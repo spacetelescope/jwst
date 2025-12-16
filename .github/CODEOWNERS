@@ -1,5 +1,8 @@
 # automatically requests pull request reviews for files matching the given pattern; the last match takes precedence
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# 
+# pull requests are required to have at least 1 approval from one of the codeowners, as defined in the ruleset at https://github.com/spacetelescope/jwst/settings/rules/7657862
+# files defined without any usernames or teams will have NO codeowner
 
 # any files not matched below default to the maintainers team
 * 							@spacetelescope/jwst-pipeline-maintainers
@@ -9,7 +12,7 @@
 
 # IN ADDITION to the code owners defined below, this repository ALSO requires
 # all changes to files in `/jwst/` to ALSO be approved by the maintainers team
-# (this behavior is defined in the repository ruleset at https://github.com/spacetelescope/jwst/settings/rules/7657862)
+# as defined in the ruleset at https://github.com/spacetelescope/jwst/settings/rules/7657862
  
 # steps and packages
 /jwst/ami/					@spacetelescope/jwst-pipeline-maintainers @emolter
