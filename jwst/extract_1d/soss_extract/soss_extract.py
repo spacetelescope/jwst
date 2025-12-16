@@ -2,11 +2,12 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+
 import numpy as np
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from astropy.utils.decorators import lazyproperty
-from scipy.interpolate import CubicSpline, UnivariateSpline
 from scipy import ndimage
+from scipy.interpolate import CubicSpline, UnivariateSpline
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SossWaveGridModel, dqflags
 
@@ -53,6 +54,7 @@ ORDER_STR_TO_INT = {f"Order {order}": order for order in [1, 2, 3]}
 
 
 __all__ = ["get_ref_file_args", "run_extract1d"]
+
 
 @dataclass
 class DetectorModelOrder:
@@ -113,12 +115,12 @@ class DetectorModelOrder:
     kernel_func: WebbKernel | None = None
     subarray: str | None = None
 
-    orderengine : ExtractionEngine | None = None
-    order12engine : ExtractionEngine | None = None
-    mederr : np.ndarray | None = None
-    m_inv : np.ndarray | None = None
-    bmat : np.ndarray | None = None
-    mask : np.ndarray | None = None
+    orderengine: ExtractionEngine | None = None
+    order12engine: ExtractionEngine | None = None
+    mederr: np.ndarray | None = None
+    m_inv: np.ndarray | None = None
+    bmat: np.ndarray | None = None
+    mask: np.ndarray | None = None
 
     @lazyproperty
     def trace(self):
@@ -312,17 +314,15 @@ def get_ref_file_args(ref_files, mederr=None, orders_requested=None):
 
     return detector_models
 
-def _infill_data_get_mederr(cube_model, scimask, refmask, ninterp=9):
+
+def _infill_data_get_mederr(cube_model, refmask, ninterp=9):
     """
-    Impute missing data, compute median uncertainty
+    Impute missing data, compute median uncertainty.
 
     Parameters
     ----------
     cube_model : CubeModel
         The input DataModel as a CubeModel.
-    scimask : np.ndarray
-        A boolean array that is True for pixels that are bad in *all*
-        integrations
     refmask : np.ndarray
         Boolean mask for the reference pixels
     ninterp : int, optional
@@ -337,12 +337,9 @@ def _infill_data_get_mederr(cube_model, scimask, refmask, ninterp=9):
         mean of ninterp neighboring images.
     medarr : np.ndarray
         Median uncertainty from cube_model.err, excluding NaNs.
-
     """
     # Pixels that are bad in all integrations
-
-    allbad = np.sum(np.isfinite(cube_model.err) &
-                    np.isfinite(cube_model.data), axis=0) == 0
+    allbad = np.sum(np.isfinite(cube_model.err) & np.isfinite(cube_model.data), axis=0) == 0
 
     # Make a copy of the cube model where bad pixels in any individual
     # integration are replaced with a running median in time.
@@ -354,7 +351,7 @@ def _infill_data_get_mederr(cube_model, scimask, refmask, ninterp=9):
     # Use of the median uncertainty means that the matrices used in
     # the ATOCA algorithm are shared between all integrations.
 
-    mederr = np.nanmedian(cube_model.err*1., axis=0)
+    mederr = np.nanmedian(cube_model.err * 1.0, axis=0)
     meddata = np.nanmedian(data_nanreplaced, axis=0)
 
     mederr[allbad] = np.inf
@@ -382,7 +379,15 @@ def _infill_data_get_mederr(cube_model, scimask, refmask, ninterp=9):
 
 def _refine_tikfac(tiktests, tikho_struct, engine, niter_refine=3):
     """
-    Iteratively refine the optimal Tikhonov regularization factor.
+    Refine the optimal Tikhonov regularization factor using iterations.
+
+    This algorithm takes the results of Tikhonov optimization over the
+    initial, coarse grid as input.  It then finds the best factor using
+    the dchi2/dlog(factor) criterion.  It chooses the closest point on
+    the grid, adds two new points on either side of this to increase the
+    resolution (or extends the grid if the best-fit was an endpoint),
+    and recomputes the best Tikhonov factor.  This process is iterated
+    niter_refine times.
 
     Parameters
     ----------
@@ -403,33 +408,25 @@ def _refine_tikfac(tiktests, tikho_struct, engine, niter_refine=3):
     -------
     tifac : float
         The best Tikhonov factor
-
-    This algorithm takes the results of Tikhonov optimization over the
-    initial, coarse grid as input.  It then finds the best factor using
-    the dchi2/dlog(factor) criterion.  It chooses the closest point on
-    the grid, adds two new points on either side of this to increase the
-    resolution (or extends the grid if the best-fit was an endpoint),
-    and recomputes the best Tikhonov factor.  This process is iterated
-    niter_refine times.
     """
-
     tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
 
-    for i in range(niter_refine):
-        f = np.sort(tiktests['factors'])
+    for _i in range(niter_refine):
+        f = np.sort(tiktests["factors"])
 
-        closest_point = (np.abs(np.log(f) - np.log(tikfac)) ==
-                       np.amin(np.abs(np.log(f) - np.log(tikfac))))
+        closest_point = np.abs(np.log(f) - np.log(tikfac)) == np.amin(
+            np.abs(np.log(f) - np.log(tikfac))
+        )
 
         # Add two points, extrapolating if necessary.
 
         j = np.where(closest_point)[0][0]
         if j == 0:
-            newfac = np.array([f[0]**2 / f[1], np.sqrt(f[0] * f[1])])
+            newfac = np.array([f[0] ** 2 / f[1], np.sqrt(f[0] * f[1])])
         elif j == len(f) - 1:
-            newfac = np.array([np.sqrt(f[-1] * f[-2]), f[-1]**2 / f[-2]])
+            newfac = np.array([np.sqrt(f[-1] * f[-2]), f[-1] ** 2 / f[-2]])
         else:
-            newfac = np.array([np.sqrt(f[j] * f[j-1]), np.sqrt(f[j] * f[j+1])])
+            newfac = np.array([np.sqrt(f[j] * f[j - 1]), np.sqrt(f[j] * f[j + 1])])
 
         # Merge results and recompute the best Tikhonov factor.
 
@@ -451,8 +448,7 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.int_num = 0  # marks this as a test spectrum
 
 
-def _build_tracemodel_order(engine, order_model, f_k, mask,
-                            force_recompute_engine=False):
+def _build_tracemodel_order(engine, order_model, f_k, mask, force_recompute_engine=False):
     """
     Build the trace model for a specific spectral order.
 
@@ -597,7 +593,7 @@ def _do_tiktests(
     global_mask,
     save_tiktests=False,
     tikfac_log_range=None,
-    niter_refine=3
+    niter_refine=3,
 ):
     """
     Test a grid of Tikhonov regularization factors to find the most appropriate one.
@@ -656,8 +652,7 @@ def _do_tiktests(
 
     # Refine to a final answer.
 
-    tikfac, all_tests = _refine_tikfac(
-        all_tests, tikho_struct, engine, niter_refine=niter_refine)
+    tikfac, all_tests = _refine_tikfac(all_tests, tikho_struct, engine, niter_refine=niter_refine)
     log.info("Final best tikfac: %.4e", tikfac)
 
     spec_list = []
@@ -672,8 +667,8 @@ def _do_tiktests(
                     spec_ord = _build_null_spec_table(engine.wave_grid, order)
                 else:
                     _, spec_ord = _build_tracemodel_order(
-                        engine, order_model, f_k, global_mask,
-                        force_recompute_engine=True)
+                        engine, order_model, f_k, global_mask, force_recompute_engine=True
+                    )
                 _populate_tikho_attr(spec_ord, all_tests, idx, order)
                 spec_list.append(spec_ord)
 
@@ -1082,8 +1077,7 @@ class Integration:
         tracemodels = {}
         for i_order, _order in enumerate([1, 2]):
             tracemodel_ord, spec_ord = _build_tracemodel_order(
-                engine, self.order_models[i_order], f_k, global_mask,
-                force_recompute_engine=False
+                engine, self.order_models[i_order], f_k, global_mask, force_recompute_engine=False
             )
             spec_ord.meta.soss_extract1d.factor = tikfacs_out["Order 1"]
             spec_ord.meta.soss_extract1d.color_range = "RED"
@@ -1466,7 +1460,7 @@ def _process_one_integration(
                 wave_grid,
                 estimate=estimate,
                 tikfacs_in=tikfacs_in,
-                threshold=soss_kwargs["threshold"]
+                threshold=soss_kwargs["threshold"],
             )
         except KernelShapeError:
             # Revert to using kernel functions. This will happen if one integration has
@@ -1700,7 +1694,7 @@ def run_extract1d(
     # Fill in pixels that are bad or missing in individual integrations,
     # also compute the median uncertainty across integrations.
 
-    scidata, mederr = _infill_data_get_mederr(cube_model, scimask, refmask)
+    scidata, mederr = _infill_data_get_mederr(cube_model, refmask)
     nints = scidata.shape[0]
 
     # Prepare the reference file arguments.
@@ -1760,36 +1754,34 @@ def run_extract1d(
     t0 = time.time()
 
     for i in range(nimages):
-
         scierr_i = cube_model.err[i].astype("float64")
-        bad = (~np.isfinite(cube_model.data[i]))|(~np.isfinite(scierr_i))
+        bad = (~np.isfinite(cube_model.data[i])) | (~np.isfinite(scierr_i))
 
         # Inflate errors of interpolated values by a factor of 10 over
         # the median uncertainties across integrations.  This in intended
         # to encourage the user not to overinterpret imputed data.
 
-        scierr_i[bad] = mederr[bad]*10
+        scierr_i[bad] = mederr[bad] * 10
 
-        all_results += [_process_one_integration(
-            scidata[i],
-            scierr_i,
-            scimask,
-            refmask,
-            order_models,
-            box_weights,
-            wavelengths,
-            soss_kwargs,
-            wave_grid=wave_grid_first,
-            tikfacs_in=tikfacs_first,
-            generate_model=generate_model,
-            int_num=i + 1
-        )]
+        all_results += [
+            _process_one_integration(
+                scidata[i],
+                scierr_i,
+                scimask,
+                refmask,
+                order_models,
+                box_weights,
+                wavelengths,
+                soss_kwargs,
+                wave_grid=wave_grid_first,
+                tikfacs_in=tikfacs_first,
+                generate_model=generate_model,
+                int_num=i + 1,
+            )
+        ]
 
     t1 = time.time()
-    log.info(
-        f"Wall clock time for processing {nimages} integrations: "
-        f"{(t1 - t0):.1f} sec"
-    )
+    log.info(f"Wall clock time for processing {nimages} integrations: {(t1 - t0):.1f} sec")
 
     # Set up the dictionaries of results using the first integration.
 
