@@ -21,7 +21,7 @@ class TargCentroidStep(Step):
     skip = boolean(default=True)  # Skip this step by default
     """  # noqa: E501
 
-    reference_file_types = ["specwcs", "filteroffset"]
+    reference_file_types = ["filteroffset"]
 
     def process(self, step_input):
         """
@@ -76,33 +76,25 @@ class TargCentroidStep(Step):
             result = self._rebuild_container(container, result)
             return result
 
-        # # read specwcs to get necessary reference points on detector
-        # # if we always have dither info from TA image, we won't need this at all
-        # reffile = self.get_reference_file(result, "specwcs")
-        # with dm.MiriLRSSpecwcsModel(reffile) as refmodel:
-        #     if exp_type == "MIR_LRS-FIXEDSLIT":
-        #         ref_center = (refmodel.meta.x_ref, refmodel.meta.y_ref)
-        #     else:
-        #         ref_center = (refmodel.meta.x_ref_slitless, refmodel.meta.y_ref_slitless)
-
-        # Read the TA image and extract necessary info
         with dm.open(self.ta_file) as ta_model:
             log.info(f"Performing TA centering using file: {self.ta_file}")
-            # Assign a WCS to the ta_image if not already present
+            # Call assign_wcs step to ensure WCS is present
+
+            # Find expected source position by assigning WCS to TA model
+            # and translating dither offsets to detector coordinates
+            ref_center = self._find_dither_position(ta_model)
+            log.debug(f"Reference center in detector subarray (0-indexed): {ref_center}")
+
+            # Put attributes needed later into local variables so we can exit context manager
             ta_image = ta_model.data
             ta_filter = ta_model.meta.instrument.filter
             filteroffset_file = self.get_reference_file(ta_model, "filteroffset")
-
-            # Find expected source position based on reference information
-            ref_center = self._find_dither_position(ta_model)
-            log.debug(f"Reference center on detector (0-indexed): {ref_center}")
-
-            # Get subarray information from TA image
             subarray_name = ta_model.meta.subarray.name
             xstart = ta_model.meta.subarray.xstart  # 1-indexed in FITS
             ystart = ta_model.meta.subarray.ystart  # 1-indexed in FITS
             log.debug(f"TA subarray: {subarray_name}, origin: ({xstart}, {ystart})")
 
+        # Compute centroid from TA image
         try:
             x_center, y_center = center_from_ta_image(
                 ta_image,
@@ -115,7 +107,7 @@ class TargCentroidStep(Step):
             result = self._rebuild_container(container, result)
             return result
 
-        # store TA centering results in output model
+        # Store TA centering results in output model
         result.ta_xpos = x_center
         result.ta_ypos = y_center
 
@@ -126,13 +118,15 @@ class TargCentroidStep(Step):
             x_center += col_offset
             y_center += row_offset
 
-        # Set completion status
+        # Store final source position in science model and set completion flag
         result.source_xpos = x_center
         result.source_ypos = y_center
         result.meta.cal_step.targ_centroid = "COMPLETE"
-
         log.info(
-            f"TA centering complete. Final source position: "
+            "TA centering complete. \n"
+            "Fitted source position before filter offset: "
+            f"({result.ta_xpos:.2f}, {result.ta_ypos:.2f})\n"
+            "Final source position after filter offset: "
             f"({result.source_xpos:.2f}, {result.source_ypos:.2f})"
         )
 
@@ -190,23 +184,31 @@ class TargCentroidStep(Step):
 
     def _find_dither_position(self, ta_model):
         """
-        Apply dither offsets to the reference center.
+        Assign a WCS and find expected source position based on dither metadata.
 
         Parameters
         ----------
         ta_model : DataModel
-            The TA image data model.
+            The TA verification image datamodel.
 
         Returns
         -------
         x_center, y_center : float
             Dithered x, y center position in full-frame detector coordinates.
         """
-        ta_model = AssignWcsStep.call(ta_model)
-        store_dithered_position(ta_model)
-        dra, ddec = ta_model.meta.dither.dithered_ra, ta_model.meta.dither.dithered_dec
+        if not ta_model.meta.hasattr("wcs"):
+            log.info("Assigning WCS to TA verification image.")
+            ta_model = AssignWcsStep.call(ta_model)
+        if not (
+            ta_model.meta.dither.hasattr("dithered_ra")
+            and ta_model.meta.dither.hasattr("dithered_dec")
+        ):
+            # Compute the dithered RA and Dec from the WCS and metadata
+            # This is only computed by default for MIRI LRS slit data within assign_wcs
+            store_dithered_position(ta_model)
 
         # translate from arcseconds (SI ideal coordinate frame) to pixels (detector frame)
+        dra, ddec = ta_model.meta.dither.dithered_ra, ta_model.meta.dither.dithered_dec
         world_to_pixel = ta_model.meta.wcs.get_transform("world", "detector")
         dither_x, dither_y = world_to_pixel(dra, ddec)
 

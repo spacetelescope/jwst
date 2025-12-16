@@ -47,16 +47,17 @@ The ``targ_centroid`` step performs the following operations:
 
 #. **Load reference files**: The step retrieves the following reference files from CRDS:
 
-   * SPECWCS: Contains the reference position (x_ref, y_ref) for the slit and
-     slitless configurations
    * FILTEROFFSET: Provides column and row offsets specific to the observation filter
 
-#. **Determine reference position**: Based on the SPECWCS reference file metadata,
-   the step identifies the expected source location. If the TA verification image
-   uses a subarray, appropriate coordinate transformations are applied.
+#. **Assign WCS to TA image**: If the TA verification image does not already have
+   a WCS assigned, the step invokes the :ref:`assign_wcs <assign_wcs_step>` step
+   to compute and attach the WCS to the TA image data model.
+
+#. **Determine reference position**: The step computes the expected source location
+   based on the TA verification image WCS and metadata.
 
 #. **Extract cutout**: A cutout of the TA verification image is extracted,
-   centered on the reference position.
+   centered on the expected source position.
 
 #. **Find the centroid**: The centroid of the source within the cutout is determined
    using the :meth:`~photutils.aperture.aperture.ApertureStats.centroid` routine.

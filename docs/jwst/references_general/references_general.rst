@@ -179,8 +179,6 @@ documentation on each reference file.
 | :ref:`superbias <superbias_step>`                     | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`targ_centroid <targ_centroid_step>`             | :ref:`FILTEROFFSET <filteroffset_reffile>`       |
-+                                                       +--------------------------------------------------+
-|                                                       | :ref:`SPECWCS <specwcs_reffile>`                 |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`tso_photometry <tso_photometry_step>`           | :ref:`GAIN <gain_reffile>`                       |
 +-------------------------------------------------------+--------------------------------------------------+
@@ -301,8 +299,6 @@ documentation on each reference file.
 | :ref:`SIRSKERNEL <sirskernel_reffile>`           | :ref:`refpix <refpix_step>`                           |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`SPECWCS <specwcs_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`                   |
-+                                                  +-------------------------------------------------------+
-|                                                  | :ref:`targ_centroid <targ_centroid_step>`             |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`saturation <saturation_step>`                   |
 +                                                  +-------------------------------------------------------+

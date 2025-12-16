@@ -2,7 +2,6 @@ import logging
 
 import numpy as np
 from photutils.centroids import centroid_2dg
-from scipy.ndimage import median_filter
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +30,8 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
     ta_image : ndarray
         2D target acquisition image data.
     ref_center : tuple of float
-        (x_ref, y_ref) reference center position in full-frame detector coordinates.
+        (x_ref, y_ref) reference center position in subarray coordinates, zero-indexed.
+        Dither position comes out of the WCS transform already in subarray coordinates.
     subarray_origin : tuple of int, optional
         (xstart, ystart) 1-indexed origin of the subarray in full-frame coordinates.
         Default is (1, 1) for full frame.
@@ -42,22 +42,9 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
         Fitted x, y center position in full-frame detector coordinates.
     """
     log.info("Computing centroid of source in TA verification image.")
-    # Transform reference center from full-frame to subarray coordinates
-    # FITS convention: xstart, ystart are 1-indexed
-    # Python/array convention: 0-indexed
-    # ref_center is in 0-indexed detector coordinates
-    ref_center_subarray = (
-        ref_center[0] - (subarray_origin[0] - 1),
-        ref_center[1] - (subarray_origin[1] - 1),
-    )
 
-    log.debug(
-        f"Reference center (0-indexed): full-frame=({ref_center[0]:.2f}, {ref_center[1]:.2f}), "
-        f"subarray=({ref_center_subarray[0]:.2f}, {ref_center_subarray[1]:.2f})"
-    )
-
-    # Create cutout around reference center (in subarray coordinates)
-    cutout, cutout_origin = _cutout_center(ta_image, ref_center_subarray)
+    # Create small cutout around reference center (in subarray coordinates)
+    cutout, cutout_origin = _cutout_center(ta_image, ref_center, size=20)
 
     if np.sum(~np.isnan(cutout)) < 10:
         raise NoFinitePixelsError(
@@ -81,44 +68,34 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
     return x_center, y_center
 
 
-def _fit_centroid(ta_image):
+def _fit_centroid(cutout):
     """
     Compute the centroid of the target acquisition image.
 
     Parameters
     ----------
-    ta_image : ndarray
-        2D target acquisition image data.
+    cutout : ndarray
+        2D target acquisition image data, cut out around the reference position.
 
     Returns
     -------
     x_center, y_center : float
         Centroid x, y position.
     """
-    # Initial guess: spatial median filter to remove hot pixels if present, then find max
-    filtered_image = median_filter(ta_image, size=3)
-    y_guess, x_guess = np.unravel_index(np.nanargmax(filtered_image), ta_image.shape)
-    # make an even smaller cutout, +/- 8 pixels around the guess position
-    cutout, cutout_origin = _cutout_center(ta_image, (x_guess, y_guess), size=16)
     mask = ~np.isfinite(cutout)
-
     # Use a 2-D Gaussian fit to find the centroid
     try:
-        x_center_cutout, y_center_cutout = centroid_2dg(cutout, mask=mask)
+        x_center, y_center = centroid_2dg(cutout, mask=mask)
     except ValueError as e:
         raise BadFitError(
             "2D Gaussian centroid fit failed. Check input data and mask. "
             f"Error from fitter was {type(e).__name__}: {e}"
         ) from None
 
-    # Transform back to original image coordinates
-    x_center = x_center_cutout + cutout_origin[0]
-    y_center = y_center_cutout + cutout_origin[1]
-
     return x_center, y_center
 
 
-def _cutout_center(image, center, size=40):
+def _cutout_center(image, center, size=16):
     """
     Cut out a small square region from an image centered on a reference position.
 
