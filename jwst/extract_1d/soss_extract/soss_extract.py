@@ -87,7 +87,7 @@ class DetectorModelOrder:
     orderengine : ExtractionEngine or None
         Precomputed extraction engine for this order.  This is intended to be
         computed for the first integration and stored thereafter.
-    order12engine : ExtractionEngine or Nonr
+    order12engine : ExtractionEngine or None
         Precomputed extraction engine for orders 1+2.  This is intended to be
         computed for the first integration and stored thereafter.
     mederr : np.ndarray or None
