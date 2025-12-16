@@ -700,7 +700,6 @@ class ExtractionEngine:
         tests : dict
             Dictionary of the test results
         """
-
         # Test all factors
         tests = tikho.test_factors(factors)
 
@@ -951,7 +950,6 @@ class ExtractionEngine:
 
         return spectrum
 
-
     def precompute_detector_model(self, data, error, tikfac):
         """
         Return the matrices and mask needed to solve for the spectrum.
@@ -973,7 +971,6 @@ class ExtractionEngine:
         b_matrix : (N, M) array
             The matrix b in M*f_k=b*(y/err)
         """
-
         # Build the system to solve
         b_matrix, _ = self.get_detector_model(data, error)
 
@@ -989,7 +986,6 @@ class ExtractionEngine:
         design_matrix_inv = np.linalg.inv(design_matrix)
 
         return design_matrix_inv, b_matrix
-
 
     def _get_lo_hi(self, grid, wave_p, wave_m, mask):
         """
