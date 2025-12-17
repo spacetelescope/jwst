@@ -3,7 +3,7 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.datamodels import ModelContainer
-from jwst.targ_centroid.targ_centroid_step import TargCentroidStep
+from jwst.targ_centroid.targ_centroid_step import TargCentroidStep, _find_dither_position
 from jwst.targ_centroid.tests.helpers import (
     MIRI_DETECTOR_SHAPE,
     X_REF,
@@ -303,3 +303,166 @@ def _tests_for_skipped_step(model):
     assert model.meta.cal_step.targ_centroid == "SKIPPED"
     assert not model.hasattr("source_xpos")
     assert not model.hasattr("source_ypos")
+
+
+class PlaceholderWCS:
+    """Simple WCS that applies a linear transformation for testing."""
+
+    def __init__(self, xscale=100.0, yscale=100.0, xoff=1.0, yoff=2.0):
+        self.xscale = xscale
+        self.yscale = yscale
+        self.xoff = xoff
+        self.yoff = yoff
+
+    def get_transform(self, frm, to):
+        def world_to_pixel(ra, dec):
+            # simple linear transform for testing
+            return (ra * self.xscale + self.xoff, dec * self.yscale + self.yoff)
+
+        return world_to_pixel
+
+
+def test_find_dither_position_wcs_and_dither(monkeypatch):
+    """
+    Case where both WCS and dither keywords are present.
+
+    Code should apply the WCS to dithered RA/Dec to get pixel position.
+    """
+    model = make_ta_model(np.zeros((10, 10)))
+    # attach WCS and dither metadata
+    model.meta.wcs = PlaceholderWCS()
+    model.meta.dither.dithered_ra = 0.11
+    model.meta.dither.dithered_dec = 0.22
+
+    # ensure calling AssignWcsStep or store_dithered_position does not happen
+    def mock_assign_wcs(ta_model, **kwargs):
+        raise RuntimeError("AssignWcsStep.call should not be called in this test")
+
+    def mock_store_dithered_position(ta_model):
+        raise RuntimeError("store_dithered_position should not be called in this test")
+
+    monkeypatch.setattr(
+        "jwst.targ_centroid.targ_centroid_step.AssignWcsStep.call",
+        mock_assign_wcs,
+    )
+    monkeypatch.setattr(
+        "jwst.targ_centroid.targ_centroid_step.store_dithered_position",
+        mock_store_dithered_position,
+    )
+
+    xpix, ypix = _find_dither_position(model)
+
+    assert np.isclose(xpix, 0.11 * 100.0 + 1.0)
+    assert np.isclose(ypix, 0.22 * 100.0 + 2.0)
+
+
+def test_find_dither_position_no_wcs(monkeypatch):
+    """
+    Case where WCS is missing.
+
+    This looks like the typical flow if input ta_model is a rate file.
+    """
+    model = make_ta_model(np.zeros((10, 10)))
+
+    def mock_assign_wcs(ta_model, **kwargs):
+        # attach WCS and dither fields
+        ta_model.meta.wcs = PlaceholderWCS()
+        ta_model.meta.dither.dithered_ra = 0.5
+        ta_model.meta.dither.dithered_dec = -0.25
+        ta_model.meta.cal_step.assign_wcs = "COMPLETE"
+        return ta_model
+
+    def mock_store_dithered_position(ta_model):
+        # This should not be called in this test
+        ta_model.meta.dither.dithered_ra = 0.33
+        ta_model.meta.dither.dithered_dec = 0.44
+
+    monkeypatch.setattr(
+        "jwst.targ_centroid.targ_centroid_step.AssignWcsStep.call",
+        mock_assign_wcs,
+    )
+    monkeypatch.setattr(
+        "jwst.targ_centroid.targ_centroid_step.store_dithered_position",
+        mock_store_dithered_position,
+    )
+
+    xpix, ypix = _find_dither_position(model)
+    assert model.meta.cal_step.assign_wcs == "COMPLETE"
+    assert np.isclose(xpix, 0.5 * 100.0 + 1.0)
+    assert np.isclose(ypix, -0.25 * 100.0 + 2.0)
+
+
+def test_find_dither_position_calls_store_dithered_position_when_missing(monkeypatch):
+    """
+    Case where WCS exists but store_dithered_position is called to get dithered position.
+
+    This looks like typical flow if input ta_model is a cal file.
+    """
+    model = make_ta_model(np.zeros((10, 10)))
+    model.meta.wcs = PlaceholderWCS()
+
+    def mock_store_dithered_position(ta_model):
+        # This should not be called in this test
+        ta_model.meta.dither.dithered_ra = 0.33
+        ta_model.meta.dither.dithered_dec = 0.44
+
+    monkeypatch.setattr(
+        "jwst.targ_centroid.targ_centroid_step.store_dithered_position",
+        mock_store_dithered_position,
+    )
+
+    xpix, ypix = _find_dither_position(model)
+    assert np.isclose(xpix, 0.33 * 100.0 + 1.0)
+    assert np.isclose(ypix, 0.44 * 100.0 + 2.0)
+
+
+def test_targ_centroid_assign_wcs_error(input_model_slit, tmp_path, monkeypatch, log_watcher):
+    """If AssignWcsStep.call raises, the step should be skipped."""
+
+    # Create a simple TA model file to pass into the step
+    ta_model = make_ta_model(np.zeros((10, 10)))
+    ta_path = tmp_path / "ta_assign_fail.fits"
+    ta_model.save(str(ta_path))
+
+    def mock_assign_wcs(ta_model, **kwargs):
+        raise RuntimeError("assign_wcs failed")
+
+    monkeypatch.setattr(
+        "jwst.targ_centroid.targ_centroid_step.AssignWcsStep.call",
+        mock_assign_wcs,
+    )
+
+    watcher = log_watcher(
+        "jwst.targ_centroid.targ_centroid_step",
+        message="Error when assigning WCS",
+    )
+
+    result = TargCentroidStep.call(input_model_slit, ta_file=str(ta_path))
+    watcher.assert_seen()
+
+    _tests_for_skipped_step(result)
+
+
+def test_targ_centroid_assign_wcs_skipped(input_model_slit, tmp_path, monkeypatch, log_watcher):
+    """If AssignWcsStep.call returns but assign_wcs is skipped, step is skipped."""
+
+    # Create a simple TA model file to pass into the step
+    ta_model = make_ta_model(np.zeros((10, 10)))
+    ta_path = tmp_path / "ta_assign_incomplete.fits"
+    ta_model.save(str(ta_path))
+
+    def mock_assign_wcs(ta_model, **kwargs):
+        ta_model.meta.cal_step.assign_wcs = "SKIPPED"
+        return ta_model
+
+    monkeypatch.setattr(
+        "jwst.targ_centroid.targ_centroid_step.AssignWcsStep.call",
+        mock_assign_wcs,
+    )
+
+    watcher = log_watcher("jwst.targ_centroid.targ_centroid_step", message="Failed to assign WCS")
+
+    result = TargCentroidStep.call(input_model_slit, ta_file=str(ta_path))
+    watcher.assert_seen()
+
+    _tests_for_skipped_step(result)

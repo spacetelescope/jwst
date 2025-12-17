@@ -82,7 +82,13 @@ class TargCentroidStep(Step):
 
             # Find expected source position by assigning WCS to TA model
             # and translating dither offsets to detector coordinates
-            ref_center = self._find_dither_position(ta_model)
+            try:
+                ref_center = _find_dither_position(ta_model)
+            except WCSError as e:
+                log.error(f"Error when assigning WCS to {self.ta_file}: {e}. Step will be SKIPPED.")
+                result.meta.cal_step.targ_centroid = "SKIPPED"
+                result = self._rebuild_container(container, result)
+                return result
             log.debug(f"Reference center in detector subarray (0-indexed): {ref_center}")
 
             # Put attributes needed later into local variables so we can exit context manager
@@ -182,34 +188,45 @@ class TargCentroidStep(Step):
         container[sci_idx[0]] = updated_sci_model
         return container
 
-    def _find_dither_position(self, ta_model):
-        """
-        Assign a WCS and find expected source position based on dither metadata.
 
-        Parameters
-        ----------
-        ta_model : DataModel
-            The TA verification image datamodel.
+class WCSError(Exception):
+    """Custom exception raised when WCS assignment or usage fails."""
 
-        Returns
-        -------
-        x_center, y_center : float
-            Dithered x, y center position in full-frame detector coordinates.
-        """
-        if not ta_model.meta.hasattr("wcs"):
-            log.info("Assigning WCS to TA verification image.")
+    pass
+
+
+def _find_dither_position(ta_model):
+    """
+    Assign a WCS and find expected source position based on dither metadata.
+
+    Parameters
+    ----------
+    ta_model : DataModel
+        The TA verification image datamodel.
+
+    Returns
+    -------
+    x_center, y_center : float
+        Dithered x, y center position in full-frame detector coordinates.
+    """
+    if not ta_model.meta.hasattr("wcs"):
+        log.info("Assigning WCS to TA verification image.")
+        try:
             ta_model = AssignWcsStep.call(ta_model, sip_approx=False)
-        if not (
-            ta_model.meta.dither.hasattr("dithered_ra")
-            and ta_model.meta.dither.hasattr("dithered_dec")
-        ):
-            # Compute the dithered RA and Dec from the WCS and metadata
-            # This is only computed by default for MIRI LRS slit data within assign_wcs
-            store_dithered_position(ta_model)
+        except Exception as e:
+            raise WCSError("Failed to assign WCS to TA verification image.") from e
+        if ta_model.meta.cal_step.assign_wcs != "COMPLETE":
+            raise WCSError("Failed to assign WCS to TA verification image (step was skipped).")
+    if not (
+        ta_model.meta.dither.hasattr("dithered_ra") and ta_model.meta.dither.hasattr("dithered_dec")
+    ):
+        # Compute the dithered RA and Dec from the WCS and metadata
+        # This is only computed by default for MIRI LRS slit data within assign_wcs
+        store_dithered_position(ta_model)
 
-        # translate from arcseconds (SI ideal coordinate frame) to pixels (detector frame)
-        dra, ddec = ta_model.meta.dither.dithered_ra, ta_model.meta.dither.dithered_dec
-        world_to_pixel = ta_model.meta.wcs.get_transform("world", "detector")
-        dither_x, dither_y = world_to_pixel(dra, ddec)
+    # translate from arcseconds (SI ideal coordinate frame) to pixels (detector frame)
+    dra, ddec = ta_model.meta.dither.dithered_ra, ta_model.meta.dither.dithered_dec
+    world_to_pixel = ta_model.meta.wcs.get_transform("world", "detector")
+    dither_x, dither_y = world_to_pixel(dra, ddec)
 
-        return dither_x, dither_y
+    return dither_x, dither_y
