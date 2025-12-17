@@ -1110,24 +1110,16 @@ def fit_and_oversample(
     )
 
     log.info("Oversampling error and DQ arrays")
-    # todo: error may need inflation to avoid underestimate later
     errors = [model.err, model.var_rnoise, model.var_poisson, model.var_flat]
     dq = model.dq
     if rotate:
         errors = [np.rot90(err) for err in errors]
         dq = np.rot90(dq)
 
-    # todo - deal with all the extra arrays better
-
     # Nearest pixel interpolation for the dq and regions array
     closest_pix = (np.round(y_os).astype(int), np.round(x_os).astype(int))
     dq_os = dq[*closest_pix]
     regions_os = region_map[*closest_pix]
-    pathloss_point_os, pathloss_uniform_os = None, None
-    if model.hasattr("pathloss_point"):
-        pathloss_point_os = model.pathloss_point[*closest_pix]
-    if model.hasattr("pathloss_uniform"):
-        pathloss_uniform_os = model.pathloss_uniform[*closest_pix]
 
     # Update the DQ image for pixels that used to be NaN, now replaced by spline interpolation.
     # Remove the DO_NOT_USE flag, add FLUX_ESTIMATED
@@ -1136,6 +1128,7 @@ def fit_and_oversample(
     dq_os[is_estimated] |= dqflags.pixel["FLUX_ESTIMATED"]
 
     # Simple linear oversample for the error arrays
+    # todo: error may need inflation to avoid underestimate later
     errors_os = []
     for error_array in errors:
         error_os = linear_oversample(
@@ -1173,17 +1166,24 @@ def fit_and_oversample(
         regions_os = np.rot90(regions_os, k=-1)
         profile = np.rot90(profile, k=-1)
 
+    # Update the model with the oversampled arrays
     model.data = flux_os
     model.err, model.var_rnoise, model.var_poisson, model.var_flat = errors_os
     model.dq = dq_os
     model.wavelength = wave_os
     model.profile = profile
-    if regions_os is not None:
-        model.regions = regions_os
-    if pathloss_point_os is not None:
-        model.pathloss_point = pathloss_point_os
-    if pathloss_uniform_os is not None:
-        model.pathloss_uniform = pathloss_uniform_os
+    model.regions = regions_os
+
+    # Remove some extra arrays if present: no longer needed
+    extras = [
+        "area",
+        "pathloss_point",
+        "pathloss_uniform",
+        "zeroframe",
+    ]
+    for name in extras:
+        if model.hasattr(name):
+            delattr(model, name)
 
     # Make sure NaNs and DO_NOT_USE flags match in all extensions
     match_nans_and_flags(model)
