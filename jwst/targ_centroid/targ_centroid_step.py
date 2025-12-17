@@ -117,7 +117,7 @@ class TargCentroidStep(Step):
 
         # Compute centroid from TA image
         try:
-            x_center, y_center = center_from_ta_image(
+            (x_center, y_center), (x_center_sub, y_center_sub) = center_from_ta_image(
                 ta_image,
                 ref_center,
                 subarray_origin=(xstart, ystart),
@@ -129,8 +129,8 @@ class TargCentroidStep(Step):
             return result
 
         # Store TA centering results in output model
-        result.ta_xpos = x_center
-        result.ta_ypos = y_center
+        result.ta_xpos = x_center_sub
+        result.ta_ypos = y_center_sub
 
         # Apply filter offsets
         with dm.FilteroffsetModel(filteroffset_file) as filteroffset:

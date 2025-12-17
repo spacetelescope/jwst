@@ -47,8 +47,10 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
 
     Returns
     -------
-    x_center, y_center : float
+    x_center, y_center : tuple of float
         Fitted x, y center position in full-frame detector coordinates.
+    x_center_subarray, y_center_subarray : tuple of float
+        Fitted x, y center position in subarray coordinates.
     """
     log.info("Computing centroid of source in TA verification image.")
 
@@ -74,7 +76,7 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
         f"full-frame=({x_center:.2f}, {y_center:.2f})"
     )
 
-    return x_center, y_center
+    return (x_center, y_center), (x_center_subarray, y_center_subarray)
 
 
 def _fit_centroid(cutout):
