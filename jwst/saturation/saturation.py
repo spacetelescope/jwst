@@ -82,6 +82,19 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, bias_
         # Obtain the bias data, used for group 2 saturation flagging in frame-averaged groups
         bias = bias_model.data
 
+    if (
+        hasattr(output_model.meta.subarray, "num_superstripe")
+        and isinstance(num_superstripe := output_model.meta.subarray.num_superstripe, int)
+        and num_superstripe > 0
+    ):
+        # Expand ref arrays to 4-D for ease of slicing
+        bias = bias[:, np.newaxis, :, :].repeat(ngroups, axis=1)
+        bias = np.tile(bias, reps=(data.shape[0] // bias.shape[0], 1, 1, 1))
+        sat_dq = sat_dq[:, np.newaxis, :, :].repeat(ngroups, axis=1)
+        sat_dq = np.tile(sat_dq, reps=(data.shape[0] // sat_dq.shape[0], 1, 1, 1))
+        sat_thresh = sat_thresh[:, np.newaxis, :, :].repeat(ngroups, axis=1)
+        sat_thresh = np.tile(sat_thresh, reps=(data.shape[0] // sat_thresh.shape[0], 1, 1, 1))
+
     gdq_new, pdq_new, zframe = flag_saturated_pixels(
         data,
         gdq,
