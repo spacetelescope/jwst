@@ -98,7 +98,7 @@ class TargCentroidStep(Step):
             # Find expected source position by assigning WCS to TA model
             # and translating dither offsets to detector coordinates
             try:
-                ref_center = find_dither_position(ta_model)
+                ref_center, ta_dither_offset = find_dither_position(ta_model)
             except WCSError as e:
                 log.error(f"Error when assigning WCS to {self.ta_file}: {e}. Step will be SKIPPED.")
                 result.meta.cal_step.targ_centroid = "SKIPPED"
@@ -132,6 +132,27 @@ class TargCentroidStep(Step):
         result.ta_xpos = x_center_sub
         result.ta_ypos = y_center_sub
 
+        # undo dither offset of TA image
+        log.debug(
+            "Undoing TA verification image dither offsets: "
+            f"x={ta_dither_offset[0]}, y={ta_dither_offset[1]}"
+        )
+        x_center -= ta_dither_offset[0]
+        y_center -= ta_dither_offset[1]
+
+        # Apply science exposure subarray offset
+        log.debug(
+            f"Applying science exposure subarray origin offsets: xstart={xstart}, ystart={ystart}"
+        )
+        x_center -= xstart - 1
+        y_center -= ystart - 1
+
+        # Apply dither offset from science exposure
+        _, (offset_x, offset_y) = find_dither_position(ta_model)
+        log.debug(f"Applying science exposure dither offsets: x={offset_x}, y={offset_y}")
+        x_center -= offset_x
+        y_center -= offset_y
+
         # Apply filter offsets
         with dm.FilteroffsetModel(filteroffset_file) as filteroffset:
             col_offset, row_offset = retrieve_filter_offset(filteroffset, ta_filter)
@@ -145,9 +166,9 @@ class TargCentroidStep(Step):
         result.meta.cal_step.targ_centroid = "COMPLETE"
         log.info(
             "TA centering complete. \n"
-            "Fitted source position before filter offset: "
+            "Fitted source position on TA verification image: "
             f"({result.ta_xpos:.2f}, {result.ta_ypos:.2f})\n"
-            "Final source position after filter offset: "
+            "Final source position in science data frame: "
             f"({result.source_xpos:.2f}, {result.source_ypos:.2f})"
         )
 

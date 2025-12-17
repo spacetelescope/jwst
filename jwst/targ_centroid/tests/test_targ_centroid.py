@@ -379,7 +379,7 @@ def test_find_dither_position_wcs_and_dither(monkeypatch):
         mock_store_dithered_position,
     )
 
-    xpix, ypix = find_dither_position(model)
+    (xpix, ypix), _ = find_dither_position(model)
 
     assert np.isclose(xpix, 0.11 * 100.0 + 1.0)
     assert np.isclose(ypix, 0.22 * 100.0 + 2.0)
@@ -415,7 +415,7 @@ def test_find_dither_position_no_wcs(monkeypatch):
         mock_store_dithered_position,
     )
 
-    xpix, ypix = find_dither_position(model)
+    (xpix, ypix), _ = find_dither_position(model)
     assert model.meta.cal_step.assign_wcs == "COMPLETE"
     assert np.isclose(xpix, 0.5 * 100.0 + 1.0)
     assert np.isclose(ypix, -0.25 * 100.0 + 2.0)
@@ -440,7 +440,7 @@ def test_find_dither_position_wcs_but_no_dither(monkeypatch):
         mock_store_dithered_position,
     )
 
-    xpix, ypix = find_dither_position(model)
+    (xpix, ypix), _ = find_dither_position(model)
     assert np.isclose(xpix, 0.33 * 100.0 + 1.0)
     assert np.isclose(ypix, 0.44 * 100.0 + 2.0)
 

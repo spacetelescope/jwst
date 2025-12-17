@@ -163,8 +163,10 @@ def find_dither_position(ta_model):
 
     Returns
     -------
-    x_center, y_center : float
-        Dithered x, y center position in full-frame detector coordinates.
+    x_center, y_center : tuple of float
+        Dithered x, y center position in pixels.
+    x_offset, y_offset : tuple of float
+        Dither x, y offsets in pixels from the nominal position.
     """
     if not ta_model.meta.hasattr("wcs"):
         log.info("Assigning WCS to TA verification image.")
@@ -182,8 +184,15 @@ def find_dither_position(ta_model):
         store_dithered_position(ta_model)
 
     # translate from arcseconds (SI ideal coordinate frame) to pixels (detector frame)
-    dra, ddec = ta_model.meta.dither.dithered_ra, ta_model.meta.dither.dithered_dec
+    dithered_ra, dithered_dec = ta_model.meta.dither.dithered_ra, ta_model.meta.dither.dithered_dec
     world_to_pixel = ta_model.meta.wcs.get_transform("world", "detector")
-    dither_x, dither_y = world_to_pixel(dra, ddec)
+    dither_x, dither_y = world_to_pixel(dithered_ra, dithered_dec)
 
-    return dither_x, dither_y
+    # Determine nominal (non-dithered) position
+    ra_ref, dec_ref = ta_model.meta.wcsinfo.crval1, ta_model.meta.wcsinfo.crval2
+    x_ref, y_ref = world_to_pixel(ra_ref, dec_ref)
+
+    # Compute offsets from nominal position
+    offset_x = dither_x - x_ref
+    offset_y = dither_y - y_ref
+    return (dither_x, dither_y), (offset_x, offset_y)
