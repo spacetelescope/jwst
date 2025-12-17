@@ -60,7 +60,7 @@ The ``targ_centroid`` step performs the following operations:
    centered on the expected source position.
 
 #. **Find the centroid**: The centroid of the source within the cutout is determined
-   using the :meth:`~photutils.aperture.aperture.ApertureStats.centroid` routine.
+   using the :attr:`~photutils.aperture.ApertureStats.centroid` method.
    This yields the fitted x and y coordinates of the source in
    cutout pixel coordinates.
 
