@@ -64,13 +64,13 @@ The ``targ_centroid`` step performs the following operations:
    This yields the fitted x and y coordinates of the source in
    cutout pixel coordinates.
 
-#. **Transform coordinates**: The fitted position is transformed from cutout
-   coordinates to full-frame detector coordinates, accounting for any subarray
-   offsets.
-
 #. **Store TA position**: The measured source position in the TA verification
    image is stored in the input data model's ``ta_xpos`` and ``ta_ypos``
    attributes for reference.
+
+#. **Transform coordinates**: The fitted position is transformed from cutout
+   coordinates to full-frame detector coordinates, accounting for any subarray
+   offsets and/or dither offsets.
 
 #. **Apply filter offsets**: The FILTEROFFSET reference file corrections are
    applied to the final x and y position.
@@ -84,14 +84,12 @@ Step Outputs
 
 The input science exposure is returned unmodified, except with three new attributes:
 
-* ``ta_xpos``: The x-coordinate of the source in the TA verification image
-  full-frame detector coordinate system (0-indexed pixels)
-* ``ta_ypos``: The y-coordinate of the source in the TA verification image
-  full-frame detector coordinate system (0-indexed pixels)
-* ``source_xpos``: The x-coordinate of the source in the full-frame detector
-  coordinate system (0-indexed pixels). This position differs from ``ta_xpos``
-  because it includes the filter offset correction.
-* ``source_ypos``: The y-coordinate of the source in the full-frame detector
-  coordinate system (0-indexed pixels). This position differs from ``ta_ypos``
-  because it includes the filter offset correction.
+* ``ta_xpos``: The measured x-coordinate of the source
+  in the TA verification image (0-indexed pixels)
+* ``ta_ypos``: The measured y-coordinate of the source
+  in the TA verification image (0-indexed pixels)
+* ``source_xpos``: The x-coordinate of the source in the science detector
+  coordinate system (0-indexed pixels).
+* ``source_ypos``: The y-coordinate of the source in the science detector
+  coordinate system (0-indexed pixels).
 * ``meta.cal_step.targ_centroid`` keyword set to "COMPLETE"
