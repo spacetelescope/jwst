@@ -8,6 +8,7 @@ from astropy.stats import sigma_clipped_stats as scs
 from astropy.utils.exceptions import AstropyUserWarning
 from scipy.interpolate import make_lsq_spline
 from scipy.signal import find_peaks
+from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.assign_wcs.nirspec import nrs_ifu_wcs
@@ -19,7 +20,7 @@ __all__ = [
     "linear_oversample",
     "fit_all_regions",
     "oversample_flux",
-    "fit_and_oversample_ifu",
+    "fit_and_oversample",
 ]
 
 log = logging.getLogger(__name__)
@@ -369,9 +370,9 @@ def _profile_image(shape, spline_models, spline_scales, region_map, alpha):
     ----------
     shape : tuple of int
         Data shape for the output image.
-    spline_models : dict of `~scipy.interpolate.BSpline`
+    spline_models : dict
         Spline models to evaluate.
-    spline_scales : dict of float
+    spline_scales : dict
         Scaling factors for spline models.
     region_map : ndarray
         2D image matching shape, indicating valid regions.
@@ -533,7 +534,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
     region_map : ndarray of int
         Map indicating valid regions. Values are >0 for pixels in valid
         regions, 0 otherwise.
-    signal_threshold : dict of float
+    signal_threshold : dict
         Threshold values for each valid region in the region map. If
         the median peak value across columns in the region is below this
         threshold, a fit will not be attempted for that region.
@@ -815,7 +816,145 @@ def oversample_flux(
     return flux_os, flux_os_bspline_full
 
 
-def fit_and_oversample_ifu(
+def _set_fit_kwargs(detector, xsize):
+    # Empirical parameters for this mode
+    if detector.startswith("NRS"):
+        require_ngood = 15
+        splinebkpt = 62
+        spaceratio = 1.6
+        lrange = 50
+
+        # Set up the column fitting order by detector
+        if detector == "NRS1":
+            # For NRS1, start on the left of detector since the tilt wrt pixels is greatest here
+            col_index = range(0, xsize, 1)
+        else:
+            # For NRS2, start on the right of detector since the tilt wrt pixels is greatest here
+            col_index = range(xsize - 1, 0, -1)
+
+    elif detector.startswith("MIR"):
+        require_ngood = 8
+        splinebkpt = 36
+        spaceratio = 1.2
+        lrange = 50
+
+        # For MIRI fitting order,  we need to start on the left and run to the middle,
+        # and then on the right to the middle in order to have the middle
+        # section not go too far beyond last good fit
+        col_index = np.concatenate(
+            [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
+        )
+    else:
+        raise ValueError("Unknown detector")
+
+    fit_kwargs = {
+        "lrange": lrange,
+        "col_index": col_index,
+        "require_ngood": require_ngood,
+        "splinebkpt": splinebkpt,
+        "spaceratio": spaceratio,
+    }
+    return fit_kwargs
+
+
+def _set_oversample_kwargs(detector):
+    if detector.startswith("NRS"):
+        # Trimming ends of the interpolation can help with bad extrapolations
+        pad = 2
+        trimends = True
+    elif detector.startswith("MIR"):
+        # Trimming ends is bad for MIRI, where dithers place point sources near the ends
+        pad = 3
+        trimends = False
+    else:
+        raise ValueError("Unknown detector")
+
+    oversample_kwargs = {"pad": pad, "trimends": trimends}
+    return oversample_kwargs
+
+
+def _get_alpha_nrs_ifu(ifu_wcs, xsize, ysize):
+    alpha_orig = np.full((ysize, xsize), np.nan)
+    for slice_wcs in ifu_wcs:
+        x, y = gwcs.wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+        _, alpha, _ = slice_wcs.transform("detector", "slicer", x, y)
+        idx = y.astype(int), x.astype(int)
+
+        # Flip alpha so in same direction as increasing Y
+        alpha_orig[*idx] = -alpha
+    return alpha_orig
+
+
+def _get_alpha_mir_mrs(wcs, xsize, ysize):
+    x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
+    alpha_orig, _, _ = wcs.transform("detector", "alpha_beta", x, y)
+    return alpha_orig
+
+
+def _get_oversampled_coords_nrs_ifu(ifu_wcs, x_os, y_os):
+    os_shape = x_os.shape
+    alpha_os = np.full(os_shape, np.nan)
+    wave_os = np.full(os_shape, np.nan)
+    for slice_wcs in ifu_wcs:
+        bbox = slice_wcs.bounding_box
+        x_in_bounds = (x_os >= bbox[0][0]) & (x_os <= bbox[0][1])
+        y_in_bounds = (y_os >= bbox[1][0]) & (y_os <= bbox[1][1])
+        _, alpha, lam = slice_wcs.transform(
+            "detector",
+            "slicer",
+            x_os[x_in_bounds & y_in_bounds],
+            y_os[x_in_bounds & y_in_bounds],
+        )
+        alpha_os[x_in_bounds & y_in_bounds] = -alpha
+        # Store wavelength, convert to um
+        wave_os[x_in_bounds & y_in_bounds] = lam * 1e6
+
+    return alpha_os, wave_os
+
+
+def _update_wcs_nrs_ifu(wcs, map_pixels):
+    if "coordinates" in wcs.available_frames:
+        # coordinate-based WCS
+        first_transform = wcs.pipeline[0].transform
+        wcs.pipeline[0].transform = map_pixels | first_transform
+        wcs.pipeline[0].transform.name = first_transform.name
+        wcs.pipeline[0].transform.inputs = first_transform.inputs
+        wcs.pipeline[0].transform.outputs = first_transform.outputs
+
+        # update bounding box limits
+        det2slicer_selector = wcs.pipeline[1].transform.selector
+        for slnum in range(30):
+            bb = det2slicer_selector[slnum + 1].bounding_box
+            bb[0], bb[1] = map_pixels.inverse(bb[0], bb[1])
+
+    else:
+        # slice-based WCS
+        map_pixels &= Identity(1)
+        map_pixels.name = "coord2det"
+        map_pixels.inputs = ("x", "y", "name")
+        map_pixels.outputs = ("x", "y", "name")
+        bbox = wcs.bounding_box
+        frame = gwcs.coordinate_frames.Frame2D(name="coordinates", axes_order=(0, 1))
+        wcs = gwcs.WCS([(frame, map_pixels), *wcs.pipeline])
+
+        # update bounding box limits
+        for slnum in range(30):
+            bb = bbox[slnum]
+            bb[0], bb[1], _ = map_pixels.inverse(bb[0], bb[1], slnum)
+        wcs.bounding_box = bbox
+    return wcs
+
+
+def _update_wcs(wcs, map_pixels):
+    map_pixels.name = "coord2det"
+    map_pixels.inputs = ("x", "y")
+    map_pixels.outputs = ("x", "y")
+    frame = gwcs.coordinate_frames.Frame2D(name="coordinates", axes_order=(0, 1))
+    new_wcs = gwcs.WCS([(frame, map_pixels), *wcs.pipeline])
+    return new_wcs
+
+
+def fit_and_oversample(
     model, threshsig=10.0, slopelim=0.1, psfoptimal=False, oversample_factor=1.0
 ):
     """
@@ -827,7 +966,7 @@ def fit_and_oversample_ifu(
         The input datamodel, updated in place.
     threshsig : float
         The signal threshold sigma for attempting spline fits within a slice region.
-        Higher values will create spline profiles for more slices.
+        Lower values will create spline profiles for more slices.
     slopelim : float
         The normalized slope threshold for using the spline model in oversampled
         data.  Lower values will use the spline model for fainter sources.
@@ -844,85 +983,50 @@ def fit_and_oversample_ifu(
         The datamodel, updated with a profile image and optionally oversampled
         arrays.
     """
+    # Get input data coordinates
     detector = model.meta.instrument.detector
+    ysize, xsize = model.data.shape
     if detector.startswith("NRS"):
-        mode = "NIRS"
-        ysize, xsize = model.data.shape
+        rotate = False
+        if isinstance(model, datamodels.IFUImageModel):
+            mode = "NRS_IFU"
+            wcs = nrs_ifu_wcs(model)
+            alpha_orig = _get_alpha_nrs_ifu(wcs, xsize, ysize)
 
-        # Empirical parameters for this mode
-        require_ngood = 15
-        splinebkpt = 62
-        spaceratio = 1.6
-        pad = 2
-        lrange = 50
+            # the region map is already stored in the datamodel
+            region_map = model.regions
+        else:
+            raise ValueError("Unsupported mode")
 
-        # Trimming ends of the interpolation can help with bad extrapolations
-        trimends = True
-    elif (detector == "MIRIFUSHORT") | (detector == "MIRIFULONG"):
-        mode = "MIRI"
-        # Note that MIRI gets rotated internally, so these are FLIPPED from usual orientation
-        xsize, ysize = model.data.shape
+    elif detector.startswith("MIR"):
+        rotate = True
+        wcs = model.meta.wcs
+        if isinstance(model, datamodels.IFUImageModel):
+            mode = "MIR_MRS"
+            alpha_orig = _get_alpha_mir_mrs(wcs, xsize, ysize)
 
-        # Empirical parameters for this mode
-        require_ngood = 8
-        splinebkpt = 36
-        spaceratio = 1.2
-        pad = 3
-        lrange = 50
-
-        # Trimming ends is bad for MIRI, where dithers place point sources near the ends
-        trimends = False
+            # Region map is stored in the transform
+            det2ab_transform = wcs.get_transform("detector", "alpha_beta")
+            region_map = det2ab_transform.label_mapper.mapper
+        else:
+            raise ValueError("Unsupported mode")
     else:
         raise ValueError("Unknown detector")
 
-    basex, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
-    if mode == "NIRS":
-        alpha_orig = np.full((ysize, xsize), np.nan)
-        ifu_wcs = nrs_ifu_wcs(model)
-        for slice_wcs in ifu_wcs:
-            x, y = gwcs.wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-            _, alpha, _ = slice_wcs.transform("detector", "slicer", x, y)
-            idx = y.astype(int), x.astype(int)
-
-            # Flip alpha so in same direction as increasing Y
-            alpha_orig[*idx] = -alpha
-
-        # NIRSpec uses fluxes in normal orientation and
-        # has the region map already stored in the datamodel
-        flux_orig = model.data
-        region_map = model.regions
-
-        # Set up the column fitting order by detector
-        if detector == "NRS1":
-            # For NRS1, start on the left of detector since the tilt wrt pixels is greatest here
-            col_index = range(0, xsize, 1)
-        else:
-            # For NRS2, start on the right of detector since the tilt wrt pixels is greatest here
-            col_index = range(xsize - 1, 0, -1)
-    else:
-        ifu_wcs = None
-        det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
-        alpha_orig, _, _ = det2ab_transform(np.rot90(basey, k=1), np.rot90(basex, k=-1))
-
-        # Region map is stored in the transform
-        region_map = det2ab_transform.label_mapper.mapper
-
-        # MIRI will rotate all arrays for convenience to line up with NIRSpec convention
-        flux_orig = np.rot90(model.data)
+    # Rotate input data if needed
+    flux_orig = model.data
+    if rotate:
+        xsize, ysize = ysize, xsize
+        flux_orig = np.rot90(flux_orig)
         alpha_orig = np.rot90(alpha_orig)
         region_map = np.rot90(region_map)
-
-        # For MIRI fitting order,  we need to start on the left and run to the middle,
-        # and then on the right to the middle in order to have the middle
-        # section not go too far beyond last good fit
-        col_index = np.concatenate(
-            [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
-        )
 
     # Set thresholding for the bspline fitting
     # Do some statistics on the overall cal file
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=AstropyUserWarning)
+        warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
+        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
         overall_mean, _, overall_rms = scs(flux_orig[region_map > 0])
 
     # Need to ensure that the median pixel value isn't negative, because that causes chaos
@@ -933,13 +1037,9 @@ def fit_and_oversample_ifu(
 
     # Define a per-slice analysis threshold (must be brighter than some level above background)
     slice_numbers = np.unique(region_map[region_map > 0])
-    if mode == "NIRS":
-        # For NIRSpec all slices have the same threshold
-        threshold = overall_mean + threshsig * overall_rms
-        signal_threshold = dict.fromkeys(slice_numbers, threshold)
-    else:
-        # For MIRI we need each channel to have its own threshold, particularly for Ch3/Ch4
-        # since the sky is so much brighter in Ch4
+    if mode == "MIR_MRS":
+        # For MIRI MRS we need each channel to have its own threshold, particularly
+        # for Ch3/Ch4 since the sky is so much brighter in Ch4
         signal_threshold = dict.fromkeys(slice_numbers, np.nan)
         for channel in [100, 200, 300, 400]:
             ch_data = (region_map >= channel) & (region_map < channel + 100)
@@ -951,14 +1051,13 @@ def fit_and_oversample_ifu(
             for slnum in slice_numbers:
                 if channel <= slnum < channel + 100:
                     signal_threshold[slnum] = ch_mean + threshsig * ch_rms
+    else:
+        # For NIRSpec IFU, all regions have the same threshold
+        threshold = overall_mean + threshsig * overall_rms
+        signal_threshold = dict.fromkeys(slice_numbers, threshold)
 
-    fit_kwargs = {
-        "lrange": lrange,
-        "col_index": col_index,
-        "require_ngood": require_ngood,
-        "splinebkpt": splinebkpt,
-        "spaceratio": spaceratio,
-    }
+    # Fit spline models to all regions
+    fit_kwargs = _set_fit_kwargs(detector, xsize)
     spline_models, spline_scales = fit_all_regions(
         flux_orig, alpha_orig, region_map, signal_threshold, **fit_kwargs
     )
@@ -970,37 +1069,24 @@ def fit_and_oversample_ifu(
         profile = _profile_image(
             flux_orig.shape, spline_models, spline_scales, region_map, alpha_orig
         )
-        if mode == "MIRI":
+        if rotate:
             profile = np.rot90(profile, k=-1)
         model.profile = profile
         return model
 
-    # Oversampled flux array (linear and bspline to compare)
+    # Oversampled array size
     os_shape = (int(np.ceil(ysize * oversample_factor)), xsize)
     x_os = np.full(os_shape, np.nan)
     y_os = np.full(os_shape, np.nan)
 
     # Pre-compute coordinates for the new data size
     log.info("Computing oversampled coordinates")
+    basex, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
     newy, oldy = _reindex(0, ysize - 1, scale=oversample_factor)
     y_os[:, :] = oldy[:, None]
     x_os[:, :] = basex[oldy.astype(int), :]
-    if mode == "NIRS":
-        alpha_os = np.full(os_shape, np.nan)
-        wave_os = np.full(os_shape, np.nan)
-        for slice_wcs in ifu_wcs:
-            bbox = slice_wcs.bounding_box
-            x_in_bounds = (x_os >= bbox[0][0]) & (x_os <= bbox[0][1])
-            y_in_bounds = (y_os >= bbox[1][0]) & (y_os <= bbox[1][1])
-            _, alpha, lam = slice_wcs.transform(
-                "detector",
-                "slicer",
-                x_os[x_in_bounds & y_in_bounds],
-                y_os[x_in_bounds & y_in_bounds],
-            )
-            alpha_os[x_in_bounds & y_in_bounds] = -alpha
-            # Store wavelength, convert to um
-            wave_os[x_in_bounds & y_in_bounds] = lam * 1e6
+    if mode == "NRS_IFU":
+        alpha_os, wave_os = _get_oversampled_coords_nrs_ifu(wcs, x_os, y_os)
     else:
         # Because MIRI was rotated the indexing in the non-rotated frame,
         # the input coordinates need to be adjusted slightly
@@ -1009,6 +1095,7 @@ def fit_and_oversample_ifu(
         )
 
     log.info("Oversampling the flux array from the fit profile")
+    oversample_kwargs = _set_oversample_kwargs(detector)
     flux_os, profile = oversample_flux(
         flux_orig,
         alpha_orig,
@@ -1017,20 +1104,20 @@ def fit_and_oversample_ifu(
         spline_scales,
         oversample_factor,
         alpha_os,
-        require_ngood=require_ngood,
-        trimends=trimends,
-        pad=pad,
         slopelim=slopelim,
         psfoptimal=psfoptimal,
+        **oversample_kwargs,
     )
 
     log.info("Oversampling error and DQ arrays")
     # todo: error may need inflation to avoid underestimate later
     errors = [model.err, model.var_rnoise, model.var_poisson, model.var_flat]
     dq = model.dq
-    if mode == "MIRI":
+    if rotate:
         errors = [np.rot90(err) for err in errors]
         dq = np.rot90(dq)
+
+    # todo - deal with all the extra arrays better
 
     # Nearest pixel interpolation for the dq and regions array
     closest_pix = (np.round(y_os).astype(int), np.round(x_os).astype(int))
@@ -1052,7 +1139,11 @@ def fit_and_oversample_ifu(
     errors_os = []
     for error_array in errors:
         error_os = linear_oversample(
-            error_array, region_map, oversample_factor, require_ngood, preserve_nan=False
+            error_array,
+            region_map,
+            oversample_factor,
+            fit_kwargs["require_ngood"],
+            preserve_nan=False,
         )
 
         # Restore NaNs from the input, except at the estimated locations
@@ -1062,47 +1153,19 @@ def fit_and_oversample_ifu(
         errors_os.append(error_os)
 
     # Update the wcs for new pixel scale
-    scale = oversample_factor
-    if mode == "NIRS":
-        map_pixels = Identity(1) & (Scale(1 / scale) | Shift(-(scale - 1) / (scale * 2)))
-
-        if "coordinates" in model.meta.wcs.available_frames:
-            # coordinate-based WCS
-            first_transform = model.meta.wcs.pipeline[0].transform
-            model.meta.wcs.pipeline[0].transform = map_pixels | first_transform
-            model.meta.wcs.pipeline[0].transform.name = first_transform.name
-            model.meta.wcs.pipeline[0].transform.inputs = first_transform.inputs
-            model.meta.wcs.pipeline[0].transform.outputs = first_transform.outputs
-
-            # update bounding box limits
-            det2slicer_selector = model.meta.wcs.pipeline[1].transform.selector
-            for slnum in range(30):
-                bb = det2slicer_selector[slnum + 1].bounding_box
-                bb[0], bb[1] = map_pixels.inverse(bb[0], bb[1])
-
-        else:
-            # slice-based WCS
-            map_pixels &= Identity(1)
-            map_pixels.name = "coord2det"
-            map_pixels.inputs = ("x", "y", "name")
-            map_pixels.outputs = ("x", "y", "name")
-            bbox = model.meta.wcs.bounding_box
-            model.meta.wcs = gwcs.WCS([("coordinates", map_pixels), *model.meta.wcs.pipeline])
-
-            # update bounding box limits
-            for slnum in range(30):
-                bb = bbox[slnum]
-                bb[0], bb[1], _ = map_pixels.inverse(bb[0], bb[1], slnum)
-            model.meta.wcs.bounding_box = bbox
+    scale_and_shift = Scale(1 / oversample_factor) | Shift(
+        -(oversample_factor - 1) / (oversample_factor * 2)
+    )
+    if mode == "NRS_IFU":
+        map_pixels = Identity(1) & scale_and_shift
+        model.meta.wcs = _update_wcs_nrs_ifu(model.meta.wcs, map_pixels)
     else:
-        map_pixels = (Scale(1 / scale) | Shift(-(scale - 1) / (scale * 2))) & Identity(1)
-        map_pixels.name = "coord2det"
-        map_pixels.inputs = ("x", "y")
-        map_pixels.outputs = ("x", "y")
-        model.meta.wcs = gwcs.WCS([("coordinates", map_pixels), *model.meta.wcs.pipeline])
+        # MIRI
+        map_pixels = scale_and_shift & Identity(1)
+        model.meta.wcs = _update_wcs(model.meta.wcs, map_pixels)
 
-    # If MIRI, undo all of our rotations before passing back the arrays
-    if mode == "MIRI":
+    # If needed, undo all of our rotations before passing back the arrays
+    if rotate:
         flux_os = np.rot90(flux_os, k=-1)
         errors_os = [np.rot90(err, k=-1) for err in errors_os]
         dq_os = np.rot90(dq_os, k=-1)
