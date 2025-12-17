@@ -730,7 +730,7 @@ def _estim_integration_err(grid, fct):
     return err, rel_err
 
 
-def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
+def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6, min_dlambda=1e-5):
     """
     Build an irregular oversampled grid needed to reach a given precision when integrating.
 
@@ -760,6 +760,11 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
         The desired relative tolerance. Default is 10e-6, so 10 ppm.
     atol : float, optional
         The desired absolute tolerance. Default is 1e-6.
+    min_dlambda : float, optional
+        The minimum wavelength spacing in the grid, in microns.  Intended
+        to prevent the grid from reaching absurd degrees of oversampling
+        over small wavelength ranges.
+        Default 1e-5, or about 0.01 pixels on the detector.
 
     Returns
     -------
@@ -814,6 +819,13 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
 
         # Generate oversampled grid (subdivide). Returns sorted and unique grid.
         grid = oversample_grid(grid, n_os=n_oversample)
+
+        # Ensure that grid points are spaced by at least min_dlambda
+        newgrid = [grid[0]]
+        for i in range(1, len(grid)):
+            if grid[i] - newgrid[-1] > min_dlambda:
+                newgrid += [grid[i]]
+        grid = np.array(newgrid)
 
     return grid, is_converged
 
