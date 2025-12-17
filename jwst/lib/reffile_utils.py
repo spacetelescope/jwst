@@ -377,16 +377,17 @@ def stripe_read(sci_model, ref_model, attribs):
     # Get the science model multistripe params
     sci_meta = sci_model.meta
 
+    num_superstripe = getattr(sci_model.meta.subarray, "num_superstripe", 0)
     # We need to extract the number of science integrations in this file, which is tangled up with
     #  - the number of integrations in the exposure
     #  - the number of superstripes each science integration may be divided between
     # Substripe data may have 0 for num_superstripe, so we use 1 as the integration divisor
-    num_superstripe = max(getattr(sci_model.meta.subarray, "num_superstripe", 1), 1)
-    sci_nints = sci_model.data.shape[0] // num_superstripe
+    int_divisor = max(num_superstripe, 1)
+    sci_nints = sci_model.data.shape[0] // int_divisor
 
     # Get the reference model subarray params
-    if sci_meta.subarray.num_superstripe > 0:
-        sub_model = datamodels.ReferenceQuadModel()
+    if num_superstripe > 0:
+        sub_model = datamodels.ReferenceFileModel()
     else:
         sub_model = type(ref_model)()
 
@@ -540,6 +541,7 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
     else:
         # SUPERSTRIPE MODE
         # First alter subarray shape to broadcast stripe size to fill "full" subarray
+        ref_native_dims = len(ref_shape)
         if len(ref_shape) == 2:
             ref_array = ref_array[np.newaxis, np.newaxis, :].repeat(ngroups, axis=1)
             ref_shape = ref_array.shape
@@ -618,11 +620,17 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
                         "Stripe readout resulted in mismatched reference array shape "
                         "with respect to science array!"
                     )
-
         # If multistripe, broadcast arrays into nints copies so that direct application
         # of the reference array to the science array is possible
-        if num_superstripe > 0:
-            stripe_out = stripe_out.repeat(sci_nints, axis=0)
+        if num_superstripe > 0 and ref_native_dims == 4:
+            stripe_out = np.tile(stripe_out, reps=(sci_nints, 1, 1, 1))
+        # If multistripe but ref array is typically 2-D:
+        # rather than broadcast a 2-D array into many wasted dims, just provide the minimal
+        # 3-D array, with one slice per superstripe in the third dimension. Expect steps
+        # to handle the extra dimension.
+        elif num_superstripe > 0 and ref_native_dims == 2:
+            stripe_out = stripe_out[:, 0, :, :]
+
         # Transform from detector frame back to science frame
         stripe_out = detector_science_frame_transform(stripe_out, fastaxis, slowaxis)
 

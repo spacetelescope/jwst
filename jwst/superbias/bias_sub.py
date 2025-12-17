@@ -65,9 +65,19 @@ def subtract_bias(output, bias):
     # combine the science and superbias DQ arrays
     output.pixeldq |= bias.dq
 
+    if (
+        hasattr(output.meta.subarray, "num_superstripe")
+        and isinstance(num_superstripe := output.meta.subarray.num_superstripe, int)
+        and num_superstripe > 0
+    ):
+        nints, ngroups, _, _ = output.data.shape
+        bias_data = bias.data[:, np.newaxis, :, :].repeat(ngroups, axis=1)
+        bias_data = np.tile(bias_data, reps=(nints // num_superstripe, 1, 1, 1))
+    else:
+        bias_data = bias.data
     # Subtract the superbias image from all groups and integrations
     # of the science data
-    output.data -= bias.data
+    output.data -= bias_data
 
     # If ZEROFRAME is present, subtract the super bias.  Zero values
     # indicate bad data, so should be kept zero.

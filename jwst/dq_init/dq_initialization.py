@@ -59,6 +59,19 @@ def do_dqinit(output_model, mask_model, user_dq=None):
     # Set model-specific data quality in output
     if output_model.meta.exposure.type in guider_list:
         output_model.dq |= mask_array
+    elif (
+        hasattr(output_model.meta.subarray, "num_superstripe")
+        and isinstance(num_superstripe := output_model.meta.subarray.num_superstripe, int)
+        and num_superstripe > 0
+    ):
+        # Store 3-D DQ array in pixeldq
+        output_model.pixeldq = mask_array
+        # Generate 4-D groupdq mask_array from pixeldq array, given output groupdq shape
+        nints, ngroups, _, _ = output_model.groupdq.shape
+        nsci_ints = nints // num_superstripe
+        mask_array = mask_array[:, np.newaxis, :, :].repeat(ngroups, axis=1)
+        mask_array = np.tile(mask_array, reps=(nsci_ints, 1, 1, 1))
+        output_model.groupdq |= mask_array & dqflags.group["DO_NOT_USE"]
     else:
         output_model.pixeldq |= mask_array
 
