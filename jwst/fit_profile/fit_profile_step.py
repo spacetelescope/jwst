@@ -3,7 +3,7 @@ import logging
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
-from jwst.fit_profile.fit_profile import fit_and_oversample_ifu
+from jwst.fit_profile.fit_profile import fit_and_oversample
 from jwst.stpipe import Step
 
 __all__ = ["FitProfileStep"]
@@ -52,7 +52,7 @@ class FitProfileStep(Step):
 
             # Update the model in place
             log.info("Fitting profile for %s", model.meta.filename)
-            fit_and_oversample_ifu(
+            fit_and_oversample(
                 model,
                 threshsig=self.threshsig,
                 slopelim=self.slopelim,
