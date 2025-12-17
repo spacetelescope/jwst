@@ -237,6 +237,21 @@ def test_skip_bad_ta_type(input_model_slit, tmp_path):
     # Create a non-image TA model (e.g. CubeModel)
     data = np.zeros((5, MIRI_DETECTOR_SHAPE[0], MIRI_DETECTOR_SHAPE[1]))
     ta_model = dm.CubeModel(data)
+    ta_model.meta.exposure.type = "MIR_TACONFIRM"
+
+    ta_path = tmp_path / "ta_bad_type.fits"
+    ta_model.save(str(ta_path))
+
+    result = TargCentroidStep.call(input_model_slit, ta_file=str(ta_path))
+    _tests_for_skipped_step(result)
+
+
+def test_skip_bad_ta_exptype(input_model_slit, tmp_path):
+    """Test that step is skipped when TA file has wrong exposure type."""
+    # Create a non-image TA model (e.g. CubeModel)
+    data = np.zeros((MIRI_DETECTOR_SHAPE[0], MIRI_DETECTOR_SHAPE[1]))
+    ta_model = dm.ImageModel(data)
+    ta_model.meta.exposure.type = "MIR_IMAGE"
 
     ta_path = tmp_path / "ta_bad_type.fits"
     ta_model.save(str(ta_path))
@@ -297,7 +312,7 @@ def test_targ_centroid_asn(input_model_slit, tmp_cwd, mock_references):
     )
 
 
-def test_targ_centroid_asn_no_ta(input_model_slit, tmp_cwd, mock_references):
+def test_skip_asn_no_ta(input_model_slit, tmp_cwd, mock_references):
     """Test TA centering step when run on an association with no TA exposure."""
     # Create association with only science exposure
     asn_fname = make_ta_association(input_model_slit, ta_model=None)
@@ -406,7 +421,7 @@ def test_find_dither_position_no_wcs(monkeypatch):
     assert np.isclose(ypix, -0.25 * 100.0 + 2.0)
 
 
-def test_find_dither_position_calls_store_dithered_position_when_missing(monkeypatch):
+def test_find_dither_position_wcs_but_no_dither(monkeypatch):
     """
     Case where WCS exists but store_dithered_position is called to get dithered position.
 
@@ -430,7 +445,7 @@ def test_find_dither_position_calls_store_dithered_position_when_missing(monkeyp
     assert np.isclose(ypix, 0.44 * 100.0 + 2.0)
 
 
-def test_targ_centroid_assign_wcs_error(input_model_slit, tmp_path, monkeypatch, log_watcher):
+def test_skip_assign_wcs_error(input_model_slit, tmp_path, monkeypatch, log_watcher):
     """If AssignWcsStep.call raises, the step should be skipped."""
 
     # Create a simple TA model file to pass into the step
@@ -457,7 +472,7 @@ def test_targ_centroid_assign_wcs_error(input_model_slit, tmp_path, monkeypatch,
     _tests_for_skipped_step(result)
 
 
-def test_targ_centroid_assign_wcs_skipped(input_model_slit, tmp_path, monkeypatch, log_watcher):
+def test_skip_assign_wcs_skipped(input_model_slit, tmp_path, monkeypatch, log_watcher):
     """If AssignWcsStep.call returns but assign_wcs is skipped, step is skipped."""
 
     # Create a simple TA model file to pass into the step

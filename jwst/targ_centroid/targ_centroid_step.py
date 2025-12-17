@@ -83,11 +83,13 @@ class TargCentroidStep(Step):
 
         log.info(f"Performing TA centering using file: {self.ta_file}")
         with dm.open(self.ta_file) as ta_model:
-            # check TA verification image type
-            if not isinstance(ta_model, dm.ImageModel):
+            # check TA verification image and exposure type
+            ta_exptype = ta_model.meta.exposure.type
+            if (not isinstance(ta_model, dm.ImageModel)) or (ta_exptype != "MIR_TACONFIRM"):
                 log.error(
-                    "TA verification image must be an ImageModel. "
-                    f"Input TA file is of type {type(ta_model)}. Step will be SKIPPED."
+                    "TA verification image must be an ImageModel with exposure type MIR_TACONFIRM. "
+                    f"Input TA file is of type {type(ta_model)} with exposure type {ta_exptype}. "
+                    "Step will be SKIPPED."
                 )
                 result.meta.cal_step.targ_centroid = "SKIPPED"
                 result = self._rebuild_container(container, result)
