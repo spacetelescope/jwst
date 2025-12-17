@@ -3,7 +3,8 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.datamodels import ModelContainer
-from jwst.targ_centroid.targ_centroid_step import TargCentroidStep, _find_dither_position
+from jwst.targ_centroid.targ_centroid import find_dither_position
+from jwst.targ_centroid.targ_centroid_step import TargCentroidStep
 from jwst.targ_centroid.tests.helpers import (
     MIRI_DETECTOR_SHAPE,
     X_REF,
@@ -231,6 +232,19 @@ def test_skip_wrong_exp_type(input_model_slit, slitless_ta_image):
     _tests_for_skipped_step(result)
 
 
+def test_skip_bad_ta_type(input_model_slit, tmp_path):
+    """Test that step is skipped when TA file is not an image."""
+    # Create a non-image TA model (e.g. CubeModel)
+    data = np.zeros((5, MIRI_DETECTOR_SHAPE[0], MIRI_DETECTOR_SHAPE[1]))
+    ta_model = dm.CubeModel(data)
+
+    ta_path = tmp_path / "ta_bad_type.fits"
+    ta_model.save(str(ta_path))
+
+    result = TargCentroidStep.call(input_model_slit, ta_file=str(ta_path))
+    _tests_for_skipped_step(result)
+
+
 def test_skip_mostly_nan(input_model_slit, tmp_path, mock_references, log_watcher):
     """Test that step raises an error when center-finding does not converge."""
     # Create a TA model with a source far from the reference position
@@ -342,15 +356,15 @@ def test_find_dither_position_wcs_and_dither(monkeypatch):
         raise RuntimeError("store_dithered_position should not be called in this test")
 
     monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid_step.AssignWcsStep.call",
+        "jwst.targ_centroid.targ_centroid.AssignWcsStep.call",
         mock_assign_wcs,
     )
     monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid_step.store_dithered_position",
+        "jwst.targ_centroid.targ_centroid.store_dithered_position",
         mock_store_dithered_position,
     )
 
-    xpix, ypix = _find_dither_position(model)
+    xpix, ypix = find_dither_position(model)
 
     assert np.isclose(xpix, 0.11 * 100.0 + 1.0)
     assert np.isclose(ypix, 0.22 * 100.0 + 2.0)
@@ -378,15 +392,15 @@ def test_find_dither_position_no_wcs(monkeypatch):
         ta_model.meta.dither.dithered_dec = 0.44
 
     monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid_step.AssignWcsStep.call",
+        "jwst.targ_centroid.targ_centroid.AssignWcsStep.call",
         mock_assign_wcs,
     )
     monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid_step.store_dithered_position",
+        "jwst.targ_centroid.targ_centroid.store_dithered_position",
         mock_store_dithered_position,
     )
 
-    xpix, ypix = _find_dither_position(model)
+    xpix, ypix = find_dither_position(model)
     assert model.meta.cal_step.assign_wcs == "COMPLETE"
     assert np.isclose(xpix, 0.5 * 100.0 + 1.0)
     assert np.isclose(ypix, -0.25 * 100.0 + 2.0)
@@ -407,11 +421,11 @@ def test_find_dither_position_calls_store_dithered_position_when_missing(monkeyp
         ta_model.meta.dither.dithered_dec = 0.44
 
     monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid_step.store_dithered_position",
+        "jwst.targ_centroid.targ_centroid.store_dithered_position",
         mock_store_dithered_position,
     )
 
-    xpix, ypix = _find_dither_position(model)
+    xpix, ypix = find_dither_position(model)
     assert np.isclose(xpix, 0.33 * 100.0 + 1.0)
     assert np.isclose(ypix, 0.44 * 100.0 + 2.0)
 
@@ -428,7 +442,7 @@ def test_targ_centroid_assign_wcs_error(input_model_slit, tmp_path, monkeypatch,
         raise RuntimeError("assign_wcs failed")
 
     monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid_step.AssignWcsStep.call",
+        "jwst.targ_centroid.targ_centroid.AssignWcsStep.call",
         mock_assign_wcs,
     )
 
@@ -456,7 +470,7 @@ def test_targ_centroid_assign_wcs_skipped(input_model_slit, tmp_path, monkeypatc
         return ta_model
 
     monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid_step.AssignWcsStep.call",
+        "jwst.targ_centroid.targ_centroid.AssignWcsStep.call",
         mock_assign_wcs,
     )
 

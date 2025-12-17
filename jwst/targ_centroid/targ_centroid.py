@@ -3,10 +3,13 @@ import logging
 import numpy as np
 from photutils.centroids import centroid_2dg
 
+from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.miri import store_dithered_position
+
 log = logging.getLogger(__name__)
 
 
-__all__ = ["center_from_ta_image", "NoFinitePixelsError", "BadFitError"]
+__all__ = ["find_dither_position", "center_from_ta_image", "NoFinitePixelsError", "BadFitError"]
 
 
 class NoFinitePixelsError(Exception):
@@ -17,6 +20,12 @@ class NoFinitePixelsError(Exception):
 
 class BadFitError(Exception):
     """Custom exception raised when the model fit does not meet quality criteria."""
+
+    pass
+
+
+class WCSError(Exception):
+    """Custom exception raised when WCS assignment or usage fails."""
 
     pass
 
@@ -139,3 +148,40 @@ def _cutout_center(image, center, size=16):
     cutout_origin = (x_min, y_min)
 
     return cutout, cutout_origin
+
+
+def find_dither_position(ta_model):
+    """
+    Assign a WCS and find expected source position based on dither metadata.
+
+    Parameters
+    ----------
+    ta_model : `~stdatamodels.jwst.datamodels.ImageModel`
+        The TA verification image.
+
+    Returns
+    -------
+    x_center, y_center : float
+        Dithered x, y center position in full-frame detector coordinates.
+    """
+    if not ta_model.meta.hasattr("wcs"):
+        log.info("Assigning WCS to TA verification image.")
+        try:
+            ta_model = AssignWcsStep.call(ta_model, sip_approx=False)
+        except Exception as e:
+            raise WCSError("Failed to assign WCS to TA verification image.") from e
+        if ta_model.meta.cal_step.assign_wcs != "COMPLETE":
+            raise WCSError("Failed to assign WCS to TA verification image (step was skipped).")
+    if not (
+        ta_model.meta.dither.hasattr("dithered_ra") and ta_model.meta.dither.hasattr("dithered_dec")
+    ):
+        # Compute the dithered RA and Dec from the WCS and metadata
+        # This is only computed by default for MIRI LRS slit data within assign_wcs
+        store_dithered_position(ta_model)
+
+    # translate from arcseconds (SI ideal coordinate frame) to pixels (detector frame)
+    dra, ddec = ta_model.meta.dither.dithered_ra, ta_model.meta.dither.dithered_dec
+    world_to_pixel = ta_model.meta.wcs.get_transform("world", "detector")
+    dither_x, dither_y = world_to_pixel(dra, ddec)
+
+    return dither_x, dither_y
