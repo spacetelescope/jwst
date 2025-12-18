@@ -783,7 +783,7 @@ class STHDUDiff(HDUDiff):
 
         if self.diff_data is not None and not self.diff_data.identical:
             self._fileobj.write("\n")
-            self._writeln(" Data contains differences:")
+            self._writeln("Data contains differences:")
             if [self.nans, self.percentages, self.stats] != [None, None, None]:
                 report_data_diff()
             self.diff_data.report(self._fileobj, indent=self._indent + 1)
@@ -1338,9 +1338,12 @@ class STTableDataDiff(TableDataDiff):
                 finite_idx = np.isfinite(arra) & np.isfinite(arrb)
                 maxr, meanr, stdr = np.nan, np.nan, np.nan
                 if number_that_fail_atol_rtol_test > 0:
-                    numeric_fail_idx = where_not_allclose(
-                        arra[finite_idx], arrb[finite_idx], self.atol, self.rtol
-                    )
+                    absdiff = np.abs(arrb[finite_idx] - arra[finite_idx])
+                    if self.atol == 0 and self.rtol == 0:
+                        thresh = 0.0
+                    else:
+                        thresh = self.atol + self.rtol * np.abs(arrb[finite_idx])
+                    numeric_fail_idx = np.where(absdiff > thresh)
                     numeric_fail_atol_rtol = len(numeric_fail_idx[0])
                     if numeric_fail_atol_rtol > 0:
                         rtol_failures = abs(
@@ -1423,27 +1426,27 @@ class STTableDataDiff(TableDataDiff):
                         maxr = np.max(rtol_failures)
                         meanr = np.mean(rtol_failures)
                         stdr = np.std(rtol_failures)
-                self.report_zeros_nan.add_row(
-                    (
-                        col.name,
-                        f"{zeros_a} {zeros_b}",
-                        f"{nans_a} {nans_b}",
-                        f"{nonans_a.size} {nonans_b.size}",
-                        f"{arramax:>6.2g} {arrbmax:>6.2g}",
-                        f"{arramin:>6.2g} {arrbmin:>6.2g}",
-                        f"{arramean:>6.2g} {arrbmean:>6.2g}",
+                    self.report_zeros_nan.add_row(
+                        (
+                            col.name,
+                            f"{zeros_a} {zeros_b}",
+                            f"{nans_a} {nans_b}",
+                            f"{nonans_a.size} {nonans_b.size}",
+                            f"{arramax:>6.2g} {arrbmax:>6.2g}",
+                            f"{arramin:>6.2g} {arrbmin:>6.2g}",
+                            f"{arramean:>6.2g} {arrbmean:>6.2g}",
+                        )
                     )
-                )
-                self.report_table.add_row(
-                    (
-                        col.name,
-                        str(arra.dtype).replace(">", ""),
-                        n_fail_rtol,
-                        maxr,
-                        meanr,
-                        stdr,
+                    self.report_table.add_row(
+                        (
+                            col.name,
+                            str(arra.dtype).replace(">", ""),
+                            n_fail_rtol,
+                            maxr,
+                            meanr,
+                            stdr,
+                        )
                     )
-                )
 
                 if not self.report_pixel_loc_diffs:
                     self.diff_total += n_fail_rtol

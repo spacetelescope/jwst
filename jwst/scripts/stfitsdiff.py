@@ -187,7 +187,7 @@ def main():
         "report_pixel_loc_diffs": args.report_pixel_loc_diffs,
     }
 
-    ignore_hdus = ["ASDF"]
+    ignore_hdus = []
     if args.ignore_hdus is not None:
         ignore_hdus = _check_arglist(args.ignore_hdus, ignore_hdus)
         # Check if there are any number extensions in ignore_hdus
@@ -196,12 +196,12 @@ def main():
                 ignore_hdus[exti] = int(ext)
     stfitsdiff_default_kwargs["ignore_hdus"] = ignore_hdus
 
-    ignore_keywords = ["DATE", "CAL_VER", "CAL_VCS", "CRDS_VER", "CRDS_CTX", "NAXIS1", "TFORM*"]
+    ignore_keywords = []
     if args.ignore_keywords is not None:
         ignore_keywords = _check_arglist(args.ignore_keywords, ignore_keywords)
     stfitsdiff_default_kwargs["ignore_keywords"] = ignore_keywords
 
-    ignore_comments = ["DATE", "CAL_VER", "CAL_VCS", "CRDS_VER", "CRDS_CTX", "NAXIS1", "TFORM*"]
+    ignore_comments = []
     if args.ignore_comments is not None:
         ignore_comments = _check_arglist(args.ignore_comments, ignore_comments)
     stfitsdiff_default_kwargs["ignore_comments"] = ignore_comments
