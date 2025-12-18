@@ -1,5 +1,4 @@
 import logging
-import datetime
 
 from stdatamodels.jwst import datamodels
 
@@ -76,7 +75,7 @@ class PersistenceStep(Step):
                     msg += " " + name
             log.warning("%s", msg)
             result.meta.cal_step.persistence = "SKIPPED"
-            return result
+            return result, None
 
         if self.input_trapsfilled is None:
             traps_filled_model = None
@@ -116,7 +115,7 @@ class PersistenceStep(Step):
             del output_pers
 
         persistence_list = None
-        if self.persistence_array is not None:
+        if pers_a.persistence_array is not None:
             persistence_list = self.persistence_array.tolist()
 
         # Cleanup
@@ -135,7 +134,8 @@ class PersistenceStep(Step):
         result : RampModel
             The RampModel on which to process the persistence flag.
         """
-        if self.persistence_time is None:
+        if self.persistence_time is None or self.persistence_time <= 0.0:
+            self.persistence_time = None
             return  # No persistence option chosen
 
         _, _, nrow, ncols = result.groupdq.shape
