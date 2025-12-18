@@ -265,6 +265,8 @@ documentation on each reference file.
 | :ref:`PERSAT <persat_reffile>`                   | :ref:`persistence <persistence_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PHOTOM <photom_reffile>`                   | :ref:`photom <photom_step>`                           |
++                                                  +-------------------------------------------------------+
+|                                                  | :ref:`wfss_contam <wfss_contam_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PICTUREFRAME <pictureframe_reffile>`       | :ref:`picture_frame <picture_frame_step>`             |
 +--------------------------------------------------+-------------------------------------------------------+
@@ -309,6 +311,8 @@ documentation on each reference file.
 |                                                  | :ref:`background <background_subtraction>`            |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`extract_2d <extract_2d_step>`                   |
++                                                  +-------------------------------------------------------+
+|                                                  | :ref:`wfss_contam <wfss_contam_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVECORR <wavecorr_reffile>`               | :ref:`wavecorr <wavecorr_step>`                       |
 +--------------------------------------------------+-------------------------------------------------------+
