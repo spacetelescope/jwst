@@ -303,6 +303,7 @@ def extract_grism_objects(
     source_ids=None,
     source_ra=None,
     source_dec=None,
+    max_sep=None,
     mmag_extract=None,
     compute_wavelength=True,
     wfss_extract_half_height=None,
@@ -335,6 +336,12 @@ def extract_grism_objects(
 
     source_dec : list[float]
         Source declinations to be processed, must have same length as source_ra.
+
+    max_sep : float
+        Radius in arcseconds within which source_ra and source_dec will be matched
+        to sources in the catalog. If no source is found within this radius, a warning
+        will be emitted and no source will be extracted corresponding to that ra, dec pair.
+        Has effect for WFSS modes only.
 
     mmag_extract : float
         Sources with magnitudes fainter than this minimum magnitude extraction
@@ -416,10 +423,7 @@ def extract_grism_objects(
             raise ValueError("Expected name of wavelengthrange reference file")
 
         source_ids = radec_to_source_ids(
-            input_model.meta.source_catalog,
-            source_ids,
-            source_ra,
-            source_dec,
+            input_model.meta.source_catalog, source_ids, source_ra, source_dec, max_sep=max_sep
         )
         grism_objects = util.create_grism_bbox(
             input_model,
