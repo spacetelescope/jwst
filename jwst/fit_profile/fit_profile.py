@@ -455,7 +455,9 @@ def _linear_interp(col_y, col_flux, y_interp, edge_limit, preserve_nan=True):
     return interpolated_flux
 
 
-def linear_oversample(data, region_map, oversample_factor, require_ngood, preserve_nan=True):
+def linear_oversample(
+    data, region_map, oversample_factor, require_ngood, edge_limit=None, preserve_nan=True
+):
     """
     Oversample the input data with a linear interpolation.
 
@@ -473,6 +475,10 @@ def linear_oversample(data, region_map, oversample_factor, require_ngood, preser
         Scaling factor to oversample by.
     require_ngood : int
         Minimum number of pixels required in a column to perform an interpolation.
+    edge_limit : int, optional
+        If greater than zero, this many pixels at the edges of
+        the interpolated values will be set to NaN. If None, will default
+        to the value of ``oversample_factor``.
     preserve_nan : bool, optional
         If True, NaNs in the input will be preserved in the output.
 
@@ -486,7 +492,8 @@ def linear_oversample(data, region_map, oversample_factor, require_ngood, preser
 
     os_shape = (int(np.ceil(ysize * oversample_factor)), xsize)
     os_data = np.full(os_shape, np.nan, dtype=np.float32)
-    edge_limit = int(oversample_factor)
+    if edge_limit is None:
+        edge_limit = int(oversample_factor)
 
     data_slice = np.full_like(data, np.nan)
     y_slice = np.full_like(data, np.nan)
@@ -515,7 +522,7 @@ def linear_oversample(data, region_map, oversample_factor, require_ngood, preser
             )
 
             os_data[newy, ii] = _linear_interp(
-                col_y, col_flux, oldy, edge_limit, preserve_nan=preserve_nan
+                col_y, col_flux, oldy, edge_limit=edge_limit, preserve_nan=preserve_nan
             )
 
     return os_data
@@ -1136,6 +1143,7 @@ def fit_and_oversample(
             region_map,
             oversample_factor,
             fit_kwargs["require_ngood"],
+            edge_limit=0,
             preserve_nan=False,
         )
 
