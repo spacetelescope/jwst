@@ -20,18 +20,25 @@ def create_sci_model():
         dm = datamodels.RampModel(data=scidata)
         dm.meta.subarray.xstart = xstart
         dm.meta.subarray.ystart = ystart
+
         dm.meta.exposure.frame_time = 10.73677
         dm.meta.exposure.group_time = 21.47354
         dm.meta.exposure.ngroups = ngroups
         dm.meta.exposure.nframes = 1
+        dm.meta.exposure.integration_time = ngroups * dm.meta.exposure.group_time
         dm.meta.exposure.groupgap = 1
         dm.meta.exposure.nresets_at_start = 0
         dm.meta.exposure.nresets_between_ints = 1
+        dm.meta.exposure.start_time = 59672.47338658912
+
         dm.meta.instrument.detector = "NRCA1"
         dm.meta.instrument.name = "NIRCAM"
-        dm.meta.exposure.start_time = 59672.47338658912
+
+
         dm.meta.observation.date = "2022-04-03"
         dm.meta.observation.time = "11:21:40"
+        dm.meta.observation.date_beg = "2022-04-03T11:21:40"
+
         dm.meta.filename = "test.fits"
 
         return dm
