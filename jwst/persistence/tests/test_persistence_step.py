@@ -7,7 +7,7 @@ from jwst.persistence.persistence_step import PersistenceStep
 
 def test_step_no_trapsfilled(create_sci_model, tmp_path):
     model = create_sci_model()
-    result = PersistenceStep.call(model, output_dir=str(tmp_path), save_trapsfilled=True)
+    result, _ = PersistenceStep.call(model, output_dir=str(tmp_path), save_trapsfilled=True)
 
     # Step completed
     assert result.meta.cal_step.persistence == "COMPLETE"
@@ -32,7 +32,7 @@ def test_step_with_trapsfilled(
     trap_file = str(tmp_path / "trapsfilled.fits")
     traps.save(trap_file)
 
-    result = PersistenceStep.call(
+    result, _ = PersistenceStep.call(
         sci,
         input_trapsfilled=trap_file,
         override_trapdensity=density,
@@ -56,7 +56,7 @@ def test_step_with_trapsfilled(
 
 def test_step_missing_one_ref(caplog, create_sci_model):
     sci = create_sci_model()
-    result = PersistenceStep.call(sci, override_trapdensity="N/A")
+    result, _ = PersistenceStep.call(sci, override_trapdensity="N/A")
 
     # Missing reference file is logged
     assert "Missing reference file type:  TRAPDENSITY" in caplog.text
@@ -71,7 +71,7 @@ def test_step_missing_one_ref(caplog, create_sci_model):
 
 def test_step_missing_all_ref(caplog, create_sci_model):
     sci = create_sci_model()
-    result = PersistenceStep.call(
+    result, _ = PersistenceStep.call(
         sci, override_trapdensity="N/A", override_trappars="N/A", override_persat="N/A"
     )
 
@@ -93,7 +93,7 @@ def test_step_persistence_fails(monkeypatch, create_sci_model):
     )
 
     sci = create_sci_model()
-    result = PersistenceStep.call(sci)
+    result, _ = PersistenceStep.call(sci)
 
     # Step is skipped
     assert result.meta.cal_step.persistence == "SKIPPED"
