@@ -98,6 +98,7 @@ def run_pipeline_select_sources(rtdata_module):
         "--steps.extract_2d.source_ids=202,2157",  # some source ids that are actually on detector
         f"--steps.extract_2d.source_ra={centroid1.ra.value},{centroid2.ra.value},{bad_centroid[0]}",
         f"--steps.extract_2d.source_dec={centroid1.dec.value},{centroid2.dec.value},{bad_centroid[1]}",
+        "--steps.extract_2d.source_max_sep=1.0",
         "--steps.wfss_contam.skip=False",
         "--steps.wfss_contam.magnitude_limit=18.0",
     ]
