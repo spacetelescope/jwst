@@ -565,15 +565,3 @@ smoothest solution for the flux that fits the observations within the measured u
 The resulting spectral trace solutions are at a higher resolution than the observed data since an oversampled
 wavelength grid is used by the ATOCA algorithm for decontamination. These results are then reconvolved onto the native
 wavelength grid before the 1D spectra for each order are extracted.
-
-
-Multiprocessing
----------------
-For SOSS data, the extraction can be parallelized over multiple CPU cores by setting the
-``soss_maximum_cores`` parameter. The first integration is always run on a single core in
-order to determine a good Tikhonov regularization parameter and a good adaptive wavelength
-grid for the input dataset. Subsequent integrations are then run in parallel using the
-specified number of CPU cores. If ``soss_maximum_cores`` is set to 1 (the default),
-no multiprocessing will be used.
-See :ref:`multiprocessing` for more details and examples of how to run a pipeline step
-with multiprocessing enabled.
