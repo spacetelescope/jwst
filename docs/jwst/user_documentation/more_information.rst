@@ -36,8 +36,8 @@ However, contrary to common practice, ``jwst`` package also considers what would
 
 These are the only conditions where ``jwst`` would consider public API and thus follows :ref:`jwst-deprecation-policy`:
 
-* High-level calibration step classes
-* Command-line interface for calibration steps
+* Calibration step classes (e.g., Spec2Pipeline, JumpStep, AmiNormalizeStep)
+* Command-line interface for calibration steps (e.g. calwebb_image3)
 
 .. _jwst-deprecation-policy:
 
