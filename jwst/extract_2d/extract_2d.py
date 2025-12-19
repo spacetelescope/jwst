@@ -21,6 +21,7 @@ def extract2d(
     source_ids=None,
     source_ra=None,
     source_dec=None,
+    max_sep=None,
     reference_files=None,
     grism_objects=None,
     tsgrism_extract_height=None,
@@ -44,6 +45,11 @@ def extract2d(
         Source right ascensions to be processed (has effect for WFSS modes only)
     source_dec : list[float]
         Source declinations to be processed (has effect for WFSS modes only)
+    max_sep : float
+        Radius in arcseconds within which source_ra and source_dec will be matched
+        to sources in the catalog. If no source is found within this radius, a warning
+        will be emitted and no source will be extracted corresponding to that ra, dec pair.
+        Has effect for WFSS modes only.
     reference_files : dict
         Reference files.
     grism_objects : list
@@ -106,6 +112,7 @@ def extract2d(
                 source_ids=source_ids,
                 source_ra=source_ra,
                 source_dec=source_dec,
+                max_sep=max_sep,
                 mmag_extract=mmag_extract,
                 wfss_extract_half_height=wfss_extract_half_height,
                 nbright=nbright,

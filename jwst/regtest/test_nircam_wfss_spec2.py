@@ -80,6 +80,7 @@ def run_pipeline_select_sources(rtdata_module):
     cat = QTable.read(rtdata.input, format="ascii.ecsv")
     centroid1 = cat[423]["sky_centroid"]  # source id 424
     centroid2 = cat[1359]["sky_centroid"]  # source id 1360
+    bad_centroid = (0.0, 0.0)  # not on detector
 
     rtdata.get_data("nircam/wfss/jw01076-o101_t002_nircam_clear-f356w_segm.fits")
     rtdata.get_data("nircam/wfss/jw01076-o101_t002_nircam_clear-f356w_i2d.fits")
@@ -95,8 +96,9 @@ def run_pipeline_select_sources(rtdata_module):
         "--steps.extract_1d.output_file=four_sources_x1d.fits",  # avoid clobbering the test above
         "--steps.bkg_subtract.skip=True",
         "--steps.extract_2d.source_ids=202,2157",  # some source ids that are actually on detector
-        f"--steps.extract_2d.source_ra={centroid1.ra.value},{centroid2.ra.value}",
-        f"--steps.extract_2d.source_dec={centroid1.dec.value},{centroid2.dec.value}",
+        f"--steps.extract_2d.source_ra={centroid1.ra.value},{centroid2.ra.value},{bad_centroid[0]}",
+        f"--steps.extract_2d.source_dec={centroid1.dec.value},{centroid2.dec.value},{bad_centroid[1]}",
+        "--steps.extract_2d.source_max_sep=1.0",
         "--steps.wfss_contam.skip=False",
         "--steps.wfss_contam.magnitude_limit=18.0",
     ]

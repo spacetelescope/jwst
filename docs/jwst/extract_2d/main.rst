@@ -334,6 +334,12 @@ Time-Series (TSO) grism spectroscopy:
   list of floats. The Dec coordinates (in decimal degrees) of specific sources to extract from
   the source catalog. Only applies to WFSS mode.
 
+``--source_max_sep``
+  float. The maximum separation in arcseconds within which source_ra and source_dec will be matched
+  to sources in the catalog. If no source is found within this radius, a warning
+  will be emitted and no source will be extracted corresponding to that ra, dec pair.
+  Only applies to WFSS mode.
+
 ``source_ids`` can be used at the same time as ``source_ra`` and ``source_dec``;
   duplicates will be filtered out.
 
