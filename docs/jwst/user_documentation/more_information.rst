@@ -23,21 +23,31 @@ Versioning Scheme
    This section addresses the release version to PyPI.
    It is not to be confused with the DMS quarterly build version.
 
-The ``jwst`` package does not follow strict `semantic versioning <https://semver.org/>`_, in that a "minor" version bump may also contain non-backward compatible changes. However, a "patch" release will strive to contain only bug fixes.
+The ``jwst`` package does not follow strict `semantic versioning <https://semver.org/>`_,
+in that a "minor" version bump may also contain non-backward compatible changes.
+However, a "patch" release will strive to contain only bug fixes.
 
 .. _jwst-public-vs-private-api:
 
 API: Public vs Private
 ----------------------
 
-As per Python convention, any API name that starts with underscore (e.g., ``_my_private_function``) is considered private; i.e., **it could be removed and changed without notice.** Any API not officially documented (i.e., you only found it after some extensive code-diving) is also considered private.
+As per Python convention, any API name that starts with underscore
+(e.g., ``_my_private_function``) is considered private.
+Any API not officially documented (i.e., you only found it after some extensive
+code-diving) is also considered private.
 
-However, contrary to common practice, ``jwst`` package also considers what would normally be public API (i.e., no leading underscore and fully documented) to be private unless stated below.
+However, contrary to common practice, ``jwst`` package also considers what would
+normally be public API (i.e., no leading underscore and fully documented)
+to be private unless stated as follow. **Any API not listed below, even if
+fully documented, could be removed or changed without notice.**
 
-These are the only conditions where ``jwst`` would consider public API and thus follows :ref:`jwst-deprecation-policy`:
+These are the only conditions where ``jwst`` would consider public API and
+thus follows :ref:`jwst-deprecation-policy`:
 
 * Calibration step classes (e.g., Spec2Pipeline, JumpStep, AmiNormalizeStep)
-* Command-line interface for calibration steps (e.g. calwebb_image3)
+* Command-line interface for calibration steps (e.g., calwebb_image3)
+* Data models (e.g., removal of a WCS transform converter causing I/O incompatibility)
 
 .. _jwst-deprecation-policy:
 
@@ -64,7 +74,9 @@ warning would provide at least the following information:
 * alternative or replacement, if available.
 
 Deprecation usually cannot happen in a "patch" release (see :ref:`jwst-version-scheme`)
-unless it somehow addresses critical security vulnerability or mission needs. All deprecations would be stated clearly in the API documentation and the release change log.
+unless it somehow addresses critical security vulnerability or mission needs.
+All deprecations would be stated clearly in the API documentation and
+the release change log.
 
 The deprecation period starts the moment it is first released.
 Ideally, it would last at least two "minor" releases, or longer if the item

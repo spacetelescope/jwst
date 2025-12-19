@@ -233,6 +233,10 @@ The latest build information is also available on JDox at:
 
 https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information
 
+For more info on public API and its deprecation policy:
+
+https://jwst-pipeline.readthedocs.io/en/latest/jwst/user_documentation/more_information.html
+
 ## Contributions and Feedback
 
 We welcome contributions and feedback on the project. Please follow the
