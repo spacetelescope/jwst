@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 from stdatamodels.jwst import datamodels
 
@@ -21,7 +22,7 @@ class PersistenceStep(Step):
         save_persistence = boolean(default=False) # Save subtracted persistence to an output file with suffix '_output_pers'
         save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
         modify_input = boolean(default=False)
-        persistence_time = int(default=None) # Time, in seconds, to use for persistence window
+        persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
         persistence_array = int_list(default=None) # A 2-D array or none.
         persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
     """  # noqa: E501
@@ -138,7 +139,7 @@ class PersistenceStep(Step):
             self.persistence_time = None
             return  # No persistence option chosen
 
-        _, _, nrow, ncols = result.groupdq.shape
+        _, _, nrows, ncols = result.groupdq.shape
         if self.persistence_array is not None:
             self.persistence_array_create = False 
             self.persistence_array = np.array(self.persistence_array)
