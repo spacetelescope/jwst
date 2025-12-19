@@ -3,9 +3,11 @@ import logging
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from photutils.centroids import centroid_2dg
+from stcal.alignment.util import wcs_bbox_from_shape
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.miri import store_dithered_position
+from jwst.extract_1d.source_location import middle_from_wcs
 
 log = logging.getLogger(__name__)
 
@@ -187,11 +189,15 @@ def find_dither_position(model):
     # translate from arcseconds (SI ideal coordinate frame) to pixels (detector frame)
     # handle WCS with 2 or 3 inputs; third input is wavelength when input is SlitModel
     dithered_ra, dithered_dec = model.meta.dither.dithered_ra, model.meta.dither.dithered_dec
-    world_to_pixel = model.meta.wcs.get_transform("world", "detector")
+    wcs = model.meta.wcs
+    world_to_pixel = wcs.get_transform("world", "detector")
     wavelength = None
     if isinstance(model, dm.SlitModel):
-        filt = model.meta.instrument.filter
-        wavelength = get_wavelength(filt)
+        # Find central wavelength
+        bb = wcs.bounding_box
+        if bb is None:
+            bb = wcs_bbox_from_shape(model.data.shape[-2:])
+        _, _, wavelength = middle_from_wcs(wcs, bb, model.meta.wcsinfo.dispersion_direction)
     n_inputs = world_to_pixel.n_inputs
     dithered_inputs = [dithered_ra, dithered_dec] + [wavelength] * (n_inputs - 2)
     dithered_outputs = world_to_pixel(*dithered_inputs)
@@ -208,20 +214,3 @@ def find_dither_position(model):
     offset_x = dither_x - x_ref
     offset_y = dither_y - y_ref
     return (dither_x, dither_y), (offset_x, offset_y)
-
-
-def get_wavelength(filter_name):  # numpydoc ignore=RT01
-    """Map filter name to central wavelength in microns."""
-    filter_wavelengths = {
-        "F560W": 5.6,
-        "P750L": 7.5,
-        "F770W": 7.7,
-        "F1000W": 10.0,
-        "F1130W": 11.3,
-        "F1280W": 12.8,
-        "F1500W": 15.0,
-        "F1800W": 18.0,
-        "F2100W": 21.0,
-        "F2550W": 25.5,
-    }
-    return filter_wavelengths.get(filter_name, None)
