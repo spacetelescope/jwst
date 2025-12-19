@@ -5,28 +5,15 @@ import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import models
 
+from jwst.assign_wcs import AssignWcsStep
+
 # Constants for MIRI imager and LRS slit dimensions
 PIXSCALE = 0.11  # arcsec/pixel for MIRI imager
 JWST_DIAMETER = 6.5  # meters
-X_REF = 326.13  # for these tests we assume same ref position for slit and slitless
-Y_REF = 300.7
-MIRI_DETECTOR_SHAPE = (1024, 1032)  # (ny, nx) for MIRI imager
-
-
-def get_wavelength(filter_name):  # numpydoc ignore=RT01
-    """Map filter name to central wavelength in microns."""
-    filter_wavelengths = {
-        "F560W": 5.6,
-        "F770W": 7.7,
-        "F1000W": 10.0,
-        "F1130W": 11.3,
-        "F1280W": 12.8,
-        "F1500W": 15.0,
-        "F1800W": 18.0,
-        "F2100W": 21.0,
-        "F2550W": 25.5,
-    }
-    return filter_wavelengths.get(filter_name, None)
+SLIT_REF = (326.13, 300.7)  # for fixed-slit data
+FULL_SHAPE = (1024, 1032)  # (ny, nx) for MIRI imager full subarray
+SLITLESS_REF = (38.5, 301.0)  # for slitless data
+SLITLESSPRISM_SHAPE = (72, 416)  # for SLITLESSPRISM subarray
 
 
 def make_slitless_data(wavelength=15.0, offset=(0, 0)):
@@ -45,8 +32,8 @@ def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     data : 2D ndarray
         Simulated slitless TA image.
     """
-    # Create coordinate grids using full MIRI detector size
-    y, x = np.mgrid[0 : MIRI_DETECTOR_SHAPE[0], 0 : MIRI_DETECTOR_SHAPE[1]]
+    # Create coordinate grids using slitless subarray size
+    y, x = np.mgrid[0 : SLITLESSPRISM_SHAPE[1], 0 : SLITLESSPRISM_SHAPE[0]]
 
     # Calculate diffraction-limited Airy disk radius
     # First zero of Airy disk: theta = 1.22 * lambda / D (in radians)
@@ -55,8 +42,8 @@ def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     radius_pixels = theta_arcsec / PIXSCALE  # to pixels
 
     # Calculate source center position using slitless reference position
-    x_center = X_REF + offset[0]
-    y_center = Y_REF + offset[1]
+    x_center = SLITLESS_REF[0] + offset[0]
+    y_center = SLITLESS_REF[1] + offset[1]
 
     # Simulate source as an Airy disk model at diffraction-limited resolution
     airy = models.AiryDisk2D(amplitude=1000.0, x_0=x_center, y_0=y_center, radius=radius_pixels)
@@ -67,10 +54,64 @@ def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     noise = rng.normal(0, 1, data.shape)
     data += noise
 
+    # Add NaN values near the slitless source position to test that this still works ok
+    data[int(SLITLESS_REF[1]) + 5, int(SLITLESS_REF[0]) + 3] = np.nan
+    data[int(SLITLESS_REF[1]) - 4, int(SLITLESS_REF[0]) - 2] = np.inf
+
     return data
 
 
-def make_ta_model(data):
+def add_metadata(model, exptype):
+    """
+    Add metadata to science or TA confirm data.
+
+    Parameters
+    ----------
+    model : ImageModel
+        Input data model.
+    exptype : str
+        Exposure type of the associated science data.
+    """
+    model.meta.instrument.name = "MIRI"
+    model.meta.instrument.detector = "MIRIMAGE"
+    model.meta.instrument.filter = "F1500W"
+    model.meta.exposure.type = exptype
+
+    model.meta.observation.date = "2025-11-10"
+    model.meta.observation.time = "12:00:00"
+
+    # Add subarray metadata
+    if exptype != "MIR_LRS-SLITLESS":
+        model.meta.subarray.name = "FULL"
+        model.meta.subarray.xstart = 1  # 1-indexed FITS convention
+        model.meta.subarray.ystart = 1
+        model.meta.subarray.xsize = FULL_SHAPE[1]  # nx
+        model.meta.subarray.ysize = FULL_SHAPE[0]  # ny
+        model.meta.wcsinfo.v2_ref = -414.848
+        model.meta.wcsinfo.v3_ref = -400.426
+    else:
+        # slitless data are only valid in a subarray, otherwise assign_wcs errors out
+        model.meta.subarray.name = "SLITLESSPRISM"
+        model.meta.subarray.xstart = 1  # 1-indexed FITS convention
+        model.meta.subarray.ystart = 529
+        model.meta.subarray.xsize = SLITLESSPRISM_SHAPE[1]  # nx
+        model.meta.subarray.ysize = SLITLESSPRISM_SHAPE[0]  # ny
+        model.meta.wcsinfo.v2_ref = -378.600
+        model.meta.wcsinfo.v3_ref = -344.752
+
+    # add wcsinfo
+    model.meta.wcsinfo.roll_ref = 92.69243893875218
+    model.meta.wcsinfo.ra_ref = 108.63038309653392
+    model.meta.wcsinfo.dec_ref = 13.860413558600543
+    model.meta.wcsinfo.v3yangle = 4.75797
+    model.meta.wcsinfo.vparity = -1
+
+    # dither info
+    model.meta.dither.x_offset = 0.0
+    model.meta.dither.y_offset = 0.0
+
+
+def make_ta_model(data, exptype):
     """
     Create a MIRI TA verification image model.
 
@@ -78,6 +119,8 @@ def make_ta_model(data):
     ----------
     data : ndarray
         The image data array.
+    exptype : str
+        Exposure type of the associated science data
 
     Returns
     -------
@@ -86,37 +129,10 @@ def make_ta_model(data):
     """
     model = dm.ImageModel()
     model.data = data
-    model.meta.instrument.name = "MIRI"
-    model.meta.instrument.detector = "MIRIMAGE"
-    model.meta.instrument.filter = "F1500W"
+    add_metadata(model, exptype)
+
+    # override exptype as taconfirm
     model.meta.exposure.type = "MIR_TACONFIRM"
-
-    model.meta.observation.date = "2025-11-10"
-    model.meta.observation.time = "12:00:00"
-
-    # Add subarray metadata
-    model.meta.subarray.name = "FULL"
-    model.meta.subarray.xstart = 1  # 1-indexed FITS convention
-    model.meta.subarray.ystart = 1
-    model.meta.subarray.xsize = MIRI_DETECTOR_SHAPE[1]  # nx
-    model.meta.subarray.ysize = MIRI_DETECTOR_SHAPE[0]  # ny
-
-    # add wcsinfo
-    model.meta.wcsinfo.crpix1 = 0
-    model.meta.wcsinfo.crpix2 = 0
-    model.meta.wcsinfo.v2_ref = -414.848
-    model.meta.wcsinfo.v3_ref = -400.426
-    model.meta.wcsinfo.roll_ref = 92.69243893875218
-    model.meta.wcsinfo.ra_ref = 108.63038309653392
-    model.meta.wcsinfo.dec_ref = 13.860413558600543
-    model.meta.wcsinfo.v3yangle = 4.75797
-    model.meta.wcsinfo.vparity = -1
-    model.meta.wcsinfo.crval1 = 108.63038309653392
-    model.meta.wcsinfo.crval2 = 13.860413558600543
-
-    # dither info
-    model.meta.dither.x_offset = 0.0
-    model.meta.dither.y_offset = 0.0
 
     return model
 
@@ -140,7 +156,7 @@ def make_slit_data(offset):
     model : ImageModel
         Simulated slit TA image model with PSF weighted by pathloss.
     """
-    wavelength = get_wavelength("F1500W")
+    wavelength = 15.0
 
     # Calculate diffraction-limited Airy disk radius
     theta_rad = 1.22 * wavelength * 1e-6 / JWST_DIAMETER
@@ -148,22 +164,22 @@ def make_slit_data(offset):
     radius_pixels = theta_arcsec / PIXSCALE  # to pixels
 
     # Calculate source center position using slit reference position
-    x_center = X_REF + offset[0]
-    y_center = Y_REF + offset[1]
+    x_center = SLIT_REF[0] + offset[0]
+    y_center = SLIT_REF[1] + offset[1]
 
     # Create Airy disk model on the full detector
-    y, x = np.mgrid[0 : MIRI_DETECTOR_SHAPE[0], 0 : MIRI_DETECTOR_SHAPE[1]]
+    y, x = np.mgrid[0 : FULL_SHAPE[0], 0 : FULL_SHAPE[1]]
     airy = models.AiryDisk2D(amplitude=1000.0, x_0=x_center, y_0=y_center, radius=radius_pixels)
     data_full = airy(x, y)
 
     # Make a slit mask
     slit_half_height = 8  # pixels in y direction (cross-dispersion) very approximate
     slit_half_width = 60  # pixels in x direction (along slit)
-    y_min = max(0, int(Y_REF - slit_half_height))
-    y_max = min(MIRI_DETECTOR_SHAPE[0], int(Y_REF + slit_half_height))
-    x_min = max(0, int(X_REF - slit_half_width))
-    x_max = min(MIRI_DETECTOR_SHAPE[1], int(X_REF + slit_half_width))
-    slit_mask = np.zeros(MIRI_DETECTOR_SHAPE, dtype=bool)
+    y_min = max(0, int(SLIT_REF[1] - slit_half_height))
+    y_max = min(FULL_SHAPE[0], int(SLIT_REF[1] + slit_half_height))
+    x_min = max(0, int(SLIT_REF[0] - slit_half_width))
+    x_max = min(FULL_SHAPE[1], int(SLIT_REF[0] + slit_half_width))
+    slit_mask = np.zeros(FULL_SHAPE, dtype=bool)
     slit_mask[y_min:y_max, x_min:x_max] = True
 
     # Add noise
@@ -175,50 +191,34 @@ def make_slit_data(offset):
     data = data_full * slit_mask
 
     # Add bad values near the slit source position to test their handling
-    data[int(Y_REF) + 4, int(X_REF) + 2] = np.nan
-    data[int(Y_REF) - 3, int(X_REF) - 4] = np.inf
+    data[int(SLIT_REF[1]) + 4, int(SLIT_REF[0]) + 2] = np.nan
+    data[int(SLIT_REF[1]) - 3, int(SLIT_REF[0]) - 4] = np.inf
 
-    model = make_ta_model(data)
+    model = make_ta_model(data, "MIR_LRS-FIXEDSLIT")
     return model
 
 
-def make_empty_lrs_model():
+def make_empty_lrs_model(exptype):
     """
-    Create empty ImageModel with metadata shared between slit and slitless modes for LRS.
+    Create empty SlitModel with metadata shared between slit and slitless modes for LRS.
+
+    Parameters
+    ----------
+    exptype : str
+        Exposure type, one of MIR_LRS-FIXEDSLIT or MIR_LRS-SLITLESS
 
     Returns
     -------
-    ImageModel
+    SlitModel
         MIRI LRS model with required metadata.
     """
     model = dm.ImageModel()
-    model.meta.instrument.name = "MIRI"
-    model.meta.target.source_type = "POINT"
-    model.meta.instrument.filter = "F1500W"
-    model.meta.instrument.detector = "MIRIMAGE"
+    add_metadata(model, exptype)
 
-    model.meta.observation.date = "2025-11-10"
-    model.meta.observation.time = "12:00:00"
-
-    # Add subarray metadata
-    model.meta.subarray.name = "FULL"
-    model.meta.subarray.xstart = 1  # 1-indexed FITS convention
-    model.meta.subarray.ystart = 1
-    model.meta.subarray.xsize = MIRI_DETECTOR_SHAPE[1]  # nx
-    model.meta.subarray.ysize = MIRI_DETECTOR_SHAPE[0]  # ny
-
-    # bare minimum wcs info to get assign_wcs step to pass
-    model.meta.wcsinfo.crpix1 = 693.5
-    model.meta.wcsinfo.crpix2 = 512.5
-    model.meta.wcsinfo.v2_ref = -453.37849
-    model.meta.wcsinfo.v3_ref = -373.810549
-    model.meta.wcsinfo.roll_ref = 272.3237653262276
-    model.meta.wcsinfo.ra_ref = 80.54724018120017
-    model.meta.wcsinfo.dec_ref = -69.5081101864959
-    model.meta.wcsinfo.v3yangle = 0.0
-    model.meta.wcsinfo.vparity = 1
-
-    return model
+    # Assign a WCS, then convert to SlitModel as would be done by calwebb_spec2
+    # must be done in this order because AssignWcsStep doesn't like SlitModels
+    model = AssignWcsStep.call(model)
+    return dm.SlitModel(model)
 
 
 def make_ta_association(sci_model, ta_model=None, asn_fname="mir_lrs_ta_asn.json"):

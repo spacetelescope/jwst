@@ -3,13 +3,11 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.datamodels import ModelContainer
-from jwst.targ_centroid.targ_centroid import find_dither_position
 from jwst.targ_centroid.targ_centroid_step import TargCentroidStep
 from jwst.targ_centroid.tests.helpers import (
-    MIRI_DETECTOR_SHAPE,
-    X_REF,
-    Y_REF,
-    get_wavelength,
+    FULL_SHAPE,
+    SLIT_REF,
+    SLITLESS_REF,
     make_empty_lrs_model,
     make_slit_data,
     make_slitless_data,
@@ -74,15 +72,11 @@ def mock_references(monkeypatch, mock_filteroffset_model):
 @pytest.fixture
 def slitless_ta_image(tmp_path):
     """Generate a slitless TA image for testing."""
-    wavelength = get_wavelength("F1500W")
+    wavelength = 15.0
     offset = (2, -3)
     data = make_slitless_data(wavelength, offset)
 
-    # Add NaN values near the slitless source position to test that this still works ok
-    data[int(Y_REF) + 5, int(X_REF) + 3] = np.nan
-    data[int(Y_REF) - 4, int(X_REF) - 2] = np.inf
-
-    model = make_ta_model(data)
+    model = make_ta_model(data, "MIR_LRS-SLITLESS")
 
     filepath = tmp_path / "slitless_ta.fits"
     model.save(filepath)
@@ -97,9 +91,7 @@ def input_model_slit():
     The data itself are not used by the step; we just need enough metadata to
     retrieve the appropriate reference files.
     """
-    model = make_empty_lrs_model()
-    model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
-    return model
+    return make_empty_lrs_model("MIR_LRS-FIXEDSLIT")
 
 
 @pytest.fixture
@@ -110,9 +102,7 @@ def input_model_slitless():
     The data itself are not used by the step; we just need enough metadata to
     retrieve the appropriate reference files.
     """
-    model = make_empty_lrs_model()
-    model.meta.exposure.type = "MIR_LRS-SLITLESS"
-    return model
+    return make_empty_lrs_model("MIR_LRS-SLITLESS")
 
 
 def test_targ_centroid_slitless(input_model_slitless, slitless_ta_image, mock_references):
@@ -121,8 +111,8 @@ def test_targ_centroid_slitless(input_model_slitless, slitless_ta_image, mock_re
     x_center, y_center = result.source_xpos, result.source_ypos
 
     # Expected center position (reference position + offset)
-    expected_x = X_REF + 2
-    expected_y = Y_REF - 3
+    expected_x = SLITLESS_REF[0] + 2
+    expected_y = SLITLESS_REF[1] - 3
 
     # Check that the computed center is close to the expected position
     assert np.isclose(x_center, expected_x, atol=0.05), (
@@ -165,8 +155,8 @@ def test_targ_centroid_slit(input_model_slit, offset, tmp_path, mock_references)
     x_center, y_center = result.source_xpos, result.source_ypos
 
     # Expected center position (reference position + offset)
-    expected_x = X_REF + offset[0]
-    expected_y = Y_REF + offset[1]
+    expected_x = SLIT_REF[0] + offset[0]
+    expected_y = SLIT_REF[1] + offset[1]
 
     # Check that the computed center is close to the expected position
     # The slit truncation may cause slightly larger errors, so use slightly larger tolerance
@@ -187,8 +177,8 @@ def test_targ_centroid_flat_flux(input_model_slit, tmp_path, mock_references, lo
     """
 
     # Create a flat TA image
-    data = np.full(MIRI_DETECTOR_SHAPE, 1000.0)
-    ta_model = make_ta_model(data)
+    data = np.full(FULL_SHAPE, 1000.0)
+    ta_model = make_ta_model(data, "MIR_LRS-FIXEDSLIT")
 
     # Save to file
     filepath = tmp_path / "flat_ta.fits"
@@ -235,7 +225,7 @@ def test_skip_wrong_exp_type(input_model_slit, slitless_ta_image):
 def test_skip_bad_ta_type(input_model_slit, tmp_path):
     """Test that step is skipped when TA file is not an image."""
     # Create a non-image TA model (e.g. CubeModel)
-    data = np.zeros((5, MIRI_DETECTOR_SHAPE[0], MIRI_DETECTOR_SHAPE[1]))
+    data = np.zeros((5, FULL_SHAPE[0], FULL_SHAPE[1]))
     ta_model = dm.CubeModel(data)
     ta_model.meta.exposure.type = "MIR_TACONFIRM"
 
@@ -249,7 +239,7 @@ def test_skip_bad_ta_type(input_model_slit, tmp_path):
 def test_skip_bad_ta_exptype(input_model_slit, tmp_path):
     """Test that step is skipped when TA file has wrong exposure type."""
     # Create a non-image TA model (e.g. CubeModel)
-    data = np.zeros((MIRI_DETECTOR_SHAPE[0], MIRI_DETECTOR_SHAPE[1]))
+    data = np.zeros((FULL_SHAPE[0], FULL_SHAPE[1]))
     ta_model = dm.ImageModel(data)
     ta_model.meta.exposure.type = "MIR_IMAGE"
 
@@ -263,10 +253,10 @@ def test_skip_bad_ta_exptype(input_model_slit, tmp_path):
 def test_skip_mostly_nan(input_model_slit, tmp_path, mock_references, log_watcher):
     """Test that step raises an error when center-finding does not converge."""
     # Create a TA model with a source far from the reference position
-    data = np.zeros(MIRI_DETECTOR_SHAPE) * np.nan
-    data[int(Y_REF) + 1, int(X_REF) + 1] = 1
+    data = np.zeros(FULL_SHAPE) * np.nan
+    data[int(SLIT_REF[1]) + 1, int(SLIT_REF[0]) + 1] = 1
 
-    ta_model = make_ta_model(data)
+    ta_model = make_ta_model(data, "MIR_LRS-FIXEDSLIT")
 
     ta_path = tmp_path / "ta_nonconverge.fits"
     ta_model.save(str(ta_path))
@@ -300,8 +290,8 @@ def test_targ_centroid_asn(input_model_slit, tmp_cwd, mock_references):
     assert sci_model.meta.cal_step.targ_centroid == "COMPLETE"
 
     # Expected center position (reference position + offset)
-    expected_x = X_REF + offset[0]
-    expected_y = Y_REF + offset[1]
+    expected_x = SLIT_REF[0] + offset[0]
+    expected_y = SLIT_REF[1] + offset[1]
 
     # Check that the computed center is close to the expected position
     assert np.isclose(sci_model.source_xpos, expected_x, atol=0.05), (
@@ -351,105 +341,11 @@ class PlaceholderWCS:
         return world_to_pixel
 
 
-def test_find_dither_position_wcs_and_dither(monkeypatch):
-    """
-    Case where both WCS and dither keywords are present.
-
-    Code should apply the WCS to dithered RA/Dec to get pixel position.
-    """
-    model = make_ta_model(np.zeros((10, 10)))
-    # attach WCS and dither metadata
-    model.meta.wcs = PlaceholderWCS()
-    model.meta.dither.dithered_ra = 0.11
-    model.meta.dither.dithered_dec = 0.22
-
-    # ensure calling AssignWcsStep or store_dithered_position does not happen
-    def mock_assign_wcs(ta_model, **kwargs):
-        raise RuntimeError("AssignWcsStep.call should not be called in this test")
-
-    def mock_store_dithered_position(ta_model):
-        raise RuntimeError("store_dithered_position should not be called in this test")
-
-    monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid.AssignWcsStep.call",
-        mock_assign_wcs,
-    )
-    monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid.store_dithered_position",
-        mock_store_dithered_position,
-    )
-
-    (xpix, ypix), _ = find_dither_position(model)
-
-    assert np.isclose(xpix, 0.11 * 100.0 + 1.0)
-    assert np.isclose(ypix, 0.22 * 100.0 + 2.0)
-
-
-def test_find_dither_position_no_wcs(monkeypatch):
-    """
-    Case where WCS is missing.
-
-    This looks like the typical flow if input ta_model is a rate file.
-    """
-    model = make_ta_model(np.zeros((10, 10)))
-
-    def mock_assign_wcs(ta_model, **kwargs):
-        # attach WCS and dither fields
-        ta_model.meta.wcs = PlaceholderWCS()
-        ta_model.meta.dither.dithered_ra = 0.5
-        ta_model.meta.dither.dithered_dec = -0.25
-        ta_model.meta.cal_step.assign_wcs = "COMPLETE"
-        return ta_model
-
-    def mock_store_dithered_position(ta_model):
-        # This should not be called in this test
-        ta_model.meta.dither.dithered_ra = 0.33
-        ta_model.meta.dither.dithered_dec = 0.44
-
-    monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid.AssignWcsStep.call",
-        mock_assign_wcs,
-    )
-    monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid.store_dithered_position",
-        mock_store_dithered_position,
-    )
-
-    (xpix, ypix), _ = find_dither_position(model)
-    assert model.meta.cal_step.assign_wcs == "COMPLETE"
-    assert np.isclose(xpix, 0.5 * 100.0 + 1.0)
-    assert np.isclose(ypix, -0.25 * 100.0 + 2.0)
-
-
-def test_find_dither_position_wcs_but_no_dither(monkeypatch):
-    """
-    Case where WCS exists but store_dithered_position is called to get dithered position.
-
-    This looks like typical flow if input ta_model is a cal file.
-    """
-    model = make_ta_model(np.zeros((10, 10)))
-    model.meta.wcs = PlaceholderWCS()
-
-    def mock_store_dithered_position(ta_model):
-        # This should not be called in this test
-        ta_model.meta.dither.dithered_ra = 0.33
-        ta_model.meta.dither.dithered_dec = 0.44
-
-    monkeypatch.setattr(
-        "jwst.targ_centroid.targ_centroid.store_dithered_position",
-        mock_store_dithered_position,
-    )
-
-    (xpix, ypix), _ = find_dither_position(model)
-    assert np.isclose(xpix, 0.33 * 100.0 + 1.0)
-    assert np.isclose(ypix, 0.44 * 100.0 + 2.0)
-
-
 def test_skip_assign_wcs_error(input_model_slit, tmp_path, monkeypatch, log_watcher):
     """If AssignWcsStep.call raises, the step should be skipped."""
 
     # Create a simple TA model file to pass into the step
-    ta_model = make_ta_model(np.zeros((10, 10)))
+    ta_model = make_ta_model(np.zeros((10, 10)), "MIR_LRS-FIXEDSLIT")
     ta_path = tmp_path / "ta_assign_fail.fits"
     ta_model.save(str(ta_path))
 
@@ -476,7 +372,7 @@ def test_skip_assign_wcs_skipped(input_model_slit, tmp_path, monkeypatch, log_wa
     """If AssignWcsStep.call returns but assign_wcs is skipped, step is skipped."""
 
     # Create a simple TA model file to pass into the step
-    ta_model = make_ta_model(np.zeros((10, 10)))
+    ta_model = make_ta_model(np.zeros((10, 10)), "MIR_LRS-FIXEDSLIT")
     ta_path = tmp_path / "ta_assign_incomplete.fits"
     ta_model.save(str(ta_path))
 

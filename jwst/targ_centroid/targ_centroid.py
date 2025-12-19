@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from photutils.centroids import centroid_2dg
-from stcal.alignment.util import wcs_bbox_from_shape
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.miri import store_dithered_position
@@ -195,8 +194,6 @@ def find_dither_position(model):
     if isinstance(model, dm.SlitModel):
         # Find central wavelength
         bb = wcs.bounding_box
-        if bb is None:
-            bb = wcs_bbox_from_shape(model.data.shape[-2:])
         _, _, wavelength = middle_from_wcs(wcs, bb, model.meta.wcsinfo.dispersion_direction)
     n_inputs = world_to_pixel.n_inputs
     dithered_inputs = [dithered_ra, dithered_dec] + [wavelength] * (n_inputs - 2)
