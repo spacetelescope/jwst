@@ -1,9 +1,47 @@
 import numpy as np
+import pytest
+
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.persistence import persistence
 from jwst.persistence.persistence_step import PersistenceStep
 
+
+def test_persistence_time_none_keeps_groupdq_unchanged(create_sci_model):
+    """Test that when persistence_time is None, no PERSISTENCE flags are added to groupdq."""
+    model = create_sci_model()
+    # Pre-mark a pixel as SATURATED to prove no extra flagging occurs when disabled
+    y, x = 1, 2
+    model.groupdq[0, 0, y, x] |= dqflags.group["SATURATED"]
+    step = PersistenceStep(persistence_time=None)
+    res, _ = step.run(model)
+    assert np.array_equal(res.groupdq, model.groupdq)
+
+
+def test_persistence_time_10_sec(create_sci_model):
+    """Test persitence flag gets set inside of persistence window"""
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    step = PersistenceStep(persistence_time=70)
+    res, _ = step.run(model)
+
+    # With a persistenc window of 70 seconds and group time of 21.47354 seconds, the 5th
+    # group of the first integration for pixel (0, 1) and the following three groups
+    # (crossing the integration) will be flagged as persistent.
+
+    check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check3 = np.array([0, 0, 0, 0, 0, 34, 34], dtype=np.uint8)
+    check4 = np.array([32, 32, 0, 0, 0, 0, 0], dtype=np.uint8)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 0], check1)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
+
+# XXX Continue creating CI tests for new persistence flagging.
 
 def test_step_no_trapsfilled(create_sci_model, tmp_path):
     model = create_sci_model()
