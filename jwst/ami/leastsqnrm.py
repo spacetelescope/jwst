@@ -51,15 +51,19 @@ def weighted_operations(img, model, dqm=None):
 
     A is the model, b is the data (image), and x is the coefficient vector we are solving for.
 
-    Here we are weighting data by Poisson variance:
-      x = inv(At.W.A).(At.W.b)
-      where W is a diagonal matrix of weights w_i,
-      weighting each data point i by the inverse of its variance:
-         w_i = 1 / sigma_i^2
-      For photon noise, the data, i.e. the image values b_i  have variance
-      proportional to b_i with an e.g. ADU to electrons conversion factor.
-      If this factor is the same for all pixels, we do not need to include
-      it here.
+    Here we are weighting data by Poisson variance::
+
+        x = inv(At.W.A).(At.W.b)
+
+    where W is a diagonal matrix of weights w_i,
+    weighting each data point i by the inverse of its variance::
+
+        w_i = 1 / sigma_i ^ 2
+
+    For photon noise, the data, i.e., the image values b_i have variance
+    proportional to b_i with an, e.g., ADU to electrons conversion factor.
+    If this factor is the same for all pixels, we do not need to include
+    it here.
 
     Parameters
     ----------
@@ -323,14 +327,14 @@ def populate_antisymmphasearray(deltaps, n=7):
     """
     Populate the antisymmetric fringe phase array:.
 
-    This array takes the form:
+    This array takes the form::
 
-    fringephasearray[0,q+1:] = coeffs[0:6]
-    fringephasearray[1,q+2:] = coeffs[6:11]
-    fringephasearray[2,q+3:] = coeffs[11:15]
-    fringephasearray[3,q+4:] = coeffs[15:18]
-    fringephasearray[4,q+5:] = coeffs[18:20]
-    fringephasearray[5,q+6:] = coeffs[20:]
+        fringephasearray[0, q + 1 :] = coeffs[0:6]
+        fringephasearray[1, q + 2 :] = coeffs[6:11]
+        fringephasearray[2, q + 3 :] = coeffs[11:15]
+        fringephasearray[3, q + 4 :] = coeffs[15:18]
+        fringephasearray[4, q + 5 :] = coeffs[18:20]
+        fringephasearray[5, q + 6 :] = coeffs[20:]
 
     Parameters
     ----------
@@ -539,8 +543,9 @@ class LinearFit:
     All inputs have to be numpy matrices.
 
     Math is based on Press'
-    Numerical Recipes p661 : Section 15.2 Fitting Data to a Straight Line
-    Numerical Recipes p671 : Section 15.4 General Linear Least Squares
+
+    * Numerical Recipes p661 : Section 15.2 Fitting Data to a Straight Line
+    * Numerical Recipes p671 : Section 15.4 General Linear Least Squares
 
     Code is based on an early yorick implementation by Damien Segransan (University of Geneva)
     Python implementation and tools by Johannes Sahlmann 2009-2017
