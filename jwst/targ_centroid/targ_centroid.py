@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import stdatamodels.jwst.datamodels as dm
 from photutils.centroids import centroid_2dg
 
 from jwst.assign_wcs import AssignWcsStep
@@ -152,14 +153,16 @@ def _cutout_center(image, center, size=16):
     return cutout, cutout_origin
 
 
-def find_dither_position(ta_model):
+def find_dither_position(model):
     """
     Assign a WCS and find expected source position based on dither metadata.
 
     Parameters
     ----------
-    ta_model : `~stdatamodels.jwst.datamodels.ImageModel`
-        The TA verification image.
+    model : `~jwst.datamodels.container.ModelContainer`, \
+            `~stdatamodels.jwst.datamodels.ImageModel`, \
+            `~stdatamodels.jwst.datamodels.CubeModel`
+        The input datamodel, either science or TA verification type.
 
     Returns
     -------
@@ -168,31 +171,57 @@ def find_dither_position(ta_model):
     x_offset, y_offset : tuple of float
         Dither x, y offsets in pixels from the nominal position.
     """
-    if not ta_model.meta.hasattr("wcs"):
+    if not model.meta.hasattr("wcs"):
         log.info("Assigning WCS to TA verification image.")
         try:
-            ta_model = AssignWcsStep.call(ta_model, sip_approx=False)
+            model = AssignWcsStep.call(model, sip_approx=False)
         except Exception as e:
             raise WCSError("Failed to assign WCS to TA verification image.") from e
-        if ta_model.meta.cal_step.assign_wcs != "COMPLETE":
+        if model.meta.cal_step.assign_wcs != "COMPLETE":
             raise WCSError("Failed to assign WCS to TA verification image (step was skipped).")
-    if not (
-        ta_model.meta.dither.hasattr("dithered_ra") and ta_model.meta.dither.hasattr("dithered_dec")
-    ):
+    if not (model.meta.dither.hasattr("dithered_ra") and model.meta.dither.hasattr("dithered_dec")):
         # Compute the dithered RA and Dec from the WCS and metadata
         # This is only computed by default for MIRI LRS slit data within assign_wcs
-        store_dithered_position(ta_model)
+        store_dithered_position(model)
 
     # translate from arcseconds (SI ideal coordinate frame) to pixels (detector frame)
-    dithered_ra, dithered_dec = ta_model.meta.dither.dithered_ra, ta_model.meta.dither.dithered_dec
-    world_to_pixel = ta_model.meta.wcs.get_transform("world", "detector")
-    dither_x, dither_y = world_to_pixel(dithered_ra, dithered_dec)
+    # handle WCS with 2 or 3 inputs; third input is wavelength when input is SlitModel
+    dithered_ra, dithered_dec = model.meta.dither.dithered_ra, model.meta.dither.dithered_dec
+    world_to_pixel = model.meta.wcs.get_transform("world", "detector")
+    wavelength = None
+    if isinstance(model, dm.SlitModel):
+        filt = model.meta.instrument.filter
+        wavelength = get_wavelength(filt)
+    n_inputs = world_to_pixel.n_inputs
+    dithered_inputs = [dithered_ra, dithered_dec] + [wavelength] * (n_inputs - 2)
+    dithered_outputs = world_to_pixel(*dithered_inputs)
+    dither_x, dither_y = dithered_outputs[0], dithered_outputs[1]
 
     # Determine nominal (non-dithered) position
-    ra_ref, dec_ref = ta_model.meta.wcsinfo.crval1, ta_model.meta.wcsinfo.crval2
-    x_ref, y_ref = world_to_pixel(ra_ref, dec_ref)
+    ra_ref, dec_ref = model.meta.wcsinfo.ra_ref, model.meta.wcsinfo.dec_ref
+    # ra_ref, dec_ref = model.meta.wcsinfo.crval1, model.meta.wcsinfo.crval2
+    ref_inputs = [ra_ref, dec_ref] + [wavelength] * (n_inputs - 2)
+    ref_outputs = world_to_pixel(*ref_inputs)
+    x_ref, y_ref = ref_outputs[0], ref_outputs[1]
 
     # Compute offsets from nominal position
     offset_x = dither_x - x_ref
     offset_y = dither_y - y_ref
     return (dither_x, dither_y), (offset_x, offset_y)
+
+
+def get_wavelength(filter_name):  # numpydoc ignore=RT01
+    """Map filter name to central wavelength in microns."""
+    filter_wavelengths = {
+        "F560W": 5.6,
+        "P750L": 7.5,
+        "F770W": 7.7,
+        "F1000W": 10.0,
+        "F1130W": 11.3,
+        "F1280W": 12.8,
+        "F1500W": 15.0,
+        "F1800W": 18.0,
+        "F2100W": 21.0,
+        "F2550W": 25.5,
+    }
+    return filter_wavelengths.get(filter_name, None)

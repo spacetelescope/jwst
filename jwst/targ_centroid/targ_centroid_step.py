@@ -132,13 +132,22 @@ class TargCentroidStep(Step):
         result.ta_xpos = x_center_sub
         result.ta_ypos = y_center_sub
 
-        # undo dither offset of TA image
+        log.info(
+            "Fitted source position on TA verification image: "
+            f"({result.ta_xpos:.2f}, {result.ta_ypos:.2f})\n"
+        )
+
+        # undo dither offset of TA image.
+        # At this stage we should be near the reference point from the specwcs,
+        # (326.13, 300.7) for slit data
+        # (38.5, 829.0) for slitless data
+        x_center -= ta_dither_offset[0]
+        y_center -= ta_dither_offset[1]
         log.debug(
             "Undoing TA verification image dither offsets: "
             f"x={ta_dither_offset[0]}, y={ta_dither_offset[1]}"
+            f" -> new position: x={x_center}, y={y_center} should be near reference point."
         )
-        x_center -= ta_dither_offset[0]
-        y_center -= ta_dither_offset[1]
 
         # Apply science exposure subarray offset
         log.debug(
@@ -148,10 +157,10 @@ class TargCentroidStep(Step):
         y_center -= ystart - 1
 
         # Apply dither offset from science exposure
-        _, (offset_x, offset_y) = find_dither_position(ta_model)
+        _, (offset_x, offset_y) = find_dither_position(result)
         log.debug(f"Applying science exposure dither offsets: x={offset_x}, y={offset_y}")
-        x_center -= offset_x
-        y_center -= offset_y
+        x_center += offset_x
+        y_center += offset_y
 
         # Apply filter offsets
         with dm.FilteroffsetModel(filteroffset_file) as filteroffset:
@@ -166,8 +175,6 @@ class TargCentroidStep(Step):
         result.meta.cal_step.targ_centroid = "COMPLETE"
         log.info(
             "TA centering complete. \n"
-            "Fitted source position on TA verification image: "
-            f"({result.ta_xpos:.2f}, {result.ta_ypos:.2f})\n"
             "Final source position in science data frame: "
             f"({result.source_xpos:.2f}, {result.source_ypos:.2f})"
         )
