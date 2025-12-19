@@ -11,7 +11,7 @@ Main API
 Other API
 =========
 
-(Also see :ref:`Other API in AMI Analyse <ami_analyse_other_api>`.)
+(Also see :ref:`Other API in ami_analyze <ami_analyze_other_api>`.)
 
 .. automodapi:: jwst.ami.ami_normalize
    :no-inheritance-diagram:

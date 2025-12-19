@@ -8,7 +8,7 @@ Main API
 .. automodapi:: jwst.ami.ami_analyze_step
    :no-inheritance-diagram:
 
-.. _ami_analyse_other_api:
+.. _ami_analyze_other_api:
 
 Other API
 =========
