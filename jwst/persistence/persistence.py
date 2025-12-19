@@ -350,10 +350,10 @@ class DataSet:
         group_time = self.output_obj.meta.exposure.group_time
         sat_array = np.zeros(shape=(ny, nx), dtype=np.uint32)
         for integ in range(nints):
-            # import ipdb; ipdb.set_trace() # XXX
             current_time = epoch_time + integ * integration_time
             self.get_group_info(integ)  # self.tgroup, etc.
             decayed[:, :, :] = 0.0  # initialize
+
             # slope has to be computed early in the loop over integrations,
             # before the data are modified by subtracting persistence.
             # The slope is needed for computing charge captures.
@@ -363,6 +363,7 @@ class DataSet:
                 persistence[:, :] = 0.0  # initialize
                 for k in range(nfamilies):
                     decay_param_k = self.get_decay_param(par, k)
+
                     # Compute and subtract the decays during the reset.
                     # Decays during the reset at the beginning of the
                     # first integration have already been accounted for.
@@ -372,10 +373,12 @@ class DataSet:
                             self.traps_filled.data[k], decay_param_k, reset_time
                         )
                         self.traps_filled.data[k, :, :] -= decay_during_reset
+
                     # Decays during current group, for current trap family.
                     decayed_in_group = self.compute_decay(
                         self.traps_filled.data[k], decay_param_k, t_group
                     )
+
                     # Cumulative decay to the end of the current group.
                     decayed[k, :, :] += decayed_in_group
                     self.traps_filled.data[k, :, :] -= decayed_in_group
@@ -1107,9 +1110,16 @@ class DataSet:
         Parameters
         ----------
         current_time : float
+            The epoch time of the current integration and group.
+
         sat_array : ndarray
+            The saturation count for each pixel.
+
         integ : int
+            The current integration being processed.
+
         group : int
+            The current group being processed.
         """
         # Any persistence_array time earlier than current time gets set to zero. The
         # persistence window has ended for that pixel.
@@ -1117,14 +1127,15 @@ class DataSet:
 
         # Calculate any first saturation points
         gdq_plane = self.output_obj.groupdq[integ, group, :, :]
-        sat_array[np.bitwise_and(gdq_plane, dqflags.group["SATURATED"])] += 1
+        sat_loc = np.bitwise_and(gdq_plane, dqflags.group["SATURATED"])
+        sat_array[sat_loc > 0] += 1
 
         # Add first saturation points and the end window time to persistence_array
         self.persistence_array[sat_array==1] = current_time + self.persistence_time
 
         # Set persistence flag for any group in persistence window
         if self.persistence_dnu:
-            flag = dqflags.group["SATURATED"] | dqflags.pixel["PERSISTENCE"]
+            flag = dqflags.group["DO_NOT_USE"] | dqflags.pixel["PERSISTENCE"]
         else:
             flag = dqflags.pixel["PERSISTENCE"]
         gdq_plane[self.persistence_array > 0.0] |= flag
