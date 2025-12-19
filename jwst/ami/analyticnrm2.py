@@ -413,7 +413,7 @@ def asf(detpixel, fov, oversample, d, lam, psf_offset):
 
 def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
     """
-    Amplitude Spread Function (a.k.a. image plane complex amplitude) for a fringe.
+    Amplitude Spread Function (AKA image plane complex amplitude) for a fringe.
 
     Parameters
     ----------
@@ -457,7 +457,7 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
 
 def asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
     """
-    Amplitude Spread Function (a.k.a. image plane complex amplitude) for a hexagonal aperture.
+    Amplitude Spread Function (AKA image plane complex amplitude) for a hexagonal aperture.
 
     Parameters
     ----------
