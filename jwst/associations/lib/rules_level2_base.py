@@ -1451,16 +1451,15 @@ class AsnMixin_Lv2WFSS:
         """
         item = self.direct_image.item
         opt_elems = []
-        inst = str(item.get("instrume", "Unknown"))
+        inst = str(item.get("instrume", "UNKNOWN"))
         if inst == "miri":
-            for key in ["filter"]:
-                val = item.get(key)  # we just want to value of 1 key, Use simple get function
-                # getattr_from_list_nofail(item, keys, _EMPTY)[1] is expecting
-                # a pair of keys
+            val = item.get("filter")  # we just want to value of 1 key, Use simple get function
+            # getattr_from_list_nofail(item, keys, _EMPTY)[1] is expecting
+            # a pair of keys
 
-                # Check that it exists
-                if val is not None:
-                    opt_elems.append(str(val))
+            # Check that it exists
+            if val is not None:
+                opt_elems.append(str(val))
         else:
             for keys in [["filter", "band"], ["pupil", "grating"]]:
                 opt_elem = getattr_from_list_nofail(item, keys, _EMPTY)[1]
