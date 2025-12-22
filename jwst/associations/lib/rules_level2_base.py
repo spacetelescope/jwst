@@ -1451,7 +1451,7 @@ class AsnMixin_Lv2WFSS:
         """
         item = self.direct_image.item
         opt_elems = []
-        inst = str(item.get("instrume", "UNKNOWN"))
+        inst = str(item.get("instrume", "UNKNOWN")).lower()
         if inst == "miri":
             val = item.get("filter")  # we just want to value of 1 key, Use simple get function
             # Check that it exists
