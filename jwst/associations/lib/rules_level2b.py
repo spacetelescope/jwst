@@ -1002,11 +1002,11 @@ class Asn_Lv2WFSSMIR(
     Level2b MIR WFSS Association.
 
     Characteristics:
-      - Association type: ``spec2``
-      - Pipeline: ``calwebb_spec2``
-      - Multi-object science exposures
-      - Single science exposure
-      - Require a source catalog from processing of the corresponding direct imagery.
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Multi-object science exposures
+    - Single science exposure
+    - Require a source catalog from processing of the corresponding direct imagery.
     """
 
     def __init__(self, *args, **kwargs):
