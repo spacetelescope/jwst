@@ -1,1 +1,1 @@
-creating MIRI WFSS associations
+Added ``Asn_Lv2WFSSMIR`` rule class for creating MIRI WFSS associations.
