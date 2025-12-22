@@ -1454,9 +1454,6 @@ class AsnMixin_Lv2WFSS:
         inst = str(item.get("instrume", "UNKNOWN"))
         if inst == "miri":
             val = item.get("filter")  # we just want to value of 1 key, Use simple get function
-            # getattr_from_list_nofail(item, keys, _EMPTY)[1] is expecting
-            # a pair of keys
-
             # Check that it exists
             if val is not None:
                 opt_elems.append(str(val))
