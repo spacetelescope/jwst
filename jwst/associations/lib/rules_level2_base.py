@@ -1458,8 +1458,8 @@ class AsnMixin_Lv2WFSS:
                 # getattr_from_list_nofail(item, keys, _EMPTY)[1] is expecting
                 # a pair of keys
 
-                # Check that it exists and isn't the JWST 'null' string
-                if val is not None and val != "null":
+                # Check that it exists
+                if val is not None:
                     opt_elems.append(str(val))
         else:
             for keys in [["filter", "band"], ["pupil", "grating"]]:
