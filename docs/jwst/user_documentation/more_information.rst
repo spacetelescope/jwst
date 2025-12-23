@@ -39,7 +39,7 @@ code-diving) is also considered private.
 
 However, contrary to common practice, ``jwst`` package also considers what would
 normally be public API (i.e., no leading underscore and fully documented)
-to be private unless stated as follow. **Any API not listed below, even if
+to be private unless stated as follows. **Any API not listed below, even if
 fully documented, could be removed or changed without notice.**
 
 These are the only conditions where ``jwst`` would consider public API and
