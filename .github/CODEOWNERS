@@ -1,12 +1,81 @@
 # automatically requests pull request reviews for files matching the given pattern; the last match takes precedence
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# 
+# pull requests are required to have at least 1 approval from one of the codeowners, as defined in the ruleset at https://github.com/spacetelescope/jwst/settings/rules/7657862
+# files defined without any usernames or teams will have NO codeowner
 
-# maintainers own everything
-* @spacetelescope/jwst-pipeline-maintainers 
+# any files not matched below default to the maintainers team
+* 							@spacetelescope/jwst-pipeline-maintainers
 
-# developers can own some specific paths
-/.github/ @spacetelescope/jwst-pipeline-developers  # CI files
-/.github/dependabot.yml @zacharyburnett  # Replaced reviewers field in the dependabot.yml
-/* @spacetelescope/jwst-pipeline-developers  # top level files only
-/changes/** @spacetelescope/jwst-pipeline-developers  # changelogs
-/docs/** @spacetelescope/jwst-pipeline-developers  # docs
-/jwst/regtest/** @spacetelescope/jwst-pipeline-developers  # regtest code
+# workflows and automation
+/.github/					@zacharyburnett @jhunkeler @pllim
+
+# IN ADDITION to the code owners defined below, this repository ALSO requires
+# all changes to files in `/jwst/` to ALSO be approved by the maintainers team
+# as defined in the ruleset at https://github.com/spacetelescope/jwst/settings/rules/7657862
+ 
+# steps and packages
+/jwst/ami/					@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/assign_mtwcs/			@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/assign_wcs/			@spacetelescope/jwst-pipeline-maintainers @melanieclarke @jemorrison
+/jwst/associations/			@spacetelescope/jwst-pipeline-maintainers @tapastro @stscieisenhamer
+/jwst/background/			@spacetelescope/jwst-pipeline-maintainers @melanieclarke @penaguerrero
+/jwst/badpix_selfcal/		@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/barshadow/			@spacetelescope/jwst-pipeline-maintainers @stscirij @melanieclarke
+/jwst/charge_migration/		@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/clean_flicker_noise/	@spacetelescope/jwst-pipeline-maintainers @melanieclarke @stscirij
+/jwst/combine_1d/			@spacetelescope/jwst-pipeline-maintainers @stscirij @tapastro @melanieclarke
+/jwst/coron/				@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/cube_build/			@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/dark_current/			@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/datamodels/			@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/dq_init/				@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/emicorr/				@spacetelescope/jwst-pipeline-maintainers @penaguerrero @melanieclarke
+/jwst/engdblog/				@spacetelescope/jwst-pipeline-maintainers @tapastro @pllim
+/jwst/exp_to_source/		@spacetelescope/jwst-pipeline-maintainers @penaguerrero @melanieclarke
+/jwst/extract_1d/			@spacetelescope/jwst-pipeline-maintainers @melanieclarke @emolter @jemorrison
+/jwst/extract_2d/			@spacetelescope/jwst-pipeline-maintainers @stscirij @tapastro
+/jwst/firstframe/			@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/flatfield/			@spacetelescope/jwst-pipeline-maintainers @jemorrison @stscirij @melanieclarke
+/jwst/fringe/				@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/gain_scale/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/group_scale/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/guider_cds/			@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/imprint/				@spacetelescope/jwst-pipeline-maintainers @melanieclarke
+/jwst/ipc/					@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/jump/					@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/lastframe/			@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/lib/					@spacetelescope/jwst-pipeline-maintainers @pllim
+/jwst/linearity/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/master_background/	@spacetelescope/jwst-pipeline-maintainers @penaguerrero @melanieclarke
+/jwst/model_blender/		@spacetelescope/jwst-pipeline-maintainers @emolter @braingram
+/jwst/msaflagopen/			@spacetelescope/jwst-pipeline-maintainers @stscirij @melanieclarke
+/jwst/outlier_detection/	@spacetelescope/jwst-pipeline-maintainers @emolter @braingram
+/jwst/pathloss/				@spacetelescope/jwst-pipeline-maintainers @stscirij @melanieclarke
+/jwst/persistence/			@spacetelescope/jwst-pipeline-maintainers @tapastro @kmacdonald-stsci
+/jwst/photom/				@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/picture_frame/		@spacetelescope/jwst-pipeline-maintainers @melanieclarke @stscirij 
+/jwst/pipeline/				@spacetelescope/jwst-pipeline-maintainers @tapastro @melanieclarke @emolter
+/jwst/pixel_replace/		@spacetelescope/jwst-pipeline-maintainers @tapastro @melanieclarke
+/jwst/ramp_fitting/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/refpix/				@spacetelescope/jwst-pipeline-maintainers @stscirij @melanieclarke
+/jwst/regtest/				@spacetelescope/jwst-pipeline-maintainers @melanieclarke @penaguerrero @tapastro @pllim
+/jwst/resample/				@spacetelescope/jwst-pipeline-maintainers @emolter @melanieclarke @mcara @braingram
+/jwst/reset/				@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/residual_fringe/		@spacetelescope/jwst-pipeline-maintainers @jemorrison @melanieclarke
+/jwst/rscd/					@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/saturation/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/scripts/				@spacetelescope/jwst-pipeline-maintainers @penaguerrero
+/jwst/skymatch/				@spacetelescope/jwst-pipeline-maintainers @emolter @mcara
+/jwst/source_catalog/		@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/spectral_leak/		@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/srctype/				@spacetelescope/jwst-pipeline-maintainers @tapastro @penaguerrero
+/jwst/stpipe/				@spacetelescope/jwst-pipeline-maintainers @emolter @tapastro
+/jwst/straylight/			@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/superbias/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/tso_photometry/		@spacetelescope/jwst-pipeline-maintainers @emolter @melanieclarke
+/jwst/tweakreg/				@spacetelescope/jwst-pipeline-maintainers @emolter @mcara
+/jwst/wavecorr/				@spacetelescope/jwst-pipeline-maintainers @melanieclarke
+/jwst/wfs_combine/			@spacetelescope/jwst-pipeline-maintainers @penaguerrero
+/jwst/wfss_contam/			@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/white_light/			@spacetelescope/jwst-pipeline-maintainers @penaguerrero @emolter
