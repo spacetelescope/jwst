@@ -1002,6 +1002,7 @@ class Asn_Lv2WFSSMIR(
     Level2b MIR WFSS Association.
 
     Characteristics:
+
     - Association type: ``spec2``
     - Pipeline: ``calwebb_spec2``
     - Multi-object science exposures
