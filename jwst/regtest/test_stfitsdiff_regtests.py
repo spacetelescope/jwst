@@ -163,3 +163,21 @@ def test_miri_mrs_extract1d_nominal(rtdata, fitsdiff_default_kwargs):
 
     assert result == apresult
     assert report == apreport
+
+
+def test_one_nan_in_table(rtdata, fitsdiff_default_kwargs):
+    """Test running STFITSDiff on a table with one NaN difference."""
+
+    rtdata.get_data("nirspec/mos/nrs1_one_nan_x1d.fits")
+    rtdata.get_truth("nirspec/mos/nrs1_no_nans_x1d.fits")
+
+    apresult, apreport = astropy_fitsdiff(rtdata.input, rtdata.truth, fitsdiff_default_kwargs)
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    result, report = get_stfitsdiff_reports(rtdata.input, rtdata.truth, fitsdiff_default_kwargs)
+    assert result == apresult
+    assert report == apreport
+
+    diff = STFITSDiff(rtdata.input, rtdata.truth, **fitsdiff_default_kwargs)
+    assert "    1 failed the (atol, rtol) test" in diff.report()
+    assert "    Found 1 different table data element(s). " in diff.report()
+    assert "    WAVELENGTH    f8         0     nan      nan     nan" in diff.report()
