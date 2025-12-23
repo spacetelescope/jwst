@@ -1,25 +1,7 @@
 import numpy as np
 
 from jwst.fit_profile import fit_profile as fp
-
-
-def profile_1d(xvec):
-    """
-    Make a smooth 1D Gaussian profile.
-
-    Parameters
-    ----------
-    xvec : ndarray
-        X-values for the profile.
-
-    Returns
-    -------
-    yvec : ndarray
-        Gaussian y-values for the profile, centered on the middle of the ``xvec`` array.
-    """
-    xpos = np.mean(xvec)
-    peak = 0.1 * np.exp(-0.5 * ((xvec - xpos) / 2) ** 2)
-    return peak + 1.0
+from jwst.fit_profile.tests.helpers import profile_1d
 
 
 def test_bspline_fit_flat_data():

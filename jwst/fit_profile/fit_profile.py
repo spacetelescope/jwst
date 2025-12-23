@@ -264,7 +264,8 @@ def fit_2d_spline_profile(
     scales = {}
     for i in col_index:
         col_flux = flux[:, i]
-        ngood = np.sum(np.isfinite(col_flux))
+        col_alpha = alpha[:, i]
+        ngood = np.sum(np.isfinite(col_flux) & np.isfinite(col_alpha))
         if ngood <= require_ngood:
             continue
 
@@ -302,7 +303,7 @@ def fit_2d_spline_profile(
                 spline_model = spline_model_save
             else:
                 spline_model = bspline
-        except Exception as err:
+        except (ValueError, RuntimeError) as err:
             log.warning(f"Spline fit failed at column {i}: {str(err)}")
             spline_model = spline_model_save
 
@@ -316,7 +317,6 @@ def fit_2d_spline_profile(
 
         # Evaluate the bspline at the valid input locations to determine
         # a scale factor for the fit
-        col_alpha = alpha[:, i]
         idx = np.isfinite(col_alpha)
         col_alpha = col_alpha[idx]
         col_flux = col_flux[idx]
@@ -466,7 +466,7 @@ def _linear_interp(col_y, col_flux, y_interp, edge_limit, preserve_nan=True):
 
 
 def linear_oversample(
-    data, region_map, oversample_factor, require_ngood, edge_limit=None, preserve_nan=True
+    data, region_map, oversample_factor, require_ngood, edge_limit=0, preserve_nan=True
 ):
     """
     Oversample the input data with a linear interpolation.
@@ -487,8 +487,7 @@ def linear_oversample(
         Minimum number of pixels required in a column to perform an interpolation.
     edge_limit : int, optional
         If greater than zero, this many pixels at the edges of
-        the interpolated values will be set to NaN. If None, will default
-        to the value of ``oversample_factor``.
+        the interpolated values will be set to NaN.
     preserve_nan : bool, optional
         If True, NaNs in the input will be preserved in the output.
 
@@ -502,8 +501,6 @@ def linear_oversample(
 
     os_shape = (int(np.ceil(ysize * oversample_factor)), xsize)
     os_data = np.full(os_shape, np.nan, dtype=np.float32)
-    if edge_limit is None:
-        edge_limit = int(oversample_factor)
 
     data_slice = np.full_like(data, np.nan)
     y_slice = np.full_like(data, np.nan)
@@ -805,12 +802,14 @@ def oversample_flux(
             # Require peaks above some threshold
             peak_indices, _ = find_peaks(hist, height=0.2)
             amask = avec[peak_indices]
+            total_used = 0
             for value in amask:
-                indx = np.where(
-                    (alpha_os_slice > value - pad * native_dalpha)
-                    & (alpha_os_slice <= value + pad * native_dalpha)
+                indx = (alpha_os_slice > value - pad * native_dalpha) & (
+                    alpha_os_slice <= value + pad * native_dalpha
                 )
                 flux_os_bspline_use[indx] = flux_os_bspline_full[indx]
+                total_used += np.sum(~np.isnan(flux_os_bspline_full[indx]))
+            log.debug(f"Using {total_used} pixels from the spline model for slice {slnum}")
 
     # Insert the bspline interpolated values into the final combined oversampled array,
     # starting from the linearly interpolated array
@@ -834,6 +833,28 @@ def oversample_flux(
 
 
 def _set_fit_kwargs(detector, xsize):
+    """
+    Set optional parameters for spline fits by detector.
+
+    Parameters
+    ----------
+    detector : str
+        Detector name.
+    xsize : int
+        Input size for the data, along the dispersion axis. Used
+        to determine the column index order for spline fits.
+
+    Returns
+    -------
+    fit_kwargs : dict
+        Optional parameter settings to pass to the ``fit_all_regions``
+        function.
+
+    Raises
+    ------
+    ValueError
+        If the input detector is not supported.
+    """
     # Empirical parameters for this mode
     if detector.startswith("NRS"):
         require_ngood = 15
@@ -847,7 +868,7 @@ def _set_fit_kwargs(detector, xsize):
             col_index = range(0, xsize, 1)
         else:
             # For NRS2, start on the right of detector since the tilt wrt pixels is greatest here
-            col_index = range(xsize - 1, 0, -1)
+            col_index = range(xsize - 1, -1, -1)
 
     elif detector.startswith("MIR"):
         require_ngood = 8
@@ -875,6 +896,25 @@ def _set_fit_kwargs(detector, xsize):
 
 
 def _set_oversample_kwargs(detector):
+    """
+    Set optional parameters for oversampling by detector.
+
+    Parameters
+    ----------
+    detector : str
+        Detector name.
+
+    Returns
+    -------
+    oversample_kwargs : dict
+        Optional parameter settings to pass to the ``oversample_flux``
+        function.
+
+    Raises
+    ------
+    ValueError
+        If the input detector is not supported.
+    """
     if detector.startswith("NRS"):
         # Trimming ends of the interpolation can help with bad extrapolations
         pad = 2
@@ -891,6 +931,23 @@ def _set_oversample_kwargs(detector):
 
 
 def _get_alpha_nrs_ifu(ifu_wcs, xsize, ysize):
+    """
+    Get alpha coordinates for NIRSpec IFU corresponding to the original data array.
+
+    Parameters
+    ----------
+    ifu_wcs : list of `~gwcs.WCS`
+        List of WCS objects, one per slice.
+    xsize : int
+        X-size for the data array.
+    ysize : int
+        Y-size for the data array.
+
+    Returns
+    -------
+    alpha_orig : ndarray
+        Alpha coordinates for the data array, with shape (ysize, xsize).
+    """
     alpha_orig = np.full((ysize, xsize), np.nan)
     for slice_wcs in ifu_wcs:
         x, y = gwcs.wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
@@ -903,12 +960,50 @@ def _get_alpha_nrs_ifu(ifu_wcs, xsize, ysize):
 
 
 def _get_alpha_mir_mrs(wcs, xsize, ysize):
+    """
+    Get alpha coordinates for MIRI MRS corresponding to the original data array.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.WCS`
+        WCS object.
+    xsize : int
+        X-size for the data array.
+    ysize : int
+        Y-size for the data array.
+
+    Returns
+    -------
+    alpha_orig : ndarray
+        Alpha coordinates for the data array, with shape (ysize, xsize).
+    """
     x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
-    alpha_orig, _, _ = wcs.transform("detector", "alpha_beta", x, y)
+    det2ab = wcs.get_transform("detector", "alpha_beta")
+    alpha_orig, _, _ = det2ab(x, y)
     return alpha_orig
 
 
 def _get_oversampled_coords_nrs_ifu(ifu_wcs, x_os, y_os):
+    """
+    Get alpha coordinates for NIRSpec IFU corresponding to the oversampled data array.
+
+    Parameters
+    ----------
+    ifu_wcs : list of `~gwcs.WCS`
+        List of WCS objects, one per slice.
+    x_os : int
+        X-size for the oversampled data array.
+    y_os : int
+        Y-size for the oversampled data array.
+
+    Returns
+    -------
+    alpha_os : ndarray
+        Alpha coordinates for the data array, with shape (y_os, x_os).
+    wave_os : ndarray
+        Wavelength coordinates for the data array, with shape (y_os, x_os),
+        in um.
+    """
     os_shape = x_os.shape
     alpha_os = np.full(os_shape, np.nan)
     wave_os = np.full(os_shape, np.nan)
@@ -930,6 +1025,26 @@ def _get_oversampled_coords_nrs_ifu(ifu_wcs, x_os, y_os):
 
 
 def _update_wcs_nrs_ifu(wcs, map_pixels):
+    """
+    Update a NIRSpec IFU WCS to include the oversampling transform.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.WCS`
+        The WCS object, including transforms for all slices.
+        May be either coordinate-based or slice-based.
+    map_pixels : `~astropy.modeling.models.Model`
+        Model that transforms from oversampled pixels to original detector
+        pixels, to be prepended to the WCS pipeline.
+
+    Returns
+    -------
+    wcs : `~gwcs.WCS`
+        The updated WCS.  If the input WCS was coordinate-based,
+        then the new transform is prepended to the existing "coordinates"
+        transform.  If it was slice-based, a new WCS pipeline is created
+        with "coordinates" as the input frame, containing the new transform.
+    """
     if "coordinates" in wcs.available_frames:
         # coordinate-based WCS
         first_transform = wcs.pipeline[0].transform
@@ -963,6 +1078,25 @@ def _update_wcs_nrs_ifu(wcs, map_pixels):
 
 
 def _update_wcs(wcs, map_pixels):
+    """
+    Update a WCS to include the oversampling transform.
+
+    Appropriate to the MIRI MRS WCS or slit-like WCS objects, following ``extract_2d``.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.WCS`
+        The WCS object, including transforms for all slices.
+    map_pixels : `~astropy.modeling.models.Model`
+        Model that transforms from oversampled pixels to original detector
+        pixels, to be prepended to the WCS pipeline.
+
+    Returns
+    -------
+    wcs : `~gwcs.WCS`
+        A new WCS pipeline, with "coordinates" as the input frame, containing the
+        new transform.
+    """
     map_pixels.name = "coord2det"
     map_pixels.inputs = ("x", "y")
     map_pixels.outputs = ("x", "y")
@@ -1017,14 +1151,14 @@ def fit_and_oversample(
 
     elif detector.startswith("MIR"):
         rotate = True
-        wcs = model.meta.wcs
         if isinstance(model, datamodels.IFUImageModel):
             mode = "MIR_MRS"
+            wcs = model.meta.wcs
             alpha_orig = _get_alpha_mir_mrs(wcs, xsize, ysize)
 
             # Region map is stored in the transform
             det2ab_transform = wcs.get_transform("detector", "alpha_beta")
-            region_map = det2ab_transform.label_mapper.mapper
+            region_map = det2ab_transform.label_mapper.mapper.copy()
         else:
             raise ValueError("Unsupported mode")
     else:
@@ -1107,9 +1241,8 @@ def fit_and_oversample(
     else:
         # Because MIRI was rotated the indexing in the non-rotated frame,
         # the input coordinates need to be adjusted slightly
-        alpha_os, _, wave_os = model.meta.wcs.transform(
-            "detector", "alpha_beta", ysize - y_os - 1, x_os
-        )
+        det2ab = model.meta.wcs.get_transform("detector", "alpha_beta")
+        alpha_os, _, wave_os = det2ab(ysize - y_os - 1, x_os)
 
     log.info("Oversampling the flux array from the fit profile")
     oversample_kwargs = _set_oversample_kwargs(detector)
