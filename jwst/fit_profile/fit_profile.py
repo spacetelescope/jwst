@@ -33,7 +33,7 @@ def bspline_fit(
     wrapsig_low=3.0,
     wrapsig_high=3.0,
     wrapiter=3,
-    spaceratio=1.6,
+    spaceratio=1.2,
     verbose=False,
 ):
     """
@@ -59,7 +59,7 @@ def bspline_fit(
         than the knot spacing by this ratio, then return None instead
         of attempting to fit the data.
     verbose : bool, optional
-        If True, a debug log message is generated for each fitting iteration.
+        If True, an info log message is generated for each fitting iteration.
 
     Returns
     -------
@@ -75,8 +75,8 @@ def bspline_fit(
     # cause problems with breakpoints
     spacing = np.abs(np.diff(xvec_use, prepend=0))
     space_mean, _, space_rms = scs(spacing)
-    if space_rms > 0:
-        good = spacing < (space_mean + 5 * space_rms)
+    if np.isfinite(space_rms):
+        good = spacing <= (space_mean + 5 * space_rms)
         xvec_use = xvec_use[good]
         yvec_use = yvec_use[good]
 
@@ -95,7 +95,7 @@ def bspline_fit(
     last_spline = None
     for ii in range(0, wrapiter):
         knotspacing = (np.max(xvec_use) - np.min(xvec_use)) / nbkpts
-        knotmin = np.min(xvec_use)
+        knotmin = np.min(xvec_use) + knotspacing / 2.0
         knotmax = np.max(xvec_use) - knotspacing / 2.0
         knots = np.arange(knotmin, knotmax, knotspacing)
 
@@ -105,7 +105,12 @@ def bspline_fit(
         xe = xvec_use[-1]
         knots = np.concatenate(([xb] * (degree + 1), knots, [xe] * (degree + 1)))
 
-        spline_model = make_lsq_spline(xvec_use, yvec_use, knots, k=degree)
+        try:
+            spline_model = make_lsq_spline(xvec_use, yvec_use, knots, k=degree)
+        except ValueError:
+            # Bad fit: break the loop and return the last fit spline (or None)
+            spline_model = last_spline
+            break
         ytemp = spline_model(xvec_use)
         if np.any(np.isnan(ytemp)):
             # Bad fit: break the loop and return the last fit spline (or None)
@@ -115,18 +120,23 @@ def bspline_fit(
         # Good fit: keep it for the next loop.
         last_spline = spline_model
 
-        # Reject significant outliers
+        # No need to reject data on the last iteration
+        if ii == wrapiter - 1:
+            break
+
+        # If continuing on, reject significant outliers
         diff = yvec_use - ytemp
         rms = np.std(diff)
         rej = (diff < -wrapsig_low * rms) | (diff > wrapsig_high * rms)
         keep = ~rej
         if verbose:
-            log.debug(f"Iter {ii} Rejected {np.sum(rej)} Kept {np.sum(keep)}")
+            log.info(f"Iter {ii} Rejected {np.sum(rej)} Kept {np.sum(keep)}")
 
         # If no points rejected or too few kept break out of the loop
         if np.sum(keep) < 0.8 * norig:
             # Too many rejected - keep the last model instead
-            # todo - instead return None?
+            if verbose:
+                log.info("Stopping iteration: too many points rejected")
             spline_model = last_spline
             break
         elif np.sum(rej) == 0:
@@ -315,7 +325,7 @@ def fit_2d_spline_profile(
         # Determine the normalization by the weighted mean ratio between model and data
         # Weights are based on the model so that we can reject outliers
         with warnings.catch_warnings():
-            warnings.filterwarnings(action="ignore", category=RuntimeWarning)
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
 
             ratio = col_flux / col_fit
 
@@ -583,7 +593,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
 
         # Collapse the slice along Y to get max in each column
         with warnings.catch_warnings():
-            warnings.filterwarnings(action="ignore", category=RuntimeWarning)
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
             collapse = np.nanmax(data_slice, axis=0)
 
         # Median column max across all columns
