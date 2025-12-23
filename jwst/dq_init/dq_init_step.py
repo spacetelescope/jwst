@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+from astropy.io import fits
 from stdatamodels.jwst import datamodels
 
 from jwst.dq_init import dq_initialization
@@ -24,6 +26,7 @@ class DQInitStep(Step):
     class_alias = "dq_init"
 
     spec = """
+        user_supplied_dq = string(default=None)  # FITS user-supplied DQ file
     """  # noqa: E501
     reference_file_types = ["mask"]
 
@@ -81,10 +84,24 @@ class DQInitStep(Step):
         # Load the reference file
         mask_model = datamodels.MaskModel(mask_filename)
 
+        # Load the user-supplied DQ file, if applicable
+        if self.user_supplied_dq is not None:
+            log.info(
+                f"User-supplied DQ {self.user_supplied_dq} given. Adding it to DQ initialization."
+            )
+            user_dq = fits.getdata(self.user_supplied_dq)
+            if not issubclass(user_dq.dtype.type, np.integer):
+                log.error(f"User-supplied DQ is not of type integer, got {user_dq.dtype.type}")
+                raise
+        else:
+            user_dq = None
+
         # Apply the step
-        result = dq_initialization.do_dqinit(result, mask_model)
+        result = dq_initialization.do_dqinit(result, mask_model, user_dq=user_dq)
 
         # Cleanup
         del mask_model
+        if user_dq:
+            del user_dq
 
         return result
