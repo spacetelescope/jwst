@@ -48,7 +48,6 @@ Coronagraphic PSF image stack                  psfstack
 Coronagraphic PSF-aligned images               psfalign
 Coronagraphic PSF-subtracted images            psfsub
 AMI fringe and closure phases                  ami
-AMI averaged fringe and closure phases         amiavg
 AMI normalized fringe and closure phases       aminorm
 =============================================  ========
 
