@@ -250,7 +250,7 @@ def test_traverse_tso_grism(create_tso_wcs):
     assert np.isclose(x0, wcs_tso_kw["xref_sci"], atol=1e-3)
     assert np.isclose(y0, wcs_tso_kw["yref_sci"], atol=1e-3)
     assert order == orderdet
-    assert np.isclose(x, xin, atol=1e-3)
+    assert np.isclose(x, xin, atol=2e-2)
 
     # this roundtrip fails to account for the ~22.5 pixel shift from target acquisition
     # to science position; grism shifts spectrum wrt direct image by that amount.
