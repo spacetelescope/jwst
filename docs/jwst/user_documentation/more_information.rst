@@ -21,7 +21,9 @@ Versioning Scheme
 .. note::
 
    This section addresses the release version to PyPI.
-   It is not to be confused with the DMS quarterly build version.
+   It is not to be confused with the DMS quarterly build version,
+   which has a different numbering scheme (see
+   `software vs. DMS builds <https://github.com/spacetelescope/jwst?tab=readme-ov-file#software-vs-dms-build-version-map>`_).
 
 The ``jwst`` package does not follow strict `semantic versioning <https://semver.org/>`_,
 in that a "minor" version bump may also contain non-backward compatible changes.
@@ -37,16 +39,16 @@ As per Python convention, any API name that starts with underscore
 Any API not officially documented (i.e., you only found it after some extensive
 code-diving) is also considered private.
 
-However, contrary to common practice, ``jwst`` package also considers what would
+However, contrary to common practice, the ``jwst`` package also considers what would
 normally be public API (i.e., no leading underscore and fully documented)
 to be private unless stated as follows. **Any API not listed below, even if
 fully documented, could be removed or changed without notice.**
 
-These are the only conditions where ``jwst`` would consider public API and
-thus follows :ref:`jwst-deprecation-policy`:
+These are the only software interfaces that ``jwst`` considers public API and
+thus follow :ref:`jwst-deprecation-policy`:
 
 * Calibration step classes (e.g., Spec2Pipeline, JumpStep, AmiNormalizeStep)
-* Command-line interface for calibration steps (e.g., calwebb_image3)
+* Command-line interface for calibration steps (e.g., ``strun calwebb_image3``)
 * Data models (e.g., removal of a WCS transform converter causing I/O incompatibility)
 
 .. _jwst-deprecation-policy:
@@ -56,7 +58,7 @@ API Deprecation Policy
 
 .. note::
 
-   This section only cover API changes that are not backward-compatible.
+   This section only covers API changes that are not backward-compatible.
    Adding a new API is usually backward compatible and thus not covered here.
 
 Occasionally, there is a need to modify or remove a given API
@@ -66,11 +68,11 @@ breaking change happens, if possible, ``jwst`` would first deprecate
 the item being removed or renamed; this could be a input keyword,
 step configuration, function, class, etc.
 
-A deprecated item would emit a ``DeprecationWarning`` via Python warnings
-system (and also to log file, where appropriate). Ideally, the deprecation
+A deprecated item would emit a ``DeprecationWarning`` via the Python warnings
+system (and also to the log, where appropriate). Ideally, the deprecation
 warning would provide at least the following information:
 
-* which ``jwst`` version was it first deprecated, and
+* which ``jwst`` version first deprecated it, and
 * alternative or replacement, if available.
 
 Deprecation usually cannot happen in a "patch" release (see :ref:`jwst-version-scheme`)
