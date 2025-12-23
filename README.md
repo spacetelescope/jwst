@@ -12,6 +12,10 @@
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
+This package processes uncalibrated data for both imagers and spectrographs onboard the James Webb Space Telescope (JWST), an orbiting infrared observatory stationed at Earth-Sun L<sub>2</sub>. It performs a series of calibration steps that result in standard data products usable for science.
+More information on running this pipeline, including explanations of specific stages and how to obtain reference files,
+can be found [here](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline).
+
 > [!WARNING]
 > Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
 > this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
