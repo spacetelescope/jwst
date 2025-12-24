@@ -3,6 +3,7 @@
 import logging
 
 import numpy as np
+from astropy.modeling.models import Identity
 from gwcs import wcstools
 
 from jwst.assign_wcs import nirspec
@@ -10,9 +11,40 @@ from jwst.assign_wcs.util import wrap_ra
 
 log = logging.getLogger(__name__)
 
-__all__ = ["find_corners_miri", "find_corners_nirspec"]
+__all__ = ["miri_slice_limit_coords", "find_corners_miri", "find_corners_nirspec"]
 
-# ******************************************************************************
+
+def miri_slice_limit_coords(wcs, xstart, xend):
+    """
+    Get MIRI slice end points in input image coordinates.
+
+    This function is intended to support oversampled images as
+    well as images with the original detector sampling.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.WCS`
+        WCS pipeline for the input data.
+    xstart : int
+        Starting pixel in detector coordinates for the slice.
+    xend : int
+        Ending pixel in detector coordinates for the slice.
+
+    Returns
+    -------
+    x_coord_start : int
+        Starting pixel in image coordinates for the slice.
+    x_coord_end : int
+        Ending pixel in image coordinates for the slice.
+    """
+    # check for oversampled data
+    if wcs is not None and "coordinates" in wcs.available_frames:
+        det2coord = wcs.get_transform("detector", "coordinates")
+    else:
+        det2coord = Identity(2)
+
+    xc, _ = det2coord([xstart, xend], [0, 0])
+    return int(np.floor(xc[0])), int(np.ceil(xc[1]))
 
 
 def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
@@ -60,16 +92,18 @@ def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
     """
     # x,y values for channel - convert to output coordinate system
     # return the min & max of spatial coords and wavelength
-
     xstart, xend = instrument_info.get_miri_slice_endpts(this_channel)
+    xc_start, xc_end = miri_slice_limit_coords(input_data.meta.wcs, xstart, xend)
     ysize = input_data.data.shape[0]
-
-    y, x = np.mgrid[:ysize, xstart:xend]
+    y, x = np.mgrid[:ysize, xc_start:xc_end]
 
     if coord_system == "internal_cal":
         # coord1 = along slice
         # coord2 = across slice
-        detector2alpha_beta = input_data.meta.wcs.get_transform("detector", "alpha_beta")
+        if "coordinates" in input_data.meta.wcs.available_frames:
+            detector2alpha_beta = input_data.meta.wcs.get_transform("coordinates", "alpha_beta")
+        else:
+            detector2alpha_beta = input_data.meta.wcs.get_transform("detector", "alpha_beta")
         coord1, coord2, lam = detector2alpha_beta(x, y)
 
         valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
@@ -192,6 +226,7 @@ def find_corners_nirspec(input_data, coord_system):
     a = np.zeros(nslices * 2)
     lambda_slice = np.zeros(nslices * 2)
     k = 0
+
     # for NIRSPEC there are 30 regions
     log.info("Looping over slices to determine cube size")
 
@@ -199,11 +234,15 @@ def find_corners_nirspec(input_data, coord_system):
         slice_wcs = nirspec.nrs_wcs_set_input(input_data, i)
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
         if coord_system == "internal_cal":
-            # coord1 = along slice
-            # coord2 = across slice
-            detector2slicer = slice_wcs.get_transform("detector", "slicer")
+            # Check for oversampled data
+            if "coordinates" in slice_wcs.available_frames:
+                detector2slicer = slice_wcs.get_transform("coordinates", "slicer")
+            else:
+                detector2slicer = slice_wcs.get_transform("detector", "slicer")
             coord2, coord1, lam = detector2slicer(x, y)  # lam ~0 for this transform
             valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
+            # coord1 = along slice
+            # coord2 = across slice
             coord1 = coord1[valid]
             coord2 = coord2[valid]
 
