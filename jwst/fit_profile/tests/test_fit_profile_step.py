@@ -103,18 +103,24 @@ def test_fit_profile_step_oversample():
 
 @pytest.mark.parametrize("mode", ["MIR_MRS", "NRS_IFU", "NRS_IFU_SLICE_WCS"])
 def test_fit_profile_step_oversample_with_source(mode):
+    threshsig = 10.0
     if mode == "MIR_MRS":
         model = helpers.miri_mrs_model_with_source()
     elif mode == "NRS_IFU_SLICE_WCS":
         model = helpers.nirspec_ifu_model_with_source(wcs_style="slice")
     else:
         model = helpers.nirspec_ifu_model_with_source()
-    result = FitProfileStep.call(model, oversample=2, slopelim=0.05)
+    result = FitProfileStep.call(model, oversample=2, slopelim=0.05, threshsig=threshsig)
     assert result.meta.cal_step.fit_profile == "COMPLETE"
 
     # data is twice the size of the input along the x axis
     extnames = ["data", "dq", "err", "var_poisson", "var_rnoise", "var_flat"]
     for extname in extnames:
+        # check for extension presence
+        if not model.hasattr(extname):
+            assert not result.hasattr(extname)
+            continue
+
         input_ext = getattr(model, extname)
         output_ext = getattr(result, extname)
         if mode.startswith("MIR"):

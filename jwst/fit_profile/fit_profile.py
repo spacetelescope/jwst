@@ -1176,9 +1176,10 @@ def fit_and_oversample(
     # Do some statistics on the overall cal file
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=AstropyUserWarning)
-        warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
-        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         overall_mean, _, overall_rms = scs(flux_orig[region_map > 0])
+    overall_mean = 0 if ~np.isfinite(overall_mean) else overall_mean
+    overall_rms = 0 if ~np.isfinite(overall_rms) else overall_rms
 
     # Need to ensure that the median pixel value isn't negative, because that causes chaos
     # Subtract off that constant
@@ -1260,10 +1261,15 @@ def fit_and_oversample(
     )
 
     log.info("Oversampling error and DQ arrays")
-    errors = [model.err, model.var_rnoise, model.var_poisson, model.var_flat]
+    error_extensions = ["err", "var_rnoise", "var_poisson", "var_flat"]
+    errors = {}
+    for extname in error_extensions:
+        if model.hasattr(extname):
+            errors[extname] = getattr(model, extname)
+            if rotate:
+                errors[extname] = np.rot90(errors[extname])
     dq = model.dq
     if rotate:
-        errors = [np.rot90(err) for err in errors]
         dq = np.rot90(dq)
 
     # Nearest pixel interpolation for the dq and regions array
@@ -1279,8 +1285,8 @@ def fit_and_oversample(
 
     # Simple linear oversample for the error arrays
     # todo: error may need inflation to avoid underestimate later
-    errors_os = []
-    for error_array in errors:
+    errors_os = {}
+    for extname, error_array in errors.items():
         error_os = linear_oversample(
             error_array,
             region_map,
@@ -1294,7 +1300,7 @@ def fit_and_oversample(
         is_nan = ~np.isfinite(error_array[closest_pix])
         error_os[is_nan & ~is_estimated] = np.nan
 
-        errors_os.append(error_os)
+        errors_os[extname] = error_os
 
     # Update the wcs for new pixel scale
     scale_and_shift = Scale(1 / oversample_factor) | Shift(
@@ -1311,19 +1317,22 @@ def fit_and_oversample(
     # If needed, undo all of our rotations before passing back the arrays
     if rotate:
         flux_os = np.rot90(flux_os, k=-1)
-        errors_os = [np.rot90(err, k=-1) for err in errors_os]
         dq_os = np.rot90(dq_os, k=-1)
         wave_os = np.rot90(wave_os, k=-1)
         regions_os = np.rot90(regions_os, k=-1)
         profile = np.rot90(profile, k=-1)
+        for extname, error_array in errors_os.items():
+            errors_os[extname] = np.rot90(error_array, k=-1)
 
     # Update the model with the oversampled arrays
     model.data = flux_os
-    model.err, model.var_rnoise, model.var_poisson, model.var_flat = errors_os
     model.dq = dq_os
     model.wavelength = wave_os
     model.profile = profile
-    model.regions = regions_os
+    for extname, error_array in errors_os.items():
+        setattr(model, extname, error_array)
+    if isinstance(model, datamodels.IFUImageModel):
+        model.regions = regions_os
 
     # Remove some extra arrays if present: no longer needed
     extras = [
