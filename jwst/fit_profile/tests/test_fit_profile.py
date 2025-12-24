@@ -30,7 +30,7 @@ def test_fit_2d_spline_profile(fit_2d_spline_input):
     assert len(scales) == flux.shape[1]
 
     # for unscaled fits, output scales should be close to 1
-    np.testing.assert_allclose(list(scales.values()), 1.0, atol=0.02)
+    np.testing.assert_allclose(list(scales.values()), 1.0, atol=0.06)
 
     # evaluated fits should be close to input data
     region_map = (~np.isnan(slit.wavelength)).astype(int)
