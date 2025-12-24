@@ -47,19 +47,19 @@ def miri_mrs_model(detector="MIRIFUSHORT", channel="12", band="SHORT", shape=(10
 
 
 def _add_source(model, region_map, along_x=True, bright_factor=10.0):
-    ysize, xsize = model.data.shape
+    ysize, xsize = model.data.shape[-2:]
     x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
     slice_numbers = np.unique(region_map[region_map > 0])
     for slice_num in slice_numbers:
         indx = region_map == slice_num
         if along_x:
-            model.data[indx] = profile_1d(y[indx], amplitude=1.0, baseline=0.0)
+            model.data[..., indx] = profile_1d(y[indx], amplitude=1.0, baseline=0.0)
         else:
-            model.data[indx] = profile_1d(x[indx], amplitude=1.0, baseline=0.0)
+            model.data[..., indx] = profile_1d(x[indx], amplitude=1.0, baseline=0.0)
 
         # Make one slice brighter, for threshold tests
         if slice_num == slice_numbers[len(slice_numbers) // 2]:
-            model.data[indx] *= bright_factor
+            model.data[..., indx] *= bright_factor
 
 
 def miri_mrs_model_with_source():
@@ -105,7 +105,6 @@ def nirspec_ifu_model_with_source(wcs_style="coordinates"):
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.var_poisson = np.zeros(shape)
     model.var_rnoise = np.zeros(shape)
-    model.var_flat = np.zeros(shape)
     model.pathloss_point = np.zeros(shape)
 
     return model
@@ -116,11 +115,22 @@ def nirspec_slit_model_with_source():
     model = datamodels.ImageModel(hdul)
     hdul.close()
 
-    model.data = np.full((2048, 2048), np.nan)
+    shape = (2048, 2048)
+    model.data = np.full(shape, np.nan)
+    model.err = np.zeros(shape)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
     model = AssignWcsStep.call(model)
     model = Extract2dStep.call(model)
 
     for slit in model.slits:
+        slit.meta.photometry.pixelarea_steradians = 1.0
+        slit.meta.photometry.pixelarea_arcsecsq = 1.0
+        if slit.name == model.meta.instrument.fixed_slit:
+            slit.meta.bunit_data = "MJy"
+        else:
+            slit.meta.bunit_data = "MJy/sr"
         region_map = (~np.isnan(slit.wavelength)).astype(int)
         _add_source(slit, region_map)
 
