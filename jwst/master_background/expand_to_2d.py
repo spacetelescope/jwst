@@ -144,7 +144,7 @@ def create_bkg(input_data, tab_wavelength, tab_background, allow_mos=False):
         )
 
     # Handle MIRI LRS
-    elif isinstance(input_data, datamodels.ImageModel):
+    elif isinstance(input_data, (datamodels.ImageModel, datamodels.SlitModel)):
         background = bkg_for_image(input_data, tab_wavelength, tab_background)
 
     # Handle MIRI MRS and NIRSpec IFU

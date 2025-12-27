@@ -712,6 +712,8 @@ def copy_keyword_info(slit, slitname, spec):
     copy_attributes = [
         "slitlet_id",
         "source_id",
+        "ta_xpos",
+        "ta_ypos",
         "source_xpos",
         "source_ypos",
         "source_ra",
