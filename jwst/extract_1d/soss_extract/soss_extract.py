@@ -1695,7 +1695,7 @@ def run_extract1d(
     scidata, mederr = _infill_data_get_mederr(cube_model, refmask)
     nints = scidata.shape[0]
 
-    # Prepare the reference file arguments.
+    # Construct detector model attributes from reference files using PASTASOSS
     order_models = get_ref_file_args(ref_files, mederr=mederr, orders_requested=order_list)
 
     # Pre-compute the weights for box extraction (used in modeling and extraction)
