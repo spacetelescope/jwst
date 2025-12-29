@@ -129,6 +129,7 @@ def miri_mrs():
     # Mock a wcs that just returns 1 for alpha, beta, lam
     transform = Mapping((0, 1, 1), n_inputs=2) | Const1D(1) & Const1D(1) & Const1D(1)
     model.meta.wcs = gwcs.WCS([("detector", transform), ("alpha_beta", None)])
+
     return model, bad_idx
 
 

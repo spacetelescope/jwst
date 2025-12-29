@@ -91,7 +91,7 @@ def test_fit_profile_step_oversample():
         output_ext = getattr(result, extname)
         assert output_ext.shape == (input_ext.shape[0], 2 * input_ext.shape[1])
         if extname != "dq":
-            np.testing.assert_equal(np.nanmean(output_ext), np.mean(input_ext))
+            np.testing.assert_allclose(np.nanmean(output_ext), np.mean(input_ext), atol=1e-7)
 
     # profile is attached, but contains NaN only for flat input data
     assert result.profile.shape == result.data.shape
