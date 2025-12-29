@@ -2,16 +2,16 @@
 API
 ===
 
-Main API
-========
+Public Step API
+===============
 
 .. automodapi:: jwst.ami.ami_analyze_step
    :no-inheritance-diagram:
 
 .. _ami_analyze_other_api:
 
-Other API
-=========
+Complete Developer API
+======================
 
 (Some API here may also be used in :ref:`ami_normalize_step`.)
 
