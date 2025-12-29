@@ -8,6 +8,7 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 
 # step imports
+from jwst.adaptive_trace_model import adaptive_trace_model_step
 from jwst.assign_wcs import assign_wcs_step
 from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.background import background_step
@@ -17,7 +18,6 @@ from jwst.clean_flicker_noise import clean_flicker_noise_step
 from jwst.cube_build import cube_build_step
 from jwst.extract_1d import extract_1d_step
 from jwst.extract_2d import extract_2d_step
-from jwst.fit_profile import fit_profile_step
 from jwst.flatfield import flat_field_step
 from jwst.fringe import fringe_step
 from jwst.imprint import imprint_step
@@ -64,7 +64,7 @@ class Spec2Pipeline(Pipeline):
     assign_wcs, badpix_selfcal, msa_flagging, clean_flicker_noise, bkg_subtract,
     imprint_subtract, extract_2d, master_background_mos, targ_centroid, wavecorr,
     flat_field, srctype, straylight, fringe, residual_fringe, pathloss,
-    barshadow, wfss_contam, photom, fit_profile, pixel_replace, resample_spec,
+    barshadow, wfss_contam, photom, adaptive_trace_model, pixel_replace, resample_spec,
     cube_build, and extract_1d.
     """
 
@@ -97,7 +97,7 @@ class Spec2Pipeline(Pipeline):
         "barshadow": barshadow_step.BarShadowStep,
         "wfss_contam": wfss_contam_step.WfssContamStep,
         "photom": photom_step.PhotomStep,
-        "fit_profile": fit_profile_step.FitProfileStep,
+        "adaptive_trace_model": adaptive_trace_model_step.AdaptiveTraceModelStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "resample_spec": resample_spec_step.ResampleSpecStep,
         "cube_build": cube_build_step.CubeBuildStep,
@@ -412,8 +412,9 @@ class Spec2Pipeline(Pipeline):
             if exp_type == "MIR_MRS" and self.cube_build.output_type is None:
                 self.cube_build.output_type = "multi"
             resampled = calibrated.copy()
-            # First call fit_profile and pixel_replace then call cube_build step for IFU data.
-            resampled = self.fit_profile.run(resampled)
+            # First call adaptive_trace_model and pixel_replace then
+            # call cube_build step for IFU data.
+            resampled = self.adaptive_trace_model.run(resampled)
             resampled = self.pixel_replace.run(resampled)
             resampled = self.cube_build.run(resampled)
             if query_step_status(resampled, "cube_build") == "COMPLETE":

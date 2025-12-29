@@ -2,25 +2,25 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import ImageModel
 
+from jwst.adaptive_trace_model.adaptive_trace_model_step import AdaptiveTraceModelStep
+from jwst.adaptive_trace_model.tests import helpers
 from jwst.datamodels import ModelContainer
-from jwst.fit_profile.fit_profile_step import FitProfileStep
-from jwst.fit_profile.tests import helpers
 
 
 @pytest.mark.parametrize("mode", ["MIR_MRS", "NRS_IFU"])
-def test_fit_profile_step_success(mode):
+def test_adaptive_trace_model_step_success(mode):
     if mode == "MIR_MRS":
         model = helpers.miri_mrs_model()
     else:
         model = helpers.nirspec_ifu_model_with_source()
-    result = FitProfileStep.call(model, oversample=1, threshsig=100000)
+    result = AdaptiveTraceModelStep.call(model, oversample=1, threshsig=100000)
 
     # step is complete
-    assert result.meta.cal_step.fit_profile == "COMPLETE"
+    assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
     # output is not the same as input
     assert result is not model
-    assert model.meta.cal_step.fit_profile is None
+    assert model.meta.cal_step.adaptive_trace_model is None
 
     # data is unchanged with oversample=1
     np.testing.assert_equal(result.data, model.data)
@@ -33,10 +33,10 @@ def test_fit_profile_step_success(mode):
     result.close()
 
 
-def test_fit_profile_step_with_source():
+def test_adaptive_trace_model_step_with_source():
     model = helpers.miri_mrs_model_with_source()
-    result = FitProfileStep.call(model, oversample=1)
-    assert result.meta.cal_step.fit_profile == "COMPLETE"
+    result = AdaptiveTraceModelStep.call(model, oversample=1)
+    assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
     # data is unchanged with oversample=1
     np.testing.assert_equal(result.data, model.data)
@@ -57,14 +57,14 @@ def test_fit_profile_step_with_source():
     result.close()
 
 
-def test_fit_profile_step_negative_mean():
+def test_adaptive_trace_model_step_negative_mean():
     model = helpers.miri_mrs_model_with_source()
 
     # Add a significant negative mean value to the data
     original_max = np.nanmax(model.data)
     model.data -= 100
 
-    result = FitProfileStep.call(model, oversample=1)
+    result = AdaptiveTraceModelStep.call(model, oversample=1)
     det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
     indx = det2ab_transform.label_mapper.mapper == 120
     assert np.all(np.isnan(result.profile[~indx]))
@@ -79,10 +79,10 @@ def test_fit_profile_step_negative_mean():
     result.close()
 
 
-def test_fit_profile_step_oversample():
+def test_adaptive_trace_model_step_oversample():
     model = helpers.miri_mrs_model()
-    result = FitProfileStep.call(model, oversample=2)
-    assert result.meta.cal_step.fit_profile == "COMPLETE"
+    result = AdaptiveTraceModelStep.call(model, oversample=2)
+    assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
     # data is twice the size of the input along the x axis
     extnames = ["data", "dq", "err", "var_poisson", "var_rnoise", "var_flat"]
@@ -102,7 +102,7 @@ def test_fit_profile_step_oversample():
 
 
 @pytest.mark.parametrize("mode", ["MIR_MRS", "NRS_IFU", "NRS_IFU_SLICE_WCS"])
-def test_fit_profile_step_oversample_with_source(mode):
+def test_adaptive_trace_model_step_oversample_with_source(mode):
     threshsig = 10.0
     if mode == "MIR_MRS":
         model = helpers.miri_mrs_model_with_source()
@@ -110,8 +110,8 @@ def test_fit_profile_step_oversample_with_source(mode):
         model = helpers.nirspec_ifu_model_with_source(wcs_style="slice")
     else:
         model = helpers.nirspec_ifu_model_with_source()
-    result = FitProfileStep.call(model, oversample=2, slopelim=0.05, threshsig=threshsig)
-    assert result.meta.cal_step.fit_profile == "COMPLETE"
+    result = AdaptiveTraceModelStep.call(model, oversample=2, slopelim=0.05, threshsig=threshsig)
+    assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
     # data is twice the size of the input along the x axis
     extnames = ["data", "dq", "err", "var_poisson", "var_rnoise", "var_flat"]
@@ -147,25 +147,25 @@ def test_fit_profile_step_oversample_with_source(mode):
     result.close()
 
 
-def test_fit_profile_step_with_container():
+def test_adaptive_trace_model_step_with_container():
     model = helpers.miri_mrs_model()
     container = ModelContainer([model, model.copy()])
-    result = FitProfileStep.call(container, oversample=1)
+    result = AdaptiveTraceModelStep.call(container, oversample=1)
 
     assert result is not container
     assert isinstance(result, ModelContainer)
     for input_model, output_model in zip(container, result, strict=True):
         assert input_model is not output_model
-        assert input_model.meta.cal_step.fit_profile is None
-        assert output_model.meta.cal_step.fit_profile == "COMPLETE"
+        assert input_model.meta.cal_step.adaptive_trace_model is None
+        assert output_model.meta.cal_step.adaptive_trace_model == "COMPLETE"
         assert output_model.hasattr("profile")
 
 
-def test_fit_profile_unsupported_model(caplog):
+def test_adaptive_trace_model_unsupported_model(caplog):
     model = ImageModel()
-    result = FitProfileStep.call(model)
+    result = AdaptiveTraceModelStep.call(model)
     assert "only implemented for IFU" in caplog.text
 
     assert result is not model
-    assert result.meta.cal_step.fit_profile == "SKIPPED"
-    assert model.meta.cal_step.fit_profile is None
+    assert result.meta.cal_step.adaptive_trace_model == "SKIPPED"
+    assert model.meta.cal_step.adaptive_trace_model is None
