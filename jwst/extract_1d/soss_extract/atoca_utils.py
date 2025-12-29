@@ -1956,7 +1956,7 @@ class Tikhonov:
 
             # Print
             message = f"{i_fac + 1}/{len(factors)}"
-            log.info(message)
+            log.debug(message)
 
         # Convert to arrays
         sln = np.array(sln)

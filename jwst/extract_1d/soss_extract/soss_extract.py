@@ -1,5 +1,6 @@
 import logging
 import time
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -345,8 +346,10 @@ def _infill_data_get_mederr(cube_model, refmask, ninterp=9):
     # Use of the median uncertainty means that the matrices used in
     # the ATOCA algorithm are shared between all integrations.
 
-    mederr = np.nanmedian(cube_model.err, axis=0)
-    meddata = np.nanmedian(data_nanreplaced, axis=0)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "All-NaN slice encountered", RuntimeWarning)
+        mederr = np.nanmedian(cube_model.err, axis=0)
+        meddata = np.nanmedian(data_nanreplaced, axis=0)
 
     mederr[allbad] = np.inf
     mederr[refmask] = np.inf
@@ -1048,25 +1051,29 @@ class Integration:
             tikfacs_out["Order 1"] = tikfacs_in["Order 1"]
 
         # Run the extract method of the Engine.
-        log.info("Running extraction engine for overlapping orders 1 & 2...")
+        log.debug("Running extraction engine for overlapping orders 1 & 2...")
 
         # Precompute the inverse of the design matrix and the values divided
         # by the uncertainties.  This makes the solution of the matrix equation
         # only a matrix multiplication.
 
         if self.order_models[0].m_inv is None:
+            log.info("Precomputing the inverse of the design matrix for Order 1+2 modeling")
+
             _m_inv, _bmat = engine.precompute_detector_model(
                 self.scidata_bkg, self.scierr, tikfac=tikfacs_out["Order 1"]
             )
             self.order_models[0].m_inv = _m_inv
             self.order_models[0].bmat = _bmat
 
-        y_over_err = (self.scidata_bkg / self.order_models[0].mederr)[~engine.mask]
-        f_k = self.order_models[0].m_inv.dot(self.order_models[0].bmat.T * y_over_err)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "invalid value encountered in divide", RuntimeWarning)
+            y_over_err = (self.scidata_bkg / self.order_models[0].mederr)[~engine.mask]
+            f_k = self.order_models[0].m_inv.dot(self.order_models[0].bmat.T * y_over_err)
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
         # Model the traces for each order separately.
-        log.info("Building decontaminated trace models and spectra for Order 1 and Order 2 red.")
+        log.debug("Building decontaminated trace models and spectra for Order 1 and Order 2 red.")
         tracemodels = {}
         for i_order, _order in enumerate([1, 2]):
             tracemodel_ord, spec_ord = _build_tracemodel_order(
@@ -1100,7 +1107,7 @@ class Integration:
 
             idx_order = np.array(self.order_indices)[np.array(self.order_list) == order][0]
             order_str = self.order_strs[idx_order]
-            log.info(f"Generate model for well-separated part of {order_str}")
+            log.debug(f"Generate model for well-separated part of {order_str}")
             order_model = self.order_models[idx_order]
 
             # Use provided tikfac if given=
@@ -1314,7 +1321,7 @@ class Integration:
             decontaminated_data[order] = decont
         return decontaminated_data
 
-    def extract_image(self, decontaminated_data, bad_pix="model", tracemodels=None):
+    def extract_image(self, decontaminated_data, bad_pix="model", tracemodels=None, verbose=False):
         """
         Perform the box-extraction on the image using the trace model to correct for contamination.
 
@@ -1329,6 +1336,8 @@ class Integration:
             'model' option uses `tracemodels` to replace the bad pixels.
         tracemodels : dict
             Dictionary of the modeled detector images for each order.
+        verbose : bool
+            Print bad pixel imputation messages to log.info?
 
         Returns
         -------
@@ -1353,7 +1362,8 @@ class Integration:
             decont = decontaminated_data[order]
             # Replace bad pixels with trace model
             if (bad_pix == "model") and (order in list(tracemodels.keys())):
-                log.info(f"Replacing bad pixels in {order} with trace model.")
+                if verbose:
+                    log.info(f"Replacing bad pixels in {order} with trace model.")
                 # Some pixels might not be modeled by the bad pixel models
                 is_modeled = np.isfinite(tracemodels[order])
                 # Replace bad pixels
@@ -1377,10 +1387,11 @@ class Integration:
                 scimask_ord = np.where(is_modeled, False, self.scimask)
 
             else:
-                log.info(
-                    f"Bad pixels in {order} will be masked instead of modeled: "
-                    "Trace model unavailable or not requested."
-                )
+                if verbose:
+                    log.info(
+                        f"Bad pixels in {order} will be masked instead of modeled: "
+                        "Trace model unavailable or not requested."
+                    )
                 scimask_ord = self.scimask
                 scierr_ord = self.scierr
 
@@ -1405,7 +1416,11 @@ def _process_one_integration(
     generate_model=True,
     int_num=None,
 ):
-    log.info(f"Processing integration {int_num}")
+    if type(int_num) is int:
+        log.info(f"Processing integration {int_num}")
+
+    # Print verbose log info only on the first integration.
+    verbose = int_num == 1
 
     if tikfacs_in is None:
         tikfacs_in = {"Order 1": None, "Order 2": None, "Order 3": None}
@@ -1445,7 +1460,8 @@ def _process_one_integration(
                 f" with {wave_grid.size} points"
             )
         else:
-            log.info("Using previously computed or user specified wavelength grid.")
+            if verbose:
+                log.info("Using previously computed or user specified wavelength grid.")
 
         # Model the image.
         try:
@@ -1489,9 +1505,7 @@ def _process_one_integration(
 
     # Use the bad pixel models to perform a de-contaminated extraction.
     fluxes, fluxerrs, npixels = integration.extract_image(
-        data_to_extract,
-        bad_pix=soss_kwargs["bad_pix"],
-        tracemodels=tracemodels,
+        data_to_extract, bad_pix=soss_kwargs["bad_pix"], tracemodels=tracemodels, verbose=verbose
     )
 
     # Save trace models for output reference
@@ -1725,6 +1739,8 @@ def run_extract1d(
     rng = np.random.default_rng(seed=42)
     scidata_typical += rng.normal(0, mederr * np.sqrt((nints - 1) / nints))
 
+    log.info("Computing order models and Tikhonov factors from the mean integration")
+
     _, _, _, tikfacs_first, wave_grid_first = _process_one_integration(
         scidata_typical,
         mederr,
@@ -1737,11 +1753,10 @@ def run_extract1d(
         wave_grid=wave_grid,
         tikfacs_in=tikfacs_in,
         generate_model=generate_model,
-        int_num=1,
     )
 
     log.info(
-        "Tikhonov factors and wavelength grid from a representative "
+        "Tikhonov factors and wavelength grid computed from the mean "
         "integration will be applied to all integrations."
     )
 
