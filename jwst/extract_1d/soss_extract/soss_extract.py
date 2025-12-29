@@ -328,7 +328,6 @@ def _infill_data_get_mederr(cube_model, refmask, ninterp=9):
     ninterp : int, optional
         Number of neighboring images (in time) to use to impute missing data.
         Used with ndimage.median_filter.  Should be odd.
-        Default 9.
 
     Returns
     -------
