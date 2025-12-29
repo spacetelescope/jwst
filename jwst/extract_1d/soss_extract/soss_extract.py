@@ -401,7 +401,6 @@ def _refine_tikfac(tiktests, tikho_struct, engine, niter_refine=3):
         of-fit quantities have been calculated
     niter_refine : int
         Number of times to refine the calculation by adding two points.
-        Default 3.
 
     Returns
     -------
