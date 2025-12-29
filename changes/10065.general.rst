@@ -1,0 +1,1 @@
+Changes to st_fitsdiff, improving some of the reporting and fixing a bug. Added new unit tests.
