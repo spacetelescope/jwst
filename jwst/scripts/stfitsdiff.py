@@ -102,7 +102,7 @@ def main():
         "--rtol",
         dest="rtol",
         action="store",
-        default=1e-5,
+        default=0.0,
         type=float,
         help="The relative difference to allow when comparing two float values either in "
         "header values, image arrays, or table columns.",
@@ -113,7 +113,7 @@ def main():
         "--atol",
         dest="atol",
         action="store",
-        default=1e-7,
+        default=0.0,
         type=float,
         help="The allowed absolute difference.",
     )
@@ -187,7 +187,7 @@ def main():
         "report_pixel_loc_diffs": args.report_pixel_loc_diffs,
     }
 
-    ignore_hdus = ["ASDF"]
+    ignore_hdus = []
     if args.ignore_hdus is not None:
         ignore_hdus = _check_arglist(args.ignore_hdus, ignore_hdus)
         # Check if there are any number extensions in ignore_hdus
@@ -196,12 +196,12 @@ def main():
                 ignore_hdus[exti] = int(ext)
     stfitsdiff_default_kwargs["ignore_hdus"] = ignore_hdus
 
-    ignore_keywords = ["DATE", "CAL_VER", "CAL_VCS", "CRDS_VER", "CRDS_CTX", "NAXIS1", "TFORM*"]
+    ignore_keywords = []
     if args.ignore_keywords is not None:
         ignore_keywords = _check_arglist(args.ignore_keywords, ignore_keywords)
     stfitsdiff_default_kwargs["ignore_keywords"] = ignore_keywords
 
-    ignore_comments = ["DATE", "CAL_VER", "CAL_VCS", "CRDS_VER", "CRDS_CTX", "NAXIS1", "TFORM*"]
+    ignore_comments = []
     if args.ignore_comments is not None:
         ignore_comments = _check_arglist(args.ignore_comments, ignore_comments)
     stfitsdiff_default_kwargs["ignore_comments"] = ignore_comments
@@ -226,13 +226,8 @@ def main():
             exit()
 
     # Find the differences
-    logger.info("\n* STScI Custom FITSDiff")
-    try:
-        diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
-        logger.info(diff.report())
-    except Exception as err:
-        logger.error("\n *** STFitsDiff crashed with the following error: \n")
-        logger.error(err)
+    diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
+    logger.info(diff.report())
 
 
 if __name__ == "__main__":
