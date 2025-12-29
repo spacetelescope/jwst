@@ -49,9 +49,9 @@ The ``targ_centroid`` step performs the following operations:
 
    * FILTEROFFSET: Provides column and row offsets specific to the observation filter
 
-#. **Assign WCS to TA image**: If the TA verification image does not already have
+#. **Assign WCS to TA verification image**: If the TA verification image does not already have
    a WCS assigned, the step invokes the :ref:`assign_wcs <assign_wcs_step>` step
-   to compute and attach the WCS to the TA image data model.
+   to compute and attach the WCS to the TA verification image data model.
 
 #. **Determine reference position**: The step computes the expected source location
    based on the TA verification image WCS and metadata.
@@ -60,7 +60,8 @@ The ``targ_centroid`` step performs the following operations:
    centered on the expected source position.
 
 #. **Find the centroid**: The centroid of the source within the cutout is determined
-   using the :attr:`~photutils.aperture.ApertureStats.centroid` method.
+   using the :func:`~photutils.centroids.centroid_2dg` method,
+   which fits the source with a 2D Gaussian.
    This yields the fitted x and y coordinates of the source in
    cutout pixel coordinates.
 
@@ -68,8 +69,8 @@ The ``targ_centroid`` step performs the following operations:
    image is stored in the input data model's ``ta_xpos`` and ``ta_ypos``
    attributes for reference.
 
-#. **Transform coordinates**: The fitted position is transformed from cutout
-   coordinates to full-frame detector coordinates, accounting for any subarray
+#. **Transform coordinates**: The fitted position is transformed from TA verification image cutout
+   coordinates to science image coordinates, accounting for any subarray
    offsets and/or dither offsets.
 
 #. **Apply filter offsets**: The FILTEROFFSET reference file corrections are
@@ -82,7 +83,7 @@ The ``targ_centroid`` step performs the following operations:
 Step Outputs
 ------------
 
-The input science exposure is returned unmodified, except with three new attributes:
+The input science exposure is returned unmodified, except with new metadata attributes:
 
 * ``ta_xpos``: The measured x-coordinate of the source
   in the TA verification image (0-indexed pixels)
