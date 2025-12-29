@@ -3,7 +3,7 @@ import shutil
 
 import pytest
 
-from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
+from jwst.datamodels import IFUImageModel, ImageModel  # type: ignore[attr-defined]
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 from jwst.stpipe import Step
 from jwst.targ_centroid.tests.helpers import (
@@ -196,8 +196,8 @@ def test_bsub_deprecated(make_test_rate_file):
 
 @pytest.mark.parametrize("use_asn", [True, False])
 def test_targ_centroid_logic(use_asn, tmp_cwd):
-    sci_model = make_empty_lrs_model()
-    sci_model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+    sci_model = make_empty_lrs_model("MIR_LRS-FIXEDSLIT")
+    sci_model = ImageModel(sci_model)  # assign_wcs can't operate on SlitModel
 
     if use_asn:
         ta_model = make_slit_data(offset=(0, 0))
