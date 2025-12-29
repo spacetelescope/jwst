@@ -7,6 +7,7 @@ from photutils.centroids import centroid_2dg
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.miri import store_dithered_position
 from jwst.extract_1d.source_location import middle_from_wcs
+from jwst.lib.basic_utils import disable_logging
 
 log = logging.getLogger(__name__)
 
@@ -174,10 +175,11 @@ def find_dither_position(model):
     """
     if not model.meta.hasattr("wcs"):
         log.info("Assigning WCS to TA verification image.")
-        try:
-            model = AssignWcsStep.call(model, sip_approx=False)
-        except Exception as e:
-            raise WCSError("Failed to assign WCS to TA verification image.") from e
+        with disable_logging(level=logging.ERROR):
+            try:
+                model = AssignWcsStep.call(model, sip_approx=False)
+            except Exception as e:
+                raise WCSError("Failed to assign WCS to TA verification image.") from e
         if model.meta.cal_step.assign_wcs != "COMPLETE":
             raise WCSError("Failed to assign WCS to TA verification image (step was skipped).")
     if not (model.meta.dither.hasattr("dithered_ra") and model.meta.dither.hasattr("dithered_dec")):
@@ -202,7 +204,6 @@ def find_dither_position(model):
 
     # Determine nominal (non-dithered) position
     ra_ref, dec_ref = model.meta.wcsinfo.ra_ref, model.meta.wcsinfo.dec_ref
-    # ra_ref, dec_ref = model.meta.wcsinfo.crval1, model.meta.wcsinfo.crval2
     ref_inputs = [ra_ref, dec_ref] + [wavelength] * (n_inputs - 2)
     ref_outputs = world_to_pixel(*ref_inputs)
     x_ref, y_ref = ref_outputs[0], ref_outputs[1]

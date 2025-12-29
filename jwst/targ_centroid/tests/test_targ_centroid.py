@@ -55,7 +55,7 @@ def mock_references(monkeypatch, mock_filteroffset_model):
     Monkeypatch the get_reference_file method to return mock reference files.
 
     This allows tests to run without requiring CRDS access, and ensures that
-    these tests won't start breaking if the values in the pathloss reference file
+    these tests won't start breaking if the values in the reference file
     are changed in CRDS.
     """
 

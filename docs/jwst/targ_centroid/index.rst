@@ -1,8 +1,8 @@
 .. _targ_centroid_step:
 
-=========
-TA Center
-=========
+=======================
+Target Centroiding Step
+=======================
 
 .. toctree::
    :maxdepth: 1

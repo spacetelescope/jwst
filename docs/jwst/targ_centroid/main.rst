@@ -10,7 +10,7 @@ position is used by downstream calibration steps, such as
 :ref:`pathloss <pathloss_step>`, to apply corrections that account
 for source positioning within the aperture.
 
-This step is applicable to MIRI LRS (Low Resolution Spectrometer) observations
+This step is applicable to MIRI Low-Resolution Spectrometer (LRS) observations
 where a TA verification image is available. Pre-launch assumptions that telescope
 pointing information would be sufficient for accurate pathloss corrections have
 been superseded by in-flight experience, which demonstrates the need to use

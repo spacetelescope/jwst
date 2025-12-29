@@ -30,7 +30,7 @@ class TargCentroidStep(Step):
 
     def process(self, step_input):
         """
-        Process target acquisition data.
+        Determine target position from TA verification image.
 
         Parameters
         ----------
@@ -134,7 +134,7 @@ class TargCentroidStep(Step):
 
         log.info(
             "Fitted source position on TA verification image: "
-            f"({result.ta_xpos:.2f}, {result.ta_ypos:.2f})\n"
+            f"({result.ta_xpos:.2f}, {result.ta_ypos:.2f})"
         )
 
         # undo dither offset of TA image.
@@ -173,8 +173,8 @@ class TargCentroidStep(Step):
         result.source_xpos = x_center
         result.source_ypos = y_center
         result.meta.cal_step.targ_centroid = "COMPLETE"
+        log.info("TA centering complete.")
         log.info(
-            "TA centering complete. \n"
             "Final source position in science data frame: "
             f"({result.source_xpos:.2f}, {result.source_ypos:.2f})"
         )

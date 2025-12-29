@@ -16,6 +16,15 @@ SLITLESS_REF = (38.5, 301.0)  # for slitless data
 SLITLESSPRISM_SHAPE = (72, 416)  # for SLITLESSPRISM subarray
 
 
+__all__ = [
+    "make_slit_data",
+    "make_slitless_data",
+    "make_empty_lrs_model",
+    "make_ta_model",
+    "make_ta_association",
+]
+
+
 def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     """
     Make a fake MIRI LRS slitless TA verification image.
@@ -61,7 +70,7 @@ def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     return data
 
 
-def add_metadata(model, exptype):
+def _add_metadata(model, exptype):
     """
     Add metadata to science or TA confirm data.
 
@@ -129,7 +138,7 @@ def make_ta_model(data, exptype):
     """
     model = dm.ImageModel()
     model.data = data
-    add_metadata(model, exptype)
+    _add_metadata(model, exptype)
 
     # override exptype as taconfirm
     model.meta.exposure.type = "MIR_TACONFIRM"
@@ -141,10 +150,9 @@ def make_slit_data(offset):
     """
     Make a fake MIRI LRS slit TA verification image.
 
-    The output data are zero everywhere except in the slit region,
-    where all data are weighted according to the pathloss correction.
+    The output data are zero everywhere except in the slit region.
     An Airy disk PSF is created at the source position plus offset,
-    noise is added, and then the weights are applied.
+    noise is added, and then the slit mask is applied.
 
     Parameters
     ----------
@@ -154,7 +162,7 @@ def make_slit_data(offset):
     Returns
     -------
     model : ImageModel
-        Simulated slit TA image model with PSF weighted by pathloss.
+        Simulated slit TA image model.
     """
     wavelength = 15.0
 
@@ -187,7 +195,7 @@ def make_slit_data(offset):
     noise = rng.normal(0, 1, data_full.shape)
     data_full += noise
 
-    # Apply slit weights to the data
+    # Apply slit mask to the data
     data = data_full * slit_mask
 
     # Add bad values near the slit source position to test their handling
@@ -213,7 +221,7 @@ def make_empty_lrs_model(exptype):
         MIRI LRS model with required metadata.
     """
     model = dm.ImageModel()
-    add_metadata(model, exptype)
+    _add_metadata(model, exptype)
 
     # Assign a WCS, then convert to SlitModel as would be done by calwebb_spec2
     # must be done in this order because AssignWcsStep doesn't like SlitModels

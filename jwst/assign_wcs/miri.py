@@ -38,7 +38,15 @@ from jwst.assign_wcs.util import (
 log = logging.getLogger(__name__)
 
 
-__all__ = ["create_pipeline", "imaging", "lrs", "ifu", "retrieve_filter_offset", "wfss"]
+__all__ = [
+    "create_pipeline",
+    "imaging",
+    "lrs",
+    "ifu",
+    "retrieve_filter_offset",
+    "store_dithered_position",
+    "wfss",
+]
 
 
 def create_pipeline(input_model, reference_files):
