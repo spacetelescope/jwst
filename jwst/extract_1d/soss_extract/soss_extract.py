@@ -350,7 +350,7 @@ def _infill_data_get_mederr(cube_model, refmask, ninterp=9):
     # Use of the median uncertainty means that the matrices used in
     # the ATOCA algorithm are shared between all integrations.
 
-    mederr = np.nanmedian(cube_model.err * 1.0, axis=0)
+    mederr = np.nanmedian(cube_model.err, axis=0)
     meddata = np.nanmedian(data_nanreplaced, axis=0)
 
     mederr[allbad] = np.inf
