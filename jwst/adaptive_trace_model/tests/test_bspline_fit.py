@@ -1,7 +1,7 @@
 import numpy as np
 
-from jwst.fit_profile import fit_profile as fp
-from jwst.fit_profile.tests.helpers import profile_1d
+from jwst.adaptive_trace_model import adaptive_trace_model as atm
+from jwst.adaptive_trace_model.tests.helpers import profile_1d
 
 
 def test_bspline_fit_flat_data():
@@ -10,7 +10,7 @@ def test_bspline_fit_flat_data():
     yvec = np.full(100, 1.0)
 
     # Fit the data with as many breakpoints as possible, one iteration
-    bspline = fp.bspline_fit(xvec, yvec)
+    bspline = atm.bspline_fit(xvec, yvec)
 
     # The fit spline should exactly reproduce the data
     np.testing.assert_allclose(bspline(xvec), yvec)
@@ -23,7 +23,7 @@ def test_bspline_fit_spikes():
     yvec[5::10] = 1
 
     # Fit the data with as many breakpoints as possible, one iteration
-    bspline = fp.bspline_fit(xvec, yvec, nbkpts=90, wrapiter=1)
+    bspline = atm.bspline_fit(xvec, yvec, nbkpts=90, wrapiter=1)
 
     # The fit spline with regular breakpoints
     # should reproduce the spikes pretty well, but not perfectly.
@@ -36,7 +36,7 @@ def test_bspline_fit_smooth_profile():
     yvec = profile_1d(xvec)
 
     # Fit the data with default breakpoints, 1 iteration
-    bspline = fp.bspline_fit(xvec, yvec, wrapiter=1)
+    bspline = atm.bspline_fit(xvec, yvec, wrapiter=1)
 
     # The fit spline with regular breakpoints
     # should reproduce the smooth profile very well
@@ -51,7 +51,7 @@ def test_bspline_fit_spacing_gap():
 
     # The extra point should be rejected and fit should be good,
     # except for the last point
-    bspline = fp.bspline_fit(xvec, yvec, wrapiter=1)
+    bspline = atm.bspline_fit(xvec, yvec, wrapiter=1)
     np.testing.assert_allclose(bspline(xvec[:-1]), yvec[:-1], rtol=1e-3)
 
 
@@ -60,7 +60,7 @@ def test_bspline_fit_too_many_gaps():
     yvec = profile_1d(xvec)
 
     # too many gaps compared to breakpoint spacing: spline fit returns None
-    bspline = fp.bspline_fit(xvec, yvec, wrapiter=1)
+    bspline = atm.bspline_fit(xvec, yvec, wrapiter=1)
     assert bspline is None
 
 
@@ -68,7 +68,7 @@ def test_bspline_fit_too_few_points():
     # Vector is too small for cubic fit
     xvec = np.arange(10, dtype=float)
     yvec = np.zeros(10, dtype=float)
-    bspline = fp.bspline_fit(xvec, yvec, wrapiter=1)
+    bspline = atm.bspline_fit(xvec, yvec, wrapiter=1)
     assert bspline is None
 
 
@@ -78,7 +78,7 @@ def test_bspline_fit_failed():
     yvec = np.zeros(100, dtype=float)
     yvec[10:50] = np.nan
 
-    bspline = fp.bspline_fit(xvec, yvec, wrapiter=1)
+    bspline = atm.bspline_fit(xvec, yvec, wrapiter=1)
     assert bspline is None
 
 
@@ -91,7 +91,7 @@ def test_bspline_fit_outlier_rejection(caplog):
     yvec[10] = 10
 
     # Fit with two iterations
-    bspline = fp.bspline_fit(xvec, yvec, wrapiter=2, verbose=True)
+    bspline = atm.bspline_fit(xvec, yvec, wrapiter=2, verbose=True)
 
     # The outlier (plus surrounding points) is rejected in iteration 1;
     # any further iterations would reject the profile peak
@@ -116,7 +116,7 @@ def test_bspline_fit_reject_too_many(caplog):
     yvec[13::29] = 10
 
     # Fit with 10 iterations
-    bspline = fp.bspline_fit(xvec, yvec, wrapiter=10, verbose=True)
+    bspline = atm.bspline_fit(xvec, yvec, wrapiter=10, verbose=True)
 
     # Stops before reaching the end of the iterations because
     # too many data points are rejected

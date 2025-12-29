@@ -8,6 +8,7 @@ from astropy.modeling.models import Mapping
 from stcal.alignment import combine_sregions
 
 # step imports
+from jwst.adaptive_trace_model import adaptive_trace_model_step
 from jwst.assign_mtwcs import assign_mtwcs_step
 from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
@@ -16,7 +17,6 @@ from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multicombined, make_wfss_multiexposure
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
-from jwst.fit_profile import fit_profile_step
 from jwst.lib.exposure_types import is_moving_target
 from jwst.master_background import master_background_step
 from jwst.master_background.master_background_step import split_container
@@ -43,7 +43,7 @@ class Spec3Pipeline(Pipeline):
     Process JWST spectroscopic exposures from Level 2b to 3.
 
     Included steps are: assign_mtwcs, master_background,
-    outlier_detection, fit_profile, pixel_replace, resample_spec,
+    outlier_detection, adaptive_trace_model, pixel_replace, resample_spec,
     cube_build, extract_1d, photom, combine_1d, and spectral_leak.
     """
 
@@ -57,7 +57,7 @@ class Spec3Pipeline(Pipeline):
         "assign_mtwcs": assign_mtwcs_step.AssignMTWcsStep,
         "master_background": master_background_step.MasterBackgroundStep,
         "outlier_detection": outlier_detection_step.OutlierDetectionStep,
-        "fit_profile": fit_profile_step.FitProfileStep,
+        "adaptive_trace_model": adaptive_trace_model_step.AdaptiveTraceModelStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "resample_spec": resample_spec_step.ResampleSpecStep,
         "cube_build": cube_build_step.CubeBuildStep,
@@ -105,7 +105,9 @@ class Spec3Pipeline(Pipeline):
         # steps.
         self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
         self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
-        self.fit_profile.save_model = invariant_filename(self.fit_profile.save_model)
+        self.adaptive_trace_model.save_model = invariant_filename(
+            self.adaptive_trace_model.save_model
+        )
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
@@ -228,8 +230,8 @@ class Spec3Pipeline(Pipeline):
                     self.outlier_detection.mode = "spec"
                 result = self.outlier_detection.run(result)
 
-                # fit a profile to the model and optionally oversample the data
-                result = self.fit_profile.run(result)
+                # model the spectral trace and optionally oversample the data
+                result = self.adaptive_trace_model.run(result)
 
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.

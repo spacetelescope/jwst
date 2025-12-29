@@ -2,19 +2,19 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
+from jwst.adaptive_trace_model.adaptive_trace_model import fit_and_oversample
 from jwst.datamodels import ModelContainer
-from jwst.fit_profile.fit_profile import fit_and_oversample
 from jwst.stpipe import Step
 
-__all__ = ["FitProfileStep"]
+__all__ = ["AdaptiveTraceModelStep"]
 
 log = logging.getLogger(__name__)
 
 
-class FitProfileStep(Step):
-    """Fit a spatial profile to a spectral image."""
+class AdaptiveTraceModelStep(Step):
+    """Fit an adaptive trace model to a spectral image."""
 
-    class_alias = "fit_profile"
+    class_alias = "adaptive_trace_model"
 
     spec = """
     threshsig = float(default=10) # Limiting sigma for fitting splines
@@ -45,13 +45,13 @@ class FitProfileStep(Step):
 
         for model in models:
             if not isinstance(model, datamodels.IFUImageModel):
-                log.warning("The fit_profile step is only implemented for IFU data.")
+                log.warning("The adaptive_trace_model step is only implemented for IFU data.")
                 log.warning("Skipping processing for datamodel type %s.", str(output_model))
-                model.meta.cal_step.fit_profile = "SKIPPED"
+                model.meta.cal_step.adaptive_trace_model = "SKIPPED"
                 continue
 
             # Update the model in place
-            log.info("Fitting profile for %s", model.meta.filename)
+            log.info("Fitting trace profile for %s", model.meta.filename)
             fit_and_oversample(
                 model,
                 threshsig=self.threshsig,
@@ -59,6 +59,6 @@ class FitProfileStep(Step):
                 oversample_factor=self.oversample,
             )
 
-            model.meta.cal_step.fit_profile = "COMPLETE"
+            model.meta.cal_step.adaptive_trace_model = "COMPLETE"
 
         return output_model
