@@ -1,0 +1,3 @@
+Add a new ``fit_profile`` step to the spec2 and spec3 pipelines to create spatial profiles for spectral data.
+Optionally, the spatial profile can be used to oversample the flux data, prior to resampling or cube building, to address undersampling effects.
+Only IFU data is supported in the initial implementation.

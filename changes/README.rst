@@ -76,6 +76,7 @@ Stage 2
 - ``<PR#>.pathloss.rst``
 - ``<PR#>.barshadow.rst``
 - ``<PR#>.photom.rst``
+- ``<PR#>.fit_profiile.rst``
 - ``<PR#>.pixel_replace.rst``
 - ``<PR#>.resample_spec.rst``
 - ``<PR#>.residual_fringe.rst``
