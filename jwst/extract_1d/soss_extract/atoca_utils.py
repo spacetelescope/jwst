@@ -761,8 +761,8 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6, mi
     atol : float, optional
         The desired absolute tolerance. Default is 1e-6.
     min_dlambda : float, optional
-        The minimum wavelength spacing in the grid, in microns.  Intended
-        to prevent the grid from reaching absurd degrees of oversampling
+        The minimum wavelength spacing in the grid, in microns. Prevents the grid from reaching
+        arbitrarily fine degrees of oversampling
         over small wavelength ranges.
         Default 1e-5, or about 0.01 pixels on the detector.
 
