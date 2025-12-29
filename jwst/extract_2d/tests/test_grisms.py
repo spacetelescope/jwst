@@ -475,16 +475,16 @@ def test_radec_to_source_ids_none(source_ids_in):
         np.testing.assert_allclose(source_ids, np.atleast_1d(source_ids_in))
 
 
-def test_radec_to_source_ids_no_match(log_watcher):
+def test_radec_to_source_ids_no_match():
     source_catalog = get_pkg_data_filename(
         "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
     )
     ra = 0.0
     dec = 0.0
-    watcher = log_watcher("jwst.extract_2d.grisms", message="No catalog source found")
-    source_ids = radec_to_source_ids(source_catalog, source_ra=[ra], source_dec=[dec], max_sep=0.5)
-    assert source_ids is None
-    watcher.assert_seen()
+    with pytest.raises(
+        ValueError, match="source_ra and source_dec were provided, but no sources were found"
+    ):
+        radec_to_source_ids(source_catalog, source_ra=[ra], source_dec=[dec], max_sep=0.5)
 
 
 @pytest.mark.filterwarnings("ignore: Card is too long")

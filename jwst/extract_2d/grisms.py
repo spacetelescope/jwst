@@ -789,4 +789,9 @@ def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=Non
 
     if source_ids:
         return np.unique(np.atleast_1d(source_ids))  # return unique IDs only
+    if source_ra is not None or source_dec is not None:
+        raise ValueError(
+            "source_ra and source_dec were provided, but no sources were found "
+            "within source_max_sep of the requested location."
+        )
     return None
