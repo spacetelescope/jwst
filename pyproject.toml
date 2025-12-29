@@ -361,6 +361,11 @@ showcontent = true
 # steps
 
 [[tool.towncrier.type]]
+directory = "adaptive_trace_model"
+name = "adaptive_trace_model (spec2, spec3)"
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "align_refs"
 name = 'align_refs (coron3)'
 showcontent = true
@@ -453,11 +458,6 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "firstframe"
 name = 'firstframe (detector1 MIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "fit_profile"
-name = "fit_profile (spec2, spec3)"
 showcontent = true
 
 [[tool.towncrier.type]]
