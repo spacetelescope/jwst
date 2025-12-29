@@ -1760,7 +1760,8 @@ def run_extract1d(
         "integration will be applied to all integrations."
     )
 
-    all_results = []
+    all_tracemodels = {order: [] for order in box_weights}
+    output_spec_list = {order: [] for order in box_weights}
 
     t0 = time.time()
 
@@ -1774,7 +1775,7 @@ def run_extract1d(
 
         scierr_i[bad] = mederr[bad] * 10
 
-        all_results += [
+        tracemodels, spec_list_data, atoca_list_data, tikfacs_out, wave_grid = (
             _process_one_integration(
                 scidata[i],
                 scierr_i,
@@ -1789,39 +1790,19 @@ def run_extract1d(
                 generate_model=generate_model,
                 int_num=i + 1,
             )
-        ]
+        )
 
-    t1 = time.time()
-    log.info(f"Wall clock time for processing {nimages} integrations: {(t1 - t0):.1f} sec")
-
-    # Set up the dictionaries of results using the first integration.
-
-    tracemodels, spec_list_data, atoca_list_data, _, _ = all_results[0]
-
-    # Reconstruct SpecModels from dict
-    spec_list = {
-        order: _reconstruct_spec_from_data(spec_list_data[order]) for order in spec_list_data
-    }
-    for atoca_spec_data in atoca_list_data:
-        atoca_spec = _reconstruct_spec_from_data(atoca_spec_data)
-        output_atoca.spec.append(atoca_spec)
-
-    # Prepare arguments for processing remaining integrations
-
-    all_tracemodels = {order: [tracemodels[order]] for order in tracemodels}
-    output_spec_list = {order: [spec_list[order]] for order in spec_list}
-
-    # Now add in the rest of the integrations
-
-    for tracemodels, spec_list_data, atoca_list_data, _, _ in all_results[1:]:
         for order in tracemodels:
             all_tracemodels[order].append(tracemodels[order])
         for order in spec_list_data:
-            spec = _reconstruct_spec_from_data(spec_list_data[order])
-            output_spec_list[order].append(spec)
+            reconstructed_spec = _reconstruct_spec_from_data(spec_list_data[order])
+            output_spec_list[order].append(reconstructed_spec)
         for atoca_spec_data in atoca_list_data:
             atoca_spec = _reconstruct_spec_from_data(atoca_spec_data)
             output_atoca.spec.append(atoca_spec)
+
+    t1 = time.time()
+    log.info(f"Wall clock time for processing {nimages} integrations: {(t1 - t0):.1f} sec")
 
     # Make a TSOSpecModel from the output spec list
     for order in output_spec_list:
