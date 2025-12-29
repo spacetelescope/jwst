@@ -209,7 +209,7 @@ class DetectorModelOrder:
         return oversample_grid(wave_grid, n_os=n_os)
 
 
-def get_ref_file_args(ref_files, mederr=None, orders_requested=None):
+def get_ref_file_args(ref_files, orders_requested=None):
     """
     Prepare the reference files for the extraction engine.
 
@@ -218,10 +218,6 @@ def get_ref_file_args(ref_files, mederr=None, orders_requested=None):
     ref_files : dict
         A dictionary of the reference file DataModels, along with values
         for the subarray and pwcpos, i.e. the pupil wheel position.
-    mederr : np.ndarray or None, optional
-        If an array, this should be the median uncertainty across integrations.
-        Will be saved as the mederr attribute of each returned detector_model.
-        Default None
     orders_requested : list or None, optional
         A list of the spectral orders requested for extraction.
         If None, all orders in the pastasoss reference file are used.
@@ -309,7 +305,6 @@ def get_ref_file_args(ref_files, mederr=None, orders_requested=None):
         detector_model.kernel = kernel
         detector_model.kernel_native = kernel
         detector_model.kernel_func = kernel
-        detector_model.mederr = mederr
         detector_models.append(detector_model)
 
     return detector_models
@@ -1696,7 +1691,10 @@ def run_extract1d(
     nints = scidata.shape[0]
 
     # Construct detector model attributes from reference files using PASTASOSS
-    order_models = get_ref_file_args(ref_files, mederr=mederr, orders_requested=order_list)
+    order_models = get_ref_file_args(ref_files, orders_requested=order_list)
+    # Each order model will need the reference (median) per-pixel uncertainty
+    for om in order_models:
+        om.mederr = mederr
 
     # Pre-compute the weights for box extraction (used in modeling and extraction)
     box_weights, wavelengths = _compute_box_weights(
