@@ -2,7 +2,7 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-from jwst.adaptive_trace_model.adaptive_trace_model import fit_and_oversample
+from jwst.adaptive_trace_model.trace_model import fit_and_oversample
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import Step
 
@@ -19,7 +19,7 @@ class AdaptiveTraceModelStep(Step):
     spec = """
     threshsig = float(default=10) # Limiting sigma for fitting splines
     slopelim = float(default=0.1) # Slope limit for using splines in oversample
-    oversample = float(default=1.0) # Use the profile fit to oversample the data by this factor
+    oversample = float(default=1.0) # Use the trace model to oversample the data by this factor
     skip = boolean(default=True) # By default, skip the step.
     """  # noqa: E501
 
@@ -35,7 +35,7 @@ class AdaptiveTraceModelStep(Step):
         Returns
         -------
         `~stdatamodels.jwst.datamodels.JwstDataModel`
-            The input model, updated with the fit profile.
+            The input model, updated with the fit trace model.
         """
         output_model = self.prepare_output(input_data)
         if isinstance(output_model, ModelContainer):
@@ -51,7 +51,7 @@ class AdaptiveTraceModelStep(Step):
                 continue
 
             # Update the model in place
-            log.info("Fitting trace profile for %s", model.meta.filename)
+            log.info("Fitting trace model for %s", model.meta.filename)
             fit_and_oversample(
                 model,
                 threshsig=self.threshsig,
