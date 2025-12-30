@@ -25,9 +25,9 @@ def test_adaptive_trace_model_step_success(mode):
     # data is unchanged with oversample=1
     np.testing.assert_equal(result.data, model.data)
 
-    # profile is attached, but contains NaN only for high threshold
-    assert result.profile.shape == result.data.shape
-    assert np.all(np.isnan(result.profile))
+    # trace is attached, but contains NaN only for high threshold
+    assert result.trace_model.shape == result.data.shape
+    assert np.all(np.isnan(result.trace_model))
 
     model.close()
     result.close()
@@ -41,17 +41,17 @@ def test_adaptive_trace_model_step_with_source():
     # data is unchanged with oversample=1
     np.testing.assert_equal(result.data, model.data)
 
-    # profile is attached, contains non-NaN profile for the one bright slit only
-    assert result.profile.shape == result.data.shape
+    # trace is attached, contains non-NaN trace for the one bright slit only
+    assert result.trace_model.shape == result.data.shape
     det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
     indx = det2ab_transform.label_mapper.mapper == 120
-    assert np.all(np.isnan(result.profile[~indx]))
-    assert np.sum(~np.isnan(result.profile[indx])) > 0.9 * np.sum(indx)
+    assert np.all(np.isnan(result.trace_model[~indx]))
+    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.9 * np.sum(indx)
 
-    # fit profile is a reasonable model of the slice but not perfect
+    # fit trace is a reasonable model of the slice but not perfect
     valid = indx & ~np.isnan(result.data)
     atol = 0.25 * np.nanmax(model.data)
-    np.testing.assert_allclose(result.data[valid], result.profile[valid], atol=atol)
+    np.testing.assert_allclose(result.data[valid], result.trace_model[valid], atol=atol)
 
     model.close()
     result.close()
@@ -67,13 +67,13 @@ def test_adaptive_trace_model_step_negative_mean():
     result = AdaptiveTraceModelStep.call(model, oversample=1)
     det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
     indx = det2ab_transform.label_mapper.mapper == 120
-    assert np.all(np.isnan(result.profile[~indx]))
-    assert np.sum(~np.isnan(result.profile[indx])) > 0.9 * np.sum(indx)
+    assert np.all(np.isnan(result.trace_model[~indx]))
+    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.9 * np.sum(indx)
 
-    # fit profile is a reasonable model of the slice, minus the negative mean
+    # fit trace is a reasonable model of the slice, minus the negative mean
     valid = indx & ~np.isnan(result.data)
     atol = 0.25 * original_max
-    np.testing.assert_allclose(result.data[valid] + 100, result.profile[valid], atol=atol)
+    np.testing.assert_allclose(result.data[valid] + 100, result.trace_model[valid], atol=atol)
 
     model.close()
     result.close()
@@ -93,9 +93,9 @@ def test_adaptive_trace_model_step_oversample():
         if extname != "dq":
             np.testing.assert_allclose(np.nanmean(output_ext), np.mean(input_ext), atol=1e-7)
 
-    # profile is attached, but contains NaN only for flat input data
-    assert result.profile.shape == result.data.shape
-    assert np.all(np.isnan(result.profile))
+    # trace is attached, but contains NaN only for flat input data
+    assert result.trace_model.shape == result.data.shape
+    assert np.all(np.isnan(result.trace_model))
 
     model.close()
     result.close()
@@ -128,20 +128,20 @@ def test_adaptive_trace_model_step_oversample_with_source(mode):
         else:
             assert output_ext.shape == (input_ext.shape[0] * 2, input_ext.shape[1])
 
-    # profile is attached, contains non-NaN profile for the one bright slit only
-    assert result.profile.shape == result.data.shape
+    # trace is attached, contains non-NaN trace for the one bright slit only
+    assert result.trace_model.shape == result.data.shape
     if mode == "MIR_MRS":
         indx = result.regions == 120
     else:
         indx = result.regions == 16
-    assert np.all(np.isnan(result.profile[~indx]))
-    assert np.sum(~np.isnan(result.profile[indx])) > 0.9 * np.sum(indx)
+    assert np.all(np.isnan(result.trace_model[~indx]))
+    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.9 * np.sum(indx)
 
-    # fit profile is a reasonable model of the slice but not perfect -
+    # fit trace is a reasonable model of the slice but not perfect -
     # the slice is mostly linearly interpolated
     valid = indx & ~np.isnan(result.data)
     atol = 0.25 * np.nanmax(model.data)
-    np.testing.assert_allclose(result.data[valid], result.profile[valid], atol=atol)
+    np.testing.assert_allclose(result.data[valid], result.trace_model[valid], atol=atol)
 
     model.close()
     result.close()
@@ -158,7 +158,7 @@ def test_adaptive_trace_model_step_with_container():
         assert input_model is not output_model
         assert input_model.meta.cal_step.adaptive_trace_model is None
         assert output_model.meta.cal_step.adaptive_trace_model == "COMPLETE"
-        assert output_model.hasattr("profile")
+        assert output_model.hasattr("trace_model")
 
 
 def test_adaptive_trace_model_unsupported_model(caplog):

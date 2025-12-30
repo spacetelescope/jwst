@@ -16,7 +16,7 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 
 __all__ = [
     "bspline_fit",
-    "fit_2d_spline_profile",
+    "fit_2d_spline_trace",
     "linear_oversample",
     "fit_all_regions",
     "oversample_flux",
@@ -194,7 +194,7 @@ def _get_weights_for_fit_scale(ratio, model_fit):
     return weights
 
 
-def fit_2d_spline_profile(
+def fit_2d_spline_trace(
     flux,
     alpha,
     fit_scale=None,
@@ -205,7 +205,7 @@ def fit_2d_spline_profile(
     spaceratio=1.2,
 ):
     """
-    Create a profile from spline fits to a single slit/slice image.
+    Create a trace model from spline fits to a single slit/slice image.
 
     Image must be oriented so that wavelengths are along x-axis. Each
     column is fit separately, with a window to include nearby data.
@@ -372,9 +372,9 @@ def _reindex(xmin, xmax, scale=2.0):
     return new_x, old_x
 
 
-def _profile_image(shape, spline_models, spline_scales, region_map, alpha):
+def _trace_image(shape, spline_models, spline_scales, region_map, alpha):
     """
-    Evaluate spline models at all pixels to generate a profile image.
+    Evaluate spline models at all pixels to generate a trace image.
 
     Parameters
     ----------
@@ -391,19 +391,19 @@ def _profile_image(shape, spline_models, spline_scales, region_map, alpha):
 
     Returns
     -------
-    profile : ndarray
+    trace : ndarray
         2D image containing the scaled spline data fit evaluated at
         the input alpha coordinates.  Values are NaN where no spline
         model was available.
     """
-    profile = np.full(shape, np.nan, dtype=np.float32)
+    trace = np.full(shape, np.nan, dtype=np.float32)
     alpha_slice = np.full(shape, np.nan, dtype=np.float32)
-    profile_slice = np.full(shape, np.nan, dtype=np.float32)
+    trace_slice = np.full(shape, np.nan, dtype=np.float32)
     for slnum in spline_models:
         splines = spline_models[slnum]
         scales = spline_scales[slnum]
         alpha_slice[:] = np.nan
-        profile_slice[:] = np.nan
+        trace_slice[:] = np.nan
 
         indx = region_map == slnum
         alpha_slice[indx] = alpha[indx]
@@ -417,11 +417,11 @@ def _profile_image(shape, spline_models, spline_scales, region_map, alpha):
             alpha_col = alpha_slice[:, i]
             valid_alpha = np.isfinite(alpha_col)
             spline_fit = scales[i] * splines[i](alpha_col[valid_alpha])
-            profile_slice[:, i][valid_alpha] = spline_fit
+            trace_slice[:, i][valid_alpha] = spline_fit
 
-        profile[indx] = profile_slice[indx]
+        trace[indx] = trace_slice[indx]
 
-    return profile
+    return trace
 
 
 def _linear_interp(col_y, col_flux, y_interp, edge_limit, preserve_nan=True):
@@ -537,7 +537,7 @@ def linear_oversample(
 
 def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
     """
-    Fit a profile to all regions in the flux image.
+    Fit a trace model to all regions in the flux image.
 
     Parameters
     ----------
@@ -553,7 +553,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
         the median peak value across columns in the region is below this
         threshold, a fit will not be attempted for that region.
     **fit_kwargs
-        Keyword arguments to pass to the fitting routine (see `fit_2d_spline_profile`).
+        Keyword arguments to pass to the fitting routine (see `fit_2d_spline_trace`).
 
     Returns
     -------
@@ -602,7 +602,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
             dospline = True
 
         if dospline:
-            splines, scales = fit_2d_spline_profile(
+            splines, scales = fit_2d_spline_trace(
                 data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs
             )
         else:
@@ -673,8 +673,8 @@ def oversample_flux(
     flux_os : ndarray
         The oversampled flux array, containing contributions from the evaluated
         spline models, linear interpolations, and residual corrections.
-    profile : ndarray
-        A spatial profile model, generated from the spline models evaluated at
+    trace : ndarray
+        A trace model, generated from the spline models evaluated at
         every pixel.
     """
     ysize, xsize = flux.shape
@@ -1109,7 +1109,7 @@ def fit_and_oversample(
     model, threshsig=10.0, slopelim=0.1, psfoptimal=False, oversample_factor=1.0
 ):
     """
-    Fit a spatial profile and optionally oversample an IFU datamodel.
+    Fit a trace model and optionally oversample an IFU datamodel.
 
     Parameters
     ----------
@@ -1117,7 +1117,7 @@ def fit_and_oversample(
         The input datamodel, updated in place.
     threshsig : float
         The signal threshold sigma for attempting spline fits within a slice region.
-        Lower values will create spline profiles for more slices.
+        Lower values will create spline traces for more slices.
     slopelim : float
         The normalized slope threshold for using the spline model in oversampled
         data.  Lower values will use the spline model for fainter sources.
@@ -1131,7 +1131,7 @@ def fit_and_oversample(
     Returns
     -------
     model : `~stdatamodels.jwst.datamodels.IFUImageModel`
-        The datamodel, updated with a profile image and optionally oversampled
+        The datamodel, updated with a trace image and optionally oversampled
         arrays.
     """
     # Get input data coordinates
@@ -1215,15 +1215,13 @@ def fit_and_oversample(
     )
 
     # If oversampling is not needed, evaluate the spline models to create the
-    # profile image, store it in the model, and return
+    # trace image, store it in the model, and return
     # todo - may want to check for psf_optimal param before returning
     if oversample_factor == 1:
-        profile = _profile_image(
-            flux_orig.shape, spline_models, spline_scales, region_map, alpha_orig
-        )
+        trace = _trace_image(flux_orig.shape, spline_models, spline_scales, region_map, alpha_orig)
         if rotate:
-            profile = np.rot90(profile, k=-1)
-        model.profile = profile
+            trace = np.rot90(trace, k=-1)
+        model.trace_model = trace
         return model
 
     # Oversampled array size
@@ -1245,9 +1243,9 @@ def fit_and_oversample(
         det2ab = model.meta.wcs.get_transform("detector", "alpha_beta")
         alpha_os, _, wave_os = det2ab(ysize - y_os - 1, x_os)
 
-    log.info("Oversampling the flux array from the fit profile")
+    log.info("Oversampling the flux array from the fit trace model")
     oversample_kwargs = _set_oversample_kwargs(detector)
-    flux_os, profile = oversample_flux(
+    flux_os, trace = oversample_flux(
         flux_orig,
         alpha_orig,
         region_map,
@@ -1320,7 +1318,7 @@ def fit_and_oversample(
         dq_os = np.rot90(dq_os, k=-1)
         wave_os = np.rot90(wave_os, k=-1)
         regions_os = np.rot90(regions_os, k=-1)
-        profile = np.rot90(profile, k=-1)
+        trace = np.rot90(trace, k=-1)
         for extname, error_array in errors_os.items():
             errors_os[extname] = np.rot90(error_array, k=-1)
 
@@ -1328,7 +1326,7 @@ def fit_and_oversample(
     model.data = flux_os
     model.dq = dq_os
     model.wavelength = wave_os
-    model.profile = profile
+    model.trace_model = trace
     for extname, error_array in errors_os.items():
         setattr(model, extname, error_array)
     if isinstance(model, datamodels.IFUImageModel):

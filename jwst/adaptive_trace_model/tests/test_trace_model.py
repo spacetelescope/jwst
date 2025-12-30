@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.adaptive_trace_model import adaptive_trace_model as atm
+from jwst.adaptive_trace_model import trace_model as tm
 from jwst.adaptive_trace_model.tests import helpers
 
 
@@ -22,9 +22,9 @@ def fit_2d_spline_input(nrs_slit_model):
     return slit, flux, alpha
 
 
-def test_fit_2d_spline_profile(fit_2d_spline_input):
+def test_fit_2d_spline_trace(fit_2d_spline_input):
     slit, flux, alpha = fit_2d_spline_input
-    splines, scales = atm.fit_2d_spline_profile(flux, alpha)
+    splines, scales = tm.fit_2d_spline_trace(flux, alpha)
 
     assert len(splines) == flux.shape[1]
     assert len(scales) == flux.shape[1]
@@ -34,22 +34,22 @@ def test_fit_2d_spline_profile(fit_2d_spline_input):
 
     # evaluated fits should be close to input data
     region_map = (~np.isnan(slit.wavelength)).astype(int)
-    profile = atm._profile_image(flux.shape, {1: splines}, {1: scales}, region_map, alpha)
+    trace = tm._trace_image(flux.shape, {1: splines}, {1: scales}, region_map, alpha)
 
     indx = region_map == 1
     atol = 0.25 * np.nanmax(flux)
-    np.testing.assert_allclose(flux[indx], profile[indx], atol=atol)
+    np.testing.assert_allclose(flux[indx], trace[indx], atol=atol)
 
 
-def test_fit_2d_spline_profile_fail(monkeypatch, caplog, fit_2d_spline_input):
+def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
     # mock a failure in the fit
     def mock_fit(*args, **kwargs):
         raise RuntimeError("Bad fit")
 
-    monkeypatch.setattr(atm, "bspline_fit", mock_fit)
+    monkeypatch.setattr(tm, "bspline_fit", mock_fit)
 
     slit, flux, alpha = fit_2d_spline_input
-    splines, scales = atm.fit_2d_spline_profile(flux, alpha)
+    splines, scales = tm.fit_2d_spline_trace(flux, alpha)
     assert len(splines) == 0
     assert len(scales) == 0
     assert "Spline fit failed" in caplog.text
@@ -101,7 +101,7 @@ def test_fit_2d_spline_profile_fail(monkeypatch, caplog, fit_2d_spline_input):
     ],
 )
 def test_set_fit_kwargs(detector, expected):
-    fit_kwargs = atm._set_fit_kwargs(detector, 10)
+    fit_kwargs = tm._set_fit_kwargs(detector, 10)
     assert list(fit_kwargs.keys()) == list(expected.keys())
     for key in expected:
         if key == "col_index":
@@ -112,7 +112,7 @@ def test_set_fit_kwargs(detector, expected):
 
 def test_set_fit_kwargs_error():
     with pytest.raises(ValueError, match="Unknown detector"):
-        atm._set_fit_kwargs("NIS", 10)
+        tm._set_fit_kwargs("NIS", 10)
 
 
 @pytest.mark.parametrize(
@@ -135,13 +135,13 @@ def test_set_fit_kwargs_error():
     ],
 )
 def test_set_oversample_kwargs(detector, expected):
-    oversample_kwargs = atm._set_oversample_kwargs(detector)
+    oversample_kwargs = tm._set_oversample_kwargs(detector)
     assert oversample_kwargs == expected
 
 
 def test_set_oversample_kwargs_error():
     with pytest.raises(ValueError, match="Unknown detector"):
-        atm._set_oversample_kwargs("NIS")
+        tm._set_oversample_kwargs("NIS")
 
 
 @pytest.mark.parametrize(
@@ -152,4 +152,4 @@ def test_fit_and_oversample_unsupported_model(detector, message):
     model = ImageModel()
     model.meta.instrument.detector = detector
     with pytest.raises(ValueError, match=message):
-        atm.fit_and_oversample(model)
+        tm.fit_and_oversample(model)
