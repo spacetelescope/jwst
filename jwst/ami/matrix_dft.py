@@ -20,20 +20,16 @@ much more flexibility in choosing array sizes and sampling, and often lets
 you replace "fast calculations on very large arrays" with "relatively slow
 calculations on much smaller ones".
 
-Code originally by A. Sivaramakrishnan
-
-* 2010-11-05 Revised normalizations for flux conservation consistent
-  with Soummer et al. 2007. Updated documentation.  -- M. Perrin
-* 2011-2012: Various enhancements, detailed history not kept, sorry.
-* 2012-05-18: module renamed SFT.py -> matrixDFT.py
-* 2012-09-26: minor big fixes
-* 2015-01-21: Eliminate redundant code paths, correct parity flip,
-  PEP8 formatting pass (except variable names)-- J. Long
+Notes
+-----
+Code originally by A. Sivaramakrishnan, with early modifications by
+M. Perrin in accordance to Soummer et al. 2007 [1]_ and J. Long.
+Changes since then are kept in Git commit history.
 
 References
 ----------
-Soummer et al. 2007, Opt. Express  15, 15935-15951 (2007)
-https://doi.org/10.1364/OE.15.015935
+.. [1] Soummer et al. 2007, Opt. Express 15, 15935-15951 (2007)
+   https://doi.org/10.1364/OE.15.015935
 
 Examples
 --------
@@ -104,7 +100,7 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
     Returns
     -------
     float, ndarray
-        Normalized FT coeffs that is ``norm_coeff * t2``.
+        Normalized FT coeffs, i.e., ``norm_coeff * t2``.
     """
     npup_y, npup_x = plane.shape
 

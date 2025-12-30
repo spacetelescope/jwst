@@ -64,7 +64,7 @@ class FringeFitter:
 
         Parameters
         ----------
-        input_model : `~stdatamodels.DataModel`
+        input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             DM object for input
 
         Returns

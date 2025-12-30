@@ -115,14 +115,14 @@ class NIRISS:
 
         Parameters
         ----------
-        input_model : `~stdatamodels.DataModel`
+        input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             DM object for input
 
         Returns
         -------
-        scidata_ctrd : numpy array
+        scidata_ctrd : ndarray
             Cropped, centered, optionally cleaned AMI data
-        dqmask_ctrd
+        dqmask_ctrd : ndarray
             Cropped, centered mask of bad pixels
         """
         # all instrumentdata attributes will be available when oifits files written out

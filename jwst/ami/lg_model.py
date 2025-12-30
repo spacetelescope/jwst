@@ -20,7 +20,7 @@ class LgModel:
     """
     A class for conveniently dealing with an NRM object.
 
-    This should be able to take `~jwst.ami.mask_definition_ami.NRMDefinition` for mask geometry.
+    This class:
 
     * Defines mask geometry and detector-scale parameters.
     * Simulates PSF (broadband or monochromatic).
@@ -122,7 +122,7 @@ class LgModel:
         fov : int
             Number of detector pixels on a side
         psf_offset : tuple of int
-            Detector pixels defining the center offset from center of array
+            Offset from center of array in units of detector pixels.
 
         Returns
         -------
@@ -176,7 +176,7 @@ class LgModel:
         fov : int
             Number of detector pixels on a side
         psf_offset : tuple of int
-            Detector pixels defining the center offset from center of array
+            Offset from center of array in units of detector pixels.
 
         Returns
         -------
