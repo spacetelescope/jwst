@@ -7,10 +7,10 @@ import os
 import numpy as np
 import pytest
 from astropy.io import fits
-from gwcs import WCS
 from stdatamodels.jwst.datamodels import IFUImageModel
 
-from jwst import assign_wcs
+from jwst.adaptive_trace_model import AdaptiveTraceModelStep
+from jwst.adaptive_trace_model.tests import helpers
 from jwst.cube_build import CubeBuildStep
 from jwst.cube_build.cube_build import NoChannelsError
 from jwst.cube_build.file_table import NoAssignWCSError
@@ -109,7 +109,7 @@ def miri_cube_pars(tmp_path_factory):
 
 
 @pytest.fixture(scope="function")
-def miri_image():
+def miri_image_no_wcs():
     image = IFUImageModel((20, 20))
     image.data = np.random.random((20, 20))
     image.meta.instrument.name = "MIRI"
@@ -121,9 +121,24 @@ def miri_image():
     return image
 
 
+@pytest.fixture(scope="module")
+def nirspec_data():
+    model = helpers.nirspec_ifu_model()
+    model.meta.filename = "test_nirspec_cal.fits"
+    return model
+
+
+@pytest.fixture(scope="module")
+def miri_data():
+    model = helpers.miri_mrs_model()
+    model.meta.filename = "test_miri_cal.fits"
+    return model
+
+
 @pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filename):
+def test_call_cube_build_errors(tmp_cwd, miri_cube_pars, miri_image_no_wcs, tmp_path, as_filename):
     """test defaults of step are set up and user input are defined correctly"""
+    miri_image = miri_image_no_wcs
     if as_filename:
         fn = tmp_path / "miri.fits"
         miri_image.save(fn)
@@ -170,42 +185,13 @@ def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filen
         step.run(step_input)
 
 
-@pytest.fixture(scope="function")
-def nirspec_data():
-    image = IFUImageModel((2048, 2048))
-    image.data = np.random.random((2048, 2048))
-    image.meta.instrument.name = "NIRSPEC"
-    image.meta.instrument.detector = "NRS1"
-    image.meta.exposure.type = "NRS_IFU"
-    image.meta.filename = "test_nirspec_cal.fits"
-    image.meta.observation.date = "2023-10-06"
-    image.meta.observation.time = "00:00:00.000"
-    # below values taken from regtest using file
-    # jw01249005001_03101_00004_nrs1_cal.fits
-    image.meta.instrument.filter = "F290LP"
-    image.meta.instrument.grating = "G395H"
-    image.meta.wcsinfo.v2_ref = 299.83548
-    image.meta.wcsinfo.v3_ref = -498.256805
-    image.meta.wcsinfo.ra_ref = 358.0647567841019
-    image.meta.wcsinfo.dec_ref = -2.167207258876695
-    image.meta.cal_step.assign_wcs = "COMPLETE"
-    step = assign_wcs.assign_wcs_step.AssignWcsStep()
-    refs = {}
-    for reftype in assign_wcs.assign_wcs_step.AssignWcsStep.reference_file_types:
-        refs[reftype] = step.get_reference_file(image, reftype)
-    pipe = assign_wcs.nirspec.create_pipeline(image, refs, slit_y_range=[-0.5, 0.5])
-    image.meta.wcs = WCS(pipe)
-    image.meta.wcs.bounding_box = assign_wcs.nirspec.generate_compound_bbox(image)
-    return image
-
-
 @pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename):
+@pytest.mark.parametrize("coord_system", ["internal_cal", "skyalign"])
+def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename, coord_system):
     # Add a NaN in the error array, unmatched in data, to
     # check that the input is not modified by the match_nans_and_flags
     # call in the beginning of the step
     nirspec_data.err[100, 100] = np.nan
-
     if as_filename:
         fn = tmp_path / "test_nirspec_cal.fits"
         nirspec_data.save(fn)
@@ -213,7 +199,7 @@ def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename):
     else:
         step_input = nirspec_data.copy()
     step = CubeBuildStep()
-    step.coord_system = "internal_cal"
+    step.coord_system = coord_system
     step.save_results = True
     result = step.run(step_input)
 
@@ -221,7 +207,10 @@ def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename):
     assert len(result) == 1
     model = result[0]
     assert model.meta.cal_step.cube_build == "COMPLETE"
-    assert model.meta.filename == "test_nirspec_g395h-f290lp_internal_s3d.fits"
+    if coord_system == "internal_cal":
+        assert model.meta.filename == "test_nirspec_prism-clear_internal_s3d.fits"
+    else:
+        assert model.meta.filename == "test_nirspec_prism-clear_s3d.fits"
     assert os.path.isfile(model.meta.filename)
 
     # make sure input is not modified
@@ -237,10 +226,36 @@ def test_missing_cubepars(nirspec_data):
         CubeBuildStep.call(nirspec_data, override_cubepar="N/A")
 
 
-def test_invalid_coord_sys(miri_image, miri_cube_pars):
+def test_invalid_coord_sys(miri_image_no_wcs, miri_cube_pars):
     step = CubeBuildStep()
     step.override_cubepar = miri_cube_pars
     step.coord_system = "internal_cal"
-    miri_image.meta.cal_step.assign_wcs = "COMPLETE"
+    miri_image_no_wcs.meta.cal_step.assign_wcs = "COMPLETE"
     with pytest.raises(ValueError, match="coordinate system is not supported for MIRI"):
-        step.run(miri_image)
+        step.run(miri_image_no_wcs)
+
+
+@pytest.mark.parametrize("oversample", [1, 2])
+@pytest.mark.parametrize(
+    "dataset,output_shape", [("nirspec_data", (941, 41, 37)), ("miri_data", (850, 41, 41))]
+)
+def test_cube_build_oversampled(request, oversample, dataset, output_shape):
+    model = request.getfixturevalue(dataset)
+
+    # Oversample the input data, or just attach a profile
+    shape = model.data.shape
+    oversampled = AdaptiveTraceModelStep.call(model, oversample=oversample)
+    if dataset.startswith("miri"):
+        assert oversampled.data.shape == (shape[0], shape[1] * oversample)
+    else:
+        assert oversampled.data.shape == (shape[0] * oversample, shape[1])
+    if oversample != 1:
+        assert oversampled.hasattr("regions")
+
+    # In either case, cube build succeeds and output size is the about the same
+    cube = CubeBuildStep.call(oversampled)[0]
+    assert cube.meta.cal_step.cube_build == "COMPLETE"
+    np.testing.assert_allclose(cube.data.shape, output_shape, atol=2)
+
+    # Input data is flat, so output data should have the same mean value
+    np.testing.assert_allclose(np.nanmean(cube.data), np.nanmean(model.data))
