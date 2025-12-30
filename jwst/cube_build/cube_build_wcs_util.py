@@ -100,10 +100,8 @@ def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
     if coord_system == "internal_cal":
         # coord1 = along slice
         # coord2 = across slice
-        if "coordinates" in input_data.meta.wcs.available_frames:
-            detector2alpha_beta = input_data.meta.wcs.get_transform("coordinates", "alpha_beta")
-        else:
-            detector2alpha_beta = input_data.meta.wcs.get_transform("detector", "alpha_beta")
+        input_frame = input_data.meta.wcs.available_frames[0]
+        detector2alpha_beta = input_data.meta.wcs.get_transform(input_frame, "alpha_beta")
         coord1, coord2, lam = detector2alpha_beta(x, y)
 
         valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
@@ -235,10 +233,8 @@ def find_corners_nirspec(input_data, coord_system):
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
         if coord_system == "internal_cal":
             # Check for oversampled data
-            if "coordinates" in slice_wcs.available_frames:
-                detector2slicer = slice_wcs.get_transform("coordinates", "slicer")
-            else:
-                detector2slicer = slice_wcs.get_transform("detector", "slicer")
+            input_frame = slice_wcs.available_frames[0]
+            detector2slicer = slice_wcs.get_transform(input_frame, "slicer")
             coord2, coord1, lam = detector2slicer(x, y)  # lam ~0 for this transform
             valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
             # coord1 = along slice
