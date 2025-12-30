@@ -45,6 +45,7 @@ Stage 1
 Stage 2
 ^^^^^^^
 
+- ``<PR#>.adaptive_trace_model.rst``
 - ``<PR#>.assign_wcs.rst``
 - ``<PR#>.badpix_selfcal.rst``
 - ``<PR#>.msaflagopen.rst``
@@ -62,7 +63,6 @@ Stage 2
 - ``<PR#>.pathloss.rst``
 - ``<PR#>.barshadow.rst``
 - ``<PR#>.photom.rst``
-- ``<PR#>.fit_profiile.rst``
 - ``<PR#>.pixel_replace.rst``
 - ``<PR#>.resample_spec.rst``
 - ``<PR#>.residual_fringe.rst``
