@@ -16,7 +16,40 @@ __all__ = ["NIRISS"]
 
 
 class NIRISS:
-    """Module for defining NIRISS data format, wavelength info, and mask geometry."""
+    """
+    Module for defining NIRISS data format, wavelength info, and mask geometry.
+
+    Parameters
+    ----------
+    filt : str
+        Filter name.
+
+    nrm_model : `~stdatamodels.jwst.datamodels.NRMModel`
+        Datamodel containing mask geometry information.
+
+    bandpass : `~synphot.spectrum.SpectralElement`, array, or `None`
+        Array should be in the format of ``[(wt,wlen), (wt,wlen), ...]``.
+        Monochromatic would be, e.g., ``[(1.0, 4.3e-6)]``.
+        Explicit bandpass argument will replace *all* NIRISS filter-specific variables with
+        the given bandpass, so you could simulate, for example,
+        a 21cm PSF through something called "F430M".
+
+    chooseholes : list, optional
+        List of hole names to use, e.g., ``['B2', 'B4', 'B5', 'B6']`` for a four-hole mask,
+        If not specified, all the holes will be used.
+
+    affine2d : Affine2d object, optional
+        Affine2d object. If not specified, an ideal affine2d object will be used.
+
+    usebp : bool
+        If True, exclude pixels marked DO_NOT_USE from fringe fitting.
+
+    firstfew : int
+        If not None, process only the first few integrations.
+
+    run_bpfix : bool
+        Run Fourier bad pixel fix on cropped data.
+    """
 
     def __init__(
         self,
@@ -29,33 +62,6 @@ class NIRISS:
         firstfew=None,
         run_bpfix=True,
     ):
-        """
-        Initialize NIRISS class for NIRISS/AMI instrument.
-
-        Parameters
-        ----------
-        filt : str
-            Filter name
-        nrm_model : NRMModel datamodel
-            Datamodel containing mask geometry information
-        bandpass : synphot spectrum or array
-            None, synphot object or [(wt,wlen),(wt,wlen),...].
-            Monochromatic would be e.g. [(1.0, 4.3e-6)]
-            Explicit bandpass arg will replace *all* niriss filter-specific variables with
-            the given bandpass, so you could simulate, for example,
-            a 21cm psf through something called "F430M"!
-        chooseholes : list, optional
-            List of hole names to use, e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask,
-            If not specified, all the holes will be used.
-        affine2d : Affine2d object, optional
-            Affine2d object. If not specified, an ideal affine2d object will be used.
-        usebp : bool
-            If True, exclude pixels marked DO_NOT_USE from fringe fitting
-        firstfew : int
-            If not None, process only the first few integrations
-        run_bpfix : bool
-            Run Fourier bad pixel fix on cropped data
-        """
         self.run_bpfix = run_bpfix
         self.usebp = usebp
         self.chooseholes = chooseholes
@@ -109,14 +115,14 @@ class NIRISS:
 
         Parameters
         ----------
-        input_model : instance Data Model
+        input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             DM object for input
 
         Returns
         -------
-        scidata_ctrd : numpy array
+        scidata_ctrd : ndarray
             Cropped, centered, optionally cleaned AMI data
-        dqmask_ctrd :
+        dqmask_ctrd : ndarray
             Cropped, centered mask of bad pixels
         """
         # all instrumentdata attributes will be available when oifits files written out
@@ -265,8 +271,10 @@ class NIRISS:
         Rotate hole center coordinates.
 
         Rotation of coordinates is:
-            Clockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = -1
-            Counterclockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = 1
+
+        * Clockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = -1
+        * Counterclockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = 1
+
         Hole center coords are in the V2, V3 plane in meters.
 
         Returns

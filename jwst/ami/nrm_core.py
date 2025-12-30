@@ -16,7 +16,26 @@ class FringeFitter:
 
     For the given information on the instrument and mask, calculate the
     fringe observables (visibilities and closure phases in the image plane.
-    Original python was by A. Greenbaum & A. Sivaramakrishnan
+    Original Python was by A. Greenbaum & A. Sivaramakrishnan
+
+    Parameters
+    ----------
+    instrument_data : `~jwst.ami.instrument_data.NIRISS`
+        Information on the mask geometry (namely # holes), instrument,
+        wavelength obs mode.
+
+    oversample : int, optional
+        Model oversampling (also how fine to measure the centering). Default is 3.
+
+    psf_offset_ff : float, optional
+        Subpixel centering of your data, if known. Default is None.
+
+    npix : int, optional
+        Number of data pixels to use. Default is to use the shape of the data frame.
+
+    weighted : bool, optional
+        If True, use Poisson variance for weighting, otherwise do not apply
+        any weighting. Default is False.
     """
 
     def __init__(
@@ -27,24 +46,6 @@ class FringeFitter:
         npix="default",
         weighted=False,
     ):
-        """
-        Initialize the FringeFitter object.
-
-        Parameters
-        ----------
-        instrument_data : jwst.ami.instrument_data.NIRISS object
-            Information on the mask geometry (namely # holes), instrument,
-            wavelength obs mode.
-        oversample : int, optional
-            Model oversampling (also how fine to measure the centering). Default is 3.
-        psf_offset_ff : float, optional
-            Subpixel centering of your data, if known. Default is None.
-        npix : int, optional
-            Number of data pixels to use. Default is to use the shape of the data frame.
-        weighted : bool, optional
-            If True, use Poisson variance for weighting, otherwise do not apply
-            any weighting. Default is False.
-        """
         self.instrument_data = instrument_data
 
         self.oversample = oversample
@@ -63,17 +64,19 @@ class FringeFitter:
 
         Parameters
         ----------
-        input_model : instance Data Model
+        input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             DM object for input
 
         Returns
         -------
-        output_model : AmiOIModel object
+        output_model : `~stdatamodels.jwst.datamodels.AmiOIModel`
             AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
-        output_model_multi : AmiOIModel object
+
+        output_model_multi : `~stdatamodels.jwst.datamodels.AmiOIModel`
             AMI tables of observables for each integration
             from LG algorithm fringe fitting in OIFITS format
-        lgfit : AmiLgFitModel object
+
+        lgfit : `~stdatamodels.jwst.datamodels.AmiLgFitModel`
             AMI cropped data, model, and residual data from LG algorithm fringe fitting
 
         Notes
@@ -158,16 +161,14 @@ class FringeFitter:
         -----
         After nrm.fit_image is called, these attributes are stored in nrm object:
 
-        -----------------------------------------------------------------------------
-        soln            --- resulting sin/cos coefficients from least squares fitting
-        fringephase     --- baseline phases in radians
-        fringeamp       --- baseline amplitudes (flux normalized)
-        redundant_cps   --- closure phases in radians
-        redundant_cas   --- closure amplitudes
-        residual        --- fit residuals [data - model solution]
-        cond            --- matrix condition for inversion
-        fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
-        -----------------------------------------------------------------------------
+        * ``soln``: resulting sin/cos coefficients from least squares fitting
+        * ``fringephase``:  baseline phases in radians
+        * ``fringeamp``: baseline amplitudes (flux normalized)
+        * ``redundant_cps``: closure phases in radians
+        * ``redundant_cas``: closure amplitudes
+        * ``residual``: fit residuals [data - model solution]
+        * ``cond``: matrix condition for inversion
+        * ``fringepistons``: zero-mean piston opd in radians on each hole (eigenphases)
         """
         nrm = lg_model.LgModel(
             self.instrument_data.nrm_model,

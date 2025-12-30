@@ -4,11 +4,13 @@ Matrix-based discrete Fourier transforms for computing PSFs.
 MatrixDFT: Matrix-based discrete Fourier transforms for computing PSFs.
 Internally this will call one of several subfunctions depending on the
 specified centering type. These have to do with where the (0, 0) element of
-the Fourier transform is located, i.e. where the PSF center ends up.
-- 'FFTSTYLE' centered on one pixel
-- 'SYMMETRIC' centered on crosshairs between middle pixel
-- 'ADJUSTABLE', always centered in output array depending on
-whether it is even or odd
+the Fourier transform is located, i.e., where the PSF center ends up:
+
+* 'FFTSTYLE' centered on one pixel
+* 'SYMMETRIC' centered on crosshairs between middle pixel
+* 'ADJUSTABLE', always centered in output array depending on
+  whether it is even or odd
+
 'ADJUSTABLE' is the default.
 This module was originally called "Slow Fourier Transform", and this
 terminology still appears in some places in the code.  Note that this is
@@ -18,23 +20,21 @@ much more flexibility in choosing array sizes and sampling, and often lets
 you replace "fast calculations on very large arrays" with "relatively slow
 calculations on much smaller ones".
 
-Code originally by A. Sivaramakrishnan
-2010-11-05 Revised normalizations for flux conservation consistent
-with Soummer et al. 2007. Updated documentation.  -- M. Perrin
-2011-2012: Various enhancements, detailed history not kept, sorry.
-2012-05-18: module renamed SFT.py -> matrixDFT.py
-2012-09-26: minor big fixes
-2015-01-21: Eliminate redundant code paths, correct parity flip,
-PEP8 formatting pass (except variable names)-- J. Long
+Notes
+-----
+Code originally by A. Sivaramakrishnan, M. Perrin, and J. Long,
+in accordance with Soummer et al. 2007. [1]_
 
 References
 ----------
-Soummer et al. 2007, Opt. Express  15, 15935-15951 (2007)
-https://doi.org/10.1364/OE.15.015935
+.. [1] Soummer et al. 2007, Opt. Express 15, 15935-15951 (2007)
+   https://doi.org/10.1364/OE.15.015935
 
 Examples
 --------
-result = matrix_dft.matrix_dft(pupilArray, focalplane_size, focalplane_npix)
+::
+
+    result = matrix_dft.matrix_dft(pupilArray, focalplane_size, focalplane_npix)
 """
 
 __all__ = ["matrix_dft", "matrix_idft"]
@@ -87,6 +87,7 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
         implying a forward transformation.)
     centering : {'FFTSTYLE', 'SYMMETRIC', 'ADJUSTABLE'}, optional
         What type of centering convention should be used for this FFT?
+
         * ADJUSTABLE (the default) For an output array with ODD size n,
           the PSF center will be at the center of pixel (n-1)/2. For an output
           array with EVEN size n, the PSF center will be in the corner between
@@ -97,8 +98,8 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
 
     Returns
     -------
-    norm_coeff * t2; float, ndarray
-        Normalized FT coeffs
+    float, ndarray
+        Normalized FT coeffs, i.e., ``norm_coeff * t2``.
     """
     npup_y, npup_x = plane.shape
 
@@ -189,12 +190,14 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
     return norm_coeff * t2
 
 
-def matrix_idft(*args, **kwargs):  # noqa: D103
+def matrix_idft(*args, **kwargs):
+    """
+    Perform an inverse matrix discrete Fourier transform.
+
+    Returns
+    -------
+    float, ndarray
+        Inverse of :func:`matrix_dft`.
+    """
     kwargs["inverse"] = True
     return matrix_dft(*args, **kwargs)
-
-
-matrix_idft.__doc__ = matrix_dft.__doc__.replace(  # type: ignore[union-attr]
-    "Perform a matrix discrete Fourier transform",
-    "Perform an inverse matrix discrete Fourier transform",
-)
