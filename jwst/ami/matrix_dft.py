@@ -23,7 +23,7 @@ calculations on much smaller ones".
 Notes
 -----
 Code originally by A. Sivaramakrishnan, M. Perrin, and J. Long,
-in accordance to Soummer et al. 2007. [1]_
+in accordance with Soummer et al. 2007. [1]_
 
 References
 ----------
