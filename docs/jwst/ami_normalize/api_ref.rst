@@ -11,7 +11,7 @@ Public Step API
 Complete Developer API
 ======================
 
-(Also see :ref:`Other API in ami_analyze <ami_analyze_other_api>`.)
+The developer API is shared with the ``ami_normalize`` step.  See :ref:`AMI Normalize developer API <ami_analyze_other_api>` for more information.
 
 .. automodapi:: jwst.ami.ami_normalize
    :no-inheritance-diagram:
