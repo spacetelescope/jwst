@@ -435,8 +435,7 @@ def extract_grism_objects(
             nbright=nbright,
         )
         log.info(
-            f"Grism object list created from source catalog: \
-            {input_model.meta.source_catalog}"
+            f"Grism object list created from source catalog: {input_model.meta.source_catalog}"
         )
 
     if not isinstance(grism_objects, list):
