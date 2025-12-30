@@ -522,6 +522,11 @@ def _create_grism_bbox(
                 order_bounding[order] = ((ymin, ymax), (xmin, xmax))
                 waverange[order] = (lmin, lmax)
                 partial_order[order] = ispartial
+            if exclude and source_ids is not None:
+                # If source_ids is specified, we want to warn for excluded objects
+                log.warning(
+                    f"Excluding requested object: {obj.label}, order {order} (off detector)"
+                )
 
         if len(order_bounding) > 0:
             grism_objects.append(

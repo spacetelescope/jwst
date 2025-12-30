@@ -303,6 +303,7 @@ def extract_grism_objects(
     source_ids=None,
     source_ra=None,
     source_dec=None,
+    max_sep=None,
     mmag_extract=None,
     compute_wavelength=True,
     wfss_extract_half_height=None,
@@ -335,6 +336,12 @@ def extract_grism_objects(
 
     source_dec : list[float]
         Source declinations to be processed, must have same length as source_ra.
+
+    max_sep : float
+        Radius in arcseconds within which source_ra and source_dec will be matched
+        to sources in the catalog. If no source is found within this radius, a warning
+        will be emitted and no source will be extracted corresponding to that ra, dec pair.
+        Has effect for WFSS modes only.
 
     mmag_extract : float
         Sources with magnitudes fainter than this minimum magnitude extraction
@@ -414,33 +421,22 @@ def extract_grism_objects(
             "",
         ]:
             raise ValueError("Expected name of wavelengthrange reference file")
-        else:
-            # force_list coming into the step makes these all strings
-            if source_ids is not None:
-                source_ids = np.atleast_1d(source_ids).astype(int)
-            if source_ra is not None:
-                source_ra = np.atleast_1d(source_ra).astype(float)
-            if source_dec is not None:
-                source_dec = np.atleast_1d(source_dec).astype(float)
-            source_ids = radec_to_source_ids(
-                input_model.meta.source_catalog,
-                source_ids,
-                source_ra,
-                source_dec,
-            )
-            grism_objects = util.create_grism_bbox(
-                input_model,
-                reference_files,
-                extract_orders=extract_orders,
-                source_ids=source_ids,
-                mmag_extract=mmag_extract,
-                wfss_extract_half_height=wfss_extract_half_height,
-                nbright=nbright,
-            )
-            log.info(
-                f"Grism object list created from source catalog: \
-                {input_model.meta.source_catalog}"
-            )
+
+        source_ids = radec_to_source_ids(
+            input_model.meta.source_catalog, source_ids, source_ra, source_dec, max_sep=max_sep
+        )
+        grism_objects = util.create_grism_bbox(
+            input_model,
+            reference_files,
+            extract_orders=extract_orders,
+            source_ids=source_ids,
+            mmag_extract=mmag_extract,
+            wfss_extract_half_height=wfss_extract_half_height,
+            nbright=nbright,
+        )
+        log.info(
+            f"Grism object list created from source catalog: {input_model.meta.source_catalog}"
+        )
 
     if not isinstance(grism_objects, list):
         raise TypeError("Expected input grism objects to be a list")
@@ -727,7 +723,7 @@ def compute_wfss_wavelength(slit):
     return wavelength
 
 
-def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=None):
+def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=None, max_sep=1.0):
     """
     Convert source RA/Dec lists to source IDs from the catalog.
 
@@ -750,6 +746,9 @@ def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=Non
     source_dec : list[float]
         Source declinations to be processed, must have same length as source_ra.
 
+    max_sep : float
+        Maximum separation in arcsec to consider a catalog source a match to the provided RA/Dec.
+
     Returns
     -------
     source_ids : np.ndarray or None
@@ -760,15 +759,38 @@ def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=Non
     if source_ids is None:
         source_ids = []
     else:
-        source_ids = np.atleast_1d(source_ids).tolist()
-    if source_ra is not None:
+        # force_list coming into the step makes these all strings
+        source_ids = np.atleast_1d(source_ids).astype(int).tolist()
+
+    # check validity of RA/Dec inputs
+    if source_ra is None and source_dec is not None:
+        raise ValueError("source_ra must be provided if source_dec is provided.")
+    if source_dec is None and source_ra is not None:
+        raise ValueError("source_dec must be provided if source_ra is provided.")
+    if (source_ra is not None) and (source_dec is not None):
+        # force_list coming into the step makes these all strings
+        source_ra = np.atleast_1d(source_ra).astype(float)
+        source_dec = np.atleast_1d(source_dec).astype(float)
         if len(source_ra) != len(source_dec):
             raise ValueError("source_ra and source_dec must have the same length.")
+
+        # find nearest catalog source for each RA/Dec pair
         for ra, dec in zip(source_ra, source_dec, strict=True):
             this_coord = SkyCoord(ra=ra, dec=dec, unit="deg")
-            idx, _sep, _dist3d = this_coord.match_to_catalog_sky(catalog_coord)
+            idx, sep, _dist3d = this_coord.match_to_catalog_sky(catalog_coord)
+            if sep.arcsecond > max_sep:
+                log.warning(
+                    f"No catalog source found within {max_sep} arcsec of RA: {ra}, Dec: {dec}."
+                )
+                continue
             src_id = catalog["label"][idx]
             source_ids.append(src_id)
+
     if source_ids:
         return np.unique(np.atleast_1d(source_ids))  # return unique IDs only
+    if source_ra is not None or source_dec is not None:
+        raise ValueError(
+            "source_ra and source_dec were provided, but no sources were found "
+            "within source_max_sep of the requested location."
+        )
     return None

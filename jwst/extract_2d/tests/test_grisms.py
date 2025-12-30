@@ -417,11 +417,11 @@ def test_radec_to_source_ids(source_ids):
         "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
     )
     # object 9
-    ra1 = 53.13773660029234
-    dec1 = -27.80858320887945
+    ra1 = 53.1377366
+    dec1 = -27.80858321
     # object 19
-    ra2 = 53.153053283691406
-    dec2 = -27.810455322265625
+    ra2 = 53.15786615
+    dec2 = -27.81442243
 
     # single RA/Dec
     source_ids_1 = radec_to_source_ids(
@@ -445,12 +445,22 @@ def test_radec_to_source_ids(source_ids):
         assert 19 in source_ids_2
 
 
-def test_radec_to_source_ids_bad_radec():
+def test_radec_to_source_ids_radec_length_mismatch():
     source_catalog = get_pkg_data_filename(
         "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
     )
     with pytest.raises(ValueError, match="source_ra and source_dec must have the same length."):
         radec_to_source_ids(source_catalog, source_ra=[0.0, 0.0], source_dec=[0.0])
+
+
+def test_radec_to_source_ids_radec_without_both():
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    with pytest.raises(ValueError, match="source_ra must be provided if source_dec is provided."):
+        radec_to_source_ids(source_catalog, source_dec=[0.0])
+    with pytest.raises(ValueError, match="source_dec must be provided if source_ra is provided."):
+        radec_to_source_ids(source_catalog, source_ra=[0.0])
 
 
 @pytest.mark.parametrize("source_ids_in", [None, [9, 19], 25])
@@ -463,6 +473,18 @@ def test_radec_to_source_ids_none(source_ids_in):
         assert source_ids is None
     else:
         np.testing.assert_allclose(source_ids, np.atleast_1d(source_ids_in))
+
+
+def test_radec_to_source_ids_no_match():
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    ra = 0.0
+    dec = 0.0
+    with pytest.raises(
+        ValueError, match="source_ra and source_dec were provided, but no sources were found"
+    ):
+        radec_to_source_ids(source_catalog, source_ra=[ra], source_dec=[dec], max_sep=0.5)
 
 
 @pytest.mark.filterwarnings("ignore: Card is too long")
