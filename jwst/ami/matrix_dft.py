@@ -24,7 +24,6 @@ Notes
 -----
 Code originally by A. Sivaramakrishnan, with early modifications by
 M. Perrin in accordance to Soummer et al. 2007 [1]_ and J. Long.
-Changes since then are kept in Git commit history.
 
 References
 ----------
