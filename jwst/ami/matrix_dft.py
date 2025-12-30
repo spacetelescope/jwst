@@ -22,8 +22,8 @@ calculations on much smaller ones".
 
 Notes
 -----
-Code originally by A. Sivaramakrishnan, with early modifications by
-M. Perrin in accordance to Soummer et al. 2007 [1]_ and J. Long.
+Code originally by A. Sivaramakrishnan, M. Perrin, and J. Long,
+in accordance to Soummer et al. 2007. [1]_
 
 References
 ----------
