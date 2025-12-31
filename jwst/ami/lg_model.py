@@ -20,12 +20,40 @@ class LgModel:
     """
     A class for conveniently dealing with an NRM object.
 
-    This should be able to take an NRMDefinition object for mask geometry.
-    Defines mask geometry and detector-scale parameters.
-    Simulates PSF (broadband or monochromatic)
-    Builds a fringe model - either by user definition, or automated to data
-    Fits model to data by least squares
-    Masks: jwst_ami (formerly jwst_g7s6c)
+    This class:
+
+    * Defines mask geometry and detector-scale parameters.
+    * Simulates PSF (broadband or monochromatic).
+    * Builds a fringe model - either by user definition, or automated to data.
+    * Fits model to data by least squares.
+
+    Masks: ``jwst_ami`` (formerly ``jwst_g7s6c``)
+
+    Parameters
+    ----------
+    nrm_model : `~stdatamodels.jwst.datamodels.NRMModel` or \
+                `~jwst.ami.mask_definition_ami.NRMDefinition`
+        Datamodel containing mask geometry information
+    pixscale : float
+       Initial estimate of pixel scale in radians
+    bandpass : ndarray[float]
+        Array of the form: ``[(weight1, wavl1), (weight2, wavl2), ...]``
+    mask : str
+        Keyword for built-in values
+    holeshape : str
+       Shape of apertures; default: "hex"
+    over : int
+       Oversampling factor
+    phi : float 1D array
+        Distance of fringe from hole center in units of waves
+    chooseholes : list of strings, default None
+        E.g., ``['B2', 'B4', 'B5', 'B6']`` for a four-hole mask.
+        If None, use the real seven-hole mask.
+    affine2d : `~jwst.ami.utils.Affine2d`
+        Affine2d object
+
+    Notes
+    -----
     Algorithm documented in Greenbaum, A. Z., Pueyo, L. P., Sivaramakrishnan,
     A., and Lacour, S., Astrophysical Journal vol. 798, Jan 2015.
     First written by Alexandra Greenbaum in 2014.
@@ -43,31 +71,6 @@ class LgModel:
         chooseholes=None,
         affine2d=None,
     ):
-        """
-        Set attributes of LgModel class.
-
-        Parameters
-        ----------
-        nrm_model : NRMModel (or NRMDefinition object? test.)
-            Datamodel containing mask geometry information
-        pixscale : float
-           Initial estimate of pixel scale in radians
-        bandpass : ndarray[float]
-            Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
-        mask : str
-            Keyword for built-in values
-        holeshape : str
-           Shape of apertures, default="hex"
-        over : int
-           Oversampling factor
-        phi : float 1D array
-            Distance of fringe from hole center in units of waves
-        chooseholes : list of strings, default None
-            E.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
-            If None, use the real seven-hole mask.
-        affine2d : Affine2d object
-            Affine2d object
-        """
         self.bandpass = bandpass
         self.holeshape = holeshape
         self.pixel = pixscale  # det pix in rad (square)
@@ -107,24 +110,25 @@ class LgModel:
 
     def simulate(self, fov, psf_offset=(0, 0)):
         """
-        Simulate a detector-scale psf.
+        Simulate a detector-scale PSF.
 
         Use parameters input from the call and
-        already stored in the object, and generate a simulation fits header
-        storing all of the  parameters used to generate that psf.  If the input
-        bandpass is one number it will calculate a monochromatic psf.
+        already stored in the object, and generate a simulation FITS header
+        storing all of the  parameters used to generate that PSF.  If the input
+        bandpass is one number, it will calculate a monochromatic PSF.
 
         Parameters
         ----------
         fov : int
             Number of detector pixels on a side
-        psf_offset : detector pixels
-            Center offset from center of array
+        psf_offset : tuple of int
+            Offset from center of array in units of detector pixels.
 
         Returns
         -------
-        Object's 'psf' : float 2D array
-            Simulated psf of shape (fov, fov).
+        float 2D array
+            Simulated PSF of shape ``(fov, fov)`` that is also
+            stored as ``self.psf``
         """
         # First set up conditions for choosing various parameters
 
@@ -158,23 +162,27 @@ class LgModel:
         Generate the fringe model.
 
         Use the attributes of the object with a bandpass that is either a single
-        wavelength or a list of tuples of the form
-        [(weight1, wavl1), (weight2, wavl2),...].  The model is
-        a collection of fringe intensities, where nholes = 7 means the model
-        has a @D slice for each of 21 cosines, 21 sines, a DC-like, and a flux
+        wavelength or a list of tuples of the form::
+
+            [(weight1, wavl1), (weight2, wavl2), ...]
+
+        The model is
+        a collection of fringe intensities, where ``nholes = 7`` means the model
+        has a ``@D`` slice for each of 21 cosines, 21 sines, a DC-like, and a flux
         slice for a total of 44 2D slices.
 
         Parameters
         ----------
         fov : int
             Number of detector pixels on a side
-        psf_offset : detector pixels
-            Center offset from center of array
+        psf_offset : tuple of int
+            Offset from center of array in units of detector pixels.
 
         Returns
         -------
-        model : ndarray[float]
-            Generated fringe model, shape (fov, fov, N * (N - 1) + 2)
+        ndarray[float]
+            Generated fringe model in the shape of ``(fov, fov, N * (N - 1) + 2)``
+            that is also stored as ``self.model``
         """
         self.fov = fov
 
@@ -235,13 +243,10 @@ class LgModel:
         If a model is not specified then this
         method will find the appropriate wavelength scale, rotation (and
         hopefully centering as well -- This is not written into the object yet,
-        but should be soon).  Without specifying a model, fit_image can take a
+        but should be soon).  Without specifying a model, this method can take a
         reference image (a cropped deNaNed version of the data) to run
         correlations. It is recommended that the symmetric part of the data be
         used to avoid piston confusion in scaling.
-        TODO: change name of self.singvals or self.linfit_results to be the same, for consistency.
-        This would be easier if matrix_operations and weighted_operations both did their fitting
-        with scipy
 
         Parameters
         ----------
@@ -254,6 +259,10 @@ class LgModel:
         weighted : bool
             Use weighted operations in the least squares routine
         """
+        # TODO: change name of self.singvals or self.linfit_results to be the same, for consistency.
+        # This would be easier if matrix_operations and weighted_operations both did their fitting
+        # with scipy
+
         self.weighted = weighted
         self.fittingmodel = model_in
         if dqm is None:
@@ -282,7 +291,11 @@ class LgModel:
         self.q4_phases = leastsqnrm.q4_phases(self.fringephase, n=self.N)  # RC 8/24
 
     def create_modelpsf(self):
-        """Make an image from the object's model and fit solutions by setting modelpsf attribute."""
+        """
+        Make an image from the object's model and fit solutions.
+
+        The result is stored in the ``self.modelpsf`` attribute.
+        """
         try:
             self.modelpsf = np.zeros((self.fov, self.fov))
         except AttributeError:
@@ -332,7 +345,7 @@ def run_data_correlate(data, model):
     data : 2D float array
         Reference image
     model : 2D float array
-        Simulated psf
+        Simulated PSF
 
     Returns
     -------
