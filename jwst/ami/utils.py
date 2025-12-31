@@ -49,12 +49,16 @@ class Affine2d:
     in the image plane.
 
     The theorem states that if f(x,y) and F(u,v) are Fourier pairs, and
-    g(x,y) = f(x',y'), where::
+    g(x,y) = f(x',y'), where:
+
+    .. code-block:: text
 
         x' = mx * x  +  sx * y  +  xo
         y' = my * y  +  sy * x  +  yo,
 
-    then G(u,v), the Fourier transform of g(x,y), is given by::
+    then G(u,v), the Fourier transform of g(x,y), is given by:
+
+    .. code-block:: text
 
         G(u,v) = ( 1/|Delta| ) * exp { (2*Pi*i/Delta) *
                                           [ (my*xo - sx*yo) * u  +
@@ -62,11 +66,15 @@ class Affine2d:
                                  F{ ( my*u - sy*v) / Delta,
                                     (-sx*u + mx*v) / Delta  }
 
-    where::
+    where:
+
+    .. code-block:: text
 
         Delta = mx * my - sx * sy.
 
-    The reverse transformation, from (x',y') to (x,y) is given by::
+    The reverse transformation, from (x',y') to (x,y) is given by:
+
+    .. code-block:: text
 
         x = (1/Delta) * ( my * x' - sx * y'  -  my * xo + sx * yo )
         y = (1/Delta) * ( mx * y' - sy * x'  -  mx * yo + sy * xo )
@@ -77,7 +85,9 @@ class Affine2d:
     two lattice vectors a and b defining the grid.  These lattice vectors have
     components a=(a_u,a_v) and b=(b_u,b_v) along the u and v axes.
 
-    Discussion with Randall Telfer (2018.05.18)  clarified that::
+    Discussion with Randall Telfer (2018.05.18)  clarified that:
+
+    .. code-block:: text
 
         These constants, properly applied to the analytical transform in a
         "pitch matrix" instead of a scalar "pitch" variable, provide the PSF
