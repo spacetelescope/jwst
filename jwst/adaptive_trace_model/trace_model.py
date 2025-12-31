@@ -502,7 +502,7 @@ def oversample_flux(
     trimends=False,
     pad=3,
     slope_limit=0.1,
-    psfoptimal=False,
+    psf_optimal=False,
 ):
     """
     Oversample a flux image from spline models fit to the data.
@@ -540,7 +540,7 @@ def oversample_flux(
         The slope limit in the normalized model fits above which the spline
         model is considered appropriate. Lower values will use spline fits
         for fainter sources.
-    psfoptimal : bool, optional
+    psf_optimal : bool, optional
         If True, residual corrections to the spline model are not included
         in the oversampled flux.
 
@@ -694,7 +694,7 @@ def oversample_flux(
     flux_os[indx] = flux_os_bspline_use[indx]
 
     # Unless we're doing a specific psf optimal extraction, add in the residual fit
-    if not psfoptimal:
+    if not psf_optimal:
         log.info("Applying complex scene corrections.")
         # DRL- conflicted about this indx array
         # Using only where flux_os_bspline_use is finite will trim the slice edges a bit
@@ -982,7 +982,7 @@ def _update_wcs(wcs, map_pixels):
 
 
 def fit_and_oversample(
-    model, fit_threshold=10.0, slope_limit=0.1, psfoptimal=False, oversample_factor=1.0
+    model, fit_threshold=10.0, slope_limit=0.1, psf_optimal=False, oversample_factor=1.0
 ):
     """
     Fit a trace model and optionally oversample an IFU datamodel.
@@ -997,7 +997,7 @@ def fit_and_oversample(
     slope_limit : float
         The normalized slope threshold for using the spline model in oversampled
         data.  Lower values will use the spline model for fainter sources.
-    psfoptimal : bool
+    psf_optimal : bool
         If True, residual corrections to the spline model are not included
         in the oversampled flux.  This option is generally appropriate for simple
         isolated point sources only.
@@ -1130,7 +1130,7 @@ def fit_and_oversample(
         oversample_factor,
         alpha_os,
         slope_limit=slope_limit,
-        psfoptimal=psfoptimal,
+        psf_optimal=psf_optimal,
         **oversample_kwargs,
     )
 
