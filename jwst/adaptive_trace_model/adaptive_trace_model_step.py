@@ -17,9 +17,9 @@ class AdaptiveTraceModelStep(Step):
     class_alias = "adaptive_trace_model"
 
     spec = """
-    threshsig = float(default=10) # Limiting sigma for fitting splines
+    fit_threshold = float(default=10.0) # Limiting sigma for fitting splines
     oversample = float(default=1.0) # Use the trace model to oversample the data by this factor
-    slopelim = float(default=0.1) # Slope limit for using splines in oversample
+    slope_limit = float(default=0.1) # Slope limit for using splines in oversample
     skip = boolean(default=True) # By default, skip the step.
     """  # noqa: E501
 
@@ -30,7 +30,7 @@ class AdaptiveTraceModelStep(Step):
         For each spectral region in the input (i.e. a slice or a slit), the algorithm
         fits a univariate basis spline to the spatial data within a window of each
         dispersion element. A spectral region may be ignored if its signal-to-noise
-        ratio is too low. This decision is controlled by the ``threshsig`` parameter:
+        ratio is too low. This decision is controlled by the ``fit_threshold`` parameter:
         lower values will create spline models for more slices.
 
         After fitting, the set of spline models is then evaluated at each pixel to
@@ -50,7 +50,7 @@ class AdaptiveTraceModelStep(Step):
         linear interpolation at each dispersion element.  Which model is used at each
         pixel depends on some heuristic decisions derived from the data: bright, compact
         source regions generally use the spline model; faint, diffuse regions use the linear
-        interpolation.  The ``slopelim`` parameter can be modified to impact the decision
+        interpolation.  The ``slope_limit`` parameter can be modified to impact the decision
         on whether sources are bright and compact enough to use the spline models. Lower
         values will use the spline model for fainter sources.
 
@@ -85,8 +85,8 @@ class AdaptiveTraceModelStep(Step):
             log.info("Fitting trace model for %s", model.meta.filename)
             fit_and_oversample(
                 model,
-                threshsig=self.threshsig,
-                slopelim=self.slopelim,
+                fit_threshold=self.fit_threshold,
+                slope_limit=self.slope_limit,
                 oversample_factor=self.oversample,
             )
 
