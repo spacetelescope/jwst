@@ -4,6 +4,7 @@ Package Index
 .. toctree::
    :maxdepth: 2
 
+   adaptive_trace_model/index.rst
    align_refs/index.rst
    ami_analyze/index.rst
    ami_normalize/index.rst
