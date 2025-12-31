@@ -501,7 +501,7 @@ def oversample_flux(
     require_ngood=8,
     trimends=False,
     pad=3,
-    slopelim=0.1,
+    slope_limit=0.1,
     psfoptimal=False,
 ):
     """
@@ -536,7 +536,7 @@ def oversample_flux(
     pad : int, optional
         The number of pixels near peak data to include the spline fit for in
         the output array.
-    slopelim : float, optional
+    slope_limit : float, optional
         The slope limit in the normalized model fits above which the spline
         model is considered appropriate. Lower values will use spline fits
         for fainter sources.
@@ -646,7 +646,7 @@ def oversample_flux(
 
             # Add to our list of alpha values where the slope can be high for this slice
             # and store the oversampled alpha values to check against later
-            highslope = (np.where(modelslope > slopelim))[0]
+            highslope = (np.where(modelslope > slope_limit))[0]
             alpha_ptsource = np.append(alpha_ptsource, col_alpha[valid_alpha][highslope])
             alpha_os_slice[newy, ii] = alpha_os[newy, ii]
 
@@ -982,7 +982,7 @@ def _update_wcs(wcs, map_pixels):
 
 
 def fit_and_oversample(
-    model, threshsig=10.0, slopelim=0.1, psfoptimal=False, oversample_factor=1.0
+    model, fit_threshold=10.0, slope_limit=0.1, psfoptimal=False, oversample_factor=1.0
 ):
     """
     Fit a trace model and optionally oversample an IFU datamodel.
@@ -991,10 +991,10 @@ def fit_and_oversample(
     ----------
     model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The input datamodel, updated in place.
-    threshsig : float
+    fit_threshold : float
         The signal threshold sigma for attempting spline fits within a slice region.
         Lower values will create spline traces for more slices.
-    slopelim : float
+    slope_limit : float
         The normalized slope threshold for using the spline model in oversampled
         data.  Lower values will use the spline model for fainter sources.
     psfoptimal : bool
@@ -1078,10 +1078,10 @@ def fit_and_oversample(
                 ch_mean, _, ch_rms = scs(flux_orig[ch_data])
             for slnum in slice_numbers:
                 if channel <= slnum < channel + 100:
-                    signal_threshold[slnum] = ch_mean + threshsig * ch_rms
+                    signal_threshold[slnum] = ch_mean + fit_threshold * ch_rms
     else:
         # For NIRSpec IFU, all regions have the same threshold
-        threshold = overall_mean + threshsig * overall_rms
+        threshold = overall_mean + fit_threshold * overall_rms
         signal_threshold = dict.fromkeys(slice_numbers, threshold)
 
     # Fit spline models to all regions
@@ -1129,7 +1129,7 @@ def fit_and_oversample(
         spline_scales,
         oversample_factor,
         alpha_os,
-        slopelim=slopelim,
+        slope_limit=slope_limit,
         psfoptimal=psfoptimal,
         **oversample_kwargs,
     )

@@ -13,7 +13,7 @@ def test_adaptive_trace_model_step_success(mode):
         model = helpers.miri_mrs_model()
     else:
         model = helpers.nirspec_ifu_model_with_source()
-    result = AdaptiveTraceModelStep.call(model, oversample=1, threshsig=100000)
+    result = AdaptiveTraceModelStep.call(model, oversample=1, fit_threshold=100000)
 
     # step is complete
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
@@ -103,14 +103,16 @@ def test_adaptive_trace_model_step_oversample():
 
 @pytest.mark.parametrize("mode", ["MIR_MRS", "NRS_IFU", "NRS_IFU_SLICE_WCS"])
 def test_adaptive_trace_model_step_oversample_with_source(mode):
-    threshsig = 10.0
+    fit_threshold = 10.0
     if mode == "MIR_MRS":
         model = helpers.miri_mrs_model_with_source()
     elif mode == "NRS_IFU_SLICE_WCS":
         model = helpers.nirspec_ifu_model_with_source(wcs_style="slice")
     else:
         model = helpers.nirspec_ifu_model_with_source()
-    result = AdaptiveTraceModelStep.call(model, oversample=2, slopelim=0.05, threshsig=threshsig)
+    result = AdaptiveTraceModelStep.call(
+        model, oversample=2, slope_limit=0.05, fit_threshold=fit_threshold
+    )
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
     # data is twice the size of the input along the x axis
