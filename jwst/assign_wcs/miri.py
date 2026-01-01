@@ -38,7 +38,15 @@ from jwst.assign_wcs.util import (
 log = logging.getLogger(__name__)
 
 
-__all__ = ["create_pipeline", "imaging", "lrs", "ifu", "wfss"]
+__all__ = [
+    "create_pipeline",
+    "imaging",
+    "lrs",
+    "ifu",
+    "retrieve_filter_offset",
+    "store_dithered_position",
+    "wfss",
+]
 
 
 def create_pipeline(input_model, reference_files):
@@ -127,6 +135,37 @@ def imaging(input_model, reference_files):
     return pipeline
 
 
+def retrieve_filter_offset(filter_offset_model, obsfilter):
+    """
+    Retrieve the filter offset for a given filter from the FilteroffsetModel.
+
+    Parameters
+    ----------
+    filter_offset_model : `~stdatamodels.jwst.datamodels.FilteroffsetModel`
+        The filter offset reference model.
+    obsfilter : str
+        The name of the filter used in the observation.
+
+    Returns
+    -------
+    col_offset : float
+        The column offset for the specified filter.
+    row_offset : float
+        The row offset for the specified filter.
+    """
+    filters = filter_offset_model.filters
+
+    col_offset = None
+    row_offset = None
+    for f in filters:
+        if f.filter == obsfilter:
+            col_offset = f.column_offset
+            row_offset = f.row_offset
+            break
+
+    return col_offset, row_offset
+
+
 def imaging_distortion(input_model, reference_files):
     """
     Create the "detector" to "v2v3" transform for the MIRI Imager.
@@ -165,15 +204,7 @@ def imaging_distortion(input_model, reference_files):
     # Add an offset for the filter
     obsfilter = input_model.meta.instrument.filter
     with FilteroffsetModel(reference_files["filteroffset"]) as filter_offset:
-        filters = filter_offset.filters
-
-    col_offset = None
-    row_offset = None
-    for f in filters:
-        if f.filter == obsfilter:
-            col_offset = f.column_offset
-            row_offset = f.row_offset
-            break
+        col_offset, row_offset = retrieve_filter_offset(filter_offset, obsfilter)
 
     if col_offset is not None and row_offset is not None:
         distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion
@@ -974,8 +1005,10 @@ def store_dithered_position(input_model):
     )
 
     v23toworld = input_model.meta.wcs.get_transform("v2v3", "world")
-    # v23toworld requires a wavelength along with v2, v3, but value does not affect return
-    dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)
+    # v23toworld requires a wavelength along with v2, v3 for some modes
+    # but value does not affect return
+    dithered_inputs = [dithered_v2, dithered_v3] + [0.0] * (v23toworld.n_inputs - 2)
+    dithered_outputs = v23toworld(*dithered_inputs)
 
-    input_model.meta.dither.dithered_ra = dithered_ra
-    input_model.meta.dither.dithered_dec = dithered_dec
+    input_model.meta.dither.dithered_ra = dithered_outputs[0]
+    input_model.meta.dither.dithered_dec = dithered_outputs[1]

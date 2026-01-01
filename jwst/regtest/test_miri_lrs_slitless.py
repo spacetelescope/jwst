@@ -258,3 +258,42 @@ def test_miri_lrs_slitless_wcs(run_tso_spec2_pipeline, fitsdiff_default_kwargs, 
         assert_allclose(ra, ratruth)
         assert_allclose(dec, dectruth)
         assert_allclose(lam, lamtruth)
+
+
+@pytest.fixture(scope="module")
+def run_spec2_slitless_targ_centroid(rtdata_module):
+    """Run calwebb_spec2 including targ_centroid step on a MIRI LRS slitless exposure."""
+    rtdata = rtdata_module
+
+    # science exposure
+    sci = rtdata.get_data(
+        "miri/lrs/jw04496004001_03103_00001-seg001_mirimage_truncated_rateints.fits"
+    )
+
+    # target acquisition verification image
+    targ_fname = "jw04496004001_03102_00001-seg001_mirimage_rate.fits"
+    taq = rtdata.get_data(f"miri/lrs/{targ_fname}")
+
+    args = [
+        "calwebb_spec2",
+        sci,
+        "--steps.targ_centroid.skip=false",
+        "--steps.targ_centroid.save_results=true",
+        f"--steps.targ_centroid.ta_file={taq}",
+    ]
+    Step.from_cmdline(args)
+
+
+@pytest.mark.parametrize("step_suffix", ["targ_centroid", "calints", "x1dints"])
+def test_miri_lrs_slitless_spec2_targ_centroid(
+    run_spec2_slitless_targ_centroid, rtdata_module, fitsdiff_default_kwargs, step_suffix
+):
+    """Compare the output of a MIRI LRS slitless calwebb_spec2 pipeline including targ_centroid step."""
+    rtdata = rtdata_module
+
+    output_filename = f"jw04496004001_03103_00001-seg001_mirimage_truncated_{step_suffix}.fits"
+    rtdata.output = output_filename
+    rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso_spec2/{output_filename}")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()

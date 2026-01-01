@@ -178,6 +178,8 @@ documentation on each reference file.
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`superbias <superbias_step>`                     | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
+| :ref:`targ_centroid <targ_centroid_step>`             | :ref:`FILTEROFFSET <filteroffset_reffile>`       |
++-------------------------------------------------------+--------------------------------------------------+
 | :ref:`tso_photometry <tso_photometry_step>`           | :ref:`GAIN <gain_reffile>`                       |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`wavecorr <wavecorr_step>`                       | :ref:`WAVECORR <wavecorr_reffile>`               |
@@ -221,6 +223,8 @@ documentation on each reference file.
 | :ref:`FFLAT <fflat_reffile>`                     | :ref:`flatfield <flatfield_step>`                     |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`FILTEROFFSET <filteroffset_reffile>`       | :ref:`assign_wcs <assign_wcs_step>`                   |
++                                                  +-------------------------------------------------------+
+|                                                  | :ref:`targ_centroid <targ_centroid_step>`             |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`FLAT <flat_reffile>`                       | :ref:`clean_flicker_noise <clean_flicker_noise_step>` |
 |                                                  +-------------------------------------------------------+
@@ -530,6 +534,7 @@ S_SRCCAT    Source catalog creation
 S_SRCTYP    Source type determination
 S_STRAY     Straylight correction
 S_SUPERB    Superbias subtraction
+S_TACNTR    Source position from TA verification image
 S_TELEMI    Telescope emission correction
 S_TSPHOT    TSO imaging photometry
 S_TWKREG    Tweakreg image alignment

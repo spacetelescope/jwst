@@ -31,6 +31,7 @@ from jwst.residual_fringe import residual_fringe_step
 from jwst.srctype import srctype_step
 from jwst.stpipe import Pipeline, query_step_status
 from jwst.straylight import straylight_step
+from jwst.targ_centroid import targ_centroid_step
 from jwst.wavecorr import wavecorr_step
 from jwst.wfss_contam import wfss_contam_step
 
@@ -49,6 +50,7 @@ NRS_SLIT_TYPES = [
 GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS"]
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
+TA_TYPES = ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +61,7 @@ class Spec2Pipeline(Pipeline):
 
     Included steps are:
     assign_wcs, badpix_selfcal, msa_flagging, clean_flicker_noise, bkg_subtract,
-    imprint_subtract, extract_2d, master_background_mos, wavecorr,
+    imprint_subtract, extract_2d, master_background_mos, targ_centroid, wavecorr,
     flat_field, srctype, straylight, fringe, residual_fringe, pathloss,
     barshadow, wfss_contam, photom, pixel_replace, resample_spec,
     cube_build, and extract_1d.
@@ -83,6 +85,7 @@ class Spec2Pipeline(Pipeline):
         "imprint_subtract": imprint_step.ImprintStep,
         "extract_2d": extract_2d_step.Extract2dStep,
         "master_background_mos": master_background_mos_step.MasterBackgroundMosStep,
+        "targ_centroid": targ_centroid_step.TargCentroidStep,
         "wavecorr": wavecorr_step.WavecorrStep,
         "flat_field": flat_field_step.FlatFieldStep,
         "srctype": srctype_step.SourceTypeStep,
@@ -246,6 +249,17 @@ class Spec2Pipeline(Pipeline):
                         raise IndexError(
                             "No source catalog specified in association or datamodel"
                         ) from None
+
+            # Check to see if the model is an LRS slit or slitless exposure
+            # and has a TA verification image associated with it.
+            if exp_type in TA_TYPES:
+                try:
+                    ta_file = members_by_type["target_acquisition"][0]
+                except (IndexError, KeyError):
+                    ta_file = None
+                if str(self.targ_centroid.ta_file).lower() == "none":
+                    self.targ_centroid.ta_file = ta_file
+                log.info(f"Using TA verification image {self.targ_centroid.ta_file}")
 
             # Decide on what steps can actually be accomplished based on the
             # provided input.
@@ -564,6 +578,12 @@ class Spec2Pipeline(Pipeline):
             log.debug('Science data does not allow fringe correction. Skipping "fringe".')
             self.fringe.skip = True
 
+        if not self.targ_centroid.skip and exp_type not in TA_TYPES:
+            log.warning(
+                'Science data does not allow targ_centroid correction. Skipping "targ_centroid".'
+            )
+            self.targ_centroid.skip = True
+
         # Apply pathloss correction to MIRI LRS, NIRSpec, and NIRISS SOSS exposures
         if not self.pathloss.skip and exp_type not in [
             "MIR_LRS-FIXEDSLIT",
@@ -877,7 +897,13 @@ class Spec2Pipeline(Pipeline):
         `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model
         """
+        if data.meta.exposure.type in TA_TYPES:
+            # convert to SlitModel type to be more in line with other spectroscopic modes
+            data = datamodels.SlitModel(data)
+            for attr in ["xstart", "ystart", "xsize", "ysize"]:
+                setattr(data, attr, getattr(data.meta.subarray, attr))
         calibrated = self.srctype.run(data)
+        calibrated = self.targ_centroid.run(calibrated)
         calibrated = self.straylight.run(calibrated)
         calibrated = self.flat_field.run(calibrated)
         calibrated = self.fringe.run(calibrated)
