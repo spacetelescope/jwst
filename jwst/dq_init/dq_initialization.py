@@ -47,13 +47,14 @@ def do_dqinit(output_model, mask_model, user_dq=None):
         mask_array = mask_sub_model.dq
         del mask_sub_model
 
-    if user_dq:
-        if not issubclass(user_dq.dtype.type, np.integer):
-            log.error(f"user_dq is not of type integer, got {user_dq.dtype.type}")
-        elif user_dq.shape != mask_array.shape:
-            log.error(f"user_dq has shape={user_dq.shape} but expecting {mask_array.shape}")
-        else:
-            mask_array |= user_dq
+    if user_dq is not None:
+        if user_dq.shape != mask_array.shape:
+            errmsg = f"user_dq has shape={user_dq.shape} but expecting {mask_array.shape}"
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        user_dq = user_dq.astype(mask_array.dtype)
+        mask_array |= user_dq
 
     # Set model-specific data quality in output
     if output_model.meta.exposure.type in guider_list:

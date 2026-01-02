@@ -97,7 +97,7 @@ class DQInitStep(Step):
 
         # Cleanup
         del mask_model
-        if user_dq:
+        if user_dq is not None:
             del user_dq
 
         return result
