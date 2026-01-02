@@ -1,6 +1,5 @@
 import logging
 
-import numpy as np
 from astropy.io import fits
 from stdatamodels.jwst import datamodels
 
@@ -90,9 +89,6 @@ class DQInitStep(Step):
                 f"User-supplied DQ {self.user_supplied_dq} given. Adding it to DQ initialization."
             )
             user_dq = fits.getdata(self.user_supplied_dq)
-            if not issubclass(user_dq.dtype.type, np.integer):
-                log.error(f"User-supplied DQ is not of type integer, got {user_dq.dtype.type}")
-                raise
         else:
             user_dq = None
 

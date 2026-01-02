@@ -48,7 +48,9 @@ def do_dqinit(output_model, mask_model, user_dq=None):
         del mask_sub_model
 
     if user_dq:
-        if user_dq.shape != mask_array.shape:
+        if not issubclass(user_dq.dtype.type, np.integer):
+            log.error(f"user_dq is not of type integer, got {user_dq.dtype.type}")
+        elif user_dq.shape != mask_array.shape:
             log.error(f"user_dq has shape={user_dq.shape} but expecting {mask_array.shape}")
         else:
             mask_array |= user_dq
