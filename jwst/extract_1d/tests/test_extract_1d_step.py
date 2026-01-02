@@ -181,7 +181,6 @@ def test_extract_niriss_soss_256(tmp_path, mock_niriss_soss_256):
     result2 = Extract1dStep.call(
         mock_niriss_soss_256,
         soss_rtol=0.1,
-        # soss_tikfac=tikfac,
         soss_wave_grid_in=str(tmp_path / "soss_wave_grid.fits"),
         output_dir=str(tmp_path),
     )
