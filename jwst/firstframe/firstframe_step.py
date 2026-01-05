@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 from stdatamodels.jwst import datamodels
 
@@ -22,12 +23,12 @@ class FirstFrameStep(Step):
     class_alias = "firstframe"
 
     spec = """
-    skip = booelan(default=True) # Do not run this step. 
+    skip = boolean(default=True) # Do not run this step.
     """  # noqa: E501
 
     def __init__(self, *args, **kwargs):
         deprecation_message = (
-            "'FiristFrameStep' has been deprecated since 1.21.0 and "
+            "'FirstFrameStep' has been deprecated since 1.21.0 and "
             "will be removed in a future release. Flagging the first group  has been"
             " added to the RSCD step.  "
         )
