@@ -144,5 +144,5 @@ instead use::
 References
 ----------
 
-The adaptive trace model algorithm is based on work by D. Law, "Mitigating Resampling Noise
-for the JWST IFU Spectrometers with Adaptive Basis Spline Modeling" (in prep).
+The adaptive trace model algorithm is based on work by D. Law, "Mitigating Pixel Phase
+Artifacts for the JWST IFU Spectrometers with Adaptive Trace Modeling" (in prep).
