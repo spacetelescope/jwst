@@ -6,7 +6,8 @@ The ``adaptive_trace_model`` step has the following step-specific arguments:
 ``--fit_threshold`` (float, default=10.0)
   Limiting sigma for fitting splines. This parameter controls whether a spline fit is
   attempted at all for a spectral region (slit or slice).  Higher values will create
-  spline models for fewer slices; lower values will attempt to fit more slices.
+  spline models for fewer slices; lower values will attempt to fit more slices. If
+  set to 0, all slices will be fit.
 
 ``--oversample`` (float, default=1.0)
   Use the trace model to oversample the data by this factor.  If the value is 1.0,
@@ -20,4 +21,12 @@ The ``adaptive_trace_model`` step has the following step-specific arguments:
   between bright, compact sources and faint diffuse sources for oversampling purposes.
   For compact sources (high slope), the spline models are used in the interpolation.
   For diffuse sources (low slope), a linear interpolation is used.  Set the slope
-  limit to lower values to use the spline model for fainter sources.
+  limit to lower values to use the spline model for fainter sources.  If set to zero,
+  the spline model will always be used.
+
+``--psf_optimal`` boolean(default=False)
+  Model the target as a simple point source.  If set to True, the values for
+  ``fit_threshold`` and ``slope_limit`` are ignored and the spline models are fit
+  and used for all data.  In this case, residual differences from the spline model
+  are not interpolated and added to the spline fits. This option is generally only
+  appropriate for simple, isolated point sources.
