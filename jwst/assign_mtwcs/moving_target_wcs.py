@@ -23,7 +23,7 @@ from jwst.stpipe.utilities import record_step_status
 
 log = logging.getLogger(__name__)
 
-__all__ = ["assign_moving_target_wcs"]
+__all__ = ["assign_moving_target_wcs", "add_mt_frame"]
 
 
 def assign_moving_target_wcs(input_models):
@@ -156,8 +156,8 @@ def _is_mt_meta_valid(meta):
     Parameters
     ----------
     meta : dict
-        Nested metadata dictionary from a data model, as output from `read_metadata`
-        with `flatten=False`.
+        Nested metadata dictionary from a data model, as output from ``read_metadata``
+        with ``flatten=False``.
 
     Returns
     -------
