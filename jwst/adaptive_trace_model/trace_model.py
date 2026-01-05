@@ -539,7 +539,8 @@ def oversample_flux(
     slope_limit : float, optional
         The slope limit in the normalized model fits above which the spline
         model is considered appropriate. Lower values will use spline fits
-        for fainter sources.
+        for fainter sources. If less than or equal to zero, the spline fits
+        will always be used.
     psf_optimal : bool, optional
         If True, residual corrections to the spline model are not included
         in the oversampled flux.
@@ -662,7 +663,10 @@ def oversample_flux(
         # Now look at our list of alpha values where model slopes were high to figure out
         # where traces are and we actually want to use the spline model
         # Don't bother with this if not enough recorded alpha values
-        if len(alpha_ptsource) > 50 and splinebkpt is not None:
+        if slope_limit <= 0:
+            # Always use the spline fit in this case
+            flux_os_bspline_use = flux_os_bspline_full
+        elif len(alpha_ptsource) > 50 and splinebkpt is not None:
             # What is the rough native pixel size in alpha in the columns?
             native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
 
@@ -993,14 +997,17 @@ def fit_and_oversample(
         The input datamodel, updated in place.
     fit_threshold : float
         The signal threshold sigma for attempting spline fits within a slice region.
-        Lower values will create spline traces for more slices.
+        Lower values will create spline traces for more slices.  If less than or
+        equal to 0, all slices will be fit.
     slope_limit : float
         The normalized slope threshold for using the spline model in oversampled
-        data.  Lower values will use the spline model for fainter sources.
+        data.  Lower values will use the spline model for fainter sources. If less
+        than or equal to 0, the spline model will always be used.
     psf_optimal : bool
         If True, residual corrections to the spline model are not included
         in the oversampled flux.  This option is generally appropriate for simple
-        isolated point sources only.
+        isolated point sources only.  If set, ``slope_limit`` and ``fit_threshold``
+        values are ignored and spline fits are attempted and used for all data.
     oversample_factor : float
         If not 1.0, then the data will be oversampled by this factor.
 
@@ -1010,6 +1017,12 @@ def fit_and_oversample(
         The datamodel, updated with a trace image and optionally oversampled
         arrays.
     """
+    # Check parameters
+    if psf_optimal:
+        log.info("Ignoring fit threshold and slope limit for psf_optimal=True")
+        fit_threshold = 0
+        slope_limit = 0
+
     # Get input data coordinates
     detector = model.meta.instrument.detector
     ysize, xsize = model.data.shape
@@ -1065,24 +1078,29 @@ def fit_and_oversample(
 
     # Define a per-slice analysis threshold (must be brighter than some level above background)
     slice_numbers = np.unique(region_map[region_map > 0])
-    if mode == "MIR_MRS":
-        # For MIRI MRS we need each channel to have its own threshold, particularly
-        # for Ch3/Ch4 since the sky is so much brighter in Ch4
-        signal_threshold = dict.fromkeys(slice_numbers, np.nan)
-        for channel in [100, 200, 300, 400]:
-            ch_data = (region_map >= channel) & (region_map < channel + 100)
-            if not np.any(ch_data):
-                continue
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=AstropyUserWarning)
-                ch_mean, _, ch_rms = scs(flux_orig[ch_data])
-            for slnum in slice_numbers:
-                if channel <= slnum < channel + 100:
-                    signal_threshold[slnum] = ch_mean + fit_threshold * ch_rms
+    if fit_threshold <= 0:
+        # In this case, all slices should be fit, so make the threshold
+        # lower than any real signal
+        signal_threshold = dict.fromkeys(slice_numbers, -np.inf)
     else:
-        # For NIRSpec IFU, all regions have the same threshold
-        threshold = overall_mean + fit_threshold * overall_rms
-        signal_threshold = dict.fromkeys(slice_numbers, threshold)
+        if mode == "MIR_MRS":
+            # For MIRI MRS we need each channel to have its own threshold, particularly
+            # for Ch3/Ch4 since the sky is so much brighter in Ch4
+            signal_threshold = dict.fromkeys(slice_numbers, np.nan)
+            for channel in [100, 200, 300, 400]:
+                ch_data = (region_map >= channel) & (region_map < channel + 100)
+                if not np.any(ch_data):
+                    continue
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=AstropyUserWarning)
+                    ch_mean, _, ch_rms = scs(flux_orig[ch_data])
+                for slnum in slice_numbers:
+                    if channel <= slnum < channel + 100:
+                        signal_threshold[slnum] = ch_mean + fit_threshold * ch_rms
+        else:
+            # For NIRSpec IFU, all regions have the same threshold
+            threshold = overall_mean + fit_threshold * overall_rms
+            signal_threshold = dict.fromkeys(slice_numbers, threshold)
 
     # Fit spline models to all regions
     fit_kwargs = _set_fit_kwargs(detector, xsize)
@@ -1091,8 +1109,10 @@ def fit_and_oversample(
     )
 
     # If oversampling is not needed, evaluate the spline models to create the
-    # trace image, store it in the model, and return
-    # todo - may want to check for psf_optimal param before returning
+    # trace image, store it in the model, and return.
+    # In the future, it might be useful to update the SCI extension here for the
+    # psf_optimal=True case, even when oversample=1, but for now, we will leave
+    # data unmodified.
     if oversample_factor == 1:
         trace = _trace_image(flux_orig.shape, spline_models, spline_scales, region_map, alpha_orig)
         if rotate:

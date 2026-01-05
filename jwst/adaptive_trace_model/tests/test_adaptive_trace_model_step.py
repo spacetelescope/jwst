@@ -13,6 +13,8 @@ def test_adaptive_trace_model_step_success(mode):
         model = helpers.miri_mrs_model()
     else:
         model = helpers.nirspec_ifu_model_with_source()
+
+    # run with a high threshold so spline fits are not performed, for speed
     result = AdaptiveTraceModelStep.call(model, oversample=1, fit_threshold=100000)
 
     # step is complete
@@ -104,6 +106,7 @@ def test_adaptive_trace_model_step_oversample():
 @pytest.mark.parametrize("mode", ["MIR_MRS", "NRS_IFU", "NRS_IFU_SLICE_WCS"])
 def test_adaptive_trace_model_step_oversample_with_source(mode):
     fit_threshold = 10.0
+    slope_limit = 0.05
     if mode == "MIR_MRS":
         model = helpers.miri_mrs_model_with_source()
     elif mode == "NRS_IFU_SLICE_WCS":
@@ -111,7 +114,7 @@ def test_adaptive_trace_model_step_oversample_with_source(mode):
     else:
         model = helpers.nirspec_ifu_model_with_source()
     result = AdaptiveTraceModelStep.call(
-        model, oversample=2, slope_limit=0.05, fit_threshold=fit_threshold
+        model, oversample=2, slope_limit=slope_limit, fit_threshold=fit_threshold
     )
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
@@ -171,3 +174,25 @@ def test_adaptive_trace_model_unsupported_model(caplog):
     assert result is not model
     assert result.meta.cal_step.adaptive_trace_model == "SKIPPED"
     assert model.meta.cal_step.adaptive_trace_model is None
+
+
+@pytest.mark.slow
+def test_adaptive_trace_model_step_psf_optimal(caplog):
+    model = helpers.miri_mrs_model_with_source()
+    result = AdaptiveTraceModelStep.call(model, oversample=2, psf_optimal=True)
+    assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
+    assert "Ignoring fit threshold and slope limit" in caplog.text
+
+    # trace is attached, contains non-NaN trace for all slices
+    assert result.trace_model.shape == result.data.shape
+    indx = result.regions > 0
+    assert np.all(np.isnan(result.trace_model[~indx]))
+    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.9 * np.sum(indx)
+
+    # fit trace is exactly the same as the data, since the spline
+    # model is used everywhere
+    valid = indx & ~np.isnan(result.data)
+    np.testing.assert_allclose(result.data[valid], result.trace_model[valid])
+
+    model.close()
+    result.close()
