@@ -152,9 +152,9 @@ def fit_2d_spline_trace(
         local_data = scaled_flux[:, lstart:lstop]
 
         # Trim to finite values
-        finite_alpha = np.isfinite(local_alpha)
-        local_alpha = local_alpha[finite_alpha]
-        local_data = local_data[finite_alpha]
+        finite_values = np.isfinite(local_alpha) & np.isfinite(local_data)
+        local_alpha = local_alpha[finite_values]
+        local_data = local_data[finite_values]
 
         # Sort by alpha
         idx = np.argsort(local_alpha)
