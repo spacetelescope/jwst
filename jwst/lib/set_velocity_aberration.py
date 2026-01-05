@@ -23,15 +23,12 @@ in the header other than what is required by the standard.
 import logging
 
 import stcal.velocity_aberration as va
-from scipy.constants import speed_of_light
 
 import jwst.datamodels as dm
 from jwst.datamodels import Level1bModel  # type: ignore[attr-defined]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-
-SPEED_OF_LIGHT = speed_of_light / 1000  # km / s
 
 __all__ = ["add_dva"]
 
