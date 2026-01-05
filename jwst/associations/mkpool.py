@@ -66,7 +66,7 @@ def mkpool(
     - dms_note
           Notes from upstream processing of the downlinked data that may be pertinent
           to the quality of the data. Currently the value "wfsc_los_jitter" is used
-          by the Level 2 wavefront sensing rule, Asn_Lv2WFSC, to ignore exposures.
+          by the Level 2 wavefront sensing rule to ignore exposures.
     - is_imprt
           A 't' indicates the exposure is a NIRSpec imprint exposure.
     - pntgtype

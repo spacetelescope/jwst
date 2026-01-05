@@ -1,0 +1,1 @@
+Removed deprecated ``calwebb_wfs-image2.cfg`` configuration and unused ``Asn_Lv2WFSC`` rule.

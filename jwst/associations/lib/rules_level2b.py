@@ -58,7 +58,6 @@ __all__ = [
     "Asn_Lv2WFSSNIS",
     "Asn_Lv2WFSSNRC",
     "Asn_Lv2WFSSParallel",
-    "Asn_Lv2WFSC",
 ]
 
 # Configure logging
@@ -1143,50 +1142,6 @@ class Asn_Lv2NRSIFUNod(AsnMixin_Lv2Imprint, AsnMixin_Lv2Nod, AsnMixin_Lv2Spectra
 
         # Now check and continue initialization.
         super(Asn_Lv2NRSIFUNod, self).__init__(*args, **kwargs)
-
-
-@RegistryMarker.rule
-class Asn_Lv2WFSC(DMSLevel2bBase):
-    """
-    Level2b Wavefront Sensing & Control Association.
-
-    Characteristics:
-
-        - Association type: ``wfs-image2``
-        - Pipeline: ``calwebb_wfs-image2``
-        - WFS and WFS&C observations
-        - Single science exposure
-    """
-
-    def __init__(self, *args, **kwargs):
-        # Setup constraints
-        self.constraints = Constraint(
-            [
-                Constraint_Base(),
-                Constraint_Image_Science(),
-                Constraint_Single_Science(self.has_science, self.get_exposure_type),
-                Constraint_WFSC(),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            name="dms_note",
-                            sources=["dms_note"],
-                            value="wfsc_los_jitter",
-                        ),
-                        DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="nrc_image"),
-                    ],
-                    reduce=Constraint.notall,
-                ),
-            ]
-        )
-
-        # Now check and continue initialization.
-        super(Asn_Lv2WFSC, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization."""
-        super(Asn_Lv2WFSC, self)._init_hook(item)
-        self.data["asn_type"] = "wfs-image2"
 
 
 @RegistryMarker.rule
