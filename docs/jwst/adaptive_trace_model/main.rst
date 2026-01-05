@@ -114,6 +114,12 @@ compact sources and a linear interpolation for faint, diffuse regions. The resid
 into the spline model accounts for any local structures that are not well modeled by the spline
 profile.
 
+Optionally, if the ``psf_optimal`` step parameter is set to True, fit threshold and slope limits
+are ignored, so that spline models are created and used for all pixels, and the residual image
+is not added into the oversampled flux.  This option is only appropriate for simple, isolated
+point sources, but if used, can significantly improve the signal-to-noise ratio for extracted
+spectra, at the cost of ignoring non-PSF structures.
+
 To match the oversampled flux image, the error and variance arrays in the datamodel are linearly
 interpolated onto the oversampled grid.  The DQ array is oversampled as well,
 with a nearest-pixel interpolation.  It is then updated with a FLUX_ESTIMATED flag for any

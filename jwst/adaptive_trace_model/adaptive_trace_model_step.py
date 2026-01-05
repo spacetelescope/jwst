@@ -20,6 +20,7 @@ class AdaptiveTraceModelStep(Step):
     fit_threshold = float(default=10.0) # Limiting sigma for fitting splines
     oversample = float(default=1.0) # Use the trace model to oversample the data by this factor
     slope_limit = float(default=0.1) # Slope limit for using splines in oversample
+    psf_optimal = boolean(default=False) # Model the target as a simple point source; ignore slope_limit and fit_threshold.
     skip = boolean(default=True) # By default, skip the step.
     """  # noqa: E501
 
@@ -88,6 +89,7 @@ class AdaptiveTraceModelStep(Step):
                 fit_threshold=self.fit_threshold,
                 slope_limit=self.slope_limit,
                 oversample_factor=self.oversample,
+                psf_optimal=self.psf_optimal,
             )
 
             model.meta.cal_step.adaptive_trace_model = "COMPLETE"
