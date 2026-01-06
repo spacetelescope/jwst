@@ -117,13 +117,33 @@ profile.
 Optionally, if the ``psf_optimal`` step parameter is set to True, fit threshold and slope limits
 are ignored, so that spline models are created and used for all pixels, and the residual image
 is not added into the oversampled flux.  This option is only appropriate for simple, isolated
-point sources, but if used, can significantly improve the signal-to-noise ratio for extracted
-spectra, at the cost of ignoring non-PSF structures.
+point sources, but if used, can significantly improve the signal-to-noise ratio (SNR) for
+extracted spectra, at the cost of ignoring non-PSF structures.
 
-To match the oversampled flux image, the error and variance arrays in the datamodel are linearly
-interpolated onto the oversampled grid.  The DQ array is oversampled as well,
+Propagate DQ, Error, and Variance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To match the oversampled flux image, the error and variance arrays in the datamodel are
+linearly interpolated onto the oversampled grid.  The DQ array is oversampled as well,
 with a nearest-pixel interpolation.  It is then updated with a FLUX_ESTIMATED flag for any
 pixels that were NaN in the input but were replaced with real values by the spline modeling.
+
+After oversampling, error and variance arrays are inflated by a factor dependent on the
+oversampling ratio to account for the introduced covariance.  This factor is intended
+to produce resampled cubes with the same SNR for all oversampling factors, to first order.
+The value of the factor (*X*) was empirically determined from tests on a line-free region
+of a stellar spectrum, and is calculated for oversample factor *N* as:
+
+.. math::
+   X = 0.23 N + 0.77
+
+The oversampled error image is multiplied by X; variance images are multiplied
+by X\ :sup:`2`.
+
+Note that the inflated error arrays do not accurately reflect the per-pixel errors
+on the oversampled flux, but rather are intended to produce approximately correct
+errors after further resampling. The oversampled product is primarily intended to
+be an intermediate format, prior to building a rectified spectral cube.
 
 Update the WCS
 ^^^^^^^^^^^^^^
