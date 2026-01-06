@@ -2806,7 +2806,7 @@ def _create_ifupost_transform(ifupost_slice):
 
     Parameters
     ----------
-    ifupost_slice : ObjectNode
+    ifupost_slice : stdatamodels.properties.ObjectNode
         IFUPost transform for a specific slice
 
     Returns
