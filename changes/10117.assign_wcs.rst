@@ -1,0 +1,1 @@
+Add a non-empty frame for the "coordinates" transform in the NIRSpec IFU WCS.
