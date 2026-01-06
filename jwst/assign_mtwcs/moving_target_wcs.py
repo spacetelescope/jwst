@@ -1,11 +1,4 @@
-"""
-Adjust the WCS of a moving target exposure.
-
-Computes the average RA and DEC of a moving
-target in all exposures in an association and adds a step to
-each of the WCS pipelines to allow aligning the exposures to the average
-location of the target.
-"""
+"""Functions for adjusting the WCS of a moving target exposure."""
 
 import logging
 from copy import deepcopy
@@ -23,12 +16,17 @@ from jwst.stpipe.utilities import record_step_status
 
 log = logging.getLogger(__name__)
 
-__all__ = ["assign_moving_target_wcs"]
+__all__ = ["assign_moving_target_wcs", "add_mt_frame"]
 
 
 def assign_moving_target_wcs(input_models):
     """
     Adjust the WCS of a moving target exposure.
+
+    Computes the average RA and DEC of a moving
+    target in all exposures in an association and adds a step to
+    each of the WCS pipelines to allow aligning the exposures to the average
+    location of the target.
 
     Parameters
     ----------
@@ -156,8 +154,8 @@ def _is_mt_meta_valid(meta):
     Parameters
     ----------
     meta : dict
-        Nested metadata dictionary from a data model, as output from `read_metadata`
-        with `flatten=False`.
+        Nested metadata dictionary from a data model, as output from ``read_metadata``
+        with ``flatten=False``.
 
     Returns
     -------
