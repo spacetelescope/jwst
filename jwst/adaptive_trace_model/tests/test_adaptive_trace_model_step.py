@@ -92,8 +92,19 @@ def test_adaptive_trace_model_step_oversample():
         input_ext = getattr(model, extname)
         output_ext = getattr(result, extname)
         assert output_ext.shape == (input_ext.shape[0], 2 * input_ext.shape[1])
-        if extname != "dq":
+
+        # Check mean value: errors are inflated, data should match
+        inflation = 0.23 * 2 + 0.77
+        if extname == "data":
             np.testing.assert_allclose(np.nanmean(output_ext), np.mean(input_ext), atol=1e-7)
+        elif extname == "err":
+            np.testing.assert_allclose(
+                np.nanmean(output_ext), np.mean(input_ext) * inflation, atol=1e-7
+            )
+        elif extname.startswith("var"):
+            np.testing.assert_allclose(
+                np.nanmean(output_ext), np.mean(input_ext) * inflation**2, atol=1e-7
+            )
 
     # trace is attached, but contains NaN only for flat input data
     assert result.trace_model.shape == result.data.shape
