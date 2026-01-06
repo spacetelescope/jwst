@@ -65,14 +65,43 @@ __all__ = [
     "imaging",
     "ifu",
     "slits_wcs",
+    "slitlets_wcs",
     "get_open_slits",
+    "get_open_fixed_slits",
+    "get_msa_metadata",
+    "get_msa_slit_scales",
+    "get_open_msa_slits",
+    "get_spectral_order_wrange",
+    "ifuslit_to_slicer",
+    "slicer_to_msa",
+    "slit_to_msa",
+    "gwa_to_ifuslit",
+    "gwa_to_slit",
+    "angle_from_disperser",
+    "wavelength_from_disperser",
+    "detector_to_gwa",
+    "dms_to_sca",
+    "mask_slit",
+    "compute_bounding_box",
     "generate_compound_bbox",
+    "collimator_to_gwa",
+    "get_disperser",
+    "correct_tilt",
+    "ifu_msa_to_oteip",
+    "msa_to_oteip",
+    "oteip_to_v23",
+    "create_frames",
+    "create_imaging_frames",
+    "get_slit_location_model",
+    "gwa_to_ymsa",
     "nrs_fs_slit_id",
     "nrs_fs_slit_name",
     "nrs_wcs_set_input",
-    "nrs_ifu_wcs",
-    "get_spectral_order_wrange",
+    "validate_open_slits",
     "spectral_order_wrange_from_model",
+    "nrs_ifu_wcs",
+    "apply_slicemap",
+    "nrs_lamp",
 ]
 
 
@@ -864,7 +893,7 @@ def get_open_msa_slits(
     slit_scales : dict or None
         A dictionary of scaling factors for MSA shutters.  Keys are integer quadrant values
         (one-indexed).  Values are 2-tuples of float values (scale_x, scale_y).
-        If not provided, default values from `MSA_SLIT_SCALES` are used.
+        If not provided, default values from ``MSA_SLIT_SCALES`` are used.
 
     Returns
     -------
