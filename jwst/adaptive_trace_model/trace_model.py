@@ -904,6 +904,44 @@ def _get_oversampled_coords_nrs_ifu(ifu_wcs, x_os, y_os):
     return alpha_os, wave_os
 
 
+def _inflate_error(error_array, extname, oversample_factor):
+    """
+    Inflate error or variance arrays to account for oversampling.
+
+    Errors are increased by a factor dependent on the oversampling ratio
+    in order to account for the covariance introduced by the oversampling.
+
+    The inflation factor was determined empirically for IFU data
+    by comparing the reported error of single-spaxel spectra and aperture-summed
+    spectra, following ``cube_build`` on an oversampled image.
+
+    Empirically, based on the RMS of the aperture-summed spectrum in a line-free
+    region of  a stellar spectrum, the true SNR does not change much (< 4%) between
+    N=1 and N=2/3/4. In contrast the reported SNR increases by an amount well fit
+    by X = 0.23N + 0.77. I.e., X=1 for N=1, and X=1.46 for N=3.  This does not account
+    for variations in individual pixels, but to first order, inflating by this X
+    factor when the oversampling is performed will produce data cubes in which the
+    SNR is mostly preserved accurately.  Per-pixel errors in the oversampled
+    product are not accurately reported by the inflated errors, but the oversampled
+    product should be considered primarily an intermediate data product; the
+    errors in the resampled cube are more important.
+
+    Parameters
+    ----------
+    error_array : ndarray
+        Error or variance image to inflate. Updated in place.
+    extname : {"err", "var_rnoise", "var_poisson", "var_flat"}
+        Extension name.
+    oversample_factor : float
+        The oversampling factor used.
+    """
+    inflation_factor = 0.23 * oversample_factor + 0.77
+    if str(extname).lower().startswith("var"):
+        error_array *= inflation_factor**2
+    else:
+        error_array *= inflation_factor
+
+
 def _update_wcs_nrs_ifu(wcs, map_pixels):
     """
     Update a NIRSpec IFU WCS to include the oversampling transform.
@@ -1178,7 +1216,6 @@ def fit_and_oversample(
     dq_os[is_estimated] |= dqflags.pixel["FLUX_ESTIMATED"]
 
     # Simple linear oversample for the error arrays
-    # todo: error may need inflation to avoid underestimate later
     errors_os = {}
     for extname, error_array in errors.items():
         error_os = linear_oversample(
@@ -1193,6 +1230,9 @@ def fit_and_oversample(
         # Restore NaNs from the input, except at the estimated locations
         is_nan = ~np.isfinite(error_array[closest_pix])
         error_os[is_nan & ~is_estimated] = np.nan
+
+        # Inflate the errors to account for oversampling covariance
+        _inflate_error(error_os, extname, oversample_factor)
 
         errors_os[extname] = error_os
 
