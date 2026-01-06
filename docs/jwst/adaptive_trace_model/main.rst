@@ -154,17 +154,17 @@ is stored in a frame called "coordinates", prior to the "detector" frame.  WCS o
 oversampling should use "coordinates" as the input frame.  For example, to retrieve the
 world coordinates for pixel x, y in the oversampled image, these operations are equivalent::
 
-  ra, dec, lam = oversampled_model.meta.wcs(x, y)
+   ra, dec, lam = oversampled_model.meta.wcs(x, y)
 
 and::
 
-  oversampled_transform = oversampled_model.meta.wcs.get_transform('coordinates', 'world')
-  ra, dec, lam = oversampled_transform(x, y)
+   oversampled_transform = oversampled_model.meta.wcs.get_transform('coordinates', 'world')
+   ra, dec, lam = oversampled_transform(x, y)
 
-To retrieve the transform from original detector pixels to world coordinates, you may
-instead use::
+To retrieve the transform from original detector pixels to world coordinates instead,
+use the "detector" frame::
 
-  detector_pixel_transform = oversampled_model.meta.wcs.get_transform('detector', 'world')
+   detector_pixel_transform = oversampled_model.meta.wcs.get_transform('detector', 'world')
 
 
 References
