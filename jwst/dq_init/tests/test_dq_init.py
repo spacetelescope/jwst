@@ -18,7 +18,7 @@ ids = ["GuiderRawModel-Stack", "GuiderRawModel-Image", "RampModel", "RampModel"]
 
 
 @pytest.mark.parametrize(args, test_data, ids=ids)
-def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type):
+def test_dq_im_default(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type):
     """Check that PIXELDQ is initialized with the information from the reference file.
     test that a flagged value in the reference file flags the PIXELDQ array"""
 
@@ -74,8 +74,28 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
     assert dqdata[300, 200] == 16777217
     assert dqdata[400, 200] == 16385
 
+
+def test_dq_im_wrong_shape():
+    """Use one of the param combos from test_dq_im_default to trigger exception."""
+    xstart = ystart = nints = 1
+    xsize = 1032
+    ysize = 1024
+    ngroups = 5
+    instrument = "MIRI"
+    exp_type = "MIR_IMAGE"
+
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
+    dq, dq_def = make_maskmodel(ysize, xsize)
+
+    ref_data = MaskModel(dq=dq, dq_def=dq_def)
+    ref_data.meta.instrument.name = instrument
+    ref_data.meta.subarray.xstart = xstart
+    ref_data.meta.subarray.xsize = xsize
+    ref_data.meta.subarray.ystart = ystart
+    ref_data.meta.subarray.ysize = ysize
+
     with pytest.raises(ValueError, match="user_dq has shape"):
-        outfile = do_dqinit(dm_ramp, ref_data, user_dq=np.ones((2, 2), dtype=dq.dtype))
+        do_dqinit(dm_ramp, ref_data, user_dq=np.ones((2, 2), dtype=dq.dtype))
 
 
 def test_groupdq():
