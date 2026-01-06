@@ -9,4 +9,4 @@ The ``dq_init`` step has the following step-specific argument.
     as the science frame. The data type of the DQ array in this file
     must be integer. It is up to the user to ensure the supplied flags are
     valid as no such checks will be done before applying them in the
-    pipeline. This option is not recommended for inexperienced pipeline users.
+    pipeline (see :ref:`Data Quality Flags`).
