@@ -54,22 +54,6 @@ def miri_mrs_model(detector="MIRIFUSHORT", channel="12", band="SHORT", shape=(10
     return model
 
 
-def _add_source(model, region_map, along_x=True, bright_factor=10.0):
-    ysize, xsize = model.data.shape[-2:]
-    x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
-    slice_numbers = np.unique(region_map[region_map > 0])
-    for slice_num in slice_numbers:
-        indx = region_map == slice_num
-        if along_x:
-            model.data[..., indx] = profile_1d(y[indx], amplitude=1.0, baseline=0.0)
-        else:
-            model.data[..., indx] = profile_1d(x[indx], amplitude=1.0, baseline=0.0)
-
-        # Make one slice brighter, for threshold tests
-        if slice_num == slice_numbers[len(slice_numbers) // 2]:
-            model.data[..., indx] *= bright_factor
-
-
 def miri_mrs_model_with_source():
     """
     Create a mock MIRI MRS model with a simple spectral source in the data array.
@@ -215,3 +199,19 @@ def profile_1d(xvec, amplitude=0.1, baseline=1.0):
     xpos = np.mean(xvec)
     peak = amplitude * np.exp(-0.5 * ((xvec - xpos) / 2) ** 2)
     return peak + baseline
+
+
+def _add_source(model, region_map, along_x=True, bright_factor=10.0):
+    ysize, xsize = model.data.shape[-2:]
+    x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
+    slice_numbers = np.unique(region_map[region_map > 0])
+    for slice_num in slice_numbers:
+        indx = region_map == slice_num
+        if along_x:
+            model.data[..., indx] = profile_1d(y[indx], amplitude=1.0, baseline=0.0)
+        else:
+            model.data[..., indx] = profile_1d(x[indx], amplitude=1.0, baseline=0.0)
+
+        # Make one slice brighter, for threshold tests
+        if slice_num == slice_numbers[len(slice_numbers) // 2]:
+            model.data[..., indx] *= bright_factor
