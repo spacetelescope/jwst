@@ -65,30 +65,30 @@ class AssignWcsStep(Step):
 
         Reference file types for this step:
 
-            - camera: Camera model (NIRSPEC)
-            - collimator: Collimator Model (NIRSPEC)
-            - disperser: Disperser model (NIRSPEC)
-            - distortion: Spatial distortion model (FGS, MIRI, NIRCAM, NIRISS)
-            - filteroffset: Filter offsets (MIRI Imager)
-            - fore: Transform through the FORE optics (NIRSPEC)
-            - fpa: Transform in the FPA plane (NIRSPEC)
-            - ifufore: Transforms from the MSA plane to the plane of the IFU slicer (NIRSPEC)
-            - ifupost: Transforms from the slicer plane to the MSA plane (NIRSPEC)
-            - ifuslicer: Metrology of the IFU slicer (NIRSPEC)
-            - msa: Metrology of the MSA plane (NIRSPEC)
-            - ote: Transform through the Optical Telescope Element (NIRSPEC)
-            - specwcs: Wavelength calibration models (MIRI, NIRCAM, NIRISS)
-            - regions: Stores location of the regions on the detector (MIRI)
-            - wavelengthrange: Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
+        - camera: Camera model (NIRSPEC)
+        - collimator: Collimator Model (NIRSPEC)
+        - disperser: Disperser model (NIRSPEC)
+        - distortion: Spatial distortion model (FGS, MIRI, NIRCAM, NIRISS)
+        - filteroffset: Filter offsets (MIRI Imager)
+        - fore: Transform through the FORE optics (NIRSPEC)
+        - fpa: Transform in the FPA plane (NIRSPEC)
+        - ifufore: Transforms from the MSA plane to the plane of the IFU slicer (NIRSPEC)
+        - ifupost: Transforms from the slicer plane to the MSA plane (NIRSPEC)
+        - ifuslicer: Metrology of the IFU slicer (NIRSPEC)
+        - msa: Metrology of the MSA plane (NIRSPEC)
+        - ote: Transform through the Optical Telescope Element (NIRSPEC)
+        - specwcs: Wavelength calibration models (MIRI, NIRCAM, NIRISS)
+        - regions: Stores location of the regions on the detector (MIRI)
+        - wavelengthrange: Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
 
         Parameters
         ----------
-        input_data : JwstDataModel or str
+        input_data : `~stdatamodels.jwst.datamodels.JwstDataModel` or str
             Either a jwst data model or a string that is the path to one.
 
         Returns
         -------
-        result : JwstDataModel
+        result : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The data model with the WCS information added.
         """
         reference_file_names = {}

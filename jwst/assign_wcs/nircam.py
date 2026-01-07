@@ -35,7 +35,7 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -60,7 +60,7 @@ def imaging(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -107,7 +107,8 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -167,11 +168,11 @@ def tsgrism(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
-        Requires 'distortion', 'filteroffset' and 'specwcs' reference files.
+        Requires 'distortion', 'filteroffset', and 'specwcs' reference files.
 
     Returns
     -------
@@ -323,7 +324,7 @@ def wfss(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
