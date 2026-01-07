@@ -303,6 +303,18 @@ def test_fullstep_userdq(tmp_path):
     dm_ramp.meta.observation.date = "2016-06-01"
     dm_ramp.meta.observation.time = "00:00:00"
 
+    # create a MaskModel for the dq input mask
+    dq, dq_def = make_maskmodel(ysize, xsize)
+
+    # write mask model
+    ref_data = MaskModel(dq=dq, dq_def=dq_def)
+    ref_data.meta.instrument.name = instrument
+    ref_data.meta.subarray.xstart = xstart
+    ref_data.meta.subarray.xsize = xsize
+    ref_data.meta.subarray.ystart = ystart
+    ref_data.meta.subarray.ysize = ysize
+
+    # create user-defined DQ file
     dqarr = np.zeros((ysize, xsize), dtype=np.uint32)
     dqarr[100, 100] = 1
     hdu = fits.PrimaryHDU(data=dqarr)
@@ -310,13 +322,15 @@ def test_fullstep_userdq(tmp_path):
     hdu.writeto(user_dq_file, overwrite=True)
 
     # run the full step
-    outfile = DQInitStep.call(dm_ramp, user_supplied_dq=user_dq_file)
+    outfile = DQInitStep.call(dm_ramp, override_mask=ref_data, user_supplied_dq=user_dq_file)
 
     # test that a pixeldq frame has been initialized
     assert outfile.pixeldq.ndim == 2  # a 2-d pixeldq frame exists
 
     # test that user DQ is propagated
-    np.testing.assert_array_equal(outfile.pixeldq[100, 100], 1)
+    expected_dq = np.zeros_like(dqarr)
+    expected_dq[100, 100] = 1
+    np.testing.assert_array_equal(outfile.pixeldq, expected_dq)
 
 
 def test_output_is_not_input():
