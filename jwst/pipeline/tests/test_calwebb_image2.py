@@ -109,7 +109,6 @@ def test_output_file_rename_file(run_image2_pipeline_file):
         assert os.path.exists(f"{custom_stem}_{extension}.fits")
 
 
-@pytest.mark.filterwarnings("ignore::ResourceWarning")
 def test_output_file_norename_asn(run_image2_pipeline_asn):
     """
     Ensure output_file parameter is ignored, with warning,
