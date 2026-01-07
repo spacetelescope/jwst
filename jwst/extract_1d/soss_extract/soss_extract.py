@@ -1448,9 +1448,9 @@ def run_extract1d(
     wave_grid_in = soss_kwargs["wave_grid_in"]
     if wave_grid_in is not None:
         log.info(f"Loading wavelength grid from {wave_grid_in}.")
-        wave_grid = datamodels.SossWaveGridModel(wave_grid_in).wavegrid
-        # Make sure it has the correct precision
-        wave_grid = wave_grid.astype("float64")
+        with datamodels.open(wave_grid_in) as wave_grid_model:
+            # must ensure this gets loaded into memory because asdf will lazy-load it
+            wave_grid = wave_grid_model.wavegrid[:]
     else:
         # wave_grid will be estimated later in the first call of `Integration.model_image`
         log.info("Wavelength grid was not specified. Setting `wave_grid` to None.")
@@ -1682,7 +1682,8 @@ def run_extract1d(
         output_model.int_times = input_model.int_times.copy()
 
     if soss_kwargs["wave_grid_out"] is not None:
-        wave_grid_model = SossWaveGridModel(wavegrid=wave_grid)
+        # Ensure wave grid is saved with float64 precision to avoid rounding errors
+        wave_grid_model = SossWaveGridModel(wavegrid=wave_grid_first.astype("float64"))
         log.info(f"Saving soss_wave_grid to {soss_kwargs['wave_grid_out']}")
         wave_grid_model.save(path=soss_kwargs["wave_grid_out"])
         wave_grid_model.close()
