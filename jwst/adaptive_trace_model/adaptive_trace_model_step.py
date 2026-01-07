@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 from stdatamodels.jwst import datamodels
 
@@ -22,6 +23,7 @@ class AdaptiveTraceModelStep(Step):
     slope_limit = float(default=0.1) # Slope limit for using splines in oversample
     psf_optimal = boolean(default=False) # Model the target as a simple point source; ignore slope_limit and fit_threshold.
     skip = boolean(default=True) # By default, skip the step.
+    output_use_model = boolean(default=True) # Use input filenames in the output models
     """  # noqa: E501
 
     def process(self, input_data):
@@ -72,6 +74,21 @@ class AdaptiveTraceModelStep(Step):
         output_model = self.prepare_output(input_data)
         if isinstance(output_model, ModelContainer):
             models = output_model
+
+            # Set up output path name to include the ASN ID if associations are involved
+            # TODO: This check is also performed in pixel_replace and outlier_detection.
+            #       It should be moved to a shared location instead.
+            asn_id = None
+            try:
+                asn_id = models.asn_table["asn_id"]
+            except (AttributeError, KeyError):
+                pass
+            if asn_id is None:
+                asn_id = self.search_attr("asn_id")
+            if asn_id is not None:
+                _make_output_path = self.search_attr("_make_output_path", parent_first=True)
+                self._make_output_path = partial(_make_output_path, asn_id=asn_id)
+
         else:
             models = [output_model]
 
