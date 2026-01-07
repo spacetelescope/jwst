@@ -150,7 +150,13 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
             [
                 Constraint_Base(),
                 Constraint_Mode(),
-                Constraint_Image_Science(),
+                Constraint(
+                    [
+                        Constraint_Image_Science(),
+                        Constraint_WFSC(),
+                    ],
+                    reduce=Constraint.any,
+                ),
                 Constraint(
                     [
                         Constraint_TSO(),
