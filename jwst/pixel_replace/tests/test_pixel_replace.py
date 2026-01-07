@@ -127,7 +127,10 @@ def miri_mrs():
     model = cal_data(shape=shape, bad_idx=bad_idx, dispaxis=2, model="ifu")
     model.meta.instrument.name = "MIRI"
     model.meta.exposure.type = "MIR_MRS"
-    model.meta.wcs = {"transform": mock_transform, "available_frames": ["detector", "world"]}
+    model.meta.wcs = {
+        "get_transform": lambda *args: mock_transform,
+        "available_frames": ["detector", "world"],
+    }
     return model, bad_idx
 
 
