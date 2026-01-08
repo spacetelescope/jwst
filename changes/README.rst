@@ -20,7 +20,7 @@ towncrier build --version <VERSION>
 News fragment change types
 --------------------------
 
-- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks existing functionality
+- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks **step-level API**
 
 General Pipeline Changes
 ^^^^^^^^^^^^^^^^^^^^^^^^
