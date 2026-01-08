@@ -20,10 +20,10 @@ towncrier build --version <VERSION>
 News fragment change types
 --------------------------
 
-- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks existing functionality
+- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks **step-level API**
 
 General Pipeline Changes
-^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""
 
 - ``<PR#>.stpipe.rst``
 - ``<PR#>.datamodels.rst``
@@ -33,7 +33,7 @@ General Pipeline Changes
 - ``<PR#>.associations.rst``
 
 Stage 1
-^^^^^^^
+"""""""
 
 - ``<PR#>.group_scale.rst``
 - ``<PR#>.dq_init.rst``
@@ -57,7 +57,7 @@ Stage 1
 - ``<PR#>.gain_scale.rst``
 
 Stage 2
-^^^^^^^
+"""""""
 
 - ``<PR#>.assign_wcs.rst``
 - ``<PR#>.badpix_selfcal.rst``
@@ -84,7 +84,7 @@ Stage 2
 - ``<PR#>.resample.rst``
 
 Stage 3
-^^^^^^^
+"""""""
 
 - ``<PR#>.assign_mtwcs.rst``
 - ``<PR#>.tweakreg.rst``
@@ -101,7 +101,7 @@ Stage 3
 - ``<PR#>.ami.rst``
 
 Other
-^^^^^
+"""""
 
 - ``<PR#>.wfs_combine.rst``
 - ``<PR#>.white_light.rst``
