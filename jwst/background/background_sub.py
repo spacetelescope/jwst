@@ -7,8 +7,6 @@ from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
 from stdatamodels.jwst import datamodels
 
-from jwst.background import subtract_images
-
 log = logging.getLogger(__name__)
 
 __all__ = ["ImageSubsetArray", "background_sub", "average_background"]
@@ -177,7 +175,7 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     Parameters
     ----------
     input_model : ImageModel
-        Input target exposure data model
+        Input target exposure data model. Updated in place.
 
     bkg_list : list
         Filename list of background exposures
@@ -194,8 +192,8 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     bkg_model : ImageModel
         Background data model
 
-    result : ImageModel
-        Background-subtracted target data model
+    input_model : ImageModel
+        Background-subtracted target data model.
     """
     # Compute the average of the background images associated with
     # the target exposure
@@ -208,11 +206,11 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
 
     # Subtract the average background from the member
     log.info(f"Subtracting avg bkg from {input_model.meta.filename}")
-
-    result = subtract_images.subtract(input_model, bkg_model)
+    input_model.data -= bkg_model.data
+    input_model.dq |= bkg_model.dq
 
     # We're done. Return the background model and the result.
-    return bkg_model, result
+    return bkg_model, input_model
 
 
 def average_background(input_model, bkg_list, sigma, maxiters):
