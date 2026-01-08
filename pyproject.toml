@@ -320,15 +320,7 @@ directory = "breaking"
 name = "Breaking Changes"
 showcontent = true
 
-[[tool.towncrier.type]]
-directory = "docs"
-name = "Documentation"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "misc"
-name = "Miscellaneous"
-showcontent = true
+# general pipeline changes
 
 [[tool.towncrier.type]]
 directory = "stpipe"
@@ -355,14 +347,12 @@ directory = "set_telescope_pointing"
 name = '``set_telescope_pointing``'
 showcontent = true
 
-# pipeline
-
 [[tool.towncrier.type]]
 directory = "pipeline"
 name = 'Pipeline'
 showcontent = true
 
-# steps
+# step changes
 
 [[tool.towncrier.type]]
 directory = "align_refs"
@@ -667,4 +657,16 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "white_light"
 name = 'white_light'
+showcontent = true
+
+# other changes
+
+[[tool.towncrier.type]]
+directory = "docs"
+name = "Documentation Changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "other"
+name = "Other Changes"
 showcontent = true

@@ -9,8 +9,11 @@ Make sure to use full sentences with correct case and punctuation.
 News fragment change types
 --------------------------
 
-- ``<PR#>.general.rst``: Infrastructure or miscellaneous change
-- ``<PR#>.docs.rst``
+- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks existing functionality
+
+General Pipeline Changes
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 - ``<PR#>.stpipe.rst``
 - ``<PR#>.datamodels.rst``
 - ``<PR#>.scripts.rst``
@@ -93,6 +96,9 @@ Other
 - ``<PR#>.white_light.rst``
 - ``<PR#>.engdb_tools.rst``
 - ``<PR#>.guider_cds.rst``
+
+- ``<PR#>.docs.rst``
+- ``<PR#>.other.rst``: Infrastructure or miscellaneous change
 
 Note
 ----
