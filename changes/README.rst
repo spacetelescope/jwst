@@ -20,7 +20,7 @@ towncrier build --version <VERSION>
 News fragment change types
 --------------------------
 
-- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks **step-level API**
+- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks if your change breaks **step-level or public API** ([as defined in the docs](https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private))
 
 General Pipeline Changes
 """"""""""""""""""""""""
