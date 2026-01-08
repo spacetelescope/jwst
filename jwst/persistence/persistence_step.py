@@ -23,7 +23,7 @@ class PersistenceStep(Step):
         save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
         modify_input = boolean(default=False)
         persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
-        persistence_array = int_list(default=None) # A 2-D array or none.
+        persistence_array = list(default=None) # A 2-D array or none.
         persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
     """  # noqa: E501
 
