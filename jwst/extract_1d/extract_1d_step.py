@@ -302,6 +302,7 @@ class Extract1dStep(Step):
             self.ifu_rscale,
             self.ifu_covar_scale,
         )
+        model.close()
         return result
 
     def _save_intermediate(self, intermediate_model, suffix, idx):

@@ -1,5 +1,6 @@
 """JWST pipeline step for image alignment."""
 
+import gc
 import logging
 from pathlib import Path
 
@@ -332,6 +333,7 @@ class TweakRegStep(Step):
                     return images
                 finally:
                     del ref_image
+                    gc.collect()
 
         if local_align_failed and not align_to_abs_refcat:
             record_step_status(images, "tweakreg", success=False)
