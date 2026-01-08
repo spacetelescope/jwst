@@ -57,6 +57,7 @@ __all__ = [
     "Asn_Lv2SpecTSO",
     "Asn_Lv2WFSSNIS",
     "Asn_Lv2WFSSNRC",
+    "Asn_Lv2WFSSMIR",
     "Asn_Lv2WFSSParallel",
     "Asn_Lv2WFSC",
 ]
@@ -938,11 +939,11 @@ class Asn_Lv2WFSSNRC(
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - Multi-object science exposures
-        - Single science exposure
-        - Require a source catalog from processing of the corresponding direct imagery.
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Multi-object science exposures
+    - Single science exposure
+    - Require a source catalog from processing of the corresponding direct imagery.
     """
 
     def __init__(self, *args, **kwargs):
@@ -990,6 +991,70 @@ class Asn_Lv2WFSSNRC(
         )
 
         super(Asn_Lv2WFSSNRC, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
+class Asn_Lv2WFSSMIR(
+    AsnMixin_Lv2WFSS,
+    AsnMixin_Lv2Spectral,
+):
+    """
+    Level2b MIR WFSS Association.
+
+    Characteristics:
+
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Multi-object science exposures
+    - Single science exposure
+    - Require a source catalog from processing of the corresponding direct imagery.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.constraints = Constraint(
+            [
+                Constraint_Base(),
+                Constraint_Target(),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="exp_type",
+                            sources=["exp_type"],
+                            value="mir_wfss",
+                        ),
+                        DMSAttrConstraint(
+                            name="image_exp_type",
+                            sources=["exp_type"],
+                            value="mir_image",
+                            force_reprocess=ListCategory.NONSCIENCE,
+                            only_on_match=True,
+                        ),
+                    ],
+                    reduce=Constraint.any,
+                ),
+                DMSAttrConstraint(
+                    name="instrument",
+                    sources=["instrume"],
+                ),
+                DMSAttrConstraint(
+                    name="detector",
+                    sources=["detector"],
+                ),
+                Constraint(
+                    [
+                        SimpleConstraint(
+                            value="science",
+                            test=lambda value, item: self.get_exposure_type(item) != value,
+                            force_unique=False,
+                        ),
+                        Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                    ],
+                    reduce=Constraint.any,
+                ),
+            ]
+        )
+
+        super(Asn_Lv2WFSSMIR, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
