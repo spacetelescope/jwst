@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.assign_mtwcs.AssignMTWcsStep`
+:Class: `jwst.assign_mtwcs.assign_mtwcs_step.AssignMTWcsStep`
 :Alias: assign_mtwcs
 
 
@@ -56,6 +56,6 @@ In addition to populating the "MT_AVRA" and "MT_AVDEC" keywords, this step adds
 another transform to the original WCS in each exposure that results in the WCS
 frame being centered at "MT_AVRA" and "MT_AVDEC".
 The transform of the original WCS associated with the science aperture pointing
-(i.e. without the additional MT correction) can be accessed by executing::
+(i.e., without the additional MT correction) can be accessed by executing::
 
-  sci_transform = model.meta.wcs.get_transform('detector', 'world')
+    sci_transform = model.meta.wcs.get_transform('detector', 'world')

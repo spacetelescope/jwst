@@ -28,7 +28,7 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -48,11 +48,11 @@ def imaging(input_model, reference_files):
     """
     Create the WCS pipeline for FGS imaging data.
 
-    It includes 3 coordinate frames - "detector", "v2v3" and "world".
+    It includes 3 coordinate frames - "detector", "v2v3", and "world".
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -106,7 +106,7 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -114,7 +114,7 @@ def imaging_distortion(input_model, reference_files):
 
     Returns
     -------
-    transform : `astropy.modeling.Model
+    transform : `astropy.modeling.Model`
         The transform from "detector" to "v2v3".
     """
     dist = DistortionModel(reference_files["distortion"])

@@ -15,7 +15,7 @@ guider_list = ["FGS_ID-IMAGE", "FGS_ID-STACK", "FGS_ACQ1", "FGS_ACQ2", "FGS_TRAC
 __all__ = ["do_dqinit", "check_dimensions"]
 
 
-def do_dqinit(output_model, mask_model):
+def do_dqinit(output_model, mask_model, user_dq=None):
     """
     Perform the dq_init step on a JWST datamodel.
 
@@ -26,6 +26,8 @@ def do_dqinit(output_model, mask_model):
         The JWST datamodel to be corrected.
     mask_model : `~stdatamodels.jwst.datamodels.MaskModel`
         The mask model to use in the correction.
+    user_dq : ndarray or None
+        User-supplied DQ int array, if any.
 
     Returns
     -------
@@ -44,6 +46,15 @@ def do_dqinit(output_model, mask_model):
         mask_sub_model = reffile_utils.get_subarray_model(output_model, mask_model)
         mask_array = mask_sub_model.dq
         del mask_sub_model
+
+    if user_dq is not None:
+        if user_dq.shape != mask_array.shape:
+            errmsg = f"user_dq has shape={user_dq.shape} but expecting {mask_array.shape}"
+            log.error(errmsg)
+            raise ValueError(errmsg)
+
+        user_dq = user_dq.astype(mask_array.dtype)
+        mask_array |= user_dq
 
     # Set model-specific data quality in output
     if output_model.meta.exposure.type in guider_list:

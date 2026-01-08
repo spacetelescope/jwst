@@ -63,7 +63,6 @@ def make_dummy_association(make_dummy_cal_file):
     )
 
 
-@pytest.mark.filterwarnings("ignore::ResourceWarning")  # in_memory=False
 @pytest.mark.parametrize("in_memory", [True, False])
 def test_run_image3_pipeline(make_dummy_association, in_memory):
     """
@@ -88,7 +87,6 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
     _is_run_complete(LOGFILE)
 
 
-@pytest.mark.filterwarnings("ignore::ResourceWarning")
 def test_run_image3_single_file(make_dummy_cal_file):
     args = [
         "calwebb_image3",

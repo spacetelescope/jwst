@@ -2,7 +2,7 @@
 Description
 ===========
 
-:Class: `jwst.assign_wcs.AssignWcsStep`
+:Class: `jwst.assign_wcs.assign_wcs_step.AssignWcsStep`
 :Alias: assign_wcs
 
 
@@ -54,13 +54,10 @@ Basic WCS keywords and the transform from ``v2v3`` to ``world``
 All JWST instruments use the following FITS header keywords to
 define the transform from ``v2v3`` to ``world``:
 
-``RA_REF``, ``DEC_REF`` - a fiducial point on the sky, ICRS [deg]
-
-``V2_REF``, ``V3_REF`` - a point in the V2V3 system that maps to ``RA_REF``, ``DEC_REF`` [arcsec]
-
-``ROLL_REF`` - local roll angle associated with each aperture [deg]
-
-``RADESYS`` - standard coordinate system [ICRS]
+* ``RA_REF``, ``DEC_REF`` - a fiducial point on the sky, ICRS [deg]
+* ``V2_REF``, ``V3_REF`` - a point in the V2V3 system that maps to ``RA_REF``, ``DEC_REF`` [arcsec]
+* ``ROLL_REF`` - local roll angle associated with each aperture [deg]
+* ``RADESYS`` - standard coordinate system [ICRS]
 
 These quantities are used to create a 3D Euler angle rotation between the V2V3 spherical system,
 associated with the telescope, and a standard celestial system.
@@ -119,7 +116,7 @@ at pixel (x, y) = (804, 522):
 For MOS observations, the slit ID is the name of the slit, as specified by the
 "slitlet_id" field in the :ref:`MSA metadata file<msa_metadata>`.
 For fixed slit observations, the slit ID is a fixed integer for each slit as shown in the table below.
-These values can also be retrieved by slit name using the :func:`jwst.assign_wcs.nrs_fs_slit_id` function.
+These values can also be retrieved by slit name using the :func:`jwst.assign_wcs.nirspec.nrs_fs_slit_id` function.
 
 .. list-table:: NIRSpec Fixed Slit IDs
    :header-rows: 1

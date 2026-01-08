@@ -26,7 +26,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -41,7 +41,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
 
     Returns
     -------
-    output_model : `~jwst.datamodels.JwstDataModel`
+    output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The data model with the WCS information in the meta attribute.
     """
     if reference_files is not None:

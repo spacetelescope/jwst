@@ -38,7 +38,7 @@ def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
 
     Parameters
     ----------
-    input_model : JwstDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
     wrap_v2_at : float, optional
         The value at which to wrap the V2 coordinate.
@@ -117,11 +117,11 @@ def _roll_angle_from_matrix(matrix, v2, v3):
 
 def wcsinfo_from_model(input_model):
     """
-    Create a dict {wcs_keyword: array_of_values} pairs from a data model.
+    Create a dict ``{wcs_keyword: array_of_values}`` pairs from a data model.
 
     Parameters
     ----------
-    input_model : JwstDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
 
     Returns
@@ -153,21 +153,21 @@ def wcsinfo_from_model(input_model):
 
 def fitswcs_transform_from_model(wcsinfo, wavetable=None):
     """
-    Create a WCS object using from datamodel.meta.wcsinfo.
+    Create a WCS object using from ``datamodel.meta.wcsinfo``.
 
     Transforms assume 0-based coordinates.
 
     Parameters
     ----------
     wcsinfo : dict-like
-        ``~jwst.meta.wcsinfo`` structure.
+        ``model.meta.wcsinfo`` structure.
     wavetable : `~astropy.table.Table` or None, optional
         A table with wavelength values. If None, a linear transformation
         will be used.
 
     Returns
     -------
-    transform : `~astropy.modeling.core.Model`
+    transform : `~astropy.modeling.Model`
         WCS forward transform - from pixel to world coordinates.
     """
     spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
@@ -198,11 +198,11 @@ def frame_from_fits(ff):
 
 def frame_from_model(wcsinfo):
     """
-    Initialize a coordinate frame based on values in model.meta.wcsinfo.
+    Initialize a coordinate frame based on values in ``model.meta.wcsinfo``.
 
     Parameters
     ----------
-    wcsinfo : JwstDataModel or dict
+    wcsinfo : `~stdatamodels.jwst.datamodels.JwstDataModel` or dict
         Either one of the JWST data models or a dict with model.meta.wcsinfo.
 
     Returns
@@ -258,7 +258,7 @@ def create_fitswcs(inp, input_frame=None):
 
     Parameters
     ----------
-    inp : JwstDataModel
+    inp : `~stdatamodels.jwst.datamodels.JwstDataModel`
         A JWST data model instance.
     input_frame : `~gwcs.coordinate_frames.CoordinateFrame` or None, optional
         The input coordinate frame. If None, a default frame will be created.
@@ -311,7 +311,7 @@ def dva_corr_model(va_scale, v2_ref, v3_ref):
     va_scale : float, None
         Ratio of the apparent plate scale to the true plate scale. When
         ``va_scale`` is `None`, it is assumed to be identical to ``1`` and
-        an ``astropy.modeling.models.Identity`` model will be returned.
+        an `astropy.modeling.mappings.Identity` model will be returned.
     v2_ref : float, None
         Telescope ``v2`` coordinate of the reference point in ``arcsec``. When
         ``v2_ref`` is `None`, it is assumed to be identical to ``0``.
@@ -321,9 +321,9 @@ def dva_corr_model(va_scale, v2_ref, v3_ref):
 
     Returns
     -------
-    va_corr : astropy.modeling.CompoundModel, astropy.modeling.models.Identity
+    va_corr : `astropy.modeling.CompoundModel`, `astropy.modeling.mappings.Identity`
         A 2D compound model that corrects DVA. If ``va_scale`` is `None` or 1
-        then `astropy.modeling.models.Identity` will be returned.
+        then `astropy.modeling.mappings.Identity` will be returned.
     """
     if va_scale is None or va_scale == 1:
         return Identity(2)
