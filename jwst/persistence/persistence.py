@@ -350,6 +350,7 @@ class DataSet:
         group_time = self.output_obj.meta.exposure.group_time
         sat_array = np.zeros(shape=(ny, nx), dtype=np.uint32)
         for integ in range(nints):
+            # XXX Investigate possible better way to compute current_time.
             current_time = epoch_time + integ * integration_time
             self.get_group_info(integ)  # self.tgroup, etc.
             decayed[:, :, :] = 0.0  # initialize
@@ -1138,5 +1139,6 @@ class DataSet:
             flag = dqflags.group["DO_NOT_USE"] | dqflags.pixel["PERSISTENCE"]
         else:
             flag = dqflags.pixel["PERSISTENCE"]
+        # XXX Could output updated persistence_array here for history purposes.
         gdq_plane[self.persistence_array > 0.0] |= flag
         self.output_obj.groupdq[integ, group, :, :] = gdq_plane

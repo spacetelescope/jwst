@@ -124,6 +124,7 @@ class PersistenceStep(Step):
         del trappars_model
         del persat_model
 
+        # XXX Instead of returning persistence_list, could store it in ASDF.
         return result, persistence_list
 
     def process_persistence_options(self, result):
@@ -135,10 +136,13 @@ class PersistenceStep(Step):
         result : RampModel
             The RampModel on which to process the persistence flag.
         """
+        # Could make less than or equal to frametime.
         if self.persistence_time is None or self.persistence_time <= 0.0:
             self.persistence_time = None
+            # XXX raise error or log info?
             return  # No persistence option chosen
 
+        # XXX think about using ASDF for persistence_array input and output
         _, _, nrows, ncols = result.groupdq.shape
         if self.persistence_array is not None:
             self.persistence_array_create = False 
