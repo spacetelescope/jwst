@@ -92,42 +92,42 @@ class AssignWcsStep(Step):
             The data model with the WCS information added.
         """
         reference_file_names = {}
-        with datamodels.open(input_data) as input_model:
-            # If input type is not supported, log warning, set to 'skipped', exit
-            if not (
-                isinstance(input_model, datamodels.ImageModel)
-                or isinstance(input_model, datamodels.CubeModel)
-                or isinstance(input_model, datamodels.IFUImageModel)
-            ):
-                log.warning("Input dataset type is not supported.")
-                log.warning("assign_wcs expects ImageModel, IFUImageModel or CubeModel as input.")
-                log.warning("Skipping assign_wcs step.")
-                result = input_model.copy()
-                result.meta.cal_step.assign_wcs = "SKIPPED"
-                return result
+        output_model = self.prepare_output(input_data)
 
-            for reftype in self.reference_file_types:
-                reffile = self.get_reference_file(input_model, reftype)
-                reference_file_names[reftype] = reffile if reffile else ""
-            log.debug(f"reference files used in assign_wcs: {reference_file_names}")
+        # If input type is not supported, log warning, set to 'skipped', exit
+        if not (
+            isinstance(output_model, datamodels.ImageModel)
+            or isinstance(output_model, datamodels.CubeModel)
+            or isinstance(output_model, datamodels.IFUImageModel)
+        ):
+            log.warning("Input dataset type is not supported.")
+            log.warning("assign_wcs expects ImageModel, IFUImageModel or CubeModel as input.")
+            log.warning("Skipping assign_wcs step.")
+            output_model.meta.cal_step.assign_wcs = "SKIPPED"
+            return output_model
 
-            # Get the MSA metadata file if needed and add to reffiles
-            if input_model.meta.exposure.type == "NRS_MSASPEC":
-                msa_metadata_file = input_model.meta.instrument.msa_metadata_file
-                if msa_metadata_file is not None and msa_metadata_file.strip() not in ["", "N/A"]:
-                    msa_metadata_file = self.make_input_path(msa_metadata_file)
-                    reference_file_names["msametafile"] = msa_metadata_file
-                else:
-                    message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
-                    log.error(message)
-                    raise MSAFileError(message)
-            slit_y_range = [self.slit_y_low, self.slit_y_high]
-            result = load_wcs(
-                input_model,
-                reference_file_names,
-                slit_y_range,
-                nrs_ifu_slice_wcs=self.nrs_ifu_slice_wcs,
-            )
+        for reftype in self.reference_file_types:
+            reffile = self.get_reference_file(output_model, reftype)
+            reference_file_names[reftype] = reffile if reffile else ""
+        log.debug(f"reference files used in assign_wcs: {reference_file_names}")
+
+        # Get the MSA metadata file if needed and add to reffiles
+        if output_model.meta.exposure.type == "NRS_MSASPEC":
+            msa_metadata_file = output_model.meta.instrument.msa_metadata_file
+            if msa_metadata_file is not None and msa_metadata_file.strip() not in ["", "N/A"]:
+                msa_metadata_file = self.make_input_path(msa_metadata_file)
+                reference_file_names["msametafile"] = msa_metadata_file
+            else:
+                message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
+                log.error(message)
+                raise MSAFileError(message)
+        slit_y_range = [self.slit_y_low, self.slit_y_high]
+        result = load_wcs(
+            output_model,
+            reference_file_names,
+            slit_y_range,
+            nrs_ifu_slice_wcs=self.nrs_ifu_slice_wcs,
+        )
 
         if not (
             result.meta.exposure.type.lower() in (IMAGING_TYPES.union(WFSS_TYPES))
@@ -166,7 +166,7 @@ class AssignWcsStep(Step):
                 elif result_exptype == "mir_wfss":
                     imaging_func = miri_imaging
                     # The current MIRI WFSS specwcs is the best that can be derived using
-                    # limited test data. With specific MIRI WFSS tests, the specwsc polynomials will
+                    # limited test data. With specific MIRI WFSS tests, the specwcs polynomials will
                     # be updated and the sip_max_inv_pix_error floor value might then be removed.
                     if self.sip_max_inv_pix_error < 0.02:
                         self.sip_max_inv_pix_error = 0.02
