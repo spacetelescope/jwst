@@ -316,13 +316,18 @@ wrap = true
 issue_format = "`#{issue} <https://github.com/spacetelescope/jwst/issues/{issue}>`_"
 
 [[tool.towncrier.type]]
-directory = "general"
-name = "General"
+directory = "breaking"
+name = "Breaking Changes"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "docs"
 name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Miscellaneous"
 showcontent = true
 
 [[tool.towncrier.type]]
