@@ -6,6 +6,17 @@ small **ReST**-formatted text that will be added to the full changelog.
 
 Make sure to use full sentences with correct case and punctuation.
 
+Consuming news fragments in `changes/` into a new change log entry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Running `towncrier build` will read all existing fragment files in `changes/`
+and create a new entry at the top of `CHANGES.rst` with the specified version number.
+
+```shell
+pip install towncrier
+towncrier build --version <VERSION>
+```
+
 News fragment change types
 --------------------------
 
