@@ -120,6 +120,10 @@ is not added into the oversampled flux.  This option is only appropriate for sim
 point sources, but if used, can significantly improve the signal-to-noise ratio (SNR) for
 extracted spectra, at the cost of ignoring non-PSF structures.
 
+Alternately, crowded fields with multiple stars may benefit particularly from setting
+the ``fit_threshold`` and ``slope_limit`` parameters to zero in order to ensure proper
+modeling of both bright and faint stars.
+
 Propagate DQ, Error, and Variance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
