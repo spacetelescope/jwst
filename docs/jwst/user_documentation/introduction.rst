@@ -136,8 +136,8 @@ and `Nancy Grace Roman Telescope <https://roman-pipeline.readthedocs.io/en/lates
 
 **stcal**
 
-The `stcal` package contains step code that is common to both JWST and the Roman
+The ``stcal`` package contains step code that is common to both JWST and the Roman
 telescope, to avoid redundancy. All step classes for the JWST
 pipeline are still defined in ``jwst``, but some of the underlying code for these
-steps lives in `stcal` if the algorithm is shared by Roman (for example, ramp
+steps lives in ``stcal`` if the algorithm is shared by Roman (for example, ramp
 fitting, saturation).
