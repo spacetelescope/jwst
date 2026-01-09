@@ -219,78 +219,76 @@ class Spec2Pipeline(Pipeline):
         science_member = science_member[0]
 
         log.info("Working on input %s ...", science_member)
-        with self.open_model(science_member) as science:
-            exp_type = science.meta.exposure.type
-            if isinstance(science, datamodels.CubeModel):
-                multi_int = True
-            else:
-                multi_int = False
+        science = self.prepare_output(science_member)
 
-            # Suffixes are dependent on whether the science is multi-integration or not.
-            if multi_int:
-                suffix = "calints"
-                self.extract_1d.suffix = "x1dints"
-            else:
-                suffix = "cal"
-                self.extract_1d.suffix = "x1d"
+        exp_type = science.meta.exposure.type
+        if isinstance(science, datamodels.CubeModel):
+            multi_int = True
+        else:
+            multi_int = False
 
-            # Check the datamodel to see if it's a dispersed image, if so get the catalog
-            # name from the asn and record it to the meta
-            if exp_type in WFSS_TYPES:
-                try:
-                    science.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
-                    log.info(f"Using sourcecat file {science.meta.source_catalog}")
-                    science.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
-                    log.info(f"Using segmentation map {science.meta.segmentation_map}")
-                    science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
-                    log.info(f"Using direct image {science.meta.direct_image}")
-                except IndexError:
-                    if science.meta.source_catalog is None:
-                        raise IndexError(
-                            "No source catalog specified in association or datamodel"
-                        ) from None
+        # Suffixes are dependent on whether the science is multi-integration or not.
+        if multi_int:
+            suffix = "calints"
+            self.extract_1d.suffix = "x1dints"
+        else:
+            suffix = "cal"
+            self.extract_1d.suffix = "x1d"
 
-            # Check to see if the model is an LRS slit or slitless exposure
-            # and has a TA verification image associated with it.
-            if exp_type in TA_TYPES:
-                try:
-                    ta_file = members_by_type["target_acquisition"][0]
-                except (IndexError, KeyError):
-                    ta_file = None
-                if str(self.targ_centroid.ta_file).lower() == "none":
-                    self.targ_centroid.ta_file = ta_file
-                log.info(f"Using TA verification image {self.targ_centroid.ta_file}")
-
-            # Decide on what steps can actually be accomplished based on the
-            # provided input.
-            self._step_verification(exp_type, science, members_by_type, multi_int)
-            # Start processing the individual steps.
-            # `assign_wcs` is the critical step. Without it, processing cannot proceed.
-            assign_wcs_exception = None
+        # Check the datamodel to see if it's a dispersed image, if so get the catalog
+        # name from the asn and record it to the meta
+        if exp_type in WFSS_TYPES:
             try:
-                calibrated = self.assign_wcs.run(science)
-            except Exception as exception:
-                assign_wcs_exception = exception
-            if (
-                assign_wcs_exception is not None
-                or calibrated.meta.cal_step.assign_wcs != "COMPLETE"
-            ):
-                messages = (
-                    "Assign_wcs processing was skipped.",
-                    "Aborting remaining processing for this exposure.",
-                    "No output product will be created.",
-                )
-                if self.assign_wcs.skip:
-                    for message in messages:
-                        log.warning(message)
-                    return
+                science.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
+                log.info(f"Using sourcecat file {science.meta.source_catalog}")
+                science.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
+                log.info(f"Using segmentation map {science.meta.segmentation_map}")
+                science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
+                log.info(f"Using direct image {science.meta.direct_image}")
+            except IndexError:
+                if science.meta.source_catalog is None:
+                    raise IndexError(
+                        "No source catalog specified in association or datamodel"
+                    ) from None
+
+        # Check to see if the model is an LRS slit or slitless exposure
+        # and has a TA verification image associated with it.
+        if exp_type in TA_TYPES:
+            try:
+                ta_file = members_by_type["target_acquisition"][0]
+            except (IndexError, KeyError):
+                ta_file = None
+            if str(self.targ_centroid.ta_file).lower() == "none":
+                self.targ_centroid.ta_file = ta_file
+            log.info(f"Using TA verification image {self.targ_centroid.ta_file}")
+
+        # Decide on what steps can actually be accomplished based on the
+        # provided input.
+        self._step_verification(exp_type, science, members_by_type, multi_int)
+        # Start processing the individual steps.
+        # `assign_wcs` is the critical step. Without it, processing cannot proceed.
+        assign_wcs_exception = None
+        try:
+            calibrated = self.assign_wcs.run(science)
+        except Exception as exception:
+            assign_wcs_exception = exception
+        if assign_wcs_exception is not None or calibrated.meta.cal_step.assign_wcs != "COMPLETE":
+            messages = (
+                "Assign_wcs processing was skipped.",
+                "Aborting remaining processing for this exposure.",
+                "No output product will be created.",
+            )
+            if self.assign_wcs.skip:
+                for message in messages:
+                    log.warning(message)
+                return
+            else:
+                for message in messages:
+                    log.error(message)
+                if assign_wcs_exception is not None:
+                    raise assign_wcs_exception
                 else:
-                    for message in messages:
-                        log.error(message)
-                    if assign_wcs_exception is not None:
-                        raise assign_wcs_exception
-                    else:
-                        raise RuntimeError("Cannot determine WCS.")
+                    raise RuntimeError("Cannot determine WCS.")
 
         # Steps whose order is the same for all types of input:
 
