@@ -122,14 +122,14 @@ def test_set_fit_kwargs_error():
             "NRS1",
             {
                 "pad": 2,
-                "trimends": True,
+                "trim_ends": True,
             },
         ),
         (
             "MIRIFUSHORT",
             {
                 "pad": 3,
-                "trimends": False,
+                "trim_ends": False,
             },
         ),
     ],
