@@ -22,7 +22,8 @@ cube can mitigate these spectral artifacts.
 
 This step is currently available for NIRSpec IFU and MIRI MRS exposures only.
 It is incorporated into the :ref:`calwebb_spec2 <calwebb_spec2>` and
-:ref:`calwebb_spec3 <calwebb_spec3>` pipelines, prior to the :ref:`cube_build step <cube_build_step>`,
+:ref:`calwebb_spec3 <calwebb_spec3>` pipelines, prior to the
+:ref:`pixel_replace <pixel_replace_step>` and :ref:`cube_build <cube_build_step>` steps,
 but may also be run as a standalone step.
 
 Upon successful completion of this step, the status keyword S_TRCMDL is set to "COMPLETE",
