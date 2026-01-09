@@ -175,8 +175,8 @@ def get_object_info(catalog_name=None):
 
     Returns
     -------
-    objects : list[jwst.lib.catalog_utils.SkyObject]
-        A list of SkyObject tuples
+    objects : list
+        A list of `~jwst.lib.catalog_utils.SkyObject` tuples
     """
     catalog = read_source_catalog(catalog_name)
 
