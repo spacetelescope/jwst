@@ -65,8 +65,6 @@ def bspline_fit(
 
     # If the tenth-largest spacing was bigger than the knot spacing
     # (with some margin) then don't bspline
-    # This factor of 1.6 was dialed based on inspection of the results
-    # as sampling gets progressively worse for NIRSpec detectors
     knotspacing = (np.max(xvec_use) - np.min(xvec_use)) / nbkpts
     tenthspace = np.partition(spacing, -10)[-10]
     if tenthspace > (spaceratio * knotspacing):

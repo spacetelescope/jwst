@@ -4,10 +4,11 @@ Step Arguments
 The ``adaptive_trace_model`` step has the following step-specific arguments:
 
 ``--fit_threshold`` (float, default=10.0)
-  Limiting sigma for fitting splines. This parameter controls whether a spline fit is
-  attempted at all for a spectral region (slit or slice).  Higher values will create
-  spline models for fewer slices; lower values will attempt to fit more slices. If
-  set to 0, all slices will be fit.
+  Signal threshold value for attempting a spline fit, specified as the number of
+  standard deviations from the overall mean for the image. This parameter controls
+  whether a spline fit is attempted for a given spectral region (slit or slice).
+  Higher values will create spline models for fewer slices; lower values will attempt
+  to fit more slices. If set to 0, all slices will be fit.
 
 ``--oversample`` (float, default=1.0)
   Use the trace model to oversample the data by this factor.  If the value is 1.0,
