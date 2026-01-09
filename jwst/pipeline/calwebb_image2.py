@@ -144,10 +144,7 @@ class Image2Pipeline(Pipeline):
         science = science[0]
 
         log.info("Working on input %s ...", science)
-        if isinstance(science, datamodels.JwstDataModel):
-            input_data = science
-        else:
-            input_data = datamodels.open(science)
+        input_data = self.prepare_output(science)
 
         # Record ASN pool and table names in output
         input_data.meta.asn.pool_name = pool_name
