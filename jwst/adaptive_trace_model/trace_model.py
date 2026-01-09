@@ -76,8 +76,8 @@ def fit_2d_spline_trace(
     fit_scale=None,
     lrange=50,
     col_index=None,
-    require_ngood=8,
-    splinebkpt=36,
+    require_ngood=10,
+    splinebkpt=50,
     spaceratio=1.2,
 ):
     """
@@ -219,9 +219,12 @@ def _reindex(xmin, xmax, scale=2.0):
     """
     Convert pixel positions on the old grid to oversampled positions.
 
-    For example, with oversample=2, [0, 1, 2] goes to
-    [-0.25, 0.25, 0.75, 1.25, 1.75, 2.25]. With oversample=3,
-    [0, 1, 2] goes to [-0.33, 0, 0.33, 0.67, 1, 1.33, 1.67, 2, 2.33].
+    For example, with oversample scale = 2, [0, 1, 2] goes to
+    old_x = [-0.25, 0.25, 0.75, 1.25, 1.75, 2.25], for
+    new_x = [0, 1, 2, 3, 4, 5].
+    With oversample scale = 3, [0, 1, 2] goes to
+    old_x = [-0.33, 0, 0.33, 0.67, 1, 1.33, 1.67, 2, 2.33], for
+    new_x = [0, 1, 2, 3, 4, 5, 6, 7, 8].
 
     Parameters
     ----------
@@ -261,7 +264,7 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha):
     spline_scales : dict
         Scaling factors for spline models.
     region_map : ndarray
-        2D image matching shape, indicating valid regions.
+        2D image matching shape, mapping valid region numbers.
     alpha : ndarray
         Alpha coordinates for all pixels marked as valid regions.
 
@@ -300,7 +303,7 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha):
     return trace
 
 
-def _linear_interp(col_y, col_flux, y_interp, edge_limit, preserve_nan=True):
+def _linear_interp(col_y, col_flux, y_interp, edge_limit=0, preserve_nan=True):
     """
     Perform a linear interpolation at one column.
 
@@ -312,7 +315,7 @@ def _linear_interp(col_y, col_flux, y_interp, edge_limit, preserve_nan=True):
         Flux values in the original data for the column.
     y_interp : ndarray
         Y values to interpolate to.
-    edge_limit : int
+    edge_limit : int, optional
         If greater than zero, this many pixels at the edges of
         the interpolated values will be set to NaN.
     preserve_nan : bool, optional
@@ -355,8 +358,8 @@ def linear_oversample(
     data : ndarray
         Original data to oversample.
     region_map : ndarray of int
-        Map indicating valid regions. Values are >0 for pixels in valid
-        regions, 0 otherwise.
+        Map containing the slice or slit number for valid regions.
+        Values are >0 for pixels in valid regions, 0 otherwise.
     oversample_factor : float
         Scaling factor to oversample by.
     require_ngood : int
@@ -422,8 +425,8 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
     alpha : ndarray
         Alpha coordinates for all flux values.
     region_map : ndarray of int
-        Map indicating valid regions. Values are >0 for pixels in valid
-        regions, 0 otherwise.
+        Map containing the slice or slit number for valid regions.
+        Values are >0 for pixels in valid regions, 0 otherwise.
     signal_threshold : dict
         Threshold values for each valid region in the region map. If
         the median peak value across columns in the region is below this
@@ -472,7 +475,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
         # Median column max across all columns
         medcmax = np.nanmedian(collapse)
 
-        # Is medcmax over threshold?  If so do, bspline for this slice.
+        # Is medcmax over threshold?  If so, do bspline for this slice.
         dospline = False
         if medcmax > signal_threshold[slnum]:
             dospline = True
@@ -498,14 +501,33 @@ def oversample_flux(
     spline_scales,
     oversample_factor,
     alpha_os,
-    require_ngood=8,
-    trimends=False,
+    require_ngood=10,
+    trim_ends=False,
     pad=3,
     slope_limit=0.1,
     psf_optimal=False,
 ):
     """
     Oversample a flux image from spline models fit to the data.
+
+    For each column in each slice or slit in the region map:
+
+    1. Check if there are enough valid data points to proceed.
+    2. Compute oversampled coordinates corresponding to the input column.
+    3. Linearly interpolate flux values onto the oversampled column.
+    4. If a spline fit is available, evaluate it for the original column
+       coordinates.
+    5. Construct a residual between the spline fit and the original column.
+       data, then linearly interpolate the residual onto the oversampled
+       column.
+    6. Compute the slope of each column pixel as the difference between the
+       normalized spline model at that pixel and its immediate neighbor.
+    7. Evaluate the spline model at the oversampled coordinates.
+
+    The oversampled flux for each slice or slit is set from the spline flux
+    plus the interpolated residual, for pixels where the slope exceeds the
+    ``slope_limit``.  Otherwise, the flux is set to the linearly interpolated
+    value.
 
     Parameters
     ----------
@@ -514,8 +536,8 @@ def oversample_flux(
     alpha : ndarray
         Alpha coordinates for all flux values.
     region_map : ndarray of int
-        Map indicating valid regions. Values are >0 for pixels in valid
-        regions, 0 otherwise.
+        Map containing the slice or slit number for valid regions.
+        Values are >0 for pixels in valid regions, 0 otherwise.
     spline_models : dict
         Keys are region numbers, values are dicts containing a spline model for
         each column index in the region. If a spline model could not be fit, the
@@ -531,7 +553,7 @@ def oversample_flux(
         at every pixel.
     require_ngood : int, optional
         Minimum number of pixels required in a column to perform an interpolation.
-    trimends : bool, optional
+    trim_ends : bool, optional
         If True, the edges of the evaluated spline fit will be set to NaN.
     pad : int, optional
         The number of pixels near peak data to include the spline fit for in
@@ -587,8 +609,8 @@ def oversample_flux(
         alpha_slice[indx] = alpha[indx]
         basey_slice[indx] = basey[indx]
 
-        # Define an array that will hold all alpha values for this slice where the slope can be high
-        alpha_ptsource = np.array([])
+        # Define a list that will hold all alpha values for this slice where the slope can be high
+        alpha_ptsource = []
 
         for ii in range(xsize):
             # Are there sufficient values in this column to do anything?
@@ -610,7 +632,7 @@ def oversample_flux(
             )
 
             # Default approach is to do linear interpolation
-            flux_os_linear[newy, ii] = _linear_interp(col_y, col_flux, oldy, edge_limit)
+            flux_os_linear[newy, ii] = _linear_interp(col_y, col_flux, oldy, edge_limit=edge_limit)
 
             # Check for a spline fit for this column
             if slnum not in spline_models or ii not in spline_models[slnum]:
@@ -648,12 +670,12 @@ def oversample_flux(
             # Add to our list of alpha values where the slope can be high for this slice
             # and store the oversampled alpha values to check against later
             highslope = (np.where(modelslope > slope_limit))[0]
-            alpha_ptsource = np.append(alpha_ptsource, col_alpha[valid_alpha][highslope])
+            alpha_ptsource.append(col_alpha[valid_alpha][highslope])
             alpha_os_slice[newy, ii] = alpha_os[newy, ii]
 
             # Evaluate the bspline at the oversampled alpha for this column
             oversampled_fit = spline_model(alpha_os[newy, ii]) * spline_scale
-            if trimends and edge_limit >= 1:
+            if trim_ends and edge_limit >= 1:
                 oversampled_fit[0:edge_limit] = np.nan
                 oversampled_fit[-edge_limit:] = np.nan
 
@@ -663,6 +685,8 @@ def oversample_flux(
         # Now look at our list of alpha values where model slopes were high to figure out
         # where traces are and we actually want to use the spline model
         # Don't bother with this if not enough recorded alpha values
+        if len(alpha_ptsource) > 0:
+            alpha_ptsource = np.concatenate(alpha_ptsource)
         if slope_limit <= 0:
             # Always use the spline fit in this case
             flux_os_bspline_use = flux_os_bspline_full
@@ -739,8 +763,11 @@ def _set_fit_kwargs(detector, xsize):
     if detector.startswith("NRS"):
         require_ngood = 15
         splinebkpt = 62
-        spaceratio = 1.6
         lrange = 50
+
+        # This factor of 1.6 was dialed based on inspection of the results
+        # as sampling gets progressively worse for NIRSpec detectors
+        spaceratio = 1.6
 
         # Set up the column fitting order by detector
         if detector == "NRS1":
@@ -753,8 +780,8 @@ def _set_fit_kwargs(detector, xsize):
     elif detector.startswith("MIR"):
         require_ngood = 8
         splinebkpt = 36
-        spaceratio = 1.2
         lrange = 50
+        spaceratio = 1.2
 
         # For MIRI fitting order,  we need to start on the left and run to the middle,
         # and then on the right to the middle in order to have the middle
@@ -798,15 +825,15 @@ def _set_oversample_kwargs(detector):
     if detector.startswith("NRS"):
         # Trimming ends of the interpolation can help with bad extrapolations
         pad = 2
-        trimends = True
+        trim_ends = True
     elif detector.startswith("MIR"):
         # Trimming ends is bad for MIRI, where dithers place point sources near the ends
         pad = 3
-        trimends = False
+        trim_ends = False
     else:
         raise ValueError("Unknown detector")
 
-    oversample_kwargs = {"pad": pad, "trimends": trimends}
+    oversample_kwargs = {"pad": pad, "trim_ends": trim_ends}
     return oversample_kwargs
 
 
@@ -964,14 +991,14 @@ def _update_wcs_nrs_ifu(wcs, map_pixels):
         with "coordinates" as the input frame, containing the new transform.
     """
     if "coordinates" in wcs.available_frames:
-        # coordinate-based WCS
+        # coordinate-based WCS: update the existing transform with the new mapping
         first_transform = wcs.pipeline[0].transform
         wcs.pipeline[0].transform = map_pixels | first_transform
         wcs.pipeline[0].transform.name = first_transform.name
         wcs.pipeline[0].transform.inputs = first_transform.inputs
         wcs.pipeline[0].transform.outputs = first_transform.outputs
 
-        # update bounding box limits
+        # update bounding box limits in place
         det2slicer_selector = wcs.pipeline[1].transform.selector
         for slnum in range(30):
             bb = det2slicer_selector[slnum + 1].bounding_box
@@ -1189,6 +1216,7 @@ def fit_and_oversample(
         alpha_os,
         slope_limit=slope_limit,
         psf_optimal=psf_optimal,
+        require_ngood=fit_kwargs["require_ngood"],
         **oversample_kwargs,
     )
 
