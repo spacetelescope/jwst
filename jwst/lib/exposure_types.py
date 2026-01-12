@@ -58,7 +58,7 @@ def is_nrs_lamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -76,7 +76,7 @@ def is_nrs_linelamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -94,7 +94,7 @@ def is_nrs_flatlamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -116,7 +116,7 @@ def is_nrs_slit_linelamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -139,7 +139,7 @@ def is_nrs_ifu_linelamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -157,7 +157,7 @@ def is_nrs_ifu_flatlamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -175,7 +175,7 @@ def is_nrs_ifu_lamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -193,7 +193,7 @@ def is_nrs_msaspec_lamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -211,7 +211,7 @@ def is_nrs_msaspec_linelamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -229,7 +229,7 @@ def is_nrs_msaspec_flatlamp(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -247,7 +247,7 @@ def is_nrs_autoflat(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         JWST data model.
 
     Returns
@@ -265,7 +265,7 @@ def is_moving_target(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel` or dict
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel` or dict
         JWST data model or flattened metadata dictionary.
 
     Returns
