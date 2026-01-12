@@ -31,9 +31,6 @@ For Developers
    devel_logging.rst
    devel_io_design.rst
 
-.. automodapi:: jwst.stpipe
-   :no-inheritance-diagram:
-
 Base Classes
 ------------
 
@@ -41,3 +38,9 @@ Base Classes
    :members: load_as_level2_asn, load_as_level3_asn
 
 .. autoclass:: jwst.stpipe.core::JwstPipeline
+
+Utilities
+---------
+
+.. automodapi:: jwst.stpipe.utilities
+   :no-inheritance-diagram:
