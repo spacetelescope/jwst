@@ -11,22 +11,30 @@ from jwst.datamodels import ModelContainer
 
 @pytest.fixture(scope="module")
 def miri_mrs_model():
-    return helpers.miri_mrs_model()
+    model = helpers.miri_mrs_model()
+    yield model
+    model.close()
 
 
 @pytest.fixture(scope="module")
 def nirspec_ifu_model_with_source():
-    return helpers.nirspec_ifu_model_with_source()
+    model = helpers.nirspec_ifu_model_with_source()
+    yield model
+    model.close()
 
 
 @pytest.fixture(scope="module")
 def miri_mrs_model_with_source():
-    return helpers.miri_mrs_model_with_source()
+    model = helpers.miri_mrs_model_with_source()
+    yield model
+    model.close()
 
 
 @pytest.fixture(scope="module")
 def nirspec_ifu_slice_wcs():
-    return helpers.nirspec_ifu_model_with_source(wcs_style="slice")
+    model = helpers.nirspec_ifu_model_with_source(wcs_style="slice")
+    yield model
+    model.close()
 
 
 @pytest.fixture()
