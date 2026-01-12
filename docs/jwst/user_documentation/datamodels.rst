@@ -4,7 +4,7 @@
 JWST Datamodels
 ===============
 
-The `stdatamodels` package contains the interface for JWST datamodels. This package
+The ``stdatamodels`` package contains the interface for JWST datamodels. This package
 is separated from the ``jwst`` pipeline package (to allow models to be manipulated without needing
 to install the whole pipeline), but the contents of ``stdatamodels.jwst.datamodels``
 are also accessible from ``jwst.datamodels``.
@@ -59,7 +59,7 @@ to the association itself.  The association file, as well as the files
 listed in the association file, must be in the input directory.
 
 Data structures that handle groups of datamodels are stored in the ``jwst``
-repository instead of inside `stdatamodels`. The API for these data structures
+repository instead of inside ``stdatamodels``. The API for these data structures
 is documented here:
 
 .. automodapi:: jwst.datamodels.container
