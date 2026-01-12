@@ -37,10 +37,12 @@ def miri_slice_limit_coords(wcs, xstart, xend):
     x_coord_end : int
         Ending pixel in image coordinates for the slice.
     """
-    # check for oversampled data
     if wcs is not None and "coordinates" in wcs.available_frames:
+        # If the data was oversampled, get a transform from detector pixels
+        # back to image coordinates
         det2coord = wcs.get_transform("detector", "coordinates")
     else:
+        # Otherwise, detector and image coordinates are the same.
         det2coord = Identity(2)
 
     xc, _ = det2coord([xstart, xend], [0, 0])
@@ -232,7 +234,8 @@ def find_corners_nirspec(input_data, coord_system):
         slice_wcs = nirspec.nrs_wcs_set_input(input_data, i)
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
         if coord_system == "internal_cal":
-            # Check for oversampled data
+            # Get either "detector" or "coordinates" frame depending on if the
+            # data were oversampled
             input_frame = slice_wcs.available_frames[0]
             detector2slicer = slice_wcs.get_transform(input_frame, "slicer")
             coord2, coord1, lam = detector2slicer(x, y)  # lam ~0 for this transform

@@ -5,7 +5,7 @@ from jwst.adaptive_trace_model.tests.helpers import profile_1d
 
 
 def test_bspline_fit_flat_data():
-    # Make some flat test data with spikes
+    # Make some flat test data
     xvec = np.arange(100, dtype=float)
     yvec = np.full(100, 1.0)
 
