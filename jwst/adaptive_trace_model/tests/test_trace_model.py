@@ -9,7 +9,8 @@ from jwst.adaptive_trace_model.tests import helpers
 @pytest.fixture(scope="module")
 def nrs_slit_model():
     model = helpers.nirspec_slit_model_with_source()
-    return model
+    yield model
+    model.close()
 
 
 @pytest.fixture(scope="module")
