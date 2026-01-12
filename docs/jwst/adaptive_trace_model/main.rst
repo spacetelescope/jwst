@@ -74,9 +74,11 @@ slice is separately modeled as follows:
 The set of spline models and scale factors for each wavelength in each slice constitutes
 the adaptive trace model for the spectral image.
 
-If no oversampling is desired, the trace model can then be evaluated at every pixel in the
-input image to create a wavelength-dependent spatial profile.  This image is stored in the output
-datamodel, in the ``trace_model`` attribute.
+If no oversampling is desired (i.e. the ``oversample`` parameter is set to 1.0), then the trace
+model is evaluated at every pixel in the input image to create a wavelength-dependent spatial
+profile.  This image is stored in the output datamodel, in the ``trace_model`` attribute, then
+the step returns without further changes to the input datamodel.  The rest of the algorithm
+description, below, applies only to oversampling.
 
 Oversample the Flux
 ^^^^^^^^^^^^^^^^^^^
@@ -124,6 +126,10 @@ extracted spectra, at the cost of ignoring non-PSF structures.
 Alternately, crowded fields with multiple stars may benefit particularly from setting
 the ``fit_threshold`` and ``slope_limit`` parameters to zero in order to ensure proper
 modeling of both bright and faint stars.
+
+Alongside the oversampled flux image, the set of spline models evaluated at all oversampled
+coordinates (:math:`f_{spline}`, above) are saved to the output model in the ``trace_model``
+attribute, as a record of the wavelength-dependent spatial profile for the oversampled data.
 
 Propagate DQ, Error, and Variance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
