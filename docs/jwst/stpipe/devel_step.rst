@@ -293,8 +293,8 @@ or at the command line::
 
    --override_flat_field=/path/to/my_reference_file.fits
 
-Making a simple commandline script for a step
-=============================================
+Making a simple command line script for a step
+==============================================
 
 Any step can be run from the commandline using :ref:`strun`.  However,
 to make a step even easier to run from the commandline, a custom
