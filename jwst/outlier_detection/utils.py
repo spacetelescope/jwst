@@ -333,6 +333,8 @@ def flag_resampled_model_crs(
     median_err=None,
     save_blot=False,
     make_output_path=None,
+    stepsize=10,
+    order=3,
 ):
     """
     Flag outliers in a resampled model, updating DQ array in place.
@@ -382,6 +384,8 @@ def flag_resampled_model_crs(
         input_model.meta.wcs,
         pix_ratio,
         fillval=np.nan,
+        stepsize=stepsize,
+        order=order,
     )
     if median_err is not None:
         blot_err = gwcs_blot(
@@ -391,6 +395,8 @@ def flag_resampled_model_crs(
             input_model.meta.wcs,
             pix_ratio,
             fillval=np.nan,
+            stepsize=stepsize,
+            order=order,
         )
     else:
         blot_err = None
@@ -517,6 +523,8 @@ def flag_crs_in_models_with_resampling(
             median_err=median_err,
             save_blot=save_blot,
             make_output_path=make_output_path,
+            stepsize=1,
+            order=1,
         )
 
 
