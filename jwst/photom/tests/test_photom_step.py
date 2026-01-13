@@ -2,6 +2,8 @@ import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.photom.photom_step import PhotomStep
 from jwst.photom.tests.test_photom import create_input
 
@@ -110,3 +112,40 @@ def test_photom_correction_pars(input_model):
 
     result.close()
     inverse_result.close()
+
+
+def test_photom_nrs_ifu():
+    """
+    Smoke test photom for NIRSpec IFU.
+
+    Requires a realistic WCS, so testing this mode at the step
+    interface level instead of with the other mocked modes in
+    ``test_photom``.
+    """
+    # Make a model with reasonable metadata
+    shape = (2048, 2048)
+    hdul = create_nirspec_ifu_file(
+        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
+    )
+    model = datamodels.IFUImageModel(hdul)
+    hdul.close()
+
+    # Assign some flat data and a WCS
+    model.data = np.ones(shape, dtype=np.float32)
+    model.err = np.full(shape, 0.1, dtype=np.float32)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model = AssignWcsStep.call(model)
+
+    result = PhotomStep.call(model)
+    assert result is not model
+    assert result.meta.cal_step.photom == "COMPLETE"
+    assert model.meta.cal_step.photom is None
+
+    # result is not the same as input
+    assert not np.allclose(result.data, model.data)
+    assert not np.allclose(result.err, model.err)
+
+    # inverting recovers the input
+    inverse_result = PhotomStep.call(result, inverse=True)
+    np.testing.assert_allclose(inverse_result.data, model.data)
+    np.testing.assert_allclose(inverse_result.err, model.err)
