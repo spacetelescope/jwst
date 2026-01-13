@@ -30,14 +30,4 @@ For Developers
    devel_pipeline.rst
    devel_logging.rst
    devel_io_design.rst
-
-.. automodapi:: jwst.stpipe
-   :no-inheritance-diagram:
-
-Base Classes
-------------
-
-.. autoclass:: jwst.stpipe.core::JwstStep
-   :members: load_as_level2_asn, load_as_level3_asn
-
-.. autoclass:: jwst.stpipe.core::JwstPipeline
+   api_ref.rst

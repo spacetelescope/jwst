@@ -38,7 +38,7 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : JwstDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -68,7 +68,7 @@ def niriss_soss_set_input(model, order_number):
 
     Returns
     -------
-    gwcs.wcs.WCS
+    `gwcs.wcs.WCS`
         The WCS corresponding to the spectral order.
     """
     # Make sure the spectral order is available.
@@ -118,12 +118,12 @@ def niriss_bounding_box(input_model):
 
     Parameters
     ----------
-    input_model : JwstDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
 
     Returns
     -------
-    CompoundBoundingBox
+    `~astropy.modeling.bounding_box.CompoundBoundingBox`
         The bounding box for the NIRISS model.
     """
     bbox = {(order,): _niriss_order_bounding_box(input_model, order) for order in [1, 2, 3]}
@@ -141,7 +141,9 @@ def niriss_soss(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel, IFUImageModel, or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                  `~stdatamodels.jwst.datamodels.IFUImageModel`, or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -240,11 +242,11 @@ def imaging(input_model, reference_files):
     """
     Create the WCS pipeline for NIRISS imaging data.
 
-    It includes three coordinate frames - "detector" "v2v3" and "world".
+    It includes three coordinate frames - "detector", "v2v3", and "world".
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -292,7 +294,7 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -351,7 +353,7 @@ def wfss(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -367,8 +369,7 @@ def wfss(input_model, reference_files):
     The tree in the grism reference file has a section for each order/beam as
     well as the link to the filter data file, not sure if there will be a
     separate passband reference file needed for the wavelength scaling or the
-    wedge offsets. This file is currently created in
-    jwreftools/niriss/niriss_reftools.
+    wedge offsets.
 
     The direct image the catalog has been created from was corrected for
     distortion, but the dispersed images have not. This is OK if the trace and

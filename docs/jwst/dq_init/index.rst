@@ -13,3 +13,4 @@ Data Quality (DQ) Initialization
 
 
 .. automodapi:: jwst.dq_init
+   :no-inheritance-diagram:

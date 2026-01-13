@@ -38,7 +38,15 @@ from jwst.assign_wcs.util import (
 log = logging.getLogger(__name__)
 
 
-__all__ = ["create_pipeline", "imaging", "lrs", "ifu", "wfss"]
+__all__ = [
+    "create_pipeline",
+    "imaging",
+    "lrs",
+    "ifu",
+    "retrieve_filter_offset",
+    "store_dithered_position",
+    "wfss",
+]
 
 
 def create_pipeline(input_model, reference_files):
@@ -47,7 +55,9 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel, IFUImageModel, CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                  `~stdatamodels.jwst.datamodels.IFUImageModel`, or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -68,11 +78,13 @@ def imaging(input_model, reference_files):
     """
     Create the WCS pipeline for MIRI imaging data.
 
-    It includes three coordinate frames - "detector", "v2v3" and "world".
+    It includes three coordinate frames - "detector", "v2v3", and "world".
 
     Parameters
     ----------
-    input_model : ImageModel, IFUImageModel, CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                  `~stdatamodels.jwst.datamodels.IFUImageModel`, or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -127,6 +139,37 @@ def imaging(input_model, reference_files):
     return pipeline
 
 
+def retrieve_filter_offset(filter_offset_model, obsfilter):
+    """
+    Retrieve the filter offset for a given filter from the FilteroffsetModel.
+
+    Parameters
+    ----------
+    filter_offset_model : `~stdatamodels.jwst.datamodels.FilteroffsetModel`
+        The filter offset reference model.
+    obsfilter : str
+        The name of the filter used in the observation.
+
+    Returns
+    -------
+    col_offset : float
+        The column offset for the specified filter.
+    row_offset : float
+        The row offset for the specified filter.
+    """
+    filters = filter_offset_model.filters
+
+    col_offset = None
+    row_offset = None
+    for f in filters:
+        if f.filter == obsfilter:
+            col_offset = f.column_offset
+            row_offset = f.row_offset
+            break
+
+    return col_offset, row_offset
+
+
 def imaging_distortion(input_model, reference_files):
     """
     Create the "detector" to "v2v3" transform for the MIRI Imager.
@@ -140,7 +183,9 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel, IFUImageModel, or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                  `~stdatamodels.jwst.datamodels.IFUImageModel`, or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -165,15 +210,7 @@ def imaging_distortion(input_model, reference_files):
     # Add an offset for the filter
     obsfilter = input_model.meta.instrument.filter
     with FilteroffsetModel(reference_files["filteroffset"]) as filter_offset:
-        filters = filter_offset.filters
-
-    col_offset = None
-    row_offset = None
-    for f in filters:
-        if f.filter == obsfilter:
-            col_offset = f.column_offset
-            row_offset = f.row_offset
-            break
+        col_offset, row_offset = retrieve_filter_offset(filter_offset, obsfilter)
 
     if col_offset is not None and row_offset is not None:
         distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion
@@ -193,12 +230,13 @@ def lrs(input_model, reference_files):
     """
     Create the WCS pipeline for LRS-FIXEDSLIT and LRS-SLITLESS data.
 
-    It includes three coordinate frames - "detector", "v2v3" and "world".
+    It includes three coordinate frames - "detector", "v2v3", and "world".
     "v2v3" and "world" each have (spatial, spatial, spectral) components.
 
     Parameters
     ----------
-    input_model : ImageModel or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -284,7 +322,9 @@ def lrs_xytoabl(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel, IFUImageModel, or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                  `~stdatamodels.jwst.datamodels.IFUImageModel`, or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -533,7 +573,8 @@ def ifu(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -611,21 +652,23 @@ def detector_to_abl(input_model, reference_files):
     """
     Create the transform from "detector" to "alpha_beta" frame.
 
-    Transform description:
-    forward transform
-      RegionsSelector
-        label_mapper is the regions array
-        selector is {slice_number: alpha_model & beta_model & lambda_model}
-    backward transform
-      RegionsSelector
-        label_mapper is LabelMapperDict
-           {channel_wave_range (): LabelMapperDict}
-                                   {beta: slice_number}
-        selector is {slice_number: x_transform & y_transform}
+    Transform description::
+
+        forward transform
+          RegionsSelector
+            label_mapper is the regions array
+            selector is {slice_number: alpha_model & beta_model & lambda_model}
+        backward transform
+          RegionsSelector
+            label_mapper is LabelMapperDict
+               {channel_wave_range (): LabelMapperDict}
+                                       {beta: slice_number}
+            selector is {slice_number: x_transform & y_transform}
 
     Parameters
     ----------
-    input_model : ImageModel or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -707,21 +750,23 @@ def abl_to_v2v3l(input_model, reference_files):
     """
     Create the transform from "alpha_beta" to "v2v3" frame.
 
-    Transform description:
-    forward transform
-      RegionsSelector
-        label_mapper is LabelMapperDict()
-        {channel_wave_range (): channel_number}
-        selector is {channel_number: ab2v2 & ab2v3}
-    backward_transform
-      RegionsSelector
-        label_mapper is LabelMapperDict()
-        {channel_wave_range (): channel_number}
-        selector is {channel_number: v22ab & v32ab}
+    Transform description::
+
+        forward transform
+          RegionsSelector
+            label_mapper is LabelMapperDict()
+            {channel_wave_range (): channel_number}
+            selector is {channel_number: ab2v2 & ab2v3}
+        backward_transform
+          RegionsSelector
+            label_mapper is LabelMapperDict()
+            {channel_wave_range (): channel_number}
+            selector is {channel_number: v22ab & v32ab}
 
     Parameters
     ----------
-    input_model : ImageModel or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -786,7 +831,7 @@ def wfss(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -795,7 +840,7 @@ def wfss(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     # Notes
     # -----
@@ -958,7 +1003,7 @@ def store_dithered_position(input_model):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Data model containing dither offset information
     """
     # V2_ref and v3_ref should be in arcsec
@@ -974,8 +1019,10 @@ def store_dithered_position(input_model):
     )
 
     v23toworld = input_model.meta.wcs.get_transform("v2v3", "world")
-    # v23toworld requires a wavelength along with v2, v3, but value does not affect return
-    dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)
+    # v23toworld requires a wavelength along with v2, v3 for some modes
+    # but value does not affect return
+    dithered_inputs = [dithered_v2, dithered_v3] + [0.0] * (v23toworld.n_inputs - 2)
+    dithered_outputs = v23toworld(*dithered_inputs)
 
-    input_model.meta.dither.dithered_ra = dithered_ra
-    input_model.meta.dither.dithered_dec = dithered_dec
+    input_model.meta.dither.dithered_ra = dithered_outputs[0]
+    input_model.meta.dither.dithered_dec = dithered_outputs[1]

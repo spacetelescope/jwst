@@ -4,12 +4,10 @@ Test script for set_velocity_aberration.py
 
 import subprocess
 
-import pytest
 from astropy.io import fits
 from numpy import isclose
 
 import jwst.datamodels as dm
-from jwst.lib.set_velocity_aberration import compute_va_effects, compute_va_effects_vector
 
 # Testing constants
 GOOD_VELOCITY = (100.0, 100.0, 100.0)
@@ -17,16 +15,6 @@ GOOD_POS = (359.0, -2.0)
 GOOD_SCALE_FACTOR = 1.000316017905845
 GOOD_APPARENT_RA = 359.01945099823
 GOOD_APPARENT_DEC = -1.980247580394956
-
-
-def test_compute_va_effects_deprecated():
-    with pytest.warns(DeprecationWarning, match="compute_va_effects is deprecated"):
-        compute_va_effects(*GOOD_VELOCITY, *GOOD_POS)
-
-
-def test_compute_va_effects_vector_deprecated():
-    with pytest.warns(DeprecationWarning, match="compute_va_effects_vector is deprecated"):
-        compute_va_effects_vector(0.0, 0.0, 0.0, GOOD_VELOCITY)
 
 
 def test_velocity_aberration_script(tmp_path):

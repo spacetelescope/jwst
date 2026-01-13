@@ -1,0 +1,1 @@
+Removed deprecated lib.compute_va_effects and lib.compute_va_effects_vector functions; use the functions from stcal.velocity_aberration module instead.

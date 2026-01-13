@@ -316,14 +316,11 @@ wrap = true
 issue_format = "`#{issue} <https://github.com/spacetelescope/jwst/issues/{issue}>`_"
 
 [[tool.towncrier.type]]
-directory = "general"
-name = "General"
+directory = "breaking"
+name = "Breaking Changes"
 showcontent = true
 
-[[tool.towncrier.type]]
-directory = "docs"
-name = "Documentation"
-showcontent = true
+# general pipeline changes
 
 [[tool.towncrier.type]]
 directory = "stpipe"
@@ -350,14 +347,12 @@ directory = "set_telescope_pointing"
 name = '``set_telescope_pointing``'
 showcontent = true
 
-# pipeline
-
 [[tool.towncrier.type]]
 directory = "pipeline"
 name = 'Pipeline'
 showcontent = true
 
-# steps
+# step changes
 
 [[tool.towncrier.type]]
 directory = "align_refs"
@@ -630,6 +625,11 @@ name = 'superbias (detector1 NIR)'
 showcontent = true
 
 [[tool.towncrier.type]]
+directory = "targ_centroid"
+name = 'targ_centroid (spec2)'
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "tso_photometry"
 name = 'tso_photometry (tso3)'
 showcontent = true
@@ -657,4 +657,16 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "white_light"
 name = 'white_light'
+showcontent = true
+
+# other changes
+
+[[tool.towncrier.type]]
+directory = "docs"
+name = "Documentation Changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "other"
+name = "Other Changes"
 showcontent = true

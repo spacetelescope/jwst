@@ -1,0 +1,1 @@
+Make wfss_contam expect the direct image to have a WCS object instead of the segmentation map

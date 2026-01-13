@@ -1,0 +1,3 @@
+Fix a bug where defining source_dec without source_ra did not raise an error.
+Add ``source_max_sep`` parameter to specify maximum distance in arcsec from user-input ra, dec pair
+that should be considered a match.

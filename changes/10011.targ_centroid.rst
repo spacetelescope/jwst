@@ -1,0 +1,1 @@
+Initial implementation of the step. Finds x,y position of target on detector based on TA verification images (if available) for MIRI LRS fixed-slit and slitless data.

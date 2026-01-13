@@ -81,11 +81,11 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
     Returns
     -------
     matrix : list
-        The rotation matrix, [pc1_1, pc1_2, pc2_1, pc2_2]
+        The rotation matrix, ``[pc1_1, pc1_2, pc2_1, pc2_2]``
 
     Notes
     -----
-    The rotation is
+    The rotation is::
 
        ----------------
        | pc1_1  pc2_1 |
@@ -111,14 +111,15 @@ def subarray_transform(input_model):
 
     Parameters
     ----------
-    input_model : JwstDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
 
     Returns
     -------
-    subarray2full : `~astropy.modeling.core.Model` or ``None``
-        Returns a (combination of ) ``Shift`` models if a subarray is used.
-        Returns ``None`` if a full frame observation.
+    subarray2full : `~astropy.modeling.Model` or `None`
+        Returns a (combination of) `~astropy.modeling.functional_models.Shift` models
+        if a subarray is used.
+        Returns `None` if a full frame observation.
     """
     tr_xstart = astmodels.Identity(1)
     tr_ystart = astmodels.Identity(1)
@@ -147,7 +148,7 @@ def not_implemented_mode(input_model, ref, slit_y_range=None):  # noqa: ARG001
 
     Parameters
     ----------
-    input_model : JwstDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
     ref : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -164,18 +165,18 @@ def get_object_info(catalog_name=None):
     Return a list of SkyObjects from the direct image.
 
     The source_catalog step catalog items are read into a list
-    of  SkyObjects which can be referenced by catalog id. Only
+    of SkyObjects which can be referenced by catalog id. Only
     the columns needed by the WFSS code are saved.
 
     Parameters
     ----------
-    catalog_name : str, astropy.table.table.Qtable
+    catalog_name : str, `astropy.table.Qtable`
         The name of the photutils catalog or its quantities table
 
     Returns
     -------
-    objects : list[jwst.transforms.models.SkyObject]
-        A list of SkyObject tuples
+    objects : list
+        A list of `~jwst.lib.catalog_utils.SkyObject` tuples
     """
     catalog = read_source_catalog(catalog_name)
 
@@ -242,29 +243,29 @@ def create_grism_bbox(
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Data model which holds the grism image
     reference_files : dict, optional
         Dictionary of reference file names.
-        If ``None``, ``wavelength_range`` must be supplied to specify
+        If `None`, ``wavelength_range`` must be supplied to specify
         the orders and corresponding wavelength ranges to be used in extraction.
     mmag_extract : float, optional
         The faintest magnitude to extract from the catalog.
     extract_orders : list, optional
         The list of orders to extract, if specified this will
         override the orders listed in the wavelengthrange reference file.
-        If ``None``, the default one in the wavelengthrange reference file is used.
+        If `None`, the default one in the wavelengthrange reference file is used.
     source_ids : list, optional
         List of source IDs to extract.
     wfss_extract_half_height : int, optional
         Cross-dispersion extraction half height in pixels, WFSS mode.
-        Overwrites the computed extraction height in ``GrismObject.order_bounding.``
-        If ``None``, it's computed from the segmentation map,
+        Overwrites the computed extraction height in ``GrismObject.order_bounding``.
+        If `None`, it's computed from the segmentation map,
         using the min and max wavelength for each of the orders that
         are available.
     wavelength_range : dict, optional
-        Pairs of {spectral_order: (wave_min, wave_max)} for each order.
-        If ``None``, the default one in the wavelengthrange reference file is used.
+        Pairs of ``{spectral_order: (wave_min, wave_max)}`` for each order.
+        If `None`, the default one in the wavelengthrange reference file is used.
     nbright : int, optional
         The number of brightest objects to extract from the catalog.
 
@@ -284,7 +285,7 @@ def create_grism_bbox(
 
     It's left to the calling routine to cut the bounding boxes at the
     extent of the detector (for example, extract 2d would only extract
-    the on-detector portion of the bounding box)
+    the on-detector portion of the bounding box).
 
     Bounding box dispersion direction is dependent on the filter and
     module for NIRCAM and changes for GRISMR, but is consistent for GRISMC,
@@ -522,6 +523,11 @@ def _create_grism_bbox(
                 order_bounding[order] = ((ymin, ymax), (xmin, xmax))
                 waverange[order] = (lmin, lmax)
                 partial_order[order] = ispartial
+            if exclude and source_ids is not None:
+                # If source_ids is specified, we want to warn for excluded objects
+                log.warning(
+                    f"Excluding requested object: {obj.label}, order {order} (off detector)"
+                )
 
         if len(order_bounding) > 0:
             grism_objects.append(
@@ -591,12 +597,12 @@ def bounding_box_from_subarray(input_model, order="C"):
     Create a bounding box from the subarray size.
 
     Note: The bounding_box assumes full frame coordinates.
-    It is set to ((ystart, ystart + xsize), (xstart, xstart + xsize)).
+    It is set to ``((ystart, ystart + xsize), (xstart, xstart + xsize))``.
     It is in 0-based coordinates.
 
     Parameters
     ----------
-    input_model : JwstDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
     order : str
         The order of the array.  Either "C" or "F".
@@ -604,8 +610,8 @@ def bounding_box_from_subarray(input_model, order="C"):
     Returns
     -------
     bbox : tuple
-        Bounding box in y, x order if order is "C" (default)
-        Boundsing box in x, y order if order is "F"
+        Bounding box in y, x order if order is "C" (default).
+        Bounding box in x, y order if order is "F".
     """
     bb_xstart = -0.5
     bb_xend = -0.5
@@ -636,7 +642,7 @@ def update_s_region_lrs(model, reference_files):
 
     Parameters
     ----------
-    model : DataModel
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input model
     reference_files : list
         List of reference files for assign_wcs.
@@ -676,7 +682,7 @@ def compute_footprint_spectral(model):
 
     Parameters
     ----------
-    model : DataModel
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The output of assign_wcs.
 
     Returns
@@ -733,7 +739,7 @@ def compute_footprint_nrs_slit(slit):
 
     Parameters
     ----------
-    slit : `~jwst.datamodels.SlitModel`
+    slit : `~stdatamodels.jwst.datamodels.SlitModel`
         The slit model.
 
     Returns
@@ -757,6 +763,7 @@ def compute_footprint_nrs_slit(slit):
 
 
 def update_s_region_nrs_slit(slit):
+    """Update the S_REGION keyword for NIRSpec slit."""
     footprint, spectral_region = compute_footprint_nrs_slit(slit)
     update_s_region_keyword(slit, footprint)
     slit.meta.wcsinfo.spectral_region = spectral_region
@@ -775,7 +782,7 @@ def compute_footprint_nrs_ifu(dmodel):
 
     Parameters
     ----------
-    dmodel : `~jwst.datamodels.IFUImageModel`
+    dmodel : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
 
     Returns
@@ -821,7 +828,7 @@ def update_s_region_nrs_ifu(output_model):
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.IFUImageModel`
+    output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
     """
     footprint, spectral_region = compute_footprint_nrs_ifu(output_model)
@@ -835,7 +842,7 @@ def update_s_region_mrs(output_model):
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.IFUImageModel`
+    output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
     """
     footprint, spectral_region = compute_footprint_spectral(output_model)
@@ -870,16 +877,16 @@ def wrap_ra(ravalues):
 
     If exists it makes it difficult to determine
     RA range of a region on the sky. This problem is solved by putting them all
-    on "one side" of 0/360 border
+    on "one side" of 0/360 border.
 
     Parameters
     ----------
-    ravalues : numpy.ndarray
+    ravalues : ndarray
         The input RA values
 
     Returns
     -------
-    np.ndarray
+    ndarray
         A numpy array of RA values all on "same side" of 0/360 border
     """
     ravalues_array = np.array(ravalues)
@@ -907,7 +914,7 @@ def wrap_ra(ravalues):
 
 def in_ifu_slice(slice_wcs, ra, dec, lam):
     """
-    Given RA, DEC and LAM return the x, y positions within a slice.
+    Given RA, DEC, and LAM return the x, y positions within a slice.
 
     Parameters
     ----------
@@ -958,7 +965,7 @@ def update_fits_wcsinfo(
     create FITS WCS representations of GWCS objects. Only most important
     :py:meth:`~gwcs.wcs.WCS.to_fits_sip` parameters are exposed here. Other
     arguments to :py:meth:`~gwcs.wcs.WCS.to_fits_sip` can be passed via
-    ``kwargs`` - see "Other Parameters" section below.
+    ``kwargs`` - see Parameters section below.
     Please refer to the documentation of :py:meth:`~gwcs.wcs.WCS.to_fits_sip`
     for more details.
 
@@ -1019,7 +1026,7 @@ def update_fits_wcsinfo(
         Projection to be used for the created FITS WCS. It can be specified
         as a string of three characters specifying a FITS projection code
         from Table 13 in
-        `Representations of World Coordinates in FITS \
+        `Representations of World Coordinates in FITS
         <https://doi.org/10.1051/0004-6361:20021326>`_
         (Paper I), Greisen, E. W., and Calabretta, M. R., A & A, 395,
         1061-1075, 2002. Alternatively, it can be an instance of one of the
@@ -1046,7 +1053,7 @@ def update_fits_wcsinfo(
         * bounding_box : tuple, None, optional
             A pair of tuples, each consisting of two numbers
             Represents the range of pixel values in both dimensions
-            ((xmin, xmax), (ymin, ymax))
+            ``((xmin, xmax), (ymin, ymax))``
         * verbose : bool, optional
             Print progress of fits.
 
@@ -1137,7 +1144,7 @@ def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
 
     Parameters
     ----------
-    wfss_model : `~ImageModel`
+    wfss_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Input WFSS model (NRC or NIS).
     imaging : func, callable
         The ``imaging`` function in the ``niriss`` or ``nircam`` modules.
@@ -1145,7 +1152,7 @@ def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
         The bounding box over which to approximate the distortion solution.
         Typically this is based on the shape of the direct image.
     **kwargs : dict
-        Additional parameters to be passed to update_fits_wcsinfo().
+        Additional parameters to be passed to :func:`update_fits_wcsinfo`.
     """
     xstart = wfss_model.meta.subarray.xstart
     ystart = wfss_model.meta.subarray.ystart
@@ -1168,7 +1175,7 @@ def get_wcs_reference_files(datamodel):
 
     Parameters
     ----------
-    datamodel : ImageModel
+    datamodel : `~stdatamodels.jwst.datamodels.ImageModel`
         Input WFSS file (NRC or NIS).
 
     Returns

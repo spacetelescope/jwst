@@ -160,6 +160,7 @@ def test_extract_niriss_soss_256(tmp_path, mock_niriss_soss_256):
         mock_niriss_soss_256,
         soss_rtol=0.1,
         soss_modelname="soss_model.fits",
+        soss_wave_grid_out=str(tmp_path / "soss_wave_grid.fits"),
         output_dir=str(tmp_path),
     )
     assert result.meta.cal_step.extract_1d == "COMPLETE"
@@ -168,11 +169,28 @@ def test_extract_niriss_soss_256(tmp_path, mock_niriss_soss_256):
     # on extraction parameters
     assert np.all(result.spec[0].spec_table["FLUX"] > 0)
     assert np.all(result.spec[0].spec_table["FLUX_ERROR"] > 0)
-    result.close()
 
     # soss output files are saved
     assert os.path.isfile(tmp_path / "soss_model_SossExtractModel.fits")
     assert os.path.isfile(tmp_path / "soss_model_AtocaSpectra.fits")
+
+    tikfac = result.meta.soss_extract1d.tikhonov_factor
+
+    # rerun call with the same wave grid file and Tikhonov factor,
+    # results should be identical
+    result2 = Extract1dStep.call(
+        mock_niriss_soss_256,
+        soss_rtol=0.1,
+        soss_wave_grid_in=str(tmp_path / "soss_wave_grid.fits"),
+        output_dir=str(tmp_path),
+    )
+    assert result2.meta.cal_step.extract_1d == "COMPLETE"
+    np.testing.assert_allclose(
+        result2.spec[0].spec_table["FLUX"], result.spec[0].spec_table["FLUX"]
+    )
+
+    result.close()
+    result2.close()
 
 
 @pytest.mark.slow
