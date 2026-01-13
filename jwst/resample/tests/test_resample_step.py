@@ -435,7 +435,15 @@ def test_single_image_file_input(nircam_rate, tmp_cwd):
     # Create a temporary file with the input data
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     im.meta.filename = "test_input.fits"
+
+    # Add a bad pixel in the error plane, not matched with a NaN in data.
+    # This will test if the match_nans_and_flags call at the beginning
+    # of the step modifies the input model.
+    im.err[0, 0] = np.nan
+
+    # Save a copy to disk, keep a copy of the data for testing.
     im.save("test_input.fits")
+    im_copy = im.data.copy()
 
     # Run the step on the file
     result_from_memory = ResampleStep.call(im)
@@ -449,10 +457,50 @@ def test_single_image_file_input(nircam_rate, tmp_cwd):
     # Check that input model was not modified
     assert im is not result_from_memory
     assert im.meta.cal_step.resample is None
+    assert_allclose(im.data, im_copy)
 
     result_from_file.close()
     result_from_memory.close()
     im.close()
+
+
+def test_list_model_input(nircam_rate, tmp_cwd):
+    """Ensure step can be run on a list of models without modifying them."""
+    # Create a temporary file with the input data
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im.meta.filename = "test_input_1.fits"
+
+    # Add a bad pixel in the error plane, not matched with a NaN in data.
+    # This will test if the match_nans_and_flags call at the beginning
+    # of the step modifies the input model.
+    im.err[0, 0] = np.nan
+
+    # Keep a copy of the data for testing
+    im_copy = im.data.copy()
+
+    # Make a list of input models to run
+    im2 = im.copy()
+    im2.meta.filename = "test_input_2.fits"
+    im_list = [im, im2]
+
+    # Run the step on the file
+    result = ResampleStep.call(im_list)
+
+    # Check that the output is as expected
+    assert isinstance(result, ImageModel)
+    assert result.meta.cal_step.resample == "COMPLETE"
+
+    # Check that input models were not modified
+    assert result is not im
+    assert result is not im2
+    assert im.meta.cal_step.resample is None
+    assert im2.meta.cal_step.resample is None
+    assert_allclose(im.data, im_copy)
+    assert_allclose(im2.data, im_copy)
+
+    result.close()
+    im.close()
+    im2.close()
 
 
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
