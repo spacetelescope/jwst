@@ -47,7 +47,8 @@ class BackgroundStep(Step):
 
         Parameters
         ----------
-        step_input : str, ImageModel or IFUImageModel
+        step_input : str, `~stdatamodels.jwst.datamodels.ImageModel` or \
+                     `~stdatamodels.jwst.datamodels.IFUImageModel`
             Input target data model to which background subtraction is applied or asn file
 
         input_bkg_list : list, optional
@@ -55,11 +56,12 @@ class BackgroundStep(Step):
 
         Returns
         -------
-        result : ImageModel or IFUImageModel
+        result : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                 `~stdatamodels.jwst.datamodels.IFUImageModel`
             The background-subtracted target data model
         """
         asn = self.load_as_level2_asn(step_input)
-        model, members_by_type = self.asn_get_data(asn)
+        model, members_by_type = self._asn_get_data(asn)
 
         if model.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
             # Get the reference file names
@@ -182,18 +184,19 @@ class BackgroundStep(Step):
 
         return result
 
-    def asn_get_data(self, asn):
+    def _asn_get_data(self, asn):
         """
-        Check if the input is an asn file and get the targets and catalog.
+        Get the targets and catalog from an association.
 
         Parameters
         ----------
-        asn : str, asn file
-            Input target data
+        asn : ``jwst.associations.lib.rules_level2_base.DMSLevel2bBase``
+            Input association.
 
         Returns
         -------
-        step_input : ImageModel or IFUImageModel
+        step_input : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                     `~stdatamodels.jwst.datamodels.IFUImageModel`
             Input target data model
         bkg_list : list
             File name list of background exposures
