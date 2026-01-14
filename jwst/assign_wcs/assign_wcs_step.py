@@ -95,10 +95,8 @@ class AssignWcsStep(Step):
         output_model = self.prepare_output(input_data)
 
         # If input type is not supported, log warning, set to 'skipped', exit
-        if not (
-            isinstance(output_model, datamodels.ImageModel)
-            or isinstance(output_model, datamodels.CubeModel)
-            or isinstance(output_model, datamodels.IFUImageModel)
+        if not isinstance(
+            output_model, (datamodels.ImageModel, datamodels.CubeModel, datamodels.IFUImageModel)
         ):
             log.warning("Input dataset type is not supported.")
             log.warning("assign_wcs expects ImageModel, IFUImageModel or CubeModel as input.")
