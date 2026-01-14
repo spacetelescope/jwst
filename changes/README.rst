@@ -1,29 +1,25 @@
-Changelog
-=========
+Writing news fragments for the change log
+#########################################
 
-This directory contains "news fragments" which are short files that contain a
-small **ReST**-formatted text that will be added to the full changelog.
+This ``changes/`` directory contains "news fragments": small ReStructured Text files describing a change in a few sentences.
+When making a release, run ``towncrier build --version <VERSION>`` to consume existing fragments in ``changes/`` and insert them as a full change log entry at the top of ``CHANGES.rst`` for the released version.
 
-Make sure to use full sentences with correct case and punctuation.
+News fragment filenames consist of the pull request number and the change log category (see below). A single change can have more than one news fragment, if it spans multiple categories:
 
-Consuming news fragments in `changes/` into a new change log entry
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block::
 
-Running `towncrier build` will read all existing fragment files in `changes/`
-and create a new entry at the top of `CHANGES.rst` with the specified version number.
+  10028.other.rst
+  10042.breaking.rst
+  10042.tso_photometry.rst
+  10043.tweakreg.rst
+  10139.docs.rst
 
-```shell
-pip install towncrier
-towncrier build --version <VERSION>
-```
-
-News fragment change types
---------------------------
-
-- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks if your change breaks **step-level or public API** ([as defined in the docs](https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private))
+Change log categories
+*********************
+- ``<PR#>.breaking.rst``: Also add this fragment if your change breaks **step-level or public API** ([as defined in the docs](https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private))
 
 General Pipeline Changes
-""""""""""""""""""""""""
+========================
 
 - ``<PR#>.stpipe.rst``
 - ``<PR#>.datamodels.rst``
@@ -34,6 +30,8 @@ General Pipeline Changes
 
 Stage 1
 """""""
+^^^^^^^
+=======
 
 - ``<PR#>.group_scale.rst``
 - ``<PR#>.dq_init.rst``
@@ -58,6 +56,8 @@ Stage 1
 
 Stage 2
 """""""
+^^^^^^^
+=======
 
 - ``<PR#>.adaptive_trace_model.rst``
 - ``<PR#>.assign_wcs.rst``
@@ -86,6 +86,8 @@ Stage 2
 
 Stage 3
 """""""
+^^^^^^^
+=======
 
 - ``<PR#>.assign_mtwcs.rst``
 - ``<PR#>.tweakreg.rst``
@@ -103,6 +105,8 @@ Stage 3
 
 Other
 """""
+^^^^^
+=====
 
 - ``<PR#>.wfs_combine.rst``
 - ``<PR#>.white_light.rst``
