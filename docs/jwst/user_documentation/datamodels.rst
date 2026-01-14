@@ -6,11 +6,11 @@ JWST Datamodels
 
 The ``stdatamodels`` package contains the interface for JWST datamodels. This package
 is separated from the ``jwst`` pipeline package (to allow models to be manipulated without needing
-to install the whole pipeline), but the contents of ``stdatamodels.jwst.datamodels``
+to install the whole pipeline), but the contents of `stdatamodels.jwst.datamodels`
 are also accessible from ``jwst.datamodels``.
 
 Datamodels are the recommended way of reading and writing JWST data files and
-reference files (.fits and .asdf). JWST data are usually encoded in FITS files
+reference files (``.fits`` and ``.asdf``). JWST data are usually encoded in FITS files
 (although they can also be saved to/read from ASDF), and reference
 files consist of a mix of FITS and ASDF - datamodels were designed to
 abstract away these intricacies and provide a simple interface to the data. They
@@ -36,13 +36,13 @@ file on disk. E.g:
     input_model = dm.open('jw00001001001_01101_00001_mirimage_uncal.fits')
     result = LinearityStep.call(input_model)
 
-If a string path to a file on disk is passed in, a ``DataModel`` object will be
+If a string path to a file on disk is passed in, a `~stdatamodels.jwst.datamodels.JwstDataModel` object will be
 created internally when the pipeline/step is run.
 
 By default, when running in Python, the corrected data will be returned in-memory
-as a ``DataModel`` instead of being written as an output file.
+as a `~stdatamodels.jwst.datamodels.JwstDataModel` instead of being written as an output file.
 See :ref:`controlling output file behavior<python_outputs>` for instructions on
-how to write the returned ``DataModel`` to an output file.
+how to write the returned `~stdatamodels.jwst.datamodels.JwstDataModel` to an output file.
 
 Groups of Datamodels
 ====================
