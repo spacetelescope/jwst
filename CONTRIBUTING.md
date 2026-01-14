@@ -90,9 +90,9 @@ to generate documentation, which is then hosted online on [readthedocs](https://
 
 You can access two versions of the documentation on the
 [JWST readthedocs website](https://readthedocs.org/projects/jwst-pipeline/)
--- the `latest` version is whatever is currently on the main branch, and the `stable`
+-- the `latest` version is whatever is currently on the main branch, and the [`stable`](https://jwst-pipeline.readthedocs.io/en/stable/)
 version is the last released version. If you successfully merge a PR with documentation
-changes, they will only appear on `latest` until the next JWST release.
+changes, they will only appear on [`latest`](https://jwst-pipeline.readthedocs.io/en/latest/) until the next JWST release.
 
 All of the documentation resides in the `jwst/docs` subdirectories (mainly within
 directories in `jwst/docs/jwst`, organized by module). The documentation is written
