@@ -143,7 +143,7 @@ class Detector1Pipeline(Pipeline):
         # persistence should be between flicker noise and ramp_fit.
         # XXX What should be done with the persistence_list?
         if instrument != "NIRSPEC" and instrument != "MIRI":
-            input_data, persistence_list = self.persistence.run(input_data)
+            input_data = self.persistence.run(input_data)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
