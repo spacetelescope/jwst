@@ -1107,16 +1107,20 @@ def fit_residual_fringes_1d(
     weights[weights == np.inf] = 0
     weights[np.isnan(weights)] = 0
 
+    # Create a weights_feat array to allow zeroing-out weights near spectral features
+    # so that they don't get used in the fitting
+    weights_feat = weights * 1.0
+
     # Zero out any weights longward of 27.6 microns as the calibration is too uncertain
     # and can bias the fringe finding
-    weights[usewave > 27.6] = 0
+    weights_feat[usewave > 27.6] = 0
 
     # Zero out weights for any user-specified regions
     if ignore_regions is not None:
         for region in ignore_regions:
-            weights[(usewave > region[0]) & (usewave < region[1])] = 0
+            weights_feat[(usewave > region[0]) & (usewave < region[1])] = 0
 
-    if np.all(weights == 0):
+    if np.all(weights_feat == 0):
         log.warning("No good data. Skipping correction.")
         return flux
 
@@ -1142,7 +1146,7 @@ def fit_residual_fringes_1d(
         weight_factors = clip_spectral_features(mod, sigma=clip_sigma)
     else:
         weight_factors = find_lines(mod, max_line_array)
-    weights_feat = weights * weight_factors
+    weights_feat = weights_feat * weight_factors
 
     if dichroic_only is True:
         if channel not in [3, 4]:
