@@ -19,6 +19,7 @@ def subtract_wfss_bkg(
     bkg_filename,
     wl_range_name,
     mmag_extract=None,
+    mask=None,
     rescaler_kwargs=None,
 ):
     """
@@ -37,6 +38,11 @@ def subtract_wfss_bkg(
 
     mmag_extract : float, optional, default None
         Minimum abmag of grism objects to extract
+
+    mask : ndarray[bool], optional, default None
+        User-supplied boolean source mask. True for background,
+        False for pixels that are part of sources. If provided, will supersede the auto-generated
+        mask from the source catalog, and `model.meta.source_catalog` will be ignored entirely.
 
     rescaler_kwargs : dict, optional, default None
         Keyword arguments to pass to ScalingFactorComputer
@@ -64,15 +70,9 @@ def subtract_wfss_bkg(
     rescaler_kwargs["dispersion_axis"] = dispaxis
 
     # get the source catalog for masking
-    if hasattr(model.meta, "source_catalog"):
-        got_catalog = True
-    else:
-        log.warning("No source_catalog found in input.meta.")
-        got_catalog = False
-
-    # Create a mask from the source catalog, True where there are no sources,
-    # i.e. in regions we can use as background.
-    if got_catalog:
+    if model.meta.hasattr("source_catalog") and mask is None:
+        # Create a mask from the source catalog, True where there are no sources,
+        # i.e. in regions we can use as background.
         bkg_mask = _mask_from_source_cat(model, wl_range_name, mmag_extract)
         if not _sufficient_background_pixels(model.dq, bkg_mask, bkg_ref.data):
             log.warning("Not enough background pixels to work with.")
@@ -84,8 +84,12 @@ def subtract_wfss_bkg(
             model.meta.cal_step.bkg_subtract = "FAILED"
             bkg_ref.close()
             return model
-    else:
+    elif mask is None:
+        log.warning("No source_catalog found in input.meta, and custom mask not specified. ")
+        log.warning("No sources will be masked for background scaling.")
         bkg_mask = np.ones(model.data.shape, dtype=bool)
+    else:
+        bkg_mask = mask
 
     # save the mask in expected data type for the datamodel
     model.mask = bkg_mask.astype(np.uint32)

@@ -30,6 +30,7 @@ class BackgroundStep(Step):
         soss_source_percentile = float(default=35.0) # Threshold flux percentile to mask out source pixels
         soss_bkg_percentile = float_list(min=2, max=2, default=None) # Background percentiles to use; default is [25.0, 50.0]
         wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
+        wfss_mask = string(default=None)  # WFSS source mask file
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
         wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
         wfss_outlier_percent = float(default=1)  # WFSS outlier percentile to reject per iteration
@@ -76,6 +77,11 @@ class BackgroundStep(Step):
             log.info("Using BKG reference file %s", bkg_name)
             log.info("Using WavelengthRange reference file %s", wlrange_name)
 
+            wfss_mask = None
+            if self.wfss_mask is not None:
+                with datamodels.open(self.wfss_mask) as mask_model:
+                    wfss_mask = mask_model.mask
+
             # Do the background subtraction for WFSS/GRISM data
             rescaler_kwargs = {
                 "p": self.wfss_outlier_percent,
@@ -87,6 +93,7 @@ class BackgroundStep(Step):
                 bkg_name,
                 wlrange_name,
                 self.wfss_mmag_extract,
+                mask=wfss_mask,
                 rescaler_kwargs=rescaler_kwargs,
             )
             if result is None:
