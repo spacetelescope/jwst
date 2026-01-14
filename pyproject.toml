@@ -228,7 +228,9 @@ addopts = [
 ]
 xfail_strict = true
 filterwarnings = [
-    "error"
+    "error",
+    # dev numpy deprecated shape assignment which astropy still uses
+    "ignore:Setting the shape on a NumPy array has been deprecated:DeprecationWarning:astropy.*",
 ]
 
 [tool.coverage.run]
