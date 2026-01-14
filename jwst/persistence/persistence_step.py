@@ -1,3 +1,5 @@
+import asdf
+import datetime
 import logging
 import numpy as np
 
@@ -23,7 +25,7 @@ class PersistenceStep(Step):
         save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
         modify_input = boolean(default=False)
         persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
-        persistence_array = list(default=None) # A 2-D array or none.
+        persistence_array_file = string(default=None) # A path to an ASDF file containing a 2-D array of persistence times per pixel
         persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
     """  # noqa: E501
 
@@ -76,7 +78,7 @@ class PersistenceStep(Step):
                     msg += " " + name
             log.warning("%s", msg)
             result.meta.cal_step.persistence = "SKIPPED"
-            return result, None
+            return result
 
         if self.input_trapsfilled is None:
             traps_filled_model = None
@@ -115,17 +117,16 @@ class PersistenceStep(Step):
             self.save_model(output_pers, suffix="output_pers", force=self.save_persistence)
             del output_pers
 
-        persistence_list = None
         if pers_a.persistence_array is not None:
-            persistence_list = self.persistence_array.tolist()
+            self.write_persistence_array()
+
 
         # Cleanup
         del trap_density_model
         del trappars_model
         del persat_model
 
-        # XXX Instead of returning persistence_list, could store it in ASDF.
-        return result, persistence_list
+        return result
 
     def process_persistence_options(self, result):
         """
@@ -139,19 +140,43 @@ class PersistenceStep(Step):
         # Could make less than or equal to frametime.
         if self.persistence_time is None or self.persistence_time <= 0.0:
             self.persistence_time = None
-            # XXX raise error or log info?
+            self.persistence_array = None
             return  # No persistence option chosen
 
-        # XXX think about using ASDF for persistence_array input and output
         _, _, nrows, ncols = result.groupdq.shape
-        if self.persistence_array is not None:
+        if self.persistence_array_file is not None:
             self.persistence_array_create = False 
-            self.persistence_array = np.array(self.persistence_array)
+
+            with asdf.open(self.persistence_array_file) as af:
+                self.persistence_array = af.tree["persistence_data"].copy()
 
             # Make sure array has correct dimensions
             dims = self.persistence_array.shape 
             if len(dims) != 2 or dims[0] != nrows or dims[1] != ncols:
                 raise ValueError("'persistence_array' needs to be a 2-D list with dimensions (nrows, ncols)")
         else:
+            self.persistence_array_file = result.meta.filename
             self.persistence_array_create = True
             self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
+
+    def write_persistence_array(self):
+        """
+        Write the persistence array to an ASDF file.
+
+        Parameters
+        ----------
+        filename : str
+            The name of the output ASDF file.
+        """
+        # Get current time string
+        now = datetime.datetime.now()
+        time_fmt = "%Y%m%d_%H%M%S_%f"
+        time_str = now.strftime(time_fmt)
+
+        # Add time suffix
+        filename = self.persistence_array_file.replace(".asdf", f"_pers_{time_str}.asdf")
+
+        # Write persistence array to ASDF file
+        tree = {"persistence_data": self.persistence_array}
+        with asdf.AsdfFile(tree) as af:
+            af.write_to(filename)   
