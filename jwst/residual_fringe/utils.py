@@ -1109,7 +1109,7 @@ def fit_residual_fringes_1d(
 
     # Create a weights_feat array to allow zeroing-out weights near spectral features
     # so that they don't get used in the fitting
-    weights_feat = weights * 1.0
+    weights_feat = weights.copy()
 
     # Zero out any weights longward of 27.6 microns as the calibration is too uncertain
     # and can bias the fringe finding
