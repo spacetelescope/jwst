@@ -30,11 +30,11 @@ file on disk. E.g:
 
 ::
 
-	# running a single pipeline step, input is datamodel object
-	from jwst.linearity import LinearityStep
-	import stdatamodels.jwst.datamodels as dm
-	input_model = dm.open('jw00001001001_01101_00001_mirimage_uncal.fits')
-	result = LinearityStep.call(input_model)
+    # running a single pipeline step, input is datamodel object
+    from jwst.linearity import LinearityStep
+    import stdatamodels.jwst.datamodels as dm
+    input_model = dm.open('jw00001001001_01101_00001_mirimage_uncal.fits')
+    result = LinearityStep.call(input_model)
 
 If a string path to a file on disk is passed in, a ``DataModel`` object will be
 created internally when the pipeline/step is run.
@@ -62,13 +62,7 @@ Data structures that handle groups of datamodels are stored in the ``jwst``
 repository instead of inside ``stdatamodels``. The API for these data structures
 is documented here:
 
-.. automodapi:: jwst.datamodels.container
-	:no-inheritance-diagram:
+.. toctree::
+   :maxdepth: 2
 
-.. autodata:: jwst.datamodels.container.RECOGNIZED_MEMBER_FIELDS
-
-.. automodapi:: jwst.datamodels.library
-	:no-inheritance-diagram:
-
-.. automodapi:: jwst.datamodels.source_container
-	:no-inheritance-diagram:
+   datamodels_api.rst
