@@ -174,7 +174,10 @@ class PersistenceStep(Step):
         time_str = now.strftime(time_fmt)
 
         # Add time suffix
-        filename = self.persistence_array_file.replace(".asdf", f"_pers_{time_str}.asdf")
+        if filename.endswith(".asdf"):
+            filename = self.persistence_array_file.replace(".asdf", f"_pers_{time_str}.asdf")
+        elif filename.endswith(".fits"):
+            filename = self.persistence_array_file.replace(".fits", f"_pers_{time_str}.asdf")
 
         # Write persistence array to ASDF file
         tree = {"persistence_data": self.persistence_array}
