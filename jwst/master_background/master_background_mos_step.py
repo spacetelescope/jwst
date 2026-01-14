@@ -110,71 +110,68 @@ class MasterBackgroundMosStep(Pipeline):
               - Reverse-calibrate the 2D background, using the correction arrays calculated above.
               - Subtract the background from the input slit data.
         """
-        with datamodels.open(data) as data_model:
-            # If some type of background processing had already been done. Abort.
-            # UNLESS forcing is enacted.
-            if not self.force_subtract and "COMPLETE" in [
-                data_model.meta.cal_step.bkg_subtract,
-                data_model.meta.cal_step.master_background,
-            ]:
-                log.info("Background subtraction has already occurred. Skipping.")
-                result = data_model.copy()
-                record_step_status(result, "master_background", success=False)
-                return result
+        data_model = self.prepare_output(data)
 
-            if self.user_background:
-                log.info(
-                    "Calculating master background from "
-                    f"user-supplied background {self.user_background}"
+        # If some type of background processing had already been done. Abort.
+        # UNLESS forcing is enacted.
+        if not self.force_subtract and "COMPLETE" in [
+            data_model.meta.cal_step.bkg_subtract,
+            data_model.meta.cal_step.master_background,
+        ]:
+            log.info("Background subtraction has already occurred. Skipping.")
+            record_step_status(data_model, "master_background", success=False)
+            return data_model
+
+        if self.user_background:
+            log.info(
+                "Calculating master background from "
+                f"user-supplied background {self.user_background}"
+            )
+            user_background = datamodels.open(self.user_background)
+            master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
+                data_model, user_background
+            )
+        elif self.use_correction_pars:
+            log.info("Using pre-calculated correction parameters.")
+            master_background = self.correction_pars["masterbkg_1d"]
+            mb_multislit = self.correction_pars["masterbkg_2d"]
+        else:
+            num_bkg, num_src = self._classify_slits(data_model)
+            if num_bkg == 0:
+                log.warning(
+                    "No background slits available for creating master background. Skipping"
                 )
-                user_background = datamodels.open(self.user_background)
-                master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
-                    data_model, user_background
-                )
-            elif self.use_correction_pars:
-                log.info("Using pre-calculated correction parameters.")
-                master_background = self.correction_pars["masterbkg_1d"]
-                mb_multislit = self.correction_pars["masterbkg_2d"]
-            else:
-                num_bkg, num_src = self._classify_slits(data_model)
-                if num_bkg == 0:
-                    log.warning(
-                        "No background slits available for creating master background. Skipping"
-                    )
-                    result = data_model.copy()
-                    record_step_status(result, "master_background", False)
-                    return result
-                elif num_src == 0:
-                    log.warning("No source slits for applying master background. Skipping")
-                    result = data_model.copy()
-                    record_step_status(result, "master_background", False)
-                    return result
+                record_step_status(data_model, "master_background", False)
+                return data_model
+            elif num_src == 0:
+                log.warning("No source slits for applying master background. Skipping")
+                record_step_status(data_model, "master_background", False)
+                return data_model
 
-                log.info("Calculating master background")
-                master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
-                    data_model, sigma_clip=self.sigma_clip, median_kernel=self.median_kernel
-                )
-
-            # Check that a master background was actually determined.
-            if master_background is None:
-                log.info("No master background could be calculated. Skipping.")
-                result = data_model.copy()
-                record_step_status(result, "master_background", False)
-                return result
-
-            # Now apply the de-calibrated background to the original science
-            result = nirspec_utils.apply_master_background(
-                data_model, mb_multislit, inverse=self.inverse
+            log.info("Calculating master background")
+            master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
+                data_model, sigma_clip=self.sigma_clip, median_kernel=self.median_kernel
             )
 
-            # Mark as completed and setup return data
-            record_step_status(result, "master_background", True)
-            self.correction_pars = {"masterbkg_1d": master_background, "masterbkg_2d": mb_multislit}
-            if self.save_background:
-                self.save_model(master_background, suffix="masterbg1d", force=True)
-                self.save_model(mb_multislit, suffix="masterbg2d", force=True)
-                if bkg_x1d_spectra is not None:
-                    self.save_model(bkg_x1d_spectra, suffix="bkgx1d", force=True)
+        # Check that a master background was actually determined.
+        if master_background is None:
+            log.info("No master background could be calculated. Skipping.")
+            record_step_status(data_model, "master_background", False)
+            return data_model
+
+        # Now apply the de-calibrated background to the original science
+        result = nirspec_utils.apply_master_background(
+            data_model, mb_multislit, inverse=self.inverse
+        )
+
+        # Mark as completed and setup return data
+        record_step_status(result, "master_background", True)
+        self.correction_pars = {"masterbkg_1d": master_background, "masterbkg_2d": mb_multislit}
+        if self.save_background:
+            self.save_model(master_background, suffix="masterbg1d", force=True)
+            self.save_model(mb_multislit, suffix="masterbg2d", force=True)
+            if bkg_x1d_spectra is not None:
+                self.save_model(bkg_x1d_spectra, suffix="bkgx1d", force=True)
 
         return result
 
@@ -277,13 +274,17 @@ class MasterBackgroundMosStep(Pipeline):
             # Any parameters that need be changed below are ignored.
             self.set_pars_from_parent()
 
+            # Copy the data before processing so that intermediate calibrations
+            # don't get applied to the output model
+            pre_calibrated = data.copy()
+
             # First pass: just do the calibration to determine the correction
             # arrays. However, force all slits to be processed as extended sources.
             self.pathloss.source_type = "EXTENDED"
             self.barshadow.source_type = "EXTENDED"
             self.photom.source_type = "EXTENDED"
 
-            pre_calibrated = self.flat_field.run(data)
+            pre_calibrated = self.flat_field.run(pre_calibrated)
             pre_calibrated = self.pathloss.run(pre_calibrated)
             pre_calibrated = self.barshadow.run(pre_calibrated)
             pre_calibrated = self.photom.run(pre_calibrated)
