@@ -137,11 +137,11 @@ def test_photom_nrs_ifu():
     model = AssignWcsStep.call(model)
 
     result = PhotomStep.call(model)
-    assert result is not model
     assert result.meta.cal_step.photom == "COMPLETE"
-    assert model.meta.cal_step.photom is None
 
     # result is not the same as input
+    assert result is not model
+    assert model.meta.cal_step.photom is None
     assert not np.allclose(result.data, model.data)
     assert not np.allclose(result.err, model.err)
 
