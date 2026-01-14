@@ -33,82 +33,80 @@ class PhotomStep(Step):
 
         Parameters
         ----------
-        input_data : str
-            Input science data file to be calibrated
+        input_data : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
+            Input science data file to be calibrated.
 
         Returns
         -------
         result : DataModel
             DataModel with the photom correction applied
         """
-        with datamodels.open(input_data) as input_model:
-            # Report the detected type of input model
-            log.debug(f"Input is {str(input_model)}")
-            if not isinstance(
-                input_model,
-                datamodels.CubeModel
-                | datamodels.SlitModel
-                | datamodels.ImageModel
-                | datamodels.IFUImageModel
-                | datamodels.MultiSlitModel
-                | datamodels.TSOMultiSpecModel,
-            ):
-                log.warning(
-                    "Input is not one of the supported model types: "
-                    "CubeModel, ImageModel, IFUImageModel, "
-                    "SlitModel, MultiSlitModel, or TSOMultiSpecModel."
-                )
-                log.warning("Photom step will be skipped")
-                result = input_model.copy()
-                result.meta.cal_step.photom = "SKIPPED"
-                return result
+        output_model = self.prepare_output(input_data)
 
-            # Setup reference files and whether previous correction information
-            # should be used.
-            if self.use_correction_pars and self.correction_pars:
-                log.info("Using previously specified correction parameters.")
-                correction_pars = self.correction_pars
-                phot_filename = correction_pars["refs"]["photom"]
-                area_filename = correction_pars["refs"]["area"]
-            else:
-                correction_pars = None
-                phot_filename = self.get_reference_file(input_model, "photom")
-                area_filename = self.get_reference_file(input_model, "area")
+        # Report the detected type of input model
+        log.debug(f"Input is {str(output_model)}")
+        if not isinstance(
+            output_model,
+            datamodels.CubeModel
+            | datamodels.SlitModel
+            | datamodels.ImageModel
+            | datamodels.IFUImageModel
+            | datamodels.MultiSlitModel
+            | datamodels.TSOMultiSpecModel,
+        ):
+            log.warning(
+                "Input is not one of the supported model types: "
+                "CubeModel, ImageModel, IFUImageModel, "
+                "SlitModel, MultiSlitModel, or TSOMultiSpecModel."
+            )
+            log.warning("Photom step will be skipped")
+            output_model.meta.cal_step.photom = "SKIPPED"
+            return output_model
 
-            log.info("Using photom reference file: %s", phot_filename)
-            log.info("Using area reference file: %s", area_filename)
+        # Setup reference files and whether previous correction information
+        # should be used.
+        if self.use_correction_pars and self.correction_pars:
+            log.info("Using previously specified correction parameters.")
+            correction_pars = self.correction_pars
+            phot_filename = correction_pars["refs"]["photom"]
+            area_filename = correction_pars["refs"]["area"]
+        else:
+            correction_pars = None
+            phot_filename = self.get_reference_file(output_model, "photom")
+            area_filename = self.get_reference_file(output_model, "area")
 
-            # Check for a valid photom reference file
-            if phot_filename == "N/A":
-                log.warning("No PHOTOM reference file found")
-                log.warning("Photom step will be skipped")
-                result = input_model.copy()
-                result.meta.cal_step.photom = "SKIPPED"
-                return result
+        log.info("Using photom reference file: %s", phot_filename)
+        log.info("Using area reference file: %s", area_filename)
 
-            try:
-                # Do the correction
-                phot = photom.DataSet(
-                    input_model,
-                    self.inverse,
-                    self.source_type,
-                    self.apply_time_correction,
-                    correction_pars,
-                )
-                result = phot.apply_photom(phot_filename, area_filename)
-                result.meta.cal_step.photom = "COMPLETE"
-                self.correction_pars = phot.correction_pars
-                self.correction_pars["refs"] = {"photom": phot_filename, "area": area_filename}
+        # Check for a valid photom reference file
+        if phot_filename == "N/A":
+            log.warning("No PHOTOM reference file found")
+            log.warning("Photom step will be skipped")
+            output_model.meta.cal_step.photom = "SKIPPED"
+            return output_model
 
-            except photom.DataModelTypeError:
-                # should trip e.g. for NIRISS SOSS data in FULL subarray
-                log.error(
-                    f"Unexpected data model type {str(input_model)} for "
-                    f"{input_model.meta.instrument.name.upper()}. "
-                    "Photom will be skipped."
-                )
-                result = input_model.copy()
-                result.meta.cal_step.photom = "SKIPPED"
-                return result
+        try:
+            # Do the correction
+            phot = photom.DataSet(
+                output_model,
+                self.inverse,
+                self.source_type,
+                self.apply_time_correction,
+                correction_pars,
+            )
+            result = phot.apply_photom(phot_filename, area_filename)
+            result.meta.cal_step.photom = "COMPLETE"
+            self.correction_pars = phot.correction_pars
+            self.correction_pars["refs"] = {"photom": phot_filename, "area": area_filename}
 
-            return result
+        except photom.DataModelTypeError:
+            # should trip e.g. for NIRISS SOSS data in FULL subarray
+            log.error(
+                f"Unexpected data model type {str(output_model)} for "
+                f"{output_model.meta.instrument.name.upper()}. "
+                "Photom will be skipped."
+            )
+            output_model.meta.cal_step.photom = "SKIPPED"
+            return output_model
+
+        return result
