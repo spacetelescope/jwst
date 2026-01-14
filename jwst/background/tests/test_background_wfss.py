@@ -283,11 +283,7 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
 
     # do the subtraction. set all options to ensure they are at least recognized
     result = BackgroundStep.call(
-        data,
-        None,
-        wfss_maxiter=3,
-        wfss_outlier_percent=0.5,
-        wfss_rms_stop=0,
+        data, None, wfss_maxiter=3, wfss_outlier_percent=0.5, wfss_rms_stop=0, save_results=False
     )
     assert result is not data
     assert data.meta.cal_step.bkg_subtract is None
@@ -315,11 +311,7 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
 
     # do the subtraction. set all options to ensure they are at least recognized
     result = BackgroundStep.call(
-        data,
-        None,
-        wfss_maxiter=3,
-        wfss_outlier_percent=0.5,
-        wfss_rms_stop=0,
+        data, None, wfss_maxiter=3, wfss_outlier_percent=0.5, wfss_rms_stop=0, save_results=False
     )
     assert result is not data
     assert data.meta.cal_step.bkg_subtract is None
@@ -486,7 +478,7 @@ def test_wfss_asn_input(mock_asn_and_data):
     # change the working directory into the temp dir, so it can find all files
     cwd = os.getcwd()
     os.chdir(ratefile.parents[0])
-    result = BackgroundStep.call(asn_name)
+    result = BackgroundStep.call(asn_name, save_results=False)
     # return to previous working dir
     os.chdir(cwd)
 
@@ -517,7 +509,7 @@ def test_bkg_fail(monkeypatch, caplog, make_nrc_wfss_datamodel):
     # insufficient pixels
     monkeypatch.setattr(background_sub_wfss, "_sufficient_background_pixels", lambda *args: False)
 
-    result = BackgroundStep.call(model)
+    result = BackgroundStep.call(model, save_results=False)
     assert result is not model
     assert model.meta.cal_step.bkg_subtract is None
     assert result.meta.cal_step.bkg_subtract == "FAILED"
@@ -534,7 +526,7 @@ def test_infinite_factor(monkeypatch, caplog, make_nrc_wfss_datamodel):
         background_sub_wfss._ScalingFactorComputer, "err_weighted_mean", lambda *args: np.nan
     )
 
-    result = BackgroundStep.call(model)
+    result = BackgroundStep.call(model, save_results=False)
     assert result is not model
     assert model.meta.cal_step.bkg_subtract is None
     assert result.meta.cal_step.bkg_subtract == "FAILED"
