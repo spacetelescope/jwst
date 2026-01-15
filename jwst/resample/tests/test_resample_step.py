@@ -1664,8 +1664,21 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     result4.close()
 
 
-def test_spec_output_is_not_input(nirspec_cal):
-    im = ResampleSpecStep.call(nirspec_cal)
+@pytest.mark.parametrize("input_list", [True, False])
+def test_spec_input_not_modified(nirspec_cal, input_list):
+    # Add a bad pixel in the error plane of one slit, not matched
+    # with a NaN in data.
+    # This will test if the match_nans_and_flags call at the beginning
+    # of the step modifies the input model.
+    nirspec_cal.slits[0].err[15, 100] = np.nan
+    data_copy = nirspec_cal.slits[0].data.copy()
+
+    if input_list:
+        input_models = [nirspec_cal, nirspec_cal.copy()]
+    else:
+        input_models = nirspec_cal
+
+    im = ResampleSpecStep.call(input_models)
 
     # Step is complete
     assert im.meta.cal_step.resample == "COMPLETE"
@@ -1673,6 +1686,11 @@ def test_spec_output_is_not_input(nirspec_cal):
     # Input is not modified
     assert im is not nirspec_cal
     assert nirspec_cal.meta.cal_step.resample is None
+    if input_list:
+        for model in input_models:
+            assert_allclose(model.slits[0].data, data_copy)
+    else:
+        assert_allclose(input_models.slits[0].data, data_copy)
 
 
 def test_spec_skip_cube():
