@@ -28,12 +28,12 @@ def make_wfss_multiexposure(input_list):
 
     Parameters
     ----------
-    input_list : MultiSpecModel or list[MultiSpecModel]
-        List of MultiSpecModel objects to be combined.
+    input_list : `~stdatamodels.jwst.datamodels.MultiSpecModel` or list[MultiSpecModel]
+        List of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects to be combined.
 
     Returns
     -------
-    output_x1d : WFSSMultiSpecModel
+    output_x1d : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
         The extract_1d product for WFSS modes.
     """
     if isinstance(input_list, dm.JwstDataModel):
@@ -164,18 +164,20 @@ def make_wfss_multiexposure(input_list):
 
 def wfss_multiexposure_to_multispec(input_model):
     """
-    Transform a WFSSMultiSpecModel into a list of MultiSpecModel objects.
+    Transform a `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel` into
+    a list of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects.
 
     Parameters
     ----------
-    input_model : WFSSMultiSpecModel
+    input_model : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
         Input model to be reorganized.
 
     Returns
     -------
     output_list : list[MultiSpecModel]
-        List of MultiSpecModel objects, one for each exposure in the input model.
-    """
+        List of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects,
+        one for each exposure in the input model.
+    """  # noqa: D205  # numpydoc ignore=SS06
     # first extract all spectra as SpecModels in a flat list
     spec_list = []
     source_ids = []
@@ -218,11 +220,12 @@ def make_wfss_multicombined(results_list):
     Parameters
     ----------
     results_list : list[MultiCombinedSpecModel]
-        List of MultiSpecModel objects to be combined.
+        List of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects
+        to be combined.
 
     Returns
     -------
-    output_c1d : WFSSMultiCombinedSpecModel
+    output_c1d : `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel`
         The combined c1d product for WFSS modes.
     """
     # determine shape of output table.
