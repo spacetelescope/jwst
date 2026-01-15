@@ -93,7 +93,7 @@ class BackgroundStep(Step):
                 bkg_name,
                 wlrange_name,
                 self.wfss_mmag_extract,
-                mask=wfss_mask,
+                user_mask=wfss_mask,
                 rescaler_kwargs=rescaler_kwargs,
             )
             if result is None:

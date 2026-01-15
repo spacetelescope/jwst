@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 from pathlib import Path
@@ -184,7 +185,7 @@ def make_nis_wfss_sub64(make_wfss_datamodel):
     return result
 
 
-@pytest.fixture()
+@pytest.fixture
 def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     """Mock background reference file"""
 
@@ -535,3 +536,101 @@ def test_infinite_factor(monkeypatch, caplog, make_nrc_wfss_datamodel):
         "Could not determine a finite scaling factor between reference background and data"
         in caplog.text
     )
+
+
+@pytest.fixture
+def user_mask(make_nrc_wfss_datamodel):
+    """Create a custom user mask (True for background, False for sources)"""
+    model = make_nrc_wfss_datamodel.copy()
+    user_mask = np.ones(model.data.shape, dtype=bool)
+    # Mask out a rectangular region as if it were a source
+    user_mask[500:600, 800:900] = False
+    return user_mask
+
+
+def test_user_mask(make_nrc_wfss_datamodel, bkg_file, user_mask, caplog):
+    """Test that source catalog is ignored when user mask is provided."""
+    model = make_nrc_wfss_datamodel.copy()
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Do the subtraction with user mask
+    with caplog.at_level(logging.INFO):
+        result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+    assert "Using user-supplied source mask" in caplog.text
+
+    # Verify the user mask is saved in the output model
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+    assert result.mask.dtype == np.uint32
+
+    # Ensure scaling factor is finite and reasonable
+    assert np.isfinite(result.meta.background.scaling_factor)
+    assert result.meta.background.scaling_factor > 0
+
+    # Verify that the mask matches the user mask, not the catalog-derived mask
+    catalog_mask = _mask_from_source_cat(model, wavelenrange)
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+    with pytest.raises(AssertionError):
+        np.testing.assert_allclose(result.mask, catalog_mask.astype(np.uint32))
+
+
+def test_user_mask_no_catalog(make_nrc_wfss_datamodel, bkg_file, user_mask):
+    """Test user mask works even when source catalog is missing."""
+    model = make_nrc_wfss_datamodel.copy()
+    model.meta.source_catalog = None
+
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Do the subtraction with user mask (should work despite missing catalog)
+    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+
+    # Verify the user mask is saved and background subtraction succeeded
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+    assert np.isfinite(result.meta.background.scaling_factor)
+    assert result.meta.background.scaling_factor > 0
+
+
+def test_user_mask_insufficient_pixels(make_nrc_wfss_datamodel, bkg_file):
+    """Test that insufficient background pixels in user mask causes failure."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Create a mask where almost everything is a source (very few background pixels)
+    user_mask = np.zeros(model.data.shape, dtype=bool)
+    # Only mark a tiny corner as background (< 5%)
+    user_mask[:10, :10] = True
+
+    # Get References
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Do the subtraction with user mask
+    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+
+    # Should fail due to insufficient background pixels
+    assert result.meta.cal_step.bkg_subtract == "FAILED"
+    assert result.meta.background.scaling_factor == 0.0
+
+
+def test_user_mask_step(mock_asn_and_data, user_mask, caplog):
+    """Test that BackgroundStep correctly uses user-supplied mask from ASN input."""
+    # get the file name of asn and other file objects
+    asn_name, ratefile = mock_asn_and_data[0], mock_asn_and_data[1]
+    i2dfile, segmfile = mock_asn_and_data[2], mock_asn_and_data[3]
+    # change the working directory into the temp dir, so it can find all files
+    cwd = os.getcwd()
+    os.chdir(ratefile.parents[0])
+
+    # Saveuser mask to file
+    mask_fname = "user_mask.fits"
+    mask_model = datamodels.ImageModel(
+        data=np.zeros(user_mask.shape), mask=user_mask.astype(np.uint32)
+    )
+    mask_model.save(mask_fname)
+    mask_model.close()
+
+    with caplog.at_level(logging.INFO):
+        result = BackgroundStep.call(asn_name, wfss_mask=mask_fname, save_results=False)
+    # return to previous working dir
+    os.chdir(cwd)
+
+    assert "Using user-supplied source mask" in caplog.text
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+    assert result.meta.cal_step.bkg_subtract == "COMPLETE"
