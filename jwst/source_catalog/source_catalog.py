@@ -605,7 +605,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~astropy.units.Quantity` (array-like of floats with units)
+        `~astropy.units.Quantity`
             The aperture local background fluxes.
         """
         return self._aper_local_background[0]
@@ -617,7 +617,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~astropy.units.Quantity` (array-like of floats with units)
+        `~astropy.units.Quantity`
             The aperture local background flux errors.
         """
         return self._aper_local_background[1]
