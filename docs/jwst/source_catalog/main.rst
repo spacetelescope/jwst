@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.source_catalog.SourceCatalogStep`
+:Class: `jwst.source_catalog.source_catalog_step.SourceCatalogStep`
 :Alias: source_catalog
 
 This step creates a catalog of source photometry and morphologies.
