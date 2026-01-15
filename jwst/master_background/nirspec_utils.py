@@ -23,6 +23,7 @@ def apply_master_background(source_model, bkg_model, inverse=False):
     ----------
     source_model : `~jwst.datamodels.MultiSlitModel`
         The input data model containing all source slit instances.
+        Updated in place.
     bkg_model : `~jwst.datamodels.MultiSlitModel`
         The data model containing 2D background slit instances.
     inverse : bool
@@ -30,7 +31,7 @@ def apply_master_background(source_model, bkg_model, inverse=False):
 
     Returns
     -------
-    output_model: `~jwst.datamodels.MultiSlitModel`
+    source_model: `~jwst.datamodels.MultiSlitModel`
         The output background-subtracted data model.
     """
     from jwst.master_background.master_background_step import subtract_2d_background
@@ -49,9 +50,9 @@ def apply_master_background(source_model, bkg_model, inverse=False):
     # two MultiSlitModels must have matching numbers of slit instances).
     # This may be changed in the future to only do the subtraction from
     # a certain subset of source slits.
-    output_model = subtract_2d_background(source_model, bkg)
+    subtract_2d_background(source_model, bkg)
 
-    return output_model
+    return source_model
 
 
 def map_to_science_slits(input_model, master_bkg):
