@@ -576,9 +576,10 @@ def test_user_mask(make_nrc_wfss_datamodel, bkg_file, user_mask, caplog):
 def test_user_mask_no_catalog(make_nrc_wfss_datamodel, bkg_file, user_mask):
     """Test user mask works even when source catalog is missing."""
     model = make_nrc_wfss_datamodel.copy()
-    model.meta.source_catalog = None
-
     wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Remove the source catalog
+    model.meta.source_catalog = None
 
     # Do the subtraction with user mask (should work despite missing catalog)
     result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
@@ -592,14 +593,12 @@ def test_user_mask_no_catalog(make_nrc_wfss_datamodel, bkg_file, user_mask):
 def test_user_mask_low_pixels(make_nrc_wfss_datamodel, bkg_file):
     """Test that user mask with few background pixels still succeeds (min_pixfrac=0.0)."""
     model = make_nrc_wfss_datamodel.copy()
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
 
     # Create a mask where almost everything is a source (very few background pixels, < 5%)
     # With user masks, this should still succeed - we are trusting the user
     user_mask = np.zeros(model.data.shape, dtype=bool)
     user_mask[:10, :10] = True
-
-    # Get References
-    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
 
     # Do the subtraction with user mask
     result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
@@ -613,6 +612,7 @@ def test_user_mask_low_pixels(make_nrc_wfss_datamodel, bkg_file):
 def test_user_mask_no_valid_pixels(make_nrc_wfss_datamodel, bkg_file):
     """Test that user mask fails when DQ flags eliminate all background pixels."""
     model = make_nrc_wfss_datamodel.copy()
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
 
     # Create a user mask with some background pixels
     user_mask = np.zeros(model.data.shape, dtype=bool)
@@ -621,15 +621,33 @@ def test_user_mask_no_valid_pixels(make_nrc_wfss_datamodel, bkg_file):
     # Mark all those same pixels as DO_NOT_USE in the DQ array
     model.dq[:100, :100] = pixel["DO_NOT_USE"]
 
-    # Get References
-    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
-
     # Do the subtraction with user mask
     result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
 
     # Should fail because DQ flags eliminate all valid background pixels
     assert result.meta.cal_step.bkg_subtract == "FAILED"
     assert result.meta.background.scaling_factor == 0.0
+
+
+def test_no_catalog_no_user_mask(make_nrc_wfss_datamodel, bkg_file, caplog):
+    """Test that background subtraction works when no source catalog or user mask is provided."""
+    model = make_nrc_wfss_datamodel.copy()
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Remove the source catalog
+    model.meta.source_catalog = None
+
+    # Do the subtraction without user mask and without source catalog
+    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=None)
+    assert "No source_catalog found in input.meta. Setting all pixels as background." in caplog.text
+
+    # Should succeed using all pixels as background
+    assert np.isfinite(result.meta.background.scaling_factor)
+    assert result.meta.background.scaling_factor > 0
+
+    # Verify that the mask is all True (all background)
+    expected_mask = np.ones(model.data.shape, dtype=np.uint32)
+    np.testing.assert_allclose(result.mask, expected_mask)
 
 
 def test_user_mask_step(mock_asn_and_data, user_mask, caplog):
