@@ -1,151 +1,125 @@
 # Running tests for the JWST Calibration Pipeline
 
-When editing the `jwst` code locally, you can install the package as "editable" to immediately propagate any code changes into the installed package:
+`jwst` has several test suites to ensure that functionality remains consistent and does not break when code changes.
+In order for a change you make to the code to be accepted and merged, that change must pass existing tests, as well as any new tests you write that cover new functionality.
+
+`jwst` uses `pytest` to define and run tests. To install `pytest` and other required testing tools, run the following:
 ```shell
-pip install -e .
+pip install -e .[test]
 ```
 
-This is useful for making changes and then testing them, either by running the pipeline normally or by running the tests from the test suite. 
+> [!TIP]
+> When editing code locally, use `-e` to install the package as "editable". This will immediately propagate any code changes into the installed package in your environment, making testing much easier:
+> ```shell
+> pip install -e .
+> ```
 
-## Running tests
-
-`jwst` uses `pytest` to collect and run tests.
-To install `pytest`, along with other dependencies required to run the unit tests,
-install the package with the `test` extra included:
-```shell
-pip install -e ".[test]"
-```
-
-Run simple unit tests by invoking `pytest`:
+To run tests, simply run `pytest`:
 ```shell
 pytest
 ```
 
-By default, simply running `pytest` will skip some tests that require access to large datasets.
+`pytest` recursively searches the given directory (by default `.`) for any files with a name like `test_*.py`, and runs all functions it finds that have a name like `test_*`.
 
-To run these tests, you must
-1. have access to the STScI internal network
-2. set the environment variable `TEST_BIGDATA` to the STScI Artifactory server:
-  ```shell
-  export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
-  ```
-3. add the `--bigdata` flag to your `pytest` command:
-  ```
-  pytest --bigdata
-  ```
+For example, running `pytest` without any arguments will find and run this test from `jwst/associations/tests/test_load_from_asn.py` (along with many others):
+```python
+from stdatamodels.jwst.datamodels import ImageModel
 
-Additionally, some more tests are skipped by default because they take a long time.
-These can be run by adding the `--slow` flag to your `pytest` command:
-```shell
-pytest --slow
+from jwst.associations.load_as_asn import LoadAsLevel2Asn
+
+
+def test_lv2_datamodel():
+    model = ImageModel()
+    model.meta.filename = "modelfile.fits"
+    asn = LoadAsLevel2Asn.load(model)
+    assert asn.filename == DEFAULT_NAME
+    assert asn["program"] == DEFAULT_NAME
+    assert asn["target"] == DEFAULT_NAME
+    assert asn["asn_pool"] == DEFAULT_NAME
+    assert len(asn["products"]) == 1
+    assert asn["products"][0]["name"] == "modelfile"
 ```
+
+To run tests from a specific directory or file, pass the path to `pytest`:
+```shell
+# only run tests in `jwst/associations/`
+pytest jwst/associations/
+
+# only run tests in `jwst/associations/tests/test_load_as_asn.py`
+pytest jwst/associations/tests/test_load_as_asn.py
+```
+
+To run only specific tests that contain a given string in their name, use `-k <string>`:
+```shell
+# only run tests with `datamodel` in their name
+pytest -k datamodel
+
+# only run the `test_lv2_datamodel` test
+pytest -k test_lv2_datamodel
+```
+
+See the [`pytest` documentation](https://docs.pytest.org) for more instructions on using `pytest`.
+
+> [!NOTE]
+> By default, simply running `pytest` will skip some tests that require access to large datasets.
+> 
+> To run these tests, you must have access to the STScI internal network, set the environment variable `TEST_BIGDATA` to the STScI Artifactory server, and use the `--bigdata` flag with `pytest`:
+> ```shell
+> TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory pytest --bigdata
+> ```
+
+> [!NOTE]
+> Additionally, some more tests are skipped by default because they take a long time.
+> These can be run by using the `--slow` flag with `pytest`:
+> ```shell
+> pytest --slow
+> ```
 
 > [!TIP]
 > You can control where test results are written by adding `--basetemp=<PATH>` to your `pytest` command.
 > `pytest` will wipe this directory clean for each test session, so make sure it is a scratch area.
 
+# Unit Tests
 
-## Regression Tests
+Unit tests are located in each module in `jwst/*/tests/` (for example `jwst/ramp_fitting/tests/`).
+These tests run the code on simplified datasets to make sure there are no breaking changes introduced. Most lines of `jwst` should be covered
+by a unit test, so when adding code you will often need to write a new test, or add to an existing test, to ensure adequate coverage.
 
-Regression tests mainly require access to large datasets:
-```shell
-pytest --bigdata --slow jwst/regtest
-```
+Most test modules use a shared `@pytest.fixture` to set up a common dataset (usually a very simple `datamodel` with some observational parameters and simplified data and / or DQ arrays) for tests in that file.
+Most individual tests set up a scenario to run a pipeline / step under certain conditions and test a specific functionality, culminating in a set of `assert`ions that must be true in order for the test to pass.
 
-Latest regression test results can be found [here (currently viewable by STScI staff only)](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml?query=event%3Aschedule).
+When you open a pull request (assuming you have set up your environment as described in `CONTRIBUTING.md`), GitHub will automatically start a workflow to run tests on your branch.
+These tests re-run every time you `git push`.
 
-See [Maintaining Regression Tests](https://github.com/spacetelescope/jwst/wiki/Maintaining-Regression-Tests) for instructions on updating datasets.
+## Writing Unit Tests
 
-## Writing and running unit tests
+If your change introduces new code that isn't covered by an existing test, you should write new test(s) to cover this new functionality.
 
-Unit tests are located in each module in `jwst` in a `tests` subdirectory (for example,
-`jwst/ramp_fitting/tests`). These tests run the code on simplified datasets to make
-sure there are no breaking changes introduced. Most lines of `jwst` should be covered
-by a unit test, so when adding code you will often need to write a new test or add
-to an existing test to ensure adequate coverage.
-
-See [Writing and Running Unit Tests](#writing-and-running-unit-tests) for more details on testing.
-
-Take a look around at the existing tests for a template - a majority of these tests
-use a `@pytest.fixture` to set up a common dataset (usually a very simple `datamodel`
-with some observational parameters and simplified data/dq arrays) for tests in that
-file, and the test functions themselves set up a scenario to run a pipeline/step
-under certain conditions, and culminate in a set of assertions that need to pass
-(or fail if the test is marked as `xfail`).
-
-The CI will run the unit tests on your branch when you open a pull request. They
-will re-run every time you push commits to this remote branch as well. Unit tests
-must pass on any changes you make, and if you're introducing new code that isn't
-covered by an existing test, you will need to write one. The `codecoverage` check
-that runs on the CI when you open a pull request will tell you if you've introduced
-any new lines that aren't covered by a test.
-
-You can also run unit tests locally, and you should do this periodically to test
-your code. To do this, you will need to install the optional dependencies needed
-for running tests:
-```shell
-pip install -e ".[test]"
-```
-
-This will install the optional `test` dependencies specified in `pyproject.toml` that
-don't install by default. (Note these test dependencies are also included when
-installing `jwst` with the `[contrib]` tag).
-The package `pytest` is one of these and is what's used
-to run the tests. `pytest` searches through all the directories in your repository
-(underneath the directory from which it was invoked command line) and looks for any
-directories called `test` or `.py` files with the word `test` in the name. Functions
-in these files will be executed.
-
-To run all of the `jwst` unit tests, while in the `jwst` level directory, simply
-run the command:
-```shell
-pytest
-```
-
-If you want to run all the tests for a single module, for example `ramp_fitting`,
-you can run this from either the `jwst/ramp_fitting` OR the
-`jwst/ramp_fitting/tests` directory.
-
-To run all tests within a single test file (for example, all tests in
-`jwst/jump/tests/test_detect_jumps.py`):
-```shell
-pytest jwst/jump/tests/test_detect_jumps.py
-```
-
-### Configuring pytest for unit tests
-
-`pytest` can be configured with many different flags - see the
-[`pytest` documentation](https://docs.pytest.org/en/stable/)
-to see all of these. Here we will summarize a few of the most useful options.
-
-If you are writing and debugging a test, you may find it helpful to have print statements
-printed to the terminal while running tests (which doesn't happen by default). To do this:
-```shell
-pytest -s
-```
-
-If you want to only run a specific test function within a file (or only tests with names
-that contain a certain string):
-```shell
-pytest -k testname
-```
-
-This will search all files under the directory you're in for files or functions with
-the string `test` in them, and within those files run only the test functions that
-contain the string `testname`.
+> [!TIP]
+> If you are writing and / or debugging a test, you may find it helpful to have print statements printed to the terminal while running tests (which doesn't happen by default):
+> ```shell
+> pytest -s
+> ```
 
 Within the test files themselves, decorators can be used to control the behavior of the test.
 Some of the more useful decorators include:
 
 1. `@pytest.fixture` to declare a
    [fixture](https://docs.pytest.org/en/stable/explanation/fixtures.html)
-2. `@pytest.mark.bigdata` (provided by `ci-watson`) to declare a test accessing
-   large remote data from Artifactory and only run when `--bigdata` flag is provided
-3. `@pytest.mark.parametrize` to run a single test on multiples sets
-   of input parameters
-4. `@pytest.mark.skip` to skip tests altogether, or under specific conditions
-   (for example, only when being run by the CI)
-5. `@pytest.mark.slow` (provided by `ci-watson`) to declare a test taking significant
-   amount of time to run and only run when `--slow` flag is provided
-6. `@pytest.mark.xfail` will make a test pass only if it fails
+2. `@pytest.mark.bigdata` (provided by `ci-watson`) to only run a test when the `--bigdata` flag is provided
+3. `@pytest.mark.parametrize` to run a test multiple times over a set (or sets) of parameters
+4. `@pytest.mark.skipif` to skip a test under certain conditions
+5. `@pytest.mark.slow` (provided by `ci-watson`) to only run a test when the `--slow` flag is provided
+6. `@pytest.mark.xfail` will make a test pass only if it fails (useful in certain circumstances)
+
+# Regression Tests
+
+Whereas unit tests focus on functionality on individual features with small datasets, regression tests in `jwst/regtest/` are focused mainly on large-scale functionality and thus require access to large datasets:
+```shell
+pytest --bigdata --slow jwst/regtest/
+```
+
+Regression tests are run on STScI-provisioned runners from the [RegressionTests repository (currently viewable by STScI staff only)](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml?query=event%3Aschedule). To run regression tests, read [the instructions](https://github.com/spacetelescope/RegressionTests/blob/main/docs/running_regression_tests.md).
+
+See [Maintaining Regression Tests](https://github.com/spacetelescope/jwst/wiki/Maintaining-Regression-Tests) for instructions on updating datasets.
 
