@@ -589,13 +589,13 @@ def test_user_mask_no_catalog(make_nrc_wfss_datamodel, bkg_file, user_mask):
     assert result.meta.background.scaling_factor > 0
 
 
-def test_user_mask_insufficient_pixels(make_nrc_wfss_datamodel, bkg_file):
-    """Test that insufficient background pixels in user mask causes failure."""
+def test_user_mask_low_pixels(make_nrc_wfss_datamodel, bkg_file):
+    """Test that user mask with few background pixels still succeeds (min_pixfrac=0.0)."""
     model = make_nrc_wfss_datamodel.copy()
 
-    # Create a mask where almost everything is a source (very few background pixels)
+    # Create a mask where almost everything is a source (very few background pixels, < 5%)
+    # With user masks, this should still succeed - we are trusting the user
     user_mask = np.zeros(model.data.shape, dtype=bool)
-    # Only mark a tiny corner as background (< 5%)
     user_mask[:10, :10] = True
 
     # Get References
@@ -604,7 +604,30 @@ def test_user_mask_insufficient_pixels(make_nrc_wfss_datamodel, bkg_file):
     # Do the subtraction with user mask
     result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
 
-    # Should fail due to insufficient background pixels
+    # Should succeed with user mask despite having < 5% background pixels
+    assert np.isfinite(result.meta.background.scaling_factor)
+    assert result.meta.background.scaling_factor > 0
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+
+
+def test_user_mask_no_valid_pixels(make_nrc_wfss_datamodel, bkg_file):
+    """Test that user mask fails when DQ flags eliminate all background pixels."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Create a user mask with some background pixels
+    user_mask = np.zeros(model.data.shape, dtype=bool)
+    user_mask[:100, :100] = True  # Mark a region as background
+
+    # Mark all those same pixels as DO_NOT_USE in the DQ array
+    model.dq[:100, :100] = pixel["DO_NOT_USE"]
+
+    # Get References
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Do the subtraction with user mask
+    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+
+    # Should fail because DQ flags eliminate all valid background pixels
     assert result.meta.cal_step.bkg_subtract == "FAILED"
     assert result.meta.background.scaling_factor == 0.0
 

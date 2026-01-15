@@ -70,28 +70,44 @@ def subtract_wfss_bkg(
     rescaler_kwargs["dispersion_axis"] = dispaxis
 
     # get the source catalog for masking
-    if model.meta.hasattr("source_catalog") and user_mask is None:
-        # Create a mask from the source catalog, True where there are no sources,
-        # i.e. in regions we can use as background.
-        bkg_mask = _mask_from_source_cat(model, wl_range_name, mmag_extract)
-    elif user_mask is None:
-        log.warning("No source_catalog found in input.meta, and custom mask not specified. ")
-        log.warning("No sources will be masked for background scaling.")
-        bkg_mask = np.ones(model.data.shape, dtype=bool)
+    if user_mask is None:
+        if model.meta.hasattr("source_catalog") and user_mask is None:
+            # Create a mask from the source catalog, True where there are no sources,
+            # i.e. in regions we can use as background.
+            bkg_mask = _mask_from_source_cat(model, wl_range_name, mmag_extract)
+            log.warning("No source_catalog found in input.meta, and custom mask not specified. ")
+            log.warning("No sources will be masked for background scaling.")
+            if not _sufficient_background_pixels(model.dq, bkg_mask, bkg_ref.data):
+                log.warning("Not enough background pixels to work with.")
+                log.warning("Step will be marked FAILED.")
+                # Save the mask in expected data type for the datamodel and set
+                # other keywords appropriately for this case
+                model.mask = bkg_mask.astype(np.uint32)
+                model.meta.background.scaling_factor = 0.0
+                model.meta.cal_step.bkg_subtract = "FAILED"
+                bkg_ref.close()
+                return model
+        else:
+            bkg_mask = np.ones(model.data.shape, dtype=bool)
     else:
         log.info("Using user-supplied source mask for background scaling.")
+        # we want a more generous criterion for sufficient background pixels here,
+        # since the user is explicitly specifying the mask.
+        # Assume bkg_ref is all good pixels, and set minimum fraction to zero
+        # Then this is effectively just dq array & user mask constraints
+        if not _sufficient_background_pixels(
+            model.dq, user_mask, np.ones_like(user_mask), min_pixfrac=0.0
+        ):
+            log.warning("No background pixels found in user-supplied mask.")
+            log.warning("Step will be marked FAILED.")
+            # Save the mask in expected data type for the datamodel and set
+            # other keywords appropriately for this case
+            model.mask = user_mask.astype(np.uint32)
+            model.meta.background.scaling_factor = 0.0
+            model.meta.cal_step.bkg_subtract = "FAILED"
+            bkg_ref.close()
+            return model
         bkg_mask = user_mask.astype(bool)
-
-    if not _sufficient_background_pixels(model.dq, bkg_mask, bkg_ref.data):
-        log.warning("Not enough background pixels to work with.")
-        log.warning("Step will be marked FAILED.")
-        # Save the mask in expected data type for the datamodel and set
-        # other keywords appropriately for this case
-        model.mask = bkg_mask.astype(np.uint32)
-        model.meta.background.scaling_factor = 0.0
-        model.meta.cal_step.bkg_subtract = "FAILED"
-        bkg_ref.close()
-        return model
 
     # save the mask in expected data type for the datamodel
     model.mask = bkg_mask.astype(np.uint32)
