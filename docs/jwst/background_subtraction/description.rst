@@ -171,6 +171,10 @@ used to define the background regions.
 The default is to use all source catalog entries that result in a spectrum
 falling within the WFSS image.
 
+The step argument ``wfss_mask`` can be used to provide a custom user mask
+that overrides the source-catalog-derived mask. The argument should point to
+a FITS or ASDF file containing a 2D boolean array in its ``mask`` attribute.
+
 SOSS Mode
 ---------
 In a similar manner to WFSS modes, the NIRISS SOSS mode uses a set of reference

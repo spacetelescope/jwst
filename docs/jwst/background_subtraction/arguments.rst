@@ -37,6 +37,14 @@ control the sigma clipping, and are passed as arguments to the astropy
   from the WFSS source catalog, based on the value of ``isophotal_abmag`` in the
   source catalog. Defaults to ``None``.
 
+``--wfss_mask``
+  Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
+  Provides a custom user mask to use for background scaling, overriding
+  the source-catalog-derived mask. The argument should point to a FITS or ASDF
+  file containing a 2D boolean array in its ``mask`` attribute.
+  The ``.data`` attribute is not used.
+  Defaults to ``None``.
+
 ``--wfss_maxiter``
   Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
   Sets the maximum number of iterations allowed for iterative outlier rejection
