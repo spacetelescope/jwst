@@ -69,7 +69,6 @@ def create_image_model(input_model, image_info):
     out_model : ImageModel
         The output ImageModel to be returned from the ramp fit step.
     """
-    #data, dq, var_poisson, var_rnoise, err = image_info
 
     # Create output datamodel
     out_model = datamodels.ImageModel(image_info['slope'].shape)
@@ -105,7 +104,6 @@ def create_integration_model(input_model, integ_info, int_times):
     int_model : CubeModel
         The output CubeModel to be returned from the ramp fit step.
     """
-    #data, dq, var_poisson, var_rnoise, err = integ_info
 
     # Create output datamodel
     int_model = datamodels.CubeModel(integ_info['slope'].shape)
