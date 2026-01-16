@@ -13,27 +13,27 @@ segment.
 Source Detection
 ----------------
 Stars are detected in the input image with one of the following source
-detection algorithms: ``photutils.detection.DAOStarFinder``,
-``photutils.detection.IRAFStarFinder``, or ``photutils.segmentation.SourceFinder``
-in conjunction with ``photutils.segmentation.SourceCatalog`` (default).
+detection algorithms: `photutils.detection.DAOStarFinder`,
+`photutils.detection.IRAFStarFinder`, or `photutils.segmentation.SourceFinder`,
+in conjunction with `photutils.segmentation.SourceCatalog` (default).
 
-DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
+`~photutils.detection.DAOStarFinder` is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
 <https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract>`_).  It searches
 images for local density maxima that have a peak amplitude greater
 than a specified threshold (the threshold is applied to a convolved
 image) and have a size and shape similar to a defined 2D Gaussian
-kernel.  DAOFind also provides an estimate of the object's
+kernel.  `DAOFIND`_ also provides an estimate of the object's
 roundness and sharpness, whose lower and upper bounds can be
 specified.
 
-IRAFStarFinder is a Python implementation of the IRAF star finding algorithm,
+`~photutils.detection.IRAFStarFinder` is a Python implementation of the IRAF star finding algorithm,
 which also calculates the objects' centroids, roundness, and sharpness.
-However, IRAFStarFinder uses image moments
+However, `~photutils.detection.IRAFStarFinder` uses image moments
 instead of 1-D Gaussian fits to projected light distributions like
-DAOStarFinder.
+`~photutils.detection.DAOStarFinder`.
 
-SourceFinder, the default option, implements an `image segmentation
+`~photutils.segmentation.SourceFinder`, the default option, implements an `image segmentation
 <https://en.wikipedia.org/wiki/Image_segmentation>`_ algorithm, which is a
 process of assigning a label to every pixel in an image such that
 pixels with the same label are part of the same source.  The
@@ -61,16 +61,16 @@ there is a saddle between them.
     It has been shown (`STScI Technical Report JWST-STScI-008116, SM-12
     <https://www.stsci.edu/~goudfroo/NIRISSdoc/Centroid_Accuracies_Precisions_NIRISS_v2.pdf>`_)
     that for undersampled PSFs, e.g. for short-wavelength NIRISS
-    imaging data, ``DAOStarFinder`` gives bad results no matter the input parameters
+    imaging data, `~photutils.detection.DAOStarFinder` gives bad results no matter the input parameters
     due to its use of 1-D Gaussian fits.
-    ``IRAFStarFinder`` or ``SourceFinder`` should be used instead.
+    `~photutils.detection.IRAFStarFinder` or `~photutils.segmentation.SourceFinder` should be used instead.
 
 .. note::
-    If any other source detection algorithm other than ``SourceFinder`` is used,
+    If any other source detection algorithm other than `~photutils.segmentation.SourceFinder` is used,
     the output segmentation map will not be created, and the source catalog will
     be missing column values that are required for use as input to Level 2 spectral
     associations. Therefore if the direct image is to be used as part of a
-    ``spec2`` association, ``SourceFinder`` should be used as the source
+    ``spec2`` association, `~photutils.segmentation.SourceFinder` should be used as the source
     detection algorithm.
 
 .. _DAOFIND: https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract
@@ -99,8 +99,7 @@ total-error array includes source Poisson noise.
 Source Position
 ---------------
 The source centroid is computed as the center of mass of the unmasked pixels
-within the source segment (see
-`photutils SourceCatalog <https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceCatalog.html>`_
+within the source segment (see `~photutils.segmentation.SourceCatalog`
 for details). As such, the centroid depends on the source morphology,
 the parameters passed to the segmentation algorithm, and the local background
 noise properties. This also makes the uncertainty in the centroid position
