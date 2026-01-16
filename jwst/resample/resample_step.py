@@ -1,9 +1,8 @@
 import logging
 
 from stdatamodels import filetype
-from stdatamodels.jwst import datamodels as dm
 
-from jwst.datamodels import ImageModel, ModelLibrary  # type: ignore[attr-defined]
+from jwst.datamodels import ImageModel, ModelContainer, ModelLibrary  # type: ignore[attr-defined]
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample import resample
 from jwst.resample.resample_utils import load_custom_wcs
@@ -70,19 +69,25 @@ class ResampleStep(Step):
         WCS parameters such as ``output_shape`` (now computed from by
         ``output_wcs.bounding_box``) and ``crpix``.
         """
-        if isinstance(input_data, str):
-            ext = filetype.check(input_data)
-            if ext in ("fits", "asdf"):
-                input_data = dm.open(input_data)
-        if isinstance(input_data, ModelLibrary):
-            input_models = input_data
-        elif isinstance(input_data, (str, dict, list)):
-            input_models = ModelLibrary(input_data, on_disk=not self.in_memory)
-        elif isinstance(input_data, ImageModel):
-            input_models = ModelLibrary([input_data], on_disk=not self.in_memory)
-            output = input_data.meta.filename
+        # Make a copy if needed for an input model.
+        # Don't open filenames if they're not already models --
+        # leave it to the ModelLibrary call below to open them.
+        input_model = self.prepare_output(input_data, open_models=False)
+
+        if isinstance(input_model, ModelLibrary):
+            # Input is already a library: leave it alone.
+            input_models = input_model
+        elif isinstance(input_model, ImageModel) or (
+            isinstance(input_model, str) and filetype.check(input_model) in ["fits", "asdf"]
+        ):
+            # Input is a single file: pass it to ModelLibrary in a list
+            input_models = ModelLibrary([input_model], on_disk=not self.in_memory)
             self.blendheaders = False
+        elif isinstance(input_model, (str, dict, list, ModelContainer)):
+            # Input is an association or list of models/files
+            input_models = ModelLibrary(input_model, on_disk=not self.in_memory)
         else:
+            # Input is not recognized
             raise TypeError(f"Input {input_data} is not a 2D image.")
 
         try:
@@ -140,6 +145,13 @@ class ResampleStep(Step):
                 **kwargs,
             )
             result = resamp.resample_many_to_one()
+
+        # The output is a new datamodel.
+        # Clean up the input model(s) if they were opened here.
+        if input_model is not input_data:
+            del input_model
+        if input_models is not input_data:
+            del input_models
 
         return result
 
