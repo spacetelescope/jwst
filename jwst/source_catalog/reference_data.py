@@ -13,25 +13,26 @@ __all__ = ["ReferenceData"]
 
 
 class ReferenceData:
-    """Manipulate APCORR and ABVEGAOFFSET reference file data needed by `SourceCatalogStep`."""
+    """
+    Manipulate APCORR and ABVEGAOFFSET reference file data.
+
+    These data are needed by `~jwst.source_catalog.source_catalog_step.SourceCatalogStep`.
+
+    Parameters
+    ----------
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
+        An `~stdatamodels.jwst.datamodels.ImageModel` of drizzled image.
+    reffile_paths : list of 2 str
+        The full path filename of the APCORR and ABVEGAOFFSET reference
+        files.
+    aperture_ee : tuple of 3 int
+        The aperture encircled energies to be used for aperture
+        photometry.  The values must be 3 strictly-increasing integers.
+        Valid values are defined in the APCORR reference files (20, 30,
+        40, 50, 60, 70, or 80).
+    """
 
     def __init__(self, model, reffile_paths, aperture_ee):
-        """
-        Initialize the class.
-
-        Parameters
-        ----------
-        model : `ImageModel`
-            An `ImageModel` of drizzled image.
-        reffile_paths : list of 2 str
-            The full path filename of the APCORR and ABVEGAOFFSET reference
-            files.
-        aperture_ee : tuple of 3 int
-            The aperture encircled energies to be used for aperture
-            photometry.  The values must be 3 strictly-increasing integers.
-            Valid values are defined in the APCORR reference files (20, 30,
-            40, 50, 60, 70, or 80).
-        """
         if not isinstance(model, ImageModel):
             raise TypeError("The input model must be a ImageModel.")
         self.model = model
@@ -208,7 +209,7 @@ class ReferenceData:
         Returns
         -------
         abvega_offset : float
-            The value m_AB - m_Vega.
+            The value ``m_AB - m_Vega``.
         """
         if self.abvegaoffset_filename is None:
             log.warning(
