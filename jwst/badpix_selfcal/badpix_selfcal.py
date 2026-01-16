@@ -19,7 +19,7 @@ def badpix_selfcal(
     dispaxis=None,
 ) -> np.ndarray:
     """
-    Flag residual artifacts as bad pixels in the DQ array of a JWST exposure.
+    Identify residual artifacts in a combined image.
 
     Parameters
     ----------
@@ -79,7 +79,7 @@ def apply_flags(input_model: IFUImageModel, flagged_indices: np.ndarray) -> IFUI
     Parameters
     ----------
     input_model : IFUImageModel
-        Input science data to be corrected
+        Input science data to be corrected. Updated in place.
     flagged_indices : ndarray
         Indices of the flagged pixels,
         shaped like output from np.where
