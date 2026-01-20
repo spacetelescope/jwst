@@ -174,15 +174,17 @@ falling within the WFSS image.
 The step argument ``wfss_mask`` can be used to provide a custom user mask
 that overrides the source-catalog-derived mask. The argument should point to
 a FITS or ASDF file openable as `~stdatamodels.jwst.datamodels.ImageModel`
-containing a 2D boolean array in its ``.mask`` attribute. The output of a previous
-run of the background subtraction step, saved with suffix "bsub", can be used
-as such a custom mask, after editing the ``.mask`` attribute as desired. To generate
+containing a 2D array of integers in its ``.mask`` attribute (FITS ``MASK`` extension)
+with pixels to be used as background set to 1 and other pixels set to 0.
+The output of a previous run of the background subtraction step,
+saved with suffix "bsub", can be used as such a custom mask
+(after editing the ``.mask`` attribute as desired). To generate
 a valid model from scratch, use something like::
    
     from stdatamodels.jwst.datamodels import ImageModel
     import numpy as np
 
-    mask_data = np.ones((2048, 2048), dtype=bool)  # same shape as science data
+    mask_data = np.ones((2048, 2048), dtype=np.uint32)  # same shape as science data
     mask_model = ImageModel()
     mask_model.mask = mask_data
     mask_model.save('custom_mask.fits')

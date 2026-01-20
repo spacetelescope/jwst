@@ -42,7 +42,8 @@ control the sigma clipping, and are passed as arguments to the astropy
   Provides a custom user mask to use for background scaling, overriding
   the source-catalog-derived mask. The argument should point to
   a FITS or ASDF file openable as `~stdatamodels.jwst.datamodels.ImageModel`
-  containing a 2D boolean array in its ``.mask`` attribute.
+  containing a 2D array of integers in its ``.mask`` attribute (FITS ``MASK`` extension)
+  with pixels to be used as background set to 1 and other pixels set to 0.
   The ``.data`` attribute is not used.
   Defaults to ``None``.
 
