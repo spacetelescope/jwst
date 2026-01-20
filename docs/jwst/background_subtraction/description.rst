@@ -185,6 +185,7 @@ a valid model from scratch, use something like::
     import numpy as np
 
     mask_data = np.ones((2048, 2048), dtype=np.uint32)  # same shape as science data
+    mask_data[500:1500, 500:1500] = 0  # example: mask out central region
     mask_model = ImageModel()
     mask_model.mask = mask_data
     mask_model.save('custom_mask.fits')
