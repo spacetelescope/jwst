@@ -675,3 +675,37 @@ def test_user_mask_step(mock_asn_and_data, user_mask, caplog):
     assert "Using user-supplied source mask" in caplog.text
     np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
     assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+
+
+def test_user_mask_no_mask_attribute(make_nrc_wfss_datamodel, tmp_cwd):
+    """Test that BackgroundStep raises error when mask file has no mask attribute."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Create a mask file without a mask attribute (just data)
+    mask_fname = tmp_cwd / "bad_mask.fits"
+    bad_mask_model = datamodels.ImageModel(data=np.zeros(model.data.shape))
+    bad_mask_model.save(mask_fname)
+    bad_mask_model.close()
+
+    # Should raise AttributeError
+    with pytest.raises(AttributeError, match="No 'mask' attribute found"):
+        BackgroundStep.call(model, wfss_mask=str(mask_fname), save_results=False)
+
+
+def test_user_mask_wrong_shape(make_nrc_wfss_datamodel, tmp_cwd):
+    """Test that BackgroundStep raises error when mask shape doesn't match data."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Create a mask with wrong shape
+    wrong_shape = (100, 100)
+    mask_fname = tmp_cwd / "wrong_shape_mask.fits"
+    wrong_mask = np.ones(wrong_shape, dtype=bool)
+    mask_model = datamodels.ImageModel(
+        data=np.zeros(wrong_shape), mask=wrong_mask.astype(np.uint32)
+    )
+    mask_model.save(mask_fname)
+    mask_model.close()
+
+    # Should raise ValueError
+    with pytest.raises(ValueError, match="WFSS mask shape .* does not match input data shape"):
+        BackgroundStep.call(model, wfss_mask=str(mask_fname), save_results=False)

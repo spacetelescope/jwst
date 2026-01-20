@@ -79,8 +79,15 @@ class BackgroundStep(Step):
 
             wfss_mask = None
             if self.wfss_mask is not None:
-                with datamodels.open(self.wfss_mask) as mask_model:
-                    wfss_mask = mask_model.mask
+                with datamodels.ImageModel(self.wfss_mask) as mask_model:
+                    if not mask_model.hasattr("mask"):
+                        raise AttributeError(f"No 'mask' attribute found in {self.wfss_mask}")
+                    wfss_mask = mask_model.mask.astype(bool)
+                    if wfss_mask.shape != model.data.shape:
+                        raise ValueError(
+                            f"WFSS mask shape {wfss_mask.shape} does not match "
+                            f"input data shape {model.data.shape}"
+                        )
 
             # Do the background subtraction for WFSS/GRISM data
             rescaler_kwargs = {
