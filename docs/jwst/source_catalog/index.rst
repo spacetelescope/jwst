@@ -10,5 +10,4 @@ Source Catalog
    main.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.source_catalog
+   api_ref.rst
