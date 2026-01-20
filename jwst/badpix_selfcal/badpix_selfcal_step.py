@@ -210,10 +210,12 @@ class BadpixSelfcalStep(Step):
             Input exposures to be split into science, background, and selfcal lists.
         selfcal_list : list or None
             Exposures to include as part of median background model used to find bad pixels,
-            but that are not flagged and returned as background exposures
+            but that are not flagged and returned as background exposures. The list can
+            contain either file names or datamodels.
         bkg_list : list or None
             Exposures to include as part of median background model used to find bad pixels,
-            and that are flagged and returned as background exposures
+            and that are flagged and returned as background exposures. The list can
+            contain either file names or datamodels.
 
         Returns
         -------
