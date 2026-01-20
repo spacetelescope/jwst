@@ -126,6 +126,10 @@ class Detector1Pipeline(Pipeline):
             input_data = self.superbias.run(input_data)
             input_data = self.refpix.run(input_data)
             input_data = self.linearity.run(input_data)
+
+            # Persistence should be between flicker noise and ramp fitting.
+            if instrument != "NIRSPEC":
+                input_data = self.persistence.run(input_data)
             input_data = self.dark_current.run(input_data)
 
         # apply the charge_migration step
@@ -141,9 +145,8 @@ class Detector1Pipeline(Pipeline):
         input_data = self.clean_flicker_noise.run(input_data)
 
         # persistence should be between flicker noise and ramp_fit.
-        # XXX What should be done with the persistence_list?
-        if instrument != "NIRSPEC" and instrument != "MIRI":
-            input_data = self.persistence.run(input_data)
+        # if instrument != "NIRSPEC" and instrument != "MIRI":
+        #     input_data = self.persistence.run(input_data)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
