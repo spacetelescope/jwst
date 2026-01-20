@@ -173,6 +173,9 @@ class PersistenceStep(Step):
         time_fmt = "%Y%m%d_%H%M%S_%f"
         time_str = now.strftime(time_fmt)
 
+        # persistence_array_file always gets set if the persistence options are processed.
+        filename = self.persistence_array_file
+
         # Add time suffix
         if filename.endswith(".asdf"):
             filename = self.persistence_array_file.replace(".asdf", f"_pers_{time_str}.asdf")
