@@ -185,7 +185,6 @@ class SkyMatchStep(Step):
             sky_id=image_model.meta.filename,
             skystat=self._skystat,
             stepsize=self.stepsize,
-            reduce_memory_usage=False,  # this overwrote input files
             meta={"index": index},
         )
 
