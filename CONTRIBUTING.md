@@ -34,6 +34,7 @@ To suggest a specific code change, or to contribute new code:
 > When making changes, it is standard practice to create a new "branch" for each new feature or bug fix.
 > We recommend naming your new branch something like `feature/cool_new_feature`, `fix/thing_that_was_fixed`, `docs/updated_description_of_feature`, etc:
 > ```shell
+> git remote add upstream https://github.com/spacetelescope/jwst
 > git fetch upstream --tags
 > git checkout upstream/main -b docs/update_contributing_instructions
 > ```
@@ -67,12 +68,7 @@ However, if the changes to `main` touch the same lines as your changes, you will
 
 ### Incorporate upstream changes manually with `git rebase`
 
-First, make sure the `upstream` remote on your local repository is set to this repository:
-```shell
-git remote add upstream https://github.com/spacetelescope/jwst
-```
-
-Then, rebase your current branch onto `upstream/main` to apply any new changes on top of yours:
+Rebase your current branch onto `upstream/main` to apply any new changes on top of yours:
 ```shell
 git fetch --all
 git rebase -i upstream/main
