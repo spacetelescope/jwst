@@ -193,7 +193,8 @@ class BadpixSelfcalStep(Step):
 
         # Since selfcal_models are not returned, close them here
         for model in selfcal_models:
-            model.close()
+            if model not in bkg_models:
+                model.close()
 
         return input_sci, bkg_models
 

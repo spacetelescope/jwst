@@ -300,6 +300,7 @@ def test_apply_flags(background):
 def test_badpix_selfcal_step(request, dset):
     """Smoke test for the badpix_selfcal step."""
     input_data = request.getfixturevalue(dset)
+    input_data_copy = input_data.copy()
     result = BadpixSelfcalStep.call(input_data, skip=False, force_single=True)
 
     assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"
@@ -314,9 +315,20 @@ def test_badpix_selfcal_step(request, dset):
         assert len(result[1]) == 2
 
     # Make sure input is not modified
-    assert result[0] is not input_data
     if dset == "sci":
+        assert result[0] is not input_data
         assert input_data.meta.cal_step.badpix_selfcal is None
+
+        # DQ is modified by the step
+        assert not np.allclose(result[0].dq, input_data.dq)
+        assert np.allclose(input_data.dq, input_data_copy.dq)
+    else:
+        # Make sure none of the input models were modified
+        assert result[0] is not input_data[0]
+        assert not np.allclose(result[0].dq, input_data[0].dq)
+        for input_model, input_model_copy in zip(input_data, input_data_copy, strict=True):
+            assert input_model.meta.cal_step.badpix_selfcal is None
+            assert np.allclose(input_model.dq, input_model_copy.dq)
 
 
 def test_expected_fail_sci(sci):
