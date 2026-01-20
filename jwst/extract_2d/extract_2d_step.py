@@ -31,13 +31,13 @@ class Extract2dStep(Step):
 
         Parameters
         ----------
-        input_data : str, `~stdatamodels.jwst.datamodels.ImageModel`, or
+        input_data : str, `~stdatamodels.jwst.datamodels.ImageModel`, or \
                      `~stdatamodels.jwst.datamodels.CubeModel`
             Input datamodel or file name.
 
         Returns
         -------
-        result : `~stdatamodels.jwst.datamodels.MultiSlitModel`, or
+        result : `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
                  `~stdatamodels.jwst.datamodels.SlitModel`
             Output datamodel containing spectral cutouts in separate extensions.
         """
