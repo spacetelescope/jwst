@@ -1,0 +1,1 @@
+Fix a minor bug in which user-defined spectral lines masked in the MIRI MRS 1d residual fringe correction were incorrectly having no RF correction applied at all, rather than simply being excluded when finding the fringe signal.

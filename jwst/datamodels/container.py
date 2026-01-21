@@ -16,7 +16,7 @@ from jwst.datamodels.utils import attrs_to_group_id
 __all__ = ["ModelContainer"]
 
 RECOGNIZED_MEMBER_FIELDS = ["tweakreg_catalog", "group_id"]
-"""Special metadata handling by ModelContainer."""
+"""Special metadata handling by `~jwst.datamodels.container.ModelContainer`."""
 
 EMPTY_ASN_TABLE = {
     "asn_id": None,
@@ -30,21 +30,23 @@ logger = logging.getLogger(__name__)
 
 class ModelContainer(Sequence):
     """
-    A list-like container for holding DataModels.
+    A list-like container for holding `~stdatamodels.jwst.datamodels.JwstDataModel`.
 
-    This functions like a list for holding DataModel objects.  It can be
-    iterated through like a list, DataModels within the container can be
+    This functions like a list for holding `~stdatamodels.jwst.datamodels.JwstDataModel` objects.
+    It can be iterated through like a list,
+    `~stdatamodels.jwst.datamodels.JwstDataModel` within the container can be
     addressed by index, and the datamodels can be grouped into a list of
     lists for grouped looping, useful for NIRCam where grouping together
     all detectors of a given exposure is useful for some pipeline steps.
 
     Parameters
     ----------
-    init : file path, list of DataModels, or None
+    init : file path, list of `~stdatamodels.jwst.datamodels.JwstDataModel`, or None
         If a file path, initialize from an association table.
-        If a list, can be a list of DataModels of any type
+        If a list, can be a list of `~stdatamodels.jwst.datamodels.JwstDataModel` of any type
         If None, initializes an empty `~jwst.datamodels.container.ModelContainer`
-        instance, to which DataModels can be added via the :meth:`append` method.
+        instance, to which `~stdatamodels.jwst.datamodels.JwstDataModel`
+        can be added via the :meth:`append` method.
 
     asn_exptypes : str or None
         List of exposure types from the asn file to read
@@ -63,7 +65,7 @@ class ModelContainer(Sequence):
     Notes
     -----
     When ASN table's members contain attributes listed in
-    :py:data:`RECOGNIZED_MEMBER_FIELDS`, :py:class:`ModelContainer` will
+    :py:data:`RECOGNIZED_MEMBER_FIELDS`, `~jwst.datamodels.container.ModelContainer` will
     read those attribute values and update the corresponding attributes
     in the ``meta`` of input models.
 
@@ -112,7 +114,8 @@ to supply custom catalogs.
         ``group_id`` can be an integer, a string, or Null. When ``group_id``
         is ``Null``, it is converted to `None` in Python and a group ID will be assigned
         based on various exposure attributes - see the
-        ``models_grouped`` property for more details.
+        :attr:`~jwst.datamodels.container.ModelContainer.models_grouped`
+        property for more details.
 
     Examples
     --------
@@ -123,7 +126,8 @@ to supply custom catalogs.
         for model in container:
             print(model.meta.filename)
 
-    Say the association was a NIRCam dithered dataset. The `models_grouped`
+    Say the association was a NIRCam dithered dataset.
+    The :attr:`~jwst.datamodels.container.ModelContainer.models_grouped`
     attribute is a list of lists, the first index giving the list of exposure
     groups, with the second giving the individual datamodels representing
     each detector in the exposure (2 or 8 in the case of NIRCam)::
@@ -467,7 +471,8 @@ to supply custom catalogs.
 
         Notes
         -----
-        stpipe requires ModelContainer to have a crds_observatory attribute in order
+        stpipe requires `~jwst.datamodels.container.ModelContainer` to
+        have a ``crds_observatory`` attribute in order
         to pass through ``step.run()``, but it is never accessed.
         """
         msg = (

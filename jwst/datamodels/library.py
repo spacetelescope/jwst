@@ -122,7 +122,8 @@ class ModelLibrary(AbstractModelLibrary):
 
     def _filename_to_group_id(self, filename):
         """
-        Compute a "group_id" without loading the file as a DataModel.
+        Compute a "group_id" without loading the file as a
+        `~stdatamodels.jwst.datamodels.JwstDataModel`.
 
         Parameters
         ----------
@@ -134,7 +135,7 @@ class ModelLibrary(AbstractModelLibrary):
         str
             The meta.group_id stored in the ASDF extension (if it exists)
             or a group_id calculated from the FITS headers.
-        """
+        """  # noqa: D205  # numpydoc ignore=SS06
         # use read_metadata to read header keywords
         # avoiding the DataModel overhead
         meta = read_metadata(filename, flatten=False)["meta"]
@@ -152,11 +153,12 @@ class ModelLibrary(AbstractModelLibrary):
 
     def _model_to_group_id(self, model):
         """
-        Compute a "group_id" from a model using the DataModel interface.
+        Compute a "group_id" from a model using the
+        `~stdatamodels.jwst.datamodels.JwstDataModel` interface.
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The model from which to to extract the group_id.
 
         Returns
@@ -169,7 +171,7 @@ class ModelLibrary(AbstractModelLibrary):
         NoGroupID
             If the model does not have a meta.group_id, and one cannot be built from
             the model's meta.observation attributes.
-        """
+        """  # noqa: D205  # numpydoc ignore=SS06
         if group_id := getattr(model.meta, "group_id", None):
             return group_id
         if model.meta.hasattr("observation"):
@@ -314,7 +316,7 @@ def _read_meta_from_open_model(model, flatten):
 
     Parameters
     ----------
-    model : DataModel
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The model from which to read metadata.
     flatten : bool
         If True, the metadata will be flattened to a single level.

@@ -9,12 +9,13 @@ def attrs_to_group_id(obs_meta):
     ----------
     obs_meta : dict or ObjectNode
         A dictionary or ObjectNode containing meta.observation metadata, either
-        model.meta.observation or meta["meta"]["observation"] from read_metadata.
+        ``model.meta.observation`` or ``meta["meta"]["observation"]``
+        from :meth:`~jwst.datamodels.library.ModelLibrary.read_metadata`.
 
     Returns
     -------
     str
-        The group_id string.
+        The ``group_id`` string.
     """
     obs_meta = dict(obs_meta.items())  # a bit circular to do to a dict, but needed for ObjectNode
     for key in [
