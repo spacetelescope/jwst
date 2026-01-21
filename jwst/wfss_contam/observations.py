@@ -226,45 +226,51 @@ class Observation:
             the arguments to disperse() for that group
             in the format that multiprocessing starmap expects.
         """
-        chunks = []
-        current_chunk = []
-        current_size = 0
-
         source_ids = _select_ids(selected_ids, self.source_ids)
+        max_pixels = int(max_pixels)
 
-        for sid in source_ids:
-            n_pixels = np.sum(self.seg == sid)
-            if n_pixels > max_pixels:
-                log.warning(
-                    f"Source {sid} has {n_pixels} pixels, which exceeds the maximum number "
-                    f"of pixels per chunk ({max_pixels}). Skipping this source. "
-                    "Consider increasing max_pixels, and/or check to ensure the segmentation map "
-                    "looks reasonable for that source."
-                )
-                continue
-            if current_size + n_pixels > max_pixels:
-                chunks.append(current_chunk)
-                current_chunk = []
-                current_size = 0
-            current_chunk.append(sid)
-            current_size += n_pixels
+        # Create a mask for selected sources
+        selected_mask = np.isin(self.source_ids_per_pixel, source_ids)
 
-        if current_chunk:
-            chunks.append(current_chunk)
+        # Get pixels for selected sources
+        selected_xs = self.xs[selected_mask]
+        selected_ys = self.ys[selected_mask]
+        selected_fluxes = self.fluxes[selected_mask]
+        selected_source_ids = self.source_ids_per_pixel[selected_mask]
+
+        # Sort by source ID to keep sources mostly together
+        # This reduces the number of times we have to call build_dispersed_image_of_source
+        # within disperse()
+        sort_indices = np.argsort(selected_source_ids)
+        sorted_xs = selected_xs[sort_indices]
+        sorted_ys = selected_ys[sort_indices]
+        sorted_fluxes = selected_fluxes[sort_indices]
+        sorted_source_ids = selected_source_ids[sort_indices]
+
+        # Split into chunks of max_pixels
+        total_pixels = len(sorted_xs)
+        n_chunks = int(np.ceil(total_pixels / max_pixels))
+
+        log.info(
+            f"Splitting {total_pixels} pixels from {len(source_ids)} sources into {n_chunks} chunks"
+        )
 
         disperse_args = []
-        for source_ids in chunks:
-            isin = np.isin(self.source_ids_per_pixel, source_ids)
-            source_ids_per_pixel = self.source_ids_per_pixel[isin]
-            xs = self.xs[isin]
-            ys = self.ys[isin]
-            fluxes = self.fluxes[isin]
+        for i in range(n_chunks):
+            start_idx = i * max_pixels
+            end_idx = min((i + 1) * max_pixels, total_pixels)
+
+            chunk_xs = sorted_xs[start_idx:end_idx]
+            chunk_ys = sorted_ys[start_idx:end_idx]
+            chunk_fluxes = sorted_fluxes[start_idx:end_idx]
+            chunk_source_ids = sorted_source_ids[start_idx:end_idx]
+
             disperse_args.append(
                 [
-                    xs,
-                    ys,
-                    fluxes,
-                    source_ids_per_pixel,
+                    chunk_xs,
+                    chunk_ys,
+                    chunk_fluxes,
+                    chunk_source_ids,
                     order,
                     wmin,
                     wmax,
@@ -334,17 +340,64 @@ class Observation:
         t1 = time.time()
         log.info(f"Wall clock time for disperse_chunk order {order}: {(t1 - t0):.1f} sec")
 
-        # Combine the results from all chunks
+        # Combine results from all chunks, aggregating by source ID
+        source_results = {}
         for results in all_res:
             if results is None:
                 # None of the sources in this chunk for this order had pixels on the detector
                 continue
             for sid in results:
-                bounds = results[sid]["bounds"]
-                img = results[sid]["image"]
-                slit = _construct_slitmodel(img, bounds, sid, order)
-                self.simulated_image[bounds[2] : bounds[3] + 1, bounds[0] : bounds[1] + 1] += img
-                self.simulated_slits.slits.append(slit)
+                _aggregate_by_source(results, sid, source_results)
+
+        # Now add the combined results to the simulation
+        for sid in source_results:
+            bounds = source_results[sid]["bounds"]
+            img = source_results[sid]["image"]
+            slit = _construct_slitmodel(img, bounds, sid, order)
+            self.simulated_image[bounds[2] : bounds[3] + 1, bounds[0] : bounds[1] + 1] += img
+            self.simulated_slits.slits.append(slit)
+
+
+def _aggregate_by_source(results, sid, source_results):
+    if sid not in source_results:
+        source_results[sid] = {
+            "bounds": results[sid]["bounds"],
+            "image": results[sid]["image"].copy(),
+        }
+    else:
+        # Combine bounds
+        old_bounds = source_results[sid]["bounds"]
+        new_bounds = results[sid]["bounds"]
+        combined_bounds = [
+            min(old_bounds[0], new_bounds[0]),
+            max(old_bounds[1], new_bounds[1]),
+            min(old_bounds[2], new_bounds[2]),
+            max(old_bounds[3], new_bounds[3]),
+        ]
+
+        # Create combined image with the union of bounds
+        combined_shape = (
+            combined_bounds[3] - combined_bounds[2] + 1,
+            combined_bounds[1] - combined_bounds[0] + 1,
+        )
+        combined_image = np.zeros(combined_shape, dtype=float)
+
+        # Add existing image to combined image
+        old_y_start = old_bounds[2] - combined_bounds[2]
+        old_y_end = old_y_start + source_results[sid]["image"].shape[0]
+        old_x_start = old_bounds[0] - combined_bounds[0]
+        old_x_end = old_x_start + source_results[sid]["image"].shape[1]
+        combined_image[old_y_start:old_y_end, old_x_start:old_x_end] += source_results[sid]["image"]
+
+        # Add new image to combined image
+        new_y_start = new_bounds[2] - combined_bounds[2]
+        new_y_end = new_y_start + results[sid]["image"].shape[0]
+        new_x_start = new_bounds[0] - combined_bounds[0]
+        new_x_end = new_x_start + results[sid]["image"].shape[1]
+        combined_image[new_y_start:new_y_end, new_x_start:new_x_end] += results[sid]["image"]
+
+        # Update source results
+        source_results[sid] = {"bounds": combined_bounds, "image": combined_image}
 
 
 def _construct_slitmodel(
