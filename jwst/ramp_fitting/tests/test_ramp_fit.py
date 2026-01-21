@@ -22,7 +22,7 @@ def test_one_group_small_buffer_fit_ols():
         model1, True, rnoise, gain, DEFAULT_OLS, "optimal", "none", dqflags.pixel
     )
 
-    np.testing.assert_allclose(slopes['slope'][50, 50], 10.0, 1e-6)
+    np.testing.assert_allclose(slopes["slope"][50, 50], 10.0, 1e-6)
 
 
 def test_drop_frames1_not_set():
@@ -34,7 +34,7 @@ def test_drop_frames1_not_set():
         model1, True, rnoise, gain, DEFAULT_OLS, "optimal", "none", dqflags.pixel
     )
 
-    data = slopes['slope']
+    data = slopes["slope"]
     np.testing.assert_allclose(data[50, 50], 10.0, 1e-6)
 
 
@@ -49,7 +49,7 @@ def test_one_group_two_ints_fit_ols():
         model1, False, rnoise, gain, DEFAULT_OLS, "optimal", "none", dqflags.pixel
     )
 
-    np.testing.assert_allclose(slopes['slope'][50, 50], 11.0, 1e-6)
+    np.testing.assert_allclose(slopes["slope"][50, 50], 11.0, 1e-6)
 
 
 def test_multiprocessing():
@@ -87,7 +87,7 @@ def test_multiprocessing():
         model2, False, rnoise2, gain2, algo, "optimal", "all", dqflags.pixel
     )
 
-    np.testing.assert_allclose(slopes['slope'], slopes_multi['slope'], rtol=1e-5)
+    np.testing.assert_allclose(slopes["slope"], slopes_multi["slope"], rtol=1e-5)
 
 
 def test_multiprocessing2():
@@ -122,7 +122,7 @@ def test_multiprocessing2():
         model2, False, rnoise2, gain2, algo, "optimal", "all", dqflags.pixel
     )
 
-    np.testing.assert_allclose(slopes['slope'], slopes_multi['slope'], rtol=1e-5)
+    np.testing.assert_allclose(slopes["slope"], slopes_multi["slope"], rtol=1e-5)
 
 
 @pytest.mark.parametrize("method", [DEFAULT_OLS])
@@ -135,8 +135,8 @@ class TestMethods:
             model1, False, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        assert 0 == np.max(slopes['slope'])
-        assert 0 == np.min(slopes['slope'])
+        assert 0 == np.max(slopes["slope"])
+        assert 0 == np.min(slopes["slope"])
 
     def test_nocrs_noflux_firstrows_are_nan(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5)
@@ -148,7 +148,7 @@ class TestMethods:
             model1, False, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        data = slopes['slope']
+        data = slopes["slope"]
         assert 0 == np.max(data)
         assert 0 == np.min(data)
 
@@ -186,7 +186,7 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        out_slope = slopes['slope'][50, 50]
+        out_slope = slopes["slope"][50, 50]
         deltaDN1 = 50
         deltaDN2 = 150
         np.testing.assert_allclose(out_slope, (deltaDN1 + deltaDN2) / 2.0, 75.0, 1e-6)
@@ -200,7 +200,7 @@ class TestMethods:
             model1, False, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        data = slopes['slope']
+        data = slopes["slope"]
         assert 0 == np.max(data)
         assert 0 == np.min(data)
 
@@ -217,15 +217,15 @@ class TestMethods:
             model1, False, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        no_nan = np.zeros(slopes['slope'].shape, dtype=int)
-        no_nan[slopes['slope'] != 0] = 1
+        no_nan = np.zeros(slopes["slope"].shape, dtype=int)
+        no_nan[slopes["slope"] != 0] = 1
         tsum = sum(sum(no_nan))
 
         assert tsum == 2
-        assert np.isnan(slopes['slope'][1, 1])
-        assert np.isnan(slopes['slope'][2, 2])
-        assert slopes['dq'][1, 1] == NO_GAIN | DO_NOT_USE
-        assert slopes['dq'][2, 2] == NO_GAIN | DO_NOT_USE
+        assert np.isnan(slopes["slope"][1, 1])
+        assert np.isnan(slopes["slope"][2, 2])
+        assert slopes["dq"][1, 1] == NO_GAIN | DO_NOT_USE
+        assert slopes["dq"][2, 2] == NO_GAIN | DO_NOT_USE
 
     def test_simple_ramp(self, method):
         # Here given a 10 group ramp with an exact slope of 20/group. The output slope should be 20.
@@ -246,7 +246,7 @@ class TestMethods:
         )
 
         # take the ratio of the slopes to get the relative error
-        np.testing.assert_allclose(slopes['slope'][50, 50], (20.0 / 3), 1e-6)
+        np.testing.assert_allclose(slopes["slope"][50, 50], (20.0 / 3), 1e-6)
 
     def test_read_noise_only_fit(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5, readnoise=50)
@@ -264,7 +264,7 @@ class TestMethods:
         yvalues = np.array([10, 15, 25, 33, 60])
         coeff = np.polyfit(xvalues, yvalues, 1)
 
-        np.testing.assert_allclose(slopes['slope'][50, 50], coeff[0], 1e-6)
+        np.testing.assert_allclose(slopes["slope"][50, 50], coeff[0], 1e-6)
 
     def test_photon_noise_only_fit(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5, gain=1000, readnoise=1)
@@ -279,7 +279,7 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        np.testing.assert_allclose(slopes['slope'][50, 50], cds_slope, 1e-2)
+        np.testing.assert_allclose(slopes["slope"][50, 50], cds_slope, 1e-2)
 
     def test_photon_noise_only_bad_last_frame(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5, gain=1000, readnoise=1)
@@ -295,7 +295,7 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        np.testing.assert_allclose(slopes['slope'][50, 50], cds_slope, 1e-2)
+        np.testing.assert_allclose(slopes["slope"][50, 50], cds_slope, 1e-2)
 
     def test_photon_noise_only_bad_last_frame_two_groups(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=2, gain=1000, readnoise=1)
@@ -340,13 +340,13 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        np.testing.assert_allclose(slopes['slope'][50, 50], cds_slope, 1e-6)
+        np.testing.assert_allclose(slopes["slope"][50, 50], cds_slope, 1e-6)
 
         # expect SATURATED
-        assert slopes['dq'][50, 51] == SATURATED
+        assert slopes["dq"][50, 51] == SATURATED
 
         # expect SATURATED and DO_NOT_USE, because 1st group is Saturated
-        assert slopes['dq'][50, 52] == SATURATED | DO_NOT_USE
+        assert slopes["dq"][50, 52] == SATURATED | DO_NOT_USE
 
     def test_four_groups_oneCR_orphangroupatend_fit(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
@@ -361,7 +361,7 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        np.testing.assert_allclose(slopes['slope'][50, 50], cds_slope, 1e-6)
+        np.testing.assert_allclose(slopes["slope"][50, 50], cds_slope, 1e-6)
 
     def test_four_groups_two_CRs_at_end(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
@@ -377,7 +377,7 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        np.testing.assert_allclose(slopes['slope'][50, 50], cds_slope, 1e-6)
+        np.testing.assert_allclose(slopes["slope"][50, 50], cds_slope, 1e-6)
 
     def test_four_groups_four_CRs(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
@@ -399,7 +399,7 @@ class TestMethods:
 
         from math import isnan
 
-        assert isnan(slopes['slope'][row, col])
+        assert isnan(slopes["slope"][row, col])
 
     def test_four_groups_three_CRs_at_end(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
@@ -416,7 +416,7 @@ class TestMethods:
         )
 
         expected_slope = 10.0
-        np.testing.assert_allclose(slopes['slope'][50, 50], expected_slope, 1e-6)
+        np.testing.assert_allclose(slopes["slope"][50, 50], expected_slope, 1e-6)
 
     def test_four_groups_CR_causes_orphan_1st_group(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
@@ -436,7 +436,7 @@ class TestMethods:
 
         tol = 1.0e-5
         expected_slope = 20.0
-        np.testing.assert_allclose(slopes['slope'][row, col], expected_slope, tol)
+        np.testing.assert_allclose(slopes["slope"][row, col], expected_slope, tol)
 
     def test_one_group_fit(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10)
@@ -446,7 +446,7 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        np.testing.assert_allclose(slopes['slope'][50, 50], 10.0, 1e-6)
+        np.testing.assert_allclose(slopes["slope"][50, 50], 10.0, 1e-6)
 
     def test_two_groups_unc(self, method):
         grouptime = 3.0
@@ -465,9 +465,9 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        var_poisson = slopes['var_poisson']
-        var_rnoise = slopes['var_rnoise']
-        err = slopes['err']
+        var_poisson = slopes["var_poisson"]
+        var_rnoise = slopes["var_rnoise"]
+        err = slopes["err"]
         # delta_electrons = deltaDN * ingain
         single_sample_readnoise = inreadnoise / np.sqrt(2)
         np.testing.assert_allclose(var_poisson[50, 50], ((deltaDN / ingain) / grouptime**2), 1e-6)
@@ -510,9 +510,9 @@ class TestMethods:
         # delta_electrons = median_slope * ingain *delta_time
         single_sample_readnoise = np.float32(inreadnoise / np.sqrt(2))
 
-        var_poisson = slopes['var_poisson']
-        var_rnoise = slopes['var_rnoise']
-        err = slopes['err']
+        var_poisson = slopes["var_poisson"]
+        var_rnoise = slopes["var_rnoise"]
+        err = slopes["err"]
 
         np.testing.assert_allclose(
             var_poisson[50, 50], ((median_slope) / (ingain * delta_time)), 1e-6
@@ -559,7 +559,7 @@ class TestMethods:
         # check that the segment variance is as expected
 
         np.testing.assert_allclose(
-            opt_info['var_rnoise'][0, 0, 50, 50],
+            opt_info["var_rnoise"][0, 0, 50, 50],
             (
                 12.0
                 * single_sample_readnoise**2
@@ -569,11 +569,11 @@ class TestMethods:
         )
 
         # check the combined slope is the average of the two segments since they have the same number of groups
-        np.testing.assert_allclose(slopes['slope'][50, 50], 2.5, rtol=1e-5)
+        np.testing.assert_allclose(slopes["slope"][50, 50], 2.5, rtol=1e-5)
 
         # check that the slopes of the two segments are correct
-        np.testing.assert_allclose(opt_info['slope'][0, 0, 50, 50], 5 / 3.0, rtol=1e-5)
-        np.testing.assert_allclose(opt_info['slope'][0, 1, 50, 50], 10 / 3.0, rtol=1e-5)
+        np.testing.assert_allclose(opt_info["slope"][0, 0, 50, 50], 5 / 3.0, rtol=1e-5)
+        np.testing.assert_allclose(opt_info["slope"][0, 1, 50, 50], 10 / 3.0, rtol=1e-5)
 
     def test_oneCR_10_groups_combination_noisy2ndSegment(self, method):
         grouptime = 3.0
@@ -602,11 +602,11 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        avg_slope = (opt_info['slope'][0, 0, 50, 50] + opt_info['slope'][0, 1, 50, 50]) / 2.0
+        avg_slope = (opt_info["slope"][0, 0, 50, 50] + opt_info["slope"][0, 1, 50, 50]) / 2.0
 
         # even with noiser second segment, final slope should be just the
         # average since they have the same number of groups
-        np.testing.assert_allclose(slopes['slope'][50, 50], avg_slope, rtol=1e-5)
+        np.testing.assert_allclose(slopes["slope"][50, 50], avg_slope, rtol=1e-5)
 
 
 def test_twenty_groups_two_segments():
@@ -639,17 +639,17 @@ def test_twenty_groups_two_segments():
     )
 
     # Check some PRI & OPT output arrays
-    np.testing.assert_allclose(new_mod['slope'], 10.0 / deltatime, rtol=1e-4)
+    np.testing.assert_allclose(new_mod["slope"], 10.0 / deltatime, rtol=1e-4)
 
-    wh_data = opt_info['slope'] != 0.0  # only test existing segments
-    np.testing.assert_allclose(opt_info['slope'][wh_data], 10.0 / deltatime, rtol=1e-4)
-    np.testing.assert_allclose(opt_info['yint'][0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1e-5)
+    wh_data = opt_info["slope"] != 0.0  # only test existing segments
+    np.testing.assert_allclose(opt_info["slope"][wh_data], 10.0 / deltatime, rtol=1e-4)
+    np.testing.assert_allclose(opt_info["yint"][0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1e-5)
 
-    check = model1.data[0, 0, 0, :] - opt_info['slope']
+    check = model1.data[0, 0, 0, :] - opt_info["slope"]
     tol = 1e-5
     # Pixel 1 has zero slope, so ignore it.
 
-    np.testing.assert_allclose(opt_info['pedestal'][0, 0, 1:], check[0, 0, 0, 1:], tol)
+    np.testing.assert_allclose(opt_info["pedestal"][0, 0, 1:], check[0, 0, 0, 1:], tol)
 
 
 def test_miri_all_sat():
@@ -715,7 +715,7 @@ def test_miri_first_last():
         model1, True, rnoise, gain, DEFAULT_OLS, "optimal", "none", dqflags.pixel
     )
 
-    np.testing.assert_allclose(image_info['slope'], 10.0 / 3.0, rtol=1e-5)
+    np.testing.assert_allclose(image_info["slope"], 10.0 / 3.0, rtol=1e-5)
 
 
 def test_miri_no_good_pixel():
