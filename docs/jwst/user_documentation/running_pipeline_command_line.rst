@@ -307,7 +307,8 @@ current working directory, use the ``output_dir`` option::
     strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.output_dir='calibrated'
 
 When this is run, all three final output products of ``Detector1Pipeline`` will
-be saved within the subdirectory ``calibrated``.
+be saved within the subdirectory ``calibrated``, which will be automatically created
+if the directory does not yet exist before the run.
 
 Setting ``output_dir`` at the step-level indicates that the step's result should
 be saved (so, also setting ``save_results`` is redundant), and that the files
