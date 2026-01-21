@@ -16,10 +16,9 @@ def pixel_scale_angle_at_skycoord(skycoord, wcs, offset=1 * u.arcsec):
         The SkyCoord coordinate.
 
     wcs : WCS object
-        A world coordinate system (WCS) transformation that
-        supports the `astropy shared interface for WCS
-        <https://docs.astropy.org/en/stable/wcs/wcsapi.html>`_ (e.g.,
-        `astropy.wcs.WCS`, `gwcs.wcs.WCS`).
+        A world coordinate system (WCS) transformation that supports the
+        :ref:`astropy shared interface for WCS <astropy:wcsapi>`
+        (e.g., `astropy.wcs.WCS`, `gwcs.wcs.WCS`).
 
     offset : `~astropy.units.Quantity`
         A small angular offset to use to compute the pixel scale and

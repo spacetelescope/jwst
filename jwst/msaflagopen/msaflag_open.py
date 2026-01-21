@@ -43,8 +43,8 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
 
     Parameters
     ----------
-    input_model : DataModel
-        Science data to be corrected.
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
+        Science data to be corrected. Updated in place.
     shutter_refname : str
         Name of MSAOPER reference file.
     wcs_refnames : dict
@@ -52,7 +52,7 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
 
     Returns
     -------
-    output_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Science data with DQ array modified.
     """
     # Create a list of failed open slitlets from the msaoper reference file
@@ -62,10 +62,10 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
     # Flag the stuck open shutters
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="Invalid interval")
-        output_model = flag(input_model, failed_slitlets, wcs_refnames)
-    output_model.meta.cal_step.msa_flagging = "COMPLETE"
+        input_model = flag(input_model, failed_slitlets, wcs_refnames)
+    input_model.meta.cal_step.msa_flagging = "COMPLETE"
 
-    return output_model
+    return input_model
 
 
 def flag(input_datamodel, failed_slitlets, wcs_refnames):
@@ -83,7 +83,7 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     Parameters
     ----------
     input_datamodel : DataModel
-        Input science data.
+        Input science data. Updated in place.
     failed_slitlets : list of Slit
         Failed open slitlets.
     wcs_refnames : dict
@@ -92,7 +92,7 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
 
     Returns
     -------
-    DataModel
+    input_datamodel : DataModel
         Science data with DQ flags modified.
     """
     # Use the machinery in assign_wcs to create a WCS object for the bad shutters
