@@ -44,7 +44,8 @@ def extract_tso_object(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.CubeModel` or `~jwst.datamodels.ImageModel`
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel` or \
+                  `~stdatamodels.jwst.datamodels.ImageModel`
         The input TSO data is an instance of a CubeModel (3D) or ImageModel (2D)
 
     reference_files : dict
@@ -67,8 +68,8 @@ def extract_tso_object(
 
     Returns
     -------
-    output_model : `~jwst.datamodels.SlitModel`
-        Output SlitModel DataModel containing extracted spectrum
+    output_model : `~stdatamodels.jwst.datamodels.SlitModel`
+        Output SlitModel containing extracted spectrum
 
     Notes
     -----
