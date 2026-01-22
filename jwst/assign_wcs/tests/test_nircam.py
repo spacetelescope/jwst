@@ -101,6 +101,7 @@ def create_hdul(
     scihdu = fits.ImageHDU()
     scihdu.header["EXTNAME"] = "SCI"
     scihdu.header["SUBARRAY"] = subarray
+    scihdu.data = np.zeros((10, 10))
     scihdu.header.update(wcskeys)
     hdul.append(phdu)
     hdul.append(scihdu)
@@ -137,6 +138,7 @@ def create_tso_wcs(filtername=tsgrism_filters[0], subarray="SUBGRISM256"):
         subarray=subarray,
         wcskeys=wcs_tso_kw,
     )
+    hdul[1].data = np.zeros((10, 10, 10))  # make it a cube
     im = CubeModel(hdul)
     ref = get_reference_files(im)
     pipeline = nircam.create_pipeline(im, ref)

@@ -126,9 +126,9 @@ def imaging(input_model, reference_files):
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
-        va_scale=input_model.meta.velocity_aberration.scale_factor,
-        v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref,
+        va_scale=getattr(input_model.meta.velocity_aberration, "scale_factor", None),
+        v2_ref=getattr(input_model.meta.wcsinfo, "v2_ref", None),
+        v3_ref=getattr(input_model.meta.wcsinfo, "v3_ref", None),
     )
 
     tel2sky = pointing.v23tosky(input_model)
@@ -627,9 +627,9 @@ def ifu(input_model, reference_files):
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
-        va_scale=input_model.meta.velocity_aberration.scale_factor,
-        v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref,
+        va_scale=getattr(input_model.meta.velocity_aberration, "scale_factor", None),
+        v2_ref=getattr(input_model.meta.wcsinfo, "v2_ref", None),
+        v3_ref=getattr(input_model.meta.wcsinfo, "v3_ref", None),
     ) & models.Identity(1)
 
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)

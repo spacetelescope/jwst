@@ -16,7 +16,7 @@ def test_assign_wcs_step_miri_ifu():
     result = AssignWcsStep.call(model)
     assert result is not model
     assert result.meta.cal_step.assign_wcs == "COMPLETE"
-    assert model.meta.cal_step.assign_wcs is None
+    assert not hasattr(model.meta.cal_step, "assign_wcs")
 
 
 def test_assign_wcs_step_nis_wfss():
@@ -25,7 +25,7 @@ def test_assign_wcs_step_nis_wfss():
     result = AssignWcsStep.call(model)
     assert result is not model
     assert result.meta.cal_step.assign_wcs == "COMPLETE"
-    assert model.meta.cal_step.assign_wcs is None
+    assert not hasattr(model.meta.cal_step, "assign_wcs")
 
 
 def test_assign_wcs_step_nrc_wfss():
@@ -34,7 +34,7 @@ def test_assign_wcs_step_nrc_wfss():
     result = AssignWcsStep.call(model)
     assert result is not model
     assert result.meta.cal_step.assign_wcs == "COMPLETE"
-    assert model.meta.cal_step.assign_wcs is None
+    assert not hasattr(model.meta.cal_step, "assign_wcs")
 
 
 def test_unsupported_input(caplog):
@@ -43,4 +43,4 @@ def test_unsupported_input(caplog):
     assert result is not model
     assert "type is not supported" in caplog.text
     assert result.meta.cal_step.assign_wcs == "SKIPPED"
-    assert model.meta.cal_step.assign_wcs is None
+    assert not hasattr(model.meta.cal_step, "assign_wcs")
