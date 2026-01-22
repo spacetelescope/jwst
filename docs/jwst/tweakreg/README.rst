@@ -25,36 +25,7 @@ detection algorithms: `~photutils.detection.DAOStarFinder` (default),
 `~photutils.detection.IRAFStarFinder`, or `~photutils.segmentation.SourceFinder`
 in conjunction with `~photutils.segmentation.SourceCatalog`.
 
-`~photutils.detection.DAOStarFinder` is an implementation of the `DAOFIND`_ algorithm
-(`Stetson 1987, PASP 99, 191
-<https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract>`_).  It searches
-images for local density maxima that have a peak amplitude greater
-than a specified threshold (the threshold is applied to a convolved
-image) and have a size and shape similar to a defined 2D Gaussian
-kernel.  `DAOFIND`_ also provides an estimate of the object's
-roundness and sharpness, whose lower and upper bounds can be
-specified.
-
-`~photutils.detection.IRAFStarFinder` is a Python implementation of the IRAF star finding algorithm,
-which also calculates the objects' centroids, roundness, and sharpness.
-However, `~photutils.detection.IRAFStarFinder` uses image moments
-instead of 1-D Gaussian fits to projected light distributions like
-`~photutils.detection.DAOStarFinder`.
-
-`~photutils.segmentation.SourceFinder` implements a segmentation algorithm that identifies
-sources in an image based on a number of connected pixels above a
-specified threshold value.  The sources are deblended using a
-combination of multi-thresholding and watershed segmentation.
-`~photutils.segmentation.SourceCatalog` finds the centroids of these sources, which are used
-as the retrieved star positions.
-
-.. warning::
-    It has been shown (`STScI Technical Report JWST-STScI-008116, SM-12
-    <https://www.stsci.edu/~goudfroo/NIRISSdoc/Centroid_Accuracies_Precisions_NIRISS_v2.pdf>`_)
-    that for undersampled PSFs, e.g., for short-wavelength NIRISS
-    imaging data, `~photutils.detection.DAOStarFinder` gives bad results no matter the input parameters
-    due to its use of 1-D Gaussian fits.
-    `~photutils.detection.IRAFStarFinder` or `~photutils.segmentation.SourceFinder` should be used instead.
+.. include:: ../references_general/source_detection.rst
 
 .. note::
     `~photutils.segmentation.SourceFinder` is likely to detect non-stellar sources
@@ -62,8 +33,6 @@ as the retrieved star positions.
     point-source-like. This may lead to mismatches between the
     derived source catalog and the reference catalog during the
     alignment step.
-
-.. _DAOFIND: https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract
 
 Custom Source Catalogs
 ----------------------
