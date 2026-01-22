@@ -853,6 +853,10 @@ class Spec2Pipeline(Pipeline):
                 for step in fs_steps:
                     setattr(calib_mos.meta.cal_step, step, getattr(calib_fss.meta.cal_step, step))
 
+        # Clean up the old models, no longer needed
+        del calibrated
+        del calib_fss
+
         return calib_mos
 
     def _process_niriss_soss(self, data):
