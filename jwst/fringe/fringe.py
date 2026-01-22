@@ -44,18 +44,8 @@ def apply_fringe(input_model, fringe):
     if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
         input_model.var_flat *= inv_fringe_data_sq
 
-    # 05/22/14: For now, commenting out the following updating of the output
-    # DQ based on the DQ of the reference file. This is done now because the
-    # current DQ values in the ref file do not correspond to 'bad' data
-    # values in the SCI array of the ref file.  Accordingly, this information
-    # will be logged for now. This behavior may be changed later.
-    ###
-    # set DQ flag for bad pixels in the fringe
-    #   dq_mask = fringe.dq * 0
-    #   dq_mask[np.where(fringe.dq != 0)] = dqflags.pixel['DEAD']
-
-    # update DQ array based on fringe's DQ values
-    #   input_model.dq = np.bitwise_or(input_model.dq, dq_mask)
+    # DQ values in the reference file do not correspond well to bad data in
+    # the SCI array, so DQ is not propagated to the science exposure.
     log.debug("DQ values in the reference file NOT used to update the output DQ.")
 
     return input_model
