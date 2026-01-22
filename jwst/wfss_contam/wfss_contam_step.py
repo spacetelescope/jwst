@@ -41,7 +41,7 @@ class WfssContamStep(Step):
         Returns
         -------
         output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
-            The updated data model, with contamination removed.
+            A copy of the input data model, with contamination removed.
         """
         output_model = self.prepare_output(input_data)
 
