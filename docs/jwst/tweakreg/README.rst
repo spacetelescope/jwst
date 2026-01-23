@@ -465,9 +465,8 @@ can be found at the following links:
 .. _SourceFinder: https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceFinder.html
 .. _SourceCatalog: https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceCatalog.html
 
-The alignment and WCS correction portions of the step are handled by the `stcal` package.
-Additional documentation may be found `here <https://stcal.readthedocs.io/en/latest/stcal/tweakreg/index.html>`_.
-
+The alignment and WCS correction portions of the step are handled by the ``stcal`` package.
+Additional documentation may be found :ref:`here <stcal:tweakreg_step>`.
 
 Reference Files
 ===============

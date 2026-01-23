@@ -13,9 +13,9 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.JwstDataModel`
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science data, or a slit from a
-        `~jwst.datamodels.MultiSlitModel`.
+        `~stdatamodels.jwst.datamodels.MultiSlitModel`.
 
     exp_type : str
         The exposure type.  This is only needed to check whether the input

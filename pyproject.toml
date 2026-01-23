@@ -23,8 +23,7 @@ dependencies = [
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
     "drizzle>=2.1.1,<2.2.0",
-    "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
-    # "gwcs>=0.26.0",
+    "gwcs>=0.26.1,<1.0.0",
     "numpy>=1.25",
     "photutils>=2.1.0",
     "pyparsing>=2.2.1",
@@ -84,7 +83,7 @@ jwst = "jwst.stpipe.integration:get_steps"
 docs = [
     "matplotlib",
     "numpydoc",
-    "sphinx",
+    "sphinx<9",
     "sphinxcontrib-jquery",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
@@ -316,14 +315,11 @@ wrap = true
 issue_format = "`#{issue} <https://github.com/spacetelescope/jwst/issues/{issue}>`_"
 
 [[tool.towncrier.type]]
-directory = "general"
-name = "General"
+directory = "breaking"
+name = "Breaking Changes"
 showcontent = true
 
-[[tool.towncrier.type]]
-directory = "docs"
-name = "Documentation"
-showcontent = true
+# general pipeline changes
 
 [[tool.towncrier.type]]
 directory = "stpipe"
@@ -350,14 +346,12 @@ directory = "set_telescope_pointing"
 name = '``set_telescope_pointing``'
 showcontent = true
 
-# pipeline
-
 [[tool.towncrier.type]]
 directory = "pipeline"
 name = 'Pipeline'
 showcontent = true
 
-# steps
+# step changes
 
 [[tool.towncrier.type]]
 directory = "align_refs"
@@ -662,4 +656,16 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "white_light"
 name = 'white_light'
+showcontent = true
+
+# other changes
+
+[[tool.towncrier.type]]
+directory = "docs"
+name = "Documentation Changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "other"
+name = "Other Changes"
 showcontent = true

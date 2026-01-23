@@ -109,7 +109,7 @@ class DataSet:
         Parameters
         ----------
         model : `~jwst.datamodels.JwstDataModel`
-            Input Data Model object.
+            Input Data Model object. Updated in place.
         inverse : bool
             Invert the math operations used to apply the corrections.
         source_type : str or None
@@ -179,8 +179,8 @@ class DataSet:
                 if model.meta.target.source_type is not None:
                     self.source_type = model.meta.target.source_type.upper()
 
-        # Create a copy of the input model
-        self.input = model.copy()
+        # Store the input model for updating
+        self.input = model
 
         # Let the user know what we're working with
         log.info("Using instrument: %s", self.instrument)

@@ -1,9 +1,13 @@
 import os
 import shutil
+from pathlib import Path
 
+import numpy as np
 import pytest
+from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
+from jwst.pipeline import Image2Pipeline
+from jwst.pipeline.tests.helpers import make_nircam_rate_model
 from jwst.stpipe import Step
 from jwst.tests.helpers import _help_pytest_warns
 
@@ -21,35 +25,7 @@ def make_rate_file(tmp_cwd_module):
     Make and save a rate file in the temporary working directory
     Partially copied from test_background.py
     """
-
-    image = ImageModel((2048, 2048))
-    image.data[:, :] = 1
-    image.meta.instrument.name = "NIRCAM"
-    image.meta.instrument.filter = "F200W"
-    image.meta.instrument.pupil = "CLEAR"
-    image.meta.exposure.type = "NRC_IMAGE"
-    image.meta.observation.date = "2019-02-27"
-    image.meta.observation.time = "13:37:18.548"
-    image.meta.date = "2019-02-27T13:37:18.548"
-    image.meta.subarray.xstart = 1
-    image.meta.subarray.ystart = 1
-
-    image.meta.subarray.xsize = image.data.shape[-1]
-    image.meta.subarray.ysize = image.data.shape[-2]
-
-    image.meta.instrument.channel = "SHORT"
-    image.meta.instrument.module = "A"
-    image.meta.instrument.detector = "NRCA1"
-
-    # bare minimum wcs info to get assign_wcs step to pass
-    image.meta.wcsinfo.crpix1 = 693.5
-    image.meta.wcsinfo.crpix2 = 512.5
-    image.meta.wcsinfo.v2_ref = -453.37849
-    image.meta.wcsinfo.v3_ref = -373.810549
-    image.meta.wcsinfo.roll_ref = 272.3237653262276
-    image.meta.wcsinfo.ra_ref = 80.54724018120017
-    image.meta.wcsinfo.dec_ref = -69.5081101864959
-
+    image = make_nircam_rate_model()
     with image as dm:
         dm.save(INPUT_FILE)
 
@@ -157,3 +133,19 @@ def test_bsub_deprecated(make_rate_file):
         pytest.warns(DeprecationWarning, match="The --save_bsub parameter is deprecated"),
     ):
         Step.from_cmdline(args)
+
+
+def test_image2_nircam_model(make_rate_file):
+    input_model = datamodels.open(INPUT_FILE)
+    input_model_copy = input_model.copy()
+    Image2Pipeline.call(input_model, save_results=True, steps={"resample": {"skip": True}})
+
+    # Check for expected output
+    assert Path("test_cal.fits").exists()
+
+    # Input model is not modified
+    np.testing.assert_allclose(input_model.data, input_model_copy.data)
+    assert input_model.meta.cal_step._instance == input_model_copy.meta.cal_step._instance
+
+    input_model.close()
+    input_model_copy.close()

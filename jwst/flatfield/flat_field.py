@@ -74,7 +74,7 @@ def do_correction(
     Parameters
     ----------
     input_model : DataModel
-        Input science data model to be flat-fielded.
+        Input science data model to be flat-fielded. Updated in place.
     flat : DataModel or None, optional
         Data model containing flat-field for all instruments other than
         NIRSpec spectrographic data.
@@ -92,15 +92,12 @@ def do_correction(
 
     Returns
     -------
-    output_model : DataModel
-        The data model for the flat-fielded science data.
+    input_model : DataModel
+        The updated data model with flat-fielded science data.
     flat_applied : MultiSlitModel, ImageModel
         Data model containing the interpolated flat fields (NIRSpec data only), or
         just the input flat.
     """
-    # Initialize the output model as a copy of the input
-    output_model = input_model.copy()
-
     # NIRSpec spectrographic data are processed differently from other
     # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
@@ -108,7 +105,7 @@ def do_correction(
         input_model.meta.instrument.lamp_mode != "IMAGE"
     ):
         flat_applied = do_nirspec_flat_field(
-            output_model,
+            input_model,
             fflat,
             sflat,
             dflat,
@@ -120,13 +117,13 @@ def do_correction(
             flat = user_supplied_flat
         if flat is None:
             log.warning("No flat found or supplied; step will be skipped.")
-            output_model.meta.cal_step.flat_field = "SKIPPED"
+            input_model.meta.cal_step.flat_field = "SKIPPED"
             flat_applied = None
         else:
-            do_flat_field(output_model, flat, inverse=inverse)
+            do_flat_field(input_model, flat, inverse=inverse)
             flat_applied = flat
 
-    return output_model, flat_applied
+    return input_model, flat_applied
 
 
 def do_flat_field(output_model, flat_model, inverse=False):

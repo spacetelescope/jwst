@@ -1486,15 +1486,6 @@ def test_nirspec_msa():
     assert np.all(result)
 
 
-""" Skip this test because it would require a realistic wcs.
-def test_nirspec_ifu():
-
-    input_model = create_input("NIRSPEC", "NRS1", "NRS_IFU",
-                               filter="F170LP", grating="G235M")
-    ds = photom.DataSet(input_model)
-"""
-
-
 def test_niriss_wfss():
     """Test the calc_niriss method of the DataSet class, WFSS data."""
     input_model = create_input("NIRISS", "NIS", "NIS_WFSS", filter_used="GR150R", pupil="F140M")
@@ -1902,7 +1893,7 @@ def test_apply_photom_1():
     is checking that the pixel area keywords are populated correctly.
     """
     input_model = create_input("NIRCAM", "NRCA3", "NRC_IMAGE", filter_used="F150W", pupil="CLEAR")
-    ds = photom.DataSet(input_model)
+    ds = photom.DataSet(input_model.copy())
     ftab = create_photom_nircam_image()
 
     area_ster = 2.31307642258977e-14
@@ -1994,7 +1985,7 @@ def test_apply_photom_2(srctype):
     relresponse = ftab.phot_table["relresponse"][rownum][0:nelem]
 
     # Recover original input before photom step.
-    ds2 = photom.DataSet(output_model, inverse=True)
+    ds2 = photom.DataSet(output_model.copy(), inverse=True)
     rt_model = ds2.apply_photom(ftab, area_ref)
     for k, slit in enumerate(save_input.slits):
         assert_allclose(rt_model.slits[k].data, slit.data, rtol=1e-4)

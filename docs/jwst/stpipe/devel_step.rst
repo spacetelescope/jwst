@@ -48,7 +48,7 @@ Output Files and Directories
 
 The step will generally return its output as a data model. Every step has
 implicitly created parameters ``output_dir`` and ``output_file`` which the user can
-use to specify the directory and file to save this model to. Since the `stpipe`
+use to specify the directory and file to save this model to. Since the ``stpipe``
 architecture generally creates output file names, in general, it is expected
 that ``output_file`` be rarely specified, and that different sets of outputs be
 separated using ``output_dir``.
@@ -151,7 +151,7 @@ to describe its parameters.
 
 The Python Step subclass may be installed anywhere that your Python
 installation can find it.  It does not need to be installed in the
-`stpipe` package.
+``stpipe`` package.
 
 .. _the-spec-member:
 
@@ -293,8 +293,8 @@ or at the command line::
 
    --override_flat_field=/path/to/my_reference_file.fits
 
-Making a simple commandline script for a step
-=============================================
+Making a simple command line script for a step
+==============================================
 
 Any step can be run from the commandline using :ref:`strun`.  However,
 to make a step even easier to run from the commandline, a custom

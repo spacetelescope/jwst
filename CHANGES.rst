@@ -3444,7 +3444,7 @@ tweakreg
 1.10.2 (2023-04-14)
 ===================
 
-- pinned `stdatamodels`, `stcal`, and `stpipe` below API-breaking changes [#7555]
+- pinned ``stdatamodels``, ``stcal``, and ``stpipe`` below API-breaking changes [#7555]
 
 
 1.10.1 (2023-04-13)
@@ -3590,7 +3590,7 @@ other
 - Fix memory leaks in packages that use C code: ``cube_build``, ``wfss_contam``,
   and ``straylight``. [#7493]
 
-- add ``opencv-python`` to hard dependencies for usage of snowball detection in the jump step in `stcal` [#7499]
+- add ``opencv-python`` to hard dependencies for usage of snowball detection in the jump step in ``stcal`` [#7499]
 
 outlier_detection
 -----------------

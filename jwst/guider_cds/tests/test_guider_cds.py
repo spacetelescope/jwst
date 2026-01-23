@@ -5,29 +5,13 @@ from crds import getreferences
 from jwst import datamodels
 from jwst.guider_cds.guider_cds import guider_cds
 from jwst.guider_cds.guider_cds_step import GuiderCdsStep
+from jwst.guider_cds.tests.helpers import make_guider_image
 
 
 @pytest.fixture
 def make_guider_image_and_refs():
-    """Generate science image."""
-
-    image = datamodels.GuiderRawModel()
-
-    image.meta.instrument.name = "FGS"
-    image.meta.instrument.detector = "GUIDER1"
-    image.meta.observation.date = "2016-04-07"
-    image.meta.observation.time = "14:44:57"
-    image.meta.exposure.frame_time = 234.3423235
-    image.meta.exposure.ngroups = 4
-    image.meta.exposure.group_time = 465.643643
-    image.meta.exposure.type = "FGS_FINEGUIDE"
-
-    image.data = np.random.rand(4, 10, 10, 10)
-    image.meta.subarray.xstart = 1226
-    image.meta.subarray.ystart = 209
-    image.meta.subarray.xsize = 10
-    image.meta.subarray.ysize = 10
-
+    """Generate science image and fetch references."""
+    image = make_guider_image()
     refs = getreferences(image, reftypes=["gain", "readnoise"])
     gain_model = datamodels.GainModel(refs["gain"])
     readnoise_model = datamodels.ReadnoiseModel(refs["gain"])

@@ -54,18 +54,18 @@ def calc_pointing_deltas(model):
 
     Parameters
     ----------
-    model : `jwst.datamodels.JwstDataModel`
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The model to check pointing information in.
 
     Returns
     -------
     delta : Delta
-        A `namedtuple` with the following keys. If for some reason
+        A `~collections.namedtuple` with the following keys. If for some reason
         a value could not be determined, `None` is given.
 
-        - 'target': `SkyCoord` of the target.
-        - 'v1': `SkyCoord` of V1.
-        - 'refpoint': `SkyCoord` of the reference point.
+        - 'target': `~astropy.coordinates.SkyCoord` of the target.
+        - 'v1': `~astropy.coordinates.SkyCoord` of V1.
+        - 'refpoint': `~astropy.coordinates.SkyCoord` of the reference point.
         - 'delta_v1': Difference between V1 and proposed TARGET.
         - 'delta_refpoint': Difference between reference pixel pointing and TARGET.
     """
@@ -92,7 +92,7 @@ def calc_deltas(exposures, extra_meta=None):
     Parameters
     ----------
     exposures : [file-like[,...]] or [DataModel[,...]]
-        List of file-like objects or `jwst.datamodels.JwstDataModel` to retrieve
+        List of file-like objects or `~stdatamodels.jwst.datamodels.JwstDataModel` to retrieve
         pointing information from.
 
     extra_meta : [str[,...]] or None
@@ -104,9 +104,9 @@ def calc_deltas(exposures, extra_meta=None):
         Table of results with the following columns:
 
         - exposure: The exposure the pointing information is from.
-        - target: `SkyCoord` of the proposed target.
-        - v1: `SkyCoord` of v1.
-        - refpoint: `SkyCoord` of the reference point.
+        - target: `~astropy.coordinates.SkyCoord` of the proposed target.
+        - v1: `~astropy.coordinates.SkyCoord` of v1.
+        - refpoint: `~astropy.coordinates.SkyCoord` of the reference point.
         - delta_v1: target - V1 separation.
         - delta_refpoint: target - refpoint separation.
     """
