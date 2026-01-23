@@ -60,6 +60,8 @@ class EngdbDirect(EngdbABC):
     starttime = None
 
     def __init__(self, base_url=None, default_format="dict", **service_kwargs):
+        raise OSError("EngdbDirect: You shall not pass!") from None
+
         logger.debug("kwargs not used by this service: %s", service_kwargs)
 
         self.configure(base_url=base_url)
