@@ -81,6 +81,8 @@ class EngdbMast(EngdbABC):
     token = None
 
     def __init__(self, base_url=None, token=None, **service_kwargs):
+        raise OSError("EngdbMast: You shall not pass!") from None
+
         logger.debug("kwargs not used by this service: %s", service_kwargs)
 
         self.configure(base_url=base_url, token=token)
