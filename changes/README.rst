@@ -16,10 +16,15 @@ News fragment filenames consist of the pull request number and the change log ca
 
 Change log categories
 *********************
+
+Typically, changes to the JWST calibration pipeline will either be to one of the steps (delineated in stages, below), or to shared pipeline modules.
+Make a news fragment for every relevant category affected by your change.
+
+If a change breaks **step-level or public API** ([as defined in the docs](https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private)), also add a `<PR#>.breaking.rst` fragment, describing what changes user may need to make to their code:
 - ``<PR#>.breaking.rst``: Also add this fragment if your change breaks **step-level or public API** ([as defined in the docs](https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private))
 
-General Pipeline Changes
-========================
+Shared Pipeline
+===============
 
 - ``<PR#>.stpipe.rst``
 - ``<PR#>.datamodels.rst``
@@ -29,8 +34,6 @@ General Pipeline Changes
 - ``<PR#>.associations.rst``
 
 Stage 1
-"""""""
-^^^^^^^
 =======
 
 - ``<PR#>.group_scale.rst``
@@ -55,8 +58,6 @@ Stage 1
 - ``<PR#>.gain_scale.rst``
 
 Stage 2
-"""""""
-^^^^^^^
 =======
 
 - ``<PR#>.adaptive_trace_model.rst``
@@ -85,8 +86,6 @@ Stage 2
 - ``<PR#>.resample.rst``
 
 Stage 3
-"""""""
-^^^^^^^
 =======
 
 - ``<PR#>.assign_mtwcs.rst``
@@ -104,8 +103,6 @@ Stage 3
 - ``<PR#>.ami.rst``
 
 Other
-"""""
-^^^^^
 =====
 
 - ``<PR#>.wfs_combine.rst``
