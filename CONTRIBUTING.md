@@ -145,7 +145,7 @@ pip install -e ../stcal
 > source .venv_jwst_stcal_dev/bin/activate
 > ```
 
-Since we do not use a monorepo for coupled repositories, when making a change like this, you will need to make two pull requests: one in the `jwst` repository, and one in the dependency's repository.
+Since we do not use a single repository (sometimes called a "monorepo") for these coupled packages, when making a change like this, you will need to make two pull requests: one in the `jwst` repository, and one in the dependency's repository.
 However, unit tests will not automatically pass because the `pyproject.toml` file in `jwst` points to the last released version of `stcal`, which does not incorporate your changes.
 To resolve this (temporarily, for testing) modify the `pyproject.toml` files in `jwst` to point to your branch, to demonstrate that unit tests pass. 
 > [!WARNING]
