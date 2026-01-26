@@ -25,8 +25,7 @@ class DataTypes:
         """
         Assemble input data for processing.
 
-        Open the input data using datamodels and determine if data is
-        a single input model, an association, or a set of input models
+        Determine if data is a single input model or a set of input models
         contained in a ModelContainer. The method populates the self.input_models
         which is a list of input models. An initial base name for the output file
         is constructed.
@@ -34,11 +33,10 @@ class DataTypes:
         Parameters
         ----------
         input_models : IFUImageModel or ModelContainer
-           Input data to cube_build either a filename, single model,
-           association table, or a ModelContainer
+           Input data to cube_build. Either a single model or a ModelContainer.
         single : bool
-           If True then creating single mode IFUCubes for outlier detection
-           or mrs_matching. If false then creating standard IFUcubes
+           If True, then create single mode IFU cubes for outlier detection.
+           If False, then create standard IFU cubes.
         output_file : str
            Optional user provided output file name.
         output_dir : str
