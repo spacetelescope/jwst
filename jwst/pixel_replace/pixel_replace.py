@@ -259,7 +259,7 @@ class PixelReplacement:
         Returns
         -------
         model : DataModel
-            The same DataModel with flagged bad pixels now flagged with
+            The same DataModel with bad pixels now flagged with
             FLUX_ESTIMATED and holding a flux value estimated
             from spatial profile, derived from adjacent columns.
         """
