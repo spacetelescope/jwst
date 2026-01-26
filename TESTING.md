@@ -3,16 +3,10 @@
 `jwst` has several test suites to ensure that functionality remains consistent and does not break when code changes.
 In order for a change you make to the code to be accepted and merged, that change must pass existing tests, as well as any new tests you write that cover new functionality.
 
-`jwst` uses `pytest` to define and run tests. To install `pytest` and other required testing tools, run the following:
+`jwst` uses `pytest` to define and run tests. To install `pytest` and other required testing tools to your development environment, install `jwst` with the `test` extra:
 ```shell
 pip install -e .[test]
 ```
-
-> [!TIP]
-> When editing code locally, use `-e` to install the package as "editable". This will immediately propagate any code changes into the installed package in your environment, making testing much easier:
-> ```shell
-> pip install -e .
-> ```
 
 To run tests, simply run `pytest`:
 ```shell
@@ -86,9 +80,9 @@ These tests run the code on simplified datasets to make sure there are no breaki
 by a unit test, so when adding code you will often need to write a new test, or add to an existing test, to ensure adequate coverage.
 
 Most test modules use a shared `@pytest.fixture` to set up a common dataset (usually a very simple `datamodel` with some observational parameters and simplified data and / or DQ arrays) for tests in that file.
-Most individual tests set up a scenario to run a pipeline / step under certain conditions and test a specific functionality, culminating in a set of `assert`ions that must be true in order for the test to pass.
+Most individual tests set up a scenario to run a pipeline / step under certain conditions and test a specific functionality, culminating in a set of assertions (`assert`) that must be true in order for the test to pass.
 
-When you open a pull request (assuming you have set up your environment as described in `CONTRIBUTING.md`), GitHub will automatically start a workflow to run tests on your branch.
+When you open a pull request (assuming you have [set up your environment as described in `CONTRIBUTING.md`](./CONTRIBUTING.md#creating-a-development-environment)), GitHub will automatically start a workflow to run tests on your branch.
 These tests re-run every time you `git push`.
 
 ## Writing Unit Tests
