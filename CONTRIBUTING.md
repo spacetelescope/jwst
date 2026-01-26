@@ -16,7 +16,22 @@ To submit a bug report or feature request, [open a new issue in this repository]
 
 To suggest a specific code change, or to contribute new code:
 1. [Fork this repository](https://github.com/spacetelescope/jwst/fork).
-2. Install `pre-commit` to automatically check your changes for formatting issues:
+2. Clone your fork to your local machine:
+    ```shell
+    git clone https://github.com/YOUR_USERNAME/jwst
+    cd jwst/
+    ```
+
+> [!TIP]
+> When making changes, create a new "branch" for each new feature or bug fix.
+> We recommend naming your new branch something like `feature/cool_new_feature`, `fix/thing_that_was_fixed`, `docs/updated_description_of_feature`, etc:
+> ```shell
+> git remote add upstream https://github.com/spacetelescope/jwst
+> git fetch upstream --tags
+> git checkout upstream/main -b docs/update_contributing_instructions
+> ```
+
+3. Install `pre-commit` to automatically check your changes for formatting issues:
     ```shell
     pip install pre-commit
     pre-commit install
@@ -25,31 +40,18 @@ To suggest a specific code change, or to contribute new code:
 > [!TIP]
 > To run `pre-commit` checks manually, do `pre-commit run --all`.
 
-3. Clone your fork to your local machine:
-    ```shell
-    git clone https://github.com/YOUR_USERNAME/jwst
-    ```
-
-> [!TIP]
-> When making changes, it is standard practice to create a new "branch" for each new feature or bug fix.
-> We recommend naming your new branch something like `feature/cool_new_feature`, `fix/thing_that_was_fixed`, `docs/updated_description_of_feature`, etc:
-> ```shell
-> git remote add upstream https://github.com/spacetelescope/jwst
-> git fetch upstream --tags
-> git checkout upstream/main -b docs/update_contributing_instructions
-> ```
-
-4. Make your changes using your editor of choice.
-5. Commit and push your changes to your fork as a new branch:
+4. [Install `jwst` to your development environment.](#creating-a-development-environment)
+5. Make your changes using your editor of choice.
+6. Commit and push your changes to your fork as a new branch:
     ```shell
     git add changed_file.py
     git commit -m "description of changes"
     git push
     ```
     The [`git` reference manual](https://git-scm.com/docs) has details on what these commands do.
-6. [Open a new Pull Request](https://github.com/spacetelescope/jwst/pulls) requesting that your changes be merged into the `main` branch of this repository.
-7. Ensure that your change passes automated testing (see `TESTING.md` for details).
-8. Complete the items in the **Tasks** checklist (created when you open the pull request) to the best of your ability.
+7. [Open a new Pull Request](https://github.com/spacetelescope/jwst/pulls) requesting that your changes be merged into the `main` branch of this repository.
+8. Ensure that your change passes automated testing (see `TESTING.md` for details).
+9. Complete the items in the **Tasks** checklist (created when you open the pull request) to the best of your ability.
 
 Once your pull request is created, it will need to be reviewed and approved by the code maintainer team.
 They may require changes from you before your code can be merged,
@@ -82,14 +84,53 @@ Once you've completed your rebase, you will need to "force push" your branch to 
 git push -u origin -f feature/cool_new_feature
 ```
 
+## Creating a development environment
+
+When developing `jwst` (or any other Python package), you should install the package locally to a development environment.
+Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
+
+The easiest way to create a development environment is with `virtualenv`:
+```shell
+virtualenv .venv/
+source .venv/bin/activate
+pip install -e .
+hx .
+```
+
+Breaking down what these lines do:
+1. ```shell
+   virtualenv .venv/
+   ```
+   Create a new empty Python environment in the `.venv/` directory.
+2. ```shell
+   source .venv/bin/activate
+   ```
+   "Activate" the environment: modify the current shell session by changing shell variables to point to the isolated Python installation in `.venv/` instead of the system Python.
+3. ```shell
+   pip install -e . 
+   ```
+   Install the local package (`jwst`) to your environment in "editable mode", so that any code changes will be instantly reflected in the installed package (useful for testing).
+4. ```shell
+   hx .
+   ```
+   Run your editor of choice (for example I use Helix, `hx`).
+   
+
+> [!TIP]
+> There are other ways of managing environments.
+> For instance, if you have `uv` installed, you can replicate all 4 lines above in a single command (`uv` will handle the environment creation and activation transparently):
+  ```shell
+  uv run hx .
+  ```
+
 ## Making simultaneous changes to `jwst` and one of its dependencies
 
-If you need to make a change in `jwst` that requires a simultaneous change to one of its dependencies (`stcal`, `stdatamodels`, `stpipe`, etc.), you can install that dependency from your local machine to your development environment with `pip install -e .`.
-For instance, assuming you've cloned the source code for both `jwst` and `stcal` to their own directories, you can do:
+If you need to make a change in `jwst` that requires a simultaneous change to one of its dependencies (`stcal`, `stdatamodels`, `stpipe`, etc.), also install that dependency from your local machine [to your development environment](#creating-a-development-environment).
+For instance, assuming you've cloned the source code for both `jwst` and `stcal`, you can do the following from the `jwst/` directory:
 ```shell
 cd jwst/
-pip install -e .[test]
-pip install -e ../stcal[test]
+pip install -e .
+pip install -e ../stcal
 ```
 
 > [!TIP]
