@@ -4,7 +4,7 @@
 The source code is available in the [JWST Github repository](https://github.com/spacetelescope/jwst/).
 New contributions and contributors are very welcome!
 Do not hesitate to reach out to the package maintainers if you are new to open-source development or if you have any questions/concerns.
-We only ask that all contributors adhere to the Space Telescope [Code of Conduct](CODE_OF_CONDUCT.md).
+We only ask that all contributors adhere to the Space Telescope [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## Reporting bugs / requesting a new feature
 To submit a bug report or feature request, [open a new issue in this repository](https://github.com/spacetelescope/jwst/issues).
@@ -54,7 +54,7 @@ To suggest a specific code change, or to contribute new code:
     ```
     The [`git` reference manual](https://git-scm.com/docs) has details on what these commands do.
 8. [Open a new Pull Request](https://github.com/spacetelescope/jwst/pulls) requesting that your changes be merged into the `main` branch of this repository.
-9. Ensure that your change passes automated testing (see `TESTING.md` for details).
+9. Ensure that your change passes automated testing (see [`TESTING.md`](./TESTING.md) for details).
 10. Complete the items in the **Tasks** checklist (created when you open the pull request) to the best of your ability.
 
 Once your pull request is created, it will need to be reviewed and approved by the code maintainer team.
@@ -92,7 +92,9 @@ git push -u origin -f feature/cool_new_feature
 ## Creating a development environment
 
 When developing `jwst` (or any other Python package), you should install the package locally to a development environment.
-Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
+
+> [!TIP]
+> Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
 
 The easiest way to create a development environment is with `virtualenv`:
 ```shell
@@ -103,30 +105,29 @@ hx .
 ```
 
 Breaking down what these lines do:
-1. ```shell
+1. Create a new empty Python environment in the `.venv/` directory:
+   ```shell
    virtualenv .venv/
    ```
-   Create a new empty Python environment in the `.venv/` directory.
-2. ```shell
+2. "Activate" the environment (change shell variables in the current session to point to the isolated Python installation):
+   ```shell
    source .venv/bin/activate
    ```
-   "Activate" the environment: modify the current shell session by changing shell variables to point to the isolated Python installation in `.venv/` instead of the system Python.
-3. ```shell
+3. Install the local package (`jwst`) to your environment in "editable mode", so that any code changes will be instantly reflected in the installed package (useful for testing):
+   ```shell
    pip install -e . 
    ```
-   Install the local package (`jwst`) to your environment in "editable mode", so that any code changes will be instantly reflected in the installed package (useful for testing).
-4. ```shell
+4. Run your editor of choice (in this example I use Helix `hx`):
+   ```shell
    hx .
    ```
-   Run your editor of choice (for example I use Helix, `hx`).
-   
 
 > [!TIP]
 > There are other ways of managing environments.
-> For instance, if you have `uv` installed, you can replicate all 4 lines above in a single command (`uv` will handle the environment creation and activation transparently):
-  ```shell
-  uv run hx .
-  ```
+> For instance, if you have `uv` installed, you can accomplish the same as above with a single command:
+> ```shell
+> uv run hx .
+> ```
 
 ## Making simultaneous changes to `jwst` and one of its dependencies
 
@@ -148,8 +149,6 @@ pip install -e ../stcal
 Since we do not use a single repository (sometimes called a "monorepo") for these coupled packages, when making a change like this, you will need to make two pull requests: one in the `jwst` repository, and one in the dependency's repository.
 However, unit tests will not automatically pass because the `pyproject.toml` file in `jwst` points to the last released version of `stcal`, which does not incorporate your changes.
 To resolve this (temporarily, for testing) modify the `pyproject.toml` files in `jwst` to point to your branch, to demonstrate that unit tests pass. 
-> [!WARNING]
-> **REMEMBER TO CHANGE THIS BACK BEFORE YOUR CHANGE IS MERGED INTO `main`.**
 ```toml
 # jwst/pyproject.toml
 [project]
@@ -160,6 +159,8 @@ dependencies = [
     ...
 ]
 ```
+> [!WARNING]
+> **REMEMBER TO REVERT THE CHANGES TO `pyproject.toml` BEFORE YOUR BRANCH IS MERGED INTO `main`.**
 
 ## Code style
 
@@ -197,4 +198,4 @@ The majority of the `jwst` repository does *not* have type hints, and type hints
 
 ## Writing and maintaining documentation
 
-See `docs/README.md` for instructions.
+See [`docs/README.md`](./docs/README.md) for instructions.
