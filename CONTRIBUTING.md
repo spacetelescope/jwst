@@ -64,9 +64,10 @@ Incorporate those changes into your branch, either automatically with the button
 
 ### Incorporate upstream changes automatically with button on GitHub pull request page
 
-Usually, GitHub can rebase a branch automatically. If you see `This branch is out-of-date with the base branch`, you will have the option to `Update with merge commit` or `Update with rebase`. Updating with a rebase is usually cleaner and the better option.
+Usually, GitHub can rebase a branch automatically.
+If you see "**This branch is out-of-date with the base branch**", you will have the option to "**Update with merge commit**" or "**Update with rebase**". Updating with a merge commit is usually safer.
 
-However, if the changes to `main` touch the same lines as your changes, you will see `This branch has conflicts that must be resolved`. You will need to manually resolve these conflicts yourself.
+However, if the changes to `main` touch the same lines as your changes, you will see "**This branch has conflicts that must be resolved**". You will need to manually resolve these conflicts yourself; follow the steps described on the page.
 
 ### Incorporate upstream changes manually with `git rebase`
 
