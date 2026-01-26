@@ -22,16 +22,20 @@ To suggest a specific code change, or to contribute new code:
     cd jwst/
     ```
 
+3. Add the `upstream` repository, as a remote, to your local clone:
+    ```shell
+    git remote add upstream https://github.com/spacetelescope/jwst
+    ```
+
 > [!TIP]
 > When making changes, create a new "branch" for each new feature or bug fix.
 > We recommend naming your new branch something like `feature/cool_new_feature`, `fix/thing_that_was_fixed`, `docs/updated_description_of_feature`, etc:
 > ```shell
-> git remote add upstream https://github.com/spacetelescope/jwst
 > git fetch upstream --tags
 > git checkout upstream/main -b docs/update_contributing_instructions
 > ```
 
-3. Install `pre-commit` to automatically check your changes for formatting issues:
+4. Install `pre-commit` to automatically check your changes for formatting issues:
     ```shell
     pip install pre-commit
     pre-commit install
@@ -40,22 +44,22 @@ To suggest a specific code change, or to contribute new code:
 > [!TIP]
 > To run `pre-commit` checks manually, do `pre-commit run --all`.
 
-4. [Install `jwst` to your development environment.](#creating-a-development-environment)
-5. Make your changes using your editor of choice.
-6. Commit and push your changes to your fork as a new branch:
+5. [Install `jwst` to your development environment.](#creating-a-development-environment)
+6. Make your changes using your editor of choice.
+7. Commit and push your changes to your fork as a new branch:
     ```shell
     git add changed_file.py
     git commit -m "description of changes"
     git push
     ```
     The [`git` reference manual](https://git-scm.com/docs) has details on what these commands do.
-7. [Open a new Pull Request](https://github.com/spacetelescope/jwst/pulls) requesting that your changes be merged into the `main` branch of this repository.
-8. Ensure that your change passes automated testing (see `TESTING.md` for details).
-9. Complete the items in the **Tasks** checklist (created when you open the pull request) to the best of your ability.
+8. [Open a new Pull Request](https://github.com/spacetelescope/jwst/pulls) requesting that your changes be merged into the `main` branch of this repository.
+9. Ensure that your change passes automated testing (see `TESTING.md` for details).
+10. Complete the items in the **Tasks** checklist (created when you open the pull request) to the best of your ability.
 
 Once your pull request is created, it will need to be reviewed and approved by the code maintainer team.
 They may require changes from you before your code can be merged,
-in which case you will need to go back and make those changes, run tests again, and push the changes to the branch you made earlier.
+in which case go back and make those changes, run tests again, and push the changes to the branch you made earlier.
 
 ## Keeping your development branch current with `main`
 
