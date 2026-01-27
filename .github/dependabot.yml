@@ -20,18 +20,3 @@ updates:
       default-days: 7
     reviewers:
       - "zacharyburnett"
-
-  # Maintain dependencies for pip
-  - package-ecosystem: "pip"
-    directory: "/"
-    target-branch: "main"
-    schedule:
-      interval: "weekly"
-    groups:
-      actions:
-        patterns:
-          - "*"
-    cooldown:
-      default-days: 7
-    reviewers:
-      - "zacharyburnett"
