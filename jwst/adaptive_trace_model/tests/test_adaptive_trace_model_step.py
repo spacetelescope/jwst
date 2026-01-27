@@ -75,9 +75,7 @@ def asn_input(tmp_path, miri_mrs_model):
 
 
 @pytest.mark.parametrize("dataset", ["miri_mrs_model", "nirspec_ifu_model_with_source"])
-def test_adaptive_trace_model_step_success(
-    request, dataset, miri_mrs_model, nirspec_ifu_model_with_source
-):
+def test_adaptive_trace_model_step_success(request, dataset):
     model = request.getfixturevalue(dataset)
 
     # run with a high threshold so spline fits are not performed, for speed
