@@ -34,6 +34,7 @@ def nrs_slit_model(nrs_fs_model):
 
     # make a slit model to run through correction
     slit = datamodels.SlitModel(im_ex2d.slits[0].data)
+    slit.wavelength = im_ex2d.slits[0].wavelength
     slit.update(im_ex2d)
     slit.meta.wcs = im_ex2d.slits[0].meta.wcs
     slit.source_type = "POINT"
