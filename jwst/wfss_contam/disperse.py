@@ -323,16 +323,16 @@ def disperse(
     # The input direct image data is already photometrically calibrated,
     # so we need to basically apply a reverse flux calibration here.
     # Divide out the response values to convert from Mjy/sr to DN/s.
-    # Note that the photom reference files are constructed differently for NIRCam and NIRISS
-    # in the way they handle the dispersion: NIRCam uses per/wavelength, NIRISS uses per-pixel.
+    # Note that the photom reference files are constructed with per-wavelength units,
+    # so oversampling is accounted for by the spacing of dlam.
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
         if phot_per_lam:
-            # NIRCam case. Oversampling is accounted for by the spacing of dlam.
+            # NIRCam case. Fluxes are per angstrom
             counts = fluxes * areas * dlam * 1e4 / sens
         else:
-            # NIRISS case. Oversampling must be handled directly to avoid double-counting.
-            counts = fluxes * areas / (sens * oversample_factor)
+            # NIRISS case. Fluxes are per micron
+            counts = fluxes * areas * dlam / sens
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
     del fluxes, areas, sens, dlam, no_cal
 
