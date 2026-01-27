@@ -683,7 +683,7 @@ class IFUCubeData:
             for input_model in self.master_table.FileMap[self.instrument][this_par1][this_par2]:
                 # loop over the files that cover the spectral range the cube is for
 
-                self.input_models_this_cube.append(input_model.copy())
+                self.input_models_this_cube.append(input_model)
                 # set up input_model to be first file used to copy in basic header info
                 # to ifucube meta data
                 if ib == 0 and k == 0:
