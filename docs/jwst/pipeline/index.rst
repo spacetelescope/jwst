@@ -19,5 +19,4 @@ Pipeline Modules
    calwebb_guider.rst
    calwebb_wfs-image2.rst
    calwebb_wfs-image3.rst
-
-.. automodapi:: jwst.pipeline
+   api_ref.rst
