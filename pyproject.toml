@@ -83,7 +83,7 @@ jwst = "jwst.stpipe.integration:get_steps"
 docs = [
     "matplotlib",
     "numpydoc",
-    "sphinx<9",
+    "sphinx",
     "sphinxcontrib-jquery",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
