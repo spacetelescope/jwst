@@ -108,7 +108,7 @@ class Spec3Pipeline(Pipeline):
         # could either be done via LoadAsAssociation and then manually
         # load input members into models and ModelContainer, or just
         # do a direct open of all members in ASN file, e.g.
-        input_models = dm.open(input_data, asn_exptypes=asn_exptypes)
+        input_models = self.prepare_output(input_data, asn_exptypes=asn_exptypes)
 
         # Immediately update the ASNTABLE keyword value in all inputs,
         # so that all outputs get the new value
@@ -331,7 +331,8 @@ class Spec3Pipeline(Pipeline):
                 log.info(f"Saving the final c1d product as {c1d_filename}.")
                 c1d_output.save(c1d_filename)
 
-        input_models.close()
+        if input_models is not input_data:
+            input_models.close()
 
         log.info("Ending calwebb_spec3")
         return
