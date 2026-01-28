@@ -36,23 +36,23 @@ class ResidualFringeStep(Step):
 
         Parameters
         ----------
-        input_data : str or IFUImageModel
+        input_data : str or `~stdatamodels.jwst.datamodels.IFUImageModel`
             Input data to correct.  Must be a MIRI MRS IFU image.
 
         Returns
         -------
-        IFUImageModel
+        output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
             The corrected datamodel.
         """
-        self.transmission_level = 80  # sets the transmission level to use in the regions file
-        # 80% is what other steps use.
+        # Sets the transmission level to use in the regions file.
+        # 80% is standard.
+        transmission_level = 80
 
         # set up the dictionary to ignore wavelength regions in the residual fringe correction
         ignore_regions = {"num": 0, "min": [], "max": []}
         if self.ignore_region_min is not None:
             for region in self.ignore_region_min:
                 ignore_regions["min"].append(float(region))
-
         min_num = len(ignore_regions["min"])
 
         if self.ignore_region_max is not None:
@@ -65,22 +65,19 @@ class ResidualFringeStep(Step):
             raise ValueError("Number of ignore_region_min does not match ignore_region_max")
 
         ignore_regions["num"] = min_num
-
         if min_num > 0:
             log.info(f"Ignoring {min_num} wavelength regions")
 
-        self.ignore_regions = ignore_regions
+        output_model = self.prepare_output(input_data)
 
-        input_data = datamodels.open(input_data)
-
-        if isinstance(input_data, datamodels.IFUImageModel):
-            exptype = input_data.meta.exposure.type
+        if isinstance(output_model, datamodels.IFUImageModel):
+            exptype = output_model.meta.exposure.type
         else:
-            raise TypeError(f"Failed to process input type: {type(input_data)}")
+            raise TypeError(f"Failed to process input type: {type(output_model)}")
 
         # Set up residual fringe correction parameters
         pars = {
-            "transmission_level": self.transmission_level,
+            "transmission_level": transmission_level,
             "save_intermediate_results": self.save_intermediate_results,
             "make_output_path": self.make_output_path,
         }
@@ -88,43 +85,41 @@ class ResidualFringeStep(Step):
         if exptype != "MIR_MRS":
             log.warning("Residual fringe correction is only for MIRI MRS data")
             log.warning(f"Input is: {exptype}")
-            result = input_data.copy()
-            result.meta.cal_step.residual_fringe = "SKIPPED"
-            return result
+            output_model.meta.cal_step.residual_fringe = "SKIPPED"
+            return output_model
 
         # 1. set up the reference files
         # 2. correct the  model
         # 3. return from step
 
-        self.residual_fringe_filename = self.get_reference_file(input_data, "fringefreq")
-        log.info(f"Using FRINGEFREQ reference file:{self.residual_fringe_filename}")
+        residual_fringe_filename = self.get_reference_file(output_model, "fringefreq")
+        log.info(f"Using FRINGEFREQ reference file: {residual_fringe_filename}")
 
         # set up regions reference file
-        self.regions_filename = self.get_reference_file(input_data, "regions")
-        log.info(f"Using MRS regions reference file: {self.regions_filename}")
+        regions_filename = self.get_reference_file(output_model, "regions")
+        log.info(f"Using MRS regions reference file: {regions_filename}")
 
         # Check for a valid reference files. If they are not found skip step
-        if self.residual_fringe_filename == "N/A" or self.regions_filename == "N/A":
-            if self.residual_fringe_filename == "N/A":
+        if residual_fringe_filename == "N/A" or regions_filename == "N/A":
+            if residual_fringe_filename == "N/A":
                 log.warning("No FRINGEFREQ reference file found")
                 log.warning("Residual Fringe step will be skipped")
 
-            if self.regions_filename == "N/A":
+            if regions_filename == "N/A":
                 log.warning("No MRS regions reference file found")
                 log.warning("Residual Fringe step will be skipped")
 
-            result = input_data.copy()
-            result.meta.cal_step.residual_fringe = "SKIPPED"
-            return result
+            output_model.meta.cal_step.residual_fringe = "SKIPPED"
+            return output_model
 
         # Do the correction
         rfc = residual_fringe.ResidualFringeCorrection(
-            input_data,
-            self.residual_fringe_filename,
-            self.regions_filename,
-            self.ignore_regions,
+            output_model,
+            residual_fringe_filename,
+            regions_filename,
+            ignore_regions,
             **pars,
         )
-        result = rfc.do_correction()
-        result.meta.cal_step.residual_fringe = "COMPLETE"
-        return result
+        output_model = rfc.do_correction()
+        output_model.meta.cal_step.residual_fringe = "COMPLETE"
+        return output_model

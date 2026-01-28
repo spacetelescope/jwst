@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-from stdatamodels.jwst import datamodels
 
 from jwst.srctype.srctype import set_source_type
 from jwst.stpipe import Step
@@ -30,19 +29,24 @@ class SourceTypeStep(Step):
 
         Parameters
         ----------
-        step_input : str, IFUImageModel, MultiSlitModel, or SlitModel
+        step_input : str, `~stdatamodels.jwst.datamodels.IFUImageModel`, \
+                     `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+                     `~stdatamodels.jwst.datamodels.SlitModel`
             Either the path to the file or the science data model to be corrected.
 
         Returns
         -------
-        datamodel : IFUImageModel, MultiSlitModel, or SlitModel
+        output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`, \
+                       `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+                       `~stdatamodels.jwst.datamodels.SlitModel`
             Data model with keyword "SRCTYPE" populated with either "POINT" or "EXTENDED".
         """
-        with datamodels.open(step_input) as input_model:
-            # Call the source selection routine on a copy of the input
-            result = set_source_type(input_model.copy(), self.source_type)
+        output_model = self.prepare_output(step_input)
 
-            # Set the step status in the output model
-            result.meta.cal_step.srctype = "COMPLETE"
+        # Call the source selection routine on the output model
+        output_model = set_source_type(output_model, self.source_type)
 
-        return result
+        # Set the step status in the output model
+        output_model.meta.cal_step.srctype = "COMPLETE"
+
+        return output_model

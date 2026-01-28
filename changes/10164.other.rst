@@ -1,0 +1,1 @@
+Pin gwcs to <1 to avoid errors for WCS instances with None input_frame.

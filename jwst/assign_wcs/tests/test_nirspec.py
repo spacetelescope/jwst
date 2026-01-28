@@ -195,6 +195,7 @@ def test_nirspec_imaging_via_step_call(exptype):
     """Test Nirspec Imaging modes in the step call."""
     f = create_nirspec_imaging_file(exptype=exptype)
     im = datamodels.ImageModel(f)
+    im.data = np.zeros((10, 10))
     result = assign_wcs_step.AssignWcsStep.call(im)
     assert result.meta.wcs.available_frames == [
         "detector",

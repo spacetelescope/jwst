@@ -55,7 +55,7 @@ def test_data_correction(setup_inputs):
     )
 
     # Do the correction.
-    output_model = fringe.do_correction(input_model, fringe_model)
+    output_model = fringe.apply_fringe(input_model.copy(), fringe_model)
 
     # Check that correction was done on pixels with valid values for all
     # SCI, ERR, and VAR arrays.
