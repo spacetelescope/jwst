@@ -1,4 +1,7 @@
+import asdf
+import datetime
 import logging
+import numpy as np
 
 from stdatamodels.jwst import datamodels
 
@@ -21,6 +24,9 @@ class PersistenceStep(Step):
         save_persistence = boolean(default=False) # Save subtracted persistence to an output file with suffix '_output_pers'
         save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
         modify_input = boolean(default=False)
+        persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
+        persistence_array_file = string(default=None) # A path to an ASDF file containing a 2-D array of persistence times per pixel
+        persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
     """  # noqa: E501
 
     reference_file_types = ["trapdensity", "trappars", "persat"]
@@ -44,6 +50,8 @@ class PersistenceStep(Step):
                 self.input_trapsfilled = None
 
         result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
+
+        self.process_persistence_options(result)
 
         trap_density_filename = self.get_reference_file(result, "trapdensity")
         trappars_filename = self.get_reference_file(result, "trappars")
@@ -88,6 +96,9 @@ class PersistenceStep(Step):
             trap_density_model,
             trappars_model,
             persat_model,
+            self.persistence_time,
+            self.persistence_array,
+            self.persistence_dnu,
         )
         (result, traps_filled, output_pers, skipped) = pers_a.do_all()
         if skipped:
@@ -106,9 +117,72 @@ class PersistenceStep(Step):
             self.save_model(output_pers, suffix="output_pers", force=self.save_persistence)
             del output_pers
 
+        if pers_a.persistence_array is not None:
+            self.write_persistence_array()
+
+
         # Cleanup
         del trap_density_model
         del trappars_model
         del persat_model
 
         return result
+
+    def process_persistence_options(self, result):
+        """
+        Processing  persistence_time, persistence_array, and persistence_dnu as the inputs.
+
+        Parameters
+        ----------
+        result : RampModel
+            The RampModel on which to process the persistence flag.
+        """
+        # Could make less than or equal to frametime.
+        if self.persistence_time is None or self.persistence_time <= 0.0:
+            self.persistence_time = None
+            self.persistence_array = None
+            return  # No persistence option chosen
+
+        _, _, nrows, ncols = result.groupdq.shape
+        if self.persistence_array_file is not None:
+            self.persistence_array_create = False 
+
+            with asdf.open(self.persistence_array_file) as af:
+                self.persistence_array = af.tree["persistence_data"].copy()
+
+            # Make sure array has correct dimensions
+            dims = self.persistence_array.shape 
+            if len(dims) != 2 or dims[0] != nrows or dims[1] != ncols:
+                raise ValueError("'persistence_array' needs to be a 2-D list with dimensions (nrows, ncols)")
+        else:
+            self.persistence_array_file = result.meta.filename
+            self.persistence_array_create = True
+            self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
+
+    def write_persistence_array(self):
+        """
+        Write the persistence array to an ASDF file.
+
+        Parameters
+        ----------
+        filename : str
+            The name of the output ASDF file.
+        """
+        # Get current time string
+        now = datetime.datetime.now()
+        time_fmt = "%Y%m%d_%H%M%S_%f"
+        time_str = now.strftime(time_fmt)
+
+        # persistence_array_file always gets set if the persistence options are processed.
+        filename = self.persistence_array_file
+
+        # Add time suffix
+        if filename.endswith(".asdf"):
+            filename = self.persistence_array_file.replace(".asdf", f"_pers_{time_str}.asdf")
+        elif filename.endswith(".fits"):
+            filename = self.persistence_array_file.replace(".fits", f"_pers_{time_str}.asdf")
+
+        # Write persistence array to ASDF file
+        tree = {"persistence_data": self.persistence_array}
+        with asdf.AsdfFile(tree) as af:
+            af.write_to(filename)   
