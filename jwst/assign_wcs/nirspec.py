@@ -207,9 +207,9 @@ def imaging(input_model, reference_files):
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
-        va_scale=input_model.meta.velocity_aberration.scale_factor,
-        v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref,
+        va_scale=getattr(input_model.meta.velocity_aberration, "scale_factor", None),
+        v2_ref=getattr(input_model.meta.wcsinfo, "v2_ref", None),
+        v3_ref=getattr(input_model.meta.wcsinfo, "v3_ref", None),
     )
     va_corr.name = "va_corr"
     va_corr.inputs = ("v2", "v3")
@@ -357,9 +357,9 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
-        va_scale=input_model.meta.velocity_aberration.scale_factor,
-        v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref,
+        va_scale=getattr(input_model.meta.velocity_aberration, "scale_factor", None),
+        v2_ref=getattr(input_model.meta.wcsinfo, "v2_ref", None),
+        v3_ref=getattr(input_model.meta.wcsinfo, "v3_ref", None),
     ) & Identity(2)
     va_corr.name = "va_corr"
     va_corr.inputs = ("v2", "v3", "lam", "name")
@@ -523,9 +523,9 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
-        va_scale=input_model.meta.velocity_aberration.scale_factor,
-        v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref,
+        va_scale=getattr(input_model.meta.velocity_aberration, "scale_factor", None),
+        v2_ref=getattr(input_model.meta.wcsinfo, "v2_ref", None),
+        v3_ref=getattr(input_model.meta.wcsinfo, "v3_ref", None),
     ) & Identity(2)
     va_corr.name = "va_corr"
     va_corr.inputs = ("v2", "v3", "lam", "name")
@@ -573,11 +573,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
         A list of `~stdatamodels.jwst.transforms.models.Slit` objects.
     """
     exp_type = input_model.meta.exposure.type.lower()
-    lamp_mode = input_model.meta.instrument.lamp_mode
-    if isinstance(lamp_mode, str):
-        lamp_mode = lamp_mode.lower()
-    else:
-        lamp_mode = "none"
+    lamp_mode = getattr(input_model.meta.instrument, "lamp_mode", "none").lower()
 
     # MOS/MSA exposure requiring MSA metadata file
     if exp_type in ["nrs_msaspec", "nrs_autoflat"] or (
@@ -777,7 +773,7 @@ def get_msa_metadata(input_model, reference_files):
             message = "msa_metadata_file is None."
             log.critical(message)
             raise MSAFileError(message) from None
-    msa_metadata_id = input_model.meta.instrument.msa_metadata_id
+    msa_metadata_id = getattr(input_model.meta.instrument, "msa_metadata_id", None)
     if msa_metadata_id is None:
         message = "Missing msa_metadata_id (keyword MSAMETID)."
         log.critical(message)
@@ -1226,7 +1222,7 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
     full_range = [0.6e-6, 5.3e-6]
 
     filt = input_model.meta.instrument.filter
-    lamp = input_model.meta.instrument.lamp_state
+    lamp = getattr(input_model.meta.instrument, "lamp_state", "none")
     grating = input_model.meta.instrument.grating
     exp_type = input_model.meta.exposure.type
 
@@ -1753,8 +1749,8 @@ def dms_to_sca(input_model):
         Transform from DMS frame to SCA frame.
     """
     detector = input_model.meta.instrument.detector
-    xstart = input_model.meta.subarray.xstart
-    ystart = input_model.meta.subarray.ystart
+    xstart = getattr(input_model.meta.subarray, "xstart", None)
+    ystart = getattr(input_model.meta.subarray, "ystart", None)
     if xstart is None:
         xstart = 1
     if ystart is None:
@@ -2018,8 +2014,8 @@ def get_disperser(input_model, disperserfile):
         The corrected disperser information.
     """
     disperser = DisperserModel(disperserfile)
-    xtilt = input_model.meta.instrument.gwa_xtilt
-    ytilt = input_model.meta.instrument.gwa_ytilt
+    xtilt = getattr(input_model.meta.instrument, "gwa_xtilt", None)
+    ytilt = getattr(input_model.meta.instrument, "gwa_ytilt", None)
     disperser = correct_tilt(disperser, xtilt, ytilt)
     return disperser
 
@@ -2565,7 +2561,9 @@ def validate_open_slits(input_model, open_slits, reference_files):
     # read models from reference file
     disperser = DisperserModel(reference_files["disperser"])
     disperser = correct_tilt(
-        disperser, input_model.meta.instrument.gwa_xtilt, input_model.meta.instrument.gwa_ytilt
+        disperser,
+        getattr(input_model.meta.instrument, "gwa_xtilt", None),
+        getattr(input_model.meta.instrument, "gwa_ytilt", None),
     )
 
     order, wrange = get_spectral_order_wrange(input_model, reference_files["wavelengthrange"])
@@ -2832,11 +2830,7 @@ def nrs_lamp(input_model, reference_files, slit_y_range):
     pipeline : list
         The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
-    lamp_mode = input_model.meta.instrument.lamp_mode
-    if isinstance(lamp_mode, str):
-        lamp_mode = lamp_mode.lower()
-    else:
-        lamp_mode = "none"
+    lamp_mode = getattr(input_model.meta.instrument, "lamp_mode", "none").lower()
     if lamp_mode in ["fixedslit", "brightobj"]:
         return slits_wcs(input_model, reference_files, slit_y_range)
     elif lamp_mode == "ifu":
