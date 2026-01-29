@@ -27,10 +27,6 @@ updates:
     target-branch: "main"
     schedule:
       interval: "weekly"
-    groups:
-      actions:
-        patterns:
-          - "*"
     cooldown:
       default-days: 7
     reviewers:
