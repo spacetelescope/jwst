@@ -124,7 +124,7 @@ class Observation:
         max_cpu=1,
         max_pixels_per_chunk=5e4,
         oversample_factor=2,
-        phot_per_lam=True,
+        phot_lam_unit="um",
     ):
         """
         Initialize all data and metadata for a given observation.
@@ -147,10 +147,10 @@ class Observation:
             Maximum number of pixels per chunk when dispersing sources
         oversample_factor : int, optional
             Factor by which to oversample the wavelength grid
-        phot_per_lam : bool, optional
-            Whether to compute photometry per wavelength bin (True) or per pixel (False).
+        phot_lam_unit : str, optional
+            Unit of the photometric wavelength calibration ("um" or "a").
             This depends on how the photom reference file has been delivered.
-            True should be used for NIRCam, and False should be used for NIRISS.
+            "a" should be used for NIRCam, and "um" should be used for NIRISS.
         """
         if boundaries is None:
             boundaries = []
@@ -164,7 +164,7 @@ class Observation:
         self.max_cpu = max_cpu
         self.max_pixels_per_chunk = max_pixels_per_chunk
         self.oversample_factor = oversample_factor
-        self.phot_per_lam = phot_per_lam
+        self.phot_lam_unit = phot_lam_unit
 
         # ensure the direct image has background subtracted
         self.dimage = background_subtract(direct_image)
@@ -274,7 +274,7 @@ class Observation:
                     self.grism_wcs,
                     self.naxis,
                     self.oversample_factor,
-                    self.phot_per_lam,
+                    self.phot_lam_unit,
                 ]
             )
 

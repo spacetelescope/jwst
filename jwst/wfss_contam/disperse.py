@@ -199,7 +199,7 @@ def disperse(
     grism_wcs,
     naxis,
     oversample_factor=2,
-    phot_per_lam=True,
+    phot_lam_unit="um",
 ):
     """
     Compute the dispersed image pixel values from the direct image.
@@ -232,12 +232,8 @@ def disperse(
         Dimensions of the grism image (naxis[0], naxis[1])
     oversample_factor : int, optional
         Factor by which to oversample the wavelength grid
-    phot_per_lam : bool
-        If True, it is assumed that the photometric response is calibrated per wavelength,
-        as is done for NIRCam, and therefore we need to multiply by dlam to un-do the calibration
-        in this step.
-        If False, it is assumed that the response is calibrated per pixel, and there is no need
-        to multiply by dlam. This is what's done for NIRISS.
+    phot_lam_unit : str, optional
+        Unit of the photometric wavelength calibration ("um" or "a").
 
     Returns
     -------
@@ -325,14 +321,15 @@ def disperse(
     # Divide out the response values to convert from Mjy/sr to DN/s.
     # Note that the photom reference files are constructed with per-wavelength units,
     # so oversampling is accounted for by the spacing of dlam.
+    if phot_lam_unit == "a":
+        factor = 1e4
+    elif phot_lam_unit == "um":
+        factor = 1.0
+    else:
+        raise ValueError('phot_lam_unit must be either "um" or "a"')
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-        if phot_per_lam:
-            # NIRCam case. Fluxes are per angstrom
-            counts = fluxes * areas * dlam * 1e4 / sens
-        else:
-            # NIRISS case. Fluxes are per micron
-            counts = fluxes * areas * dlam / sens
+        counts = fluxes * areas * dlam * factor / sens
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
     del fluxes, areas, sens, dlam, no_cal
 
