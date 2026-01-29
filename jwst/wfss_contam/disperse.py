@@ -199,7 +199,6 @@ def disperse(
     grism_wcs,
     naxis,
     oversample_factor=2,
-    phot_lam_unit="um",
 ):
     """
     Compute the dispersed image pixel values from the direct image.
@@ -211,7 +210,8 @@ def disperse(
     ys : ndarray
         Flat array of Y coordinates of pixels in the direct image
     fluxes : ndarray
-        Fluxes of the pixels in the direct image corresponding to xs, ys
+        Fluxes of the pixels in the direct image corresponding to xs, ys.
+        These should have units of MJy/sr.
     source_ids_per_pixel : int array
         Source IDs of the input pixels in the segmentation map
     order : int
@@ -221,9 +221,10 @@ def disperse(
     wmax : float
         Maximum wavelength for dispersed spectra
     sens_waves : float array
-        Wavelength array from photom reference file
+        Wavelength array from photom reference file. Expected unit is micron.
     sens_resp : float array
-        Response (flux calibration) array from photom reference file
+        Response (flux calibration) array from photom reference file.
+        Expected units are (micron) * (MJy / sr) / (ADU/s).
     direct_image_wcs : WCS object
         WCS object for the direct image and segmentation map
     grism_wcs : WCS object
@@ -232,8 +233,6 @@ def disperse(
         Dimensions of the grism image (naxis[0], naxis[1])
     oversample_factor : int, optional
         Factor by which to oversample the wavelength grid
-    phot_lam_unit : str, optional
-        Unit of the photometric wavelength calibration ("um" or "a").
 
     Returns
     -------
@@ -321,15 +320,9 @@ def disperse(
     # Divide out the response values to convert from Mjy/sr to DN/s.
     # Note that the photom reference files are constructed with per-wavelength units,
     # so oversampling is accounted for by the spacing of dlam.
-    if phot_lam_unit == "a":
-        factor = 1e4
-    elif phot_lam_unit == "um":
-        factor = 1.0
-    else:
-        raise ValueError('phot_lam_unit must be either "um" or "a"')
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-        counts = fluxes * areas * dlam * factor / sens
+        counts = fluxes * areas * dlam / sens
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
     del fluxes, areas, sens, dlam, no_cal
 

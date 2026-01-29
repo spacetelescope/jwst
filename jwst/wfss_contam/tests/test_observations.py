@@ -24,7 +24,6 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
         segmentation_map.data,
         grism_wcs,
         direct_image_with_gradient.meta.wcs,
-        phot_lam_unit="um",
     )
 
 
