@@ -148,7 +148,6 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p, bright_use
     if sci_int_start == 1:  # we have segmented data and the data starts with the first integration.
         rscd_skip_array, num_rscd_lowered = flag_rscd(
             output,
-            sci_ngroups,
             sci_int_start,
             sci_int_start,
             group_skip_int1,
@@ -179,10 +178,10 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p, bright_use
         log.info(f"Number of groups to skip for integrations 2 and higher: {group_skip_int2p}")
 
         rscd_skip_array, num_rscd_lowered = flag_rscd(
-            output, sci_ngroups, int_start, int_end, group_skip_int2p, bright_use_2groups
+            output, int_start, int_end, group_skip_int2p, bright_use_2groups
         )
 
-        output = apply_rscd_flags(output, sci_int_start, sci_int_start, rscd_skip_array)
+        output = apply_rscd_flags(output, int_start, int_end, rscd_skip_array)
         log.info(
             "Number of usable bright pixels with rscd flag groups "
             f"not set to DO_NOT_USE: {num_rscd_lowered}"
