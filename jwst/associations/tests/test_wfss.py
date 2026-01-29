@@ -6,7 +6,6 @@ from jwst.associations import AssociationPool
 from jwst.associations.main import Main
 
 REQUIRED_ASN_TYPES = set(["image2", "spec2", "image3", "spec3"])
-REQUIRED_ASN_TYPES_MIRI = set(["image2", "spec2", "image3"])
 
 
 def test_niriss_wfss():
@@ -55,10 +54,11 @@ def test_miri_wfss():
     # For this pool of 4 dithers that will result in:
     # 4 image2 associations
     # 4 spec2 associations
+    # 1 spec3 association
     # 1 image3 association
-    assert len(asns) == 9
+    assert len(asns) == 10
     asn_types = [asn["asn_type"] for asn in asns]
-    assert REQUIRED_ASN_TYPES_MIRI == set(asn_types)
+    assert REQUIRED_ASN_TYPES == set(asn_types)
 
     # Arrange associations by type
     asn_by_type = {asn["asn_type"]: asn for asn in asns}
