@@ -18,6 +18,7 @@ def klip(target_model, refs_model, truncate):
     target_model : CubeModel
         The input images of the target (NINTS x NROWS x NCOLS). Multiple integrations
         within a single exposure are stacked along the first (NINTS) axis of the data arrays.
+        Updated in place.
     refs_model : CubeModel
         The input 3D stack of reference images (NINTS_PSF x NROWS x NCOLS). The first
         (NINTS_PSF) axis is the stack of aligned PSF integrations for that
@@ -27,13 +28,12 @@ def klip(target_model, refs_model, truncate):
 
     Returns
     -------
-    output_target : CubeModel
+    target_model : CubeModel
         Science target Cubemodel with PSF subtracted
     output_psf : CubeModel
         CubeModel of PSF fitted to target image
     """
-    # Initialize the output models as copies of the input target model
-    output_target = target_model.copy()
+    # Initialize the output PSF model as a copy of the target model
     output_psf = target_model.copy()
 
     # Loop over the target integrations
@@ -71,7 +71,7 @@ def klip(target_model, refs_model, truncate):
         psfimg = psfimg.reshape(tshape)
         output_psf.data[i] = psfimg
         outimg = outimg.reshape(tshape)
-        output_target.data[i] = outimg
+        target_model.data[i] = outimg
 
         # Compute the ERR for the fitted target image:
         # the ERR is taken as the std-dev of the KLIP results for all of the
@@ -83,9 +83,9 @@ def klip(target_model, refs_model, truncate):
             refs_fit[k] = refs[k] - np.dot(klvect.T, np.dot(refs[k], klvect.T))
 
         # Now take the standard deviation of the results
-        output_target.err[i] = np.std(refs_fit, 0).reshape(tshape)
+        target_model.err[i] = np.std(refs_fit, 0).reshape(tshape)
 
-    return output_target, output_psf
+    return target_model, output_psf
 
 
 def karhunen_loeve_transform(m, normalize=False):
