@@ -78,6 +78,10 @@ class Ami3Pipeline(Pipeline):
             # Save the result
             targ_lg.append(result1)
 
+            # Close the other models
+            result2.close()
+            result3.close()
+
         # Run ami_analyze on all the psf members
         psf_lg = []
         for input_file in psf_files:
@@ -92,6 +96,10 @@ class Ami3Pipeline(Pipeline):
 
             # Save the result
             psf_lg.append(result1)
+
+            # Close the other models
+            result2.close()
+            result3.close()
 
         # This zip operation matches science exposures to reference star exposures
         # in a one-to-one fashion, truncating a list if it is longer than the
