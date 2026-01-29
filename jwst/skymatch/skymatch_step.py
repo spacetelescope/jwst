@@ -179,7 +179,7 @@ class SkyMatchStep(Step):
             image=image_model.data,
             wcs_fwd=wcs.__call__,
             wcs_inv=wcs.invert,
-            mask=dqmask.astype("bool"),
+            mask=dqmask,
             sky_id=image_model.meta.filename,
             skystat=self._skystat,
             stepsize=self.stepsize,
