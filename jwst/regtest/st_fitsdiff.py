@@ -714,10 +714,13 @@ class STHDUDiff(HDUDiff):
         elif isinstance(self.a, _TableLikeHDU) and isinstance(self.b, _TableLikeHDU):
             # TODO: Replace this if/when _BaseHDU grows a .is_table property
             self.diff_data = STTableDataDiff.fromdiff(self, self.a.data, self.b.data)
-            # Clean up references to (possibly) memmapped arrays, so they can
-            # be closed by .close()
-            self.diff_data.a = None
-            self.diff_data.b = None
+            if self.diff_data.diff_total == 0:
+                self.diff_data = None
+            else:
+                # Clean up references to (possibly) memmapped arrays, so they can
+                # be closed by .close()
+                self.diff_data.a = None
+                self.diff_data.b = None
         elif not self.diff_extension_types:
             # Don't diff the data for unequal extension types that are not
             # recognized image or table types
@@ -786,11 +789,11 @@ class STHDUDiff(HDUDiff):
                 self._writeln(tline)
 
         if self.diff_data is not None and not self.diff_data.identical:
-            self._fileobj.write("\n")
-            self._writeln("Data contains differences:")
             if [self.nans, self.percentages, self.stats] != [None, None, None]:
+                self._fileobj.write("\n")
+                self._writeln("Data contains differences:")
                 report_data_diff()
-            self.diff_data.report(self._fileobj, indent=self._indent + 1)
+                self.diff_data.report(self._fileobj, indent=self._indent + 1)
 
 
 class STImageDataDiff(ImageDataDiff):
@@ -1510,7 +1513,10 @@ class STTableDataDiff(TableDataDiff):
                     last_seen_idx = idx
                     self.diff_values.append(((col.name, idx), (arra[idx], arrb[idx])))
 
-        # Calculate the absolute difference
+        # Calculate the absolute difference only if there are failed tolerance tests
+        if self.fail_atol_rtol_test == 0:
+            self.diff_total = 0
+            return
         total_values = len(self.a) * len(self.a.dtype.fields)
         # Calculate the absolute and relative difference percentages
         if self.report_pixel_loc_diffs:
@@ -1566,6 +1572,9 @@ class STTableDataDiff(TableDataDiff):
         #   otherwise report the column and the total number of differences and the
         #   percentage absolute and relative differences.
 
+        if self.identical_columns:
+            return
+
         self._writeln(f"Found {self.different_table_elements} different table data element(s). ")
         self._writeln(f"{self.fail_atol_rtol_test} failed the (atol, rtol) test")
 
@@ -1595,12 +1604,6 @@ class STTableDataDiff(TableDataDiff):
                     self._writeln(f"Column {colname} has {ndiffs} different non-numeric entries")
                 else:
                     self._writeln(f"Column {colname} has {ndiffs} different non-numeric entry")
-
-        if self.identical_columns:
-            if len(self.identical_columns) == 1:
-                self._writeln(f"\nColumn {self.identical_columns} is identical")
-            else:
-                self._writeln(f"\nColumns {self.identical_columns} are identical")
 
         # Report of column differences from astropy
         if self.report_pixel_loc_diffs:
