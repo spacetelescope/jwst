@@ -148,15 +148,15 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p, bright_use
     if sci_int_start == 1:  # we have segmented data and the data starts with the first integration.
         rscd_skip_array, num_rscd_lowered = flag_rscd(
             output,
-            sci_int_start-1,
-            sci_int_start-1,
+            sci_int_start - 1,
+            sci_int_start - 1,
             group_skip_int1,
             bright_use_2groups,
         )
 
-        print('RSCD skip array', rscd_skip_array)
+        print("RSCD skip array", rscd_skip_array)
 
-        output = apply_rscd_flags(output, sci_int_start-1, sci_int_start-1, rscd_skip_array)
+        output = apply_rscd_flags(output, sci_int_start - 1, sci_int_start - 1, rscd_skip_array)
         log.info(
             "Number of usable bright pixels with rscd flag groups "
             f"not set to DO_NOT_USE: {num_rscd_lowered}"
@@ -177,12 +177,12 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p, bright_use
     if sci_nints > 1:
         log.info(f"Number of groups to skip for integrations 2 and higher: {group_skip_int2p}")
 
-        print('Second int', int_start, int_end)
+        print("Second int", int_start, int_end)
         rscd_skip_array, num_rscd_lowered = flag_rscd(
-            output, int_start-1, int_end-1, group_skip_int2p, bright_use_2groups
+            output, int_start - 1, int_end - 1, group_skip_int2p, bright_use_2groups
         )
 
-        output = apply_rscd_flags(output, int_start-1, int_end-1, rscd_skip_array)
+        output = apply_rscd_flags(output, int_start - 1, int_end - 1, rscd_skip_array)
         log.info(
             "Number of usable bright pixels with rscd flag groups "
             f"not set to DO_NOT_USE: {num_rscd_lowered}"
@@ -229,7 +229,6 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip, bright_use_2groups):
         log.info(f"Number of groups to skip for integration 1 : {rscd_skip}")
     else:
         log.info(f"Number of groups to skip for integration 2 and higher : {rscd_skip}")
-
 
     n_ints = int_end - int_start + 1
     x_dim = output_model.groupdq.shape[3]
@@ -321,7 +320,7 @@ def apply_rscd_flags(output_model, int_start, int_end, skip_array):
         Ramp datamodel with RSCD affected groups flagged as DO_NOT_USE
     """
     # Redefine starting at 0
-    skip_array = skip_array-1
+    skip_array = skip_array - 1
     # 1. Extract the relevant region of the groupdq array
     # Shape: (N_ints, Groups, Y, X)
     dq = output_model.groupdq[int_start : int_end + 1, :, :, :]
@@ -337,12 +336,12 @@ def apply_rscd_flags(output_model, int_start, int_end, skip_array):
 
     mask = group_indices[None, :, None, None] <= skip_array[:, None, :, :]
 
-    #print(mask)
+    # print(mask)
     # 4. Apply the DO_NOT_USE flag using the mask
     # This updates only the pixels/groups where the index is below the skip threshold
     dq[mask] |= dqflags.group["DO_NOT_USE"]
 
-    print('DQ', dq)
+    print("DQ", dq)
     # Put the modified dq back
     output_model.groupdq[int_start : int_end + 1, :, :, :] = dq
 
