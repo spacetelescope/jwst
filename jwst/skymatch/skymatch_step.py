@@ -138,7 +138,7 @@ class SkyMatchStep(Step):
             dqmask = np.isfinite(image_model.data)
         else:
             dqmask = bitfield_to_boolean_mask(
-                image_model.dq, self._dqbits, good_mask_value=True, dtype=np.bool
+                image_model.dq, self._dqbits, good_mask_value=True, dtype="bool"
             ) & np.isfinite(image_model.data)
 
         # see if 'skymatch' was previously run and raise an exception
