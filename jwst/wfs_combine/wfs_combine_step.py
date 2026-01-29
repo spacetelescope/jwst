@@ -61,15 +61,13 @@ class WfsCombineStep(Step):
             science_members = [
                 member for member in which_set["members"] if member["exptype"].lower() == "science"
             ]
-            infile_1 = science_members[0]["expname"]
-            infile_2 = science_members[1]["expname"]
-            outfile = which_set["name"]
+            model_1 = self.prepare_output(science_members[0]["expname"])
+            model_2 = self.prepare_output(science_members[1]["expname"])
 
             # Create the step instance
             wfs = wfs_combine.DataSet(
-                infile_1,
-                infile_2,
-                outfile,
+                model_1,
+                model_2,
                 self.do_refine,
                 self.flip_dithers,
                 self.psf_size,
@@ -80,9 +78,10 @@ class WfsCombineStep(Step):
             # Do the processing
             output_model = wfs.do_all()
 
-            # The DataSet class does not close its resources.  Do that here.
-            wfs.input_1.close()
-            wfs.input_2.close()
+            # Clean up the DataSet class and close the input models
+            del wfs
+            model_1.close()
+            model_2.close()
 
             # Update necessary meta info in the output
             output_model.meta.cal_step.wfs_combine = "COMPLETE"
