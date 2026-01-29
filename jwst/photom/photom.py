@@ -909,7 +909,7 @@ class DataSet:
                 )
             else:
                 # NRC_TSGRISM data produces a SpecModel, which is handled here
-                if self.exptype in ["NRC_WFSS", "NRC_TSGRISM"]:
+                if self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
                     log.info("Including spectral dispersion in 2-d flux calibration")
                     conversion, no_cal = self.create_2d_conversion(
                         self.input,
