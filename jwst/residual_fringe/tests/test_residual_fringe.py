@@ -76,8 +76,8 @@ def miri_mrs_model_linear(monkeypatch, linear_spectrum):
     model.meta.cal_step.fringe = "COMPLETE"
 
     wave, flux = linear_spectrum
-    model.data = flux[:, np.newaxis]
-    model.wavelength = wave[:, np.newaxis]
+    model.data += flux[:, None]
+    model.wavelength = np.ones_like(model.data) * wave[:, None]
     model.err = model.data * 0.01
 
     return model
