@@ -108,8 +108,12 @@ def set_variable_to_empty_list(variable):
     return variable
 
 
-class STFITSDiff(FITSDiff):
-    """FITSDiff class that just filters warnings from astropy FITSDiff."""
+class FITSDiffFilterWarnings(FITSDiff):
+    """
+    FITSDiff class that just filters warnings from astropy FITSDiff.
+
+    This class remains here in case we need to quickly revert to astropy FITSDiff.
+    """
 
     def _report(self):
         with warnings.catch_warnings():
@@ -117,7 +121,7 @@ class STFITSDiff(FITSDiff):
             super()._report()
 
 
-class STFITSDiffBeta(FITSDiff):
+class STFITSDiff(FITSDiff):
     """
     FITSDiff class from astropy with STScI ad hoc changes for STScI regression test reports.
 
@@ -1506,7 +1510,10 @@ class STTableDataDiff(TableDataDiff):
                     last_seen_idx = idx
                     self.diff_values.append(((col.name, idx), (arra[idx], arrb[idx])))
 
-        # Calculate the absolute difference
+        # Calculate the absolute difference only if there are failed tolerance tests
+        if self.fail_atol_rtol_test == 0 and len(self.non_numeric_diff_columns) == 0:
+            self.diff_total = 0
+            return
         total_values = len(self.a) * len(self.a.dtype.fields)
         # Calculate the absolute and relative difference percentages
         if self.report_pixel_loc_diffs:
@@ -1591,12 +1598,6 @@ class STTableDataDiff(TableDataDiff):
                     self._writeln(f"Column {colname} has {ndiffs} different non-numeric entries")
                 else:
                     self._writeln(f"Column {colname} has {ndiffs} different non-numeric entry")
-
-        if self.identical_columns:
-            if len(self.identical_columns) == 1:
-                self._writeln(f"\nColumn {self.identical_columns} is identical")
-            else:
-                self._writeln(f"\nColumns {self.identical_columns} are identical")
 
         # Report of column differences from astropy
         if self.report_pixel_loc_diffs:
