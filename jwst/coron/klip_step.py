@@ -47,14 +47,10 @@ class KlipStep(Step):
         log.info("KL transform truncation = %d", truncate)
 
         # Call the KLIP routine
-        target_model, psf_fit = klip.klip(target_model, refs_model, truncate)
+        target_model = klip.klip(target_model, refs_model, truncate, return_psf=False)
 
         # Update the step completion status
         target_model.meta.cal_step.klip = "COMPLETE"
-
-        # Close the psf_fit model since it was newly created
-        # and is not returned
-        psf_fit.close()
 
         # Return the target model
         return target_model

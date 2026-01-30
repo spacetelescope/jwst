@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 __all__ = ["klip", "karhunen_loeve_transform"]
 
 
-def klip(target_model, refs_model, truncate):
+def klip(target_model, refs_model, truncate, return_psf=True):
     """
     Apply KLIP algorithm to science data.
 
@@ -25,16 +25,21 @@ def klip(target_model, refs_model, truncate):
         target image.
     truncate : int
         Indicates how many rows to keep in the Karhunen-Loeve transform.
+    return_psf : bool, optional
+        If True, the PSF fit to the target image will be returned as a
+        separate datamodel.
 
     Returns
     -------
     target_model : CubeModel
         Science target Cubemodel with PSF subtracted
-    output_psf : CubeModel
-        CubeModel of PSF fitted to target image
+    output_psf : CubeModel, optional
+        CubeModel of PSF fitted to target image. Returned only if
+        ``return_psf`` is set to True.
     """
-    # Initialize the output PSF model as a copy of the target model
-    output_psf = target_model.copy()
+    # If needed, initialize the output PSF model as a copy of the target model
+    if return_psf:
+        output_psf = target_model.copy()
 
     # Loop over the target integrations
     for i in range(target_model.data.shape[0]):
@@ -68,10 +73,11 @@ def klip(target_model, refs_model, truncate):
 
         # Unflatten the PSF and subtracted target images from 1-D to 2-D
         # and copy them to the output models
-        psfimg = psfimg.reshape(tshape)
-        output_psf.data[i] = psfimg
         outimg = outimg.reshape(tshape)
         target_model.data[i] = outimg
+        if return_psf:
+            psfimg = psfimg.reshape(tshape)
+            output_psf.data[i] = psfimg
 
         # Compute the ERR for the fitted target image:
         # the ERR is taken as the std-dev of the KLIP results for all of the
@@ -85,7 +91,10 @@ def klip(target_model, refs_model, truncate):
         # Now take the standard deviation of the results
         target_model.err[i] = np.std(refs_fit, 0).reshape(tshape)
 
-    return target_model, output_psf
+    if return_psf:
+        return target_model, output_psf
+    else:
+        return target_model
 
 
 def karhunen_loeve_transform(m, normalize=False):
