@@ -1,5 +1,9 @@
 #! /usr/bin/env python
-"""JWST pipeline step for sky matching."""
+"""
+JWST pipeline step for sky matching.
+
+Provide support for sky background subtraction and equalization (matching).
+"""
 
 import logging
 from copy import deepcopy
@@ -63,12 +67,13 @@ class SkyMatchStep(Step):
 
         Parameters
         ----------
-        input_models : Any data type readable into a ModelLibrary, e.g. an asn file
+        input_models : obj
             An association of datamodels to input.
+            This can be any data type readable into a ModelLibrary, e.g., an ASN file,
 
         Returns
         -------
-        ModelLibrary
+        `~jwst.datamodels.library.ModelLibrary`
             A library of datamodels with the skymatch step applied.
         """
         # Check the input for open models and make a copy if necessary
@@ -227,12 +232,12 @@ class SkyMatchStep(Step):
 
         Parameters
         ----------
-        library : ModelLibrary
+        library : `~jwst.datamodels.library.ModelLibrary`
             Library of input data models.
 
         Returns
         -------
-        ModelLibrary
+        `~jwst.datamodels.library.ModelLibrary`
             Library of input data models with sky background values set to user-provided values.
         """
         if self.skylist is None:
