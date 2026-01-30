@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 import numpy as np
 from astropy.io.fits import FITS_rec
@@ -56,7 +55,7 @@ class Tso3Pipeline(Pipeline):
         log.info("Starting calwebb_tso3...")
         asn_exptypes = ["science"]
 
-        input_models = datamodels.open(input_data, asn_exptypes=asn_exptypes)
+        input_models = self.prepare_output(input_data, asn_exptypes=asn_exptypes)
 
         # Sanity check the input data
         input_tsovisit = is_tso(input_models[0])
@@ -93,7 +92,7 @@ class Tso3Pipeline(Pipeline):
                 original_filename = cube.meta.filename
 
                 # ensure output filename will not have duplicate asn_id
-                if "_" + self.asn_id in original_filename:
+                if self.asn_id is not None and "_" + self.asn_id in original_filename:
                     original_filename = original_filename.replace("_" + self.asn_id, "")
                 self.save_model(
                     cube, output_file=original_filename, suffix="crfints", asn_id=self.asn_id
@@ -164,7 +163,7 @@ class Tso3Pipeline(Pipeline):
 
             # Update some metadata from the association
             x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
-            x1d_result.meta.asn.table_name = Path(input_data).name
+            x1d_result.meta.asn.table_name = input_models.asn_table_name
 
             # Save the final x1d Multispec model
             x1d_result.meta.cal_step.pixel_replace = state
@@ -177,7 +176,8 @@ class Tso3Pipeline(Pipeline):
                 self.save_model(x1d_result, suffix="x1dints")
 
         # Done with all the inputs
-        input_models.close()
+        if input_models is not input_data:
+            input_models.close()
 
         # Check for all null photometry results before saving
         all_none = np.all([(x is None) for x in phot_result_list])
