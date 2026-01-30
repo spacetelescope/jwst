@@ -1,0 +1,1 @@
+Modified the ``jwst.coron.klip.klip`` function to update the target model in place and make the PSF output model optional.
