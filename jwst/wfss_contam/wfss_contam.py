@@ -435,10 +435,8 @@ def contam_corr(
     # filter needs to come from the PUPIL keyword value.
     if input_model.meta.instrument.name == "NIRISS":
         filter_name = pupil_kwd
-        phot_per_lam = False
     else:
         filter_name = filter_kwd
-        phot_per_lam = True
 
     # Read the source catalog to perform magnitude-based source selection later
     # mag limit will be scaled according to order 1 sensitivity
@@ -459,7 +457,6 @@ def contam_corr(
         max_cpu=ncpus,
         max_pixels_per_chunk=max_pixels_per_chunk,
         oversample_factor=oversample_factor,
-        phot_per_lam=phot_per_lam,
     )
 
     no_sources = True
