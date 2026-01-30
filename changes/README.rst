@@ -59,6 +59,7 @@ Stage 1
 Stage 2
 """""""
 
+- ``<PR#>.adaptive_trace_model.rst``
 - ``<PR#>.assign_wcs.rst``
 - ``<PR#>.badpix_selfcal.rst``
 - ``<PR#>.msaflagopen.rst``
