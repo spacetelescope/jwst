@@ -81,12 +81,19 @@ def test_get_wavelengths():
     assert_allclose(wl, wl_og)
 
 
-def test_get_wavelengths_empty():
-    # create a mock SlitModel
+def test_get_wavelengths_bad_shape():
     model = create_model()
-    model.data = np.array([])
 
-    with pytest.raises(ValueError):
+    model.data = np.array([])
+    with pytest.raises(ValueError, match=".*cannot compute wavelengths"):
+        get_wavelengths(model)
+
+    model.data = np.array(1)
+    with pytest.raises(ValueError, match=".*cannot compute wavelengths"):
+        get_wavelengths(model)
+
+    model.data = np.ones((10))
+    with pytest.raises(ValueError, match=".*cannot compute wavelengths"):
         get_wavelengths(model)
 
 
