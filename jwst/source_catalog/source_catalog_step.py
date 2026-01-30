@@ -75,97 +75,101 @@ class SourceCatalogStep(Step):
             filepaths.append(filepath)
         return filepaths
 
-    def process(self, input_model):
+    def process(self, input_data):
         """
         Create the catalog from the input datamodel.
 
         Parameters
         ----------
-        input_model : str or `~stdatamodels.jwst.datamodels.ImageModel`
-            A FITS filename or an `~stdatamodels.jwst.datamodels.ImageModel` of a drizzled image.
+        input_data : str or `~stdatamodels.jwst.datamodels.ImageModel`
+            A filename or an `~stdatamodels.jwst.datamodels.ImageModel` of a drizzled image.
 
         Returns
         -------
         catalog : `astropy.table.Table` or None
             The source catalog, or None if no sources were found.
         """
-        with datamodels.open(input_model) as model:
-            reffile_paths = self._get_reffile_paths(model)
-            aperture_ee = (self.aperture_ee1, self.aperture_ee2, self.aperture_ee3)
+        output_model = self.prepare_output(input_data)
+        reffile_paths = self._get_reffile_paths(output_model)
+        aperture_ee = (self.aperture_ee1, self.aperture_ee2, self.aperture_ee3)
 
-            try:
-                refdata = ReferenceData(model, reffile_paths, aperture_ee)
-                aperture_params = refdata.aperture_params
-                abvega_offset = refdata.abvega_offset
-            except RuntimeError as err:
-                msg = f"{err} Source catalog will not be created."
-                log.warning(msg)
-                return None
+        try:
+            refdata = ReferenceData(output_model, reffile_paths, aperture_ee)
+            aperture_params = refdata.aperture_params
+            abvega_offset = refdata.abvega_offset
+        except RuntimeError as err:
+            msg = f"{err} Source catalog will not be created."
+            log.warning(msg)
+            return None
 
-            coverage_mask = np.isnan(model.err) | (model.wht == 0)
+        coverage_mask = np.isnan(output_model.err) | (output_model.wht == 0)
 
-            # convert to Jy before calling make_tweakreg_catalog so the outputs end up in Jy
-            JWSTSourceCatalog.convert_mjysr_to_jy(model)
+        # convert to Jy before calling make_tweakreg_catalog so the outputs end up in Jy
+        JWSTSourceCatalog.convert_mjysr_to_jy(output_model)
 
-            starfinder_kwargs = {
-                "sigma_radius": self.sigma_radius,
-                "minsep_fwhm": self.minsep_fwhm,
-                "sharplo": self.sharplo,
-                "sharphi": self.sharphi,
-                "roundlo": self.roundlo,
-                "roundhi": self.roundhi,
-                "peakmax": self.peakmax,
-                "brightest": self.brightest,
-                "npixels": self.npixels,
-                "connectivity": int(self.connectivity),  # option returns a string, so cast to int
-                "nlevels": self.nlevels,
-                "contrast": self.contrast,
-                "mode": self.multithresh_mode,
-                "localbkg_width": self.localbkg_width,
-                "apermask_method": self.apermask_method,
-                "kron_params": self.kron_params,
-                "deblend": self.deblend,
-                "error": model.err,
-                "wcs": model.meta.wcs,
-                "relabel": True,
-            }
-            catalog, segment_img = make_tweakreg_catalog(
-                model,
-                self.snr_threshold,
-                self.kernel_fwhm,
-                bkg_boxsize=self.bkg_boxsize,
-                coverage_mask=coverage_mask,
-                starfinder_name=self.starfinder,
-                starfinder_kwargs=starfinder_kwargs,
-            )
-            if len(catalog) == 0:
-                log.warning("No sources found in the image. Catalog will be empty.")
-                return None
+        starfinder_kwargs = {
+            "sigma_radius": self.sigma_radius,
+            "minsep_fwhm": self.minsep_fwhm,
+            "sharplo": self.sharplo,
+            "sharphi": self.sharphi,
+            "roundlo": self.roundlo,
+            "roundhi": self.roundhi,
+            "peakmax": self.peakmax,
+            "brightest": self.brightest,
+            "npixels": self.npixels,
+            "connectivity": int(self.connectivity),  # option returns a string, so cast to int
+            "nlevels": self.nlevels,
+            "contrast": self.contrast,
+            "mode": self.multithresh_mode,
+            "localbkg_width": self.localbkg_width,
+            "apermask_method": self.apermask_method,
+            "kron_params": self.kron_params,
+            "deblend": self.deblend,
+            "error": output_model.err,
+            "wcs": output_model.meta.wcs,
+            "relabel": True,
+        }
+        catalog, segment_img = make_tweakreg_catalog(
+            output_model,
+            self.snr_threshold,
+            self.kernel_fwhm,
+            bkg_boxsize=self.bkg_boxsize,
+            coverage_mask=coverage_mask,
+            starfinder_name=self.starfinder,
+            starfinder_kwargs=starfinder_kwargs,
+        )
+        if len(catalog) == 0:
+            log.warning("No sources found in the image. Catalog will be empty.")
+            return None
 
-            ci_star_thresholds = (self.ci1_star_threshold, self.ci2_star_threshold)
-            catobj = JWSTSourceCatalog(
-                model,
-                catalog,
-                self.kernel_fwhm,
-                aperture_params,
-                abvega_offset,
-                ci_star_thresholds,
-            )
-            catalog = catobj.catalog
+        ci_star_thresholds = (self.ci1_star_threshold, self.ci2_star_threshold)
+        catobj = JWSTSourceCatalog(
+            output_model,
+            catalog,
+            self.kernel_fwhm,
+            aperture_params,
+            abvega_offset,
+            ci_star_thresholds,
+        )
+        catalog = catobj.catalog
 
-            if self.save_results:
-                cat_filepath = self.make_output_path(ext=".ecsv")
-                catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
-                model.meta.source_catalog = Path(cat_filepath).name
-                log.info(f"Wrote source catalog: {cat_filepath}")
+        if self.save_results:
+            cat_filepath = self.make_output_path(ext=".ecsv")
+            catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
+            output_model.meta.source_catalog = Path(cat_filepath).name
+            log.info(f"Wrote source catalog: {cat_filepath}")
 
-                if segment_img is not None:
-                    segm_model = datamodels.SegmentationMapModel(segment_img.data)
-                    segm_model.update(model, only="PRIMARY")
-                    segm_model.meta.wcs = model.meta.wcs
-                    segm_model.meta.wcsinfo = model.meta.wcsinfo
+            if segment_img is not None:
+                with datamodels.SegmentationMapModel(segment_img.data) as segm_model:
+                    segm_model.update(output_model, only="PRIMARY")
+                    segm_model.meta.wcs = output_model.meta.wcs
+                    segm_model.meta.wcsinfo = output_model.meta.wcsinfo
                     self.save_model(segm_model, suffix="segm")
-                    model.meta.segmentation_map = segm_model.meta.filename
+                    output_model.meta.segmentation_map = segm_model.meta.filename
                     log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
+
+        # Since it is not returned, close the output model if needed
+        if output_model is not input_data:
+            output_model.close()
 
         return catalog
