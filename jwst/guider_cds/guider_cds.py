@@ -113,15 +113,15 @@ def guider_cds(model, gain_model, readnoise_model):
     new_model.err = (var_rn + var_pn) ** 0.5
 
     # Add all table extensions to be carried over to output
-    if len(model.planned_star_table):
+    if model.hasattr("planned_star_table"):
         new_model.planned_star_table = model.planned_star_table
-    if len(model.flight_star_table):
+    if model.hasattr("flight_star_table"):
         new_model.flight_star_table = model.flight_star_table
-    if len(model.pointing_table):
+    if model.hasattr("pointing_table"):
         new_model.pointing_table = model.pointing_table
-    if len(model.centroid_table):
+    if model.hasattr("centroid_table"):
         new_model.centroid_table = model.centroid_table
-    if len(model.track_sub_table):
+    if model.hasattr("track_sub_table"):
         new_model.track_sub_table = model.track_sub_table
 
     # copy all meta data from input to output model
