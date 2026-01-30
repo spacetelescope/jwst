@@ -81,18 +81,11 @@ def test_get_wavelengths():
     assert_allclose(wl, wl_og)
 
 
-def test_get_wavelengths_bad_shape():
+@pytest.mark.parametrize("arr_init", [np.array([]), np.array(1), np.ones((10))])
+def test_get_wavelengths_bad_shape(arr_init):
     model = create_model()
 
-    model.data = np.array([])
-    with pytest.raises(ValueError, match=".*cannot compute wavelengths"):
-        get_wavelengths(model)
-
-    model.data = np.array(1)
-    with pytest.raises(ValueError, match=".*cannot compute wavelengths"):
-        get_wavelengths(model)
-
-    model.data = np.ones((10))
+    model.data = arr_init
     with pytest.raises(ValueError, match=".*cannot compute wavelengths"):
         get_wavelengths(model)
 
