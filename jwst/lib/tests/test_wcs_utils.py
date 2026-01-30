@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import Identity, Mapping, Scale, Shift
@@ -78,6 +79,15 @@ def test_get_wavelengths():
     # Check that wavelengths are generated correctly when given a WFSS exp_type
     wl = get_wavelengths(model, exp_type="NRC_TSGRISM")
     assert_allclose(wl, wl_og)
+
+
+def test_get_wavelengths_empty():
+    # create a mock SlitModel
+    model = create_model()
+    model.data = np.array([])
+
+    with pytest.raises(ValueError):
+        get_wavelengths(model)
 
 
 def test_get_wavelengths_soss():
