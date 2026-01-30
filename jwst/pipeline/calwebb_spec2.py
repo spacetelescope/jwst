@@ -853,6 +853,10 @@ class Spec2Pipeline(Pipeline):
                 for step in fs_steps:
                     setattr(calib_mos.meta.cal_step, step, getattr(calib_fss.meta.cal_step, step))
 
+        # Clean up the old models, no longer needed
+        del calibrated
+        del calib_fss
+
         return calib_mos
 
     def _process_niriss_soss(self, data):
@@ -897,9 +901,11 @@ class Spec2Pipeline(Pipeline):
         """
         if data.meta.exposure.type in TA_TYPES:
             # convert to SlitModel type to be more in line with other spectroscopic modes
-            data = datamodels.SlitModel(data)
+            slit_model = datamodels.SlitModel(data)
             for attr in ["xstart", "ystart", "xsize", "ysize"]:
-                setattr(data, attr, getattr(data.meta.subarray, attr))
+                setattr(slit_model, attr, getattr(data.meta.subarray, attr))
+            data.close()
+            data = slit_model
         calibrated = self.srctype.run(data)
         calibrated = self.targ_centroid.run(calibrated)
         calibrated = self.straylight.run(calibrated)

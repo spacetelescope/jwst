@@ -1152,7 +1152,7 @@ class Asn_Lv2WFSC(DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``wfs-image2``
+        - Association type: ``image2``
         - Pipeline: ``calwebb_wfs-image2``
         - WFS and WFS&C observations
         - Single science exposure
@@ -1186,7 +1186,7 @@ class Asn_Lv2WFSC(DMSLevel2bBase):
     def _init_hook(self, item):
         """Post-check and pre-add initialization."""
         super(Asn_Lv2WFSC, self)._init_hook(item)
-        self.data["asn_type"] = "wfs-image2"
+        self.data["asn_type"] = "image2"
 
 
 @RegistryMarker.rule
