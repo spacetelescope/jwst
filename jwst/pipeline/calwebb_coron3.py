@@ -103,7 +103,7 @@ class Coron3Pipeline(Pipeline):
         asn_exptypes = ["science", "psf"]
 
         # Create a DM object using the association table
-        input_models = datamodels.open(user_input, asn_exptypes=asn_exptypes)
+        input_models = self.prepare_output(user_input, asn_exptypes=asn_exptypes)
 
         # This asn_id assignment is important as it allows outlier detection
         # to know the asn_id since that step receives the cube as input.
@@ -114,10 +114,8 @@ class Coron3Pipeline(Pipeline):
 
         # Find all the member types in the product
         members_by_type = defaultdict(list)
-        prod = input_models.asn_table["products"][0]
-
-        for member in prod["members"]:
-            members_by_type[member["exptype"].lower()].append(member["expname"])
+        for model in input_models:
+            members_by_type[str(model.meta.asn.exptype).lower()].append(model)
 
         # Set up required output products and formats
         self.outlier_detection.suffix = "crfints"
@@ -126,40 +124,33 @@ class Coron3Pipeline(Pipeline):
         self.resample.blendheaders = False
 
         # Extract lists of all the PSF and science target members
-        psf_files = members_by_type["psf"]
-        targ_files = members_by_type["science"]
+        psf_models = members_by_type["psf"]
+        targ_models = members_by_type["science"]
 
         # Make sure we found some PSF and target members
-        if len(psf_files) == 0:
+        if len(psf_models) == 0:
             err_str1 = "No reference PSF members found in association table."
             log.error(err_str1)
             log.error("Calwebb_coron3 processing will be aborted")
             return
 
-        if len(targ_files) == 0:
+        if len(targ_models) == 0:
             err_str1 = "No science target members found in association table"
             log.error(err_str1)
             log.error("Calwebb_coron3 processing will be aborted")
             return
 
-        for member in psf_files + targ_files:
+        for member in psf_models + targ_models:
             self.prefetch(member)
 
-        # Assemble all the input psf files into a single ModelContainer
-        # and run outlier detection if desired
-        psf_models = ModelContainer()
-        for i in range(len(psf_files)):
-            psf_input = datamodels.CubeModel(psf_files[i])
-
+        # Run outlier detection on psf models if desired
+        psf_models = ModelContainer(psf_models)
+        for i in range(len(psf_models)):
             if not self.outlier_detection.skip:
-                psf_input = self.outlier_detection.run(psf_input)
-
-            psf_models.append(psf_input)
+                psf_models[i] = self.outlier_detection.run(psf_models[i])
 
         # Stack all the PSF images into a single CubeModel
         psf_stack = self.stack_refs.run(psf_models)
-        psf_models.close()
-        del psf_models
 
         # Save the resulting PSF stack
         self.save_model(psf_stack, suffix="psfstack")
@@ -168,33 +159,35 @@ class Coron3Pipeline(Pipeline):
         # once for each input target exposure
         resample_input = ModelContainer()
         model_blender = ModelBlender()
-        for target_file in targ_files:
-            with datamodels.open(target_file) as target:
-                model_blender.accumulate(target)
+        for target in targ_models:
+            target_output_file = target.meta.filename
+            model_blender.accumulate(target)
 
-                # Remove outliers from the target
-                if not self.outlier_detection.skip:
-                    target = self.outlier_detection.run(target)
+            # Remove outliers from the target
+            if not self.outlier_detection.skip:
+                target = self.outlier_detection.run(target)
 
-                # Call align_refs
-                psf_aligned = self.align_refs.run(target, psf_stack)
+            # Call align_refs
+            psf_aligned = self.align_refs.run(target, psf_stack)
 
-                # Save the alignment results
-                self.save_model(
-                    psf_aligned, output_file=target_file, suffix="psfalign", acid=self.asn_id
-                )
+            # Save the alignment results
+            self.save_model(
+                psf_aligned, output_file=target_output_file, suffix="psfalign", acid=self.asn_id
+            )
 
-                # Call KLIP
-                psf_sub = self.klip.run(target, psf_aligned)
-                psf_aligned.close()
+            # Call KLIP
+            psf_sub = self.klip.run(target, psf_aligned)
+            psf_aligned.close()
 
-                # Save the psf subtraction results
-                self.save_model(psf_sub, output_file=target_file, suffix="psfsub", acid=self.asn_id)
+            # Save the psf subtraction results
+            self.save_model(
+                psf_sub, output_file=target_output_file, suffix="psfsub", acid=self.asn_id
+            )
 
-                # Split out the integrations into separate models
-                # in a ModelContainer to pass to `resample`
-                for model in to_container(psf_sub):
-                    resample_input.append(model)
+            # Split out the integrations into separate models
+            # in a ModelContainer to pass to `resample`
+            for model in to_container(psf_sub):
+                resample_input.append(model)
 
         # Call the resample step to combine all psf-subtracted target images
         # for compatibility with image3 pipeline use of ModelLibrary,
@@ -228,5 +221,11 @@ class Coron3Pipeline(Pipeline):
 
         # We're done
         log.info("...ending calwebb_coron3")
+
+        # Close the input if it was opened here
+        if input_models is not user_input:
+            input_models.close()
+        for model in resample_input:
+            model.close()
 
         return

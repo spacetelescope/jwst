@@ -241,3 +241,32 @@ def test_run_coron3_no_science(tmp_cwd, caplog, coron3_psf_only):
     pipeline = Coron3Pipeline()
     pipeline.run(coron3_psf_only)
     assert "No science target members" in caplog.text
+
+
+def test_run_coron3_with_models(tmp_cwd, coron3_input):
+    # Open the input as a container
+    with datamodels.open(coron3_input) as input_models:
+        input_copy = input_models.copy()
+
+        steps = {
+            # make sure outlier_detection runs
+            "outlier_detection": {"skip": False},
+            # skip resampling because it requires a wcs
+            "resample": {"skip": True},
+        }
+
+        Coron3Pipeline.call(input_models, steps=steps, save_results=True)
+
+        outlier_files = [f"test_coron3_target_{i + 1}_c1000_crfints.fits" for i in range(3)]
+        for filename in outlier_files:
+            assert (tmp_cwd / filename).exists()
+            with datamodels.open(filename) as model:
+                # Make sure outlier detection ran
+                assert model.meta.cal_step.outlier_detection == "COMPLETE"
+
+        # Make sure input is not modified
+        for model, model_copy in zip(input_models, input_copy, strict=True):
+            assert model.meta.cal_step.outlier_detection is None
+            np.testing.assert_allclose(model.data, model_copy.data)
+
+        input_copy.close()

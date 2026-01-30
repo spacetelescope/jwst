@@ -1,4 +1,3 @@
-import copy
 import logging
 
 import numpy as np
@@ -31,11 +30,12 @@ def apply_lg_plus(
 
     Parameters
     ----------
-    input_model : data model object
-        AMI science image to be analyzed
-    throughput_model : data model object
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
+        AMI science image to be analyzed. May be modified in processing.
+    throughput_model : `~stdatamodels.jwst.datamodels.ThroughputModel`
         Filter throughput data
-    nrm_model : data model object
+    nrm_model : `~stdatamodels.jwst.datamodels.NRMModel`
         NRM model data
     oversample : int
         Oversampling factor
@@ -58,28 +58,28 @@ def apply_lg_plus(
 
     Returns
     -------
-    oifitsmodel : AmiOIModel object
+    oifitsmodel : `~stdatamodels.jwst.datamodels.AmiOIModel`
         AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
-    oifitsmodel_multi : AmiOIModel object
+    oifitsmodel_multi : `~stdatamodels.jwst.datamodels.AmiOIModel`
         AMI tables of observables for each integration
         from LG algorithm fringe fitting in OIFITS format
-    amilgmodel : AmiLGFitModel object
+    amilgmodel : `~stdatamodels.jwst.datamodels.AmiOIModel`
         AMI cropped data, model, and residual data from LG algorithm fringe fitting
     """
-    # Create copy of input_model to avoid overwriting input
+    # Make a cube from an input image if needed
     if isinstance(input_model, ImageModel):
         # If the input image is 2D, expand all relevant extensions to be 3D
         data = np.expand_dims(input_model.data, axis=0)
         dq = np.expand_dims(input_model.dq, axis=0)
-        input_copy = CubeModel(data=data, dq=dq)
-        input_copy.update(input_model)
+        input_cube = CubeModel(data=data, dq=dq)
+        input_cube.update(input_model)
         # Incl. those not currently used?
         # input_copy.err = np.expand_dims(input_model.err, axis=0)
         # input_copy.var_poisson = np.expand_dims(input_model.var_poisson, axis=0)
         # input_copy.var_rnoise = np.expand_dims(input_model.var_rnoise, axis=0)
         # input_copy.var_flat = np.expand_dims(input_model.var_flat, axis=0)
     elif isinstance(input_model, CubeModel):
-        input_copy = copy.deepcopy(input_model)
+        input_cube = input_model
     else:
         raise TypeError("Input model must be a CubeModel or ImageModel.")
 
@@ -93,18 +93,18 @@ def apply_lg_plus(
         ysize = 80
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
-        input_copy.data = input_copy.data[:, ystart - 1 : ystop, xstart - 1 : xstop]
-        input_copy.dq = input_copy.dq[:, ystart - 1 : ystop, xstart - 1 : xstop]
-        input_copy.err = input_copy.err[:, ystart - 1 : ystop, xstart - 1 : xstop]
+        input_cube.data = input_cube.data[:, ystart - 1 : ystop, xstart - 1 : xstop]
+        input_cube.dq = input_cube.dq[:, ystart - 1 : ystop, xstart - 1 : xstop]
+        input_cube.err = input_cube.err[:, ystart - 1 : ystop, xstart - 1 : xstop]
 
-    data = input_copy.data
+    data = input_cube.data
     dim = data.shape[-1]  # 80 px
 
     psf_offset_ff = None
     # get filter, pixel scale from input_model,
     # make bandpass array for find_rotation, instrument_data calls
-    filt = input_copy.meta.instrument.filter
-    pscaledegx, pscaledegy = utils.degrees_per_pixel(input_copy)
+    filt = input_cube.meta.instrument.filter
+    pscaledegx, pscaledegy = utils.degrees_per_pixel(input_cube)
     # model requires single pixel scale, so average X and Y scales
     # (this is done again in instrument_data?)
     pscale_deg = np.mean([pscaledegx, pscaledegy])
@@ -184,11 +184,15 @@ def apply_lg_plus(
 
     ff_t = nrm_core.FringeFitter(niriss, psf_offset_ff=psf_offset_ff, oversample=oversample)
 
-    oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_copy)
+    oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_cube)
 
     # Copy header keywords from input to outputs
     oifitsmodel.update(input_model, only="PRIMARY")
     oifitsmodel_multi.update(input_model, only="PRIMARY")
     amilgmodel.update(input_model, only="PRIMARY")
+
+    # Close the input cube model if it was created here
+    if input_cube is not input_model:
+        input_cube.close()
 
     return oifitsmodel, oifitsmodel_multi, amilgmodel

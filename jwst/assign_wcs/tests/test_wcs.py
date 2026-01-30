@@ -74,6 +74,7 @@ def create_model_2d():
 @pytest.fixture
 def create_model_3d():
     im = CubeModel()
+    im.data = zeros((5, 10, 10))
     im.meta.wcsinfo.crpix1 = 2.5
     im.meta.wcsinfo.crpix2 = 3
     im.meta.wcsinfo.crval1 = 5.6

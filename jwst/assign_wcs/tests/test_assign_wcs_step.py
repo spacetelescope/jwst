@@ -11,8 +11,8 @@ from jwst.assign_wcs.tests.test_niriss import create_hdul as create_niriss
 
 def test_assign_wcs_step_miri_ifu():
     hdul = create_miri(detector="MIRIFULONG", channel="34", band="MEDIUM")
+    hdul[1].data = np.zeros((3, 40, 50))
     model = datamodels.CubeModel(hdul)
-    model.data = np.zeros((3, 40, 50))
     result = AssignWcsStep.call(model)
     assert result is not model
     assert result.meta.cal_step.assign_wcs == "COMPLETE"
@@ -31,6 +31,7 @@ def test_assign_wcs_step_nis_wfss():
 def test_assign_wcs_step_nrc_wfss():
     hdul = create_nircam(exptype="NRC_WFSS", filtername="F444W", pupil="GRISMR")
     model = datamodels.ImageModel(hdul)
+    model.data = np.zeros((10, 10))
     result = AssignWcsStep.call(model)
     assert result is not model
     assert result.meta.cal_step.assign_wcs == "COMPLETE"
