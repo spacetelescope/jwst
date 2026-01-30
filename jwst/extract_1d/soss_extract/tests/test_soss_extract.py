@@ -81,6 +81,9 @@ def test_model_image(monkeypatch_setup, imagemodel, detector_mask, detector_mode
     else:
         extract_order3 = False
 
+    for model in detector_models:
+        model.mederr = scierr
+
     integration = Integration(
         scidata,
         scierr,
@@ -183,6 +186,9 @@ def test_model_image_tikfac_specified(
         detector_models, DATA_SHAPE, box_width, orders_requested=order_list
     )
 
+    for model in detector_models:
+        model.mederr = scierr
+
     integration = Integration(
         scidata,
         scierr,
@@ -226,6 +232,9 @@ def test_model_image_wavegrid_specified(
     Note the failure with SossWaveGridModel passed as input. What should be done about that?
     """
     scidata, scierr = imagemodel
+
+    for model in detector_models:
+        model.mederr = scierr
 
     order_list = [1, 2]
     refmask = np.zeros_like(detector_mask)
@@ -287,6 +296,10 @@ def test_process_one_integration(
     scidata, scierr = imagemodel
     refmask = np.zeros_like(detector_mask)
     box_width = 5.0
+
+    for model in detector_models:
+        model.mederr = scierr
+
     box_weights, wavelengths = _compute_box_weights(
         detector_models, DATA_SHAPE, box_width, orders_requested=[1, 2, 3]
     )
