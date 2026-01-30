@@ -1,0 +1,1 @@
+Change ramp fitting to expect dictionaries as output from stcal routines as per stcal PR #496
