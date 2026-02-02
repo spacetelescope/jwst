@@ -220,7 +220,7 @@ def make_empty_lrs_model(exptype):
     SlitModel
         MIRI LRS model with required metadata.
     """
-    model = dm.ImageModel()
+    model = dm.ImageModel((10, 10))
     _add_metadata(model, exptype)
 
     # Assign a WCS, then convert to SlitModel as would be done by calwebb_spec2
