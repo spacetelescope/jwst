@@ -154,8 +154,6 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p, bright_use
             bright_use_2groups,
         )
 
-        print("RSCD skip array", rscd_skip_array)
-
         output = apply_rscd_flags(output, sci_int_start - 1, sci_int_start - 1, rscd_skip_array)
         log.info(
             "Number of usable bright pixels with rscd flag groups "
@@ -169,7 +167,10 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p, bright_use
     # Flag RSCD  groups in integration 2 and higher
     # ______________________________________________
     int_start = 2
-    int_end = sci_nints - 1
+    s = output.data.shape
+    int_end = s[0]  # use the data shape instead of sci_ints in case we have segmented data
+    # in segmented data the sci_ints can be much larger than data.shape[0]
+    # depending on which segment number we are on.
 
     if sci_int_start != 1:  # we have segmented data and we are not on the first integration
         int_start = 1
@@ -177,7 +178,6 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p, bright_use
     if sci_nints > 1:
         log.info(f"Number of groups to skip for integrations 2 and higher: {group_skip_int2p}")
 
-        print("Second int", int_start, int_end)
         rscd_skip_array, num_rscd_lowered = flag_rscd(
             output, int_start - 1, int_end - 1, group_skip_int2p, bright_use_2groups
         )
@@ -233,10 +233,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip, bright_use_2groups):
     n_ints = int_end - int_start + 1
     x_dim = output_model.groupdq.shape[3]
     y_dim = output_model.groupdq.shape[2]
-    # print("x dim", x_dim)
-    # print("y dim", y_dim)
 
-    # print("number of ints", n_ints)
     skip_array = np.zeros((n_ints, y_dim, x_dim))
     skip_array[:, :, :] = rscd_skip
 
@@ -252,7 +249,6 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip, bright_use_2groups):
             > 0
         ).astype(bool)
 
-        # print(is_sat_problem.shape)
         num_sat = np.sum(is_sat_problem)
         num_rscd_lowered = num_sat
 
@@ -264,14 +260,10 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip, bright_use_2groups):
             #  do dynamic rscd flagging - based on saturation group of every pixel
             x_dim = output_model.groupdq.shape[3]
             y_dim = output_model.groupdq.shape[2]
-            # print("x dim", x_dim)
-            # print("y dim", y_dim)
 
             n_ints = int_end - int_start + 1
-            # print("number of ints", n_ints)
             skip_array = np.zeros((n_ints, y_dim, x_dim))
             skip_array[:, :, :] = rscd_skip
-            # print("initial skip array shape", skip_array.shape)
 
             while num_sat > 0 and min_group > 0:
                 skip_array[is_sat_problem] = np.maximum(skip_array[is_sat_problem] - 1, 0)
@@ -336,12 +328,10 @@ def apply_rscd_flags(output_model, int_start, int_end, skip_array):
 
     mask = group_indices[None, :, None, None] <= skip_array[:, None, :, :]
 
-    # print(mask)
     # 4. Apply the DO_NOT_USE flag using the mask
     # This updates only the pixels/groups where the index is below the skip threshold
     dq[mask] |= dqflags.group["DO_NOT_USE"]
 
-    print("DQ", dq)
     # Put the modified dq back
     output_model.groupdq[int_start : int_end + 1, :, :, :] = dq
 
