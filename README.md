@@ -16,14 +16,8 @@ This package processes uncalibrated data for both imagers and spectrographs onbo
 More information on running this pipeline, including explanations of specific stages and how to obtain reference files,
 can be found [here](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline).
 
-> [!WARNING]
-> Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
-> this can be remedied by downgrading the `gwcs` version through e.g. `pip install 'gwcs<0.22'`
-
 > [!IMPORTANT]
-> JWST requires a C compiler for dependencies.
->
-> Linux and macOS platforms are tested and supported. Windows is not currently supported.
+> The JWST calibration pipeline currently supports Linux and macOS. Windows is **not** currently supported.
 
 ## Installation
 
@@ -45,10 +39,20 @@ source jwst_env/bin/activate
 pip install jwst==1.20.1
 ```
 
+> [!WARNING]
+> Installing `jwst` version `1.15.1` through `1.16.1` pulls an incompatible version of `gwcs`.
+> Remedy this issue by downgrading `gwcs`:
+> ```shell
+> pip install 'gwcs<0.22'
+> ```
+
 > [!NOTE]
 > Please contact the [JWST Help Desk](https://jwsthelp.stsci.edu) if you have issues installing `jwst`.
 
 ### Installing the latest unreleased development version directly from the source code
+
+> [!IMPORTANT]
+> You need a C compiler in order to build the JWST calibration pipeline (and dependencies) from source.
 
 ```shell
 pip install git+https://github.com/spacetelescope/jwst
