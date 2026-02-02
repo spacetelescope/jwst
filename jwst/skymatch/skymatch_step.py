@@ -67,9 +67,10 @@ class SkyMatchStep(Step):
 
         Parameters
         ----------
-        input_models : obj
+        input_models : str or Path or list (of DataModels)
             An association of datamodels to input.
-            This can be any data type readable into a ModelLibrary, e.g., an ASN file,
+            This can be any data type readable into a
+            `~jwst.datamodels.library.ModelLibrary`, e.g., an ASN file.
 
         Returns
         -------

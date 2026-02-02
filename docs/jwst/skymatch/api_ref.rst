@@ -11,4 +11,4 @@ Public Step API
 Complete Developer API
 ======================
 
-N/A
+See :ref:`stcal.skymatch API <stcal:skymatch_module>`.
