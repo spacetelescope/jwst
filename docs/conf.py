@@ -73,7 +73,11 @@ class CondaInstallVersionDirective(SphinxDirective):
 
 def setup(app):
     # add a custom AttributeDocumenter subclass to handle Step.spec formatting
-    app.add_autodocumenter(StepSpecDocumenter, True)
+    def register_documenter(app, config):
+        app.add_autodocumenter(StepSpecDocumenter, True)
+    # register it with a high priority so it behaves with the built-in autodoc
+    app.connect("config-inited", register_documenter, priority=9000)
+
     app.add_directive('pip_install_literal', PipInstallVersionDirective)
     app.add_directive('conda_install_literal', CondaInstallVersionDirective)
 
