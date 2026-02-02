@@ -23,11 +23,12 @@ def cal_data(shape, bad_idx, dispaxis=1, model="slit"):
 
     # Set the data and error arrays to all 1s except one bad pixel
     # to correct at the middle of the array
-    model.data[:] = 1.0
-    model.err[:] = 1.0
-    model.var_poisson[:] = 1.0
-    model.var_rnoise[:] = 1.0
-    model.var_flat[:] = 1.0
+    ones = np.ones(shape, dtype=float)
+    model.data = ones.copy()
+    model.err = ones.copy()
+    model.var_poisson = ones.copy()
+    model.var_rnoise = ones.copy()
+    model.var_flat = ones.copy()
 
     bad_flag = flags["DO_NOT_USE"] + flags["OTHER_BAD_PIXEL"]
     model.data[bad_idx] = np.nan

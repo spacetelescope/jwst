@@ -135,11 +135,11 @@ class SkyMatchStep(Step):
 
     def _imodel2skyim(self, image_model, index):
         if self._dqbits is None:
-            dqmask = np.isfinite(image_model.data).astype(dtype=np.uint8)
+            dqmask = np.isfinite(image_model.data)
         else:
             dqmask = bitfield_to_boolean_mask(
-                image_model.dq, self._dqbits, good_mask_value=1, dtype=np.uint8
-            ) * np.isfinite(image_model.data)
+                image_model.dq, self._dqbits, good_mask_value=True, dtype="bool"
+            ) & np.isfinite(image_model.data)
 
         # see if 'skymatch' was previously run and raise an exception
         # if 'subtract' mode has changed compared to the previous pass:
@@ -179,13 +179,10 @@ class SkyMatchStep(Step):
             image=image_model.data,
             wcs_fwd=wcs.__call__,
             wcs_inv=wcs.invert,
-            pix_area=1.0,  # TODO: pixel area
-            convf=1.0,  # TODO: conv. factor to brightness
             mask=dqmask,
             sky_id=image_model.meta.filename,
             skystat=self._skystat,
             stepsize=self.stepsize,
-            reduce_memory_usage=False,  # this overwrote input files
             meta={"index": index},
         )
 

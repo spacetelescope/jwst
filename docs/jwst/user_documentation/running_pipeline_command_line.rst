@@ -309,9 +309,9 @@ current working directory, use the ``output_dir`` option::
 When this is run, all three final output products of ``Detector1Pipeline`` will
 be saved within the subdirectory ``calibrated``.
 
-Setting ``output_dir`` at the step-level indicates that the step's result should
-be saved (so, also setting ``save_results`` is redundant), and that the files
+Setting ``output_dir`` indicates that the files
 should be saved in the directory specified instead of the current working directory.
+The specified directory will be created if it does not yet exist before the run.
 For example, to save the intermediate results of ``DarkCurrentStep`` when running
 ``Detector1Pipeline`` in a subdirectory called ``calibrated``::
 

@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.tweakreg.TweakRegStep`
+:Class: `jwst.tweakreg.tweakreg_step.TweakRegStep`
 :Alias: tweakreg
 
 Overview
@@ -25,45 +25,14 @@ detection algorithms: `~photutils.detection.DAOStarFinder` (default),
 `~photutils.detection.IRAFStarFinder`, or `~photutils.segmentation.SourceFinder`
 in conjunction with `~photutils.segmentation.SourceCatalog`.
 
-DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
-(`Stetson 1987, PASP 99, 191
-<https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract>`_).  It searches
-images for local density maxima that have a peak amplitude greater
-than a specified threshold (the threshold is applied to a convolved
-image) and have a size and shape similar to a defined 2D Gaussian
-kernel.  DAOFind also provides an estimate of the object's
-roundness and sharpness, whose lower and upper bounds can be
-specified.
-
-IRAFStarFinder is a Python implementation of the IRAF star finding algorithm,
-which also calculates the objects' centroids, roundness, and sharpness.
-However, IRAFStarFinder uses image moments
-instead of 1-D Gaussian fits to projected light distributions like
-DAOStarFinder.
-
-SourceFinder implements a segmentation algorithm that identifies
-sources in an image based on a number of connected pixels above a
-specified threshold value.  The sources are deblended using a
-combination of multi-thresholding and watershed segmentation.
-SourceCatalog finds the centroids of these sources, which are used
-as the retrieved star positions.
-
-.. warning::
-    It has been shown (`STScI Technical Report JWST-STScI-008116, SM-12
-    <https://www.stsci.edu/~goudfroo/NIRISSdoc/Centroid_Accuracies_Precisions_NIRISS_v2.pdf>`_)
-    that for undersampled PSFs, e.g. for short-wavelength NIRISS
-    imaging data, ``DAOStarFinder`` gives bad results no matter the input parameters
-    due to its use of 1-D Gaussian fits.
-    ``IRAFStarFinder`` or ``SourceFinder`` should be used instead.
+.. include:: ../references_general/source_detection.rst
 
 .. note::
-    ``SourceFinder`` is likely to detect non-stellar sources
+    `~photutils.segmentation.SourceFinder` is likely to detect non-stellar sources
     such as galaxies because sources are not assumed to be
     point-source-like. This may lead to mismatches between the
     derived source catalog and the reference catalog during the
     alignment step.
-
-.. _DAOFIND: https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract
 
 Custom Source Catalogs
 ----------------------
@@ -151,7 +120,6 @@ then gets cross-matched and fit to this astrometric reference catalog.
 The results of this one fit then gets back-propagated to all the
 input images to align them all to the astrometric reference frame while
 maintaining the relative alignment between the images.
-
 
 Grouping
 --------
@@ -455,15 +423,10 @@ https://tweakwcs.readthedocs.io/en/latest/
 Further description of the input parameters and algorithms for star finding
 can be found at the following links:
 
-* `DAOStarFinder`_
-* `IRAFStarFinder`_
-* `SourceFinder`_
-* `SourceCatalog`_
-
-.. _DAOStarFinder: https://photutils.readthedocs.io/en/stable/api/photutils.detection.DAOStarFinder.html
-.. _IRAFStarFinder: https://photutils.readthedocs.io/en/stable/api/photutils.detection.IRAFStarFinder.html
-.. _SourceFinder: https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceFinder.html
-.. _SourceCatalog: https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceCatalog.html
+* `~photutils.detection.DAOStarFinder`
+* `~photutils.detection.IRAFStarFinder`
+* `~photutils.segmentation.SourceFinder`
+* `~photutils.segmentation.SourceCatalog`
 
 The alignment and WCS correction portions of the step are handled by the ``stcal`` package.
 Additional documentation may be found :ref:`here <stcal:tweakreg_step>`.

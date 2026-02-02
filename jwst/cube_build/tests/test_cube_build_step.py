@@ -201,12 +201,17 @@ def nirspec_data():
 
 @pytest.mark.parametrize("as_filename", [True, False])
 def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename):
+    # Add a NaN in the error array, unmatched in data, to
+    # check that the input is not modified by the match_nans_and_flags
+    # call in the beginning of the step
+    nirspec_data.err[100, 100] = np.nan
+
     if as_filename:
         fn = tmp_path / "test_nirspec_cal.fits"
         nirspec_data.save(fn)
         step_input = fn
     else:
-        step_input = nirspec_data
+        step_input = nirspec_data.copy()
     step = CubeBuildStep()
     step.coord_system = "internal_cal"
     step.save_results = True
@@ -223,4 +228,19 @@ def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename):
     assert result is not step_input
     assert result[0] is not step_input
     if not as_filename:
+        np.testing.assert_allclose(step_input.data, nirspec_data.data)
         assert step_input.meta.cal_step.cube_build is None
+
+
+def test_missing_cubepars(nirspec_data):
+    with pytest.raises(ValueError, match="cubepar reference file is required"):
+        CubeBuildStep.call(nirspec_data, override_cubepar="N/A")
+
+
+def test_invalid_coord_sys(miri_image, miri_cube_pars):
+    step = CubeBuildStep()
+    step.override_cubepar = miri_cube_pars
+    step.coord_system = "internal_cal"
+    miri_image.meta.cal_step.assign_wcs = "COMPLETE"
+    with pytest.raises(ValueError, match="coordinate system is not supported for MIRI"):
+        step.run(miri_image)
