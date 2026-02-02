@@ -1335,7 +1335,7 @@ class STTableDataDiff(TableDataDiff):
                     thresh = self.atol + self.rtol * np.abs(arrb[bothfinite])
                 failed_tol_test = absdiff > thresh
                 # The number of failed test total, is the diff greater than threshold plus
-                # ifferent nan and inf values
+                # different nan and inf values
                 nan_diffs = ~np.isnan(arra)[bothfinite] != ~np.isnan(arrb)[bothfinite]
                 inf_diffs = ~np.isfinite(arra)[bothfinite] != ~np.isfinite(arrb)[bothfinite]
                 number_that_fail_atol_rtol_test = (
