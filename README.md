@@ -45,7 +45,7 @@ source jwst_env/bin/activate
 pip install jwst==1.20.1
 ```
 
-> [!INFO]
+> [!NOTE]
 > Please contact the [JWST Help Desk](https://jwsthelp.stsci.edu) if you have issues installing `jwst`.
 
 ### Installing the latest unreleased development version directly from the source code
