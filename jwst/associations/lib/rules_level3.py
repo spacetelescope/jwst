@@ -1287,9 +1287,9 @@ class Asn_Lv3WFSSMIR(AsnMixin_Spectrum):
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - Gather all prism exposures
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Gather all prism exposures
     """
 
     def __init__(self, *args, **kwargs):
@@ -1308,10 +1308,6 @@ class Asn_Lv3WFSSMIR(AsnMixin_Spectrum):
                     value="P750L",
                     force_unique=True,
                 ),
-                #                DMSAttrConstraint(
-                #                    name="opt_elem2",
-                #                    sources=["filter"],
-                #                ),
             ]
         )
 
