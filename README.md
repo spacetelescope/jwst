@@ -17,7 +17,8 @@ More information on running this pipeline, including explanations of specific st
 can be found [here](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline).
 
 > [!IMPORTANT]
-> The JWST calibration pipeline currently supports Linux and macOS. Windows is **not** currently supported.
+> The JWST calibration pipeline currently supports Linux and macOS.
+> Native Windows builds are **not** currently supported; [use WSL instead](https://stenv.readthedocs.io/en/latest/windows.html).
 
 ## Installation
 
