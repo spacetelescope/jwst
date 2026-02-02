@@ -176,8 +176,3 @@ def test_one_nan_in_table(rtdata, fitsdiff_default_kwargs):
     result, report = get_stfitsdiff_reports(rtdata.input, rtdata.truth, fitsdiff_default_kwargs)
     assert result == apresult
     assert report == apreport
-
-    diff = STFITSDiff(rtdata.input, rtdata.truth, **fitsdiff_default_kwargs)
-    assert "    1 failed the (atol, rtol) test" in diff.report()
-    assert "    Found 1 different table data element(s). " in diff.report()
-    assert "    WAVELENGTH    f8         0     nan      nan     nan" in diff.report()

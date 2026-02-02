@@ -1315,21 +1315,7 @@ class STTableDataDiff(TableDataDiff):
 
             # Calculate the absolute and relative differences
             if np.issubdtype(arra.dtype, np.number) and np.issubdtype(arrb.dtype, np.number):
-                # First count all entries that fail the atol/rtol test
-                # This includes entries where 1 of (a, b) is NaN or infinite and the other is not
-                # But not entries where both are NaN
-                finitea = np.isfinite(arra)
-                finiteb = np.isfinite(arrb)
-                if self.atol == 0 and self.rtol == 0:
-                    thresh = 0.0
-                else:
-                    thresh = self.atol + self.rtol * np.abs(arrb)
-                diffs = np.abs(arrb - arra)
-                number_that_fail_atol_rtol_test = ((~finitea ^ ~finiteb) | (diffs > thresh)).sum()
-                self.fail_atol_rtol_test += number_that_fail_atol_rtol_test
-                # Find plain differences while excluding entries where both are NaN
-                bothnans = np.isnan(arra) & np.isnan(arrb)
-                n_different = (arra[~bothnans] != arrb[~bothnans]).sum()
+                n_different = (arra != arrb).sum()
                 if n_different == 0:
                     self.identical_columns.append(col.name)
                     continue
@@ -1339,48 +1325,55 @@ class STTableDataDiff(TableDataDiff):
                 nonansb = arrb[np.isfinite(arrb)]
                 arramax, arramin, arramean = get_stats_if_nonans(nonansa)
                 arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
-                finite_idx = np.isfinite(arra) & np.isfinite(arrb)
                 maxr, meanr, stdr = np.nan, np.nan, np.nan
+                # Find plain differences while excluding entries where both are NaN or inf
+                bothfinite = np.isfinite(arra) & np.isfinite(arrb)
+                absdiff = np.abs(arrb[bothfinite] - arra[bothfinite])
+                if self.atol == 0 and self.rtol == 0:
+                    thresh = 0.0
+                else:
+                    thresh = self.atol + self.rtol * np.abs(arrb[bothfinite])
+                failed_tol_test = absdiff > thresh
+                # The number of failed test total, is the diff greater than threshold plus
+                # ifferent nan and inf values
+                nan_diffs = ~np.isnan(arra)[bothfinite] != ~np.isnan(arrb)[bothfinite]
+                inf_diffs = ~np.isfinite(arra)[bothfinite] != ~np.isfinite(arrb)[bothfinite]
+                number_that_fail_atol_rtol_test = (
+                    failed_tol_test.sum() + nan_diffs.sum() + inf_diffs.sum()
+                )
+                self.fail_atol_rtol_test += number_that_fail_atol_rtol_test
                 if number_that_fail_atol_rtol_test > 0:
-                    absdiff = np.abs(arrb[finite_idx] - arra[finite_idx])
-                    if self.atol == 0 and self.rtol == 0:
-                        thresh = 0.0
-                    else:
-                        thresh = self.atol + self.rtol * np.abs(arrb[finite_idx])
-                    numeric_fail_idx = np.where(absdiff > thresh)
-                    numeric_fail_atol_rtol = len(numeric_fail_idx[0])
-                    if numeric_fail_atol_rtol > 0:
-                        rtol_failures = abs(
-                            arra[finite_idx][numeric_fail_idx] - arrb[finite_idx][numeric_fail_idx]
-                        )
-                        maxr = np.max(rtol_failures)
-                        meanr = np.mean(rtol_failures)
-                        stdr = np.std(rtol_failures)
-                    # Report the total number of zeros, nans, and no-nan values
-                    self.report_zeros_nan.add_row(
-                        (
-                            col.name,
-                            f"{arra[arra == 0.0].size} {arrb[arrb == 0.0].size}",
-                            f"{nansa.size} {nansb.size}",
-                            f"{nonansa.size} {nonansb.size}",
-                            f"{arramax:>9.4g} {arrbmax:>9.4g}",
-                            f"{arramin:>9.4g} {arrbmin:>9.4g}",
-                            f"{arramean:>9.4g} {arrbmean:>9.4g}",
-                        )
+                    rtol_failures = abs(
+                        arra[bothfinite][failed_tol_test] - arrb[bothfinite][failed_tol_test]
                     )
-                    self.report_table.add_row(
-                        (
-                            col.name,
-                            str(arra.dtype).replace(">", ""),
-                            numeric_fail_atol_rtol,
-                            maxr,
-                            meanr,
-                            stdr,
-                        )
+                    maxr = np.max(rtol_failures)
+                    meanr = np.mean(rtol_failures)
+                    stdr = np.std(rtol_failures)
+                # Report the total number of zeros, nans, and no-nan values
+                self.report_zeros_nan.add_row(
+                    (
+                        col.name,
+                        f"{arra[arra == 0.0].size} {arrb[arrb == 0.0].size}",
+                        f"{nansa.size} {nansb.size}",
+                        f"{nonansa.size} {nonansb.size}",
+                        f"{arramax:>9.4g} {arrbmax:>9.4g}",
+                        f"{arramin:>9.4g} {arrbmin:>9.4g}",
+                        f"{arramean:>9.4g} {arrbmean:>9.4g}",
                     )
+                )
+                self.report_table.add_row(
+                    (
+                        col.name,
+                        str(arra.dtype).replace(">", ""),
+                        number_that_fail_atol_rtol_test,
+                        maxr,
+                        meanr,
+                        stdr,
+                    )
+                )
 
                 if not self.report_pixel_loc_diffs:
-                    self.diff_total += arrb.size
+                    self.diff_total += number_that_fail_atol_rtol_test
                     self.rel_diffs += np.nan
 
             elif "P" in col.format or "Q" in col.format:
@@ -1511,8 +1504,7 @@ class STTableDataDiff(TableDataDiff):
                     self.diff_values.append(((col.name, idx), (arra[idx], arrb[idx])))
 
         # Calculate the absolute difference only if there are failed tolerance tests
-        if self.fail_atol_rtol_test == 0 and len(self.non_numeric_diff_columns) == 0:
-            self.diff_total = 0
+        if self.diff_total == 0 and len(self.non_numeric_diff_columns) == 0:
             return
         total_values = len(self.a) * len(self.a.dtype.fields)
         # Calculate the absolute and relative difference percentages

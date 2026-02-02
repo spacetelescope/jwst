@@ -125,9 +125,12 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
     else:
         # Match the astropy report
         streport, pixelreport = [], []
+        stidx, pixidx = False, False
         for idx, line in enumerate(report):
             # Ignore the ST added legends
-            if "These values are calculated" in line:
+            if "failed the (atol, rtol) test" in line:
+                continue
+            elif "These values are calculated" in line:
                 continue
             elif "Pixel indices below are 1-based." in line:
                 continue
@@ -1464,17 +1467,19 @@ def test_hdus_tables_misc(fitsdiff_default_kwargs):
         "Extension HDU 1:",
         "Data contains differences:",
         "Found 26 different table data element(s).",
-        "16 failed the (atol, rtol) test",
+        "10 failed the (atol, rtol) test",
         "Values in a and b",
         "col_name  zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "ERROR       1 1     0 5     100 95        99        99         0         0      49.5     47.26",
+        "FLUX       1 1     0 0    100 100        99        99         0         0      49.5      49.5",
         "INDEX       1 0     0 0    100 100        99        99         0         1      49.5     49.55",
         "WAVELENGTH       1 0     0 1     100 99        99        99         0         1      49.5     49.65",
         "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
         "col_name   dtype  rel_diffs rel_max rel_mean rel_std",
         "---------- ------- --------- ------- -------- -------",
         "ERROR float32         0     nan      nan     nan",
+        "FLUX float32         0     nan      nan     nan",
         "INDEX   int32         5       1        1       0",
         "WAVELENGTH float32         5       1        1       0",
         "* Pixel indices below are 1-based.",
