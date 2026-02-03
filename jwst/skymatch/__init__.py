@@ -2,5 +2,4 @@
 
 from .skymatch_step import SkyMatchStep
 
-__author__ = "Mihai Cara"
 __all__ = ["SkyMatchStep"]
