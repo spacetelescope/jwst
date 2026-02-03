@@ -27,30 +27,31 @@ def subtract_wfss_bkg(
 
     Parameters
     ----------
-    model : ImageModel
-        Copy of input target exposure data model
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
+        Copy of input target exposure data model.
 
     bkg_filename : str
-        Name of master background file for WFSS/GRISM
+        Name of master background file for WFSS/GRISM.
 
     wl_range_name : str
-        Name of wavelength range reference file
+        Name of wavelength range reference file.
 
-    mmag_extract : float, optional, default None
-        Minimum abmag of grism objects to extract
+    mmag_extract : float or None, optional
+        Minimum AB mag of grism objects to extract. Default: None
 
-    user_mask : ndarray[bool], optional, default None
-        User-supplied boolean source mask. True for background,
-        False for pixels that are part of sources. If provided, will supersede the auto-generated
-        mask from the source catalog, and `model.meta.source_catalog` will be ignored entirely.
+    user_mask : ndarray[bool] or None, optional
+        User-supplied boolean source mask. `True` for background,
+        `False` for pixels that are part of sources. If provided, will supersede the auto-generated
+        mask from the source catalog, and ``model.meta.source_catalog`` will be ignored entirely.
+        Default: None
 
-    rescaler_kwargs : dict, optional, default None
-        Keyword arguments to pass to ScalingFactorComputer
+    rescaler_kwargs : dict or None, optional
+        Keyword arguments to pass to ``_ScalingFactorComputer``. Default: None
 
     Returns
     -------
-    result : ImageModel
-        Background-subtracted target data model
+    result : `~stdatamodels.jwst.datamodels.ImageModel`
+        Background-subtracted target data model.
     """
     bkg_ref = datamodels.open(bkg_filename)
     bkg_ref = get_subarray_model(model, bkg_ref)
@@ -152,31 +153,32 @@ def subtract_wfss_bkg(
 
 
 class _ScalingFactorComputer:
+    """
+    Handle computation of scaling factor.
+
+    Parameters
+    ----------
+    p : float, optional
+        Percentile for sigma clipping on both low and high ends per iteration, default 1.0.
+        For example, with ``p=2.0``, the middle 96% of the data is kept.
+
+    maxiter : int, optional
+        Maximum number of iterations for outlier rejection. Default 5.
+
+    delta_rms_thresh : float, optional
+        Stopping criterion for outlier rejection; stops when the rms residuals
+        change by less than this fractional threshold in a single iteration.
+        For example, assuming ``delta_rms_thresh=0.1`` and a residual RMS of 100
+        in iteration 1, the iteration will stop if the RMS residual in iteration
+        2 is greater than 90.
+        Default 0.0, i.e., ignore this and only stop at ``maxiter``.
+
+    dispersion_axis : int, optional
+        The index to select the along-dispersion axis. Used to compute the RMS
+        residual, so must be set if ``rms_thresh > 0``. Default None.
+    """
+
     def __init__(self, p=1.0, maxiter=5, delta_rms_thresh=0, dispersion_axis=None):
-        """
-        Initialize the class.
-
-        Parameters
-        ----------
-        p : float, optional
-            Percentile for sigma clipping on both low and high ends per iteration, default 1.0.
-            For example, with p=2.0, the middle 96% of the data is kept.
-
-        maxiter : int, optional
-            Maximum number of iterations for outlier rejection. Default 5.
-
-        delta_rms_thresh : float, optional
-            Stopping criterion for outlier rejection; stops when the rms residuals
-            change by less than this fractional threshold in a single iteration.
-            For example, assuming delta_rms_thresh=0.1 and a residual RMS of 100
-            in iteration 1, the iteration will stop if the RMS residual in iteration
-            2 is greater than 90.
-            Default 0.0, i.e., ignore this and only stop at maxiter.
-
-        dispersion_axis : int, optional
-            The index to select the along-dispersion axis. Used to compute the RMS
-            residual, so must be set if rms_thresh > 0. Default None.
-        """
         if (delta_rms_thresh > 0) and (dispersion_axis not in [1, 2]):
             msg = (
                 f"Unrecognized dispersion axis {dispersion_axis}. "
@@ -324,7 +326,7 @@ def _sufficient_background_pixels(dq_array, bkg_mask, bkg, min_pixfrac=0.05):
 
     Check DQ flags of pixels selected for bkg use - XOR the DQ values with
     the DO_NOT_USE flag to flip the DO_NOT_USE bit. Then count the number
-    of pixels that AND with the DO_NOT_USE flag, i.e. initially did not have
+    of pixels that AND with the DO_NOT_USE flag, i.e., initially did not have
     the DO_NOT_USE bit set.
 
     Parameters
@@ -360,14 +362,14 @@ def _mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Input target exposure data model
 
     wl_range_name : str
         Name of the wavelengthrange reference file
 
     mmag_extract : float
-        Minimum abmag of grism objects to extract
+        Minimum AB mag of grism objects to extract
 
     Returns
     -------

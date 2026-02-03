@@ -10,5 +10,4 @@ Background Subtraction
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.background
+   api_ref.rst
