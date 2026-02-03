@@ -1334,14 +1334,13 @@ class STTableDataDiff(TableDataDiff):
                 else:
                     thresh = self.atol + self.rtol * np.abs(arrb[bothfinite])
                 failed_tol_test = absdiff > thresh
-                # The number of total failed tolerance tests, is the diff greater than threshold
-                # plus different nan and inf values
-                nan_diffs = ~np.isnan(arra)[bothfinite] != ~np.isnan(arrb)[bothfinite]
-                inf_diffs = ~np.isfinite(arra)[bothfinite] != ~np.isfinite(arrb)[bothfinite]
-                number_that_fail_atol_rtol_test = (
-                    failed_tol_test.sum() + nan_diffs.sum() + inf_diffs.sum()
-                )
+                number_that_fail_atol_rtol_test = failed_tol_test.sum()
                 self.fail_atol_rtol_test += number_that_fail_atol_rtol_test
+                if not self.report_pixel_loc_diffs:
+                    # The number of total failed tolerance tests, is the diff greater than threshold
+                    # plus different nan and inf values
+                    inf_diffs = np.isfinite(arra)[~bothfinite] != np.isfinite(arrb)[~bothfinite]
+                    self.diff_total += number_that_fail_atol_rtol_test + inf_diffs.sum()
                 if number_that_fail_atol_rtol_test > 0:
                     rtol_failures = abs(
                         arra[bothfinite][failed_tol_test] - arrb[bothfinite][failed_tol_test]
@@ -1349,6 +1348,9 @@ class STTableDataDiff(TableDataDiff):
                     maxr = np.max(rtol_failures)
                     meanr = np.mean(rtol_failures)
                     stdr = np.std(rtol_failures)
+                    if not self.report_pixel_loc_diffs:
+                        self.rel_diffs += rtol_failures.size
+
                 # Report the total number of zeros, nans, and no-nan values
                 self.report_zeros_nan.add_row(
                     (
@@ -1371,10 +1373,6 @@ class STTableDataDiff(TableDataDiff):
                         stdr,
                     )
                 )
-
-                if not self.report_pixel_loc_diffs:
-                    self.diff_total += number_that_fail_atol_rtol_test
-                    self.rel_diffs += np.nan
 
             elif "P" in col.format or "Q" in col.format:
                 different_idx = (
