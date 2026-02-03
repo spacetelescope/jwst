@@ -1306,7 +1306,6 @@ class Asn_Lv3WFSSMIR(AsnMixin_Spectrum):
                     name="opt_elem",
                     sources=["filter"],
                     value="P750L",
-                    force_unique=True,
                 ),
             ]
         )
