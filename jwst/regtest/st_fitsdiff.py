@@ -1323,8 +1323,7 @@ class STTableDataDiff(TableDataDiff):
                     self.identical_columns.append(col.name)
                     continue
                 if not self.report_pixel_loc_diffs:
-                    # The number of total failed tolerance tests, is the diff greater than threshold
-                    # plus different nan and inf values
+                    # The number of finite differences plus different nan and inf values
                     self.diff_total += n_different
                 nansa = arra[np.isnan(arra)]
                 nansb = arrb[np.isnan(arrb)]
