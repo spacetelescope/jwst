@@ -1,8 +1,9 @@
 Reference Files
 ===============
-The background image subtraction step uses reference files only when
-processing Wide-Field Slitless Spectroscopy (WFSS) exposures. Two reference
-files are used for WFSS mode:
+The background image subtraction step uses reference files when
+processing Wide-Field Slitless Spectroscopy (WFSS) and
+Single Object Slitless Spectroscopy (SOSS) exposures. Two reference
+files are used for WFSS and SOSS modes:
 
 * :ref:`BKG <bkg_reffile>`
 * :ref:`WAVELENGTHRANGE <bg_wlrange_reffile>`

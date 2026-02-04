@@ -78,9 +78,8 @@ If more than one background exposure is provided, they will be averaged
 together before being subtracted from the target exposure. Iterative sigma
 clipping is applied during the averaging process, to reject sources or other
 outliers.
-The clipping is accomplished using the function
-:func:`astropy.stats.sigma_clip`.
-The background step allows users to supply values for the ``sigma_clip``
+The clipping is accomplished using :func:`astropy.stats.sigma_clip`.
+The background step allows users to supply values for the :func:`astropy.stats.sigma_clip`
 parameters ``sigma`` and ``maxiters`` (see :ref:`bkg_step_args`),
 in order to control the clipping operation.
 
@@ -138,7 +137,7 @@ The combined, averaged background image can be saved using the step parameter
 
 WFSS Mode
 ---------
-For Wide-Field Slitless Spectroscopy expsoures (``NIS_WFSS`` and ``NRC_WFSS``),
+For Wide-Field Slitless Spectroscopy exposures,
 a background reference image is subtracted from the target exposure.
 Before being subtracted, the background reference image is scaled to match the
 signal level of the WFSS image within background (source-free) regions of the
