@@ -149,6 +149,13 @@ ban-relative-imports = "all"  # Disallow all relative imports.
     "N802", # Function name should be lowercase
     "N813", # Camelcase imported as lowercase
 ]
+"jwst/regtest/lib/*.py" = [
+    "SLF",
+    "D102", # Missing docstring in public method
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "S101", # use of assert
+]
 
 [lint.isort]
 known-first-party = ["jwst"]
