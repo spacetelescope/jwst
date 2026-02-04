@@ -233,13 +233,12 @@ def test_rscd_addto_groupdq(create_miri_model):
     assert dm_ramp_rscd.groupdq[0, 0, 5, 5] == 5
 
 
-def test_rscd_bright_use_group1(create_miri_model):
+def test_rscd_bright_use_2groups(create_miri_model):
     """
-    Test the rscd code when bright_use_group1 is set to True.
+    Test the rscd code when bright_use_2groups is set to True.
 
-    The groupdq flag for group 1 should not be set to DO_NOT_USE for the pixels that saturate
-    the 3rd group.  Otherwise, all other pixels should have their group1 groupdq
-    flags set to DO_NOT_USE.
+    Test backing off on the RSCD flagging when there is saturated data so we have at least
+    two valid groups.
     """
 
     # size of ramp
@@ -252,27 +251,26 @@ def test_rscd_bright_use_group1(create_miri_model):
     # create the data and groupdq arrays
     dm_ramp.data[:, :, :, :] = 1
 
-    # set a fraction of the pixels to saturate in between the 2nd and 3rd groups
-    dm_ramp.groupdq[:, 2, 0:10, :] = dqflags.group["SATURATED"]
+    # set a fraction of the pixels starting at group 3
+    dm_ramp.groupdq[:, 2:, 0:10, :] = dqflags.group["SATURATED"]
 
-    # set a fraction of the pixels to saturate in between the 1st and 2nd groups
-    dm_ramp.groupdq[:, 2, 20:30, :] = dqflags.group["SATURATED"]  # saturates on group 3
-    dm_ramp.groupdq[:, 1, 20:30, :] = dqflags.group["SATURATED"]  # saturates on group 2
-    #  Set a pixels to also be saturated on the first group. These will be flagged
-    # by rscd correction.
+    # set a fraction of the pixels to saturate starting at group 2 on integration 2
+    # we can not recover these pixels
+    # dm_ramp.groupdq[1, 1:, 20:30, :] = dqflags.group["SATURATED"]  # saturates on group 2
 
-    dm_ramp.groupdq[:, 0, 25:30, :] = dqflags.group["SATURATED"]  # saturates on group 1
+    #  Set a pixels to also be saturated on the first group on integration 1
+    # we can not recover these pixels
+    # dm_ramp.groupdq[0, 0:, 25:30, :] = dqflags.group["SATURATED"]  # saturates on group 1
 
     dm_ramp.pixeldq[:, :] = 0  # initialize to zero
 
     # check for a log message
-    n_kept = 15 * xsize * nints
-    n_kept_int = 15 * xsize
+    n_kept_int = 10 * xsize
 
     nflag_int1 = 1
     nflag_int2 = 1
     dm_ramp_rscd = correction_skip_groups(
-        dm_ramp.copy(), nflag_int1, nflag_int2, bright_use_group1=True
+        dm_ramp.copy(), nflag_int1, nflag_int2, bright_use_2groups=True
     )
     number_kept1 = dm_ramp_rscd.meta.rscd.keep_bright_firstgroup_int1
     assert number_kept1 == n_kept_int
@@ -286,7 +284,7 @@ def test_rscd_bright_use_group1(create_miri_model):
 
     expected_diff = np.full((nints, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int)
     expected_diff[:, 0:10, :] = 0
-    expected_diff[:, 20:25, :] = 0
+    #    expected_diff[:, 20:25, :] = 0
 
     np.testing.assert_array_equal(
         expected_diff,
@@ -308,7 +306,7 @@ def test_rscd_bright_use_group1(create_miri_model):
     dq_diff = dm_ramp_rscd.pixeldq - dm_ramp.pixeldq
     expected_diff = np.full((ysize, xsize), 0, dtype=int)
     expected_diff[0:10, :] = dqflags.pixel["FLUX_ESTIMATED"]
-    expected_diff[20:25, :] = dqflags.pixel["FLUX_ESTIMATED"]
+    # expected_diff[20:25, :] = dqflags.pixel["FLUX_ESTIMATED"]
     np.testing.assert_array_equal(
         expected_diff,
         dq_diff,
