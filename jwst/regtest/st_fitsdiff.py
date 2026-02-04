@@ -1339,8 +1339,11 @@ class STTableDataDiff(TableDataDiff):
                 if not self.report_pixel_loc_diffs:
                     # The number of total failed tolerance tests, is the diff greater than threshold
                     # plus different nan and inf values
-                    inf_diffs = np.isfinite(arra)[~bothfinite] != np.isfinite(arrb)[~bothfinite]
-                    self.diff_total += number_that_fail_atol_rtol_test + inf_diffs.sum()
+                    inf_diffs = np.isinf(arra)[~bothfinite] != np.isinf(arrb)[~bothfinite]
+                    nan_diffs = np.isnan(arra)[~bothfinite] != np.isnan(arrb)[~bothfinite]
+                    self.diff_total += (
+                        number_that_fail_atol_rtol_test + inf_diffs.sum() + nan_diffs.sum()
+                    )
                 if number_that_fail_atol_rtol_test > 0:
                     rtol_failures = abs(
                         arra[bothfinite][failed_tol_test] - arrb[bothfinite][failed_tol_test]

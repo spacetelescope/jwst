@@ -1611,3 +1611,46 @@ def test_table_pq_different_array_sizes(mock_table, fitsdiff_default_kwargs):
     assert result is False
     assert "Extra column col_1 of format PI(4) in a" in report
     assert "Extra column col_1 of format PI(5) in b" in report
+
+
+def test_table_nan_and_inf(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    cw = fits.Column(name="WAVELENGTH", format="E", unit="Angstrom")
+    cd_a = fits.ColDefs([cw])
+    cd_b = fits.ColDefs([cw])
+    table_a = fits.BinTableHDU.from_columns(cd_a, nrows=10)
+    table_b = fits.BinTableHDU.from_columns(cd_b, nrows=10)
+    arr = np.arange(10.0)
+    arr[0] = np.nan
+    table_a.data["WAVELENGTH"] = arr
+    arr[0] = 0.0
+    arr[3] = np.nan
+    arr[4] = np.inf
+    arr[5] = 20.0
+    table_b.data["WAVELENGTH"] = arr
+    a.append(table_a)
+    b.append(table_b)
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = report_to_list(diff.report())
+    result = diff.identical
+
+    expected_report = [
+        "Extension HDU 1:",
+        "Data contains differences:",
+        "Found 4 different table data element(s).",
+        "1 failed the (atol, rtol) test",
+        "Values in a and b",
+        "col_name  zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
+        "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
+        "WAVELENGTH       0 1     1 1        9 8         9        20         1         0         5     6.625",
+        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
+        "col_name   dtype  rel_diffs rel_max rel_mean rel_std",
+        "---------- ------- --------- ------- -------- -------",
+        "WAVELENGTH float32         1      15       15       0",
+    ]
+
+    assert result is False
+    assert report == expected_report
