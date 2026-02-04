@@ -1322,6 +1322,10 @@ class STTableDataDiff(TableDataDiff):
                 if n_different == 0:
                     self.identical_columns.append(col.name)
                     continue
+                if not self.report_pixel_loc_diffs:
+                    # The number of total failed tolerance tests, is the diff greater than threshold
+                    # plus different nan and inf values
+                    self.diff_total += n_different
                 nansa = arra[np.isnan(arra)]
                 nansb = arrb[np.isnan(arrb)]
                 nonansa = arra[np.isfinite(arra)]
@@ -1338,10 +1342,6 @@ class STTableDataDiff(TableDataDiff):
                 failed_tol_test = absdiff > thresh
                 number_that_fail_atol_rtol_test = failed_tol_test.sum()
                 self.fail_atol_rtol_test += number_that_fail_atol_rtol_test
-                if not self.report_pixel_loc_diffs:
-                    # The number of total failed tolerance tests, is the diff greater than threshold
-                    # plus different nan and inf values
-                    self.diff_total += number_that_fail_atol_rtol_test + inf_diffs + nan_diffs
                 if number_that_fail_atol_rtol_test > 0:
                     rtol_failures = abs(
                         arra[bothfinite][failed_tol_test] - arrb[bothfinite][failed_tol_test]
