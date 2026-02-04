@@ -1315,7 +1315,10 @@ class STTableDataDiff(TableDataDiff):
 
             # Calculate the absolute and relative differences
             if np.issubdtype(arra.dtype, np.number) and np.issubdtype(arrb.dtype, np.number):
-                n_different = (arra != arrb).sum()
+                bothfinite = np.isfinite(arra) & np.isfinite(arrb)
+                inf_diffs = (np.isinf(arra)[~bothfinite] != np.isinf(arrb)[~bothfinite]).sum()
+                nan_diffs = (np.isnan(arra)[~bothfinite] != np.isnan(arrb)[~bothfinite]).sum()
+                n_different = (arra[bothfinite] != arrb[bothfinite]).sum() + inf_diffs + nan_diffs
                 if n_different == 0:
                     self.identical_columns.append(col.name)
                     continue
@@ -1327,7 +1330,6 @@ class STTableDataDiff(TableDataDiff):
                 arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
                 maxr, meanr, stdr = np.nan, np.nan, np.nan
                 # Find plain differences while excluding entries where both are NaN or inf
-                bothfinite = np.isfinite(arra) & np.isfinite(arrb)
                 absdiff = np.abs(arrb[bothfinite] - arra[bothfinite])
                 if self.atol == 0 and self.rtol == 0:
                     thresh = 0.0
@@ -1339,11 +1341,7 @@ class STTableDataDiff(TableDataDiff):
                 if not self.report_pixel_loc_diffs:
                     # The number of total failed tolerance tests, is the diff greater than threshold
                     # plus different nan and inf values
-                    inf_diffs = np.isinf(arra)[~bothfinite] != np.isinf(arrb)[~bothfinite]
-                    nan_diffs = np.isnan(arra)[~bothfinite] != np.isnan(arrb)[~bothfinite]
-                    self.diff_total += (
-                        number_that_fail_atol_rtol_test + inf_diffs.sum() + nan_diffs.sum()
-                    )
+                    self.diff_total += number_that_fail_atol_rtol_test + inf_diffs + nan_diffs
                 if number_that_fail_atol_rtol_test > 0:
                     rtol_failures = abs(
                         arra[bothfinite][failed_tol_test] - arrb[bothfinite][failed_tol_test]
