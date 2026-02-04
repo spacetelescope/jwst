@@ -11,7 +11,7 @@ from jwst.lib.reffile_utils import get_subarray_model
 
 log = logging.getLogger(__name__)
 
-__all__ = ["subtract_wfss_bkg"]
+__all__ = ["subtract_wfss_bkg", "ScalingFactorComputer"]
 
 
 def subtract_wfss_bkg(
@@ -46,7 +46,7 @@ def subtract_wfss_bkg(
         Default: None
 
     rescaler_kwargs : dict or None, optional
-        Keyword arguments to pass to ``_ScalingFactorComputer``. Default: None
+        Keyword arguments to pass to `ScalingFactorComputer`. Default: None
 
     Returns
     -------
@@ -116,7 +116,7 @@ def subtract_wfss_bkg(
 
     # compute scaling factor for the reference background image
     log.info("Starting iterative outlier rejection for background subtraction.")
-    rescaler = _ScalingFactorComputer(**rescaler_kwargs)
+    rescaler = ScalingFactorComputer(**rescaler_kwargs)
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", category=RuntimeWarning, message="All-NaN slice encountered"
@@ -152,7 +152,7 @@ def subtract_wfss_bkg(
     return model
 
 
-class _ScalingFactorComputer:
+class ScalingFactorComputer:
     """
     Handle computation of scaling factor.
 
