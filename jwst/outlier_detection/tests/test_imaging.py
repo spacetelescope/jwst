@@ -187,7 +187,7 @@ def test_outlier_step_with_source_no_outliers(mirimage_three_sci, tmp_cwd, src_t
 
 
 @pytest.mark.parametrize("weight", ["exptime", "ivm"])
-@pytest.mark.parametrize("src_type", ["gaussian", "square", "strip"])
+@pytest.mark.parametrize("src_type", ["gaussian", "square", "strip", "point"])
 @pytest.mark.parametrize("idx", [0, 1, 2])
 def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weight, idx):
     """Test whole step with no outlier and an artificial source: "gaussian" source
@@ -203,6 +203,9 @@ def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weigh
     elif src_type == "square":
         sl = np.s_[5:16, 5:16]
         src = np.full((11, 11), 100 * helpers.SIGMA, dtype=np.float32)
+    elif src_type == "point":
+        sl = (10, 10)
+        src = 100 * helpers.SIGMA
     else:  # gaussian
         sl = np.s_[5:16, 5:16]
         y, x = np.indices((11, 11)) - 5
@@ -237,7 +240,7 @@ def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weigh
             m = non_nan_mask_as_cube[i]
             if i == idx:
                 # Make sure CR pixels are now NaN in SCI and flagged in DQ
-                m[sl] = ~cr_mask
+                m[sl] = np.logical_not(cr_mask)
                 m2 = np.isfinite(corrected.data)
 
                 if src_type == "square":
