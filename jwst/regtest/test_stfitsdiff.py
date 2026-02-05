@@ -1623,3 +1623,33 @@ def test_table_pq_different_array_sizes(mock_table, fitsdiff_default_kwargs):
     assert "Extra column col_1 of format PI(4) in a" in report
     assert "Extra column col_1 of format PI(5) in b" in report
     assert "Column ['col_3'] is identical" in report
+
+
+def test_table_edge_cases(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    ce = fits.Column(name="EDGE_CASES", format="E")
+    cn = fits.Column(name="ALLNANS", format="E")
+    cd_a = fits.ColDefs([ce, cn])
+    cd_b = fits.ColDefs([ce, cn])
+    table_a = fits.BinTableHDU.from_columns(cd_a, nrows=16)
+    table_b = fits.BinTableHDU.from_columns(cd_b, nrows=16)
+    table_a.data["EDGE_CASES"] = np.array(4 * [1.0] + 4 * [np.inf] + 4 * [-np.inf] + 4 * [np.nan])
+    table_b.data["EDGE_CASES"] = np.array(4 * [1.0, np.inf, -np.inf, np.nan])
+    table_a.data["ALLNANS"] = np.full(16, np.nan)
+    table_b.data["ALLNANS"] = np.full(16, np.nan)
+    a.append(table_a)
+    b.append(table_b)
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "Found 12 different table data element(s)" in report
+    assert "12 failed the (atol, rtol) test" in report
+    assert "Column ['ALLNANS'] is identical" in report
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    fitsdiff_default_kwargs["numdiffs"] = -1
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "12 different table data element(s) found (37.50% different)." in report
+    assert "Column ['ALLNANS'] is identical" in report

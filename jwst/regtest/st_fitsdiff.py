@@ -31,6 +31,7 @@ __all__ = [
     "STTableDataDiff",
 ]
 
+
 #
 # When we get to the right version, the following items need to be removed:
 # Items                                                         Script where items live
@@ -1312,20 +1313,15 @@ class STTableDataDiff(TableDataDiff):
             # Calculate the absolute and relative differences
             if np.issubdtype(arra.dtype, np.number) and np.issubdtype(arrb.dtype, np.number):
                 # First count all entries that fail the atol/rtol test
-                # This includes entries where 1 of (a, b) is NaN or infinite and the other is not
-                # But not entries where both are NaN
-                finitea = np.isfinite(arra)
-                finiteb = np.isfinite(arrb)
-                if self.atol == 0 and self.rtol == 0:
-                    thresh = 0.0
-                else:
-                    thresh = self.atol + self.rtol * np.abs(arrb)
-                diffs = np.abs(arrb - arra)
-                number_that_fail_atol_rtol_test = ((~finitea ^ ~finiteb) | (diffs > thresh)).sum()
+                # This includes entries where 1 of (a, b) is np.inf, -np.inf or np.nan and the
+                # other is not and also instances where entries are different forms of not
+                # finite, e.g. 1 is nan and the other is inf
+                not_close = ~np.isclose(arra, arrb, rtol=self.rtol, atol=self.atol, equal_nan=True)
+                number_that_fail_atol_rtol_test = np.sum(not_close)
                 self.fail_atol_rtol_test += number_that_fail_atol_rtol_test
                 # Find plain differences while excluding entries where both are NaN
-                bothnans = np.isnan(arra) & np.isnan(arrb)
-                n_different = (arra[~bothnans] != arrb[~bothnans]).sum()
+                equal = (arra == arrb) | (np.isnan(arra) & np.isnan(arrb))
+                n_different = (~equal).sum()
                 if n_different == 0:
                     self.identical_columns.append(col.name)
                     continue
@@ -1376,7 +1372,7 @@ class STTableDataDiff(TableDataDiff):
                     )
 
                 if not self.report_pixel_loc_diffs:
-                    self.diff_total += arrb.size
+                    self.diff_total += number_that_fail_atol_rtol_test
                     self.rel_diffs += np.nan
 
             elif "P" in col.format or "Q" in col.format:
@@ -1452,9 +1448,8 @@ class STTableDataDiff(TableDataDiff):
                     self.diff_total += n_fail_rtol
                     self.rel_diffs += 0
 
-                # Should only get here for text table entries
             else:
-                # Should only get here if not numeric
+                # Should only get here if either integer or character
                 n_different = (arra != arrb).sum()
                 if n_different > 0:
                     if not np.issubdtype(arra.dtype, np.number):
@@ -1470,8 +1465,8 @@ class STTableDataDiff(TableDataDiff):
                 if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
                     arrb.dtype, np.floating
                 ):
-                    diffs, self.max_absolite, self.max_relative = where_not_allclose(
-                        arra, arrb, rtol=self.rtol, atol=self.atol, return_maxdiff=True
+                    diffs = np.where(
+                        ~np.isclose(arra, arrb, rtol=self.rtol, atol=self.atol, equal_nan=True)
                     )
                 elif "P" in col.format or "Q" in col.format:
                     diffs = (
