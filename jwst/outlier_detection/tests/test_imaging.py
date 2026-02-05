@@ -134,7 +134,7 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
 @pytest.mark.parametrize("src_type", ["square", "gaussian"])
 def test_outlier_step_with_source_no_outliers(mirimage_three_sci, tmp_cwd, src_type, weight):
     """Test whole step with no outliers and an artificial source:
-    a uniform "square" with sharp edges or a "gaussian" source centerd
+    a uniform "square" with sharp edges or a "gaussian" source centered
     on the image, no outliers."""
     container = ModelLibrary(list(mirimage_three_sci))
 
