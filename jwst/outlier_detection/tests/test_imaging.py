@@ -133,8 +133,9 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
 @pytest.mark.parametrize("weight", ["exptime", "ivm"])
 @pytest.mark.parametrize("src_type", ["square", "gaussian"])
 def test_outlier_step_with_source_no_outliers(mirimage_three_sci, tmp_cwd, src_type, weight):
-    """Test whole step with no outlier and an artificial source: "gaussian" source
-    or a constant square source with sharp edges, no outliers"""
+    """Test whole step with no outliers and an artificial source:
+    a uniform "square" with sharp edges or a "gaussian" source centerd
+    on the image, no outliers."""
     container = ModelLibrary(list(mirimage_three_sci))
 
     atol = 2.0 * np.finfo(np.float32).eps
@@ -190,35 +191,39 @@ def test_outlier_step_with_source_no_outliers(mirimage_three_sci, tmp_cwd, src_t
 @pytest.mark.parametrize("src_type", ["gaussian", "square", "strip", "point"])
 @pytest.mark.parametrize("idx", [0, 1, 2])
 def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weight, idx):
-    """Test whole step with no outlier and an artificial source: "gaussian" source
-    or a constant square source with sharp edges, no outliers"""
+    """Test whole step with outlier(s) added besides a uniform square source."""
     container = ModelLibrary(list(mirimage_three_sci))
 
     atol = 2.0 * np.finfo(np.float32).eps
 
     # Create artificial source
+    src_sl = np.s_[5:16, 5:16]
+    src = np.full((11, 11), 100 * helpers.SIGMA, dtype=np.float32)
+
+    # Create artificial CR
     if src_type == "strip":
         sl = np.s_[9:12, 5:16]
-        src = np.full((3, 11), 100 * helpers.SIGMA, dtype=np.float32)
+        cr = np.full((3, 11), 100 * helpers.SIGMA, dtype=np.float32)
     elif src_type == "square":
         sl = np.s_[5:16, 5:16]
-        src = np.full((11, 11), 100 * helpers.SIGMA, dtype=np.float32)
+        cr = np.full((11, 11), 100 * helpers.SIGMA, dtype=np.float32)
     elif src_type == "point":
-        sl = (10, 10)
-        src = 100 * helpers.SIGMA
+        sl = ((1, 1), (10, 10))
+        cr = 100 * helpers.SIGMA
     else:  # gaussian
         sl = np.s_[5:16, 5:16]
         y, x = np.indices((11, 11)) - 5
         fwhm = 1.5
-        src = 100 * helpers.SIGMA * np.exp(-4.0 * np.log(2.0) * (x**2 + y**2) / fwhm**2)
+        cr = 100 * helpers.SIGMA * np.exp(-4.0 * np.log(2.0) * (x**2 + y**2) / fwhm**2)
 
-    cr_mask = src > 5 * helpers.SIGMA
+    cr_mask = cr > 5 * helpers.SIGMA
 
     # put a Gaussian source in all three exposures
     with container:
         for i, ccont in enumerate(container):
+            ccont.data[src_sl] += src
             if i == idx:
-                ccont.data[sl] += src
+                ccont.data[sl] += cr
                 # ccont.err[5:16, 5:16] = np.sqrt(ccont.err[5:16, 5:16]**2 + src)
             container.shelve(ccont)
 
