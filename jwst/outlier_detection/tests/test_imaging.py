@@ -151,7 +151,7 @@ def test_outlier_step_with_source_no_outliers(mirimage_three_sci, tmp_cwd, src_t
     with container:
         for ccont in container:
             ccont.data[5:16, 5:16] += src
-            ccont.err[5:16, 5:16] = np.sqrt(ccont.err[5:16, 5:16]**2 + src)
+            ccont.err[5:16, 5:16] = np.sqrt(ccont.err[5:16, 5:16] ** 2 + src)
             container.shelve(ccont)
 
     # Save all the data into a separate array before passing into step
@@ -244,10 +244,14 @@ def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weigh
                 m2 = np.isfinite(corrected.data)
 
                 if src_type == "square":
-                    pytest.xfail("Square CR fails with pixels in the interior of the square not flagged as outliers.")
+                    pytest.xfail(
+                        "Square CR fails with pixels in the interior of the square not flagged as outliers."
+                    )
 
                 assert np.all(m == m2)
-                assert np.all((corrected.dq[~m] & helpers.OUTLIER_DO_NOT_USE) == helpers.OUTLIER_DO_NOT_USE)
+                assert np.all(
+                    (corrected.dq[~m] & helpers.OUTLIER_DO_NOT_USE) == helpers.OUTLIER_DO_NOT_USE
+                )
 
             np.testing.assert_allclose(data_as_cube[i][m], corrected.data[m], rtol=0.0, atol=atol)
             np.testing.assert_array_equal(dq_as_cube[i][m], corrected.dq[m])

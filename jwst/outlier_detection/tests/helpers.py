@@ -76,10 +76,7 @@ def assign_wcs_to_models(models, exptype, tsovisit, detector="ANY"):
     for m in models:
         m.meta.wcs = wcs
         m.meta.wcsinfo = wcsinfo
-        m.meta.photometry.pixelarea_steradians = compute_mean_pixel_area(
-            wcs,
-            m.data.shape
-        )
+        m.meta.photometry.pixelarea_steradians = compute_mean_pixel_area(wcs, m.data.shape)
     return models
 
 
