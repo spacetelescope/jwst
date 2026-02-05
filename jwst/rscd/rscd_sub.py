@@ -241,6 +241,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip, bright_use_2groups):
         # --- Logic for retaining at least 2 groups when we have saturating data
         min_group = rscd_skip + 2  # counting starting at 1
 
+        # identify pixels saturated at the current threshold
         is_sat_problem = (
             (
                 output_model.groupdq[int_start : int_end + 1, min_group - 1, :, :]
@@ -248,6 +249,17 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip, bright_use_2groups):
             )
             > 0
         ).astype(bool)
+
+        # New check specifically for Group 2. If it is also saturated then we can not
+        # recover this pixe. If group 2 is then so is group 1.
+        is_group_2_sat = (
+            (output_model.groupdq[int_start : int_end + 1, 1, :, :] & dqflags.group["SATURATED"])
+            > 0
+        ).astype(bool)
+
+        # 3. Remove Group 2 saturation from the original problem mask
+        # This keeps saturation flags ONLY if they are NOT saturated in Group 2
+        is_sat_problem = is_sat_problem & ~is_group_2_sat
 
         num_sat = np.sum(is_sat_problem)
         num_rscd_lowered = num_sat
@@ -258,8 +270,6 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip, bright_use_2groups):
         )
         if num_sat > 0:
             #  do dynamic rscd flagging - based on saturation group of every pixel
-            x_dim = output_model.groupdq.shape[3]
-            y_dim = output_model.groupdq.shape[2]
 
             n_ints = int_end - int_start + 1
             skip_array = np.zeros((n_ints, y_dim, x_dim))
@@ -267,14 +277,15 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip, bright_use_2groups):
 
             while num_sat > 0 and min_group > 0:
                 skip_array[is_sat_problem] = np.maximum(skip_array[is_sat_problem] - 1, 0)
-                # Collapse 3D to 2D: True if saturated in ANY integration
+
+                # Collapse 3D to 2D to flab PixelDQ. True if saturated in ANY integration
                 is_sat_2d = np.any(is_sat_problem, axis=0)
-
-                # Get Y and X coordinates
-                y_coords, x_coords = np.where(is_sat_2d)
-
-                output_model.pixeldq[y_coords, x_coords] |= dqflags.pixel["FLUX_ESTIMATED"]
+                output_model.pixeldq[is_sat_2d] |= dqflags.pixel["FLUX_ESTIMATED"]
                 min_group = min_group - 1
+                if min_group < 1:  # Safety check
+                    break
+
+                # re-evaluate the saturation at the lower group level
                 is_sat_problem = (
                     (
                         output_model.groupdq[int_start : int_end + 1, min_group - 1, :, :]
@@ -282,6 +293,11 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip, bright_use_2groups):
                     )
                     > 0
                 ).astype(bool)
+
+                # Re-apply the group 2 guard
+                # (Otherwise, if we drop to Group 1, we might process pixels
+                # we already deemed "unrecoverable")
+                is_sat_problem = is_sat_problem & ~is_group_2_sat
 
                 num_sat = is_sat_problem.sum()
 

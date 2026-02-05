@@ -244,8 +244,8 @@ def test_rscd_bright_use_2groups(create_miri_model):
     # size of ramp
     nints = 2
     ngroups = 5
-    xsize = 40
-    ysize = 40
+    xsize = 15
+    ysize = 15
 
     dm_ramp = create_miri_model(nints, ngroups, ysize, xsize)
     # create the data and groupdq arrays
@@ -256,35 +256,32 @@ def test_rscd_bright_use_2groups(create_miri_model):
 
     # set a fraction of the pixels to saturate starting at group 2 on integration 2
     # we can not recover these pixels
-    # dm_ramp.groupdq[1, 1:, 20:30, :] = dqflags.group["SATURATED"]  # saturates on group 2
-
-    #  Set a pixels to also be saturated on the first group on integration 1
-    # we can not recover these pixels
-    # dm_ramp.groupdq[0, 0:, 25:30, :] = dqflags.group["SATURATED"]  # saturates on group 1
+    dm_ramp.groupdq[1, 1:, 10:, :] = dqflags.group["SATURATED"]  # saturates on group 2
 
     dm_ramp.pixeldq[:, :] = 0  # initialize to zero
 
     # check for a log message
     n_kept_int = 10 * xsize
 
-    nflag_int1 = 1
-    nflag_int2 = 1
+    nflag_int1 = 2
+    nflag_int2 = 2
     dm_ramp_rscd = correction_skip_groups(
         dm_ramp.copy(), nflag_int1, nflag_int2, bright_use_2groups=True
     )
+
     number_kept1 = dm_ramp_rscd.meta.rscd.keep_bright_firstgroup_int1
     assert number_kept1 == n_kept_int
 
     number_kept2 = dm_ramp_rscd.meta.rscd.keep_bright_firstgroup_int2p
     assert number_kept2 == n_kept_int
 
-    # check that the difference in the groupdq flags is equal to
+    # For integration 1 check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag
-    dq_diff = dm_ramp_rscd.groupdq[:, 0, :, :] - dm_ramp.groupdq[:, 0, :, :]
+    dq_diff = dm_ramp_rscd.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
 
-    expected_diff = np.full((nints, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int)
-    expected_diff[:, 0:10, :] = 0
-    #    expected_diff[:, 20:25, :] = 0
+    # on integration 1
+    expected_diff = np.full((ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int)
+    expected_diff[0:10, :] = 0
 
     np.testing.assert_array_equal(
         expected_diff,
@@ -292,23 +289,26 @@ def test_rscd_bright_use_2groups(create_miri_model):
         err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
     )
 
-    # test that the groupdq flags are not changed for the rest of the groups
-    dq_diff = dm_ramp_rscd.groupdq[1, 1:ngroups, :, :] - dm_ramp.groupdq[1, 1:ngroups, :, :]
-    index = np.where(dq_diff != 0)
-
-    np.testing.assert_array_equal(
-        np.full((ngroups - 1, ysize, xsize), 0, dtype=int),
-        dq_diff,
-        err_msg="n >= 2 groupdq flags changes and they should not be",
-    )
-
     # also check that pixel dq flags are set for the pixels that were kept
     dq_diff = dm_ramp_rscd.pixeldq - dm_ramp.pixeldq
     expected_diff = np.full((ysize, xsize), 0, dtype=int)
     expected_diff[0:10, :] = dqflags.pixel["FLUX_ESTIMATED"]
-    # expected_diff[20:25, :] = dqflags.pixel["FLUX_ESTIMATED"]
     np.testing.assert_array_equal(
         expected_diff,
         dq_diff,
         err_msg="pixeldq flags do not have expected values",
+    )
+
+    # For integration 2 test on GROUP 2 test that  pixels saturated at x = 20:30 are not recovered
+    # They are still set to saturated and they will not be ignored by RSCD flag
+    # But x = 0:10 are usable (not flagged by the RSCD correction)
+    # Essentially the RSCD flagging has not occurred in integration 2 group 1.
+    dq_diff = dm_ramp_rscd.groupdq[1, 1, :, :] - dm_ramp.groupdq[1, 1, :, :]
+
+    expected_diff = np.full((ysize, xsize), 0, dtype=int)
+    expected_diff[10:, :] = 1
+    np.testing.assert_array_equal(
+        expected_diff,
+        dq_diff,
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
     )
