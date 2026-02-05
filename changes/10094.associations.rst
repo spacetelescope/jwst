@@ -1,0 +1,1 @@
+Added ``Asn_Lv2WFSSMIR`` and ``Asn_Lv3WFSSMIR`` rule classes for creating MIRI WFSS associations.

@@ -157,7 +157,7 @@ def test_source_catalog_point_sources(finder, nircam_model, tmp_cwd):
 
 
 def test_output_is_not_input(nircam_model):
-    """Make sure output is not the same as input."""
+    """Make sure input is not modified."""
     step = SourceCatalogStep(
         snr_threshold=0.5, npixels=5, bkg_boxsize=50, kernel_fwhm=2.0, save_results=False
     )
@@ -167,3 +167,7 @@ def test_output_is_not_input(nircam_model):
     assert result is not nircam_model
     assert isinstance(result, QTable)
     assert isinstance(nircam_model, dm.ImageModel)
+
+    # Input is not modified when called standalone
+    assert nircam_model.meta.source_catalog is None
+    assert nircam_model.meta.cal_step.source_catalog is None

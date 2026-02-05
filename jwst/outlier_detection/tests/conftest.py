@@ -37,7 +37,6 @@ def sci_blot_image_pair():
     rng = np.random.default_rng(720)
     sci.data = rng.normal(loc=background, size=helpers.SHAPE, scale=helpers.SIGMA)
     sci.err = np.zeros(helpers.SHAPE) + helpers.SIGMA
-    sci.var_rnoise += 0
 
     # Add a source in the center
     signal = 20 * helpers.SIGMA
