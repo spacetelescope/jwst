@@ -8,7 +8,6 @@ Notes:
 """
 
 import numpy as np
-import pytest
 from astropy.io import fits
 from gwcs import wcs
 from numpy.testing import assert_allclose
@@ -146,7 +145,7 @@ def traverse_wfss_trace():
 
 
 # Invoke this test when the reference files for MIRI WFSS are in CRDS
-@pytest.mark.xfail(reason="Reference files for MIRI WFSS mode are not in CRDS yet.")
+# @pytest.mark.xfail(reason="Reference files for MIRI WFSS mode are not in CRDS yet.")
 def test_traverse_wfss():
     """Make sure the trace polynomials roundtrip."""
     traverse_wfss_trace()
