@@ -25,18 +25,18 @@ def find_discontinuity(image):
     This function applies a gaussian smoothing filter to the image, then
     searches for a discontinuity by locating the maximum gradient in the
     smoothed image. The search is restricted to columns where the
-    discontinuity is expected to occur, set by the BKG_DISCON_COLUMNS
+    discontinuity is expected to occur, set by the ``BKG_DISCON_COLUMNS``
     parameter.
 
     Parameters
     ----------
-    image : float32 ndarray
+    image : ndarray
         The background template with a discontinuity.
 
     Returns
     -------
-    float32 ndarray
-        The derived location of the discontinuity in [x, y].
+    ndarray
+        The derived location of the discontinuity in ``[x, y]``.
     """
     smoothed = ndimage.gaussian_filter(image, 3)
     gradient = np.gradient(smoothed, axis=1)
@@ -60,21 +60,21 @@ def generate_background_masks(background, n_repeats, for_fitting):
     regions.
 
     The mask right of the discontinuity is also truncated rightward of
-    a cutoff value set by BACKGROUND_MASK_CUTOFF - the NIRISS team
+    a cutoff value set by ``BACKGROUND_MASK_CUTOFF`` - the NIRISS team
     found that template matching using pixels on the right side of the
     detector led to poorer fits due to source contamination.
 
     Parameters
     ----------
-    background : float32 ndarray
+    background : ndarray
         The 2-D background template.
     n_repeats : int
         The number of integrations in the science data, used to
         broadcast the mask into a 3-D array.
     for_fitting : bool
-        If true, the right_mask will be truncated to only use pixels
-        left of the BACKGROUND_MASK_CUTOFF value, by default column 950.
-        If false, every pixel will belong to either left_mask or
+        If `True`, the right_mask will be truncated to only use pixels
+        left of the ``BACKGROUND_MASK_CUTOFF`` value, by default column 950.
+        If `False`, every pixel will belong to either left_mask or
         right_mask.
 
     Returns
@@ -121,21 +121,23 @@ def subtract_soss_bkg(
 
     Parameters
     ----------
-    input_model : CubeModel or ImageModel
-        The science data, typically multi-integration CubeModel but
-        possibly an ImageModel.
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel` or \
+                  `~stdatamodels.jwst.datamodels.ImageModel`
+        The science data, typically multi-integration
+        `~stdatamodels.jwst.datamodels.CubeModel` but
+        possibly an `~stdatamodels.jwst.datamodels.ImageModel`.
     bkg_name : str
         The name of the background reference file.
-    soss_source_percentile : float32
+    soss_source_percentile : float
         The threshold percentile used as a cutoff - all pixels above the threshold
         are deemed source and are not used for background template matching.
-    soss_bkg_percentile : list of float32
+    soss_bkg_percentile : list of float
         A 2-member list describing the lower and upper limits of the background
         flux percentiles to use for calculation of the scaling factor.
 
     Returns
     -------
-    CubeModel or ImageModel
+    `~stdatamodels.jwst.datamodels.CubeModel` or `~stdatamodels.jwst.datamodels.ImageModel`
         The background-subtracted science datamodel.
     """
     # Load background reference file into datamodel

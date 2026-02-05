@@ -1,3 +1,5 @@
+"""Subtraction of background signal depending on the observing mode."""
+
 import logging
 from collections import defaultdict
 from pathlib import Path
