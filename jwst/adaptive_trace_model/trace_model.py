@@ -77,8 +77,8 @@ def fit_2d_spline_trace(
     lrange=50,
     col_index=None,
     require_ngood=10,
-    splinebkpt=50,
-    spaceratio=1.2,
+    spline_bkpt=50,
+    space_ratio=1.2,
 ):
     """
     Create a trace model from spline fits to a single slit/slice image.
@@ -103,9 +103,9 @@ def fit_2d_spline_trace(
         If not provided, columns will be fit left to right.
     require_ngood : int, optional
         Minimum number of data points required to attempt a fit in a column.
-    splinebkpt : int, optional
+    spline_bkpt : int, optional
         Number of spline breakpoints (knots).
-    spaceratio : float, optional
+    space_ratio : float, optional
         Maximum spacing ratio to allow fitting to continue. If
         the tenth-largest spacing in the input ``xvec`` is larger
         than the knot spacing by this ratio, then return None instead
@@ -166,11 +166,11 @@ def fit_2d_spline_trace(
             bspline = bspline_fit(
                 local_alpha,
                 local_data,
-                nbkpts=splinebkpt,
+                nbkpts=spline_bkpt,
                 wrapsig_low=2.5,
                 wrapsig_high=2.5,
                 wrapiter=3,
-                spaceratio=spaceratio,
+                space_ratio=space_ratio,
                 verbose=False,
             )
 
@@ -251,9 +251,74 @@ def _reindex(xmin, xmax, scale=2.0):
     return new_x, old_x
 
 
-def _trace_image(shape, spline_models, spline_scales, region_map, alpha):
+def _is_compact_source(
+    alpha_slice, alpha_ptsource, native_dalpha, spline_bkpt, pad=3, require_npt=50
+):
+    """
+    Determine which pixels within a slice contain a compact source.
+
+    Parameters
+    ----------
+    alpha_slice : ndarray
+        Alpha coordinates for the output slice. If oversampling is performed,
+        these should be the oversampled coordinates.
+    alpha_ptsource : ndarray
+        Array of alpha values for modeled flux that met the slope limit threshold.
+    native_dalpha : float
+        Approximate native pixel size in alpha, along the columns.
+    spline_bkpt : int
+        The number of breakpoints used in the spline modeling.
+    pad : int, optional
+        The number of pixels near peak data to include the spline fit for in
+        the output array.
+    require_npt : int, optional
+        The minimum required number of high-slope data points to consider any
+        pixels to be compact.
+
+    Returns
+    -------
+    is_compact : ndarray
+        Boolean array matching the shape of ``alpha_slice``, where True
+        indicates a pixel containing a compact source.
+    """
+    is_compact = np.full(alpha_slice.shape, False)
+
+    # If there is not enough high slope data or no spline models were found,
+    # just return False for all data
+    if len(alpha_ptsource) < require_npt or spline_bkpt is None:
+        return is_compact
+
+    # Bin the alpha coordinates for the high slope locations
+    avec = np.arange(spline_bkpt) * native_dalpha / 2 - (native_dalpha * spline_bkpt / 4)
+    hist, edges = np.histogram(
+        alpha_ptsource,
+        bins=spline_bkpt,
+        range=(-native_dalpha * spline_bkpt / 4, native_dalpha * spline_bkpt / 4),
+        density=True,
+    )
+    hist = hist / np.nanmax(hist)
+
+    # Require peaks above some threshold
+    peak_indices, _ = find_peaks(hist, height=0.2)
+    amask = avec[peak_indices]
+
+    # Flag regions near the compact source, with some padding
+    for value in amask:
+        indx = (alpha_slice > value - pad * native_dalpha) & (
+            alpha_slice <= value + pad * native_dalpha
+        )
+        is_compact[indx] = True
+    return is_compact
+
+
+def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_limit=0.1, pad=3):
     """
     Evaluate spline models at all pixels to generate a trace image.
+
+    The trace image will be NaN wherever a spline model was not fit and
+    wherever the source is not compact enough for the spline model
+    to be appropriate. The ``slope_limit`` parameter controls the decision
+    for compact source regions.
 
     Parameters
     ----------
@@ -267,6 +332,14 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha):
         2D image matching shape, mapping valid region numbers.
     alpha : ndarray
         Alpha coordinates for all pixels marked as valid regions.
+    slope_limit : float, optional
+        The slope limit in the normalized model fits above which the spline
+        model is considered appropriate. Lower values will use spline fits
+        for fainter sources. If less than or equal to zero, the spline fits
+        will always be used.
+    pad : int, optional
+        The number of pixels near peak data to include the spline fit for in
+        the output array.
 
     Returns
     -------
@@ -278,6 +351,7 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha):
     trace = np.full(shape, np.nan, dtype=np.float32)
     alpha_slice = np.full(shape, np.nan, dtype=np.float32)
     trace_slice = np.full(shape, np.nan, dtype=np.float32)
+    spline_bkpt = None
     for slnum in spline_models:
         splines = spline_models[slnum]
         scales = spline_scales[slnum]
@@ -287,18 +361,53 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha):
         indx = region_map == slnum
         alpha_slice[indx] = alpha[indx]
 
+        # Define a list that will hold all alpha values for this
+        # slice where the slope is high
+        alpha_ptsource = []
+
         # loop over columns
         for i in range(shape[-1]):
             if i not in splines:
                 continue
 
             # Evaluate the spline model for relevant data
-            alpha_col = alpha_slice[:, i]
-            valid_alpha = np.isfinite(alpha_col)
-            spline_fit = scales[i] * splines[i](alpha_col[valid_alpha])
-            trace_slice[:, i][valid_alpha] = spline_fit
+            col_alpha = alpha_slice[:, i]
+            valid_alpha = np.isfinite(col_alpha)
+            col_fit = splines[i](col_alpha[valid_alpha])
+            scaled_fit = scales[i] * col_fit
+            trace_slice[:, i][valid_alpha] = scaled_fit
 
-        trace[indx] = trace_slice[indx]
+            # Get the slope of the model fit prior to scaling
+            model_slope = np.abs(np.diff(col_fit, prepend=0))
+
+            # Ensure boundaries don't look weird
+            model_slope[0] = 0
+            model_slope[-1] = 0
+
+            highslope = (np.where(model_slope > slope_limit))[0]
+            alpha_ptsource.append(col_alpha[valid_alpha][highslope])
+
+            # Get the number of spline breakpoints used from the first real model
+            if spline_bkpt is None:
+                spline_bkpt = len(np.unique(splines[i].t)) - 1
+
+        if slope_limit <= 0:
+            # Always use the spline fit in this case
+            trace[indx] = trace_slice[indx]
+        else:
+            if len(alpha_ptsource) > 0:
+                alpha_ptsource = np.concatenate(alpha_ptsource)
+
+            native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
+            compact_locations = _is_compact_source(
+                alpha_slice, alpha_ptsource, native_dalpha, spline_bkpt, pad
+            )
+            trace[compact_locations] = trace_slice[compact_locations]
+
+            total_used = np.sum(compact_locations)
+            log.debug(
+                f"Using {total_used}/{np.sum(indx)} pixels from the spline model for slice {slnum}"
+            )
 
     return trace
 
@@ -502,10 +611,10 @@ def oversample_flux(
     oversample_factor,
     alpha_os,
     require_ngood=10,
-    trim_ends=False,
-    pad=3,
     slope_limit=0.1,
     psf_optimal=False,
+    trim_ends=False,
+    pad=3,
 ):
     """
     Oversample a flux image from spline models fit to the data.
@@ -553,11 +662,6 @@ def oversample_flux(
         at every pixel.
     require_ngood : int, optional
         Minimum number of pixels required in a column to perform an interpolation.
-    trim_ends : bool, optional
-        If True, the edges of the evaluated spline fit will be set to NaN.
-    pad : int, optional
-        The number of pixels near peak data to include the spline fit for in
-        the output array.
     slope_limit : float, optional
         The slope limit in the normalized model fits above which the spline
         model is considered appropriate. Lower values will use spline fits
@@ -566,6 +670,11 @@ def oversample_flux(
     psf_optimal : bool, optional
         If True, residual corrections to the spline model are not included
         in the oversampled flux.
+    trim_ends : bool, optional
+        If True, the edges of the evaluated spline fit will be set to NaN.
+    pad : int, optional
+        The number of pixels near peak data to include the spline fit for in
+        the output array.
 
     Returns
     -------
@@ -597,7 +706,7 @@ def oversample_flux(
     # Edge limit for trimming ends
     edge_limit = int(oversample_factor)
     slice_numbers = np.unique(region_map[region_map > 0])
-    splinebkpt = None
+    spline_bkpt = None
     for slnum in slice_numbers:
         # Reset holding arrays to NaN
         for reset_array in reset_arrays:
@@ -609,7 +718,8 @@ def oversample_flux(
         alpha_slice[indx] = alpha[indx]
         basey_slice[indx] = basey[indx]
 
-        # Define a list that will hold all alpha values for this slice where the slope can be high
+        # Define a list that will hold all alpha values for this slice
+        # where the slope is high
         alpha_ptsource = []
 
         for ii in range(xsize):
@@ -641,8 +751,8 @@ def oversample_flux(
             spline_scale = spline_scales[slnum][ii]
 
             # Get the number of spline breakpoints used from the first real model
-            if splinebkpt is None:
-                splinebkpt = len(np.unique(spline_model.t)) - 1
+            if spline_bkpt is None:
+                spline_bkpt = len(np.unique(spline_model.t)) - 1
 
             # Get valid input locations and evaluate the spline
             valid_alpha = np.isfinite(col_alpha)
@@ -661,16 +771,17 @@ def oversample_flux(
             flux_os_residual[newy, ii] = interpval
 
             # What was the slope of the model fit prior to scaling?
-            modelslope = np.abs(np.diff(col_fit, prepend=0))
+            model_slope = np.abs(np.diff(col_fit, prepend=0))
             # Ensure boundaries don't look weird
             if edge_limit >= 1:
-                modelslope[0:edge_limit] = 0
-                modelslope[-edge_limit:] = 0
+                model_slope[0:edge_limit] = 0
+                model_slope[-edge_limit:] = 0
 
             # Add to our list of alpha values where the slope can be high for this slice
-            # and store the oversampled alpha values to check against later
-            highslope = (np.where(modelslope > slope_limit))[0]
+            highslope = (np.where(model_slope > slope_limit))[0]
             alpha_ptsource.append(col_alpha[valid_alpha][highslope])
+
+            # Store the oversampled alpha values to check against later
             alpha_os_slice[newy, ii] = alpha_os[newy, ii]
 
             # Evaluate the bspline at the oversampled alpha for this column
@@ -682,38 +793,25 @@ def oversample_flux(
             flux_os_bspline_full[newy, ii] = oversampled_fit
 
         # Now that our initial loop along the slice is done, we have a spline model everywhere
+
         # Now look at our list of alpha values where model slopes were high to figure out
         # where traces are and we actually want to use the spline model
-        # Don't bother with this if not enough recorded alpha values
-        if len(alpha_ptsource) > 0:
-            alpha_ptsource = np.concatenate(alpha_ptsource)
         if slope_limit <= 0:
             # Always use the spline fit in this case
             flux_os_bspline_use = flux_os_bspline_full
-        elif len(alpha_ptsource) > 50 and splinebkpt is not None:
-            # What is the rough native pixel size in alpha in the columns?
+        else:
+            if len(alpha_ptsource) > 0:
+                alpha_ptsource = np.concatenate(alpha_ptsource)
             native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
-
-            avec = np.arange(splinebkpt) * native_dalpha / 2 - (native_dalpha * splinebkpt / 4)
-            hist, edges = np.histogram(
-                alpha_ptsource,
-                bins=splinebkpt,
-                range=(-native_dalpha * splinebkpt / 4, native_dalpha * splinebkpt / 4),
-                density=True,
+            compact_locations = _is_compact_source(
+                alpha_os_slice, alpha_ptsource, native_dalpha, spline_bkpt, pad
             )
-            hist = hist / np.nanmax(hist)
+            flux_os_bspline_use[compact_locations] = flux_os_bspline_full[compact_locations]
 
-            # Require peaks above some threshold
-            peak_indices, _ = find_peaks(hist, height=0.2)
-            amask = avec[peak_indices]
-            total_used = 0
-            for value in amask:
-                indx = (alpha_os_slice > value - pad * native_dalpha) & (
-                    alpha_os_slice <= value + pad * native_dalpha
-                )
-                flux_os_bspline_use[indx] = flux_os_bspline_full[indx]
-                total_used += np.sum(~np.isnan(flux_os_bspline_full[indx]))
-            log.debug(f"Using {total_used} pixels from the spline model for slice {slnum}")
+            total_used = np.sum(compact_locations)
+            log.debug(
+                f"Using {total_used}/{np.sum(indx)} pixels from the spline model for slice {slnum}"
+            )
 
     # Insert the bspline interpolated values into the final combined oversampled array,
     # starting from the linearly interpolated array
@@ -733,7 +831,7 @@ def oversample_flux(
         indx = np.where(np.isfinite(flux_os_bspline_use) & np.isfinite(flux_os_residual))
         flux_os[indx] += flux_os_residual[indx]
 
-    return flux_os, flux_os_bspline_full
+    return flux_os, flux_os_bspline_use
 
 
 def _set_fit_kwargs(detector, xsize):
@@ -762,12 +860,12 @@ def _set_fit_kwargs(detector, xsize):
     # Empirical parameters for this mode
     if detector.startswith("NRS"):
         require_ngood = 15
-        splinebkpt = 62
+        spline_bkpt = 62
         lrange = 50
 
         # This factor of 1.6 was dialed based on inspection of the results
         # as sampling gets progressively worse for NIRSpec detectors
-        spaceratio = 1.6
+        space_ratio = 1.6
 
         # Set up the column fitting order by detector
         if detector == "NRS1":
@@ -779,9 +877,9 @@ def _set_fit_kwargs(detector, xsize):
 
     elif detector.startswith("MIR"):
         require_ngood = 8
-        splinebkpt = 36
+        spline_bkpt = 36
         lrange = 50
-        spaceratio = 1.2
+        space_ratio = 1.2
 
         # For MIRI fitting order,  we need to start on the left and run to the middle,
         # and then on the right to the middle in order to have the middle
@@ -796,8 +894,8 @@ def _set_fit_kwargs(detector, xsize):
         "lrange": lrange,
         "col_index": col_index,
         "require_ngood": require_ngood,
-        "splinebkpt": splinebkpt,
-        "spaceratio": spaceratio,
+        "spline_bkpt": spline_bkpt,
+        "space_ratio": space_ratio,
     }
     return fit_kwargs
 
@@ -1178,8 +1276,17 @@ def fit_and_oversample(
     # In the future, it might be useful to update the SCI extension here for the
     # psf_optimal=True case, even when oversample=1, but for now, we will leave
     # data unmodified.
+    oversample_kwargs = _set_oversample_kwargs(detector)
     if oversample_factor == 1:
-        trace = _trace_image(flux_orig.shape, spline_models, spline_scales, region_map, alpha_orig)
+        trace = _trace_image(
+            flux_orig.shape,
+            spline_models,
+            spline_scales,
+            region_map,
+            alpha_orig,
+            slope_limit=slope_limit,
+            pad=oversample_kwargs["pad"],
+        )
         if rotate:
             trace = np.rot90(trace, k=-1)
         model.trace_model = trace
@@ -1205,7 +1312,6 @@ def fit_and_oversample(
         alpha_os, _, wave_os = det2ab(ysize - y_os - 1, x_os)
 
     log.info("Oversampling the flux array from the fit trace model")
-    oversample_kwargs = _set_oversample_kwargs(detector)
     flux_os, trace = oversample_flux(
         flux_orig,
         alpha_orig,

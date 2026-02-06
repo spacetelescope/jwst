@@ -100,7 +100,7 @@ def test_adaptive_trace_model_step_success(request, dataset):
 
 def test_adaptive_trace_model_step_with_source(miri_mrs_model_with_source):
     model = miri_mrs_model_with_source
-    result = AdaptiveTraceModelStep.call(model, oversample=1)
+    result = AdaptiveTraceModelStep.call(model, oversample=1, slope_limit=0)
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
     # data is unchanged with oversample=1
@@ -127,7 +127,7 @@ def test_adaptive_trace_model_step_negative_mean(miri_mrs_model_with_source):
     original_max = np.nanmax(model.data)
     model.data -= 100
 
-    result = AdaptiveTraceModelStep.call(model, oversample=1)
+    result = AdaptiveTraceModelStep.call(model, oversample=1, slope_limit=0)
     det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
     indx = det2ab_transform.label_mapper.mapper == 120
     assert np.all(np.isnan(result.trace_model[~indx]))
@@ -210,11 +210,12 @@ def test_adaptive_trace_model_step_oversample_with_source(request, dataset):
     else:
         indx = result.regions == 16
     assert np.all(np.isnan(result.trace_model[~indx]))
-    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.9 * np.sum(indx)
+    # Only the compact core is modeled, so ~20% of the slice is non-NaN
+    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.2 * np.sum(indx)
 
     # fit trace is a reasonable model of the slice but not perfect -
     # the slice is mostly linearly interpolated
-    valid = indx & ~np.isnan(result.data)
+    valid = indx & ~np.isnan(result.data) & ~np.isnan(result.trace_model)
     atol = 0.25 * np.nanmax(model.data)
     np.testing.assert_allclose(result.data[valid], result.trace_model[valid], atol=atol)
 

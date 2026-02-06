@@ -37,7 +37,8 @@ def test_fit_2d_spline_trace(fit_2d_spline_input):
     region_map = (~np.isnan(slit.wavelength)).astype(int)
     trace = tm._trace_image(flux.shape, {1: splines}, {1: scales}, region_map, alpha)
 
-    indx = region_map == 1
+    indx = (region_map == 1) & ~np.isnan(trace)
+    assert np.sum(indx) > 0
     atol = 0.25 * np.nanmax(flux)
     np.testing.assert_allclose(flux[indx], trace[indx], atol=atol)
 
@@ -65,8 +66,8 @@ def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                 "require_ngood": 15,
-                "splinebkpt": 62,
-                "spaceratio": 1.6,
+                "spline_bkpt": 62,
+                "space_ratio": 1.6,
             },
         ),
         (
@@ -75,8 +76,8 @@ def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
                 "require_ngood": 15,
-                "splinebkpt": 62,
-                "spaceratio": 1.6,
+                "spline_bkpt": 62,
+                "space_ratio": 1.6,
             },
         ),
         (
@@ -85,8 +86,8 @@ def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
                 "require_ngood": 8,
-                "splinebkpt": 36,
-                "spaceratio": 1.2,
+                "spline_bkpt": 36,
+                "space_ratio": 1.2,
             },
         ),
         (
@@ -95,8 +96,8 @@ def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
                 "require_ngood": 8,
-                "splinebkpt": 36,
-                "spaceratio": 1.2,
+                "spline_bkpt": 36,
+                "space_ratio": 1.2,
             },
         ),
     ],
