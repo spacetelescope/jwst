@@ -1823,9 +1823,11 @@ def run_extract1d(
     for order in all_tracemodels:
         # Convert from list to array
         tracemod_ord = np.array(all_tracemodels[order])
-        # Save
-        order_int = ORDER_STR_TO_INT[order]
-        setattr(output_references, f"order{order_int}", tracemod_ord)
+        # Ensure  an empty array
+        if len(tracemod_ord.shape) == 3:
+            # Save
+            order_int = ORDER_STR_TO_INT[order]
+            setattr(output_references, f"order{order_int}", tracemod_ord)
 
     for order in box_weights:
         # Convert from list to array
