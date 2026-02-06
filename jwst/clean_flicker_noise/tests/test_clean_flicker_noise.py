@@ -61,6 +61,10 @@ def test_postprocess_rate_nirspec(log_watcher):
 
 def test_postprocess_rate_miri(log_watcher):
     rate_model = helpers.make_small_rate_model()
+    # Since flat_dq is True, flatfield step will run, so the variance arrays are needed
+    rate_model.var_rnoise = rate_model.get_default("var_rnoise")
+    rate_model.var_poisson = rate_model.get_default("var_poisson")
+    rate_model.var_flat = rate_model.get_default("var_flat")
     assert np.sum(rate_model.dq & datamodels.dqflags.pixel["DO_NOT_USE"]) == 0
 
     watcher = log_watcher(

@@ -1888,7 +1888,7 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
 
     interpolated_flats.data = flat_2d
     interpolated_flats.dq = flat_dq_2d
-    interpolated_flats.err = flat_err_2d.astype(output_model.err.dtype)
+    interpolated_flats.err = flat_err_2d.astype(output_model.get_dtype("err"))
     interpolated_flats.wavelength = wl
 
     return interpolated_flats
