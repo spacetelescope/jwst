@@ -1819,24 +1819,23 @@ def run_extract1d(
     output_model.meta.soss_extract1d.threshold = soss_kwargs["threshold"]
     output_model.meta.soss_extract1d.bad_pix = soss_kwargs["bad_pix"]
 
-    # Save output references
-    for order in all_tracemodels:
-        # Convert from list to array
-        tracemod_ord = np.array(all_tracemodels[order])
-        # Ensure tracemodel is not an empty array
-        if len(tracemod_ord.shape) == 3:
+    # Save output references if requested
+    if soss_kwargs["model"]:
+        for order in all_tracemodels:
+            # Convert from list to array
+            tracemod_ord = np.array(all_tracemodels[order])
             # Save
             order_int = ORDER_STR_TO_INT[order]
             setattr(output_references, f"order{order_int}", tracemod_ord)
 
-    for order in box_weights:
-        # Convert from list to array
-        box_w_ord = np.array(box_weights[order])
-        # repeat along axis zero to have shape (nints, y, x)
-        box_w_ord = np.repeat(box_w_ord[None, :, :], nimages, axis=0)
-        # Save
-        order_int = ORDER_STR_TO_INT[order]
-        setattr(output_references, f"aperture{order_int}", box_w_ord)
+        for order in box_weights:
+            # Convert from list to array
+            box_w_ord = np.array(box_weights[order])
+            # repeat along axis zero to have shape (nints, y, x)
+            box_w_ord = np.repeat(box_w_ord[None, :, :], nimages, axis=0)
+            # Save
+            order_int = ORDER_STR_TO_INT[order]
+            setattr(output_references, f"aperture{order_int}", box_w_ord)
 
     if pipe_utils.is_tso(input_model):
         log.info("Populating INT_TIMES keywords from input table.")
