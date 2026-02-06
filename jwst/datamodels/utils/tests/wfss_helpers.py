@@ -1,11 +1,33 @@
+import gwcs
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
+from astropy.modeling.models import Const1D
 
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 
 N_SOURCES = 5
 N_EXPOSURES = 4
 N_ROWS = 3
+
+
+def mock_wcs():
+    """
+    Create a simple mock WCS with a 3D transform.
+
+    Returns
+    -------
+    `~gwcs.wcs.WCS`
+        The WCS object.
+    """
+    transform = Const1D(0.0) & Const1D(0.0) & Const1D(0.0)
+    input_frame = gwcs.CoordinateFrame(
+        name="detector", naxes=3, axes_order=(0, 1, 2), axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"]
+    )
+    output_frame = gwcs.CoordinateFrame(
+        name="world", naxes=3, axes_order=(0, 1, 2), axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"]
+    )
+    wcs = gwcs.WCS(transform, input_frame=input_frame, output_frame=output_frame)
+    return wcs
 
 
 def example_spec():
@@ -18,14 +40,10 @@ def example_spec():
         A SpecModel with a mock WCS and a spec_table with N_ROWS rows.
         The spec_table has columns "WAVELENGTH" and "FLUX".
     """
-
-    def mock_wcs(*args, **kwargs):  # Noqa: ARG001
-        return 0.0, 0.0, 0.0
-
     spec = dm.SpecModel()
     spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
     recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
-    spec.meta.wcs = mock_wcs
+    spec.meta.wcs = mock_wcs()
     spec_table = np.recarray((N_ROWS,), dtype=recarray_dtype)
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)

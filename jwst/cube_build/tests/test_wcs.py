@@ -4,7 +4,9 @@ Unit test for Cube Build testing for various wcs functions
 
 import math
 
+import gwcs
 import numpy as np
+from astropy.modeling.models import Const1D, Mapping, Scale, Shift
 from stdatamodels.jwst import datamodels
 
 from jwst.cube_build import coord, cube_build_wcs_util, ifu_cube, instrument_defaults
@@ -20,7 +22,7 @@ slice_gap[:, 55:75] = 3
 slice_gap[:, 80:] = 4
 
 
-def dummy_wcs(x, y):
+def mock_wcs():
     """Simple WCS for testing"""
 
     global xcenter, ycenter, shape, slice_gap
@@ -40,30 +42,23 @@ def dummy_wcs(x, y):
     crval2 = 45.0
     crval3 = 7.5
 
-    dec = np.zeros(shape, dtype=float)
-    ra = np.zeros(shape, dtype=float)
-    wave = np.zeros(shape, dtype=float)
-
-    wave = (y + 1 - crpix3) * cdelt3 + crval3
-    index_x1 = np.where(slice_gap == 1)  # slice 1
-    dec[index_x1] = crval2 + 1 * cdelt2
-
-    index_x2 = np.where(slice_gap == 2)  # slice 2
-    dec[index_x2] = crval2 + 2 * cdelt2
-
-    index_x3 = np.where(slice_gap == 3)  # slice 3
-    dec[index_x3] = crval2 + 3 * cdelt2
-
-    index_x4 = np.where(slice_gap == 4)  # slice 4
-    dec[index_x4] = crval2 + 4 * cdelt2
-    ra = (x + 1 - crpix1) * cdelt1 + crval1
-
-    index_nan = np.where(slice_gap == 0)
-    dec[index_nan] = np.nan
-    ra[index_nan] = np.nan
-    wave[index_nan] = np.nan
-
-    return ra, dec, wave
+    ra = Shift(1 - crpix1) | Scale(cdelt1) | Shift(crval1)
+    dec = Const1D(crval2)
+    wave = Shift(1 - crpix3) | Scale(cdelt3) | Shift(crval3)
+    map_input = Mapping((0, 1, 1), n_inputs=2)
+    label_mapper = gwcs.selector.LabelMapperArray(slice_gap)
+    transforms = {}
+    for slice_idx in range(1, 5):
+        extra_shift = Shift(cdelt2 * slice_idx)
+        transforms[slice_idx] = map_input | ra & (dec | extra_shift) & wave
+    det2world = gwcs.selector.RegionsSelector(
+        ("x", "y"), ("ra", "dec", "lam"), label_mapper=label_mapper, selector=transforms
+    )
+    input_frame = gwcs.Frame2D(name="detector")
+    output_frame = gwcs.Frame2D(name="world")
+    pipeline = [(input_frame, det2world), (output_frame, None)]
+    wcs = gwcs.WCS(pipeline)
+    return wcs
 
 
 def test_coord_trans1():
@@ -237,7 +232,7 @@ def test_footprint_miri():
     input_model.meta.instrument.band = "SHORT"
 
     input_model.data = np.zeros(shape)
-    input_model.meta.wcs = dummy_wcs
+    input_model.meta.wcs = mock_wcs()
 
     this_channel = "3"
     coord_system = "skyalign"
