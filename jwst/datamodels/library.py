@@ -99,7 +99,7 @@ class ModelLibrary(AbstractModelLibrary):
         return [
             i
             for i, member in enumerate(self._members)
-            if member["exptype"].lower() == exptype.lower()
+            if str(member["exptype"]).lower() == exptype.lower()
         ]
 
     def _model_to_filename(self, model):
@@ -149,6 +149,8 @@ class ModelLibrary(AbstractModelLibrary):
             raise NoGroupID(msg) from e
 
     def _model_to_exptype(self, model):
+        if getattr(model.meta.asn, "exptype", None) is None:
+            return "SCIENCE"
         return model.meta.asn.exptype
 
     def _model_to_group_id(self, model):
