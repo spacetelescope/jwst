@@ -249,7 +249,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     log.debug(f"slit.ymin {slit.ymin}")
     if (
         output_model.meta.exposure.type.lower() in ["nrs_msaspec", "nrs_autoflat"]
-        or output_model.meta.instrument.lamp_mode.upper == "MSASPEC"
+        or str(output_model.meta.instrument.lamp_mode).upper() == "MSASPEC"
     ):
         # output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name

@@ -58,7 +58,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
 
     if (
         input_model.meta.exposure.type.lower() in SPEC_TYPES
-        or input_model.meta.instrument.lamp_mode.lower() in NRS_LAMP_MODE_SPEC_TYPES
+        or str(input_model.meta.instrument.lamp_mode).lower() in NRS_LAMP_MODE_SPEC_TYPES
     ):
         input_model.meta.wcsinfo.specsys = "BARYCENT"
         input_model.meta.wcsinfo.dispersion_direction = get_dispersion_direction(
