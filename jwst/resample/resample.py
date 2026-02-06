@@ -56,6 +56,7 @@ class ResampleImage(Resample):
         report_var=True,
         compute_err=None,
         asn_id=None,
+        propagate_dq=False,
     ):
         """
         Initialize the ResampleImage object.
@@ -267,6 +268,11 @@ class ResampleImage(Resample):
         asn_id : str, None, optional
             The association id. The id is what appears in
             the :ref:`asn-jwst-naming`.
+
+        propagate_dq : bool
+            If `True`, propagate DQ during resampling. DQ flags are propagated
+            by bitwise OR of all input DQ flags that contribute to a given
+            output pixel.
         """
         self.input_models = input_models
         self.output_jwst_model = None
@@ -340,6 +346,7 @@ class ResampleImage(Resample):
             enable_ctx=enable_ctx,
             enable_var=enable_var,
             compute_err=compute_err,
+            propagate_dq=propagate_dq,
         )
 
     def input_model_to_dict(self, model, weight_type, enable_var, compute_err):
@@ -401,10 +408,12 @@ class ResampleImage(Resample):
         """
         model.data = info_dict["data"]
         model.wht = info_dict["wht"]
-        if self._enable_ctx:
+        if self.enable_ctx:
             model.con = info_dict["con"]
-        if self._compute_err:
+        if self.compute_err:
             model.err = info_dict["err"]
+        if self.propagate_dq:
+            model.dq = info_dict["dq"]
         elif model.meta.hasattr("bunit_err"):
             # bunit_err metadata is mapped to the err extension, so it must be removed
             # in order to fully remove the err extension.
