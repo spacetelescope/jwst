@@ -16,7 +16,7 @@ def bspline_fit(
     wrapsig_low=3.0,
     wrapsig_high=3.0,
     wrapiter=3,
-    spaceratio=1.2,
+    space_ratio=1.2,
     verbose=False,
 ):
     """
@@ -36,7 +36,7 @@ def bspline_fit(
         High sigma threshold for iterative fit.
     wrapiter : int, optional
         Number of iterations for the fit.
-    spaceratio : float, optional
+    space_ratio : float, optional
         Maximum spacing ratio to allow fitting to continue. If
         the tenth-largest spacing in the input ``xvec`` is larger
         than the knot spacing by this ratio, then return None instead
@@ -67,7 +67,7 @@ def bspline_fit(
     # (with some margin) then don't bspline
     knotspacing = (np.max(xvec_use) - np.min(xvec_use)) / nbkpts
     tenthspace = np.partition(spacing, -10)[-10]
-    if tenthspace > (spaceratio * knotspacing):
+    if tenthspace > (space_ratio * knotspacing):
         return spline_model
 
     # Number of points before iterative loop
