@@ -2,7 +2,7 @@ import json
 
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import ImageModel
+from stdatamodels.jwst import datamodels
 
 from jwst.adaptive_trace_model.adaptive_trace_model_step import AdaptiveTraceModelStep
 from jwst.adaptive_trace_model.tests import helpers
@@ -237,7 +237,7 @@ def test_adaptive_trace_model_step_with_container(miri_mrs_model):
 
 
 def test_adaptive_trace_model_unsupported_model(caplog):
-    model = ImageModel()
+    model = datamodels.ImageModel()
     result = AdaptiveTraceModelStep.call(model)
     assert "only implemented for IFU" in caplog.text
 
@@ -288,3 +288,36 @@ def test_save_container_asn_id_missing(tmp_path, asn_input):
     expected_output = [tmp_path / "test1_atm.fits", tmp_path / "test2_atm.fits"]
     for output in expected_output:
         assert output.exists()
+
+
+@pytest.mark.parametrize("oversample", [1.0, 2.0])
+def test_adaptive_trace_model_step_save_intermediate(tmp_path, miri_mrs_model, oversample):
+    model = miri_mrs_model
+    AdaptiveTraceModelStep.call(
+        model,
+        oversample=oversample,
+        save_results=True,
+        suffix="atm",
+        save_intermediate_results=True,
+        output_dir=str(tmp_path),
+    )
+
+    # Check for expected files
+    expected = [
+        "test12SHORT_atm.fits",
+        "test12SHORT_spline_full.fits",
+        "test12SHORT_spline_used.fits",
+    ]
+    expect_empty = [False, True, True]
+    if oversample > 1:
+        # Extra files expected if oversampling is done
+        expected.extend(["test12SHORT_linear_interp.fits", "test12SHORT_spline_residual.fits"])
+        expect_empty.extend([False, True])
+    for filename, is_empty in zip(expected, expect_empty):
+        assert (tmp_path / filename).exists()
+        with datamodels.open(str(tmp_path / filename)) as model:
+            assert isinstance(model, datamodels.IFUImageModel)
+            if is_empty:
+                assert np.all(np.isnan(model.data))
+            else:
+                assert not np.all(np.isnan(model.data))

@@ -35,12 +35,20 @@ def test_fit_2d_spline_trace(fit_2d_spline_input):
 
     # evaluated fits should be close to input data
     region_map = (~np.isnan(slit.wavelength)).astype(int)
-    trace = tm._trace_image(flux.shape, {1: splines}, {1: scales}, region_map, alpha)
+    trace_used, full_trace = tm._trace_image(
+        flux.shape, {1: splines}, {1: scales}, region_map, alpha
+    )
 
-    indx = (region_map == 1) & ~np.isnan(trace)
-    assert np.sum(indx) > 0
+    # Fit values should be close to flux
     atol = 0.25 * np.nanmax(flux)
-    np.testing.assert_allclose(flux[indx], trace[indx], atol=atol)
+    full_indx = region_map == 1
+    assert np.sum(full_indx) > 0
+    np.testing.assert_allclose(flux[full_indx], full_trace[full_indx], atol=atol)
+
+    # Trace used is a subset of the full trace
+    used_indx = (region_map == 1) & ~np.isnan(trace_used)
+    assert 0 < np.sum(used_indx) < np.sum(full_indx)
+    np.testing.assert_allclose(flux[used_indx], trace_used[used_indx], atol=atol)
 
 
 def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
