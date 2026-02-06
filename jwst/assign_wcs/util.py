@@ -125,8 +125,8 @@ def subarray_transform(input_model):
     tr_ystart = astmodels.Identity(1)
 
     # These quantities are 1-based
-    xstart = input_model.meta.subarray.xstart
-    ystart = input_model.meta.subarray.ystart
+    xstart = getattr(input_model.meta.subarray, "xstart", None)
+    ystart = getattr(input_model.meta.subarray, "ystart", None)
 
     if xstart is not None and xstart != 1:
         tr_xstart = astmodels.Shift(xstart - 1)
@@ -1078,7 +1078,10 @@ def update_fits_wcsinfo(
     For more details, see :py:meth:`~gwcs.wcs.WCS.to_fits_sip`.
     """
     if crpix is None:
-        crpix = [datamodel.meta.wcsinfo.crpix1, datamodel.meta.wcsinfo.crpix2]
+        crpix = [
+            getattr(datamodel.meta.wcsinfo, "crpix1", None),
+            getattr(datamodel.meta.wcsinfo, "crpix2", None),
+        ]
     if None in crpix:
         crpix = None
 
@@ -1154,8 +1157,8 @@ def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
     **kwargs : dict
         Additional parameters to be passed to :func:`update_fits_wcsinfo`.
     """
-    xstart = wfss_model.meta.subarray.xstart
-    ystart = wfss_model.meta.subarray.ystart
+    xstart = getattr(wfss_model.meta.subarray, "xstart", None)
+    ystart = getattr(wfss_model.meta.subarray, "ystart", None)
     reference_files = get_wcs_reference_files(wfss_model)
     image_pipeline = imaging(wfss_model, reference_files)
     imwcs = WCS(image_pipeline)
