@@ -9,7 +9,7 @@ from jwst.lib import engdb_mast
 from jwst.lib.engdb_lib import EngDB_Value
 
 # Mark all tests in this module as slow due to remote DB connection
-pytestmark = [pytest.mark.slow]
+pytestmark = pytest.mark.slow
 
 # Test query
 QUERY = ("sa_zattest2", "2022-02-02T22:24:58", "2022-02-02T22:24:59")
