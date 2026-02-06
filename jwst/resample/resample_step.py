@@ -40,6 +40,7 @@ class ResampleStep(Step):
         enable_ctx = boolean(default=True)  # Compute and report the context array
         enable_err = boolean(default=True)  # Compute and report the err array
         report_var = boolean(default=True)  # Report the variance array
+        propagate_dq = boolean(default=False)  # propagate DQ during resampling
         pixmap_stepsize = float(default=1.0)  # Interpolation step size for pixel map; interpolation is used for stepsize > 1
         pixmap_order = integer(default=1)  # Spline order for pixel mapping, must be 1 or 3
     """  # noqa: E501
@@ -144,6 +145,7 @@ class ResampleStep(Step):
                 enable_var=enable_var,
                 report_var=report_var,
                 compute_err=compute_err,
+                propagate_dq=self.propagate_dq,
                 **kwargs,
             )
             result = resamp.resample_many_to_one()
