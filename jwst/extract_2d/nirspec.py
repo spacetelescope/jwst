@@ -85,9 +85,9 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             output_model.source_ypos = 0.0
             output_model.source_xpos = 0.0
         if "world" in input_model.meta.wcs.available_frames:
-            orig_s_region = output_model.meta.wcsinfo.s_region.strip()
+            orig_s_region = str(output_model.meta.wcsinfo.s_region).strip()
             util.update_s_region_nrs_slit(output_model)
-            if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
+            if orig_s_region != str(output_model.meta.wcsinfo.s_region).strip():
                 log.info(f"extract_2d updated S_REGION to {output_model.meta.wcsinfo.s_region}")
     else:
         output_model = datamodels.MultiSlitModel()
@@ -99,7 +99,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             new_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit)
 
             slits.append(new_model)
-            orig_s_region = new_model.meta.wcsinfo.s_region.strip()
+            orig_s_region = str(new_model.meta.wcsinfo.s_region).strip()
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             set_slit_attributes(new_model, slit, xlo, xhi, ylo, yhi)
@@ -121,7 +121,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             # Update the S_REGION keyword value for the extracted slit
             if "world" in input_model.meta.wcs.available_frames:
                 util.update_s_region_nrs_slit(new_model)
-                if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
+                if orig_s_region != str(new_model.meta.wcsinfo.s_region).strip():
                     log.info(f"Updated S_REGION to {new_model.meta.wcsinfo.s_region}")
 
             # Copy BUNIT values to output slit
@@ -328,16 +328,28 @@ def extract_slit(input_model, slit):
         ext_data = input_model.data[slit_slice].copy()
         ext_err = input_model.err[slit_slice].copy()
         ext_dq = input_model.dq[slit_slice].copy()
-        ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
-        ext_var_poisson = input_model.var_poisson[slit_slice].copy()
+        if input_model.var_rnoise is not None:
+            ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
+        else:
+            ext_var_rnoise = None
+        if input_model.var_poisson is not None:
+            ext_var_poisson = input_model.var_poisson[slit_slice].copy()
+        else:
+            ext_var_poisson = None
         int_times = None
     elif ndim == 3:
         slit_slice = np.s_[:, ylo:yhi, xlo:xhi]
         ext_data = input_model.data[slit_slice].copy()
         ext_err = input_model.err[slit_slice].copy()
         ext_dq = input_model.dq[slit_slice].copy()
-        ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
-        ext_var_poisson = input_model.var_poisson[slit_slice].copy()
+        if input_model.var_rnoise is not None:
+            ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
+        else:
+            ext_var_rnoise = None
+        if input_model.var_poisson is not None:
+            ext_var_poisson = input_model.var_poisson[slit_slice].copy()
+        else:
+            ext_var_poisson = None
         if pipe_utils.is_tso(input_model):
             log.debug("TSO data, so copying the INT_TIMES table.")
             int_times = input_model.int_times.copy()
