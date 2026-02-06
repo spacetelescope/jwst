@@ -6,7 +6,7 @@ from astropy.time import Time
 from jwst.lib.engdb_tools import ENGDB_Service
 
 # Mark all tests in this module as slow due to remote DB connection
-pytestmark = [pytest.mark.slow]
+pytestmark = pytest.mark.slow
 
 GOOD_MNEMONIC = "INRSI_GWA_Y_TILT_AVGED"
 GOOD_STARTTIME = "2022-01-25 23:29:02.188"
