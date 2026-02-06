@@ -13,8 +13,8 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep, background_sub_wfss
 from jwst.background.background_sub_wfss import (
+    ScalingFactorComputer,
     _mask_from_source_cat,
-    _ScalingFactorComputer,
     _sufficient_background_pixels,
     subtract_wfss_bkg,
 )
@@ -370,7 +370,7 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     var[np.unravel_index(bad_i, var.shape)] = 0.0
 
     # instantiate scaling factor computer
-    rescaler = _ScalingFactorComputer()
+    rescaler = ScalingFactorComputer()
 
     # just get the weighted mean without iteration
     # to check it's as expected, mask outliers
@@ -383,7 +383,7 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     # ensure it still works after iteration
     for niter in [1, 2, 5]:
         for p in [2, 0.5, 0.1]:
-            rescaler = _ScalingFactorComputer(p=p, maxiter=niter)
+            rescaler = ScalingFactorComputer(p=p, maxiter=niter)
             assert (
                 rescaler.delta_rms_thresh == 0
             )  # check rms_thresh=None input sets thresh properly
@@ -403,24 +403,24 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     maxiter = 10
     delta_rms_thresh = 1e-4
     p = 100 * INITIAL_OUTLIER_FRACTION / 2
-    rescaler = _ScalingFactorComputer(
+    rescaler = ScalingFactorComputer(
         p=p, dispersion_axis=1, delta_rms_thresh=delta_rms_thresh, maxiter=maxiter
     )
     factor, mask_out = rescaler(sci, bkg, var)
     assert rescaler._iters_run_last_call < maxiter
 
     # test putting mask=None works ok, and that maxiter=0 just gives you err weighted mean
-    rescaler = _ScalingFactorComputer(maxiter=0)
+    rescaler = ScalingFactorComputer(maxiter=0)
     factor, mask_out = rescaler(sci, bkg, var)
     assert np.all(mask_out == 0)
     assert factor == rescaler.err_weighted_mean(sci, bkg, var)
 
     # test invalid inputs
     with pytest.raises(ValueError):
-        rescaler = _ScalingFactorComputer(dispersion_axis=5, delta_rms_thresh=1)
+        rescaler = ScalingFactorComputer(dispersion_axis=5, delta_rms_thresh=1)
 
     with pytest.raises(ValueError):
-        rescaler = _ScalingFactorComputer(dispersion_axis=None, delta_rms_thresh=1)
+        rescaler = ScalingFactorComputer(dispersion_axis=None, delta_rms_thresh=1)
 
 
 @pytest.fixture()
@@ -524,7 +524,7 @@ def test_infinite_factor(monkeypatch, caplog, make_nrc_wfss_datamodel):
 
     # Mock an infinite scaling factor
     monkeypatch.setattr(
-        background_sub_wfss._ScalingFactorComputer, "err_weighted_mean", lambda *args: np.nan
+        background_sub_wfss.ScalingFactorComputer, "err_weighted_mean", lambda *args: np.nan
     )
 
     result = BackgroundStep.call(model, save_results=False)

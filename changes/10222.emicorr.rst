@@ -1,0 +1,1 @@
+Deprecate the 'user_supplied_reffile' step parameter. The auto-generated parameter 'override_emicorr' should be used instead.

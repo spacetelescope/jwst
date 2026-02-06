@@ -16,18 +16,15 @@ class ImageSubsetArray:
     """
     Keep track of where different images relate to each other.
 
-    This includes using e.g. subarray observations.
+    This includes using, e.g., subarray observations.
+
+    Parameters
+    ----------
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
+        Input datamodel
     """
 
     def __init__(self, model):
-        """
-        Initialize the class.
-
-        Parameters
-        ----------
-        model : ImageModel
-            Input datamodel
-        """
         im = datamodels.open(model)
 
         # Make sure xstart/ystart/xsize/ysize exist in the model metadata
@@ -77,7 +74,7 @@ class ImageSubsetArray:
 
         Parameters
         ----------
-        other : ImageModel
+        other : `~stdatamodels.jwst.datamodels.ImageModel`
             Input model
 
         Returns
@@ -98,7 +95,7 @@ class ImageSubsetArray:
 
         Parameters
         ----------
-        other : ImageModel
+        other : `~stdatamodels.jwst.datamodels.ImageModel`
             Input model
 
         Returns
@@ -174,25 +171,25 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Input target exposure data model. Updated in place.
 
     bkg_list : list
-        Filename list of background exposures
+        Filename list of background exposures.
 
     sigma : float
         Number of standard deviations to use for both the lower
         and upper clipping limits.
 
     maxiters : int or None
-        Maximum number of sigma-clipping iterations to perform
+        Maximum number of sigma-clipping iterations to perform.
 
     Returns
     -------
-    bkg_model : ImageModel
+    bkg_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Background data model
 
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Background-subtracted target data model.
     """
     # Compute the average of the background images associated with
@@ -217,12 +214,13 @@ def average_background(input_model, bkg_list, sigma, maxiters):
     """
     Average multiple background exposures into a combined data model.
 
-    Processes backgrounds from various DataModel types, including those
+    Processes backgrounds from various
+    `~stdatamodels.jwst.datamodels.JwstDataModel` types, including those
     having 2D (rate) or 3D (rateints) backgrounds.
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Input target exposure data model
 
     bkg_list : list
@@ -237,7 +235,7 @@ def average_background(input_model, bkg_list, sigma, maxiters):
 
     Returns
     -------
-    avg_bkg : ImageModel
+    avg_bkg : `~stdatamodels.jwst.datamodels.ImageModel`
         The averaged background exposure
     """
     # Determine the dimensionality of the input file

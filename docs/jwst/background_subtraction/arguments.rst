@@ -2,11 +2,11 @@
 
 Step Arguments
 ==============
-The background image subtraction step has four optional arguments.
+The background image subtraction step has several optional arguments.
 The first two are used only when the step is applied to non-WFSS exposures.
 They are used in the process of creating an average background image, to
-control the sigma clipping, and are passed as arguments to the astropy
-``sigma_clip`` function:
+control the sigma clipping, and are passed as arguments to
+:func:`astropy.stats.sigma_clip`:
 
 ``--sigma``
   When combining multiple background images, the number of standard deviations
