@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.jump.JumpStep`
+:Class: `jwst.jump.jump_step.JumpStep`
 :Alias: jump
 
 This step finds and flags outliers (usually caused by cosmic-ray hits) in

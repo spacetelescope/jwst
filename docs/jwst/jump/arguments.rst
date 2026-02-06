@@ -56,14 +56,14 @@ The details for each are listed below.
 
 **Parameters that affect after jump Flagging**
 
-After a jump of at least 'after_jump_flag_dn1' DN, groups up to 'after_jump_flag_time1'
+After a jump of at least ``after_jump_flag_dn1`` DN, groups up to ``after_jump_flag_time1``
 seconds will also be flagged as jumps. That pair of arguments is defined as:
 
 * ``--after_jump_flag_dn1``: A floating point value in units of DN
 * ``--after_jump_flag_time1``: A floating point value in units of seconds
 
-A second threshold and time can also be set: after a jump of at least 'after_jump_flag_dn2' DN,
-groups up to 'after_jump_flag_time2' seconds will also be flagged as jumps. That pair of arguments
+A second threshold and time can also be set: after a jump of at least ``after_jump_flag_dn2`` DN,
+groups up to ``after_jump_flag_time2`` seconds will also be flagged as jumps. That pair of arguments
 is defined as:
 
 * ``--after_jump_flag_dn2``: A floating point value in units of DN
@@ -71,17 +71,15 @@ is defined as:
 
 **Parameters that affect Near-IR Snowball Flagging**
 
-* ``--expand_large_events``:  A boolean parameter that controls whether the jump step will expand the number of pixels that are flagged around large cosmic ray events. These are know as "snowballs" in the near-infrared detectors and "showers" for the MIRI detectors. In general, this should be set to True.
+* ``--expand_large_events``:  A boolean parameter that controls whether the jump step will expand the number of pixels that are flagged around large cosmic ray events. These are know as "snowballs" in the near-infrared detectors and "showers" for the MIRI detectors. In general, this should be set to `True`.
 
 * ``--min_jump_area``: The minimum number of contiguous pixels needed to trigger the expanded flagging of large cosmic rays events.
 
-* ``--min_sat_area``:  The minimum number of saturated pixels required to meet "sat_required_snowball".
+* ``--min_sat_area``:  The minimum number of saturated pixels required to meet ``sat_required_snowball``.
 
 * ``--expand_factor``: A multiplicative factor applied to the enclosing ellipse for snowballs. This larger area will have all pixels flagged as having a jump.
 
-* ``--use_ellipses``:  deprecated
-
-* ``--sat_required_snowball``: A boolean value that if True requires that there are saturated pixels within the enclosed jump circle.
+* ``--sat_required_snowball``: A boolean value that if `True` requires that there are saturated pixels within the enclosed jump circle.
 
 * ``--min_sat_radius_extend``: The minimum radius of the saturated core of a snowball required to for the radius of the saturated core to be extended.
 
@@ -101,9 +99,9 @@ is defined as:
 
 * ``--extend_min_area``: The required minimum area of extended emission after convolution for the detection of showers in MIRI
 
-* ``--extend_inner_radius``: The inner radius of the ring_2D_kernel that is used for the detection of extended emission in showers
+* ``--extend_inner_radius``: The inner radius of the `~astropy.convolution.Ring2DKernel` that is used for the detection of extended emission in showers
 
-* ``--extend_outer_radius``: The outer radius of the Ring2DKernal that is used for the detection of extended emission in showers
+* ``--extend_outer_radius``: The outer radius of the `~astropy.convolution.Ring2DKernel` that is used for the detection of extended emission in showers
 
 * ``--extend_ellipse_expand_ratio``: Multiplicative factor to expand the radius of the ellipse fit to the detected extended emission in MIRI showers
 
@@ -123,4 +121,4 @@ is defined as:
 
 * ``--minimum_sigclip_groups``: The minimum number of groups to switch the jump detection to use sigma clipping
 
-* ``--only_use_ints``: If true the sigma clipping is applied only for a given group across all ints. If not, all groups from all ints are used for the sigma clipping.
+* ``--only_use_ints``: If `True` the sigma clipping is applied only for a given group across all integrations. If not, all groups from all integrations are used for the sigma clipping.
