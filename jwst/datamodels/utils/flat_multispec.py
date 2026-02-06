@@ -271,7 +271,7 @@ def expand_table(spec):
         columns_to_copy = np.array([col["name"] for col in data_type])
 
         # Copy over the vector columns from input spec_table to output spec_table
-        spec_table = np.empty(n_elements, dtype=new_spec.spec_table.dtype)
+        spec_table = np.empty(n_elements, dtype=new_spec.get_dtype("spec_table"))
         for col_name in columns_to_copy:
             spec_table[col_name] = spec_row[col_name][:n_elements]
         new_spec.spec_table = spec_table
