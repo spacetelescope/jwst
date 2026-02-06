@@ -533,7 +533,7 @@ There are a couple of scenarios to use multiprocessing with the pipeline:
     if __name__ = '__main__':
         sys.exit(main())
 
-2. Calling the pipeline using multiprocessing via its :py:func:`multiprocessing.pool.Pool.starmap`
+2. Calling the pipeline using multiprocessing via its :py:meth:`multiprocessing.pool.Pool.starmap`
    and using :py:func:`zip` to pack its inputs. The following example uses an
    option to set up a text file with the full traceback in case there is a crash.
    Notice that the ``import`` statement of the pipeline is within the multiprocessing
