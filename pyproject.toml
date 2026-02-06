@@ -282,6 +282,9 @@ checks = [
     "RT02", # First line of return should contain only the type
     "RT05", # Return value description should finish with a period
 ]
+exclude_files = [ # don't process filepaths that match these regex
+    "^jwst/regtest/lib/.*",
+]
 
 [tool.codespell]
 skip = "*.c, *.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"

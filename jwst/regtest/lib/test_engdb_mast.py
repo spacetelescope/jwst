@@ -1,0 +1,104 @@
+"""Test the MAST Engineering interface."""
+
+import pytest
+from astropy.table import Table
+from astropy.time import Time
+from astropy.utils.diff import report_diff_values
+
+from jwst.lib import engdb_mast
+from jwst.lib.engdb_lib import EngDB_Value
+
+# Mark all tests in this module as slow due to remote DB connection
+pytestmark = pytest.mark.slow
+
+# Test query
+QUERY = ("sa_zattest2", "2022-02-02T22:24:58", "2022-02-02T22:24:59")
+
+# Expected return from query
+EXPECTED_RESPONSE = (
+    "theTime,MJD,euvalue,sqldataType\r\n"
+    "2022-02-02 22:24:57.797000,59612.9340022801,-0.7914493680,real\r\n"
+    "2022-02-02 22:24:58.053000,59612.9340052431,-0.7914494276,real\r\n"
+    "2022-02-02 22:24:58.309000,59612.9340082060,-0.7914494276,real\r\n"
+    "2022-02-02 22:24:58.565000,59612.9340111690,-0.7914494276,real\r\n"
+    "2022-02-02 22:24:58.821000,59612.9340141319,-0.7914493680,real\r\n"
+    "2022-02-02 22:24:59.077000,59612.9340170949,-0.7914493680,real\r\n"
+)
+EXPECTED_RECORDS = Table.read(EXPECTED_RESPONSE, format="ascii.csv")
+
+
+class TestEngdbMast:
+    """
+    Class to test engdb_mast with DB connection.
+
+    Because the DB constructor actually pings the service provider,
+    we only want to do it once to prevent unnecessary server spam.
+    """
+
+    def setup_class(self):
+        try:
+            self.engdb = engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
+            self.errmsg = ""
+        except RuntimeError as exception:
+            self.engdb = None
+            self.errmsg = f"Live MAST Engineering Service not available: {repr(exception)}"
+
+    def test_get_records(self):
+        """Test getting records."""
+        engdb = self.engdb
+        if engdb is None:
+            pytest.skip(self.errmsg)
+        records = engdb._get_records(*QUERY)
+        assert engdb.response.text == EXPECTED_RESPONSE
+        assert report_diff_values(records, EXPECTED_RECORDS)
+
+    @pytest.mark.parametrize(
+        "pars, expected",
+        [
+            ({}, [-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368]),
+            (
+                {"include_obstime": True},
+                [
+                    EngDB_Value(obstime=Time(59612.9340052431, format="mjd"), value=-0.7914494276),
+                    EngDB_Value(obstime=Time(59612.9340082060, format="mjd"), value=-0.7914494276),
+                    EngDB_Value(obstime=Time(59612.9340111690, format="mjd"), value=-0.7914494276),
+                    EngDB_Value(obstime=Time(59612.9340141319, format="mjd"), value=-0.791449368),
+                ],
+            ),
+            (
+                {"include_obstime": True, "zip_results": False},
+                EngDB_Value(
+                    obstime=[
+                        Time(59612.9340052431, format="mjd"),
+                        Time(59612.9340082060, format="mjd"),
+                        Time(59612.9340111690, format="mjd"),
+                        Time(59612.9340141319, format="mjd"),
+                    ],
+                    value=[-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368],
+                ),
+            ),
+            (
+                {"include_bracket_values": True},
+                [
+                    -0.791449368,
+                    -0.7914494276,
+                    -0.7914494276,
+                    -0.7914494276,
+                    -0.791449368,
+                    -0.791449368,
+                ],
+            ),
+        ],
+    )
+    def test_get_values(self, pars, expected):
+        engdb = self.engdb
+        if engdb is None:
+            pytest.skip(self.errmsg)
+        values = engdb.get_values(*QUERY, **pars)
+        assert values == expected
+
+
+def test_negative_aliveness():
+    """Ensure failure occurs with a bad url."""
+    with pytest.raises(RuntimeError):
+        engdb_mast.EngdbMast(base_url="https://127.0.0.1/_engdb_mast_test", token="dummytoken")  # noqa: S106
