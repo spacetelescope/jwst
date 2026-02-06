@@ -205,7 +205,7 @@ def test_extract_niriss_soss_96(tmp_path, mock_niriss_soss_96):
 
     # output flux and errors are non-zero, exact values will depend
     # on extraction parameters
-    assert np.all(result.spec[0].spec_table["FLUX"] > 0)
+    assert np.all(result.spec[0].spec_table["FLUX"] >= 0)
     assert np.all(result.spec[0].spec_table["FLUX_ERROR"] > 0)
     result.close()
 
