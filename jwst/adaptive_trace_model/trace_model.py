@@ -343,12 +343,17 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_l
 
     Returns
     -------
-    trace : ndarray
+    trace_used : ndarray
         2D image containing the scaled spline data fit evaluated at
-        the input alpha coordinates.  Values are NaN where no spline
-        model was available.
+        the input alpha coordinates for compact source regions.  Values are
+        NaN where no spline model was available and where the source
+        was below the slope limit.
+    full_trace: ndarray
+        2D image containing the scaled spline data fit evaluated at
+        all pixels. Values are NaN where no spline model was available.
     """
-    trace = np.full(shape, np.nan, dtype=np.float32)
+    trace_used = np.full(shape, np.nan, dtype=np.float32)
+    full_trace = np.full(shape, np.nan, dtype=np.float32)
     alpha_slice = np.full(shape, np.nan, dtype=np.float32)
     trace_slice = np.full(shape, np.nan, dtype=np.float32)
     spline_bkpt = None
@@ -391,9 +396,10 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_l
             if spline_bkpt is None:
                 spline_bkpt = len(np.unique(splines[i].t)) - 1
 
+        full_trace[indx] = trace_slice[indx]
         if slope_limit <= 0:
             # Always use the spline fit in this case
-            trace[indx] = trace_slice[indx]
+            trace_used[indx] = trace_slice[indx]
         else:
             if len(alpha_ptsource) > 0:
                 alpha_ptsource = np.concatenate(alpha_ptsource)
@@ -402,14 +408,14 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_l
             compact_locations = _is_compact_source(
                 alpha_slice, alpha_ptsource, native_dalpha, spline_bkpt, pad
             )
-            trace[compact_locations] = trace_slice[compact_locations]
+            trace_used[compact_locations] = trace_slice[compact_locations]
 
             total_used = np.sum(compact_locations)
             log.debug(
                 f"Using {total_used}/{np.sum(indx)} pixels from the spline model for slice {slnum}"
             )
 
-    return trace
+    return trace_used, full_trace
 
 
 def _linear_interp(col_y, col_flux, y_interp, edge_limit=0, preserve_nan=True):
@@ -681,9 +687,17 @@ def oversample_flux(
     flux_os : ndarray
         The oversampled flux array, containing contributions from the evaluated
         spline models, linear interpolations, and residual corrections.
-    trace : ndarray
+    trace_used : ndarray
+        A trace model, generated from the spline models evaluated at
+        pixels containing a compact source.
+    full_trace : ndarray
         A trace model, generated from the spline models evaluated at
         every pixel.
+    linear_flux : ndarray
+        The flux linearly interpolated onto the oversampled grid.
+    residual_flux : ndarray
+        Residuals between the spline modeled data and the original flux,
+        linearly interpolated onto the oversampled grid.
     """
     ysize, xsize = flux.shape
     _, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
@@ -831,7 +845,7 @@ def oversample_flux(
         indx = np.where(np.isfinite(flux_os_bspline_use) & np.isfinite(flux_os_residual))
         flux_os[indx] += flux_os_residual[indx]
 
-    return flux_os, flux_os_bspline_use
+    return flux_os, flux_os_bspline_use, flux_os_bspline_full, flux_os_linear, flux_os_residual
 
 
 def _set_fit_kwargs(detector, xsize):
@@ -1148,8 +1162,40 @@ def _update_wcs(wcs, map_pixels):
     return new_wcs
 
 
+def _intermediate_models(model, data_arrays):
+    """
+    Make new datamodels for intermediate data arrays.
+
+    Parameters
+    ----------
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        The input datamodel. Metadata will be copied from it.
+    data_arrays : list of ndarray or None
+        Data arrays to save.  If None, the model returned is also None.
+
+    Returns
+    -------
+    new_models : list of `~stdatamodels.jwst.datamodels.IFUImageModel` or None
+        A list of datamodels containing the input data arrays.
+    """
+    new_models = []
+    for data in data_arrays:
+        if data is None:
+            new_model = None
+        else:
+            new_model = datamodels.IFUImageModel(data)
+            new_model.update(model)
+        new_models.append(new_model)
+    return new_models
+
+
 def fit_and_oversample(
-    model, fit_threshold=10.0, slope_limit=0.1, psf_optimal=False, oversample_factor=1.0
+    model,
+    fit_threshold=10.0,
+    slope_limit=0.1,
+    psf_optimal=False,
+    oversample_factor=1.0,
+    return_intermediate_models=False,
 ):
     """
     Fit a trace model and optionally oversample an IFU datamodel.
@@ -1158,27 +1204,45 @@ def fit_and_oversample(
     ----------
     model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The input datamodel, updated in place.
-    fit_threshold : float
+    fit_threshold : float, optional
         The signal threshold sigma for attempting spline fits within a slice region.
         Lower values will create spline traces for more slices.  If less than or
         equal to 0, all slices will be fit.
-    slope_limit : float
+    slope_limit : float, optional
         The normalized slope threshold for using the spline model in oversampled
         data.  Lower values will use the spline model for fainter sources. If less
         than or equal to 0, the spline model will always be used.
-    psf_optimal : bool
+    psf_optimal : bool, optional
         If True, residual corrections to the spline model are not included
         in the oversampled flux.  This option is generally appropriate for simple
         isolated point sources only.  If set, ``slope_limit`` and ``fit_threshold``
         values are ignored and spline fits are attempted and used for all data.
-    oversample_factor : float
+    oversample_factor : float, optional
         If not 1.0, then the data will be oversampled by this factor.
+    return_intermediate_models : bool, optional
+        If True, additional image models will be returned, containing the full
+        spline model, the spline model as used for compact sources, the residual
+        model, and the linearly interpolated data.
 
     Returns
     -------
     model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The datamodel, updated with a trace image and optionally oversampled
         arrays.
+    full_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`, optional
+        The spline model evaluated at all pixels. Returned only if
+        ``return_intermediate_models`` is True.
+    source_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`, optional
+        The spline model evaluated at compact source locations only.
+        Returned only if ``return_intermediate_models`` is True.
+    linear_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or None, optional
+        All data linearly interpolated onto the oversampled grid
+        Returned only if ``return_intermediate_models`` is True.  Will be None if
+        ``oversample_factor`` is 1.0.
+    residual_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or None, optional
+        Residuals from the spline fit, linearly interpolated onto the oversampled grid
+        Returned only if ``return_intermediate_models`` is True.  Will be None if
+        ``oversample_factor`` is 1.0.
     """
     # Check parameters
     if psf_optimal:
@@ -1278,7 +1342,7 @@ def fit_and_oversample(
     # data unmodified.
     oversample_kwargs = _set_oversample_kwargs(detector)
     if oversample_factor == 1:
-        trace = _trace_image(
+        trace_used, full_trace = _trace_image(
             flux_orig.shape,
             spline_models,
             spline_scales,
@@ -1288,9 +1352,14 @@ def fit_and_oversample(
             pad=oversample_kwargs["pad"],
         )
         if rotate:
-            trace = np.rot90(trace, k=-1)
-        model.trace_model = trace
-        return model
+            trace_used = np.rot90(trace_used, k=-1)
+            full_trace = np.rot90(full_trace, k=-1)
+        model.trace_model = trace_used
+        if return_intermediate_models:
+            new_models = _intermediate_models(model, [full_trace, trace_used, None, None])
+            return model, *new_models
+        else:
+            return model
 
     # Oversampled array size
     os_shape = (int(np.ceil(ysize * oversample_factor)), xsize)
@@ -1312,7 +1381,7 @@ def fit_and_oversample(
         alpha_os, _, wave_os = det2ab(ysize - y_os - 1, x_os)
 
     log.info("Oversampling the flux array from the fit trace model")
-    flux_os, trace = oversample_flux(
+    flux_os, trace_used, full_trace, linear, residual = oversample_flux(
         flux_orig,
         alpha_orig,
         region_map,
@@ -1388,7 +1457,10 @@ def fit_and_oversample(
         dq_os = np.rot90(dq_os, k=-1)
         wave_os = np.rot90(wave_os, k=-1)
         regions_os = np.rot90(regions_os, k=-1)
-        trace = np.rot90(trace, k=-1)
+        trace_used = np.rot90(trace_used, k=-1)
+        full_trace = np.rot90(full_trace, k=-1)
+        linear = np.rot90(linear, k=-1)
+        residual = np.rot90(residual, k=-1)
         for extname, error_array in errors_os.items():
             errors_os[extname] = np.rot90(error_array, k=-1)
 
@@ -1396,7 +1468,7 @@ def fit_and_oversample(
     model.data = flux_os
     model.dq = dq_os
     model.wavelength = wave_os
-    model.trace_model = trace
+    model.trace_model = trace_used
     for extname, error_array in errors_os.items():
         setattr(model, extname, error_array)
     if isinstance(model, datamodels.IFUImageModel):
@@ -1416,4 +1488,9 @@ def fit_and_oversample(
     # Make sure NaNs and DO_NOT_USE flags match in all extensions
     match_nans_and_flags(model)
 
-    return model
+    # Return intermediate models if needed
+    if return_intermediate_models:
+        new_models = _intermediate_models(model, [full_trace, trace_used, linear, residual])
+        return model, *new_models
+    else:
+        return model

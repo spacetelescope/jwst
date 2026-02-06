@@ -22,6 +22,7 @@ class AdaptiveTraceModelStep(Step):
     oversample = float(default=1.0) # Use the trace model to oversample the data by this factor
     slope_limit = float(default=0.1) # Slope limit for using splines in oversample
     psf_optimal = boolean(default=False) # Model the target as a simple point source; ignore slope_limit and fit_threshold.
+    save_intermediate_results = boolean(default=False)  # Save the full spline model and residuals.
     skip = boolean(default=True) # By default, skip the step.
     output_use_model = boolean(default=True) # Use input filenames in the output models
     """  # noqa: E501
@@ -101,14 +102,35 @@ class AdaptiveTraceModelStep(Step):
 
             # Update the model in place
             log.info("Fitting trace model for %s", model.meta.filename)
-            fit_and_oversample(
+            results = fit_and_oversample(
                 model,
                 fit_threshold=self.fit_threshold,
                 slope_limit=self.slope_limit,
                 oversample_factor=self.oversample,
                 psf_optimal=self.psf_optimal,
+                return_intermediate_models=self.save_intermediate_results,
             )
 
             model.meta.cal_step.adaptive_trace_model = "COMPLETE"
+            if self.save_intermediate_results:
+                _, full_spline, used_spline, linear, residual = results
+                basepath = model.meta.filename
+
+                outpath = self.make_output_path(basepath=basepath, suffix="spline_full")
+                full_spline.save(outpath)
+                log.info(f"Saved full spline model in {outpath}")
+
+                outpath = self.make_output_path(basepath=basepath, suffix="spline_used")
+                used_spline.save(outpath)
+                log.info(f"Saved spline model for compact sources in {outpath}")
+
+                if linear is not None:
+                    outpath = self.make_output_path(basepath=basepath, suffix="linear_interp")
+                    linear.save(outpath)
+                    log.info(f"Saved linearly interpolated data in {outpath}")
+                if residual is not None:
+                    outpath = self.make_output_path(basepath=basepath, suffix="spline_residual")
+                    residual.save(outpath)
+                    log.info(f"Saved spline residuals in {outpath}")
 
         return output_model
