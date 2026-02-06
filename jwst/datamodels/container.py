@@ -497,6 +497,8 @@ to supply custom catalogs.
         """
         ind = []
         for i, model in enumerate(self._models):
+            if getattr(model.meta.asn, "exptype", None) is None:
+                model.meta.asn.exptype = "science"
             if model.meta.asn.exptype.lower() == asn_exptype:
                 ind.append(i)
         return ind
