@@ -1373,7 +1373,6 @@ class STTableDataDiff(TableDataDiff):
 
                 if not self.report_pixel_loc_diffs:
                     self.diff_total += number_that_fail_atol_rtol_test
-                    self.rel_diffs += np.nan
 
             elif "P" in col.format or "Q" in col.format:
                 different_idx = (
