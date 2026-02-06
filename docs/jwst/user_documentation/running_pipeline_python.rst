@@ -537,7 +537,7 @@ There are a couple of scenarios to use multiprocessing with the pipeline:
    method and using :py:func:`zip` to pack its inputs. The following example uses an
    option to set up a text file with the full traceback in case there is a crash.
    Notice that the ``import`` statement of the pipeline is within the multiprocessing
-   block that gets called by every worker; This is to avoid a known memory leak.
+   block that gets called by every worker; this is to avoid a known memory leak.
 
 ::
 
