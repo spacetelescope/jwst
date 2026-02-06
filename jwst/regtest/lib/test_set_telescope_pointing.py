@@ -23,7 +23,7 @@ from jwst.lib.basic_utils import LoggingContext  # noqa: E402
 from jwst.tests.helpers import word_precision_check  # noqa: E402
 
 # Mark all tests in this module as slow due to possible remote DB connection
-pytestmark = [pytest.mark.slow]
+pytestmark = pytest.mark.slow
 
 # The tests here need MAST DB to be available.
 try:

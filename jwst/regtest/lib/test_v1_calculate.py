@@ -15,7 +15,7 @@ import jwst.lib.v1_calculate as v1c  # noqa: E402
 from jwst.lib import engdb_mast  # noqa: E402
 
 # Mark all tests in this module as slow due to possible remote DB connection
-pytestmark = [pytest.mark.slow]
+pytestmark = pytest.mark.slow
 
 # The tests here need MAST DB to be available.
 try:
