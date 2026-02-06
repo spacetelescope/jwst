@@ -199,6 +199,8 @@ def nircam_rate():
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.var_rnoise += 0
+    rng = np.random.default_rng(seed=1)
+    im.dq = 2 ** rng.integers(10, 22, size=shape).astype(np.uint32)
     im.meta.wcsinfo = {
         "ctype1": "RA---TAN",
         "ctype2": "DEC--TAN",
@@ -430,11 +432,13 @@ def test_miri_wcs_roundtrip(miri_cal):
     im.close()
 
 
-def test_single_image_file_input(nircam_rate, tmp_cwd):
+@pytest.mark.parametrize("propagate_dq", [True, False])
+def test_single_image_file_input(nircam_rate, tmp_cwd, propagate_dq):
     """Ensure step can be run on a single image file."""
     # Create a temporary file with the input data
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     im.meta.filename = "test_input.fits"
+    im.var_rnoise += 1.0
 
     # Add a bad pixel in the error plane, not matched with a NaN in data.
     # This will test if the match_nans_and_flags call at the beginning
@@ -446,13 +450,24 @@ def test_single_image_file_input(nircam_rate, tmp_cwd):
     im_copy = im.data.copy()
 
     # Run the step on the file
-    result_from_memory = ResampleStep.call(im)
-    result_from_file = ResampleStep.call("test_input.fits")
+    good_bits = sum([2**i for i in range(10, 22)])
+
+    result_from_memory = ResampleStep.call(
+        im,
+        propagate_dq=propagate_dq,
+    )
+    result_from_file = ResampleStep.call(
+        "test_input.fits",
+        propagate_dq=propagate_dq,
+    )
 
     # Check that the output is as expected
     assert result_from_memory.meta.cal_step.resample == "COMPLETE"
     assert result_from_file.meta.cal_step.resample == "COMPLETE"
     assert_allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
+    if propagate_dq:
+        assert np.all(result_from_file.dq == result_from_memory.dq)
+        assert np.bitwise_or.reduce(result_from_memory.dq, axis=(0, 1)) == good_bits
 
     # Check that input model was not modified
     assert im is not result_from_memory

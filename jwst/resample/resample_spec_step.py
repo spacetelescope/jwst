@@ -37,6 +37,7 @@ class ResampleSpecStep(Step):
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
         in_memory = boolean(default=True)  # Keep images in memory
+        propagate_dq = boolean(default=False)  # propagate DQ during resampling
     """  # noqa: E501
 
     def process(self, input_data):
