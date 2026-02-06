@@ -365,10 +365,6 @@ def flag_resampled_model_crs(
         The functools.partial instance to pass to save_blot. Must be
         specified if save_blot is True.
     """
-    if "SPECTRAL" not in input_model.meta.wcs.output_frame.axes_type:
-        # Set array shape, needed to compute image pixel area
-        input_model.meta.wcs.array_shape = input_model.shape
-
     blot = gwcs_blot(
         median_data=median_data,
         median_wcs=median_wcs,
