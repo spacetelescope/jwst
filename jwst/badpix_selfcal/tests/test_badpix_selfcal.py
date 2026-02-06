@@ -115,6 +115,8 @@ def background():
     wcsobj = wcs.WCS(pipeline)
     im.meta.wcs = wcsobj
 
+    im.var_rnoise = np.ones(shp)
+
     return im
 
 
@@ -287,9 +289,11 @@ def test_apply_flags(background):
     for idx in outlier_indices:
         assert np.isnan(flagged.data[idx])
         assert np.isnan(flagged.err[idx])
-        assert np.isnan(flagged.var_poisson[idx])
         assert np.isnan(flagged.var_rnoise[idx])
-        assert np.isnan(flagged.var_flat[idx])
+
+    # ensure arrays not initially present in test data are not created by the step
+    assert flagged.var_poisson is None
+    assert flagged.var_flat is None
 
     # check that DQ flag is set properly
     for idx in outlier_indices:
