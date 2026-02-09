@@ -24,7 +24,6 @@ from jwst.extract_1d.soss_extract.atoca_utils import (
     throughput_soss,
 )
 from jwst.extract_1d.soss_extract.pastasoss import (
-    CUTOFFS,
     _find_spectral_order_index,
     _verify_requested_orders,
     get_soss_wavemaps,
@@ -38,18 +37,6 @@ from jwst.extract_1d.soss_extract.soss_syscor import make_background_mask, soss_
 from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)
-
-"""Shortest wavelength to consider for each spectral order"""
-SHORT_CUTOFF = [None, 0.58, 0.63]
-
-"""
-Wavelengths short of which to consider Order 2 to be well-separated from order 1.
-Two values are defined. The first is the cutoff longwave of which should be included
-in the combined extraction; the second is the cutoff shortwave of which should be
-included in the extraction of just that order. Some overlap is helpful to avoid
-numerical issues.
-"""
-ORDER2_SEPARATION_CUTOFF = [0.77, 0.95]
 
 ORDER_STR_TO_INT = {f"Order {order}": order for order in [1, 2, 3]}
 
@@ -87,6 +74,11 @@ class DetectorModelOrder:
         ExtractionEngine can use it to generate a kernel at any wavelength grid.
     subarray : str or None
         The name of the subarray used for the extraction.
+    trace_cutoff : int
+        The maximum x pixel to consider for this order, as determined by the pastasoss ref file.
+    short_cutoff : float or None
+        The shortest wavelength to consider for this order, in microns,
+        as determined by the pastasoss ref file.
     orderengine : ExtractionEngine or None
         Precomputed extraction engine for this order.  This is intended to be
         computed for the first integration and stored thereafter.
@@ -115,6 +107,8 @@ class DetectorModelOrder:
     kernel_native: WebbKernel | None = None
     kernel_func: WebbKernel | None = None
     subarray: str | None = None
+    trace_cutoff: int = 2048
+    short_cutoff: float | None = None
 
     orderengine: ExtractionEngine | None = None
     order12engine: ExtractionEngine | None = None
@@ -133,9 +127,8 @@ class DetectorModelOrder:
         xtrace, ytrace, wavetrace : array[float]
             The x, y and wavelength of the trace.
         """
-        order_idx = self.spectral_order - 1
         spectrace = self.spectrace
-        xtrace = np.arange(CUTOFFS[order_idx])
+        xtrace = np.arange(self.trace_cutoff)
 
         # CubicSpline requires monotonically increasing x arr
         if spectrace[0][0] - spectrace[0][1] > 0:
@@ -278,6 +271,8 @@ def get_ref_file_args(ref_files, orders_requested=None):
             pastasoss_ref.throughputs[order_idx].wavelength[:],
             pastasoss_ref.throughputs[order_idx].throughput[:],
         )
+        trace_cutoff = pastasoss_ref.traces[order_idx].cutoff
+        short_cutoff = getattr(pastasoss_ref.traces[order_idx], "short_cutoff", None)
 
         detector_model = DetectorModelOrder(
             spectral_order=order,
@@ -287,6 +282,8 @@ def get_ref_file_args(ref_files, orders_requested=None):
             throughput=thru,
             kernel=None,
             spectrace=spectraces[order_idx],
+            trace_cutoff=trace_cutoff,
+            short_cutoff=short_cutoff,
         )
 
         # Build a kernel for this order
@@ -545,7 +542,7 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, force_recompute_engi
     return tracemodel_ord, spec
 
 
-def _build_null_spec_table(wave_grid, order):
+def _build_null_spec_table(wave_grid, order, cut=None):
     """
     Build a SpecModel of entirely bad values.
 
@@ -555,6 +552,8 @@ def _build_null_spec_table(wave_grid, order):
         Input wavelengths
     order : int
         Spectral order
+    cut : float or None
+        The shortest wavelength to consider for this order, in microns.
 
     Returns
     -------
@@ -562,7 +561,6 @@ def _build_null_spec_table(wave_grid, order):
         Null SpecModel. Flux values are NaN, DQ flags are 1,
         but note that DQ gets overwritten at end of run_extract1d
     """
-    cut = SHORT_CUTOFF[order - 1]
     if cut is None:
         wave_grid_cut = wave_grid
     else:
@@ -660,7 +658,9 @@ def _do_tiktests(
                 log.debug("Building diagnostic spectrum for order %d, factor %.4e", order, fac)
                 f_k = all_tests["solution"][idx, :]
                 if np.all(~np.isfinite(f_k)):
-                    spec_ord = _build_null_spec_table(engine.wave_grid, order)
+                    spec_ord = _build_null_spec_table(
+                        engine.wave_grid, order, cut=order_model.short_cutoff
+                    )
                 else:
                     _, spec_ord = _build_tracemodel_order(
                         engine, order_model, f_k, global_mask, force_recompute_engine=True
@@ -871,7 +871,36 @@ def _model_single_order(
 
 
 class Integration:
-    """Class to handle extraction of a single integration."""
+    """
+    Class to handle extraction of a single integration.
+
+    Parameters
+    ----------
+    scidata : np.ndarray
+        2D science data array.
+    scierr : np.ndarray
+        2D science error array.
+    scimask : np.ndarray[bool]
+        2D boolean mask array for the science data. True values are masked.
+    refmask : np.ndarray[bool]
+        2D boolean mask array for the reference pixels. True values are masked.
+    order_models : list[DetectorModelOrder]
+        Models of the detector and trace properties, one per spectral order.
+    box_weights : dict
+        A dictionary of the weights for each order.
+    do_bkgsub : bool, optional
+        Whether to perform background subtraction. Default is True.
+    extract_order3 : bool, optional
+        Whether to extract order 3. Default is True.
+    save_intermediate : bool, optional
+        Whether to save intermediate products for debugging. Default is False.
+    order2_separation_cutoff : tuple(float, float), optional
+        Wavelengths short of which to consider Order 2 to be well-separated from order 1.
+        Two values are defined. The first is the cutoff longwave of which should be included
+        in the combined extraction; the second is the cutoff shortwave of which should be
+        included in the extraction of just that order. Some overlap is helpful to avoid
+        numerical issues.
+    """
 
     def __init__(
         self,
@@ -884,6 +913,7 @@ class Integration:
         do_bkgsub=True,
         extract_order3=True,
         save_intermediate=False,
+        order2_separation_cutoff=(0.77, 0.95),
     ):
         self.scidata = scidata
         self.scierr = scierr
@@ -905,6 +935,7 @@ class Integration:
         # unpack ref file args
         self.order_models = order_models
         self.subarray = order_models[0].subarray
+        self.order2_separation_cutoff = order2_separation_cutoff
 
         # Define mask based on box aperture
         # (we want to model each contaminated pixels that will be extracted)
@@ -1101,7 +1132,7 @@ class Integration:
             if order not in self.order_list:
                 continue
             if order == 2:
-                cutoff = ORDER2_SEPARATION_CUTOFF[1]
+                cutoff = self.order2_separation_cutoff[1]
             else:
                 cutoff = None
 
@@ -1154,7 +1185,9 @@ class Integration:
                     "Not enough unmasked pixels to model the remaining part of order 2."
                     " Model and spectrum will be NaN in that spectral region."
                 )
-                spec_ord = [_build_null_spec_table(pixel_wave_grid, order)]
+                spec_ord = [
+                    _build_null_spec_table(pixel_wave_grid, order, cut=order_model.short_cutoff)
+                ]
                 model = np.nan * np.ones_like(self.scidata_bkg)
 
             # Keep only pixels from which order 2 contribution
@@ -1274,7 +1307,7 @@ class Integration:
         # Cut order 2 at 0.77 (not smaller than that)
         # because there is no contamination there. Can be extracted afterward.
         # In the red, no cut.
-        wv_range = [ORDER2_SEPARATION_CUTOFF[0], np.max(grids_ord[1])]
+        wv_range = [self.order2_separation_cutoff[0], np.max(grids_ord[1])]
 
         # Finally, build the list of corresponding estimates.
         # The estimate for the overlapping part is the order 1 estimate.
@@ -1415,6 +1448,7 @@ def _process_one_integration(
     tikfacs_in=None,
     generate_model=True,
     int_num=None,
+    order2_separation_cutoff=(0.77, 0.95),
 ):
     if type(int_num) is int:
         log.info(f"Processing integration {int_num}")
@@ -1434,6 +1468,7 @@ def _process_one_integration(
         extract_order3=soss_kwargs["order_3"],
         do_bkgsub=soss_kwargs["subtract_background"],
         save_intermediate=soss_kwargs["model"],
+        order2_separation_cutoff=order2_separation_cutoff,
     )
 
     # Model the traces based on optics filter configuration (CLEAR or F277W)
@@ -1753,6 +1788,7 @@ def run_extract1d(
         wave_grid=wave_grid,
         tikfacs_in=tikfacs_in,
         generate_model=generate_model,
+        order2_separation_cutoff=ref_files["pastasoss"].meta.order2_separation_cutoff,
     )
 
     log.info(
