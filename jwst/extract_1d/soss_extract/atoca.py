@@ -29,6 +29,12 @@ class MaskOverlapError(Exception):
         super().__init__(self.message)
 
 
+class KernelShapeError(Exception):
+    """Exception to raise if the kernel shape is inconsistent with the wavelength grid."""
+
+    pass
+
+
 class ExtractionEngine:
     """
     Run the ATOCA algorithm (Darveau-Bernier 2022, PASP, DOI:10.1088/1538-3873/ac8a77).
@@ -279,6 +285,11 @@ class ExtractionEngine:
                 kernel_n = atoca_utils.get_c_matrix(
                     kernel_n, self.wave_grid, i_bounds=self.i_bounds[i_order], **c_kwargs[i_order]
                 )
+            else:
+                # ensure if input was already sparse, it has the correct shape
+                n_x = self.i_bounds[i_order][1] - self.i_bounds[i_order][0]
+                if kernel_n.shape != (n_x, self.n_wavepoints):
+                    raise KernelShapeError("Kernel shape is inconsistent with wave_grid length.")
 
             kernels_new.append(kernel_n)
 
@@ -649,14 +660,12 @@ class ExtractionEngine:
 
         return factor_guess
 
-    def get_tikho_tests(self, factors, data, error):
+    def get_tikho_test_structure(self, data, error):
         """
-        Test different factors for Tikhonov regularization.
+        Structure to test different factors for Tikhonov regularization.
 
         Parameters
         ----------
-        factors : 1D list or array-like
-            Factors to be tested.
         data : (N, M) array-like
             A 2-D array of real values representing the detector image.
         error : (N, M) array-like
@@ -664,14 +673,33 @@ class ExtractionEngine:
 
         Returns
         -------
-        tests : dict
-            Dictionary of the test results
+        tikho : Tikhonov class
+            Instance of class with matrices pre-computed
+            Suitable for calling get_tikho_tests
         """
         # Build the system to solve
         b_matrix, pix_array = self.get_detector_model(data, error)
 
         tikho = atoca_utils.Tikhonov(b_matrix, pix_array, self.tikho_mat)
 
+        return tikho
+
+    def get_tikho_tests(self, tikho, factors):
+        """
+        Test different factors for Tikhonov regularization.
+
+        Parameters
+        ----------
+        tikho : Tikhonov class
+            Instance of class with matrices pre-computed
+        factors : 1D list or array-like
+            Factors to be tested.
+
+        Returns
+        -------
+        tests : dict
+            Dictionary of the test results
+        """
         # Test all factors
         tests = tikho.test_factors(factors)
 
@@ -921,6 +949,43 @@ class ExtractionEngine:
             spectrum = self._solve(matrix, result)
 
         return spectrum
+
+    def precompute_detector_model(self, data, error, tikfac):
+        """
+        Return the matrices and mask needed to solve for the spectrum.
+
+        Parameters
+        ----------
+        data : (N, M) array-like
+            A 2-D array of real values representing the detector image.
+        error : (N, M) array-like
+            Estimate of the error on each pixel`
+            Same shape as `data`.
+        tikfac : float
+            The Tikhonov factor to use
+
+        Returns
+        -------
+        design_matrix_inv : (N, N) array
+            The inverse of the design matrix M in M*f_k=b*(y/err)
+        b_matrix : (N, M) array
+            The matrix b in M*f_k=b*(y/err)
+        """
+        # Build the system to solve
+        b_matrix, _ = self.get_detector_model(data, error)
+
+        # squared tikhonov matrix
+        t_mat = self.tikho_mat
+        t_mat_sq = (t_mat.T).dot(t_mat)
+
+        # squared model matrix
+        a_matrix_sq = b_matrix.T.dot(b_matrix)
+
+        # design matrix for the problem
+        design_matrix = (a_matrix_sq + tikfac**2 * t_mat_sq).toarray()
+        design_matrix_inv = np.linalg.inv(design_matrix)
+
+        return design_matrix_inv, b_matrix
 
     def _get_lo_hi(self, grid, wave_p, wave_m, mask):
         """

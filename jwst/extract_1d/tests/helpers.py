@@ -14,6 +14,7 @@ __all__ = [
     "mock_nirspec_bots_func",
     "mock_miri_lrs_fs_func",
     "mock_miri_ifu_func",
+    "mock_miri_wfss_l2",
     "mock_nis_wfss_l2",
     "mock_nis_wfss_l3",
     "mock_niriss_soss_func",
@@ -277,6 +278,7 @@ def mock_nirspec_bots_func():
     model.meta.target.source_type = "POINT"
     model.meta.wcsinfo.dispersion_direction = 1
     model.meta.wcs = simple_wcs_func()
+    model.meta.aperture.position_angle = 150.0
 
     model.data = np.arange(10 * 50 * 50, dtype=float).reshape((10, 50, 50))
     model.var_poisson = model.data * 0.02
@@ -426,6 +428,49 @@ def mock_miri_lrs_fs_func():
     return model
 
 
+def mock_miri_wfss_l2():
+    """
+    Mock 3 slits in MIRI WFSS mode, level 2 style.
+
+    The slits correspond to a single exposure, with one slit per extracted source.
+
+    Returns
+    -------
+    MultiSlitModel
+        The mock model.
+    """
+    model = dm.MultiSlitModel()
+    model.meta.instrument.name = "MIRI"
+    model.meta.instrument.detector = "MIRIMAGE"
+    model.meta.instrument.filter = "P750L"
+    model.meta.observation.date = "2023-07-22"
+    model.meta.observation.time = "06:24:45.569"
+    model.meta.observation.program_number = "1"
+    model.meta.observation.observation_number = "1"
+    model.meta.observation.visit_number = "1"
+    model.meta.observation.visit_group = "1"
+    model.meta.observation.sequence_id = "1"
+    model.meta.observation.activity_id = "1"
+    model.meta.observation.exposure_number = "5"
+    model.meta.exposure.type = "MIR_WFSS"
+    model.meta.wcsinfo = {}
+    model.meta.wcsinfo.s_region = (
+        "POLYGON ICRS  247.883569817 30.206692493 247.901987783 "
+        "30.174116268 247.864126916 30.158804440 247.846405241 30.190721550"
+    )
+
+    slit0 = mock_miri_lrs_fs_func()
+
+    nslit = 3
+    for i in range(nslit):
+        slit = slit0.copy()
+        slit.name = str(i + 1)
+        slit.meta.exposure.type = "MIR_WFSS"
+        model.slits.append(slit)
+
+    return model
+
+
 def mock_miri_ifu_func():
     """
     Mock an IFU cube in MIRI MRS mode.
@@ -445,6 +490,7 @@ def mock_miri_ifu_func():
     model.meta.wcsinfo.dispersion_direction = 2
     model.meta.photometry.pixelarea_steradians = 1.0
     model.meta.wcs = simple_wcs_ifu_func()
+    model.meta.aperture.position_angle = 150.0
 
     model.data = np.arange(10 * 50 * 50, dtype=float).reshape((10, 50, 50))
     model.var_poisson = model.data * 0.02

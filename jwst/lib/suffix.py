@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 # add to the result it produces.
 SUFFIXES_TO_ADD = [
     "ami",
-    "amiavg",
     "aminorm",
     "ami-oi",
     "aminorm-oi",
@@ -49,7 +48,6 @@ SUFFIXES_TO_ADD = [
     "mbsub",
     "median",
     "phot",
-    "psf-amiavg",
     "psfalign",
     "psfstack",
     "psfsub",
@@ -70,7 +68,6 @@ SUFFIXES_TO_ADD = [
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
 SUFFIXES_TO_DISCARD = [
-    "ami_average",
     "engdblogstep",
     "functionwrapper",
     "pipeline",
@@ -129,7 +126,6 @@ _calculated_suffixes = {
     "guidercdsstep",
     "imprint",
     "resample_spec",
-    "ami_average",
     "white_light",
     "resample",
     "sourcetypestep",
@@ -149,7 +145,6 @@ _calculated_suffixes = {
     "source_catalog",
     "resamplestep",
     "refpix",
-    "amiaveragestep",
     "superbiasstep",
     "dq_init",
     "wfsscontamstep",
@@ -172,10 +167,10 @@ _calculated_suffixes = {
     "combine1dstep",
     "tsophotometrystep",
     "spec3pipeline",
-    "nsclean",
-    "nscleanstep",
     "clean_flicker_noise",
     "cleanflickernoisestep",
+    "picture_frame",
+    "pictureframestep",
     "outlierdetectionstep",
     "groupscalestep",
     "hlspstep",
@@ -213,6 +208,8 @@ _calculated_suffixes = {
     "emicorr",
     "emicorrstep",
     "badpixselfcalstep",
+    "targcentroidstep",
+    "targ_centroid",
 }
 
 

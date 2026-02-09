@@ -1,9 +1,12 @@
+"""Subtraction of background signal depending on the observing mode."""
+
 import logging
+from collections import defaultdict
+from pathlib import Path
 
 import numpy as np
 from stdatamodels.jwst import datamodels
 
-from jwst.background.asn_intake import asn_get_data
 from jwst.background.background_sub import background_sub
 from jwst.background.background_sub_soss import subtract_soss_bkg
 from jwst.background.background_sub_wfss import subtract_wfss_bkg
@@ -12,6 +15,8 @@ from jwst.stpipe import Step
 __all__ = ["BackgroundStep"]
 
 log = logging.getLogger(__name__)
+
+WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 
 
 class BackgroundStep(Step):
@@ -27,6 +32,7 @@ class BackgroundStep(Step):
         soss_source_percentile = float(default=35.0) # Threshold flux percentile to mask out source pixels
         soss_bkg_percentile = float_list(min=2, max=2, default=None) # Background percentiles to use; default is [25.0, 50.0]
         wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
+        wfss_mask = string(default=None)  # WFSS source mask file
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
         wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
         wfss_outlier_percent = float(default=1)  # WFSS outlier percentile to reject per iteration
@@ -44,7 +50,8 @@ class BackgroundStep(Step):
 
         Parameters
         ----------
-        step_input : str, ImageModel or IFUImageModel
+        step_input : str, `~stdatamodels.jwst.datamodels.ImageModel` or \
+                     `~stdatamodels.jwst.datamodels.IFUImageModel`
             Input target data model to which background subtraction is applied or asn file
 
         input_bkg_list : list, optional
@@ -52,13 +59,12 @@ class BackgroundStep(Step):
 
         Returns
         -------
-        result : ImageModel or IFUImageModel
+        result : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                 `~stdatamodels.jwst.datamodels.IFUImageModel`
             The background-subtracted target data model
         """
         asn = self.load_as_level2_asn(step_input)
-        input_model, members_by_type = asn_get_data(asn)
-        model = input_model.copy()
-        input_model.close()
+        model, members_by_type = self._asn_get_data(asn)
 
         if model.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
             # Get the reference file names
@@ -73,6 +79,18 @@ class BackgroundStep(Step):
             log.info("Using BKG reference file %s", bkg_name)
             log.info("Using WavelengthRange reference file %s", wlrange_name)
 
+            wfss_mask = None
+            if self.wfss_mask is not None:
+                with datamodels.ImageModel(self.wfss_mask) as mask_model:
+                    if not mask_model.hasattr("mask"):
+                        raise AttributeError(f"No 'mask' attribute found in {self.wfss_mask}")
+                    wfss_mask = mask_model.mask.astype(bool)
+                    if wfss_mask.shape != model.data.shape:
+                        raise ValueError(
+                            f"WFSS mask shape {wfss_mask.shape} does not match "
+                            f"input data shape {model.data.shape}"
+                        )
+
             # Do the background subtraction for WFSS/GRISM data
             rescaler_kwargs = {
                 "p": self.wfss_outlier_percent,
@@ -84,6 +102,7 @@ class BackgroundStep(Step):
                 bkg_name,
                 wlrange_name,
                 self.wfss_mmag_extract,
+                user_mask=wfss_mask,
                 rescaler_kwargs=rescaler_kwargs,
             )
             if result is None:
@@ -95,6 +114,12 @@ class BackgroundStep(Step):
         elif model.meta.exposure.type == "NIS_SOSS":
             # Fetch the background reference filename
             bkg_name = self.get_reference_file(model, "bkg")
+
+            if bkg_name == "N/A":
+                log.warning("No BKG reference file found. Skipping background subtraction.")
+                model.meta.cal_step.bkg_subtract = "SKIPPED"
+                return model
+
             log.info("Using BKG reference file %s", bkg_name)
 
             if self.soss_bkg_percentile is None:
@@ -174,3 +199,62 @@ class BackgroundStep(Step):
                 log.warning("GWA_XTIL and GWA_YTIL source values are not the same as bkg values")
 
         return result
+
+    def _asn_get_data(self, asn):
+        """
+        Get the targets and catalog from an association.
+
+        Parameters
+        ----------
+        asn : ``jwst.associations.lib.rules_level2_base.DMSLevel2bBase``
+            Input association.
+
+        Returns
+        -------
+        step_input : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                     `~stdatamodels.jwst.datamodels.IFUImageModel`
+            Input target data model
+        bkg_list : list
+            File name list of background exposures
+        """
+        members_by_type = defaultdict(list)
+
+        if len(asn["products"]) > 1:
+            log.warning("Multiple products in input association. Using only the first one.")
+
+        # Get the grism image and the catalog, direct image, and segmentation map
+        exp_product = asn["products"][0]
+        # Find all the member types in the product
+        for member in exp_product["members"]:
+            members_by_type[member["exptype"].lower()].append(member["expname"])
+
+        # Get the science member. Technically there should only be one. Even if
+        # there are more, we'll just get the first one found.
+        science_member = members_by_type["science"]
+        if len(science_member) != 1:
+            log.warning(
+                "Wrong number of science exposures found in {}".format(exp_product["name"])  # noqa: E501
+            )
+            log.warning("    Using only first one.")
+
+        science_member = science_member[0]
+        log.info("Working on input %s ...", science_member)
+
+        # Open the datamodel and update it with the relevant info for the background step
+        sci = self.prepare_output(science_member)
+        exp_type = sci.meta.exposure.type
+        if exp_type in WFSS_TYPES:
+            try:
+                sci.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
+                log.info(f"Using sourcecat file {sci.meta.source_catalog}")
+                sci.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
+                log.info(f"Using segmentation map {sci.meta.segmentation_map}")
+                sci.meta.direct_image = Path(members_by_type["direct_image"][0]).name
+                log.info(f"Using direct image {sci.meta.direct_image}")
+            except IndexError:
+                if sci.meta.source_catalog is None:
+                    raise IndexError(
+                        "No source catalog specified in association or datamodel."
+                    ) from None
+
+        return sci, members_by_type

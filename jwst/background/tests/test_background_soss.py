@@ -160,6 +160,17 @@ def test_bkg_fail(monkeypatch, caplog, generate_background_template, generate_so
     assert mock_model.meta.cal_step.bkg_subtract is None
 
 
+def test_bkg_no_reffile(caplog, generate_soss_cube_substrip96):
+    mock_model = generate_soss_cube_substrip96
+
+    result = BackgroundStep.call(mock_model, override_bkg="N/A")
+
+    assert result is not mock_model
+    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert "No BKG reference file found" in caplog.text
+    assert mock_model.meta.cal_step.bkg_subtract is None
+
+
 def test_bkg_percentile(generate_background_template, generate_soss_cube_substrip96):
     template_model = datamodels.SossBkgModel(
         data=np.stack((generate_background_template, generate_background_template))

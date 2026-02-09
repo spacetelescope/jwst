@@ -8,7 +8,9 @@ from numpy.testing import assert_allclose, assert_equal
 
 from jwst.datamodels import ModelContainer
 from jwst.extract_1d import extract as ex
+from jwst.extract_1d import ifu
 from jwst.extract_1d import psf_profile as pp
+from jwst.extract_1d.extract_1d_step import Extract1dStep
 
 
 @pytest.fixture()
@@ -327,27 +329,6 @@ def test_populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec):
         assert spec["TDB-END"] == mock_nirspec_bots.int_times["int_end_BJD_TDB"][i]
 
 
-def test_populate_time_keywords_no_table(
-    mock_nirspec_fs_one_slit, mock_10_multi_int_spec, log_watcher
-):
-    watcher = log_watcher("jwst.extract_1d.extract", message="no INT_TIMES table")
-    ex.populate_time_keywords(mock_nirspec_fs_one_slit, mock_10_multi_int_spec)
-
-    # No int_times table: warns and integration is set to simple index
-    watcher.assert_seen()
-    for spec in mock_10_multi_int_spec.spec:
-        assert_equal(spec.spec_table["INT_NUM"], np.arange(1, 11))
-
-
-def test_populate_time_keywords_multislit(mock_nirspec_mos, mock_10_multi_int_spec):
-    mock_nirspec_mos.meta.exposure.nints = 10
-    ex.populate_time_keywords(mock_nirspec_mos, mock_10_multi_int_spec)
-
-    # no int_times - only int_num is added to spec
-    # It is set to the integration number for all spectra - no integrations in multislit data.
-    assert_equal(mock_10_multi_int_spec.spec[0].spec_table["INT_NUM"], np.arange(1, 11))
-
-
 def test_populate_time_keywords_multislit_table(
     mock_nirspec_mos, mock_nirspec_bots, mock_10_spec, log_watcher
 ):
@@ -457,6 +438,24 @@ def test_is_prism_miri(mock_miri_ifu):
     assert ex.is_prism(mock_miri_ifu) is True
 
 
+def test_ifu_extract_1d(mock_miri_ifu):
+    # set the inputs for the IFU 1D extraction
+    source_type = "UNKNOWN"
+    subtract_background = None
+    bkg_sigma_clip = 3.0
+    step = Extract1dStep()
+    ref_file = step.get_reference_file(mock_miri_ifu, "extract1d")
+    ifu_extraction_inputs = [
+        mock_miri_ifu,
+        ref_file,
+        source_type,
+        subtract_background,
+        bkg_sigma_clip,
+    ]
+    output_model = ifu.ifu_extract1d(*ifu_extraction_inputs)
+    assert output_model.spec[0].position_angle == 150.0
+
+
 def test_copy_keyword_info(mock_nirspec_fs_one_slit, mock_one_spec):
     expected = {
         "slitlet_id": 2,
@@ -476,7 +475,7 @@ def test_copy_keyword_info(mock_nirspec_fs_one_slit, mock_one_spec):
     }
     for key, value in expected.items():
         setattr(mock_nirspec_fs_one_slit, key, value)
-        assert not hasattr(mock_one_spec, key)
+        assert not mock_one_spec.hasattr(key)
 
     ex.copy_keyword_info(mock_nirspec_fs_one_slit, "slit_name", mock_one_spec)
     assert mock_one_spec.name == "slit_name"
@@ -1529,6 +1528,7 @@ def test_create_extraction_one_int(create_extraction_inputs, mock_nirspec_bots, 
     ex.create_extraction(*create_extraction_inputs, log_increment=1)
     output_model = create_extraction_inputs[2]
     assert len(output_model.spec) == 1
+    assert output_model.spec[0].position_angle == 150.0
     watcher.assert_seen()
 
 
@@ -1635,7 +1635,6 @@ def test_create_extraction_optimal(monkeypatch, create_extraction_inputs, psf_re
     # profile contains positive and negative nod, summed
     assert np.all(profile_model.data[:10] > 0)
     assert np.all(profile_model.data[-10:] < 0)
-
     profile_model.close()
 
 

@@ -42,7 +42,7 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
-WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM"]
+WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM", "MIR_WFSS"]
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
 SRCPOS_EXPTYPES = ["MIR_LRS-FIXEDSLIT", "NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_BRIGHTOBJ"]
@@ -146,6 +146,7 @@ def read_apcorr_ref(refname, exptype):
     apcorr_model_map = {
         "MIR_LRS-FIXEDSLIT": MirLrsApcorrModel,
         "MIR_LRS-SLITLESS": MirLrsApcorrModel,
+        "MIR_WFSS": MirLrsApcorrModel,
         "MIR_MRS": MirMrsApcorrModel,
         "NRC_GRISM": NrcWfssApcorrModel,
         "NRC_WFSS": NrcWfssApcorrModel,
@@ -541,21 +542,7 @@ def populate_time_keywords(input_model, output_model):
     else:
         num_integrations = 1
 
-    if hasattr(input_model, "int_times") and input_model.int_times is not None:
-        nrows = len(input_model.int_times)
-    else:
-        nrows = 0
-
-    if nrows < 1:
-        log.warning(
-            "There is no INT_TIMES table in the input file - "
-            "Making best guess on integration numbers."
-        )
-
-        # Set a simple integration index
-        for spec in output_model.spec:
-            spec.spec_table["INT_NUM"] = np.arange(1, len(spec.spec_table) + 1)
-        return
+    nrows = len(input_model.int_times)
 
     # If we have a single plane (e.g. ImageModel or MultiSlitModel),
     # we will only populate the keywords if the corresponding uncal file
@@ -725,6 +712,8 @@ def copy_keyword_info(slit, slitname, spec):
     copy_attributes = [
         "slitlet_id",
         "source_id",
+        "ta_xpos",
+        "ta_ypos",
         "source_xpos",
         "source_ypos",
         "source_ra",
@@ -1856,6 +1845,7 @@ def create_extraction(
         spec.spectral_order = sp_order
         spec.dispersion_direction = extract_params["dispaxis"]
         spec.detector = input_model.meta.instrument.detector
+        spec.position_angle = data_model.meta.aperture.position_angle
 
         # Record aperture limits as x/y start/stop values
         lower_limit, upper_limit, left_limit, right_limit = limits

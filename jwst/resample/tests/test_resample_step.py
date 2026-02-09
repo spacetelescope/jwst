@@ -7,11 +7,11 @@ import pytest
 from astropy.io import fits
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
+from stcal.alignment.util import compute_scale
 from stcal.resample.utils import build_driz_weight, compute_mean_pixel_area
 from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, dqflags
 
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.util import compute_scale
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
@@ -20,7 +20,6 @@ from jwst.resample.resample import input_jwst_model_to_dict
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
 from jwst.resample.resample_step import GOOD_BITS
 from jwst.resample.resample_utils import load_custom_wcs
-from jwst.tests.helpers import _help_pytest_warns
 
 _FLT32_EPS = np.finfo(np.float32).eps
 
@@ -436,7 +435,15 @@ def test_single_image_file_input(nircam_rate, tmp_cwd):
     # Create a temporary file with the input data
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     im.meta.filename = "test_input.fits"
+
+    # Add a bad pixel in the error plane, not matched with a NaN in data.
+    # This will test if the match_nans_and_flags call at the beginning
+    # of the step modifies the input model.
+    im.err[0, 0] = np.nan
+
+    # Save a copy to disk, keep a copy of the data for testing.
     im.save("test_input.fits")
+    im_copy = im.data.copy()
 
     # Run the step on the file
     result_from_memory = ResampleStep.call(im)
@@ -450,10 +457,50 @@ def test_single_image_file_input(nircam_rate, tmp_cwd):
     # Check that input model was not modified
     assert im is not result_from_memory
     assert im.meta.cal_step.resample is None
+    assert_allclose(im.data, im_copy)
 
     result_from_file.close()
     result_from_memory.close()
     im.close()
+
+
+def test_list_model_input(nircam_rate, tmp_cwd):
+    """Ensure step can be run on a list of models without modifying them."""
+    # Create a temporary file with the input data
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im.meta.filename = "test_input_1.fits"
+
+    # Add a bad pixel in the error plane, not matched with a NaN in data.
+    # This will test if the match_nans_and_flags call at the beginning
+    # of the step modifies the input model.
+    im.err[0, 0] = np.nan
+
+    # Keep a copy of the data for testing
+    im_copy = im.data.copy()
+
+    # Make a list of input models to run
+    im2 = im.copy()
+    im2.meta.filename = "test_input_2.fits"
+    im_list = [im, im2]
+
+    # Run the step on the file
+    result = ResampleStep.call(im_list)
+
+    # Check that the output is as expected
+    assert isinstance(result, ImageModel)
+    assert result.meta.cal_step.resample == "COMPLETE"
+
+    # Check that input models were not modified
+    assert result is not im
+    assert result is not im2
+    assert im.meta.cal_step.resample is None
+    assert im2.meta.cal_step.resample is None
+    assert_allclose(im.data, im_copy)
+    assert_allclose(im2.data, im_copy)
+
+    result.close()
+    im.close()
+    im2.close()
 
 
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
@@ -966,7 +1013,7 @@ def test_resample_variance_context_disable(
 
 
 @pytest.mark.parametrize("shape", [(0,), (10, 1)])
-def test_resample_undefined_variance(nircam_rate, shape):
+def test_resample_undefined_variance(caplog, nircam_rate, shape):
     """Test that resampled variance and error arrays are computed properly"""
     im = AssignWcsStep.call(nircam_rate)
     im.var_rnoise = np.ones(shape, dtype=im.var_rnoise.dtype.type)
@@ -975,11 +1022,8 @@ def test_resample_undefined_variance(nircam_rate, shape):
     im.meta.filename = "foo.fits"
     c = ModelLibrary([im])
 
-    with (
-        _help_pytest_warns(),
-        pytest.warns(RuntimeWarning, match="'var_rnoise' array not available"),
-    ):
-        result = ResampleStep.call(c, blendheaders=False)
+    result = ResampleStep.call(c, blendheaders=False)
+    assert "'var_rnoise' array not available" in caplog.text
 
     # no valid variance - output error and variance are all NaN
     assert_allclose(result.err, np.nan)
@@ -1620,8 +1664,21 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     result4.close()
 
 
-def test_spec_output_is_not_input(nirspec_cal):
-    im = ResampleSpecStep.call(nirspec_cal)
+@pytest.mark.parametrize("input_list", [True, False])
+def test_spec_input_not_modified(nirspec_cal, input_list):
+    # Add a bad pixel in the error plane of one slit, not matched
+    # with a NaN in data.
+    # This will test if the match_nans_and_flags call at the beginning
+    # of the step modifies the input model.
+    nirspec_cal.slits[0].err[15, 100] = np.nan
+    data_copy = nirspec_cal.slits[0].data.copy()
+
+    if input_list:
+        input_models = [nirspec_cal, nirspec_cal.copy()]
+    else:
+        input_models = nirspec_cal
+
+    im = ResampleSpecStep.call(input_models)
 
     # Step is complete
     assert im.meta.cal_step.resample == "COMPLETE"
@@ -1629,6 +1686,11 @@ def test_spec_output_is_not_input(nirspec_cal):
     # Input is not modified
     assert im is not nirspec_cal
     assert nirspec_cal.meta.cal_step.resample is None
+    if input_list:
+        for model in input_models:
+            assert_allclose(model.slits[0].data, data_copy)
+    else:
+        assert_allclose(input_models.slits[0].data, data_copy)
 
 
 def test_spec_skip_cube():

@@ -1,0 +1,1 @@
+Fix indexing bug for associations that have background exposures before science exposures

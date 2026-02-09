@@ -29,6 +29,7 @@ from jwst.extract_2d.grisms import (
     compute_tso_offset_center,
     extract_grism_objects,
     extract_tso_object,
+    radec_to_source_ids,
 )
 
 # Allowed settings for nircam
@@ -410,8 +411,86 @@ def test_compute_tso_offset_center():
     assert np.isclose(xc, 961.355, atol=1e-3)
 
 
+@pytest.mark.parametrize("source_ids", [None, 9, [19, 25]])
+def test_radec_to_source_ids(source_ids):
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    # object 9
+    ra1 = 53.1377366
+    dec1 = -27.80858321
+    # object 19
+    ra2 = 53.15786615
+    dec2 = -27.81442243
+
+    # single RA/Dec
+    source_ids_1 = radec_to_source_ids(
+        source_catalog, source_ids=source_ids, source_ra=[ra1], source_dec=[dec1]
+    )
+
+    # multiple RA/Dec
+    source_ids_2 = radec_to_source_ids(
+        source_catalog, source_ids=source_ids, source_ra=[ra1, ra2], source_dec=[dec1, dec2]
+    )
+
+    if source_ids == [19, 25]:
+        assert len(source_ids_1) == 3
+        assert len(source_ids_2) == 3
+        np.testing.assert_allclose(source_ids_1, source_ids_2)
+    else:
+        assert len(source_ids_1) == 1
+        assert source_ids_1[0] == 9
+        assert len(source_ids_2) == 2
+        assert 9 in source_ids_2
+        assert 19 in source_ids_2
+
+
+def test_radec_to_source_ids_radec_length_mismatch():
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    with pytest.raises(ValueError, match="source_ra and source_dec must have the same length."):
+        radec_to_source_ids(source_catalog, source_ra=[0.0, 0.0], source_dec=[0.0])
+
+
+def test_radec_to_source_ids_radec_without_both():
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    with pytest.raises(ValueError, match="source_ra must be provided if source_dec is provided."):
+        radec_to_source_ids(source_catalog, source_dec=[0.0])
+    with pytest.raises(ValueError, match="source_dec must be provided if source_ra is provided."):
+        radec_to_source_ids(source_catalog, source_ra=[0.0])
+
+
+@pytest.mark.parametrize("source_ids_in", [None, [9, 19], 25])
+def test_radec_to_source_ids_none(source_ids_in):
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    source_ids = radec_to_source_ids(source_catalog, source_ids=source_ids_in)
+    if source_ids_in is None:
+        assert source_ids is None
+    else:
+        np.testing.assert_allclose(source_ids, np.atleast_1d(source_ids_in))
+
+
+def test_radec_to_source_ids_no_match():
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    ra = 0.0
+    dec = 0.0
+    with pytest.raises(
+        ValueError, match="source_ra and source_dec were provided, but no sources were found"
+    ):
+        radec_to_source_ids(source_catalog, source_ra=[ra], source_dec=[dec], max_sep=0.5)
+
+
 @pytest.mark.filterwarnings("ignore: Card is too long")
-def test_extract_wfss_object():
+@pytest.mark.parametrize("nbright", [None, 1, 2])
+@pytest.mark.parametrize("source_ids", [None, [19, 25], 19])
+def test_extract_wfss_object(nbright, source_ids):
     """Test extraction of a WFSS object.
 
     Test extraction of 2 objects into a MultiSlitModel.
@@ -425,18 +504,39 @@ def test_extract_wfss_object():
     wcsimage = create_wfss_image(pupil="GRISMR")
     wcsimage.meta.source_catalog = source_catalog
     refs = get_reference_files(wcsimage)
-    outmodel = extract_grism_objects(wcsimage, reference_files=refs, compute_wavelength=False)
+    outmodel = extract_grism_objects(
+        wcsimage,
+        reference_files=refs,
+        compute_wavelength=False,
+        nbright=nbright,
+        source_ids=source_ids,
+    )
     assert isinstance(outmodel, MultiSlitModel)
-    assert len(outmodel.slits) == 3
+
+    # expected names, source ids depend on inputs
+    if source_ids is None:
+        source_ids = [9, 19, 25]
+    if nbright is None:
+        nbright = 3
+    expected_ids = [25, 9, 19]  # sorted by magnitude
+    if source_ids is not None:
+        expected_ids = [sid for sid in expected_ids if sid in np.atleast_1d(source_ids)]
+
+    # check the number of sources was as expected
+    n_expected = min(nbright, len(np.atleast_1d(source_ids)))
+    assert len(outmodel.slits) == n_expected
+
+    # Check that the source IDs and names are as expected
     ids = [slit.source_id for slit in outmodel.slits]
-    assert ids == [9, 19, 25]
+    assert ids == expected_ids[:n_expected]  # ordered by magnitude
 
     # Compare SRCDEC and SRCRA values
-    assert np.isclose(outmodel[0].source_dec, -27.80858320887945)
-    assert np.isclose(outmodel[0].source_ra, 53.13773660029234)
+    if nbright is None and source_ids is None:
+        assert np.isclose(outmodel[1].source_dec, -27.80858320887945)
+        assert np.isclose(outmodel[1].source_ra, 53.13773660029234)
 
     names = [slit.name for slit in outmodel.slits]
-    assert names == ["9", "19", "25"]
+    assert names == [str(sid) for sid in expected_ids[:n_expected]]
 
     with pytest.raises(TypeError):
         extract_tso_object(wcsimage, reference_files="myspecwcs.asdf")

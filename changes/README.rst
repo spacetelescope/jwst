@@ -6,11 +6,25 @@ small **ReST**-formatted text that will be added to the full changelog.
 
 Make sure to use full sentences with correct case and punctuation.
 
+Consuming news fragments in `changes/` into a new change log entry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Running `towncrier build` will read all existing fragment files in `changes/`
+and create a new entry at the top of `CHANGES.rst` with the specified version number.
+
+```shell
+pip install towncrier
+towncrier build --version <VERSION>
+```
+
 News fragment change types
 --------------------------
 
-- ``<PR#>.general.rst``: Infrastructure or miscellaneous change
-- ``<PR#>.docs.rst``
+- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks if your change breaks **step-level or public API** ([as defined in the docs](https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private))
+
+General Pipeline Changes
+""""""""""""""""""""""""
+
 - ``<PR#>.stpipe.rst``
 - ``<PR#>.datamodels.rst``
 - ``<PR#>.scripts.rst``
@@ -19,7 +33,7 @@ News fragment change types
 - ``<PR#>.associations.rst``
 
 Stage 1
-^^^^^^^
+"""""""
 
 - ``<PR#>.group_scale.rst``
 - ``<PR#>.dq_init.rst``
@@ -37,23 +51,24 @@ Stage 1
 - ``<PR#>.dark_current.rst``
 - ``<PR#>.charge_migration.rst``
 - ``<PR#>.jump.rst``
+- ``<PR#>.picture_frame.rst``
 - ``<PR#>.clean_flicker_noise.rst``
 - ``<PR#>.ramp_fitting.rst``
 - ``<PR#>.gain_scale.rst``
 
 Stage 2
-^^^^^^^
+"""""""
 
 - ``<PR#>.assign_wcs.rst``
 - ``<PR#>.badpix_selfcal.rst``
 - ``<PR#>.msaflagopen.rst``
-- ``<PR#>.nsclean.rst``
 - ``<PR#>.imprint.rst``
 - ``<PR#>.background.rst``
 - ``<PR#>.extract_2d.rst``
 - ``<PR#>.master_background.rst``
 - ``<PR#>.wavecorr.rst``
 - ``<PR#>.srctype.rst``
+- ``<PR#>.targ_centroid.rst``
 - ``<PR#>.straylight.rst``
 - ``<PR#>.wfss_contam.rst``
 - ``<PR#>.flatfield.rst``
@@ -69,7 +84,7 @@ Stage 2
 - ``<PR#>.resample.rst``
 
 Stage 3
-^^^^^^^
+"""""""
 
 - ``<PR#>.assign_mtwcs.rst``
 - ``<PR#>.tweakreg.rst``
@@ -86,12 +101,15 @@ Stage 3
 - ``<PR#>.ami.rst``
 
 Other
-^^^^^
+"""""
 
 - ``<PR#>.wfs_combine.rst``
 - ``<PR#>.white_light.rst``
 - ``<PR#>.engdb_tools.rst``
 - ``<PR#>.guider_cds.rst``
+
+- ``<PR#>.docs.rst``
+- ``<PR#>.other.rst``: Infrastructure or miscellaneous change
 
 Note
 ----

@@ -9,33 +9,11 @@ from jwst.wfss_contam.wfss_contam import (
     _cut_frame_to_match_slit,
     _find_matching_simul_slit,
     _validate_orders_against_reference,
-    determine_multiprocessing_ncores,
     match_backplane_encompass_both,
     match_backplane_prefer_first,
 )
 
 VALID_ORDERS = [-1, 0, 1, 2, 3]
-
-
-@pytest.mark.parametrize(
-    "max_cores, num_cores, expected",
-    [
-        ("none", 4, 1),
-        ("quarter", 4, 1),
-        ("half", 4, 2),
-        ("all", 4, 4),
-        ("none", 1, 1),
-        (
-            None,
-            1,
-            1,
-        ),
-        (3, 5, 3),
-        (100, 5, 5),
-    ],
-)
-def test_determine_multiprocessing_ncores(max_cores, num_cores, expected):
-    assert determine_multiprocessing_ncores(max_cores, num_cores) == expected
 
 
 @pytest.fixture(scope="module")

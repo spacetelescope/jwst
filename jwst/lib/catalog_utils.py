@@ -1,10 +1,56 @@
 """Utilities for naming source catalogs."""
 
+import logging
 import re
 from collections import namedtuple
 from pathlib import Path
 
-__all__ = ["replace_suffix_ext", "SkyObject"]
+from astropy.table import QTable
+
+log = logging.getLogger(__name__)
+
+__all__ = ["replace_suffix_ext", "SkyObject", "read_source_catalog"]
+
+
+def read_source_catalog(catalog_name):
+    """
+    Read a source catalog from file or validate an existing QTable.
+
+    Parameters
+    ----------
+    catalog_name : str or `~astropy.table.QTable`
+        Either the filename of a source catalog in ECSV format, or an
+        existing Astropy QTable containing the catalog data.
+
+    Returns
+    -------
+    catalog : `~astropy.table.QTable`
+        The source catalog as a table.
+
+    Raises
+    ------
+    ValueError
+        If an empty filename string is provided.
+    FileNotFoundError
+        If the specified catalog file cannot be found.
+    TypeError
+        If the input is neither a string filename nor a QTable instance.
+    """
+    if isinstance(catalog_name, str):
+        if len(catalog_name) == 0:
+            err_text = "Empty catalog filename"
+            log.error(err_text)
+            raise ValueError(err_text)
+        try:
+            return QTable.read(catalog_name, format="ascii.ecsv")
+        except FileNotFoundError as e:
+            log.error(f"Could not find catalog file: {e}")
+            raise FileNotFoundError(f"Could not find catalog: {e}") from None
+    elif isinstance(catalog_name, QTable):
+        return catalog_name
+    err_text = "Need to input string name of catalog or astropy.table.table.QTable instance"
+    log.error(err_text)
+    raise TypeError(err_text)
 
 
 def replace_suffix_ext(filename, old_suffix_list, new_suffix, output_ext="ecsv", output_dir=None):

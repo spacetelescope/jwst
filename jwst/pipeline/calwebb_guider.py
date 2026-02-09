@@ -62,9 +62,9 @@ class GuiderPipeline(Pipeline):
                 "dq_init and guider_cds are set to skip; assume they"
                 " were run before and load data as GuiderCalModel"
             )
-            input_data = datamodels.GuiderCalModel(input_data)
+            input_data = self.prepare_output(input_data, open_as_type=datamodels.GuiderCalModel)
         else:
-            input_data = datamodels.GuiderRawModel(input_data)
+            input_data = self.prepare_output(input_data, open_as_type=datamodels.GuiderRawModel)
 
         # Apply the steps
         input_data = self.dq_init.run(input_data)

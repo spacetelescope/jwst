@@ -7,8 +7,9 @@ Description
 Overview
 --------
 The ``clean_flicker_noise`` step removes flicker noise from calibrated
-ramp images, after the :ref:`jump <jump_step>` step and prior to
-performing the :ref:`ramp_fitting <ramp_fitting_step>` step.
+ramp images in the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline, after the
+:ref:`jump <jump_step>` step and prior to performing the
+:ref:`ramp_fitting <ramp_fitting_step>` step.
 
 For NIR detectors, the noise addressed by this step is 1/f noise, which
 appears as faint banding along the detector slow axis.  For NIRSpec and
@@ -21,13 +22,22 @@ corrected by similar methods, so it is also addressed by this step.
 
 To correct for flicker noise, the algorithm requires that the noise
 generated between one group readout and the next be isolated as much
-as possible from the astronomical signal. The residual noise may then
-be fit in frequency space, via an FFT, or may be characterized by a
+as possible from the astronomical signal.  The step accomplishes this by creating
+a scene mask from a draft rate image. The residual noise in the identified background
+data may then be fit in frequency space, via an FFT, or may be characterized by a
 median along the rows or columns, as appropriate for the detector.
 The modeled noise is then directly subtracted from each group readout.
 
-The correction is available for any type of NIRSpec, NIRISS, or NIRCam
-exposure. For MIRI, it is available only for imaging exposures.
+The correction is available in the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline
+for ramp data from any type of NIRSpec, NIRISS, or NIRCam exposure. For MIRI, it is available
+only for imaging exposures. Additionally, the step may be called on NIRSpec rate data
+in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, or as a standalone step on
+any supported ramp or rate exposure.  The only difference in processing if the input
+is a rate image or rateints cube instead of a ramp is that a draft rate file is not
+necessary: the scene mask is derived from the input and correction is directly
+applied to the rate image(s).
+
+.. _scene_mask:
 
 Creation of a scene mask
 ------------------------
@@ -164,7 +174,9 @@ See the :ref:`step arguments <clean_flicker_noise_arguments>` for more
 information on all referenced parameters.
 
 #. From the calibrated ramp input, make a draft rate (``single_mask`` = True)
-   or rateints (``single_mask`` = False) file.
+   or rateints (``single_mask`` = False) file. If the input to the step
+   is already a rate or rateints file, it is used directly for all following
+   steps.
 
 #. Create a scene mask from the rate data.
 
@@ -201,7 +213,8 @@ information on all referenced parameters.
 #. Iterate over each integration and group in the data, to fit and correct
    for noise.
 
-   #. Make a diff image (current group – previous group) to correct.
+   #. For ramp data, make a diff image (current group – previous group) to correct.
+      For rate data, use the current image directly as the diff image.
 
    #. If ``apply_flat_field`` is set and a flat file is available, divide the
       diff image by the flat image.
@@ -240,8 +253,8 @@ information on all referenced parameters.
       diff image.  Also restore the flat structure if needed by multiplying the
       cleaned diff by the flat image.
 
-   #. Add the cleaned diff back to a cleaned version of the previous
-      group image.
+   #. For ramp data, add the cleaned diff back to a cleaned version of the previous
+      group image. For rate data, use the cleaned diff as the output rate image.
 
 Automatic Parameter Determination
 ---------------------------------
@@ -260,7 +273,7 @@ and fitting parameters according to a heuristic decision tree.
 
 For NIRISS and NIRCam imaging, the auto-parameter process is:
 
-#. Make a draft rate file from the input.
+#. Make a draft rate file from the input if necessary.
 
 #. Divide by a flat field image.
 

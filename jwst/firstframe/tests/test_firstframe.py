@@ -35,7 +35,7 @@ def test_firstframe_set_groupdq():
     np.testing.assert_array_equal(
         np.full((ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
     )
 
     # test that the groupdq flags are not changed for the rest of the groups
@@ -43,7 +43,7 @@ def test_firstframe_set_groupdq():
     np.testing.assert_array_equal(
         np.full((ngroups - 1, ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="n >= 2 groupdq flags changes " + "and they should not be",
+        err_msg="n >= 2 groupdq flags changes and they should not be",
     )
 
 
@@ -77,7 +77,7 @@ def test_firstframe_single_group():
     np.testing.assert_array_equal(
         np.full((ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="groupdq changed for single group " + "when it should not",
+        err_msg="groupdq changed for single group when it should not",
     )
 
 
@@ -140,7 +140,7 @@ def test_firstframe_3groups():
     np.testing.assert_array_equal(
         np.full((ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to 0",
+        err_msg="Diff in groupdq flags is not equal to 0",
     )
 
 
@@ -173,7 +173,7 @@ def test_nircam():
     np.testing.assert_array_equal(
         np.full((ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to 0",
+        err_msg="Diff in groupdq flags is not equal to 0",
     )
 
     # check that input is not modified
@@ -211,7 +211,7 @@ def test_miri():
     np.testing.assert_array_equal(
         np.full((ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to DO_NOT_USE",
+        err_msg="Diff in groupdq flags is not equal to DO_NOT_USE",
     )
 
     # check that input is not modified

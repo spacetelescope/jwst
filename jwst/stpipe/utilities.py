@@ -114,7 +114,7 @@ def folder_traverse(folder_path, basename_regex=".+", path_exclude_regex="^$"):
 
     basename_regex : str
         Regular expression that must match
-        the `basename` part of the file path.
+        the ``basename`` part of the file path.
 
     path_exclude_regex : str
         Regular expression to exclude a path.

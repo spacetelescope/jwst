@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import GuiderRawModel, MaskModel, RampModel, dqflags
+from astropy.io import fits
+from stdatamodels.jwst.datamodels import GuiderRawModel, ImageModel, MaskModel, RampModel, dqflags
 
 from jwst.dq_init import DQInitStep, dq_init_step
 from jwst.dq_init.dq_initialization import do_dqinit
@@ -17,7 +18,7 @@ ids = ["GuiderRawModel-Stack", "GuiderRawModel-Image", "RampModel", "RampModel"]
 
 
 @pytest.mark.parametrize(args, test_data, ids=ids)
-def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type):
+def test_dq_im_default(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type):
     """Check that PIXELDQ is initialized with the information from the reference file.
     test that a flagged value in the reference file flags the PIXELDQ array"""
 
@@ -33,6 +34,7 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
     dq[300, 100] = 8  # Unreliable_slope
     dq[400, 100] = 16  # RC
     dq[500, 100] = 1  # Do_not_use
+    dq[500, 101] = 1  # Do_not_use
     dq[100, 200] = 3  # Dead pixel + do not use
     dq[200, 200] = 5  # Hot pixel + do not use
     dq[300, 200] = 9  # Unreliable slope + do not use
@@ -46,8 +48,13 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
     ref_data.meta.subarray.ystart = ystart
     ref_data.meta.subarray.ysize = ysize
 
+    # user-supplied DQ array
+    user_dq = np.zeros_like(dq)
+    user_dq[0, 0] = 1  # Do_not_use
+    user_dq[500, 101] = 2  # Dead pixel
+
     # run do_dqinit
-    outfile = do_dqinit(dm_ramp, ref_data)
+    outfile = do_dqinit(dm_ramp, ref_data, user_dq=user_dq)
 
     if instrument == "FGS":
         dqdata = outfile.dq
@@ -55,15 +62,40 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
         dqdata = outfile.pixeldq
 
     # assert that the pixels read back in match the mapping from ref data to science data
+    assert dqdata[0, 0] == dqflags.pixel["DO_NOT_USE"]
     assert dqdata[100, 100] == dqflags.pixel["DEAD"]
     assert dqdata[200, 100] == dqflags.pixel["HOT"]
     assert dqdata[300, 100] == dqflags.pixel["UNRELIABLE_SLOPE"]
     assert dqdata[400, 100] == dqflags.pixel["RC"]
     assert dqdata[500, 100] == dqflags.pixel["DO_NOT_USE"]
+    assert dqdata[500, 101] == 3
     assert dqdata[100, 200] == 1025
     assert dqdata[200, 200] == 2049
     assert dqdata[300, 200] == 16777217
     assert dqdata[400, 200] == 16385
+
+
+def test_dq_im_wrong_shape():
+    """Use one of the param combos from test_dq_im_default to trigger exception."""
+    xstart = ystart = nints = 1
+    xsize = 1032
+    ysize = 1024
+    ngroups = 5
+    instrument = "MIRI"
+    exp_type = "MIR_IMAGE"
+
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
+    dq, dq_def = make_maskmodel(ysize, xsize)
+
+    ref_data = MaskModel(dq=dq, dq_def=dq_def)
+    ref_data.meta.instrument.name = instrument
+    ref_data.meta.subarray.xstart = xstart
+    ref_data.meta.subarray.xsize = xsize
+    ref_data.meta.subarray.ystart = ystart
+    ref_data.meta.subarray.ysize = ysize
+
+    with pytest.raises(ValueError, match="user_dq has shape"):
+        do_dqinit(dm_ramp, ref_data, user_dq=np.ones((2, 2), dtype=dq.dtype))
 
 
 def test_groupdq():
@@ -226,7 +258,9 @@ ids = ["GuiderRawModel-Image", "RampModel"]
 
 
 @pytest.mark.parametrize(args, test_data_multiple, ids=ids)
-def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector):
+def test_fullstep_default(
+    xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector
+):
     """Test that the full step runs"""
 
     # create raw input data for step
@@ -245,6 +279,58 @@ def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_
         assert outfile.dq.ndim == 2
     else:
         assert outfile.pixeldq.ndim == 2  # a 2-d pixeldq frame exists
+
+
+def test_fullstep_userdq(tmp_path):
+    """
+    Test that the full step runs with user-supplied DQ array
+    for one of the parameterized options of test_fullstep_default() above.
+    """
+    xstart = ystart = 1
+    xsize = 1032
+    ysize = 1024
+    nints = 1
+    ngroups = 5
+    instrument = "MIRI"
+    exp_type = "MIR_IMAGE"
+    detector = "MIRIMAGE"
+
+    # create raw input data for step
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
+
+    dm_ramp.meta.instrument.name = instrument
+    dm_ramp.meta.instrument.detector = detector
+    dm_ramp.meta.observation.date = "2016-06-01"
+    dm_ramp.meta.observation.time = "00:00:00"
+
+    # create a MaskModel for the dq input mask
+    dq, dq_def = make_maskmodel(ysize, xsize)
+
+    # write mask model
+    ref_data = MaskModel(dq=dq, dq_def=dq_def)
+    ref_data.meta.instrument.name = instrument
+    ref_data.meta.subarray.xstart = xstart
+    ref_data.meta.subarray.xsize = xsize
+    ref_data.meta.subarray.ystart = ystart
+    ref_data.meta.subarray.ysize = ysize
+
+    # create user-defined DQ file
+    dqarr = np.zeros((ysize, xsize), dtype=np.uint32)
+    dqarr[100, 100] = 1
+    hdu = fits.PrimaryHDU(data=dqarr)
+    user_dq_file = str(tmp_path / "flags_of_our_user.fits")
+    hdu.writeto(user_dq_file, overwrite=True)
+
+    # run the full step
+    outfile = DQInitStep.call(dm_ramp, override_mask=ref_data, user_supplied_dq=user_dq_file)
+
+    # test that a pixeldq frame has been initialized
+    assert outfile.pixeldq.ndim == 2  # a 2-d pixeldq frame exists
+
+    # test that user DQ is propagated
+    expected_dq = np.zeros_like(dqarr)
+    expected_dq[100, 100] = 1
+    np.testing.assert_array_equal(outfile.pixeldq, expected_dq)
 
 
 def test_output_is_not_input():
@@ -298,7 +384,8 @@ def test_open_double_error(monkeypatch, caplog):
 
 
 def test_open_unknown_error(monkeypatch, caplog):
-    dm_ramp = make_rampmodel()
+    # Make a model that is not a RampModel, so the step will attempt to convert it
+    dm_ramp = ImageModel()
 
     # Mock an unknown error in opening the model as a RampModel
     def mock_model(*args):

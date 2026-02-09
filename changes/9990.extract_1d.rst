@@ -1,0 +1,1 @@
+Allow multiprocessing by integration for SOSS. New step-level parameter soss_maximum_cores turns multiprocessing on (off by default).

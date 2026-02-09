@@ -4,63 +4,20 @@ import logging
 import multiprocessing
 
 import numpy as np
-from astropy.table import Table
+from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import (
     NIRCAMBackwardGrismDispersion,
     NIRISSBackwardGrismDispersion,
 )
 
+from jwst.lib.catalog_utils import read_source_catalog
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
 
 log = logging.getLogger(__name__)
 
 __all__ = ["contam_corr"]
-
-
-def determine_multiprocessing_ncores(max_cores, num_cores):
-    """
-    Determine the number of cores to use for multiprocessing.
-
-    Parameters
-    ----------
-    max_cores : str or int
-        Number of cores to use for multiprocessing. If set to 'none'
-        (the default), then no multiprocessing will be done. The other
-        allowable string values are 'quarter', 'half', and 'all', which indicate
-        the fraction of cores to use for multi-proc. The total number of
-        cores includes the SMT cores (Hyper Threading for Intel).
-        If an integer is provided, it will be the exact number of cores used.
-    num_cores : int
-        Number of cores available on the machine
-
-    Returns
-    -------
-    ncpus : int
-        Number of cores to use for multiprocessing
-    """
-    match max_cores:
-        case "none":
-            return 1
-        case None:
-            return 1
-        case "quarter":
-            return num_cores // 4 or 1
-        case "half":
-            return num_cores // 2 or 1
-        case "all":
-            return num_cores
-        case int():
-            if max_cores <= num_cores and max_cores > 0:
-                return max_cores
-            log.warning(
-                f"Requested {max_cores} cores exceeds the number of cores available "
-                "on this machine ({num_cores}). Using all available cores."
-            )
-            return num_cores
-        case _:
-            raise ValueError(f"Invalid value for max_cores: {max_cores}")
 
 
 class UnmatchedSlitIDError(Exception):
@@ -400,7 +357,8 @@ def contam_corr(
     Parameters
     ----------
     input_model : `~jwst.datamodels.MultiSlitModel`
-        Input data model containing 2D spectral cutouts
+        Input data model containing 2D spectral cutouts. May be modified by processing:
+        make a copy before calling this function, if needed.
     waverange : `~jwst.datamodels.WavelengthrangeModel`
         Wavelength range reference file model
     photom : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
@@ -435,8 +393,9 @@ def contam_corr(
     contam_model : `~jwst.datamodels.MultiSlitModel`
         Contamination estimate images for each source slit
     """
-    num_cores = multiprocessing.cpu_count()
-    ncpus = determine_multiprocessing_ncores(max_cores, num_cores)
+    max_available_cores = multiprocessing.cpu_count()
+    # don't worry about case where nchunks < ncpus; just set nchunks large for now
+    ncpus = compute_num_cores(max_cores, 1e10, max_available_cores)
 
     # Get the segmentation map and direct image for this grism exposure
     seg_model = datamodels.open(input_model.meta.segmentation_map)
@@ -484,7 +443,7 @@ def contam_corr(
     # Read the source catalog to perform magnitude-based source selection later
     # mag limit will be scaled according to order 1 sensitivity
     if magnitude_limit is not None:
-        source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
+        source_catalog = read_source_catalog(input_model.meta.source_catalog)
         order1_wave_response, order1_sens_response = get_photom_data(
             photom, filter_kwd, pupil_kwd, order=1
         )
@@ -552,12 +511,11 @@ def contam_corr(
     # Initialize output multislitmodel
     output_model = datamodels.MultiSlitModel()
 
-    # Copy over matching slits
-    good_slits = [
-        datamodels.SlitModel(slit.instance).copy()
-        for slit in input_model.slits
-        if slit.source_id in obs.source_ids
-    ]
+    # Copy over matching slits.
+    # Note that this makes a reference to input slits, not a deep copy,
+    # so the input data may be modified by this function.  The input data is
+    # copied in the calling step, as needed.
+    good_slits = [slit for slit in input_model.slits if slit.source_id in obs.source_ids]
     output_model.slits.extend(good_slits)
 
     # Loop over all slits/sources to subtract contaminating spectra

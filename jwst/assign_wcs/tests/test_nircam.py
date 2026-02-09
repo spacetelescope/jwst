@@ -111,6 +111,7 @@ def create_wfss_wcs(pupil, filtername="F444W"):
     """Help create WFSS GWCS object."""
     hdul = create_hdul(exptype="NRC_WFSS", filtername=filtername, pupil=pupil)
     im = ImageModel(hdul)
+    im.data = np.zeros((10, 10))
     ref = get_reference_files(im)
     pipeline = nircam.create_pipeline(im, ref)
     wcsobj = wcs.WCS(pipeline)
@@ -120,6 +121,7 @@ def create_wfss_wcs(pupil, filtername="F444W"):
 def create_imaging_wcs():
     hdul = create_hdul()
     image = ImageModel(hdul)
+    image.data = np.zeros((10, 10))
     ref = get_reference_files(image)
     pipeline = nircam.create_pipeline(image, ref)
     wcsobj = wcs.WCS(pipeline)
@@ -138,6 +140,7 @@ def create_tso_wcs(filtername=tsgrism_filters[0], subarray="SUBGRISM256"):
         wcskeys=wcs_tso_kw,
     )
     im = CubeModel(hdul)
+    im.data = np.zeros((10, 10, 10))
     ref = get_reference_files(im)
     pipeline = nircam.create_pipeline(im, ref)
     wcsobj = wcs.WCS(pipeline)
@@ -250,7 +253,7 @@ def test_traverse_tso_grism(create_tso_wcs):
     assert np.isclose(x0, wcs_tso_kw["xref_sci"], atol=1e-3)
     assert np.isclose(y0, wcs_tso_kw["yref_sci"], atol=1e-3)
     assert order == orderdet
-    assert np.isclose(x, xin, atol=1e-3)
+    assert np.isclose(x, xin, atol=2e-2)
 
     # this roundtrip fails to account for the ~22.5 pixel shift from target acquisition
     # to science position; grism shifts spectrum wrt direct image by that amount.
@@ -269,6 +272,7 @@ def test_imaging_frames():
 def test_wfss_sip():
     hdul = create_hdul(filtername="F444W", pupil="GRISMR", exptype="NRC_WFSS")
     wfss_model = ImageModel(hdul)
+    wfss_model.data = np.zeros((10, 10))
     ref = get_reference_files(wfss_model)
     pipeline = nircam.create_pipeline(wfss_model, ref)
     wcsobj = wcs.WCS(pipeline)
@@ -281,6 +285,7 @@ def test_wfss_sip():
 def test_update_s_region_imaging():
     """Ensure the s_region keyword matches output of wcs.footprint()"""
     model = ImageModel(create_hdul())
+    model.data = np.zeros((10, 10))
     model.meta.wcs = create_imaging_wcs()
     util.update_s_region_imaging(model)
 

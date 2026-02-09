@@ -6,111 +6,19 @@ import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import models
 from astropy.table import QTable
 from numpy.testing import assert_allclose
-from photutils.datasets import make_gwcs
 
 from jwst.source_catalog import SourceCatalogStep
+from jwst.source_catalog.tests.helpers import make_nircam_model, make_nircam_model_without_apcorr
 
 
 @pytest.fixture
 def nircam_model():
-    rng = np.random.default_rng(seed=123)
-    data = rng.normal(0, 0.5, size=(101, 101))
-    data[20:80, 10:20] = 1.4
-    data[20:30, 20:45] = 1.4
-    data[20:80, 55:65] = 7.2
-    data[70:80, 65:87] = 7.2
-    data[45:55, 65:87] = 7.2
-    data[20:30, 65:87] = 7.2
-    data[55:75, 82:92] = 7.2
-    data[25:45, 82:92] = 7.2
-
-    wht = np.ones(data.shape)
-    wht[0:10, :] = 0.0
-    err = np.abs(data) / 10.0
-    model = dm.ImageModel(data, wht=wht, err=err)
-    model.meta.bunit_data = "MJy/sr"
-    model.meta.bunit_err = "MJy/sr"
-    model.meta.photometry.pixelarea_steradians = 1.0e-13
-    model.meta.wcs = make_gwcs(data.shape)
-    model.meta.wcsinfo = {
-        "ctype1": "RA---TAN",
-        "ctype2": "DEC--TAN",
-        "dec_ref": 11.99875540218638,
-        "ra_ref": 22.02351763251896,
-        "roll_ref": 0.005076934167039675,
-        "v2_ref": 86.039011,
-        "v3_ref": -493.385704,
-        "v3yangle": -0.07385127,
-        "vparity": -1,
-        "wcsaxes": 2,
-        "crpix1": 50,
-        "crpix2": 50,
-    }
-    model.meta.instrument = {
-        "channel": "LONG",
-        "detector": "NRCALONG",
-        "filter": "F444W",
-        "lamp_mode": "NONE",
-        "module": "A",
-        "name": "NIRCAM",
-        "pupil": "CLEAR",
-    }
-    model.meta.exposure.type = "NRC_IMAGE"
-    model.meta.observation.date = "2021-01-01"
-    model.meta.observation.time = "00:00:00"
-
-    return model
+    return make_nircam_model()
 
 
 @pytest.fixture
 def nircam_model_without_apcorr():
-    rng = np.random.default_rng(seed=123)
-    data = rng.normal(0, 0.5, size=(101, 101))
-    data[20:80, 10:20] = 1.4
-    data[20:30, 20:45] = 1.4
-    data[20:80, 55:65] = 7.2
-    data[70:80, 65:87] = 7.2
-    data[45:55, 65:87] = 7.2
-    data[20:30, 65:87] = 7.2
-    data[55:75, 82:92] = 7.2
-    data[25:45, 82:92] = 7.2
-
-    wht = np.ones(data.shape)
-    wht[0:10, :] = 0.0
-    err = np.abs(data) / 10.0
-    model = dm.ImageModel(data, wht=wht, err=err)
-    model.meta.bunit_data = "MJy/sr"
-    model.meta.bunit_err = "MJy/sr"
-    model.meta.photometry.pixelarea_steradians = 1.0e-13
-    model.meta.wcs = make_gwcs(data.shape)
-    model.meta.wcsinfo = {
-        "ctype1": "RA---TAN",
-        "ctype2": "DEC--TAN",
-        "dec_ref": 11.99875540218638,
-        "ra_ref": 22.02351763251896,
-        "roll_ref": 0.005076934167039675,
-        "v2_ref": 86.039011,
-        "v3_ref": -493.385704,
-        "v3yangle": -0.07385127,
-        "vparity": -1,
-        "wcsaxes": 2,
-        "crpix1": 50,
-        "crpix2": 50,
-    }
-    model.meta.instrument = {
-        "channel": "LONG",
-        "detector": "NRCALONG",
-        "filter": "F2550WR",
-        "lamp_mode": "NONE",
-        "module": "A",
-        "name": "NIRCAM",
-        "pupil": "CLEAR",
-    }
-    model.meta.exposure.type = "NRC_IMAGE"
-    model.meta.observation.date = "2021-01-01"
-    model.meta.observation.time = "00:00:00"
-
-    return model
+    return make_nircam_model_without_apcorr()
 
 
 @pytest.mark.parametrize(
@@ -249,7 +157,7 @@ def test_source_catalog_point_sources(finder, nircam_model, tmp_cwd):
 
 
 def test_output_is_not_input(nircam_model):
-    """Make sure output is not the same as input."""
+    """Make sure input is not modified."""
     step = SourceCatalogStep(
         snr_threshold=0.5, npixels=5, bkg_boxsize=50, kernel_fwhm=2.0, save_results=False
     )
@@ -259,3 +167,7 @@ def test_output_is_not_input(nircam_model):
     assert result is not nircam_model
     assert isinstance(result, QTable)
     assert isinstance(nircam_model, dm.ImageModel)
+
+    # Input is not modified when called standalone
+    assert nircam_model.meta.source_catalog is None
+    assert nircam_model.meta.cal_step.source_catalog is None

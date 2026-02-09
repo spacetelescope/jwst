@@ -62,7 +62,6 @@ The current association types are:
   * ``tso3``: Intended for :ref:`calwebb_tso3 <calwebb_tso3>` processing
   * ``tso-image2``: Intended for :ref:`calwebb_image2 <calwebb_image2>` processing
   * ``tso-spec2``: Intended for :ref:`calwebb_spec2 <calwebb_spec2>` processing
-  * ``wfs-image2``: Intended for :ref:`calwebb_image2 <calwebb_image2>` processing
   * ``wfs-image3``: Intended for :ref:`calwebb_wfs-image3 <calwebb_wfs-image3>` processing
 
 Field Guide to File Names

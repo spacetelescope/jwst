@@ -26,38 +26,36 @@ class LinearityStep(Step):
 
         Parameters
         ----------
-        step_input : RampModel
+        step_input : `~stdatamodels.jwst.datamodels.RampModel`
             The input ramp model.
 
         Returns
         -------
-        result : RampModel
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             The output ramp model with linearity correction applied.
         """
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            # Get the name of the linearity reference file to use
-            self.lin_name = self.get_reference_file(result, "linearity")
-            log.info("Using Linearity reference file %s", self.lin_name)
+        # Get the name of the linearity reference file to use
+        lin_name = self.get_reference_file(result, "linearity")
+        log.info("Using Linearity reference file %s", lin_name)
 
-            # Check for a valid reference file
-            if self.lin_name == "N/A":
-                log.warning("No Linearity reference file found")
-                log.warning("Linearity step will be skipped")
-                result.meta.cal_step.linearity = "SKIPPED"
-                return result
+        # Check for a valid reference file
+        if lin_name == "N/A":
+            log.warning("No Linearity reference file found")
+            log.warning("Linearity step will be skipped")
+            result.meta.cal_step.linearity = "SKIPPED"
+            return result
 
-            # Open the linearity reference file data model
-            lin_model = datamodels.LinearityModel(self.lin_name)
+        # Open the linearity reference file data model
+        lin_model = datamodels.LinearityModel(lin_name)
 
-            # Do the linearity correction
-            result = linearity.do_correction(result, lin_model)
-            result.meta.cal_step.linearity = "COMPLETE"
+        # Do the linearity correction
+        result = linearity.do_correction(result, lin_model)
+        result.meta.cal_step.linearity = "COMPLETE"
 
-            # Cleanup
-            del lin_model
+        # Cleanup
+        del lin_model
 
         return result

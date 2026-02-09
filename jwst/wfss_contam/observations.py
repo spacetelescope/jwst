@@ -1,9 +1,11 @@
 import logging
 import multiprocessing as mp
 import time
+import warnings
 
 import numpy as np
 from astropy.stats import SigmaClip
+from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
 from stdatamodels.jwst import datamodels
 
@@ -53,15 +55,18 @@ def background_subtract(
         box_size = (int(data.shape[0] / 5), int(data.shape[1] / 5))
     sigma_clip = SigmaClip(sigma=sigma)
     bkg_estimator = MedianBackground()
-    bkg = Background2D(
-        data,
-        box_size,
-        filter_size=filter_size,
-        sigma_clip=sigma_clip,
-        bkg_estimator=bkg_estimator,
-        exclude_percentile=exclude_percentile,
-    )
-    return data - bkg.background
+    with warnings.catch_warnings():
+        # there can be multiple different AstropyUserWarning messages here about NaN and Inf values
+        warnings.filterwarnings("ignore", category=AstropyUserWarning)
+        bkg = Background2D(
+            data,
+            box_size,
+            filter_size=filter_size,
+            sigma_clip=sigma_clip,
+            bkg_estimator=bkg_estimator,
+            exclude_percentile=exclude_percentile,
+        )
+        return data - bkg.background
 
 
 def _select_ids(source_id, all_ids):
@@ -321,8 +326,15 @@ class Observation:
                 f"{len(self.source_ids)} sources in {len(disperse_args)} chunks."
             )
             ctx = mp.get_context("spawn")
-            with ctx.Pool(self.max_cpu) as mypool:
-                all_res = mypool.starmap(disperse, disperse_args)
+            pool = ctx.Pool(self.max_cpu)
+            try:
+                all_res = pool.starmap(disperse, disperse_args)
+            except Exception as e:
+                log.error(f"Error during parallel processing: {e}")
+                raise
+            finally:
+                pool.close()
+                pool.join()
         else:
             all_res = [disperse(*args) for args in disperse_args]
         t1 = time.time()

@@ -26,8 +26,8 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
-        The input data model.
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        The input data model. Updated in place.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
     nrs_slit_y_range : list
@@ -41,7 +41,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
 
     Returns
     -------
-    output_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The data model with the WCS information in the meta attribute.
     """
     if reference_files is not None:
@@ -67,7 +67,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
             input_model.meta.instrument.filter,
             input_model.meta.instrument.pupil,
         )
-
     if instrument.lower() == "nirspec":
         pipeline = mod.create_pipeline(input_model, reference_files, slit_y_range=nrs_slit_y_range)
     else:
@@ -79,17 +78,17 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
         log.warning("assign_wcs: SKIPPED")
         return input_model
 
-    output_model = input_model.copy()
     wcs = WCS(pipeline)
-    output_model.meta.wcs = wcs
+    input_model.meta.wcs = wcs
+
     if (
         instrument.lower() == "nirspec"
-        and output_model.meta.exposure.type.lower() not in IMAGING_TYPES
-        and output_model.meta.instrument.grating.lower() != "mirror"
+        and input_model.meta.exposure.type.lower() not in IMAGING_TYPES
+        and input_model.meta.instrument.grating.lower() != "mirror"
     ):
-        cbbox = mod.generate_compound_bbox(output_model)
-        output_model.meta.wcs.bounding_box = cbbox
-    output_model.meta.cal_step.assign_wcs = "COMPLETE"
+        cbbox = mod.generate_compound_bbox(input_model)
+        input_model.meta.wcs.bounding_box = cbbox
+    input_model.meta.cal_step.assign_wcs = "COMPLETE"
     exclude_types = [
         "nrc_wfss",
         "nrc_tsgrism",
@@ -101,50 +100,51 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
         "nrs_lamp",
         "nrs_brightobj",
         "nis_soss",
+        "mir_wfss",
     ]
 
-    if output_model.meta.exposure.type.lower() not in exclude_types:
+    if input_model.meta.exposure.type.lower() not in exclude_types:
         imaging_types = IMAGING_TYPES.copy()
         imaging_types.update(["mir_lrs-slitless"])
         imaging_lrs_types = ["mir_lrs-fixedslit"]
-        if output_model.meta.exposure.type.lower() in imaging_lrs_types:
+        if input_model.meta.exposure.type.lower() in imaging_lrs_types:
             # uses slits corners in V2, V3 that are read in from the
             # lrs specwcs reference file
-            update_s_region_lrs(output_model, reference_files)
-            output_model.wavelength = get_wavelengths(output_model)
-        elif output_model.meta.exposure.type.lower() in imaging_types:
+            update_s_region_lrs(input_model, reference_files)
+            input_model.wavelength = get_wavelengths(input_model)
+        elif input_model.meta.exposure.type.lower() in imaging_types:
             try:
-                update_s_region_imaging(output_model)
+                update_s_region_imaging(input_model)
             except Exception as exc:
                 log.error(
-                    f"Unable to update S_REGION for type {output_model.meta.exposure.type}: {exc}"
+                    f"Unable to update S_REGION for type {input_model.meta.exposure.type}: {exc}"
                 )
             else:
-                log.info(f"assign_wcs updated S_REGION to {output_model.meta.wcsinfo.s_region}")
-            if output_model.meta.exposure.type.lower() == "mir_lrs-slitless":
-                output_model.wavelength = get_wavelengths(output_model)
-        elif output_model.meta.exposure.type.lower() == "nrs_ifu":
-            update_s_region_nrs_ifu(output_model)
+                log.info(f"assign_wcs updated S_REGION to {input_model.meta.wcsinfo.s_region}")
+            if input_model.meta.exposure.type.lower() == "mir_lrs-slitless":
+                input_model.wavelength = get_wavelengths(input_model)
+        elif input_model.meta.exposure.type.lower() == "nrs_ifu":
+            update_s_region_nrs_ifu(input_model)
 
             # Attach a slice map in the regions attribute.
             # Optionally, use it to further revise the output WCS pipeline.
-            mod.apply_slicemap(output_model, replace_wcs=(not nrs_ifu_slice_wcs))
-        elif output_model.meta.exposure.type.lower() == "mir_mrs":
-            update_s_region_mrs(output_model)
+            mod.apply_slicemap(input_model, replace_wcs=(not nrs_ifu_slice_wcs))
+        elif input_model.meta.exposure.type.lower() == "mir_mrs":
+            update_s_region_mrs(input_model)
         else:
             try:
-                update_s_region_spectral(output_model)
+                update_s_region_spectral(input_model)
             except Exception as exc:
                 log.info(
-                    f"Unable to update S_REGION for type {output_model.meta.exposure.type}: {exc}"
+                    f"Unable to update S_REGION for type {input_model.meta.exposure.type}: {exc}"
                 )
 
     # Store position of dithered pointing location in metadata for later spectral extraction
-    if output_model.meta.exposure.type.lower() == "mir_lrs-fixedslit":
-        store_dithered_position(output_model)
+    if input_model.meta.exposure.type.lower() == "mir_lrs-fixedslit":
+        store_dithered_position(input_model)
         log.debug(
             "Storing dithered pointing location information: "
-            f"{output_model.meta.dither.dithered_ra} {output_model.meta.dither.dithered_dec}"
+            f"{input_model.meta.dither.dithered_ra} {input_model.meta.dither.dithered_dec}"
         )
     log.info("COMPLETED assign_wcs")
-    return output_model
+    return input_model

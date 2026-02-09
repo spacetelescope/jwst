@@ -21,10 +21,8 @@ in the header other than what is required by the standard.
 """
 
 import logging
-import warnings
 
 import stcal.velocity_aberration as va
-from scipy.constants import speed_of_light
 
 import jwst.datamodels as dm
 from jwst.datamodels import Level1bModel  # type: ignore[attr-defined]
@@ -32,92 +30,7 @@ from jwst.datamodels import Level1bModel  # type: ignore[attr-defined]
 # Configure logging
 logger = logging.getLogger(__name__)
 
-SPEED_OF_LIGHT = speed_of_light / 1000  # km / s
-
-__all__ = ["compute_va_effects_vector", "compute_va_effects", "add_dva"]
-
-
-def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
-    """
-    Compute velocity aberration effects scale factor.
-
-    Computes constant scale factor due to velocity aberration as well as
-    corrected ``RA`` and ``DEC`` values, in vector form.
-
-    Parameters
-    ----------
-    velocity_x, velocity_y, velocity_z : float
-        The components of the velocity of JWST, in km / s with respect to
-        the Sun.  These are celestial coordinates, with x toward the
-        vernal equinox, y toward right ascension 90 degrees and declination
-        0, z toward the north celestial pole.
-
-    u : numpy.array([u0, u1, u2])
-        The vector form of right ascension and declination of the target (or some other
-        point, such as the center of a detector) in the barycentric coordinate
-        system.  The equator and equinox should be the same as the coordinate
-        system for the velocity.
-
-    Returns
-    -------
-    scale_factor : float
-        Multiply the nominal image scale (e.g., in degrees per pixel) by
-        this value to obtain the image scale corrected for the "aberration
-        of starlight" due to the velocity of JWST with respect to the Sun.
-
-    u_corr : numpy.array([ua0, ua1, ua2])
-        Apparent position vector in the moving telescope frame.
-    """
-    warnings.warn(
-        "compute_va_effects_vector is deprecated. "
-        "Use stcal.velocity_aberration.compute_va_effects_vector instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return va.compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u)
-
-
-def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
-    """
-    Compute velocity aberration effects.
-
-    Computes constant scale factor due to velocity aberration as well as
-    corrected ``RA`` and ``DEC`` values.
-
-    Parameters
-    ----------
-    velocity_x, velocity_y, velocity_z : float
-        The components of the velocity of JWST, in km / s with respect to
-        the Sun.  These are celestial coordinates, with x toward the
-        vernal equinox, y toward right ascension 90 degrees and declination
-        0, z toward the north celestial pole.
-
-    ra, dec : float
-        The right ascension and declination of the target (or some other
-        point, such as the center of a detector) in the barycentric coordinate
-        system.  The equator and equinox should be the same as the coordinate
-        system for the velocity.
-
-    Returns
-    -------
-    scale_factor : float
-        Multiply the nominal image scale (e.g., in degrees per pixel) by
-        this value to obtain the image scale corrected for the "aberration
-        of starlight" due to the velocity of JWST with respect to the Sun.
-
-    apparent_ra : float
-        Apparent star position in the moving telescope frame.
-
-    apparent_dec : float
-        Apparent star position in the moving telescope frame.
-    """
-    warnings.warn(
-        "compute_va_effects is deprecated. "
-        "Use stcal.velocity_aberration.compute_va_effects instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return va.compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec)
+__all__ = ["add_dva"]
 
 
 def add_dva(filename, force_level1bmodel=True):

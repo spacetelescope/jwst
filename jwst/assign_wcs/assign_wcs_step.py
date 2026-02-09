@@ -1,15 +1,16 @@
 #! /usr/bin/env python
 import logging
 
+from stcal.alignment.util import wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.assign_wcs import load_wcs
+from jwst.assign_wcs.miri import imaging as miri_imaging
 from jwst.assign_wcs.nircam import imaging as nircam_imaging
 from jwst.assign_wcs.niriss import imaging as niriss_imaging
 from jwst.assign_wcs.util import (
     MSAFileError,
     update_fits_wcsinfo,
-    wcs_bbox_from_shape,
     wfss_imaging_wcs,
 )
 from jwst.lib.exposure_types import IMAGING_TYPES
@@ -20,7 +21,7 @@ log = logging.getLogger(__name__)
 __all__ = ["AssignWcsStep"]
 
 
-WFSS_TYPES = {"nrc_wfss", "nis_wfss"}
+WFSS_TYPES = {"nrc_wfss", "nis_wfss", "mir_wfss"}
 
 
 class AssignWcsStep(Step):
@@ -64,69 +65,67 @@ class AssignWcsStep(Step):
 
         Reference file types for this step:
 
-            - camera: Camera model (NIRSPEC)
-            - collimator: Collimator Model (NIRSPEC)
-            - disperser: Disperser model (NIRSPEC)
-            - distortion: Spatial distortion model (FGS, MIRI, NIRCAM, NIRISS)
-            - filteroffset: Filter offsets (MIRI Imager)
-            - fore: Transform through the FORE optics (NIRSPEC)
-            - fpa: Transform in the FPA plane (NIRSPEC)
-            - ifufore: Transforms from the MSA plane to the plane of the IFU slicer (NIRSPEC)
-            - ifupost: Transforms from the slicer plane to the MSA plane (NIRSPEC)
-            - ifuslicer: Metrology of the IFU slicer (NIRSPEC)
-            - msa: Metrology of the MSA plane (NIRSPEC)
-            - ote: Transform through the Optical Telescope Element (NIRSPEC)
-            - specwcs: Wavelength calibration models (MIRI, NIRCAM, NIRISS)
-            - regions: Stores location of the regions on the detector (MIRI)
-            - wavelengthrange: Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
+        - camera: Camera model (NIRSPEC)
+        - collimator: Collimator Model (NIRSPEC)
+        - disperser: Disperser model (NIRSPEC)
+        - distortion: Spatial distortion model (FGS, MIRI, NIRCAM, NIRISS)
+        - filteroffset: Filter offsets (MIRI Imager)
+        - fore: Transform through the FORE optics (NIRSPEC)
+        - fpa: Transform in the FPA plane (NIRSPEC)
+        - ifufore: Transforms from the MSA plane to the plane of the IFU slicer (NIRSPEC)
+        - ifupost: Transforms from the slicer plane to the MSA plane (NIRSPEC)
+        - ifuslicer: Metrology of the IFU slicer (NIRSPEC)
+        - msa: Metrology of the MSA plane (NIRSPEC)
+        - ote: Transform through the Optical Telescope Element (NIRSPEC)
+        - specwcs: Wavelength calibration models (MIRI, NIRCAM, NIRISS)
+        - regions: Stores location of the regions on the detector (MIRI)
+        - wavelengthrange: Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
 
         Parameters
         ----------
-        input_data : JwstDataModel or str
+        input_data : `~stdatamodels.jwst.datamodels.JwstDataModel` or str
             Either a jwst data model or a string that is the path to one.
 
         Returns
         -------
-        result : JwstDataModel
+        result : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The data model with the WCS information added.
         """
         reference_file_names = {}
-        with datamodels.open(input_data) as input_model:
-            # If input type is not supported, log warning, set to 'skipped', exit
-            if not (
-                isinstance(input_model, datamodels.ImageModel)
-                or isinstance(input_model, datamodels.CubeModel)
-                or isinstance(input_model, datamodels.IFUImageModel)
-            ):
-                log.warning("Input dataset type is not supported.")
-                log.warning("assign_wcs expects ImageModel, IFUImageModel or CubeModel as input.")
-                log.warning("Skipping assign_wcs step.")
-                result = input_model.copy()
-                result.meta.cal_step.assign_wcs = "SKIPPED"
-                return result
+        output_model = self.prepare_output(input_data)
 
-            for reftype in self.reference_file_types:
-                reffile = self.get_reference_file(input_model, reftype)
-                reference_file_names[reftype] = reffile if reffile else ""
-            log.debug(f"reference files used in assign_wcs: {reference_file_names}")
+        # If input type is not supported, log warning, set to 'skipped', exit
+        if not isinstance(
+            output_model, (datamodels.ImageModel, datamodels.CubeModel, datamodels.IFUImageModel)
+        ):
+            log.warning("Input dataset type is not supported.")
+            log.warning("assign_wcs expects ImageModel, IFUImageModel or CubeModel as input.")
+            log.warning("Skipping assign_wcs step.")
+            output_model.meta.cal_step.assign_wcs = "SKIPPED"
+            return output_model
 
-            # Get the MSA metadata file if needed and add to reffiles
-            if input_model.meta.exposure.type == "NRS_MSASPEC":
-                msa_metadata_file = input_model.meta.instrument.msa_metadata_file
-                if msa_metadata_file is not None and msa_metadata_file.strip() not in ["", "N/A"]:
-                    msa_metadata_file = self.make_input_path(msa_metadata_file)
-                    reference_file_names["msametafile"] = msa_metadata_file
-                else:
-                    message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
-                    log.error(message)
-                    raise MSAFileError(message)
-            slit_y_range = [self.slit_y_low, self.slit_y_high]
-            result = load_wcs(
-                input_model,
-                reference_file_names,
-                slit_y_range,
-                nrs_ifu_slice_wcs=self.nrs_ifu_slice_wcs,
-            )
+        for reftype in self.reference_file_types:
+            reffile = self.get_reference_file(output_model, reftype)
+            reference_file_names[reftype] = reffile if reffile else ""
+        log.debug(f"reference files used in assign_wcs: {reference_file_names}")
+
+        # Get the MSA metadata file if needed and add to reffiles
+        if output_model.meta.exposure.type == "NRS_MSASPEC":
+            msa_metadata_file = output_model.meta.instrument.msa_metadata_file
+            if msa_metadata_file is not None and msa_metadata_file.strip() not in ["", "N/A"]:
+                msa_metadata_file = self.make_input_path(msa_metadata_file)
+                reference_file_names["msametafile"] = msa_metadata_file
+            else:
+                message = "MSA metadata file (MSAMETFL) is required for NRS_MSASPEC exposures."
+                log.error(message)
+                raise MSAFileError(message)
+        slit_y_range = [self.slit_y_low, self.slit_y_high]
+        result = load_wcs(
+            output_model,
+            reference_file_names,
+            slit_y_range,
+            nrs_ifu_slice_wcs=self.nrs_ifu_slice_wcs,
+        )
 
         if not (
             result.meta.exposure.type.lower() in (IMAGING_TYPES.union(WFSS_TYPES))
@@ -160,8 +159,17 @@ class AssignWcsStep(Step):
                 bbox = wcs_bbox_from_shape(result.data.shape)
                 if result_exptype == "nis_wfss":
                     imaging_func = niriss_imaging
-                else:
+                elif result_exptype == "nrc_wfss":
                     imaging_func = nircam_imaging
+                elif result_exptype == "mir_wfss":
+                    imaging_func = miri_imaging
+                    # The current MIRI WFSS specwcs is the best that can be derived using
+                    # limited test data. With specific MIRI WFSS tests, the specwcs polynomials will
+                    # be updated and the sip_max_inv_pix_error floor value might then be removed.
+                    if self.sip_max_inv_pix_error < 0.02:
+                        self.sip_max_inv_pix_error = 0.02
+                        log.info(" Changed sip_max_inv_pix_error to 0.02.")
+                        log.info(" This is the minimum value of MIRI WFSS allowed")
 
                 wfss_imaging_wcs(
                     result,

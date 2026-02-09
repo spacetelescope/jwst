@@ -12,17 +12,17 @@
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
+This package processes uncalibrated data for both imagers and spectrographs onboard the James Webb Space Telescope (JWST), an orbiting infrared observatory stationed at Earth-Sun L<sub>2</sub>. It performs a series of calibration steps that result in standard data products usable for science.
+More information on running this pipeline, including explanations of specific stages and how to obtain reference files,
+can be found [here](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline).
+
 > [!WARNING]
-> `jwst` is not yet compatible with python 3.14.
-> 
 > Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
 > this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
->
-> Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 > [!IMPORTANT]
 > JWST requires a C compiler for dependencies.
-> 
+>
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 ## Installation
@@ -237,6 +237,10 @@ The latest build information is also available on JDox at:
 
 https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information
 
+For more info on public API and its deprecation policy:
+
+https://jwst-pipeline.readthedocs.io/en/latest/jwst/user_documentation/more_information.html
+
 ## Contributions and Feedback
 
 We welcome contributions and feedback on the project. Please follow the
@@ -263,14 +267,16 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.20.0              | B12.0.3   | 2025.4.0 | 1439         | 2025-09-23 |             | First release candidate for B12.0.3           |
-| 1.19.2              | B12.0.2   | 2025.3.0 | 1408         | 2025-09-11 |             | Patch release for B12.0.2                     |
-| 1.19.1              | B12.0.1   | 2025.3.0 | 1408         | 2025-07-21 |             | Patch release for B12.0.1                     |
+| 1.20.2              | B12.1.1   | 2025.4.1 | 1464         | 2025-10-31 |             | Patch release for B12.1.1                     |
+| 1.20.1              | B12.1     | 2025.4.0 | 1464         | 2025-10-20 |             | Patch release for B12.1                       |
+| 1.20.0              | B12.1     | 2025.4.0 | 1462         | 2025-10-15 |             | First release candidate for B12.1             |
+| 1.19.2              | B12.0.2   | 2025.3.0 | 1408         | 2025-09-11 | 2025-10-06  | Patch release for B12.0.2                     |
+| 1.19.1              | B12.0.1   | 2025.3.0 | 1408         | 2025-07-21 | 2025-08-26  | Patch release for B12.0.1                     |
 | 1.19.0              | B12.0     | 2025.3.0 | 1408         | 2025-06-26 |             | First release candidate for B12.0             |
 | 1.18.1              | B11.3.1   | 2025.2.1 | 1364         | 2025-06-10 |             | Patch release for B11.3.1                     |
 | 1.18.0              | B11.3     | 2025.2.0 | 1364         | 2025-04-01 | 2025-05-20  | First release for B11.3                       |
 | 1.17.1              | B11.2     | 2025.1.0 | 1321         | 2025-01-02 | 2025-03-05  | Final release candidate for B11.2             |
-| 1.17.0              | B11.2     | 2025.1.0 | 1321         | 2024-12-20 | TBD         | First release candidate for B11.2             |
+| 1.17.0              | B11.2     | 2025.1.0 | 1321         | 2024-12-20 |             | First release candidate for B11.2             |
 | 1.16.1              | B11.1.1   | 2024.3.1 | 1303         | 2024-11-13 | 2024-12-06  | Final release candidate for B11.1             |
 | 1.16.0              | B11.1     | 2024.3.0 | 1298         | 2024-09-20 |             | First release candidate for B11.1             |
 | 1.15.1              | B11.0     | 2024.2.2 | 1293         | 2024-07-08 | 2024-09-12  | Final release candidate for B11.0             |

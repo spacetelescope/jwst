@@ -19,7 +19,7 @@ __all__ = ["JwstStep", "JwstPipeline"]
 
 
 class JwstStep(_Step):
-    """A JWST pipeline step."""
+    """A JWST pipeline step (``jwst.stpipe.Step``)."""
 
     spec = """
     output_ext = string(default='.fits')  # Output file type
@@ -218,7 +218,7 @@ class JwstStep(_Step):
                     # It is assumed the provided class is appropriate for the input.
                     input_models = open_as_type(init, **kwargs)
                 else:
-                    input_models = datamodels.open(init)
+                    input_models = datamodels.open(init, **kwargs)
             else:
                 # Return the filename or path -
                 # the calling code will handle opening it as needed.
@@ -319,7 +319,7 @@ class JwstStep(_Step):
 
 class JwstPipeline(Pipeline, JwstStep):
     """
-    A JWST pipeline.
+    A JWST pipeline (``jwst.stpipe.Pipeline``).
 
     JwstPipeline needs to inherit from Pipeline, but also
     be a subclass of JwstStep so that it will pass checks

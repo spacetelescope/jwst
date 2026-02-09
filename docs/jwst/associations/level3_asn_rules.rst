@@ -41,7 +41,7 @@ follows:
 
 - sequence
 
-  *TBD*
+  Associations of the same type are sequenced.
 
 - activity
 

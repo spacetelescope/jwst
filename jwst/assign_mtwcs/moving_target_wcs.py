@@ -1,11 +1,4 @@
-"""
-Adjust the WCS of a moving target exposure.
-
-Computes the average RA and DEC of a moving
-target in all exposures in an association and adds a step to
-each of the WCS pipelines to allow aligning the exposures to the average
-location of the target.
-"""
+"""Functions for adjusting the WCS of a moving target exposure."""
 
 import logging
 from copy import deepcopy
@@ -23,12 +16,17 @@ from jwst.stpipe.utilities import record_step_status
 
 log = logging.getLogger(__name__)
 
-__all__ = ["assign_moving_target_wcs"]
+__all__ = ["assign_moving_target_wcs", "add_mt_frame"]
 
 
 def assign_moving_target_wcs(input_models):
     """
     Adjust the WCS of a moving target exposure.
+
+    Computes the average RA and DEC of a moving
+    target in all exposures in an association and adds a step to
+    each of the WCS pipelines to allow aligning the exposures to the average
+    location of the target.
 
     Parameters
     ----------
@@ -43,19 +41,23 @@ def assign_moving_target_wcs(input_models):
     if not isinstance(input_models, ModelLibrary):
         raise TypeError(f"Expected a ModelLibrary object, not {type(input_models)}")
 
-    # loop over only science exposures in the ModelLibrary
-    ind = input_models.indices_for_exptype("science")
-    mt_ra = np.full(len(ind), np.nan)
-    mt_dec = np.full(len(ind), np.nan)
+    science_indices = input_models.indices_for_exptype("science")
+    mt_ra = np.full(len(science_indices), np.nan)
+    mt_dec = np.full(len(science_indices), np.nan)
     mt_valid = True
     with input_models:
-        for i in ind:
+        # loop over only science exposures in the ModelLibrary
+        for i in science_indices:
             meta = input_models.read_metadata(i, flatten=False)
             mt_valid = _is_mt_meta_valid(meta)
             if not mt_valid:
                 break
-            mt_ra[i] = meta["meta"]["wcsinfo"]["mt_ra"]
-            mt_dec[i] = meta["meta"]["wcsinfo"]["mt_dec"]
+
+            # map index in science_indices to index in mt_ra/mt_dec arrays
+            # mt_ra, mt_dec have length equal to number of science exposures
+            j = science_indices.index(i)
+            mt_ra[j] = meta["meta"]["wcsinfo"]["mt_ra"]
+            mt_dec[j] = meta["meta"]["wcsinfo"]["mt_dec"]
 
     # Compute the mean MT RA/Dec over all exposures
     if not mt_valid:
@@ -68,7 +70,7 @@ def assign_moving_target_wcs(input_models):
     mt_avdec = mt_dec.mean()
 
     with input_models:
-        for i in ind:
+        for i in science_indices:
             model = input_models.borrow(i)
             model.meta.wcsinfo.mt_avra = mt_avra
             model.meta.wcsinfo.mt_avdec = mt_avdec
@@ -152,8 +154,8 @@ def _is_mt_meta_valid(meta):
     Parameters
     ----------
     meta : dict
-        Nested metadata dictionary from a data model, as output from `read_metadata`
-        with `flatten=False`.
+        Nested metadata dictionary from a data model, as output from ``read_metadata``
+        with ``flatten=False``.
 
     Returns
     -------

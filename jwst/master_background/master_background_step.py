@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 
-import numpy as np
 from scipy.signal import medfilt
 from stdatamodels.jwst import datamodels
 from stdatamodels.properties import merge_tree
@@ -48,164 +47,154 @@ class MasterBackgroundStep(Step):
                  `~jwst.datamodels.container.ModelContainer`
             The background-subtracted science datamodel(s)
         """
-        with datamodels.open(input_data) as input_model:
-            # Make the input data available to self
-            self.input_model = input_model
+        output_model = self.prepare_output(input_data)
 
-            # First check if we should even do the subtraction.  If not, bail.
-            if not self._do_sub:
-                result = input_model.copy()
-                record_step_status(result, "master_background", success=False)
-                return result
+        # First check if we should even do the subtraction.  If not, bail.
+        if not self._do_sub(output_model):
+            record_step_status(output_model, "master_background", success=False)
+            return output_model
 
-            # Check that data is a supported datamodel. If not, bail.
-            if not isinstance(
-                input_model,
-                (
-                    ModelContainer,
-                    datamodels.MultiSlitModel,
-                    datamodels.ImageModel,
-                    datamodels.IFUImageModel,
-                ),
-            ):
-                result = input_model.copy()
-                log.warning(
-                    f"Input {input_data} of type {type(input_data)} cannot be handled.  "
-                    f"Step skipped."
-                )
-                record_step_status(result, "master_background", success=False)
-                return result
+        # Check that data is a supported datamodel. If not, bail.
+        if not isinstance(
+            output_model,
+            (
+                ModelContainer,
+                datamodels.MultiSlitModel,
+                datamodels.ImageModel,
+                datamodels.SlitModel,
+                datamodels.IFUImageModel,
+            ),
+        ):
+            log.warning(
+                f"Input {input_data} of type {type(output_model)} cannot be handled.  Step skipped."
+            )
+            record_step_status(output_model, "master_background", success=False)
+            return output_model
 
-            # If user-supplied master background, subtract it
-            if self.user_background:
-                if isinstance(input_model, ModelContainer):
-                    input_model, _ = split_container(input_model)
-                    asn_id = input_model.asn_table["asn_id"]
-                    del _
-                    result = ModelContainer()
-                    background_2d_collection = ModelContainer()
-                    for model in input_model:
-                        background_2d = expand_to_2d(model, self.user_background)
-                        result.append(subtract_2d_background(model, background_2d))
-                        background_2d_collection.append(background_2d)
+        # If user-supplied master background, subtract it
+        if self.user_background:
+            if isinstance(output_model, ModelContainer):
+                result, bg_container = split_container(output_model)
+                asn_id = result.asn_table["asn_id"]
+                del bg_container
+
+                background_2d_collection = ModelContainer()
+                user_bg_name = Path(self.user_background).name
+                for model in result:
+                    background_2d = expand_to_2d(model, self.user_background)
+                    subtract_2d_background(model, background_2d)
+                    background_2d_collection.append(background_2d)
+
                     # Record name of user-supplied master background spectrum
-                    for model in result:
-                        model.meta.background.master_background_file = Path(
-                            self.user_background
-                        ).name
-                # Use user-supplied master background and subtract it
-                else:
-                    asn_id = None
-                    background_2d = expand_to_2d(input_model, self.user_background)
-                    background_2d_collection = ModelContainer([background_2d])
-                    result = subtract_2d_background(input_model, background_2d)
-                    # Record name of user-supplied master background spectrum
-                    result.meta.background.master_background_file = Path(self.user_background).name
-
-                # Save the computed 2d background if requested by user. The user has supplied
-                # the master background so just save the expanded 2d background
-                if self.save_background:
-                    self.save_container(
-                        background_2d_collection, suffix="masterbg2d", force=True, asn_id=asn_id
-                    )
-
-            # Compute master background and subtract it
+                    model.meta.background.master_background_file = user_bg_name
             else:
-                if isinstance(input_model, ModelContainer):
-                    input_model, background_data = split_container(input_model)
-                    if len(background_data) == 0:
-                        msg = (
-                            "No background data found in input container, "
-                            "and no user-supplied background provided.  Skipping step."
-                        )
-                        log.warning(msg)
-                        result = input_model.copy()
-                        record_step_status(result, "master_background", success=False)
-                        return result
-                    asn_id = input_model.asn_table["asn_id"]
+                # Use user-supplied master background and subtract it
+                asn_id = None
+                background_2d = expand_to_2d(output_model, self.user_background)
+                background_2d_collection = ModelContainer([background_2d])
+                result = subtract_2d_background(output_model, background_2d)
 
-                    for model in background_data:
-                        # Check if the background members are nodded x1d extractions
-                        # or background from dedicated background exposures.
-                        # Use "bkgdtarg == False" so we don't also get None cases
-                        # for simulated data that didn't bother populating this
-                        # keyword.
-                        this_is_ifu_extended = False
-                        if (
-                            model.meta.exposure.type == "NRS_IFU"
-                            and model.spec[0].source_type == "EXTENDED"
-                        ):
-                            this_is_ifu_extended = True
-                        if model.meta.exposure.type == "MIR_MRS":
-                            # always treat as extended for MIRI MRS
-                            this_is_ifu_extended = True
+                # Record name of user-supplied master background spectrum
+                result.meta.background.master_background_file = Path(self.user_background).name
 
-                        if model.meta.observation.bkgdtarg is False or this_is_ifu_extended:
-                            log.debug("Copying BACKGROUND column to SURF_BRIGHT")
-                            copy_background_to_surf_bright(model)
+            # Save the computed 2d background if requested by user. The user has supplied
+            # the master background so just save the expanded 2d background
+            if self.save_background:
+                self.save_container(
+                    background_2d_collection, suffix="masterbg2d", force=True, asn_id=asn_id
+                )
 
-                    master_background = combine_1d_spectra(
-                        background_data,
-                        exptime_key="exposure_time",
-                    )
+        # Compute master background and subtract it
+        else:
+            # Input must be a container to continue
+            if not isinstance(output_model, ModelContainer):
+                log.warning(
+                    f"Input {input_data} of type {type(output_model)} cannot be "
+                    "handled without user-supplied background.  Step skipped."
+                )
+                record_step_status(output_model, "master_background", success=False)
+                return output_model
 
-                    # If requested, apply a moving-median boxcar filter to the
-                    # master background spectrum.
-                    # Round down even kernel sizes because only odd kernel sizes are supported.
-                    if self.median_kernel % 2 == 0:
-                        self.median_kernel -= 1
-                        log.info(
-                            "Even median filter kernels are not supported."
-                            f" Rounding the median kernel size down to {self.median_kernel}."
-                        )
+            result, background_data = split_container(output_model)
+            if len(background_data) == 0:
+                msg = (
+                    "No background data found in input container, "
+                    "and no user-supplied background provided.  Skipping step."
+                )
+                log.warning(msg)
+                record_step_status(output_model, "master_background", success=False)
+                return output_model
+            asn_id = result.asn_table["asn_id"]
 
-                    if self.median_kernel > 1:
-                        log.info(f"Applying moving-median boxcar of width {self.median_kernel}.")
-                        master_background.spec[0].spec_table["surf_bright"] = medfilt(
-                            master_background.spec[0].spec_table["surf_bright"],
-                            kernel_size=[self.median_kernel],
-                        )
-                        master_background.spec[0].spec_table["flux"] = medfilt(
-                            master_background.spec[0].spec_table["flux"],
-                            kernel_size=[self.median_kernel],
-                        )
+            for model in background_data:
+                # Check if the background members are nodded x1d extractions
+                # or background from dedicated background exposures.
+                this_is_ifu_extended = False
+                if (
+                    model.meta.exposure.type == "NRS_IFU"
+                    and model.spec[0].source_type == "EXTENDED"
+                ):
+                    this_is_ifu_extended = True
+                if model.meta.exposure.type == "MIR_MRS":
+                    # always treat as extended for MIRI MRS
+                    this_is_ifu_extended = True
 
-                    background_data.close()
+                # Use "bkgdtarg is False" so we don't also get None cases
+                # for simulated data that didn't bother populating this
+                # keyword.
+                if model.meta.observation.bkgdtarg is False or this_is_ifu_extended:
+                    log.debug("Copying BACKGROUND column to SURF_BRIGHT")
+                    copy_background_to_surf_bright(model)
 
-                    result = ModelContainer()
-                    background_2d_collection = ModelContainer()
-                    for model in input_model:
-                        background_2d = expand_to_2d(model, master_background)
-                        result.append(subtract_2d_background(model, background_2d))
-                        background_2d_collection.append(background_2d)
+            master_background = combine_1d_spectra(
+                background_data,
+                exptime_key="exposure_time",
+            )
 
-                    input_model.close()
+            # If requested, apply a moving-median boxcar filter to the
+            # master background spectrum.
+            # Round down even kernel sizes because only odd kernel sizes are supported.
+            if self.median_kernel % 2 == 0:
+                self.median_kernel -= 1
+                log.info(
+                    "Even median filter kernels are not supported."
+                    f" Rounding the median kernel size down to {self.median_kernel}."
+                )
 
-                else:
-                    result = input_model.copy()
-                    input_model.close()
-                    log.warning(
-                        f"Input {input_data} of type {type(input_data)} cannot be "
-                        "handled without user-supplied background.  Step skipped."
-                    )
-                    record_step_status(result, "master_background", success=False)
-                    return result
+            if self.median_kernel > 1:
+                log.info(f"Applying moving-median boxcar of width {self.median_kernel}.")
+                master_background.spec[0].spec_table["surf_bright"] = medfilt(
+                    master_background.spec[0].spec_table["surf_bright"],
+                    kernel_size=[self.median_kernel],
+                )
+                master_background.spec[0].spec_table["flux"] = medfilt(
+                    master_background.spec[0].spec_table["flux"],
+                    kernel_size=[self.median_kernel],
+                )
 
-                # Save the computed background if requested by user
-                if self.save_background:
-                    self.save_model(
-                        master_background, suffix="masterbg1d", force=True, asn_id=asn_id
-                    )
-                    self.save_container(
-                        background_2d_collection, suffix="masterbg2d", force=True, asn_id=asn_id
-                    )
+            background_data.close()
 
-            record_step_status(result, "master_background", success=True)
+            background_2d_collection = ModelContainer()
+            for model in result:
+                background_2d = expand_to_2d(model, master_background)
+                subtract_2d_background(model, background_2d)
+                background_2d_collection.append(background_2d)
+
+            # Save the computed background if requested by user
+            if self.save_background:
+                self.save_model(master_background, suffix="masterbg1d", force=True, asn_id=asn_id)
+                self.save_container(
+                    background_2d_collection, suffix="masterbg2d", force=True, asn_id=asn_id
+                )
+
+        record_step_status(result, "master_background", success=True)
+
+        # Clean up intermediate background models
+        background_2d_collection.close()
 
         return result
 
-    @property
-    def _do_sub(self):
+    def _do_sub(self, input_model):
         """
         Decide if subtraction is to be done.
 
@@ -217,57 +206,56 @@ class MasterBackgroundStep(Step):
         do_sub : bool
             If ``True``, do the subtraction
         """
+        # If force_subtract is set, always return True
+        if self.force_subtract:
+            return True
+
+        # Otherwise, check if the input data is a model container.
         do_sub = True
-        if not self.force_subtract:
-            input_model = self.input_model
-            # check if the input data is a model container. If it is then loop over
-            # container and see if the background was subtracted in calspec2.
-            # If all data was background subtracted, skip master bgk subtraction.
+        if isinstance(input_model, ModelContainer):
+            # Loop over the container and see if the background was
+            # subtracted in calspec2. If all data was background subtracted,
+            # skip master bkg subtraction.
             # If there is a mixture of some being background subtracted, don't
             # subtract and print warning message
-            if isinstance(input_model, ModelContainer):
-                isub = 0
-                for indata in input_model:
-                    if (
-                        indata.meta.cal_step.bkg_subtract == "COMPLETE"
-                        or indata.meta.cal_step.master_background == "COMPLETE"
-                    ):
-                        do_sub = False
-                        isub += 1
-
-                if not do_sub and isub == len(input_model):
-                    log.info(
-                        "Not subtracting master background, background was subtracted in calspec2"
-                    )
-                    log.info(
-                        "To force the master background to be subtracted from this data, "
-                        "run again and set force_subtract = True."
-                    )
-
-                if not do_sub and isub != len(input_model):
-                    log.warning("Not subtracting master background.")
-                    log.warning(
-                        "Input data contains a mixture of data with and without "
-                        "background subtraction done in calspec2."
-                    )
-                    log.warning(
-                        "To force the master background to be subtracted from this data, "
-                        "run again and set force_subtract = True."
-                    )
-            # input data is a single file
-            else:
+            isub = 0
+            for indata in input_model:
                 if (
-                    input_model.meta.cal_step.bkg_subtract == "COMPLETE"
-                    or input_model.meta.cal_step.master_background == "COMPLETE"
+                    indata.meta.cal_step.bkg_subtract == "COMPLETE"
+                    or indata.meta.cal_step.master_background == "COMPLETE"
                 ):
                     do_sub = False
-                    log.info(
-                        "Not subtracting master background, background was subtracted in calspec2"
-                    )
-                    log.info(
-                        "To force the master background to be subtracted from this data, "
-                        "run again and set force_subtract = True."
-                    )
+                    isub += 1
+
+            if not do_sub and isub == len(input_model):
+                log.info("Not subtracting master background, background was subtracted in calspec2")
+                log.info(
+                    "To force the master background to be subtracted from this data, "
+                    "run again and set force_subtract = True."
+                )
+
+            if not do_sub and isub != len(input_model):
+                log.warning("Not subtracting master background.")
+                log.warning(
+                    "Input data contains a mixture of data with and without "
+                    "background subtraction done in calspec2."
+                )
+                log.warning(
+                    "To force the master background to be subtracted from this data, "
+                    "run again and set force_subtract = True."
+                )
+        else:
+            # input data is a single file
+            if (
+                input_model.meta.cal_step.bkg_subtract == "COMPLETE"
+                or input_model.meta.cal_step.master_background == "COMPLETE"
+            ):
+                do_sub = False
+                log.info("Not subtracting master background, background was subtracted in calspec2")
+                log.info(
+                    "To force the master background to be subtracted from this data, "
+                    "run again and set force_subtract = True."
+                )
 
         return do_sub
 
@@ -331,7 +319,7 @@ def subtract_2d_background(source, background):
     ----------
     source : `~stdatamodels.jwst.datamodels.JwstDataModel` or \
              `~jwst.datamodels.container.ModelContainer`
-        The input science data.
+        The input science data, updated in place.
     background : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input background data.  Must be the same datamodel type as `source`.
         For a `~jwst.datamodels.container.ModelContainer`,
@@ -340,42 +328,29 @@ def subtract_2d_background(source, background):
 
     Returns
     -------
-    `~stdatamodels.jwst.datamodels.JwstDataModel`
-        Background subtracted from source.
+    source : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Input data with background subtracted.
     """
 
     def _subtract_2d_background(model, background):
-        result = model.copy()
         # Handle individual NIRSpec FS, NIRSpec MOS
         if isinstance(model, datamodels.MultiSlitModel):
-            for slit, slitbg in zip(result.slits, background.slits, strict=False):
+            for slit, slitbg in zip(model.slits, background.slits, strict=False):
                 slit.data -= slitbg.data
-                slit.dq = np.bitwise_or(slit.dq, slitbg.dq)
+                slit.dq |= slitbg.dq
 
         # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
-        elif isinstance(model, (datamodels.ImageModel, datamodels.IFUImageModel)):
-            result.data -= background.data
-            result.dq = np.bitwise_or(result.dq, background.dq)
         else:
-            # Shouldn't get here.
-            raise TypeError(f"Input type {type(model)} is not supported.")
-        return result
+            model.data -= background.data
+            model.dq |= background.dq
 
-    # Handle containers of many datamodels
     if isinstance(source, ModelContainer):
-        result = ModelContainer()
-        result.update(source)
+        # Handle containers of many datamodels
         for model, bg in zip(source, background, strict=False):
-            result.append(_subtract_2d_background(model, bg))
-
-    # Handle single datamodels
-    elif isinstance(
-        source, (datamodels.ImageModel, datamodels.IFUImageModel, datamodels.MultiSlitModel)
-    ):
-        result = _subtract_2d_background(source, background)
+            _subtract_2d_background(model, bg)
 
     else:
-        # Shouldn't get here.
-        raise TypeError(f"Input type {type(source)} is not supported.")
+        # Handle single datamodels
+        _subtract_2d_background(source, background)
 
-    return result
+    return source

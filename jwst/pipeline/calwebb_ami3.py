@@ -24,7 +24,6 @@ class Ami3Pipeline(Pipeline):
     # Define aliases to steps
     step_defs = {
         "ami_analyze": ami_analyze_step.AmiAnalyzeStep,
-        # 'ami_average': ami_average_step.AmiAverageStep,
         "ami_normalize": ami_normalize_step.AmiNormalizeStep,
     }
 
@@ -76,8 +75,12 @@ class Ami3Pipeline(Pipeline):
             result1.meta.asn.table_name = Path(asn.filename).name
             self.save_model(result1, output_file=input_file, suffix="ami-oi", asn_id=asn_id)
 
-            # Save the result for use as input to ami_average
+            # Save the result
             targ_lg.append(result1)
+
+            # Close the other models
+            result2.close()
+            result3.close()
 
         # Run ami_analyze on all the psf members
         psf_lg = []
@@ -91,8 +94,12 @@ class Ami3Pipeline(Pipeline):
             result1.meta.asn.table_name = Path(asn.filename).name
             self.save_model(result1, output_file=input_file, suffix="psf-ami-oi", asn_id=asn_id)
 
-            # Save the result for use as input to ami_average
+            # Save the result
             psf_lg.append(result1)
+
+            # Close the other models
+            result2.close()
+            result3.close()
 
         # This zip operation matches science exposures to reference star exposures
         # in a one-to-one fashion, truncating a list if it is longer than the

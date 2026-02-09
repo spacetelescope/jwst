@@ -5,7 +5,7 @@ import gwcs
 import numpy as np
 from astropy.stats import SigmaClip, sigma_clipped_stats
 from astropy.utils.exceptions import AstropyUserWarning
-from gwcs.utils import _toindex
+from gwcs.utils import to_index
 from photutils.background import Background2D, MedianBackground
 from scipy.optimize import curve_fit
 from stdatamodels.jwst.datamodels import dqflags
@@ -38,6 +38,7 @@ __all__ = [
     "fft_clean_full_frame",
     "fft_clean_subarray",
     "median_clean",
+    "make_intermediate_model",
     "do_correction",
 ]
 
@@ -124,9 +125,10 @@ def make_rate(input_model, input_dir="", return_cube=False):
     # Use software default values for parameters
 
     log.info("Creating draft rate file for scene masking")
-    step = RampFitStep()
-    step.input_dir = input_dir
     with disable_logging(level=logging.WARNING):
+        step = RampFitStep()
+        step.input_dir = input_dir
+
         # Note: the copy is currently needed because ramp fit
         # closes the input model when it's done, and we need
         # it to stay open.
@@ -182,25 +184,25 @@ def post_process_rate(
     # If needed, assign a WCS
     if (assign_wcs or msaflagopen) and not hasattr(output_model.meta, "wcs"):
         log.info("Assigning a WCS for scene masking")
-        step = AssignWcsStep()
-        step.input_dir = input_dir
         with disable_logging(level=logging.WARNING):
+            step = AssignWcsStep()
+            step.input_dir = input_dir
             output_model = step.run(output_model)
 
     # If needed, flag open MSA shutters
     if msaflagopen:
         log.info("Flagging failed-open MSA shutters for scene masking")
-        step = MSAFlagOpenStep()
-        step.input_dir = input_dir
         with disable_logging(level=logging.WARNING):
+            step = MSAFlagOpenStep()
+            step.input_dir = input_dir
             output_model = step.run(output_model)
 
     # If needed, draft a flat correction to retrieve non-science areas
     if flat_dq:
         log.info("Retrieving flat DQ values for scene masking")
-        step = FlatFieldStep()
-        step.input_dir = input_dir
         with disable_logging(level=logging.WARNING):
+            step = FlatFieldStep()
+            step.input_dir = input_dir
             flat_corrected_model = step.run(output_model)
 
         # Copy out the flat DQ plane, leave the data as is
@@ -298,8 +300,8 @@ def mask_slits(input_model, mask):
     # Note that for 3D masks (TSO mode), all planes will be set to the same value.
     for slit in slits:
         bbox = input_model.meta.wcs.bounding_box[slit]
-        xlo, xhi = _toindex(bbox[0])
-        ylo, yhi = _toindex(bbox[1])
+        xlo, xhi = to_index(bbox[0])
+        ylo, yhi = to_index(bbox[1])
         mask[..., ylo:yhi, xlo:xhi] = False
 
     return mask
@@ -533,8 +535,8 @@ def create_mask(
     if exptype in ["nrs_fixedslit", "nrs_brightobj", "nrs_msaspec"] and mask_science_regions:
         mask = mask_slits(input_model, mask)
 
-    # If IFU or MOS, mask pixels affected by failed-open shutters
-    if mask_science_regions and exptype in ["nrs_ifu", "nrs_msaspec"]:
+    # If NIRSpec, mask pixels affected by failed-open shutters
+    if mask_science_regions and exptype.startswith("nrs"):
         open_pix = input_model.dq & dqflags.pixel["MSA_FAILED_OPEN"]
         mask[open_pix > 0] = False
 
@@ -975,6 +977,38 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
     return corrected_image
 
 
+def make_intermediate_model(input_model, intermediate_data):
+    """
+    Make a data model to contain intermediate outputs.
+
+    The output model type depends on the shape of the input
+    intermediate data.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.JwstDataModel`
+        The input data.
+    intermediate_data : array-like
+        The intermediate data to save.
+
+    Returns
+    -------
+    intermediate_model : `~jwst.datamodels.JwstDataModel`
+        A model containing only the intermediate data and top-level
+        metadata matching the input.
+    """
+    if intermediate_data.ndim == 4:
+        intermediate_model = datamodels.RampModel(data=intermediate_data)
+    elif intermediate_data.ndim == 3:
+        intermediate_model = datamodels.CubeModel(data=intermediate_data)
+    else:
+        intermediate_model = datamodels.ImageModel(data=intermediate_data)
+
+    # Copy metadata from input model
+    intermediate_model.update(input_model)
+    return intermediate_model
+
+
 def _check_input(exp_type, fit_method):
     """
     Check for valid input data and options.
@@ -1007,38 +1041,6 @@ def _check_input(exp_type, fit_method):
         return False
 
     return True
-
-
-def _make_intermediate_model(input_model, intermediate_data):
-    """
-    Make a data model to contain intermediate outputs.
-
-    The output model type depends on the shape of the input
-    intermediate data.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
-        The input data.
-    intermediate_data : array-like
-        The intermediate data to save.
-
-    Returns
-    -------
-    intermediate_model : `~jwst.datamodels.JwstDataModel`
-        A model containing only the intermediate data and top-level
-        metadata matching the input.
-    """
-    if intermediate_data.ndim == 4:
-        intermediate_model = datamodels.RampModel(data=intermediate_data)
-    elif intermediate_data.ndim == 3:
-        intermediate_model = datamodels.CubeModel(data=intermediate_data)
-    else:
-        intermediate_model = datamodels.ImageModel(data=intermediate_data)
-
-    # Copy metadata from input model
-    intermediate_model.update(input_model)
-    return intermediate_model
 
 
 def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit_by_channel):
@@ -1236,7 +1238,7 @@ def _make_scene_mask(
 
     # Store the mask image in a model, if requested
     if save_mask:
-        mask_model = _make_intermediate_model(image_model, background_mask)
+        mask_model = make_intermediate_model(image_model, background_mask)
     else:
         mask_model = None
 
@@ -1464,7 +1466,7 @@ def do_correction(
     Parameters
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
-        Science data to be corrected.
+        Science data to be corrected. Updated in place.
 
     input_dir : str
         Path to the input directory.  Used by sub-steps (e.g. assign_wcs
@@ -1556,8 +1558,6 @@ def do_correction(
     if not _check_input(exp_type, fit_method):
         return input_model, None, None, None, status
 
-    output_model = input_model.copy()
-
     # Get parameters needed for subsequent corrections, as appropriate
     # to the input data
     axis_to_correct, background_method, fit_by_channel, fc = _standardize_parameters(
@@ -1585,7 +1585,7 @@ def do_correction(
     # Check data shapes for 2D, 3D, or 4D inputs
     mismatch, ndim, nints, ngroups = _check_data_shapes(input_model, background_mask)
     if mismatch:
-        return output_model, None, None, None, status
+        return input_model, None, None, None, status
 
     # Close the draft rate model if created - it is no longer needed.
     if image_model is not input_model:
@@ -1597,6 +1597,9 @@ def do_correction(
         background_to_save = np.zeros_like(input_model.data)
     else:
         background_to_save = None
+
+    # Keep a copy of the original input data
+    input_data = input_model.data.copy()
 
     # Loop over integrations and groups (even if there's only 1)
     for i in range(nints):
@@ -1612,13 +1615,13 @@ def do_correction(
 
             # Get the relevant image data
             if ndim == 2:
-                image = input_model.data
+                image = input_data
             elif ndim == 3:
-                image = input_model.data[i]
+                image = input_data[i]
             else:
                 # Ramp data input:
                 # subtract the current group from the next one
-                image = input_model.data[i, j + 1] - input_model.data[i, j]
+                image = input_data[i, j + 1] - input_data[i, j]
                 dq = input_model.groupdq[i, j + 1]
 
                 # Mask any DNU and JUMP pixels
@@ -1646,8 +1649,8 @@ def do_correction(
 
                 # Restore input data to make sure any partial changes
                 # are thrown away
-                output_model.data = input_model.data.copy()
-                return output_model, None, None, None, status
+                input_model.data = input_data
+                return input_model, None, None, None, status
 
             if cleaned_image is None:
                 # Cleaning did not proceed because the image is bad:
@@ -1660,35 +1663,35 @@ def do_correction(
 
             # Store the cleaned image in the output model
             if ndim == 2:
-                output_model.data = cleaned_image
+                input_model.data = cleaned_image
                 if save_background:
                     background_to_save[:] = background
             elif ndim == 3:
-                output_model.data[i] = cleaned_image
+                input_model.data[i] = cleaned_image
                 if save_background:
                     background_to_save[i] = background
             else:
                 # Add the cleaned data diff to the previously cleaned group,
                 # rather than the noisy input group
-                output_model.data[i, j + 1] = output_model.data[i, j] + cleaned_image
+                input_model.data[i, j + 1] = input_model.data[i, j] + cleaned_image
                 if save_background:
                     background_to_save[i, j + 1] = background
 
     # Store the background image in a model, if requested
     if save_background:
-        background_model = _make_intermediate_model(output_model, background_to_save)
+        background_model = make_intermediate_model(input_model, background_to_save)
     else:
         background_model = None
 
     # Make a fit noise model for diagnostic purposes by
     # diffing the input and output models
     if save_noise:
-        noise_data = output_model.data - input_model.data
-        noise_model = _make_intermediate_model(output_model, noise_data)
+        noise_data = input_model.data - input_data
+        noise_model = make_intermediate_model(input_model, noise_data)
     else:
         noise_model = None
 
     # Set completion status
     status = "COMPLETE"
 
-    return output_model, mask_model, background_model, noise_model, status
+    return input_model, mask_model, background_model, noise_model, status

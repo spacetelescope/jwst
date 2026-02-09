@@ -1,5 +1,6 @@
 import logging
 
+from astropy.io import fits
 from stdatamodels.jwst import datamodels
 
 from jwst.dq_init import dq_initialization
@@ -24,6 +25,7 @@ class DQInitStep(Step):
     class_alias = "dq_init"
 
     spec = """
+        user_supplied_dq = string(default=None)  # FITS user-supplied DQ file
     """  # noqa: E501
     reference_file_types = ["mask"]
 
@@ -33,29 +35,32 @@ class DQInitStep(Step):
 
         Parameters
         ----------
-        step_input : JWST datamodel
-            Input jwst datamodel.
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            Input JWST datamodel or filename.
 
         Returns
         -------
-        output_model : JWST datamodel
+        output_model : `~stdatamodels.jwst.datamodels.RampModel` \
+                       or `~stdatamodels.jwst.datamodels.GuiderRawModel`
             Result JWST datamodel.
         """
         # Try to open the input as a regular RampModel
         try:
-            input_model = datamodels.RampModel(step_input)
+            result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
             # Check to see if it's Guider raw data
-            if input_model.meta.exposure.type in dq_initialization.guider_list:
+            if result.meta.exposure.type in dq_initialization.guider_list:
+                # Close and delete the current model if it's not the same as the input
+                if result is not step_input:
+                    del result
+
                 # Reopen as a GuiderRawModel
-                input_model.close()
-                input_model = datamodels.GuiderRawModel(step_input)
+                result = self.prepare_output(step_input, open_as_type=datamodels.GuiderRawModel)
                 log.info("Input opened as GuiderRawModel")
 
         except (TypeError, ValueError):
-            # If the initial open attempt fails,
-            # try to open as a GuiderRawModel
+            # If the initial open attempt fails, try to open as a GuiderRawModel
             try:
-                input_model = datamodels.GuiderRawModel(step_input)
+                result = self.prepare_output(step_input, open_as_type=datamodels.GuiderRawModel)
                 log.info("Input opened as GuiderRawModel")
             except (TypeError, ValueError):
                 log.error("Unexpected or unknown input model type")
@@ -65,27 +70,34 @@ class DQInitStep(Step):
             raise
 
         # Retrieve the mask reference file name
-        self.mask_filename = self.get_reference_file(input_model, "mask")
-        log.info("Using MASK reference file %s", self.mask_filename)
-
-        # Work on a copy
-        result = input_model.copy()
+        mask_filename = self.get_reference_file(result, "mask")
+        log.info("Using MASK reference file %s", mask_filename)
 
         # Check for a valid reference file
-        if self.mask_filename == "N/A":
+        if mask_filename == "N/A":
             log.warning("No MASK reference file found")
             log.warning("DQ initialization step will be skipped")
             result.meta.cal_step.dq_init = "SKIPPED"
             return result
 
         # Load the reference file
-        mask_model = datamodels.MaskModel(self.mask_filename)
+        mask_model = datamodels.MaskModel(mask_filename)
+
+        # Load the user-supplied DQ file, if applicable
+        if self.user_supplied_dq is not None:
+            log.info(
+                f"User-supplied DQ {self.user_supplied_dq} given. Adding it to DQ initialization."
+            )
+            user_dq = fits.getdata(self.user_supplied_dq)
+        else:
+            user_dq = None
 
         # Apply the step
-        result = dq_initialization.correct_model(result, mask_model)
+        result = dq_initialization.do_dqinit(result, mask_model, user_dq=user_dq)
 
         # Cleanup
         del mask_model
-        del input_model
+        if user_dq is not None:
+            del user_dq
 
         return result

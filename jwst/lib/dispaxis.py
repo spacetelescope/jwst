@@ -76,6 +76,7 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY", pupi
         "MIR_IMAGE": None,
         "MIR_LRS-FIXEDSLIT": 2,
         "MIR_LRS-SLITLESS": 2,
+        "MIR_WFSS": 2,
         "MIR_LYOT": None,
         "MIR_MRS": 2,
         "MIR_TACQ": None,

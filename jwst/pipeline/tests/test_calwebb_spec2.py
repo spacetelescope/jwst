@@ -1,11 +1,19 @@
 import os
 import shutil
+from pathlib import Path
 
+import numpy as np
 import pytest
+from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
+from jwst.pipeline.tests.helpers import make_nirspec_ifu_rate_model
 from jwst.stpipe import Step
+from jwst.targ_centroid.tests.helpers import (
+    make_empty_lrs_model,
+    make_slit_data,
+    make_ta_association,
+)
 from jwst.tests.helpers import _help_pytest_warns
 
 INPUT_FILE = "test_rate.fits"
@@ -22,32 +30,7 @@ def make_test_rate_file(tmp_cwd_module):
     Make and save a test rate file in the temporary working directory
     Partially copied from test_background.py
     """
-    image = IFUImageModel((2048, 2048))
-    image.data[:, :] = 1
-
-    image.meta.instrument.name = "NIRSPEC"
-    image.meta.instrument.detector = "NRS1"
-    image.meta.instrument.filter = "CLEAR"
-    image.meta.instrument.grating = "PRISM"
-    image.meta.exposure.type = "NRS_IFU"
-    image.meta.observation.date = "2019-02-27"
-    image.meta.observation.time = "13:37:18.548"
-    image.meta.date = "2019-02-27T13:37:18.548"
-    image.meta.subarray.xstart = 1
-    image.meta.subarray.ystart = 1
-    image.meta.subarray.xsize = image.data.shape[-1]
-    image.meta.subarray.ysize = image.data.shape[-2]
-    image.meta.instrument.gwa_tilt = 37.0610
-
-    # bare minimum wcs info to get assign_wcs step to pass
-    image.meta.wcsinfo.crpix1 = 693.5
-    image.meta.wcsinfo.crpix2 = 512.5
-    image.meta.wcsinfo.v2_ref = -453.37849
-    image.meta.wcsinfo.v3_ref = -373.810549
-    image.meta.wcsinfo.roll_ref = 272.3237653262276
-    image.meta.wcsinfo.ra_ref = 80.54724018120017
-    image.meta.wcsinfo.dec_ref = -69.5081101864959
-
+    image = make_nirspec_ifu_rate_model()
     with image as dm:
         dm.save(INPUT_FILE)
 
@@ -69,7 +52,7 @@ def run_spec2_pipeline(make_test_rate_file, request):
         INPUT_FILE,
         "--steps.badpix_selfcal.skip=true",
         "--steps.msa_flagging.skip=true",
-        "--steps.nsclean.skip=true",
+        "--steps.clean_flicker_noise.skip=true",
         "--steps.flat_field.skip=true",
         "--steps.pathloss.skip=true",
         "--steps.photom.skip=true",
@@ -96,7 +79,7 @@ def run_spec2_pipeline_asn(make_test_association, request):
         f"--log-file={LOGFILE}",
         "--steps.badpix_selfcal.skip=true",
         "--steps.msa_flagging.skip=true",
-        "--steps.nsclean.skip=true",
+        "--steps.clean_flicker_noise.skip=true",
         "--steps.flat_field.skip=true",
         "--steps.pathloss.skip=true",
         "--steps.photom.skip=true",
@@ -122,7 +105,6 @@ def test_output_file_rename(run_spec2_pipeline):
         assert os.path.exists(f"{custom_stem}_{extension}.fits")
 
 
-@pytest.mark.filterwarnings("ignore::ResourceWarning")
 def test_output_file_norename_asn(run_spec2_pipeline_asn):
     """
     Ensure output_file parameter is ignored, with warning,
@@ -174,7 +156,7 @@ def test_bsub_deprecated(make_test_rate_file):
         "--save_bsub=true",
         "--steps.badpix_selfcal.skip=true",
         "--steps.msa_flagging.skip=true",
-        "--steps.nsclean.skip=true",
+        "--steps.clean_flicker_noise.skip=true",
         "--steps.flat_field.skip=true",
         "--steps.pathloss.skip=true",
         "--steps.photom.skip=true",
@@ -187,3 +169,51 @@ def test_bsub_deprecated(make_test_rate_file):
         pytest.warns(DeprecationWarning, match="The --save_bsub parameter is deprecated"),
     ):
         Step.from_cmdline(args)
+
+
+@pytest.mark.parametrize("use_asn", [True, False])
+def test_targ_centroid_logic(use_asn, tmp_cwd):
+    sci_model = make_empty_lrs_model("MIR_LRS-FIXEDSLIT")
+    sci_model = datamodels.ImageModel(sci_model)  # assign_wcs can't operate on SlitModel
+
+    if use_asn:
+        ta_model = make_slit_data(offset=(0, 0))
+        step_input = make_ta_association(sci_model, ta_model)
+    else:
+        step_input = sci_model
+
+    all_steps = Spec2Pipeline.step_defs.keys()
+    do_steps = {step_name: {"skip": True} for step_name in all_steps}
+    do_steps["assign_wcs"] = {"skip": False}
+    do_steps["targ_centroid"] = {"skip": False}
+    result = Spec2Pipeline.call(
+        step_input,
+        steps=do_steps,
+    )
+    status = result[0].meta.cal_step.targ_centroid
+    if use_asn:
+        assert status == "COMPLETE"
+    else:
+        # TA centering image not provided
+        assert status == "SKIPPED"
+
+
+def test_spec2_nirspec_ifu_model(make_test_rate_file):
+    input_model = datamodels.open(INPUT_FILE)
+    input_model_copy = input_model.copy()
+
+    # Skip all steps but the first for speed
+    all_steps = Spec2Pipeline.step_defs.keys()
+    do_steps = {step_name: {"skip": True} for step_name in all_steps}
+    do_steps["assign_wcs"] = {"skip": False}
+    Spec2Pipeline.call(input_model, save_results=True, steps=do_steps)
+
+    # Check for expected output
+    assert Path("test_cal.fits").exists()
+
+    # Input model is not modified
+    np.testing.assert_allclose(input_model.data, input_model_copy.data)
+    assert input_model.meta.cal_step._instance == input_model_copy.meta.cal_step._instance
+
+    input_model.close()
+    input_model_copy.close()

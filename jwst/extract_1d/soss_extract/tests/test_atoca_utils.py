@@ -1,4 +1,5 @@
 import logging
+import pickle
 
 import numpy as np
 import pytest
@@ -374,6 +375,39 @@ def test_throughput_soss():
         au.throughput_soss(wavelengths, throughputs[:-1])
 
 
+def test_throughput_soss_pickleable():
+    """Test that ThroughputInterpolator objects can be pickled and unpickled correctly."""
+    wavelengths = np.linspace(2, 5, 20)
+    throughputs = np.sin(wavelengths) + 1  # varying throughput function
+    interpolator = au.throughput_soss(wavelengths, throughputs)
+
+    # Test wavelengths for evaluation
+    wl_test = np.linspace(2.5, 4.5, 15)
+
+    # Get results before pickling
+    result_before = interpolator(wl_test)
+
+    # Pickle and unpickle the interpolator
+    pickled = pickle.dumps(interpolator)
+    interpolator_restored = pickle.loads(pickled)
+
+    # Verify all attributes are preserved
+    assert np.allclose(interpolator_restored.wavelength, interpolator.wavelength)
+    assert np.allclose(interpolator_restored.throughput, interpolator.throughput)
+    assert np.allclose(interpolator_restored.wl_min, interpolator.wl_min)
+    assert np.allclose(interpolator_restored.wl_max, interpolator.wl_max)
+
+    # Verify the interpolator was recreated and works correctly
+    result_after = interpolator_restored(wl_test)
+    assert np.allclose(result_before, result_after)
+
+    # Test edge cases (clipping behavior)
+    wl_outside = np.array([1.5, 2.0, 3.0, 5.0, 5.5])
+    result_outside_before = interpolator(wl_outside)
+    result_outside_after = interpolator_restored(wl_outside)
+    assert np.allclose(result_outside_before, result_outside_after)
+
+
 def test_webb_kernel(webb_kernels, wave_map):
     wave_trace = wave_map[0][0]
     min_trace, max_trace = np.min(wave_trace), np.max(wave_trace)
@@ -435,6 +469,43 @@ def test_webb_kernel(webb_kernels, wave_map):
     # both inputs need to be same shape
     with pytest.raises(ValueError):
         kern(wl_test, wl_test[:-1])
+
+
+def test_webb_kernel_pickleable(webb_kernels, wave_map):
+    """Test that WebbKernel objects can be pickled and unpickled correctly."""
+    kern = webb_kernels[0]
+    wave_trace = wave_map[0][0]
+    min_trace, max_trace = np.min(wave_trace), np.max(wave_trace)
+
+    # Test wavelengths and pixels for evaluation
+    wl_test = np.linspace(min_trace, max_trace, 10)
+    pix_half = kern.n_pix // 2
+    pixels_test = np.array([-pix_half - 1, 0, pix_half, pix_half + 1])
+
+    # Get results before pickling
+    f_ker_before = kern.f_ker(pixels_test, wl_test)
+    call_before = kern(wl_test, wl_test)
+
+    # Pickle and unpickle the kernel
+    pickled = pickle.dumps(kern)
+    kern_restored = pickle.loads(pickled)
+
+    # Verify all attributes are preserved
+    assert np.allclose(kern_restored.n_pix, kern.n_pix)
+    assert np.allclose(kern_restored.pixels, kern.pixels)
+    assert np.allclose(kern_restored.wave_kernels, kern.wave_kernels)
+    assert np.allclose(kern_restored.wave_center, kern.wave_center)
+    assert np.allclose(kern_restored.poly, kern.poly)
+    assert np.allclose(kern_restored.kernels, kern.kernels)
+    assert np.allclose(kern_restored.min_value, kern.min_value)
+
+    # Verify the interpolator was recreated and works correctly
+    f_ker_after = kern_restored.f_ker(pixels_test, wl_test)
+    assert np.allclose(f_ker_before, f_ker_after)
+
+    # Verify the __call__ method works correctly
+    call_after = kern_restored(wl_test, wl_test)
+    assert np.allclose(call_before, call_after)
 
 
 def test_finite_first_diff():

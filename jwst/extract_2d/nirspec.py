@@ -6,7 +6,7 @@ import logging
 import numpy as np
 from astropy.modeling.models import Shift
 from gwcs import wcstools
-from gwcs.utils import _toindex
+from gwcs.utils import to_index
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
@@ -33,8 +33,10 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
-        Input data model.
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
+        Input data model. May be updated in place with a "SKIPPED" status,
+        if a new model cannot be created.
     slit_names : list containing strings or ints
         Slit names.
     source_ids : list containing strings or ints
@@ -42,7 +44,8 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
 
     Returns
     -------
-    output_model : SlitModel or MultiSlitModel
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`, or
+                   `~stdatamodels.jwst.datamodels.SlitModel`
         DataModel containing extracted slit(s)
     """
     exp_type = input_model.meta.exposure.type.upper()
@@ -53,9 +56,8 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
     ):
         log.info("assign_wcs was skipped")
         log.warning("extract_2d will be SKIPPED")
-        output_model = input_model.copy()
-        output_model.meta.cal_step.extract_2d = "SKIPPED"
-        return output_model
+        input_model.meta.cal_step.extract_2d = "SKIPPED"
+        return input_model
 
     if not (hasattr(input_model.meta, "wcs") and input_model.meta.wcs is not None):
         raise AttributeError(
@@ -288,8 +290,8 @@ def offset_wcs(slit_wcs):
     xlo, xhi, ylo, yhi : tuple of floats
         Indices of the bounding box of the WCS
     """
-    xlo, xhi = _toindex(slit_wcs.bounding_box[0])
-    ylo, yhi = _toindex(slit_wcs.bounding_box[1])
+    xlo, xhi = to_index(slit_wcs.bounding_box[0])
+    ylo, yhi = to_index(slit_wcs.bounding_box[1])
 
     # Add the slit offset to each slit WCS object
     tr = slit_wcs.get_transform("detector", "sca")
@@ -336,7 +338,7 @@ def extract_slit(input_model, slit):
         ext_dq = input_model.dq[slit_slice].copy()
         ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
         ext_var_poisson = input_model.var_poisson[slit_slice].copy()
-        if pipe_utils.is_tso(input_model) and hasattr(input_model, "int_times"):
+        if pipe_utils.is_tso(input_model):
             log.debug("TSO data, so copying the INT_TIMES table.")
             int_times = input_model.int_times.copy()
         else:

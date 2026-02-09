@@ -13,6 +13,7 @@ from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.background import background_step
 from jwst.badpix_selfcal import badpix_selfcal_step
 from jwst.barshadow import barshadow_step
+from jwst.clean_flicker_noise import clean_flicker_noise_step
 from jwst.cube_build import cube_build_step
 from jwst.extract_1d import extract_1d_step
 from jwst.extract_2d import extract_2d_step
@@ -22,7 +23,6 @@ from jwst.imprint import imprint_step
 from jwst.lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
 from jwst.master_background import master_background_mos_step
 from jwst.msaflagopen import msaflagopen_step
-from jwst.nsclean import nsclean_step
 from jwst.pathloss import pathloss_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
@@ -31,6 +31,7 @@ from jwst.residual_fringe import residual_fringe_step
 from jwst.srctype import srctype_step
 from jwst.stpipe import Pipeline, query_step_status
 from jwst.straylight import straylight_step
+from jwst.targ_centroid import targ_centroid_step
 from jwst.wavecorr import wavecorr_step
 from jwst.wfss_contam import wfss_contam_step
 
@@ -45,9 +46,11 @@ NRS_SLIT_TYPES = [
     "NRS_AUTOWAVE",
     "NRS_AUTOFLAT",
 ]
-WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
-GRISM_TYPES = ["NRC_TSGRISM"] + WFSS_TYPES
-EXP_TYPES_USING_REFBKGDS = WFSS_TYPES + ["NIS_SOSS"]
+
+GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS"]
+WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
+TA_TYPES = ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]
 
 log = logging.getLogger(__name__)
 
@@ -57,8 +60,8 @@ class Spec2Pipeline(Pipeline):
     Process JWST spectroscopic exposures from Level 2a to 2b.
 
     Included steps are:
-    assign_wcs, badpix_selfcal, msa_flagging, nsclean, bkg_subtract,
-    imprint_subtract, extract_2d, master_background_mos, wavecorr,
+    assign_wcs, badpix_selfcal, msa_flagging, clean_flicker_noise, bkg_subtract,
+    imprint_subtract, extract_2d, master_background_mos, targ_centroid, wavecorr,
     flat_field, srctype, straylight, fringe, residual_fringe, pathloss,
     barshadow, wfss_contam, photom, pixel_replace, resample_spec,
     cube_build, and extract_1d.
@@ -77,11 +80,12 @@ class Spec2Pipeline(Pipeline):
         "assign_wcs": assign_wcs_step.AssignWcsStep,
         "badpix_selfcal": badpix_selfcal_step.BadpixSelfcalStep,
         "msa_flagging": msaflagopen_step.MSAFlagOpenStep,
-        "nsclean": nsclean_step.NSCleanStep,
+        "clean_flicker_noise": clean_flicker_noise_step.CleanFlickerNoiseStep,
         "bkg_subtract": background_step.BackgroundStep,
         "imprint_subtract": imprint_step.ImprintStep,
         "extract_2d": extract_2d_step.Extract2dStep,
         "master_background_mos": master_background_mos_step.MasterBackgroundMosStep,
+        "targ_centroid": targ_centroid_step.TargCentroidStep,
         "wavecorr": wavecorr_step.WavecorrStep,
         "flat_field": flat_field_step.FlatFieldStep,
         "srctype": srctype_step.SourceTypeStep,
@@ -132,7 +136,6 @@ class Spec2Pipeline(Pipeline):
         self.cube_build.skip_dqflagging = True
         self.cube_build.pipeline = 2
         self.extract_1d.save_results = self.save_results
-
         # Retrieve the input(s)
         asn = self.load_as_level2_asn(data)
         if len(asn["products"]) > 1 and self.output_file is not None:
@@ -216,67 +219,76 @@ class Spec2Pipeline(Pipeline):
         science_member = science_member[0]
 
         log.info("Working on input %s ...", science_member)
-        with self.open_model(science_member) as science:
-            exp_type = science.meta.exposure.type
-            if isinstance(science, datamodels.CubeModel):
-                multi_int = True
-            else:
-                multi_int = False
+        science = self.prepare_output(science_member)
 
-            # Suffixes are dependent on whether the science is multi-integration or not.
-            if multi_int:
-                suffix = "calints"
-                self.extract_1d.suffix = "x1dints"
-            else:
-                suffix = "cal"
-                self.extract_1d.suffix = "x1d"
+        exp_type = science.meta.exposure.type
+        if isinstance(science, datamodels.CubeModel):
+            multi_int = True
+        else:
+            multi_int = False
 
-            # Check the datamodel to see if it's a grism image, if so get the catalog
-            # name from the asn and record it to the meta
-            if exp_type in WFSS_TYPES:
-                try:
-                    science.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
-                    log.info(f"Using sourcecat file {science.meta.source_catalog}")
-                    science.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
-                    log.info(f"Using segmentation map {science.meta.segmentation_map}")
-                    science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
-                    log.info(f"Using direct image {science.meta.direct_image}")
-                except IndexError:
-                    if science.meta.source_catalog is None:
-                        raise IndexError(
-                            "No source catalog specified in association or datamodel"
-                        ) from None
+        # Suffixes are dependent on whether the science is multi-integration or not.
+        if multi_int:
+            suffix = "calints"
+            self.extract_1d.suffix = "x1dints"
+        else:
+            suffix = "cal"
+            self.extract_1d.suffix = "x1d"
 
-            # Decide on what steps can actually be accomplished based on the
-            # provided input.
-            self._step_verification(exp_type, science, members_by_type, multi_int)
-            # Start processing the individual steps.
-            # `assign_wcs` is the critical step. Without it, processing cannot proceed.
-            assign_wcs_exception = None
+        # Check the datamodel to see if it's a dispersed image, if so get the catalog
+        # name from the asn and record it to the meta
+        if exp_type in WFSS_TYPES:
             try:
-                calibrated = self.assign_wcs.run(science)
-            except Exception as exception:
-                assign_wcs_exception = exception
-            if (
-                assign_wcs_exception is not None
-                or calibrated.meta.cal_step.assign_wcs != "COMPLETE"
-            ):
-                messages = (
-                    "Assign_wcs processing was skipped.",
-                    "Aborting remaining processing for this exposure.",
-                    "No output product will be created.",
-                )
-                if self.assign_wcs.skip:
-                    for message in messages:
-                        log.warning(message)
-                    return
+                science.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
+                log.info(f"Using sourcecat file {science.meta.source_catalog}")
+                science.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
+                log.info(f"Using segmentation map {science.meta.segmentation_map}")
+                science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
+                log.info(f"Using direct image {science.meta.direct_image}")
+            except IndexError:
+                if science.meta.source_catalog is None:
+                    raise IndexError(
+                        "No source catalog specified in association or datamodel"
+                    ) from None
+
+        # Check to see if the model is an LRS slit or slitless exposure
+        # and has a TA verification image associated with it.
+        if exp_type in TA_TYPES:
+            try:
+                ta_file = members_by_type["target_acquisition"][0]
+            except (IndexError, KeyError):
+                ta_file = None
+            if str(self.targ_centroid.ta_file).lower() == "none":
+                self.targ_centroid.ta_file = ta_file
+            log.info(f"Using TA verification image {self.targ_centroid.ta_file}")
+
+        # Decide on what steps can actually be accomplished based on the
+        # provided input.
+        self._step_verification(exp_type, science, members_by_type, multi_int)
+        # Start processing the individual steps.
+        # `assign_wcs` is the critical step. Without it, processing cannot proceed.
+        assign_wcs_exception = None
+        try:
+            calibrated = self.assign_wcs.run(science)
+        except Exception as exception:
+            assign_wcs_exception = exception
+        if assign_wcs_exception is not None or calibrated.meta.cal_step.assign_wcs != "COMPLETE":
+            messages = (
+                "Assign_wcs processing was skipped.",
+                "Aborting remaining processing for this exposure.",
+                "No output product will be created.",
+            )
+            if self.assign_wcs.skip:
+                for message in messages:
+                    log.warning(message)
+                return
+            else:
+                for message in messages:
+                    log.error(message)
+                if assign_wcs_exception is not None:
+                    raise assign_wcs_exception
                 else:
-                    for message in messages:
-                        log.error(message)
-                    if assign_wcs_exception is not None:
-                        raise assign_wcs_exception
-                    else:
-                        raise RuntimeError("Cannot determine WCS.")
+                    raise RuntimeError("Cannot determine WCS.")
 
         # Steps whose order is the same for all types of input:
 
@@ -299,30 +311,30 @@ class Spec2Pipeline(Pipeline):
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging.run(calibrated)
 
-        # apply the "nsclean" 1/f correction to NIRSpec images
-        calibrated = self.nsclean.run(calibrated)
+        # apply the 1/f correction to NIRSpec images
+        calibrated = self.clean_flicker_noise.run(calibrated)
 
-        # Apply nsclean to NIRSpec imprint and background members
-        if not self.nsclean.skip:
-            save_results = self.nsclean.save_results
+        # Apply clean_flicker_noise to NIRSpec imprint and background members
+        if not self.clean_flicker_noise.skip:
+            save_results = self.clean_flicker_noise.save_results
 
             for i, imprint_file in enumerate(members_by_type["imprint"]):
                 if save_results:
                     if isinstance(imprint_file, datamodels.JwstDataModel):
-                        self.nsclean.output_file = imprint_file.meta.filename
+                        self.clean_flicker_noise.output_file = imprint_file.meta.filename
                     else:
-                        self.nsclean.output_file = Path(imprint_file).name
-                imprint_nsclean = self.nsclean.run(imprint_file)
-                members_by_type["imprint"][i] = imprint_nsclean
+                        self.clean_flicker_noise.output_file = Path(imprint_file).name
+                imprint_clean = self.clean_flicker_noise.run(imprint_file)
+                members_by_type["imprint"][i] = imprint_clean
 
             for i, bkg_file in enumerate(members_by_type["background"]):
                 if save_results:
                     if isinstance(bkg_file, datamodels.JwstDataModel):
-                        self.nsclean.output_file = bkg_file.meta.filename
+                        self.clean_flicker_noise.output_file = bkg_file.meta.filename
                     else:
-                        self.nsclean.output_file = Path(bkg_file).name
-                bkg_nsclean = self.nsclean.run(bkg_file)
-                members_by_type["background"][i] = bkg_nsclean
+                        self.clean_flicker_noise.output_file = Path(bkg_file).name
+                bkg_clean = self.clean_flicker_noise.run(bkg_file)
+                members_by_type["background"][i] = bkg_clean
 
         # Leakcal subtraction (imprint)  occurs before background subtraction
         # on a per-exposure basis.
@@ -352,6 +364,8 @@ class Spec2Pipeline(Pipeline):
             calibrated = self._process_grism(calibrated)
         elif exp_type == "NRS_MSASPEC":
             calibrated = self._process_nirspec_msa_slits(calibrated)
+        elif exp_type == "MIR_WFSS":
+            calibrated = self._process_miri_wfss(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
         elif exp_type == "NIS_SOSS":
@@ -492,16 +506,16 @@ class Spec2Pipeline(Pipeline):
             log.debug('Science data does not allow MSA flagging. Skipping "msa_flagging".')
             self.msa_flagging.skip = True
 
-        # Check for NIRSpec "nsclean" correction. Attempt to apply to
+        # Check for NIRSpec 1/f correction. Attempt to apply to
         # IFU, MOS, FIXEDSLIT, and NRS_BRIGHTOBJ modes, for now.
-        if not self.nsclean.skip and exp_type not in [
+        if not self.clean_flicker_noise.skip and exp_type not in [
             "NRS_MSASPEC",
             "NRS_IFU",
             "NRS_FIXEDSLIT",
             "NRS_BRIGHTOBJ",
         ]:
-            log.debug('Science data does not allow NSClean correction. Skipping "nsclean".')
-            self.nsclean.skip = True
+            log.debug("Science data does not allow 1/f correction. Skipping clean_flicker_noise.")
+            self.clean_flicker_noise.skip = True
 
         # Check for image-to-image background subtraction can be done.
         if not self.bkg_subtract.skip:
@@ -562,6 +576,12 @@ class Spec2Pipeline(Pipeline):
             log.debug('Science data does not allow fringe correction. Skipping "fringe".')
             self.fringe.skip = True
 
+        if not self.targ_centroid.skip and exp_type not in TA_TYPES:
+            log.warning(
+                'Science data does not allow targ_centroid correction. Skipping "targ_centroid".'
+            )
+            self.targ_centroid.skip = True
+
         # Apply pathloss correction to MIRI LRS, NIRSpec, and NIRISS SOSS exposures
         if not self.pathloss.skip and exp_type not in [
             "MIR_LRS-FIXEDSLIT",
@@ -593,6 +613,48 @@ class Spec2Pipeline(Pipeline):
             )
             self.wfss_contam.skip = True
 
+    def _determine_e_per_sec_image(self, calibrated):
+        """
+        Convert image to e/sec using the gain reference file.
+
+        Parameters
+        ----------
+        calibrated : `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The input science data model.
+
+        Returns
+        -------
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The calibrated data converted to e/sec.
+        """
+        # Find and load the gain reference file that we need
+        gain_filename = self.get_reference_file(calibrated, "gain")
+        log.info("Using GAIN reference file %s", gain_filename)
+        wfss_esec = calibrated.copy()
+
+        with datamodels.GainModel(gain_filename) as gain_model:
+            # Always use the full-frame version of the gain ref file,
+            # even the science data are taken with a subarray
+            gain_image = gain_model.data
+
+            # Compute the simple mean of the gain image, excluding reference pixels.
+            # The gain ref file doesn't have a DQ array that can be used to
+            # mask bad values, so manually exclude NaN's and gain <= 0.
+            gain_image[gain_image <= 0.0] = np.nan
+            mean_gain = np.nanmean(gain_image[4:-4, 4:-4])
+            log.info("mean gain = %s", mean_gain)
+
+            # Apply gain to the intermediate WFSS image
+            mean_gain_sqr = mean_gain**2
+            wfss_esec.data *= mean_gain
+            wfss_esec.var_poisson *= mean_gain_sqr
+            wfss_esec.var_rnoise *= mean_gain_sqr
+            wfss_esec.var_flat *= mean_gain_sqr
+            wfss_esec.err = np.sqrt(
+                wfss_esec.var_poisson + wfss_esec.var_rnoise + wfss_esec.var_flat
+            )
+        return wfss_esec
+
     def _process_grism(self, data):
         """
         Calibrate WFSS & Grism data.
@@ -617,36 +679,10 @@ class Spec2Pipeline(Pipeline):
         # Create and save a WFSS e-/sec image, if requested
         if self.save_wfss_esec:
             log.info("Creating WFSS e-/sec product")
-
-            # Find and load the gain reference file that we need
-            gain_filename = self.get_reference_file(calibrated, "gain")
-            log.info("Using GAIN reference file %s", gain_filename)
-            with datamodels.GainModel(gain_filename) as gain_model:
-                # Always use the full-frame version of the gain ref file,
-                # even the science data are taken with a subarray
-                gain_image = gain_model.data
-
-                # Compute the simple mean of the gain image, excluding reference pixels.
-                # The gain ref file doesn't have a DQ array that can be used to
-                # mask bad values, so manually exclude NaN's and gain <= 0.
-                gain_image[gain_image <= 0.0] = np.nan
-                mean_gain = np.nanmean(gain_image[4:-4, 4:-4])
-                log.info("mean gain = %s", mean_gain)
-
-                # Apply gain to the intermediate WFSS image
-                wfss_esec = calibrated.copy()
-                mean_gain_sqr = mean_gain**2
-                wfss_esec.data *= mean_gain
-                wfss_esec.var_poisson *= mean_gain_sqr
-                wfss_esec.var_rnoise *= mean_gain_sqr
-                wfss_esec.var_flat *= mean_gain_sqr
-                wfss_esec.err = np.sqrt(
-                    wfss_esec.var_poisson + wfss_esec.var_rnoise + wfss_esec.var_flat
-                )
-
-                # Save the WFSS e-/sec image
-                self.save_model(wfss_esec, suffix="esec", force=True)
-                del wfss_esec
+            wfss_esec = self._determine_e_per_sec_image(calibrated)
+            # Save the WFSS e-/sec image
+            self.save_model(wfss_esec, suffix="esec", force=True)
+            del wfss_esec
 
         # Continue with remaining calibration steps, using the original
         # DN/sec image
@@ -657,6 +693,43 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss.run(calibrated)
         calibrated = self.barshadow.run(calibrated)
         calibrated = self.wfss_contam.run(calibrated)
+        calibrated = self.photom.run(calibrated)
+        return calibrated
+
+    def _process_miri_wfss(self, data):
+        """
+        Calibrate MIRI WFSS  data.
+
+        Determine the order of the steps
+
+        Parameters
+        ----------
+        data : JWSTDataModel
+            The input science data model.
+
+        Returns
+        -------
+        JWSTDataModel
+            The calibrated data model.
+        """
+        calibrated = data.copy()
+        # Create and save a WFSS e-/sec image, if requested
+        if self.save_wfss_esec:
+            log.info("Creating WFSS e-/sec product")
+            wfss_esec = self._determine_e_per_sec_image(calibrated)
+            # Save the WFSS e-/sec image
+            self.save_model(wfss_esec, suffix="esec", force=True)
+            del wfss_esec
+
+        # More study required on the best approach for flat fielding with MIRI WFSS
+        # For now we are allowing flat fielding. This may change in the future.
+
+        # Continue with remaining calibration steps, using the original
+        # DN/sec image
+        calibrated = self.flat_field.run(calibrated)
+        calibrated = self.extract_2d.run(calibrated)
+        calibrated = self.srctype.run(calibrated)
+        calibrated = self.pathloss.run(calibrated)
         calibrated = self.photom.run(calibrated)
         return calibrated
 
@@ -780,6 +853,10 @@ class Spec2Pipeline(Pipeline):
                 for step in fs_steps:
                     setattr(calib_mos.meta.cal_step, step, getattr(calib_fss.meta.cal_step, step))
 
+        # Clean up the old models, no longer needed
+        del calibrated
+        del calib_fss
+
         return calib_mos
 
     def _process_niriss_soss(self, data):
@@ -822,7 +899,15 @@ class Spec2Pipeline(Pipeline):
         `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model
         """
+        if data.meta.exposure.type in TA_TYPES:
+            # convert to SlitModel type to be more in line with other spectroscopic modes
+            slit_model = datamodels.SlitModel(data)
+            for attr in ["xstart", "ystart", "xsize", "ysize"]:
+                setattr(slit_model, attr, getattr(data.meta.subarray, attr))
+            data.close()
+            data = slit_model
         calibrated = self.srctype.run(data)
+        calibrated = self.targ_centroid.run(calibrated)
         calibrated = self.straylight.run(calibrated)
         calibrated = self.flat_field.run(calibrated)
         calibrated = self.fringe.run(calibrated)

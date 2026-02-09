@@ -28,7 +28,7 @@ def is_subarray(input_model):
 
     Parameters
     ----------
-    input_model : `jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input data model to be checked.
 
     Returns
@@ -67,10 +67,10 @@ def ref_matches_sci(sci_model, ref_model):
 
     Parameters
     ----------
-    sci_model : `jwst.datamodels.JwstDataModel`
+    sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data model.
 
-    ref_model : `jwst.datamodels.JwstDataModel`
+    ref_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Reference file data model.
 
     Returns
@@ -231,15 +231,15 @@ def get_subarray_model(sci_model, ref_model):
 
     Parameters
     ----------
-    sci_model : `jwst.datamodels.JwstDataModel`
+    sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data model.
 
-    ref_model : `jwst.datamodels.JwstDataModel`
+    ref_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Reference file data model.
 
     Returns
     -------
-    sub_model : `jwst.datamodels.JwstDataModel`
+    sub_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Subarray version of the reference file model.
     """
     # If science data is in multistripe readout, use
