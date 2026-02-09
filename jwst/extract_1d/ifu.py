@@ -1087,7 +1087,7 @@ def get_coordinates(input_model, x0, y0):
     wavelength : ndarray, 1D
         The wavelength in micrometers at each pixel.
     """
-    if input_model.meta.hasattr("wcs"):
+    if getattr(input_model.meta, "wcs", None) is not None:
         wcs = input_model.meta.wcs
     else:
         log.warning("WCS not found in input.")
