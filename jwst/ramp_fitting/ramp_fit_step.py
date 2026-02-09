@@ -1,5 +1,6 @@
 import logging
 
+import asdf
 import numpy as np
 from stcal.ramp_fitting import ramp_fit
 from stcal.ramp_fitting.likely_fit import LIKELY_MIN_NGROUPS
@@ -261,6 +262,13 @@ class RampFitStep(Step):
             opt_model = create_optional_results_model(result, opt_info)
             self.save_model(opt_model, "fitopt", output_file=self.opt_name)
 
+        # For the LIKELY algorithm, save chi-square array.
+        if self.algorithm.lower() == "LIKELY" and "chisq" in image_info:
+            likely_filename = self.get_likely_filename(self):
+            tree = {"chisq_data": image_info["chisq"]}
+            with asdf.AsdfFile(tree) as af:
+                af.write_to(likely_filename)
+
         # Create models from possibly updated info
         out_model, int_model = None, None
         if image_info is not None and integ_info is not None:
@@ -285,6 +293,40 @@ class RampFitStep(Step):
             del result
 
         return out_model, int_model
+
+
+    def get_likely_filename(self):
+        """
+        Returns file name of the chisq file name for the LIKELY algorithm.
+
+        Returns
+        -------
+        filename : str
+            The file name of the chisq file for the LIKELY algorithm
+        """
+        base_name = self.meta.filename
+        rstring = None
+        if "uncal" in base_name:
+            rstring = "uncal"
+        elif "jump" in base_name:
+            rstring = "jump"
+        elif "ramp" in base_name:
+            rstring = "ramp"
+
+        # Determine replace string and extension.
+        if rstring is not None:
+            new_name = base_name.replace(rstring, "likely_chisq")
+            extension = ".asdf"
+        else:
+            new_name = base_name
+            extension = "likely_chisq.asdf"
+
+        if new_name.endswith(".fits") or new_name.endswith(".asdf"):
+            filename = new_name.replace(".fits", extension)
+        else:
+            filename += extension
+
+        return filename
 
 
 def set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags):
