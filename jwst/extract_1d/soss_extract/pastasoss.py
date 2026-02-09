@@ -12,12 +12,12 @@ log = logging.getLogger(__name__)
 
 SOSS_XDIM = 2048
 SOSS_YDIM = 300
-CUTOFFS = [SOSS_XDIM, 1783, 1134]  # max pixel x-index to consider for a given order
+CUTOFFS = [2048, 1783, 1134]  # max pixel x-index to consider for a given order
 WAVEMAP_WLMIN = 0.5  # min wavelength for pastasoss 1-d wavelength grid
 WAVEMAP_WLMAX = 5.5  # max wavelength for pastasoss 1-d wavelength grid
 WAVEMAP_NWL = 5001  # number of wavelengths for pastasoss 1-d wavelength grid
-SUBARRAY_YMIN = 2048 - 256  # pixel y-value defining the start of the subarray
-PWCPOS_BOUNDS = (245.79 - 0.25, 245.79 + 0.25)  # reasonable PWC position limits
+SUBARRAY_YMIN = 1792  # pixel y-value defining the start of the subarray
+PWCPOS_BOUNDS = (245.54, 246.04)  # reasonable PWC position limits
 DEFAULT_CRDS_PARAMS = {
     "meta.instrument.name": "NIRISS",
     "meta.observation.date": datetime.today().strftime("%Y-%m-%d"),
@@ -151,12 +151,7 @@ def _get_wavelengths(refmodel, x, pwcpos, order):
 
     # scale x and pwcpos offset to be between 0 and 1
     x_scaled = x_scaler(x)
-    if int(order) == 2:
-        # Reference file has a bug for order 2 where the scale_extents are not
-        # defined as offsets: they have not had the commanded position subtracted
-        offset = np.ones_like(x) * pwcpos
-    else:
-        offset = np.ones_like(x) * (pwcpos - refmodel.meta.pwcpos_cmd)
+    offset = np.ones_like(x) * (pwcpos - refmodel.meta.pwcpos_cmd)
     offset_scaled = pwcpos_offset_scaler(offset)
 
     wavelengths = poly(x_scaled, offset_scaled)
