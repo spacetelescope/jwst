@@ -3,7 +3,6 @@ import pytest
 from stdatamodels.jwst.datamodels import SossWaveGridModel, SpecModel
 
 from jwst.extract_1d.soss_extract.soss_extract import (
-    SHORT_CUTOFF,
     DetectorModelOrder,
     Integration,
     _build_null_spec_table,
@@ -11,6 +10,8 @@ from jwst.extract_1d.soss_extract.soss_extract import (
     _process_one_integration,
 )
 from jwst.extract_1d.soss_extract.tests.helpers import DATA_SHAPE
+
+SHORT_CUTOFF = [None, 0.58, 0.63]
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
@@ -37,7 +38,6 @@ def monkeypatch_setup(
     monkeypatch.setattr(
         "jwst.extract_1d.soss_extract.soss_extract.make_background_mask", mock_make_background_mask
     )
-    monkeypatch.setattr("jwst.extract_1d.soss_extract.soss_extract.CUTOFFS", [200, 200, 200])
 
 
 @pytest.fixture
@@ -61,6 +61,7 @@ def detector_models(
             kernel_func=webb_kernels[order - 1],
             kernel_native=webb_kernels[order - 1],
             subarray="SUBSTRIP256",
+            trace_cutoff=200,
         )
         detector_models.append(detector_model)
     return detector_models
