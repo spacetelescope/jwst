@@ -18,15 +18,25 @@ The ``adaptive_trace_model`` step has the following step-specific arguments:
   grid.
 
 ``--slope_limit`` (float, default=0.1)
-  Slope limit for using splines in oversample.  This parameter is used to distinguish
-  between bright, compact sources and faint, diffuse sources for oversampling purposes.
-  For compact sources (high slope), the spline models are used in the interpolation.
-  For diffuse sources (low slope), a linear interpolation is used.  Set the slope
-  limit to lower values to use the spline model for fainter sources.  If set to zero,
-  the spline model will always be used.
+  Slope limit for using the spline model to compute the trace.  This parameter is used to
+  distinguish between bright, compact sources for which the spline model is appropriate and
+  faint, diffuse sources for which it is not.
+  For compact sources (high slope), the spline models are saved in the output trace model
+  and are used to compute the oversampled flux if oversampling is performed.
+  For diffuse sources (low slope), a linear interpolation is used in oversampling.
+  Set the slope limit to lower values to use the spline model for fainter sources.
+  If set to zero, the spline model will always be used.
 
 ``--psf_optimal`` boolean(default=False)
   If set to True, the values for ``fit_threshold`` and ``slope_limit`` are ignored and
   the spline models are fit and used for all data.  Also, residual differences from
-  the spline model are not interpolated and added to the spline fits. This option is
-  generally only appropriate for simple, isolated point sources.
+  the spline model are not interpolated and added to the spline fits in oversampling.
+  This option is generally only appropriate for simple, isolated point sources.
+
+``--save_intermediate_results`` boolean(default=False)
+  If set to True, additional image models are saved to disk for inspection, containing the full
+  spline model, the spline model as used for compact sources, the linearly interpolated
+  data, and the residual flux model.  The saved files will have suffix
+  ``spline_full``, ``spline_used``, ``linear_interp``, and ``spline_residual``,
+  respectively.  The linear interpolation and residual flux files are saved only
+  if oversampling was performed.

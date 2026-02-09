@@ -37,8 +37,10 @@ class AdaptiveTraceModelStep(Step):
         ratio is too low. This decision is controlled by the ``fit_threshold`` parameter:
         lower values will create spline models for more slices.
 
-        After fitting, the set of spline models is then evaluated at each pixel to
-        create a model of the spectral trace at all valid data points.
+        After fitting, a further check is performed, using the ``slope_limit`` parameter
+        to identify bright, compact source regions for which the spline models are likely
+        to be valid. The set of spline models is then evaluated at each pixel within a
+        compact source region to create a model of the spectral trace.
 
         If no oversample factor is specified, the only change to the datamodel
         is to attach the resulting spectral trace image, in the ``trace_model``
@@ -53,7 +55,7 @@ class AdaptiveTraceModelStep(Step):
         To perform this oversampling, the trace model is used in combination with a
         linear interpolation at each dispersion element.  Which model is used at each
         pixel depends on some heuristic decisions derived from the data: bright, compact
-        source regions generally use the spline model; faint, diffuse regions use the linear
+        source regions use the spline model; faint, diffuse regions use the linear
         interpolation.  The ``slope_limit`` parameter can be modified to impact the decision
         on whether sources are bright and compact enough to use the spline models. Lower
         values will use the spline model for fainter sources.
@@ -118,19 +120,23 @@ class AdaptiveTraceModelStep(Step):
 
                 outpath = self.make_output_path(basepath=basepath, suffix="spline_full")
                 full_spline.save(outpath)
+                full_spline.close()
                 log.info(f"Saved full spline model in {outpath}")
 
                 outpath = self.make_output_path(basepath=basepath, suffix="spline_used")
                 used_spline.save(outpath)
+                used_spline.close()
                 log.info(f"Saved spline model for compact sources in {outpath}")
 
                 if linear is not None:
                     outpath = self.make_output_path(basepath=basepath, suffix="linear_interp")
                     linear.save(outpath)
+                    linear.close()
                     log.info(f"Saved linearly interpolated data in {outpath}")
                 if residual is not None:
                     outpath = self.make_output_path(basepath=basepath, suffix="spline_residual")
                     residual.save(outpath)
+                    residual.close()
                     log.info(f"Saved spline residuals in {outpath}")
 
         return output_model

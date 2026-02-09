@@ -74,11 +74,20 @@ slice is separately modeled as follows:
 The set of spline models and scale factors for each wavelength in each slice constitutes
 the adaptive trace model for the spectral image.
 
+The spline modeling assumptions are generally only appropriate to compact sources, so an
+additional check is made to determine regions for which the model is likely to be accurate.
+The slope of the model flux is computed for each column pixel as the
+absolute difference between the normalized spline model at that pixel and its immediate neighbor.
+Slope values higher than a threshold value (step parameter ``slope_limit``) indicate
+a compact source region.  The trace model will be evaluated for these regions, with some
+padding for nearby pixels; it will not be evaluated in other regions.
+
 If no oversampling is desired (i.e. the ``oversample`` parameter is set to 1.0), then the trace
-model is evaluated at every pixel in the input image to create a wavelength-dependent spatial
-profile.  This image is stored in the output datamodel, in the ``trace_model`` attribute, then
-the step returns without further changes to the input datamodel.  The rest of the algorithm
-description, below, applies only to oversampling.
+model is evaluated at every input pixel in a compact source region to create a wavelength-dependent
+spatial profile.  This image is stored in the output datamodel, in the ``trace_model`` attribute.
+Regions for which a spline model could not be computed, or which did not meet the compact source
+criteria, are set to NaN in the image. The step then returns without further changes to the input
+datamodel.  The rest of the algorithm description, below, applies only to oversampling.
 
 Oversample the Flux
 ^^^^^^^^^^^^^^^^^^^
@@ -99,8 +108,8 @@ processed separately, by interpolating the spectral flux onto the new grid as fo
    #. Construct the residual between the evaluated spline fit and the original data, and
       linearly interpolate it onto the oversampled coordinates (:math:`f_{residual}`).
 
-   #. Compute the slope of each column pixel as the difference between the normalized spline
-      model at that pixel and its immediate neighbor.
+   #. Compute the slope of each column pixel as the absolute difference between the normalized
+      spline model at that pixel and its immediate neighbor.
 
    #. Evaluate the spline model at the oversampled coordinates (:math:`f_{spline}`).
 
@@ -117,6 +126,12 @@ compact sources and a linear interpolation for faint, diffuse regions. The resid
 into the spline model accounts for any local structures that are not well modeled by the spline
 profile.
 
+Note that the interpolation process may provide output values for some pixels corresponding to
+data with NaN values in the input.  If the region is modeled by a valid spline interpolation, the
+missing values over the compact source are extrapolated and replaced with real values from the
+spline model plus residual flux.  These values will be marked in the DQ plane with a FLUX_ESTIMATED
+flag (see below).
+
 Optionally, if the ``psf_optimal`` step parameter is set to True, fit threshold and slope limits
 are ignored, so that spline models are created and used for all pixels, and the residual image
 is not added into the oversampled flux.  This option is only appropriate for simple, isolated
@@ -127,9 +142,10 @@ Alternately, crowded fields with multiple stars may benefit particularly from se
 the ``fit_threshold`` and ``slope_limit`` parameters to zero in order to ensure proper
 modeling of both bright and faint stars.
 
-Alongside the oversampled flux image, the set of spline models evaluated at all oversampled
-coordinates (:math:`f_{spline}`, above) are saved to the output model in the ``trace_model``
-attribute, as a record of the wavelength-dependent spatial profile for the oversampled data.
+Alongside the oversampled flux image, the set of spline models evaluated at all compact source
+coordinates (:math:`f_{spline}`, above, where the slope condition is met) are saved to the output
+model in the ``trace_model`` attribute, as a record of the wavelength-dependent spatial profile
+for the oversampled data.
 
 Propagate DQ, Error, and Variance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
