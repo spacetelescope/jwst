@@ -16,7 +16,7 @@ __all__ = ["BackgroundStep"]
 
 log = logging.getLogger(__name__)
 
-WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]  # adding MIRI WFSS
+WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 
 
 class BackgroundStep(Step):
