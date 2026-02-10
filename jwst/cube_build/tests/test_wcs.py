@@ -238,7 +238,6 @@ def test_footprint_miri(input_frame):
     input_model = mock_miri_model()
     input_model.meta.wcs.available_frames[0] = input_frame
 
-
     this_channel = "3"
     coord_system = "skyalign"
     instrument_info = instrument_defaults.InstrumentInfo()
