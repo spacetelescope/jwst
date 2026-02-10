@@ -73,22 +73,27 @@ def setup_inputs():
 
         rampmodel = RampModel((nints, ngroups, nrows, ncols), int_times=int_times)
 
+        rampmodel.meta.filename = "dummy_uncal.fits"
+
         rampmodel.meta.instrument.name = "MIRI"
         rampmodel.meta.instrument.detector = "MIRIMAGE"
         rampmodel.meta.instrument.filter = "F480M"
+
         rampmodel.meta.observation.date = "2015-10-13"
+
         rampmodel.meta.exposure.type = "MIR_IMAGE"
         rampmodel.meta.exposure.group_time = deltatime
-        rampmodel.meta.subarray.name = "FULL"
-        rampmodel.meta.subarray.xstart = 1
-        rampmodel.meta.subarray.ystart = 1
-        rampmodel.meta.subarray.xsize = ncols
-        rampmodel.meta.subarray.ysize = nrows
         rampmodel.meta.exposure.frame_time = deltatime
         rampmodel.meta.exposure.ngroups = ngroups
         rampmodel.meta.exposure.group_time = deltatime
         rampmodel.meta.exposure.nframes = 1
         rampmodel.meta.exposure.groupgap = 0
+
+        rampmodel.meta.subarray.name = "FULL"
+        rampmodel.meta.subarray.xstart = 1
+        rampmodel.meta.subarray.ystart = 1
+        rampmodel.meta.subarray.xsize = ncols
+        rampmodel.meta.subarray.ysize = nrows
 
         gain = GainModel(data=gain)
         gain.meta.instrument.name = "MIRI"
@@ -354,6 +359,29 @@ def test_set_group_warnings(firstgroup, lastgroup, message, log_watcher):
     watcher = log_watcher("jwst.ramp_fitting.ramp_fit_step", message=message)
     set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
     watcher.assert_seen()
+
+
+def test_likely_output(tmp_path, setup_inputs):
+    ingain, inreadnoise = 6, 7
+    grouptime = 3.0
+    nints, ngroups, nrows, ncols = 1, 5, 2, 2
+    model, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups,
+        readnoise=inreadnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        deltatime=grouptime,
+    )
+
+    # Call ramp fit through the step class
+    slopes, cube_model = RampFitStep.call(
+        model,
+        algorithm = 'LIKELY',
+        override_gain=gain,
+        override_readnoise=rnModel,
+    )
 
 
 def one_group_suppressed(nints, suppress, setup_inputs):

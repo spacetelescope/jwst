@@ -263,8 +263,10 @@ class RampFitStep(Step):
             self.save_model(opt_model, "fitopt", output_file=self.opt_name)
 
         # For the LIKELY algorithm, save chi-square array.
-        if self.algorithm.lower() == "LIKELY" and "chisq" in image_info:
-            likely_filename = self.get_likely_filename(self):
+        if self.algorithm.lower() == "likely" and "chisq" in image_info:
+            print(" ----- We are here -----")
+            likely_filename = self.get_likely_filename(result)
+            print(f"{likely_filename = }")
             tree = {"chisq_data": image_info["chisq"]}
             with asdf.AsdfFile(tree) as af:
                 af.write_to(likely_filename)
@@ -295,7 +297,7 @@ class RampFitStep(Step):
         return out_model, int_model
 
 
-    def get_likely_filename(self):
+    def get_likely_filename(self, model):
         """
         Returns file name of the chisq file name for the LIKELY algorithm.
 
@@ -304,7 +306,8 @@ class RampFitStep(Step):
         filename : str
             The file name of the chisq file for the LIKELY algorithm
         """
-        base_name = self.meta.filename
+        # XXX Use suffix from lib
+        base_name = model.meta.filename
         rstring = None
         if "uncal" in base_name:
             rstring = "uncal"
