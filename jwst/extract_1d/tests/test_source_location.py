@@ -1,6 +1,7 @@
 import gwcs
 import numpy as np
 import pytest
+from astropy import units as u
 from astropy.modeling.models import Identity, Scale
 
 from jwst.extract_1d import source_location as sl
@@ -288,7 +289,20 @@ def test_nod_pair_location_miri(mock_miri_lrs_fs, dispaxis):
 
     # mock v2v3 transform
     model.meta.wcs = gwcs.WCS(
-        [model.meta.wcs.pipeline[0], ("v2v3", Identity(3)), model.meta.wcs.pipeline[1]]
+        [
+            model.meta.wcs.pipeline[0],
+            (
+                gwcs.CompositeFrame(
+                    [
+                        gwcs.Frame2D(name="frame", axes_order=(0, 1)),
+                        gwcs.SpectralFrame(name="lambda", axes_order=(2,), unit=(u.um,)),
+                    ],
+                    name="v2v3",
+                ),
+                Identity(3),
+            ),
+            model.meta.wcs.pipeline[1],
+        ]
     )
     model.meta.wcsinfo.v3yangle = 1.0
     model.meta.wcsinfo.v2_ref = 1.0
