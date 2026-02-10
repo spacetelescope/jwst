@@ -227,7 +227,9 @@ addopts = [
 ]
 xfail_strict = true
 filterwarnings = [
-    "error"
+    "error",
+    # https://github.com/astropy/astropy/issues/19216
+    "ignore:The chararray class is deprecated:DeprecationWarning",
 ]
 
 [tool.coverage.run]
