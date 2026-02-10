@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import numpy as np
 
@@ -112,17 +113,19 @@ def box_extract(scidata, scierr, scimask, box_weights):
     # Set the weights of masked pixels to zero.
     box_weights[mask] = 0.0
 
-    # Extract total flux (sum over columns).
-    flux = np.nansum(box_weights * data, axis=0)
-    npix = np.nansum(box_weights, axis=0)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value encountered in multiply", RuntimeWarning)
+        # Extract total flux (sum over columns).
+        flux = np.nansum(box_weights * data, axis=0)
+        npix = np.nansum(box_weights, axis=0)
 
-    # Extract flux error (sum of variances).
-    flux_var = np.nansum(box_weights * error**2, axis=0)
-    flux_err = np.sqrt(flux_var)
+        # Extract flux error (sum of variances).
+        flux_var = np.nansum(box_weights * error**2, axis=0)
+        flux_err = np.sqrt(flux_var)
 
-    # Set empty columns to NaN.
-    flux = np.where(npix > 0, flux, np.nan)
-    flux_err = np.where(npix > 0, flux_err, np.nan)
+        # Set empty columns to NaN.
+        flux = np.where(npix > 0, flux, np.nan)
+        flux_err = np.where(npix > 0, flux_err, np.nan)
 
     return cols, flux, flux_err, npix
 

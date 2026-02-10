@@ -1,0 +1,1 @@
+A number of changes to the SOSS ATOCA implementation to impute missing data, use the same uncertainty across integrations, and precompute quantities to improve runtime by a typical factor of 15-30.  Multiprocessing removed from SOSS.

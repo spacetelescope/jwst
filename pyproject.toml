@@ -23,7 +23,7 @@ dependencies = [
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
     "drizzle>=2.2.0,<2.3.0",
-    "gwcs>=0.26.1,<1.0.0",
+    "gwcs>=1.0.1,<2",
     "numpy>=1.25",
     "photutils>=2.1.0",
     "pyparsing>=2.2.1",
@@ -83,7 +83,7 @@ jwst = "jwst.stpipe.integration:get_steps"
 docs = [
     "matplotlib",
     "numpydoc",
-    "sphinx<9",
+    "sphinx",
     "sphinxcontrib-jquery",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
