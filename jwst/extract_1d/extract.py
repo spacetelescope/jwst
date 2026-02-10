@@ -1819,7 +1819,7 @@ def create_extraction(
                     strict=False,
                 )
             ),
-            dtype=datamodels.SpecModel().spec_table.dtype,
+            dtype=datamodels.SpecModel().get_dtype("spec_table"),
         )
 
         spec = datamodels.SpecModel(spec_table=otab)
@@ -1982,7 +1982,7 @@ def _make_output_model(data_model, meta_source):
         output_model = datamodels.TSOMultiSpecModel()
     else:
         output_model = datamodels.MultiSpecModel()
-    if hasattr(meta_source, "int_times"):
+    if getattr(meta_source, "int_times", None) is not None:
         output_model.int_times = meta_source.int_times.copy()
     output_model.update(meta_source, only="PRIMARY")
     return output_model
@@ -2274,7 +2274,7 @@ def run_extract1d(
             populate_time_keywords(input_model, output_model)
     else:
         log.debug("Not copying from the INT_TIMES table because this is not a TSO exposure.")
-        if hasattr(output_model, "int_times"):
+        if getattr(output_model, "int_times", None) is not None:
             del output_model.int_times
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.

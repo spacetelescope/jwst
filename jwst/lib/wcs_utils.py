@@ -36,7 +36,7 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
     if len(model.data.shape) < 2:
         raise ValueError("Input data array is empty; cannot compute wavelengths.")
     # Use the existing wavelength array, if there is one
-    if hasattr(model, "wavelength"):
+    if getattr(model, "wavelength", None) is not None:
         wl_array = model.wavelength.copy()
         got_wavelength = True  # may be reset below
     else:
