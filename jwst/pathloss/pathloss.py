@@ -673,16 +673,20 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
         if not inverse:
             slit.data /= correction.data
             slit.err /= correction.data
-            slit.var_poisson /= correction.data**2
-            slit.var_rnoise /= correction.data**2
-            if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+            if slit.var_poisson is not None:
+                slit.var_poisson /= correction.data**2
+            if slit.var_rnoise is not None:
+                slit.var_rnoise /= correction.data**2
+            if slit.var_flat is not None:
                 slit.var_flat /= correction.data**2
         else:
             slit.data *= correction.data
             slit.err *= correction.data
-            slit.var_poisson *= correction.data**2
-            slit.var_rnoise *= correction.data**2
-            if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+            if slit.var_poisson is not None:
+                slit.var_poisson *= correction.data**2
+            if slit.var_rnoise is not None:
+                slit.var_rnoise *= correction.data**2
+            if slit.var_flat is not None:
                 slit.var_flat *= correction.data**2
 
         slit.pathloss_point = correction.pathloss_point

@@ -369,6 +369,8 @@ def mock_miri_lrs_fs_func():
     model.meta.wcs = simple_wcs_transpose_func()
 
     model.data = np.arange(50 * 50, dtype=float).reshape((50, 50))
+    model.dq = np.zeros((50, 50), dtype=np.uint32)
+    model.err = model.data * 0.02
     model.var_poisson = model.data * 0.02
     model.var_rnoise = model.data * 0.02
     model.var_flat = model.data * 0.05
