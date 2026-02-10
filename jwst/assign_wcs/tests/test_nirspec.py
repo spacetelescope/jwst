@@ -980,7 +980,9 @@ def test_functional_fs_msa(mode):
     # 3D Rotation. It uses the corrected GWA tilt value
     with datamodels.DisperserModel(refs["disperser"]) as disp:
         disperser = nirspec.correct_tilt(
-            disp, im.meta.instrument.gwa_xtilt, im.meta.instrument.gwa_ytilt
+            disp,
+            getattr(im.meta.instrument, "gwa_xtilt", None),
+            getattr(im.meta.instrument, "gwa_ytilt", None),
         )
     collimator2gwa = nirspec.collimator_to_gwa(refs, disperser)
     x_gwa_in, y_gwa_in, z_gwa_in = collimator2gwa(msax, msay)

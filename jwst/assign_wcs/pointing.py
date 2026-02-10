@@ -146,7 +146,7 @@ def wcsinfo_from_model(input_model):
         for j in range(1, wcsaxes + 1):
             pc[i - 1, j - 1] = getattr(input_model.meta.wcsinfo, f"pc{i}_{j}", 1)
     wcsinfo["PC"] = pc
-    wcsinfo["RADESYS"] = input_model.meta.coordinates.reference_frame
+    wcsinfo["RADESYS"] = getattr(input_model.meta.coordinates, "reference_frame", None)
     wcsinfo["has_cd"] = False
     return wcsinfo
 
