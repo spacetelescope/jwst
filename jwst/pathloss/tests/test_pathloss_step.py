@@ -92,29 +92,15 @@ def nirspec_fs_model_extended():
     return create_nirspec_fs_model(source_type="EXTENDED")
 
 
-def mock_get_transform(tfm_from, tfm_to):  # noqa: ARG001
-    """Mock the specific wcs functions needed."""
-    if tfm_from == "detector":
-
-        def return_results(*args, **kwargs):  # noqa: ARG001
-            return 1.0, 1.0, 1.0
-
-        return_results.offset_1 = -300
-        return_results.offset_2 = -300
-        return return_results
-
-    else:
-
-        def return_results(*args, **kwargs):  # noqa: ARG001
-            return 1.0, 1.0
-
-        return return_results
-
-
 @pytest.fixture(scope="module")
 def miri_lrs_model_point():
     model = mock_miri_lrs_fs_func()
-    model.meta.wcs.get_transform = mock_get_transform
+
+    # Mock some WCS data needed for pathloss correction
+    model.meta.wcs.pipeline[0].transform.offset_1 = -10
+    model.meta.wcs.pipeline[0].transform.offset_2 = -10
+    model.meta.target.ra = 45.0
+    model.meta.target.dec = 45.1
     model.meta.target.source_type = "POINT"
     return model
 
@@ -122,7 +108,6 @@ def miri_lrs_model_point():
 @pytest.fixture(scope="module")
 def miri_lrs_model_extended():
     model = mock_miri_lrs_fs_func()
-    model.meta.wcs.get_transform = mock_get_transform
     return model
 
 
