@@ -39,7 +39,9 @@ def nirspec_rate():
     xsize = 2048
     shape = (ysize, xsize)
     im = datamodels.ImageModel(shape)
-    im.var_rnoise += 1
+    # im.var_rnoise = np.ones(shape, dtype=np.float32)
+    # im.var_poisson = np.ones(shape, dtype=np.float32)
+    # im.var_flat = np.ones(shape, dtype=np.float32)
     im.meta.target = {"ra": 100.1237, "dec": 39.86, "source_type_apt": "EXTENDED"}
     im.meta.wcsinfo = {
         "dec_ref": 40,

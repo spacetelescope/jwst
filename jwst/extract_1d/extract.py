@@ -1371,6 +1371,12 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         var_flat = data_model.var_flat
 
     # Make sure variances match data
+    if getattr(data_model, "var_rnoise", None) is None:
+        var_rnoise = np.zeros_like(data)
+    if getattr(data_model, "var_poisson", None) is None:
+        var_poisson = np.zeros_like(data)
+    if getattr(data_model, "var_flat", None) is None:
+        var_flat = np.zeros_like(data)
     if var_rnoise.shape != data.shape:
         var_rnoise = np.zeros_like(data)
     if var_poisson.shape != data.shape:
