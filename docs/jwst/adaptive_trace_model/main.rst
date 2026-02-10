@@ -74,7 +74,7 @@ slice is separately modeled as follows:
 The set of spline models and scale factors for each wavelength in each slice constitutes
 the adaptive trace model for the spectral image.
 
-The spline modeling assumptions are generally only appropriate to compact sources, so an
+The spline modeling assumptions are generally only appropriate for compact sources, so an
 additional check is made to determine regions for which the model is likely to be accurate.
 The slope of the model flux is computed for each column pixel as the
 absolute difference between the normalized spline model at that pixel and its immediate neighbor.
@@ -128,9 +128,8 @@ profile.
 
 Note that the interpolation process may provide output values for some pixels corresponding to
 data with NaN values in the input.  If the region is modeled by a valid spline interpolation, the
-missing values over the compact source are extrapolated and replaced with real values from the
-spline model plus residual flux.  These values will be marked in the DQ plane with a FLUX_ESTIMATED
-flag (see below).
+missing values are extrapolated and replaced with real values from the spline model plus residual
+flux.  These values will be marked in the DQ plane with a FLUX_ESTIMATED flag (see below).
 
 Optionally, if the ``psf_optimal`` step parameter is set to True, fit threshold and slope limits
 are ignored, so that spline models are created and used for all pixels, and the residual image

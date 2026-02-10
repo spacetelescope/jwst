@@ -133,10 +133,16 @@ class AdaptiveTraceModelStep(Step):
                     linear.save(outpath)
                     linear.close()
                     log.info(f"Saved linearly interpolated data in {outpath}")
+                else:
+                    log.info(
+                        f"No linearly interpolated data to save for oversample={self.oversample}"
+                    )
                 if residual is not None:
                     outpath = self.make_output_path(basepath=basepath, suffix="spline_residual")
                     residual.save(outpath)
                     residual.close()
                     log.info(f"Saved spline residuals in {outpath}")
+                else:
+                    log.info(f"No spline residuals to save for oversample={self.oversample}")
 
         return output_model
