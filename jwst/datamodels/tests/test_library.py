@@ -247,13 +247,15 @@ def test_read_metadata_flat_nested(example_library):
         for key in ["_fits_hash", "meta.date"]:
             del flat[key]
         for key in flat.copy().keys():
-            if key.startswith("data."):
-                del flat[key]
+            for arr_key in ["data.", "err.", "dq."]:
+                if key.startswith(arr_key):
+                    del flat[key]
     for nested in [meta_nested, meta_open_nested]:
         del nested["meta"]["date"]
         del nested["_fits_hash"]
-        if "data" in nested:
-            del nested["data"]
+        for arr_key in ["data", "err", "dq"]:
+            if arr_key in nested:
+                del nested[arr_key]
     assert meta_flat == meta_open_flat
     assert meta_nested == meta_open_nested
 

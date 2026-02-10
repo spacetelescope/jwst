@@ -325,7 +325,7 @@ def expand_flat_spec(input_model):
     output_model.update(input_model, only="PRIMARY")
 
     # Copy int_times if present
-    if hasattr(input_model, "int_times"):
+    if getattr(input_model, "int_times", None) is not None:
         output_model.int_times = input_model.int_times.copy()
 
     return output_model
