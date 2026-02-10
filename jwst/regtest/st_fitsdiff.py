@@ -109,7 +109,7 @@ def set_variable_to_empty_list(variable):
     return variable
 
 
-class STFITSDiff(FITSDiff):
+class STFITSDiffFilterWarnings(FITSDiff):
     """FITSDiff class that just filters warnings from astropy FITSDiff."""
 
     def _report(self):
@@ -118,7 +118,7 @@ class STFITSDiff(FITSDiff):
             super()._report()
 
 
-class STFITSDiffBeta(FITSDiff):
+class STFITSDiff(FITSDiff):
     """
     FITSDiff class from astropy with STScI ad hoc changes for STScI regression test reports.
 
@@ -866,9 +866,23 @@ class STImageDataDiff(ImageDataDiff):
                 atol = 0
 
             # Find the indices where the values are not equal
-            diffs, self.max_absolute, self.max_relative = where_not_allclose(
-                self.a, self.b, atol=atol, rtol=rtol, return_maxdiff=True
-            )
+            not_close = ~np.isclose(self.a, self.b, atol=atol, rtol=rtol, equal_nan=True)
+            diffs = np.where(not_close)
+            finite_a = np.isfinite(self.a)
+            finite_b = np.isfinite(self.b)
+            both_finite = finite_a & finite_b
+            self.max_absolute = np.max(np.abs(self.a[both_finite] - self.b[both_finite]))
+            valid_relative = both_finite & (self.b != 0)
+            if np.any(valid_relative):
+                self.max_relative = np.max(
+                    np.abs(self.a[valid_relative] - self.b[valid_relative])
+                    / np.abs(self.b[valid_relative])
+                )
+            else:
+                self.max_relative = np.inf
+            #            diffs, self.max_absolute, self.max_relative = where_not_allclose(
+            #                self.a, self.b, atol=atol, rtol=rtol, return_maxdiff=True
+            #            )
 
             self.diff_total = len(diffs[0])
 
@@ -1311,7 +1325,7 @@ class STTableDataDiff(TableDataDiff):
                 return nonansmax, nonansmin, nonansmean
 
             # Calculate the absolute and relative differences
-            if np.issubdtype(arra.dtype, np.number) and np.issubdtype(arrb.dtype, np.number):
+            if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(arrb.dtype, np.floating):
                 # First count all entries that fail the atol/rtol test
                 # This includes entries where 1 of (a, b) is np.inf, -np.inf or np.nan and the
                 # other is not and also instances where entries are different forms of not
@@ -1322,6 +1336,8 @@ class STTableDataDiff(TableDataDiff):
                 # Find plain differences while excluding entries where both are NaN
                 equal = (arra == arrb) | (np.isnan(arra) & np.isnan(arrb))
                 n_different = (~equal).sum()
+                # Astropy uses "different" to mean outside of tolerances for floating point numbers
+                n_different = number_that_fail_atol_rtol_test
                 if n_different == 0:
                     self.identical_columns.append(col.name)
                     continue
@@ -1331,7 +1347,7 @@ class STTableDataDiff(TableDataDiff):
                 nonansb = arrb[np.isfinite(arrb)]
                 arramax, arramin, arramean = get_stats_if_nonans(nonansa)
                 arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
-                finite_idx = np.isfinite(arra) & np.isfinite(arrb)
+                finite_idx = np.isfinite(arra) & np.isfinite(arrb) & (arrb != 0.0)
                 maxr, meanr, stdr = np.nan, np.nan, np.nan
                 if number_that_fail_atol_rtol_test > 0:
                     absdiff = np.abs(arrb[finite_idx] - arra[finite_idx])
@@ -1344,7 +1360,7 @@ class STTableDataDiff(TableDataDiff):
                     if numeric_fail_atol_rtol > 0:
                         rtol_failures = abs(
                             arra[finite_idx][numeric_fail_idx] - arrb[finite_idx][numeric_fail_idx]
-                        )
+                        ) / abs(arrb[finite_idx][numeric_fail_idx])
                         maxr = np.max(rtol_failures)
                         meanr = np.mean(rtol_failures)
                         stdr = np.std(rtol_failures)
@@ -1375,16 +1391,9 @@ class STTableDataDiff(TableDataDiff):
                     self.diff_total += number_that_fail_atol_rtol_test
 
             elif "P" in col.format or "Q" in col.format:
-                different_idx = (
-                    [idx for idx in range(len(arra)) if (np.any(arra[idx] != arrb[idx]))],
-                )
-                n_different = len(different_idx[0])
-                if n_different == 0:
-                    self.identical_columns.append(col.name)
-                    continue
-                isnumber_a = np.issubdtype(arra[0].dtype, np.number)
-                isnumber_b = np.issubdtype(arrb[0].dtype, np.number)
-                if isnumber_a and isnumber_b:
+                is_float_a = np.issubdtype(arra[0].dtype, np.floating)
+                is_float_b = np.issubdtype(arrb[0].dtype, np.floating)
+                if is_float_a and is_float_b:
                     float_diffs = (
                         [
                             idx
@@ -1393,6 +1402,15 @@ class STTableDataDiff(TableDataDiff):
                         ],
                     )
                     self.fail_atol_rtol_test += len(float_diffs[0])
+                    n_different = len(float_diffs[0])
+                else:
+                    different_idx = (
+                        [idx for idx in range(len(arra)) if (np.any(arra[idx] != arrb[idx]))],
+                    )
+                    n_different = len(different_idx[0])
+                if n_different == 0:
+                    self.identical_columns.append(col.name)
+                    continue
                 zeros_a = np.array([sum(y) for y in [x == 0 for x in arra]]).sum()
                 zeros_b = np.array([sum(y) for y in [x == 0 for x in arrb]]).sum()
                 nans_a = np.array([sum(y) for y in [np.isnan(x) for x in arra]]).sum()
@@ -1410,9 +1428,14 @@ class STTableDataDiff(TableDataDiff):
                 n_fail_rtol, maxr, meanr, stdr = 0.0, 0.0, 0.0, 0.0
                 finite_idx = np.isfinite(concatenated_a) & np.isfinite(concatenated_b)
                 if finite_idx.any():
-                    r_idx = where_not_allclose(
-                        concatenated_a[finite_idx], concatenated_b[finite_idx], self.atol, self.rtol
+                    not_close = ~np.isclose(
+                        concatenated_a[finite_idx],
+                        concatenated_b[finite_idx],
+                        rtol=self.rtol,
+                        atol=self.atol,
+                        equal_nan=True,
                     )
+                    r_idx = np.where(not_close)
                     n_fail_rtol = len(r_idx[0])
                     rtol_failures = abs(
                         concatenated_b[finite_idx][r_idx] - concatenated_a[finite_idx][r_idx]
@@ -1459,7 +1482,10 @@ class STTableDataDiff(TableDataDiff):
             self.different_table_elements += n_different
 
             if self.report_pixel_loc_diffs:
-                # The following lines are identical to the original TableDataDiff code
+                # Use numpy.isclose in preference to astropy where_not_allclose
+                # The latter considers non-finite elements to be "close",
+                # even if they are different types of non-finite elements,
+                # e.g. one is nan and the other is inf, which is not what we want
 
                 if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
                     arrb.dtype, np.floating
@@ -1557,7 +1583,6 @@ class STTableDataDiff(TableDataDiff):
         #   percentage absolute and relative differences.
 
         self._writeln(f"Found {self.different_table_elements} different table data element(s). ")
-        self._writeln(f"{self.fail_atol_rtol_test} failed the (atol, rtol) test")
 
         # Print differences in zeros and nans per column
         self._writeln("\nValues in a and b")
@@ -1567,7 +1592,7 @@ class STTableDataDiff(TableDataDiff):
 
         # Print the difference (b - a) stats
         self._writeln(
-            "\nDifference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)"
+            "\nRelative difference stats for non-NaN diffs that fail the [atol, rtol] test:"
         )
         # make sure the format is acceptable
         for colname in self.report_table.columns:
@@ -1588,9 +1613,13 @@ class STTableDataDiff(TableDataDiff):
 
         if self.identical_columns:
             if len(self.identical_columns) == 1:
-                self._writeln(f"\nColumn {self.identical_columns} is identical")
+                self._writeln(
+                    f"\nColumn {self.identical_columns} is identical (or within tolerances)"
+                )
             else:
-                self._writeln(f"\nColumns {self.identical_columns} are identical")
+                self._writeln(
+                    f"\nColumns {self.identical_columns} are identical (or within tolerances)"
+                )
 
         # Report of column differences from astropy
         if self.report_pixel_loc_diffs:
