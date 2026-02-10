@@ -2,5 +2,7 @@
 Contributing and Reporting Issues
 =================================
 
-``jwst`` is open source - if you would like to contribute code or file an issue,
-please see the `the Github Contribution Guide <https://github.com/spacetelescope/jwst/blob/main/CONTRIBUTING.md>`_.
+`jwst` is an open source package written in Python.
+The source code is available in the `JWST Github repository <https://github.com/spacetelescope/jwst>`_.
+New contributions and contributors are very welcome!
+Please read `CONTRIBUTING.md <https://github.com/spacetelescope/jwst/blob/main/CONTRIBUTING.md>`_ for instructions on how to report an issue or contribute to the codebase.
