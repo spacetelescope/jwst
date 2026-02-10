@@ -6,7 +6,7 @@ from astropy.io import fits
 from astropy.io.fits.diff import FITSDiff
 from stdatamodels.jwst import datamodels
 
-from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff
 
 
 @pytest.fixture(scope="module")
@@ -1004,7 +1004,7 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "col_name zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "FLUX       0 0     0 0    100 100       100         1     1e-05         1      1.98         1",
-        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
+        "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
         "col_name dtype rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- -------",
         "FLUX    f8         2      99       50      49",
@@ -1012,7 +1012,7 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
         "'SB_VAR_FLAT', 'SB_VAR_POISSON', 'SB_VAR_RNOISE', 'SURF_BRIGHT', "
-        "'WAVELENGTH'] are identical",
+        "'WAVELENGTH'] are identical (or within tolerances)",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -1043,7 +1043,7 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "col_name zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "FLUX       2 0     2 0     98 100         1         1         0         1    0.9796         1",
-        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
+        "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
         "col_name dtype rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- -------",
         "FLUX    f8         2       1        1       0",
@@ -1051,7 +1051,7 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
         "'SB_VAR_FLAT', 'SB_VAR_POISSON', 'SB_VAR_RNOISE', 'SURF_BRIGHT', "
-        "'WAVELENGTH'] are identical",
+        "'WAVELENGTH'] are identical (or within tolerances)",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -1082,7 +1082,7 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "col_name  zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "WAVELENGTH       0 1   100 0      0 100       nan       9.9       nan         0       nan      4.95",
-        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
+        "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
         "col_name  dtype rel_diffs rel_max rel_mean rel_std",
         "---------- ----- --------- ------- -------- -------",
         "WAVELENGTH    f8         0     nan      nan     nan",
@@ -1090,7 +1090,7 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
         "'SB_VAR_FLAT', 'SB_VAR_POISSON', 'SB_VAR_RNOISE', 'SURF_BRIGHT'] are "
-        "identical",
+        "identical (or within tolerances)",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -1159,13 +1159,12 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
         "Extension HDU 1 (TEST, 1):",
         "Data contains differences:",
         "Found 2 different table data element(s).",
-        "2 failed the (atol, rtol) test",
         "Values in a and b",
         "col_name zeros_a_b nan_a_b no-nan_a_b    max_a_b       min_a_b       mean_a_b",
         "-------- --------- ------- ---------- ------------- ------------- -------------",
         "col_1       1 1     0 0        5 5     11      4      0      0      4      2",
         "col_2       1 1     2 2        4 4     23      3      0      0      7    1.5",
-        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
+        "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
         "col_name dtype  rel_diffs rel_max rel_mean rel_std",
         "-------- ------ --------- ------- -------- -------",
         "col_1 object         1      10       10       0",
@@ -1478,20 +1477,18 @@ def test_hdus_tables_misc(fitsdiff_default_kwargs):
     expected_report = [
         "Extension HDU 1:",
         "Data contains differences:",
-        "Found 26 different table data element(s).",
-        "16 failed the (atol, rtol) test",
+        "Found 16 different table data element(s).",
         "Values in a and b",
         "col_name  zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "ERROR       1 1     0 5     100 95        99        99         0         0      49.5     47.26",
-        "INDEX       1 0     0 0    100 100        99        99         0         1      49.5     49.55",
         "WAVELENGTH       1 0     0 1     100 99        99        99         0         1      49.5     49.65",
-        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
+        "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
         "col_name   dtype  rel_diffs rel_max rel_mean rel_std",
         "---------- ------- --------- ------- -------- -------",
         "ERROR float32         0     nan      nan     nan",
-        "INDEX   int32         5       1        1       0",
-        "WAVELENGTH float32         5       1        1       0",
+        "WAVELENGTH float32         5       1   0.4567  0.2901",
+        "Column ['FLUX'] is identical (or within tolerances)",
         "* Pixel indices below are 1-based.",
         "Column ERROR data differs in row 90:",
         "a> 90.0",
@@ -1622,7 +1619,7 @@ def test_table_pq_different_array_sizes(mock_table, fitsdiff_default_kwargs):
     assert result is False
     assert "Extra column col_1 of format PI(4) in a" in report
     assert "Extra column col_1 of format PI(5) in b" in report
-    assert "Column ['col_3'] is identical" in report
+    assert "Column ['col_3'] is identical (or within tolerances)" in report
 
 
 def test_table_edge_cases(fitsdiff_default_kwargs):
@@ -1645,7 +1642,6 @@ def test_table_edge_cases(fitsdiff_default_kwargs):
     diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
     report = diff.report()
     assert "Found 12 different table data element(s)" in report
-    assert "12 failed the (atol, rtol) test" in report
     assert "Column ['ALLNANS'] is identical" in report
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     fitsdiff_default_kwargs["numdiffs"] = -1
