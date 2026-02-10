@@ -239,7 +239,7 @@ def copy_spec_metadata(input_model, output_model):
         if prop not in ["meta", "spec_table"]:
             copy_attributes.append(prop)
     for key in copy_attributes:
-        if hasattr(input_model, key) and getattr(input_model, key) is not None:
+        if getattr(input_model, key, None) is not None:
             setattr(output_model, key, getattr(input_model, key))
 
 
@@ -286,7 +286,7 @@ def expand_table(spec):
                 pass
 
         # Copy over relevant metadata from the input model to the output model
-        if hasattr(spec.meta, "wcs"):
+        if getattr(spec.meta, "wcs", None) is not None:
             new_spec.meta.wcs = deepcopy(spec.meta.wcs)
         new_spec.meta.group_id = getattr(spec, "group_id", "")
         new_spec.meta.filename = getattr(spec, "filename", "")

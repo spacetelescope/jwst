@@ -59,7 +59,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
         input_model.meta.cal_step.extract_2d = "SKIPPED"
         return input_model
 
-    if not (hasattr(input_model.meta, "wcs") and input_model.meta.wcs is not None):
+    if getattr(input_model.meta, "wcs", None) is None:
         raise AttributeError(
             "Input model does not have a WCS object; assign_wcs should be run before extract_2d."
         )

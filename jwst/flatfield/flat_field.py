@@ -1796,7 +1796,7 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
     """
     exposure_type = output_model.meta.exposure.type
 
-    got_wcs = hasattr(output_model.meta, "wcs") and output_model.meta.wcs is not None
+    got_wcs = getattr(output_model.meta, "wcs", None) is not None
 
     # Create an output model for the interpolated flat fields.
     interpolated_flats = datamodels.ImageModel()
@@ -1948,7 +1948,7 @@ def flat_for_nirspec_slit(
     xstop = xstart + xsize
     ystop = ystart + ysize
 
-    got_wcs = hasattr(slit.meta, "wcs") and slit.meta.wcs is not None
+    got_wcs = getattr(slit.meta, "wcs", None) is not None
 
     # Get the wavelength at each pixel in the extracted slit data.
     # If the wavelength attribute exists and is populated, use it

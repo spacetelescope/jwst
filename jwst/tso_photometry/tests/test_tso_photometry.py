@@ -1,8 +1,8 @@
-import math
-
 import astropy.units as u
+import gwcs
 import numpy as np
 import pytest
+from astropy.modeling.models import Scale, Shift
 from stdatamodels.jwst import datamodels
 
 from jwst.lib import reffile_utils
@@ -61,30 +61,24 @@ def mk_data_array(shape, value, background, xcenter, ycenter, radius):
 def make_mock_wcs(xcenter, ycenter):
     """Placeholder WCS"""
 
-    def mock_wcs(x, y):
-        if np.isscalar(x):
-            x = [x]
-            y = [y]
-        crpix1 = xcenter
-        crpix2 = ycenter
-        cdelt1 = 0.031
-        cdelt2 = 0.031
-        crval1 = 15.0 * (((34.4147 / 60.0 + 48.0) / 60.0) + 15.0)  # 15h 48m 34.4147s
-        crval2 = ((24.295 / 60.0 + 9.0) / 60.0) + 28.0  # 28d 09' 24.295"
+    cdelt1 = 0.031
+    cdelt2 = 0.031
+    crval1 = 15.0 * (((34.4147 / 60.0 + 48.0) / 60.0) + 15.0)  # 15h 48m 34.4147s
+    crval2 = ((24.295 / 60.0 + 9.0) / 60.0) + 28.0  # 28d 09' 24.295"
 
-        ra, dec = [], []
-        for xval, yval in zip(x, y):
-            decval = (yval + 1.0 - crpix2) * cdelt2 + crval2
-            dec.append(decval)
-            cosdec = math.cos(decval * math.pi / 180.0)
-            ra.append((xval + 1.0 - crpix1) * cdelt1 / cosdec + crval1)
+    # Simple imaging wcs with linear scales along x and y.
+    # Does not account for the cos(dec) in the RA value, but should be
+    # good enough for testing purposes.
+    ra = Shift(1 - xcenter) | Scale(cdelt1) | Shift(crval1)
+    dec = Shift(1 - ycenter) | Scale(cdelt2) | Shift(crval2)
+    det2world = ra & dec
 
-        if np.isscalar(x):
-            return ra[0], dec[0]
-        else:
-            return ra, dec
+    input_frame = gwcs.Frame2D(name="detector")
+    output_frame = gwcs.Frame2D(name="world")
+    pipeline = [(input_frame, det2world), (output_frame, None)]
+    wcs = gwcs.WCS(pipeline)
 
-    return mock_wcs
+    return wcs
 
 
 def set_meta(datamodel, xcenter, ycenter, sub64p=False):

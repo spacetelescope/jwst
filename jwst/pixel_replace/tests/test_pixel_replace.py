@@ -1,8 +1,10 @@
 import os
 from glob import glob
 
+import gwcs
 import numpy as np
 import pytest
+from astropy.modeling.models import Const1D, Mapping
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel as flags
 
@@ -119,15 +121,14 @@ def miri_lrs():
 
 def miri_mrs():
     shape = (20, 20)
-
-    def mock_transform(*args):
-        return None, np.full(shape, 1), None
-
     bad_idx = (10, 10)
     model = cal_data(shape=shape, bad_idx=bad_idx, dispaxis=2, model="ifu")
     model.meta.instrument.name = "MIRI"
     model.meta.exposure.type = "MIR_MRS"
-    model.meta.wcs = {"transform": mock_transform}
+
+    # Mock a wcs that just returns 1 for alpha, beta, lam
+    transform = Mapping((0, 1, 1), n_inputs=2) | Const1D(1) & Const1D(1) & Const1D(1)
+    model.meta.wcs = gwcs.WCS([("detector", transform), ("alpha_beta", None)])
     return model, bad_idx
 
 
