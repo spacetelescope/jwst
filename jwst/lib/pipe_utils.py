@@ -114,9 +114,9 @@ def match_nans_and_flags(input_model):
     data_shape = None
     nan_extensions = ["data", "err", "var_rnoise", "var_poisson", "var_flat"]
     for extension in nan_extensions:
-        if not hasattr(input_model, extension):
+        data = getattr(input_model, extension, None)
+        if data is None:
             continue
-        data = getattr(input_model, extension)
         if is_invalid is None:
             is_invalid = np.isnan(data)
             data_shape = data.shape
@@ -143,9 +143,9 @@ def match_nans_and_flags(input_model):
 
     # Update all the data extensions
     for extension in nan_extensions:
-        if not hasattr(input_model, extension):
+        data = getattr(input_model, extension, None)
+        if data is None:
             continue
-        data = getattr(input_model, extension)
         if data.shape != data_shape:
             continue
         data[is_invalid] = np.nan
