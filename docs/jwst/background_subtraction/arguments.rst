@@ -50,7 +50,8 @@ control the sigma clipping, and are passed as arguments to
 ``--wfss_maxiter``
   Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
   Sets the maximum number of iterations allowed for iterative outlier rejection
-  during determination of the reference background scaling factor. Defaults to 5.
+  during determination of the reference background scaling factor. If set to 0,
+  no outlier rejection will be applied. Defaults to 5.
 
 ``--wfss_rms_stop``
   Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
