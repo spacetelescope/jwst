@@ -442,7 +442,8 @@ def dhs(input_model, reference_files):
         # crpix1 <--> xref_sci and crpix2 <--> yref_sci
         # offsets in X are handled in extract_2d, e.g. if an offset
         # special requirement was specified in the APT.
-        xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
+        xc, yc = (0, 0)  # TODO: Wait for ref files to be delivered with siaf ref positions
+        # (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
 
         if xc is None:
             raise ValueError("XREF_SCI is missing.")
@@ -485,8 +486,8 @@ def dhs(input_model, reference_files):
     )
 
     stripe2det = selector.RegionsSelector(
-        ("x", "y", "order"),
-        ("x0", "y0", "lam", "order", "stripe"),
+        inputs=["x", "y", "order"],
+        outputs=["x0", "y0", "lam", "order", "stripe"],
         label_mapper=label_mapper,
         selector=transforms,
     )
