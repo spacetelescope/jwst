@@ -109,7 +109,7 @@ def grism_wcs():
 
 
 @pytest.fixture(scope="module")
-def photom_ref_model():
+def phot_table():
     """
     Make a mock photom reference model for NIRISS WFSS.
 
@@ -158,4 +158,40 @@ def photom_ref_model():
     phot_table["wavelength"] = wavelength
     phot_table["relresponse"] = relresponse
     phot_table["reluncertainty"] = reluncertainty
+    return phot_table
+
+
+@pytest.fixture(scope="module")
+def photom_ref_model_niriss(phot_table):
+    """
+    Make a mock photom reference model for NIRISS WFSS.
+
+    Parameters
+    ----------
+    phot_table : np.recarray
+        Photometry table.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
+        Photom ref file model.
+    """
     return dm.NisWfssPhotomModel(phot_table=phot_table)
+
+
+@pytest.fixture(scope="module")
+def photom_ref_model_nircam(phot_table):
+    """
+    Make a mock photom reference model for NIRCam WFSS.
+
+    Parameters
+    ----------
+    phot_table : np.recarray
+        Photometry table.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`
+        Photom ref file model.
+    """
+    return dm.NrcWfssPhotomModel(phot_table=phot_table)
