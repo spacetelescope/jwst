@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.11,<3.14"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -15,10 +15,9 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "asdf>=4.2,<6",
+    "asdf>=4.1,<6",
     "astropy>=6.1",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
@@ -28,17 +27,17 @@ dependencies = [
     "photutils>=2.1.0",
     "pyparsing>=2.2.1",
     "requests>=2.31",
-    "scikit-image>=0.21.0",
+    "scikit-image>=0.20.0",
     "scipy>=1.14.1",
     "spherical-geometry>=1.3",
     "stdatamodels @ git+https://github.com/tapastro/stdatamodels.git@jp-3955-dhs-specwcs",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
-    # "stcal>=1.15.1,<1.16.0",
     "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
-    # "stpipe>=0.11.0,<0.12.0",
+    "stsci.imagestats>=1.6.3",
     "synphot>=1.3",
     "tweakwcs>=0.8.8",
-    "packaging>=21.0",
+    "wiimatch>=0.3.2",
+    "packaging>20.0",
     "importlib-metadata>=4.11.4",
     "jsonschema>=4.8",
 ]
@@ -285,7 +284,7 @@ checks = [
 ]
 
 [tool.codespell]
-skip = "*.c, *.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
+skip = "*.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
 ignore-words-list = "indx, delt, Shepard, tread, usig"
 
 [tool.mypy]
@@ -316,11 +315,14 @@ wrap = true
 issue_format = "`#{issue} <https://github.com/spacetelescope/jwst/issues/{issue}>`_"
 
 [[tool.towncrier.type]]
-directory = "breaking"
-name = "Breaking Changes"
+directory = "general"
+name = "General"
 showcontent = true
 
-# general pipeline changes
+[[tool.towncrier.type]]
+directory = "docs"
+name = "Documentation"
+showcontent = true
 
 [[tool.towncrier.type]]
 directory = "stpipe"
@@ -347,12 +349,14 @@ directory = "set_telescope_pointing"
 name = '``set_telescope_pointing``'
 showcontent = true
 
+# pipeline
+
 [[tool.towncrier.type]]
 directory = "pipeline"
 name = 'Pipeline'
 showcontent = true
 
-# step changes
+# steps
 
 [[tool.towncrier.type]]
 directory = "adaptive_trace_model"
@@ -515,6 +519,11 @@ name = 'master_background (spec2 MOS, spec3)'
 showcontent = true
 
 [[tool.towncrier.type]]
+directory = "mrs_imatch"
+name = 'mrs_imatch (spec3)'
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "msaflagopen"
 name = 'msaflagopen (spec2 IFU, spec2 MOS)'
 showcontent = true
@@ -542,11 +551,6 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "photom"
 name = 'photom (image2, spec2)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "picture_frame"
-name = "picture_frame (detector1)"
 showcontent = true
 
 [[tool.towncrier.type]]
@@ -630,11 +634,6 @@ name = 'superbias (detector1 NIR)'
 showcontent = true
 
 [[tool.towncrier.type]]
-directory = "targ_centroid"
-name = 'targ_centroid (spec2)'
-showcontent = true
-
-[[tool.towncrier.type]]
 directory = "tso_photometry"
 name = 'tso_photometry (tso3)'
 showcontent = true
@@ -662,16 +661,4 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "white_light"
 name = 'white_light'
-showcontent = true
-
-# other changes
-
-[[tool.towncrier.type]]
-directory = "docs"
-name = "Documentation Changes"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "other"
-name = "Other Changes"
 showcontent = true
