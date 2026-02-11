@@ -27,13 +27,13 @@ def run_tso_spec2(rtdata_module):
         "--steps.flat_field.save_results=True",
         "--steps.srctype.save_results=True",
         "--steps.extract_1d.soss_atoca=False",
+        "--steps.extract_1d.override_pastasoss=jwst_niriss_pastasoss_b123.asdf",
     ]
     Step.from_cmdline(args)
 
     # Run tso-spec2 pipeline on the second _rateints file, without saving or
     # checking any results (simply create a fresh input for level-3 test)
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg002_nis_short_rateints.fits")
-    rtdata.get_data("niriss/soss/jwst_niriss_pastasoss_b123.asdf")
     args = [
         "calwebb_spec2",
         rtdata.input,
@@ -66,10 +66,10 @@ def run_atoca_extras(rtdata_module, resource_tracker):
     """Run stage 2 pipeline on NIRISS SOSS data using enhanced modes via parameter settings."""
     rtdata = rtdata_module
 
+    rtdata.get_data("niriss/soss/jwst_niriss_pastasoss_b123.asdf")
     # Run spec2 pipeline on the second _rateints file, using wavegrid generated from first segment.
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_wavegrid.fits")
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg002_nis_short_rateints.fits")
-    rtdata.get_data("niriss/soss/jwst_niriss_pastasoss_b123.asdf")
     args = [
         "calwebb_spec2",
         rtdata.input,
