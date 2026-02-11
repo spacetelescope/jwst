@@ -15,13 +15,15 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "asdf>=4.2,<6",
     "astropy>=6.1",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
-    "gwcs>=1.0.1, <2",
+    "drizzle>=2.2.0,<2.3.0",
+    "gwcs>=1.0.1,<2",
     "numpy>=1.25",
     "photutils>=2.1.0",
     "pyparsing>=2.2.1",
@@ -37,7 +39,7 @@ dependencies = [
     # "stpipe>=0.11.0,<0.12.0",
     "synphot>=1.3",
     "tweakwcs>=0.8.8",
-    "packaging>21.0",
+    "packaging>=21.0",
     "importlib-metadata>=4.11.4",
     "jsonschema>=4.8",
 ]
@@ -344,13 +346,12 @@ directory = "set_telescope_pointing"
 name = '``set_telescope_pointing``'
 showcontent = true
 
-
 [[tool.towncrier.type]]
 directory = "pipeline"
 name = 'Pipeline'
 showcontent = true
 
-# steps
+# step changes
 
 [[tool.towncrier.type]]
 directory = "align_refs"
