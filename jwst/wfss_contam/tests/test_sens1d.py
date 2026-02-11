@@ -5,12 +5,6 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.wfss_contam.sens1d import create_1d_sens, get_photom_data
 
 
-@pytest.fixture
-def photom_ref_model(request):
-    fixture_name = getattr(request, "param", "photom_ref_model_niriss")
-    return request.getfixturevalue(fixture_name)
-
-
 @pytest.mark.parametrize(
     "photom_ref_model", ["photom_ref_model_niriss", "photom_ref_model_nircam"], indirect=True
 )

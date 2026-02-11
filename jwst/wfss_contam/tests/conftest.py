@@ -195,3 +195,19 @@ def photom_ref_model_nircam(phot_table):
         Photom ref file model.
     """
     return dm.NrcWfssPhotomModel(phot_table=phot_table)
+
+
+@pytest.fixture
+def photom_ref_model(request):
+    """
+    Make a mock photom reference model that can be parameterized for any WFSS mode.
+
+    If request.param is not set, defaults to NIRISS.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Photom ref file model of the appropriate type based on the parameterization.
+    """
+    fixture_name = getattr(request, "param", "photom_ref_model_niriss")
+    return request.getfixturevalue(fixture_name)
