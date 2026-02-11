@@ -256,7 +256,7 @@ def test_get_wavemap():
     A separate test is needed, since calls to the higher level correction method
     mock this function for synthetic data simplicity.
     """
-    model = datamodels.IFUImageModel()
+    model = datamodels.IFUImageModel((10, 10))
 
     # Mock a WCS that returns 1 for wavelengths
     transform = Mapping((0, 1, 1), n_inputs=2) | Identity(2) & Const1D(1)
