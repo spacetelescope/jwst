@@ -68,7 +68,7 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
     if use_wavecorr is not None:
         if (
             not use_wavecorr
-            and hasattr(model.meta, "wcs")
+            and getattr(model.meta, "wcs", None) is not None
             and "wavecorr_frame" in model.meta.wcs.available_frames
         ):
             wcs = model.meta.wcs
@@ -78,7 +78,7 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
             return wl_array
 
     # If no existing wavelength array, compute one
-    if hasattr(model.meta, "wcs") and not got_wavelength:
+    if getattr(model.meta, "wcs", None) is not None and not got_wavelength:
         # Set up an appropriate WCS object
         if hasattr(model.meta, "exposure") and model.meta.exposure.type == "NIS_SOSS":
             wl_array = model.meta.wcs(grid[1], grid[0], order)[2]

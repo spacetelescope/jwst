@@ -182,7 +182,7 @@ def post_process_rate(
     output_model = input_model
 
     # If needed, assign a WCS
-    if (assign_wcs or msaflagopen) and not hasattr(output_model.meta, "wcs"):
+    if (assign_wcs or msaflagopen) and getattr(output_model.meta, "wcs", None) is None:
         log.info("Assigning a WCS for scene masking")
         with disable_logging(level=logging.WARNING):
             step = AssignWcsStep()

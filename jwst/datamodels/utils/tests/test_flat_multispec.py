@@ -14,6 +14,7 @@ from jwst.datamodels.utils.flat_multispec import (
     populate_recarray,
     set_schema_units,
 )
+from jwst.datamodels.utils.tests.wfss_helpers import mock_wcs
 from jwst.tests.helpers import LogWatcher
 
 
@@ -95,7 +96,8 @@ def tso_multi_spec():
         # Add some metadata
         spec.source_id = i + 1
         spec.name = f"test {i + 1}"
-        spec.meta.wcs = ["test"]
+        spec.meta.wcs = mock_wcs()
+        spec.meta.wcs.pipeline[0].transform.name = "test"
         spec.spec_table["INT_NUM"] = i + 1
 
         tso_multi.spec.append(spec)
@@ -300,9 +302,9 @@ def test_expand_flat_spec(tso_multi_spec):
         assert spec.name == f"test {input_spec_num}"
         assert spec.int_num == input_spec_num
 
-        assert spec.meta.wcs[0] == "test"
-        spec.meta.wcs[0] = "copy"
-        assert spec.meta.wcs[0] == "copy"
-        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs[0] == "test"
+        assert spec.meta.wcs.pipeline[0].transform.name == "test"
+        spec.meta.wcs.pipeline[0].transform.name = "copy"
+        assert spec.meta.wcs.pipeline[0].transform.name == "copy"
+        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs.pipeline[0].transform.name == "test"
 
         assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)

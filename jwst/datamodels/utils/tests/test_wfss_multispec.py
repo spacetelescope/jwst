@@ -61,7 +61,7 @@ def test_make_wfss_multiexposure(input_model_maker, request):
         assert output_model.spec[0].spec_table.shape == (1,)
 
     # check the required metadata attributes
-    assert not hasattr(output_model.meta, "wcs")
+    assert getattr(output_model.meta, "wcs", None) is None
     for i, exposure in enumerate(output_model.spec):
         assert exposure.group_id == str(i + 1)
 

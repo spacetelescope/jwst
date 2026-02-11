@@ -1,14 +1,14 @@
 import logging
-import multiprocessing as mp
 import time
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from astropy.utils.decorators import lazyproperty
+from scipy import ndimage
 from scipy.interpolate import CubicSpline, UnivariateSpline
-from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SossWaveGridModel, dqflags
 
@@ -87,6 +87,23 @@ class DetectorModelOrder:
         ExtractionEngine can use it to generate a kernel at any wavelength grid.
     subarray : str or None
         The name of the subarray used for the extraction.
+    orderengine : ExtractionEngine or None
+        Precomputed extraction engine for this order.  This is intended to be
+        computed for the first integration and stored thereafter.
+    order12engine : ExtractionEngine or None
+        Precomputed extraction engine for orders 1+2.  This is intended to be
+        computed for the first integration and stored thereafter.
+    mederr : np.ndarray or None
+        Median error across integrations
+    m_inv : np.ndarray or None
+        Inverse of the design matrix of the regularized least squares problem.
+        Intended to be computed for the first integration and stored thereafter.
+    bmat : np.ndarray or None
+        Matrix of pixel values divided by the median error.
+        Intended to be computed for the first integration and stored thereafter.
+    mask : np.ndarray or None
+        Mask for pixels valid in at least some integrations.
+        Intended to be computed for the first integration and stored thereafter.
     """
 
     spectral_order: int
@@ -98,6 +115,13 @@ class DetectorModelOrder:
     kernel_native: WebbKernel | None = None
     kernel_func: WebbKernel | None = None
     subarray: str | None = None
+
+    orderengine: ExtractionEngine | None = None
+    order12engine: ExtractionEngine | None = None
+    mederr: np.ndarray | None = None
+    m_inv: np.ndarray | None = None
+    bmat: np.ndarray | None = None
+    mask: np.ndarray | None = None
 
     @lazyproperty
     def trace(self):
@@ -287,12 +311,126 @@ def get_ref_file_args(ref_files, orders_requested=None):
     return detector_models
 
 
-def _append_tiktests(test_a, test_b):
-    out = {}
-    for key in test_a:
-        out[key] = np.append(test_a[key], test_b[key], axis=0)
+def _infill_data_get_mederr(cube_model, refmask, ninterp=9):
+    """
+    Impute missing data, compute median uncertainty.
 
-    return out
+    Parameters
+    ----------
+    cube_model : CubeModel
+        The input DataModel as a CubeModel.
+    refmask : np.ndarray
+        Boolean mask for the reference pixels
+    ninterp : int, optional
+        Number of neighboring images (in time) to use to impute missing data.
+        Used with ndimage.median_filter.  Should be odd.
+
+    Returns
+    -------
+    data_nanreplaced : np.ndarray
+        Array of shape (nintegrations, ny, nx) with NaNs replaced with the
+        mean of ninterp neighboring images.
+    medarr : np.ndarray
+        Median uncertainty from cube_model.err, excluding NaNs.
+    """
+    # Pixels that are bad in all integrations
+    allbad = np.sum(np.isfinite(cube_model.err) & np.isfinite(cube_model.data), axis=0) == 0
+
+    # Make a copy of the cube model where bad pixels in any individual
+    # integration are replaced with a running median in time.
+
+    data_nanreplaced = cube_model.data.copy()
+    data_infilled = cube_model.data.copy()
+
+    # We will use the median uncertainty throughout the calculation.
+    # Use of the median uncertainty means that the matrices used in
+    # the ATOCA algorithm are shared between all integrations.
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "All-NaN slice encountered", RuntimeWarning)
+        mederr = np.nanmedian(cube_model.err, axis=0)
+        meddata = np.nanmedian(data_nanreplaced, axis=0)
+
+    mederr[allbad] = np.inf
+    mederr[refmask] = np.inf
+    meddata[allbad] = 0
+
+    # Fill in values for pixels that are bad in individual integrations
+
+    for i in range(data_nanreplaced.shape[0]):
+        indx = ~np.isfinite(data_nanreplaced[i])
+        data_infilled[i][indx] = meddata[indx]
+
+    # Apply a median filter in time to make the final replacements of bad
+    # pixels in individual integrations.  Use a running median of ninterp
+    # time steps as a compromise between precision and time resolution.
+
+    nints = data_nanreplaced.shape[0]
+    medfilt = ndimage.median_filter(data_infilled, min(nints, ninterp), axes=(0))
+
+    indx = ~np.isfinite(data_nanreplaced)
+    data_nanreplaced[indx] = medfilt[indx]
+
+    return data_nanreplaced, mederr
+
+
+def _refine_tikfac(tiktests, tikho_struct, engine, niter_refine=3):
+    """
+    Refine the optimal Tikhonov regularization factor using iterations.
+
+    This algorithm takes the results of Tikhonov optimization over the
+    initial, coarse grid as input.  It then finds the best factor using
+    the dchi2/dlog(factor) criterion.  It chooses the closest point on
+    the grid, adds two new points on either side of this to increase the
+    resolution (or extends the grid if the best-fit was an endpoint),
+    and recomputes the best Tikhonov factor.  This process is iterated
+    niter_refine times.
+
+    Parameters
+    ----------
+    tiktests : Tikhonov
+        Dictionary-like object with Tikhonov factors and associated
+        goodness-of-fit quantities
+    tikho_struct : Tikhonov
+        A Tikhonov structure appropriately initialized to enable the
+        calculation of goodness-of-fit metrics for trial Tikhonov factors
+    engine : ExtractionEngine
+        Used to determine the best Tikhonov factor after the goodness-
+        of-fit quantities have been calculated
+    niter_refine : int
+        Number of times to refine the calculation by adding two points.
+
+    Returns
+    -------
+    tifac : float
+        The best Tikhonov factor
+    """
+    tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
+
+    for _i in range(niter_refine):
+        f = np.sort(tiktests["factors"])
+
+        closest_point = np.abs(np.log(f) - np.log(tikfac)) == np.amin(
+            np.abs(np.log(f) - np.log(tikfac))
+        )
+
+        # Add two points, extrapolating if necessary.
+
+        j = np.where(closest_point)[0][0]
+        if j == 0:
+            newfac = np.array([f[0] ** 2 / f[1], np.sqrt(f[0] * f[1])])
+        elif j == len(f) - 1:
+            newfac = np.array([np.sqrt(f[-1] * f[-2]), f[-1] ** 2 / f[-2]])
+        else:
+            newfac = np.array([np.sqrt(f[j] * f[j - 1]), np.sqrt(f[j] * f[j + 1])])
+
+        # Merge results and recompute the best Tikhonov factor.
+
+        newtest = engine.get_tikho_tests(tikho_struct, newfac)
+        tiktests.merge(newtest)
+        tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
+
+    return tikfac, tiktests
 
 
 def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
@@ -306,7 +444,7 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.int_num = 0  # marks this as a test spectrum
 
 
-def _build_tracemodel_order(engine, order_model, f_k, mask):
+def _build_tracemodel_order(engine, order_model, f_k, mask, force_recompute_engine=False):
     """
     Build the trace model for a specific spectral order.
 
@@ -321,6 +459,14 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
     mask : np.ndarray[bool]
         The global mask of pixels to be modeled. Bad pixels in the science data
         should remain unmasked.
+    force_recompute_engine : bool, optional
+        Force the recomputation of the ExtractionEngine inside this function,
+        and prevent it from being saved to the order_model?  Alternative is to
+        use or generate the engine already associated with order_model.  This
+        boolean should be True if reconstructing spectra within the Tikhonov
+        tests, and False if using the function within the main integration
+        routine.  If True, order_model.orderengine will not be modified.
+        Default False.
 
     Returns
     -------
@@ -343,15 +489,24 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
 
     # Build model of the order
     # Give the identity kernel to the Engine (so no convolution)
-    engine = ExtractionEngine(
-        [order_model.wavemap],
-        [order_model.specprofile],
-        [order_model.throughput],
-        [np.array([1.0])],
-        wave_grid=grid_order,
-        mask_trace_profile=[mask],
-        orders=[order_model.spectral_order],
-    )
+    # Load a precomputed engine if available and a recomputation is not
+    # forced.  Otherwise, compute it now, and store it unless
+    # force_recompute_engine is True.
+
+    if (order_model.orderengine is None) or (force_recompute_engine):
+        engine = ExtractionEngine(
+            [order_model.wavemap],
+            [order_model.specprofile],
+            [order_model.throughput],
+            [np.array([1.0])],
+            wave_grid=grid_order,
+            mask_trace_profile=[mask],
+            orders=[order_model.spectral_order],
+        )
+        if not force_recompute_engine:
+            order_model.orderengine = engine
+    else:
+        engine = order_model.orderengine
 
     # Project on detector and save in dictionary
     tracemodel_ord = engine.rebuild(flux_order, fill_value=np.nan)
@@ -434,6 +589,7 @@ def _do_tiktests(
     global_mask,
     save_tiktests=False,
     tikfac_log_range=None,
+    niter_refine=3,
 ):
     """
     Test a grid of Tikhonov regularization factors to find the most appropriate one.
@@ -461,6 +617,10 @@ def _do_tiktests(
         Logarithmic range around `guess_factor` to search. The default is [-2, 8], which was
         chosen because we are looking for the smoothest (largest-factor) solution that
         still provides a good fit to the data.
+    niter_refine : int
+        Number of times to add two points to the initial grid of trial Tikhonov
+        factors in order to better estimate the optimal factor.
+        Default 3.
 
     Returns
     -------
@@ -480,20 +640,20 @@ def _do_tiktests(
     # Initial pass 8 orders of magnitude with 10 grid points.
     log_guess = np.log10(guess_factor)
     factors = np.logspace(log_guess + tikfac_log_range[0], log_guess + tikfac_log_range[1], 10)
-    all_tests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
-    tikfac = engine.best_tikho_factor(all_tests, fit_mode="all")
+
+    tikho_struct = engine.get_tikho_test_structure(scidata_bkg, scierr)
+    all_tests = engine.get_tikho_tests(tikho_struct, factors)
+    tikfac = engine.best_tikho_factor(all_tests, fit_mode="d_chi2")
     log.info("Coarse grid best tikfac: %.4e", tikfac)
 
-    # Refine across 2 orders of magnitude.
-    tikfac = np.log10(tikfac)
-    factors = np.logspace(tikfac - 2, tikfac + 2, 20)
-    tiktests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
-    tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
+    # Refine to a final answer.
+
+    tikfac, all_tests = _refine_tikfac(all_tests, tikho_struct, engine, niter_refine=niter_refine)
+    log.info("Final best tikfac: %.4e", tikfac)
 
     spec_list = []
     if save_tiktests:
         # Save spectra in a list of SingleSpecModels for optional output
-        all_tests = _append_tiktests(all_tests, tiktests)
         for i, order in enumerate(engine.orders):
             order_model = order_models[i]
             for idx, fac in enumerate(all_tests["factors"]):
@@ -502,14 +662,15 @@ def _do_tiktests(
                 if np.all(~np.isfinite(f_k)):
                     spec_ord = _build_null_spec_table(engine.wave_grid, order)
                 else:
-                    _, spec_ord = _build_tracemodel_order(engine, order_model, f_k, global_mask)
+                    _, spec_ord = _build_tracemodel_order(
+                        engine, order_model, f_k, global_mask, force_recompute_engine=True
+                    )
                 _populate_tikho_attr(spec_ord, all_tests, idx, order)
                 spec_list.append(spec_ord)
 
     # reset the kernel, as it is set to an array inside _build_tracemodel_order
     for model in order_models:
         model.kernel_native = model.kernel_func
-    log.info("Found best Tikhonov factor: %.4e", tikfac)
     return tikfac, spec_list
 
 
@@ -845,17 +1006,22 @@ class Integration:
         global_mask = np.all(self.mask_trace_profile, axis=0).astype(bool)
 
         # Initialize the Engine for combined extraction of orders 1 and 2
-        engine = ExtractionEngine(
-            [om.wavemap for om in self.order_models][:2],
-            [om.specprofile for om in self.order_models][:2],
-            [om.throughput for om in self.order_models][:2],
-            [om.kernel for om in self.order_models][:2],
-            wave_grid=wave_grid,
-            mask_trace_profile=self.mask_trace_profile[:2],
-            global_mask=self.scimask,
-            threshold=threshold,
-            orders=[1, 2],
-        )
+        if self.order_models[0].order12engine is not None:
+            engine = self.order_models[0].order12engine
+        else:
+            engine = ExtractionEngine(
+                [om.wavemap for om in self.order_models][:2],
+                [om.specprofile for om in self.order_models][:2],
+                [om.throughput for om in self.order_models][:2],
+                [om.kernel for om in self.order_models][:2],
+                wave_grid=wave_grid,
+                mask_trace_profile=self.mask_trace_profile[:2],
+                global_mask=self.scimask,
+                threshold=threshold,
+                orders=[1, 2],
+            )
+            self.order_models[0].order12engine = engine
+
         # set the kernels in the order models to those used in the engine
         # these are now sparse matrices, so this avoids re-computing them in subsequent integrations
         for i in range(2):
@@ -885,17 +1051,33 @@ class Integration:
             tikfacs_out["Order 1"] = tikfacs_in["Order 1"]
 
         # Run the extract method of the Engine.
-        log.info("Running extraction engine for overlapping orders 1 & 2...")
-        f_k = engine(self.scidata_bkg, self.scierr, tikhonov=True, factor=tikfacs_out["Order 1"])
+        log.debug("Running extraction engine for overlapping orders 1 & 2...")
 
+        # Precompute the inverse of the design matrix and the values divided
+        # by the uncertainties.  This makes the solution of the matrix equation
+        # only a matrix multiplication.
+
+        if self.order_models[0].m_inv is None:
+            log.info("Precomputing the inverse of the design matrix for Order 1+2 modeling")
+
+            _m_inv, _bmat = engine.precompute_detector_model(
+                self.scidata_bkg, self.scierr, tikfac=tikfacs_out["Order 1"]
+            )
+            self.order_models[0].m_inv = _m_inv
+            self.order_models[0].bmat = _bmat
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "invalid value encountered in divide", RuntimeWarning)
+            y_over_err = (self.scidata_bkg / self.order_models[0].mederr)[~engine.mask]
+            f_k = self.order_models[0].m_inv.dot(self.order_models[0].bmat.T * y_over_err)
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
         # Model the traces for each order separately.
-        log.info("Building decontaminated trace models and spectra for Order 1 and Order 2 red.")
+        log.debug("Building decontaminated trace models and spectra for Order 1 and Order 2 red.")
         tracemodels = {}
         for i_order, _order in enumerate([1, 2]):
             tracemodel_ord, spec_ord = _build_tracemodel_order(
-                engine, self.order_models[i_order], f_k, global_mask
+                engine, self.order_models[i_order], f_k, global_mask, force_recompute_engine=False
             )
             spec_ord.meta.soss_extract1d.factor = tikfacs_out["Order 1"]
             spec_ord.meta.soss_extract1d.color_range = "RED"
@@ -925,7 +1107,7 @@ class Integration:
 
             idx_order = np.array(self.order_indices)[np.array(self.order_list) == order][0]
             order_str = self.order_strs[idx_order]
-            log.info(f"Generate model for well-separated part of {order_str}")
+            log.debug(f"Generate model for well-separated part of {order_str}")
             order_model = self.order_models[idx_order]
 
             # Use provided tikfac if given=
@@ -1139,7 +1321,7 @@ class Integration:
             decontaminated_data[order] = decont
         return decontaminated_data
 
-    def extract_image(self, decontaminated_data, bad_pix="model", tracemodels=None):
+    def extract_image(self, decontaminated_data, bad_pix="model", tracemodels=None, verbose=False):
         """
         Perform the box-extraction on the image using the trace model to correct for contamination.
 
@@ -1154,6 +1336,8 @@ class Integration:
             'model' option uses `tracemodels` to replace the bad pixels.
         tracemodels : dict
             Dictionary of the modeled detector images for each order.
+        verbose : bool
+            Print bad pixel imputation messages to log.info?
 
         Returns
         -------
@@ -1178,7 +1362,8 @@ class Integration:
             decont = decontaminated_data[order]
             # Replace bad pixels with trace model
             if (bad_pix == "model") and (order in list(tracemodels.keys())):
-                log.info(f"Replacing bad pixels in {order} with trace model.")
+                if verbose:
+                    log.info(f"Replacing bad pixels in {order} with trace model.")
                 # Some pixels might not be modeled by the bad pixel models
                 is_modeled = np.isfinite(tracemodels[order])
                 # Replace bad pixels
@@ -1202,10 +1387,11 @@ class Integration:
                 scimask_ord = np.where(is_modeled, False, self.scimask)
 
             else:
-                log.info(
-                    f"Bad pixels in {order} will be masked instead of modeled: "
-                    "Trace model unavailable or not requested."
-                )
+                if verbose:
+                    log.info(
+                        f"Bad pixels in {order} will be masked instead of modeled: "
+                        "Trace model unavailable or not requested."
+                    )
                 scimask_ord = self.scimask
                 scierr_ord = self.scierr
 
@@ -1230,7 +1416,11 @@ def _process_one_integration(
     generate_model=True,
     int_num=None,
 ):
-    log.info(f"Processing integration {int_num}")
+    if type(int_num) is int:
+        log.info(f"Processing integration {int_num}")
+
+    # Print verbose log info only on the first integration.
+    verbose = int_num == 1
 
     if tikfacs_in is None:
         tikfacs_in = {"Order 1": None, "Order 2": None, "Order 3": None}
@@ -1270,7 +1460,8 @@ def _process_one_integration(
                 f" with {wave_grid.size} points"
             )
         else:
-            log.info("Using previously computed or user specified wavelength grid.")
+            if verbose:
+                log.info("Using previously computed or user specified wavelength grid.")
 
         # Model the image.
         try:
@@ -1314,9 +1505,7 @@ def _process_one_integration(
 
     # Use the bad pixel models to perform a de-contaminated extraction.
     fluxes, fluxerrs, npixels = integration.extract_image(
-        data_to_extract,
-        bad_pix=soss_kwargs["bad_pix"],
-        tracemodels=tracemodels,
+        data_to_extract, bad_pix=soss_kwargs["bad_pix"], tracemodels=tracemodels, verbose=verbose
     )
 
     # Save trace models for output reference
@@ -1502,21 +1691,29 @@ def run_extract1d(
         log.critical(msg)
         raise TypeError(msg)
 
-    # Prepare the reference file arguments.
-    order_models = get_ref_file_args(ref_files, orders_requested=order_list)
+    # Only mask pixels that are bad in *all* integrations
+    scimask = np.all(cube_model.dq & dqflags.pixel["DO_NOT_USE"] != 0, axis=0)
 
-    # Run the first integration to get the Tikhonov factor for the rest
-    scidata = cube_model.data[0].astype("float64")
-    scierr = cube_model.err[0].astype("float64")
-    scimask = np.bitwise_and(cube_model.dq[0], dqflags.pixel["DO_NOT_USE"]).astype(bool)
     refmask = bitfield_to_boolean_mask(
         cube_model.dq[0], ignore_flags=dqflags.pixel["REFERENCE_PIXEL"], flip_bits=True
     )
 
+    # Fill in pixels that are bad or missing in individual integrations,
+    # also compute the median uncertainty across integrations.
+
+    scidata, mederr = _infill_data_get_mederr(cube_model, refmask)
+    nints = scidata.shape[0]
+
+    # Construct detector model attributes from reference files using PASTASOSS
+    order_models = get_ref_file_args(ref_files, orders_requested=order_list)
+    # Each order model will need the reference (median) per-pixel uncertainty
+    for om in order_models:
+        om.mederr = mederr
+
     # Pre-compute the weights for box extraction (used in modeling and extraction)
     box_weights, wavelengths = _compute_box_weights(
         order_models,
-        scidata.shape,
+        scidata[0].shape,
         width=soss_kwargs["width"],
         orders_requested=order_list,
     )
@@ -1525,124 +1722,87 @@ def run_extract1d(
     if subarray == "SUBSTRIP96":
         box_weights["Order 2"] = np.ones((96, 2048))
 
-    # Process the 0th integration to compute a good Tikhonov factor and adaptive wave_grid
+    # Process a typical integration to compute a good Tikhonov factor and adaptive wave_grid
     if soss_kwargs["tikfac"] is not None:
         tikfacs_in = {"Order 1": soss_kwargs["tikfac"], "Order 2": None, "Order 3": None}
     else:
         tikfacs_in = None
 
-    tracemodels, spec_list_data, atoca_list_data, tikfacs_first, wave_grid_first = (
-        _process_one_integration(
-            scidata,
-            scierr,
-            scimask,
-            refmask,
-            order_models,
-            box_weights,
-            wavelengths,
-            soss_kwargs,
-            wave_grid=wave_grid,
-            tikfacs_in=tikfacs_in,
-            generate_model=generate_model,
-            int_num=1,
-        )
+    # We need a representative integration for computing the best Tikhonov
+    # factor.  We will use the mean across integrations so that noise averages
+    # down even in the face of real astrophysical variability.  We will then
+    # add Gaussian error to get the chi squared behavior right, as that is
+    # what the Tikhonov refinement criteria checks for.
+
+    scidata_typical = np.mean(scidata, axis=0)
+    # Force the seed to be the same here for testing and repeatability
+    rng = np.random.default_rng(seed=42)
+    scidata_typical += rng.normal(0, mederr * np.sqrt((nints - 1) / nints))
+
+    log.info("Computing order models and Tikhonov factors from the mean integration")
+
+    _, _, _, tikfacs_first, wave_grid_first = _process_one_integration(
+        scidata_typical,
+        mederr,
+        scimask,
+        refmask,
+        order_models,
+        box_weights,
+        wavelengths,
+        soss_kwargs,
+        wave_grid=wave_grid,
+        tikfacs_in=tikfacs_in,
+        generate_model=generate_model,
     )
+
     log.info(
-        "Tikhonov factors and wavelength grid from first integration "
-        "will be applied to subsequent ones."
+        "Tikhonov factors and wavelength grid computed from the mean "
+        "integration will be applied to all integrations."
     )
 
-    # Reconstruct SpecModels from dict
-    spec_list = {
-        order: _reconstruct_spec_from_data(spec_list_data[order]) for order in spec_list_data
-    }
-    for atoca_spec_data in atoca_list_data:
-        atoca_spec = _reconstruct_spec_from_data(atoca_spec_data)
-        output_atoca.spec.append(atoca_spec)
+    all_tracemodels = {order: [] for order in box_weights}
+    output_spec_list = {order: [] for order in box_weights}
 
-    # Prepare arguments for processing remaining integrations
-    all_tracemodels = {order: [tracemodels[order]] for order in tracemodels}
-    output_spec_list = {order: [spec_list[order]] for order in spec_list}
+    t0 = time.time()
 
-    if nimages > 1:
-        # Build list of arguments for parallel processing
-        process_args = []
-        for i in range(1, nimages):
-            scidata_i = cube_model.data[i].astype("float64")
-            scierr_i = cube_model.err[i].astype("float64")
-            scimask_i = np.bitwise_and(cube_model.dq[i], dqflags.pixel["DO_NOT_USE"]).astype(bool)
-            refmask_i = bitfield_to_boolean_mask(
-                cube_model.dq[i], ignore_flags=dqflags.pixel["REFERENCE_PIXEL"], flip_bits=True
+    for i in range(nimages):
+        scierr_i = cube_model.err[i].astype("float64")
+        bad = (~np.isfinite(cube_model.data[i])) | (~np.isfinite(scierr_i))
+
+        # Inflate errors of interpolated values by a factor of 10 over
+        # the median uncertainties across integrations.  This in intended
+        # to encourage the user not to overinterpret imputed data.
+
+        scierr_i[bad] = mederr[bad] * 10
+
+        tracemodels, spec_list_data, atoca_list_data, tikfacs_out, wave_grid = (
+            _process_one_integration(
+                scidata[i],
+                scierr_i,
+                scimask,
+                refmask,
+                order_models,
+                box_weights,
+                wavelengths,
+                soss_kwargs,
+                wave_grid=wave_grid_first,
+                tikfacs_in=tikfacs_first,
+                generate_model=generate_model,
+                int_num=i + 1,
             )
-
-            process_args.append(
-                [
-                    scidata_i,
-                    scierr_i,
-                    scimask_i,
-                    refmask_i,
-                    order_models,
-                    box_weights,
-                    wavelengths,
-                    soss_kwargs,
-                    wave_grid_first,
-                    tikfacs_first,
-                    generate_model,
-                    i + 1,
-                ]
-            )
-
-        # Determine number of cores for multiprocessing
-        max_available_cores = mp.cpu_count()
-        max_cpu = compute_num_cores(
-            soss_kwargs.pop("maximum_cores"),
-            nimages - 1,
-            max_available_cores,
         )
 
-        t0 = time.time()
-        if max_cpu > 1 and nimages > 1:
-            log.info(f"Using {max_cpu} CPU cores for multiprocessing {nimages - 1} integrations...")
-            ctx = mp.get_context("spawn")
-            pool = ctx.Pool(max_cpu)
-            try:
-                # Submit all jobs and collect AsyncResult objects
-                async_results = []
-                for i, args in enumerate(process_args):
-                    int_num = i + 2  # Integration numbers start at 2 (1 was already processed)
-                    result = pool.apply_async(_process_one_integration, args)
-                    async_results.append((int_num, result))
+        for order in tracemodels:
+            all_tracemodels[order].append(tracemodels[order])
+        for order in spec_list_data:
+            reconstructed_spec = _reconstruct_spec_from_data(spec_list_data[order])
+            output_spec_list[order].append(reconstructed_spec)
+        for atoca_spec_data in atoca_list_data:
+            atoca_spec = _reconstruct_spec_from_data(atoca_spec_data)
+            output_atoca.spec.append(atoca_spec)
 
-                # Collect results as they complete
-                all_results = []
-                for int_num, result in async_results:
-                    output = result.get()
-                    log.info(f"Completed processing integration {int_num}.")
-                    all_results.append(output)
-            except Exception as e:
-                log.error(f"Error during parallel processing on integration {int_num}: {e}")
-                raise
-            finally:
-                pool.close()
-                pool.join()
-        else:
-            all_results = [_process_one_integration(*args) for args in process_args]
-        t1 = time.time()
-        log.info(
-            f"Wall clock time for processing integrations 2 to {nimages} on {max_cpu} cores: "
-            f"{(t1 - t0):.1f} sec"
-        )
-
-        # Collect results from parallel processing and reconstruct SpecModels
-        for tracemodels, spec_list_data, atoca_list_data, _, _ in all_results:
-            for order in tracemodels:
-                all_tracemodels[order].append(tracemodels[order])
-            for order in spec_list_data:
-                spec = _reconstruct_spec_from_data(spec_list_data[order])
-                output_spec_list[order].append(spec)
-            for atoca_spec_data in atoca_list_data:
-                atoca_spec = _reconstruct_spec_from_data(atoca_spec_data)
-                output_atoca.spec.append(atoca_spec)
+    t1 = time.time()
+    log.info(f"Wall clock time for processing {nimages} integrations: {(t1 - t0):.1f} sec")
 
     # Make a TSOSpecModel from the output spec list
     for order in output_spec_list:
@@ -1659,22 +1819,23 @@ def run_extract1d(
     output_model.meta.soss_extract1d.threshold = soss_kwargs["threshold"]
     output_model.meta.soss_extract1d.bad_pix = soss_kwargs["bad_pix"]
 
-    # Save output references
-    for order in all_tracemodels:
-        # Convert from list to array
-        tracemod_ord = np.array(all_tracemodels[order])
-        # Save
-        order_int = ORDER_STR_TO_INT[order]
-        setattr(output_references, f"order{order_int}", tracemod_ord)
+    # Save output references if requested
+    if soss_kwargs["model"]:
+        for order in all_tracemodels:
+            # Convert from list to array
+            tracemod_ord = np.array(all_tracemodels[order])
+            # Save
+            order_int = ORDER_STR_TO_INT[order]
+            setattr(output_references, f"order{order_int}", tracemod_ord)
 
-    for order in box_weights:
-        # Convert from list to array
-        box_w_ord = np.array(box_weights[order])
-        # repeat along axis zero to have shape (nints, y, x)
-        box_w_ord = np.repeat(box_w_ord[None, :, :], nimages, axis=0)
-        # Save
-        order_int = ORDER_STR_TO_INT[order]
-        setattr(output_references, f"aperture{order_int}", box_w_ord)
+        for order in box_weights:
+            # Convert from list to array
+            box_w_ord = np.array(box_weights[order])
+            # repeat along axis zero to have shape (nints, y, x)
+            box_w_ord = np.repeat(box_w_ord[None, :, :], nimages, axis=0)
+            # Save
+            order_int = ORDER_STR_TO_INT[order]
+            setattr(output_references, f"aperture{order_int}", box_w_ord)
 
     if pipe_utils.is_tso(input_model):
         log.info("Populating INT_TIMES keywords from input table.")
