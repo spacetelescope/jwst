@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.badpix_selfcal.BadpixSelfcalStep`
+:Class: `jwst.badpix_selfcal.badpix_selfcal_step.BadpixSelfcalStep`
 :Alias: badpix_selfcal
 
 Overview

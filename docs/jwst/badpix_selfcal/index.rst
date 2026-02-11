@@ -9,6 +9,10 @@ Bad Pixel Self-Calibration
 
    description.rst
    arguments.rst
-   reference_files.rst
 
-.. automodapi:: jwst.badpix_selfcal
+* Reference File: The ``badpix_selfcal`` step does not use any reference files.
+
+.. toctree::
+   :maxdepth: 2
+
+   api_ref.rst

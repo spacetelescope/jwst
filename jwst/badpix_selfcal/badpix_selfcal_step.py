@@ -1,3 +1,5 @@
+"""Self-calibration of bad pixels in JWST data."""
+
 import logging
 import warnings
 
@@ -21,11 +23,11 @@ class BadpixSelfcalStep(Step):
     """
     Flag residual artifacts as bad pixels using a median filter and percentile cutoffs.
 
-    All input exposures in the association file (or manually-provided bkg_list) are combined
+    All input exposures in the association file (or manually-provided ``bkg_list``) are combined
     into a single background model using a MIN operation. The bad pixels are then identified
     using a median filter and percentile cutoffs, and applied to the science data by setting
     the flagged pixels, errors, and variances to NaN,
-    and the DQ flag to DO_NOT_USE + OTHER_BAD_PIXEL.
+    and the DQ flag to ``DO_NOT_USE + OTHER_BAD_PIXEL``.
     """
 
     class_alias = "badpix_selfcal"
@@ -45,12 +47,12 @@ class BadpixSelfcalStep(Step):
 
         Parameters
         ----------
-        model : JWST data model
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Data model to save
         *args : tuple
-            Additional arguments to pass to Step.save_model
+            Additional arguments to pass to :meth:`stpipe.Step.save_model`
         **kwargs : dict
-            Additional keyword arguments to pass to Step.save_model
+            Additional keyword arguments to pass to :meth:`stpipe.Step.save_model`
 
         Returns
         -------
@@ -66,7 +68,7 @@ class BadpixSelfcalStep(Step):
 
         Parameters
         ----------
-        bkg_list : list of ImageModels
+        bkg_list : list of `~stdatamodels.jwst.datamodels.ImageModel`
             Background exposures to save
         suffix : str
             Suffix to append to the filename
@@ -104,11 +106,11 @@ class BadpixSelfcalStep(Step):
         If an association file is read in, all exposures in the
         association file, including science, background, and selfcal exposures,
         are included in the MIN frame from which outliers are detected.
-        If selfcal_list and/or bkg_list are specified manually, they are appended to any
+        If ``selfcal_list`` and/or ``bkg_list`` are specified manually, they are appended to any
         selfcal or background exposures found in the input association file.
-        If selfcal_list and bkg_list are both set to None and input is
+        If ``selfcal_list`` and ``bkg_list`` are both set to `None` and input is
         a single science exposure, the step will be skipped with a warning unless
-        the force_single parameter is set True.
+        the force_single parameter is set `True`.
         In that case, the input exposure will be used as the sole background exposure,
         i.e., true self-calibration.
         """
@@ -279,7 +281,7 @@ def split_container_by_asn_exptype(container: dm.ModelContainer, exptypes: list)
 
     Parameters
     ----------
-    container : ModelContainer
+    container : `~jwst.datamodels.container.ModelContainer`
         The input association.
     exptypes : list[str]
         List of exposure types to split on.
@@ -287,8 +289,10 @@ def split_container_by_asn_exptype(container: dm.ModelContainer, exptypes: list)
     Returns
     -------
     split_list : list of lists
-        Lists of ImageModels, where the outer list is indexed by the input exptypes and the
-        inner list contains the ImageModels of that type.
+        Lists of `~stdatamodels.jwst.datamodels.ImageModel`,
+        where the outer list is indexed by the input exptypes and the
+        inner list contains the `~stdatamodels.jwst.datamodels.ImageModel`
+        of that type.
     """
     split_list = []
     for exptype in exptypes:
