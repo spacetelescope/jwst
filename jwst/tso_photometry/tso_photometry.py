@@ -25,8 +25,8 @@ def convert_data_units(datamodel, gain_2d=None):
 
     Parameters
     ----------
-    datamodel : `CubeModel`
-        The input `CubeModel` of a TSO imaging observation.
+    datamodel : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input CubeModel of a TSO imaging observation.
     gain_2d : ndarray or None, optional
         The gain for all pixels.  Required if the input units are "DN/s".
     """
@@ -70,8 +70,8 @@ def tso_aperture_photometry(
 
     Parameters
     ----------
-    datamodel : `CubeModel`
-        The input `CubeModel` of a TSO imaging observation.
+    datamodel : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input CubeModel of a TSO imaging observation.
     xcenter, ycenter : float or ndarray
         The ``x`` and ``y`` center of the aperture.  If a single value
         is provided, it will be used for all integrations.  If an array
@@ -487,8 +487,8 @@ def tso_source_centroid(
 
     Parameters
     ----------
-    datamodel : `CubeModel`
-        The input `CubeModel` of a TSO imaging observation.
+    datamodel : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input CubeModel of a TSO imaging observation.
     xcenter : float
         Initial guess for the x-center of the source.
     ycenter : float

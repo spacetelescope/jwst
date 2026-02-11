@@ -27,8 +27,9 @@ def determine_vector_and_meta_columns(input_datatype, output_datatype):
 
     The vector-like columns are the ones defined in the input schema,
     and the metadata columns are the ones defined only in the output schema.
-    The input and output datatypes are typically read from the schema as e.g.
-    datatype = schema["properties"]["spec_table"]["datatype"].
+    The input and output datatypes are typically read from the schema as e.g.::
+
+        datatype = schema["properties"]["spec_table"]["datatype"].
 
     Parameters
     ----------
@@ -45,7 +46,7 @@ def determine_vector_and_meta_columns(input_datatype, output_datatype):
         Array of tuples containing the column names and their dtypes.
     is_vector : ndarray[bool]
         Array of booleans indicating whether each column is vector-like,
-        same length as `columns`.
+        same length as ``columns``.
     """
     # Extract just names and dtypes, convert to numpy dtypes
     vector_colnames = np.array([col["name"] for col in input_datatype])
@@ -76,7 +77,7 @@ def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=0):
         Array of tuples containing the column names and their dtypes.
     is_vector : ndarray[bool]
         Array of booleans indicating whether each column is vector-like.
-        If `True`, the column will be a 1D array of length `n_rows`.
+        If `True`, the column will be a 1D array of length ``n_rows``.
         Otherwise, the column will be a scalar.
     defaults : list, ndarray, int, or float, optional
         List of default values for each column. If a column is vector-like,
@@ -125,7 +126,8 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
     ----------
     output_table : `~numpy.recarray`
         The output table to be populated with the spectral data.
-    input_spec : `~jwst.datamodels.SpecModel` or `~jwst.datamodels.CombinedSpecModel`
+    input_spec : `~stdatamodels.jwst.datamodels.SpecModel` or \
+                 `~stdatamodels.jwst.datamodels.CombinedSpecModel`
         The input data model containing the spectral data.
     columns : ndarray[tuple]
         Array of tuples containing the column names and their dtypes.
@@ -179,7 +181,7 @@ def set_schema_units(model):
 
     Parameters
     ----------
-    model : DataModel
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Any model containing a spec_table attribute.
     """
     data_type = model.schema["properties"]["spec_table"]["datatype"]
@@ -197,10 +199,10 @@ def copy_column_units(input_model, output_model):
 
     Parameters
     ----------
-    input_model : SpecModel
+    input_model : `~stdatamodels.jwst.datamodels.SpecModel`
         Input spectral model containing vector columns in the
         ``spec_table`` attribute.
-    output_model : DataModel
+    output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Output spectral model containing a mix of vector columns
         and metadata columns in the ``spec_table`` attribute.
     """
@@ -220,21 +222,24 @@ def copy_spec_metadata(input_model, output_model):
 
     Parameters
     ----------
-    input_model : DataModel or ObjectNode
-        A spectral model, such as SpecModel or TSOSpecModel. If read
-        in from a list of spectra, as in MultiSpecModel, the input model may be
-        an ObjectNode rather than a full DataModel.
-    output_model : DataModel
-        A spectral model, such as SpecModel or TSOSpecModel. Updated in place
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel` or ObjectNode
+        A spectral model, such as `~stdatamodels.jwst.datamodels.SpecModel` or
+        `~stdatamodels.jwst.datamodels.TSOSpecModel`. If read
+        in from a list of spectra, as in
+        `~stdatamodels.jwst.datamodels.MultiSpecModel`, the input model may be
+        an ObjectNode rather than a full `~stdatamodels.jwst.datamodels.JwstDataModel`.
+    output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        A spectral model, such as `~stdatamodels.jwst.datamodels.SpecModel` or
+        `~stdatamodels.jwst.datamodels.TSOSpecModel`. Updated in place
         with metadata from the input model.  The output model must be a full
-        DataModel, not an ObjectNode.
+        `~stdatamodels.jwst.datamodels.JwstDataModel`, not an ObjectNode.
     """
     copy_attributes = []
     for prop in output_model.schema["properties"]:
         if prop not in ["meta", "spec_table"]:
             copy_attributes.append(prop)
     for key in copy_attributes:
-        if hasattr(input_model, key) and getattr(input_model, key) is not None:
+        if getattr(input_model, key, None) is not None:
             setattr(output_model, key, getattr(input_model, key))
 
 
@@ -244,13 +249,15 @@ def expand_table(spec):
 
     Parameters
     ----------
-    spec : WFSSSpecModel, TSOMultiSpecModel, ObjectNode
+    spec : `~stdatamodels.jwst.datamodels.WFSSSpecModel`, \
+           `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`, ObjectNode
         Any model containing a spec_table to expand into multiple spectra
 
     Returns
     -------
     list[SpecModel]
-        A list of SpecModel objects, one for each spectrum in the input spec_table.
+        A list of `~stdatamodels.jwst.datamodels.SpecModel` objects,
+        one for each spectrum in the input spec_table.
     """
     all_columns = np.array([str(x) for x in spec.spec_table.dtype.names])
     new_spec_list = []
@@ -279,7 +286,7 @@ def expand_table(spec):
                 pass
 
         # Copy over relevant metadata from the input model to the output model
-        if hasattr(spec.meta, "wcs"):
+        if getattr(spec.meta, "wcs", None) is not None:
             new_spec.meta.wcs = deepcopy(spec.meta.wcs)
         new_spec.meta.group_id = getattr(spec, "group_id", "")
         new_spec.meta.filename = getattr(spec, "filename", "")
@@ -297,14 +304,14 @@ def expand_flat_spec(input_model):
 
     Parameters
     ----------
-    input_model : TSOMultiSpecModel
+    input_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
         Spectral model containing spectra with a mix of vector columns
         and metadata columns in the ``spec_table`` attribute.
         Metadata columns will be dropped.
 
     Returns
     -------
-    MultiSpecModel
+    `~stdatamodels.jwst.datamodels.MultiSpecModel`
         A set of simple spectra, one per extension.
     """
     output_model = datamodels.MultiSpecModel()
@@ -318,7 +325,7 @@ def expand_flat_spec(input_model):
     output_model.update(input_model, only="PRIMARY")
 
     # Copy int_times if present
-    if hasattr(input_model, "int_times"):
+    if getattr(input_model, "int_times", None) is not None:
         output_model.int_times = input_model.int_times.copy()
 
     return output_model

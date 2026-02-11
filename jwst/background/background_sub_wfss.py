@@ -11,7 +11,7 @@ from jwst.lib.reffile_utils import get_subarray_model
 
 log = logging.getLogger(__name__)
 
-__all__ = ["subtract_wfss_bkg"]
+__all__ = ["subtract_wfss_bkg", "ScalingFactorComputer"]
 
 
 def subtract_wfss_bkg(
@@ -19,6 +19,7 @@ def subtract_wfss_bkg(
     bkg_filename,
     wl_range_name,
     mmag_extract=None,
+    user_mask=None,
     rescaler_kwargs=None,
 ):
     """
@@ -26,25 +27,31 @@ def subtract_wfss_bkg(
 
     Parameters
     ----------
-    model : ImageModel
-        Copy of input target exposure data model
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
+        Copy of input target exposure data model.
 
     bkg_filename : str
-        Name of master background file for WFSS/GRISM
+        Name of master background file for WFSS/GRISM.
 
     wl_range_name : str
-        Name of wavelength range reference file
+        Name of wavelength range reference file.
 
-    mmag_extract : float, optional, default None
-        Minimum abmag of grism objects to extract
+    mmag_extract : float or None, optional
+        Minimum AB mag of grism objects to extract. Default: None
 
-    rescaler_kwargs : dict, optional, default None
-        Keyword arguments to pass to ScalingFactorComputer
+    user_mask : ndarray[bool] or None, optional
+        User-supplied boolean source mask. `True` for background,
+        `False` for pixels that are part of sources. If provided, will supersede the auto-generated
+        mask from the source catalog, and ``model.meta.source_catalog`` will be ignored entirely.
+        Default: None
+
+    rescaler_kwargs : dict or None, optional
+        Keyword arguments to pass to `ScalingFactorComputer`. Default: None
 
     Returns
     -------
-    result : ImageModel
-        Background-subtracted target data model
+    result : `~stdatamodels.jwst.datamodels.ImageModel`
+        Background-subtracted target data model.
     """
     bkg_ref = datamodels.open(bkg_filename)
     bkg_ref = get_subarray_model(model, bkg_ref)
@@ -64,35 +71,52 @@ def subtract_wfss_bkg(
     rescaler_kwargs["dispersion_axis"] = dispaxis
 
     # get the source catalog for masking
-    if hasattr(model.meta, "source_catalog"):
-        got_catalog = True
+    if user_mask is None:
+        if getattr(model.meta, "source_catalog", None) is not None:
+            # Create a mask from the source catalog, True where there are no sources,
+            # i.e. in regions we can use as background.
+            bkg_mask = _mask_from_source_cat(model, wl_range_name, mmag_extract)
+            log.warning("No source_catalog found in input.meta, and custom mask not specified. ")
+            log.warning("No sources will be masked for background scaling.")
+            if not _sufficient_background_pixels(model.dq, bkg_mask, bkg_ref.data):
+                log.warning("Not enough background pixels to work with.")
+                log.warning("Step will be marked FAILED.")
+                # Save the mask in expected data type for the datamodel and set
+                # other keywords appropriately for this case
+                model.mask = bkg_mask.astype(np.uint32)
+                model.meta.background.scaling_factor = 0.0
+                model.meta.cal_step.bkg_subtract = "FAILED"
+                bkg_ref.close()
+                return model
+        else:
+            log.warning("No source_catalog found in input.meta. Setting all pixels as background.")
+            bkg_mask = np.ones(model.data.shape, dtype=bool)
     else:
-        log.warning("No source_catalog found in input.meta.")
-        got_catalog = False
-
-    # Create a mask from the source catalog, True where there are no sources,
-    # i.e. in regions we can use as background.
-    if got_catalog:
-        bkg_mask = _mask_from_source_cat(model, wl_range_name, mmag_extract)
-        if not _sufficient_background_pixels(model.dq, bkg_mask, bkg_ref.data):
-            log.warning("Not enough background pixels to work with.")
+        log.info("Using user-supplied source mask for background scaling.")
+        # we want a more generous criterion for sufficient background pixels here,
+        # since the user is explicitly specifying the mask.
+        # Assume bkg_ref is all good pixels, and set minimum fraction to zero
+        # Then this is effectively just dq array & user mask constraints
+        if not _sufficient_background_pixels(
+            model.dq, user_mask, np.ones_like(user_mask), min_pixfrac=0.0
+        ):
+            log.warning("No background pixels found in user-supplied mask.")
             log.warning("Step will be marked FAILED.")
             # Save the mask in expected data type for the datamodel and set
             # other keywords appropriately for this case
-            model.mask = bkg_mask.astype(np.uint32)
+            model.mask = user_mask.astype(np.uint32)
             model.meta.background.scaling_factor = 0.0
             model.meta.cal_step.bkg_subtract = "FAILED"
             bkg_ref.close()
             return model
-    else:
-        bkg_mask = np.ones(model.data.shape, dtype=bool)
+        bkg_mask = user_mask.astype(bool)
 
     # save the mask in expected data type for the datamodel
     model.mask = bkg_mask.astype(np.uint32)
 
     # compute scaling factor for the reference background image
     log.info("Starting iterative outlier rejection for background subtraction.")
-    rescaler = _ScalingFactorComputer(**rescaler_kwargs)
+    rescaler = ScalingFactorComputer(**rescaler_kwargs)
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", category=RuntimeWarning, message="All-NaN slice encountered"
@@ -128,32 +152,33 @@ def subtract_wfss_bkg(
     return model
 
 
-class _ScalingFactorComputer:
+class ScalingFactorComputer:
+    """
+    Handle computation of scaling factor.
+
+    Parameters
+    ----------
+    p : float, optional
+        Percentile for sigma clipping on both low and high ends per iteration, default 1.0.
+        For example, with ``p=2.0``, the middle 96% of the data is kept.
+
+    maxiter : int, optional
+        Maximum number of iterations for outlier rejection. Default 5.
+
+    delta_rms_thresh : float, optional
+        Stopping criterion for outlier rejection; stops when the rms residuals
+        change by less than this fractional threshold in a single iteration.
+        For example, assuming ``delta_rms_thresh=0.1`` and a residual RMS of 100
+        in iteration 1, the iteration will stop if the RMS residual in iteration
+        2 is greater than 90.
+        Default 0.0, i.e., ignore this and only stop at ``maxiter``.
+
+    dispersion_axis : int, optional
+        The index to select the along-dispersion axis. Used to compute the RMS
+        residual, so must be set if ``rms_thresh > 0``. Default None.
+    """
+
     def __init__(self, p=1.0, maxiter=5, delta_rms_thresh=0, dispersion_axis=None):
-        """
-        Initialize the class.
-
-        Parameters
-        ----------
-        p : float, optional
-            Percentile for sigma clipping on both low and high ends per iteration, default 1.0.
-            For example, with p=2.0, the middle 96% of the data is kept.
-
-        maxiter : int, optional
-            Maximum number of iterations for outlier rejection. Default 5.
-
-        delta_rms_thresh : float, optional
-            Stopping criterion for outlier rejection; stops when the rms residuals
-            change by less than this fractional threshold in a single iteration.
-            For example, assuming delta_rms_thresh=0.1 and a residual RMS of 100
-            in iteration 1, the iteration will stop if the RMS residual in iteration
-            2 is greater than 90.
-            Default 0.0, i.e., ignore this and only stop at maxiter.
-
-        dispersion_axis : int, optional
-            The index to select the along-dispersion axis. Used to compute the RMS
-            residual, so must be set if rms_thresh > 0. Default None.
-        """
         if (delta_rms_thresh > 0) and (dispersion_axis not in [1, 2]):
             msg = (
                 f"Unrecognized dispersion axis {dispersion_axis}. "
@@ -301,7 +326,7 @@ def _sufficient_background_pixels(dq_array, bkg_mask, bkg, min_pixfrac=0.05):
 
     Check DQ flags of pixels selected for bkg use - XOR the DQ values with
     the DO_NOT_USE flag to flip the DO_NOT_USE bit. Then count the number
-    of pixels that AND with the DO_NOT_USE flag, i.e. initially did not have
+    of pixels that AND with the DO_NOT_USE flag, i.e., initially did not have
     the DO_NOT_USE bit set.
 
     Parameters
@@ -337,14 +362,14 @@ def _mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
 
     Parameters
     ----------
-    input_model : ImageModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Input target exposure data model
 
     wl_range_name : str
         Name of the wavelengthrange reference file
 
     mmag_extract : float
-        Minimum abmag of grism objects to extract
+        Minimum AB mag of grism objects to extract
 
     Returns
     -------

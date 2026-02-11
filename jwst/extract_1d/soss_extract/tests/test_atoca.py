@@ -334,7 +334,8 @@ def tikho_tests(imagemodel, engine):
 
     log_guess = np.log10(engine.estimate_tikho_factors(f_lam))
     factors = np.logspace(log_guess - 9, log_guess + 9, 19)
-    return factors, engine.get_tikho_tests(factors, data, error)
+    tikho_struct = engine.get_tikho_test_structure(data, error)
+    return factors, engine.get_tikho_tests(tikho_struct, factors)
 
 
 def test_get_tikho_tests(tikho_tests, engine):

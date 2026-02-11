@@ -8,21 +8,22 @@ __all__ = ["make_tso_specmodel"]
 
 def make_tso_specmodel(spec_list, segment=None):
     """
-    Make a TSOSpecModel from a list of SpecModel.
+    Make a `~stdatamodels.jwst.datamodels.TSOSpecModel` from a list of
+    `~stdatamodels.jwst.datamodels.SpecModel`.
 
     Parameters
     ----------
-    spec_list : list of SpecModel
+    spec_list : list of `~stdatamodels.jwst.datamodels.SpecModel`
        Individual spectra for each integration.
     segment : int or None, optional
        The segment number for the input model.
 
     Returns
     -------
-    TSOSpecModel
+    `~stdatamodels.jwst.datamodels.TSOSpecModel`
         A model containing all spectra in a flat table with vector
         columns for spectral data.
-    """
+    """  # noqa: D205  # numpydoc ignore=SS06
     # Make a blank model
     tso_spec = datamodels.TSOSpecModel()
 
@@ -85,7 +86,7 @@ def make_tso_specmodel(spec_list, segment=None):
 
     # Copy metadata from the first input_spec
     tso_spec.update(spec_list[0])
-    if hasattr(spec_list[0].meta, "wcs"):
+    if getattr(spec_list[0].meta, "wcs", None) is not None:
         tso_spec.meta.wcs = spec_list[0].meta.wcs
 
     return tso_spec

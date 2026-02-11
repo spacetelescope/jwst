@@ -218,7 +218,7 @@ class JwstStep(_Step):
                     # It is assumed the provided class is appropriate for the input.
                     input_models = open_as_type(init, **kwargs)
                 else:
-                    input_models = datamodels.open(init)
+                    input_models = datamodels.open(init, **kwargs)
             else:
                 # Return the filename or path -
                 # the calling code will handle opening it as needed.

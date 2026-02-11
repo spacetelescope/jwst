@@ -9,6 +9,7 @@ file.
 
 """
 
+import numpy as np
 from astropy.io import fits
 from gwcs import wcs
 from numpy.testing import assert_allclose
@@ -63,6 +64,7 @@ def create_hdul(detector="NIS", filtername="CLEAR", exptype="NIS_IMAGE", pupil="
     scihdu = fits.ImageHDU()
     scihdu.header["EXTNAME"] = "SCI"
     scihdu.header.update(wcs_kw)
+    scihdu.data = np.zeros((10, 10))
     hdul.append(phdu)
     hdul.append(scihdu)
     return hdul

@@ -1,5 +1,7 @@
+import gwcs
 import numpy as np
 import pytest
+from astropy.modeling.models import Const1D, Identity, Mapping
 from stdatamodels.jwst import datamodels
 
 from jwst.residual_fringe.residual_fringe import ResidualFringeCorrection, utils
@@ -76,8 +78,8 @@ def miri_mrs_model_linear(monkeypatch, linear_spectrum):
     model.meta.cal_step.fringe = "COMPLETE"
 
     wave, flux = linear_spectrum
-    model.data[:, :] = flux[:, None]
-    model.wavelength[:, :] = wave[:, None]
+    model.data += flux[:, None]
+    model.wavelength = np.ones_like(model.data) * wave[:, None]
     model.err = model.data * 0.01
 
     return model
@@ -257,10 +259,8 @@ def test_get_wavemap():
     model = datamodels.IFUImageModel()
 
     # Mock a WCS that returns 1 for wavelengths
-    def return_ones(x, y):
-        return None, None, np.ones(x.shape)
-
-    model.meta.wcs = return_ones
+    transform = Mapping((0, 1, 1), n_inputs=2) | Identity(2) & Const1D(1)
+    model.meta.wcs = gwcs.WCS([("detector", transform), ("world", None)])
 
     rf = ResidualFringeCorrection(model, "N/A", "N/A", None)
     wavemap = rf._get_wave_map()

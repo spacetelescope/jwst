@@ -416,9 +416,9 @@ appropriate suffix::
 
 **Setting Output File Directory**
 
-Setting ``output_dir`` at the step-level indicates that the step's result should
-be saved (so, also setting ``save_results`` is redundant), and that the files
+Setting ``output_dir`` indicates that the files
 should be saved in the directory specified instead of the current working directory.
+The specified directory will be created if it does not yet exist before the run.
 For example, to save the intermediate results of ``DarkCurrentStep`` when running
 ``Detector1Pipeline`` in a subdirectory ``calibrated``::
 
@@ -489,16 +489,20 @@ multiprocessing to simultaneously run the entire pipeline on multiple observatio
 
 Since the pipeline uses multiprocessing it is critical that any code using the pipeline adhere
 to the guidelines described in the
-`python multiprocessing documentation <https://docs.python.org/3/library/multiprocessing.html#multiprocessing-programming>`_.
+`Python multiprocessing documentation <https://docs.python.org/3/library/multiprocessing.html#multiprocessing-programming>`_.
 The pipeline uses the ``spawn`` start method internally and it is recommended that any
 multiprocessing scripts that use the pipeline use the same start. As detailed in the
-`python documentation <https://docs.python.org/3/library/multiprocessing.html#the-spawn-and-forkserver-start-methods>`_
+`Python documentation <https://docs.python.org/3/library/multiprocessing.html#the-spawn-and-forkserver-start-methods>`_
 this will require that code be "protected" with a ``if __name__ == '__main__':`` check as follows::
 
     if __name__ = '__main__':
         [code used in multiprocessing]
 
 There are a couple of scenarios to use multiprocessing with the pipeline:
+
+.. note::
+    For more details on how to adjust ``.call(...)`` inputs in the examples below,
+    please see :ref:`setting_parameters_python`.
 
 1. Multiprocessing within a pipeline step. At the moment, the steps that
    support this are the :ref:`jump <jump_step>`,
@@ -529,10 +533,11 @@ There are a couple of scenarios to use multiprocessing with the pipeline:
     if __name__ = '__main__':
         sys.exit(main())
 
-2. Calling the pipeline using multiprocessing. The following example uses this
-   option setting up a text file with the full traceback in case there is a crash.
+2. Calling the pipeline using multiprocessing via its :py:meth:`multiprocessing.pool.Pool.starmap`
+   method and using :py:func:`zip` to pack its inputs. The following example uses an
+   option to set up a text file with the full traceback in case there is a crash.
    Notice that the ``import`` statement of the pipeline is within the multiprocessing
-   block that gets called by every worker. This is to avoid a known memory leak.
+   block that gets called by every worker; this is to avoid a known memory leak.
 
 ::
 

@@ -394,28 +394,24 @@ def do_correction(
 
     Parameters
     ----------
-    input_model : data model object
-        Science data to be corrected
-
-    pathloss_model : pathloss model object or None
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Science data to be corrected. Updated in place.
+    pathloss_model : `~stdatamodels.jwst.datamodels.MirLrsPathlossModel`, \
+                     `~stdatamodels.jwst.datamodels.PathlossModel` or None, optional
         Pathloss correction data
-
-    inverse : bool
+    inverse : bool, optional
         Invert the math operations used to apply the pathloss correction.
-
-    source_type : str or None
+    source_type : str or None, optional
         Force processing using the specified source type.
-
-    correction_pars : dict or None
+    correction_pars : dict or None, optional
         Correction parameters to use instead of recalculation.
-
-    user_slit_loc : float
+    user_slit_loc : float, optional
         User-provided slit location in units of arcsec, where (0,0)
         is the center and the edges are +/-0.255 arcsec.
 
     Returns
     -------
-    output_model, corrections : jwst.datamodels.JwstDataModel
+    input_model, corrections : tuple of `~stdatamodels.jwst.datamodels.JwstDataModel`
         2-tuple of the corrected science data with pathloss extensions added, and a
         model of the correction arrays.
     """
@@ -426,45 +422,41 @@ def do_correction(
         )
     exp_type = input_model.meta.exposure.type
     log.info(f"Input exposure type is {exp_type}")
-    output_model = input_model.copy()
 
+    corrections = None
     if exp_type == "NRS_MSASPEC":
         corrections = do_correction_mos(
-            output_model, pathloss_model, inverse, source_type, correction_pars
+            input_model, pathloss_model, inverse, source_type, correction_pars
         )
     elif exp_type in ["NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
         corrections = do_correction_fixedslit(
-            output_model, pathloss_model, inverse, source_type, correction_pars
+            input_model, pathloss_model, inverse, source_type, correction_pars
         )
     elif exp_type == "NRS_IFU":
         corrections = do_correction_ifu(
-            output_model, pathloss_model, inverse, source_type, correction_pars
+            input_model, pathloss_model, inverse, source_type, correction_pars
         )
     elif exp_type in ["MIR_LRS-FIXEDSLIT", "MIR_WFSS"]:
         # only apply correction to LRS fixed-slit if target is point source
-        if is_pointsource(output_model.meta.target.source_type):
-            corrections = do_correction_lrs(output_model, pathloss_model, user_slit_loc)
+        if is_pointsource(input_model.meta.target.source_type):
+            do_correction_lrs(input_model, pathloss_model, user_slit_loc)
         else:
             log.warning("Not a point source; skipping correction for LRS.")
-            output_model.meta.cal_step.pathloss = "SKIPPED"
-            corrections = None
+            input_model.meta.cal_step.pathloss = "SKIPPED"
     elif exp_type == "NIS_SOSS":
         if correction_pars:
             log.warning("Use of correction_pars with NIS_SOSS is not implemented. Skipping")
-            output_model.meta.cal_step.pathloss = "SKIPPED"
-            corrections = None
+            input_model.meta.cal_step.pathloss = "SKIPPED"
         elif inverse:
             log.warning("Use of inversion with NIS_SOSS is not implemented. Skipping")
-            output_model.meta.cal_step.pathloss = "SKIPPED"
-            corrections = None
+            input_model.meta.cal_step.pathloss = "SKIPPED"
         elif source_type is not None:
             log.warning("Forcing of source type with NIS_SOSS is not implemented. Skipping")
-            output_model.meta.cal_step.pathloss = "SKIPPED"
-            corrections = None
+            input_model.meta.cal_step.pathloss = "SKIPPED"
         else:
-            corrections = do_correction_soss(output_model, pathloss_model)
+            do_correction_soss(input_model, pathloss_model)
 
-    return output_model, corrections
+    return input_model, corrections
 
 
 def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
