@@ -19,6 +19,8 @@ def nrs_fs_model():
     hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
     im = datamodels.ImageModel(hdul)
     im.data = np.zeros((2048, 2048))
+    im.err = np.zeros((2048, 2048))
+    im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
     yield im_ex2d
@@ -50,6 +52,8 @@ def test_wavecorr():
     hdul[0].header["MSAMETID"] = 12
     im = datamodels.ImageModel(hdul)
     im.data = np.zeros((2048, 2048))
+    im.err = np.zeros((2048, 2048))
+    im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
     bbox = ((-0.5, 1432.5), (-0.5, 37.5))
@@ -156,6 +160,8 @@ def test_reference_file_requirements():
     hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
     im = datamodels.ImageModel(hdul)
     im.data = np.zeros((2048, 2048))
+    im.err = np.zeros((2048, 2048))
+    im.dq = np.zeros((2048, 2048), dtype=np.uint32)
 
     outa = AssignWcsStep.call(im)
 
@@ -227,6 +233,8 @@ def test_mos_slit_status():
     hdul[0].header["MSAMETID"] = 12
     im = datamodels.ImageModel(hdul)
     im.data = np.zeros((2048, 2048))
+    im.err = np.zeros((2048, 2048))
+    im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
     bbox = ((-0.5, 1432.5), (-0.5, 37.5))
@@ -269,6 +277,8 @@ def test_mos_slit_status():
 def test_wavecorr_fs():
     hdul = create_nirspec_fs_file(grating="PRISM", filter="CLEAR")
     im = datamodels.ImageModel(hdul)
+    im.err = np.zeros((2048, 2048))
+    im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     dither = {"x_offset": -0.0264, "y_offset": 1.089798712}
 
     im.meta.dither = dither
