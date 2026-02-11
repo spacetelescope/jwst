@@ -18,6 +18,7 @@ To build the docs locally (assuming you have [set up your environment as describ
 ```shell
 pip install -e .[docs]
 cd docs/
+make clean
 make html
 ```
 
