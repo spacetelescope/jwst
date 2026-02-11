@@ -41,7 +41,7 @@ def test_fit_2d_spline_trace(fit_2d_spline_input):
 
     # Fit values should be close to flux
     atol = 0.25 * np.nanmax(flux)
-    full_indx = region_map == 1
+    full_indx = (region_map == 1) & ~np.isnan(full_trace)
     assert np.sum(full_indx) > 0
     np.testing.assert_allclose(flux[full_indx], full_trace[full_indx], atol=atol)
 

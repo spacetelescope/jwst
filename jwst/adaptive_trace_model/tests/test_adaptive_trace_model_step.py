@@ -111,10 +111,10 @@ def test_adaptive_trace_model_step_with_source(miri_mrs_model_with_source):
     det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
     indx = det2ab_transform.label_mapper.mapper == 120
     assert np.all(np.isnan(result.trace_model[~indx]))
-    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.9 * np.sum(indx)
+    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.85 * np.sum(indx)
 
     # fit trace is a reasonable model of the slice but not perfect
-    valid = indx & ~np.isnan(result.data)
+    valid = indx & ~np.isnan(result.data) & ~np.isnan(result.trace_model)
     atol = 0.25 * np.nanmax(model.data)
     np.testing.assert_allclose(result.data[valid], result.trace_model[valid], atol=atol)
     result.close()
@@ -131,10 +131,10 @@ def test_adaptive_trace_model_step_negative_mean(miri_mrs_model_with_source):
     det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
     indx = det2ab_transform.label_mapper.mapper == 120
     assert np.all(np.isnan(result.trace_model[~indx]))
-    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.9 * np.sum(indx)
+    assert np.sum(~np.isnan(result.trace_model[indx])) > 0.85 * np.sum(indx)
 
     # fit trace is a reasonable model of the slice, minus the negative mean
-    valid = indx & ~np.isnan(result.data)
+    valid = indx & ~np.isnan(result.data) & ~np.isnan(result.trace_model)
     atol = 0.25 * original_max
     np.testing.assert_allclose(result.data[valid] + 100, result.trace_model[valid], atol=atol)
 

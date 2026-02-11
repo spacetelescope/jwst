@@ -379,6 +379,11 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_l
             col_alpha = alpha_slice[:, i]
             valid_alpha = np.isfinite(col_alpha)
             col_fit = splines[i](col_alpha[valid_alpha])
+
+            # Set the edges to NaN to avoid edge effects
+            col_fit[0] = np.nan
+            col_fit[-1] = np.nan
+
             scaled_fit = scales[i] * col_fit
             trace_slice[:, i][valid_alpha] = scaled_fit
 
