@@ -2755,7 +2755,8 @@ def apply_slicemap(input_model, replace_wcs=True):
 
     # Fix the slit name input for all further transforms - the value is not relevant.
     slicer_idx = full_wcs.available_frames.index("slicer")
-    new_pipeline = [("coordinates", input2det), (full_wcs.pipeline[0].frame, det2slicer)]
+    coord_frame = gwcs.coordinate_frames.Frame2D(name="coordinates", axes_order=(0, 1))
+    new_pipeline = [(coord_frame, input2det), (full_wcs.pipeline[0].frame, det2slicer)]
     for step in full_wcs.pipeline[slicer_idx:]:
         new_transform = _fix_slit_name(step.transform, 0)
         new_pipeline.append((step.frame, new_transform))
