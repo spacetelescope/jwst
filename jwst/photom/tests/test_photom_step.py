@@ -134,6 +134,9 @@ def test_photom_nrs_ifu():
     model.data = np.ones(shape, dtype=np.float32)
     model.err = np.full(shape, 0.1, dtype=np.float32)
     model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = model.get_default("var_poisson")
+    model.var_rnoise = model.get_default("var_rnoise")
+    model.var_flat = model.get_default("var_flat")
     model = AssignWcsStep.call(model)
 
     result = PhotomStep.call(model)
