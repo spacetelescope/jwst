@@ -5,9 +5,7 @@ import warnings
 
 import numpy as np
 from astropy.constants import c
-from astropy.coordinates import SkyCoord
 from astropy.modeling import models as astmodels
-from astropy.table import QTable
 from gwcs import WCS
 from gwcs import utils as gwutils
 from gwcs.wcstools import grid_from_bounding_box
@@ -15,14 +13,17 @@ from stcal.alignment.util import (
     compute_s_region_imaging,
     compute_s_region_keyword,
     wcs_bbox_from_shape,
-    ReferenceImageModel,
 )
-from stdatamodels.jwst.datamodels import MiriLRSSpecwcsModel, WavelengthrangeModel
+from stdatamodels.jwst.datamodels import (
+    MiriLRSSpecwcsModel,
+    ReferenceImageModel,
+    WavelengthrangeModel,
+)
 from stdatamodels.jwst.transforms.models import GrismObject
 from stpipe.exceptions import StpipeExitException
 
-from jwst.lib.reffile_utils import stripe_read
 from jwst.lib.catalog_utils import SkyObject, read_source_catalog
+from jwst.lib.reffile_utils import stripe_read
 
 log = logging.getLogger(__name__)
 
