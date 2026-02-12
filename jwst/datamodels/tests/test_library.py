@@ -48,6 +48,7 @@ def example_asn_path(tmp_path):
         m.meta.filename = base_fn
         m.save(str(tmp_path / base_fn))
         fns.append(base_fn)
+        m.close()
 
     asn = asn_from_list(fns, product_name=_PRODUCT_NAME)
     base_fn, contents = asn.dump(format="json")
@@ -266,20 +267,20 @@ def test_read_meta_from_open_model(example_asn_path, flatten):
     Add a bunch of different types of attributes to the model to ensure they are handled
     in the same way.
     """
-    model = dm.open(example_asn_path.parent / "0.fits")
-    model.astropy_time = Time(datetime(2020, 1, 1, 12, 0, 0))
-    model.datetime_time = datetime(2020, 1, 1, 12, 0, 0)
-    model.data_list = [np.array([1, 2, 3]), np.array([4, 5, 6])]
-    model.int_list = [1, 2, 3, 4]
-    model.nested_list = [[{"key": "value"}], [{"key2": "value2"}]] * 2
-    model.meta.wcs = gwcs.WCS(
-        input_frame=cf.Frame2D(name="input"), output_frame=cf.Frame2D(name="output")
-    )
-    model.unsupported_type = set([1, 2, 3])
-    meta = _read_meta_from_open_model(model, flatten)
-    meta_crds = model.get_crds_parameters()
+    with dm.open(example_asn_path.parent / "0.fits") as model:
+        model.astropy_time = Time(datetime(2020, 1, 1, 12, 0, 0))
+        model.datetime_time = datetime(2020, 1, 1, 12, 0, 0)
+        model.data_list = [np.array([1, 2, 3]), np.array([4, 5, 6])]
+        model.int_list = [1, 2, 3, 4]
+        model.nested_list = [[{"key": "value"}], [{"key2": "value2"}]] * 2
+        model.meta.wcs = gwcs.WCS(
+            input_frame=cf.Frame2D(name="input"), output_frame=cf.Frame2D(name="output")
+        )
+        model.unsupported_type = set([1, 2, 3])
+        meta = _read_meta_from_open_model(model, flatten)
+        meta_crds = model.get_crds_parameters()
 
-    assert _to_flat_dict(meta) == meta_crds
+        assert _to_flat_dict(meta) == meta_crds
 
 
 @pytest.mark.parametrize("flatten", [True, False])
