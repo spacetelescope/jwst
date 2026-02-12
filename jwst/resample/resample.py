@@ -270,13 +270,13 @@ class ResampleImage(Resample):
             The association id. The id is what appears in
             the :ref:`asn-jwst-naming`.
 
-        pixmap_stepsize : int, optional
+        pixmap_stepsize : float, optional
             Step size for pixel map interpolation during resampling.
             Larger step sizes result in faster performance at the cost of accuracy.
             Interpolation is only performed if ``pixmap_stepsize > 1``. Default is 1.
 
         pixmap_order : int, optional
-            Order of the pixel map interpolation used. Default is 1.
+            Order of the pixel map interpolation used. Must be 1 or 3. Default is 1.
         """
         self.input_models = input_models
         self.output_jwst_model = None

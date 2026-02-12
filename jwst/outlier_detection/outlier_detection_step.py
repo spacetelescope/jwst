@@ -56,8 +56,8 @@ class OutlierDetectionStep(Step):
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         search_output_file = boolean(default=False)
         in_memory = boolean(default=True) # in_memory flag ignored if run within the pipeline; set at pipeline level instead
-        pixmap_stepsize = integer(default=1)  # Step size for pixel map interpolation during resampling; interpolation is used for stepsize > 1
-        pixmap_order = integer(default=1)  # Order of the pixel map interpolation used
+        pixmap_stepsize = float(default=1.0)  # Interpolation step size for pixel map; interpolation is used for stepsize > 1
+        pixmap_order = integer(default=1)  # Spline order for pixel mapping, must be 1 or 3
     """  # noqa: E501
 
     def process(self, input_data):
