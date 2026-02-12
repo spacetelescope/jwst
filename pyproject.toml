@@ -356,6 +356,11 @@ showcontent = true
 # step changes
 
 [[tool.towncrier.type]]
+directory = "adaptive_trace_model"
+name = "adaptive_trace_model (spec2, spec3)"
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "align_refs"
 name = 'align_refs (coron3)'
 showcontent = true
