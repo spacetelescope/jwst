@@ -683,14 +683,14 @@ class IFUCubeData:
             for input_model in self.master_table.FileMap[self.instrument][this_par1][this_par2]:
                 # loop over the files that cover the spectral range the cube is for
 
-                self.input_models_this_cube.append(input_model.copy())
+                self.input_models_this_cube.append(input_model)
                 # set up input_model to be first file used to copy in basic header info
                 # to ifucube meta data
                 if ib == 0 and k == 0:
                     input_model_ref = input_model
 
                 log.debug(f"Working on Band defined by: {this_par1} {this_par2}")
-
+                input_frame = input_model.meta.wcs.available_frames[0]
                 if self.interpolation in ["pointcloud", "drizzle"]:
                     pixelresult = self.map_detector_to_outputframe(this_par1, input_model)
 
@@ -847,7 +847,7 @@ class IFUCubeData:
                     # ----------------------------------------------------------------------------
                     if self.instrument == "MIRI":
                         det2ab_transform = input_model.meta.wcs.get_transform(
-                            "detector", "alpha_beta"
+                            input_frame, "alpha_beta"
                         )
                         start_region = self.instrument_info.get_start_slice(this_par1)
                         end_region = self.instrument_info.get_end_slice(this_par1)
@@ -855,7 +855,12 @@ class IFUCubeData:
 
                         for i in regions:
                             log.info("Working on Slice # %d", i)
-                            y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
+                            if input_model.hasattr("regions"):
+                                # expected for oversampled data
+                                slice_det = input_model.regions
+                            else:
+                                slice_det = det2ab_transform.label_mapper.mapper
+                            y, x = (slice_det == i).nonzero()
 
                             # getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
                             index = np.where(y < 1023)
@@ -904,7 +909,7 @@ class IFUCubeData:
                             x, y = wcstools.grid_from_bounding_box(
                                 slice_wcs.bounding_box, step=(1, 1), center=True
                             )
-                            detector2slicer = slice_wcs.get_transform("detector", "slicer")
+                            detector2slicer = slice_wcs.get_transform(input_frame, "slicer")
 
                             result = cube_internal_cal.match_det2cube(
                                 self.instrument,
@@ -1485,12 +1490,16 @@ class IFUCubeData:
             log.info(f"Defining rotation between ra-dec and IFU plane using {this_a}, {this_b}")
             # first file for this band
             input_model = self.master_table.FileMap[self.instrument][this_a][this_b][0]
-
+            input_frame = input_model.meta.wcs.available_frames[0]
             if self.instrument == "MIRI":
                 xstart, xend = self.instrument_info.get_miri_slice_endpts(this_a)
+                xc_start, xc_end = cube_build_wcs_util.miri_slice_limit_coords(
+                    input_model.meta.wcs, xstart, xend
+                )
                 ysize = input_model.data.shape[0]
-                y, x = np.mgrid[:ysize, xstart:xend]
-                detector2alpha_beta = input_model.meta.wcs.get_transform("detector", "alpha_beta")
+                y, x = np.mgrid[:ysize, xc_start:xc_end]
+
+                detector2alpha_beta = input_model.meta.wcs.get_transform(input_frame, "alpha_beta")
                 alpha, beta, lam = detector2alpha_beta(x, y)
                 lam_med = np.nanmedian(lam)
                 # pick two alpha, beta values to determine rotation angle
@@ -1507,7 +1516,7 @@ class IFUCubeData:
                 x, y = wcstools.grid_from_bounding_box(
                     slice_wcs.bounding_box, step=(1, 1), center=True
                 )
-                detector2slicer = slice_wcs.get_transform("detector", "slicer")
+                detector2slicer = slice_wcs.get_transform(input_frame, "slicer")
                 across, along, lam = detector2slicer(x, y)  # lam ~0 for this transform
                 lam_med = np.nanmedian(lam)
 
@@ -2001,22 +2010,31 @@ class IFUCubeData:
 
         # find the slice number of each pixel and fill in slice_det
         ysize, xsize = input_model.data.shape
-        slice_det = np.zeros((ysize, xsize), dtype=int)
-        det2ab_transform = input_model.meta.wcs.get_transform("detector", "alpha_beta")
-        start_region = self.instrument_info.get_start_slice(this_par1)
-        end_region = self.instrument_info.get_end_slice(this_par1)
-        regions = list(range(start_region, end_region + 1))
-        for i in regions:
-            ys, xs = (det2ab_transform.label_mapper.mapper == i).nonzero()
-            xind = to_index(xs)
-            yind = to_index(ys)
-            xind = np.ndarray.flatten(xind)
-            yind = np.ndarray.flatten(yind)
-            slice_det[yind, xind] = i
+        if input_model.hasattr("regions"):
+            # expected for oversampled data
+            slice_det = input_model.regions
+        else:
+            # find the slice number of each pixel and fill in slice_det
+            slice_det = np.zeros((ysize, xsize), dtype=int)
+            det2ab_transform = input_model.meta.wcs.get_transform("detector", "alpha_beta")
+            mapper = det2ab_transform.label_mapper.mapper
+            start_region = self.instrument_info.get_start_slice(this_par1)
+            end_region = self.instrument_info.get_end_slice(this_par1)
+            regions = list(range(start_region, end_region + 1))
+            for i in regions:
+                ys, xs = (mapper == i).nonzero()
+                xind = to_index(xs)
+                yind = to_index(ys)
+                xind = np.ndarray.flatten(xind)
+                yind = np.ndarray.flatten(yind)
+                slice_det[yind, xind] = i
 
         # define the x,y detector values of channel to be mapped to desired coordinate system
         xstart, xend = self.instrument_info.get_miri_slice_endpts(this_par1)
-        y, x = np.mgrid[:ysize, xstart:xend]
+        xc_start, xc_end = cube_build_wcs_util.miri_slice_limit_coords(
+            input_model.meta.wcs, xstart, xend
+        )
+        y, x = np.mgrid[:ysize, xc_start:xc_end]
         y = np.reshape(y, y.size)
         x = np.reshape(x, x.size)
 
@@ -2041,7 +2059,7 @@ class IFUCubeData:
         xind = np.ndarray.flatten(xind)
         yind = np.ndarray.flatten(yind)
         slice_no = slice_det[yind, xind]
-
+        input_frame = input_model.meta.wcs.available_frames[0]
         if self.interpolation == "drizzle":
             # Delta wavelengths
             _, _, wave1 = input_model.meta.wcs(x, y - 0.4999)
@@ -2051,10 +2069,10 @@ class IFUCubeData:
             # Pixel corners
             pixfrac = 1.0
             alpha1, beta, _ = input_model.meta.wcs.transform(
-                "detector", "alpha_beta", x - 0.4999 * pixfrac, y
+                input_frame, "alpha_beta", x - 0.4999 * pixfrac, y
             )
             alpha2, _, _ = input_model.meta.wcs.transform(
-                "detector", "alpha_beta", x + 0.4999 * pixfrac, y
+                input_frame, "alpha_beta", x + 0.4999 * pixfrac, y
             )
             # Find slice width
             allbetaval = np.unique(beta)
@@ -2161,13 +2179,14 @@ class IFUCubeData:
         dec4_det = np.zeros((ysize, xsize))
 
         # determine the slice width using slice 1 and 3
+        input_frame = input_model.meta.wcs.available_frames[0]
         slice_wcs1 = nirspec.nrs_wcs_set_input(input_model, 0)
-        detector2slicer = slice_wcs1.get_transform("detector", "slicer")
+        detector2slicer = slice_wcs1.get_transform(input_frame, "slicer")
         mean_x, mean_y = np.mean(slice_wcs1.bounding_box[0]), np.mean(slice_wcs1.bounding_box[1])
         slice_loc1, _, _ = detector2slicer(mean_x, mean_y)
 
         slice_wcs3 = nirspec.nrs_wcs_set_input(input_model, 2)
-        detector2slicer = slice_wcs3.get_transform("detector", "slicer")
+        detector2slicer = slice_wcs3.get_transform(input_frame, "slicer")
         mean_x, mean_y = np.mean(slice_wcs3.bounding_box[0]), np.mean(slice_wcs3.bounding_box[1])
         slice_loc3, _, _ = detector2slicer(mean_x, mean_y)
 
@@ -2200,7 +2219,7 @@ class IFUCubeData:
 
                 # Pixel corners
                 pixfrac = 1.0
-                detector2slicer = slice_wcs.get_transform("detector", "slicer")
+                detector2slicer = slice_wcs.get_transform(input_frame, "slicer")
                 slicer2world = slice_wcs.get_transform("slicer", slice_wcs.output_frame)
                 across1, along1, lam1 = detector2slicer(x, y - 0.49 * pixfrac)
                 across2, along2, lam2 = detector2slicer(x, y + 0.49 * pixfrac)

@@ -1,6 +1,3 @@
-#! /usr/bin/env python
-from stdatamodels.jwst import datamodels
-
 from jwst.extract_2d import extract_2d
 from jwst.stpipe import Step
 
@@ -28,44 +25,52 @@ class Extract2dStep(Step):
 
     reference_file_types = ["wavelengthrange"]
 
-    def process(self, input_model):
+    def process(self, input_data):
         """
-        Perform the extract_2d calibration step.
+        Extract 2D cutouts from a spectral image.
 
         Parameters
         ----------
-        input_model : DataModel
-            DataModel to be processed
+        input_data : str, `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                     `~stdatamodels.jwst.datamodels.CubeModel`
+            Input datamodel or file name.
 
         Returns
         -------
-        output_model : DataModel
-            The resulting DataModel of the extract_2d step
+        result : `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+                 `~stdatamodels.jwst.datamodels.SlitModel`
+            Output datamodel containing spectral cutouts in separate extensions.
         """
-        with datamodels.open(input_model) as dm:
-            reference_file_names = {}
-            if dm.meta.exposure.type in extract_2d.slitless_modes:
-                # The wavelengthrange file is used only by the WFSS modes.
-                # If retrieved by a Nirspec mode, it would override the name of
-                # the file in meta.ref_file if a custom file was used.
-                for reftype in self.reference_file_types:
-                    reffile = self.get_reference_file(input_model, reftype)
-                    reference_file_names[reftype] = reffile if reffile else ""
+        output_model = self.prepare_output(input_data)
 
-            output_model = extract_2d.extract2d(
-                dm,
-                self.slit_names,
-                self.source_ids,
-                reference_files=reference_file_names,
-                grism_objects=self.grism_objects,
-                tsgrism_extract_height=self.tsgrism_extract_height,
-                wfss_extract_half_height=self.wfss_extract_half_height,
-                extract_orders=self.extract_orders,
-                mmag_extract=self.wfss_mmag_extract,
-                nbright=self.wfss_nbright,
-                source_ra=self.source_ra,
-                source_dec=self.source_dec,
-                max_sep=self.source_max_sep,
-            )
+        reference_file_names = {}
+        if output_model.meta.exposure.type in extract_2d.slitless_modes:
+            # The wavelengthrange file is used only by the WFSS modes.
+            # If retrieved by a Nirspec mode, it would override the name of
+            # the file in meta.ref_file if a custom file was used.
+            for reftype in self.reference_file_types:
+                reffile = self.get_reference_file(output_model, reftype)
+                reference_file_names[reftype] = reffile if reffile else ""
 
-        return output_model
+        result = extract_2d.extract2d(
+            output_model,
+            self.slit_names,
+            self.source_ids,
+            reference_files=reference_file_names,
+            grism_objects=self.grism_objects,
+            tsgrism_extract_height=self.tsgrism_extract_height,
+            wfss_extract_half_height=self.wfss_extract_half_height,
+            extract_orders=self.extract_orders,
+            mmag_extract=self.wfss_mmag_extract,
+            nbright=self.wfss_nbright,
+            source_ra=self.source_ra,
+            source_dec=self.source_dec,
+            max_sep=self.source_max_sep,
+        )
+
+        # Result is a new model if the step succeeded,
+        # so close the input in that case if it was opened here
+        if output_model is not input_data and output_model is not result:
+            output_model.close()
+
+        return result

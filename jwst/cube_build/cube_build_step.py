@@ -75,13 +75,17 @@ class CubeBuildStep(Step):
 
         Parameters
         ----------
-        input_data : list of DataModel or str
-           List of datamodels or string of input fits filenames or association name.
+        input_data : str, list, `~stdatamodels.jwst.datamodels.IFUImageModel`, or \
+                     `~jwst.datamodels.container.ModelContainer`
+           Association or datamodel file name, a single datamodel, or a
+           list or container of datamodels or file names. The input is expected to be
+           one or more 2D spectral images, to combine together into one or more
+           spectral cubes.
 
         Returns
         -------
-        cube_container : ModelContainer
-           Container (list) of IFUCube models
+        cube_container : `~jwst.datamodels.container.ModelContainer`
+           Container (list) of IFUCube models.
         """
         log.info("Starting IFU Cube Building Step")
 
@@ -207,13 +211,15 @@ class CubeBuildStep(Step):
         # if options channel, band, grating, or  filter are set on the command lines
         # then set self.pars_input['output_type'] = 'user' and fill in  par_input with values
         self.read_user_input()
+
+        # Read in the input data and make a copy as needed.
+        read_in_models = self.prepare_output(input_data)
+
         # ________________________________________________________________________________
         # DataTypes
-        # Read in the input data - 4 formats are allowed:
-        # 1. filename
-        # 2. single model
-        # 3. ASN table
-        # 4. model container
+        # Read in the input data - 2 formats are expected:
+        # 1. single model
+        # 2. model container
         # figure out what type of data we have. Fill in the input_table.input_models.
         # input_table.input_models is used in the rest of IFU Cube Building
         # We need to do this in cube_build_step because we need to pass the data_model
@@ -223,16 +229,14 @@ class CubeBuildStep(Step):
         #  channel, sub-channel  grating or filter to filename
         # ________________________________________________________________________________
         input_table = data_types.DataTypes(
-            input_data, self.single, self.output_file, self.output_dir
+            read_in_models, self.single, self.output_file, self.output_dir
         )
-
-        self.input_models = input_table.input_models
+        input_models = input_table.input_models
         self.output_name_base = input_table.output_name
-        # ________________________________________________________________________________
 
         # Read in the first input model to determine with instrument we have
         # output type is by default 'Channel' for MIRI and 'Band' for NIRSpec
-        instrument = self.input_models[0].meta.instrument.name.upper()
+        instrument = input_models[0].meta.instrument.name.upper()
 
         # The calspec2 pipeline sets up output_type for each instrument. When running cube_build
         # stand alone we to set output_type.
@@ -264,22 +268,20 @@ class CubeBuildStep(Step):
         self.offsets = None
 
         if self.offset_file is not None:
-            offsets = self.check_offset_file()
+            offsets = self.check_offset_file(input_models)
             if offsets is not None:
                 self.offsets = offsets
         # ________________________________________________________________________________
         # Read in Cube Parameter Reference file
         # identify what reference file has been associated with these input
 
-        par_filename = self.get_reference_file(self.input_models[0], "cubepar")
+        par_filename = self.get_reference_file(input_models[0], "cubepar")
         # Check for a valid reference file
         if par_filename == "N/A":
-            log.warning("No default cube parameters reference file found")
-            input_table.close()
-            return
-        # ________________________________________________________________________________
-        # shove the input parameters in to pars to pull out in general cube_build.py
+            log.error("No default cube parameters reference file found")
+            raise ValueError("The cubepar reference file is required.")
 
+        # shove the input parameters in to pars to pull out in general cube_build.py
         pars = {
             "channel": self.pars_input["channel"],
             "subchannel": self.pars_input["subchannel"],
@@ -319,14 +321,14 @@ class CubeBuildStep(Step):
         # create an instance of class CubeData
 
         # Make sure all input models have consistent NaN and DO_NOT_USE values
-        for model in self.input_models:
+        for model in input_models:
             match_nans_and_flags(model)
 
         # We need to know what type of cubes we are building for cube_build.py to correctly
         # group the data. This information is controlled by the self.output_type parameter, which
         # is also dependent on the self.pipeline parameter.
 
-        cubeinfo = cube_build.CubeData(self.input_models, par_filename, **pars)
+        cubeinfo = cube_build.CubeData(input_models, par_filename, **pars)
         # ________________________________________________________________________________
         # cubeinfo.setup:
         # read in all the input files, information from cube_pars, read in input data
@@ -340,10 +342,10 @@ class CubeBuildStep(Step):
         master_table = result["master_table"]
 
         if instrument == "MIRI" and self.coord_system == "internal_cal":
-            log.warning("The output coordinate system of internal_cal is not valid for MIRI")
-            log.warning("use output_coord = ifualign instead")
-            input_table.close()
-            return
+            log.error("The output coordinate system of internal_cal is not valid for MIRI")
+            log.error("use coord_system = ifualign instead")
+            raise ValueError("The 'internal_cal' coordinate system is not supported for MIRI")
+
         # filenames = master_table.FileMap["filename"] # This was used to determine if we have
         # pipeline 2 or 3. I don't think we need it - but saving it just in case I need know if
         # there is only 1 filename
@@ -371,7 +373,7 @@ class CubeBuildStep(Step):
             list_par2 = cube_pars[icube]["par2"]
             thiscube = ifu_cube.IFUCubeData(
                 self.pipeline,
-                self.input_models,
+                input_models,
                 self.output_name_base,
                 self.pars_input["output_type"],
                 instrument,
@@ -444,7 +446,10 @@ class CubeBuildStep(Step):
         t1 = time.time()
         log.debug(f"Time to build all cubes {t1 - t0}")
 
-        input_table.close()
+        # Output is a new model, so close the input if it was opened here
+        if read_in_models is not input_data:
+            read_in_models.close()
+
         return cube_container
 
     # ******************************************************************************
@@ -575,7 +580,7 @@ class CubeBuildStep(Step):
 
     # ________________________________________________________________________________
 
-    def check_offset_file(self):
+    def check_offset_file(self, input_models):
         """
         Read in an optional ra and dec offset for each file.
 
@@ -615,7 +620,7 @@ class CubeBuildStep(Step):
         # It must be arcsec or a validation error occurs.
 
         # check that all the file names in input_model are in the offset filename
-        for model in self.input_models:
+        for model in input_models:
             file_check = model.meta.filename
             if file_check in offset_filename:
                 continue

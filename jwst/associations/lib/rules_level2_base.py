@@ -1384,7 +1384,7 @@ class AsnMixin_Lv2WFSS:
             The exposure type of the item.
         """
         exp_type = super(AsnMixin_Lv2WFSS, self).get_exposure_type(item, default)
-        if exp_type == "science" and item["exp_type"] in ["nis_image", "nrc_image"]:
+        if exp_type == "science" and item["exp_type"] in ["nis_image", "nrc_image", "mir_image"]:
             exp_type = "direct_image"
 
         return exp_type
@@ -1451,10 +1451,17 @@ class AsnMixin_Lv2WFSS:
         """
         item = self.direct_image.item
         opt_elems = []
-        for keys in [["filter", "band"], ["pupil", "grating"]]:
-            opt_elem = getattr_from_list_nofail(item, keys, _EMPTY)[1]
-            if opt_elem:
-                opt_elems.append(opt_elem)
+        inst = str(item.get("instrume", "UNKNOWN")).lower()
+        if inst == "miri":
+            val = item.get("filter")  # we just want to value of 1 key, Use simple get function
+            # Check that it exists
+            if val is not None:
+                opt_elems.append(str(val))
+        else:
+            for keys in [["filter", "band"], ["pupil", "grating"]]:
+                opt_elem = getattr_from_list_nofail(item, keys, _EMPTY)[1]
+                if opt_elem:
+                    opt_elems.append(opt_elem)
         opt_elems.sort(key=str.lower)
         full_opt_elem = "-".join(opt_elems)
         if full_opt_elem == "":

@@ -874,7 +874,9 @@ class Constraint_Spectral(DMSAttrConstraint):
         super(Constraint_Spectral, self).__init__(
             name="exp_type",
             sources=["exp_type"],
-            value=("mir_lrs-fixedslit|nrc_grism|nrc_wfss|nrs_autoflat|nrs_autowave|nrs_fixedslit"),
+            value=(
+                "mir_lrs-fixedslit|mir_wfss|nrc_grism|nrc_wfss|nrs_autoflat|nrs_autowave|nrs_fixedslit"
+            ),
             force_unique=False,
         )
 

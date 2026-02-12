@@ -43,65 +43,65 @@ class WavecorrStep(Step):
 
         Parameters
         ----------
-        step_input : DataModel or str
-            Input data to correct.
+        step_input : str, `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+                     `~stdatamodels.jwst.datamodels.SlitModel`
+            Input file name or datamodel to correct.
 
         Returns
         -------
-        DataModel
-            The corrected data.
+        output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+                       `~stdatamodels.jwst.datamodels.SlitModel`
+            The corrected datamodel.
         """
         wavecorr_supported_modes = ["NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_BRIGHTOBJ", "NRS_AUTOFLAT"]
 
         # Open the input
-        with datamodels.open(step_input) as input_model:
-            # Work on a copy
-            output_model = input_model.copy()
+        output_model = self.prepare_output(step_input)
 
-            # Check for valid exposure type
-            exp_type = input_model.meta.exposure.type.upper()
-            if exp_type not in wavecorr_supported_modes:
-                log.info(f"Skipping wavecorr correction for EXP_TYPE {exp_type}")
-                output_model.meta.cal_step.wavecorr = "SKIPPED"
-                return output_model
+        # Check for valid exposure type
+        exp_type = output_model.meta.exposure.type.upper()
+        if exp_type not in wavecorr_supported_modes:
+            log.info(f"Skipping wavecorr correction for EXP_TYPE {exp_type}")
+            output_model.meta.cal_step.wavecorr = "SKIPPED"
+            return output_model
 
-            # Check for prerequisites
-            if (
-                hasattr(input_model.meta.cal_step, "assign_wcs")
-                and input_model.meta.cal_step.assign_wcs == "SKIPPED"
-            ):
-                log.warning("assign_wcs was skipped")
-                log.warning("Wavecorr step will be skipped")
-                output_model.meta.cal_step.wavecorr = "SKIPPED"
-                return output_model
+        # Check for prerequisites
+        if (
+            hasattr(output_model.meta.cal_step, "assign_wcs")
+            and output_model.meta.cal_step.assign_wcs == "SKIPPED"
+        ):
+            log.warning("assign_wcs was skipped")
+            log.warning("Wavecorr step will be skipped")
+            output_model.meta.cal_step.wavecorr = "SKIPPED"
+            return output_model
 
-            # Check for existence of WCS
-            if isinstance(input_model, datamodels.SlitModel):
-                _check_slit_metadata_attributes(input_model)
-            elif isinstance(input_model, datamodels.MultiSlitModel):
-                _check_slit_metadata_attributes(input_model.slits[0])
-            else:
-                raise TypeError(
-                    f"Input model must be a SlitModel or MultiSlitModel, not {type(input_model)}"
-                )
+        # Check for existence of WCS
+        if isinstance(output_model, datamodels.SlitModel):
+            _check_slit_metadata_attributes(output_model)
+        elif isinstance(output_model, datamodels.MultiSlitModel):
+            _check_slit_metadata_attributes(output_model.slits[0])
+        else:
+            raise TypeError(
+                f"Input model must be a SlitModel or MultiSlitModel, not {type(output_model)}"
+            )
 
-            # Get the reference file
-            reffile = self.get_reference_file(input_model, "wavecorr")
-            log.info(f"Using WAVECORR reference file {reffile}")
-            if reffile == "N/A":
-                log.warning("No WAVECORR reference file found")
-                log.warning("Wavecorr step will be skipped")
-                output_model.meta.cal_step.wavecorr = "SKIPPED"
-                return output_model
+        # Get the reference file
+        reffile = self.get_reference_file(output_model, "wavecorr")
+        log.info(f"Using WAVECORR reference file {reffile}")
+        if reffile == "N/A":
+            log.warning("No WAVECORR reference file found")
+            log.warning("Wavecorr step will be skipped")
+            output_model.meta.cal_step.wavecorr = "SKIPPED"
+            return output_model
 
-            # Apply the correction
-            output_model = wavecorr.do_correction(output_model, reffile)
+        # Apply the correction
+        output_model = wavecorr.do_correction(output_model, reffile)
 
         return output_model
 
 
 def _check_slit_metadata_attributes(slit):
-    if not (hasattr(slit.meta, "wcs") and slit.meta.wcs is not None):
+    if getattr(slit.meta, "wcs", None) is None:
         raise AttributeError(
             "Input model does not have a WCS object; assign_wcs should be run before wavecorr."
         )

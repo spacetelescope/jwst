@@ -43,7 +43,6 @@ def nircam_rate():
     ysize = 204
     shape = (ysize, xsize)
     im = ImageModel(shape)
-    im.var_rnoise += 0
 
     wcsinfo = _wcsinfo_from_wcs_transform(wcs)
     im.meta.wcsinfo = {

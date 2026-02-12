@@ -23,33 +23,31 @@ class FringeStep(Step):
 
         Parameters
         ----------
-        input_data : jwst.datamodels.IFUImageModel
-            Input MRS MIRS science data.
+        input_data : str or `~stdatamodels.jwst.datamodels.IFUImageModel`
+            Input MIRI MRS science file name or datamodel.
 
         Returns
         -------
-        output_data : jwst.datamodels.IFUImageModel
-            Fringe corrected MRS MIRS science data.
+        output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+            Fringe corrected MIRI MRS science data.
         """
-        with datamodels.open(input_data) as input_model:
-            # Open the reference file
-            self.fringe_filename = self.get_reference_file(input_model, "fringe")
-            log.info("Using FRINGE reference file: %s", self.fringe_filename)
+        output_model = self.prepare_output(input_data)
 
-            # Check for a valid reference file
-            if self.fringe_filename == "N/A":
-                log.warning("No FRINGE reference file found")
-                log.warning("Fringe step will be skipped")
-                result = input_model.copy()
-                result.meta.cal_step.fringe = "SKIPPED"
-                return result
+        # Open the reference file
+        fringe_filename = self.get_reference_file(output_model, "fringe")
+        log.info("Using FRINGE reference file: %s", fringe_filename)
 
-            # Load the fringe reference file
-            fringe_model = datamodels.FringeModel(self.fringe_filename)
+        # Check for a valid reference file
+        if fringe_filename == "N/A":
+            log.warning("No FRINGE reference file found")
+            log.warning("Fringe step will be skipped")
+            output_model.meta.cal_step.fringe = "SKIPPED"
+            return output_model
 
+        # Load the fringe reference file
+        with datamodels.FringeModel(fringe_filename) as fringe_model:
             # Do the correction
-            output_model = fringe.do_correction(input_model, fringe_model)
+            output_model = fringe.apply_fringe(output_model, fringe_model)
 
-            fringe_model.close()
-
+        output_model.meta.cal_step.fringe = "COMPLETE"
         return output_model

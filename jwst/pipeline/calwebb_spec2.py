@@ -8,6 +8,7 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 
 # step imports
+from jwst.adaptive_trace_model import adaptive_trace_model_step
 from jwst.assign_wcs import assign_wcs_step
 from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.background import background_step
@@ -63,7 +64,7 @@ class Spec2Pipeline(Pipeline):
     assign_wcs, badpix_selfcal, msa_flagging, clean_flicker_noise, bkg_subtract,
     imprint_subtract, extract_2d, master_background_mos, targ_centroid, wavecorr,
     flat_field, srctype, straylight, fringe, residual_fringe, pathloss,
-    barshadow, wfss_contam, photom, pixel_replace, resample_spec,
+    barshadow, wfss_contam, photom, adaptive_trace_model, pixel_replace, resample_spec,
     cube_build, and extract_1d.
     """
 
@@ -96,6 +97,7 @@ class Spec2Pipeline(Pipeline):
         "barshadow": barshadow_step.BarShadowStep,
         "wfss_contam": wfss_contam_step.WfssContamStep,
         "photom": photom_step.PhotomStep,
+        "adaptive_trace_model": adaptive_trace_model_step.AdaptiveTraceModelStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "resample_spec": resample_spec_step.ResampleSpecStep,
         "cube_build": cube_build_step.CubeBuildStep,
@@ -410,9 +412,9 @@ class Spec2Pipeline(Pipeline):
             if exp_type == "MIR_MRS" and self.cube_build.output_type is None:
                 self.cube_build.output_type = "multi"
             resampled = calibrated.copy()
-            # First call pixel_replace then call cube_build step for IFU data.
-            # interpolate pixels that have a NaN value or are flagged
-            # as DO_NOT_USE or NON_SCIENCE.
+            # First call adaptive_trace_model and pixel_replace then
+            # call cube_build step for IFU data.
+            resampled = self.adaptive_trace_model.run(resampled)
             resampled = self.pixel_replace.run(resampled)
             resampled = self.cube_build.run(resampled)
             if query_step_status(resampled, "cube_build") == "COMPLETE":
@@ -853,6 +855,10 @@ class Spec2Pipeline(Pipeline):
                 for step in fs_steps:
                     setattr(calib_mos.meta.cal_step, step, getattr(calib_fss.meta.cal_step, step))
 
+        # Clean up the old models, no longer needed
+        del calibrated
+        del calib_fss
+
         return calib_mos
 
     def _process_niriss_soss(self, data):
@@ -897,9 +903,11 @@ class Spec2Pipeline(Pipeline):
         """
         if data.meta.exposure.type in TA_TYPES:
             # convert to SlitModel type to be more in line with other spectroscopic modes
-            data = datamodels.SlitModel(data)
+            slit_model = datamodels.SlitModel(data)
             for attr in ["xstart", "ystart", "xsize", "ysize"]:
-                setattr(data, attr, getattr(data.meta.subarray, attr))
+                setattr(slit_model, attr, getattr(data.meta.subarray, attr))
+            data.close()
+            data = slit_model
         calibrated = self.srctype.run(data)
         calibrated = self.targ_centroid.run(calibrated)
         calibrated = self.straylight.run(calibrated)

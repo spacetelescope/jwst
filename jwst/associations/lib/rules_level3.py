@@ -58,6 +58,7 @@ __all__ = [
     "Asn_Lv3WFSCMB",
     "Asn_Lv3WFSSNIS",
     "Asn_Lv3WFSSNRC",
+    "Asn_Lv3WFSSMIR",
 ]
 
 # Configure logging
@@ -1275,6 +1276,52 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
         -------
         str
             Product name.
+        """
+        return dms_product_name_wfss(self)
+
+
+@RegistryMarker.rule
+class Asn_Lv3WFSSMIR(AsnMixin_Spectrum):
+    """
+    Level 3 MIRI WFSS/PRISM Association.
+
+    Characteristics:
+
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Gather all prism exposures
+    """
+
+    def __init__(self, *args, **kwargs):
+        # Setup for checking.
+        self.constraints = Constraint(
+            [
+                Constraint_Target(association=self),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_wfss",
+                ),
+                DMSAttrConstraint(
+                    name="opt_elem",
+                    sources=["filter"],
+                    value="P750L",
+                ),
+            ]
+        )
+
+        # Check and continue initialization.
+        super().__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        """
+        Return product name.
+
+        Returns
+        -------
+        str
+            The product name.
         """
         return dms_product_name_wfss(self)
 

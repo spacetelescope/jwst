@@ -33,70 +33,62 @@ class StraylightStep(Step):
 
         Parameters
         ----------
-        input_data : IFUImageModel
-            Input data to be corrected.
+        input_data : str or `~stdatamodels.jwst.datamodels.IFUImageModel`
+            Input file name or datamodel to be corrected.
 
         Returns
         -------
-        results : IFUImageModel
+        output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
             Straylight corrected data.
         """
-        with datamodels.open(input_data) as input_model:
-            # Set up the output result
-            result = input_model.copy()
+        output_model = self.prepare_output(input_data)
 
-            # check the data is an IFUImageModel (not TSO)
-            if isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
-                # Check for a valid mrsxartcorr reference file
-                self.straylight_name = self.get_reference_file(input_model, "mrsxartcorr")
+        # check the data is an IFUImageModel (not TSO)
+        if isinstance(output_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
+            # Check for a valid mrsxartcorr reference file
+            self.straylight_name = self.get_reference_file(output_model, "mrsxartcorr")
 
-                if self.straylight_name == "N/A":
-                    log.warning("No MRSXARTCORR reference file found")
-                    log.warning("Straylight step will be skipped")
-                    result.meta.cal_step.straylight = "SKIPPED"
-                    return result
-
-                log.info("Using mrsxartcorr reference file %s", self.straylight_name)
-
-                modelpars = datamodels.MirMrsXArtCorrModel(self.straylight_name)
-
-                # Apply the cross artifact correction
-                result = straylight.correct_xartifact(result, modelpars)
-
-                modelpars.close()
-
-                # Apply the cosmic ray droplets correction if desired
-                if self.clean_showers:
-                    self.regions_name = self.get_reference_file(input_model, "regions")
-                    with datamodels.RegionsModel(self.regions_name) as f:
-                        allregions = f.regions
-                        result, output_shower_model = straylight.clean_showers(
-                            result,
-                            allregions,
-                            self.shower_plane,
-                            self.shower_x_stddev,
-                            self.shower_y_stddev,
-                            self.shower_low_reject,
-                            self.shower_high_reject,
-                            self.save_shower_model,
-                        )
-                        if self.save_shower_model and output_shower_model:
-                            shower_path = self.make_output_path(
-                                basepath=input_model.meta.filename, suffix="shower_model"
-                            )
-                            log.info(f"Saving shower model file {shower_path}")
-                            output_shower_model.save(shower_path)
-                            output_shower_model.close()
-
-                result.meta.cal_step.straylight = "COMPLETE"
-
-            else:
-                if (
-                    isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel))
-                    is False
-                ):
-                    log.warning("Straylight correction not defined for datatype %s", input_model)
+            if self.straylight_name == "N/A":
+                log.warning("No MRSXARTCORR reference file found")
                 log.warning("Straylight step will be skipped")
-                result.meta.cal_step.straylight = "SKIPPED"
+                output_model.meta.cal_step.straylight = "SKIPPED"
+                return output_model
 
-        return result
+            log.info("Using mrsxartcorr reference file %s", self.straylight_name)
+
+            with datamodels.MirMrsXArtCorrModel(self.straylight_name) as modelpars:
+                # Apply the cross artifact correction
+                output_model = straylight.correct_xartifact(output_model, modelpars)
+
+            # Apply the cosmic ray droplets correction if desired
+            if self.clean_showers:
+                self.regions_name = self.get_reference_file(output_model, "regions")
+                with datamodels.RegionsModel(self.regions_name) as f:
+                    allregions = f.regions
+                    output_model, output_shower_model = straylight.clean_showers(
+                        output_model,
+                        allregions,
+                        self.shower_plane,
+                        self.shower_x_stddev,
+                        self.shower_y_stddev,
+                        self.shower_low_reject,
+                        self.shower_high_reject,
+                        self.save_shower_model,
+                    )
+                    if self.save_shower_model and output_shower_model:
+                        shower_path = self.make_output_path(
+                            basepath=output_model.meta.filename, suffix="shower_model"
+                        )
+                        log.info(f"Saving shower model file {shower_path}")
+                        output_shower_model.save(shower_path)
+                        output_shower_model.close()
+
+            output_model.meta.cal_step.straylight = "COMPLETE"
+
+        else:
+            if not isinstance(output_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
+                log.warning("Straylight correction not defined for datatype %s", output_model)
+            log.warning("Straylight step will be skipped")
+            output_model.meta.cal_step.straylight = "SKIPPED"
+
+        return output_model

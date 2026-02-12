@@ -1,3 +1,5 @@
+"""The ``utils`` module provides helpful functions for manually applying corrections to an imaging WCS."""  # noqa: E501
+
 from copy import deepcopy
 
 import numpy as np

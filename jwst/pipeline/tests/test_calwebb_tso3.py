@@ -1,3 +1,4 @@
+import numpy as np
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.associations.asn_from_list import asn_from_list
@@ -160,3 +161,23 @@ def test_populate_tso_spectral_sregion_no_spec(log_watcher):
     )
     Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
     watcher.assert_seen()
+
+
+def test_tso3_single_model_input(tmp_path):
+    """Test tso3 on a single datamodel input."""
+    input_model = niriss_soss_tso()
+    input_model.meta.filename = "test_tso3_calints.fits"
+    model_copy = input_model.copy()
+
+    # Reduce runtime for soss extraction
+    steps = {"extract_1d": {"soss_rtol": 0.1, "soss_tikfac": 2.434559775e-13}}
+    Tso3Pipeline.call([input_model], output_dir=str(tmp_path), steps=steps)
+
+    # Check for expected output files
+    expected = ["test_tso3_x1dints.fits", "test_tso3_whtlt.ecsv"]
+    for filename in expected:
+        assert (tmp_path / filename).exists()
+
+    # Input is not modified
+    assert input_model.meta.cal_step._instance == model_copy.meta.cal_step._instance
+    np.testing.assert_allclose(input_model.data, model_copy.data)

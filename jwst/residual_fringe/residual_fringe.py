@@ -41,7 +41,7 @@ class ResidualFringeCorrection:
         Parameters
         ----------
         input_model : IFUImageModel
-            Input data to correct.
+            Input data to correct.  Updated in place.
         residual_fringe_reference_file : str
             Path to FRINGEFREQ reference file.
         regions_reference_file : str
@@ -62,7 +62,6 @@ class ResidualFringeCorrection:
             are created with the default `Step.make_output_path` function.
         """
         self.input_model = input_model
-        self.model = input_model.copy()
         self.residual_fringe_reference_file = residual_fringe_reference_file
         self.regions_reference_file = regions_reference_file
         self.ignore_regions = ignore_regions
@@ -111,11 +110,11 @@ class ResidualFringeCorrection:
         # Remove any NaN values and flagged DO_NOT_USE pixels from the data prior to processing
         # Set them to 0 for the residual fringe routine
         # They will be re-added at the end
-        output_data = self.model.data.copy()
+        output_data = self.input_model.data.copy()
         dnu = datamodels.dqflags.pixel["DO_NOT_USE"]
         nanval_indx = np.where(
             np.logical_or(
-                np.bitwise_and(self.model.dq, dnu).astype(bool), ~np.isfinite(output_data)
+                np.bitwise_and(self.input_model.dq, dnu).astype(bool), ~np.isfinite(output_data)
             )
         )
         output_data[nanval_indx] = 0
@@ -264,7 +263,7 @@ class ResidualFringeCorrection:
                         col_wnum = 10000.0 / col_wmap
 
                     # use the error array to get col snr, used to remove noisy pixels
-                    col_snr = self.model.data[:, col] / self.model.err[:, col]
+                    col_snr = self.input_model.data[:, col] / self.input_model.err[:, col]
 
                     # Do some checks on column to make sure there is
                     # reasonable signal. If the SNR < min_snr (CDP), pass
@@ -521,7 +520,7 @@ class ResidualFringeCorrection:
         output_data *= normalization_factor
         # Add NaNs back to output data
         output_data[nanval_indx] = np.nan
-        self.model.data = output_data
+        self.input_model.data = output_data
         del output_data
 
         if self.save_intermediate_results:
@@ -563,7 +562,7 @@ class ResidualFringeCorrection:
             hdu.writeto(fit_results_name, overwrite=True)
             hdu.close()
 
-        return self.model
+        return self.input_model
 
     def calc_weights(self):
         """

@@ -2,11 +2,11 @@
 
 Step Arguments
 ==============
-The background image subtraction step has four optional arguments.
+The background image subtraction step has several optional arguments.
 The first two are used only when the step is applied to non-WFSS exposures.
 They are used in the process of creating an average background image, to
-control the sigma clipping, and are passed as arguments to the astropy
-``sigma_clip`` function:
+control the sigma clipping, and are passed as arguments to
+:func:`astropy.stats.sigma_clip`:
 
 ``--sigma``
   When combining multiple background images, the number of standard deviations
@@ -37,10 +37,23 @@ control the sigma clipping, and are passed as arguments to the astropy
   from the WFSS source catalog, based on the value of ``isophotal_abmag`` in the
   source catalog. Defaults to ``None``.
 
+``--wfss_mask``
+  Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
+  Provides a custom user mask to use for background scaling, overriding
+  the source-catalog-derived mask. The argument should point to
+  a FITS or ASDF file openable as `~stdatamodels.jwst.datamodels.ImageModel`
+  containing a 2D array of integers in its ``.mask`` attribute (FITS ``MASK`` extension)
+  with pixels to be used as background set to 1 and other pixels set to 0.
+  To use the mask as-is without any additional outlier rejection,
+  the ``wfss_maxiter`` argument should be set to 0.
+  The ``.data`` attribute is not used.
+  Defaults to ``None``.
+
 ``--wfss_maxiter``
   Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
   Sets the maximum number of iterations allowed for iterative outlier rejection
-  during determination of the reference background scaling factor. Defaults to 5.
+  during determination of the reference background scaling factor. If set to 0,
+  no outlier rejection will be applied. Defaults to 5.
 
 ``--wfss_rms_stop``
   Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.

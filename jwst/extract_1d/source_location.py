@@ -70,19 +70,22 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
     valid = np.isfinite(center_wavelengths[sort_idx])
 
     # Average to get the middle wavelength
-    middle_wavelength = np.nanmean(center_wavelengths)
+    if not np.any(valid):
+        middle_wavelength = np.nan
+    else:
+        middle_wavelength = np.nanmean(center_wavelengths)
 
     # Find the effective index in cross-dispersion coordinates for the
     # averaged wavelength to get the cross-dispersion center
     if dispaxis == HORIZONTAL:
-        if np.allclose(center_wavelengths, middle_wavelength):
+        if np.allclose(center_wavelengths, middle_wavelength) or np.isnan(middle_wavelength):
             middle_xdisp = np.mean(y)
         else:
             middle_xdisp = np.interp(
                 middle_wavelength, center_wavelengths[sort_idx][valid], y[sort_idx[valid]]
             )
     else:
-        if np.allclose(center_wavelengths, middle_wavelength):
+        if np.allclose(center_wavelengths, middle_wavelength) or np.isnan(middle_wavelength):
             middle_xdisp = np.mean(x)
         else:
             middle_xdisp = np.interp(
@@ -182,19 +185,18 @@ def location_from_wcs(input_model, slit, make_trace=True):
 
     elif exp_type == "MIR_LRS-FIXEDSLIT":
         log.info("Using dithered_ra and dithered_dec to center extraction.")
-        try:
-            if slit is None:
-                dithra = input_model.meta.dither.dithered_ra
-                dithdec = input_model.meta.dither.dithered_dec
-            else:
-                dithra = slit.meta.dither.dithered_ra
-                dithdec = slit.meta.dither.dithered_dec
-            location, _ = wcs.backward_transform(dithra, dithdec, middle_wl)
+        if slit is None:
+            dithra = input_model.meta.dither.dithered_ra
+            dithdec = input_model.meta.dither.dithered_dec
+        else:
+            dithra = slit.meta.dither.dithered_ra
+            dithdec = slit.meta.dither.dithered_dec
 
-        except (AttributeError, TypeError):
-            log.warning("Dithered pointing location not found in wcsinfo.")
+        if dithra is None or dithdec is None:
+            log.warning("Dithered pointing location not found in meta.dither.")
             return None, None, None, None
 
+        location, _ = wcs.backward_transform(dithra, dithdec, middle_wl)
         if ~np.isnan(location) and make_trace:
             trace = _miri_trace_from_wcs(shape, bb, wcs, dithra, dithdec)
     else:

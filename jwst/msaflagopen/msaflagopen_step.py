@@ -1,6 +1,5 @@
 import logging
 
-from stdatamodels.jwst import datamodels
 from stpipe.crds_client import reference_uri_to_cache_path
 
 from jwst.assign_wcs import AssignWcsStep
@@ -28,39 +27,39 @@ class MSAFlagOpenStep(Step):
 
         Parameters
         ----------
-        input_data : DataModel or str
+        input_data : str or `~stdatamodels.jwst.datamodels.ImageModel`
             Science data to be corrected.
 
         Returns
         -------
-        DataModel
+        `~stdatamodels.jwst.datamodels.ImageModel`
             Science data with DQ array modified.
         """
         # Open the input data model
-        with datamodels.open(input_data) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        output_model = self.prepare_output(input_data)
 
-            self.reference_name = self.get_reference_file(result, "msaoper")
-            log.info("Using reference file %s", self.reference_name)
+        self.reference_name = self.get_reference_file(output_model, "msaoper")
+        log.info("Using reference file %s", self.reference_name)
 
-            # Check for a valid reference file
-            if self.reference_name == "N/A":
-                log.warning("No reference file found")
-                log.warning("Step will be skipped")
-                result.meta.cal_step.msa_flagging = "SKIPPED"
-                return result
+        # Check for a valid reference file
+        if self.reference_name == "N/A":
+            log.warning("No reference file found")
+            log.warning("Step will be skipped")
+            output_model.meta.cal_step.msa_flagging = "SKIPPED"
+            return output_model
 
-            # Get the reference file names for constructing the WCS pipeline
-            wcs_reffile_names = create_reference_filename_dictionary(result)
+        # Get the reference file names for constructing the WCS pipeline
+        wcs_reffile_names = create_reference_filename_dictionary(output_model)
 
-            # Do the DQ flagging
-            result = msaflag_open.do_correction(result, self.reference_name, wcs_reffile_names)
+        # Do the DQ flagging
+        output_model = msaflag_open.do_correction(
+            output_model, self.reference_name, wcs_reffile_names
+        )
 
-            # set the step status to complete
-            result.meta.cal_step.msa_flagging = "COMPLETE"
+        # set the step status to complete
+        output_model.meta.cal_step.msa_flagging = "COMPLETE"
 
-        return result
+        return output_model
 
 
 def create_reference_filename_dictionary(input_model):

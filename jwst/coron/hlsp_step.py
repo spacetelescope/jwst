@@ -25,14 +25,15 @@ class HlspStep(Step):
         width = self.annuli_width
 
         # Open the input target image model
-        with datamodels.ImageModel(target) as target_model:
-            # Create a signal-to-noise ratio image
-            log.info("Creating SNR image")
-            snr = hlsp.snr_image(target_model)
+        target_model = self.prepare_output(target, open_as_type=datamodels.ImageModel)
 
-            # Create a contrast curve
-            log.info("Creating contrast curve")
-            contrast = hlsp.contrast_curve(target_model, width)
+        # Create a signal-to-noise ratio image
+        log.info("Creating SNR image")
+        snr = hlsp.snr_image(target_model)
+
+        # Create a contrast curve
+        log.info("Creating contrast curve")
+        contrast = hlsp.contrast_curve(target_model, width)
 
         # Save the SNR output file
         if self.output_file is None:
@@ -45,5 +46,9 @@ class HlspStep(Step):
         contrast.meta.cal_step.hlsp = "COMPLETE"
         self.save_model(contrast, "contrast")
         contrast.close()
+
+        # Close the target model if it was opened here
+        if target_model is not target:
+            target_model.close()
 
         return

@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.background.BackgroundStep`
+:Class: `jwst.background.background_step.BackgroundStep`
 :Alias: bkg_subtract
 
 The background subtraction step performs
@@ -14,38 +14,36 @@ while a special method is used for Wide-Field Slitless Spectroscopy (WFSS).
 For both background methods the output results are always returned in a new
 data model, leaving the original input model unchanged.
 
-Upon successful completion of the step, the S_BKDSUB keyword will be set to
+Upon successful completion of the step, the ``S_BKDSUB`` keyword will be set to
 "COMPLETE" in the output product.
 
 This type of background subtraction is just one method available within the
 JWST pipeline. See :ref:`Background Subtraction Methods <background_subtraction_methods>`
-for an overview of all the methods and to which observing modes they're
+for an overview of all the methods and to which observing modes they are
 applicable.
 
 Input Data
 ----------
-When run as part of a stage 2 pipeline, the background step takes as input a
+When run as part of a Stage 2 pipeline, the background step takes as input a
 target exposure, to which the subtraction will be applied, and, for non-WFSS
 modes, a list of one or more background exposures.  For WFSS modes, background
 exposures are not required, but the target exposure must have a WCS applied,
 and it must have a source catalog identified prior to processing.
 
-When run as a standalone step, the input may be specified either as file names
-for appropriate intermediate products or as a file name for an association
-that contains these file names.
+When run as a standalone step, the input may be specified either as filenames
+for appropriate intermediate products or as a filename for an association
+that contains these filenames.
 
 For example, for a non-WFSS mode observation, the background subtraction step can be run
-on an intermediate target exposure exp_001, subtracting exp_002 and exp_003 rate files
+on an intermediate target exposure ``exp_001``, subtracting ``exp_002`` and ``exp_003`` rate files
 as follows::
 
     strun bkg_subtract exp_001_assignwcsstep.fits --bkg_list=exp_002_rate.fits,exp_003_rate.fits
 
-
 For a WFSS mode observation, the step can be run on a single file, if it contains an assigned
-WCS and the source catalog name in the SCATFILE FITS header keyword.  It can also be run on an
-association file that contains the intermediate exposure file name and a source catalog.
+WCS and the source catalog name in the ``SCATFILE`` FITS header keyword.  It can also be run on an
+association file that contains the intermediate exposure filename and a source catalog.
 For example, if the following contents are stored in a file called ``bkg_sub_asn.json``::
-
 
         {"products": [
             {
@@ -62,12 +60,12 @@ For example, if the following contents are stored in a file called ``bkg_sub_asn
             ]
         }
 
-then the background step can be run on the target exposure wfss_exp_001 as::
+then the background step can be run on the target exposure ``wfss_exp_001`` as::
 
     strun bkg_subtract bkg_sub_asn.json
 
 From Python code, the source catalog can also be directly specified in the input model
-before calling the BackgroundStep. For example::
+before calling the BackgroundStep; e.g.::
 
     model = datamodels.open("wfss_exp_001_assignwcsstep.fits")
     model.meta.source_catalog = "image_exp_001_cat.ecsv"
@@ -80,9 +78,8 @@ If more than one background exposure is provided, they will be averaged
 together before being subtracted from the target exposure. Iterative sigma
 clipping is applied during the averaging process, to reject sources or other
 outliers.
-The clipping is accomplished using the function
-:func:`astropy.stats.sigma_clip`.
-The background step allows users to supply values for the ``sigma_clip``
+The clipping is accomplished using :func:`astropy.stats.sigma_clip`.
+The background step allows users to supply values for the :func:`astropy.stats.sigma_clip`
 parameters ``sigma`` and ``maxiters`` (see :ref:`bkg_step_args`),
 in order to control the clipping operation.
 
@@ -130,16 +127,17 @@ The subtraction consists of the following operations:
    combined using a bitwise OR operation
 
 If the target exposure is a simple ImageModel, the background image is
-subtracted from it. If the target exposure is in the form of a 3-D CubeModel
-(e.g. the result of a time series exposure), the average background image
-is subtracted from each plane of the CubeModel.
+subtracted from it. If the target exposure is in the form of a 3-D
+`~stdatamodels.jwst.datamodels.CubeModel`
+(e.g., the result of a time series exposure), the average background image
+is subtracted from each plane of the `~stdatamodels.jwst.datamodels.CubeModel`.
 
 The combined, averaged background image can be saved using the step parameter
 ``save_combined_background``.
 
 WFSS Mode
 ---------
-For Wide-Field Slitless Spectroscopy expsoures (NIS_WFSS and NRC_WFSS),
+For Wide-Field Slitless Spectroscopy exposures,
 a background reference image is subtracted from the target exposure.
 Before being subtracted, the background reference image is scaled to match the
 signal level of the WFSS image within background (source-free) regions of the
@@ -154,22 +152,44 @@ rejection process is controlled by the
 ``wfss_outlier_percent``, ``wfss_rms_stop``, and ``wfss_maxiter`` step arguments.
 
 The locations of source spectra are determined from a source catalog (specified
-by the primary header keyword SCATFILE), in conjunction with a reference file
+by the primary header keyword ``SCATFILE``), in conjunction with a reference file
 that gives the wavelength range (based on filter and grism) that is relevant
 to the WFSS image. All regions of the image that are free of source spectra
 are used for scaling the background reference image.
 
-A background mask is created and set to True where there are no sources, i.e. regions
+A background mask is created and set to `True` where there are no sources, i.e., regions
 where the background can be used.
 This mask will be saved in the ``MASK`` extension of the intermediate output
 file, saved with suffix "bsub", and will be accessible in the ``mask`` attribute of the
 output datamodel.
 
 The step argument ``wfss_mmag_extract`` can be used, if
-desired, to set the minimum (faintest) abmag of the source catalog objects
+desired, to set the minimum (faintest) AB mag of the source catalog objects
 used to define the background regions.
 The default is to use all source catalog entries that result in a spectrum
 falling within the WFSS image.
+
+The step argument ``wfss_mask`` can be used to provide a custom user mask
+that overrides the source-catalog-derived mask. The argument should point to
+a FITS or ASDF file openable as `~stdatamodels.jwst.datamodels.ImageModel`
+containing a 2D array of integers in its ``.mask`` attribute (FITS ``MASK`` extension)
+with pixels to be used as background set to 1 and other pixels set to 0.
+The output of a previous run of the background subtraction step,
+saved with suffix "bsub", can be used as such a custom mask
+(after editing the ``.mask`` attribute as desired). To generate
+a valid model from scratch, use something like::
+
+    from stdatamodels.jwst.datamodels import ImageModel
+    import numpy as np
+
+    mask_data = np.ones((2048, 2048), dtype=np.uint32)  # same shape as science data
+    mask_data[500:1500, 500:1500] = 0  # example: mask out central region
+    mask_model = ImageModel()
+    mask_model.mask = mask_data
+    mask_model.save('custom_mask.fits')
+
+To apply the user-defined mask as-is, the ``wfss_maxiter`` argument should be set to 0;
+doing so will prevent any additional outlier rejection from being applied by the step.
 
 SOSS Mode
 ---------

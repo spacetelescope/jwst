@@ -36,54 +36,55 @@ class BarShadowStep(Step):
 
         Parameters
         ----------
-        input_data : DataModel
-            Input JWST datamodel object.
+        input_data : str or `~stdatamodels.jwst.datamodels.MultiSlitModel`
+            Input JWST file name or datamodel object.
 
         Returns
         -------
-        result : DataModel
+        output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             JWST datamodel object with corrected science data and barshadow
             extension(s) added.
         """
         # Open the input data model
-        with datamodels.open(input_data) as input_model:
-            exp_type = input_model.meta.exposure.type
-            if exp_type == "NRS_MSASPEC":
-                if self.use_correction_pars:
-                    correction_pars = self.correction_pars
-                    barshadow_model = None
+        output_model = self.prepare_output(input_data)
 
-                else:
-                    correction_pars = None
+        # Check for MOS data
+        exp_type = output_model.meta.exposure.type
+        if exp_type != "NRS_MSASPEC":
+            output_model.meta.cal_step.barshadow = "SKIPPED"
+            return output_model
 
-                    # Get the name of the bar shadow reference file to use
-                    self.barshadow_name = self.get_reference_file(input_model, "barshadow")
-                    log.info(f"Using BARSHADOW reference file {self.barshadow_name}")
+        if self.use_correction_pars:
+            correction_pars = self.correction_pars
+            barshadow_model = None
+        else:
+            correction_pars = None
 
-                    # Check for a valid reference file
-                    if self.barshadow_name == "N/A":
-                        log.warning("No BARSHADOW reference file found")
-                        log.warning("Bar shadow step will be skipped")
-                        result = input_model.copy()
-                        result.meta.cal_step.barshadow = "SKIPPED"
-                        return result
+            # Get the name of the bar shadow reference file to use
+            barshadow_name = self.get_reference_file(output_model, "barshadow")
+            log.info(f"Using BARSHADOW reference file {barshadow_name}")
 
-                    # Open the barshadow ref file data model
-                    barshadow_model = datamodels.BarshadowModel(self.barshadow_name)
+            # Check for a valid reference file
+            if barshadow_name == "N/A":
+                log.warning("No BARSHADOW reference file found")
+                log.warning("Bar shadow step will be skipped")
+                output_model.meta.cal_step.barshadow = "SKIPPED"
+                return output_model
 
-                # Do the bar shadow correction
-                result, self.correction_pars = bar_shadow.do_correction(
-                    input_model,
-                    barshadow_model,
-                    inverse=self.inverse,
-                    source_type=self.source_type,
-                    correction_pars=correction_pars,
-                )
+            # Open the barshadow ref file data model
+            barshadow_model = datamodels.BarshadowModel(barshadow_name)
 
-                if barshadow_model:
-                    barshadow_model.close()
-                result.meta.cal_step.barshadow = "COMPLETE"
-            else:
-                input_model.meta.cal_step.barshadow = "SKIPPED"
-                result = input_model
-        return result
+        # Do the bar shadow correction
+        output_model, self.correction_pars = bar_shadow.do_correction(
+            output_model,
+            barshadow_model,
+            inverse=self.inverse,
+            source_type=self.source_type,
+            correction_pars=correction_pars,
+        )
+
+        if barshadow_model:
+            barshadow_model.close()
+        output_model.meta.cal_step.barshadow = "COMPLETE"
+
+        return output_model

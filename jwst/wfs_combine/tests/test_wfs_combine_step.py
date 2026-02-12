@@ -47,7 +47,7 @@ def wfs_association(tmp_path_factory):
 
     asn = asn_from_list.asn_from_list([path1, path2], product_name="combined", rule=DMS_Level3_Base)
     asn.data["program"] = "00024"
-    asn.data["asn_type"] = "wfs-image2"
+    asn.data["asn_type"] = "image2"
     asn.sequence = 1
     with warnings.catch_warnings():
         warnings.filterwarnings(

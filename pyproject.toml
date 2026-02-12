@@ -22,9 +22,8 @@ dependencies = [
     "astropy>=6.1",
     "BayesicFitting>=3.2.3",
     "crds>=12.0.4",
-    "drizzle>=2.1.1,<2.2.0",
-    "gwcs @ git+https://github.com/spacetelescope/gwcs.git@main",
-    # "gwcs>=1.0.0",
+    "drizzle>=2.2.0,<2.3.0",
+    "gwcs>=1.0.1,<2",
     "numpy>=1.25",
     "photutils>=2.1.0",
     "pyparsing>=2.2.1",
@@ -227,7 +226,9 @@ addopts = [
 ]
 xfail_strict = true
 filterwarnings = [
-    "error"
+    "error",
+    # https://github.com/astropy/astropy/issues/19216
+    "ignore:The chararray class is deprecated:DeprecationWarning",
 ]
 
 [tool.coverage.run]
@@ -352,6 +353,11 @@ name = 'Pipeline'
 showcontent = true
 
 # step changes
+
+[[tool.towncrier.type]]
+directory = "adaptive_trace_model"
+name = "adaptive_trace_model (spec2, spec3)"
+showcontent = true
 
 [[tool.towncrier.type]]
 directory = "align_refs"

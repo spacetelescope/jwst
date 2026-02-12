@@ -33,8 +33,10 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
-        Input data model.
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
+        Input data model. May be updated in place with a "SKIPPED" status,
+        if a new model cannot be created.
     slit_names : list containing strings or ints
         Slit names.
     source_ids : list containing strings or ints
@@ -42,7 +44,8 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
 
     Returns
     -------
-    output_model : SlitModel or MultiSlitModel
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`, or
+                   `~stdatamodels.jwst.datamodels.SlitModel`
         DataModel containing extracted slit(s)
     """
     exp_type = input_model.meta.exposure.type.upper()
@@ -53,11 +56,10 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
     ):
         log.info("assign_wcs was skipped")
         log.warning("extract_2d will be SKIPPED")
-        output_model = input_model.copy()
-        output_model.meta.cal_step.extract_2d = "SKIPPED"
-        return output_model
+        input_model.meta.cal_step.extract_2d = "SKIPPED"
+        return input_model
 
-    if not (hasattr(input_model.meta, "wcs") and input_model.meta.wcs is not None):
+    if getattr(input_model.meta, "wcs", None) is None:
         raise AttributeError(
             "Input model does not have a WCS object; assign_wcs should be run before extract_2d."
         )

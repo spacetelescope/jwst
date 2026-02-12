@@ -25,7 +25,7 @@ class EmiCorrStep(Step):
         onthefly_corr_freq = float_list(default=None)  # Frequencies to use for correction
         use_n_cycles = integer(default=3)  # Use N cycles to calculate the phase, to use all integrations set to None
         fit_ints_separately = boolean(default=False)  # If True and algorithm is 'joint', each integration is separately fit.
-        user_supplied_reffile = string(default=None)  # ASDF user-supplied reference file
+        user_supplied_reffile = string(default=None)  # Deprecated; use 'override_emicorr' instead
         save_intermediate_results = boolean(default=False)  # If True and a reference file is created on the fly, save it to disk
         skip = boolean(default=True)  # Skip the step
     """  # noqa: E501
@@ -98,8 +98,19 @@ class EmiCorrStep(Step):
             emicorr_ref_filename = None
             log.info("Correcting with reference file created on-the-fly.")
 
-        elif self.user_supplied_reffile is None:
-            emicorr_ref_filename = self.get_reference_file(result, "emicorr")
+        else:
+            # Check for a deprecated parameter
+            if self.user_supplied_reffile is not None:
+                msg = (
+                    "The 'user_supplied_reffile' parameter is deprecated and will "
+                    "be removed in a future release. Use 'override_emicorr' instead."
+                )
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+                log.warning(msg)
+                emicorr_ref_filename = self.user_supplied_reffile
+            else:
+                emicorr_ref_filename = self.get_reference_file(result, "emicorr")
+
             # Skip the step if no reference file is found
             if emicorr_ref_filename == "N/A":
                 log.warning("No reference file found.")
@@ -107,17 +118,13 @@ class EmiCorrStep(Step):
                 result.meta.cal_step.emicorr = "SKIPPED"
                 return result
             else:
-                log.info(f"Using CRDS reference file: {emicorr_ref_filename}")
+                log.info(f"Using EMICORR reference file: {emicorr_ref_filename}")
                 emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
-
-        else:
-            log.info(f"Using user-supplied reference file: {self.user_supplied_reffile}")
-            emicorr_model = datamodels.EmiModel(self.user_supplied_reffile)
 
         # Do the correction
         save_onthefly_reffile = None
         if self.save_intermediate_results:
-            if emicorr_ref_filename is None and self.user_supplied_reffile is None:
+            if emicorr_ref_filename is None:
                 # get the same full path as input file to save the on-the-fly reference file
                 emicorr_ref_filename = self.make_output_path(suffix="emi_ref_waves")
                 save_onthefly_reffile = emicorr_ref_filename

@@ -9,7 +9,7 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 from jwst import datamodels as dm
 from jwst.assign_wcs import AssignWcsStep, miri
 from jwst.badpix_selfcal.badpix_selfcal import apply_flags, badpix_selfcal
-from jwst.badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep, _parse_inputs
+from jwst.badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep
 
 wcs_kw = {
     "wcsaxes": 3,
@@ -181,15 +181,16 @@ def test_input_parsing(asn, sci, background):
 
     Note that science exposure gets added to selfcal_list later, not in parse_inputs
     """
+    step = BadpixSelfcalStep()
 
     # basic association case. Both background and selfcal get into the list
-    input_sci, selfcal_list, bkg_list = _parse_inputs(asn, [], [])
+    input_sci, selfcal_list, bkg_list = step._parse_inputs(asn, [], [])
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 2
     assert len(selfcal_list) == 4
 
     # association with background_list provided
-    input_sci, selfcal_list, bkg_list = _parse_inputs(
+    input_sci, selfcal_list, bkg_list = step._parse_inputs(
         asn,
         [],
         [
@@ -202,7 +203,7 @@ def test_input_parsing(asn, sci, background):
     assert len(selfcal_list) == 7
 
     # association with selfcal_list provided
-    input_sci, selfcal_list, bkg_list = _parse_inputs(
+    input_sci, selfcal_list, bkg_list = step._parse_inputs(
         asn,
         [
             background,
@@ -215,13 +216,13 @@ def test_input_parsing(asn, sci, background):
     assert len(selfcal_list) == 7
 
     # single science exposure
-    input_sci, selfcal_list, bkg_list = _parse_inputs(sci, [], [])
+    input_sci, selfcal_list, bkg_list = step._parse_inputs(sci, [], [])
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 0
     assert len(selfcal_list) == 0
 
     # single science exposure with selfcal_list and bkg_list provided
-    input_sci, selfcal_list, bkg_list = _parse_inputs(
+    input_sci, selfcal_list, bkg_list = step._parse_inputs(
         sci,
         [
             background,
@@ -239,14 +240,16 @@ def test_input_parsing(asn, sci, background):
 
 def test_bad_input():
     input_data = dm.SlitModel()
+    step = BadpixSelfcalStep()
     with pytest.raises(TypeError, match="Cannot continue"):
-        _parse_inputs(input_data, [], [])
+        step._parse_inputs(input_data, [], [])
 
 
 def test_bad_input_in_container():
     input_data = dm.ModelContainer([dm.ImageModel(), dm.ImageModel()])
+    step = BadpixSelfcalStep()
     with pytest.raises(ValueError, match="multiple science exposures"):
-        _parse_inputs(input_data, [], [])
+        step._parse_inputs(input_data, [], [])
 
 
 def test_background_flagger_mrs(background):
@@ -297,6 +300,7 @@ def test_apply_flags(background):
 def test_badpix_selfcal_step(request, dset):
     """Smoke test for the badpix_selfcal step."""
     input_data = request.getfixturevalue(dset)
+    input_data_copy = input_data.copy()
     result = BadpixSelfcalStep.call(input_data, skip=False, force_single=True)
 
     assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"
@@ -311,9 +315,20 @@ def test_badpix_selfcal_step(request, dset):
         assert len(result[1]) == 2
 
     # Make sure input is not modified
-    assert result[0] is not input_data
     if dset == "sci":
+        assert result[0] is not input_data
         assert input_data.meta.cal_step.badpix_selfcal is None
+
+        # DQ is modified by the step
+        assert not np.allclose(result[0].dq, input_data.dq)
+        assert np.allclose(input_data.dq, input_data_copy.dq)
+    else:
+        # Make sure none of the input models were modified
+        assert result[0] is not input_data[0]
+        assert not np.allclose(result[0].dq, input_data[0].dq)
+        for input_model, input_model_copy in zip(input_data, input_data_copy, strict=True):
+            assert input_model.meta.cal_step.badpix_selfcal is None
+            assert np.allclose(input_model.dq, input_model_copy.dq)
 
 
 def test_expected_fail_sci(sci):

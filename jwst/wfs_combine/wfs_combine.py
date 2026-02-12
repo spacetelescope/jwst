@@ -27,19 +27,17 @@ class DataSet:
     """Two dithered input wavefront sensing images to be combined."""
 
     def __init__(
-        self, infile_1, infile_2, outfile, do_refine, flip_dithers, psf_size, blur_size, n_size
+        self, input_model_1, input_model_2, do_refine, flip_dithers, psf_size, blur_size, n_size
     ):
         """
         Assign models to input files.
 
         Parameters
         ----------
-        infile_1 : str
-            First input file
-        infile_2 : str
-            Second input file
-        outfile : str
-            File for combined image
+        input_model_1 : `~stdatamodels.jwst.datamodels.JwstDatamodel`
+            First input datamodel
+        input_model_2 : `~stdatamodels.jwst.datamodels.JwstDatamodel`
+            Second input datamodel
         do_refine : bool
             True if refined offset calculation and application is to be made
         flip_dithers : bool
@@ -51,25 +49,15 @@ class DataSet:
         n_size : int
             Size of interpolation box
         """
-        if outfile == "":
-            log.error("No output product specified in the association table.")
-
-        try:
-            self.input_1 = datamodels.open(infile_1)
-            self.input_2 = datamodels.open(infile_2)
-        except OSError:
-            log.error("Error creating a model from at least 1 of : %s %s", infile_1, infile_2)
-
+        self.input_1 = input_model_1
+        self.input_2 = input_model_2
         self.do_refine = do_refine
 
         if self.input_1.data.shape != self.input_2.data.shape:
             log.error("Incompatible sizes for input files")
 
-        log.info("Output file: %s", outfile)
         log.info("do_refine: %s", do_refine)
         log.info("flip_dithers: %s", flip_dithers)
-        self.file1 = infile_1
-        self.file2 = infile_2
         self.off_x = 0
         self.off_y = 0
         self.flt_off_x = 0
@@ -93,15 +81,11 @@ class DataSet:
 
         # If the shift in x is negative, switch the two images
         if self.off_x < 0 and self.flip_dithers:
-            self.input_1.close()
-            self.input_2.close()
-            self.input_1 = datamodels.open(self.file2)
-            self.input_2 = datamodels.open(self.file1)
-            log.info("File 1 to combine: %s", self.file2)
-            log.info("File 2 to combine: %s", self.file1)
-        else:
-            log.info("File 1 to combine: %s", self.file1)
-            log.info("File 2 to combine: %s", self.file2)
+            tmp = self.input_1
+            self.input_1 = self.input_2
+            self.input_2 = tmp
+        log.info("File 1 to combine: %s", self.input_1.meta.filename)
+        log.info("File 2 to combine: %s", self.input_2.meta.filename)
 
         # Input SCI arrays may have nan's so replace with 0's to prevent
         # later annoyances (hopefully this can be removed later)

@@ -64,6 +64,7 @@ def create_hdul(detector, channel, band):
     scihdu = fits.ImageHDU()
     scihdu.header["EXTNAME"] = "SCI"
     scihdu.header.update(wcs_kw)
+    scihdu.data = np.zeros((10, 10))
     hdul.append(phdu)
     hdul.append(scihdu)
     return hdul

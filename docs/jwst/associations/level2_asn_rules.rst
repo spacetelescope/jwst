@@ -62,7 +62,7 @@ Image2Pipeline.
    * -
      -
      -
-     - 
+     -
    * - MIR_4QPM
      - psf
      - PSF
@@ -142,7 +142,7 @@ Image2Pipeline.
    * -
      -
      -
-     - 
+     -
    * - NIS_AMI
      - psf
      - PSF
@@ -190,7 +190,7 @@ Image2Pipeline.
    * -
      -
      -
-     - 
+     -
    * - NRC_CORON
      - psf
      - PSF
@@ -302,7 +302,7 @@ Image2Pipeline.
    * - NRS_MIMF
      - science
      - N/A
-     - wfs-image2
+     - image2
    * - NRS_MSASPEC
      - imprint
      - IMPRINT

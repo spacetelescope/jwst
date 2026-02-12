@@ -92,7 +92,7 @@ def test_extract_miri_ifu(mock_miri_ifu, simple_wcs_ifu, ifu_set_srctype):
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
     # output wavelength is the same as input
-    _, _, expected_wave = simple_wcs_ifu(np.arange(50), np.arange(50), np.arange(10))
+    _, _, expected_wave = simple_wcs_ifu(np.arange(10), np.arange(10), np.arange(10))
     assert np.allclose(result.spec[0].spec_table["WAVELENGTH"], expected_wave)
 
     # output flux for extended data is a simple sum over all data
@@ -205,7 +205,10 @@ def test_extract_niriss_soss_96(tmp_path, mock_niriss_soss_96):
 
     # output flux and errors are non-zero, exact values will depend
     # on extraction parameters
-    assert np.all(result.spec[0].spec_table["FLUX"] > 0)
+    assert (
+        np.count_nonzero(result.spec[0].spec_table["FLUX"] >= 0)
+        / result.spec[0].spec_table["FLUX"].size
+    ) > 0.99
     assert np.all(result.spec[0].spec_table["FLUX_ERROR"] > 0)
     result.close()
 

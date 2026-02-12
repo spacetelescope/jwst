@@ -28,92 +28,86 @@ class PixelReplaceStep(Step):
 
         Parameters
         ----------
-        input_data : datamodel, str
-            The input datamodel or filename containing
-            spectral data in need of pixel replacement.
+        input_data : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The file name or input datamodel containing spectral data in need of
+            pixel replacement.
 
         Returns
         -------
-        JWST DataModel
-            This will be `input` if the step was skipped; otherwise,
-            it will be a model containing data arrays with estimated fluxes
-            for any bad pixels, now flagged as TO-BE-DETERMINED (DQ bit 7?).
+        output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+            This will be the same as the input model if the step was skipped;
+            otherwise, it will be a model containing data arrays with estimated fluxes
+            for any bad pixels, now flagged as FLUX_ESTIMATED.
         """
-        with datamodels.open(input_data) as input_model:
-            # If more than one 2d spectrum exists in input, call replacement
+        output_model = self.prepare_output(input_data)
 
-            if isinstance(
-                input_model,
-                datamodels.MultiSlitModel
-                | datamodels.SlitModel
-                | datamodels.ImageModel
-                | datamodels.IFUImageModel
-                | datamodels.CubeModel,
-            ):
-                log.debug(f"Input is a {str(input_model)}.")
-            elif isinstance(input_model, datamodels.ModelContainer):
-                log.debug("Input is a ModelContainer.")
-            else:
-                log.error(f"Input is of type {str(input_model)} for which")
-                log.error("pixel_replace does not have an algorithm.")
-                log.error("Pixel replacement will be skipped.")
-                result = input_model.copy()
-                result.meta.cal_step.pixel_replace = "SKIPPED"
-                return result
+        # If more than one 2d spectrum exists in input, call replacement
 
-            pars = {
-                "algorithm": self.algorithm,
-                "n_adjacent_cols": self.n_adjacent_cols,
-            }
+        if isinstance(
+            output_model,
+            datamodels.MultiSlitModel
+            | datamodels.SlitModel
+            | datamodels.ImageModel
+            | datamodels.IFUImageModel
+            | datamodels.CubeModel,
+        ):
+            log.debug(f"Input is a {str(output_model)}.")
+        elif isinstance(output_model, datamodels.ModelContainer):
+            log.debug("Input is a ModelContainer.")
+        else:
+            log.error(f"Input is of type {str(output_model)} for which")
+            log.error("pixel_replace does not have an algorithm.")
+            log.error("Pixel replacement will be skipped.")
+            output_model.meta.cal_step.pixel_replace = "SKIPPED"
+            return output_model
 
-            # calwebb_spec3 case / ModelContainer
-            if isinstance(input_model, datamodels.ModelContainer):
-                output_model = input_model
+        pars = {
+            "algorithm": self.algorithm,
+            "n_adjacent_cols": self.n_adjacent_cols,
+        }
 
-                # Set up output path name to include the ASN ID
-                # if associations are involved
-                asn_id = None
-                try:
-                    asn_id = input_model.asn_table["asn_id"]
-                except (AttributeError, KeyError):
-                    pass
-                if asn_id is None:
-                    asn_id = self.search_attr("asn_id")
-                if asn_id is not None:
-                    _make_output_path = self.search_attr("_make_output_path", parent_first=True)
-                    self._make_output_path = partial(_make_output_path, asn_id=asn_id)
+        # calwebb_spec3 case / ModelContainer
+        if isinstance(output_model, datamodels.ModelContainer):
+            # Set up output path name to include the ASN ID
+            # if associations are involved
+            asn_id = None
+            try:
+                asn_id = output_model.asn_table["asn_id"]
+            except (AttributeError, KeyError):
+                pass
+            if asn_id is None:
+                asn_id = self.search_attr("asn_id")
+            if asn_id is not None:
+                _make_output_path = self.search_attr("_make_output_path", parent_first=True)
+                self._make_output_path = partial(_make_output_path, asn_id=asn_id)
 
-                # Check models to confirm they are the correct type
-                for i, model in enumerate(output_model):
-                    if isinstance(
-                        model,
-                        datamodels.MultiSlitModel
-                        | datamodels.SlitModel
-                        | datamodels.ImageModel
-                        | datamodels.IFUImageModel
-                        | datamodels.CubeModel,
-                    ):
-                        log.debug(f"Input is a {str(model)}.")
-                        replacement = PixelReplacement(model, **pars)
-                        replacement.replace()
-                        output_model[i] = replacement.output
-                        success = True
-                    else:
-                        log.error(f"Input is of type {str(model)} for which")
-                        log.error("pixel_replace does not have an algorithm.")
-                        log.error("Pixel replacement will be skipped.")
-                        output_model[i] = model.copy()
-                        success = False
-                    record_step_status(output_model[i], "pixel_replace", success=success)
+            # Check models to confirm they are the correct type
+            for i, model in enumerate(output_model):
+                if isinstance(
+                    model,
+                    datamodels.MultiSlitModel
+                    | datamodels.SlitModel
+                    | datamodels.ImageModel
+                    | datamodels.IFUImageModel
+                    | datamodels.CubeModel,
+                ):
+                    log.debug(f"Input is a {str(model)}.")
+                    replacement = PixelReplacement(model, **pars)
+                    replacement.replace()
+                    success = True
+                else:
+                    log.error(f"Input is of type {str(model)} for which")
+                    log.error("pixel_replace does not have an algorithm.")
+                    log.error("Pixel replacement will be skipped.")
+                    success = False
+                record_step_status(output_model[i], "pixel_replace", success=success)
 
-                return output_model
+            return output_model
 
-            # calwebb_spec2 case / single input model
-            else:
-                # Make copy of input to prevent overwriting
-                result = input_model.copy()
-                replacement = PixelReplacement(result, **pars)
-                replacement.replace()
-                record_step_status(replacement.output, "pixel_replace", success=True)
-                result = replacement.output
-                return result
+        # calwebb_spec2 case / single input model
+        else:
+            # Make copy of input to prevent overwriting
+            replacement = PixelReplacement(output_model, **pars)
+            replacement.replace()
+            record_step_status(output_model, "pixel_replace", success=True)
+            return output_model

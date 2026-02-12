@@ -1,5 +1,7 @@
 import os
+from pathlib import Path
 
+import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling.models import Identity, Multiply
@@ -10,7 +12,8 @@ from stcal.alignment.util import compute_s_region_keyword, sregion_to_footprint
 import jwst
 from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi
-from jwst.extract_1d.tests.helpers import mock_nis_wfss_l2
+from jwst.extract_1d.tests.helpers import mock_nirspec_fs_one_slit_func, mock_nis_wfss_l2
+from jwst.pipeline import Spec3Pipeline
 from jwst.stpipe import Step
 
 INPUT_WFSS = "mock_wfss_cal.fits"
@@ -169,8 +172,23 @@ def test_spec3_wfss(run_spec3_wfss):
     files_created = os.listdir(".")
     assert "test_x1d.fits" in files_created
     assert "test_c1d.fits" in files_created
-    x1d = dm.open("test_x1d.fits")
-    assert (
-        x1d.spec[0].s_region
-        == "POLYGON ICRS  247.901987783 30.174116268 247.864126916 30.158804440 247.846405241 30.190721550 247.852683427 30.193419510 247.851405241 30.195721550 247.888569817 30.211692493 247.906987783 30.179116268 247.900617472 30.176539964"
-    )
+    with dm.open("test_x1d.fits") as x1d:
+        assert (
+            x1d.spec[0].s_region
+            == "POLYGON ICRS  247.901987783 30.174116268 247.864126916 30.158804440 247.846405241 30.190721550 247.852683427 30.193419510 247.851405241 30.195721550 247.888569817 30.211692493 247.906987783 30.179116268 247.900617472 30.176539964"
+        )
+
+
+def test_spec3_nrs_fs(tmp_cwd):
+    input_model = mock_nirspec_fs_one_slit_func()
+    input_model.meta.filename = "test_spec3_cal.fits"
+    model_copy = input_model.copy()
+    steps = {"outlier_detection": {"skip": True}, "resample_spec": {"skip": True}}
+    Spec3Pipeline.call([input_model], steps=steps, save_results=True)
+
+    # check for expected output
+    assert Path("test_spec3_x1d.fits").exists()
+
+    # make sure input model was not modified
+    assert input_model.meta.cal_step._instance == model_copy.meta.cal_step._instance
+    np.testing.assert_allclose(input_model.data, model_copy.data)

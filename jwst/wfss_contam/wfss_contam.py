@@ -357,7 +357,8 @@ def contam_corr(
     Parameters
     ----------
     input_model : `~jwst.datamodels.MultiSlitModel`
-        Input data model containing 2D spectral cutouts
+        Input data model containing 2D spectral cutouts. May be modified by processing:
+        make a copy before calling this function, if needed.
     waverange : `~jwst.datamodels.WavelengthrangeModel`
         Wavelength range reference file model
     photom : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
@@ -510,12 +511,11 @@ def contam_corr(
     # Initialize output multislitmodel
     output_model = datamodels.MultiSlitModel()
 
-    # Copy over matching slits
-    good_slits = [
-        datamodels.SlitModel(slit.instance).copy()
-        for slit in input_model.slits
-        if slit.source_id in obs.source_ids
-    ]
+    # Copy over matching slits.
+    # Note that this makes a reference to input slits, not a deep copy,
+    # so the input data may be modified by this function.  The input data is
+    # copied in the calling step, as needed.
+    good_slits = [slit for slit in input_model.slits if slit.source_id in obs.source_ids]
     output_model.slits.extend(good_slits)
 
     # Loop over all slits/sources to subtract contaminating spectra

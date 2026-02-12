@@ -86,7 +86,7 @@ def make_tso_specmodel(spec_list, segment=None):
 
     # Copy metadata from the first input_spec
     tso_spec.update(spec_list[0])
-    if hasattr(spec_list[0].meta, "wcs"):
+    if getattr(spec_list[0].meta, "wcs", None) is not None:
         tso_spec.meta.wcs = spec_list[0].meta.wcs
 
     return tso_spec

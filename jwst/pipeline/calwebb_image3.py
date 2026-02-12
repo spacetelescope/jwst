@@ -127,7 +127,7 @@ class Image3Pipeline(Pipeline):
                 )
             except OSError:
                 # Try opening input as a single cal file
-                input_data = datamodels.open(input_data)
+                input_data = self.prepare_output(input_data)
                 input_data = [
                     input_data,
                 ]

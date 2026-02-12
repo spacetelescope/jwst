@@ -36,7 +36,8 @@ def extract2d(
     Parameters
     ----------
     input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
-        Input data model.
+        Input data model. May be updated in place with a "SKIPPED" status,
+        if a new model cannot be created.
     slit_names : list containing strings or ints
         Slit names to be processed.
     source_ids : list containing strings or ints
@@ -70,8 +71,9 @@ def extract2d(
 
     Returns
     -------
-    output_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodelsCubeModel`
-      A copy of the input_model that has been processed.
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel` or
+                   `~stdatamodels.jwst.datamodels.SlitModel`
+        Datamodel containing spectral cutouts.
     """
     nrs_modes = [
         "NRS_FIXEDSLIT",
@@ -89,9 +91,8 @@ def extract2d(
         if input_model.meta.instrument.grating.lower() == "mirror":
             # Catch the case of EXP_TYPE=NRS_LAMP and grating=MIRROR
             log.info(f"EXP_TYPE {exp_type} with grating=MIRROR not supported for extract 2D")
-            output_model = input_model.copy()
-            output_model.meta.cal_step.extract_2d = "SKIPPED"
-            return output_model
+            input_model.meta.cal_step.extract_2d = "SKIPPED"
+            return input_model
         output_model = nrs_extract2d(input_model, slit_names=slit_names, source_ids=source_ids)
     elif exp_type in slitless_modes:
         if exp_type == "NRC_TSGRISM":
@@ -119,12 +120,11 @@ def extract2d(
             )
     else:
         log.info(f"EXP_TYPE {exp_type} not supported for extract 2D")
-        output_model = input_model.copy()
-        output_model.meta.cal_step.extract_2d = "SKIPPED"
-        return output_model
+        input_model.meta.cal_step.extract_2d = "SKIPPED"
+        return input_model
 
     # Set the step status to COMPLETE
     if output_model.meta.cal_step.extract_2d != "SKIPPED":
         output_model.meta.cal_step.extract_2d = "COMPLETE"
-    del input_model
+
     return output_model

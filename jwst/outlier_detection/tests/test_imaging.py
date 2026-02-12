@@ -130,40 +130,136 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
     ) + len(blot_files)
 
 
-@pytest.mark.xfail(reason="Test data needs to be fixed to avoid outliers being detected.")
-def test_outlier_step_square_source_no_outliers(mirimage_three_sci, tmp_cwd):
-    """Test whole step with square source with sharp edges, no outliers"""
+@pytest.mark.parametrize("weight", ["exptime", "ivm"])
+@pytest.mark.parametrize("src_type", ["square", "gaussian"])
+def test_outlier_step_with_source_no_outliers(mirimage_three_sci, tmp_cwd, src_type, weight):
+    """Test whole step with no outliers and an artificial source:
+    a uniform "square" with sharp edges or a "gaussian" source centered
+    on the image, no outliers."""
     container = ModelLibrary(list(mirimage_three_sci))
 
-    # put a square source in all three exposures
+    atol = 2.0 * np.finfo(np.float32).eps
+
+    # Create artificial source
+    if src_type == "square":
+        src = np.full((11, 11), 50 * helpers.SIGMA, dtype=np.float32)
+    else:  # gaussian
+        y, x = np.indices((11, 11)) - 5
+        fwhm = 1.5
+        src = 50 * helpers.SIGMA * np.exp(-4.0 * np.log(2.0) * (x**2 + y**2) / fwhm**2)
+
+    # put a Gaussian source in all three exposures
     with container:
         for ccont in container:
-            ccont.data[5:15, 5:15] += 1e3
+            ccont.data[5:16, 5:16] += src
+            ccont.err[5:16, 5:16] = np.sqrt(ccont.err[5:16, 5:16] ** 2 + src)
             container.shelve(ccont)
 
     # Save all the data into a separate array before passing into step
     data_as_cube = []
     dq_as_cube = []
+    non_nan_mask_as_cube = []
     with container:
         for model in container:
             data_as_cube.append(model.data.copy())
             dq_as_cube.append(model.dq.copy())
+            non_nan_mask_as_cube.append(np.isfinite(model.data))
             container.shelve(model, modify=False)
 
-    result = OutlierDetectionStep.call(container, in_memory=True)
+    result = OutlierDetectionStep.call(container, in_memory=True, weight_type=weight)
 
     # Make sure nothing changed in SCI and DQ arrays
     with container:
         for i, image in enumerate(container):
-            np.testing.assert_allclose(image.data, data_as_cube[i])
-            np.testing.assert_allclose(image.dq, dq_as_cube[i])
+            m = non_nan_mask_as_cube[i]
+            assert np.all(np.logical_and(np.isfinite(image.data), m))
+            np.testing.assert_allclose(image.data[m], data_as_cube[i][m], rtol=0.0, atol=atol)
+            np.testing.assert_array_equal(image.dq[m], dq_as_cube[i][m])
             container.shelve(image, modify=False)
 
     # Make sure nothing changed in SCI and DQ arrays
     with result:
         for i, corrected in enumerate(result):
-            np.testing.assert_allclose(data_as_cube[i], corrected.data)
-            np.testing.assert_allclose(dq_as_cube[i], corrected.dq)
+            m = non_nan_mask_as_cube[i]
+            assert np.all(np.logical_and(np.isfinite(corrected.data), m))
+            np.testing.assert_allclose(data_as_cube[i][m], corrected.data[m], rtol=0.0, atol=atol)
+            np.testing.assert_array_equal(dq_as_cube[i][m], corrected.dq[m])
+            result.shelve(corrected, modify=False)
+
+
+@pytest.mark.parametrize("weight", ["exptime", "ivm"])
+@pytest.mark.parametrize("src_type", ["gaussian", "square", "strip", "point"])
+@pytest.mark.parametrize("idx", [0, 1, 2])
+def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weight, idx):
+    """Test whole step with outlier(s) added besides a uniform square source."""
+    container = ModelLibrary(list(mirimage_three_sci))
+
+    atol = 2.0 * np.finfo(np.float32).eps
+
+    # Create artificial source
+    src_sl = np.s_[5:16, 5:16]
+    src = np.full((11, 11), 100 * helpers.SIGMA, dtype=np.float32)
+
+    # Create artificial CR
+    if src_type == "strip":
+        sl = np.s_[9:12, 5:16]
+        cr = np.full((3, 11), 100 * helpers.SIGMA, dtype=np.float32)
+    elif src_type == "square":
+        sl = np.s_[5:16, 5:16]
+        cr = np.full((11, 11), 100 * helpers.SIGMA, dtype=np.float32)
+    elif src_type == "point":
+        sl = ((1, 1), (10, 10))
+        cr = 100 * helpers.SIGMA
+    else:  # gaussian
+        sl = np.s_[5:16, 5:16]
+        y, x = np.indices((11, 11)) - 5
+        fwhm = 1.5
+        cr = 100 * helpers.SIGMA * np.exp(-4.0 * np.log(2.0) * (x**2 + y**2) / fwhm**2)
+
+    cr_mask = cr > 5 * helpers.SIGMA
+
+    # put a Gaussian source in all three exposures
+    with container:
+        for i, ccont in enumerate(container):
+            ccont.data[src_sl] += src
+            if i == idx:
+                ccont.data[sl] += cr
+                # ccont.err[5:16, 5:16] = np.sqrt(ccont.err[5:16, 5:16]**2 + src)
+            container.shelve(ccont)
+
+    # Save all the data into a separate array before passing into step
+    data_as_cube = []
+    dq_as_cube = []
+    non_nan_mask_as_cube = []
+    with container:
+        for model in container:
+            data_as_cube.append(model.data.copy())
+            dq_as_cube.append(model.dq.copy())
+            non_nan_mask_as_cube.append(np.isfinite(model.data))
+            container.shelve(model, modify=False)
+
+    result = OutlierDetectionStep.call(container, in_memory=True, weight_type=weight)
+
+    with result:
+        for i, corrected in enumerate(result):
+            m = non_nan_mask_as_cube[i]
+            if i == idx:
+                # Make sure CR pixels are now NaN in SCI and flagged in DQ
+                m[sl] = np.logical_not(cr_mask)
+                m2 = np.isfinite(corrected.data)
+
+                if src_type == "square":
+                    pytest.xfail(
+                        "Square CR fails with pixels in the interior of the square not flagged as outliers."
+                    )
+
+                assert np.all(m == m2)
+                assert np.all(
+                    (corrected.dq[~m] & helpers.OUTLIER_DO_NOT_USE) == helpers.OUTLIER_DO_NOT_USE
+                )
+
+            np.testing.assert_allclose(data_as_cube[i][m], corrected.data[m], rtol=0.0, atol=atol)
+            np.testing.assert_array_equal(dq_as_cube[i][m], corrected.dq[m])
             result.shelve(corrected, modify=False)
 
 

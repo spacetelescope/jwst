@@ -186,7 +186,7 @@ signal in it for each dither position.
 When there is a source in a shutter, the ``estimated_source_in_shutter_x`` and
 ``estimated_source_in_shutter_y`` columns are populated with numerical values that
 estimate the source location in the shutter. These are fractional position values that
-run from 0,0 at the lower-left corner of a shutter to 1,1 at the upper-right corner
+run from 0,0 at the upper-right corner of a shutter to 1,1 at the bottom-left corner
 (hence 0.5,0.5 indicates the shutter center). These source positions are used in
 calibration steps such as :ref:`wavecorr <wavecorr_step>` and :ref:`pathloss <pathloss_step>`
 to compute the appropriate corrections.

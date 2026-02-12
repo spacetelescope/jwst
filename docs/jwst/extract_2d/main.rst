@@ -98,12 +98,12 @@ step parameter ``grism_objects`` is left unspecified, in which case the ``extrac
 step uses the source catalog that is specified in the input model's meta information,
 ``input_model.meta.source_catalog.filename`` ("SCATFILE" keyword) to define the
 list of objects to be extracted.
-Otherwise, a user can submit a list of ``GrismObjects`` that contains information
+Otherwise, a user can submit a list of `~stdatamodels.jwst.transforms.GrismObject` that contains information
 about the objects that they want extracted.
-The ``GrismObject`` list can be created automatically by using the method in
+The `~stdatamodels.jwst.transforms.GrismObject` list can be created automatically by using the method in
 ``jwst.assign_wcs.utils.create_grism_bbox``. This method also uses the name of the source
 catalog saved in the input model's meta information. If it's better to construct a list
-of ``GrismObjects`` outside of these, the ``GrismObject`` itself can be imported from
+of `~stdatamodels.jwst.transforms.GrismObject` outside of these, the `~stdatamodels.jwst.transforms.GrismObject` itself can be imported from
 ``jwst.transforms.models``.
 
 The dispersion direction will be documented by copying keyword "DISPAXIS"
@@ -360,4 +360,4 @@ Time-Series (TSO) grism spectroscopy:
   ``wavelengthrange`` reference file. Applies to both WFSS and TSO modes.
 
 ``--grism_objects``
-  list (default is empty). A list of ``jwst.transforms.models.GrismObject``.
+  list (default is empty). A list of `~stdatamodels.jwst.transforms.GrismObject`.

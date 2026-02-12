@@ -5,19 +5,21 @@ import pytest
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
+from jwst.pipeline import Image3Pipeline
 from jwst.stpipe import Step
 
-INPUT_FILE = "dummy_cal.fits"
-INPUT_FILE_2 = "dummy2_cal.fits"
-INPUT_ASN = "dummy_asn.json"
+INPUT_FILE = "mock_cal.fits"
+INPUT_FILE_2 = "mock2_cal.fits"
+INPUT_ASN = "mock_asn.json"
 OUTPUT_PRODUCT = "custom_name"
 LOGFILE = "run_asn.log"
 
 
 @pytest.fixture(scope="module")
-def make_dummy_cal_file(tmp_cwd_module):
+def make_mock_cal_model():
     """
-    Make and save a dummy cal file in the temporary working directory
+    Make a mock cal model.
+
     Partially copied from test_calwebb_image2.py
     """
 
@@ -51,12 +53,22 @@ def make_dummy_cal_file(tmp_cwd_module):
 
     image = AssignWcsStep.call(image)
 
-    with image as dm:
+    return image
+
+
+@pytest.fixture(scope="module")
+def make_mock_cal_file(tmp_cwd_module, make_mock_cal_model):
+    """
+    Make and save a mock cal file in the temporary working directory.
+
+    Partially copied from test_calwebb_image2.py
+    """
+    with make_mock_cal_model as dm:
         dm.save(INPUT_FILE)
 
 
 @pytest.fixture(scope="module")
-def make_dummy_association(make_dummy_cal_file):
+def make_mock_association(make_mock_cal_file):
     shutil.copy(INPUT_FILE, INPUT_FILE_2)
     os.system(
         f"asn_from_list -o {INPUT_ASN} --product-name {OUTPUT_PRODUCT} -r DMS_Level3_Base {INPUT_FILE} {INPUT_FILE_2}"
@@ -64,7 +76,7 @@ def make_dummy_association(make_dummy_cal_file):
 
 
 @pytest.mark.parametrize("in_memory", [True, False])
-def test_run_image3_pipeline(make_dummy_association, in_memory):
+def test_run_image3_pipeline(make_mock_association, in_memory):
     """
     Two-product association passed in, run pipeline, skipping most steps
     """
@@ -87,7 +99,7 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
     _is_run_complete(LOGFILE)
 
 
-def test_run_image3_single_file(make_dummy_cal_file):
+def test_run_image3_single_file(make_mock_cal_file):
     args = [
         "calwebb_image3",
         INPUT_FILE,
@@ -102,6 +114,25 @@ def test_run_image3_single_file(make_dummy_cal_file):
 
     Step.from_cmdline(args)
     _is_run_complete(LOGFILE)
+
+
+def test_run_image3_single_model(caplog, make_mock_cal_model):
+    model_copy = make_mock_cal_model.copy()
+    all_steps = Image3Pipeline.step_defs.keys()
+    do_steps = {step_name: {"skip": True} for step_name in all_steps}
+    Image3Pipeline.call(model_copy, steps=do_steps)
+
+    # The pipeline ran, but all steps were skipped
+    assert "Step Image3Pipeline done" in caplog.text
+    for step in do_steps:
+        if step in ["assign_mtwcs", "source_catalog"]:
+            # These steps are not even attempted for the test data
+            assert getattr(model_copy.meta.cal_step, step) is None
+        else:
+            assert getattr(model_copy.meta.cal_step, step) == "SKIPPED"
+
+        # Input is not modified
+        assert getattr(make_mock_cal_model.meta.cal_step, step) is None
 
 
 def _is_run_complete(logfile):

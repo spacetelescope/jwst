@@ -36,9 +36,9 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
     wave3a = ch3a.spec[0].spec_table.WAVELENGTH
     spec3a = ch3a.spec[0].spec_table.FLUX
 
-    leak_ref = datamodels.MirMrsPtCorrModel(sp_leak_ref)
-    leak_wave = leak_ref.leakcor_table.wavelength
-    leak_percent = leak_ref.leakcor_table.frac_leak
+    with datamodels.MirMrsPtCorrModel(sp_leak_ref) as leak_ref:
+        leak_wave = leak_ref.leakcor_table.wavelength
+        leak_percent = leak_ref.leakcor_table.frac_leak
 
     # Spectral leak vector
 

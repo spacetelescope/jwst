@@ -16,3 +16,6 @@ Complete Developer API
 
 .. automodapi:: jwst.stpipe.utilities
    :no-inheritance-diagram:
+
+.. automodapi:: jwst.engdblog
+   :no-inheritance-diagram:

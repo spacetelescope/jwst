@@ -172,17 +172,18 @@ class AmiAnalyzeStep(Step):
 
         Parameters
         ----------
-        input_data : str or datamodel
+        input_data : str, `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                     `~stdatamodels.jwst.datamodels.CubeModel`
             Input file name or datamodel
 
         Returns
         -------
-        oifitsmodel : AmiOIModel object
+        oifitsmodel : `~stdatamodels.jwst.datamodels.AmiOIModel`
             AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
-        oifitsmodel_multi : AmiOIModel object
+        oifitsmodel_multi : `~stdatamodels.jwst.datamodels.AmiOIModel`
             AMI tables of observables for each integration
             from LG algorithm fringe fitting in OIFITS format
-        amilgmodel : AmiLGFitModel object
+        amilgmodel : `~stdatamodels.jwst.datamodels.AmiOIModel`
             AMI cropped data, model, and residual data from LG algorithm fringe fitting
         """
         # Retrieve the parameter values
@@ -212,61 +213,64 @@ class AmiAnalyzeStep(Step):
             raise ValueError("Oversample value must be an odd integer.")
 
         # Open the input data model. Can be 2D or 3D image
-        with datamodels.open(input_data) as input_model:
-            # Get the name of the filter throughput reference file to use
-            throughput_reffile = self.get_reference_file(input_model, "throughput")
-            log.info(f"Using filter throughput reference file {throughput_reffile}")
+        output_model = self.prepare_output(input_data)
 
-            # Check for a valid reference file or user-provided bandpass
-            if (throughput_reffile == "N/A") & (bandpass is None):
-                raise RuntimeError(
-                    "No THROUGHPUT reference file found. ami_analyze cannot continue."
+        # Get the name of the filter throughput reference file to use
+        throughput_reffile = self.get_reference_file(output_model, "throughput")
+        log.info(f"Using filter throughput reference file {throughput_reffile}")
+
+        # Check for a valid reference file or user-provided bandpass
+        if (throughput_reffile == "N/A") & (bandpass is None):
+            raise RuntimeError("No THROUGHPUT reference file found. ami_analyze cannot continue.")
+
+        # If there's a user-defined bandpass or affine, handle it
+        if bandpass is not None:
+            bandpass = self.override_bandpass()
+        if affine2d is not None:
+            if affine2d == "commissioning":
+                affine2d = utils.Affine2d(
+                    mx=MX_COMM,
+                    my=MY_COMM,
+                    sx=SX_COMM,
+                    sy=SY_COMM,
+                    xo=XO_COMM,
+                    yo=YO_COMM,
+                    name="commissioning",
                 )
+                log.info("Using affine parameters from commissioning.")
+            else:
+                affine2d = self.override_affine2d()
 
-            # If there's a user-defined bandpass or affine, handle it
-            if bandpass is not None:
-                bandpass = self.override_bandpass()
-            if affine2d is not None:
-                if affine2d == "commissioning":
-                    affine2d = utils.Affine2d(
-                        mx=MX_COMM,
-                        my=MY_COMM,
-                        sx=SX_COMM,
-                        sy=SY_COMM,
-                        xo=XO_COMM,
-                        yo=YO_COMM,
-                        name="commissioning",
-                    )
-                    log.info("Using affine parameters from commissioning.")
-                else:
-                    affine2d = self.override_affine2d()
+        # Get the name of the NRM reference file to use
+        nrm_reffile = self.get_reference_file(output_model, "nrm")
+        log.info(f"Using NRM reference file {nrm_reffile}")
 
-            # Get the name of the NRM reference file to use
-            nrm_reffile = self.get_reference_file(input_model, "nrm")
-            log.info(f"Using NRM reference file {nrm_reffile}")
-
-            with (
-                datamodels.ThroughputModel(throughput_reffile) as throughput_model,
-                datamodels.NRMModel(nrm_reffile) as nrm_model,
-            ):
-                # Apply the LG+ methods to the data
-                oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_lg_plus(
-                    input_model,
-                    throughput_model,
-                    nrm_model,
-                    oversample,
-                    psf_offset,
-                    rotsearch_parameters,
-                    bandpass,
-                    usebp,
-                    firstfew,
-                    chooseholes,
-                    affine2d,
-                    run_bpfix,
-                )
+        with (
+            datamodels.ThroughputModel(throughput_reffile) as throughput_model,
+            datamodels.NRMModel(nrm_reffile) as nrm_model,
+        ):
+            # Apply the LG+ methods to the data
+            oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_lg_plus(
+                output_model,
+                throughput_model,
+                nrm_model,
+                oversample,
+                psf_offset,
+                rotsearch_parameters,
+                bandpass,
+                usebp,
+                firstfew,
+                chooseholes,
+                affine2d,
+                run_bpfix,
+            )
 
         amilgmodel.meta.cal_step.ami_analyze = "COMPLETE"
         oifitsmodel.meta.cal_step.ami_analyze = "COMPLETE"
         oifitsmodel_multi.meta.cal_step.ami_analyze = "COMPLETE"
+
+        # Output are all new models, so close the input if it was opened here
+        if output_model is not input_data:
+            output_model.close()
 
         return oifitsmodel, oifitsmodel_multi, amilgmodel
