@@ -878,7 +878,7 @@ def mock_table(tmp_path_factory):
         spec.spectral_order = 2
         spec.meta.soss_extract1d.type = "OBSERVATION"
         spec.meta.soss_extract1d.factor = np.nan
-        spec.spec_table = np.zeros((100,), dtype=datamodels.SpecModel().spec_table.dtype)
+        spec.spec_table = np.zeros((100,), dtype=datamodels.SpecModel().get_dtype("spec_table"))
         spec.spec_table["WAVELENGTH"] = np.arange(100) * 0.1
         spec.spec_table["FLUX"] = np.ones(100)
         spec.spec_table["DQ"] = np.ones(100, dtype=int)
@@ -911,13 +911,13 @@ def mock_table(tmp_path_factory):
         spec.spec_table["WAVELENGTH"] = np.arange(100) * 0.1
 
         # Different number of columns
-        spec.spec_table = np.zeros((105,), dtype=datamodels.SpecModel().spec_table.dtype)
+        spec.spec_table = np.zeros((105,), dtype=datamodels.SpecModel().get_dtype("spec_table"))
         spec.spec_table["WAVELENGTH"] = np.arange(105) * 0.1
         spec.spec_table["FLUX"] = np.ones(105)
         spec.spec_table["DQ"] = np.ones(105, dtype=int)
         spec.save(diff_column)
         # return to truth
-        spec.spec_table = np.zeros((100,), dtype=datamodels.SpecModel().spec_table.dtype)
+        spec.spec_table = np.zeros((100,), dtype=datamodels.SpecModel().get_dtype("spec_table"))
         spec.spec_table["WAVELENGTH"] = np.arange(100) * 0.1
         spec.spec_table["FLUX"] = np.ones(100)
         spec.spec_table["DQ"] = np.ones(100, dtype=int)
