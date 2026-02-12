@@ -344,6 +344,9 @@ class DataSet:
         # self.traps_filled will be updated with each integration, to
         # account for charge capture and decay of traps.
         filled = -1  # just to ensure that it exists
+        # XXX Use different start time. This may not be the start time of the
+        #     exposure, but the beginning of the tasking, which could include
+        #     setup time and other time outside the actual exposure.
         etime = datetime.datetime.fromisoformat(self.output_obj.meta.observation.date_beg)
         epoch_time = etime.timestamp()
         integration_time = self.output_obj.meta.exposure.integration_time
