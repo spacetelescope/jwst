@@ -235,11 +235,13 @@ def test_refine_no_error(wfs_association, xshift, yshift, xerror, yerror, flip_d
     im1 = datamodels.open(path1)
     im1.data = np.zeros(shape=(data_size, data_size), dtype=np.float32)
     im1.dq = np.zeros(shape=(data_size, data_size), dtype=np.int32)
+    im1.err = np.zeros(shape=(data_size, data_size), dtype=np.float32)
     im1.data = add_point_source(im1.data, 200, 100, 100, 4, 4)
 
     im2 = datamodels.open(path2)
     im2.data = np.zeros(shape=(data_size, data_size), dtype=np.float32)
     im2.dq = np.zeros(shape=(data_size, data_size), dtype=np.int32)
+    im2.err = np.zeros(shape=(data_size, data_size), dtype=np.float32)
     im2.meta.wcsinfo = {
         "dec_ref": 11.99875540218638 + delta_y_pixel * nircam_pixel_size,
         "ra_ref": 22.02351763251896 + delta_x_pixel * nircam_pixel_size,
@@ -292,6 +294,8 @@ def test_refine_with_error(wfs_association):
     im1 = datamodels.open(path1)
     im1.data = np.zeros(shape=(data_size, data_size), dtype=np.float32)
     im1.data = add_point_source(im1.data, 200, 100, 100, 4, 4)
+    im1.dq = np.zeros(shape=(data_size, data_size), dtype=np.int32)
+    im1.err = np.zeros(shape=(data_size, data_size), dtype=np.float32)
 
     im2 = datamodels.open(path2)
     im2.meta.wcsinfo = {
@@ -307,6 +311,8 @@ def test_refine_with_error(wfs_association):
     im2 = AssignWcsStep.call(im2, sip_approx=False)
     im2.data = np.zeros(shape=(data_size, data_size), dtype=np.float32)
     im2.data = add_point_source(im2.data, 200, 100 + delta_pixel + shift_error, 100, 4, 4)
+    im2.dq = np.zeros(shape=(data_size, data_size), dtype=np.int32)
+    im2.err = np.zeros(shape=(data_size, data_size), dtype=np.float32)
 
     wfs = wfs_combine.DataSet(
         im1,
