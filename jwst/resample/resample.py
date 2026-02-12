@@ -271,12 +271,13 @@ class ResampleImage(Resample):
             the :ref:`asn-jwst-naming`.
 
         pixmap_stepsize : float, optional
-            Step size for pixel map interpolation during resampling.
-            Larger step sizes result in faster performance at the cost of accuracy.
-            Interpolation is only performed if ``pixmap_stepsize > 1``. Default is 1.
+            Indicates the spacing at which WCS is evaluated when computing pixel map.
+            WCS coordinates of the full pixel map is computed by interpolating over
+            this sparse pixel map when ``pixmap_stepsize > 1``. Larger step sizes result in
+            faster performance at the cost of accuracy. Default is 1.
 
         pixmap_order : int, optional
-            Order of the pixel map interpolation used. Must be 1 or 3. Default is 1.
+            Interpolating spline order for pixel map computation. Must be 1 or 3. Default is 1.
         """
         self.input_models = input_models
         self.output_jwst_model = None

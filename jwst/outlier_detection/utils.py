@@ -367,11 +367,12 @@ def flag_resampled_model_crs(
         The functools.partial instance to pass to save_blot. Must be
         specified if save_blot is True.
     pixmap_stepsize : float, optional
-        Step size for pixel map interpolation during resampling.
-        Larger step sizes result in faster performance at the cost of accuracy.
-        Interpolation is only performed if ``pixmap_stepsize > 1``. Default is 1.
+        Indicates the spacing at which WCS is evaluated when computing pixel map.
+        WCS coordinates of the full pixel map is computed by interpolating over
+        this sparse pixel map when ``pixmap_stepsize > 1``. Larger step sizes result in
+        faster performance at the cost of accuracy. Default is 1.
     pixmap_order : int, optional
-        Order of the pixel map interpolation used. Must be 1 or 3. Default is 1.
+        Interpolating spline order for pixel map computation. Must be 1 or 3. Default is 1.
     """
     blot = gwcs_blot(
         median_data=median_data,
