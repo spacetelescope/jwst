@@ -10,5 +10,4 @@ Jump Detection
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.jump
+   api_ref.rst

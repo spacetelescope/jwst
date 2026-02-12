@@ -1,3 +1,5 @@
+"""Detect jumps based on science data and reference files."""
+
 import logging
 import time
 
@@ -133,12 +135,12 @@ class JumpStep(Step):
 
         Parameters
         ----------
-        result : RampModel
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             The ramp model input from the previous step.
 
         Returns
         -------
-        jump_data : JumpData
+        jump_data : `~stcal.jump.jump_class.JumpData`
             The data container to be used to run the STCAL detect_jumps_data.
         """
         # Get the gain and readnoise reference files
