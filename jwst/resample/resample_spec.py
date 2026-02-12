@@ -211,8 +211,8 @@ class ResampleSpec(ResampleImage):
             good_bits=good_bits,
             output_wcs=output_wcs_dict,
             wcs_pars=None,
-            stepsize=1,
-            order=1,
+            pixmap_stepsize=1,
+            pixmap_order=1,
             **kwargs,
         )
         self.intermediate_suffix = "outlier_s2d"

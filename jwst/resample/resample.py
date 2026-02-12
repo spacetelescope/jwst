@@ -56,8 +56,8 @@ class ResampleImage(Resample):
         report_var=True,
         compute_err=None,
         asn_id=None,
-        stepsize=10,
-        order=3,
+        pixmap_stepsize=10,
+        pixmap_order=3,
     ):
         """
         Initialize the ResampleImage object.
@@ -270,11 +270,11 @@ class ResampleImage(Resample):
             The association id. The id is what appears in
             the :ref:`asn-jwst-naming`.
 
-        stepsize : int, optional
+        pixmap_stepsize : int, optional
             Step size for resampling. Larger step sizes result in faster
             resampling at the cost of accuracy. Default is 10.
 
-        order : int, optional
+        pixmap_order : int, optional
             Order of the interpolation used for resampling. Default is 3.
         """
         self.input_models = input_models
@@ -349,8 +349,8 @@ class ResampleImage(Resample):
             enable_ctx=enable_ctx,
             enable_var=enable_var,
             compute_err=compute_err,
-            stepsize=stepsize,
-            order=order,
+            pixmap_stepsize=pixmap_stepsize,
+            pixmap_order=pixmap_order,
         )
 
     def input_model_to_dict(self, model, weight_type, enable_var, compute_err):
