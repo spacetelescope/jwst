@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.barshadow.BarShadowStep`
+:Class: `jwst.barshadow.barshadow_step.BarShadowStep`
 :Alias: barshadow
 
 Overview
@@ -24,7 +24,7 @@ It is also assumed that the input data have been processed through the
 SRCTYPE keyword value for each slit to "POINT", "EXTENDED", or "UNKNOWN." If the
 source type is "EXTENDED" or "UNKNOWN", or the SRCTYPE keyword is not present,
 the default action is to treat the source as extended and apply the ``barshadow``
-correction. If SRCTYPE="POINT" for a given slit, the correction is not applied.
+correction. If ``SRCTYPE="POINT"`` for a given slit, the correction is not applied.
 
 Algorithm
 ---------
@@ -36,7 +36,7 @@ The :ref:`barshadow_reffile` contains the correction as a function of Y
 and wavelength for a single open shutter (the DATA1X1 extension), and for 2 adjacent open
 shutters (DATA1X3).  This allows on-the-fly construction of a model for any combination
 of open and closed shutters.  The shutter configuration of a slitlet is contained
-in the attribute shutter_state, which shows whether the shutters of the slitlet are open,
+in the attribute ``shutter_state``, which shows whether the shutters of the slitlet are open,
 closed, or contain the source.  Once the correction as a function of Y and wavelength is
 calculated, the WCS transformation from the detector to the slit frame is used
 to calculate Y and wavelength for each pixel in the cutout.  The Y values are scaled from shutter
@@ -57,5 +57,5 @@ is also added to the datamodel in the "BARSHADOW" extension.
 
 Upon successful completion of the step, the status keyword "S_BARSHA"
 in the primary header is set to "COMPLETE".  For each SCI extension, the "BARSHDW"
-keyword is set to True if the slit was barshadow corrected (it is an extended
-source) or False if it was not corrected (it is a point source).
+keyword is set to `True` if the slit was barshadow corrected (it is an extended
+source) or `False` if it was not corrected (it is a point source).
