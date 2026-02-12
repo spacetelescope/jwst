@@ -10,6 +10,11 @@ from jwst.persistence import persistence
 from jwst.persistence.persistence_step import PersistenceStep
 
 
+@pytest.mark.skip(reason="testing int_times usage needs to be implemente.")
+def test_persistence_int_times():
+    pass
+
+
 def test_persistence_time_none_keeps_groupdq_unchanged(create_sci_model):
     """Test that when persistence_time is None, no PERSISTENCE flags are added to groupdq."""
     model = create_sci_model()
