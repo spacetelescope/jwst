@@ -137,10 +137,8 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
 
     if sci_int_start == 1:  # Using sci_int_start to cover segmented data case.
         rscd_skip_array, num_rscd_lowered = flag_rscd(
-            output,
-            sci_int_start - 1,
-            sci_int_start - 1,
-            group_skip_int1)
+            output, sci_int_start - 1, sci_int_start - 1, group_skip_int1
+        )
 
         output = apply_rscd_flags(output, sci_int_start - 1, sci_int_start - 1, rscd_skip_array)
         log.info(
@@ -167,7 +165,8 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
         log.info(f"Number of groups to skip for integrations 2 and higher: {group_skip_int2p}")
 
         rscd_skip_array, num_rscd_lowered = flag_rscd(
-            output, int_start - 1, int_end - 1, group_skip_int2p)
+            output, int_start - 1, int_end - 1, group_skip_int2p
+        )
 
         output = apply_rscd_flags(output, int_start - 1, int_end - 1, rscd_skip_array)
         log.info(
@@ -220,13 +219,16 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
     skip_array = np.zeros((n_ints, y_dim, x_dim))
     skip_array[:, :, :] = rscd_skip
 
-#    if bright_use_2groups:
-    # --- Logic for retaining at least 1 group when we have saturating data.
-    min_group = rscd_skip + 1  # We added 1 because at a VERY minimum  we have to have 1 group
-    # to pass on to ramp_fitting. Here we have set that have to have 1 valid group to allow
-    # ramp_fit with the suppress_group1 = False to find an approximate slope. 
-    # Note: min_groups starts count at 1 
-    # identify pixels saturated at the current threshold
+    # --- If we encounter saturation, we might need to back off the rscd correction
+    # Ideally we want at least  two valid groups, but
+    # we need to allow there to only be 1 group valid group. The user can set the
+    # ramp_fit parameter suppress_group1 = False to derive a value for this point.
+
+    min_group = rscd_skip + 2
+
+    # Note: min_groups starts count at 1
+
+    # 1. Identify pixels saturated at the current threshold
     is_sat_problem = (
         (
             output_model.groupdq[int_start : int_end + 1, min_group - 1, :, :]
@@ -235,56 +237,72 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
         > 0
     ).astype(bool)
 
-        # New check specifically for Group 1. If it is also saturated then we can not
-        # recover this pixel. 
-        is_group_1_sat = (
-            (output_model.groupdq[int_start : int_end + 1, 0, :, :] & dqflags.group["SATURATED"])
-            > 0
-        ).astype(bool)
+    # New check specifically for Group 1. If it is also saturated then we can not
+    # recover this pixel.
+    is_group_1_sat = (
+        (output_model.groupdq[int_start : int_end + 1, 0, :, :] & dqflags.group["SATURATED"]) > 0
+    ).astype(bool)
 
-        # 3. Remove Group 1 saturation from the original problem mask
-        # This keeps saturation flags ONLY if they are NOT saturated in Group 1
-        is_sat_problem = is_sat_problem & ~is_group_1_sat
+    # 3. Remove Group 1 saturation from the original problem mask
+    # This keeps saturation flags ONLY if they are NOT saturated in Group 1
+    is_sat_problem = is_sat_problem & ~is_group_1_sat
 
-        num_sat = np.sum(is_sat_problem)
-        num_rscd_lowered = num_sat
+    num_sat = np.sum(is_sat_problem)
+    num_rscd_lowered = num_sat
 
-        log.info(
-            f" There are {num_sat} saturated pixels that require the number of "
-            "rscd groups flagged to be lowered"
-        )
-        if num_sat > 0:
-            #  do dynamic rscd flagging - based on saturation group of every pixel
+    log.info(
+        f" There are {num_sat} saturated pixels that require the number of "
+        "rscd groups flagged to be lowered"
+    )
 
-            n_ints = int_end - int_start + 1
-            skip_array = np.zeros((n_ints, y_dim, x_dim))
-            skip_array[:, :, :] = rscd_skip
+    # Find the first non-saturating group
+    if num_sat > 0:
+        #  do dynamic rscd flagging - based on saturation group of every pixel
 
-            while num_sat > 0 and min_group > 0:
-                skip_array[is_sat_problem] = np.maximum(skip_array[is_sat_problem] - 1, 0)
+        n_ints = int_end - int_start + 1
+        skip_array = np.zeros((n_ints, y_dim, x_dim))
+        skip_array[:, :, :] = rscd_skip
 
-                # Collapse 3D to 2D to flab PixelDQ. True if saturated in ANY integration
-                is_sat_2d = np.any(is_sat_problem, axis=0)
-                output_model.pixeldq[is_sat_2d] |= dqflags.pixel["FLUX_ESTIMATED"]
-                min_group = min_group - 1
-                if min_group < 0:  # Safety check
-                    break
+        while num_sat > 0 and min_group > 0:
+            # subtract 1 from skip_array
+            skip_array[is_sat_problem] = np.maximum(skip_array[is_sat_problem] - 1, 0)
+            min_group = min_group - 1
+            if min_group < 0:  # Safety check
+                break
 
-                # re-evaluate the saturation at the lower group level
-                is_sat_problem = (
-                    (
-                        output_model.groupdq[int_start : int_end + 1, min_group - 1, :, :]
-                        & dqflags.group["SATURATED"]
-                    )
-                    > 0
-                ).astype(bool)
+            # re-evaluate the saturation at the lower group level
+            is_sat_problem = (
+                (
+                    output_model.groupdq[int_start : int_end + 1, min_group - 1, :, :]
+                    & dqflags.group["SATURATED"]
+                )
+                > 0
+            ).astype(bool)
 
-                # Re-apply the group 1 guard
-                # (Otherwise, if we drop to Group 1, we might process pixels
-                # we already deemed "unrecoverable")
-                is_sat_problem = is_sat_problem & ~is_group_1_sat
+            # Re-apply the group 1 guard
+            # (Otherwise, if we drop to Group 1, we might process pixels
+            # we already deemed "unrecoverable")
+            is_sat_problem = is_sat_problem & ~is_group_1_sat
 
-                num_sat = is_sat_problem.sum()
+            num_sat = is_sat_problem.sum()
+
+        # 1. Identify where the skip_array is less than the original rscd_skip
+        # This means the logic was forced to "back off" to accommodate saturation.
+        was_backed_off = skip_array < rscd_skip
+
+        # 2. Collapse the 3D mask (Integrations, Y, X) to 2D (Y, X)
+        # If a pixel was backed off in ANY integration, we flag it.
+        is_backed_off_2d = np.any(was_backed_off, axis=0)
+
+        # 3. Apply the FLUX_ESTIMATED flag
+        if np.any(is_backed_off_2d):
+            output_model.pixeldq[is_backed_off_2d] |= dqflags.pixel["FLUX_ESTIMATED"]
+            log.info(
+                f"Flagged {np.sum(is_backed_off_2d)} pixels as FLUX_ESTIMATED due to RSCD back-off."
+            )
+
+        # 4. Final Safety: Reset negative values (though with this logic, 0 is the floor)
+        skip_array = np.maximum(skip_array, 0)
 
     return skip_array, num_rscd_lowered
 
