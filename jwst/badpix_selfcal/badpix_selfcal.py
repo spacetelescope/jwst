@@ -34,7 +34,7 @@ def badpix_selfcal(
     kernel_size : int
         Size of kernel for median filter
     dispaxis : int
-        Dispersion axis, either 1 or 2. If None, a two-dimensional
+        Dispersion axis, either 1 or 2. If ``None``, a two-dimensional
         median filter is applied.
 
     Returns

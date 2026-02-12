@@ -43,7 +43,7 @@ class BadpixSelfcalStep(Step):
 
     def save_model(self, model, *args, **kwargs):
         """
-        Override save_model to suppress index 0 when save_model is True.
+        Override base step class :meth:`stpipe.Step.save_model` to suppress index 0 when save_model is True.
 
         Parameters
         ----------
@@ -291,8 +291,7 @@ def split_container_by_asn_exptype(container: dm.ModelContainer, exptypes: list)
     split_list : list of lists
         Lists of `~stdatamodels.jwst.datamodels.ImageModel`,
         where the outer list is indexed by the input exptypes and the
-        inner list contains the `~stdatamodels.jwst.datamodels.ImageModel`
-        of that type.
+        inner list contains the models of that exposure type.
     """
     split_list = []
     for exptype in exptypes:

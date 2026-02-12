@@ -21,10 +21,10 @@ Input details
 The input data must be in the form of a `~stdatamodels.jwst.datamodels.IFUImageModel` or
 a `~jwst.datamodels.container.ModelContainer` containing exactly one
 science exposure and any number of additional exposures.
-A fits or association file
+A FITS or association file
 that can be read into one of these data models is also acceptable.
 Any exposure with the metadata attribute ``asn.exptype`` set to
-``background`` or ``selfcal`` will be used in conjunction with the science
+``"background"`` or ``"selfcal"`` will be used in conjunction with the science
 exposure to construct the combined background image.
 
 Algorithm
@@ -32,7 +32,7 @@ Algorithm
 The algorithm relies on the assumption that bad pixels are outliers in the data along
 the spectral axis. The algorithm proceeds as follows:
 
-* A combined background image is created. If additional (``selfcal`` or ``background``)
+* A combined background image is created. If additional (``"selfcal"`` or ``"background"``)
   exposures are available,
   the pixelwise minimum of all background, selfcal, and science exposures is taken.
   If no additional exposures are available, the science data itself is passed in
