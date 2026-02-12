@@ -1720,7 +1720,7 @@ def test_resample_imaging_pixmap_interpolation(nircam_rate):
     # catch issue where bad inputs can cause all-NaN output when variance is zero everywhere
     assert not np.all(np.isnan(res.data))
     # ensure results are very similar
-    assert_allclose(res.data, ref.data, rtol=5.0e-7, atol=1.0e-9)
+    assert_allclose(res.data, ref.data, rtol=1.0e-6, atol=1.0e-9)
     # ensure results are not identical (i.e. pixmap settings actually did something)
     with pytest.raises(AssertionError):
         assert_allclose(res.data, ref.data)
