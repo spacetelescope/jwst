@@ -233,9 +233,9 @@ def test_rscd_addto_groupdq(create_miri_model):
     assert dm_ramp_rscd.groupdq[0, 0, 5, 5] == 5
 
 
-def test_rscd_bright_use_2groups(create_miri_model):
+def test_rscd_bright(create_miri_model):
     """
-    Test the rscd code when bright_use_2groups is set to True.
+    Test the rscd code when there is saturating data..
 
     Test backing off on the RSCD flagging when there is saturated data so we have at least
     two valid groups.
@@ -252,11 +252,10 @@ def test_rscd_bright_use_2groups(create_miri_model):
     dm_ramp.data[:, :, :, :] = 1
 
     # set a fraction of the pixels starting at group 3
-    dm_ramp.groupdq[:, 2:, 0:10, :] = dqflags.group["SATURATED"]
+    dm_ramp.groupdq[0, 2:, 0:10, :] = dqflags.group["SATURATED"]
 
     # set a fraction of the pixels to saturate starting at group 2 on integration 2
-    # we can not recover these pixels
-    dm_ramp.groupdq[1, 1:, 10:, :] = dqflags.group["SATURATED"]  # saturates on group 2
+    dm_ramp.groupdq[1, 1:, 0:10:, :] = dqflags.group["SATURATED"]  # saturates on group 2
 
     dm_ramp.pixeldq[:, :] = 0  # initialize to zero
 
@@ -265,9 +264,7 @@ def test_rscd_bright_use_2groups(create_miri_model):
 
     nflag_int1 = 2
     nflag_int2 = 2
-    dm_ramp_rscd = correction_skip_groups(
-        dm_ramp.copy(), nflag_int1, nflag_int2, bright_use_2groups=True
-    )
+    dm_ramp_rscd = correction_skip_groups(dm_ramp.copy(), nflag_int1, nflag_int2)
 
     number_kept1 = dm_ramp_rscd.meta.rscd.keep_bright_firstgroup_int1
     assert number_kept1 == n_kept_int
