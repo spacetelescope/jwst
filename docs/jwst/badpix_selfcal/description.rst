@@ -58,6 +58,6 @@ the spectral axis. The algorithm proceeds as follows:
 Output product
 --------------
 The output is a new copy of the input `~stdatamodels.jwst.datamodels.IFUImageModel`, with the
-bad pixels flagged.  If the entire ``calwebb_spec2`` pipeline is run, the background
-exposures passed into the ``background`` step will include the flags from the
+bad pixels flagged.  If the entire :ref:`calwebb_spec2 <calwebb_spec2>` pipeline is run, the background
+exposures passed into the :ref:`background step <background_subtraction>` will include the flags from the
 ``badpix_selfcal`` step.

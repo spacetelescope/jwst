@@ -58,7 +58,7 @@ class BadpixSelfcalStep(Step):
         -------
         list[str]
             List of output paths for the saved models
-        """
+        """  # noqa: E501
         kwargs["idx"] = None
         return Step.save_model(self, model, *args, **kwargs)
 
@@ -108,7 +108,7 @@ class BadpixSelfcalStep(Step):
         are included in the MIN frame from which outliers are detected.
         If ``selfcal_list`` and/or ``bkg_list`` are specified manually, they are appended to any
         selfcal or background exposures found in the input association file.
-        If ``selfcal_list`` and ``bkg_list`` are both set to `None` and input is
+        If ``selfcal_list`` and ``bkg_list`` are both set to ``None`` and input is
         a single science exposure, the step will be skipped with a warning unless
         the force_single parameter is set `True`.
         In that case, the input exposure will be used as the sole background exposure,
