@@ -332,8 +332,8 @@ def flag_resampled_model_crs(
     median_err=None,
     save_blot=False,
     make_output_path=None,
-    pixmap_stepsize=10,
-    pixmap_order=3,
+    pixmap_stepsize=1,
+    pixmap_order=1,
 ):
     """
     Flag outliers in a resampled model, updating DQ array in place.
@@ -367,10 +367,11 @@ def flag_resampled_model_crs(
         The functools.partial instance to pass to save_blot. Must be
         specified if save_blot is True.
     pixmap_stepsize : int, optional
-        Step size for resampling. Larger step sizes result in faster
-        resampling at the cost of accuracy. Default is 10.
+        Step size for pixel map interpolation during resampling.
+        Larger step sizes result in faster performance at the cost of accuracy.
+        Interpolation is only performed if ``pixmap_stepsize > 1``. Default is 1.
     pixmap_order : int, optional
-        Order of the interpolation used for resampling. Default is 3.
+        Order of the pixel map interpolation used. Default is 1.
     """
     blot = gwcs_blot(
         median_data=median_data,

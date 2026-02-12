@@ -56,8 +56,8 @@ class ResampleImage(Resample):
         report_var=True,
         compute_err=None,
         asn_id=None,
-        pixmap_stepsize=10,
-        pixmap_order=3,
+        pixmap_stepsize=1,
+        pixmap_order=1,
     ):
         """
         Initialize the ResampleImage object.
@@ -271,11 +271,12 @@ class ResampleImage(Resample):
             the :ref:`asn-jwst-naming`.
 
         pixmap_stepsize : int, optional
-            Step size for resampling. Larger step sizes result in faster
-            resampling at the cost of accuracy. Default is 10.
+            Step size for pixel map interpolation during resampling.
+            Larger step sizes result in faster performance at the cost of accuracy.
+            Interpolation is only performed if ``pixmap_stepsize > 1``. Default is 1.
 
         pixmap_order : int, optional
-            Order of the interpolation used for resampling. Default is 3.
+            Order of the pixel map interpolation used. Default is 1.
         """
         self.input_models = input_models
         self.output_jwst_model = None
