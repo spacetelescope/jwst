@@ -1,6 +1,7 @@
 #
 #  Module for correcting for persistence
 
+import datetime
 import logging
 import math
 
@@ -119,7 +120,6 @@ class DataSet:
     nresets : int
         The number of resets (frames) at the beginning of each integration.
     """
-
     def __init__(
         self,
         output_obj,
@@ -129,6 +129,9 @@ class DataSet:
         trap_density_model,
         trappars_model,
         persat_model,
+        persistence_time=None,
+        persistence_array=None,
+        persistence_dnu=None,
     ):
         """
         Assign values to attributes.
@@ -177,6 +180,10 @@ class DataSet:
         self.trappars_model = trappars_model
         self.persistencesat = persat_model
 
+        self.persistence_time = persistence_time
+        self.persistence_array = persistence_array
+        self.persistence_dnu = persistence_dnu
+
         # These will be populated from metadata.
         self.tframe = 0.0
         self.tgroup = 0.0
@@ -209,6 +216,7 @@ class DataSet:
         """
         # Initial value, indicates that processing was done successfully.
         skipped = False
+        pers_flag = dqflags.pixel["PERSISTENCE"]
 
         shape = self.output_obj.data.shape
         if len(shape) != 4:
@@ -336,17 +344,36 @@ class DataSet:
         # self.traps_filled will be updated with each integration, to
         # account for charge capture and decay of traps.
         filled = -1  # just to ensure that it exists
+        # XXX Use different start time. This may not be the start time of the
+        #     exposure, but the beginning of the tasking, which could include
+        #     setup time and other time outside the actual exposure.
+        etime = datetime.datetime.fromisoformat(self.output_obj.meta.observation.date_beg)
+        epoch_time = etime.timestamp()
+        integration_time = self.output_obj.meta.exposure.integration_time
+        group_time = self.output_obj.meta.exposure.group_time
+        sat_array = np.zeros(shape=(ny, nx), dtype=np.uint32)
+
         for integ in range(nints):
+            if self.output_obj.int_times is not None and len(self.output_obj.int_times) > integ:
+                # The index into int_times is integration, then time type. [integ][1] is the
+                # int_start_MJD_UTC type for the integration 'integ'.
+                current_time = mjd_to_epoch(self.output_obj.int_times[integ][1])
+            else:
+                current_time = epoch_time + integ * integration_time
+
             self.get_group_info(integ)  # self.tgroup, etc.
             decayed[:, :, :] = 0.0  # initialize
+
             # slope has to be computed early in the loop over integrations,
             # before the data are modified by subtracting persistence.
             # The slope is needed for computing charge captures.
             (grp_slope, slope) = self.compute_slope(integ)
             for group in range(ngroups):
+                current_time = current_time + group_time
                 persistence[:, :] = 0.0  # initialize
                 for k in range(nfamilies):
                     decay_param_k = self.get_decay_param(par, k)
+
                     # Compute and subtract the decays during the reset.
                     # Decays during the reset at the beginning of the
                     # first integration have already been accounted for.
@@ -356,10 +383,12 @@ class DataSet:
                             self.traps_filled.data[k], decay_param_k, reset_time
                         )
                         self.traps_filled.data[k, :, :] -= decay_during_reset
+
                     # Decays during current group, for current trap family.
                     decayed_in_group = self.compute_decay(
                         self.traps_filled.data[k], decay_param_k, t_group
                     )
+
                     # Cumulative decay to the end of the current group.
                     decayed[k, :, :] += decayed_in_group
                     self.traps_filled.data[k, :, :] -= decayed_in_group
@@ -375,7 +404,10 @@ class DataSet:
                     self.output_pers.data[integ, group, :, :] = persistence.copy()
                 if persistence.max() >= self.flag_pers_cutoff:
                     mask = np.where(persistence >= self.flag_pers_cutoff)
-                    self.output_obj.pixeldq[mask] |= dqflags.pixel["PERSISTENCE"]
+                    self.output_obj.pixeldq[mask] |= pers_flag
+
+                if self.persistence_time is not None:
+                    self.process_persistence_flagging(current_time, sat_array, integ, group)
 
             # Update traps_filled with the number of traps that captured
             # a charge during the current integration.
@@ -1068,3 +1100,72 @@ class DataSet:
             decayed = traps_filled * (1.0 - math.exp(-delta_t / tau))
 
         return decayed
+
+    def process_persistence_flagging(self, current_time, sat_array, integ, group):
+        """
+        Flag groups that are within a persistence window.
+
+        The structure of the persistence_array is as follows:
+            1. Zero entries indicate no persistence flagging.
+            2. Non-zero entries indicate the end time of the persistence flagging window.
+
+        Since a non-zero entry indicates a persistence flagging window has been found for
+        that pixel. The entry is the epoch time of the end of that window for a pixel. If
+        the current_time is less than an epoch time, then that group gets flagged with
+        persistence. Any non-zero entry that occurs before the current_time indicates
+        the persistence window for that pixel has ended, so the persistece_array entry
+        for that pixel will be set to zero.
+
+        Parameters
+        ----------
+        current_time : float
+            The epoch time of the current integration and group.
+
+        sat_array : ndarray
+            The saturation count for each pixel.
+
+        integ : int
+            The current integration being processed.
+
+        group : int
+            The current group being processed.
+        """
+        # Any persistence_array time earlier than current time gets set to zero. The
+        # persistence window has ended for that pixel.
+        self.persistence_array[self.persistence_array < current_time] = 0.0
+
+        # Calculate any first saturation points
+        gdq_plane = self.output_obj.groupdq[integ, group, :, :]
+        sat_loc = np.bitwise_and(gdq_plane, dqflags.group["SATURATED"])
+        sat_array[sat_loc > 0] += 1
+
+        # Add first saturation points and the end window time to persistence_array
+        self.persistence_array[sat_array==1] = current_time + self.persistence_time
+
+        # Set persistence flag for any group in persistence window
+        if self.persistence_dnu:
+            flag = dqflags.group["DO_NOT_USE"] | dqflags.pixel["PERSISTENCE"]
+        else:
+            flag = dqflags.pixel["PERSISTENCE"]
+
+        gdq_plane[self.persistence_array > 0.0] |= flag
+        self.output_obj.groupdq[integ, group, :, :] = gdq_plane
+
+def mjd_to_epoch(mjd):
+    """
+    Convert Modified Julian Date to Unix epoch time.
+
+    Parameters
+    ----------
+    mjd : float
+        Modified Julian Date
+
+    Returns
+    -------
+    float
+        Unix epoch time (seconds since January 1, 1970 00:00:00 UTC)
+    """
+    # MJD 40587.0 corresponds to Unix epoch (January 1, 1970 00:00:00 UTC)
+    # 86400 seconds per day
+    epoch_time = (mjd - 40587.0) * 86400.0
+    return epoch_time
