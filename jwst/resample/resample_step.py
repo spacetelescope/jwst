@@ -40,6 +40,7 @@ class ResampleStep(Step):
         enable_ctx = boolean(default=True)  # Compute and report the context array
         enable_err = boolean(default=True)  # Compute and report the err array
         report_var = boolean(default=True)  # Report the variance array
+        propagate_dq = boolean(default=False)  # propagate DQ during resampling
     """  # noqa: E501
 
     reference_file_types: list = []
@@ -142,6 +143,7 @@ class ResampleStep(Step):
                 enable_var=enable_var,
                 report_var=report_var,
                 compute_err=compute_err,
+                propagate_dq=self.propagate_dq,
                 **kwargs,
             )
             result = resamp.resample_many_to_one()
