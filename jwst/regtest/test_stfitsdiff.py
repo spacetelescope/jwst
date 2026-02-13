@@ -133,7 +133,7 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
                 continue
             elif "Found" in line and "table data element(s)" in line:
                 continue
-            elif "Found" in line and "different pixels." in line:
+            elif "Found" in line and "different pixel(s)." in line:
                 continue
             elif "(atol, rtol)" in line:
                 continue
@@ -365,7 +365,7 @@ def test_array_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
         "Data contains differences:",
-        "Found 5 different pixels.",
+        "Found 5 different pixel(s).",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -420,7 +420,7 @@ def test_array4d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
         "Extension HDU 3 (GROUPDQ, 1):",
         "Data contains differences:",
-        "Found 2 different pixels.",
+        "Found 2 different pixel(s).",
         "Values in a and b",
         "Quantity   a    b",
         "-------- ----- ---",
@@ -476,7 +476,7 @@ def test_array3d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "?  ^^ +",
         "Extension HDU 1 (SCI, 1):",
         "Data contains differences:",
-        "Found 2 different pixels.",
+        "Found 2 different pixel(s).",
         "Values in a and b",
         "Quantity   a     b",
         "-------- ------ ---",
@@ -533,7 +533,7 @@ def test_array2d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "?  ^^ +",
         "Extension HDU 1 (SCI, 1):",
         "Data contains differences:",
-        "Found 2 different pixels.",
+        "Found 2 different pixel(s).",
         "Values in a and b",
         "Quantity   a     b",
         "-------- ------ ---",
@@ -642,7 +642,7 @@ def test_allnan_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "a> -64",
         "b> -32",
         "Data contains differences:",
-        "Found 36 different pixels.",
+        "Found 36 different pixel(s).",
         "Values in a and b",
         "Quantity  a      b",
         "-------- --- ---------",
@@ -689,7 +689,7 @@ def test_change_sci_atol(mock_rampfiles, fitsdiff_default_kwargs):
         "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 1e-05, Absolute tolerance: 0.01",
         "Data contains differences:",
-        "Found 3 different pixels.",
+        "Found 3 different pixel(s).",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -743,7 +743,7 @@ def test_change_sci_rtol(mock_rampfiles, fitsdiff_default_kwargs):
         "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 0.001, Absolute tolerance: 1e-07",
         "Data contains differences:",
-        "Found 3 different pixels.",
+        "Found 3 different pixel(s).",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -803,7 +803,7 @@ def test_change_all_tols(mock_rampfiles, fitsdiff_default_kwargs):
         "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 0.001, Absolute tolerance: 1e-05",
         "Data contains differences:",
-        "Found 3 different pixels.",
+        "Found 3 different pixel(s).",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -1659,3 +1659,21 @@ def test_table_edge_cases(fitsdiff_default_kwargs):
     report = diff.report()
     assert "12 different table data element(s) found (37.50% different)." in report
     assert "Column ['ALLNANS'] is identical" in report
+
+
+def test_hdus_image_one_nan(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    data_array = np.ones((60, 60), dtype=np.float32)
+    data_a = data_array.copy()
+    data_b = data_array.copy()
+    data_b[3, 3] = np.nan
+    a.append(fits.ImageHDU(data=data_a, name="SCI"))
+    b.append(fits.ImageHDU(data=data_b, name="SCI"))
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "Found 1 different pixel(s)" in report
+    assert "Difference stats: abs(b - a) could not be calculated."
