@@ -248,7 +248,9 @@ def test_bad_input():
 
 
 def test_bad_input_in_container():
-    input_data = dm.ModelContainer([dm.ImageModel(), dm.ImageModel()])
+    model = dm.ImageModel()
+    model.meta.asn.exptype = "science"
+    input_data = dm.ModelContainer([model, model.copy()])
     step = BadpixSelfcalStep()
     with pytest.raises(ValueError, match="multiple science exposures"):
         step._parse_inputs(input_data, [], [])
