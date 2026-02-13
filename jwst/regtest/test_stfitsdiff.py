@@ -133,6 +133,8 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
                 continue
             elif "Found" in line and "table data element(s)" in line:
                 continue
+            elif "Found" in line and "different pixels." in line:
+                continue
             elif "(atol, rtol)" in line:
                 continue
             elif "Primary" in line or "Extension" in line:
@@ -363,6 +365,7 @@ def test_array_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
         "Data contains differences:",
+        "Found 5 different pixels.",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -417,6 +420,7 @@ def test_array4d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
         "Extension HDU 3 (GROUPDQ, 1):",
         "Data contains differences:",
+        "Found 2 different pixels.",
         "Values in a and b",
         "Quantity   a    b",
         "-------- ----- ---",
@@ -472,6 +476,7 @@ def test_array3d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "?  ^^ +",
         "Extension HDU 1 (SCI, 1):",
         "Data contains differences:",
+        "Found 2 different pixels.",
         "Values in a and b",
         "Quantity   a     b",
         "-------- ------ ---",
@@ -528,6 +533,7 @@ def test_array2d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "?  ^^ +",
         "Extension HDU 1 (SCI, 1):",
         "Data contains differences:",
+        "Found 2 different pixels.",
         "Values in a and b",
         "Quantity   a     b",
         "-------- ------ ---",
@@ -636,6 +642,7 @@ def test_allnan_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "a> -64",
         "b> -32",
         "Data contains differences:",
+        "Found 36 different pixels.",
         "Values in a and b",
         "Quantity  a      b",
         "-------- --- ---------",
@@ -682,6 +689,7 @@ def test_change_sci_atol(mock_rampfiles, fitsdiff_default_kwargs):
         "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 1e-05, Absolute tolerance: 0.01",
         "Data contains differences:",
+        "Found 3 different pixels.",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -735,6 +743,7 @@ def test_change_sci_rtol(mock_rampfiles, fitsdiff_default_kwargs):
         "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 0.001, Absolute tolerance: 1e-07",
         "Data contains differences:",
+        "Found 3 different pixels.",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -794,6 +803,7 @@ def test_change_all_tols(mock_rampfiles, fitsdiff_default_kwargs):
         "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 0.001, Absolute tolerance: 1e-05",
         "Data contains differences:",
+        "Found 3 different pixels.",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
