@@ -651,6 +651,8 @@ class STHDUDiff(HDUDiff):
                 percentages["rel_diff%"] = [100]
                 stats["abs_diff"] = [np.nan, np.nan, np.nan, np.nan]
                 return report_zeros_nan, percentages, stats
+            if np.max(finite_diffs) == 0.0:
+                return report_zeros_nan, None, None
             stats["abs_diff"] = [
                 np.max(finite_diffs),
                 np.min(finite_diffs),
@@ -767,21 +769,25 @@ class STHDUDiff(HDUDiff):
             self._writeln(f"  b: {dimsb}")
 
         def report_data_diff():
-            self._writeln(f"Found {self.diff_data.diff_total} different pixels.")
+            self._writeln(f"Found {self.diff_data.diff_total} different pixel(s).")
             # Show differences in zeros and nans between a and b
             self._writeln("Values in a and b")
             for tline in self.nans.pformat():
                 self._writeln(tline)
 
             # Show the difference (a-b) stats
-            self._writeln("\nDifference stats: abs(b - a) ")
-            for tline in self.stats.pformat():
-                self._writeln(tline)
-
+            if self.stats is not None:
+                self._writeln("\nDifference stats: abs(b - a) ")
+                for tline in self.stats.pformat():
+                    self._writeln(tline)
+            else:
+                self._writeln("\nDifference stats: abs(b - a) could not be calculated.")
+                self._writeln("This is likely because the differences are not numeric.")
             # Show percentage differences
-            self._writeln("\nPercentages of difference above threshold")
-            for tline in self.percentages.pformat():
-                self._writeln(tline)
+            if self.percentages is not None:
+                self._writeln("\nPercentages of difference above threshold")
+                for tline in self.percentages.pformat():
+                    self._writeln(tline)
 
         if self.diff_data is not None and not self.diff_data.identical:
             self._fileobj.write("\n")
