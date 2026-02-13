@@ -12,26 +12,26 @@ log = logging.getLogger(__name__)
 
 class RscdStep(Step):
     """
-    Flag the first N groups of MIRI data to 'DO_NOT_USE' in the 2nd and later integrations.
+    Flag the first N groups an integration of MIRI data to 'DO_NOT_USE'.
 
-    The number of groups, N, for which to
-    set the GROUPDQ flag to 'DO_NOT_USE' is read in from the RSCD reference file. This number
-    depends on the readout model and subarray size. The step checks that the total number of groups
-    in an integration is greater than N+3 before flagging the GROUPDQ array. If the number of groups
-    is less than N+3 then no flagging is performed, because doing so would leave too few groups
-    to work with in later steps.
+    The number of groups, N, for which to set the GROUPDQ flag to 'DO_NOT_USE' is read in from
+    the RSCD reference file. This number depends on the readout model and subarray size.
+    The step checks that the total number of groups in an integration is greater than N+3
+    before flagging the GROUPDQ array. If the number of groups is less than N+3 then no flagging
+    is performed, because doing so would leave too few groups to work with in later steps.
     """
 
     class_alias = "rscd"
 
     spec = """
+        bright_use_2groups = boolean(default=True) # For saturated data reset rscd flagging to give 2 valid groups
     """  # noqa: E501
 
     reference_file_types = ["rscd"]
 
     def process(self, step_input):
         """
-        Flag the initial groups to 'DO_NOT_USE' in the 2nd and later integrations.
+        Flag the initial groups to 'DO_NOT_USE'.
 
         The number of initial groups to flag is read in from the RSCD reference file. This number
         varies based on readout mode and subarray size.
@@ -73,7 +73,9 @@ class RscdStep(Step):
         rscd_model = datamodels.RSCDModel(rscd_name)
 
         # Do the rscd correction
-        result = rscd_sub.do_correction(result, rscd_model)
+        result = rscd_sub.do_correction(
+            result, rscd_model, bright_use_2groups=self.bright_use_2groups
+        )
 
         # Cleanup
         del rscd_model
