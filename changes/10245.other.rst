@@ -1,0 +1,1 @@
+Bump GWCS min version to 1.0.3 to pick up bugfixes for non-coordinate input values.
