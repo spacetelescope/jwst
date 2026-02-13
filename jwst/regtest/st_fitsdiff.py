@@ -767,6 +767,7 @@ class STHDUDiff(HDUDiff):
             self._writeln(f"  b: {dimsb}")
 
         def report_data_diff():
+            self._writeln(f"Found {self.diff_data.diff_total} different pixels.")
             # Show differences in zeros and nans between a and b
             self._writeln("Values in a and b")
             for tline in self.nans.pformat():
@@ -856,18 +857,18 @@ class STImageDataDiff(ImageDataDiff):
         rtol = self.rtol
         atol = self.atol
 
-        if self.report_pixel_loc_diffs:
-            # If neither a nor b are floating point (or complex), ignore rtol and
-            # atol
-            if not (
-                np.issubdtype(self.a.dtype, np.inexact) or np.issubdtype(self.b.dtype, np.inexact)
-            ):
-                rtol = 0
-                atol = 0
+        # If neither a nor b are floating point (or complex), ignore rtol and
+        # atol
+        if not (np.issubdtype(self.a.dtype, np.inexact) or np.issubdtype(self.b.dtype, np.inexact)):
+            rtol = 0
+            atol = 0
 
-            # Find the indices where the values are not equal
-            not_close = ~np.isclose(self.a, self.b, atol=atol, rtol=rtol, equal_nan=True)
-            diffs = np.where(not_close)
+        # Find the indices where the values are not equal
+        not_close = ~np.isclose(self.a, self.b, atol=atol, rtol=rtol, equal_nan=True)
+        diffs = np.where(not_close)
+        self.diff_total = len(diffs[0])
+
+        if self.report_pixel_loc_diffs:
             finite_a = np.isfinite(self.a)
             finite_b = np.isfinite(self.b)
             both_finite = finite_a & finite_b
@@ -957,14 +958,12 @@ class STImageDataDiff(ImageDataDiff):
                     if a[diff_total].size != 0:
                         data_within_tol = False
 
-            if not data_within_tol:
-                # Don't care about the actual numbers or locations, just set to something high
-                self.diff_ratio = 999.0
-                self.diff_total = 999
-            else:
+            if data_within_tol:
                 # Data is the same, nothing to do
                 self.diff_ratio = 0
                 self.diff_total = 0
+            else:
+                self.diff_ratio = 999
 
     def _report(self):
         # Code below contains mixed original ImageDiff lines as well as STScI's
