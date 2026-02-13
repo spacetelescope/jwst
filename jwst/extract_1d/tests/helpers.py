@@ -523,7 +523,7 @@ def mock_niriss_soss_func():
     CubeModel
         The mock model.
     """
-    model = dm.CubeModel((1, 50, 50))
+    model = dm.CubeModel()
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.detector = "NIS"
     model.meta.instrument.filter = "CLEAR"

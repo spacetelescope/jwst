@@ -29,7 +29,7 @@ def niriss_soss_tso(subarray="SUBSTRIP96"):
     input_model.meta.wcs = None
     input_model.meta.wcsinfo.s_region = "POLYGON ICRS 0 0 0 1 1 1 1 0"
     input_model.meta.visit.tsovisit = True
-    input_model.int_times = input_model.int_times
+    input_model.int_times = input_model.get_default("int_times")
     return input_model
 
 

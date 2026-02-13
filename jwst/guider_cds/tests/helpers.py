@@ -28,6 +28,7 @@ def make_guider_image():
 
     rng = np.random.default_rng(seed=42)
     image.data = rng.random((4, 10, 10, 10))
+    image.dq = image.get_default("dq")
     image.meta.subarray.xstart = 1226
     image.meta.subarray.ystart = 209
     image.meta.subarray.xsize = 10
