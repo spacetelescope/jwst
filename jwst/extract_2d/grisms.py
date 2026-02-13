@@ -140,7 +140,7 @@ def extract_tso_object(
     output_model.update(input_model)
     subwcs = copy.deepcopy(input_model.meta.wcs)
 
-    # (Some) NIRCam wavelengthrange entries have a fieldpoint entry, while NIRISS does not.
+    # Some NIRCam wavelengthrange entries have a fieldpoint entry, while NIRISS does not.
     if len(wavelengthrange[0]) == 5:
         filter_idx = 2
     else:
