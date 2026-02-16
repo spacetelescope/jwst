@@ -32,7 +32,7 @@ def charge_migration(output_model, signal_threshold):
     -------
     output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Data model with charge_migration applied; add CHARGELOSS and
-        DO_NOT_USE flags to groups exceeding signal_threshold.
+        DO_NOT_USE flags to groups exceeding ``signal_threshold``.
     """
     data = output_model.data
     gdq = output_model.groupdq

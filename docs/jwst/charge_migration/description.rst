@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.charge_migration.ChargeMigrationStep`
+:Class: `jwst.charge_migration.charge_migration_step.ChargeMigrationStep`
 :Alias: charge_migration
 
 
