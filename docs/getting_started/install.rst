@@ -46,7 +46,11 @@ Installing Latest Release
 
 You can install the latest released version via ``pip``.  From a bash/zsh shell:
 
-.. conda_install_literal::
+.. code-block:: shell
+
+    conda create -n <env_name> python=3.13
+    conda activate <env_name>
+    pip install jwst==<version>
 
 If no version tag is specified in the install command, ``pip`` will find the latest release compatible
 with the current environment. This can lead to an unintended ``jwst`` version, if the latest release
@@ -63,7 +67,7 @@ You can also install a specific version::
 
     conda create -n <env_name> python=3.12
     conda activate <env_name>
-    pip install jwst==1.17.1
+    pip install jwst==<version>
 
 .. _installing_dev:
 

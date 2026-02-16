@@ -43,7 +43,9 @@ Once you have created your conda environment, make sure it is active by doing::
 To install the last stable release of ``jwst``, and all its basic dependencies
 (e.g., numpy, stcal):
 
-.. pip_install_literal::
+.. code-block:: shell
+    
+    pip install jwst
 
 For detailed installation instructions, including how to install the development
 version of ``jwst`` from Github or how to install a previous released version, see
