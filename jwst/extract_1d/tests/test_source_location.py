@@ -120,6 +120,7 @@ def test_location_from_wcs_wrong_exptype(mock_niriss_soss, log_watcher):
         message="Source position cannot be found for EXP_TYPE",
         level="warning",
     )
+    mock_niriss_soss.data = np.ones((10, 10, 10))
     result = sl.location_from_wcs(mock_niriss_soss, None)
     assert result == (None, None, None, None)
     watcher.assert_seen()

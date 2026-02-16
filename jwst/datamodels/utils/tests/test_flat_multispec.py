@@ -273,7 +273,7 @@ def test_set_schema_units():
 def test_copy_spec_metadata(input_spec, output_spec):
     # Before copying, source_id and name are blank or default
     assert output_spec.name is None
-    assert output_spec.source_id is None
+    assert output_spec.source_id == 0
 
     copy_spec_metadata(input_spec, output_spec)
 
