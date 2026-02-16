@@ -83,11 +83,12 @@ jwst = "jwst.stpipe.integration:get_steps"
 docs = [
     "matplotlib",
     "numpydoc",
-    "sphinx",
-    "sphinxcontrib-jquery",
-    "sphinx-automodapi",
-    "sphinx-rtd-theme",
     "pytest-doctestplus>=0.11",
+    "sphinx",
+    "sphinx-automodapi",
+    "sphinx-inline-tabs",
+    "sphinx-rtd-theme",
+    "sphinxcontrib-jquery",
 ]
 sdp = [
     "jplephem>=2.9",
