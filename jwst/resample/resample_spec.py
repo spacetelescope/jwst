@@ -334,8 +334,9 @@ class ResampleSpec(ResampleImage):
         refwcs = refmodel.meta.wcs
 
         # Set up the transforms that are needed
-        s2d = refwcs.get_transform("slit_frame", "detector")
-        d2s = refwcs.get_transform("detector", "slit_frame")
+        input_frame = refwcs.available_frames[0]
+        s2d = refwcs.get_transform("slit_frame", input_frame)
+        d2s = refwcs.get_transform(input_frame, "slit_frame")
         if "moving_target" in refwcs.available_frames:
             s2w = refwcs.get_transform("slit_frame", "moving_target")
             w2s = refwcs.get_transform("moving_target", "slit_frame")
