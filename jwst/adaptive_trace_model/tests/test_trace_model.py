@@ -159,7 +159,7 @@ def test_set_oversample_kwargs_error():
     [("NRS1", "Unsupported mode"), ("MIRIFULONG", "Unsupported mode"), ("NIS", "Unknown detector")],
 )
 def test_fit_and_oversample_unsupported_model(detector, message):
-    model = ImageModel()
+    model = ImageModel((10, 10))
     model.meta.instrument.detector = detector
     with pytest.raises(ValueError, match=message):
         tm.fit_and_oversample(model)
