@@ -89,6 +89,29 @@ def create_hdu_wfss():
     return hdul
 
 
+def create_hdul_lrs_slitless():
+    hdul = fits.HDUList()
+    phdu = fits.PrimaryHDU()
+    phdu.header["telescop"] = "JWST"
+    phdu.header["filename"] = "test_miri_lrs_slitless"
+    phdu.header["instrume"] = "MIRI"
+    phdu.header["detector"] = "MIRIMAGE"
+    phdu.header["time-obs"] = "8:59:37"
+    phdu.header["date-obs"] = "2017-09-05"
+    phdu.header["exp_type"] = "MIR_LRS-SLITLESS"
+    phdu.header["subarray"] = "SLITLESSPRISM"
+    phdu.header["substrt1"] = 1
+    phdu.header["substrt2"] = 529
+    phdu.header["subsize1"] = 72
+    phdu.header["subsize2"] = 416
+    scihdu = fits.ImageHDU()
+    scihdu.header["EXTNAME"] = "SCI"
+    scihdu.header.update(wcs_kw)
+    hdul.append(phdu)
+    hdul.append(scihdu)
+    return hdul
+
+
 def create_datamodel(hdul):
     im = ImageModel(hdul)
     ref = create_reference_files(im)

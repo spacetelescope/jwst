@@ -380,25 +380,18 @@ class Spec2Pipeline(Pipeline):
         calibrated.meta.asn.table_name = Path(asn_file).name
         calibrated.meta.filename = self.make_output_path(basepath=self.output_file, suffix=suffix)
 
+        # For all modes, call adaptive_trace_model and pixel_replace
+        resampled = calibrated.copy()
+        resampled = self.adaptive_trace_model.run(resampled)
+        resampled = self.pixel_replace.run(resampled)
+
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
-        if exp_type in ["NRS_FIXEDSLIT", "NRS_MSASPEC", "MIR_LRS-FIXEDSLIT"] and not isinstance(
-            calibrated, datamodels.CubeModel
-        ):
-            # Call pixel replace, followed by resample_spec for 2D slit data
-            resampled = calibrated.copy()
-            # interpolate pixels that have a NaN value or are flagged
-            # as DO_NOT_USE or NON_SCIENCE.
-            resampled = self.pixel_replace.run(resampled)
-            resampled = self.resample_spec.run(resampled)
-
-        elif is_nrs_slit_linelamp(calibrated):
-            # Call pixel_replace followed by resample_spec for NRS 2D line lamp slit data
-            resampled = calibrated.copy()
-            # interpolate pixels that have a NaN value or are flagged
-            # as DO_NOT_USE or NON_SCIENCE.
-            resampled = self.pixel_replace.run(resampled)
+        if (
+            exp_type in ["NRS_FIXEDSLIT", "NRS_MSASPEC", "MIR_LRS-FIXEDSLIT"]
+            and not isinstance(calibrated, datamodels.CubeModel)
+        ) or is_nrs_slit_linelamp(calibrated):
             resampled = self.resample_spec.run(resampled)
 
         elif (exp_type in ["MIR_MRS", "NRS_IFU"]) or is_nrs_ifu_linelamp(calibrated):
@@ -411,25 +404,11 @@ class Spec2Pipeline(Pipeline):
 
             if exp_type == "MIR_MRS" and self.cube_build.output_type is None:
                 self.cube_build.output_type = "multi"
-            resampled = calibrated.copy()
-            # First call adaptive_trace_model and pixel_replace then
-            # call cube_build step for IFU data.
-            resampled = self.adaptive_trace_model.run(resampled)
-            resampled = self.pixel_replace.run(resampled)
+
             resampled = self.cube_build.run(resampled)
             if query_step_status(resampled, "cube_build") == "COMPLETE":
                 self.save_model(resampled[0], suffix="s3d")
-        elif exp_type in ["MIR_LRS-SLITLESS"]:
-            resampled = calibrated.copy()
-            # interpolate pixels that have a NaN value or are flagged
-            # as DO_NOT_USE or NON_SCIENCE.
-            resampled = self.pixel_replace.run(resampled)
-        else:
-            # will be run if set in parameter ref file or by user
-            resampled = calibrated.copy()
-            # interpolate pixels that have a NaN value or are flagged
-            # as DO_NOT_USE or NON_SCIENCE.
-            resampled = self.pixel_replace.run(resampled)
+
         # Extract a 1D spectrum from the 2D/3D data
         if (
             exp_type in ["MIR_MRS", "NRS_IFU"]

@@ -95,23 +95,57 @@ class AdaptiveTraceModelStep(Step):
         else:
             models = [output_model]
 
+        # Update each model in place
         for model in models:
-            if not isinstance(model, datamodels.IFUImageModel):
-                log.warning("The adaptive_trace_model step is only implemented for IFU data.")
-                log.warning("Skipping processing for datamodel type %s.", str(output_model))
+            log.info("Fitting trace model for %s", model.meta.filename)
+            if isinstance(model, datamodels.MultiSlitModel):
+                results = None
+                if self.save_intermediate_results:
+                    new_model = datamodels.MultiSlitModel()
+                    new_model.update(model, only="PRIMARY")
+                    if self.oversample == 1.0:
+                        results = [None, new_model, new_model.copy(), None, None]
+                    else:
+                        results = [
+                            None,
+                            new_model,
+                            new_model.copy(),
+                            new_model.copy(),
+                            new_model.copy(),
+                        ]
+                for slit in model.slits:
+                    log.info(f"Working on slit {slit.name}")
+                    log.debug(f"Slit is of type {type(slit)}")
+
+                    slit_results = fit_and_oversample(
+                        slit,
+                        fit_threshold=self.fit_threshold,
+                        slope_limit=self.slope_limit,
+                        oversample_factor=self.oversample,
+                        psf_optimal=self.psf_optimal,
+                        return_intermediate_models=self.save_intermediate_results,
+                    )
+                    if self.save_intermediate_results:
+                        for i, intermediate_model in enumerate(slit_results[1:]):
+                            if intermediate_model is not None:
+                                results[i + 1].slits.append(intermediate_model)
+
+            elif isinstance(model, (datamodels.SlitModel, datamodels.IFUImageModel)):
+                results = fit_and_oversample(
+                    model,
+                    fit_threshold=self.fit_threshold,
+                    slope_limit=self.slope_limit,
+                    oversample_factor=self.oversample,
+                    psf_optimal=self.psf_optimal,
+                    return_intermediate_models=self.save_intermediate_results,
+                )
+            else:
+                log.warning(
+                    "The adaptive_trace_model step is not implemented for %s.", str(output_model)
+                )
+                log.warning("Skipping processing.")
                 model.meta.cal_step.adaptive_trace_model = "SKIPPED"
                 continue
-
-            # Update the model in place
-            log.info("Fitting trace model for %s", model.meta.filename)
-            results = fit_and_oversample(
-                model,
-                fit_threshold=self.fit_threshold,
-                slope_limit=self.slope_limit,
-                oversample_factor=self.oversample,
-                psf_optimal=self.psf_optimal,
-                return_intermediate_models=self.save_intermediate_results,
-            )
 
             model.meta.cal_step.adaptive_trace_model = "COMPLETE"
             if self.save_intermediate_results:
