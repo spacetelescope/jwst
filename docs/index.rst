@@ -39,7 +39,6 @@ is also available on `JDox <https://jwst-docs.stsci.edu>`__.
    :caption: Getting Started
 
    getting_started/quickstart.rst
-   getting_started/install.rst
    getting_started/contributing.rst
 
 .. _user-docs:
