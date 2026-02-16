@@ -20,7 +20,7 @@ __all__ = [
 
 def do_correction(output_model, rscd_model):
     """
-    Set the initial groups of an integration for  MIRI data to 'DO_NOT_USE'.
+    Set the initial groups of an integration of MIRI data to 'DO_NOT_USE'.
 
     The number of initial groups to set to 'DO_NOT_USE' is read in from the RSCD reference
     file. The number of groups to skip is integration dependent. The first integration has
@@ -136,7 +136,7 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     log.info(f"Number of groups to skip for integration 1: {group_skip_int1}")
 
     if sci_int_start == 1:  # Using sci_int_start to cover segmented data case.
-        rscd_skip_array, num_rscd_lowered = flag_rscd(
+        rscd_skip_array, num_rscd_lowered, num_only_one_group = flag_rscd(
             output, sci_int_start - 1, sci_int_start - 1, group_skip_int1
         )
 
@@ -146,8 +146,8 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
             f"not set to DO_NOT_USE: {num_rscd_lowered}"
         )
 
-        output.meta.rscd.keep_bright_firstgroup_int1 = num_rscd_lowered
-
+        output.meta.rscd.keep_bright_firstgroup_int1 = num_only_one_group
+        output.meta.rscd.keep_groups_saturation_int1 = num_rscd_lowered
         output.meta.rscd.ngroups_skip_int1 = group_skip_int1
 
     # Flag RSCD  groups in integration 2 and higher
@@ -164,7 +164,7 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     if sci_nints > 1:
         log.info(f"Number of groups to skip for integrations 2 and higher: {group_skip_int2p}")
 
-        rscd_skip_array, num_rscd_lowered = flag_rscd(
+        rscd_skip_array, num_rscd_lowered, num_only_one_group = flag_rscd(
             output, int_start - 1, int_end - 1, group_skip_int2p
         )
 
@@ -174,7 +174,8 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
             f"not set to DO_NOT_USE: {num_rscd_lowered}"
         )
 
-        output.meta.rscd.keep_bright_firstgroup_int2p = num_rscd_lowered
+        output.meta.rscd.keep_bright_firstgroup_int2p = num_only_one_group
+        output.meta.rscd.keep_groups_saturation_int2p = num_rscd_lowered
         output.meta.rscd.ngroups_skip_int2p = group_skip_int2p
     output.meta.cal_step.rscd = "COMPLETE"
 
@@ -205,7 +206,10 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
         Array for each integration, group , pixel containing the number of rscd groups
         skip.
     num_rscd_lowered : int
-        Number of pixels where the number of RSCD groups to flag as DO_NOT_USE was changed.
+        The number of pixels where the number of RSCD groups to flag as DO_NOT_USE was
+        changed because of saturation.
+    num_only_one_group : int
+        The number of pixels where there is only 1 valid group after checking for saturation.
     """
     if int_end == 0:
         log.info(f"Number of groups to skip for integration 1 : {rscd_skip}")
@@ -219,7 +223,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
     skip_array = np.zeros((n_ints, y_dim, x_dim))
     skip_array[:, :, :] = rscd_skip
 
-    # --- If we encounter saturation, we might need to back off the rscd correction
+    # --- If we encounter saturation, we might need to back off the rscd correction.
     # Ideally we want at least  two valid groups, but
     # we need to allow there to only be 1 group valid group. The user can set the
     # ramp_fit parameter suppress_group1 = False to derive a value for this point.
@@ -247,9 +251,10 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
     # This keeps saturation flags ONLY if they are NOT saturated in Group 1
     is_sat_problem = is_sat_problem & ~is_group_1_sat
 
-    num_sat = np.sum(is_sat_problem)
-    num_rscd_lowered = num_sat
+    num_rscd_lowered = None
+    num_only_one_group_pixels = None
 
+    num_sat = np.sum(is_sat_problem)
     log.info(
         f" There are {num_sat} saturated pixels that require the number of "
         "rscd groups flagged to be lowered"
@@ -293,6 +298,9 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
         # 2. Collapse the 3D mask (Integrations, Y, X) to 2D (Y, X)
         # If a pixel was backed off in ANY integration, we flag it.
         is_backed_off_2d = np.any(was_backed_off, axis=0)
+        num_rscd_lowered = is_backed_off_2d.sum()
+        if num_rscd_lowered == 0:
+            num_rscd_lowered = None
 
         # 3. Apply the FLUX_ESTIMATED flag
         if np.any(is_backed_off_2d):
@@ -304,7 +312,13 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
         # 4. Final Safety: Reset negative values (though with this logic, 0 is the floor)
         skip_array = np.maximum(skip_array, 0)
 
-    return skip_array, num_rscd_lowered
+        # now record if we have to back off all the way to group 1
+        is_only_one_group = skip_array == 0
+        num_only_one_group_pixels = np.any(is_only_one_group, axis=0).sum()
+        if num_only_one_group_pixels == 0:
+            num_only_one_group_pixels = None
+
+    return skip_array, num_rscd_lowered, num_only_one_group_pixels
 
 
 def apply_rscd_flags(output_model, int_start, int_end, skip_array):
