@@ -878,7 +878,9 @@ class STImageDataDiff(ImageDataDiff):
             finite_a = np.isfinite(self.a)
             finite_b = np.isfinite(self.b)
             both_finite = finite_a & finite_b
-            self.max_absolute = np.max(np.abs(self.a[both_finite] - self.b[both_finite]))
+            self.max_absolute = np.nan
+            if both_finite.sum() > 0:
+                self.max_absolute = np.max(np.abs(self.a[both_finite] - self.b[both_finite]))
             valid_relative = both_finite & (self.b != 0)
             if np.any(valid_relative):
                 self.max_relative = np.max(
@@ -1484,6 +1486,10 @@ class STTableDataDiff(TableDataDiff):
                 else:
                     self.identical_columns.append(col.name)
 
+                if not self.report_pixel_loc_diffs:
+                    self.diff_total += n_different
+                    self.rel_diffs += 0
+
             self.different_table_elements += n_different
 
             if self.report_pixel_loc_diffs:
@@ -1589,24 +1595,25 @@ class STTableDataDiff(TableDataDiff):
 
         self._writeln(f"Found {self.different_table_elements} different table data element(s). ")
 
-        # Print differences in zeros and nans per column
-        self._writeln("\nValues in a and b")
-        tlines = self.report_zeros_nan.pformat(max_width=-1)
-        for tline in tlines:
-            self._writeln(tline)
+        if len(self.report_zeros_nan) > 0:
+            # Print differences in zeros and nans per column
+            self._writeln("\nValues in a and b")
+            tlines = self.report_zeros_nan.pformat(max_width=-1)
+            for tline in tlines:
+                self._writeln(tline)
 
-        # Print the difference (b - a) stats
-        self._writeln(
-            "\nRelative difference stats for non-NaN diffs that fail the [atol, rtol] test:"
-        )
-        # make sure the format is acceptable
-        for colname in self.report_table.columns:
-            if colname in ["col_name", "dtype"]:
-                continue
-            self.report_table[colname].format = ".4g"
-        tlines = self.report_table.pformat(max_width=-1)
-        for tline in tlines:
-            self._writeln(tline)
+            # Print the difference (b - a) stats
+            self._writeln(
+                "\nRelative difference stats for non-NaN diffs that fail the [atol, rtol] test:"
+            )
+            # make sure the format is acceptable
+            for colname in self.report_table.columns:
+                if colname in ["col_name", "dtype"]:
+                    continue
+                self.report_table[colname].format = ".4g"
+            tlines = self.report_table.pformat(max_width=-1)
+            for tline in tlines:
+                self._writeln(tline)
 
         if self.non_numeric_diff_columns:
             self._writeln("\n")
