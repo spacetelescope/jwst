@@ -123,10 +123,10 @@ def _calc_correction(slitlet, barshadow_model, source_type):
 
     Parameters
     ----------
-    slitlet : `~jwst.datamodels.SlitModel`
+    slitlet : `~stdatamodels.jwst.datamodels.SlitModel`
         The slitlet to calculate the correction for.
 
-    barshadow_model : `~jwst.datamodels.BarshadowModel`
+    barshadow_model : `~stdatamodels.jwst.datamodels.BarshadowModel`
         Bar shadow data model from reference file.
 
     source_type : str or None
@@ -134,7 +134,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
 
     Returns
     -------
-    correction : `~jwst.datamodels.SlitModel`
+    correction : `~stdatamodels.jwst.datamodels.SlitModel`
         The correction to be applied.
     """
     slitlet_number = slitlet.slitlet_id
@@ -207,28 +207,28 @@ def create_shutter_elements(barshadow_model):
 
     The pieces are:
 
-        1. shutter_elements['first']
-           Goes from the bottom edge of the array (at 1 shutter width from
-           the center of the first shutter) to the center of the first shutter
-        2. shutter_elements['open_open']
-            Goes from the center of an open shutter to the center of the next shutter,
-            if that shutter is open
-        3. shutter_elements['open_closed']
-            Goes from the center of an open shutter to the center of the next shutter,
-            if that shutter is closed
-        4. shutter_elements['closed_open']
-            Goes from the center of a closed shutter to the center of the next shutter,
-            if that shutter is open
-        5. shutter_elements['closed_closed']
-            Goes from the center of a closed shutter to the center of the next shutter,
-            if that shutter is also closed
-        6. shutter_elements['last']
-            Goes from the center of the last open shutter to the top edge of the shutter
-            array (1 shutter width from the center of the last open shutter)
+    1. ``shutter_elements['first']``:
+       Goes from the bottom edge of the array (at 1 shutter width from
+       the center of the first shutter) to the center of the first shutter
+    2. ``shutter_elements['open_open']``:
+       Goes from the center of an open shutter to the center of the next shutter,
+       if that shutter is open
+    3. ``shutter_elements['open_closed']``:
+       Goes from the center of an open shutter to the center of the next shutter,
+       if that shutter is closed
+    4. ``shutter_elements['closed_open']``:
+       Goes from the center of a closed shutter to the center of the next shutter,
+       if that shutter is open
+    5. ``shutter_elements['closed_closed']``:
+       Goes from the center of a closed shutter to the center of the next shutter,
+       if that shutter is also closed
+    6. ``shutter_elements['last']``:
+       Goes from the center of the last open shutter to the top edge of the shutter
+       array (1 shutter width from the center of the last open shutter)
 
     Parameters
     ----------
-    barshadow_model : BarshadowModel
+    barshadow_model : `~stdatamodels.jwst.datamodels.BarshadowModel`
         The barshadow model used to construct these pieces.
 
     Returns
@@ -267,13 +267,14 @@ def create_shadow(shutter_elements, shutter_status):
         The shutter elements dictionary.
     shutter_status : str
         String describing the shutter status:
-           0:  Closed
-           1:  Open
-           x:  Contains source
+
+        * 0: Closed
+        * 1: Open
+        * x: Contains source
 
     Returns
     -------
-    shadow_array : ndarray of float
+    shadow_array : ndarray
         The constructed bar shadow array.
     """
     nshutters = len(shutter_status)
@@ -326,7 +327,7 @@ def add_first_half_shutter(shadow, shadow_element):
     shadow : ndarray
         The bar shadow array.
     shadow_element : ndarray
-        The shutter_elements['first'] array.  Should be 501 rows (Y)
+        The ``shutter_elements['first']`` array.  Should be 501 rows (Y)
         by 101 columns (wavelength).
 
     Returns
@@ -353,7 +354,7 @@ def add_next_shutter(shadow, shadow_element, first_row):
 
     Returns
     -------
-    shadow: ndarray
+    shadow : ndarray
         The bar shadow array with the double internal shutter inserted.
     """
     # Average the last row in the current bar shadow array with the first row of
@@ -373,16 +374,16 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
 
     Parameters
     ----------
-    shadow : nddata array
+    shadow : ndarray
         The bar shadow array.
-    shadow_element : nddata array
+    shadow_element : ndarray
         The shadow_element array.
     first_row : int
         The first row to place the shadow element.
 
     Returns
     -------
-    shadow: ndarray
+    shadow : ndarray
         The bar shadow array with the last half shutter inserted.
     """
     #
@@ -401,15 +402,15 @@ def has_uniform_source(slitlet, force_type=None):
 
     Parameters
     ----------
-    slitlet : `~jwst.datamodels.SlitModel`
+    slitlet : `~stdatamodels.jwst.datamodels.SlitModel`
         The slitlet being interrogated.
     force_type : str or None
         Source type to force to and decide upon.
 
     Returns
     -------
-    answer: bool
-        True if the slitlet contains a uniform source.
+    answer : bool
+        `True` if the slitlet contains a uniform source.
     """
     source_type = force_type if force_type else slitlet.source_type
 
