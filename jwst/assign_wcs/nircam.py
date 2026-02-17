@@ -374,16 +374,14 @@ def dhs(input_model, reference_files):
 
     label_mapper = selector.LabelMapperArray(
         regions,
-        inputs_mapping=Mapping(
-            (
-                0,
-                1,
-            ),
-            n_inputs=3,
-        ),
+        inputs_mapping=Mapping(mapping=(0, 1), n_inputs=3),
         inputs=("x", "y", "order"),
     )
-    transforms = {}
+    label_mapper.inverse = selector.LabelMapper(
+        inputs=("x0", "y0", "lam", "order", "stripe"),
+        mapper=Identity(1),
+        inputs_mapping=Mapping((4,)),
+    )
 
     with NIRCAMGrismModel(reference_files["specwcs"]) as f:
         displ = f.displ.instance
@@ -403,6 +401,10 @@ def dhs(input_model, reference_files):
     setra.inverse = Const1D(input_model.meta.wcsinfo.ra_ref)
     setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
     setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
+
+    # Initialize transforms dictionary to store stripe IDs as keys, transform models as values.
+    # Used in RegionsSelector to choose correct transform given a stripe ID.
+    transforms = {}
 
     for i, stripe in enumerate(stripes):
         # now create the appropriate model for the grismr
@@ -478,12 +480,6 @@ def dhs(input_model, reference_files):
             )
 
         transforms[stripe] = sub2direct
-
-    label_mapper.inverse = selector.LabelMapper(
-        inputs=("x0", "y0", "lam", "order", "stripe"),
-        mapper=Identity(1),
-        inputs_mapping=Mapping((4,)),
-    )
 
     stripe2det = selector.RegionsSelector(
         inputs=["x", "y", "order"],
