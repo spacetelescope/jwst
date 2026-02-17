@@ -365,7 +365,7 @@ def dhs(input_model, reference_files):
 
     regs_model = RegionsModel(reference_files["regions"])
 
-    if regs_model.regions.shape == input_model.data.shape:
+    if regs_model.regions.shape == input_model.data.shape[-2:]:
         regions = regs_model.regions.copy()
     else:
         sub_regs_model = reffile_utils.get_subarray_model(input_model, regs_model)

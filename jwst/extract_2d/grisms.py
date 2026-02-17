@@ -96,12 +96,6 @@ def extract_tso_object(
     if "wavelengthrange" not in reference_files:
         raise KeyError("No wavelengthrange reference file specified")
 
-    # If an extraction height is not supplied, default to entire
-    # cross-dispersion size of the data array
-    if tsgrism_extract_height is None:
-        tsgrism_extract_height = input_model.meta.subarray.ysize
-    log.info(f"Setting extraction height to {tsgrism_extract_height}")
-
     # Get the disperser parameters that have the wave limits
     with WavelengthrangeModel(reference_files["wavelengthrange"]) as f:
         if f.meta.instrument.name != "NIRCAM" or f.meta.exposure.type != "NRC_TSGRISM":
@@ -134,162 +128,317 @@ def extract_tso_object(
     ):
         raise ValueError("XREF_SCI and YREF_SCI are required for TSO mode.")
 
-    # Create the extracted output as a SlitModel
-    log.info(f"Extracting order: {available_orders}")
-    output_model = datamodels.SlitModel()
-    output_model.update(input_model)
-    subwcs = copy.deepcopy(input_model.meta.wcs)
+    # Split the logic on DHS vs. non-DHS data here
+    if "DHS" in input_model.meta.subarray.name:
+        output_model = datamodels.MultiSlitModel()
+        output_model.update(input_model)
 
-    # Some NIRCam wavelengthrange entries have a fieldpoint entry, while NIRISS does not.
-    if len(wavelengthrange[0]) == 5:
-        filter_idx = 2
+        # TODO: Moved this from above to segment DHS vs. non-DHS data - check compat
+        # If an extraction height is not supplied, default to entire
+        # cross-dispersion size of the stripe
+        if tsgrism_extract_height is None:
+            tsgrism_extract_height = input_model.meta.subarray.multistripe_reads2
+        log.info(f"Setting extraction height to {tsgrism_extract_height}")
+
+        data_shape = input_model.data.shape
+        xx, yy = np.meshgrid(np.arange(data_shape[-1]), np.arange(data_shape[-2]))
+        fwd_xfrm = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
+        all_stripes = fwd_xfrm(xx, yy, np.ones_like(xx))[-1]
+        stripe_set = np.unique(all_stripes[~np.isnan(all_stripes)].astype(int))
+
+        for stripe_id in stripe_set:
+            for order in available_orders:
+                sub_model = datamodels.SlitModel()
+                subwcs = copy.deepcopy(input_model.meta.wcs)
+
+                fieldpoint_idx = 1
+                filter_idx = 2
+                _, _, _, lmin, lmax = [
+                    x
+                    for x in wavelengthrange
+                    if (
+                        x[0] == order
+                        and x[filter_idx] == input_model.meta.instrument.filter
+                        and x[fieldpoint_idx] in input_model.meta.aperture.pps_name
+                    )
+                ][0]
+                # TODO: Do we need to constrain on xfrm solution?
+                """
+                # Create the order bounding box
+                distortion = subwcs.get_transform("v2v3", "direct_image")
+                # 1-indexing already handled here
+                source_xpos, _ = compute_tso_offset_center(input_model, distortion)
+                # Remove FITS 1-indexed offset
+                source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1
+                transform = input_model.meta.wcs.get_transform("direct_image", "grism_detector")
+                xt, yt, _ = transform(
+                    [source_xpos]*2,
+                    [source_ypos]*2,
+                    [lmin, lmax],
+                    [order]*2,
+                    [stripe_id]*2
+                )
+                xfrm_xmin, xfrm_xmax = np.sort(xt)
+                xfrm_ymin, xfrm_ymax = np.sort(yt)
+                """
+                # Find extent of stripe as defined by regions
+                stripe_x = np.where(all_stripes == stripe_id, xx, np.nan)
+                stripe_xmin = np.nanmin(stripe_x)
+                stripe_xmax = np.nanmax(stripe_x)
+                stripe_y = np.where(all_stripes == stripe_id, yy, np.nan)
+                stripe_ymin = np.nanmin(stripe_y)
+                stripe_ymax = np.nanmax(stripe_y)
+
+                xmin, xmax = (
+                    max(stripe_xmin, 0),
+                    min(stripe_xmax, input_model.meta.subarray.xsize),
+                )
+                ymin, ymax = (
+                    max(stripe_ymin, 0),
+                    min(stripe_ymax, input_model.meta.subarray.ysize),
+                )
+
+                order_model = Const1D(order)
+                order_model.inverse = Const1D(order)
+                tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
+                tr = Mapping((0, 1, 0)) | Shift(xmin) & Shift(ymin) & order_model | tr
+                subwcs.set_transform("grism_detector", "direct_image", tr)
+
+                xmin = int(xmin)
+                xmax = int(xmax)
+                ymin = int(ymin)
+                ymax = int(ymax)
+
+                log.info(f"WCS made explicit for stripe {stripe_id}, order {order}.")
+                log.info(
+                    f"Extraction limits: (xmin: {xmin}, ymin: {ymin}), (xmax: {xmax}, ymax: {ymax})"
+                )
+
+                # Cut out the subarray from the input data arrays
+                ext_data = input_model.data[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+                ext_err = input_model.err[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+                ext_dq = input_model.dq[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+                if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
+                    var_poisson = input_model.var_poisson[
+                        ..., ymin : ymax + 1, xmin : xmax + 1
+                    ].copy()
+                else:
+                    var_poisson = None
+                if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
+                    var_rnoise = input_model.var_rnoise[
+                        ..., ymin : ymax + 1, xmin : xmax + 1
+                    ].copy()
+                else:
+                    var_rnoise = None
+                if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
+                    var_flat = input_model.var_flat[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+                else:
+                    var_flat = None
+
+                # Finish populating the output model and meta data
+                sub_model.data = ext_data
+                sub_model.err = ext_err
+                sub_model.dq = ext_dq
+                sub_model.var_poisson = var_poisson
+                sub_model.var_rnoise = var_rnoise
+                sub_model.var_flat = var_flat
+                sub_model.meta.wcs = subwcs
+                sub_model.meta.wcs.bounding_box = wcs_bbox_from_shape(ext_data.shape)
+                if compute_wavelength:
+                    sub_model.wavelength = compute_tso_wavelength_array(sub_model)
+                # sub_model.meta.wcsinfo.siaf_yref_sci = 34  # update after move, vals are the same
+                # sub_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
+                sub_model.meta.wcsinfo.spectral_order = order
+                sub_model.meta.wcsinfo.dispersion_direction = (
+                    input_model.meta.wcsinfo.dispersion_direction
+                )
+                sub_model.meta.instrument.name = "NIRCAM"
+                sub_model.name = str(stripe_id)
+                sub_model.source_type = input_model.meta.target.source_type
+                sub_model.source_name = input_model.meta.target.catalog_name
+                sub_model.source_alias = input_model.meta.target.proposer_name
+                sub_model.xstart = 1  # FITS pixels are 1-indexed
+                sub_model.xsize = ext_data.shape[-1]
+                sub_model.ystart = ymin + 1  # FITS pixels are 1-indexed
+                sub_model.ysize = ext_data.shape[-2]
+                # sub_model.source_xpos = source_xpos
+                # sub_model.source_ypos = 34
+                sub_model.source_id = 1
+                sub_model.bunit_data = input_model.meta.bunit_data
+                sub_model.bunit_err = input_model.meta.bunit_err
+                output_model.slits.append(sub_model)
+        if hasattr(input_model, "int_times"):
+            output_model.int_times = input_model.int_times.copy()
+
     else:
-        filter_idx = 1
+        # Processing non-DHS NRC_TSGRISM data
+        # Create the extracted output as a SlitModel
+        log.info(f"Extracting order: {available_orders}")
+        output_model = datamodels.SlitModel()
+        output_model.update(input_model)
 
-    # Loop over spectral orders
-    for order in available_orders:
-        range_select = [
-            (x[-2], x[-1])
-            for x in wavelengthrange
-            if (x[0] == order and x[filter_idx] == input_model.meta.instrument.filter)
-        ]
+        subwcs = copy.deepcopy(input_model.meta.wcs)
 
-        # Use the filter that was in front of the grism for translation
-        lmin, lmax = range_select.pop()
+        # TODO: Moved this from above to segment DHS vs. non-DHS data - check compat
+        # If an extraction height is not supplied, default to entire
+        # cross-dispersion size of the data array
+        if tsgrism_extract_height is None:
+            tsgrism_extract_height = input_model.meta.subarray.ysize
+        log.info(f"Setting extraction height to {tsgrism_extract_height}")
 
-        # Create the order bounding box
-        distortion = subwcs.get_transform("v2v3", "direct_image")
-        # 1-indexing already handled here
-        source_xpos, _ = compute_tso_offset_center(input_model, distortion)
-        # Remove FITS 1-indexed offset
-        source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1
-        transform = input_model.meta.wcs.get_transform("direct_image", "grism_detector")
-        xmin, ymin, _ = transform(source_xpos, source_ypos, lmin, order)
-        xmax, ymax, _ = transform(source_xpos, source_ypos, lmax, order)
+        # Loop over spectral orders
+        for order in available_orders:
+            _, _, _, lmin, lmax = [
+                x
+                for x in wavelengthrange
+                if (x[0] == order and x[2] == input_model.meta.instrument.filter)
+            ][0]
 
-        # Add the shift to the lower corner to the subarray WCS object.
-        # The shift should just be the lower bounding box corner.
-        # Also replace the object center location inputs to the GrismDispersion
-        # model with the known object center and order information (in pixels of direct image)
-        # This changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
-        #
-        # The team wants the object to fall near row 34 for all cutouts, but the default cutout
-        # height is 64 pixels (32 on either side). So bump the extraction ycenter, when necessary,
-        # so that the height is 30 above and 34 below (in full frame) the object center.
-        bump = source_ypos - 34
-        extract_y_center = source_ypos - bump
+            # Create the order bounding box
+            distortion = subwcs.get_transform("v2v3", "direct_image")
+            # 1-indexing already handled here
+            source_xpos, _ = compute_tso_offset_center(input_model, distortion)
+            # Remove FITS 1-indexed offset
+            source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1
+            transform = input_model.meta.wcs.get_transform("direct_image", "grism_detector")
+            xmin, ymin, _ = transform(source_xpos, source_ypos, lmin, order)
+            xmax, ymax, _ = transform(source_xpos, source_ypos, lmax, order)
 
-        splitheight = int(tsgrism_extract_height / 2)
-        below = extract_y_center - splitheight
-        if below == 34:
-            extract_y_min = 0
-            extract_y_max = extract_y_center + splitheight
-        elif below < 0:
-            extract_y_min = 0
-            extract_y_max = tsgrism_extract_height - 1
-        else:
-            extract_y_min = extract_y_center - 34  # always return source at row 34 in cutout
-            extract_y_max = extract_y_center + tsgrism_extract_height - 34 - 1
+            # Add the shift to the lower corner to the subarray WCS object.
+            # The shift should just be the lower bounding box corner.
+            # Also replace the object center location inputs to the GrismDispersion
+            # model with the known object center and order information (in pixels of direct image)
+            # This changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
+            #
+            # The team wants the object to fall near row 34 for all cutouts, but the default cutout
+            # height is 64 pixels (32 on either side). So bump the extraction ycenter, when
+            # necessary, so that the height is 30 above and 34 below
+            # (in full frame) the object center.
+            bump = source_ypos - 34
+            extract_y_center = source_ypos - bump
 
-        # Check for bad results
-        if extract_y_min > extract_y_max:
-            raise ValueError("Something bad happened calculating extraction y-size")
+            splitheight = int(tsgrism_extract_height / 2)
+            below = extract_y_center - splitheight
+            if below == 34:
+                extract_y_min = 0
+                extract_y_max = extract_y_center + splitheight
+            elif below < 0:
+                extract_y_min = 0
+                extract_y_max = tsgrism_extract_height - 1
+            else:
+                extract_y_min = extract_y_center - 34  # always return source at row 34 in cutout
+                extract_y_max = extract_y_center + tsgrism_extract_height - 34 - 1
 
-        # Limit the bounding box to the detector edges
-        # The bounding box is limited to the size of the detector in the dispersion direction
-        # and 64 pixels in the cross-dispersion direction (at request of instrument team).
-        ymin, ymax = (max(extract_y_min, 0), min(extract_y_max, input_model.meta.subarray.ysize))
-        xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
+            # Check for bad results
+            if extract_y_min > extract_y_max:
+                raise ValueError("Something bad happened calculating extraction y-size")
 
-        # The order and source position are put directly into the new WCS of the subarray
-        # for the forward transform.
-        #
-        # NOTE NOTE NOTE  2020-02-14
-        # We would normally use x-axis (along dispersion) extraction limits calculated
-        # above based on the min/max wavelength range and the source position to do the
-        # subarray extraction and set the subarray WCS accordingly. HOWEVER, the NIRCam
-        # team has asked for all data along the dispersion direction to be included in
-        # subarray cutout, so here we override the xmin/xmax values calculated above and
-        # instead hardwire the extraction limits for the x (dispersion) direction to
-        # cover the entire range of the data and use this new minimum x value in the
-        # subarray WCS transform. If the team ever decides to change the extraction limits,
-        # the following two constants must be modified accordingly.
-        xmin_ext = 0  # hardwire min x for extraction to zero
-        xmax_ext = input_model.data.shape[-1] - 1  # hardwire max x for extraction to size of data
-
-        order_model = Const1D(order)
-        order_model.inverse = Const1D(order)
-        tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
-        tr = Mapping((0, 1, 0)) | Shift(xmin_ext) & Shift(ymin) & order_model | tr
-        subwcs.set_transform("grism_detector", "direct_image", tr)
-
-        xmin = int(xmin)
-        xmax = int(xmax)
-        ymin = int(ymin)
-        ymax = int(ymax)
-
-        log.info(f"WCS made explicit for order: {order}")
-        log.info(
-            f"Spectral trace extents: (xmin: {xmin}, ymin: {ymin}), (xmax: {xmax}, ymax: {ymax})"
-        )
-        log.info(
-            f"Extraction limits: (xmin: {xmin_ext}, ymin: {ymin}), (xmax: {xmax_ext}, ymax: {ymax})"
-        )
-
-        # Cut out the subarray from the input data arrays
-        ext_data = input_model.data[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
-        ext_err = input_model.err[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
-        ext_dq = input_model.dq[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
-        if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
-            var_poisson = input_model.var_poisson[
-                ..., ymin : ymax + 1, xmin_ext : xmax_ext + 1
-            ].copy()
-        else:
-            var_poisson = None
-        if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
-            var_rnoise = input_model.var_rnoise[
-                ..., ymin : ymax + 1, xmin_ext : xmax_ext + 1
-            ].copy()
-        else:
-            var_rnoise = None
-        if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
-            var_flat = input_model.var_flat[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
-        else:
-            var_flat = None
-
-        # Finish populating the output model and meta data
-        if isinstance(output_model, SlitModel):
-            output_model.data = ext_data
-            output_model.err = ext_err
-            output_model.dq = ext_dq
-            output_model.var_poisson = var_poisson
-            output_model.var_rnoise = var_rnoise
-            output_model.var_flat = var_flat
-            output_model.meta.wcs = subwcs
-            output_model.meta.wcs.bounding_box = wcs_bbox_from_shape(ext_data.shape)
-            if compute_wavelength:
-                output_model.wavelength = compute_tso_wavelength_array(output_model)
-            output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same
-            output_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
-            output_model.meta.wcsinfo.spectral_order = order
-            output_model.meta.wcsinfo.dispersion_direction = (
-                input_model.meta.wcsinfo.dispersion_direction
+            # Limit the bounding box to the detector edges
+            # The bounding box is limited to the size of the detector in the dispersion direction
+            # and 64 pixels in the cross-dispersion direction (at request of instrument team).
+            ymin, ymax = (
+                max(extract_y_min, 0),
+                min(extract_y_max, input_model.meta.subarray.ysize),
             )
-            output_model.name = "1"
-            output_model.source_type = input_model.meta.target.source_type
-            output_model.source_name = input_model.meta.target.catalog_name
-            output_model.source_alias = input_model.meta.target.proposer_name
-            output_model.xstart = 1  # FITS pixels are 1-indexed
-            output_model.xsize = ext_data.shape[-1]
-            output_model.ystart = ymin + 1  # FITS pixels are 1-indexed
-            output_model.ysize = ext_data.shape[-2]
-            output_model.source_xpos = source_xpos
-            output_model.source_ypos = 34
-            output_model.source_id = 1
-            output_model.bunit_data = input_model.meta.bunit_data
-            output_model.bunit_err = input_model.meta.bunit_err
-            if hasattr(input_model, "int_times"):
-                output_model.int_times = input_model.int_times.copy()
+            xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
+
+            # The order and source position are put directly into the new WCS of the subarray
+            # for the forward transform.
+            #
+            # NOTE NOTE NOTE  2020-02-14
+            # We would normally use x-axis (along dispersion) extraction limits calculated
+            # above based on the min/max wavelength range and the source position to do the
+            # subarray extraction and set the subarray WCS accordingly. HOWEVER, the NIRCam
+            # team has asked for all data along the dispersion direction to be included in
+            # subarray cutout, so here we override the xmin/xmax values calculated above and
+            # instead hardwire the extraction limits for the x (dispersion) direction to
+            # cover the entire range of the data and use this new minimum x value in the
+            # subarray WCS transform. If the team ever decides to change the extraction limits,
+            # the following two constants must be modified accordingly.
+            xmin_ext = 0  # hardwire min x for extraction to zero
+            xmax_ext = (
+                input_model.data.shape[-1] - 1
+            )  # hardwire max x for extraction to size of data
+
+            order_model = Const1D(order)
+            order_model.inverse = Const1D(order)
+            tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
+            tr = Mapping((0, 1, 0)) | Shift(xmin_ext) & Shift(ymin) & order_model | tr
+            subwcs.set_transform("grism_detector", "direct_image", tr)
+
+            xmin = int(xmin)
+            xmax = int(xmax)
+            ymin = int(ymin)
+            ymax = int(ymax)
+
+            log.info(f"WCS made explicit for order: {order}")
+            log.info(
+                f"Spectral trace extents: (xmin: {xmin}, ymin: {ymin}),"
+                f" (xmax: {xmax}, ymax: {ymax})"
+            )
+            log.info(
+                f"Extraction limits: (xmin: {xmin_ext}, ymin: {ymin}),"
+                f" (xmax: {xmax_ext}, ymax: {ymax})"
+            )
+
+            # Cut out the subarray from the input data arrays
+            ext_data = input_model.data[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
+            ext_err = input_model.err[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
+            ext_dq = input_model.dq[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
+            if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
+                var_poisson = input_model.var_poisson[
+                    ..., ymin : ymax + 1, xmin_ext : xmax_ext + 1
+                ].copy()
+            else:
+                var_poisson = None
+            if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
+                var_rnoise = input_model.var_rnoise[
+                    ..., ymin : ymax + 1, xmin_ext : xmax_ext + 1
+                ].copy()
+            else:
+                var_rnoise = None
+            if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
+                var_flat = input_model.var_flat[
+                    ..., ymin : ymax + 1, xmin_ext : xmax_ext + 1
+                ].copy()
+            else:
+                var_flat = None
+
+            # Finish populating the output model and meta data
+            if isinstance(output_model, SlitModel):
+                output_model.data = ext_data
+                output_model.err = ext_err
+                output_model.dq = ext_dq
+                output_model.var_poisson = var_poisson
+                output_model.var_rnoise = var_rnoise
+                output_model.var_flat = var_flat
+                output_model.meta.wcs = subwcs
+                output_model.meta.wcs.bounding_box = wcs_bbox_from_shape(ext_data.shape)
+                if compute_wavelength:
+                    output_model.wavelength = compute_tso_wavelength_array(output_model)
+                output_model.meta.wcsinfo.siaf_yref_sci = (
+                    34  # update for the move, vals are the same
+                )
+                output_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
+                output_model.meta.wcsinfo.spectral_order = order
+                output_model.meta.wcsinfo.dispersion_direction = (
+                    input_model.meta.wcsinfo.dispersion_direction
+                )
+                output_model.name = "1"
+                output_model.source_type = input_model.meta.target.source_type
+                output_model.source_name = input_model.meta.target.catalog_name
+                output_model.source_alias = input_model.meta.target.proposer_name
+                output_model.xstart = 1  # FITS pixels are 1-indexed
+                output_model.xsize = ext_data.shape[-1]
+                output_model.ystart = ymin + 1  # FITS pixels are 1-indexed
+                output_model.ysize = ext_data.shape[-2]
+                output_model.source_xpos = source_xpos
+                output_model.source_ypos = 34
+                output_model.source_id = 1
+                output_model.bunit_data = input_model.meta.bunit_data
+                output_model.bunit_err = input_model.meta.bunit_err
+                if hasattr(input_model, "int_times"):
+                    output_model.int_times = input_model.int_times.copy()
 
     del subwcs
     log.info("Finished extraction")
@@ -685,6 +834,12 @@ def compute_tso_offset_center(
     xc, yc : tuple
         The x and y center of the image in direct image coordinates
 
+    Raises
+    ------
+    ValueError
+        If the distortion model requires less than four or more than five
+        inputs, a ValueError will be raised.
+
     Notes
     -----
     The wavelength is not used for the distortion calculation between
@@ -700,8 +855,15 @@ def compute_tso_offset_center(
         input_model.meta.dither.x_offset, input_model.meta.dither.y_offset
     )
     wavelength = np.nan
-    xc, yc, _, _ = distortion(v2_offset, v3_offset, wavelength, 1)
-
+    if distortion.n_inputs == 4:
+        # Default TSGRISM case
+        xc, yc, _, _ = distortion(v2_offset, v3_offset, wavelength, 1)
+    elif distortion.n_inputs == 5:
+        # DHS case, where stripe number is also passed
+        xc, yc, _, _, _ = distortion(v2_offset, v3_offset, wavelength, 1, 1)
+    else:
+        # Shouldn't be here
+        raise ValueError("TSO Distortion transform has an unexpected number of inputs.")
     return xc, yc
 
 
