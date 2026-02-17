@@ -358,17 +358,11 @@ class Extract1dStep(Step):
                 datamodels.IFUCubeModel,
                 ModelContainer,
                 SourceModelContainer,
+                datamodels.MultiSlitModel,
             ),
         ):
             # Acceptable input type, just log it
             log.debug(f"Input is a {str(output_model)}.")
-        elif isinstance(output_model, datamodels.MultiSlitModel):
-            # If input is multislit, with 3D calints, skip the step
-            log.debug("Input is a MultiSlitModel")
-            if len((output_model[0]).shape) == 3:
-                log.warning("3D input is unsupported; step will be skipped")
-                output_model.meta.cal_step.extract_1d = "SKIPPED"
-                return output_model
         else:
             log.error(f"Input is a {str(output_model)}, ")
             log.error("which was not expected for extract_1d.")
