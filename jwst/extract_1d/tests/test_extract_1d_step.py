@@ -384,3 +384,26 @@ def test_output_is_not_input(request, dataset):
 
     assert result is not input_model
     assert input_model.meta.cal_step.extract_1d is None
+
+
+def test_extract_nircam_dhs(mock_nircam_dhs, simple_wcs):
+    # input is a SourceModelContainer
+    result = Extract1dStep.call(mock_nircam_dhs)
+
+    # output is a single spectral model (not a container)
+    assert isinstance(result, dm.TSOMultiSpecModel)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
+
+    for i, exp in enumerate(result.spec):
+        tab = exp.spec_table[0]
+
+        # output wavelength is the same as input
+        _, _, expected_wave = simple_wcs(np.arange(50), np.arange(50))
+        assert np.allclose(tab["WAVELENGTH"], expected_wave)
+
+        # output flux and errors are non-zero, exact values will depend
+        # on extraction parameters
+        assert np.all(tab["FLUX"] > 0)
+        assert np.all(tab["FLUX_ERROR"] > 0)
+
+    result.close()
