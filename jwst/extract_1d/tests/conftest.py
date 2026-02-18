@@ -137,6 +137,21 @@ def mock_miri_ifu():
     model.close()
 
 
+@pytest.fixture()
+def mock_nircam_dhs():
+    """
+    Mock a MultiSlitModel in NIRCam DHS mode.
+
+    Yields
+    ------
+    MultiSlitModel
+        The mock model.
+    """
+    model = helpers.mock_nircam_dhs()
+    yield model
+    model.close()
+
+
 @pytest.fixture
 def mock_niriss_wfss_l2():
     """

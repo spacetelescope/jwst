@@ -266,6 +266,8 @@ def extract_tso_object(
                 sub_model.source_id = 1
                 sub_model.bunit_data = input_model.meta.bunit_data
                 sub_model.bunit_err = input_model.meta.bunit_err
+                if hasattr(input_model, "int_times"):
+                    sub_model.int_times = input_model.int_times.copy()
                 output_model.slits.append(sub_model)
         if hasattr(input_model, "int_times"):
             output_model.int_times = input_model.int_times.copy()
