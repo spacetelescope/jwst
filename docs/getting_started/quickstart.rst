@@ -21,17 +21,21 @@ See `the installation instructions in README.md <https://github.com/spacetelesco
 2. Activate the environment
 ===========================
 
-.. tab:: virtualenv
+.. tab:: ``mamba`` / ``conda``
+    
+    .. code-block:: shell
+
+        mamba activate -n jwst_env
+
+    > [!NOTE]
+    > ``mamba`` is the recommended drop-in replacement for the ``conda`` command. If you only have ``conda``, just replace ``mamba`` with ``conda`` in the above commands.
+
+.. tab:: ``virtualenv``
     
     .. code-block:: shell
 
         source ~/venvs/jwst_env/bin/activate
 
-.. tab:: mamba / conda
-    
-    .. code-block:: shell
-
-        mamba activate -n jwst_env
 
 3. Set CRDS environment variables
 =================================

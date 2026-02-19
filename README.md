@@ -28,9 +28,19 @@ We recommend using an isolated Python environment to install `jwst`.
 
 > [!TIP]
 > Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
-> You can manage environments with `virtualenv`, `mamba` / `conda`, etc.
+> You can manage environments with `mamba` / `conda`,`virtualenv`,  etc.
 
 To create a new environment with `jwst`:
+```shell
+mamba create -n jwst_env python=3.13
+mamba activate jwst_env
+pip install jwst
+```
+
+> [!NOTE]
+> `mamba` is the recommended drop-in replacement for the `conda` command. If you only have `conda`, just replace `mamba` with `conda` in the above commands.
+
+Alternatively, if you prefer to use `virtualenv`:
 ```shell
 virtualenv ~/venvs/jwst_env/ --python=python3.13
 source ~/venvs/jwst_env/bin/activate
@@ -38,17 +48,10 @@ pip install jwst
 ```
 
 > [!NOTE]
-> If you get a ``failed to find interpreter`` error when trying to create a new `virtualenv` environment, you need to install that version of Python to your system:
+> If you get a ``failed to find interpreter`` error when trying to create a new `virtualenv` environment, you need to install that version of Python to your system (since unlike `mamba` / `conda` or `uv`, `virtualenv` does not manage Python interpreters):
 > ```shell
 > brew install python@3.13
 > ```
-
-Alternatively, if you prefer to use `mamba` / `conda`:
-```shell
-mamba create -n jwst_env python=3.13
-mamba activate jwst_env
-pip install jwst
-```
 
 Without a specified version, `pip` defaults to the latest released version that supports your environment.
 To install a specific version of `jwst`, explicitly set that version in your `pip install` command:

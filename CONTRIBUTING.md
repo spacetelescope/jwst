@@ -96,22 +96,22 @@ When developing `jwst` (or any other Python package), you should install the pac
 > [!TIP]
 > Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
 
-The easiest way to create a development environment is with `virtualenv`:
+You can create a development environment with `mamba` / `conda`:
 ```shell
-virtualenv .venv/
-source .venv/bin/activate
+mamba create -n jwst_dev_env python=3.13
+mamba activate jwst_dev_env
 pip install -e .
 hx .
 ```
 
 Breaking down what these lines do:
-1. Create a new empty Python environment in the `.venv/` directory:
+1. Create a new empty environment called `jwst_dev_env`:
    ```shell
-   virtualenv .venv/
+   mamba create -n jwst_dev_env python=3.13
    ```
 2. "Activate" the environment (change shell variables in the current session to point to the isolated Python installation):
    ```shell
-   source .venv/bin/activate
+   mamba activate jwst_dev_env
    ```
 3. Install the local package (`jwst`) to your environment in "editable mode", so that any code changes will be instantly reflected in the installed package (useful for testing):
    ```shell
@@ -122,12 +122,19 @@ Breaking down what these lines do:
    hx .
    ```
 
-> [!TIP]
-> There are other ways of managing environments.
-> For instance, if you have `uv` installed, you can accomplish the same as above with a single command:
-> ```shell
-> uv run hx .
-> ```
+There are other ways of managing environments.
+For instance, if you have `uv` installed, you can accomplish the same as above with a single command:
+```shell
+uv run hx .
+```
+
+Or, if you prefer to use `virtualenv`:
+```shell
+virtualenv ~/venvs/jwst_dev_env/
+source ~/venvs/jwst_dev_env/bin/activate
+pip install -e .
+hx .
+```
 
 ## Making simultaneous changes to `jwst` and one of its dependencies
 
@@ -140,10 +147,10 @@ pip install -e ../stcal
 ```
 
 > [!TIP]
-> It might be easier to use a separate Python environment (`virtualenv`, `uv`, `conda`, etc.) for this work:
+> It might be easier to use a separate Python environment (`mamba` / `conda`, `virtualenv`, `uv`, etc.) for this work:
 > ```shell
-> virtualenv .venv_jwst_stcal_dev
-> source .venv_jwst_stcal_dev/bin/activate
+> mamba create -n jwst_stcal_dev_env python=3.13
+> mamba activate jwst_stcal_dev_env
 > ```
 
 Since we do not use a single repository (sometimes called a "monorepo") for these coupled packages, when making a change like this, you will need to make two pull requests: one in the `jwst` repository, and one in the dependency's repository.
