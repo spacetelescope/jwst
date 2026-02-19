@@ -147,18 +147,18 @@ def phot_table():
         ("relresponse", "<f4", (relresponse[0].size,)),
         ("reluncertainty", "<f4", (reluncertainty[0].size,)),
     ]
-    phot_table = np.recarray((5,), dtype=dtype)
+    phot = np.recarray((5,), dtype=dtype)
 
-    phot_table["filter"] = filt
-    phot_table["pupil"] = pupil
-    phot_table["order"] = order
-    phot_table["photmjsr"] = photmjsr
-    phot_table["uncertainty"] = uncertainty
-    phot_table["nelem"] = nelem
-    phot_table["wavelength"] = wavelength
-    phot_table["relresponse"] = relresponse
-    phot_table["reluncertainty"] = reluncertainty
-    return phot_table
+    phot["filter"] = filt
+    phot["pupil"] = pupil
+    phot["order"] = order
+    phot["photmjsr"] = photmjsr
+    phot["uncertainty"] = uncertainty
+    phot["nelem"] = nelem
+    phot["wavelength"] = wavelength
+    phot["relresponse"] = relresponse
+    phot["reluncertainty"] = reluncertainty
+    return phot
 
 
 @pytest.fixture(scope="module")
