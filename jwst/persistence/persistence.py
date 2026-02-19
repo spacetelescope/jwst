@@ -122,7 +122,7 @@ class DataSet:
                 current_time = mjd_to_epoch(self.output_obj.int_times[integ][1])
             else:
                 current_time = epoch_time + integ * integration_time
-
+            print(f"Integration {integ} start time (epoch): {current_time}, mjd: {epoch_to_mjd(current_time)}")
             for group in range(ngroups):
                 current_time = current_time + group_time
                 if self.persistence_time is not None:
@@ -202,3 +202,23 @@ def mjd_to_epoch(mjd):
     # 86400 seconds per day
     epoch_time = (mjd - 40587.0) * 86400.0
     return epoch_time
+
+
+def epoch_to_mjd(epoch):
+    """
+    Convert Unix epoch time to Modified Julian Date.
+
+    Parameters
+    ----------
+    epoch : float
+        Unix epoch time (seconds since January 1, 1970 00:00:00 UTC)
+
+    Returns
+    -------
+    float
+        Modified Julian Date
+    """
+    # MJD 40587.0 corresponds to Unix epoch (January 1, 1970 00:00:00 UTC)
+    # 86400 seconds per day
+    mjd = epoch / 86400.0 + 40587.0
+    return mjd
