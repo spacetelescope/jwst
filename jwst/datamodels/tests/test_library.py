@@ -5,6 +5,7 @@ import gwcs
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels
+from astropy.modeling.models import Identity
 from astropy.time import Time
 from gwcs import coordinate_frames as cf
 from stdatamodels.jwst.datamodels import ImageModel
@@ -276,7 +277,9 @@ def test_read_meta_from_open_model(example_asn_path, flatten):
         model.int_list = [1, 2, 3, 4]
         model.nested_list = [[{"key": "value"}], [{"key2": "value2"}]] * 2
         model.meta.wcs = gwcs.WCS(
-            input_frame=cf.Frame2D(name="input"), output_frame=cf.Frame2D(name="output")
+            input_frame=cf.Frame2D(name="input"),
+            output_frame=cf.Frame2D(name="output"),
+            forward_transform=Identity(2),
         )
         model.unsupported_type = set([1, 2, 3])
         meta = _read_meta_from_open_model(model, flatten)

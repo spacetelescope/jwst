@@ -35,6 +35,8 @@ def detect_outliers(
     fillval,
     in_memory,
     make_output_path,
+    pixmap_stepsize=1,
+    pixmap_order=1,
 ):
     """
     Flag outliers in imaging data.
@@ -78,6 +80,12 @@ def detect_outliers(
     make_output_path : function
         The functools.partial instance to pass to save_blot. Must be
         specified if save_blot is True.
+    pixmap_stepsize : float, optional
+        Indicates the spacing in pixels at which the WCS is evaluated when computing the pixel map.
+        Larger step sizes result in faster performance at the cost of accuracy.
+        Interpolation is only performed if ``pixmap_stepsize > 1``. Default is 1.
+    pixmap_order : int, optional
+        Interpolating spline order for pixel map computation. Must be 1 or 3. Default is 1.
 
     Returns
     -------
@@ -105,6 +113,8 @@ def detect_outliers(
             enable_ctx=False,
             enable_var=False,
             compute_err=None,
+            pixmap_order=pixmap_order,
+            pixmap_stepsize=pixmap_stepsize,
         )
         median_data, median_wcs = median_with_resampling(
             input_models,
@@ -139,6 +149,8 @@ def detect_outliers(
                     backg,
                     save_blot=save_intermediate_results,
                     make_output_path=make_output_path,
+                    pixmap_stepsize=pixmap_stepsize,
+                    pixmap_order=pixmap_order,
                 )
             else:
                 flag_model_crs(image, median_data, snr1)
