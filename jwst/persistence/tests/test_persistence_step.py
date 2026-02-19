@@ -10,9 +10,16 @@ from jwst.persistence import persistence
 from jwst.persistence.persistence_step import PersistenceStep
 
 
-@pytest.mark.skip(reason="testing int_times usage needs to be implemented.")
-def test_persistence_int_times():
-    pass
+@pytest.mark.skip(reason="testing int_times usage needs to be completed.")
+def test_persistence_int_times(create_sci_model):
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    step = PersistenceStep(persistence_time=70)
+    res = step.run(model)
+
+    # XXX Add an int_times to the model.
 
 
 def test_persistence_time_none_keeps_groupdq_unchanged(create_sci_model):
