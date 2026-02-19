@@ -133,3 +133,16 @@ image.
   Setting this to `False` helps reduce output file size for very large mosaics,
   but note that the variances are still computed internally if ``enable_err`` is `True`
   because they are needed to compute the error array.
+
+``--pixmap_stepsize``
+  Indicates the spacing at which WCS is evaluated when computing pixel map.
+  Larger step sizes result in faster performance at the cost of accuracy.
+  Interpolation is only performed if ``pixmap_stepsize > 1``.
+  If it's desired to turn on interpolation, we recommend a value of ~10
+  which seemed to work well for most modes during testing.
+  Default is 1.
+
+``--pixmap_order``
+  Interpolating spline order for pixel map computation. Has no effect unless
+  ``pixmap_stepsize > 1``. Must be 1 or 3. If it's desired to turn on interpolation,
+  we recommend a value of 3, i.e., cubic spline. Default is 1.
