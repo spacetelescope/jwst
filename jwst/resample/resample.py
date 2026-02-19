@@ -271,7 +271,7 @@ class ResampleImage(Resample):
             the :ref:`asn-jwst-naming`.
 
         pixmap_stepsize : float, optional
-            Indicates the spacing at which WCS is evaluated when computing pixel map.
+            Indicates the spacing at which the WCS is evaluated when computing the pixel map.
             WCS coordinates of the full pixel map is computed by interpolating over
             this sparse pixel map when ``pixmap_stepsize > 1``. Larger step sizes result in
             faster performance at the cost of accuracy. Default is 1.
