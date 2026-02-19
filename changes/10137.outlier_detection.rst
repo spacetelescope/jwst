@@ -1,0 +1,1 @@
+Add ``pixmap_stepsize`` and ``pixmap_order`` parameters to allow interpolated calculation of pixel map for imaging mosaics when resampling
