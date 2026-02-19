@@ -1,29 +1,33 @@
-Changelog
-=========
+Writing news fragments for the change log
+#########################################
 
-This directory contains "news fragments" which are short files that contain a
-small **ReST**-formatted text that will be added to the full changelog.
+This ``changes/`` directory contains "news fragments": small reStructuredText (``.rst``) files describing a change in a few sentences.
+When making a release, run ``towncrier build --version <VERSION>`` to consume existing fragments in ``changes/`` and insert them as a full change log entry at the top of ``CHANGES.rst`` for the released version.
 
-Make sure to use full sentences with correct case and punctuation.
+News fragment filenames consist of the pull request number and the change log category (see below).
+A single change can have more than one news fragment, if it spans multiple categories.
+For example, `pull request #10042 <https://github.com/spacetelescope/jwst/pull/10042>`_ has two change notes: ``tso_photometry`` and ``breaking``:
 
-Consuming news fragments in `changes/` into a new change log entry
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block::
 
-Running `towncrier build` will read all existing fragment files in `changes/`
-and create a new entry at the top of `CHANGES.rst` with the specified version number.
+  10028.other.rst
+  10042.breaking.rst
+  10042.tso_photometry.rst
+  10043.tweakreg.rst
+  10139.docs.rst
 
-```shell
-pip install towncrier
-towncrier build --version <VERSION>
-```
+Change log categories
+*********************
 
-News fragment change types
---------------------------
+Typically, changes to the JWST calibration pipeline will be to one or more steps and / or shared pipeline modules.
+Make a news fragment for every relevant category affected by your change.
 
-- ``<PR#>.breaking.rst``: Also add a fragment of this type if your change breaks if your change breaks **step-level or public API** ([as defined in the docs](https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private))
+If a change breaks **step-level or public API** (`as defined in the docs <https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private>`_), also add a ``<PR#>.breaking.rst`` fragment describing what changes user may need to make to their code:
 
-General Pipeline Changes
-""""""""""""""""""""""""
+- ``<PR#>.breaking.rst``: Also add this fragment if your change breaks **step-level or public API**
+
+Shared Pipeline Modules
+=======================
 
 - ``<PR#>.stpipe.rst``
 - ``<PR#>.datamodels.rst``
@@ -32,8 +36,8 @@ General Pipeline Changes
 - ``<PR#>.pipeline.rst``
 - ``<PR#>.associations.rst``
 
-Stage 1
-"""""""
+Stage 1 Steps
+=============
 
 - ``<PR#>.group_scale.rst``
 - ``<PR#>.dq_init.rst``
@@ -56,9 +60,10 @@ Stage 1
 - ``<PR#>.ramp_fitting.rst``
 - ``<PR#>.gain_scale.rst``
 
-Stage 2
-"""""""
+Stage 2 Steps
+=============
 
+- ``<PR#>.adaptive_trace_model.rst``
 - ``<PR#>.assign_wcs.rst``
 - ``<PR#>.badpix_selfcal.rst``
 - ``<PR#>.msaflagopen.rst``
@@ -83,8 +88,8 @@ Stage 2
 - ``<PR#>.extract_1d.rst``
 - ``<PR#>.resample.rst``
 
-Stage 3
-"""""""
+Stage 3 Steps
+=============
 
 - ``<PR#>.assign_mtwcs.rst``
 - ``<PR#>.tweakreg.rst``
@@ -100,8 +105,8 @@ Stage 3
 - ``<PR#>.combine_1d.rst``
 - ``<PR#>.ami.rst``
 
-Other
-"""""
+Other Changes
+=============
 
 - ``<PR#>.wfs_combine.rst``
 - ``<PR#>.white_light.rst``

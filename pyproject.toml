@@ -23,7 +23,7 @@ dependencies = [
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
     "drizzle>=2.2.0,<2.3.0",
-    "gwcs>=1.0.1,<2",
+    "gwcs>=1.0.3,<2",
     "numpy>=1.25",
     "photutils>=2.1.0",
     "pyparsing>=2.2.1",
@@ -354,6 +354,11 @@ name = 'Pipeline'
 showcontent = true
 
 # step changes
+
+[[tool.towncrier.type]]
+directory = "adaptive_trace_model"
+name = "adaptive_trace_model (spec2, spec3)"
+showcontent = true
 
 [[tool.towncrier.type]]
 directory = "align_refs"

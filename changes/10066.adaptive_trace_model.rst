@@ -1,0 +1,3 @@
+Add a new ``adaptive_trace_model`` step to the spec2 and spec3 pipelines to create a model of the spectral trace.
+Optionally, the trace model can be used to oversample the flux data, prior to resampling or cube building, to address undersampling effects.
+Only IFU data is supported in the initial implementation.

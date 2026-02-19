@@ -91,9 +91,10 @@ class PixelReplacement:
                     self.input = self.algorithm(self.input)
                 else:
                     # fit_profile method
-                    _, beta_array, _ = self.input.meta.wcs.transform(
-                        "detector", "alpha_beta", yy, xx
+                    det2ab = self.input.meta.wcs.get_transform(
+                        self.input.meta.wcs.available_frames[0], "alpha_beta"
                     )
+                    _, beta_array, _ = det2ab(yy, xx)
                     unique_beta = np.unique(beta_array)
                     unique_beta = unique_beta[~np.isnan(unique_beta)]
                     for i, beta in enumerate(unique_beta):
@@ -146,7 +147,11 @@ class PixelReplacement:
                     # fit_profile method - iterate over IFU slices
                     for i in range(30):
                         slice_wcs = nirspec.nrs_wcs_set_input(self.input, i)
-                        _, _, wave = slice_wcs.transform("detector", "slicer", yy, xx)
+                        det2slicer = slice_wcs.get_transform(
+                            self.input.meta.wcs.available_frames[0], "slicer"
+                        )
+                        _, _, wave = det2slicer(yy, xx)
+
                         # Define a mask that is True where this trace is located
                         trace_mask = wave > 0
                         trace_model = self.input.copy()

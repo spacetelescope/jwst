@@ -1,13 +1,13 @@
-.. _barshadow_step:
+.. _adaptive_trace_model_step:
 
 ====================
-Barshadow Correction
+Adaptive Trace Model
 ====================
 
 .. toctree::
    :maxdepth: 2
 
-   description.rst
+   main.rst
    arguments.rst
    reference_files.rst
    api_ref.rst
