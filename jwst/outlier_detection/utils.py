@@ -367,7 +367,7 @@ def flag_resampled_model_crs(
         The functools.partial instance to pass to save_blot. Must be
         specified if save_blot is True.
     pixmap_stepsize : float, optional
-        Indicates the spacing at which the WCS is evaluated when computing the pixel map.
+        Indicates the spacing in pixels at which the WCS is evaluated when computing the pixel map.
         WCS coordinates of the full pixel map is computed by interpolating over
         this sparse pixel map when ``pixmap_stepsize > 1``. Larger step sizes result in
         faster performance at the cost of accuracy. Default is 1.

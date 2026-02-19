@@ -80,7 +80,7 @@ Step Arguments for Imaging and Slit-like Spectroscopic data
   performing outlier detection.
 
 ``--pixmap_stepsize``
-  Indicates the spacing at which the WCS is evaluated when computing the pixel map.
+  Indicates the spacing in pixels at which the WCS is evaluated when computing the pixel map.
   Larger step sizes result in faster performance at the cost of accuracy.
   Interpolation is only performed if ``pixmap_stepsize > 1``.
   If it's desired to turn on interpolation, we recommend a value of ~10

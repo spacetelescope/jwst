@@ -81,7 +81,7 @@ def detect_outliers(
         The functools.partial instance to pass to save_blot. Must be
         specified if save_blot is True.
     pixmap_stepsize : float, optional
-        Indicates the spacing at which the WCS is evaluated when computing the pixel map.
+        Indicates the spacing in pixels at which the WCS is evaluated when computing the pixel map.
         Larger step sizes result in faster performance at the cost of accuracy.
         Interpolation is only performed if ``pixmap_stepsize > 1``. Default is 1.
     pixmap_order : int, optional
