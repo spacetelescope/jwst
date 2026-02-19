@@ -207,7 +207,13 @@ class ResampleSpec(ResampleImage):
         library = ModelLibrary(input_models, on_disk=False)
 
         super().__init__(
-            library, good_bits=good_bits, output_wcs=output_wcs_dict, wcs_pars=None, **kwargs
+            library,
+            good_bits=good_bits,
+            output_wcs=output_wcs_dict,
+            wcs_pars=None,
+            pixmap_stepsize=1,
+            pixmap_order=1,
+            **kwargs,
         )
         self.intermediate_suffix = "outlier_s2d"
 

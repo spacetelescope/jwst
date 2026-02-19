@@ -1704,3 +1704,23 @@ def test_spec_skip_cube():
     # Input is not modified
     assert result is not model
     assert model.meta.cal_step.resample is None
+
+
+def test_resample_imaging_pixmap_interpolation(nircam_rate):
+    """Test that resample gives similar results with non-default pixmap interpolation settings."""
+    img = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    # give the data some structure
+    img.data = np.random.default_rng(seed=77).random(img.data.shape)
+    img.var_rnoise = np.ones_like(img.data) * 1e-3
+
+    # resampling rotates the image a little bit, i.e. this is indeed nontrivial
+    ref = ResampleStep.call(img, pixmap_order=1, pixmap_stepsize=1)
+    res = ResampleStep.call(img, pixmap_order=3, pixmap_stepsize=10)
+
+    # catch issue where bad inputs can cause all-NaN output when variance is zero everywhere
+    assert not np.all(np.isnan(res.data))
+    # ensure results are very similar
+    assert_allclose(res.data, ref.data, rtol=1.0e-6, atol=1.0e-9)
+    # ensure results are not identical (i.e. pixmap settings actually did something)
+    with pytest.raises(AssertionError):
+        assert_allclose(res.data, ref.data)
