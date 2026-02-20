@@ -87,6 +87,7 @@ def nirspec_msa_extracted2d(nirspec_msa_rate, nirspec_msa_metfl):
     for slit in model.slits:
         slit.var_rnoise = np.ones_like(slit.data) * 0.01
         slit.var_poisson = np.ones_like(slit.data) * 0.01
+        slit.var_flat = np.ones_like(slit.data) * 0.01
     return model
 
 
