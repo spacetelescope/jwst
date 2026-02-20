@@ -100,7 +100,7 @@ class TargCentroidStep(Step):
             try:
                 ref_center, ta_dither_offset = find_dither_position(ta_model)
             except WCSError as e:
-                log.error(f"Error when assigning WCS to {self.ta_file}: {e}. Step will be SKIPPED.")
+                log.error(f"WCS error for {self.ta_file}: {e}. Step will be SKIPPED.")
                 result.meta.cal_step.targ_centroid = "SKIPPED"
                 result = self._rebuild_container(container, result)
                 return result
@@ -157,7 +157,13 @@ class TargCentroidStep(Step):
         y_center -= ystart - 1
 
         # Apply dither offset from science exposure
-        _, (offset_x, offset_y) = find_dither_position(result)
+        try:
+            _, (offset_x, offset_y) = find_dither_position(result)
+        except WCSError as e:
+            log.error(f"WCS error for science data: {e}. Step will be SKIPPED.")
+            result.meta.cal_step.targ_centroid = "SKIPPED"
+            result = self._rebuild_container(container, result)
+            return result
         log.debug(f"Applying science exposure dither offsets: x={offset_x}, y={offset_y}")
         x_center += offset_x
         y_center += offset_y
