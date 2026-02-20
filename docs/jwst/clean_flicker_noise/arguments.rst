@@ -48,7 +48,7 @@ the behavior of the processing.
 ``--n_sigma`` (float, default=2.0)
   The sigma-clipping threshold to use when searching for outliers
   and illuminated pixels to be excluded from use in the background
-  and noise fitting processes.
+  and noise fitting processes. Set to 0 to turn off outlier rejection.
 
 ``--fit_histogram`` (boolean, default=False)
   If set, the 'sigma' used with ``n_sigma`` for clipping outliers
