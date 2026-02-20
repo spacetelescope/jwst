@@ -13,6 +13,8 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.clean_flicker_noise.lib import NSClean, NSCleanSubarray
+from jwst.clean_flicker_noise.tso_median_image import make_median_image
+from jwst.extract_1d.soss_extract import pastasoss
 from jwst.flatfield import FlatFieldStep
 from jwst.lib.basic_utils import disable_logging
 from jwst.lib.reffile_utils import get_subarray_model, ref_matches_sci
@@ -106,11 +108,9 @@ def make_rate(input_model, input_dir="", return_cube=False):
     ----------
     input_model : `~stdatamodels.jwst.datamodels.RampModel`
         Input ramp model.
-
     input_dir : str
         Path to the input directory.  Used by sub-steps (e.g., ``assign_wcs``
         for NIRSpec MOS data) to find auxiliary data.
-
     return_cube : bool, optional
         If set, a `~stdatamodels.jwst.datamodels.CubeModel` will be returned, with a separate
         rate for each integration.  Otherwise, an
@@ -159,19 +159,15 @@ def post_process_rate(
     input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
                   `~stdatamodels.jwst.datamodels.CubeModel`
         Input rate model.
-
     input_dir : str
         Path to the input directory.  Used by sub-steps (e.g., ``assign_wcs``
         for NIRSpec MOS data) to find auxiliary data.
-
     assign_wcs : bool, optional
         If set and the input does not already have a WCS assigned,
         the ``assign_wcs`` step will be called on the rate model.
-
     msaflagopen : bool, optional
         If set, the ``msaflagopen`` step will be called on the rate model.
         If a WCS is not already present, ``assign_wcs`` will be called first.
-
     flat_dq : bool, optional
         If set, the ``flat_field`` step will be run on the input model. DQ
         flags are retrieved from the output and added to the input
@@ -219,7 +215,7 @@ def post_process_rate(
 
 def mask_ifu_slices(input_model, mask):
     """
-    Flag pixels within IFU slices.
+    Flag pixels within NIRSpec IFU slices.
 
     Find pixels located within IFU slices, according to the WCS,
     and flag them in the mask, so that they do not get used.
@@ -228,7 +224,6 @@ def mask_ifu_slices(input_model, mask):
     ----------
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data model
-
     mask : ndarray of bool
         2D input mask that will be updated. `True` indicates background
         pixels to be used. IFU slice regions will be set to `False`.
@@ -275,7 +270,7 @@ def mask_ifu_slices(input_model, mask):
 
 def mask_slits(input_model, mask):
     """
-    Flag pixels within science regions.
+    Flag pixels within science regions for NIRSpec slit modes.
 
     Find pixels located within MOS or fixed slit footprints
     and flag them in the mask, so that they do not get used.
@@ -284,7 +279,6 @@ def mask_slits(input_model, mask):
     ----------
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data model.
-
     mask : ndarray of bool
         2D input mask that will be updated. `True` indicates background
         pixels to be used. Slit regions will be set to `False`.
@@ -307,6 +301,51 @@ def mask_slits(input_model, mask):
         xlo, xhi = to_index(bbox[0])
         ylo, yhi = to_index(bbox[1])
         mask[..., ylo:yhi, xlo:xhi] = False
+
+    return mask
+
+
+def mask_soss_traces(input_model, mask, soss_refmodel, halfwidth=16):
+    """
+    Flag pixels within science regions for NIRISS SOSS.
+
+    Get trace positions (dependent on pupil wheel position)
+    and mask them with basic uniform width wings.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Science data model.
+    mask : ndarray of bool
+        2D input mask that will be updated. True indicates background
+        pixels to be used. Trace regions will be set to False.
+
+    Returns
+    -------
+    mask : ndarray of bool
+        2D output mask with additional flags for trace pixels.
+    """
+    pwcpos = input_model.meta.instrument.pupil_position
+    subarray = input_model.meta.subarray.name
+    wavemaps, traces = pastasoss.get_soss_wavemaps(
+        pwcpos, subarray=subarray, refmodel=soss_refmodel, spectraces=True
+    )
+    ny, nx = input_model.data.shape[-2:]
+    yidx, xidx = np.mgrid[:ny, :nx]
+    for xpts, ypts, _ in traces:
+        # Sort by x
+        order = np.argsort(xpts)
+        xpts = xpts[order]
+        ypts = ypts[order]
+
+        # Interpolate trace points onto full array width
+        x_full = np.arange(nx)
+        y_full = np.interp(x_full, xpts, ypts)
+
+        # Mask pixels within halfwidth above and below the trace
+        y_low = np.floor(y_full - halfwidth)
+        y_high = np.ceil(y_full + halfwidth)
+        mask[..., (yidx >= y_low) & (yidx <= y_high)] = False
 
     return mask
 
@@ -342,29 +381,24 @@ def clip_to_background(
     ----------
     image : ndarray of float
         2D image containing signal and background values.
-
     mask : ndarray of bool
         2D input mask to be updated. True indicates background
         pixels to be used. Regions containing signal or outliers
         will be set to `False`.
-
     sigma_lower : float, optional
         The number of standard deviations to use as the lower bound
         for the clipping limit. Values below this limit are marked
         `False` in the mask.
-
     sigma_upper : float, optional
         The number of standard deviations to use as the upper bound
         for the clipping limit. Values above this limit are marked
         `False` in the mask.
-
     fit_histogram :  bool, optional
         If set, the center value and standard deviation used with
         ``sigma_lower`` and ``sigma_upper`` for clipping outliers is derived
         from a Gaussian fit to a histogram of values. Otherwise, the
         center and standard deviation are derived from a simple iterative
         sigma clipping.
-
     lower_half_only : bool, optional
         If set, the data used to compute the center and standard deviation
         for clipping is the lower half of the distribution only. Values
@@ -372,7 +406,6 @@ def clip_to_background(
         a symmetric distribution.  This is intended to account for
         asymmetrical value distributions, with long tails in the upper
         half of the distribution, due to diffuse emission, for example.
-
     verbose : bool, optional
         If set, DEBUG level messages are issued with details on the
         computed statistics.
@@ -486,7 +519,12 @@ def clip_to_background(
 
 
 def create_mask(
-    input_model, mask_science_regions=False, n_sigma=2.0, fit_histogram=False, single_mask=False
+    input_model,
+    mask_science_regions=False,
+    n_sigma=2.0,
+    fit_histogram=False,
+    single_mask=False,
+    soss_refmodel=None,
 ):
     """
     Create a mask identifying background pixels.
@@ -496,7 +534,6 @@ def create_mask(
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data model, containing rate data with all necessary
         pre-processing already performed.
-
     mask_science_regions : bool, optional
         For NIRSpec, mask regions of the image defined by WCS bounding
         boxes for slits/slices, as well as any regions known to be
@@ -506,19 +543,20 @@ def create_mask(
         For MIRI imaging, mask regions of the detector not used for science.
         This requires that DO_NOT_USE flags are set in the DQ array
         for the input_model.
-
+        For NIRISS SOSS, use the ``soss_refmodel`` to mask the trace locations.
     n_sigma : float, optional
         Sigma threshold for masking outliers.
-
     fit_histogram : bool, optional
         If set, the 'sigma' used with ``n_sigma`` for clipping outliers
         is derived from a Gaussian fit to a histogram of values.
         Otherwise, a simple iterative sigma clipping is performed.
-
     single_mask : bool, optional
         If set, a single mask will be created, regardless of
         the number of input integrations. Otherwise, the mask will
         be a 3D cube, with one plane for each integration.
+    soss_refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`, optional
+        If ``mask_science_regions`` is True and the input exposure
+        is NIS_SOSS, will be used to mask the SOSS traces.
 
     Returns
     -------
@@ -552,6 +590,10 @@ def create_mask(
         ) > 0
         mask[non_science] = False
 
+    # If NIRISS SOSS, mask the traces from the reference model
+    if mask_science_regions and exptype == "nis_soss" and soss_refmodel is not None:
+        mask = mask_soss_traces(input_model, mask, soss_refmodel)
+
     # Mask any NaN pixels or exactly zero value pixels
     no_data_pix = np.isnan(input_model.data) | (input_model.data == 0)
     mask[no_data_pix] = False
@@ -581,19 +623,24 @@ def create_mask(
 
     # Mask outliers and signal using sigma clipping stats.
     # For 3D data, loop over each integration separately.
-    if input_model.data.ndim == 3:
-        for i in range(input_model.data.shape[0]):
+    if n_sigma > 0:
+        if input_model.data.ndim == 3:
+            for i in range(input_model.data.shape[0]):
+                clip_to_background(
+                    input_model.data[i],
+                    mask[i],
+                    sigma_upper=n_sigma,
+                    fit_histogram=fit_histogram,
+                    verbose=True,
+                )
+        else:
             clip_to_background(
-                input_model.data[i],
-                mask[i],
+                input_model.data,
+                mask,
                 sigma_upper=n_sigma,
                 fit_histogram=fit_histogram,
                 verbose=True,
             )
-    else:
-        clip_to_background(
-            input_model.data, mask, sigma_upper=n_sigma, fit_histogram=fit_histogram, verbose=True
-        )
 
     # Reduce the mask to a single plane if needed
     if single_mask and mask.ndim == 3:
@@ -611,18 +658,15 @@ def background_level(image, mask, background_method="median", background_box_siz
     ----------
     image : ndarray of float
         The 2D image containing the background to fit.
-
     mask : ndarray of bool
         The mask that indicates which pixels are to be used in fitting.
         True indicates a background pixel.
-
     background_method : {'median', 'model', None}, optional
         If 'median', the preliminary background to remove and restore
         is a simple median of the background data.  If 'model', the
         background data is fit with a low-resolution model via
         `~photutils.background.Background2D`.  If None, the background
         value is 0.0.
-
     background_box_size : tuple of int, optional
         Box size for the data grid used by `~photutils.background.Background2D` when
         ``background_method = 'model'``. For best results, use a box size
@@ -702,10 +746,8 @@ def fft_clean_full_frame(image, mask, detector):
     ----------
     image : ndarray of float
         The image to be cleaned.
-
     mask : ndarray of bool
         The mask that indicates which pixels are to be used in fitting.
-
     detector : str
         The name of the detector from which the data originate.
 
@@ -744,19 +786,15 @@ def fft_clean_subarray(
     ----------
     image : ndarray of float
         The image to be cleaned.
-
     mask : ndarray of bool
         The mask that indicates which pixels are to be used in fitting.
-
     detector : str
         The name of the detector from which the data originate.
-
     npix_iter : int
         Number of pixels to process simultaneously.  Default 512.  Should
         be at least a few hundred to access sub-kHz frequencies in areas
         where most pixels are available for fitting.  Previous default
         behavior corresponds to ``npix_iter`` of infinity.
-
     fc : tuple
         Apodizing filter definition. These parameters are tunable. The
         defaults happen to work well for NIRSpec BOTS exposures:
@@ -767,13 +805,10 @@ def fft_clean_subarray(
         4. Cosine roll-on from ``fc[2]`` to ``fc[3]``
 
         Default ``(1061, 1211, 49943, 49957)``
-
     exclude_outliers : bool
         Find and mask outliers in the fit? Default: `True`
-
     sigrej : float
         Number of sigma to clip when identifying outliers. Default: 4.
-
     minfrac : float
         Minimum fraction of pixels locally available in the mask in
         order to attempt a correction. Default: 0.05 (i.e., 5%)
@@ -917,18 +952,15 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
     ----------
     image : ndarray of float
         The image to be cleaned.
-
     mask : ndarray of bool
         The mask that indicates which pixels are to be used in fitting.
         True indicates a background pixel.
-
     axis_to_correct : int
         For NIR detectors, the axis to correct should be the detector slow
         readout direction.  Values expected are 1 or 2, following the JWST
         datamodel definition (``meta.subarray.slowaxis``).  For MIRI, flicker
         noise appears along the vertical direction, so ``axis_to_correct``
         should be set to 1 (median along the y-axis).
-
     fit_by_channel : bool, optional
         If set, flicker noise is fit independently for each detector channel.
         Ignored for MIRI and for subarray data.
@@ -1049,7 +1081,9 @@ def _check_input(exp_type, fit_method):
     return True
 
 
-def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit_by_channel):
+def _standardize_parameters(
+    exp_type, subarray, slowaxis, background_method, fit_by_channel, single_mask
+):
     """
     Standardize input parameters.
 
@@ -1068,6 +1102,8 @@ def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit
         Input option for background method.
     fit_by_channel : bool
         Input option to fit noise by channel.
+    single_mask : bool
+        Input option to make one mask for all integrations.
 
     Returns
     -------
@@ -1079,6 +1115,8 @@ def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit
     fit_by_channel : bool
         Standardized parameter value for the input subarray and
         exposure type.
+    single_mask : bool
+        Standardized parameter value for the background method.
     fc : tuple of int
         Frequency cutoff values for use with FFT correction,
         by input subarray.
@@ -1096,6 +1134,10 @@ def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit
     # Standardize background arguments
     if str(background_method).lower() == "none":
         background_method = None
+    if str(background_method).lower() == "median_image" and single_mask:
+        log.warning("The median_image background method requires draft rateints files.")
+        log.warning("Setting single_mask to False.")
+        single_mask = False
 
     # Check for fit_by_channel argument, and use only if data is full frame
     if fit_by_channel and (subarray != "FULL" or exp_type.startswith("MIR")):
@@ -1111,7 +1153,7 @@ def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit
     else:
         fc = (1061, 1211, 49943, 49957)
 
-    return axis_to_correct, background_method, fit_by_channel, fc
+    return axis_to_correct, background_method, fit_by_channel, single_mask, fc
 
 
 def _make_processed_rate_image(
@@ -1179,7 +1221,14 @@ def _make_processed_rate_image(
 
 
 def _make_scene_mask(
-    user_mask, image_model, mask_science_regions, n_sigma, fit_histogram, single_mask, save_mask
+    user_mask,
+    image_model,
+    mask_science_regions,
+    n_sigma,
+    fit_histogram,
+    single_mask,
+    save_mask,
+    soss_refmodel=None,
 ):
     """
     Make a scene mask from user input or rate image.
@@ -1200,7 +1249,8 @@ def _make_scene_mask(
         affected by failed-open MSA shutters.  For MIRI imaging, mask
         regions of the detector not used for science.
     n_sigma : float
-        N-sigma rejection level for finding outliers.
+        N-sigma rejection level for finding outliers. Set to 0.0 to skip
+        outlier rejection.
     fit_histogram : bool
         If set, the 'sigma' used with ``n_sigma`` for clipping outliers
         is derived from a Gaussian fit to a histogram of values.
@@ -1212,6 +1262,9 @@ def _make_scene_mask(
     save_mask : bool
         If set, a mask model is created and returned along with the mask
         array. If not, the ``mask_model`` returned is None.
+    soss_refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`, optional
+        If ``mask_science_regions`` is True and the input exposure
+        is NIS_SOSS, will be used to mask the SOSS traces.
 
     Returns
     -------
@@ -1240,6 +1293,7 @@ def _make_scene_mask(
             n_sigma=n_sigma,
             fit_histogram=fit_histogram,
             single_mask=single_mask,
+            soss_refmodel=soss_refmodel,
         )
 
     # Store the mask image in a model, if requested
@@ -1332,7 +1386,7 @@ def _clean_one_image(
     background_method : str
         The method for fitting the background.
     background_box_size : tuple of int
-        Background box size, used with ``background_method``
+        Background box size, used when ``background_method``
         is 'model'.
     n_sigma : float
         N-sigma rejection level for outliers.
@@ -1399,9 +1453,10 @@ def _clean_one_image(
 
         # Flag more signal in the background subtracted image,
         # with sigma set by the lower half of the distribution only
-        clip_to_background(
-            bkg_sub, mask, sigma_lower=n_sigma, sigma_upper=n_sigma, lower_half_only=True
-        )
+        if n_sigma > 0:
+            clip_to_background(
+                bkg_sub, mask, sigma_lower=n_sigma, sigma_upper=n_sigma, lower_half_only=True
+            )
 
     # Clean the noise
     if fit_method == "fft":
@@ -1458,6 +1513,7 @@ def do_correction(
     background_box_size=None,
     mask_science_regions=False,
     flat_filename=None,
+    pastasoss_filename=None,
     n_sigma=2.0,
     fit_histogram=False,
     single_mask=True,
@@ -1473,62 +1529,53 @@ def do_correction(
     ----------
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data to be corrected. Updated in place.
-
     input_dir : str
         Path to the input directory.  Used by sub-steps (e.g., ``assign_wcs``
         for NIRSpec MOS data) to find auxiliary data.
-
     fit_method : {'fft', 'median'}, optional
         The algorithm to use to fit background noise.
-
     fit_by_channel : bool, optional
         If set, flicker noise is fit independently for each detector channel.
         Ignored for MIRI, for subarray data, and for ``fit_method = 'fft'``.
-
-    background_method : {'median', 'model', None}, optional
+    background_method : {'median', 'model', 'median_image', None}, optional
         If 'median', the preliminary background to remove and restore
         is a simple median of the background data.  If 'model', the
         background data is fit with a low-resolution model via
-        `~photutils.background.Background2D`.  If None, the background
+        `~photutils.background.Background2D`.  If 'median_image' and the input
+        has multiple integrations, a median image across integrations will
+        be computed and subtracted as the background. If None, the background
         value is 0.0.
-
     background_box_size : tuple of int, optional
         Box size for the data grid used by `~photutils.background.Background2D` when
         ``background_method = 'model'``. For best results, use a box size
         that evenly divides the input image shape.
-
     mask_science_regions : bool, optional
         For NIRSpec, mask regions of the image defined by WCS bounding
         boxes for slits/slices, as well as any regions known to be
         affected by failed-open MSA shutters.  For MIRI imaging, mask
         regions of the detector not used for science.
-
     flat_filename : str, optional
         Path to a flat field image to apply to the data before fitting
         noise/background.
-
+    pastasoss_filename : str, optional
+        Path to a ``pastasoss`` reference file name. Used for NIS_SOSS only.
     n_sigma : float, optional
-        N-sigma rejection level for finding outliers.
-
+        N-sigma rejection level for finding outliers. Set to zero to skip
+        outlier rejection and use the mask as is.
     fit_histogram : bool, optional
         If set, the 'sigma' used with ``n_sigma`` for clipping outliers
         is derived from a Gaussian fit to a histogram of values.
         Otherwise, a simple iterative sigma clipping is performed.
-
     single_mask : bool, optional
         If set, a single mask will be created, regardless of
         the number of input integrations. Otherwise, the mask will
         be a 3D cube, with one plane for each integration.
-
     user_mask : str or None, optional
         Path to user-supplied mask image.
-
     save_mask : bool, optional
         Switch to indicate whether the mask should be saved.
-
     save_background : bool, optional
         Switch to indicate whether the fit background should be saved.
-
     save_noise : bool, optional
         Switch to indicate whether the fit noise should be saved.
 
@@ -1536,16 +1583,12 @@ def do_correction(
     -------
     output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Corrected data.
-
     mask_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Pixel mask to be saved or None.
-
     background_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Background model to be saved or None.
-
     noise_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Background model to be saved or None.
-
     status : {'COMPLETE', 'SKIPPED'}
         Completion status.  If errors were encountered, status is set to 'SKIPPED'
         and the output data matches the input data.  Otherwise,
@@ -1566,15 +1609,19 @@ def do_correction(
 
     # Get parameters needed for subsequent corrections, as appropriate
     # to the input data
-    axis_to_correct, background_method, fit_by_channel, fc = _standardize_parameters(
-        exp_type, subarray, slowaxis, background_method, fit_by_channel
+    axis_to_correct, background_method, fit_by_channel, single_mask, fc = _standardize_parameters(
+        exp_type, subarray, slowaxis, background_method, fit_by_channel, single_mask
     )
 
-    # Read the flat file, if provided
+    # Read the flat and pastasoss files, if provided
     flat = read_flat_file(input_model, flat_filename)
+    if pastasoss_filename is not None:
+        soss_refmodel = datamodels.PastasossModel(pastasoss_filename)
+    else:
+        soss_refmodel = None
 
     # Make a rate file if needed
-    if user_mask is None:
+    if user_mask is None or background_method == "median_image":
         image_model = _make_processed_rate_image(
             input_model, single_mask, input_dir, exp_type, mask_science_regions, flat
         )
@@ -1583,15 +1630,38 @@ def do_correction(
 
     # Make a mask model from the user input or the rate data
     background_mask, mask_model = _make_scene_mask(
-        user_mask, image_model, mask_science_regions, n_sigma, fit_histogram, single_mask, save_mask
+        user_mask,
+        image_model,
+        mask_science_regions,
+        n_sigma,
+        fit_histogram,
+        single_mask,
+        save_mask,
+        soss_refmodel=soss_refmodel,
     )
-
-    log.info(f"Cleaning image {input_model.meta.filename}")
 
     # Check data shapes for 2D, 3D, or 4D inputs
     mismatch, ndim, nints, ngroups = _check_data_shapes(input_model, background_mask)
     if mismatch:
         return input_model, None, None, None, status
+
+    # Make a background cube from a median image across integrations if needed
+    if background_method == "median_image":
+        if nints <= 1:
+            log.warning(f"The median_image background method cannot be used with nints={nints}")
+            log.warning("The step will be skipped.")
+            return input_model, None, None, None, status
+        median_image = make_median_image(input_model, image_model)
+
+        # The median image will be directly subtracted, so set background
+        # method to None for processing.
+        background_method = None
+
+        # Also add one to the ngroups, since the first group can now be processed
+        if ndim > 3:
+            ngroups += 1
+    else:
+        median_image = None
 
     # Close the draft rate model if created - it is no longer needed.
     if image_model is not input_model:
@@ -1608,6 +1678,7 @@ def do_correction(
     input_data = input_model.data.copy()
 
     # Loop over integrations and groups (even if there's only 1)
+    log.info(f"Cleaning image {input_model.meta.filename}")
     for i in range(nints):
         log.debug(f"Working on integration {i + 1}")
         for j in range(ngroups):
@@ -1623,15 +1694,22 @@ def do_correction(
             if ndim == 2:
                 image = input_data
             elif ndim == 3:
-                image = input_data[i]
+                if median_image is not None:
+                    image = input_data[i] - median_image[i]
+                else:
+                    image = input_data[i]
             else:
-                # Ramp data input:
-                # subtract the current group from the next one
-                image = input_data[i, j + 1] - input_data[i, j]
-                dq = input_model.groupdq[i, j + 1]
+                # Ramp data input
+                if median_image is not None:
+                    # subtract the median ramp
+                    image = input_data[i, j] - median_image[i, j]
+                else:
+                    # subtract the current group from the next one
+                    image = input_data[i, j + 1] - input_data[i, j]
+                    dq = input_model.groupdq[i, j + 1]
 
-                # Mask any DNU and JUMP pixels
-                _mask_unusable(mask, dq)
+                    # Mask any DNU and JUMP pixels
+                    _mask_unusable(mask, dq)
 
             # Clean the image
             cleaned_image, background, success = _clean_one_image(
@@ -1673,15 +1751,27 @@ def do_correction(
                 if save_background:
                     background_to_save[:] = background
             elif ndim == 3:
-                input_model.data[i] = cleaned_image
-                if save_background:
-                    background_to_save[i] = background
+                if median_image is not None:
+                    # Add the median image back in
+                    input_model.data[i] = median_image[i] + cleaned_image
+                    if save_background:
+                        background_to_save[i] = median_image[i]
+                else:
+                    input_model.data[i] = cleaned_image
+                    if save_background:
+                        background_to_save[i] = background
             else:
-                # Add the cleaned data diff to the previously cleaned group,
-                # rather than the noisy input group
-                input_model.data[i, j + 1] = input_model.data[i, j] + cleaned_image
-                if save_background:
-                    background_to_save[i, j + 1] = background
+                if median_image is not None:
+                    # Add the median ramp back in
+                    input_model.data[i, j] = median_image[i, j] + cleaned_image
+                    if save_background:
+                        background_to_save[i, j] = median_image[i, j]
+                else:
+                    # Add the cleaned data diff to the previously cleaned group,
+                    # rather than the noisy input group
+                    input_model.data[i, j + 1] = input_model.data[i, j] + cleaned_image
+                    if save_background:
+                        background_to_save[i, j + 1] = background
 
     # Store the background image in a model, if requested
     if save_background:
