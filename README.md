@@ -37,8 +37,12 @@ mamba activate jwst_env
 pip install jwst
 ```
 
-> [!NOTE]
-> `mamba` is the recommended drop-in replacement for the `conda` command. If you only have `conda`, just replace `mamba` with `conda` in the above commands.
+> [!CAUTION]
+> The Anaconda organization has [updated their terms of service](https://legal.anaconda.com/policies/en/#:~:text=2.1%20Organizational%20Use.%C2%A0) to indicate that any usage of their services requires a paid license, if used by an organization of more than 200 users.
+> This includes pulling packages from the Anaconda `defaults` channels, as well as installing the `conda` command.
+> 
+> `mamba` is the recommended drop-in replacement for the `conda` command.
+> We recommend that you use `mamba` and pull packages from the `conda-forge` channel, instead of using `conda` and the `defaults` channel.
 
 Alternatively, if you prefer to use `virtualenv`:
 ```shell
