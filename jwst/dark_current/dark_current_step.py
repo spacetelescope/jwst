@@ -114,7 +114,10 @@ class DarkCurrentStep(Step):
         else:
             # First prioritize a 2D average_dark_current, if defined in dark.
             # If not present, apply scalar to datamodel array, if scalar is present.
-            if np.sum(dark_model.average_dark_current) == 0.0:
+            if (
+                dark_model.average_dark_current is None
+                or np.sum(dark_model.average_dark_current) == 0.0
+            ):
                 input_model.average_dark_current = (
                     input_model.get_default("average_dark_current")
                     + dark_model.meta.exposure.average_dark_current
