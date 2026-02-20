@@ -15,15 +15,14 @@ def test_warning_inside_capture_logging():
         warnings.warn("expected", UserWarning)
 
 
-@pytest.mark.xfail
 def test_unexpected_warning_inside_capture_logging():
     """
-    This should fail (see xfail) since the warning doesn't match.
-    We're using an xfail here because we're testing that pytest.warns
-    fails to catch a warnings.
+    This test catches the exception raised due to warnings not matching.
+    We're testing that pytest.warns fails to catch a warnings.
     """
-    with _help_pytest_warns(), pytest.warns(UserWarning, match="expected"):
-        warnings.warn("not the warning you're looking for", UserWarning)
+    with pytest.raises(UserWarning, match="not the warning"):
+        with _help_pytest_warns(), pytest.warns(UserWarning, match="expected"):
+            warnings.warn("not the warning you're looking for", UserWarning)
 
 
 @pytest.mark.filterwarnings("ignore:foo")
