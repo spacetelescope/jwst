@@ -35,6 +35,8 @@ jobs:
   check:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@99401c364fa51c9c507d3cd6d272049278ac0b2c # v2.4.0
     with:
+      # remove when we can use a tox later than 4.41
+      toxdeps: '--uploaded-prior-to=2026-02-18T00:00:00Z'
       default_python: "3.12"
       envs: |
         - linux: check-dependencies
@@ -52,6 +54,8 @@ jobs:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@99401c364fa51c9c507d3cd6d272049278ac0b2c  # v2.4.0
     needs: [ crds_context ]
     with:
+      # remove when we can use a tox later than 4.41
+      toxdeps: '--uploaded-prior-to=2026-02-18T00:00:00Z'
       setenv: |
         CRDS_PATH: /tmp/data/crds_cache
         CRDS_SERVER_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
