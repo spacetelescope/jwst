@@ -7,6 +7,7 @@ import math
 import gwcs
 import numpy as np
 import pytest
+from astropy import units as u
 from astropy.modeling.models import Const1D, Identity, Mapping, Scale, Shift
 from stdatamodels.jwst import datamodels
 
@@ -233,10 +234,8 @@ def test_setup_wcs():
     assert thiscube.naxis3 == 1092
 
 
-@pytest.mark.parametrize("input_frame", ["detector", "coordinates"])
-def test_footprint_miri(input_frame):
+def test_footprint_miri():
     input_model = mock_miri_model()
-    input_model.meta.wcs.available_frames[0] = input_frame
 
     this_channel = "3"
     coord_system = "skyalign"
@@ -263,8 +262,25 @@ def test_footprint_miri_internal_cal(input_frame):
     # Mock a different WCS with alpha_beta available, for internal cal smoke test
     pipeline = []
     if input_frame == "coordinates":
-        pipeline.append(("coordinates", Identity(2)))
-    pipeline.extend([("detector", Mapping((0, 1, 1))), ("alpha_beta", None)])
+        pipeline.append((gwcs.Frame2D(name="coordinates"), Identity(2)))
+
+    pipeline.extend(
+        [
+            (gwcs.Frame2D(name="detector"), Mapping((0, 1, 1))),
+            (
+                gwcs.CompositeFrame(
+                    [
+                        gwcs.Frame2D(
+                            name="alpha_beta_spatial", axes_order=(0, 1), unit=(u.arcsec, u.arcsec)
+                        ),
+                        gwcs.SpectralFrame(name="lam", axes_order=(2,), unit=(u.nm,)),
+                    ],
+                    name="alpha_beta",
+                ),
+                None,
+            ),
+        ]
+    )
     input_model.meta.wcs = gwcs.WCS(pipeline)
 
     this_channel = "3"
