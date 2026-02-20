@@ -279,3 +279,23 @@ def test_skip_one_exposure_imaging():
     # Input is not modified
     assert result is not model
     assert model.meta.cal_step.outlier_detection is None
+
+
+def test_outlier_step_pixmap_interpolation(mirimage_three_sci):
+    """Test that outlier detection runs with non-default pixmap interpolation settings."""
+    container = ModelLibrary(mirimage_three_sci)
+
+    # Drop a CR on the science array
+    with container:
+        zeroth = container.borrow(0)
+        zeroth.data[12, 12] += 1
+        container.shelve(zeroth)
+
+    # Run outlier detection with non-default pixmap interpolation settings
+    OutlierDetectionStep.call(container, in_memory=True, pixmap_stepsize=5, pixmap_order=3)
+
+    # Verify CR is flagged
+    with container:
+        zeroth = container.borrow(0)
+        assert zeroth.dq[12, 12] == helpers.OUTLIER_DO_NOT_USE
+        container.shelve(zeroth, modify=False)

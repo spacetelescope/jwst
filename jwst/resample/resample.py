@@ -56,6 +56,8 @@ class ResampleImage(Resample):
         report_var=True,
         compute_err=None,
         asn_id=None,
+        pixmap_stepsize=1,
+        pixmap_order=1,
     ):
         """
         Initialize the ResampleImage object.
@@ -267,6 +269,16 @@ class ResampleImage(Resample):
         asn_id : str, None, optional
             The association id. The id is what appears in
             the :ref:`asn-jwst-naming`.
+
+        pixmap_stepsize : float, optional
+            Indicates the spacing in pixels
+            at which the WCS is evaluated when computing the pixel map.
+            WCS coordinates of the full pixel map is computed by interpolating over
+            this sparse pixel map when ``pixmap_stepsize > 1``. Larger step sizes result in
+            faster performance at the cost of accuracy. Default is 1.
+
+        pixmap_order : int, optional
+            Interpolating spline order for pixel map computation. Must be 1 or 3. Default is 1.
         """
         self.input_models = input_models
         self.output_jwst_model = None
@@ -340,6 +352,8 @@ class ResampleImage(Resample):
             enable_ctx=enable_ctx,
             enable_var=enable_var,
             compute_err=compute_err,
+            pixmap_stepsize=pixmap_stepsize,
+            pixmap_order=pixmap_order,
         )
 
     def input_model_to_dict(self, model, weight_type, enable_var, compute_err):

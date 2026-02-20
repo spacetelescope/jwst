@@ -1,6 +1,7 @@
 import os
 from glob import glob
 
+import astropy.units as u
 import gwcs
 import numpy as np
 import pytest
@@ -128,7 +129,14 @@ def miri_mrs():
 
     # Mock a wcs that just returns 1 for alpha, beta, lam
     transform = Mapping((0, 1, 1), n_inputs=2) | Const1D(1) & Const1D(1) & Const1D(1)
-    model.meta.wcs = gwcs.WCS([("detector", transform), ("alpha_beta", None)])
+    output_frame = gwcs.CompositeFrame(
+        [
+            gwcs.Frame2D(name="alpha_beta_spatial", axes_order=(0, 1), unit=(u.arcsec, u.arcsec)),
+            gwcs.SpectralFrame(name="lam", axes_order=(2,), unit=(u.um,)),
+        ],
+        name="alpha_beta",
+    )
+    model.meta.wcs = gwcs.WCS([(gwcs.Frame2D(name="detector"), transform), (output_frame, None)])
     return model, bad_idx
 
 

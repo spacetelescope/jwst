@@ -6,33 +6,33 @@ import math
 
 import gwcs
 import numpy as np
-from astropy.modeling.models import Const1D, Mapping, Scale, Shift
+import pytest
+from astropy import units as u
+from astropy.modeling.models import Const1D, Identity, Mapping, Scale, Shift
 from stdatamodels.jwst import datamodels
 
 from jwst.cube_build import coord, cube_build_wcs_util, ifu_cube, instrument_defaults
 
-shape = (101, 101)
-xcenter = 50
-ycenter = 50
+SHAPE = (101, 101)
+XCENTER = 50
+YCENTER = 50
 
-slice_gap = np.zeros(shape)
-slice_gap[:, 5:25] = 1
-slice_gap[:, 30:50] = 2
-slice_gap[:, 55:75] = 3
-slice_gap[:, 80:] = 4
+SLICE_GAP = np.zeros(SHAPE)
+SLICE_GAP[:, 5:25] = 1
+SLICE_GAP[:, 30:50] = 2
+SLICE_GAP[:, 55:75] = 3
+SLICE_GAP[:, 80:] = 4
 
 
 def mock_wcs():
     """Simple WCS for testing"""
-
-    global xcenter, ycenter, shape, slice_gap
 
     # for given shape and wcs this will result in
     # ra from 40.6 to 49.9 [x = -49, 49:  (x +1 -crpix1) * cdelt1 + crval1]
     # dec from 45.1 to 45.4
     # wave from 7.5 to 8.5
 
-    crpix1 = xcenter
+    crpix1 = XCENTER
     crpix3 = 1.0
     cdelt1 = 0.1
     cdelt2 = 0.1
@@ -46,7 +46,7 @@ def mock_wcs():
     dec = Const1D(crval2)
     wave = Shift(1 - crpix3) | Scale(cdelt3) | Shift(crval3)
     map_input = Mapping((0, 1, 1), n_inputs=2)
-    label_mapper = gwcs.selector.LabelMapperArray(slice_gap)
+    label_mapper = gwcs.selector.LabelMapperArray(SLICE_GAP)
     transforms = {}
     for slice_idx in range(1, 5):
         extra_shift = Shift(cdelt2 * slice_idx)
@@ -59,6 +59,18 @@ def mock_wcs():
     pipeline = [(input_frame, det2world), (output_frame, None)]
     wcs = gwcs.WCS(pipeline)
     return wcs
+
+
+def mock_miri_model():
+    input_model = datamodels.IFUImageModel()
+    input_model.meta.instrument.name = "MIRI"
+    input_model.meta.instrument.detector = "MIRIFULONG"
+    input_model.meta.instrument.channel = "34"
+    input_model.meta.instrument.band = "SHORT"
+
+    input_model.data = np.zeros(SHAPE)
+    input_model.meta.wcs = mock_wcs()
+    return input_model
 
 
 def test_coord_trans1():
@@ -223,22 +235,12 @@ def test_setup_wcs():
 
 
 def test_footprint_miri():
-    global shape
-
-    input_model = datamodels.IFUImageModel()
-    input_model.meta.instrument.name = "MIRI"
-    input_model.meta.instrument.detector = "MIRIFULONG"
-    input_model.meta.instrument.channel = "34"
-    input_model.meta.instrument.band = "SHORT"
-
-    input_model.data = np.zeros(shape)
-    input_model.meta.wcs = mock_wcs()
+    input_model = mock_miri_model()
 
     this_channel = "3"
     coord_system = "skyalign"
     instrument_info = instrument_defaults.InstrumentInfo()
     instrument_info.set_xslice_limits(0, 101, this_channel)
-    x1, x2 = instrument_info.get_miri_slice_endpts(this_channel)
 
     corners = cube_build_wcs_util.find_corners_miri(
         input_model, this_channel, instrument_info, coord_system
@@ -251,3 +253,52 @@ def test_footprint_miri():
     assert dec_max == 45.4
     assert lambda_min == 7.5
     assert lambda_max == 8.5
+
+
+@pytest.mark.parametrize("input_frame", ["detector", "coordinates"])
+def test_footprint_miri_internal_cal(input_frame):
+    input_model = mock_miri_model()
+
+    # Mock a different WCS with alpha_beta available, for internal cal smoke test
+    pipeline = []
+    if input_frame == "coordinates":
+        pipeline.append((gwcs.Frame2D(name="coordinates"), Identity(2)))
+
+    pipeline.extend(
+        [
+            (gwcs.Frame2D(name="detector"), Mapping((0, 1, 1))),
+            (
+                gwcs.CompositeFrame(
+                    [
+                        gwcs.Frame2D(
+                            name="alpha_beta_spatial", axes_order=(0, 1), unit=(u.arcsec, u.arcsec)
+                        ),
+                        gwcs.SpectralFrame(name="lam", axes_order=(2,), unit=(u.nm,)),
+                    ],
+                    name="alpha_beta",
+                ),
+                None,
+            ),
+        ]
+    )
+    input_model.meta.wcs = gwcs.WCS(pipeline)
+
+    this_channel = "3"
+    coord_system = "internal_cal"
+    instrument_info = instrument_defaults.InstrumentInfo()
+    instrument_info.set_xslice_limits(0, 101, this_channel)
+
+    corners = cube_build_wcs_util.find_corners_miri(
+        input_model, this_channel, instrument_info, coord_system
+    )
+
+    (a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max) = corners
+
+    # all values are mocked to just return the input, so output extent should
+    # match the input extent (0 to 101)
+    assert a_min == 0.0
+    assert a_max == 101.0
+    assert b_min == 0.0
+    assert b_max == 101.0
+    assert lambda_min == 0.0
+    assert lambda_max == 101.0

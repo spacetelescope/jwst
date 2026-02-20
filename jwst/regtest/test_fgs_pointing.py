@@ -12,8 +12,19 @@ from numpy import ones  # noqa: E402
 from numpy.testing import assert_allclose  # noqa: E402
 
 from jwst.datamodels import Level1bModel  # type: ignore[attr-defined] # noqa: E402
+from jwst.lib import engdb_mast, siafdb  # noqa: E402
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
-from jwst.lib import siafdb  # noqa: E402
+
+# Mark all tests in this module as slow due to possible remote DB connection
+pytestmark = pytest.mark.slow
+
+# The tests here need MAST DB to be available.
+try:
+    engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
+except RuntimeError as exception:
+    pytest.skip(
+        f"Live MAST Engineering Service not available: {exception}", allow_module_level=True
+    )
 
 # All the FGS GUIDER examples. Generated from proposal JW01029
 FGS_PATHS = sorted(

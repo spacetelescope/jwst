@@ -1,6 +1,4 @@
-"""
-Test suite for set_telescope_pointing
-"""
+"""Tests for set_telescope_pointing that might need DB connection."""
 
 import pytest
 
@@ -21,10 +19,21 @@ from jwst.lib import (
     siafdb,  # noqa: E402
 )
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
-from jwst.lib.basic_utils import LoggingContext
+from jwst.lib.basic_utils import LoggingContext  # noqa: E402
 from jwst.tests.helpers import word_precision_check  # noqa: E402
 
-# Setup mock engineering service
+# Mark all tests in this module as slow due to possible remote DB connection
+pytestmark = pytest.mark.slow
+
+# The tests here need MAST DB to be available.
+try:
+    engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
+except RuntimeError as exception:
+    pytest.skip(
+        f"Live MAST Engineering Service not available: {exception}", allow_module_level=True
+    )
+
+# Setup inputs for engineering service
 STARTTIME = Time("2022-06-03T17:25:40", format="isot")
 ENDTIME = Time("2022-06-03T17:25:56", format="isot")
 ZEROTIME_START = Time("2014-01-01")
@@ -102,7 +111,16 @@ METAS_ISCLOSE = [
 
 @pytest.fixture(params=[("good_model", True), ("bad_model", False), ("fits_nomodel", False)])
 def file_case(request, tmp_path):
-    """Generate files with different model states"""
+    """
+    Generate files with different model states.
+
+    Returns
+    -------
+    path
+        File path
+    allow
+        If False, the file should be usable only when ``allow_any_file`` is set to True
+    """
     case, allow = request.param
 
     if case == "good_model":
@@ -122,14 +140,15 @@ def file_case(request, tmp_path):
         path = tmp_path / "empty.fits"
         hdul.writeto(path)
     else:
-        assert False, f"Cannot produce a file for {case}"
+        raise AssertionError(f"Cannot produce a file for {case}")
 
     return path, allow
 
 
 @pytest.mark.parametrize("allow_any_file", [True, False])
 def test_allow_any_file(file_case, allow_any_file):
-    """Test various files against whether they should be allowed or not
+    """
+    Test various files against whether they should be allowed or not.
 
     Parameters
     ----------
@@ -153,14 +172,8 @@ def test_allow_any_file(file_case, allow_any_file):
                 stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
 
 
-@pytest.mark.parametrize("method", [method for method in stp.Methods])
-def test_method_string(method):
-    """Ensure that the value of the method is the string representation"""
-    assert f"{method}" == method.value
-
-
 def test_override_calc_wcs():
-    """Test matrix override in the full calculation"""
+    """Test matrix override in the full calculation."""
     t_pars = make_t_pars()
     t_pars.method = stp.Methods.OPS_TR_202111
     wcsinfo, vinfo, _ = stp.calc_wcs(t_pars)
@@ -190,7 +203,7 @@ def test_override_calc_wcs():
     "attribute, expected", [("m_eci2j", "overridden"), ("m_j2fgs1", "untouched")]
 )
 def test_override(attribute, expected):
-    """Test overriding of Transforms attributes"""
+    """Test overriding of Transforms attributes."""
     overrides = stp.Transforms(m_eci2j="overridden")
     to_override = stp.Transforms(m_eci2j="original", m_j2fgs1="untouched", override=overrides)
 
@@ -198,7 +211,7 @@ def test_override(attribute, expected):
 
 
 def test_transform_serialize(calc_transforms, tmp_path):
-    """Test serialization of Transforms"""
+    """Test serialization of Transforms."""
     transforms, t_pars = calc_transforms
 
     path = tmp_path / "transforms.asdf"
@@ -209,13 +222,14 @@ def test_transform_serialize(calc_transforms, tmp_path):
     assert str(transforms) == str(from_asdf)
 
 
-@pytest.mark.parametrize("matrix", [matrix for matrix in stp.Transforms()._fields])
+@pytest.mark.parametrize("matrix", stp.Transforms()._fields)
 def test_methods(calc_transforms, matrix):
-    """Ensure expected calculate of the specified matrix
+    """
+    Ensure expected calculate of the specified matrix.
 
     Parameters
     ----------
-    transforms, t_pars : Transforms, TransformParameters
+    calc_transforms : Transforms, TransformParameters
         The transforms and the parameters used to generate the transforms
 
     matrix : str
@@ -225,7 +239,8 @@ def test_methods(calc_transforms, matrix):
 
 
 def test_coarse_202111_fgsid(calc_coarse_202111_fgsid):
-    """Test COARSE_202111 to ensure correct FGS id is used.
+    """
+    Test COARSE_202111 to ensure correct FGS id is used.
 
     If an FGS is specifically used for science, the other FGS is the guider.
     For all other instruments, the assumption is that FGS1 is the guider, but
@@ -239,9 +254,10 @@ def test_coarse_202111_fgsid(calc_coarse_202111_fgsid):
     assert fgsid_used == fgs_expected
 
 
-@pytest.mark.parametrize("matrix", [matrix for matrix in stp.Transforms()._fields])
+@pytest.mark.parametrize("matrix", stp.Transforms()._fields)
 def test_coarse_202111_fgsid_matrices(calc_coarse_202111_fgsid, matrix):
-    """Test COARSE_202111 matrices using various FGS settings
+    """
+    Test COARSE_202111 matrices using various FGS settings.
 
     If an FGS is specifically used for science, the other FGS is the guider.
     For all other instruments, the assumption is that FGS1 is the guider, but
@@ -254,7 +270,8 @@ def test_coarse_202111_fgsid_matrices(calc_coarse_202111_fgsid, matrix):
 
 
 def test_change_engdb_url():
-    """Test changing the engineering database by call for success.
+    """
+    Test changing the engineering database by call for success.
 
     The given time and database should not find any values.
     """
@@ -264,45 +281,29 @@ def test_change_engdb_url():
         )
 
 
-def test_change_engdb_url_fail():
-    """Test changing the engineering database by call"""
-    with pytest.raises(Exception):
-        stp.get_pointing(
-            Time("2019-06-03T17:25:40", format="isot").mjd,
-            Time("2019-06-03T17:25:56", format="isot").mjd,
-            engdb_url="http://nonexistent.fake.example",
-        )
-
-
 def test_strict_pointing(data_file_strict):
-    """Test failure on strict pointing"""
+    """Test failure on strict pointing."""
     with pytest.raises(ValueError):
         stp.add_wcs(data_file_strict, tolerance=0)
 
 
-def test_get_pointing():
-    """Ensure that the averaging works."""
+def test_get_pointing_fail():
+    with pytest.raises(ValueError):
+        (q, j2fgs_matrix, fmscorr, obstime, gs_commanded) = stp.get_pointing(47892.0, 48256.0)
 
-    (q, j2fgs_matrix, fsmcorr, obstime, gs_commanded, fgsid, gs_position) = stp.get_pointing(
-        STARTTIME.mjd, ENDTIME.mjd
-    )
+
+def test_get_pointing_and_logging(caplog):
+    """Ensure that the averaging works."""
+    with LoggingContext(stp.logger, level=logging.DEBUG):
+        (q, j2fgs_matrix, fsmcorr, obstime, gs_commanded, fgsid, gs_position) = stp.get_pointing(
+            STARTTIME.mjd, ENDTIME.mjd
+        )
 
     assert np.allclose(q, Q_EXPECTED)
     assert np.allclose(j2fgs_matrix, J2FGS_EXPECTED)
     assert np.allclose(fsmcorr, FSMCORR_EXPECTED)
     assert np.isclose(obstime.value, OBSTIME_EXPECTED.value)
 
-
-def test_get_pointing_fail():
-    with pytest.raises(Exception):
-        (q, j2fgs_matrix, fmscorr, obstime, gs_commanded) = stp.get_pointing(47892.0, 48256.0)
-
-
-def test_logging(caplog):
-    with LoggingContext(stp.logger, level=logging.DEBUG):
-        (q, j2fgs_matrix, fsmcorr, obstime, gs_commanded, fgsid, gs_position) = stp.get_pointing(
-            STARTTIME.mjd, ENDTIME.mjd
-        )
     assert "Determining pointing between observations times" in caplog.text
     assert "Telemetry search tolerance" in caplog.text
     assert "Reduction function" in caplog.text
@@ -323,12 +324,7 @@ def test_add_wcs_default(data_file, tmp_path):
     """Handle when no pointing exists and the default is used."""
     expected_name = "add_wcs_default.fits"
 
-    try:
-        stp.add_wcs(data_file, tolerance=0, allow_default=True)
-    except ValueError:
-        pass  # This is what we want for the test.
-    except Exception as e:
-        pytest.skip("Live ENGDB service is not accessible.\nException={}".format(e))
+    stp.add_wcs(data_file, tolerance=0, allow_default=True)
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -353,12 +349,7 @@ def test_add_wcs_default_fgsacq(tmp_path):
         get_pkg_data_filename("data/add_wcs_default_acq1.fits", package="jwst.lib.tests")
     ) as model:
         expected_name = "add_wcs_default_acq1.fits"
-        try:
-            stp.update_wcs(model, tolerance=0, allow_default=True)
-        except ValueError:
-            pass  # This is what we want for the test.
-        except Exception as e:
-            pytest.skip("Live ENGDB service is not accessible.\nException={}".format(e))
+        stp.update_wcs(model, tolerance=0, allow_default=True)
 
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
@@ -375,7 +366,7 @@ def test_add_wcs_default_nosiaf(data_file_nosiaf):
 
 
 def test_add_wcs_with_db(data_file, tmp_path):
-    """Test using the database"""
+    """Test using the database."""
     expected_name = "add_wcs_with_db.fits"
 
     stp.add_wcs(data_file)
@@ -399,22 +390,17 @@ def test_add_wcs_with_db(data_file, tmp_path):
 
 @pytest.mark.parametrize("fgsid", [1, 2])
 def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
-    """Test using the database"""
+    """Test using the database."""
     expected_name = f"add_wcs_with_mast_fgs{fgsid}.fits"
-
-    # See if access to MAST is available.
-    try:
-        engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
-    except RuntimeError as exception:
-        pytest.skip(f"Live MAST Engineering Service not available: {exception}")
 
     # Execute the operation.
     try:
         stp.add_wcs(data_file_fromsim, engdb_url=engdb_mast.MAST_BASE_URL, fgsid=fgsid)
     except ValueError as exception:
-        pytest.xfail(
-            f"No telemetry exists. Update test to use existing telemetry. Exception: {exception}"
-        )
+        raise AssertionError(
+            "No telemetry exists. Update test to use existing telemetry. "
+            f"Exception: {repr(exception)}"
+        ) from None
 
     # Tests
     with datamodels.Level1bModel(data_file_fromsim) as model:
@@ -434,7 +420,7 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
 
 
 def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
-    """Test using the database"""
+    """Test using the database."""
     expected_name = "add_wcs_method_full_nosiafdb.fits"
 
     # Calculate
@@ -458,9 +444,7 @@ def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
 
 
 def test_default_siaf_values(data_file_nosiaf):
-    """
-    Test that FITS WCS default values were set.
-    """
+    """Test that FITS WCS default values were set."""
     with datamodels.Level1bModel(data_file_nosiaf) as model:
         model.meta.exposure.start_time = STARTTIME.mjd
         model.meta.exposure.end_time = ENDTIME.mjd
@@ -477,9 +461,7 @@ def test_default_siaf_values(data_file_nosiaf):
 
 
 def test_tsgrism_siaf_values(data_file_nosiaf):
-    """
-    Test that FITS WCS default values were set.
-    """
+    """Test that FITS WCS default values were set."""
     with datamodels.Level1bModel(data_file_nosiaf) as model:
         model.meta.exposure.start_time = STARTTIME.mjd
         model.meta.exposure.end_time = ENDTIME.mjd
@@ -493,9 +475,7 @@ def test_tsgrism_siaf_values(data_file_nosiaf):
 
 
 def test_mirim_tamrs_siaf_values(data_file_nosiaf):
-    """
-    Test that FITS WCS default values were set.
-    """
+    """Test that FITS WCS default values were set."""
     with datamodels.Level1bModel(data_file_nosiaf) as model:
         model.meta.exposure.start_time = STARTTIME.mjd
         model.meta.exposure.end_time = ENDTIME.mjd
@@ -554,18 +534,24 @@ def test_moving_target_tnotinrange(caplog, data_file_moving_target):
 # Utilities and fixtures
 # ######################
 def make_t_pars(detector="any", fgsid_telem=1, fgsid_user=None):
-    """Setup initial Transforms Parameters
+    """
+    Set up initial Transforms Parameters.
 
     This set was derived from the first valid group of engineering parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
 
     Parameters
-    ==========
+    ----------
     fgsid_telem : [1, 2]
         The FGS reference guider to report from telemetry.
 
     fgsid_user : [None, 1, 2]
         The user-specified FGS to use as the reference guider.
+
+    Returns
+    -------
+    t_pars
+        Transform Parameters
     """
     t_pars = stp.TransformParameters()
 
@@ -611,17 +597,18 @@ def make_t_pars(detector="any", fgsid_telem=1, fgsid_user=None):
 
 
 def _calc_coarse_202111_fgsid_idfunc(value):
-    """Created test IDS for calc_coarse_202111_fgsid"""
+    """Create test IDS for calc_coarse_202111_fgsid."""
     detector, fgsid_user, fgs_expected = value
     return f"{detector}-{fgsid_user}"
 
 
 def _test_methods(calc_transforms, matrix, truth_ext=""):
-    """Private function to ensure expected calculate of the specified matrix
+    """
+    Private function to ensure expected calculate of the specified matrix.
 
     Parameters
     ----------
-    transforms, t_pars : Transforms, TransformParameters
+    calc_transforms : Transforms, TransformParameters
         The transforms and the parameters used to generate the transforms
 
     matrix : str
@@ -662,7 +649,7 @@ def _test_methods(calc_transforms, matrix, truth_ext=""):
     ids=_calc_coarse_202111_fgsid_idfunc,
 )
 def calc_coarse_202111_fgsid(request, tmp_path_factory):
-    """Calculate the transforms for COARSE_202111 with various FGS specifications"""
+    """Calculate the transforms for COARSE_202111 with various FGS specifications."""
     detector, fgsid_user, fgs_expected = request.param
 
     # Create transform parameters.
@@ -682,9 +669,9 @@ def calc_coarse_202111_fgsid(request, tmp_path_factory):
     return transforms, t_pars, truth_ext, fgs_expected
 
 
-@pytest.fixture(scope="module", params=[method for method in stp.Methods])
+@pytest.fixture(scope="module", params=stp.Methods)
 def calc_transforms(request, tmp_path_factory):
-    """Calculate matrices for specified method method"""
+    """Calculate matrices for specified method method."""
     t_pars = make_t_pars()
 
     # Set the method
@@ -761,7 +748,7 @@ def data_file_nosiaf(tmp_path):
 
 @pytest.fixture
 def data_file_fromsim(tmp_path):
-    """Create data using times that were executed during a simulation using the OTB Simulator"""
+    """Create data using times that were executed during a simulation using the OTB Simulator."""
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = Time("2022-02-02T22:24:58.942").mjd
     model.meta.exposure.end_time = Time("2022-02-02T22:26:24.836").mjd
@@ -807,7 +794,7 @@ def data_file_acq1(tmp_path):
 
 @pytest.fixture
 def data_file_moving_target(tmp_path):
-    """Example data from simulation."""
+    """Generate example data from simulation."""
     # Values are from simulated data file jw00634_nrcblong_mttest_uncal.fits
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = 58738.82598848102

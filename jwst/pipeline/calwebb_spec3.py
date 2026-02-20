@@ -8,6 +8,7 @@ from astropy.modeling.models import Mapping
 from stcal.alignment import combine_sregions
 
 # step imports
+from jwst.adaptive_trace_model import adaptive_trace_model_step
 from jwst.assign_mtwcs import assign_mtwcs_step
 from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
@@ -42,8 +43,8 @@ class Spec3Pipeline(Pipeline):
     Process JWST spectroscopic exposures from Level 2b to 3.
 
     Included steps are: assign_mtwcs, master_background,
-    outlier_detection, pixel_replace, resample_spec, cube_build,
-    extract_1d, photom, combine_1d, and spectral_leak.
+    outlier_detection, adaptive_trace_model, pixel_replace, resample_spec,
+    cube_build, extract_1d, photom, combine_1d, and spectral_leak.
     """
 
     class_alias = "calwebb_spec3"
@@ -56,6 +57,7 @@ class Spec3Pipeline(Pipeline):
         "assign_mtwcs": assign_mtwcs_step.AssignMTWcsStep,
         "master_background": master_background_step.MasterBackgroundStep,
         "outlier_detection": outlier_detection_step.OutlierDetectionStep,
+        "adaptive_trace_model": adaptive_trace_model_step.AdaptiveTraceModelStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "resample_spec": resample_spec_step.ResampleSpecStep,
         "cube_build": cube_build_step.CubeBuildStep,
@@ -96,13 +98,17 @@ class Spec3Pipeline(Pipeline):
         self.spectral_leak.save_results = self.save_results
         self.pixel_replace.suffix = "pixel_replace"
         self.pixel_replace.output_use_model = True
+        self.adaptive_trace_model.output_use_model = True
 
         # Overriding the Step.save_model method for the following steps.
-        # These steps save intermediate files, resulting in meta.filename
+        # These steps may save intermediate files, resulting in meta.filename
         # being modified. This can affect the filenames of subsequent
         # steps.
         self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
         self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
+        self.adaptive_trace_model.save_model = invariant_filename(
+            self.adaptive_trace_model.save_model
+        )
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
@@ -224,6 +230,9 @@ class Spec3Pipeline(Pipeline):
                 else:
                     self.outlier_detection.mode = "spec"
                 result = self.outlier_detection.run(result)
+
+                # model the spectral trace and optionally oversample the data
+                result = self.adaptive_trace_model.run(result)
 
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.

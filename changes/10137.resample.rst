@@ -1,0 +1,1 @@
+Add ``pixmap_stepsize`` and ``pixmap_order`` parameters to allow interpolated calculation of pixel map for imaging mosaics; using stepsize=10 and order=3 improves runtime of calwebb_image3 by 20 percent for a 30-image mosaic tested.
