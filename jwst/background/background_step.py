@@ -16,7 +16,7 @@ __all__ = ["BackgroundStep"]
 
 log = logging.getLogger(__name__)
 
-WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 
 
 class BackgroundStep(Step):
@@ -66,7 +66,7 @@ class BackgroundStep(Step):
         asn = self.load_as_level2_asn(step_input)
         model, members_by_type = self._asn_get_data(asn)
 
-        if model.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
+        if model.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS", "MIR_WFSS"]:
             # Get the reference file names
             bkg_name = self.get_reference_file(model, "bkg")
             wlrange_name = self.get_reference_file(model, "wavelengthrange")
