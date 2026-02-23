@@ -159,8 +159,8 @@ class TargCentroidStep(Step):
         # Apply dither offset from science exposure
         try:
             _, (offset_x, offset_y) = find_dither_position(result)
-        except WCSError as e:
-            log.error(f"WCS error for science data: {e}. Step will be SKIPPED.")
+        except WCSError:
+            log.error("WCS error for science data. Step will be SKIPPED.")
             result.meta.cal_step.targ_centroid = "SKIPPED"
             result = self._rebuild_container(container, result)
             return result
