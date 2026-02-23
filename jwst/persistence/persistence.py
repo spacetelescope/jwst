@@ -119,10 +119,9 @@ class DataSet:
             if self.output_obj.int_times is not None and len(self.output_obj.int_times) > integ:
                 # The index into int_times is integration, then time type. [integ][1] is the
                 # int_start_MJD_UTC type for the integration 'integ'.
-                current_time = mjd_to_epoch(self.output_obj.int_times[integ][1])
+                current_time = mjd_to_epoch(self.output_obj.int_times[integ]["int_start_MJD_UTC"])
             else:
                 current_time = epoch_time + integ * integration_time
-            print(f"Integration {integ} start time (epoch): {current_time}, mjd: {epoch_to_mjd(current_time)}")
             for group in range(ngroups):
                 current_time = current_time + group_time
                 if self.persistence_time is not None:
