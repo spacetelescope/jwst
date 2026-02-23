@@ -425,16 +425,21 @@ class ResampleImage(Resample):
         """
         model.data = info_dict["data"]
         model.wht = info_dict["wht"]
+
         if self.enable_ctx:
             model.con = info_dict["con"]
-        if self.compute_err:
-            model.err = info_dict["err"]
+
         if self.propagate_dq:
             model.dq = info_dict["dq"]
+
+        if self.compute_err:
+            model.err = info_dict["err"]
+
         elif model.meta.hasattr("bunit_err"):
             # bunit_err metadata is mapped to the err extension, so it must be removed
             # in order to fully remove the err extension.
             del model.meta.bunit_err
+
         if self._enable_var and self._report_var:
             model.var_rnoise = info_dict["var_rnoise"]
             model.var_flat = info_dict["var_flat"]
