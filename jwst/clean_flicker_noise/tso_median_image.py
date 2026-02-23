@@ -6,7 +6,9 @@ from stdatamodels.jwst import datamodels
 
 from jwst.background.background_step import BackgroundStep
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
+from jwst.extract_1d.extract_1d_step import Extract1dStep
 from jwst.extract_1d.soss_extract import pastasoss, soss_extract
+from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.lib.basic_utils import disable_logging
 from jwst.white_light.white_light_step import WhiteLightStep
 
@@ -15,7 +17,7 @@ __all__ = ["make_median_image"]
 log = logging.getLogger(__name__)
 
 
-def _soss_box_extract(rateints):
+def _soss_box_extract(rateints, soss_refmodel=None):
     """
     Extract spectra with a simple box around the SOSS trace.
 
@@ -28,6 +30,9 @@ def _soss_box_extract(rateints):
     ----------
     rateints : `~stdatamodels.jwst.datamodels.CubeModel`
         Background subtracted rateints datamodel.
+    soss_refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`, optional
+        Used to identify SOSS traces for box extraction.
+        If not provided, a default model will be retrieved.
 
     Returns
     -------
@@ -40,8 +45,8 @@ def _soss_box_extract(rateints):
     pwcpos = rateints.meta.instrument.pupil_position
     subarray = rateints.meta.subarray.name
 
-    # todo - pass pastasoss model
-    refmodel = pastasoss.retrieve_default_pastasoss_model()
+    if soss_refmodel is None:
+        soss_refmodel = pastasoss.retrieve_default_pastasoss_model()
 
     # Set a reasonable extraction width
     width = 15
@@ -56,13 +61,15 @@ def _soss_box_extract(rateints):
         sci_mask = (rateints.dq[i] & datamodels.dqflags.pixel["DO_NOT_USE"]) > 0
 
         # Get trace x,y positions
-        _, xtrace, ytrace, _ = pastasoss.get_soss_traces(pwcpos, order=order, refmodel=refmodel)
+        _, xtrace, ytrace, _ = pastasoss.get_soss_traces(
+            pwcpos, order=order, refmodel=soss_refmodel
+        )
         box_weights = soss_extract.get_box_weights(
             ytrace, width, img_shape, cols=xtrace.astype(int)
         )
 
         wavemaps = pastasoss.get_soss_wavemaps(
-            pwcpos, subarray=subarray, refmodel=refmodel, orders_requested=[1]
+            pwcpos, subarray=subarray, refmodel=soss_refmodel, orders_requested=[1]
         )
         wave_grid = wavemaps[0]
 
@@ -133,7 +140,7 @@ def _make_background_ramp(input_ramp, background_rateints):
     return background_ramp
 
 
-def make_median_image(input_model, rateints_model):
+def make_median_image(input_model, rateints_model, soss_refmodel=None):
     """
     Make a scaled median image across integrations to subtract before cleaning.
 
@@ -148,12 +155,11 @@ def make_median_image(input_model, rateints_model):
        b. For imaging modes, compute the overall median of the image.
     3. Median combine all data across integrations to make a median
        ramp or image.
-    4. Scale the median image by the representative flux.
-    5. Match the median image to the input data by expanding it to
-       all integrations.
-    6. Add the subtracted background level to the median image
+    4. Scale the median image by the representative flux for each
+       integration.
+    5. Add the subtracted background level to the median image
        (NIRISS SOSS only).
-    7. Replace any NaN values in the median image with zeros.
+    6. Replace any NaN values in the median image with zeros.
 
     Parameters
     ----------
@@ -163,6 +169,9 @@ def make_median_image(input_model, rateints_model):
     rateints_model : `~stdatamodels.jwst.datamodels.CubeModel`
         Draft rateints model corresponding to the input model.
         May be the same as ``input_model``.
+    soss_refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`, optional
+        Used to identify NIRISS SOSS traces for box extraction.
+        If not provided, a default model will be retrieved.
 
     Returns
     -------
@@ -178,7 +187,8 @@ def make_median_image(input_model, rateints_model):
     ndim = input_model.data.ndim
     if ndim < 3:
         raise ValueError("Cannot make a median image for 2D data")
-    if input_model.data.shape[0] <= 1:
+    nints = input_model.data.shape[0]
+    if nints <= 1:
         raise ValueError("Cannot make a median image for <2 integrations")
 
     # Run background subtraction for rateints files
@@ -193,24 +203,50 @@ def make_median_image(input_model, rateints_model):
         background_rate = rateints_model.data - bgsub_rateints.data
 
     else:
-        log.info(f"No background subtraction applied for exposure type {exp_type}")
         bgsub_rateints = rateints_model
         background_rate = 0.0
 
     # Box extraction for flux scaling
-    # todo: implement for non-soss
-    log.info("Computing whitelight curve for median image scaling")
-    multi_spec = _soss_box_extract(bgsub_rateints)
+    if exp_type == "NIS_SOSS":
+        # Simple direct box extraction for SOSS
+        multi_spec = _soss_box_extract(bgsub_rateints, soss_refmodel=soss_refmodel)
+    elif exp_type in ["NRS_BRIGHTOBJ", "NRC_TSGRISM"]:
+        with disable_logging(level=logging.WARNING):
+            # Run extract2d to assign a slit-appropriate WCS
+            # (required for extract_1d)
+            step = Extract2dStep()
+            single_slit = step.run(bgsub_rateints)
+
+            # Set the source type to POINT for TSO
+            single_slit.source_type = "POINT"
+
+            # Call extract_1d with latest CRDS parameters (via call)
+            multi_spec = Extract1dStep.call(single_slit, save_results=False)
+            single_slit.close()
+    else:
+        # Not a TSO spectral mode
+        multi_spec = None
 
     # Sum the flux for each integration.
     # Use the whitelight step to retrieve and use a wavelengthrange
     # file as appropriate.
-    with disable_logging(level=logging.WARNING):
-        step = WhiteLightStep()
-        whitelight_table = step.run(multi_spec)
-    multi_spec.close()
-    wlc_flux = whitelight_table["whitelight_flux"]
-    norm_flux = wlc_flux / np.nanmedian(wlc_flux)
+    if multi_spec is not None:
+        log.info("Computing an approximate whitelight curve for scaling")
+        with disable_logging(level=logging.WARNING):
+            step = WhiteLightStep()
+            whitelight_table = step.run(multi_spec)
+        multi_spec.close()
+
+        if exp_type == "NRS_BRIGHTOBJ":
+            detector = input_model.meta.instrument.detector
+            wlc_flux = whitelight_table[f"whitelight_flux_{detector}"]
+        else:
+            wlc_flux = whitelight_table["whitelight_flux"]
+        norm_flux = wlc_flux / np.nanmedian(wlc_flux)
+
+    else:
+        # todo - run tso phot for imaging
+        norm_flux = np.nanmedian(bgsub_rateints, axis=(1, 2)) / np.nanmedian(bgsub_rateints)
 
     # Make a background corrected ramp
     if ndim > 3:
@@ -220,20 +256,23 @@ def make_median_image(input_model, rateints_model):
         background_ramp = background_rate
         bgsub_ramp = bgsub_rateints.data
 
-    # Make a scaled median background-subtracted ramp
-    log.info("Making a scaled median ramp")
+    # Make a median background-subtracted ramp
+    log.info("Making a scaled median image")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         median_ramp = np.nanmedian(bgsub_ramp, axis=0)
 
-    # Final data to subtract is background ramp + scaled median
+    # Scale the median ramp by the normalized flux
     if ndim == 3:
         scaled_median_ramp = norm_flux[:, None, None] * median_ramp[None, ...]
     else:
         scaled_median_ramp = norm_flux[:, None, None, None] * median_ramp[None, ...]
+
+    # Final data to subtract is background ramp + scaled median
     median_image = background_ramp + scaled_median_ramp
 
     # Set any NaN pixels to zero for subtraction
+    # todo: mark them in the mask instead/in addition?
     median_image[~np.isfinite(median_image)] = 0.0
 
     return median_image

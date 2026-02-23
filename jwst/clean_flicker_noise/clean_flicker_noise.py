@@ -319,6 +319,8 @@ def mask_soss_traces(input_model, mask, soss_refmodel, halfwidth=16):
     mask : ndarray of bool
         2D input mask that will be updated. True indicates background
         pixels to be used. Trace regions will be set to False.
+    soss_refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`
+        PASTASOSS reference file model.
 
     Returns
     -------
@@ -1157,7 +1159,7 @@ def _standardize_parameters(
 
 
 def _make_processed_rate_image(
-    input_model, single_mask, input_dir, exp_type, mask_science_regions, flat
+    input_model, single_mask, input_dir, exp_type, mask_science_regions, flat, background_method
 ):
     """
     Make a draft rate image and postprocess if needed.
@@ -1184,6 +1186,9 @@ def _make_processed_rate_image(
     flat : ndarray of float or None
         If not None, the draft rate will be divided by the flat array
         before returning. The provided flat must match the rate shape.
+    background_method : str
+        If 'median_image', ``assign_wcs`` needs to be run for most
+        spectrosopic modes.
 
     Returns
     -------
@@ -1198,10 +1203,12 @@ def _make_processed_rate_image(
 
     # If needed, assign a WCS to the rate file,
     # flag open MSA shutters, or retrieve flat DQ flags
-    assign_wcs = exp_type.startswith("NRS")
+    assign_wcs = exp_type.startswith("NRS") or (
+        background_method == "median_image" and exp_type != "NIS_SOSS"
+    )
     flag_open = exp_type in ["NRS_IFU", "NRS_MSASPEC"]
     flat_dq = exp_type in ["MIR_IMAGE"]
-    if mask_science_regions:
+    if mask_science_regions or background_method == "median_image":
         image_model = post_process_rate(
             image_model,
             assign_wcs=assign_wcs,
@@ -1623,7 +1630,13 @@ def do_correction(
     # Make a rate file if needed
     if user_mask is None or background_method == "median_image":
         image_model = _make_processed_rate_image(
-            input_model, single_mask, input_dir, exp_type, mask_science_regions, flat
+            input_model,
+            single_mask,
+            input_dir,
+            exp_type,
+            mask_science_regions,
+            flat,
+            background_method,
         )
     else:
         image_model = input_model
@@ -1651,10 +1664,10 @@ def do_correction(
             log.warning(f"The median_image background method cannot be used with nints={nints}")
             log.warning("The step will be skipped.")
             return input_model, None, None, None, status
-        median_image = make_median_image(input_model, image_model)
+        median_image = make_median_image(input_model, image_model, soss_refmodel=soss_refmodel)
 
-        # The median image will be directly subtracted, so set background
-        # method to None for processing.
+        # The median image will be directly subtracted. Set background
+        # method to None so any residual variable background levels are removed.
         background_method = None
 
         # Also add one to the ngroups, since the first group can now be processed
