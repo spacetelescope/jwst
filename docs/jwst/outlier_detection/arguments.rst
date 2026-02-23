@@ -79,6 +79,20 @@ Step Arguments for Imaging and Slit-like Spectroscopic data
   Specifies whether or not to resample the input images when
   performing outlier detection.
 
+``--pixmap_stepsize``
+  Indicates the spacing in pixels at which the WCS is evaluated when computing the pixel map.
+  Larger step sizes result in faster performance at the cost of accuracy.
+  Interpolation is only performed if ``pixmap_stepsize > 1``.
+  If it's desired to turn on interpolation, we recommend a value of ~10
+  which seemed to work well for most modes during testing.
+  Has no effect for spectroscopic data. Has no effect if ``resample_data`` is ``False``.
+  Default is 1.
+
+``--pixmap_order``
+  Interpolating spline order for pixel map computation. Has no effect unless
+  ``pixmap_stepsize > 1``. Must be 1 or 3. If it's desired to turn on interpolation,
+  we recommend a value of 3, i.e., cubic spline. Default is 1.
+
 ``--in_memory``
   Specifies whether or not to load and create all images that are used during
   processing into memory. If ``False``, input files are loaded from disk when
