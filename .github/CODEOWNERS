@@ -15,7 +15,7 @@
 # as defined in the ruleset at https://github.com/spacetelescope/jwst/settings/rules/7657862
  
 # steps and packages
-/jwst/adaptive_trace_model  @spacetelescope/jwst-pipeline-maintainers @melanieclarke @drlaw1558
+/jwst/adaptive_trace_model  @spacetelescope/jwst-pipeline-maintainers @melanieclarke
 /jwst/ami/					@spacetelescope/jwst-pipeline-maintainers @emolter
 /jwst/assign_mtwcs/			@spacetelescope/jwst-pipeline-maintainers @emolter
 /jwst/assign_wcs/			@spacetelescope/jwst-pipeline-maintainers @melanieclarke @jemorrison
