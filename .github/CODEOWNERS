@@ -15,6 +15,7 @@
 # as defined in the ruleset at https://github.com/spacetelescope/jwst/settings/rules/7657862
  
 # steps and packages
+/jwst/adaptive_trace_model  @spacetelescope/jwst-pipeline-maintainers @melanieclarke @drlaw1558
 /jwst/ami/					@spacetelescope/jwst-pipeline-maintainers @emolter
 /jwst/assign_mtwcs/			@spacetelescope/jwst-pipeline-maintainers @emolter
 /jwst/assign_wcs/			@spacetelescope/jwst-pipeline-maintainers @melanieclarke @jemorrison
@@ -73,6 +74,7 @@
 /jwst/stpipe/				@spacetelescope/jwst-pipeline-maintainers @emolter @tapastro
 /jwst/straylight/			@spacetelescope/jwst-pipeline-maintainers @jemorrison
 /jwst/superbias/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/targ_centroid/        @spacetelescope/jwst-pipeline-maintainers @emolter
 /jwst/tso_photometry/		@spacetelescope/jwst-pipeline-maintainers @emolter @melanieclarke
 /jwst/tweakreg/				@spacetelescope/jwst-pipeline-maintainers @emolter @mcara
 /jwst/wavecorr/				@spacetelescope/jwst-pipeline-maintainers @melanieclarke
