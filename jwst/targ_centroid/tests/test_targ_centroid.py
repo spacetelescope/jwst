@@ -412,7 +412,7 @@ def test_skip_wavelength_returns_nan(input_model_slit, tmp_path, monkeypatch, lo
     )
 
     watcher = log_watcher(
-        "jwst.targ_centroid.targ_centroid_step",
+        "jwst.targ_centroid.targ_centroid",
         message="Failed to determine wavelength from WCS transform for SlitModel",
     )
 
