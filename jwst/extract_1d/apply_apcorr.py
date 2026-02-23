@@ -168,7 +168,7 @@ class ApCorrBase(abc.ABC):
         for key, value in self.match_pars.items():
             if isinstance(value, str):
                 # Not all files will have the same format as input model metadata values.
-                table = table[table[key].upper() == value.upper()]
+                table = table[np.strings.upper(table[key]) == value.upper()]
             else:
                 table = table[table[key] == value]
 
