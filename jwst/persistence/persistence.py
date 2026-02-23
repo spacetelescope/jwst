@@ -93,24 +93,8 @@ class DataSet:
 
         (nints, ngroups, nrows, ncols) = shape
 
-        # XXX Probably change this somewhat
-        # Initialize the optional output.
-        '''
-        if self.save_persistence:
-            self.output_pers = self.output_obj.copy()
-            self.output_pers.data[:, :, :, :] = 0.0
-            self.output_pers.pixeldq = None
-            self.output_pers.groupdq = None
-            self.output_pers.err = None
-        else:
-            self.output_pers = None
-        '''
 
-        # XXX Use different start time. This may not be the start time of the
-        #     exposure, but the beginning of the tasking, which could include
-        #     setup time and other time outside the actual exposure.
-        etime = datetime.datetime.fromisoformat(self.output_obj.meta.observation.date_beg)
-        epoch_time = etime.timestamp()
+        epoch_time = mjd_to_epoch(self.output_obj.meta.exposure.start_time)
         integration_time = self.output_obj.meta.exposure.integration_time
         group_time = self.output_obj.meta.exposure.group_time
         sat_array = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
@@ -121,7 +105,9 @@ class DataSet:
                 # int_start_MJD_UTC type for the integration 'integ'.
                 current_time = mjd_to_epoch(self.output_obj.int_times[integ]["int_start_MJD_UTC"])
             else:
+                # Exposure start time is used if int_times is not available.
                 current_time = epoch_time + integ * integration_time
+
             for group in range(ngroups):
                 current_time = current_time + group_time
                 if self.persistence_time is not None:
