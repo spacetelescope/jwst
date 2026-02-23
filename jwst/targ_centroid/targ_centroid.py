@@ -179,9 +179,9 @@ def find_dither_position(model):
             try:
                 model = AssignWcsStep.call(model, sip_approx=False)
             except Exception as e:
-                raise WCSError("Failed to assign WCS to TA verification image.") from e
+                raise WCSError("Error running AssignWcsStep on TA verification image.") from e
         if model.meta.cal_step.assign_wcs != "COMPLETE":
-            raise WCSError("Failed to assign WCS to TA verification image (step was skipped).")
+            raise WCSError("AssignWcsStep was skipped when run on TA verification image.")
     if not (model.meta.dither.hasattr("dithered_ra") and model.meta.dither.hasattr("dithered_dec")):
         # Compute the dithered RA and Dec from the WCS and metadata
         # This is only computed by default for MIRI LRS slit data within assign_wcs
@@ -197,6 +197,13 @@ def find_dither_position(model):
         # Find central wavelength
         bb = wcs.bounding_box
         _, _, wavelength = middle_from_wcs(wcs, bb, model.meta.wcsinfo.dispersion_direction)
+        if np.isnan(wavelength):
+            msg = (
+                "Failed to determine wavelength from WCS transform for SlitModel. "
+                "Check WCS is valid."
+            )
+            log.error(msg)
+            raise WCSError(msg)
     n_inputs = world_to_pixel.n_inputs
     dithered_inputs = [dithered_ra, dithered_dec] + [wavelength] * (n_inputs - 2)
     dithered_outputs = world_to_pixel(*dithered_inputs)
