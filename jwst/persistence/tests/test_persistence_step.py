@@ -9,17 +9,48 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst.persistence import persistence
 from jwst.persistence.persistence_step import PersistenceStep
 
+from astropy.io import fits
 
-@pytest.mark.skip(reason="testing int_times usage needs to be completed.")
+
+def set_up_int_times(nints, ngroups, nrows, ncols):
+    """Sets up an int_times table to be used by a test."""
+    cols = fits.ColDefs([
+        fits.Column(name = 'integration_number', format = 'J'),
+        fits.Column(name = 'int_start_MJD_UTC', format = 'D'),
+        fits.Column(name = 'int_mid_MJD_UTC', format = 'D'),
+        fits.Column(name = 'int_end_MJD_UTC', format = 'D'),
+        fits.Column(name = 'int_start_BJD_TDB', format = 'D'),
+        fits.Column(name = 'int_mid_BJD_TDB', format = 'D'),
+        fits.Column(name = 'int_end_BJD_TDB', format = 'D'),
+    ])
+
+    int_times = fits.FITS_rec.from_columns(cols, nrows=nints)
+    int_times['integration_number'][:] = np.arange(1, nints + 1, dtype=np.int32)
+
+    return int_times
+
+
 def test_persistence_int_times(create_sci_model):
+    """Test persitence flag gets set inside of persistence window using int_times table."""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
 
+    model.int_times = set_up_int_times(nints, ngroups, nrows, ncols)
+    mjd_start = [59672.64004629629, 59672.64178605069]
+    model.int_times['int_start_MJD_UTC'][:] = np.array(mjd_start)
+
     step = PersistenceStep(persistence_time=70)
     res = step.run(model)
 
-    # XXX Add an int_times to the model.
+    check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check3 = np.array([0, 0, 0, 0, 0, 34, 34], dtype=np.uint8)
+    check4 = np.array([32, 32, 0, 0, 0, 0, 0], dtype=np.uint8)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 0], check1)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
 
 
 def test_persistence_time_none_keeps_groupdq_unchanged(create_sci_model):
@@ -34,7 +65,7 @@ def test_persistence_time_none_keeps_groupdq_unchanged(create_sci_model):
 
 
 def test_persistence_time_nonneg_sec(create_sci_model):
-    """Test persitence flag gets set inside of persistence window"""
+    """Test persitence flag gets set inside of persistence window using exposure start time"""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
@@ -103,8 +134,10 @@ def test_persistence_time_neg_sec(create_sci_model):
 
 def test_persistence_time_with_array(create_sci_model, tmp_path):
     """Test persitence flag gets set using a persistence_array"""
+    print(" ")
     nints, ngroups, nrows, ncols = 2, 7, 1, 3
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.meta.exposure.start_time = 59672.64004629629
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
 
     asdf_file = os.path.join(tmp_path,  "persistence_array.asdf")
