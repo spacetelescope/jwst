@@ -5,16 +5,49 @@ __all__ = ["NSClean", "make_lowpass_filter", "med_abs_deviation", "NSCleanSubarr
 
 class NSClean:
     """
+    JWST NIRSpec background modeling and subtraction -AKA "clean" (NSClean).
+
     Fit and remove 1/f noise in NIR detectors in frequency space.
 
     NSClean is the base class for removing residual correlated
     read noise from JWST NIRSpec images.  It is intended for use
-    on Level 2a pipeline products, i.e. IRS2 corrected slope
+    on Level 2a pipeline products, i.e., IRS2 corrected slope
     images. All processing is done in detector coordinates, with
     arrays transposed and flipped so that the IRS2 "zipper"
-    appears along the bottom. For most users, NSClean's `clean`
+    appears along the bottom. For most users, NSClean's :meth:`clean`
     method automatically transposes and flips the data as
     necessary.
+
+    Parameters
+    ----------
+    detector : str
+        A string selected from ``{'NRS1', 'NRS2'}``
+
+    mask : ndarray of bool
+        The background model is fitted to pixels set to `True`.
+        Pixels set to `False` are ignored.
+
+    fc : float
+        Critical frequency. This is the 1/2 power point for NSClean's
+        low pass filter. The units are 1/pixels.
+
+    kill_width : float
+        "Kill width". The low pass filter's cutoff is 1/2 of a cosine.
+        The filter function goes from 1x to 0x gain over this bandwidth.
+        The units are 1/pixels.
+
+    buffer_sigma : float
+        Standard deviation of the buffer's Gaussian smooth. This is an
+        optional 1-dimensional smooth in the spectral dispersion direction
+        only. If selected, buffing is done after modeling the background
+        but before subtracting it.
+
+    sigrej : float
+        Standard deviation threshold for flagging statistical outliers,
+        to exclude them from use in fitting the background model.
+
+    weights_kernel_sigma : int
+        Used to assign weights for MASK mode fitting.
     """
 
     def __init__(
@@ -27,40 +60,6 @@ class NSClean:
         sigrej=3.0,
         weights_kernel_sigma=32,
     ):
-        """
-        JWST NIRSpec background modeling and subtraction -AKA "clean" (NSClean).
-
-        Parameters
-        ----------
-        detector : str
-            A string selected from {'NRS1','NRS2'}
-
-        mask : bool array
-            The background model is fitted to pixels set to True.
-            Pixels set to False are ignored.
-
-        fc : float
-            Critical frequency. This is the 1/2 power point for NSClean's
-            low pass filter. The units are 1/pixels.
-
-        kill_width : float
-            "Kill width". The low pass filter's cutoff is 1/2 of a cosine.
-            The filter function goes from 1x to 0x gain over this bandwidth.
-            The units are 1/pixels.
-
-        buffer_sigma : float
-            Standard deviation of the buffer's Gaussian smooth. This is an
-            optional 1-dimensional smooth in the spectral dispersion direction
-            only. If selected, buffing is done after modeling the background
-            but before subtracting it.
-
-        sigrej : float
-            Standard deviation threshold for flagging statistical outliers,
-            to exclude them from use in fitting the background model.
-
-        weights_kernel_sigma : int
-            Used to assign weights for MASK mode fitting.
-        """
         self.detector = detector
         self.mask = mask
         self.fc = fc
@@ -138,14 +137,14 @@ class NSClean:
 
         Parameters
         ----------
-        data : float array
+        data : ndarray of float
             A NIRSpec image. The image must be in the detector-space
             orientation with the IRS2 zipper running along the bottom as
             displayed in SAOImage DS9.
 
         Returns
         -------
-        bkg : float array
+        bkg : ndarray of float
             The fitted background model.
 
         Notes
@@ -229,7 +228,7 @@ class NSClean:
         instrumental background. This is intended to improve the
         residual correlated noise (vertical banding) that is
         sometimes seen.  Because the banding is not seen by the
-        reference pixels, normal IRS^2 processing does not
+        reference pixels, normal ``IRS^2`` processing does not
         remove it.
 
         This is an ad-hoc correction. We model the background by
@@ -240,7 +239,7 @@ class NSClean:
 
         Parameters
         ----------
-        data : array-like
+        data : ndarray
             The input data. This should be the normal end result of Stage 1 processing.
 
         buff : bool
@@ -249,7 +248,7 @@ class NSClean:
 
         Returns
         -------
-        data : array-like
+        data : ndarray
             The data, but with less striping and the background subtracted.
         """
         # Transform the data to detector space with the IRS2 zipper running along the bottom.
@@ -301,7 +300,7 @@ def make_lowpass_filter(f_half_power, w_cutoff, n, d=1.0):
 
     Returns
     -------
-    filt : array
+    filt : ndarray
        Filter array
     """
     # Make frequencies vector
@@ -324,7 +323,7 @@ def med_abs_deviation(d, median=True):
 
     Computes the median and the median absolute deviation (MAD). For normally
     distributed data, multiply the MAD by 1.4826 to approximate standard deviation.
-    If median=True (the default), this returns a tuple containing (median, MAD).
+    If ``median=True`` (the default), this returns a tuple containing (median, MAD).
     Otherwise, only the MAD is returned.
 
     Parameters
@@ -352,11 +351,49 @@ def med_abs_deviation(d, median=True):
 
 class NSCleanSubarray:
     """
+    Background modeling and subtraction for generic JWST near-IR subarrays.
+
     Fit and remove 1/f noise in NIR detector subarrayss in frequency space.
 
     NSCleanSubarray is the base class for removing residual correlated
     read noise from generic JWST near-IR Subarray images.  It is
-    intended for use on Level 2a pipeline products, i.e. slope images.
+    intended for use on Level 2a pipeline products, i.e., slope images.
+
+    Parameters
+    ----------
+    data : ndarray of float
+        The 2D input image data array to be operated on.
+
+    mask : ndarray of bool
+        The background model is fitted to pixels set to `True`.
+        Pixels set to `False` are ignored.
+
+    fc : tuple
+        Apodizing filter definition. These parameters are tunable. They
+        happen to work well for NIRSpec BOTS exposures:
+
+        1. Unity gain for ``f < fc[0]``
+        2. Cosine roll-off from ``fc[0]`` to ``fc[1]``
+        3. Zero gain from ``fc[1]`` to ``fc[2]``
+        4. Cosine roll-on from ``fc[2]`` to ``fc[3]``
+
+    exclude_outliers : bool
+        Exclude statistical outliers and their nearest neighbors
+        from the background pixels mask.
+
+    weights_kernel_sigma : float
+        Standard deviation of the 1-dimensional Gaussian kernel
+        that is used to approximate background sample density. This
+        is ad-hoc. See the NSClean journal article for more information. The
+        default for subarrays results in nearly equal weighting of all background
+        samples.
+
+    Notes
+    -----
+    NSCleanSubarray works in detector coordinates. Both the data and mask
+    need to be transposed and flipped so that slow-scan runs from bottom
+    to top as displayed in SAOImage DS9. The fast scan direction is
+    required to run from left to right.
     """
 
     # Class variables. These are the same for all instances.
@@ -373,44 +410,6 @@ class NSCleanSubarray:
         exclude_outliers=True,
         weights_kernel_sigma=None,
     ):
-        """
-        Background modeling and subtraction for generic JWST near-IR subarrays.
-
-        Parameters
-        ----------
-        data : float array
-            The 2D input image data array to be operated on.
-
-        mask : bool array
-            The background model is fitted to pixels set to True.
-            Pixels set to False are ignored.
-
-        fc : tuple
-            Apodizing filter definition. These parameters are tunable. They
-            happen to work well for NIRSpec BOTS exposures.
-              1) Unity gain for f < fc[0]
-              2) Cosine roll-off from fc[0] to fc[1]
-              3) Zero gain from fc[1] to fc[2]
-              4) Cosine roll-on from fc[2] to fc[3]
-
-        exclude_outliers : bool
-            Exclude statistical outliers and their nearest neighbors
-            from the background pixels mask.
-
-        weights_kernel_sigma : float
-            Standard deviation of the 1-dimensional Gaussian kernel
-            that is used to approximate background sample density. This
-            is ad-hoc. See the NSClean journal article for more information. The
-            default for subarrays results in nearly equal weighting of all background
-            samples.
-
-        Notes
-        -----
-        1) NSCleanSubarray works in detector coordinates. Both the data and mask
-           need to be transposed and flipped so that slow-scan runs from bottom
-           to top as displayed in SAOImage DS9. The fast scan direction is
-           required to run from left to right.
-        """
         # Definitions
         self.data = np.array(data, dtype=np.float32)
         self.mask = np.array(mask, dtype=np.bool_)
@@ -497,12 +496,13 @@ class NSCleanSubarray:
             Return the Fourier transform.
 
         weight_fit : bool
-            Use weighted least squares as described in the NSClean paper.
-            Turn off by default. For subarrays it is TBD if this is necessary.
+            Use weighted least squares as described in the NSClean paper
+            (see :ref:`nsclean-algo-references`).
+            `False` by default. For subarrays it is TBD if this is necessary.
 
         Returns
         -------
-        rfft : numpy array
+        rfft : ndarray
             The computed Fourier transform.
         """
         # To build the incomplete Fourier matrix, we require the index of each
@@ -583,15 +583,16 @@ class NSCleanSubarray:
         Parameters
         ----------
         weight_fit : bool
-            Use weighted least squares as described in the NSClean paper.
+            Use weighted least squares as described in the NSClean paper
+            (see :ref:`nsclean-algo-references`).
             Otherwise, it is a simple unweighted fit.
         return_model : bool
             Return the fitted model rather than the corrected data?
-            Default False (return the corrected data, not the model).
+            Default: `False` (return the corrected data, not the model).
 
         Returns
         -------
-        data : array-like of float
+        data : ndarray of float
             The cleaned data array.
         """
         self.fit(weight_fit=weight_fit)  # Fit the background model

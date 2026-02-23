@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.clean_flicker_noise.CleanFlickerNoiseStep`
+:Class: `jwst.clean_flicker_noise.clean_flicker_noise_step.CleanFlickerNoiseStep`
 :Alias: clean_flicker_noise
 
 Overview
@@ -46,7 +46,7 @@ be used to fit the background noise.  The step builds a scene mask
 on the fly from a draft rate image, generated from the input ramp data,
 which is used to mark usable and unusable pixels. The mask is a 2D
 Boolean array, having the same size as the image, with
-pixels set to True interpreted as being OK to use.
+pixels set to `True` interpreted as being OK to use.
 
 The process of building the mask varies somewhat depending on the
 observing mode of the image being processed. Some features are common
@@ -73,22 +73,22 @@ For IFU images, the majority of the mask is based on knowing which
 pixels are contained within the footprints of the IFU slices. To do
 this, the image's World Coordinate System (WCS) object is queried in
 order to determine which pixels are contained within each of the 30
-slices. Pixels within each slice are set to False (do not use) in the
+slices. Pixels within each slice are set to `False` (do not use) in the
 mask.
 
 NIRSpec MOS/FS Slits
 ^^^^^^^^^^^^^^^^^^^^
-The footprints of each open MOS slitlet or fixed slit are flagged in
+The footprints of each open MOS slitlet or fixed slit (FS) are flagged in
 a similar way as IFU slices. For MOS and FS images, the WCS object is
 queried to determine which pixels are contained within each open
-slit/slitlet and they are set to False in the mask.
+slit/slitlet and they are set to `False` in the mask.
 
 NIRSpec MSA Failed Open Shutters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Pixels affected by stuck open MSA shutters are masked, because they
 may contain signal. This is accomplished by setting all pixels flagged by the
 :ref:`msaflagopen <msaflagopen_step>` step with DQ value "MSA_FAILED_OPEN"
-to False in the mask.
+to `False` in the mask.
 
 NIRSpec Fixed-Slit Region Pixels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -96,8 +96,8 @@ Full-frame MOS and IFU images may contain signal from the always open
 fixed slits, which appear in a fixed region in the middle of each image.
 The entire region containing the fixed slits is masked out when
 processing MOS and IFU images. The masked region is currently hardwired
-in the step to image indexes [1:2048, 923:1116], where the indexes are
-in x, y order and in 1-indexed values.
+in the step to image indexes ``[1:2048, 923:1116]``, where the indices are
+in ``x, y`` order and in 1-indexed values.
 
 Note, however, that it is possible to plan one or more fixed slit targets
 alongside MSA slitlets in MOS observations. In this situation, the fixed
@@ -109,13 +109,13 @@ The MIRI imager has a metering structure covering a large part of the
 detector area. These regions must be masked in order to fit and
 remove the background data in the science areas of the detector.
 Regions marked with DQ value "DO_NOT_USE" by the
-:ref:`flat_field <flatfield_step>` step are set to False in the
+:ref:`flat_field <flatfield_step>` step are set to `False` in the
 scene mask.
 
 Missing Data
 ^^^^^^^^^^^^
 Any pixel in the draft rate image that has a value of NaN or exactly zero
-is flagged as False in the mask. This typically includes any reference
+is flagged as `False` in the mask. This typically includes any reference
 pixels that are present in the exposure.
 
 Outliers
@@ -129,11 +129,11 @@ pixels in the unilluminated areas of the region can still contain anomalous
 signal, due to uncaught cosmic rays, hot pixels, etc.
 
 For both modes, a sigma-clipping routine is employed to find such outliers
-within the draft rate image and set them to False in the mask. All pixels with
+within the draft rate image and set them to `False` in the mask. All pixels with
 values greater than :math:`median+n\_sigma*sigma` are assumed to contain
-signal and are set to False in the scene mask. In addition, all pixels
+signal and are set to `False` in the scene mask. In addition, all pixels
 with values less than :math:`median-3.0*sigma` are assumed to be bad pixels,
-and are also set to False in the scene mask.
+and are also set to `False` in the scene mask.
 
 Mode-Specific Masking Steps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -164,7 +164,7 @@ images from each instrument and observing mode.
 
 :sup:`1`\ These steps are only applied if the
 :ref:`step parameter <clean_flicker_noise_arguments>`
-``mask_science_regions`` is set to True.
+``mask_science_regions`` is set to `True`.
 
 Correction Algorithm
 --------------------
@@ -173,8 +173,8 @@ The detailed process for fitting and removing flicker noise is as follows.
 See the :ref:`step arguments <clean_flicker_noise_arguments>` for more
 information on all referenced parameters.
 
-#. From the calibrated ramp input, make a draft rate (``single_mask`` = True)
-   or rateints (``single_mask`` = False) file. If the input to the step
+#. From the calibrated ramp input, make a draft rate (``single_mask=True``)
+   or rateints (``single_mask= False``) file. If the input to the step
    is already a rate or rateints file, it is used directly for all following
    steps.
 
@@ -205,9 +205,9 @@ information on all referenced parameters.
    #. If ``fit_histogram`` is set, compute a histogram from 4-sigma clipped
       values and fit a Gaussian to it to refine the center and sigma values.
 
-   #. Mask data more than 3 * sigma below the center as bad values.
+   #. Mask data more than :math:`3 * sigma` below the center as bad values.
 
-   #. Mask data more than ``n_sigma`` * sigma above the center as signal
+   #. Mask data more than :math:`n_sigma * sigma` above the center as signal
       (not background).
 
 #. Iterate over each integration and group in the data, to fit and correct
@@ -224,28 +224,28 @@ information on all referenced parameters.
 
       #. Clip the background data in the diff image to remove more outliers.
 
-      #. If ``background_method`` = 'median', the background value is a simple
+      #. If ``background_method='median'``, the background value is a simple
          median of the remaining values.
 
-      #. If ``background_method`` = 'model', the background data is fit with
+      #. If ``background_method='model'``, the background data is fit with
          a low-resolution model via the photutils
-         `Background2D <https://photutils.readthedocs.io/en/latest/api/photutils.background.Background2D.html>`__
+         `~photutils.background.Background2D`
          utility. The resolution box size is set by ``background_box_size``.
 
       #. Subtract the background level from the diff image and clip again
-         to ``n_sigma`` * sigma, with sigma recomputed from the
+         to :math:`n_sigma * sigma`, with sigma recomputed from the
          background-subtracted data in the remaining background pixels.
 
    #. Fit and remove the residual noise in the background-subtracted image.
 
-      #. If ``fit_method`` = 'fft', the ``nsclean`` library is called to fit
+      #. If ``fit_method='fft'``, the `~jwst.clean_flicker_noise.lib.NSClean` library is called to fit
          and remove the noise in frequency space.
 
-      #. If ``fit_method`` = 'median', the noise is fit with a simple median
+      #. If ``fit_method='median'``, the noise is fit with a simple median
          along the appropriate detector axis and subtracted from the
          background-subtracted image.
 
-         If ``fit_by_channel`` = True, and the data is a NIR full-frame exposure,
+         If ``fit_by_channel=True``, and the data is a NIR full-frame exposure,
          the median value is computed and subtracted independently for each
          detector channel.
 
@@ -266,7 +266,7 @@ suits their data, but it is possible in some cases for the algorithm to
 recommend parameter settings from a statistical analysis of the input
 data.
 
-If the input parameter ``autoparam`` is set to True, and if the input
+If the input parameter ``autoparam`` is set to `True`, and if the input
 exposure type is supported, the cleaning algorithm will attempt some pre-processing
 and analysis on the input exposure and override some of the input background
 and fitting parameters according to a heuristic decision tree.
@@ -288,23 +288,25 @@ For NIRISS and NIRCam imaging, the auto-parameter process is:
 
 #. From the computed statistics, use a decision tree to set values for the
    ``background_method`` and ``fit_by_channel`` parameters.  For both of these
-   imaging modes, ``apply_flat_field`` is also set to True, regardless of the
+   imaging modes, ``apply_flat_field`` is also set to `True`, regardless of the
    computed statistics.
 
 Any parameters that are not explicitly overridden by the auto-parameter determination
 are left at input values.
 
+.. _nsclean-algo-references:
+
 References
 ==========
 
-The FFT cleaning algorithm implementation is based on NSClean,
+The FFT cleaning algorithm implementation is based on ``NSClean``
 developed by Bernard Rauscher. Details on the source of the correlated
 noise and the algorithm used by the ``nsclean`` library to fit and
 remove it can be found in
 `Rauscher 2024 <https://ui.adsabs.harvard.edu/abs/2023arXiv230603250R/abstract>`__.
 
 The background fitting and median cleaning algorithm are based on
-the image1overf algorithm, developed by Chris Willott, and available
+the ``image1overf`` algorithm, developed by Chris Willott, and available
 on GitHub at `chriswillott/jwst <https://github.com/chriswillott/jwst>`__.
 The algorithm was adapted to the ``clean_flicker_noise`` step and is released
 under the BSD license for the JWST calibration pipeline by permission
