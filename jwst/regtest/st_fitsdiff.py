@@ -109,7 +109,7 @@ def set_variable_to_empty_list(variable):
     return variable
 
 
-class STFITSDiffFilterWarnings(FITSDiff):
+class STFITSDiff(FITSDiff):
     """FITSDiff class that just filters warnings from astropy FITSDiff."""
 
     def _report(self):
@@ -118,7 +118,7 @@ class STFITSDiffFilterWarnings(FITSDiff):
             super()._report()
 
 
-class STFITSDiff(FITSDiff):
+class STFITSDiffBeta(FITSDiff):
     """
     FITSDiff class from astropy with STScI ad hoc changes for STScI regression test reports.
 

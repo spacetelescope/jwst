@@ -6,7 +6,7 @@ from astropy.io import fits
 from astropy.io.fits.diff import FITSDiff
 from stdatamodels.jwst import datamodels
 
-from jwst.regtest.st_fitsdiff import STFITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
 
 @pytest.fixture(scope="module")

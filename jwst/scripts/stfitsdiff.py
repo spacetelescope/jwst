@@ -7,7 +7,7 @@ import logging
 import sys
 from argparse import ArgumentParser
 
-from jwst.regtest.st_fitsdiff import STFITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
 __all__ = []  # type: ignore[var-annotated]
 
