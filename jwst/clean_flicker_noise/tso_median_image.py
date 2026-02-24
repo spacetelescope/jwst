@@ -10,6 +10,7 @@ from jwst.extract_1d.extract_1d_step import Extract1dStep
 from jwst.extract_1d.soss_extract import pastasoss, soss_extract
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.lib.basic_utils import disable_logging
+from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
 from jwst.white_light.white_light_step import WhiteLightStep
 
 __all__ = ["make_median_image"]
@@ -221,6 +222,7 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
             single_slit.source_type = "POINT"
 
             # Call extract_1d with latest CRDS parameters (via call)
+            # since the recommended defaults may vary by mode
             multi_spec = Extract1dStep.call(single_slit, save_results=False)
             single_slit.close()
     else:
@@ -245,8 +247,14 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         norm_flux = wlc_flux / np.nanmedian(wlc_flux)
 
     else:
-        # todo - run tso phot for imaging
-        norm_flux = np.nanmedian(bgsub_rateints, axis=(1, 2)) / np.nanmedian(bgsub_rateints)
+        # Call tso_photometry with latest CRDS parameters (via call),
+        # since the recommended defaults may vary by mode.
+        with disable_logging(level=logging.WARNING):
+            phot_table = TSOPhotometryStep.call(bgsub_rateints)
+
+        # Use the aperture sum as the representative flux for scaling
+        phot_flux = phot_table["aperture_sum"].value
+        norm_flux = phot_flux / np.nanmedian(phot_flux)
 
     # Make a background corrected ramp
     if ndim > 3:
@@ -272,7 +280,6 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
     median_image = background_ramp + scaled_median_ramp
 
     # Set any NaN pixels to zero for subtraction
-    # todo: mark them in the mask instead/in addition?
     median_image[~np.isfinite(median_image)] = 0.0
 
     return median_image

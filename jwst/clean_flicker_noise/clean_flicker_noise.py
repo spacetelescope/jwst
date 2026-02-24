@@ -547,7 +547,7 @@ def create_mask(
         for the input_model.
         For NIRISS SOSS, use the ``soss_refmodel`` to mask the trace locations.
     n_sigma : float, optional
-        Sigma threshold for masking outliers.
+        Sigma threshold for masking outliers. Set to 0 to skip outlier rejection.
     fit_histogram : bool, optional
         If set, the 'sigma' used with ``n_sigma`` for clipping outliers
         is derived from a Gaussian fit to a histogram of values.
@@ -1256,7 +1256,7 @@ def _make_scene_mask(
         affected by failed-open MSA shutters.  For MIRI imaging, mask
         regions of the detector not used for science.
     n_sigma : float
-        N-sigma rejection level for finding outliers. Set to 0.0 to skip
+        N-sigma rejection level for finding outliers. Set to 0 to skip
         outlier rejection.
     fit_histogram : bool
         If set, the 'sigma' used with ``n_sigma`` for clipping outliers
@@ -1567,8 +1567,8 @@ def do_correction(
     pastasoss_filename : str, optional
         Path to a ``pastasoss`` reference file name. Used for NIS_SOSS only.
     n_sigma : float, optional
-        N-sigma rejection level for finding outliers. Set to zero to skip
-        outlier rejection and use the mask as is.
+        N-sigma rejection level for finding outliers. Set to 0 to skip
+        outlier rejection.
     fit_histogram : bool, optional
         If set, the 'sigma' used with ``n_sigma`` for clipping outliers
         is derived from a Gaussian fit to a histogram of values.
@@ -1670,7 +1670,8 @@ def do_correction(
         # method to None so any residual variable background levels are removed.
         background_method = None
 
-        # Also add one to the ngroups, since the first group can now be processed
+        # Also add one to the ngroups for ramp data, since the first group
+        # can now be processed
         if ndim > 3:
             ngroups += 1
     else:
