@@ -257,7 +257,6 @@ def get_extract_parameters(
         assigned if ``ref_dict`` is None.
     """
     extract_params = {"match": NO_MATCH}  # initial value
-
     if ref_dict is None:
         # There is no extract1d reference file; use "reasonable" default values.
         extract_params["match"] = EXACT
