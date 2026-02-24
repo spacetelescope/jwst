@@ -5,8 +5,6 @@ type of data being processed. Most cases just use the :ref:`flat_reffile`, while
 spectroscopic exposures use the three reference files :ref:`fflat_reffile` (fore optics),
 :ref:`sflat_reffile` (spectrograph optics), and :ref:`dflat_reffile` (detector).
 
-.. _flat_reffile:
-
 .. include:: ../references_general/flat_reffile.inc
 
 Reference Files for NIRSpec Spectroscopy
