@@ -173,7 +173,7 @@ def post_process_rate(
         If a WCS is not already present, ``assign_wcs`` will be called first.
 
     flat_dq : bool, optional
-        If set, the ```flat_field`` step will be run on the input model. DQ
+        If set, the ``flat_field`` step will be run on the input model. DQ
         flags are retrieved from the output and added to the input
         model's DQ array. The rate data is not modified.
 
