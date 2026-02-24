@@ -82,7 +82,7 @@ class CleanFlickerNoiseStep(Step):
         jump and ramp fitting steps, or a rate file
         (`~stdatamodels.jwst.datamodels.ImageModel` or `~stdatamodels.jwst.datamodels.CubeModel`).
 
-        Correction algorithms implemented are:
+        Correction algorithms implemented are (also see :ref`nsclean-algo-references`):
 
         - "fft": Background noise is fit in frequency space.
           Implementation is based on the NSClean algorithm, developed

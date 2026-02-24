@@ -205,9 +205,9 @@ information on all referenced parameters.
    #. If ``fit_histogram`` is set, compute a histogram from 4-sigma clipped
       values and fit a Gaussian to it to refine the center and sigma values.
 
-   #. Mask data more than :math:`3 * sigma` below the center as bad values.
+   #. Mask data more than ``3 * sigma`` below the center as bad values.
 
-   #. Mask data more than :math:`n_sigma * sigma` above the center as signal
+   #. Mask data more than ``n_sigma * sigma`` above the center as signal
       (not background).
 
 #. Iterate over each integration and group in the data, to fit and correct
@@ -233,13 +233,13 @@ information on all referenced parameters.
          utility. The resolution box size is set by ``background_box_size``.
 
       #. Subtract the background level from the diff image and clip again
-         to :math:`n_sigma * sigma`, with sigma recomputed from the
+         to ``n_sigma * sigma``, with sigma recomputed from the
          background-subtracted data in the remaining background pixels.
 
    #. Fit and remove the residual noise in the background-subtracted image.
 
       #. If ``fit_method='fft'``, the `~jwst.clean_flicker_noise.lib.NSClean` library is called to fit
-         and remove the noise in frequency space.
+         and remove the noise in frequency space (also see :ref:`nsclean-algo-references`).
 
       #. If ``fit_method='median'``, the noise is fit with a simple median
          along the appropriate detector axis and subtracted from the
