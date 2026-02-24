@@ -143,6 +143,10 @@ context array ``con``, one can do something like this::
 For convenience, this functionality was implemented in the
 :func:`~drizzle.utils.decode_context` function.
 
+Reference Files
+---------------
+The ``resample`` step does not use any reference files.
+
 References
 ----------
 

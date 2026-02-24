@@ -33,9 +33,9 @@ a bitwise logical OR operation. The error and variance arrays are not
 currently used or modified.
 
 Step Arguments
-==============
+--------------
 The imprint subtraction step has no step-specific arguments.
 
 Reference File
-==============
+--------------
 The imprint subtraction step does not use any reference files.

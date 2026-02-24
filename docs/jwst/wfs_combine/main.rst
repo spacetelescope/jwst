@@ -88,3 +88,7 @@ Outputs
 :File suffix: _wfscmb
 
 The output is the combined image, using the product type suffix "_wfscmb."
+
+Reference Files
+---------------
+The ``wfs_combine`` step does not use any reference files.

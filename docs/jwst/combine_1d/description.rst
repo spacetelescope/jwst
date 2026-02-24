@@ -37,11 +37,11 @@ as averages of the concatenated, sorted input wavelengths taken N at a
 time, where N is the number of overlapping input spectra at that point.
 
 Input
-=====
+-----
 An association file specifies which file or files to read for the input
 data.  Each input data file contains one or more 1-D spectra in table
-format, e.g. as written by the extract_1d step.  Each input data file will
-ordinarily be in MultiSpecModel format (which can contain more than one
+format, e.g., as written by the extract_1d step.  Each input data file will
+ordinarily be in `~stdatamodels.jwst.datamodels.MultiSpecModel` format (which can contain more than one
 spectrum).
 
 The association file should have an object called "products", which is
@@ -52,8 +52,8 @@ creating the output file name.  "members" is a list of dictionaries, each
 of which contains one input file name, identified by key "expname".
 
 Output
-======
-For most modes, the output will be in CombinedSpecModel format, with a table extension
+------
+For most modes, the output will be in `~stdatamodels.jwst.datamodels.CombinedSpecModel` format, with a table extension
 having the name COMBINE1D.  This extension will have eight columns, giving
 the wavelength, flux, error estimate for the flux, surface brightness,
 error estimate for the surface brightness, the combined data quality flags,
@@ -61,15 +61,15 @@ the sum of the weights that were used when combining the input spectra,
 and the number of input spectra that contributed to each output pixel.
 
 For WFSS modes, which may have hundreds or thousands of spectra from different sources,
-the output will be in WFSSMultiCombinedSpecModel format.
-This model differs from the other MultiCombinedSpecModel classes in that
+the output will be in `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel` format.
+This model differs from the other `~stdatamodels.jwst.datamodels.MultiCombinedSpecModel` classes in that
 it is designed to hold all the spectra in a WFSS observation in a single
 "flat" table format. Therefore, there is only one item per spectral order
 in the ``spec`` list, and each object in the ``spec`` list has
 a ``spec_table`` attribute that contains the spectral data and metadata
 for all sources in the observation.
 
-The spectral table for this model contains the same columns as the ``CombinedSpecModel``, but
+The spectral table for this model contains the same columns as the `~stdatamodels.jwst.datamodels.CombinedSpecModel`, but
 each row in the table contains the combined spectrum for a single source. The spectral columns
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
@@ -87,7 +87,7 @@ The other spectra are NaN-padded to match the longest spectrum,
 and the number of valid data points for each spectrum is recorded in the N_ALONGDISP column.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200)
-in a WFSSMultiCombinedSpecModel::
+in a `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel`::
 
     from stdatamodels.jwst import datamodels
     model = datamodels.open('multi_wfss_c1d.fits')
@@ -97,3 +97,7 @@ in a WFSSMultiCombinedSpecModel::
     row_want = tab[tab["SOURCE_ID"] == 1200][0]
     nelem = row_want["N_ALONGDISP"]
     wave, flux = row_want["WAVELENGTH"][:nelem], row_want["FLUX"][:nelem]
+
+Reference Files
+---------------
+The ``combine_1d`` step does not use any reference files.

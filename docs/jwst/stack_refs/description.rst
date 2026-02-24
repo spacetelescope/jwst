@@ -1,5 +1,5 @@
 Description
------------
+===========
 
 :Class: `jwst.coron.stack_refs_step.StackRefsStep`
 :Alias: stack_refs

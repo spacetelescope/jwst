@@ -192,6 +192,9 @@ use the "detector" frame::
 
    detector_pixel_transform = oversampled_model.meta.wcs.get_transform('detector', 'world')
 
+Reference Files
+---------------
+The ``adaptive_trace_model`` step does not use any reference files.
 
 References
 ----------

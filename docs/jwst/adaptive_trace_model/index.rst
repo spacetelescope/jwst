@@ -9,5 +9,4 @@ Adaptive Trace Model
 
    main.rst
    arguments.rst
-   reference_files.rst
    api_ref.rst

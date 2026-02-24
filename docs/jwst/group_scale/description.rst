@@ -24,7 +24,7 @@ products and the divisor that was used is recorded in the
 This method results in the correct average only when NFRAMES is a
 power of 2. When NFRAMES is not a power of 2, the next largest
 divisor is used to perform the averaging. For example, when
-NFRAMES=5, a divisor of 8 (bit shift of 3) is used to compute the
+``NFRAMES=5``, a divisor of 8 (bit shift of 3) is used to compute the
 average. This results in averaged values for each group that
 are too low by the factor NFRAMES/FRMDIVSR. This step rescales the
 pixel values by multiplying all groups in all integrations by the
@@ -46,7 +46,7 @@ and hence there's no need for rescaling that array.
 The input GROUPDQ and PIXELDQ arrays are not affected by this step.
 
 MIRI FASTGRPAVG mode
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 The MIRI detector readout pattern "FASTGRPAVG" results in individual
 frames being averaged together into a group, but the on-board
@@ -66,3 +66,7 @@ computed from MIRNFRMS * FRMDIVSR. The result is that when 4 frames
 are averaged together on board, both NFRAMES and FRMDIVSR will have a
 value of 4, which allows the ``group_scale`` step to correctly
 determine that no rescaling of the data is necessary.
+
+Reference Files
+---------------
+The ``group_scale`` step does not use any reference files.

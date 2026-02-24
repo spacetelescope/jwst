@@ -30,3 +30,7 @@ range of all inputs.
 The parameters for the drizzle operation are provided via ``resample_spec``
 step parameters, which may be overridden by a step parameter reference
 file from CRDS.
+
+Reference Files
+---------------
+The ``resample_spec`` step does not use any reference files.
