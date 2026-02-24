@@ -328,28 +328,16 @@ def extract_slit(input_model, slit):
         ext_data = input_model.data[slit_slice].copy()
         ext_err = input_model.err[slit_slice].copy()
         ext_dq = input_model.dq[slit_slice].copy()
-        if input_model.var_rnoise is not None:
-            ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
-        else:
-            ext_var_rnoise = None
-        if input_model.var_poisson is not None:
-            ext_var_poisson = input_model.var_poisson[slit_slice].copy()
-        else:
-            ext_var_poisson = None
+        ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
+        ext_var_poisson = input_model.var_poisson[slit_slice].copy()
         int_times = None
     elif ndim == 3:
         slit_slice = np.s_[:, ylo:yhi, xlo:xhi]
         ext_data = input_model.data[slit_slice].copy()
         ext_err = input_model.err[slit_slice].copy()
         ext_dq = input_model.dq[slit_slice].copy()
-        if input_model.var_rnoise is not None:
-            ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
-        else:
-            ext_var_rnoise = None
-        if input_model.var_poisson is not None:
-            ext_var_poisson = input_model.var_poisson[slit_slice].copy()
-        else:
-            ext_var_poisson = None
+        ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
+        ext_var_poisson = input_model.var_poisson[slit_slice].copy()
         if pipe_utils.is_tso(input_model):
             log.debug("TSO data, so copying the INT_TIMES table.")
             int_times = input_model.int_times.copy()

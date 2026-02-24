@@ -41,6 +41,8 @@ def nirspec_rate():
     im = datamodels.ImageModel(shape)
     im.dq = im.get_default("dq")
     im.err = im.get_default("err")
+    im.var_rnoise = im.get_default("var_rnoise")
+    im.var_poisson = im.get_default("var_poisson")
     im.meta.target = {"ra": 100.1237, "dec": 39.86, "source_type_apt": "EXTENDED"}
     im.meta.wcsinfo = {
         "dec_ref": 40,

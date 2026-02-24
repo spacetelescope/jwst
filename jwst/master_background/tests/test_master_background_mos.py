@@ -84,6 +84,8 @@ def nirspec_msa_extracted2d(nirspec_msa_rate, nirspec_msa_metfl):
     model = ImageModel(nirspec_msa_rate)
     model.dq = model.get_default("dq")
     model.err = model.get_default("err")
+    model.var_rnoise = model.get_default("var_rnoise")
+    model.var_poisson = model.get_default("var_poisson")
     model = AssignWcsStep.call(model)
     model = Extract2dStep.call(model)
     for slit in model.slits:
