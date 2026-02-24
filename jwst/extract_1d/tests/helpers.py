@@ -462,8 +462,8 @@ def mock_nircam_dhs():
     model.meta.observation.time = "06:24:45.569"
     model.meta.exposure.type = "NRC_TSGRISM"
     intend = 3
-    # model.meta.exposure.integration_start = 1
-    # model.meta.exposure.integration_end = intend
+    model.meta.exposure.integration_start = 1
+    model.meta.exposure.integration_end = intend
     model.meta.exposure.nints = intend
     integrations = [
         (
