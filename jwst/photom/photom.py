@@ -486,8 +486,7 @@ class DataSet:
             MIRI photom reference file data model.
         """
         # Handle MultiSlit models separately
-        print(datamodels.MultiSlitModel)
-        print(self.detector)
+
         if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == "MIR_WFSS":
             # We have to find and apply a separate set of flux cal
             # data for each of the slits/orders in the input
@@ -500,16 +499,12 @@ class DataSet:
                 log.info(f"Working on slit {slit.name}, order {order}")
 
                 fields_to_match = {"filter": self.filter}
-                print("fields to match", fields_to_match)
 
                 row = find_row(ftab.phot_table, fields_to_match)
-                # print('row', row)
                 if row is None:
                     continue
                 mid_time = self.input.meta.exposure.mid_time
                 correction_table = time_dependence.get_correction_table(ftab, mid_time)
-                # print('Correction table', correction_table)
-                # print(ftab.phot_table[row])
                 self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
         # Imaging detector
         elif self.detector == "MIRIMAGE":
@@ -789,13 +784,9 @@ class DataSet:
         unit_is_surface_brightness = True  # default
         try:
             conversion = tabdata["photmjsr"]  # unit is MJy / sr
-            # print('Conversion photmjsr', conversion)
-
         except KeyError:
             conversion = tabdata["photmj"]  # unit is MJy
-            # print('in photom', datamodels.MultiSlitModel)
             if isinstance(self.input, datamodels.MultiSlitModel):
-                print("a")
                 slit = self.input.slits[self.slitnum]
                 if self.exptype in ["NRS_MSASPEC", "NRS_FIXEDSLIT"]:
                     srctype = self.source_type if self.source_type else slit.source_type
@@ -816,7 +807,6 @@ class DataSet:
                 # output from extract1d should not require this area conversion
                 unit_is_surface_brightness = False
             else:
-                print("b")
                 if self.source_type is None or self.source_type != "POINT":
                     if self.input.meta.photometry.pixelarea_steradians is None:
                         log.warning(
@@ -835,7 +825,6 @@ class DataSet:
             log.info(f"Multiplicative time dependence correction is {time_correction:.6g}")
             conversion /= time_correction
 
-        print("Conversion", conversion)
         # Store the conversion factor in the meta data
         log.info(f"PHOTMJSR value: {conversion:.6g}")
         if isinstance(self.input, datamodels.MultiSlitModel):
