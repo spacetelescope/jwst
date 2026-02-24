@@ -15,8 +15,8 @@ from stcal.alignment.util import (
     wcs_bbox_from_shape,
 )
 from stdatamodels.jwst.datamodels import (
+    ImageModel,
     MiriLRSSpecwcsModel,
-    ReferenceImageModel,
     WavelengthrangeModel,
 )
 from stdatamodels.jwst.transforms.models import GrismObject
@@ -192,7 +192,7 @@ def substripe_subarray_transform(input_model, regions_model, regions_label):
     ra = np.arange(nrows_reg)
     rowarr = np.stack((ra,) * ncols_reg).T
 
-    mock_refmodel = ReferenceImageModel(data=rowarr)
+    mock_refmodel = ImageModel(data=rowarr)
     output = stripe_read(input_model, mock_refmodel, ["data"])
     yscistart = np.where(output.data == yrefstart)[0]
 

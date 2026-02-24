@@ -363,7 +363,10 @@ def dhs(input_model, reference_files):
     """
     frames = create_coord_frames()
 
-    regs_model = RegionsModel(reference_files["regions"])
+    if reference_files["regions"] != "":
+        regs_model = RegionsModel(reference_files["regions"])
+    else:
+        raise FileNotFoundError("No regions reference file provided.")
 
     if regs_model.regions.shape == input_model.data.shape[-2:]:
         regions = regs_model.regions.copy()
