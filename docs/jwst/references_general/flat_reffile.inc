@@ -1,5 +1,3 @@
-.. _flat_reffile:
-
 FLAT Reference File
 -------------------
 

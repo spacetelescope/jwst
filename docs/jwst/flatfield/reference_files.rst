@@ -1,14 +1,16 @@
 Reference Files
 ===============
 The ``flat_field`` step uses four different types of reference files, depending on the
-type of data being processed. Most cases just use the FLAT reference file, while NIRSpec
-spectroscopic exposures use the three reference files FFLAT (fore optics),
-SFLAT (spectrograph optics), and DFLAT (detector).
+type of data being processed. Most cases just use the :ref:`flat_reffile`, while NIRSpec
+spectroscopic exposures use the three reference files :ref:`fflat_reffile` (fore optics),
+:ref:`sflat_reffile` (spectrograph optics), and :ref:`dflat_reffile` (detector).
+
+.. _flat_reffile:
 
 .. include:: ../references_general/flat_reffile.inc
 
 Reference Files for NIRSpec Spectroscopy
-===================================================
+========================================
 For NIRSpec spectroscopic data, the flat-field reference files allow for variations in
 the flat field with wavelength, as well as from pixel to pixel.  There is a
 separate flat-field reference file for each of three sections of the
@@ -78,4 +80,3 @@ which are now described.
 .. include:: ../references_general/sflat_reffile.inc
 
 .. include:: ../references_general/dflat_reffile.inc
-
