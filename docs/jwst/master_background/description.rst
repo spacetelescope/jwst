@@ -395,3 +395,7 @@ as follows:
 #. The background-subtracted slits are processed through all remaining
    :ref:`calwebb_spec2 <calwebb_spec2>` calibration steps, using the corrections
    appropriate for the source type in each slit
+
+Reference Files
+---------------
+The master background subtraction step does not use any reference files.

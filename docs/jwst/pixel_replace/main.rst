@@ -21,10 +21,10 @@ estimated values, following the same interpolation method as is used for the dat
 This step is provided as a cosmetic feature and, for that reason, should be used with caution.
 
 Algorithms
-==========
+----------
 
 Adjacent Profile Approximation
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This is the default (and most extensively tested) algorithm for most spectroscopic modes.
 
@@ -40,7 +40,7 @@ Finally, this profile is scaled to the vector containing a missing pixel, and th
 estimated from the scaled profile.
 
 Minimum Gradient Estimator
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the case of the MIRI MRS, NaN-valued pixels are partially compensated during the IFU cube building process
 using the overlap between detector pixels and output cube voxels.  The effects of NaN values are thus not
@@ -59,3 +59,7 @@ two adjacent pixels along that dimension.  Near point sources this will thus fav
 axis due to spatial undersampling of the PSF profile, while near bright extended emission lines it will favor
 replacement along the spatial axis due to the steep spectral profile.  No replacement is attempted if a NaN
 value is bordered by another NaN value along a given axis.
+
+Reference Files
+---------------
+The ``pixel_replace`` step does not use any reference files.
