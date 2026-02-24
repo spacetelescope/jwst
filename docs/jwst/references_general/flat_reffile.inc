@@ -16,7 +16,7 @@ Type Specific Keywords for FLAT
 In addition to the standard reference file keywords listed above,
 the following keywords are *required* in FLAT reference files,
 because they are used as CRDS selectors
-(see :ref:`flat_selectors`):
+(see "Reference Selection Keywords for FLAT" above):
 
 =========  ==============================  =============================
 Keyword    Data Model Name                 Instruments
