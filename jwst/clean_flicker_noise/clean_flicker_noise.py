@@ -52,20 +52,20 @@ def read_flat_file(input_model, flat_filename):
 
     Only the flat image is returned: error and DQ arrays are ignored.
     Any zeros or NaNs in the flat image are set to a smoothed local average
-    value (via `background_level`, with background_method = 'model') before
+    value (via ``background_level``, with ``background_method = 'model'``) before
     returning, to avoid impacting the background and noise fits near
     missing flat data.
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data.
     flat_filename : str
         File path for a full-frame flat image.
 
     Returns
     -------
-    flat_data : array-like of float
+    flat_data : ndarray of float
         A 2D flat image array matching the input data.
     """
     if flat_filename is None:
@@ -104,21 +104,23 @@ def make_rate(input_model, input_dir="", return_cube=False):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.RampModel`
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
         Input ramp model.
 
     input_dir : str
-        Path to the input directory.  Used by sub-steps (e.g. assign_wcs
+        Path to the input directory.  Used by sub-steps (e.g., ``assign_wcs``
         for NIRSpec MOS data) to find auxiliary data.
 
     return_cube : bool, optional
-        If set, a CubeModel will be returned, with a separate
-        rate for each integration.  Otherwise, an ImageModel is returned
+        If set, a `~stdatamodels.jwst.datamodels.CubeModel` will be returned, with a separate
+        rate for each integration.  Otherwise, an
+        `~stdatamodels.jwst.datamodels.ImageModel` is returned
         with the combined rate for the full observation.
 
     Returns
     -------
-    rate_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+    rate_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                 `~stdatamodels.jwst.datamodels.CubeModel`
         The rate or rateints model.
     """
     # Call the ramp fit step on a copy of the input
@@ -154,29 +156,31 @@ def post_process_rate(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         Input rate model.
 
     input_dir : str
-        Path to the input directory.  Used by sub-steps (e.g. assign_wcs
+        Path to the input directory.  Used by sub-steps (e.g., ``assign_wcs``
         for NIRSpec MOS data) to find auxiliary data.
 
     assign_wcs : bool, optional
         If set and the input does not already have a WCS assigned,
-        the assign_wcs step will be called on the rate model.
+        the ``assign_wcs`` step will be called on the rate model.
 
     msaflagopen : bool, optional
-        If set, the msaflagopen step will be called on the rate model.
-        If a WCS is not already present, assign_wcs will be called first.
+        If set, the ``msaflagopen`` step will be called on the rate model.
+        If a WCS is not already present, ``assign_wcs`` will be called first.
 
     flat_dq : bool, optional
-        If set, the flat_field step will be run on the input model. DQ
+        If set, the ``flat_field`` step will be run on the input model. DQ
         flags are retrieved from the output and added to the input
         model's DQ array. The rate data is not modified.
 
     Returns
     -------
-    output_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+    output_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                   `~stdatamodels.jwst.datamodels.CubeModel`
         The updated model.
     """
     output_model = input_model
@@ -222,16 +226,16 @@ def mask_ifu_slices(input_model, mask):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data model
 
-    mask : array-like of bool
-        2D input mask that will be updated. True indicates background
-        pixels to be used. IFU slice regions will be set to False.
+    mask : ndarray of bool
+        2D input mask that will be updated. `True` indicates background
+        pixels to be used. IFU slice regions will be set to `False`.
 
     Returns
     -------
-    mask : array-like of bool
+    mask : ndarray of bool
         2D output mask with additional flags for science pixels
     """
     log.info("Finding slice pixels for an IFU image")
@@ -278,16 +282,16 @@ def mask_slits(input_model, mask):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data model.
 
-    mask : array-like of bool
-        2D input mask that will be updated. True indicates background
-        pixels to be used. Slit regions will be set to False.
+    mask : ndarray of bool
+        2D input mask that will be updated. `True` indicates background
+        pixels to be used. Slit regions will be set to `False`.
 
     Returns
     -------
-    mask : array-like of bool
+    mask : ndarray of bool
         2D output mask with additional flags for slit pixels
     """
     log.info("Finding slit/slitlet pixels")
@@ -327,36 +331,36 @@ def clip_to_background(
     to a histogram of the values.  In that case, the center is the
     Gaussian mean and the sigma is the Gaussian width.
 
-    Pixels above the center + sigma_upper * sigma are assumed to
+    Pixels above the ``center + sigma_upper * sigma`` are assumed to
     have signal; those below this level are assumed to be background pixels.
 
-    Pixels less than center - sigma_lower * sigma are also excluded as bad values.
+    Pixels less than ``center - sigma_lower * sigma`` are also excluded as bad values.
 
     The input mask is updated in place.
 
     Parameters
     ----------
-    image : array-like of float
+    image : ndarray of float
         2D image containing signal and background values.
 
-    mask : array-like of bool
+    mask : ndarray of bool
         2D input mask to be updated. True indicates background
         pixels to be used. Regions containing signal or outliers
-        will be set to False.
+        will be set to `False`.
 
     sigma_lower : float, optional
         The number of standard deviations to use as the lower bound
         for the clipping limit. Values below this limit are marked
-        False in the mask.
+        `False` in the mask.
 
     sigma_upper : float, optional
         The number of standard deviations to use as the upper bound
         for the clipping limit. Values above this limit are marked
-        False in the mask.
+        `False` in the mask.
 
     fit_histogram :  bool, optional
         If set, the center value and standard deviation used with
-        `sigma_lower` and `sigma_upper` for clipping outliers is derived
+        ``sigma_lower`` and ``sigma_upper`` for clipping outliers is derived
         from a Gaussian fit to a histogram of values. Otherwise, the
         center and standard deviation are derived from a simple iterative
         sigma clipping.
@@ -489,7 +493,7 @@ def create_mask(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data model, containing rate data with all necessary
         pre-processing already performed.
 
@@ -497,7 +501,7 @@ def create_mask(
         For NIRSpec, mask regions of the image defined by WCS bounding
         boxes for slits/slices, as well as any regions known to be
         affected by failed-open MSA shutters. This requires the
-        `assign_wcs` and `msaflagopen` steps to have been run on the
+        ``assign_wcs`` and ``msaflagopen`` steps to have been run on the
         input_model.
         For MIRI imaging, mask regions of the detector not used for science.
         This requires that DO_NOT_USE flags are set in the DQ array
@@ -507,7 +511,7 @@ def create_mask(
         Sigma threshold for masking outliers.
 
     fit_histogram : bool, optional
-        If set, the 'sigma' used with `n_sigma` for clipping outliers
+        If set, the 'sigma' used with ``n_sigma`` for clipping outliers
         is derived from a Gaussian fit to a histogram of values.
         Otherwise, a simple iterative sigma clipping is performed.
 
@@ -518,7 +522,7 @@ def create_mask(
 
     Returns
     -------
-    mask : array-like of bool
+    mask : ndarray of bool
         2D or 3D image mask
     """
     exptype = input_model.meta.exposure.type.lower()
@@ -605,10 +609,10 @@ def background_level(image, mask, background_method="median", background_box_siz
 
     Parameters
     ----------
-    image : array-like of float
+    image : ndarray of float
         The 2D image containing the background to fit.
 
-    mask : array-like of bool
+    mask : ndarray of bool
         The mask that indicates which pixels are to be used in fitting.
         True indicates a background pixel.
 
@@ -620,17 +624,17 @@ def background_level(image, mask, background_method="median", background_box_siz
         value is 0.0.
 
     background_box_size : tuple of int, optional
-        Box size for the data grid used by `Background2D` when
-        `background_method` = 'model'. For best results, use a box size
+        Box size for the data grid used by `~photutils.background.Background2D` when
+        ``background_method = 'model'``. For best results, use a box size
         that evenly divides the input image shape. Defaults to 32x32 if
         not provided.
 
     Returns
     -------
-    background : float or array-like of float
-        The background level: a single value, if `background_method`
+    background : float or ndarray of float
+        The background level: a single value, if ``background_method``
         is 'median' or None, or an array matching the input image size
-        if `background_method` is 'model'.
+        if ``background_method`` is 'model'.
     """
     if background_method is None:
         background = 0.0
@@ -696,10 +700,10 @@ def fft_clean_full_frame(image, mask, detector):
 
     Parameters
     ----------
-    image : array-like of float
+    image : ndarray of float
         The image to be cleaned.
 
-    mask : array-like of bool
+    mask : ndarray of bool
         The mask that indicates which pixels are to be used in fitting.
 
     detector : str
@@ -707,7 +711,7 @@ def fft_clean_full_frame(image, mask, detector):
 
     Returns
     -------
-    cleaned_image : array-like of float
+    cleaned_image : ndarray of float
         The cleaned image.
     """
     # Instantiate the cleaner
@@ -738,10 +742,10 @@ def fft_clean_subarray(
 
     Parameters
     ----------
-    image : array-like of float
+    image : ndarray of float
         The image to be cleaned.
 
-    mask : array-like of bool
+    mask : ndarray of bool
         The mask that indicates which pixels are to be used in fitting.
 
     detector : str
@@ -751,30 +755,32 @@ def fft_clean_subarray(
         Number of pixels to process simultaneously.  Default 512.  Should
         be at least a few hundred to access sub-kHz frequencies in areas
         where most pixels are available for fitting.  Previous default
-        behavior corresponds to npix_iter of infinity.
+        behavior corresponds to ``npix_iter`` of infinity.
 
     fc : tuple
         Apodizing filter definition. These parameters are tunable. The
-        defaults happen to work well for NIRSpec BOTS exposures.
-          1) Unity gain for f < fc[0]
-          2) Cosine roll-off from fc[0] to fc[1]
-          3) Zero gain from fc[1] to fc[2]
-          4) Cosine roll-on from fc[2] to fc[3]
-        Default (1061, 1211, 49943, 49957)
+        defaults happen to work well for NIRSpec BOTS exposures:
+
+        1. Unity gain for ``f < fc[0]``
+        2. Cosine roll-off from ``fc[0]`` to ``fc[1]``
+        3. Zero gain from ``fc[1]`` to ``fc[2]``
+        4. Cosine roll-on from ``fc[2]`` to ``fc[3]``
+
+        Default ``(1061, 1211, 49943, 49957)``
 
     exclude_outliers : bool
-        Find and mask outliers in the fit?  Default True
+        Find and mask outliers in the fit? Default: `True`
 
     sigrej : float
-        Number of sigma to clip when identifying outliers.  Default 4.
+        Number of sigma to clip when identifying outliers. Default: 4.
 
     minfrac : float
         Minimum fraction of pixels locally available in the mask in
-        order to attempt a correction.  Default 0.05 (i.e., 5%).
+        order to attempt a correction. Default: 0.05 (i.e., 5%)
 
     Returns
     -------
-    cleaned_image : array-like of float
+    cleaned_image : ndarray of float
         The cleaned image.
     """
     # Flip the image to detector coords. NRS1 requires a transpose
@@ -909,18 +915,18 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
 
     Parameters
     ----------
-    image : array-like of float
+    image : ndarray of float
         The image to be cleaned.
 
-    mask : array-like of bool
+    mask : ndarray of bool
         The mask that indicates which pixels are to be used in fitting.
         True indicates a background pixel.
 
     axis_to_correct : int
         For NIR detectors, the axis to correct should be the detector slow
         readout direction.  Values expected are 1 or 2, following the JWST
-        datamodel definition (meta.subarray.slowaxis).  For MIRI, flicker
-        noise appears along the vertical direction, so `axis_to_correct`
+        datamodel definition (``meta.subarray.slowaxis``).  For MIRI, flicker
+        noise appears along the vertical direction, so ``axis_to_correct``
         should be set to 1 (median along the y-axis).
 
     fit_by_channel : bool, optional
@@ -929,7 +935,7 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
 
     Returns
     -------
-    cleaned_image : array-like of float
+    cleaned_image : ndarray of float
         The cleaned image.
     """
     # Masked median along slow axis
@@ -986,14 +992,14 @@ def make_intermediate_model(input_model, intermediate_data):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data.
-    intermediate_data : array-like
+    intermediate_data : ndarray
         The intermediate data to save.
 
     Returns
     -------
-    intermediate_model : `~jwst.datamodels.JwstDataModel`
+    intermediate_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         A model containing only the intermediate data and top-level
         metadata matching the input.
     """
@@ -1116,7 +1122,7 @@ def _make_processed_rate_image(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data.
     single_mask : bool
         If set, a single scene mask is desired, so create
@@ -1130,16 +1136,16 @@ def _make_processed_rate_image(
         Exposure type for the input data, used to determine
         which kinds of postprocessing is necessary.
     mask_science_regions : bool
-        If set, science regions should be masked, so run `assign_wcs`
-        and `msaflagopen` for NIRSpec and `flatfield` for MIRI
+        If set, science regions should be masked, so run ``assign_wcs``
+        and ``msaflagopen`` for NIRSpec and ``flatfield`` for MIRI
         after creating the draft rate image.
-    flat : array-like of float or None
+    flat : ndarray of float or None
         If not None, the draft rate will be divided by the flat array
         before returning. The provided flat must match the rate shape.
 
     Returns
     -------
-    image_model : `~jwst.datamodels.JwstDataModel`
+    image_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The processed rate image or cube.
     """
     if isinstance(input_model, datamodels.RampModel):
@@ -1180,13 +1186,13 @@ def _make_scene_mask(
 
     If provided, the user mask is opened as a datamodel and directly
     returned. Otherwise, the mask is generated from the rate data in
-    `image_model`.
+    ``image_model``.
 
     Parameters
     ----------
     user_mask : str or None
         Path to user-supplied mask image.
-    image_model : `~jwst.datamodels.JwstDataModel`
+    image_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         A rate image or cube, processed as needed.
     mask_science_regions : bool
         For NIRSpec, mask regions of the image defined by WCS bounding
@@ -1196,7 +1202,7 @@ def _make_scene_mask(
     n_sigma : float
         N-sigma rejection level for finding outliers.
     fit_histogram : bool
-        If set, the 'sigma' used with `n_sigma` for clipping outliers
+        If set, the 'sigma' used with ``n_sigma`` for clipping outliers
         is derived from a Gaussian fit to a histogram of values.
         Otherwise, a simple iterative sigma clipping is performed.
     single_mask : bool
@@ -1205,16 +1211,16 @@ def _make_scene_mask(
         be a 3D cube, with one plane for each integration.
     save_mask : bool
         If set, a mask model is created and returned along with the mask
-        array. If not, the `mask_model` returned is None.
+        array. If not, the ``mask_model`` returned is None.
 
     Returns
     -------
-    background_mask : array-like of bool
+    background_mask : ndarray of bool
         Mask array, with True indicating background pixels, False
         indicating source pixels.
-    mask_model : `~jwst.datamodels.JwstDataModel` or None
-        A datamodel containing the background mask, if `save_mask`
-        is True.
+    mask_model : `~stdatamodels.jwst.datamodels.JwstDataModel` or None
+        A datamodel containing the background mask, if ``save_mask``
+        is `True`.
     """
     # Check for a user-supplied mask image. If provided, use it.
     if user_mask is not None:
@@ -1251,15 +1257,15 @@ def _check_data_shapes(input_model, background_mask):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
-    background_mask : array-like of bool
+    background_mask : ndarray of bool
         The background mask.
 
     Returns
     -------
     mismatch : bool
-        If True, the background mask does not match the data
+        If `True`, the background mask does not match the data
         and the step should be skipped.
     ndim : int
         Number of dimensions in the input data.
@@ -1318,15 +1324,15 @@ def _clean_one_image(
 
     Parameters
     ----------
-    image : array-like of float
+    image : ndarray of float
         The input image.
-    mask : array-like of bool
+    mask : ndarray of bool
         The scene mask.  All non-background signal should be
-        marked as True.
+        marked as `True`.
     background_method : str
         The method for fitting the background.
     background_box_size : tuple of int
-        Background box size, used with `background_method`
+        Background box size, used with ``background_method``
         is 'model'.
     n_sigma : float
         N-sigma rejection level for outliers.
@@ -1336,26 +1342,26 @@ def _clean_one_image(
     detector : str
         The detector name.
     fc : tuple of int
-        Frequency cutoff values, used for `fit_method` = 'fft'.
+        Frequency cutoff values, used for ``fit_method = 'fft'``.
     axis_to_correct : int
         Axis along which noise appears, used for
-        `fit_method` = 'median'.
+        ``fit_method = 'median'``.
     fit_by_channel : bool
         Option to fit noise in detector channels separately,
-        used for `fit_method` = 'median'
-    flat : array-like of float or None
+        used for ``fit_method = 'median'``
+    flat : ndarray of float or None
         If not None, the image is divided by the flat before fitting background
         and noise.  Flat data must match the shape of the image.
 
     Returns
     -------
-    cleaned_image : array-like of float
+    cleaned_image : ndarray of float
         The cleaned image.
-    background : array-like of float
+    background : ndarray of float
         The background fit and removed prior to cleaning.
         Used for diagnostic purposes.
     success : bool
-        True if cleaning proceeded as expected; False if
+        `True` if cleaning proceeded as expected; `False` if
         cleaning failed and the step should be skipped.
     """
     success = True
@@ -1432,9 +1438,9 @@ def _mask_unusable(mask, dq):
 
     Parameters
     ----------
-    mask : array-like of bool
+    mask : ndarray of bool
         Input mask, updated in place.
-    dq : array-like of int
+    dq : ndarray of int
         DQ flag array matching the mask shape.
     """
     dnu = (dq & dqflags.group["DO_NOT_USE"]) > 0
@@ -1465,11 +1471,11 @@ def do_correction(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data to be corrected. Updated in place.
 
     input_dir : str
-        Path to the input directory.  Used by sub-steps (e.g. assign_wcs
+        Path to the input directory.  Used by sub-steps (e.g., ``assign_wcs``
         for NIRSpec MOS data) to find auxiliary data.
 
     fit_method : {'fft', 'median'}, optional
@@ -1477,7 +1483,7 @@ def do_correction(
 
     fit_by_channel : bool, optional
         If set, flicker noise is fit independently for each detector channel.
-        Ignored for MIRI, for subarray data, and for `fit_method` = 'fft'.
+        Ignored for MIRI, for subarray data, and for ``fit_method = 'fft'``.
 
     background_method : {'median', 'model', None}, optional
         If 'median', the preliminary background to remove and restore
@@ -1487,8 +1493,8 @@ def do_correction(
         value is 0.0.
 
     background_box_size : tuple of int, optional
-        Box size for the data grid used by `Background2D` when
-        `background_method` = 'model'. For best results, use a box size
+        Box size for the data grid used by `~photutils.background.Background2D` when
+        ``background_method = 'model'``. For best results, use a box size
         that evenly divides the input image shape.
 
     mask_science_regions : bool, optional
@@ -1505,7 +1511,7 @@ def do_correction(
         N-sigma rejection level for finding outliers.
 
     fit_histogram : bool, optional
-        If set, the 'sigma' used with `n_sigma` for clipping outliers
+        If set, the 'sigma' used with ``n_sigma`` for clipping outliers
         is derived from a Gaussian fit to a histogram of values.
         Otherwise, a simple iterative sigma clipping is performed.
 
@@ -1528,22 +1534,22 @@ def do_correction(
 
     Returns
     -------
-    output_model : `~jwst.datamodels.JwstDataModel`
+    output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Corrected data.
 
-    mask_model : `~jwst.datamodels.JwstDataModel`
+    mask_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Pixel mask to be saved or None.
 
-    background_model : `~jwst.datamodels.JwstDataModel`
+    background_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Background model to be saved or None.
 
-    noise_model : `~jwst.datamodels.JwstDataModel`
+    noise_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Background model to be saved or None.
 
     status : {'COMPLETE', 'SKIPPED'}
-        Completion status.  If errors were encountered, status = 'SKIPPED'
+        Completion status.  If errors were encountered, status is set to 'SKIPPED'
         and the output data matches the input data.  Otherwise,
-        status = 'COMPLETE'.
+        status is set to 'COMPLETE'.
     """
     # Track the completion status, for various failure conditions
     status = "SKIPPED"

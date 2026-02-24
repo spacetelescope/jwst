@@ -1,5 +1,5 @@
 Description
------------
+===========
 
 :Class: `jwst.coron.hlsp_step.HlspStep`
 :Alias: hlsp

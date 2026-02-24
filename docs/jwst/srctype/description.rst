@@ -138,3 +138,7 @@ may show up in a Wide-Field Slitless Spectroscopy exposure. So for these modes
 the ``srctype`` step uses the value from the ``is_extended`` column of the
 source catalog generated from the direct imaging taken with WFSS observations
 and uses that to set "POINT" or "EXTENDED" for each extracted source.
+
+Reference Files
+---------------
+The ``srctype`` step does not use any reference files.

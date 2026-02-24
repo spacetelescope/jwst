@@ -331,3 +331,7 @@ the outcome of the matching (sky subtraction in general) algorithm:
    sources). However, arguments such as ``lower`` and ``upper`` will
    apply to all images regardless of the intrinsic differences
    in sky levels (see :ref:`skymatch step arguments <skymatch_arguments>`).
+
+Reference Files
+---------------
+The ``skymatch`` step does not use any reference files.

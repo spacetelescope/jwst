@@ -1,3 +1,3 @@
 Reference Files
 ===============
-The ``clean_flicker_noise`` step does not use any reference files.
+For some optional processing steps, the ``clean_flicker_noise`` step may use the :ref:`flat_reffile`.
