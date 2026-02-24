@@ -428,9 +428,6 @@ class DataSet:
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     continue
-                # Get a time-dependent correction from the reference file if available
-                mid_time = self.input.meta.exposure.mid_time
-                correction_table = time_dependence.get_correction_table(ftab, mid_time)
                 self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
         elif isinstance(self.input, datamodels.CubeModel):
