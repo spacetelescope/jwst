@@ -42,6 +42,7 @@ def test_flatfield_step_interface(instrument, exptype):
     data.meta.subarray.ysize = shape[0]
 
     # set arrays to defaults
+    data.dq = data.get_default("dq")
     data.var_rnoise = data.get_default("var_rnoise")
     data.var_poisson = data.get_default("var_poisson")
     data.var_flat = data.get_default("var_flat")
@@ -204,6 +205,7 @@ def test_nirspec_bots_flat():
     data.data += 1
     data.wavelength = np.ones(shape[-2:])
     data.wavelength[:] = np.linspace(1, 5, shape[-1], dtype=float)
+    data.dq = data.get_default("dq")
     data.var_rnoise = data.get_default("var_rnoise")
     data.var_poisson = data.get_default("var_poisson")
     data.var_flat = data.get_default("var_flat")

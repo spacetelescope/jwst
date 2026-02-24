@@ -57,6 +57,8 @@ def miri_rate_model():
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.data += 5
+    im.dq = im.get_default("dq")
+    im.err = im.get_default("err")
     im.var_rnoise = np.ones(shape)
     im.meta.wcsinfo = {
         "dec_ref": 40,
@@ -131,6 +133,7 @@ def miri_rate_zero_crossing():
     )
     shape = (ysize, xsize)
     im = ImageModel(shape)
+    im.dq = im.get_default("dq")
     im.var_rnoise = np.random.random(shape)
     im.meta.wcsinfo = {
         "dec_ref": 2.16444343946559e-05,
@@ -198,6 +201,8 @@ def nircam_rate():
     ysize = 204
     shape = (ysize, xsize)
     im = ImageModel(shape)
+    im.dq = im.get_default("dq")
+    im.err = im.get_default("err")
     im.var_rnoise = np.ones(shape)
     im.meta.wcsinfo = {
         "ctype1": "RA---TAN",
@@ -277,6 +282,8 @@ def nirspec_rate():
     xsize = 2048
     shape = (ysize, xsize)
     im = ImageModel(shape)
+    im.dq = im.get_default("dq")
+    im.err = im.get_default("err")
     im.var_rnoise = np.ones(shape)
     im.meta.target = {"ra": 100.1237, "dec": 39.86}
     im.meta.wcsinfo = {

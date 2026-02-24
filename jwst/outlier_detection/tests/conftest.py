@@ -43,6 +43,7 @@ def sci_blot_image_pair():
     sci.data[10, 10] += signal
     # update the noise for this source to include the photon/measurement noise
     sci.err[10, 10] = np.sqrt(helpers.SIGMA**2 + signal)
+    sci.dq = sci.get_default("dq")
 
     # The blot image is just a smoothed version of the science image that has
     # its background subtracted
@@ -113,6 +114,7 @@ def scimodel_base():
     # make some mock data with a "real" source at 7,7
     data, err = helpers.mock_data()
     sci1.data = data
+    sci1.dq = sci1.get_default("dq")
     sci1.err = err
     sci1.var_rnoise = np.zeros(helpers.SHAPE) + 1.0
 

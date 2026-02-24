@@ -245,6 +245,7 @@ def average_background(input_model, bkg_list, sigma, maxiters):
     im_array = ImageSubsetArray(input_model)
 
     avg_bkg = datamodels.ImageModel(image_shape)
+    avg_bkg.dq = avg_bkg.get_default("dq")
     num_bkg = len(bkg_list)
     cdata = np.zeros((num_bkg,) + image_shape)
     cerr = cdata.copy()

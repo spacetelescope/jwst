@@ -1884,7 +1884,7 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
         flat_dq_2d[mask] = np.bitwise_or(flat_dq_2d[mask], BADFLAT)
     del mask
 
-    flat_dq_2d = flat_dq_2d.astype(output_model.dq.dtype)
+    flat_dq_2d = flat_dq_2d.astype(output_model.get_dtype("dq"))
 
     interpolated_flats.data = flat_2d
     interpolated_flats.dq = flat_dq_2d

@@ -205,6 +205,8 @@ def nirspec_slit_list():
 
 def test_extract_2d_nirspec_msa_fs(nirspec_msa_rate, nirspec_msa_metfl):
     model = ImageModel(nirspec_msa_rate)
+    model.dq = model.get_default("dq")
+    model.err = model.get_default("err")
     result = AssignWcsStep.call(model)
     result = Extract2dStep.call(result)
     assert isinstance(result, MultiSlitModel)
@@ -228,6 +230,8 @@ def test_extract_2d_nirspec_msa_fs(nirspec_msa_rate, nirspec_msa_metfl):
 
 def test_extract_2d_nirspec_fs(nirspec_fs_rate):
     model = ImageModel(nirspec_fs_rate)
+    model.dq = model.get_default("dq")
+    model.err = model.get_default("err")
     model_wcs = AssignWcsStep.call(model)
 
     result = Extract2dStep.call(model_wcs)
@@ -319,6 +323,8 @@ def test_select_slits(nirspec_slit_list):
 
 def test_output_is_not_input(nirspec_fs_rate):
     model = ImageModel(nirspec_fs_rate)
+    model.dq = model.get_default("dq")
+    model.err = model.get_default("err")
     model_wcs = AssignWcsStep.call(model)
     result = Extract2dStep.call(model_wcs)
 

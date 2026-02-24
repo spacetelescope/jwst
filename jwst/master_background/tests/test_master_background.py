@@ -39,9 +39,8 @@ def nirspec_rate():
     xsize = 2048
     shape = (ysize, xsize)
     im = datamodels.ImageModel(shape)
-    # im.var_rnoise = np.ones(shape, dtype=np.float32)
-    # im.var_poisson = np.ones(shape, dtype=np.float32)
-    # im.var_flat = np.ones(shape, dtype=np.float32)
+    im.dq = im.get_default("dq")
+    im.err = im.get_default("err")
     im.meta.target = {"ra": 100.1237, "dec": 39.86, "source_type_apt": "EXTENDED"}
     im.meta.wcsinfo = {
         "dec_ref": 40,
@@ -167,6 +166,8 @@ def nirspec_asn(nirspec_cal_pair, tmp_cwd):
 def science_image():
     """Generate science image."""
     image = datamodels.ImageModel((10, 10))
+    image.dq = image.get_default("dq")
+    image.err = image.get_default("err")
     image.meta.instrument.name = "MIRI"
     image.meta.instrument.detector = "MIRIMAGE"
     image.meta.exposure.type = "MIR_LRS-FIXEDSLIT"

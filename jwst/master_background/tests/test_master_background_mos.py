@@ -82,6 +82,8 @@ def nirspec_msa_metfl(tmp_path):
 @pytest.fixture
 def nirspec_msa_extracted2d(nirspec_msa_rate, nirspec_msa_metfl):
     model = ImageModel(nirspec_msa_rate)
+    model.dq = model.get_default("dq")
+    model.err = model.get_default("err")
     model = AssignWcsStep.call(model)
     model = Extract2dStep.call(model)
     for slit in model.slits:

@@ -15,6 +15,8 @@ def wfs_association(tmp_path_factory):
     imsize = 10
     tmp_path = tmp_path_factory.mktemp("wfs")
     im1 = datamodels.ImageModel((imsize, imsize))
+    im1.dq = im1.get_default("dq")
+    im1.err = im1.get_default("err")
     im1.meta.wcsinfo = {
         "dec_ref": 11.99875540218638,
         "ra_ref": 22.02351763251896,

@@ -61,6 +61,7 @@ def make_nircam_rate_model():
     shp = (2048, 2048)
     image = datamodels.ImageModel(shp)
     image.data[:, :] = 1
+    image.dq = image.get_default("dq")
     image.var_rnoise = np.full(shp, 0.01)
     image.var_poisson = np.full(shp, 0.01)
     image.meta.instrument.name = "NIRCAM"
