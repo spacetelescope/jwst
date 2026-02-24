@@ -6,10 +6,11 @@ import warnings
 
 import astropy.units as u
 import numpy as np
+import photutils
 from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import Table
-from astropy.utils import lazyproperty
+from astropy.utils import lazyproperty, minversion
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
 from photutils.detection import DAOStarFinder, IRAFStarFinder
@@ -31,6 +32,8 @@ SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
     "sky_bbox_lr",
     "sky_bbox_ur",
 ]
+
+PHOTUTILS_LT_3 = not minversion(photutils, "2.3.1.dev")
 
 
 class JWSTBackground:
@@ -104,6 +107,10 @@ class JWSTBackground:
                     "Using the entire unmasked array for background "
                     f"estimation: bkg_boxsize={self.data.shape}."
                 )
+
+        # Force caching of background now to avoid crashing later.
+        if not PHOTUTILS_LT_3:
+            bkg.background  # noqa: B018
 
         return bkg
 
