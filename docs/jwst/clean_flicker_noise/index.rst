@@ -9,10 +9,5 @@ Clean Flicker Noise
 
    main.rst
    arguments.rst
-
-* Reference File: The ``clean_flicker_noise`` step does not use any reference files.
-
-.. toctree::
-   :maxdepth: 2
-
+   reference_files.rst
    api_ref.rst
