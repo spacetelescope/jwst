@@ -36,6 +36,6 @@ Step Arguments
 --------------
 The imprint subtraction step has no step-specific arguments.
 
-Reference File
---------------
+Reference Files
+---------------
 The imprint subtraction step does not use any reference files.
