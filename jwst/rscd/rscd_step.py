@@ -12,14 +12,13 @@ log = logging.getLogger(__name__)
 
 class RscdStep(Step):
     """
-    Flag the first N groups of MIRI data to 'DO_NOT_USE' in the 2nd and later integrations.
+    Flag the first N groups an integration of MIRI data to 'DO_NOT_USE'.
 
-    The number of groups, N, for which to
-    set the GROUPDQ flag to 'DO_NOT_USE' is read in from the RSCD reference file. This number
-    depends on the readout model and subarray size. The step checks that the total number of groups
-    in an integration is greater than N+3 before flagging the GROUPDQ array. If the number of groups
-    is less than N+3 then no flagging is performed, because doing so would leave too few groups
-    to work with in later steps.
+    The number of groups, N, for which to set the GROUPDQ flag to 'DO_NOT_USE' is read in from
+    the RSCD reference file. This number depends on the readout model and subarray size.
+    The step checks that the total number of groups in an integration is greater than N+3
+    before flagging the GROUPDQ array. If the number of groups is less than N+3 then no flagging
+    is performed, because doing so would leave too few groups to work with in later steps.
     """
 
     class_alias = "rscd"
@@ -31,7 +30,7 @@ class RscdStep(Step):
 
     def process(self, step_input):
         """
-        Flag the initial groups to 'DO_NOT_USE' in the 2nd and later integrations.
+        Flag the initial groups to 'DO_NOT_USE'.
 
         The number of initial groups to flag is read in from the RSCD reference file. This number
         varies based on readout mode and subarray size.
