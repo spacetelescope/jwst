@@ -11,7 +11,6 @@ pytestmark = [pytest.mark.bigdata]
 def run_detector1pipeline(rtdata_module, resource_tracker):
     """Run calwebb_detector1 on NIRCam imaging long data"""
     rtdata = rtdata_module
-    rtdata.get_data("nircam/dhs/sub164stripe4_dhs_mock_dark.fits")
     rtdata.get_data("nircam/dhs/jw04453010001_02106_00001_nrca1_genheader_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
@@ -24,7 +23,6 @@ def run_detector1pipeline(rtdata_module, resource_tracker):
         "--steps.refpix.save_results=True",
         "--steps.linearity.save_results=True",
         "--steps.dark_current.save_results=True",
-        "--steps.dark_current.override_dark=sub164stripe4_dhs_mock_dark.fits",
         "--steps.jump.save_results=True",
         "--steps.jump.rejection_threshold=50.0",
     ]
