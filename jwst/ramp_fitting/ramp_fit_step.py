@@ -8,6 +8,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.lib import reffile_utils
+from jwst.lib.suffix import KNOW_SUFFIXES
 from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
@@ -268,7 +269,9 @@ class RampFitStep(Step):
             likely_filename = self.get_likely_filename(result)
             print(f"{likely_filename = }")
             tree = {"chisq_data": image_info["chisq"]}
+            print(f" tree = {tree}")
             with asdf.AsdfFile(tree) as af:
+                print(f"Writing out chisq file: {likely_filename}")
                 af.write_to(likely_filename)
 
         # Create models from possibly updated info
@@ -308,26 +311,24 @@ class RampFitStep(Step):
         """
         # XXX Use suffix from lib
         base_name = model.meta.filename
-        rstring = None
-        if "uncal" in base_name:
-            rstring = "uncal"
-        elif "jump" in base_name:
-            rstring = "jump"
-        elif "ramp" in base_name:
-            rstring = "ramp"
+        split_stuff = base_name.rsplit("_", 1)
+        suf = None
 
-        # Determine replace string and extension.
-        if rstring is not None:
-            new_name = base_name.replace(rstring, "likely_chisq")
-            extension = ".asdf"
-        else:
-            new_name = base_name
-            extension = "likely_chisq.asdf"
+        if len(split_stuff) > 1:
+            bname, current_suf = split_stuff
+            # Check to see if a known suffix is part of the filename. If
+            # there is one, it will get replaced.
+            for suffix in KNOW_SUFFIXES:
+                if current_suf.startswith(suffix):
+                    suf = suffix
+                    break
 
-        if new_name.endswith(".fits") or new_name.endswith(".asdf"):
-            filename = new_name.replace(".fits", extension)
-        else:
-            filename += extension
+        # If a know suffix isn't found, then just strip off the extension.
+        if suf is None:
+            bname = os.path.spliext(base_name)[0]
+
+        # Add chisq suffix to output filename, which will be an ASDF file.
+        filename = bname + "_likely_chisq.asdf"
 
         return filename
 
