@@ -497,6 +497,7 @@ linkcheck_ignore = [
     "https://outerspace.stsci.edu",  # CI blocked by service provider
     "https://jira.stsci.edu/",  # Internal access only
     r"https://github\.com/spacetelescope/jwst/(?:issues|pull)/\d+",
+    r"https://.*\.readthedocs\.io",  # 429 Client Error: Too Many Requests
 ]
 linkcheck_timeout = 180
 linkcheck_anchors = False
