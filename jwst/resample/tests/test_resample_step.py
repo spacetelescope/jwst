@@ -285,6 +285,7 @@ def nirspec_rate():
     im.dq = im.get_default("dq")
     im.err = im.get_default("err")
     im.var_rnoise = np.ones(shape)
+    im.var_poisson = np.ones(shape)
     im.meta.target = {"ra": 100.1237, "dec": 39.86}
     im.meta.wcsinfo = {
         "dec_ref": 40,

@@ -25,6 +25,8 @@ def create_nirspec_mos_model():
     im.data = np.full((2048, 2048), 1.0)
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     im.err = np.full((2048, 2048), 0.1)
+    im.var_rnoise = np.full((2048, 2048), 0.01)
+    im.var_poisson = np.full((2048, 2048), 0.01)
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
 

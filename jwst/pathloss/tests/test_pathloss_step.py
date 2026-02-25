@@ -24,6 +24,8 @@ def create_nirspec_fs_model(source_type="POINT"):
     im.data = np.full((2048, 2048), 1.0)
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     im.err = im.data * 0.1
+    im.var_rnoise = im.data * 0.01
+    im.var_poisson = im.data * 0.01
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
 
@@ -52,6 +54,8 @@ def create_nirspec_mos_model(source_type="POINT"):
     im.data = np.full((2048, 2048), 1.0)
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     im.err = im.data * 0.1
+    im.var_rnoise = im.data * 0.01
+    im.var_poisson = im.data * 0.01
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
 

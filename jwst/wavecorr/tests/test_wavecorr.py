@@ -21,6 +21,8 @@ def nrs_fs_model():
     im.data = np.zeros((2048, 2048))
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
+    im.var_rnoise = np.zeros((2048, 2048))
+    im.var_poisson = np.zeros((2048, 2048))
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
     yield im_ex2d
@@ -41,6 +43,8 @@ def nrs_slit_model(nrs_fs_model):
     slit.meta.wcs = im_ex2d.slits[0].meta.wcs
     slit.source_type = "POINT"
     slit.name = "S1600A1"
+    slit.var_rnoise = im_ex2d.slits[0].var_rnoise
+    slit.var_poisson = im_ex2d.slits[0].var_poisson
     yield slit
     slit.close()
 
@@ -54,6 +58,8 @@ def test_wavecorr():
     im.data = np.zeros((2048, 2048))
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
+    im.var_rnoise = np.zeros((2048, 2048))
+    im.var_poisson = np.zeros((2048, 2048))
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
     bbox = ((-0.5, 1432.5), (-0.5, 37.5))
@@ -162,6 +168,8 @@ def test_reference_file_requirements():
     im.data = np.zeros((2048, 2048))
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
+    im.var_rnoise = np.zeros((2048, 2048))
+    im.var_poisson = np.zeros((2048, 2048))
 
     outa = AssignWcsStep.call(im)
 
@@ -235,6 +243,8 @@ def test_mos_slit_status():
     im.data = np.zeros((2048, 2048))
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
+    im.var_rnoise = np.zeros((2048, 2048))
+    im.var_poisson = np.zeros((2048, 2048))
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
     bbox = ((-0.5, 1432.5), (-0.5, 37.5))
@@ -279,6 +289,8 @@ def test_wavecorr_fs():
     im = datamodels.ImageModel(hdul)
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
+    im.var_rnoise = np.zeros((2048, 2048))
+    im.var_poisson = np.zeros((2048, 2048))
     dither = {"x_offset": -0.0264, "y_offset": 1.089798712}
 
     im.meta.dither = dither
