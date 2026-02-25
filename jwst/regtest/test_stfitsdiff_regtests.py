@@ -1,4 +1,4 @@
-"""Regression tests for STFitsDiff"""
+"""Regression tests for STFitsDiff."""
 
 import warnings
 
@@ -104,7 +104,7 @@ def test_nirspec_fs_spec3(rtdata_module, fitsdiff_default_kwargs, suffix, source
     ["esec"],
 )
 def test_nis_wfss_spec2(rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Regression test for calwebb_spec2 applied to NIRISS WFSS data"""
+    """Regression test for calwebb_spec2 applied to NIRISS WFSS data."""
     rtdata = rtdata_module
     spec2_asns = [
         "niriss/wfss/jw01324-o001_20220629t171902_spec2_001_asn.json",
@@ -141,7 +141,7 @@ def test_nis_wfss_spec2(rtdata_module, fitsdiff_default_kwargs, suffix):
 
 
 def test_miri_mrs_extract1d_nominal(rtdata, fitsdiff_default_kwargs):
-    """Test running extract_1d on an s3d cube containing a point source"""
+    """Test running extract_1d on an s3d cube containing a point source."""
     # input s3d are created using the same data that was used in test_miri_mrs_spec3_ifushort:
     # run calwebb_spec3 on miri/mrs/jw01024_ifushort_mediumlong_spec3_00001_asn.json to create
     # the input data for this test.
@@ -178,6 +178,5 @@ def test_one_nan_in_table(rtdata, fitsdiff_default_kwargs):
     assert report == apreport
 
     diff = STFITSDiff(rtdata.input, rtdata.truth, **fitsdiff_default_kwargs)
-    assert "    1 failed the (atol, rtol) test" in diff.report()
     assert "    Found 1 different table data element(s). " in diff.report()
     assert "    WAVELENGTH    f8         0     nan      nan     nan" in diff.report()
