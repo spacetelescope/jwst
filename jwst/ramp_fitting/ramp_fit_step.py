@@ -265,13 +265,9 @@ class RampFitStep(Step):
 
         # For the LIKELY algorithm, save chi-square array.
         if self.algorithm.lower() == "likely" and "chisq" in image_info:
-            print(" ----- We are here -----")
             likely_filename = self.get_likely_filename(result)
-            print(f"{likely_filename = }")
             tree = {"chisq_data": image_info["chisq"]}
-            print(f" tree = {tree}")
             with asdf.AsdfFile(tree) as af:
-                print(f"Writing out chisq file: {likely_filename}")
                 af.write_to(likely_filename)
 
         # Create models from possibly updated info
