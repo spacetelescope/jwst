@@ -17,6 +17,7 @@ def run_tso_spec2(rtdata_module):
     rtdata = rtdata_module
 
     # Run tso-spec2 pipeline on the first _rateints file, saving intermediate products
+    rtdata.get_data("niriss/soss/jwst_niriss_pastasoss_b123.asdf")
     rtdata.get_data("niriss/soss/jwst_niriss_soss_bkg_sub256.fits")
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_nis_short_rateints.fits")
     args = [
@@ -26,6 +27,7 @@ def run_tso_spec2(rtdata_module):
         "--steps.flat_field.save_results=True",
         "--steps.srctype.save_results=True",
         "--steps.extract_1d.soss_atoca=False",
+        "--steps.extract_1d.override_pastasoss=jwst_niriss_pastasoss_b123.asdf",
     ]
     Step.from_cmdline(args)
 
@@ -36,6 +38,7 @@ def run_tso_spec2(rtdata_module):
         "calwebb_spec2",
         rtdata.input,
         "--steps.extract_1d.soss_atoca=False",
+        "--steps.extract_1d.override_pastasoss=jwst_niriss_pastasoss_b123.asdf",
     ]
     Step.from_cmdline(args)
 
@@ -46,11 +49,13 @@ def run_tso_spec3(rtdata_module, run_tso_spec2, resource_tracker):
     rtdata = rtdata_module
     # Get the level3 association json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
+    rtdata.get_data("niriss/soss/jwst_niriss_pastasoss_b123.asdf")
     rtdata.get_data("niriss/soss/jw01091-o002_20220714t155100_tso3_001_asn.json")
     args = [
         "calwebb_tso3",
         rtdata.input,
         "--steps.extract_1d.soss_rtol=1.e-3",
+        "--steps.extract_1d.override_pastasoss=jwst_niriss_pastasoss_b123.asdf",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)
@@ -61,6 +66,7 @@ def run_atoca_extras(rtdata_module, resource_tracker):
     """Run stage 2 pipeline on NIRISS SOSS data using enhanced modes via parameter settings."""
     rtdata = rtdata_module
 
+    rtdata.get_data("niriss/soss/jwst_niriss_pastasoss_b123.asdf")
     # Run spec2 pipeline on the second _rateints file, using wavegrid generated from first segment.
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_wavegrid.fits")
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg002_nis_short_rateints.fits")
@@ -72,6 +78,7 @@ def run_atoca_extras(rtdata_module, resource_tracker):
         "--steps.extract_1d.soss_wave_grid_in=jw01091002001_03101_00001-seg001_wavegrid.fits",
         "--steps.extract_1d.soss_bad_pix=model",
         "--steps.extract_1d.soss_rtol=1.e-3",
+        "--steps.extract_1d.override_pastasoss=jwst_niriss_pastasoss_b123.asdf",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)
@@ -168,11 +175,13 @@ def run_extract1d_null_order2(rtdata_module):
     Pin tikfac and transform for faster runtime
     """
     rtdata = rtdata_module
+    rtdata.get_data("niriss/soss/jwst_niriss_pastasoss_b123.asdf")
     rtdata.get_data("niriss/soss/jw01201008001_04101_00001-seg003_nis_int72.fits")
     args = [
         "extract_1d",
         rtdata.input,
         "--soss_tikfac=4.290665733550672e-17",
+        "--override_pastasoss=jwst_niriss_pastasoss_b123.asdf",
     ]
     Step.from_cmdline(args)
 
@@ -202,6 +211,7 @@ def run_spec2_substrip96(rtdata_module):
     time-consuming. Therefore, set it to be just 1000 evenly spaced grid points here.
     """
     rtdata = rtdata_module
+    rtdata.get_data("niriss/soss/jwst_niriss_pastasoss_b123.asdf")
     rtdata.get_data("niriss/soss/jw03596001001_03102_00001-seg001_nis_ints0-2_rateints.fits")
 
     # further reduce runtime by setting the input wave_grid instead of calculating it
@@ -216,6 +226,7 @@ def run_spec2_substrip96(rtdata_module):
         rtdata.input,
         "--steps.extract_1d.soss_tikfac=1.0e-16",
         "--steps.extract_1d.soss_wave_grid_in=jw03596001001_wavegrid.fits",
+        "--steps.extract_1d.override_pastasoss=jwst_niriss_pastasoss_b123.asdf",
     ]
     Step.from_cmdline(args)
 

@@ -10,14 +10,6 @@ from stpipe import crds_client
 
 log = logging.getLogger(__name__)
 
-SOSS_XDIM = 2048
-SOSS_YDIM = 300
-CUTOFFS = [SOSS_XDIM, 1783, 1134]  # max pixel x-index to consider for a given order
-WAVEMAP_WLMIN = 0.5  # min wavelength for pastasoss 1-d wavelength grid
-WAVEMAP_WLMAX = 5.5  # max wavelength for pastasoss 1-d wavelength grid
-WAVEMAP_NWL = 5001  # number of wavelengths for pastasoss 1-d wavelength grid
-SUBARRAY_YMIN = 2048 - 256  # pixel y-value defining the start of the subarray
-PWCPOS_BOUNDS = (245.79 - 0.25, 245.79 + 0.25)  # reasonable PWC position limits
 DEFAULT_CRDS_PARAMS = {
     "meta.instrument.name": "NIRISS",
     "meta.observation.date": datetime.today().strftime("%Y-%m-%d"),
@@ -151,12 +143,7 @@ def _get_wavelengths(refmodel, x, pwcpos, order):
 
     # scale x and pwcpos offset to be between 0 and 1
     x_scaled = x_scaler(x)
-    if int(order) == 2:
-        # Reference file has a bug for order 2 where the scale_extents are not
-        # defined as offsets: they have not had the commanded position subtracted
-        offset = np.ones_like(x) * pwcpos
-    else:
-        offset = np.ones_like(x) * (pwcpos - refmodel.meta.pwcpos_cmd)
+    offset = np.ones_like(x) * (pwcpos - refmodel.meta.pwcpos_cmd)
     offset_scaled = pwcpos_offset_scaler(offset)
 
     wavelengths = poly(x_scaled, offset_scaled)
@@ -305,9 +292,10 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
     if refmodel is None:
         refmodel = retrieve_default_pastasoss_model()
 
-    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos)
+    pwcpos_bounds = refmodel.meta.pwcpos_bounds
+    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos, pwcpos_bounds)
     if not pwcpos_is_valid:
-        raise ValueError(f"PWC position {pwcpos} is outside bounds ({PWCPOS_BOUNDS}).")
+        raise ValueError(f"PWC position {pwcpos} is outside bounds ({pwcpos_bounds}).")
 
     return _get_soss_traces(refmodel, pwcpos, order, subarray)
 
@@ -425,7 +413,18 @@ def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
     return np.interp(w_grid, w, q)
 
 
-def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, maxiter=5, dtol=1e-2):
+def _calc_2d_wave_map(
+    wave_grid,
+    x_dms,
+    y_dms,
+    tilt,
+    oversample=2,
+    padding=0,
+    maxiter=5,
+    dtol=1e-2,
+    dimx=2048,
+    dimy=300,
+):
     """
     Compute the 2D wavelength map on the detector.
 
@@ -447,6 +446,10 @@ def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, ma
         The maximum number of iterations used when solving for the wavelength at each pixel.
     dtol : float
         The tolerance of the iterative solution in pixels.
+    dimx : int
+        The x-dimension of the SOSS detector area of interest.
+    dimy : int
+        The y-dimension of the SOSS detector area of interest.
 
     Returns
     -------
@@ -459,8 +462,7 @@ def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, ma
 
     # No need to compute wavelengths across the entire detector,
     # slightly larger than SUBSTRIP256 will do.
-    dimx, dimy = SOSS_XDIM, SOSS_YDIM
-    y_dms = y_dms + (dimy - SOSS_XDIM)  # Adjust y-coordinate to area of interest.
+    y_dms = y_dms + (dimy - dimx)  # Adjust y-coordinate to area of interest.
 
     # Generate the oversampled grid of pixel coordinates.
     x_vec = np.arange((dimx + 2 * xpad) * os) / os - (os - 1) / (2 * os) - xpad
@@ -553,9 +555,10 @@ def get_soss_wavemaps(
     else:
         orders_requested = _verify_requested_orders(orders_requested, refmodel_orders)
 
-    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos)
+    pwcpos_bounds = refmodel.meta.pwcpos_bounds
+    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos, pwcpos_bounds)
     if not pwcpos_is_valid:
-        raise ValueError(f"PWC position {pwcpos} is outside bounds ({PWCPOS_BOUNDS}).")
+        raise ValueError(f"PWC position {pwcpos} is outside bounds ({pwcpos_bounds}).")
 
     if padsize is None:
         padsize = getattr(refmodel.traces[0], "padding", 0)
@@ -565,10 +568,13 @@ def get_soss_wavemaps(
         do_padding = False
 
     # Make wavemap from trace center wavelengths, padding to shape (296, 2088)
-    wavemin = WAVEMAP_WLMIN
-    wavemax = WAVEMAP_WLMAX
-    nwave = WAVEMAP_NWL
-    wave_grid = np.linspace(wavemin, wavemax, nwave)
+    wave_grid = np.linspace(
+        refmodel.meta.wavemap_wlmin, refmodel.meta.wavemap_wlmax, refmodel.meta.wavemap_nwl
+    )
+
+    subarray_ymin = refmodel.meta.subarray_ymin
+    soss_xdim = refmodel.meta.soss_xdim
+    soss_ydim = refmodel.meta.soss_ydim
 
     wavemaps = []
     traces = []
@@ -586,15 +592,17 @@ def get_soss_wavemaps(
             np.zeros_like(xtrace),
             oversample=1,
             padding=padsize,
+            dimx=soss_xdim,
+            dimy=soss_ydim,
         )
         # Extrapolate wavemap to FULL frame
-        wavemap[: SUBARRAY_YMIN - padsize, :] = wavemap[SUBARRAY_YMIN - padsize]
+        wavemap[: subarray_ymin - padsize, :] = wavemap[subarray_ymin - padsize]
 
         # Trim to subarray
         if subarray == "SUBSTRIP256":
-            wavemap = wavemap[SUBARRAY_YMIN - padsize : SOSS_XDIM + padsize, :]
+            wavemap = wavemap[subarray_ymin - padsize : soss_xdim + padsize, :]
         if subarray == "SUBSTRIP96":
-            wavemap = wavemap[SUBARRAY_YMIN - padsize : SUBARRAY_YMIN + 96 + padsize, :]
+            wavemap = wavemap[subarray_ymin - padsize : subarray_ymin + 96 + padsize, :]
 
         # remove padding if necessary
         if not do_padding and padsize != 0:
@@ -608,7 +616,7 @@ def get_soss_wavemaps(
     return np.array(wavemaps)
 
 
-def _check_pwcpos_bounds(pwcpos):
+def _check_pwcpos_bounds(pwcpos, bounds):
     """
     Check if the provided PWC position is within the bounds.
 
@@ -616,10 +624,12 @@ def _check_pwcpos_bounds(pwcpos):
     ----------
     pwcpos : float
         The pupil wheel position angle.
+    bounds : tuple
+        A tuple containing the lower and upper bounds for the PWC position.
 
     Returns
     -------
     bool
         True if the PWC position is within bounds, False otherwise.
     """
-    return PWCPOS_BOUNDS[0] <= pwcpos <= PWCPOS_BOUNDS[1]
+    return bounds[0] <= pwcpos <= bounds[1]

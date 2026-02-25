@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from jwst.extract_1d.soss_extract import pastasoss
 from jwst.extract_1d.soss_extract.pastasoss import (
     _convert_refmodel_poly_to_astropy,
     _extrapolate_to_wavegrid,
@@ -19,6 +20,11 @@ from jwst.extract_1d.soss_extract.tests.helpers import (
 )
 
 """Test coverage for the helper functions in pastasoss.py"""
+
+
+@pytest.fixture(autouse=True)
+def _mock_default_pastasoss_model(monkeypatch, refmodel):
+    monkeypatch.setattr(pastasoss, "retrieve_default_pastasoss_model", lambda: refmodel)
 
 
 def test_verify_requested_orders(log_watcher):
