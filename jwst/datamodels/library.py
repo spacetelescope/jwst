@@ -99,7 +99,7 @@ class ModelLibrary(AbstractModelLibrary):
         return [
             i
             for i, member in enumerate(self._members)
-            if str(member["exptype"]).lower() == exptype.lower()
+            if member["exptype"].lower() == exptype.lower()
         ]
 
     def _model_to_filename(self, model):
