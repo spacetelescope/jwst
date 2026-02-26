@@ -57,7 +57,7 @@ turned on.
     output_dir = '/path/to/my_project'
     parameter_dict = {
         "ramp_fit": {
-            "maximum_cores": 'all'
+            "maximum_cores": 'half'
         }
     }
 
@@ -67,6 +67,11 @@ turned on.
         steps=parameter_dict,
         output_dir=output_dir
     )
+
+Alternately, you can also run the equivalent call as above via
+:ref:`strun <run_from_strun>`::
+
+    strun calwebb_detector1 jw0000_0000_uncal.fits --steps.ramp_fit.save_results=true --steps.ramp_fit.maximum_cores=half --output_dir=/path/to/my_project
 
 .. _multiproc_multiple-obs:
 
