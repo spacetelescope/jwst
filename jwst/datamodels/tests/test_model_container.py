@@ -170,7 +170,7 @@ def test_open_guess(container):
 
 
 def test_open_kwargs(container):
-    wrong_schema = datamodels.WaveMapSingleModel()._schema
+    wrong_schema = datamodels.NRMModel()._schema
     asn_file_path, _asn_file_name = os.path.split(ASN_FILE)
     fnames = [m.meta.filename for m in container]
     with pushdir(asn_file_path):

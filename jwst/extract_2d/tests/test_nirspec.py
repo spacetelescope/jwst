@@ -246,7 +246,6 @@ def test_extract_2d_nirspec_fs(nirspec_fs_rate):
 
     # the FS slit has a string name, slitlet_id matches shutter ID
     assert result.slits[0].name == "S200A1"
-    # assert result.slits[0].slitlet_id == 0 # TODO: is this needed/expected? never explicitly set in step
     assert result.slits[0].data.shape == (45, 1254)
 
     # ensure x_offset, y_offset become zero when dither information is missing

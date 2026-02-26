@@ -91,7 +91,6 @@ def nirspec_msa_extracted2d(nirspec_msa_rate, nirspec_msa_metfl):
     for slit in model.slits:
         slit.var_rnoise = np.ones_like(slit.data) * 0.01
         slit.var_poisson = np.ones_like(slit.data) * 0.01
-        slit.var_flat = np.ones_like(slit.data) * 0.01
     return model
 
 
@@ -102,6 +101,7 @@ def mk_multispec(model):
     for slit in model.slits:
         if nirspec_utils.is_background_msa_slit(slit):
             slits.append(slit)
+        slit.var_flat = np.ones_like(slit.data) * 0.01
     specs_model.slits.extend(slits)
     specs_model = PixelReplaceStep.call(specs_model)
     specs_model = ResampleSpecStep.call(specs_model)

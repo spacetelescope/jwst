@@ -45,7 +45,6 @@ def test_flatfield_step_interface(instrument, exptype):
     data.dq = data.get_default("dq")
     data.var_rnoise = data.get_default("var_rnoise")
     data.var_poisson = data.get_default("var_poisson")
-    data.var_flat = data.get_default("var_flat")
 
     flat = datamodels.FlatModel(shape)
     flat.meta.instrument.name = instrument
