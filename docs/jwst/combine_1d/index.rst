@@ -9,6 +9,4 @@ Combine 1D Spectra
 
    description.rst
    arguments.rst
-
-
-.. automodapi:: jwst.combine_1d
+   api_ref.rst
