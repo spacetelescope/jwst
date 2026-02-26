@@ -45,9 +45,9 @@ class ImprintStep(Step):
 
         Parameters
         ----------
-        input_data : `~stdatamodels.DataModel` or str
+        input_data : `~stdatamodels.jwst.datamodels.JwstDataModel` or str
             Input exposure to be corrected.
-        imprint : list of str or `~stdatamodels.DataModel`
+        imprint : list of str or `~stdatamodels.jwst.datamodels.JwstDataModel`
             Imprint exposures associated with the input.
 
         Returns

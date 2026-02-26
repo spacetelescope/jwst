@@ -126,7 +126,7 @@ an association can be opened with
 :func:`~stdatamodels.jwst.datamodels.open`
 which returns a
 `~jwst.datamodels.container.ModelContainer`. All members of the association that can
-be represented as a `~stdatamodels.DataModel`, will be available in the `~jwst.datamodels.container.ModelContainer`
+be represented as a `~stdatamodels.jwst.datamodels.JwstDataModel`, will be available in the `~jwst.datamodels.container.ModelContainer`
 as their respective DataModels.
 
 .. code-block:: python
