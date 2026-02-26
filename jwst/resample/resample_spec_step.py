@@ -210,6 +210,7 @@ class ResampleSpecStep(Step):
             "weight_type": self.weight_type,
             "good_bits": GOOD_BITS,
             "blendheaders": self.blendheaders,
+            "propagate_dq": self.propagate_dq,
         }
 
         # Custom output WCS parameters

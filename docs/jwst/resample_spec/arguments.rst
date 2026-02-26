@@ -120,3 +120,8 @@ image.
   Specifies whether or not to load and create all images that are used during
   processing into memory. If `False`, input files are loaded from disk when
   needed and all intermediate files are stored on disk, rather than in memory.
+
+``--propagate_dq`` (boolean, default=False)
+    Indicates whether to propagate DQ flags from input models to the output
+    model. DQ flags are propagated by ``bitwise-OR`` of all input DQ flags that
+    contribute to a given output pixel.

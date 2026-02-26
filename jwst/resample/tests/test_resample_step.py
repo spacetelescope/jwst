@@ -479,6 +479,59 @@ def test_single_image_file_input(nircam_rate, tmp_cwd, propagate_dq):
     im.close()
 
 
+@pytest.mark.parametrize("propagate_dq", [True, False])
+def test_single_spec_file_input(miri_cal, tmp_cwd, propagate_dq):
+    """Ensure step can be run on a single image file."""
+    # Create a temporary file with the input data
+
+    im = AssignWcsStep.call(miri_cal)
+    im.meta.filename = "test_input.fits"
+    im.var_rnoise += 1.0
+    rng = np.random.default_rng(seed=1)
+    im.dq = 2 ** rng.integers(10, 22, size=im.data.shape).astype(np.uint32)
+
+    # Add a bad pixel in the error plane, not matched with a NaN in data.
+    # This will test if the match_nans_and_flags call at the beginning
+    # of the step modifies the input model.
+    im.err[0, 0] = np.nan
+
+    # Save a copy to disk, keep a copy of the data for testing.
+    im.save("test_input.fits")
+    im_copy = im.data.copy()
+
+    # Run the step on the file
+    good_bits = sum([2**i for i in range(10, 22)])
+
+    result_from_memory = ResampleSpecStep.call(
+        im,
+        propagate_dq=propagate_dq,
+    )
+    result_from_file = ResampleSpecStep.call(
+        "test_input.fits",
+        propagate_dq=propagate_dq,
+    )
+
+    # Check that the output is as expected
+    assert result_from_memory.meta.cal_step.resample == "COMPLETE"
+    assert result_from_file.meta.cal_step.resample == "COMPLETE"
+    assert_allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
+    if propagate_dq:
+        assert np.all(result_from_file.dq == result_from_memory.dq)
+        assert np.bitwise_or.reduce(result_from_memory.dq, axis=(0, 1)) == good_bits
+    else:
+        assert np.all(result_from_file.dq == 0)
+        assert np.all(result_from_memory.dq == 0)
+
+    # Check that input model was not modified
+    assert im is not result_from_memory
+    assert im.meta.cal_step.resample is None
+    assert_allclose(im.data, im_copy)
+
+    result_from_file.close()
+    result_from_memory.close()
+    im.close()
+
+
 def test_list_model_input(nircam_rate, tmp_cwd):
     """Ensure step can be run on a list of models without modifying them."""
     # Create a temporary file with the input data
