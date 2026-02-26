@@ -884,7 +884,7 @@ class DataSet:
                     )
                     slit.photom_point = conversion  # store the result
 
-                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM"]:
+                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
                     log.info("Including spectral dispersion in 2-d flux calibration")
                     conversion, no_cal = self.create_2d_conversion(
                         slit,
@@ -909,7 +909,7 @@ class DataSet:
                 )
             else:
                 # NRC_TSGRISM data produces a SpecModel, which is handled here
-                if self.exptype in ["NRC_WFSS", "NRC_TSGRISM"]:
+                if self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
                     log.info("Including spectral dispersion in 2-d flux calibration")
                     conversion, no_cal = self.create_2d_conversion(
                         self.input,
@@ -1101,14 +1101,15 @@ class DataSet:
             dispaxis = get_dispersion_direction(self.exptype, self.grating, self.filter, self.pupil)
             if dispaxis is not None:
                 dispersion_array = self.get_dispersion_array(wl_array, dispaxis)
-                # Convert dispersion from micron/pixel to angstrom/pixel
-                dispersion_array *= 1.0e4
+                if self.exptype != "NIS_WFSS":
+                    # Convert dispersion from micron/pixel to angstrom/pixel
+                    # except for NIRISS WFSS, which has conv2d in micron/pixel
+                    dispersion_array *= 1.0e4
                 conv_2d /= np.abs(dispersion_array)
             else:
                 log.warning(
                     "Unable to get dispersion direction, so cannot calculate dispersion array"
                 )
-        # Combine the scalar and 2D conversion factors
         conversion = conversion * conv_2d
         no_cal = np.isnan(conv_2d)
         conversion[no_cal] = 0.0

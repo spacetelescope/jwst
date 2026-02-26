@@ -24,7 +24,6 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
         segmentation_map.data,
         grism_wcs,
         direct_image_with_gradient.meta.wcs,
-        phot_per_lam=False,
     )
 
 
@@ -115,4 +114,4 @@ def test_disperse_order(observation, segmentation_map):
     assert slit.data.shape == (slit.ysize, slit.xsize)
 
     # check for regression by hard-coding one value of slit.data
-    assert np.isclose(slit.data[5, 60], 20.996877670288086)
+    assert np.isclose(slit.data[5, 60], 0.09994397)
