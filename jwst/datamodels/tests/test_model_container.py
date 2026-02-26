@@ -176,8 +176,10 @@ def test_open_kwargs(container):
     with pushdir(asn_file_path):
         # opening it normally works fine
         ModelContainer(fnames)
-        container = ModelContainer(fnames, schema=wrong_schema)
-        assert container._models[0]._schema == wrong_schema
+        with pytest.raises(AttributeError):
+            # but schema can be passed all the way through to DataModel.__init__ on the
+            # individual datamodels, and cause AttributeError
+            ModelContainer(fnames, schema=wrong_schema)
 
 
 def test_copy(container):
