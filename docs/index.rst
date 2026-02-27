@@ -12,7 +12,7 @@
 
 **Version**: |release|
 
-This package processes uncalibrated data from both imagers and spectrographs onboard the `James Webb Space Telescope (JWST) <https://science.nasa.gov/mission/webb/>`_, an orbiting infrared observatory stationed at Earth-Sun L:sub:`2`.
+This package processes uncalibrated data from both imagers and spectrographs onboard the `James Webb Space Telescope (JWST) <https://science.nasa.gov/mission/webb/>`_, an orbiting infrared observatory stationed at Earth-Sun L :subscript:`2`.
 The pipeline performs a series of calibration steps that result in standard data products,
 applying various corrections to produce science-ready, calibrated output products including
 individual exposures and high-level data products (mosaics, extracted spectra, etc.).
