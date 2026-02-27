@@ -11,6 +11,7 @@ from jwst.extract_1d.extract_1d_step import Extract1dStep
 from jwst.extract_1d.soss_extract import pastasoss, soss_extract
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.lib.basic_utils import disable_logging
+from jwst.lib.pipe_utils import is_tso
 from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
 from jwst.white_light.white_light_step import WhiteLightStep
 
@@ -161,10 +162,12 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
     2. Compute a representative flux for scaling for each integration
        from the rate data.
 
-       a. For spectral modes, extract a spectrum from a simple box
+       a. For TSO spectral modes, extract a spectrum from a simple box
           and compute the whitelight flux for each integration.
-       b. For imaging modes, sum the flux over an aperture at the expected
-          source location for each integration.
+       b. For TSO imaging modes, sum the flux over an aperture at the
+          expected source location for each integration.
+       c. For any other mode, take the median of the flux in each
+          integration.
 
     3. Median combine all data across integrations to make a median
        ramp or image.
@@ -271,7 +274,7 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
             wlc_flux = whitelight_table["whitelight_flux"]
         norm_flux = wlc_flux / np.nanmedian(wlc_flux)
 
-    else:
+    elif exp_type == "NRC_TSIMAGE" or (exp_type == "MIR_IMAGE" and is_tso(input_model)):
         # Call tso_photometry with latest CRDS parameters (via call),
         # since the recommended defaults may vary by mode.
         with disable_logging(level=logging.WARNING):
@@ -280,6 +283,11 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         # Use the aperture sum as the representative flux for scaling
         phot_flux = phot_table["aperture_sum"].value
         norm_flux = phot_flux / np.nanmedian(phot_flux)
+    else:
+        # Not an expected TSO spectral or imaging mode.
+        # Take the median flux of the image as the representative value.
+        median_flux = np.nanmedian(bgsub_rateints, axis=(1, 2))
+        norm_flux = median_flux / np.nanmedian(median_flux)
 
     # Check for bad values in the normalized flux
     invalid = ~np.isfinite(norm_flux)
