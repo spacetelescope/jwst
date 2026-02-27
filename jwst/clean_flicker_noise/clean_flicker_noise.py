@@ -1402,7 +1402,13 @@ def do_correction(
             log.warning(f"The median_image background method cannot be used with nints={nints}")
             log.warning("The step will be skipped.")
             return input_model, None, None, None, status
-        median_image = make_median_image(input_model, image_model, soss_refmodel=soss_refmodel)
+        try:
+            median_image = make_median_image(input_model, image_model, soss_refmodel=soss_refmodel)
+        except ValueError as err:
+            log.warning("A median image could not be created.")
+            log.warning(f"The error was: {err}")
+            log.warning("The step will be skipped.")
+            return input_model, None, None, None, status
 
         # The median image will be directly subtracted. Set background
         # method to None so any residual variable background levels are removed.
