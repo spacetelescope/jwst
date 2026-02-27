@@ -110,80 +110,6 @@ def test_mask_slits(exptype, blocked):
     rate_model.close()
 
 
-@pytest.mark.parametrize("fit_histogram", [True, False])
-@pytest.mark.parametrize("lower_half_only", [True, False])
-def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
-    """Integrity checks for clipping a simple data array."""
-    # Make an array with normal noise
-    shape = (100, 100)
-    rng = np.random.default_rng(seed=123)
-    image = rng.normal(0, 0.01, size=shape)
-    mask = np.full(shape, True)
-
-    # Add a strong high outlier, strong low outlier
-    image[0, 0] += 1
-    image[1, 1] += -1
-
-    # Center found is close to zero, printed when verbose=True
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="center: 0.000")
-    cfn.clip_to_background(
-        image, mask, fit_histogram=fit_histogram, lower_half_only=lower_half_only, verbose=True
-    )
-    watcher.assert_seen()
-
-    # All outliers clipped with defaults, as well as a small
-    # percent of the remaining data
-    assert not mask[0, 0]
-    assert not mask[1, 1]
-    assert np.allclose(np.sum(mask) / mask.size, 0.98, atol=0.019)
-
-    # Upper outlier stays with large sigma_upper
-    mask = np.full(shape, True)
-    cfn.clip_to_background(
-        image, mask, fit_histogram=fit_histogram, lower_half_only=lower_half_only, sigma_upper=1000
-    )
-    assert mask[0, 0]
-    assert not mask[1, 1]
-    assert np.allclose(np.sum(mask) / mask.size, 0.98, atol=0.019)
-
-    # Lower outlier stays with large sigma_lower
-    mask = np.full(shape, True)
-    cfn.clip_to_background(
-        image, mask, fit_histogram=fit_histogram, lower_half_only=lower_half_only, sigma_lower=1000
-    )
-    assert not mask[0, 0]
-    assert mask[1, 1]
-    assert np.allclose(np.sum(mask) / mask.size, 0.98, atol=0.019)
-
-
-def test_clip_to_background_fit_fails(log_watcher):
-    shape = (10, 10)
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise")
-
-    # histogram failure: all data NaN
-    image = np.full(shape, np.nan)
-    mask = np.full(shape, True)
-    watcher.message = "Histogram failed"
-
-    cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
-    assert np.all(mask)
-    watcher.assert_seen()
-
-    # if mask is all False, warning is avoided, mask is unchanged
-    mask[:] = False
-    cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
-    assert not np.all(mask)
-
-    # fit failure: data is not normal
-    watcher.message = "Gaussian fit failed"
-    image = np.full(shape, 0.0)
-    mask = np.full(shape, True)
-    image[5:, 5:] = 0.1
-    cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
-    assert np.all(mask)
-    watcher.assert_seen()
-
-
 @pytest.mark.parametrize("exptype", ["mos", "mos_fs", "ifu"])
 def test_create_mask_nirspec(monkeypatch, exptype):
     # monkeypatch local functions for speed and check that they are called
@@ -225,6 +151,16 @@ def test_create_mask_nirspec(monkeypatch, exptype):
         assert np.all(mask[cfn.NRS_FS_REGION[0] : cfn.NRS_FS_REGION[1]])
     else:
         assert not np.any(mask[cfn.NRS_FS_REGION[0] : cfn.NRS_FS_REGION[1]])
+
+
+def test_create_mask_soss():
+    rate_model = helpers.make_niriss_soss_rateints()
+
+    # Mark SOSS traces as False: about 68% of the array
+    mask = cfn.create_mask(rate_model, mask_science_regions=True)
+    assert np.allclose(np.sum(mask), 0.68 * mask.size, atol=0.02 * mask.size)
+
+    rate_model.close()
 
 
 def test_create_mask_miri():
@@ -276,63 +212,6 @@ def test_create_mask_from_rateints():
     assert np.sum(mask) == mask.size - 3
 
     rate_model.close()
-
-
-def test_background_level(log_watcher):
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise")
-
-    shape = (100, 100)
-    image = np.full(shape, 1.0)
-    mask = np.full(shape, True)
-
-    # add an outlier to be clipped
-    image[50, 50] = 1000
-
-    # no background
-    background = cfn.background_level(image, mask, background_method=None)
-    assert background == 0.0
-
-    # median method
-    background = cfn.background_level(image, mask, background_method="median")
-    assert background == 1.0
-
-    # model method
-    background = cfn.background_level(
-        image, mask, background_method="model", background_box_size=(10, 10)
-    )
-    assert background.shape == shape
-    assert np.all(background == 1.0)
-
-    # model method with mismatched box size:
-    # warns, but completes successfully
-    watcher.message = "does not divide evenly"
-    background = cfn.background_level(
-        image, mask, background_method="model", background_box_size=(32, 32)
-    )
-    assert background.shape == shape
-    assert np.all(background == 1.0)
-    watcher.assert_seen()
-
-    # model method with None box size: picks the largest even divisor < 32
-    watcher.message = "box size [25, 25]"
-    background = cfn.background_level(
-        image, mask, background_method="model", background_box_size=None
-    )
-    assert background.shape == shape
-    assert np.all(background == 1.0)
-    watcher.assert_seen()
-
-    # make image mostly bad, one good region
-    image[:] = np.nan
-    image[20:25, 20:25] = 1.0
-
-    # background fit fails: falls back on simple median
-    watcher.message = "Background fit failed, using median"
-    background = cfn.background_level(
-        image, mask, background_method="model", background_box_size=(10, 10)
-    )
-    assert background == 1.0
-    watcher.assert_seen()
 
 
 @pytest.mark.parametrize("array_type,fraction_good", [("full", 0.65), ("subarray", 0.37)])
@@ -897,3 +776,60 @@ def test_do_correction_with_flat_subarray(tmp_path, log_watcher):
 
     model.close()
     flat.close()
+
+
+def test_do_correction_median_image_one_int(caplog):
+    """Test that median image aborts for <2 integrations."""
+    model = helpers.make_nirspec_fs_model()
+    data_copy = model.data.copy()
+
+    cleaned, _, _, _, status = cfn.do_correction(model, background_method="median_image")
+    assert status == "SKIPPED"
+    assert "cannot be used with nints=1" in caplog.text
+
+    # output data is unchanged
+    np.testing.assert_allclose(cleaned.data, data_copy)
+
+    model.close()
+
+
+def test_do_correction_median_image_failure(caplog, monkeypatch):
+    """Test that errors in median image calculation are handled."""
+    model = helpers.make_niriss_soss_rateints()
+    data_copy = model.data.copy()
+
+    # mock an error in the median image creation
+    def mock_make_median(*args, **kwargs):
+        raise ValueError("test error")
+
+    monkeypatch.setattr(cfn, "make_median_image", mock_make_median)
+
+    cleaned, _, _, _, status = cfn.do_correction(model, background_method="median_image")
+    assert status == "SKIPPED"
+    assert "could not be created" in caplog.text
+
+    # output data is unchanged
+    np.testing.assert_allclose(cleaned.data, data_copy)
+
+    model.close()
+
+
+def test_do_correction_median_image_rateints(caplog):
+    """Test that median image correction works with rateints input."""
+    model = helpers.make_niriss_soss_rateints()
+    data_copy = model.data.copy()
+
+    cleaned, _, bg_model, _, status = cfn.do_correction(
+        model, background_method="median_image", save_background=True
+    )
+    assert status == "COMPLETE"
+
+    # output data is still unchanged for flat input
+    np.testing.assert_allclose(cleaned.data, data_copy)
+
+    # background matches input
+    assert isinstance(bg_model, datamodels.CubeModel)
+    np.testing.assert_allclose(bg_model.data, data_copy)
+
+    model.close()
+    bg_model.close()

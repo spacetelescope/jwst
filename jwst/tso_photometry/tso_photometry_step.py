@@ -87,6 +87,7 @@ class TSOPhotometryStep(Step):
 
         # Centroid the source if desired
         if self.centroid_source:
+            log.info("Centroiding the source in each integration")
             # Check the box sizes: they must be odd integers
             boxes = ["search_box_width", "fit_box_width"]
             for box in boxes:

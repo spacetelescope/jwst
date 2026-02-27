@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
@@ -7,6 +8,7 @@ from jwst.clean_flicker_noise import CleanFlickerNoiseStep, autoparam
 from jwst.clean_flicker_noise.tests.helpers import (
     make_nircam_rate_model,
     make_niriss_rate_model,
+    make_niriss_soss_ramp,
     make_nirspec_fs_model,
     make_small_ramp_model,
 )
@@ -204,6 +206,57 @@ def test_output_is_not_input():
     # make sure input is not modified
     assert cleaned is not input_model
     assert input_model.meta.cal_step.clean_flicker_noise is None
+
+    input_model.close()
+    cleaned.close()
+
+
+def test_tso_median_image(caplog, tmp_path):
+    """Exercise TSO median image and NIRISS SOSS options."""
+    input_model = make_niriss_soss_ramp()
+    input_model.meta.filename = "test_jump.fits"
+    cleaned = CleanFlickerNoiseStep.call(
+        input_model,
+        background_method="median_image",
+        single_mask=True,
+        mask_science_regions=True,
+        save_background=True,
+        output_dir=str(tmp_path),
+    )
+
+    # Single mask is set to False to make rateints
+    assert "Setting single_mask to False" in caplog.text
+
+    # The pastasoss reference file is used
+    assert "Using PASTASOSS reference file" in caplog.text
+    assert cleaned.meta.ref_file.pastasoss.name is not None
+    assert cleaned.meta.ref_file.pastasoss.name != "N/A"
+
+    # Processing succeeded
+    assert cleaned.meta.cal_step.clean_flicker_noise == "COMPLETE"
+
+    # The background model was saved
+    bkg_file = tmp_path / "test_flicker_bkg.fits"
+    assert bkg_file.exists()
+    with datamodels.open(str(bkg_file)) as bkg_model:
+        assert isinstance(bkg_model, datamodels.RampModel)
+
+        # For flat input data, the median image is the same as the input
+        np.testing.assert_allclose(bkg_model.data, input_model.data)
+
+    input_model.close()
+    cleaned.close()
+
+
+def test_missing_pastasoss(caplog):
+    input_model = make_niriss_soss_ramp()
+    cleaned = CleanFlickerNoiseStep.call(input_model, override_pastasoss="N/A")
+    assert "No PASTASOSS reference file" in caplog.text
+
+    # The special value "N/A" is currently recorded incorrectly.
+    # See: https://github.com/spacetelescope/stpipe/issues/299
+    # This test can be uncommented when that issue is resolved.
+    # assert cleaned.meta.ref_file.pastasoss.name == "N/A"
 
     input_model.close()
     cleaned.close()
