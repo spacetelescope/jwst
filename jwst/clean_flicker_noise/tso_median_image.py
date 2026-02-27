@@ -5,6 +5,7 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.background.background_step import BackgroundStep
+from jwst.clean_flicker_noise.background_level import background_level
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.extract_1d.extract_1d_step import Extract1dStep
 from jwst.extract_1d.soss_extract import pastasoss, soss_extract
@@ -55,7 +56,7 @@ def _soss_box_extract(rateints, soss_refmodel=None):
     # Extract only order 1 for scaling purposes
     order = 1
 
-    # Make a multispec model to hold the spectra
+    # Extract a spectrum from each integration
     spec_list = []
     for i in range(nints):
         sci_data = rateints.data[i]
@@ -78,20 +79,28 @@ def _soss_box_extract(rateints, soss_refmodel=None):
         npix = np.sum(box_weights, axis=0)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
+
+            # Sum the flux
             flux = np.nansum(sci_data * box_weights, axis=0)
+
+            # Average the wavelengths
             wavelength = np.nansum(wave_grid * box_weights, axis=0) / npix
 
         # Store fluxes with valid wavelengths
-        valid = ~np.isnan(wavelength)
+        valid = np.isfinite(wavelength)
         spec = datamodels.SpecModel()
+
+        # todo: this line needs updating when stdatamodels support
+        #  for get_dtype is added
         spec.spec_table = np.zeros((valid.sum(),), dtype=spec.spec_table.dtype)
         spec.spec_table["FLUX"] = flux[valid]
         spec.spec_table["WAVELENGTH"] = wavelength[valid]
         spec_list.append(spec)
 
+    # Make a multispec model to hold the spectra
     tso_spec = make_tso_specmodel(spec_list)
 
-    # populate the midtime array with unique placeholder values to
+    # Populate the midtime array with unique placeholder values to
     # make sure every integration appears in the whitelight table, later
     tso_spec.spec_table["MJD-AVG"] = np.arange(nints)
 
@@ -151,16 +160,18 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
        (NIRISS SOSS only).
     2. Compute a representative flux for scaling for each integration
        from the rate data.
+
        a. For spectral modes, extract a spectrum from a simple box
           and compute the whitelight flux for each integration.
-       b. For imaging modes, compute the overall median of the image.
+       b. For imaging modes, sum the flux over an aperture at the expected
+          source location for each integration.
+
     3. Median combine all data across integrations to make a median
        ramp or image.
     4. Scale the median image by the representative flux for each
        integration.
     5. Add the subtracted background level to the median image
        (NIRISS SOSS only).
-    6. Replace any NaN values in the median image with zeros.
 
     Parameters
     ----------
@@ -183,7 +194,8 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
     Raises
     ------
     ValueError
-        If the input does not have multiple integrations.
+        If the input does not have multiple integrations or extracted
+        fluxes are all invalid.
     """
     ndim = input_model.data.ndim
     if ndim < 3:
@@ -203,6 +215,19 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         # Subtract rateints models to get the background by integration
         background_rate = rateints_model.data - bgsub_rateints.data
 
+        # Replace any NaN values in the background rate with smoothed local values
+        for i, bg_data in enumerate(background_rate):
+            invalid = ~np.isfinite(bg_data)
+            if np.all(invalid):
+                raise ValueError("No valid values in background rate")
+            if np.any(invalid):
+                log.debug(f"Replacing {np.sum(invalid)} values in background integration {i}")
+                smoothed_bg = background_level(bg_data, ~invalid, background_method="model")
+                if np.isscalar(smoothed_bg):
+                    # 2D model failed, median value returned instead
+                    bg_data[invalid] = smoothed_bg
+                else:
+                    bg_data[invalid] = smoothed_bg[invalid]
     else:
         bgsub_rateints = rateints_model
         background_rate = 0.0
@@ -256,6 +281,15 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         phot_flux = phot_table["aperture_sum"].value
         norm_flux = phot_flux / np.nanmedian(phot_flux)
 
+    # Check for bad values in the normalized flux
+    invalid = ~np.isfinite(norm_flux)
+    if np.all(invalid):
+        # Raise an error if they are all bad
+        raise ValueError("No valid flux for scaling")
+    elif np.any(invalid):
+        # Otherwise replace with a median value to avoid losing a whole integration
+        norm_flux[invalid] = np.median(norm_flux[~invalid])
+
     # Make a background corrected ramp
     if ndim > 3:
         background_ramp = _make_background_ramp(input_model, background_rate)
@@ -278,8 +312,5 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
 
     # Final data to subtract is background ramp + scaled median
     median_image = background_ramp + scaled_median_ramp
-
-    # Set any NaN pixels to zero for subtraction
-    median_image[~np.isfinite(median_image)] = 0.0
 
     return median_image

@@ -238,7 +238,7 @@ information on all referenced parameters.
 
    #. Fit and remove the residual noise in the background-subtracted image.
 
-      #. If ``fit_method='fft'``, the `~jwst.clean_flicker_noise.lib.NSClean` library is called to fit
+      #. If ``fit_method='fft'``, the `~jwst.clean_flicker_noise.nsclean.NSClean` library is called to fit
          and remove the noise in frequency space (also see :ref:`nsclean-algo-references`).
 
       #. If ``fit_method='median'``, the noise is fit with a simple median
