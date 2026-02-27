@@ -7,6 +7,7 @@ from jwst.clean_flicker_noise import CleanFlickerNoiseStep, autoparam
 from jwst.clean_flicker_noise.tests.helpers import (
     make_nircam_rate_model,
     make_niriss_rate_model,
+    make_niriss_soss_ramp,
     make_nirspec_fs_model,
     make_small_ramp_model,
 )
@@ -204,6 +205,42 @@ def test_output_is_not_input():
     # make sure input is not modified
     assert cleaned is not input_model
     assert input_model.meta.cal_step.clean_flicker_noise is None
+
+    input_model.close()
+    cleaned.close()
+
+
+def test_tso_median_image(caplog):
+    """Exercise TSO median image and NIRISS SOSS options."""
+    input_model = make_niriss_soss_ramp()
+    cleaned = CleanFlickerNoiseStep.call(
+        input_model, background_method="median_image", single_mask=True, mask_science_regions=True
+    )
+
+    # Single mask is set to False to make rateints
+    assert "Setting single_mask to False" in caplog.text
+
+    # The pastasoss reference file is used
+    assert "Using PASTASOSS reference file" in caplog.text
+    assert cleaned.meta.ref_file.pastasoss.name is not None
+    assert cleaned.meta.ref_file.pastasoss.name != "N/A"
+
+    # Processing succeeded
+    assert cleaned.meta.cal_step.clean_flicker_noise == "COMPLETE"
+
+    input_model.close()
+    cleaned.close()
+
+
+def test_missing_pastasoss(caplog):
+    input_model = make_niriss_soss_ramp()
+    cleaned = CleanFlickerNoiseStep.call(input_model, override_pastasoss="N/A")
+    assert "No PASTASOSS reference file" in caplog.text
+
+    # The special value "N/A" is currently recorded incorrectly.
+    # See: https://github.com/spacetelescope/stpipe/issues/299
+    # This test can be uncommented when that issue is resolved.
+    # assert cleaned.meta.ref_file.pastasoss.name == "N/A"
 
     input_model.close()
     cleaned.close()
