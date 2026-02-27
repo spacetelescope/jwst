@@ -54,6 +54,7 @@ is also available on `JDox <https://jwst-docs.stsci.edu>`__.
    jwst/user_documentation/parameters.rst
    jwst/user_documentation/running_pipeline_python.rst
    jwst/user_documentation/running_pipeline_command_line.rst
+   jwst/user_documentation/multiprocessing.rst
    jwst/user_documentation/available_pipelines.rst
    jwst/user_documentation/input_output_file_conventions.rst
    jwst/user_documentation/logging.rst
