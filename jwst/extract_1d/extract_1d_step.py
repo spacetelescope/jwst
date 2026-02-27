@@ -338,12 +338,12 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        input_data : `~stdatamodels.DataModel`
+        input_data : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input model.
 
         Returns
         -------
-        `~stdatamodels.DataModel`
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             This will be input model if the step was skipped; otherwise,
             it will be a model containing 1-D extracted spectra.
         """

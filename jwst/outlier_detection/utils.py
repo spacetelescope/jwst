@@ -340,7 +340,7 @@ def flag_resampled_model_crs(
 
     Parameters
     ----------
-    input_model : `~stdatamodels.DataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
     median_data : ndarray
         The median data array.
@@ -417,7 +417,7 @@ def _flag_resampled_model_crs(
 
     Parameters
     ----------
-    input_model : `~stdatamodels.DataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
     blot : ndarray
         The blotted data array.
@@ -529,7 +529,7 @@ def flag_model_crs(image, blot, snr, median_err=None):
 
     Parameters
     ----------
-    image : `~stdatamodels.DataModel`
+    image : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
     blot : ndarray
         The blotted data array.

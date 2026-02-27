@@ -104,9 +104,9 @@ def location_from_wcs(input_model, slit, make_trace=True):
 
     Parameters
     ----------
-    input_model : `~stdatamodels.DataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science model containing metadata information.
-    slit : `~stdatamodels.DataModel` or None
+    slit : `~stdatamodels.jwst.datamodels.JwstDataModel` or None
         One slit from a MultiSlitModel (or similar), or None.
         The WCS and target coordinates will be retrieved from ``slit``
         unless ``slit`` is None. In that case, they will be retrieved
