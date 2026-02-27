@@ -6,8 +6,12 @@ New contributions and contributors are very welcome!
 Do not hesitate to reach out to the package maintainers if you are new to open-source development or if you have any questions/concerns.
 We only ask that all contributors adhere to the Space Telescope [Code of Conduct](./CODE_OF_CONDUCT.md).
 
+> [!TIP]
+> The `jwst` public API and deprecation policy is at https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private
+
 ## Reporting bugs / requesting a new feature
-To submit a bug report or feature request, [open a new issue in this repository](https://github.com/spacetelescope/jwst/issues).
+If you have encountered a bug when running the pipeline, or wish to request a new feature,
+[open an issue](https://github.com/spacetelescope/jwst/issues) or contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 ## Suggesting code changes / contributions
 
@@ -121,20 +125,6 @@ Breaking down what these lines do:
    ```shell
    hx .
    ```
-
-There are other ways of managing environments.
-For instance, if you have `uv` installed, you can accomplish the same as above with a single command:
-```shell
-uv run hx .
-```
-
-Or, if you prefer to use `virtualenv`:
-```shell
-virtualenv ~/venvs/jwst_dev_env/
-source ~/venvs/jwst_dev_env/bin/activate
-pip install -e .
-hx .
-```
 
 ## Making simultaneous changes to `jwst` and one of its dependencies
 
