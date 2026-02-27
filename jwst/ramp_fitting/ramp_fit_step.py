@@ -8,7 +8,6 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.lib import reffile_utils
-from jwst.lib.suffix import KNOW_SUFFIXES
 from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
@@ -264,8 +263,9 @@ class RampFitStep(Step):
             self.save_model(opt_model, "fitopt", output_file=self.opt_name)
 
         # For the LIKELY algorithm, save chi-square array.
+        # XXX Possibly only save the chisq array if save_opt==True.
         if self.algorithm.lower() == "likely" and "chisq" in image_info:
-            likely_filename = self.get_likely_filename(result)
+            likely_filename = self.make_output_path(basepath=result.meta.filename, suffix="likely_chisq", ext="asdf")
             tree = {"chisq_data": image_info["chisq"]}
             with asdf.AsdfFile(tree) as af:
                 af.write_to(likely_filename)
@@ -294,39 +294,6 @@ class RampFitStep(Step):
             del result
 
         return out_model, int_model
-
-
-    def get_likely_filename(self, model):
-        """
-        Returns file name of the chisq file name for the LIKELY algorithm.
-
-        Returns
-        -------
-        filename : str
-            The file name of the chisq file for the LIKELY algorithm
-        """
-        # XXX Use suffix from lib
-        base_name = model.meta.filename
-        split_stuff = base_name.rsplit("_", 1)
-        suf = None
-
-        if len(split_stuff) > 1:
-            bname, current_suf = split_stuff
-            # Check to see if a known suffix is part of the filename. If
-            # there is one, it will get replaced.
-            for suffix in KNOW_SUFFIXES:
-                if current_suf.startswith(suffix):
-                    suf = suffix
-                    break
-
-        # If a know suffix isn't found, then just strip off the extension.
-        if suf is None:
-            bname = os.path.spliext(base_name)[0]
-
-        # Add chisq suffix to output filename, which will be an ASDF file.
-        filename = bname + "_likely_chisq.asdf"
-
-        return filename
 
 
 def set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags):
