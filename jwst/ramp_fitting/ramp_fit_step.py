@@ -1,5 +1,6 @@
 import logging
 
+import asdf
 import numpy as np
 from stcal.ramp_fitting import ramp_fit
 from stcal.ramp_fitting.likely_fit import LIKELY_MIN_NGROUPS
@@ -260,6 +261,14 @@ class RampFitStep(Step):
         if opt_info is not None:
             opt_model = create_optional_results_model(result, opt_info)
             self.save_model(opt_model, "fitopt", output_file=self.opt_name)
+
+        # For the LIKELY algorithm, save chi-square array.
+        # XXX Possibly only save the chisq array if save_opt==True.
+        if self.algorithm.lower() == "likely" and "chisq" in image_info:
+            likely_filename = self.make_output_path(basepath=result.meta.filename, suffix="likely_chisq", ext="asdf")
+            tree = {"chisq_data": image_info["chisq"]}
+            with asdf.AsdfFile(tree) as af:
+                af.write_to(likely_filename)
 
         # Create models from possibly updated info
         out_model, int_model = None, None

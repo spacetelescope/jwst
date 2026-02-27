@@ -2,6 +2,8 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import GainModel, RampModel, ReadnoiseModel, dqflags
 
+import asdf
+
 from jwst.lib.tests.test_reffile_utils import generate_test_refmodel_metadata
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep, set_groupdq
 
@@ -73,22 +75,27 @@ def setup_inputs():
 
         rampmodel = RampModel((nints, ngroups, nrows, ncols), int_times=int_times)
 
+        rampmodel.meta.filename = "dummy_uncal.fits"
+
         rampmodel.meta.instrument.name = "MIRI"
         rampmodel.meta.instrument.detector = "MIRIMAGE"
         rampmodel.meta.instrument.filter = "F480M"
+
         rampmodel.meta.observation.date = "2015-10-13"
+
         rampmodel.meta.exposure.type = "MIR_IMAGE"
         rampmodel.meta.exposure.group_time = deltatime
-        rampmodel.meta.subarray.name = "FULL"
-        rampmodel.meta.subarray.xstart = 1
-        rampmodel.meta.subarray.ystart = 1
-        rampmodel.meta.subarray.xsize = ncols
-        rampmodel.meta.subarray.ysize = nrows
         rampmodel.meta.exposure.frame_time = deltatime
         rampmodel.meta.exposure.ngroups = ngroups
         rampmodel.meta.exposure.group_time = deltatime
         rampmodel.meta.exposure.nframes = 1
         rampmodel.meta.exposure.groupgap = 0
+
+        rampmodel.meta.subarray.name = "FULL"
+        rampmodel.meta.subarray.xstart = 1
+        rampmodel.meta.subarray.ystart = 1
+        rampmodel.meta.subarray.xsize = ncols
+        rampmodel.meta.subarray.ysize = nrows
 
         gain = GainModel(data=gain)
         gain.meta.instrument.name = "MIRI"
@@ -354,6 +361,51 @@ def test_set_group_warnings(firstgroup, lastgroup, message, log_watcher):
     watcher = log_watcher("jwst.ramp_fitting.ramp_fit_step", message=message)
     set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
     watcher.assert_seen()
+
+
+def test_likely_output(tmp_path, setup_inputs):
+    """Test the LIKELY algorithm and the chisq output."""
+    ingain, inreadnoise = 6, 7
+    grouptime = 3.0
+    nints, ngroups, nrows, ncols = 1, 5, 1, 2
+    model, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups,
+        readnoise=inreadnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        deltatime=grouptime,
+    )
+
+    base_arr = np.array([k * 15.75 for k in range(1, ngroups+1)])
+
+    rnd1 = np.array([-2.67780363,  2.41978396,  1.11415405,  3.4904681 ,  2.14907302])
+    rnd2 = np.array([ 1.44133809,  0.13063589,  0.89151771,  3.14430635, -0.0463224 ])
+    model.data[0, :, 0, 0] = base_arr + rnd1
+    model.data[0, :, 0, 1] = base_arr + 20 + rnd2
+
+
+    # Call ramp fit through the step class
+    slopes, cube_model = RampFitStep.call(
+        model,
+        algorithm = 'LIKELY',
+        override_gain=gain,
+        override_readnoise=rnModel,
+    )
+
+    # Check the output slopes
+    tol = 1e-7
+    check = np.array([[5.609441, 5.2461348]])
+    np.testing.assert_allclose(slopes.data, check, rtol=tol)
+
+    # Check the chisq output array
+    chk_chisq = np.array([[0.43144223, 0.25806388]])
+    fname = "dummy_likely_chisq.asdf"
+    with asdf.open(fname, memmap=True, lazy_load=False) as chisq:
+        chisq_data = chisq["chisq_data"]
+    np.testing.assert_allclose(chisq_data, chk_chisq, rtol=tol)
+
 
 
 def one_group_suppressed(nints, suppress, setup_inputs):
