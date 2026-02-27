@@ -147,14 +147,14 @@ def subarray_transform(input_model):
         return subarray2full
 
 
-def substripe_subarray_transform(input_model, regions_model, regions_label):
+def substripe_subarray_transforms(input_model, regions_model):
     """
-    Return an offset model for NIRCam substripe data.
+    Return a dictionary of offset models for NIRCam substripe data.
 
     This method does not yet generalize to arbitrary fastaxis values, only +/- 1.
 
-    The offsets correspond to the stripe assigned to the input regions_label
-    value provided. Due to the packing of stripes into a condensed,
+    The dictionary will have key value pairs of stripe number and astropy
+    CompoundModel or None. Due to the packing of stripes into a condensed,
     subarray-like shape, the stripe x and y start values must be calculated
     rather than taken from subarray metadata.
 
@@ -164,52 +164,57 @@ def substripe_subarray_transform(input_model, regions_model, regions_label):
         The science model with defined multistripe parameters.
     regions_model : ~stdatamodels.jwst.datamodels.RegionsModel
         The regions reference model that defines stripe labels given pixel position.
-    regions_label : int
-        The stripe number to generate a transform for.
 
     Returns
     -------
-    ~astropy.modeling.models.CompoundModel
-        The subarray shift model to apply to the substripe transform.
+    dict
+        The dictionary of subarray shift models to apply to each substripe transform.
     """
-    tr_xstart = astmodels.Identity(1)
-    tr_ystart = astmodels.Identity(1)
+    # Start by finding defined stripes in region
+    stripe_ids = np.unique(regions_model.regions).astype(int)
+    stripe_ids = stripe_ids[stripe_ids != 0]
 
-    # Find minimum slowaxis index where region label is found in regions array.
-    # This index is the zero-indexed position where that subarray in the regions
-    # model begins, i.e. the "true (x, y)start" position for that stripe.
-    if np.abs(input_model.meta.subarray.fastaxis) == 1:
-        xrefstart = np.min(np.asarray(regions_model.regions == regions_label).nonzero()[1])
-        yrefstart = np.min(np.asarray(regions_model.regions == regions_label).nonzero()[0])
-    else:
-        xrefstart = np.min(np.asarray(regions_model.regions == regions_label).nonzero()[0])
-        yrefstart = np.min(np.asarray(regions_model.regions == regions_label).nonzero()[1])
+    subarray_transforms = {}
+    for stripe in stripe_ids:
+        tr_xstart = astmodels.Identity(1)
+        tr_ystart = astmodels.Identity(1)
 
-    # Now we need to find where in the data array the 0th row of the stripe resides.
-    # We do this by generating a row-index-filled array and send it through the substripe
-    # readout logic, providing a row map from full frame row index to substripe array location.
-    ncols_reg, nrows_reg = regions_model.regions.shape
-    ra = np.arange(nrows_reg)
-    rowarr = np.stack((ra,) * ncols_reg).T
+        # Find minimum slowaxis index where region label is found in regions array.
+        # This index is the zero-indexed position where that subarray in the regions
+        # model begins, i.e. the "true (x, y)start" position for that stripe.
+        if np.abs(input_model.meta.subarray.fastaxis) == 1:
+            xrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[1])
+            yrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[0])
+        else:
+            xrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[0])
+            yrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[1])
 
-    mock_refmodel = ImageModel(data=rowarr)
-    output = stripe_read(input_model, mock_refmodel, ["data"])
-    yscistart = np.where(output.data == yrefstart)[0]
+        # Now we need to find where in the data array the 0th row of the stripe resides.
+        # We do this by generating a row-index-filled array and send it through the substripe
+        # readout logic, providing a row map from full frame row index to substripe array location.
+        ncols_reg, nrows_reg = regions_model.regions.shape
+        ra = np.arange(nrows_reg)
+        rowarr = np.stack((ra,) * ncols_reg).T
 
-    if xrefstart > 0:
-        tr_xstart = astmodels.Shift(xrefstart)
+        mock_refmodel = ImageModel(data=rowarr)
+        output = stripe_read(input_model, mock_refmodel, ["data"])
+        yscistart = np.where(output.data == yrefstart)[0]
 
-    if yrefstart > 0 and len(yscistart) > 0:
-        yrefstart = yrefstart - yscistart[0]
-        tr_ystart = astmodels.Shift(yrefstart)
+        if xrefstart > 0:
+            tr_xstart = astmodels.Shift(xrefstart)
 
-    if isinstance(tr_xstart, astmodels.Identity) and isinstance(tr_ystart, astmodels.Identity):
-        # the case of a full frame observation
-        return None
-    else:
-        log.info(f"Substripe subarray shifts: x: {xrefstart} y: {yrefstart}")
-        subarray2full = tr_xstart & tr_ystart
-        return subarray2full
+        if yrefstart > 0 and len(yscistart) > 0:
+            yrefstart = yrefstart - yscistart[0]
+            tr_ystart = astmodels.Shift(yrefstart)
+
+        if isinstance(tr_xstart, astmodels.Identity) and isinstance(tr_ystart, astmodels.Identity):
+            # the case of a full frame observation
+            subarray_transforms[stripe] = None
+        else:
+            log.info(f"Substripe subarray shifts: x: {xrefstart} y: {yrefstart}")
+            subarray_transforms[stripe] = tr_xstart & tr_ystart
+
+    return subarray_transforms
 
 
 def not_implemented_mode(input_model, ref, slit_y_range=None):  # noqa: ARG001
