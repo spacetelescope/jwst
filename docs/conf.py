@@ -51,35 +51,12 @@ class StepSpecDocumenter(AttributeDocumenter):
         self.add_line(f"  {txt}", source_name, 2)
 
 
-class PipInstallVersionDirective(SphinxDirective):
-
-    def run(self):
-        help_text = f"pip install jwst=={version}\n"
-        paragraph_node = nodes.literal_block(text=help_text)
-        return [paragraph_node]
-
-
-class CondaInstallVersionDirective(SphinxDirective):
-
-    def run(self):
-        help_text = (
-            "conda create -n <env_name> python=3.13\n"
-            "conda activate <env_name>\n"
-            f"pip install jwst=={version}\n"
-        )
-        paragraph_node = nodes.literal_block(text=help_text)
-        return [paragraph_node]
-
-
 def setup(app):
     # add a custom AttributeDocumenter subclass to handle Step.spec formatting
     def register_documenter(app, config):
         app.add_autodocumenter(StepSpecDocumenter, True)
     # register it with a high priority so it behaves with the built-in autodoc
     app.connect("config-inited", register_documenter, priority=9000)
-
-    app.add_directive('pip_install_literal', PipInstallVersionDirective)
-    app.add_directive('conda_install_literal', CondaInstallVersionDirective)
 
 
 conf = ConfigParser()
@@ -137,6 +114,7 @@ extensions = [
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
     'sphinx.ext.mathjax',
+    'sphinx_inline_tabs'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
