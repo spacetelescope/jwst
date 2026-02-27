@@ -14,17 +14,17 @@ the output IFU cubes.
 .. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for CUBEPAR
-+++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++
 In addition to the standard reference file keywords listed above,
 the following keywords are *required* in CUBEPAR reference files,
 because they are used as CRDS selectors
 (see :ref:`cubepar_selectors`):
 
-=========  ==============================
+=========  ========================
 Keyword    Data Model Name
-=========  ==============================
+=========  ========================
 EXP_TYPE   model.meta.exposure.type
-=========  ==============================
+=========  ========================
 
 MIRI Reference File Format
 ++++++++++++++++++++++++++
@@ -46,7 +46,7 @@ MULTICHANNEL_DRIZ    BINTABLE  TFIELDS = 1
 
 NIRSPec Reference File Format
 +++++++++++++++++++++++++++++
-The NIRSpec CUBEPAR reference files are FITS format, with 9  BINTABLE extensions.
+The NIRSpec CUBEPAR reference files are FITS format, with 9 BINTABLE extensions.
 
 ====================  ========  ===========
 EXTNAME               XTENSION  Dimensions
