@@ -111,7 +111,7 @@ def _soss_box_extract(rateints, soss_refmodel=None):
     return multi_spec
 
 
-def _make_background_ramp(input_ramp, background_rateints):
+def _make_background_ramp(input_ramp, background_rateints_data):
     """
     Extrapolate a background rate to an up-the-ramp sampling.
 
@@ -128,7 +128,7 @@ def _make_background_ramp(input_ramp, background_rateints):
     ----------
     input_ramp : `~stdatamodels.jwst.datamodels.RampModel`
         The input ramp datamodel to match.
-    background_rateints : ndarray
+    background_rateints_data : ndarray
         A 3D background array, with one rate image per integration.
 
     Returns
@@ -146,7 +146,7 @@ def _make_background_ramp(input_ramp, background_rateints):
     background_ramp = np.zeros_like(input_ramp.data)
     for i in range(ngroups):
         group_time = (nframes + one_group * i) * frame_time
-        background_ramp[:, i, ...] = background_rateints * group_time
+        background_ramp[:, i, ...] = background_rateints_data * group_time
 
     return background_ramp
 
@@ -253,6 +253,9 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
             # since the recommended defaults may vary by mode
             multi_spec = Extract1dStep.call(single_slit, save_results=False)
             single_slit.close()
+
+            if not isinstance(multi_spec, datamodels.TSOMultiSpecModel) or len(multi_spec.spec) < 1:
+                raise ValueError("No valid spectra extracted for flux scaling")
     else:
         # Not a TSO spectral mode
         multi_spec = None
@@ -272,7 +275,10 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
             wlc_flux = whitelight_table[f"whitelight_flux_{detector}"]
         else:
             wlc_flux = whitelight_table["whitelight_flux"]
-        norm_flux = wlc_flux / np.nanmedian(wlc_flux)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            norm_flux = wlc_flux / np.nanmedian(wlc_flux)
 
     elif exp_type == "NRC_TSIMAGE" or (exp_type == "MIR_IMAGE" and is_tso(input_model)):
         # Call tso_photometry with latest CRDS parameters (via call),
@@ -282,12 +288,16 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
 
         # Use the aperture sum as the representative flux for scaling
         phot_flux = phot_table["aperture_sum"].value
-        norm_flux = phot_flux / np.nanmedian(phot_flux)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            norm_flux = phot_flux / np.nanmedian(phot_flux)
     else:
         # Not an expected TSO spectral or imaging mode.
         # Take the median flux of the image as the representative value.
-        median_flux = np.nanmedian(bgsub_rateints, axis=(1, 2))
-        norm_flux = median_flux / np.nanmedian(median_flux)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            median_flux = np.nanmedian(bgsub_rateints.data, axis=(1, 2))
+            norm_flux = median_flux / np.nanmedian(median_flux)
 
     # Check for bad values in the normalized flux
     invalid = ~np.isfinite(norm_flux)
