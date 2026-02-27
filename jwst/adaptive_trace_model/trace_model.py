@@ -7,8 +7,10 @@ from astropy.modeling.models import Identity, Scale, Shift
 from astropy.stats import sigma_clipped_stats as scs
 from astropy.utils.exceptions import AstropyUserWarning
 from scipy.signal import find_peaks
+from stcal.resample.utils import is_flux_density
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
+from stdatamodels.properties import ObjectNode
 
 from jwst.adaptive_trace_model.bspline import bspline_fit
 from jwst.assign_wcs.nirspec import nrs_ifu_wcs
@@ -573,7 +575,8 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
     spline_scales = {}
     slice_numbers = np.unique(region_map[region_map > 0])
     for slnum in slice_numbers:
-        log.info("Fitting slice %s", slnum)
+        if len(slice_numbers) > 1:
+            log.info("Fitting slice %s", slnum)
 
         # Reset holding arrays to NaN
         data_slice[:] = np.nan
@@ -593,7 +596,9 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
             collapse = np.nanmax(data_slice, axis=0)
 
         # Median column max across all columns
-        medcmax = np.nanmedian(collapse)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            medcmax = np.nanmedian(collapse)
 
         # Is medcmax over threshold?  If so, do bspline for this slice.
         dospline = False
@@ -853,12 +858,14 @@ def oversample_flux(
     return flux_os, flux_os_bspline_use, flux_os_bspline_full, flux_os_linear, flux_os_residual
 
 
-def _set_fit_kwargs(detector, xsize):
+def _set_fit_kwargs(mode, detector, xsize):
     """
     Set optional parameters for spline fits by detector.
 
     Parameters
     ----------
+    mode : str
+        Fitting mode (e.g. "NRS_IFU", "NRS_SLIT", "MIR_MRS", "MIR_LRS").
     detector : str
         Detector name.
     xsize : int
@@ -878,13 +885,19 @@ def _set_fit_kwargs(detector, xsize):
     """
     # Empirical parameters for this mode
     if detector.startswith("NRS"):
-        require_ngood = 15
-        spline_bkpt = 62
-        lrange = 50
+        if mode == "NRS_IFU":
+            require_ngood = 15
+            spline_bkpt = 62
 
-        # This factor of 1.6 was dialed based on inspection of the results
-        # as sampling gets progressively worse for NIRSpec detectors
-        space_ratio = 1.6
+            # This factor of 1.6 was dialed based on inspection of the results
+            # as sampling gets progressively worse for NIRSpec detectors
+            space_ratio = 1.6
+            lrange = 50
+        else:
+            require_ngood = 8
+            spline_bkpt = 62
+            space_ratio = 3.0
+            lrange = 50
 
         # Set up the column fitting order by detector
         if detector == "NRS1":
@@ -895,9 +908,12 @@ def _set_fit_kwargs(detector, xsize):
             col_index = range(xsize - 1, -1, -1)
 
     elif detector.startswith("MIR"):
+        if mode == "MIR_MRS":
+            lrange = 50
+        else:
+            lrange = 20
         require_ngood = 8
         spline_bkpt = 36
-        lrange = 50
         space_ratio = 1.2
 
         # For MIRI fitting order,  we need to start on the left and run to the middle,
@@ -919,12 +935,14 @@ def _set_fit_kwargs(detector, xsize):
     return fit_kwargs
 
 
-def _set_oversample_kwargs(detector):
+def _set_oversample_kwargs(mode, detector):
     """
     Set optional parameters for oversampling by detector.
 
     Parameters
     ----------
+    mode : str
+        Fitting mode (e.g. "NRS_IFU", "NRS_SLIT").
     detector : str
         Detector name.
 
@@ -940,12 +958,17 @@ def _set_oversample_kwargs(detector):
         If the input detector is not supported.
     """
     if detector.startswith("NRS"):
+        # Padding to add near point sources
+        if mode == "NRS_IFU":
+            pad = 2
+        else:
+            pad = 1
         # Trimming ends of the interpolation can help with bad extrapolations
-        pad = 2
         trim_ends = True
     elif detector.startswith("MIR"):
-        # Trimming ends is bad for MIRI, where dithers place point sources near the ends
+        # Padding to add near point sources
         pad = 3
+        # Trimming ends is bad for MIRI, where dithers place point sources near the ends
         trim_ends = False
     else:
         raise ValueError("Unknown detector")
@@ -983,6 +1006,35 @@ def _get_alpha_nrs_ifu(ifu_wcs, xsize, ysize):
     return alpha_orig
 
 
+def _get_alpha_nrs_slit(wcs, xsize, ysize):
+    """
+    Get alpha coordinates for NIRSpec slits corresponding to the original data array.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.WCS`
+        WCS object for the slit.
+    xsize : int
+        X-size for the data array.
+    ysize : int
+        Y-size for the data array.
+
+    Returns
+    -------
+    alpha_orig : ndarray
+        Alpha coordinates for the data array, with shape (ysize, xsize).
+    """
+    x, y = gwcs.wcstools.grid_from_bounding_box(wcs.bounding_box)
+    idx = y.astype(int), x.astype(int)
+    _, alpha, _ = wcs.transform("detector", "slit_frame", x, y)
+
+    # Flip alpha so in same direction as increasing Y
+    alpha_orig = np.full((ysize, xsize), np.nan)
+    alpha_orig[*idx] = -alpha
+
+    return alpha_orig
+
+
 def _get_alpha_mir_mrs(wcs, xsize, ysize):
     """
     Get alpha coordinates for MIRI MRS corresponding to the original data array.
@@ -1004,6 +1056,32 @@ def _get_alpha_mir_mrs(wcs, xsize, ysize):
     x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
     det2ab = wcs.get_transform("detector", "alpha_beta")
     alpha_orig, _, _ = det2ab(x, y)
+    return alpha_orig
+
+
+def _get_alpha_mir_lrs(wcs, xsize, ysize):
+    """
+    Get alpha coordinates for MIRI LRS corresponding to the original data array.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.WCS`
+        WCS object.
+    xsize : int
+        X-size for the data array.
+    ysize : int
+        Y-size for the data array.
+
+    Returns
+    -------
+    alpha_orig : ndarray
+        Alpha coordinates for the data array, with shape (ysize, xsize).
+    """
+    x, y = gwcs.wcstools.grid_from_bounding_box(wcs.bounding_box)
+    idx = y.astype(int), x.astype(int)
+    alpha, _, _ = wcs.transform("detector", "alpha_beta", x, y)
+    alpha_orig = np.full((ysize, xsize), np.nan)
+    alpha_orig[*idx] = alpha
     return alpha_orig
 
 
@@ -1164,6 +1242,13 @@ def _update_wcs(wcs, map_pixels):
     map_pixels.outputs = ("x", "y")
     frame = gwcs.coordinate_frames.Frame2D(name="coordinates", axes_order=(0, 1))
     new_wcs = gwcs.WCS([(frame, map_pixels), *wcs.pipeline])
+
+    # update bounding box limits if present
+    bbox = wcs.bounding_box
+    if wcs.bounding_box is not None:
+        bbox[0], bbox[1] = map_pixels.inverse(bbox[0], bbox[1])
+        new_wcs.bounding_box = (bbox[0], bbox[1])
+
     return new_wcs
 
 
@@ -1173,24 +1258,45 @@ def _intermediate_models(model, data_arrays):
 
     Parameters
     ----------
-    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+            `~stdatamodels.jwst.datamodels.SlitModel`
         The input datamodel. Metadata will be copied from it.
     data_arrays : list of ndarray or None
         Data arrays to save.  If None, the model returned is also None.
 
     Returns
     -------
-    new_models : list of `~stdatamodels.jwst.datamodels.IFUImageModel` or None
+    new_models : list of `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+                 `~stdatamodels.jwst.datamodels.SlitModel`, or None
         A list of datamodels containing the input data arrays.
+        Datamodel type will match the input model.
     """
+    model_for_update = model
+    if isinstance(model, datamodels.IFUImageModel):
+        model_type = datamodels.IFUImageModel
+    else:
+        model_type = datamodels.SlitModel
+
+        # If the input is an object node (e.g. it was a slit from a
+        # MultiSlitModel list), it's not a proper model, and we need to
+        # make a SlitModel from its instance dictionary to use it for
+        # metadata updates.
+        if isinstance(model, ObjectNode):
+            model_for_update = datamodels.SlitModel(model._instance)  # noqa: SLF001
+
     new_models = []
     for data in data_arrays:
         if data is None:
             new_model = None
         else:
-            new_model = datamodels.IFUImageModel(data)
-            new_model.update(model)
+            new_model = model_type(data=data)
+            new_model.update(model_for_update)
+            new_model.err = None
         new_models.append(new_model)
+
+    if model_for_update is not model:
+        model_for_update.close()
+
     return new_models
 
 
@@ -1203,11 +1309,12 @@ def fit_and_oversample(
     return_intermediate_models=False,
 ):
     """
-    Fit a trace model and optionally oversample an IFU datamodel.
+    Fit a trace model and optionally oversample a spectral datamodel.
 
     Parameters
     ----------
-    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+            `~stdatamodels.jwst.datamodels.SlitModel`
         The input datamodel, updated in place.
     fit_threshold : float, optional
         The signal threshold sigma for attempting spline fits within a slice region.
@@ -1231,20 +1338,25 @@ def fit_and_oversample(
 
     Returns
     -------
-    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+            `~stdatamodels.jwst.datamodels.SlitModel`
         The datamodel, updated with a trace image and optionally oversampled
         arrays.
-    full_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`, optional
+    full_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`or \
+                        `~stdatamodels.jwst.datamodels.SlitModel`, optional
         The spline model evaluated at all pixels. Returned only if
         ``return_intermediate_models`` is True.
-    source_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`, optional
+    source_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`or \
+                          `~stdatamodels.jwst.datamodels.SlitModel`, optional
         The spline model evaluated at compact source locations only.
         Returned only if ``return_intermediate_models`` is True.
-    linear_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or None, optional
+    linear_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+                   `~stdatamodels.jwst.datamodels.SlitModel` or None, optional
         All data linearly interpolated onto the oversampled grid
         Returned only if ``return_intermediate_models`` is True.  Will be None if
         ``oversample_factor`` is 1.0.
-    residual_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or None, optional
+    residual_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+                     `~stdatamodels.jwst.datamodels.SlitModel`or None, optional
         Residuals from the spline fit, linearly interpolated onto the oversampled grid
         Returned only if ``return_intermediate_models`` is True.  Will be None if
         ``oversample_factor`` is 1.0.
@@ -1257,7 +1369,11 @@ def fit_and_oversample(
 
     # Get input data coordinates
     detector = model.meta.instrument.detector
-    ysize, xsize = model.data.shape
+    if model.data.ndim == 3:
+        nint, ysize, xsize = model.data.shape
+    else:
+        nint = 1
+        ysize, xsize = model.data.shape
     if detector.startswith("NRS"):
         rotate = False
         if isinstance(model, datamodels.IFUImageModel):
@@ -1268,7 +1384,13 @@ def fit_and_oversample(
             # the region map is already stored in the datamodel
             region_map = model.regions
         else:
-            raise ValueError("Unsupported mode")
+            mode = "NRS_SLIT"
+            wcs = model.meta.wcs
+            alpha_orig = _get_alpha_nrs_slit(wcs, xsize, ysize)
+
+            # Set the region map for the single slit from the valid coordinates
+            region_map = np.zeros((ysize, xsize), dtype=np.int32)
+            region_map[np.isfinite(alpha_orig)] = 1
 
     elif detector.startswith("MIR"):
         rotate = True
@@ -1281,12 +1403,31 @@ def fit_and_oversample(
             det2ab_transform = wcs.get_transform("detector", "alpha_beta")
             region_map = det2ab_transform.label_mapper.mapper.copy()
         else:
-            raise ValueError("Unsupported mode")
+            mode = "MIR_LRS"
+            wcs = model.meta.wcs
+            alpha_orig = _get_alpha_mir_lrs(wcs, xsize, ysize)
+
+            # Set the region map for the single slit from the valid coordinates
+            region_map = np.zeros((ysize, xsize), dtype=np.int32)
+            region_map[np.isfinite(alpha_orig)] = 1
+
     else:
         raise ValueError("Unknown detector")
 
+    # For multiple integrations, fit the profile to the median image
+    if nint > 1:
+        # Also check for an input oversample factor:
+        # oversampling is not supported for multiple integrations
+        if oversample_factor != 1:
+            raise ValueError("Oversampling is not supported for TSO data.")
+        log.info("Fitting the spatial profile to the median image.")
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            flux_orig = np.nanmedian(model.data, axis=0)
+    else:
+        flux_orig = model.data
+
     # Rotate input data if needed
-    flux_orig = model.data
     if rotate:
         xsize, ysize = ysize, xsize
         flux_orig = np.rot90(flux_orig)
@@ -1330,12 +1471,12 @@ def fit_and_oversample(
                     if channel <= slnum < channel + 100:
                         signal_threshold[slnum] = ch_mean + fit_threshold * ch_rms
         else:
-            # For NIRSpec IFU, all regions have the same threshold
+            # For NIRSpec IFU or slit data, all regions have the same threshold
             threshold = overall_mean + fit_threshold * overall_rms
             signal_threshold = dict.fromkeys(slice_numbers, threshold)
 
     # Fit spline models to all regions
-    fit_kwargs = _set_fit_kwargs(detector, xsize)
+    fit_kwargs = _set_fit_kwargs(mode, detector, xsize)
     spline_models, spline_scales = fit_all_regions(
         flux_orig, alpha_orig, region_map, signal_threshold, **fit_kwargs
     )
@@ -1345,7 +1486,7 @@ def fit_and_oversample(
     # In the future, it might be useful to update the SCI extension here for the
     # psf_optimal=True case, even when oversample=1, but for now, we will leave
     # data unmodified.
-    oversample_kwargs = _set_oversample_kwargs(detector)
+    oversample_kwargs = _set_oversample_kwargs(mode, detector)
     if oversample_factor == 1:
         trace_used, full_trace = _trace_image(
             flux_orig.shape,
@@ -1379,6 +1520,10 @@ def fit_and_oversample(
     x_os[:, :] = basex[oldy.astype(int), :]
     if mode == "NRS_IFU":
         alpha_os, wave_os = _get_oversampled_coords_nrs_ifu(wcs, x_os, y_os)
+    elif mode == "NRS_SLIT":
+        _, alpha_os, wave_os = model.meta.wcs.transform("detector", "slit_frame", x_os, y_os)
+        alpha_os *= -1
+        wave_os *= 1e6
     else:
         # Because MIRI was rotated the indexing in the non-rotated frame,
         # the input coordinates need to be adjusted slightly
@@ -1451,6 +1596,9 @@ def fit_and_oversample(
     if mode == "NRS_IFU":
         map_pixels = Identity(1) & scale_and_shift
         model.meta.wcs = _update_wcs_nrs_ifu(model.meta.wcs, map_pixels)
+    elif mode == "NRS_SLIT":
+        map_pixels = Identity(1) & scale_and_shift
+        model.meta.wcs = _update_wcs(model.meta.wcs, map_pixels)
     else:
         # MIRI
         map_pixels = scale_and_shift & Identity(1)
@@ -1479,11 +1627,34 @@ def fit_and_oversample(
     if isinstance(model, datamodels.IFUImageModel):
         model.regions = regions_os
 
+    # Update additional metadata: pixel area has changed in one dimension
+    if model.meta.photometry.pixelarea_steradians is not None:
+        model.meta.photometry.pixelarea_steradians *= oversample_factor
+    if model.meta.photometry.pixelarea_arcsecsq is not None:
+        model.meta.photometry.pixelarea_arcsecsq *= oversample_factor
+
+    # If the data is in flux density units rather than surface brightness,
+    # we also need to correct for flux conservation
+    if is_flux_density(model.meta.bunit_data):
+        model.data /= oversample_factor
+        for extname in error_extensions:
+            if model.hasattr(extname):
+                ext = getattr(model, extname)
+                if extname == "err":
+                    ext /= oversample_factor
+                else:
+                    ext /= oversample_factor**2
+
     # Remove some extra arrays if present: no longer needed
     extras = [
         "area",
+        "barshadow",
+        "flatfield_point",
+        "flatfield_uniform",
         "pathloss_point",
         "pathloss_uniform",
+        "photom_point",
+        "photom_uniform",
         "zeroframe",
     ]
     for name in extras:

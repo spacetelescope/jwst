@@ -2,11 +2,16 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
-from jwst.assign_wcs.tests.test_miri import create_hdul
+from jwst.assign_wcs.tests.test_miri import (
+    create_datamodel_cube,
+    create_hdul,
+    create_hdul_lrs_slitless,
+)
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_nirspec_ifu_file
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 
 __all__ = [
+    "miri_lrs_slitless_model_with_source",
     "miri_mrs_model",
     "miri_mrs_model_with_source",
     "nirspec_ifu_model",
@@ -14,6 +19,39 @@ __all__ = [
     "nirspec_slit_model_with_source",
     "profile_1d",
 ]
+
+
+def miri_lrs_slitless_model_with_source():
+    """
+    Create a mock MIRI LRS slitless model with a simple spectral source in the data array.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.SlitModel`
+        The LRS slitless datamodel.
+    """
+    shape = (5, 416, 72)
+    hdul = create_hdul_lrs_slitless()
+    cube_model = create_datamodel_cube(hdul, shape)
+    hdul.close()
+
+    model = datamodels.SlitModel(cube_model)
+    cube_model.close()
+
+    model.data = np.full(shape, np.nan)
+    model.err = np.zeros(shape)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
+
+    ysize, xsize = shape[-2:]
+    x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
+    _, _, lam = model.meta.wcs(x, y)
+
+    region_map = (~np.isnan(lam)).astype(int)
+    _add_source(model, region_map, along_x=False)
+
+    return model
 
 
 def miri_mrs_model(detector="MIRIFUSHORT", channel="12", band="SHORT", shape=(1024, 1032)):
@@ -141,9 +179,9 @@ def nirspec_ifu_model_with_source(wcs_style="coordinates"):
     return model
 
 
-def nirspec_slit_model_with_source():
+def nirspec_slit_model():
     """
-    Create a mock NIRSpec FS model with a simple spectral source in the data array.
+    Create a mock NIRSpec FS model with no source in the data array.
 
     Calls assign_wcs and extract_2d.
 
@@ -157,8 +195,8 @@ def nirspec_slit_model_with_source():
     hdul.close()
 
     shape = (2048, 2048)
-    model.data = np.full(shape, np.nan)
-    model.err = np.zeros(shape)
+    model.data = np.ones(shape)
+    model.err = model.data * 0.01
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.var_poisson = np.zeros(shape)
     model.var_rnoise = np.zeros(shape)
@@ -172,6 +210,23 @@ def nirspec_slit_model_with_source():
             slit.meta.bunit_data = "MJy"
         else:
             slit.meta.bunit_data = "MJy/sr"
+
+    return model
+
+
+def nirspec_slit_model_with_source():
+    """
+    Create a mock NIRSpec FS model with a simple spectral source in the data array.
+
+    Calls assign_wcs and extract_2d.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        The FS datamodel.
+    """
+    model = nirspec_slit_model()
+    for slit in model.slits:
         region_map = (~np.isnan(slit.wavelength)).astype(int)
         _add_source(slit, region_map)
 
