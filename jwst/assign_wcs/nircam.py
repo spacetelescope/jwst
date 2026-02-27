@@ -6,7 +6,13 @@ from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling import bind_bounding_box
 from astropy.modeling.models import Const1D, Identity, Mapping, Shift
-from stdatamodels.jwst.datamodels import DistortionModel, ImageModel, NIRCAMGrismModel
+from gwcs import selector
+from stdatamodels.jwst.datamodels import (
+    DistortionModel,
+    ImageModel,
+    NIRCAMGrismModel,
+    RegionsModel,
+)
 from stdatamodels.jwst.transforms.models import (
     NIRCAMBackwardGrismDispersion,
     NIRCAMForwardColumnGrismDispersion,
@@ -18,10 +24,11 @@ from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,
+    substripe_subarray_transforms,
     transform_bbox_from_shape,
     velocity_correction,
 )
-from jwst.lib.reffile_utils import find_row
+from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
 
@@ -141,7 +148,7 @@ def imaging_distortion(input_model, reference_files):
             filters = filter_offset.tree["filters"]
 
         match_keys = {"filter": obsfilter, "pupil": obspupil}
-        row = find_row(filters, match_keys)
+        row = reffile_utils.find_row(filters, match_keys)
         if row is not None:
             col_offset = row.get("column_offset", "N/A")
             row_offset = row.get("row_offset", "N/A")
@@ -187,7 +194,7 @@ def tsgrism(input_model, reference_files):
     the regular grism transforms will need to be shifted to the full
     frame coordinates around the trace transform.
 
-    TSGRISM is only slated to work with GRISMR and Mod A
+    TSGRISM is only slated to work with GRISMR or DHS pupil elements and Module A.
 
     For this mode, the source is typically at crpix1 x crpix2, which
     are stored in keywords XREF_SCI, YREF_SCI.
@@ -202,7 +209,11 @@ def tsgrism(input_model, reference_files):
         raise ValueError("NRC_TSGRISM mode only supports module A")
 
     if input_model.meta.instrument.pupil != "GRISMR":
-        raise ValueError("NRC_TSGRISM mode only supports GRISMR")
+        if "DHS" in input_model.meta.instrument.pupil:
+            log.info("Building WCS for DHS data.")
+            return dhs(input_model, reference_files)
+        else:
+            raise ValueError("NRC_TSGRISM mode only supports GRISMR and DHS pupil values.")
 
     frames = create_coord_frames()
 
@@ -309,6 +320,196 @@ def tsgrism(input_model, reference_files):
 
     pipeline = [
         (frames["grism_detector"], sub2direct),
+        (frames["direct_image"], distortion),
+        (frames["v2v3"], va_corr),
+        (frames["v2v3vacorr"], tel2sky),
+        (frames["world"], None),
+    ]
+
+    return pipeline
+
+
+def dhs(input_model, reference_files):
+    """
+    Create WCS pipeline for a NIRCAM Time Series DHS Grism observation.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input data model.
+    reference_files : dict
+        Mapping between reftype (keys) and reference file name (vals).
+        Requires 'distortion', 'filteroffset' and 'specwcs' reference files.
+
+    Returns
+    -------
+    pipeline : list
+        The WCS pipeline, suitable for input into `gwcs.WCS`.
+
+    Notes
+    -----
+    The TSGRISM mode should function effectively like the grism mode
+    except that subarrays will be allowed. Since the transform models
+    depend on the original full frame coordinates of the observation,
+    the regular grism transforms will need to be shifted to the full
+    frame coordinates around the trace transform.
+
+    TSGRISM is only slated to work with GRISMR and Mod A
+
+    For this mode, the source is typically at crpix1 x crpix2, which
+    are stored in keywords XREF_SCI, YREF_SCI.
+    offset special requirements may be encoded in the X_OFFSET parameter,
+    but those are handled in extract_2d.
+    """
+    frames = create_coord_frames()
+
+    if reference_files["regions"] == "":
+        raise FileNotFoundError("No regions reference file provided.")
+
+    with RegionsModel(reference_files["regions"]) as regs_model:
+        # Get the shift to full frame coordinates from stripe coords
+        # Used in final transform from initial input x, y, order
+        sub_trans_dict = substripe_subarray_transforms(input_model, regs_model)
+
+        if regs_model.regions.shape == input_model.data.shape[-2:]:
+            regions = regs_model.regions.copy()
+        else:
+            sub_regs_model = reffile_utils.get_subarray_model(input_model, regs_model)
+            regions = sub_regs_model.regions.copy()
+            sub_regs_model.close()
+
+    label_mapper = selector.LabelMapperArray(
+        regions,
+        inputs_mapping=Mapping(mapping=(0, 1), n_inputs=3),
+        inputs=("x", "y", "order"),
+    )
+    label_mapper.inverse = selector.LabelMapper(
+        inputs=("x0", "y0", "lam", "order", "stripe"),
+        mapper=Identity(1),
+        inputs_mapping=Mapping((4,)),
+    )
+
+    with NIRCAMGrismModel(reference_files["specwcs"]) as f:
+        displ = f.displ.instance
+        dispx = f.dispx.instance
+        dispy = f.dispy.instance
+        invdispx = f.invdispx.instance
+        invdispl = f.invdispl.instance
+        orders = f.orders.instance
+        stripes = f.stripes.instance
+
+    # Ensure inverse dispersion models exist in expected shape if empty
+    if len(invdispx) == 0:
+        invdispx = [[]] * len(stripes)
+
+    # Define some models to support all stripes
+    setra = Const1D(input_model.meta.wcsinfo.ra_ref)
+    setra.inverse = Const1D(input_model.meta.wcsinfo.ra_ref)
+    setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
+    setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
+
+    # Initialize transforms dictionary to store stripe IDs as keys, transform models as values.
+    # Used in RegionsSelector to choose correct transform given a stripe ID.
+    transforms = {}
+
+    for i, stripe in enumerate(stripes):
+        # now create the appropriate model for the grismr
+        det2det = NIRCAMForwardRowGrismDispersion(
+            orders,
+            lmodels=displ[i],
+            xmodels=dispx[i],
+            ymodels=dispy[i],
+            inv_lmodels=invdispl[i],
+            inv_xmodels=invdispx[i],
+        )
+
+        det2det.inverse = NIRCAMBackwardGrismDispersion(
+            orders,
+            lmodels=displ[i],
+            xmodels=dispx[i],
+            ymodels=dispy[i],
+            inv_lmodels=invdispl[i],
+            inv_xmodels=invdispx[i],
+        )
+
+        # Add in the wavelength shift from the velocity dispersion
+        velosys = input_model.meta.wcsinfo.velosys
+
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
+            det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+
+        # input into the forward transform is x,y,x0,y0,order
+        # where x,y is the pixel location in the grism image
+        # and x0,y0 is the source location in the "direct" image.
+        # For this mode (tsgrism), it is assumed that the source is
+        # at the nominal aperture reference point, i.e.,
+        # crpix1 <--> xref_sci and crpix2 <--> yref_sci
+        # offsets in X are handled in extract_2d, e.g. if an offset
+        # special requirement was specified in the APT.
+        xc, yc = (0, 0)  # TODO: Wait for ref files to be delivered with siaf ref positions
+        # (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
+
+        if xc is None:
+            raise ValueError("XREF_SCI is missing.")
+
+        if yc is None:
+            raise ValueError("YREF_SCI is missing.")
+
+        xcenter = Const1D(xc)
+        xcenter.inverse = Const1D(xc)
+        ycenter = Const1D(yc)
+        ycenter.inverse = Const1D(yc)
+
+        stripe_model = Const1D(stripe)
+        stripe_model.inverse = Const1D(stripe)
+
+        if sub_trans_dict[stripe] is not None:
+            sub2direct = (
+                sub_trans_dict[stripe] & Identity(1)
+                | Mapping((0, 1, 0, 1, 2, 2))
+                | (Identity(2) & xcenter & ycenter & Identity(2))
+                | det2det & stripe_model
+            )
+        else:
+            sub2direct = (
+                Mapping((0, 1, 0, 1, 2, 2))
+                | (Identity(2) & xcenter & ycenter & Identity(2))
+                | det2det & stripe_model
+            )
+
+        transforms[stripe] = sub2direct
+
+    stripe2det = selector.RegionsSelector(
+        inputs=["x", "y", "order"],
+        outputs=["x0", "y0", "lam", "order", "stripe"],
+        label_mapper=label_mapper,
+        selector=transforms,
+    )
+
+    # take us from full frame detector to v2v3
+    distortion = imaging_distortion(input_model, reference_files) & Identity(3)
+
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref,
+    ) & Identity(3)
+
+    # v2v3 to the sky
+    # remap the tel2sky inverse as well since we can feed it the values of
+    # crval1, crval2 which correspond to crpix1, crpix2. This leaves
+    # us with a calling structure:
+    #  (x, y, order, stripe) <-> (wavelength, order)
+    tel2sky = pointing.v23tosky(input_model) & Identity(3)
+    t2skyinverse = tel2sky.inverse
+    newinverse = Mapping((0, 1, 0, 3, 4)) | setra & setdec & Identity(3) | t2skyinverse
+    tel2sky.inverse = newinverse
+
+    pipeline = [
+        (frames["grism_detector"], stripe2det),
         (frames["direct_image"], distortion),
         (frames["v2v3"], va_corr),
         (frames["v2v3vacorr"], tel2sky),

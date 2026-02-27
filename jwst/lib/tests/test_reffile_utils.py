@@ -44,30 +44,29 @@ def test_generate_stripe():
     #                nskips2, repeat_stripe, interleave_reads1, fastaxis, slowaxis
 
     # SUB41STRIPE1_DHS nrca1 case
-    stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, -1, 2)
+    stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, 0, 0, -1, 2, 1)
 
     # Function presumes input in science frame, so move test array to science frame
     # before supplying to function.
-    stripe1_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
-    )
+    test_array_sciframe = science_detector_frame_transform(test_array, *stripe_params[-3:-1])
+    stripe1_array = generate_stripe_array(test_array_sciframe, *stripe_params)
     assert stripe1_array.shape == (41, 2048)
     assert stripe1_array[0, 1024] == 0
     assert stripe1_array[1, 1024] == 1902  # nreads1 + nskips1
 
     # Test swapped axes
-    stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, 2, 1)
-    stripe1swap_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
-    )
+    # Note: If axes are swapped, substriped array will also be rotated, e.g.
+    # xsize corresponds to slowaxis, such that ysize will be full detector size.
+    stripe_params = (41, 2048, 1, 40, 1901, 0, 1, 1, 0, 0, 2, 1, 1)
+    test_array_sciframe = science_detector_frame_transform(test_array, *stripe_params[-3:-1])
+    stripe1swap_array = generate_stripe_array(test_array_sciframe, *stripe_params)
     assert stripe1swap_array.shape == (2048, 41)
     assert stripe1swap_array[1024, 1] == 1902  # nreads1 + nskips1
 
     # SUB82STRIPE2_DHS nrca2 case
-    stripe_params = (2048, 82, 1, 40, 1662, 82, 1, 1, 1, -2)
-    stripe2_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
-    )
+    stripe_params = (2048, 82, 1, 40, 1662, 82, 1, 1, 0, 0, 1, -2, 1)
+    test_array_sciframe = science_detector_frame_transform(test_array, *stripe_params[-3:-1])
+    stripe2_array = generate_stripe_array(test_array_sciframe, *stripe_params)
     assert stripe2_array.shape == (82, 2048)
     # nrca2 has flipped row direction, so in science frame the row indices are flipped.
     assert stripe2_array[-1, 1024] == 0
@@ -76,10 +75,9 @@ def test_generate_stripe():
     assert stripe2_array[-43, 1024] == 1785  # nreads1 + nskips1 + nreads2 + nskips2
 
     # SUB164STRIPE4_DHS nrcalong case
-    stripe_params = (2048, 164, 1, 40, 971, 0, 1, 0, -1, 2)
-    stripe4_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
-    )
+    stripe_params = (2048, 164, 1, 40, 971, 0, 1, 0, 0, 0, -1, 2, 1)
+    test_array_sciframe = science_detector_frame_transform(test_array, *stripe_params[-3:-1])
+    stripe4_array = generate_stripe_array(test_array_sciframe, *stripe_params)
     assert stripe4_array.shape == (164, 2048)
     assert stripe4_array[0, 1024] == 0
     assert stripe4_array[1, 1024] == 972  # nreads1 + nskips1

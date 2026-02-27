@@ -1925,7 +1925,7 @@ def create_extraction(
                 log.info(f"... {integ + 1} integrations done")
 
     if not progress_msg_printed:
-        log.info(f"All {input_model.data.shape[0]} integrations done")
+        log.info(f"All {data_model.data.shape[0]} integrations done")
 
     if isinstance(output_model, datamodels.TSOMultiSpecModel):
         # For multi-int data, assemble a single TSOSpecModel from the list of spectra
