@@ -1,4 +1,4 @@
-"""Routines related to WCS procedures of cube_build."""
+"""Routines related to WCS procedures of ``cube_build``."""
 
 import logging
 
@@ -23,7 +23,7 @@ def miri_slice_limit_coords(wcs, xstart, xend):
 
     Parameters
     ----------
-    wcs : `~gwcs.WCS`
+    wcs : `~gwcs.wcs.WCS`
         WCS pipeline for the input data.
     xstart : int
         Starting pixel in detector coordinates for the slice.
@@ -51,19 +51,19 @@ def miri_slice_limit_coords(wcs, xstart, xend):
 
 def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
     """
-    For MIRI channel data find the footprint of this data on the sky.
+    Find the footprint of the MIRI channel data on the sky.
 
-    For a specific channel on an exposure find the min and max of the
-    spatial coordinates, either in alpha,beta or ra,dec depending
-    on the type of cube being build. Also find the min and max of
+    For a specific channel on an exposure, find the min and max of the
+    spatial coordinates, either in ``alpha,beta`` or ``ra,dec`` depending
+    on the type of cube being build; Also find the min and max of
     wavelength this channel covers.
 
     Parameters
     ----------
-    input_data : IFUImage model
-       Input model (or file)
+    input_data : `~stdatamodels.jwst.datamodels.IFUImageModel` or str
+       Input model or file
     this_channel : str
-       Channel working with
+       Channel we are working with
     instrument_info : dict
        Dictionary holding x pixel min and max values for each channel
     coord_system : str
@@ -72,19 +72,19 @@ def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
     Returns
     -------
     a_min : float
-        Minimum value of coord 1 - along axis 1 of the IFUcube
+        Minimum value of coord 1 - along axis 1 of the IFU cube
     b1 : float
-        Coord 2 value corresponding  to a_min
+        Coord 2 value corresponding to ``a_min``
     a_max : float
-        Maximum value of coord 1 - along the axis 1 of the IFUcube
+        Maximum value of coord 1 - along the axis 1 of the IFU cube
     b2 : float
-        Coord 2 value corresponding to a_min
+        Coord 2 value corresponding to ``a_max``
     a1 : float
-        Coord 1 value coorsponding to b_min
+        Coord 1 value coorsponding to ``b_min``
     b_min : float
         Minimum value of coord 2 - along the axis 2 of the IFU cube
     a2 : float
-        Coord 1 value coorsponding to b_max
+        Coord 1 value coorsponding to ``b_max``
     b_max : float
         Maximum value of coord 2 - along the axis 2 of the IFU cube
     lambda_min : float
@@ -185,13 +185,14 @@ def find_corners_nirspec(input_data, coord_system):
     Find the sky footprint of a slice of a NIRSpec exposure.
 
     For each slice find:
+
     a. the min and max spatial coordinates (along slice, across slice) or
-       (ra,dec) depending on coordinate system of the output cube.
+       ``(ra,dec)`` depending on coordinate system of the output cube.
     b. min and max wavelength
 
     Parameters
     ----------
-    input_data : IFUImageModel
+    input_data : `~stdatamodels.jwst.datamodels.IFUImageModel`
        Input calibrated model (or file)
     coord_system : str
        Coordinate system of output cube: skyalign, ifualign, internal_cal
@@ -199,19 +200,19 @@ def find_corners_nirspec(input_data, coord_system):
     Returns
     -------
     a_min : float
-        Minimum value of coord 1 - along axis 1 of the IFUcube
+        Minimum value of coord 1 - along axis 1 of the IFU cube
     b1 : float
-        Coord 2 value corresponding  to a_min
+        Coord 2 value corresponding to ``a_min``
     a_max : float
-        Maximum value of coord 1 - along the axis 1 of the IFUcube
+        Maximum value of coord 1 - along the axis 1 of the IFU cube
     b2 : float
-        Coord 2 value corresponding to a_min
+        Coord 2 value corresponding to ``a_max``
     a1 : float
-        Coord 1 value coorsponding to b_min
+        Coord 1 value coorsponding to ``b_min``
     b_min : float
         Minimum value of coord 2 - along the axis 2 of the IFU cube
     a2 : float
-        Coord 1 value coorsponding to b_max
+        Coord 1 value coorsponding to ``b_max``
     b_max : float
         Maximum value of coord 2 - along the axis 2 of the IFU cube
     lambda_min : float
