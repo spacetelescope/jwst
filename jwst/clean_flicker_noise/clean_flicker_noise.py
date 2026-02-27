@@ -299,7 +299,7 @@ def mask_slits(input_model, mask):
     return mask
 
 
-def mask_soss_traces(input_model, mask, soss_refmodel, halfwidth=16):
+def mask_soss_traces(input_model, mask, soss_refmodel=None, halfwidth=16):
     """
     Flag pixels within science regions for NIRISS SOSS.
 
@@ -313,8 +313,11 @@ def mask_soss_traces(input_model, mask, soss_refmodel, halfwidth=16):
     mask : ndarray of bool
         2D input mask that will be updated. True indicates background
         pixels to be used. Trace regions will be set to False.
-    soss_refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`
-        PASTASOSS reference file model.
+    soss_refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`, optional
+        PASTASOSS reference file model. If None, a default model
+        will be retrieved.
+    halfwidth : int, optional
+        Width above and below the center of the trace to mask.
 
     Returns
     -------
@@ -419,8 +422,8 @@ def create_mask(
         mask[non_science] = False
 
     # If NIRISS SOSS, mask the traces from the reference model
-    if mask_science_regions and exptype == "nis_soss" and soss_refmodel is not None:
-        mask = mask_soss_traces(input_model, mask, soss_refmodel)
+    if mask_science_regions and exptype == "nis_soss":
+        mask = mask_soss_traces(input_model, mask, soss_refmodel=soss_refmodel)
 
     # Mask any NaN pixels or exactly zero value pixels
     no_data_pix = np.isnan(input_model.data) | (input_model.data == 0)

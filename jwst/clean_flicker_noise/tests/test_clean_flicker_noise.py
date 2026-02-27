@@ -153,6 +153,16 @@ def test_create_mask_nirspec(monkeypatch, exptype):
         assert not np.any(mask[cfn.NRS_FS_REGION[0] : cfn.NRS_FS_REGION[1]])
 
 
+def test_create_mask_soss():
+    rate_model = helpers.make_niriss_soss_rateints()
+
+    # Mark SOSS traces as False: about 68% of the array
+    mask = cfn.create_mask(rate_model, mask_science_regions=True)
+    assert np.allclose(np.sum(mask), 0.68 * mask.size, atol=0.02 * mask.size)
+
+    rate_model.close()
+
+
 def test_create_mask_miri():
     # small MIRI imaging data
     rate_model = helpers.make_small_rate_model()
@@ -766,3 +776,60 @@ def test_do_correction_with_flat_subarray(tmp_path, log_watcher):
 
     model.close()
     flat.close()
+
+
+def test_do_correction_median_image_one_int(caplog):
+    """Test that median image aborts for <2 integrations."""
+    model = helpers.make_nirspec_fs_model()
+    data_copy = model.data.copy()
+
+    cleaned, _, _, _, status = cfn.do_correction(model, background_method="median_image")
+    assert status == "SKIPPED"
+    assert "cannot be used with nints=1" in caplog.text
+
+    # output data is unchanged
+    np.testing.assert_allclose(cleaned.data, data_copy)
+
+    model.close()
+
+
+def test_do_correction_median_image_failure(caplog, monkeypatch):
+    """Test that errors in median image calculation are handled."""
+    model = helpers.make_niriss_soss_rateints()
+    data_copy = model.data.copy()
+
+    # mock an error in the median image creation
+    def mock_make_median(*args, **kwargs):
+        raise ValueError("test error")
+
+    monkeypatch.setattr(cfn, "make_median_image", mock_make_median)
+
+    cleaned, _, _, _, status = cfn.do_correction(model, background_method="median_image")
+    assert status == "SKIPPED"
+    assert "could not be created" in caplog.text
+
+    # output data is unchanged
+    np.testing.assert_allclose(cleaned.data, data_copy)
+
+    model.close()
+
+
+def test_do_correction_median_image_rateints(caplog):
+    """Test that median image correction works with rateints input."""
+    model = helpers.make_niriss_soss_rateints()
+    data_copy = model.data.copy()
+
+    cleaned, _, bg_model, _, status = cfn.do_correction(
+        model, background_method="median_image", save_background=True
+    )
+    assert status == "COMPLETE"
+
+    # output data is still unchanged for flat input
+    np.testing.assert_allclose(cleaned.data, data_copy)
+
+    # background matches input
+    assert isinstance(bg_model, datamodels.CubeModel)
+    np.testing.assert_allclose(bg_model.data, data_copy)
+
+    model.close()
+    bg_model.close()

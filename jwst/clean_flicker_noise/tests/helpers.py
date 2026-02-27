@@ -15,6 +15,8 @@ __all__ = [
     "make_nirspec_mos_fs_model",
     "make_nirspec_fs_model",
     "make_nirspec_mos_model",
+    "make_niriss_soss_rateints",
+    "make_niriss_soss_ramp",
 ]
 
 
@@ -313,15 +315,12 @@ def make_nrs_fs_full_ramp():
     return model
 
 
-def make_niriss_soss_ramp():
-    shape = (5, 3, 256, 2048)
-    model = datamodels.RampModel(shape)
+def _add_niriss_soss_meta(model):
+    """
+    Add some basic NIRISS SOSS metadata.
 
-    # Make data with a constant rate
-    for group in range(shape[1]):
-        model.data[:, group, :, :] = group
-
-    # Add NIRISS SOSS metadata
+    Assumes subarray 256, shape (5, 3, 256, 2048).
+    """
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.detector = "NIS"
     model.meta.instrument.filter = "CLEAR"
@@ -337,12 +336,48 @@ def make_niriss_soss_ramp():
     model.meta.subarray.xsize = 2048
     model.meta.subarray.ysize = 256
 
-    # Add ramp information
+    # Add ramp information, assuming shape = (5, 3, 256, 2048)
     model.meta.exposure.nints = 5
     model.meta.exposure.ngroups = 3
     model.meta.exposure.nframes = 1
     model.meta.exposure.groupgap = 0
     model.meta.exposure.group_time = 1.0
     model.meta.exposure.frame_time = 14.5
+
+
+def make_niriss_soss_rateints():
+    """
+    Make a NIRISS SOSS rateints model with basic metadata.
+
+    Returns
+    -------
+    CubeModel
+        A NIRISS SOSS rateints model.
+    """
+    shape = (5, 3, 256, 2048)
+    model = make_small_rateints_model(shape)
+    _add_niriss_soss_meta(model)
+
+    return model
+
+
+def make_niriss_soss_ramp():
+    """
+    Make a NIRISS SOSS ramp model with basic metadata.
+
+    Returns
+    -------
+    RampModel
+        A NIRISS SOSS ramp model.
+    """
+    shape = (5, 3, 256, 2048)
+    model = datamodels.RampModel(shape)
+
+    # Make data with a constant rate
+    for group in range(shape[1]):
+        model.data[:, group, :, :] = group
+
+    # Add NIRISS SOSS metadata
+    _add_niriss_soss_meta(model)
 
     return model
