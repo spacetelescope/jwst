@@ -24,7 +24,7 @@ from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,
-    substripe_subarray_transform,
+    substripe_subarray_transforms,
     transform_bbox_from_shape,
     velocity_correction,
 )
@@ -335,7 +335,7 @@ def dhs(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
@@ -363,17 +363,20 @@ def dhs(input_model, reference_files):
     """
     frames = create_coord_frames()
 
-    if reference_files["regions"] != "":
-        regs_model = RegionsModel(reference_files["regions"])
-    else:
+    if reference_files["regions"] == "":
         raise FileNotFoundError("No regions reference file provided.")
 
-    if regs_model.regions.shape == input_model.data.shape[-2:]:
-        regions = regs_model.regions.copy()
-    else:
-        sub_regs_model = reffile_utils.get_subarray_model(input_model, regs_model)
-        regions = sub_regs_model.regions.copy()
-        sub_regs_model.close()
+    with RegionsModel(reference_files["regions"]) as regs_model:
+        # Get the shift to full frame coordinates from stripe coords
+        # Used in final transform from initial input x, y, order
+        sub_trans_dict = substripe_subarray_transforms(input_model, regs_model)
+
+        if regs_model.regions.shape == input_model.data.shape[-2:]:
+            regions = regs_model.regions.copy()
+        else:
+            sub_regs_model = reffile_utils.get_subarray_model(input_model, regs_model)
+            regions = sub_regs_model.regions.copy()
+            sub_regs_model.close()
 
     label_mapper = selector.LabelMapperArray(
         regions,
@@ -395,7 +398,7 @@ def dhs(input_model, reference_files):
         orders = f.orders.instance
         stripes = f.stripes.instance
 
-    # Possibly temporary check to ensure inverse dispersion models exist
+    # Ensure inverse dispersion models exist in expected shape if empty
     if len(invdispx) == 0:
         invdispx = [[]] * len(stripes)
 
@@ -430,10 +433,8 @@ def dhs(input_model, reference_files):
         )
 
         # Add in the wavelength shift from the velocity dispersion
-        try:
-            velosys = input_model.meta.wcsinfo.velosys
-        except AttributeError:
-            pass
+        velosys = input_model.meta.wcsinfo.velosys
+
         if velosys is not None:
             velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
             log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
@@ -464,13 +465,9 @@ def dhs(input_model, reference_files):
         stripe_model = Const1D(stripe)
         stripe_model.inverse = Const1D(stripe)
 
-        # x, y, order in goes to transform to full array location and order
-        # get the shift to full frame coordinates
-        sub_trans = substripe_subarray_transform(input_model, regs_model, stripe)
-
-        if sub_trans is not None:
+        if sub_trans_dict[stripe] is not None:
             sub2direct = (
-                sub_trans & Identity(1)
+                sub_trans_dict[stripe] & Identity(1)
                 | Mapping((0, 1, 0, 1, 2, 2))
                 | (Identity(2) & xcenter & ycenter & Identity(2))
                 | det2det & stripe_model
