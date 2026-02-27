@@ -129,7 +129,10 @@ def extract_tso_object(
         raise ValueError("XREF_SCI and YREF_SCI are required for TSO mode.")
 
     # Split the logic on DHS vs. non-DHS data here
-    if "DHS" in input_model.meta.subarray.name:
+    if (
+        "DHS" in input_model.meta.subarray.name
+        and input_model.meta.instrument.detector != "NRCALONG"
+    ):
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
 
