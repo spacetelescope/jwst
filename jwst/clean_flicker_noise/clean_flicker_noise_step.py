@@ -132,10 +132,14 @@ class CleanFlickerNoiseStep(Step):
                 log.info(f"Using FLAT reference file: {flat_filename}")
 
         exp_type = output_model.meta.exposure.type
+        pastasoss_filename = None
         if exp_type == "NIS_SOSS":
-            pastasoss_filename = self.get_reference_file(output_model, "pastasoss")
-        else:
-            pastasoss_filename = None
+            pastasoss = self.get_reference_file(output_model, "pastasoss")
+            if pastasoss == "N/A":
+                log.warning("No PASTASOSS reference file found")
+            else:
+                pastasoss_filename = pastasoss
+                log.info(f"Using PASTASOSS reference file: {pastasoss_filename}")
 
         result = clean_flicker_noise.do_correction(
             output_model,
