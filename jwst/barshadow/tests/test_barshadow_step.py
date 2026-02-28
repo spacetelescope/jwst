@@ -23,6 +23,10 @@ def create_nirspec_mos_model():
     hdul.close()
 
     im.data = np.full((2048, 2048), 1.0)
+    im.dq = np.zeros((2048, 2048), dtype=np.uint32)
+    im.err = np.full((2048, 2048), 0.1)
+    im.var_rnoise = np.full((2048, 2048), 0.01)
+    im.var_poisson = np.full((2048, 2048), 0.01)
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
 
@@ -133,7 +137,7 @@ def test_barshadow_no_reffile(monkeypatch, nirspec_mos_model):
 
     # correction did not run
     assert result.meta.cal_step.barshadow == "SKIPPED"
-    assert result.slits[0].barshadow.size == 0
+    assert result.slits[0].barshadow is None
     assert result.slits[0].barshadow_corrected is None
 
     # make sure input is not modified
@@ -151,7 +155,7 @@ def test_barshadow_wrong_exptype():
 
     # correction did not run
     assert result.meta.cal_step.barshadow == "SKIPPED"
-    assert result.slits[0].barshadow.size == 0
+    assert result.slits[0].barshadow is None
     assert result.slits[0].barshadow_corrected is None
 
     result.close()

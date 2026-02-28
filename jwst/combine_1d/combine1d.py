@@ -241,7 +241,7 @@ class OutputSpectrumModel:
         # This is the data type for the output spectrum.  We'll use double
         # precision for accumulating sums for most columns, but for the DQ
         # array, use the correct output data type.
-        cmb_dtype = datamodels.CombinedSpecModel().spec_table.dtype
+        cmb_dtype = datamodels.CombinedSpecModel().get_dtype("spec_table")
         dq_dtype = cmb_dtype.fields["DQ"][0]
 
         nelem = self.wavelength.shape[0]
@@ -423,7 +423,7 @@ class OutputSpectrumModel:
         if not self.normalized:
             log.warning("Data have not been divided by the sum of the weights.")
 
-        cmb_dtype = datamodels.CombinedSpecModel().spec_table.dtype
+        cmb_dtype = datamodels.CombinedSpecModel().get_dtype("spec_table")
 
         # Note that these arrays have to be in the right order.
         data = np.array(

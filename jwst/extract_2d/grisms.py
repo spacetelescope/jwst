@@ -288,7 +288,7 @@ def extract_tso_object(
             output_model.source_id = 1
             output_model.bunit_data = input_model.meta.bunit_data
             output_model.bunit_err = input_model.meta.bunit_err
-            if hasattr(input_model, "int_times"):
+            if getattr(input_model, "int_times", None) is not None:
                 output_model.int_times = input_model.int_times.copy()
 
     del subwcs

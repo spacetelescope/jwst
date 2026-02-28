@@ -149,6 +149,8 @@ class ModelLibrary(AbstractModelLibrary):
             raise NoGroupID(msg) from e
 
     def _model_to_exptype(self, model):
+        if getattr(model.meta.asn, "exptype", None) is None:
+            return "SCIENCE"
         return model.meta.asn.exptype
 
     def _model_to_group_id(self, model):

@@ -159,6 +159,8 @@ def mock_nirspec_fs_one_slit_func():
     model.meta.exposure.type = "NRS_FIXEDSLIT"
     model.meta.subarray.name = "ALLSLITS"
     model.source_type = "EXTENDED"
+    model.source_xpos = 0.0
+    model.source_ypos = 0.0
 
     model.meta.wcsinfo.dispersion_direction = 1
     model.meta.wcs = simple_wcs_func()
@@ -367,6 +369,8 @@ def mock_miri_lrs_fs_func():
     model.meta.wcs = simple_wcs_transpose_func()
 
     model.data = np.arange(50 * 50, dtype=float).reshape((50, 50))
+    model.dq = np.zeros((50, 50), dtype=np.uint32)
+    model.err = model.data * 0.02
     model.var_poisson = model.data * 0.02
     model.var_rnoise = model.data * 0.02
     model.var_flat = model.data * 0.05
@@ -482,6 +486,7 @@ def mock_nis_wfss_l2():
     for i in range(nslit):
         slit = slit0.copy()
         slit.name = str(i + 1)
+        slit.source_id = 0
         slit.meta.exposure.type = "NIS_WFSS"
         model.slits.append(slit)
 
@@ -661,7 +666,7 @@ def make_spec_model(name="slit1", value=1.0):
     b_var_flat = np.zeros_like(flux)
     npixels = np.full(20, 10)
 
-    spec_dtype = dm.SpecModel().spec_table.dtype
+    spec_dtype = dm.SpecModel().get_dtype("spec_table")
     otab = np.array(
         list(
             zip(

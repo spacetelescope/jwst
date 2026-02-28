@@ -410,9 +410,6 @@ def test_get_spectral_order(mock_nirspec_fs_one_slit):
     slit.meta.wcsinfo.spectral_order = None
     assert ex.get_spectral_order(slit) == 1
 
-    slit.meta.wcsinfo = None
-    assert ex.get_spectral_order(slit) == 1
-
     del slit.meta.wcsinfo
     assert ex.get_spectral_order(slit) == 1
 

@@ -82,8 +82,15 @@ def nirspec_msa_metfl(tmp_path):
 @pytest.fixture
 def nirspec_msa_extracted2d(nirspec_msa_rate, nirspec_msa_metfl):
     model = ImageModel(nirspec_msa_rate)
+    model.dq = model.get_default("dq")
+    model.err = model.get_default("err")
+    model.var_rnoise = model.get_default("var_rnoise")
+    model.var_poisson = model.get_default("var_poisson")
     model = AssignWcsStep.call(model)
     model = Extract2dStep.call(model)
+    for slit in model.slits:
+        slit.var_rnoise = np.ones_like(slit.data) * 0.01
+        slit.var_poisson = np.ones_like(slit.data) * 0.01
     return model
 
 
@@ -94,6 +101,7 @@ def mk_multispec(model):
     for slit in model.slits:
         if nirspec_utils.is_background_msa_slit(slit):
             slits.append(slit)
+        slit.var_flat = np.ones_like(slit.data) * 0.01
     specs_model.slits.extend(slits)
     specs_model = PixelReplaceStep.call(specs_model)
     specs_model = ResampleSpecStep.call(specs_model)

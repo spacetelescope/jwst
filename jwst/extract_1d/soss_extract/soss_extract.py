@@ -536,7 +536,7 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, force_recompute_engi
     # Remove Nans to save space
     is_valid = np.isfinite(f_binned)
     table_size = np.sum(is_valid)
-    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().get_dtype("spec_table"))
     out_table["WAVELENGTH"] = pixel_grid[is_valid]
     out_table["FLUX"] = f_binned[is_valid]
     spec = datamodels.SpecModel(spec_table=out_table)
@@ -571,7 +571,9 @@ def _build_null_spec_table(wave_grid, order):
     spec.spectral_order = order
     spec.meta.soss_extract1d.type = "OBSERVATION"
     spec.meta.soss_extract1d.factor = np.nan
-    spec.spec_table = np.zeros((wave_grid_cut.size,), dtype=datamodels.SpecModel().spec_table.dtype)
+    spec.spec_table = np.zeros(
+        (wave_grid_cut.size,), dtype=datamodels.SpecModel().get_dtype("spec_table")
+    )
     spec.spec_table["WAVELENGTH"] = wave_grid_cut
     spec.spec_table["FLUX"] = np.empty(wave_grid_cut.size) * np.nan
     spec.spec_table["DQ"] = np.ones(wave_grid_cut.size)
@@ -857,7 +859,7 @@ def _model_single_order(
     # Remove Nans to save space
     is_valid = np.isfinite(f_binned)
     table_size = np.sum(is_valid)
-    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().get_dtype("spec_table"))
     out_table["WAVELENGTH"] = wave_grid[is_valid]
     out_table["FLUX"] = f_binned[is_valid]
     spec = datamodels.SpecModel(spec_table=out_table)
@@ -1549,7 +1551,7 @@ def _reconstruct_spec_from_data(spec_data):
         Reconstructed SpecModel
     """
     table_size = len(spec_data["wavelength"])
-    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().get_dtype("spec_table"))
     out_table["WAVELENGTH"] = spec_data["wavelength"]
     out_table["FLUX"] = spec_data["flux"]
 

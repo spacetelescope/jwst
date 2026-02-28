@@ -125,12 +125,12 @@ def mk_soss_spec(settings, speclen):
                         [np.linspace(0.6, 4.0, speclen[i])]
                         + [
                             np.ones(speclen[i])
-                            for _ in range(len(SpecModel().spec_table.dtype) - 1)
+                            for _ in range(len(SpecModel().get_dtype("spec_table")) - 1)
                         ]
                     )
                 )
             ),
-            dtype=SpecModel().spec_table.dtype,
+            dtype=SpecModel().get_dtype("spec_table"),
         )
         specmodel = datamodels.SpecModel(spec_table=otab)
         specmodel.spectral_order = inspec["order"]
@@ -2075,7 +2075,7 @@ def test_invalid_photom_file_bad_timecoeff_length():
 def test_invalid_photom_file_empty_timecoeff_table():
     # Auto-generate an empty extension in the photom model by trying to access it
     ftab = create_photom_miri_image()
-    ftab.timecoeff_linear = ftab.timecoeff_linear
+    ftab.timecoeff_linear = ftab.get_default("timecoeff_linear")
 
     input_model = create_input("MIRI", "MIRIMAGE", "MIR_IMAGE", filter_used="F1800W")
     ds = photom.DataSet(input_model)

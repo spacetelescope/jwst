@@ -41,6 +41,11 @@ def test_flatfield_step_interface(instrument, exptype):
     data.meta.subarray.xsize = shape[1]
     data.meta.subarray.ysize = shape[0]
 
+    # set arrays to defaults
+    data.dq = data.get_default("dq")
+    data.var_rnoise = data.get_default("var_rnoise")
+    data.var_poisson = data.get_default("var_poisson")
+
     flat = datamodels.FlatModel(shape)
     flat.meta.instrument.name = instrument
     flat.meta.subarray.xstart = 1
@@ -199,6 +204,10 @@ def test_nirspec_bots_flat():
     data.data += 1
     data.wavelength = np.ones(shape[-2:])
     data.wavelength[:] = np.linspace(1, 5, shape[-1], dtype=float)
+    data.dq = data.get_default("dq")
+    data.var_rnoise = data.get_default("var_rnoise")
+    data.var_poisson = data.get_default("var_poisson")
+    data.var_flat = data.get_default("var_flat")
 
     flats = create_nirspec_flats(w_shape)
     result = FlatFieldStep.call(
@@ -388,6 +397,10 @@ def test_nirspec_ifu_flat():
     hdul["SCI"].data = np.ones(shape, dtype=float)
 
     data = datamodels.IFUImageModel(hdul)
+    data.var_rnoise = data.get_default("var_rnoise")
+    data.var_poisson = data.get_default("var_poisson")
+    data.var_flat = data.get_default("var_flat")
+
     data = AssignWcsStep.call(data)
 
     flats = create_nirspec_flats(w_shape)

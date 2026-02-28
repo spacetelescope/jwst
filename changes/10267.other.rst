@@ -1,0 +1,1 @@
+Use new get_dtype and get_default methods of JwstDataModel to make explicit all instances where accessing an attribute was assumed to set that attribute.

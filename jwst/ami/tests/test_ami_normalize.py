@@ -80,6 +80,7 @@ def oi_data(example_model, bandpass):
     oim.array["PIST_ERR"] = pistons * ERR
 
     # oi_target extension data
+    oim.target = oim.get_default("target")
     oim.target["TARGET_ID"] = [1]
     oim.target["TARGET"] = "target"
     oim.target["RAEP0"] = example_model.meta.target.ra
@@ -99,7 +100,7 @@ def oi_data(example_model, bandpass):
     oim.target["SPECTYP"] = ["UNKNOWN"]
 
     # oi_vis extension data
-    oim.vis = np.zeros(n_baselines, dtype=oim.vis.dtype)
+    oim.vis = np.zeros(n_baselines, dtype=oim.get_dtype("vis"))
     oim.vis["TARGET_ID"] = 1
     oim.vis["TIME"] = 0
     oim.vis["VISAMP"] = visamp
@@ -109,7 +110,7 @@ def oi_data(example_model, bandpass):
     oim.vis["FLAG"] = flag_vis
 
     # oi_vis2 extension data
-    oim.vis2 = np.zeros(n_baselines, dtype=oim.vis2.dtype)
+    oim.vis2 = np.zeros(n_baselines, dtype=oim.get_dtype("vis2"))
     oim.vis2["TARGET_ID"] = 1
     oim.vis2["TIME"] = 0
     oim.vis2["VIS2DATA"] = (visamp**2).T
@@ -117,7 +118,7 @@ def oi_data(example_model, bandpass):
     oim.vis2["FLAG"] = flag_vis
 
     # oi_t3 extension data
-    oim.t3 = np.zeros(n_closure_phases, dtype=oim.t3.dtype)
+    oim.t3 = np.zeros(n_closure_phases, dtype=oim.get_dtype("t3"))
     oim.t3["TARGET_ID"] = 1
     oim.t3["TIME"] = 0
     oim.t3["T3AMP"] = t3amp
@@ -127,7 +128,7 @@ def oi_data(example_model, bandpass):
     oim.t3["FLAG"] = flag_t3
 
     # oi_q4 data
-    oim.q4 = np.zeros(n_quads, dtype=oim.q4.dtype)
+    oim.q4 = np.zeros(n_quads, dtype=oim.get_dtype("q4"))
     oim.q4["TARGET_ID"] = 1
     oim.q4["TIME"] = 0
     oim.q4["Q4AMP"] = q4amp
@@ -137,6 +138,7 @@ def oi_data(example_model, bandpass):
     oim.q4["FLAG"] = flag_q4
 
     # oi_wavelength extension data
+    oim.wavelength = oim.get_default("wavelength")
     oim.wavelength["EFF_WAVE"] = lam_c
     oim.wavelength["EFF_BAND"] = lam_c * lam_w
 

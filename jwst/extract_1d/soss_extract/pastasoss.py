@@ -558,7 +558,9 @@ def get_soss_wavemaps(
         raise ValueError(f"PWC position {pwcpos} is outside bounds ({PWCPOS_BOUNDS}).")
 
     if padsize is None:
-        padsize = getattr(refmodel.traces[0], "padding", 0)
+        padsize = refmodel.traces[0].padding
+        if padsize is None:
+            padsize = 0
     if padsize > 0:
         do_padding = True
     else:

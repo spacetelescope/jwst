@@ -51,7 +51,7 @@ def empty_recarray(request):
 def input_spec():
     """Make an input SpecModel with some metadata and column units."""
     spec = dm.SpecModel()
-    spec.spec_table = np.zeros((10,), dtype=spec.spec_table.dtype)
+    spec.spec_table = np.zeros((10,), dtype=spec.get_dtype("spec_table"))
     spec.name = "test_slit"
     spec.source_id = 1
 
@@ -65,7 +65,7 @@ def input_spec():
 def output_spec():
     """Make an output MRSSpecModel with only a bare spec_table."""
     spec = dm.MRSSpecModel()
-    spec.spec_table = np.zeros((5,), dtype=spec.spec_table.dtype)
+    spec.spec_table = np.zeros((5,), dtype=spec.get_dtype("spec_table"))
     return spec
 
 
