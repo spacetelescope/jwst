@@ -21,12 +21,12 @@ The pipeline performs a series of calibration steps that result in standard data
 applying various corrections to produce science-ready, calibrated output products including
 individual exposures and high-level data products (mosaics, extracted spectra, etc.).
 
+`See README.md for installation and usage instructions <https://github.com/spacetelescope/jwst?tab=readme-ov-file#installation>`_.
+
 This package allows users to run and configure the calibration pipeline themselves for custom processing of JWST data, 
 either :ref:`from the command line <run_from_strun>` with ``strun``
 or :ref:`from a Python script via the public API <run_from_python>`.
 Additionally, this package provides :ref:`JWST datamodel classes <jwst-data-models>`, the recommended method for reading and writing JWST data files in Python.
-
-See `README.md <https://github.com/spacetelescope/jwst>`_ for installation and usage instructions.
 
 .. note::
 
