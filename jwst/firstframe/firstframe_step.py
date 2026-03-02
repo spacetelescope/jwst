@@ -17,7 +17,7 @@ class FirstFrameStep(Step):
 
     .. deprecated:: 1.21.0
         The `FirstFrameStep` has been deprecated and will be removed
-        in a future release. Flagging the first grouops  has been added to the RSCD step.
+        in a future release. Flagging the first groups  has been added to the RSCD step.
     """
 
     class_alias = "firstframe"
