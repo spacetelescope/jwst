@@ -244,7 +244,7 @@ html_theme_options = {
     # "headbgcolor": "white",
 }
 
-html_logo = '_static/stsci_pri_combo_mark_white.png'
+html_logo = '_static/jwst_logo.png'
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []

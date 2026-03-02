@@ -1,14 +1,18 @@
-.. jwst documentation master file
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-:ref:`genindex`  |  :ref:`modindex`
-
-.. image:: _static/webb_logo.png
-   :width: 400
-   :align: center
+.. image:: _static/stsci_logo.png
+   :width: 15%
    :target: https://stsci.edu
 
+.. image:: _static/stsci_name.png
+   :width: 68%
+   :target: https://stsci.edu
+
+.. image:: _static/jwst_logo.png
+   :width: 15%
+   :target: https://science.nasa.gov/mission/webb/
+
+=========================
+JWST Calibration Pipeline
+=========================
 
 **Version**: |release|
 
@@ -30,8 +34,6 @@ See `README.md <https://github.com/spacetelescope/jwst>`_ for installation and u
    please `open an issue on GitHub <https://github.com/spacetelescope/jwst/issues>`_ or `contact the JWST Help Desk <https://jwsthelp.stsci.edu>`_.
 
 Detailed explanations of specific calibration stages, reference files, and pipeline builds can be found on `JDox <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline>`_.
-
---------------------------------
 
 .. _user-docs:
 
