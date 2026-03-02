@@ -477,10 +477,7 @@ class DataSet:
                 # Increment slit number
                 self.slitnum += 1
 
-                # Get the spectral order number for this slit
-                order = slit.meta.wcsinfo.spectral_order
-                log.info(f"Working on slit {slit.name}, order {order}")
-
+                log.info(f"Working on slit {slit.name}")
                 fields_to_match = {"filter": self.filter}
 
                 row = find_row(ftab.phot_table, fields_to_match)
