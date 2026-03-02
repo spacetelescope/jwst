@@ -226,7 +226,7 @@ the exact same structure as the rateints_ product described above.
 
 For WFSS data, the ``bsub`` product will also contain a ``mask`` attribute
 ("MASK" FITS extension), which is set to 1 for pixels where the background was determined
-to be usable, i.e., where there are assumed to be no sources.
+to be usable, i.e., where there are assumed to be no sources, and 0 elsewhere.
 
 .. _cal:
 .. _calints:
