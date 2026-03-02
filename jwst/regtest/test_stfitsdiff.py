@@ -1015,9 +1015,9 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "FLUX       0 0     0 0    100 100       100         1     1e-05         1      1.98         1",
         "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
-        "col_name dtype rel_diffs rel_max rel_mean rel_std",
-        "-------- ----- --------- ------- -------- -------",
-        "FLUX    f8         2      99       50      49",
+        "col_name dtype rel_diffs rel_max  rel_mean rel_std",
+        "-------- ----- --------- -------- -------- --------",
+        "FLUX    f8         2       99       50       49",
         "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
@@ -1054,9 +1054,9 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "FLUX       2 0     2 0     98 100         1         1         0         1    0.9796         1",
         "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
-        "col_name dtype rel_diffs rel_max rel_mean rel_std",
-        "-------- ----- --------- ------- -------- -------",
-        "FLUX    f8         2       1        1       0",
+        "col_name dtype rel_diffs rel_max  rel_mean rel_std",
+        "-------- ----- --------- -------- -------- --------",
+        "FLUX    f8         4        1        1        0",
         "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
@@ -1093,9 +1093,9 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "WAVELENGTH       0 1   100 0      0 100       nan       9.9       nan         0       nan      4.95",
         "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
-        "col_name  dtype rel_diffs rel_max rel_mean rel_std",
-        "---------- ----- --------- ------- -------- -------",
-        "WAVELENGTH    f8         0     nan      nan     nan",
+        "col_name  dtype rel_diffs rel_max  rel_mean rel_std",
+        "---------- ----- --------- -------- -------- --------",
+        "WAVELENGTH    f8       100      nan      nan      nan",
         "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
@@ -1175,10 +1175,10 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
         "col_1       1 1     0 0        5 5     11      4      0      0      4      2",
         "col_2       1 1     2 2        4 4     23      3      0      0      7    1.5",
         "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
-        "col_name dtype  rel_diffs rel_max rel_mean rel_std",
-        "-------- ------ --------- ------- -------- -------",
-        "col_1 object         1      10       10       0",
-        "col_2 object         1      20       20       0",
+        "col_name dtype  rel_diffs rel_max  rel_mean rel_std",
+        "-------- ------ --------- -------- -------- --------",
+        "col_1 object         1       10       10        0",
+        "col_2 object         1       20       20        0",
         "* Pixel indices below are 1-based.",
         "Column col_1 data differs in row 0:",
         "at [1]:",
@@ -1494,10 +1494,11 @@ def test_hdus_tables_misc(fitsdiff_default_kwargs):
         "ERROR       1 1     0 5     100 95        99        99         0         0      49.5     47.26",
         "WAVELENGTH       1 0     0 1     100 99        99        99         0         1      49.5     49.65",
         "Relative difference stats for non-NaN diffs that fail the [atol, rtol] test:",
-        "col_name   dtype  rel_diffs rel_max rel_mean rel_std",
-        "---------- ------- --------- ------- -------- -------",
-        "ERROR float32         0     nan      nan     nan",
-        "WAVELENGTH float32         5       1   0.4567  0.2901",
+        "col_name   dtype  rel_diffs rel_max  rel_mean rel_std",
+        "---------- ------- --------- -------- -------- --------",
+        "ERROR float32         5      nan      nan      nan",
+        "INDEX   int32         5      N/A      N/A      N/A",
+        "WAVELENGTH float32         6        1    0.457     0.29",
         "Column ['FLUX'] is identical (or within tolerances)",
         "* Pixel indices below are 1-based.",
         "Column ERROR data differs in row 90:",
@@ -1589,7 +1590,6 @@ def test_hdus_tables_non_numeric(fitsdiff_default_kwargs):
     b.append(table_b)
     diff = STFITSDiff(a, b)
     report = diff.report()
-    assert "Column NAME has 4 different non-numeric entries" in report
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
     report = diff.report()

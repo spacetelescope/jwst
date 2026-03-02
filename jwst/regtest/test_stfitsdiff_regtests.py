@@ -179,4 +179,4 @@ def test_one_nan_in_table(rtdata, fitsdiff_default_kwargs):
 
     diff = STFITSDiff(rtdata.input, rtdata.truth, **fitsdiff_default_kwargs)
     assert "    Found 1 different table data element(s). " in diff.report()
-    assert "    WAVELENGTH    f8         0     nan      nan     nan" in diff.report()
+    assert "    WAVELENGTH    f8         1      nan      nan      nan" in diff.report()
