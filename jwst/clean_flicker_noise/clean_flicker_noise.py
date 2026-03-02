@@ -1301,7 +1301,8 @@ def do_correction(
         For NIRSpec, mask regions of the image defined by WCS bounding
         boxes for slits/slices, as well as any regions known to be
         affected by failed-open MSA shutters.  For MIRI imaging, mask
-        regions of the detector not used for science.
+        regions of the detector not used for science. For NIRISS SOSS,
+        mask the expected spectral traces.
     flat_filename : str, optional
         Path to a flat field image to apply to the data before fitting
         noise/background.
