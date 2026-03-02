@@ -7,21 +7,25 @@ from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_ni
 from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
 
 __all__ = [
-    "add_metadata",
     "make_small_ramp_model",
     "make_small_rate_model",
     "make_small_rateints_model",
     "make_flat_model",
     "make_nirspec_ifu_model",
+    "make_nirspec_mos_model",
     "make_nirspec_mos_fs_model",
     "make_nirspec_fs_model",
-    "make_nirspec_mos_model",
+    "make_niriss_rate_model",
+    "make_nircam_rate_model",
+    "make_nrs_fs_full_ramp",
+    "make_nrs_bots_rateints",
+    "make_miri_image_tso_rateints",
     "make_niriss_soss_rateints",
     "make_niriss_soss_ramp",
 ]
 
 
-def add_metadata(model, shape):
+def _add_metadata(model, shape):
     """
     Add basic MIRI image metadata to a model.
 
@@ -69,7 +73,7 @@ def make_small_ramp_model(shape=(3, 5, 10, 10)):
         A ramp model with specified shape.
     """
     rampmodel = datamodels.RampModel(shape)
-    add_metadata(rampmodel, shape)
+    _add_metadata(rampmodel, shape)
 
     # Make data with a constant rate
     for group in range(shape[1]):
@@ -95,7 +99,7 @@ def make_small_rate_model(shape=(3, 5, 10, 10)):
         An rate model with specified shape.
     """
     ratemodel = datamodels.ImageModel(shape[2:])
-    add_metadata(ratemodel, shape)
+    _add_metadata(ratemodel, shape)
     ratemodel.data[:] = 1.0
     ratemodel.dq = ratemodel.get_default("dq")
     return ratemodel
@@ -118,7 +122,7 @@ def make_small_rateints_model(shape=(3, 5, 10, 10)):
         A rateints model with specified shape.
     """
     ratemodel = datamodels.CubeModel((shape[0], shape[2], shape[3]))
-    add_metadata(ratemodel, shape)
+    _add_metadata(ratemodel, shape)
     ratemodel.data[:] = 1.0
     return ratemodel
 
@@ -294,6 +298,14 @@ def make_nircam_rate_model(shape=None):
 
 
 def make_nrs_fs_full_ramp():
+    """
+    Make a NIRSpec FS full frame ramp model.
+
+    Returns
+    -------
+    RampModel
+        A NIRSpec fixed slit ramp model.
+    """
     shape = (1, 2, 2048, 2048)
     model = datamodels.RampModel(shape)
 
