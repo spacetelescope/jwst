@@ -48,3 +48,8 @@ Output product
 --------------
 The output is a new copy of the input `~stdatamodels.jwst.datamodels.RampModel`, with the updated DQ flags
 added to the GROUPDQ array.
+
+
+Reference Files
+---------------
+The ``charge_migration`` step does not use any reference files.

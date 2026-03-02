@@ -9,7 +9,6 @@ Resampling Spectral Data
 
    main.rst
    arguments.rst
-   reference_files.rst
    resample_spec_step.rst
    resample_spec.rst
 

@@ -41,7 +41,7 @@ class Combine1dStep(Step):
 
         Returns
         -------
-        output_spectrum : MultiCombinedSpecModel
+        output_spectrum : `~stdatamodels.jwst.datamodels.MultiCombinedSpecModel`
             A single combined 1D spectrum.
         """
         output_model = self.prepare_output(input_data)

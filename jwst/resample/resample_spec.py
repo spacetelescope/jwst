@@ -972,7 +972,7 @@ def find_dispersion_axis(refmodel):
 
     Parameters
     ----------
-    refmodel : `~stdatamodels.DataModel`
+    refmodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
 
     Returns

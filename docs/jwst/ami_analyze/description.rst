@@ -113,7 +113,7 @@ Inputs
 
 3D calibrated image
 ^^^^^^^^^^^^^^^^^^^
-:Data model: `~stdatamodels.DataModel`
+:Data model: `~stdatamodels.jwst.datamodels.JwstDataModel`
 :File suffix: _calints
 
 The ``ami_analyze`` step takes a single calibrated image cube as input, which should be

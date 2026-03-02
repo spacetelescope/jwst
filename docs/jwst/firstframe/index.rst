@@ -9,6 +9,5 @@ First Frame Correction
 
    description.rst
    arguments.rst
-   reference_files.rst
 
 .. automodapi:: jwst.firstframe
