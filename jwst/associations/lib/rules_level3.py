@@ -990,8 +990,9 @@ class Asn_Lv3TSO(AsnMixin_Science):
                                 ),
                                 SimpleConstraint(
                                     value=False,
-                                    test=lambda value, item: nissoss_calibrated_filter(item)
-                                    == value,
+                                    test=lambda value, item: (
+                                        nissoss_calibrated_filter(item) == value
+                                    ),
                                     force_unique=False,
                                 ),
                             ]
