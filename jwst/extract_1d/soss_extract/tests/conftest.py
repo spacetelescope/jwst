@@ -378,22 +378,32 @@ def refmodel(trace1d):
         Mock reference model
     """
     model = PastasossModel()
+    model.meta.order2_separation_cutoff = [0.77, 0.95]
+    model.meta.pwcpos_bounds = [245.54, 246.04]
     model.meta.pwcpos_cmd = 245.76
+    model.meta.soss_xdim = 2048
+    model.meta.soss_ydim = 300
+    model.meta.subarray_ymin = 1792
+    model.meta.wavemap_nwl = 5001
+    model.meta.wavemap_wlmin = 0.5
+    model.meta.wavemap_wlmax = 5.5
 
     trace0 = {
+        "cutoff": 2048,
         "pivot_x": 189.0,
         "pivot_y": 5.0,
         "spectral_order": 1,
         "trace": np.array([trace1d[0][0], trace1d[0][1]], dtype=np.float64).T,
-        "padding": 0,
     }
     trace1 = {
+        "cutoff": 1783,
         "pivot_x": 168.0,
         "pivot_y": 20.0,
         "spectral_order": 2,
         "trace": np.array([trace1d[1][0], trace1d[1][1]], dtype=np.float64).T,
     }
     trace2 = {
+        "cutoff": 1134,
         "pivot_x": 144.4,
         "pivot_y": 36.1,
         "spectral_order": 3,
@@ -417,7 +427,7 @@ def refmodel(trace1d):
         ]
         + [0.0 for _ in range(8)],
         "polynomial_degree": 3,
-        "scale_extents": [[0, 245.5929], [DATA_SHAPE[1], 245.9271]],
+        "scale_extents": [[0, -1.03552000e-01], [DATA_SHAPE[1], 1.62882080e-01]],
     }
     wavecal2 = {
         "coefficients": [
