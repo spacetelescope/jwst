@@ -53,7 +53,7 @@ Many of the JWST calibration steps and pipelines expect an
 :class:`~jwst.datamodels.container.ModelContainer` is returned.
 :class:`~jwst.datamodels.container.ModelContainer`
 is a list-like object where each element is the
-`~stdatamodels.DataModel` of each member of the association. The ``asn_table`` attribute is
+`~stdatamodels.jwst.datamodels.JwstDataModel` of each member of the association. The ``asn_table`` attribute is
 populated with the association data structure, allowing direct access
 to the association itself.  The association file, as well as the files
 listed in the association file, must be in the input directory.

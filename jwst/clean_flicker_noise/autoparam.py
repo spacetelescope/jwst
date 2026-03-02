@@ -26,7 +26,9 @@ def quick_clean(input_model, flat_filename=None):
 
     Parameters
     ----------
-    input_model : RampModel, ImageModel, or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`, \
+                  `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         Input data to clean.
     flat_filename : str or None
         If provided, will be read in and divided into the image before cleaning.
@@ -36,7 +38,7 @@ def quick_clean(input_model, flat_filename=None):
     image : ndarray of float
         2D cleaned rate image.
     mask : ndarray of bool
-        2D mask marking background pixels as True.
+        2D mask marking background pixels as `True`.
     """
     # Make a draft rate file first
     if isinstance(input_model, datamodels.RampModel):
@@ -301,7 +303,9 @@ def niriss_image_parameters(input_model, flat_filename):
 
     Parameters
     ----------
-    input_model : RampModel, ImageModel, or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`, \
+                  `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         Input model.
     flat_filename : str
         Path to a FLAT reference file.
@@ -399,7 +403,9 @@ def nircam_image_parameters(input_model, flat_filename):
 
     Parameters
     ----------
-    input_model : RampModel, ImageModel, or CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`, \
+                  `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         Input model.
     flat_filename : str
         Path to a FLAT reference file.

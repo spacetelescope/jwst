@@ -188,6 +188,9 @@ a valid model from scratch, use something like::
     mask_model.mask = mask_data
     mask_model.save('custom_mask.fits')
 
+To apply the user-defined mask as-is, the ``wfss_maxiter`` argument should be set to 0;
+doing so will prevent any additional outlier rejection from being applied by the step.
+
 SOSS Mode
 ---------
 In a similar manner to WFSS modes, the NIRISS SOSS mode uses a set of reference

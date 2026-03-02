@@ -332,13 +332,15 @@ def flag_resampled_model_crs(
     median_err=None,
     save_blot=False,
     make_output_path=None,
+    pixmap_stepsize=1,
+    pixmap_order=1,
 ):
     """
     Flag outliers in a resampled model, updating DQ array in place.
 
     Parameters
     ----------
-    input_model : `~stdatamodels.DataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
     median_data : ndarray
         The median data array.
@@ -364,6 +366,13 @@ def flag_resampled_model_crs(
     make_output_path : function
         The functools.partial instance to pass to save_blot. Must be
         specified if save_blot is True.
+    pixmap_stepsize : float, optional
+        Indicates the spacing in pixels at which the WCS is evaluated when computing the pixel map.
+        WCS coordinates of the full pixel map is computed by interpolating over
+        this sparse pixel map when ``pixmap_stepsize > 1``. Larger step sizes result in
+        faster performance at the cost of accuracy. Default is 1.
+    pixmap_order : int, optional
+        Interpolating spline order for pixel map computation. Must be 1 or 3. Default is 1.
     """
     blot = gwcs_blot(
         median_data=median_data,
@@ -371,6 +380,8 @@ def flag_resampled_model_crs(
         blot_shape=input_model.data.shape,
         blot_wcs=input_model.meta.wcs,
         fillval=np.nan,
+        pixmap_stepsize=pixmap_stepsize,
+        pixmap_order=pixmap_order,
     )
     if median_err is not None:
         blot_err = gwcs_blot(
@@ -379,6 +390,8 @@ def flag_resampled_model_crs(
             blot_shape=input_model.data.shape,
             blot_wcs=input_model.meta.wcs,
             fillval=np.nan,
+            pixmap_stepsize=pixmap_stepsize,
+            pixmap_order=pixmap_order,
         )
     else:
         blot_err = None
@@ -404,7 +417,7 @@ def _flag_resampled_model_crs(
 
     Parameters
     ----------
-    input_model : `~stdatamodels.DataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
     blot : ndarray
         The blotted data array.
@@ -505,6 +518,8 @@ def flag_crs_in_models_with_resampling(
             median_err=median_err,
             save_blot=save_blot,
             make_output_path=make_output_path,
+            pixmap_stepsize=1,
+            pixmap_order=1,
         )
 
 
@@ -514,7 +529,7 @@ def flag_model_crs(image, blot, snr, median_err=None):
 
     Parameters
     ----------
-    image : `~stdatamodels.DataModel`
+    image : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
     blot : ndarray
         The blotted data array.

@@ -9,7 +9,11 @@ as bad (the "DO_NOT_USE" data quality flag is added to the GROUPDQ array), but
 only if the total number of groups per integration is greater than 3.
 This results in the data contained in the first group
 being excluded from subsequent steps, such as jump detection and ramp fitting.
-No flags are added if NGROUPS <= 3, because doing so would leave too few good
+No flags are added if ``NGROUPS <= 3``, because doing so would leave too few good
 groups to work with in later steps.
 
 Only the GROUPDQ array is modified. The SCI, ERR, and PIXELDQ arrays are unchanged.
+
+Reference Files
+---------------
+The ``firstframe`` step does not use any reference files.

@@ -359,7 +359,7 @@ def test_skip_assign_wcs_error(input_model_slit, tmp_path, monkeypatch, log_watc
 
     watcher = log_watcher(
         "jwst.targ_centroid.targ_centroid_step",
-        message="Error when assigning WCS",
+        message="Error running AssignWcsStep on TA verification image",
     )
 
     result = TargCentroidStep.call(input_model_slit, ta_file=str(ta_path))
@@ -385,7 +385,36 @@ def test_skip_assign_wcs_skipped(input_model_slit, tmp_path, monkeypatch, log_wa
         mock_assign_wcs,
     )
 
-    watcher = log_watcher("jwst.targ_centroid.targ_centroid_step", message="Failed to assign WCS")
+    watcher = log_watcher(
+        "jwst.targ_centroid.targ_centroid_step",
+        message="AssignWcsStep was skipped when run on TA verification image",
+    )
+
+    result = TargCentroidStep.call(input_model_slit, ta_file=str(ta_path))
+    watcher.assert_seen()
+
+    _tests_for_skipped_step(result)
+
+
+def test_skip_wavelength_returns_nan(input_model_slit, tmp_path, monkeypatch, log_watcher):
+    """If wavelength from WCS returns NaN, step should be skipped."""
+    # Generate slit data with the specified offset
+    ta_image = make_slit_data(offset=(0, 0))
+    ta_path = tmp_path / "ta_wavelength_nan.fits"
+    ta_image.save(str(ta_path))
+
+    def mock_middle_from_wcs(wcs, bounding_box, dispaxis):
+        return np.nan, np.nan, np.nan
+
+    monkeypatch.setattr(
+        "jwst.targ_centroid.targ_centroid.middle_from_wcs",
+        mock_middle_from_wcs,
+    )
+
+    watcher = log_watcher(
+        "jwst.targ_centroid.targ_centroid",
+        message="Failed to determine wavelength from WCS transform for SlitModel",
+    )
 
     result = TargCentroidStep.call(input_model_slit, ta_file=str(ta_path))
     watcher.assert_seen()

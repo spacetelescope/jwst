@@ -1,7 +1,10 @@
 import numpy as np
 import pytest
+from astropy import units as u
+from astropy.coordinates import ICRS
 from astropy.modeling.models import Const1D, Mapping, Polynomial1D, Polynomial2D, Shift
 from gwcs import wcs
+from gwcs.coordinate_frames import CelestialFrame, CompositeFrame, Frame2D, SpectralFrame
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 from stdatamodels.jwst.datamodels import SlitModel
@@ -21,7 +24,16 @@ def create_nircam_slit(model, x0, y0, order):
         | (Shift(xmin) & Shift(ymin) & Const1D(x0) & Const1D(y0) & Const1D(order))
         | model
     )
-    wcsobj = wcs.WCS([("det", model), ("world", None)])
+    detector = Frame2D(name="detector")
+    # Note there is a "non-coordinate" output from the model.
+    world = CompositeFrame(
+        [
+            CelestialFrame(name="sky", axes_order=(0, 1), reference_frame=ICRS()),
+            SpectralFrame(name="spectral", axes_order=(2,), unit=(u.um,)),
+        ],
+        name="world",
+    )
+    wcsobj = wcs.WCS([(detector, model), (world, None)])
     wcsobj.bounding_box = ((20, 25), (800, 805))
     slit = SlitModel()
     slit.meta.wcs = wcsobj
@@ -39,7 +51,16 @@ def create_niriss_slit(model, x0, y0, order):
         | (Shift(xmin) & Shift(ymin) & Const1D(x0) & Const1D(y0) & Const1D(order))
         | model
     )
-    wcsobj = wcs.WCS([("det", model), ("world", None)])
+    detector = Frame2D(name="detector")
+    # Note there is a "non-coordinate" output from the model.
+    world = CompositeFrame(
+        [
+            CelestialFrame(name="sky", axes_order=(0, 1), reference_frame=ICRS()),
+            SpectralFrame(name="spectral", axes_order=(2,), unit=(u.um,)),
+        ],
+        name="world",
+    )
+    wcsobj = wcs.WCS([(detector, model), (world, None)])
     slit = SlitModel()
     slit.meta.wcs = wcsobj
     slit.source_xpos = x0

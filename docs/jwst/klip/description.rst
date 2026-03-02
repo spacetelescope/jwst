@@ -1,5 +1,5 @@
 Description
------------
+===========
 
 :Class: `jwst.coron.klip_step.KlipStep`
 :Alias: klip

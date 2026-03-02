@@ -40,6 +40,8 @@ class ResampleStep(Step):
         enable_ctx = boolean(default=True)  # Compute and report the context array
         enable_err = boolean(default=True)  # Compute and report the err array
         report_var = boolean(default=True)  # Report the variance array
+        pixmap_stepsize = float(default=1.0)  # Interpolation step size for pixel map; interpolation is used for stepsize > 1
+        pixmap_order = integer(default=1)  # Spline order for pixel mapping, must be 1 or 3
     """  # noqa: E501
 
     reference_file_types: list = []
@@ -211,6 +213,8 @@ class ResampleStep(Step):
             "weight_type": self.weight_type,
             "good_bits": GOOD_BITS,
             "blendheaders": self.blendheaders,
+            "pixmap_stepsize": self.pixmap_stepsize,
+            "pixmap_order": self.pixmap_order,
         }
 
         # Custom output WCS parameters.

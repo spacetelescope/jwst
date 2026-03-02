@@ -1,13 +1,15 @@
-"""Test the MAST Engineering interface"""
+"""Test the MAST Engineering interface."""
 
 import pytest
-import requests
 from astropy.table import Table
 from astropy.time import Time
 from astropy.utils.diff import report_diff_values
 
 from jwst.lib import engdb_mast
 from jwst.lib.engdb_lib import EngDB_Value
+
+# Mark all tests in this module as slow due to remote DB connection
+pytestmark = pytest.mark.slow
 
 # Test query
 QUERY = ("sa_zattest2", "2022-02-02T22:24:58", "2022-02-02T22:24:59")
@@ -25,81 +27,78 @@ EXPECTED_RESPONSE = (
 EXPECTED_RECORDS = Table.read(EXPECTED_RESPONSE, format="ascii.csv")
 
 
-@pytest.fixture(scope="module")
-def is_alive():
-    """Check if the MAST portal is accessible"""
-    is_alive = False
-    try:
-        r = requests.get(engdb_mast.MAST_BASE_URL)
-        is_alive = r.status_code == requests.codes.ok
-    except Exception:
-        pass
-    if not is_alive:
-        pytest.skip(f"MAST url {engdb_mast.MAST_BASE_URL} not available. Skipping.")
-
-
-@pytest.fixture(scope="module")
-def engdb():
-    """Open a connection"""
-    try:
-        engdb = engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
-    except RuntimeError as exception:
-        pytest.skip(f"Live MAST Engineering Service not available: {exception}")
-    return engdb
-
-
-def test_aliveness(is_alive):
-    """Check connection creation
-
-    Failure is any failure from instantiation.
+class TestEngdbMast:
     """
-    engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL, token="dummytoken")
+    Class to test engdb_mast with DB connection.
 
+    Because the DB constructor actually pings the service provider,
+    we only want to do it once to prevent unnecessary server spam.
+    """
 
-def test_get_records(engdb):
-    """Test getting records"""
-    records = engdb._get_records(*QUERY)
-    assert engdb.response.text == EXPECTED_RESPONSE
-    assert report_diff_values(records, EXPECTED_RECORDS)
+    def setup_class(self):
+        try:
+            self.engdb = engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
+            self.errmsg = ""
+        except RuntimeError as exception:
+            self.engdb = None
+            self.errmsg = f"Live MAST Engineering Service not available: {repr(exception)}"
 
+    def test_get_records(self):
+        """Test getting records."""
+        engdb = self.engdb
+        if engdb is None:
+            pytest.skip(self.errmsg)
+        records = engdb._get_records(*QUERY)
+        assert engdb.response.text == EXPECTED_RESPONSE
+        assert report_diff_values(records, EXPECTED_RECORDS)
 
-@pytest.mark.parametrize(
-    "pars, expected",
-    [
-        ({}, [-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368]),
-        (
-            {"include_obstime": True},
-            [
-                EngDB_Value(obstime=Time(59612.9340052431, format="mjd"), value=-0.7914494276),
-                EngDB_Value(obstime=Time(59612.9340082060, format="mjd"), value=-0.7914494276),
-                EngDB_Value(obstime=Time(59612.9340111690, format="mjd"), value=-0.7914494276),
-                EngDB_Value(obstime=Time(59612.9340141319, format="mjd"), value=-0.791449368),
-            ],
-        ),
-        (
-            {"include_obstime": True, "zip_results": False},
-            EngDB_Value(
-                obstime=[
-                    Time(59612.9340052431, format="mjd"),
-                    Time(59612.9340082060, format="mjd"),
-                    Time(59612.9340111690, format="mjd"),
-                    Time(59612.9340141319, format="mjd"),
+    @pytest.mark.parametrize(
+        "pars, expected",
+        [
+            ({}, [-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368]),
+            (
+                {"include_obstime": True},
+                [
+                    EngDB_Value(obstime=Time(59612.9340052431, format="mjd"), value=-0.7914494276),
+                    EngDB_Value(obstime=Time(59612.9340082060, format="mjd"), value=-0.7914494276),
+                    EngDB_Value(obstime=Time(59612.9340111690, format="mjd"), value=-0.7914494276),
+                    EngDB_Value(obstime=Time(59612.9340141319, format="mjd"), value=-0.791449368),
                 ],
-                value=[-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368],
             ),
-        ),
-        (
-            {"include_bracket_values": True},
-            [-0.791449368, -0.7914494276, -0.7914494276, -0.7914494276, -0.791449368, -0.791449368],
-        ),
-    ],
-)
-def test_get_values(engdb, pars, expected):
-    values = engdb.get_values(*QUERY, **pars)
-    assert values == expected
+            (
+                {"include_obstime": True, "zip_results": False},
+                EngDB_Value(
+                    obstime=[
+                        Time(59612.9340052431, format="mjd"),
+                        Time(59612.9340082060, format="mjd"),
+                        Time(59612.9340111690, format="mjd"),
+                        Time(59612.9340141319, format="mjd"),
+                    ],
+                    value=[-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368],
+                ),
+            ),
+            (
+                {"include_bracket_values": True},
+                [
+                    -0.791449368,
+                    -0.7914494276,
+                    -0.7914494276,
+                    -0.7914494276,
+                    -0.791449368,
+                    -0.791449368,
+                ],
+            ),
+        ],
+    )
+    def test_get_values(self, pars, expected):
+        engdb = self.engdb
+        if engdb is None:
+            pytest.skip(self.errmsg)
+        values = engdb.get_values(*QUERY, **pars)
+        assert values == expected
 
 
 def test_negative_aliveness():
-    """Ensure failure occurs with a bad url"""
+    """Ensure failure occurs with a bad url."""
     with pytest.raises(RuntimeError):
-        engdb_mast.EngdbMast(base_url="https://127.0.0.1/_engdb_mast_test", token="dummytoken")
+        engdb_mast.EngdbMast(base_url="https://127.0.0.1/_engdb_mast_test", token="dummytoken")  # noqa: S106

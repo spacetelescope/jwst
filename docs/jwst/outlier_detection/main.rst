@@ -40,3 +40,7 @@ input data:
 
 #. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.
+
+Reference Files
+---------------
+The ``outlier_detection`` step does not use any reference files.
