@@ -107,7 +107,14 @@ class Detector1Pipeline(Pipeline):
             input_data = self.emicorr.run(input_data)
             input_data = self.saturation.run(input_data)
             input_data = self.ipc.run(input_data)
-            input_data = self.firstframe.run(input_data)
+            if not self.firstframe.skip:
+                log.info(
+                    " The firstframe step has been deprecated and will be removed in a "
+                    / " future release. "
+                    / "Flagging the first groups has been added to the RSCD step"
+                )
+                self.firstframe.skip = True
+                # input_data = self.firstframe.run(input_data) # Do not Run it.
             input_data = self.lastframe.run(input_data)
             input_data = self.reset.run(input_data)
             input_data = self.linearity.run(input_data)
