@@ -309,7 +309,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
                 f"Flagged {np.sum(is_backed_off_2d)} pixels as FLUX_ESTIMATED due to RSCD back-off."
             )
 
-        # 4. Final Safety: Reset negative values (though with this logic, 0 is the floor)
+        # 4. Final Safety: Reset negative values (with this logic, 0 is the floor)
         skip_array = np.maximum(skip_array, 0)
 
         # now record if we have to back off all the way to group 1
