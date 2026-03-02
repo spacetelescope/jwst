@@ -128,6 +128,7 @@ ban-relative-imports = "all"  # Disallow all relative imports.
 "jwst/regtest/regtestdata.py" = [
     "SLF", "ARG", "PTH",
     "A002", # builtin variable shadowing
+    "A003", # builtin variable shadowing
     "S101", # use of assert
 ]
 "jwst/regtest/conftest.py" = [
