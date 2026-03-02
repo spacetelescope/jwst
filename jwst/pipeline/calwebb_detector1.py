@@ -110,8 +110,8 @@ class Detector1Pipeline(Pipeline):
             if not self.firstframe.skip:
                 log.info(
                     " The firstframe step has been deprecated and will be removed in a "
-                    / " future release. "
-                    / "Flagging the first groups has been added to the RSCD step"
+                    " future release. "
+                    "Flagging the first groups has been added to the RSCD step"
                 )
                 self.firstframe.skip = True
                 # input_data = self.firstframe.run(input_data) # Do not Run it.
