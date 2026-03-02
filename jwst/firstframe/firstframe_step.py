@@ -23,7 +23,8 @@ class FirstFrameStep(Step):
     class_alias = "firstframe"
 
     spec = """
-    skip = boolean(default=True) # Do not run this step.
+    bright_use_group1 = boolean(default=True) # do not flag group1 if group3 is saturated
+    #skip = boolean(default=True) # Do not run this step.
     """  # noqa: E501
 
     def __init__(self, *args, **kwargs):
