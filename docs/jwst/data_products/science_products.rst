@@ -224,6 +224,12 @@ structure as the rate_ product described above. Similarly, if the input is a ``r
 product, the background-subtracted result will be saved to a ``bsubints`` product, with
 the exact same structure as the rateints_ product described above.
 
+For WFSS data, the ``bsub`` product will also contain a ``mask`` attribute
+("MASK" FITS extension), which is set to 1 for pixels where the background was determined
+to be usable, i.e., where there are assumed to be no sources.
+
+
+
 .. _cal:
 .. _calints:
 
