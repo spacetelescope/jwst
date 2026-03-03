@@ -320,7 +320,13 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
     log.info("Making a scaled median image")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
-        median_ramp = np.nanmedian(bgsub_ramp, axis=0)
+
+        # np.nanmedian allocates lots of memory; this for loop gets around that
+        median_ramp = np.empty(bgsub_ramp.shape[1:], dtype=bgsub_ramp.dtype)
+        for i in range(median_ramp.shape[0]):
+            np.nanmedian(
+                bgsub_ramp[:, i, ...], axis=0, overwrite_input=True, out=median_ramp[i, ...]
+            )
 
     # Scale the median ramp by the normalized flux
     if ndim == 3:
