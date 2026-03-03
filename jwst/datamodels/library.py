@@ -113,9 +113,6 @@ class ModelLibrary(AbstractModelLibrary):
 
     @classmethod
     def _load_asn(cls, asn_path):
-        ext = Path(asn_path).suffix.lower()
-        if ext not in [".json", ".yaml", ".yml"]:
-            raise OSError(f"Unsupported file extension {ext} for ASN file.")
         try:
             with Path(asn_path).open() as asn_file:
                 asn_data = load_asn(asn_file)

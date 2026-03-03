@@ -141,12 +141,6 @@ class yaml:  # noqa: N801
         AssociationNotValidError
             Cannot create or validate the association.
         """
-        warnings.warn(
-            "Support for associations as YAML files is deprecated and will be removed "
-            "in a future release. Use JSON instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
         try:
             serialized.seek(0)
         except AttributeError:
@@ -156,6 +150,16 @@ class yaml:  # noqa: N801
         except Exception as err:
             logger.debug(f'Error unserializing: "{err}"')
             raise AssociationNotValidError(f"Container is not YAML: '{serialized}'") from err
+        # warning should only happen if the load was successful
+        # otherwise, user would see DeprecationWarning when attempting to load a file that is
+        # neither valid JSON nor valid YAML, since the base load method attempts to load using
+        # all available registered formats
+        warnings.warn(
+            "Support for associations as YAML files is deprecated and will be removed "
+            "in a future release. Use JSON instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return asn
 
     @staticmethod
