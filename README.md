@@ -20,14 +20,6 @@
 [![readthedocs](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](https://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/main/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
 
-<!--toc:start-->
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [Testing](#testing)
-- [Software vs DMS build version map](#software-vs-dms-build-version-map)
-<!--toc:end-->
-
 This package processes uncalibrated data from both imagers and spectrographs onboard the [James Webb Space Telescope (JWST)](https://science.nasa.gov/mission/webb/), an orbiting infrared observatory stationed at Earth-Sun L<sub>2</sub>.
 The pipeline performs a series of calibration steps that result in standard data products usable for science.
 
@@ -36,6 +28,15 @@ Detailed explanations of specific calibration stages, reference files, and pipel
 > [!NOTE]
 > If you have trouble installing this package, have encountered a bug while running the pipeline, or wish to request a new feature,
 > please [open an issue on GitHub](https://github.com/spacetelescope/jwst/issues) or [contact the JWST Help Desk](https://jwsthelp.stsci.edu).
+
+### On This Page
+<!--toc:start-->
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [Testing](#testing)
+- [Software vs DMS build version map](#software-vs-dms-build-version-map)
+<!--toc:end-->
 
 ## Installation
 
