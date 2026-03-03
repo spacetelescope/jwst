@@ -112,7 +112,7 @@ Programmatically, to read in an Association, one uses the
 
 What exactly is returned depends on what the association is. However,
 for all Stage 2 and Stage 3 associations, a Python :py:obj:`dict` is returned
-and its structure matches that of the JSON or YAML file. Continuing
+and its structure matches that of the JSON file. Continuing
 from the above example, the following shows how to access the first
 exposure file name of a Stage 3 associations:
 

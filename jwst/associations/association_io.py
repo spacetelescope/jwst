@@ -109,7 +109,13 @@ class json:  # noqa: N801
 
 @Association.ioregistry
 class yaml:  # noqa: N801
-    """Load and store associations as YAML."""
+    """
+    Load and store associations as YAML.
+
+    Support for associations as YAML files is deprecated
+    and will be removed in a future release.
+    Use JSON instead.
+    """
 
     @staticmethod
     def load(_cls, serialized):

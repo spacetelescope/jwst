@@ -46,7 +46,7 @@ def load_asn(
     -----
     The serialized object can be in any format
     supported by the registered I/O routines. For example, for
-    JSON and YAML formats, the input can be either a string or
+    JSON format, the input can be either a string or
     a file object containing the string.
 
     If no registry is specified, the default
