@@ -50,6 +50,11 @@ class Image3Pipeline(Pipeline):
         ----------
         input_data : Level3 Association, or `~jwst.datamodels.library.ModelLibrary`
             The exposures to process
+
+        Returns
+        -------
+        result : `~stdatamodels.jwst.datamodels.JwstDataModel`
+            Output data model
         """
         log.info("Starting calwebb_image3 ...")
 
@@ -101,6 +106,8 @@ class Image3Pipeline(Pipeline):
             and result.meta.cal_step.resample == "COMPLETE"
         ):
             self.source_catalog.run(result)
+
+        return result
 
     def _load_input_as_library(self, input_data):
         """

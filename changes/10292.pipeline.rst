@@ -1,0 +1,1 @@
+Fixed ``result.cal_logs`` not grouping ``calwebb_image3`` steps into the pipeline category like ``calwebb_image2``.
