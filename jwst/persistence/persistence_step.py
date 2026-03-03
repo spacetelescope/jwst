@@ -50,6 +50,7 @@ class PersistenceStep(Step):
 
         self.process_persistence_options(result)
 
+
         pers_a = persistence.DataSet(
             result,
             self.save_persistence,
@@ -57,15 +58,12 @@ class PersistenceStep(Step):
             self.persistence_array,
             self.persistence_dnu,
         )
-        (result, traps_filled, output_pers, skipped) = pers_a.do_all()
+        result, skipped = pers_a.do_all()
+
         if skipped:
             result.meta.cal_step.persistence = "SKIPPED"
         else:
             result.meta.cal_step.persistence = "COMPLETE"
-
-        if output_pers is not None:  # output file of persistence
-            self.save_model(output_pers, suffix="output_pers", force=self.save_persistence)
-            del output_pers
 
         if pers_a.save_persistence:
             self.write_persistence_array(result)
@@ -115,7 +113,7 @@ class PersistenceStep(Step):
         now = datetime.datetime.now()
         time_fmt = "%Y%m%d%H%M%S%f"
         time_str = now.strftime(time_fmt)
-        pers_suffix = f"_pers{time_str}"
+        pers_suffix = f"pers{time_str}"
 
         # persistence_array_file always gets set if the persistence options are processed.
         if self.persistence_array_file is None:
@@ -123,28 +121,9 @@ class PersistenceStep(Step):
         else:
             filename = self.persistence_array_file
 
-        split_stuff = filename.rsplit("_", 1)
-        suf = None
-        if len(split_stuff) > 1:
-            bname, current_suf = split_stuff
-            # Check to see if the suffix is known or is a previous persistence suffix.
-            #  If not, then just add the persistence suffix to the end of the filename.
-            if current_suf.startswith("pers"):
-                suf = current_suf
-            else:
-                for suffix in KNOW_SUFFIXES:
-                    if current_suf.startswith(suffix):
-                        suf = suffix
-                        break
-
-        # The suffix is not known, so just the extension will be changed.
-        if suf is None:
-            bname = os.path.splitext(filename)[0]
-
-        # Ensure the persistence array filename has the correct extension.
-        filename = bname + pers_suffix + ".asdf"
+        filename = self.make_output_path(basepath=filename, suffix=pers_suffix, ext="asdf")
 
         # Write persistence array to ASDF file
         tree = {"persistence_data": self.persistence_array}
         with asdf.AsdfFile(tree) as af:
-            af.write_to(filename)   
+            af.write_to(filename)
