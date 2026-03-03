@@ -87,6 +87,40 @@ def test_persistence_time_nonneg_sec(create_sci_model):
     np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
 
 
+def test_persistence_time_save_persistence(create_sci_model):
+    """Test persitence flag file gets created."""
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    step = PersistenceStep(persistence_time=70, save_persistence=True)
+    res = step.run(model)
+
+    # With a persistence window of 70 seconds and group time of 21.47354 seconds, the 5th
+    # group of the first integration for pixel (0, 1) and the following three groups
+    # (crossing the integration) will be flagged as persistent.
+
+    check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check3 = np.array([0, 0, 0, 0, 0, 34, 34], dtype=np.uint8)
+    check4 = np.array([32, 32, 0, 0, 0, 0, 0], dtype=np.uint8)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 0], check1)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
+
+    found = False
+    for el in os.listdir(os.getcwd()):
+        if found:
+            break
+        if el.startswith("dummy_pers"):
+            found = True
+            import asdf
+            with asdf.open(el, memmap=True, lazy_load=False) as pers:
+                pers_data = pers["persistence_data"]
+    
+    assert found is True
+            
+
 def test_persistence_time_0_sec(create_sci_model):
     """Test persitence flag gets set inside of persistence window of 0 seconds"""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
@@ -184,7 +218,7 @@ def test_persistence_time_dnu(create_sci_model):
 def test_step_persistence_fails(monkeypatch, create_sci_model):
     # mock a known error condition in the persistence call
     monkeypatch.setattr(
-        persistence.DataSet, "do_all", lambda *args: (datamodels.RampModel(), None, None, True)
+        persistence.DataSet, "do_all", lambda *args: (datamodels.RampModel(), True)
     )
 
     sci = create_sci_model()
