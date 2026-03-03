@@ -16,7 +16,8 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     # These are the WFSS exposures we'll be processing
 
     foffset_file = "jwst_miri_filteroffset_0008.asdf"
-    photom_file = "jwst_miri_photom_0217.fits"
+    # photom_file = "jwst_miri_photom_0217.fits"
+    photom_file = "jwst_miri_photom_WFSS_20260220_v2.fits"
     extract1d_file = "jwst_miri_extract1d_0006.json"
     distortion_file = "jwst_miri_distortion_0047.asdf"
     specwcs_file = "MIRI_WFSS_specwcs_20250911.asdf"
