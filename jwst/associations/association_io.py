@@ -2,6 +2,7 @@
 
 import json as json_lib
 import logging
+import warnings
 
 import numpy as np
 import yaml as yaml_lib
@@ -134,6 +135,12 @@ class yaml:  # noqa: N801
         AssociationNotValidError
             Cannot create or validate the association.
         """
+        warnings.warn(
+            "Support for associations as YAML files is deprecated and will be removed "
+            "in a future release. Use JSON instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         try:
             serialized.seek(0)
         except AttributeError:
@@ -162,6 +169,12 @@ class yaml:  # noqa: N801
             Name for the YAML file.
             Second item is the string containing the YAML serialization.
         """
+        warnings.warn(
+            "Support for associations as YAML files is deprecated and will be removed "
+            "in a future release. Use JSON instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         asn_filename = asn.asn_name
         if not asn.asn_name.endswith(".yaml"):
             asn_filename = asn.asn_name + ".yaml"
