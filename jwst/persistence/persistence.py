@@ -89,7 +89,7 @@ class DataSet:
         if len(shape) != 4:
             log.warning(f"Don't understand shape {shape} of input data, skipping...")
             skipped = True
-            return self.output_obj, None, None, skipped
+            return self.output_obj, skipped
 
         (nints, ngroups, nrows, ncols) = shape
 
@@ -113,10 +113,7 @@ class DataSet:
                 if self.persistence_time is not None:
                     self.process_persistence_flagging(current_time, sat_array, integ, group)
 
-        if self.save_persistence:
-            self.output_pers.update(self.output_obj, only="PRIMARY")
-
-        return self.output_obj, None, self.output_pers, skipped
+        return self.output_obj, skipped
 
     def process_persistence_flagging(self, current_time, sat_array, integ, group):
         """
