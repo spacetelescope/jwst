@@ -1,3 +1,4 @@
+
 .. _outlier_detection_step:
 
 =================
@@ -8,7 +9,6 @@ Outlier Detection
    :maxdepth: 2
 
    main.rst
-   reference_files.rst
    arguments.rst
    outlier_detection_imaging.rst
    outlier_detection_spec.rst

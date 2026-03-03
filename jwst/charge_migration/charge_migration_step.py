@@ -1,3 +1,5 @@
+"""Detect and flag charge migration."""
+
 import logging
 
 from stdatamodels.jwst import datamodels

@@ -355,7 +355,7 @@ class Spec3Pipeline(Pipeline):
 
         Parameters
         ----------
-        source_models : list of `~stdatamodels.DataModel`
+        source_models : list of `~stdatamodels.jwst.datamodels.JwstDataModel`
             List of input source models.
 
         Returns
@@ -382,7 +382,7 @@ class Spec3Pipeline(Pipeline):
 
         Parameters
         ----------
-        source_models : list of `~stdatamodels.DataModel`
+        source_models : list of `~stdatamodels.jwst.datamodels.JwstDataModel`
             List of input source models.
 
         Returns

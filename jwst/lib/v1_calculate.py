@@ -27,7 +27,7 @@ def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwarg
 
     Parameters
     ----------
-    sources : [File-like or stdatamodels.DataModel[...]]
+    sources : [File-like or stdatamodels.jwst.datamodels.JwstDataModel[...]]
         The datamodels to get timings other header parameters from.
 
     siaf_path : None or file-like
