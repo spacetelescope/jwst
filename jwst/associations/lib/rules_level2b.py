@@ -525,8 +525,9 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
                                 ),
                                 SimpleConstraint(
                                     value=False,
-                                    test=lambda value, item: nissoss_calibrated_filter(item)
-                                    == value,
+                                    test=lambda value, item: (
+                                        nissoss_calibrated_filter(item) == value
+                                    ),
                                     force_unique=False,
                                 ),
                             ]
