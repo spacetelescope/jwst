@@ -39,7 +39,7 @@ def create_sci_model():
         dm.meta.observation.time = "11:21:40"
         dm.meta.observation.date_beg = "2022-04-03T11:21:40"
 
-        dm.meta.filename = "test.fits"
+        dm.meta.filename = "dummy_uncal.fits"
 
         return dm
 
