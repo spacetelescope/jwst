@@ -766,3 +766,32 @@ def test_dunder_call_error():
     pipeline = EmptyPipeline()
     with pytest.raises(TypeError, match="not callable"):
         pipeline(None)
+
+
+def test_add_asn_id_to_output_name():
+    step = Step()
+
+    # No ASN ID
+    output_name = step.make_output_path(basepath="test", suffix="cal")
+    assert output_name == "test_cal.fits"
+
+    # Update step to use provided ASN_ID
+    step.add_asn_id_to_output_name(asn_id="1234")
+    output_name = step.make_output_path(basepath="test", suffix="cal")
+    assert output_name == "test_1234_cal.fits"
+
+    # Call again to reset and drop the ASN_ID
+    step.add_asn_id_to_output_name()
+    output_name = step.make_output_path(basepath="test", suffix="cal")
+    assert output_name == "test_cal.fits"
+
+    # Add the ASN to the step attributes instead
+    step.asn_id = "2345"
+    step.add_asn_id_to_output_name()
+    output_name = step.make_output_path(basepath="test", suffix="cal")
+    assert output_name == "test_2345_cal.fits"
+
+    # Keep the attribute, but override it with a different one
+    step.add_asn_id_to_output_name(asn_id="3456")
+    output_name = step.make_output_path(basepath="test", suffix="cal")
+    assert output_name == "test_3456_cal.fits"

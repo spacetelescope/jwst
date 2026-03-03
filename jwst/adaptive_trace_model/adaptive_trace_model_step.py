@@ -1,5 +1,4 @@
 import logging
-from functools import partial
 
 from stdatamodels.jwst import datamodels
 
@@ -78,19 +77,10 @@ class AdaptiveTraceModelStep(Step):
         if isinstance(output_model, ModelContainer):
             models = output_model
 
-            # Set up output path name to include the ASN ID if associations are involved
-            # TODO: This check is also performed in pixel_replace and outlier_detection.
-            #       It should be moved to a shared location instead.
-            asn_id = None
-            try:
-                asn_id = models.asn_table["asn_id"]
-            except (AttributeError, KeyError):
-                pass
-            if asn_id is None:
-                asn_id = self.search_attr("asn_id")
-            if asn_id is not None:
-                _make_output_path = self.search_attr("_make_output_path", parent_first=True)
-                self._make_output_path = partial(_make_output_path, asn_id=asn_id)
+            # Set up output path name to include the ASN ID if available
+            asn_table = getattr(models, "asn_table", {})
+            asn_id = asn_table.get("asn_id", None)
+            self.add_asn_id_to_output_name(asn_id=asn_id)
 
         else:
             models = [output_model]

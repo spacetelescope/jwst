@@ -1,5 +1,4 @@
 import logging
-from functools import partial
 
 from jwst import datamodels
 from jwst.pixel_replace.pixel_replace import PixelReplacement
@@ -70,16 +69,9 @@ class PixelReplaceStep(Step):
         if isinstance(output_model, datamodels.ModelContainer):
             # Set up output path name to include the ASN ID
             # if associations are involved
-            asn_id = None
-            try:
-                asn_id = output_model.asn_table["asn_id"]
-            except (AttributeError, KeyError):
-                pass
-            if asn_id is None:
-                asn_id = self.search_attr("asn_id")
-            if asn_id is not None:
-                _make_output_path = self.search_attr("_make_output_path", parent_first=True)
-                self._make_output_path = partial(_make_output_path, asn_id=asn_id)
+            asn_table = getattr(output_model, "asn_table", {})
+            asn_id = asn_table.get("asn_id", None)
+            self.add_asn_id_to_output_name(asn_id=asn_id)
 
             # Check models to confirm they are the correct type
             for i, model in enumerate(output_model):

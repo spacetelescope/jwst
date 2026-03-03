@@ -1,6 +1,7 @@
 """JWST-specific Step and Pipeline base classes."""
 
 import logging
+from functools import partial
 from pathlib import Path
 
 from stdatamodels.jwst import datamodels
@@ -249,6 +250,35 @@ class JwstStep(_Step):
                 ) from None
 
         return input_models
+
+    def add_asn_id_to_output_name(self, asn_id=None):
+        """
+        Set up output path name to include the ASN ID.
+
+        If ``asn_id`` is provided, the ``_make_output_path`` function is
+        updated to include this string as part of the output base name.
+
+        If it is not provided, the current step and its parents are searched
+        for an ``asn_id`` attribute.  If found, this value is used in the output
+        base name.
+
+        If no ASN ID is found, ``_make_output_path`` will be updated to pass
+        ``asn_id=None``.  This will override any previously passed ASN IDs, so
+        that no ASN ID appears in the output filename.
+
+        Parameters
+        ----------
+        asn_id : str or None, optional
+            The ASN ID to append to filenames. For example, for
+            `~jwst.datamodels.container.ModelContainer` input, retrieve
+            the ASN ID from container.asn_table["asn_id"].
+        """
+        if asn_id is None:
+            # This will return None if not found
+            asn_id = self.search_attr("asn_id")
+
+        _make_output_path = self.search_attr("_make_output_path", parent_first=True)
+        self._make_output_path = partial(_make_output_path, asn_id=asn_id)
 
     def finalize_result(self, result, reference_files_used):
         """

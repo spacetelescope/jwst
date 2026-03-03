@@ -1,7 +1,6 @@
 """Public common step definition for OutlierDetection processing."""
 
 import logging
-from functools import partial
 
 from stdatamodels import filetype
 from stdatamodels.jwst import datamodels
@@ -235,11 +234,6 @@ class OutlierDetectionStep(Step):
         except (AttributeError, KeyError):
             asn_id = None
 
-        if asn_id is None:
-            asn_id = self.search_attr("asn_id")
-        if asn_id is not None:
-            _make_output_path = self.search_attr("_make_output_path", parent_first=True)
-
-            self._make_output_path = partial(_make_output_path, asn_id=asn_id)
+        self.add_asn_id_to_output_name(asn_id=asn_id)
         log.info(f"Outlier Detection asn_id: {asn_id}")
         return
