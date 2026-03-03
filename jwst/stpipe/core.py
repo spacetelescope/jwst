@@ -277,9 +277,18 @@ class JwstStep(_Step):
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
             if self.class_alias:
-                if not hasattr(result, "cal_logs"):
-                    result.cal_logs = {}
-                setattr(result.cal_logs, self.class_alias, self._log_records)
+                if self.parent is None or not self.parent.class_alias:
+                    setattr(result.cal_logs, self.class_alias, self._log_records)
+                else:  # Capture step log as pipeline log
+                    if hasattr(result.cal_logs, self.parent.class_alias):
+                        old_logs = getattr(result.cal_logs, self.parent.class_alias)
+                    else:
+                        old_logs = None
+                    if old_logs:
+                        old_logs.extend(self._log_records)
+                        setattr(result.cal_logs, self.parent.class_alias, old_logs)
+                    else:
+                        setattr(result.cal_logs, self.parent.class_alias, self._log_records)
 
     def remove_suffix(self, name):
         """
@@ -342,14 +351,3 @@ class JwstPipeline(Pipeline, JwstStep):
                 "Results used CRDS context: "
                 f"{crds_client.get_context_used(result.crds_observatory)}"
             )
-
-            if self.class_alias:
-                if not hasattr(result, "cal_logs"):
-                    result.cal_logs = {}
-
-                # remove the step logs as they're captured by the pipeline log
-                for _, step in self.step_defs.items():
-                    if hasattr(result.cal_logs, step.class_alias):
-                        delattr(result.cal_logs, step.class_alias)
-
-                setattr(result.cal_logs, self.class_alias, self._log_records)
