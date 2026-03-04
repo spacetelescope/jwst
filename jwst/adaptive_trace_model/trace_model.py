@@ -174,11 +174,25 @@ def fit_2d_spline_trace(
                 verbose=False,
             )
 
-            # If this routine could not get a fit (returned None) use the saved fit
-            if bspline is None:
+            # If this routine could not get a fit (returned None) use the saved fit if available
+            # If no saved fit is available try the fitting routine again with slightly fewer breakpoints
+            # to resolve occasional numerical issues.
+            if ((bspline is None) & (spline_model_save is not None)):
                 spline_model = spline_model_save
+            elif ((bspline is None) & (spline_model_save is None)):
+                spline_model = bspline_fit(
+                    local_alpha,
+                    local_data,
+                    nbkpts=spline_bkpt - 3,
+                    wrapsig_low=2.5,
+                    wrapsig_high=2.5,
+                    wrapiter=3,
+                    space_ratio=space_ratio,
+                    verbose=False,
+                )
             else:
                 spline_model = bspline
+
         except (ValueError, RuntimeError) as err:
             log.warning(f"Spline fit failed at column {i}: {str(err)}")
             spline_model = spline_model_save
@@ -834,7 +848,7 @@ def oversample_flux(
 
     # Insert the bspline interpolated values into the final combined oversampled array,
     # starting from the linearly interpolated array
-    flux_os = flux_os_linear
+    flux_os = flux_os_linear.copy()
     indx = np.where(np.isfinite(flux_os_bspline_use))
     flux_os[indx] = flux_os_bspline_use[indx]
 
@@ -879,7 +893,7 @@ def _set_fit_kwargs(detector, xsize):
     # Empirical parameters for this mode
     if detector.startswith("NRS"):
         require_ngood = 15
-        spline_bkpt = 62
+        spline_bkpt = 68
         lrange = 50
 
         # This factor of 1.6 was dialed based on inspection of the results
