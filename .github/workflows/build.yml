@@ -12,17 +12,34 @@ concurrency:
 
 jobs:
   build:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@99401c364fa51c9c507d3cd6d272049278ac0b2c # v2.4.0
-    with:
-      upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
-      targets: |
-        # Linux wheels
-        - cp3*-manylinux_x86_64
-        # MacOS wheels
-        - cp3*-macosx_x86_64
-        # MacOS arm64 wheels
-        - cp3*-macosx_arm64
-      sdist: true
-      test_command: python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"
-    secrets:
-      pypi_token: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
+    strategy:
+      matrix:
+        target:
+          - cp3*-manylinux_x86_64
+          - cp3*-macosx_x86_64
+          - cp3*-macosx_arm64
+    runs-on: ${{ contains(matrix.target, 'macos') && 'macos-latest' || (contains(matrix.target, 'win') && 'windows-latest' || 'ubuntu-latest') }}
+    steps:
+      - uses: actions/checkout@v5
+      - if: ${{ runner.os == 'Linux' }}
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+        with:
+          platforms: all
+      - uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        with:
+          # Cache disabled to prevent cache-poisoning attacks on release artifacts.
+          enable-cache: false
+      - uses: pypa/cibuildwheel@v3.3.1
+        with:
+          package-dir: ./
+          output-dir: dist/
+        env:
+          CIBW_BUILD_FRONTEND: build[uv]
+          CIBW_BUILD: ${{ matrix.target }}
+          CIBW_ARCHS: ${{ runner.os == 'macOS' && 'arm64 x86_64' || 'auto' }}
+      - run: uv build --sdist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.runs-on }}-${{ strategy.job-index }}
+          path: ./dist/
+
