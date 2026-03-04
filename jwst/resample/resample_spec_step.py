@@ -74,7 +74,7 @@ class ResampleSpecStep(Step):
         if isinstance(output_model, ModelContainer):
             input_models = output_model
             output = input_models.asn_table["products"][0]["name"]
-            if output.strip() == "":
+            if str(output).strip() == "":
                 output = None
         else:
             input_models = ModelContainer([output_model])
