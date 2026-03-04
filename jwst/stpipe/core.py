@@ -354,3 +354,9 @@ class JwstPipeline(Pipeline, JwstStep):
                 "Results used CRDS context: "
                 f"{crds_client.get_context_used(result.crds_observatory)}"
             )
+
+            if self.class_alias:
+                if not hasattr(result, "cal_logs"):
+                    result.cal_logs = {}
+
+                setattr(result.cal_logs, self.class_alias, self._log_records)

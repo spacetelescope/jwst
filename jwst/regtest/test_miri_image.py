@@ -313,6 +313,19 @@ def test_miri_image3_i2d(run_image3, rtdata_module, fitsdiff_default_kwargs):
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
+    # https://github.com/spacetelescope/jwst/issues/9862
+    n_image3_steps_found = 0
+    expected_steps = ["outlier_detection", "resample", "skymatch", "tweakreg"]
+    with datamodels.open(rtdata.output) as im:
+        assert sorted(im.cal_logs.instance.keys()) == ["calwebb_image2", "calwebb_image3"]
+        image3_logs = im.cal_logs.calwebb_image3
+        for step_name in expected_steps:
+            for line in image3_logs:
+                if f"INFO - Step {step_name} running" in line:
+                    n_image3_steps_found += 1
+                    break
+        assert n_image3_steps_found == len(expected_steps)
+
 
 def test_miri_image3_catalog(run_image3, rtdata_module, diff_astropy_tables):
     rtdata = rtdata_module
