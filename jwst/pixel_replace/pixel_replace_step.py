@@ -69,9 +69,7 @@ class PixelReplaceStep(Step):
         if isinstance(output_model, datamodels.ModelContainer):
             # Set up output path name to include the ASN ID
             # if associations are involved
-            asn_table = getattr(output_model, "asn_table", {})
-            asn_id = asn_table.get("asn_id", None)
-            self.add_asn_id_to_output_name(asn_id=asn_id)
+            self.add_asn_id_to_output_name(output_model)
 
             # Check models to confirm they are the correct type
             for i, model in enumerate(output_model):

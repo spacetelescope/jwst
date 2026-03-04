@@ -78,9 +78,7 @@ class AdaptiveTraceModelStep(Step):
             models = output_model
 
             # Set up output path name to include the ASN ID if available
-            asn_table = getattr(models, "asn_table", {})
-            asn_id = asn_table.get("asn_id", None)
-            self.add_asn_id_to_output_name(asn_id=asn_id)
+            self.add_asn_id_to_output_name(models)
 
         else:
             models = [output_model]

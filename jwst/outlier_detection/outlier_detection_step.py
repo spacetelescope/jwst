@@ -222,18 +222,6 @@ class OutlierDetectionStep(Step):
         # handle if input_models isn't open
         if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)
-
-        # Setup output path naming if associations are involved.
-        try:
-            if isinstance(input_models, ModelLibrary):
-                asn_id = input_models.asn["asn_id"]
-            elif isinstance(input_models, ModelContainer):
-                asn_id = input_models.asn_table["asn_id"]
-            else:
-                asn_id = input_models.meta.asn_table.asn_id
-        except (AttributeError, KeyError):
-            asn_id = None
-
-        self.add_asn_id_to_output_name(asn_id=asn_id)
+        asn_id = self.add_asn_id_to_output_name(input_models)
         log.info(f"Outlier Detection asn_id: {asn_id}")
         return
