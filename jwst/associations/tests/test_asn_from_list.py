@@ -213,7 +213,7 @@ def test_cmdline_success(fmt, tmp_path):
     with open(path, "r") as fp:
         if fmt == "yaml":
             with pytest.warns(
-                DeprecationWarning, match="Support for associations as YAML files is deprecated"
+                DeprecationWarning, match="Association file has json suffix but is invalid JSON"
             ):
                 asn = load_asn(fp, fmt=fmt)
         else:
