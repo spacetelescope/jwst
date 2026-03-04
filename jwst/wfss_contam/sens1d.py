@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import stdatamodels.jwst.datamodels as dm
 
 from jwst.photom.photom import find_row
 
@@ -14,6 +15,10 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     Retrieve wavelength and response data from photom ref file.
 
     Wavelengths from the reference file are expected to be in units of microns.
+    Units of the relative response values depend on the instrument:
+    NIRCam: (Angstrom) * (MJy/sr) / (ADU/s)
+    NIRISS: (micron) * (MJy / sr) / (ADU/s)
+    Output units are converted to (micron) * (MJy / sr) / (ADU/s).
 
     Parameters
     ----------
@@ -32,7 +37,7 @@ def get_photom_data(phot_model, filter_name, pupil, order):
         Wavelengths from the ref file.
     relresps : float array
         Wavelength-dependent response (flux calibration) values from the ref file,
-        same shape as `ref_waves`.
+        same shape as `ref_waves`, units of (micron) * (MJy / sr) / (ADU/s).
     """
     # Get the appropriate row of data from the reference table
     phot_table = phot_model.phot_table
@@ -41,7 +46,15 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     tabdata = phot_table[row]
 
     # Scalar conversion factor
-    scalar_conversion = tabdata["photmjsr"]  # unit is MJy / sr
+    if isinstance(phot_model, dm.NrcWfssPhotomModel):
+        # NIRCam: convert from Angstrom to micron
+        scalar_conversion = tabdata["photmjsr"] / 1e4
+    elif isinstance(phot_model, dm.NisWfssPhotomModel):
+        # NIRISS: no conversion needed
+        scalar_conversion = tabdata["photmjsr"]
+    else:
+        log.error("Unsupported photom model type: %s", type(phot_model))
+        raise TypeError("Unsupported photom model type")
 
     # Get the length of the relative response arrays in this row
     nelem = tabdata["nelem"]
