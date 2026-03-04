@@ -73,15 +73,8 @@ class ResampleSpecStep(Step):
 
         if isinstance(output_model, ModelContainer):
             input_models = output_model
-
-            try:
-                output = input_models.meta.asn_table.products[0].name
-            except AttributeError:
-                # NIRSpec MOS data goes through this path, as the container
-                # is only ModelContainer-like, and doesn't have an asn_table
-                # attribute attached.  Output name handling gets done in
-                # _process_multislit() via the update method
-                # TODO: the container-like object should retain asn_table
+            output = input_models.asn_table["products"][0]["name"]
+            if output.strip() == "":
                 output = None
         else:
             input_models = ModelContainer([output_model])
