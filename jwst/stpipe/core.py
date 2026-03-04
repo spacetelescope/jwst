@@ -277,6 +277,9 @@ class JwstStep(_Step):
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
             if self.class_alias:
+                if not hasattr(result, "cal_logs"):
+                    result.cal_logs = {}
+
                 if self.parent is None or not self.parent.class_alias:
                     setattr(result.cal_logs, self.class_alias, self._log_records)
                 else:  # Capture step log as pipeline log
