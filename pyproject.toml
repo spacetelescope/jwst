@@ -80,15 +80,6 @@ world_coords = "jwst.scripts.world_coords:main"
 jwst = "jwst.stpipe.integration:get_steps"
 
 [project.optional-dependencies]
-docs = [
-    "matplotlib",
-    "numpydoc",
-    "sphinx",
-    "sphinxcontrib-jquery",
-    "sphinx-automodapi",
-    "sphinx-rtd-theme",
-    "pytest-doctestplus>=0.11",
-]
 sdp = [
     "jplephem>=2.9",
     "pysiaf>=0.13.0",
@@ -104,6 +95,17 @@ test = [
 contrib = [
     "pre-commit>=4.1.0",
     "jwst[test, docs]",
+]
+
+[dependency-groups]
+docs = [
+    "matplotlib",
+    "numpydoc",
+    "sphinx",
+    "sphinxcontrib-jquery",
+    "sphinx-automodapi",
+    "sphinx-rtd-theme",
+    "pytest-doctestplus>=0.11",
 ]
 
 [build-system]
