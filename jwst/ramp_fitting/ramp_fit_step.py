@@ -264,7 +264,6 @@ class RampFitStep(Step):
 
         # For the LIKELY algorithm, save chi-square array.
         if self.save_opt and self.algorithm.lower() == "likely" and "chisq" in image_info:
-            likely_filename = self.make_output_path(
             # Create output datamodel
             chisq_model = datamodels.ImageModel(image_info["chisq"].shape)
             chisq_model.update(result)
