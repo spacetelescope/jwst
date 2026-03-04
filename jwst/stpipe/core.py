@@ -1,6 +1,7 @@
 """JWST-specific Step and Pipeline base classes."""
 
 import logging
+from copy import deepcopy
 from pathlib import Path
 
 from stdatamodels.jwst import datamodels
@@ -283,15 +284,7 @@ class JwstStep(_Step):
                 if self.parent is None or not self.parent.class_alias:
                     setattr(result.cal_logs, self.class_alias, self._log_records)
                 else:  # Capture step log as pipeline log
-                    if hasattr(result.cal_logs, self.parent.class_alias):
-                        old_logs = getattr(result.cal_logs, self.parent.class_alias)
-                    else:
-                        old_logs = None
-                    if old_logs:
-                        old_logs.extend(self._log_records)
-                        setattr(result.cal_logs, self.parent.class_alias, old_logs)
-                    else:
-                        setattr(result.cal_logs, self.parent.class_alias, self._log_records)
+                    setattr(result.cal_logs, self.parent.class_alias, deepcopy(self.parent._log_records))
 
     def remove_suffix(self, name):
         """
