@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import GainModel, RampModel, ReadnoiseModel, dqflags
+from stdatamodels.jwst.datamodels import GainModel, ImageModel, RampModel, ReadnoiseModel, dqflags
 
 import asdf
 
@@ -392,6 +392,7 @@ def test_likely_output(tmp_path, setup_inputs):
         algorithm = 'LIKELY',
         override_gain=gain,
         override_readnoise=rnModel,
+        save_opt=True,
     )
 
     # Check the output slopes
@@ -401,9 +402,9 @@ def test_likely_output(tmp_path, setup_inputs):
 
     # Check the chisq output array
     chk_chisq = np.array([[0.43144223, 0.25806388]])
-    fname = "dummy_likely_chisq.asdf"
-    with asdf.open(fname, memmap=True, lazy_load=False) as chisq:
-        chisq_data = chisq["chisq_data"]
+    fname = "dummy_likely_chisq.fits"
+    with ImageModel(fname) as chisq:
+        chisq_data = chisq.data
     np.testing.assert_allclose(chisq_data, chk_chisq, rtol=tol)
 
 
