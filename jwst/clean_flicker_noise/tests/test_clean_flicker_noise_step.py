@@ -252,11 +252,6 @@ def test_missing_pastasoss(caplog):
     input_model = make_niriss_soss_ramp()
     cleaned = CleanFlickerNoiseStep.call(input_model, override_pastasoss="N/A")
     assert "No PASTASOSS reference file" in caplog.text
-
-    # The special value "N/A" is currently recorded incorrectly.
-    # See: https://github.com/spacetelescope/stpipe/issues/299
-    # This test can be uncommented when that issue is resolved.
-    # assert cleaned.meta.ref_file.pastasoss.name == "N/A"
-
+    assert cleaned.meta.ref_file.pastasoss.name == "N/A"
     input_model.close()
     cleaned.close()
