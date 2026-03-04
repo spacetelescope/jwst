@@ -263,12 +263,17 @@ class RampFitStep(Step):
             self.save_model(opt_model, "fitopt", output_file=self.opt_name)
 
         # For the LIKELY algorithm, save chi-square array.
-        # XXX Possibly only save the chisq array if save_opt==True.
-        if self.algorithm.lower() == "likely" and "chisq" in image_info:
-            likely_filename = self.make_output_path(basepath=result.meta.filename, suffix="likely_chisq", ext="asdf")
-            tree = {"chisq_data": image_info["chisq"]}
-            with asdf.AsdfFile(tree) as af:
-                af.write_to(likely_filename)
+        if self.save_opt and self.algorithm.lower() == "likely" and "chisq" in image_info:
+            likely_filename = self.make_output_path(
+            # Create output datamodel
+            chisq_model = datamodels.ImageModel(image_info["chisq"].shape)
+            chisq_model.update(result)
+            chisq_model.data = image_info["chisq"]
+            chisq_model.dq = None
+            chisq_model.var_poisson = None
+            chisq_model.var_rnoise = None
+            chisq_model.err = None
+            self.save_model(chisq_model, "likely_chisq", output_file=result.meta.filename)
 
         # Create models from possibly updated info
         out_model, int_model = None, None
