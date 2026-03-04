@@ -1,11 +1,14 @@
 """Load an Association from a file or object."""
 
+import logging
 import warnings
 from inspect import isclass
 from pathlib import Path
 
 from jwst.associations import Association, AssociationRegistry
 from jwst.associations.exceptions import AssociationNotValidError
+
+log = logging.getLogger(__name__)
 
 __all__ = ["load_asn"]
 
@@ -59,20 +62,28 @@ def load_asn(
     if fname is not None:
         suffix = Path(fname).suffix.replace(".", "")
         if suffix in ("yaml", "yml"):
-            warnings.warn(
+            msg = (
                 "Support for associations as YAML files is deprecated. "
-                "Please use JSON format with extension .json instead.",
+                "Please use JSON format with extension .json instead."
+            )
+            warnings.warn(
+                msg,
                 DeprecationWarning,
                 stacklevel=2,
             )
+            log.warning(msg)
         elif suffix != "json":
-            warnings.warn(
+            msg = (
                 f"File extension '{suffix}' is not recognized as JSON. "
                 "Attempting to load anyway, but this behavior is deprecated and will be removed "
-                "in a future release. Please ensure association files have a .json extension.",
+                "in a future release. Please ensure association files have a .json extension."
+            )
+            warnings.warn(
+                msg,
                 DeprecationWarning,
                 stacklevel=2,
             )
+            log.warning(msg)
 
     try:
         asn = _do_load(
@@ -85,7 +96,7 @@ def load_asn(
     except AssociationNotValidError:
         # if JSON load fails, try YAML load to preserve deprecated behavior
         # ignore deprecation warning coming from yaml.load since a more specific deprecationwarning
-        # will be emitted somewhere in this block
+        # will already be emitted somewhere in this function
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
@@ -97,16 +108,20 @@ def load_asn(
             )
         # if we successfully loaded as YAML, emit a warning about deprecation of YAML support
         if suffix == "json":
-            warnings.warn(
+            msg = (
                 "Association file has json suffix but is invalid JSON or is force-loaded as YAML. "
                 "Attempting to load as YAML, but YAML support is deprecated and will be removed "
                 "in a future release. In the past, invalid JSON "
                 "(e.g. due to extra trailing commas) was sometimes quietly loaded as YAML, "
-                "and this bad behavior will no longer be supported. "
-                "Please fix the JSON formatting issues in the association file.",
+                "and this behavior will no longer be supported. "
+                "Please fix any JSON formatting issues in the association file."
+            )
+            warnings.warn(
+                msg,
                 DeprecationWarning,
                 stacklevel=2,
             )
+            log.warning(msg)
     return asn
 
 

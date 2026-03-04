@@ -77,7 +77,7 @@ def test_load_asn_all(make_asns):
         assert len(asns) > 1
 
 
-def test_warn_invalid_json_as_yaml(tmp_path):
+def test_warn_invalid_json_as_yaml(tmp_path, log_watcher):
     fname = tmp_path / "bad_asn.json"
     with open(fname, "w") as f:
         # Trailing comma makes this invalid JSON, but YAML accepts it
@@ -86,14 +86,19 @@ def test_warn_invalid_json_as_yaml(tmp_path):
             ' "asn_type": "image2", "products": [{"name": "test_rate",'
             ' "members": [{"expname": "test_rate.fits", "exptype": "science"},]}]}'
         )
+    msg = "Association file has json suffix but is invalid JSON"
+    watcher = log_watcher(
+        "jwst.associations.load_asn",
+        message=msg,
+        level="warning",
+    )
     with open(fname) as f:
-        with pytest.warns(
-            DeprecationWarning, match="Association file has json suffix but is invalid JSON"
-        ):
+        with pytest.warns(DeprecationWarning, match=msg):
             load_asn(f)
+    watcher.assert_seen()
 
 
-def test_warn_force_yaml(tmp_path):
+def test_warn_force_yaml(tmp_path, log_watcher):
     fname = tmp_path / "force_yaml_asn.json"
     with open(fname, "w") as f:
         # Valid JSON, but we will force load as YAML
@@ -102,9 +107,13 @@ def test_warn_force_yaml(tmp_path):
             ' "asn_type": "image2", "products": [{"name": "test_rate",'
             ' "members": [{"expname": "test_rate.fits", "exptype": "science"}]}]}'
         )
+    msg = "Association file has json suffix but is invalid JSON or is force-loaded as YAML"
+    watcher = log_watcher(
+        "jwst.associations.load_asn",
+        message=msg,
+        level="warning",
+    )
     with open(fname) as f:
-        with pytest.warns(
-            DeprecationWarning,
-            match="Association file has json suffix but is invalid JSON or is force-loaded as YAML",
-        ):
+        with pytest.warns(DeprecationWarning, match=msg):
             load_asn(f, fmt="yaml")
+    watcher.assert_seen()
