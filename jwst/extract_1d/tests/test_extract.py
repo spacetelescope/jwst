@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import polynomial
+from astropy.modeling.models import Scale
 from numpy.testing import assert_allclose, assert_equal
 
 from jwst.datamodels import ModelContainer
@@ -1082,10 +1083,7 @@ def test_define_aperture_bad_wcs(monkeypatch, mock_nirspec_fs_one_slit, extract_
     model.wavelength[:] = np.linspace(3, 5, model.data.shape[1])
 
     # mock a bad wcs
-    def return_nan(*args):
-        return np.nan, np.nan, np.nan
-
-    monkeypatch.setattr(model.meta, "wcs", return_nan)
+    model.meta.wcs.pipeline[0].transform |= Scale(np.nan) & Scale(np.nan) & Scale(np.nan)
 
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
     ra, dec = result[:2]
@@ -1157,10 +1155,10 @@ def test_define_aperture_optimal(mock_miri_lrs_fs, extract_defaults, psf_referen
     # profile is normalized along cross-dispersion
     assert_allclose(np.sum(profile, axis=1), 1.0)
 
-    # trace is centered on 1.0, near the edge of the slit,
+    # trace is centered on 24.0, near the center of the slit,
     # and the psf data has the same size as the array (50x50),
-    # so only half the psf is included
-    npix = 26
+    # so most of the psf is included
+    npix = 49
     assert_equal(np.sum(profile != 0, axis=1), npix)
 
     # psf is uniform when in range, 0 otherwise
@@ -1180,11 +1178,15 @@ def test_define_aperture_optimal_with_nod(
     mock_miri_lrs_fs.meta.cal_step.bkg_subtract = "COMPLETE"
     mock_miri_lrs_fs.meta.dither.primary_type = "ALONG-SLIT-NOD"
 
-    # mock a nod position at the opposite end of the array
-    def mock_nod(*args, **kwargs):
+    # mock nod positions at the opposite ends of the array
+    def mock_nod_1(*args, **kwargs):
+        return 1, 7.25, 1.0, np.ones(model.data.shape[0])
+
+    def mock_nod_2(*args, **kwargs):
         return 48.0
 
-    monkeypatch.setattr(pp, "nod_pair_location", mock_nod)
+    monkeypatch.setattr(ex, "location_from_wcs", mock_nod_1)
+    monkeypatch.setattr(pp, "nod_pair_location", mock_nod_2)
 
     # set parameters for optimal extraction
     extract_defaults["extraction_type"] = "optimal"
@@ -1615,11 +1617,15 @@ def test_create_extraction_optimal(monkeypatch, create_extraction_inputs, psf_re
     model.meta.cal_step.bkg_subtract = "COMPLETE"
     model.meta.dither.primary_type = "2-POINT-NOD"
 
-    # mock a nod position at the opposite end of the array
-    def mock_nod(*args, **kwargs):
+    # mock nod positions at the opposite ends of the array
+    def mock_nod_1(*args, **kwargs):
+        return 1, 7.25, 1.0, np.ones(model.data.shape[0])
+
+    def mock_nod_2(*args, **kwargs):
         return 48.0
 
-    monkeypatch.setattr(pp, "nod_pair_location", mock_nod)
+    monkeypatch.setattr(ex, "location_from_wcs", mock_nod_1)
+    monkeypatch.setattr(pp, "nod_pair_location", mock_nod_2)
 
     profile_model, _, _ = ex.create_extraction(
         *create_extraction_inputs,

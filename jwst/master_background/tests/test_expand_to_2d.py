@@ -1,6 +1,8 @@
 """Test master_background.expand_to_2d."""
 
+import gwcs
 import numpy as np
+from astropy.modeling.models import Identity, Mapping, Planar2D
 from stdatamodels.jwst import datamodels
 
 from jwst.master_background import expand_to_2d
@@ -80,33 +82,20 @@ def image_data_c():
     dq = np.zeros(data_shape, dtype=np.uint32)
     input_model = datamodels.ImageModel(data=data, dq=dq)
 
-    def mock_wcs(x, y):
-        """Fake wcs method."""
-        # One row of wavelengths.
-        temp_wl = np.linspace(
-            1.3, 4.8, num=data_shape[1], endpoint=True, retstep=False, dtype=np.float32
-        )
-        wavelength = np.zeros(data_shape, dtype=np.float32)
-        # Shift the wavelength values from row to the next.
-        dwl = 0.1
-        for j in range(data_shape[0]):
-            wavelength[j, :] = temp_wl + j * dwl
+    # Mock a wcs with a 2D linear plane for wavelengths
+    w_start = 1.3
+    w_stop = 4.8
+    npts = data_shape[1]
+    w_delta_col = (w_stop - w_start) / (npts - 1)
+    w_delta_row = 0.1
+    wave = Planar2D(slope_x=w_delta_col, slope_y=w_delta_row, intercept=w_start)
+    det2world = Mapping((0, 1, 0, 1), n_inputs=2) | Identity(2) & wave
+    input_frame = gwcs.Frame2D(name="detector")
+    output_frame = gwcs.Frame2D(name="world")
+    pipeline = [(input_frame, det2world), (output_frame, None)]
+    wcs = gwcs.WCS(pipeline)
 
-        if hasattr(x, "dtype"):
-            ix = np.around(x).astype(np.int64)
-        else:
-            ix = round(x)
-        if hasattr(y, "dtype"):
-            iy = np.around(y).astype(np.int64)
-        else:
-            iy = round(y)
-
-        wl = wavelength[iy, ix]
-        ra = wl.copy()  # placeholder
-        dec = wl.copy()  # placeholder
-        return ra, dec, wl
-
-    input_model.meta.wcs = mock_wcs
+    input_model.meta.wcs = wcs
 
     return input_model
 

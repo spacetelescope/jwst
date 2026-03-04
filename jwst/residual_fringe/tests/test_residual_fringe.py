@@ -1,5 +1,8 @@
+import gwcs
 import numpy as np
 import pytest
+from astropy import units as u
+from astropy.modeling.models import Const1D, Identity, Mapping
 from stdatamodels.jwst import datamodels
 
 from jwst.residual_fringe.residual_fringe import ResidualFringeCorrection, utils
@@ -257,10 +260,22 @@ def test_get_wavemap():
     model = datamodels.IFUImageModel()
 
     # Mock a WCS that returns 1 for wavelengths
-    def return_ones(x, y):
-        return None, None, np.ones(x.shape)
-
-    model.meta.wcs = return_ones
+    transform = Mapping((0, 1, 1), n_inputs=2) | Identity(2) & Const1D(1)
+    model.meta.wcs = gwcs.WCS(
+        [
+            (gwcs.Frame2D(name="detector"), transform),
+            (
+                gwcs.CompositeFrame(
+                    [
+                        gwcs.Frame2D(name="sky0", axes_order=(0, 1)),
+                        gwcs.SpectralFrame(name="spectral", axes_order=(2,), unit=u.micron),
+                    ],
+                    name="world",
+                ),
+                None,
+            ),
+        ]
+    )
 
     rf = ResidualFringeCorrection(model, "N/A", "N/A", None)
     wavemap = rf._get_wave_map()

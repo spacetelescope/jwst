@@ -2,7 +2,9 @@
 Unit tests for pathloss correction
 """
 
+import gwcs
 import numpy as np
+from astropy.modeling.models import Const1D, Mapping
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel, PathlossModel
 
 from jwst.pathloss.pathloss import (
@@ -57,37 +59,21 @@ def test_get_center_exptype():
         assert y_pos == 2
 
 
-class MockWCS:
-    """Mock WCS object for testing get_center with LRS data"""
+def mock_lrs_wcs(offset_1=-100.0, offset_2=-50.0, det_pos=(105.0, 53.0)):
+    # Mock RA, Dec, wavelength
+    det2sky = Mapping((0, 0, 1), n_inputs=2) | Const1D(149.5) & Const1D(2.0) & Const1D(10.0)
 
-    def __init__(self, offset_1=-100.0, offset_2=-50.0, det_pos=(105.0, 53.0)):
-        self.offset_1 = offset_1
-        self.offset_2 = offset_2
-        self.det_pos = det_pos
+    # Mock detector x, y
+    det2sky.inverse = Mapping((0, 0), n_inputs=3) | Const1D(det_pos[0]) & Const1D(det_pos[1])
 
-    def get_transform(self, from_frame, to_frame):
-        if from_frame == "detector" and to_frame == "world":
-            # Mock det_to_sky transform
-            class MockDetToSky:
-                def __init__(self, offset_1, offset_2):
-                    self.offset_1 = offset_1
-                    self.offset_2 = offset_2
+    # Store offsets
+    det2sky.offset_1 = offset_1
+    det2sky.offset_2 = offset_2
 
-                def __call__(self, x, y):
-                    # Return mock RA, Dec, wavelength
-                    return 149.5, 2.0, 10.0
-
-            return MockDetToSky(self.offset_1, self.offset_2)
-        elif from_frame == "world" and to_frame == "detector":
-            # Mock sky_to_det transform
-            det_pos = self.det_pos
-
-            def mock_sky_to_det(ra, dec, wave):
-                # Return mock detector position
-                return det_pos[0], det_pos[1]
-
-            return mock_sky_to_det
-        return None
+    input_frame = gwcs.Frame2D(name="detector")
+    output_frame = gwcs.Frame2D(name="world")
+    wcs = gwcs.WCS([(input_frame, det2sky), (output_frame, None)])
+    return wcs
 
 
 def test_get_center_lrs_with_source_pos():
@@ -99,7 +85,7 @@ def test_get_center_lrs_with_source_pos():
     # Create WCS with offsets
     offset_1 = -100.0
     offset_2 = -50.0
-    datmod.meta.wcs = MockWCS(offset_1=offset_1, offset_2=offset_2)
+    datmod.meta.wcs = mock_lrs_wcs(offset_1=offset_1, offset_2=offset_2)
     datmod.source_xpos = 99.0
     datmod.source_ypos = 51.0
 
@@ -122,7 +108,9 @@ def test_get_center_lrs_from_ra_dec():
     # Create WCS with offsets and detector position
     offset_1_val = -100.0
     offset_2_val = -50.0
-    datmod.meta.wcs = MockWCS(offset_1=offset_1_val, offset_2=offset_2_val, det_pos=(105.0, 53.0))
+    datmod.meta.wcs = mock_lrs_wcs(
+        offset_1=offset_1_val, offset_2=offset_2_val, det_pos=(105.0, 53.0)
+    )
 
     # Test without offsets
     x_pos, y_pos = get_center("MIR_LRS-FIXEDSLIT", datmod, offsets=False)
@@ -140,7 +128,7 @@ def test_get_center_lrs_with_offsets():
     # Create WCS with offsets
     offset_1_val = -100.0
     offset_2_val = -50.0
-    datmod.meta.wcs = MockWCS(offset_1=offset_1_val, offset_2=offset_2_val)
+    datmod.meta.wcs = mock_lrs_wcs(offset_1=offset_1_val, offset_2=offset_2_val)
     datmod.source_xpos = 105.0
     datmod.source_ypos = 53.0
 

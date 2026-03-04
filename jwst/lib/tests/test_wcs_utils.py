@@ -97,15 +97,19 @@ def test_get_wavelengths_soss():
     del model.wavelength
     model.meta.exposure.type = "NIS_SOSS"
 
-    wcs = model.meta.wcs
-    new_wcs = NirissSOSSModel(
+    # mock a SOSS wcs
+    soss_transform = NirissSOSSModel([1], [model.meta.wcs])
+    detector = cf.Frame2D(name="detector")
+    world = cf.CompositeFrame(
         [
-            1,
+            cf.CelestialFrame(name="icrs", axes_order=(0, 1), reference_frame=coord.ICRS()),
+            cf.SpectralFrame(
+                name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+            ),
         ],
-        [
-            wcs,
-        ],
+        name="world",
     )
+    new_wcs = wcs.WCS([(detector, soss_transform), (world, None)])
     model.meta.wcs = new_wcs
 
     # calculate what the wavelength array should be
