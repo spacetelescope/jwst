@@ -284,7 +284,11 @@ class JwstStep(_Step):
                 if self.parent is None or not self.parent.class_alias:
                     setattr(result.cal_logs, self.class_alias, self._log_records)
                 else:  # Capture step log as pipeline log
-                    setattr(result.cal_logs, self.parent.class_alias, deepcopy(self.parent._log_records))
+                    setattr(
+                        result.cal_logs,
+                        self.parent.class_alias,
+                        deepcopy(self.parent._log_records),  # noqa: SLF001
+                    )
 
     def remove_suffix(self, name):
         """
