@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Sequence
+from pathlib import Path
 
 from stdatamodels.jwst import datamodels
 
@@ -119,21 +120,19 @@ class Image3Pipeline(Pipeline):
         if isinstance(input_data, ModelLibrary):
             return input_data
 
-        if isinstance(input_data, (str, dict)):
-            try:
-                # Try opening input as an association
-                return ModelLibrary(
-                    input_data, asn_exptypes=["science"], on_disk=not self.in_memory
-                )
-            except OSError:
-                # Try opening input as a single cal file
+        if isinstance(input_data, str):
+            ext = Path(input_data).suffix
+            if ext in (".fits", ".asdf"):
+                # single file input
                 input_data = self.prepare_output(input_data)
-                input_data = [
-                    input_data,
-                ]
-                return ModelLibrary(
-                    input_data, asn_exptypes=["science"], on_disk=not self.in_memory
-                )
+                input_data = [input_data]
+            elif ext not in (".yaml", ".yml", ".json") or isinstance(input_data, dict):
+                # unrecognized input: neither asn nor datamodel
+                raise ValueError(f"Input file {input_data} has unsupported extension {ext}")
+            return ModelLibrary(input_data, asn_exptypes=["science"], on_disk=not self.in_memory)
+        elif isinstance(input_data, dict):
+            # association as dictionary
+            return ModelLibrary(input_data, asn_exptypes=["science"], on_disk=not self.in_memory)
         elif isinstance(input_data, Sequence):
             return ModelLibrary(input_data, asn_exptypes=["science"], on_disk=not self.in_memory)
         elif isinstance(input_data, datamodels.JwstDataModel):
