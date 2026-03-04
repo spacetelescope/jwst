@@ -17,6 +17,7 @@ __all__ = [
     "mock_miri_lrs_fs_func",
     "mock_miri_ifu_func",
     "mock_miri_wfss_l2",
+    "mock_nircam_dhs",
     "mock_nis_wfss_l2",
     "mock_nis_wfss_l3",
     "mock_niriss_soss_func",
@@ -442,6 +443,85 @@ def mock_miri_ifu_func():
     model.var_rnoise = model.data * 0.02
     model.var_flat = model.data * 0.05
     model.weightmap = np.full_like(model.data, 1.0)
+    return model
+
+
+def mock_nircam_dhs():
+    """
+    Mock a substripe MultiSlitModel in NIRCam DHS TSGRISM mode.
+
+    Returns
+    -------
+    MultiSlitModel
+        The mock model.
+    """
+    model = dm.MultiSlitModel()
+    model.meta.instrument.name = "NIRCAM"
+    model.meta.instrument.detector = "NRCA1"
+    model.meta.observation.date = "2026-02-18"
+    model.meta.observation.time = "06:24:45.569"
+    model.meta.exposure.type = "NRC_TSGRISM"
+    intend = 3
+    model.meta.exposure.integration_start = 1
+    model.meta.exposure.integration_end = intend
+    model.meta.exposure.nints = intend
+    integrations = [
+        (
+            1,
+            59729.04367729,
+            59729.04378181,
+            59729.04388632,
+            59729.04731706,
+            59729.04742158,
+            59729.04752609,
+        ),
+        (
+            2,
+            59729.04389677,
+            59729.04400128,
+            59729.04410579,
+            59729.04753654,
+            59729.04764105,
+            59729.04774557,
+        ),
+        (
+            3,
+            59729.04411625,
+            59729.04422076,
+            59729.04432527,
+            59729.04775602,
+            59729.04786053,
+            59729.04796504,
+        ),
+    ]
+
+    integration_table = np.array(
+        integrations,
+        dtype=[
+            ("integration_number", "i4"),
+            ("int_start_MJD_UTC", "f8"),
+            ("int_mid_MJD_UTC", "f8"),
+            ("int_end_MJD_UTC", "f8"),
+            ("int_start_BJD_TDB", "f8"),
+            ("int_mid_BJD_TDB", "f8"),
+            ("int_end_BJD_TDB", "f8"),
+        ],
+    )
+    model.int_times = integration_table
+
+    for _ in range(2):
+        submodel = dm.SlitModel()
+        submodel.meta.wcsinfo.dispersion_direction = 1
+        submodel.meta.photometry.pixelarea_steradians = 1.0
+        submodel.meta.wcs = simple_wcs_func()
+
+        submodel.data = np.arange(intend * 50 * 50, dtype=float).reshape((intend, 50, 50))
+        submodel.var_poisson = submodel.data * 0.02
+        submodel.var_rnoise = submodel.data * 0.02
+        submodel.var_flat = submodel.data * 0.05
+        submodel.update(model)
+        submodel.int_times = integration_table
+        model.slits.append(submodel)
     return model
 
 

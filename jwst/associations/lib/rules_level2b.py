@@ -490,7 +490,7 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
                                 DMSAttrConstraint(
                                     name="pupil",
                                     sources=["pupil"],
-                                    value="clear|gdhs0|gdhs60",
+                                    value="clear",
                                 ),
                             ],
                         )
