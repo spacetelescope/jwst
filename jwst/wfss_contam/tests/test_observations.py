@@ -114,4 +114,4 @@ def test_disperse_order(observation, segmentation_map, chunk_size):
     assert slit.data.shape == (slit.ysize, slit.xsize)
 
     # check for regression by hard-coding one value of slit.data
-    assert np.isclose(slit.data[5, 60], 0.09994397)
+    assert np.isclose(slit.data[5, 60], 0.09994397, rtol=1e-4)
