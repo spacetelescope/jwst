@@ -125,6 +125,17 @@ def get_center(exp_type, input_model, offsets=False):
     # compute location relative to LRS aperture reference point
     xcenter -= imx
     ycenter -= imy
+
+    # compute cross-slit dither offset
+    location = (ref_ra, ref_dec, ref_wave)
+    scale_degrees = util.compute_scale(
+        input_model.meta.wcs, location, disp_axis=input_model.meta.wcsinfo.dispersion_direction
+    )
+    scale_arcsec = scale_degrees * 3600.0
+    yoffset = input_model.meta.dither.y_offset / scale_arcsec
+    ycenter += yoffset
+    log.info(f"Cross-slit dither offset = {yoffset} px")
+
     if offsets:
         return xcenter, ycenter, imx, imy
     return xcenter, ycenter
