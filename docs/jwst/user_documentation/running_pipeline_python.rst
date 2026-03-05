@@ -60,7 +60,8 @@ that the .run() class method is also available for use, but is discouraged and
 should be used only with caution (see :ref:`here <python_run_vs_call>` for
 more information).
 
-**Example: Running a Pipeline or Step with Default Parameters and Reference Files**
+Example: Running a Pipeline or Step with Default Parameters and Reference Files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -103,7 +104,10 @@ and pipeline steps can be skipped if desired. This section will be a general
 overview on how to configure the pipeline when running in Python, and the
 following sections will elaborate on each of these options.
 
-**When running in Python, there are two ways two configure a Pipeline/Step.**
+Ways to configure a Pipeline/Step
+---------------------------------
+
+When running in Python, there are two ways two configure a Pipeline/Step:
 
 1. By passing in keyword arguments to a pipeline/step's ``call`` method
 2. By using a :ref:`parameter file<parameter_files>`
@@ -113,7 +117,8 @@ for configuration, but keep in mind the hierarchy of
 :ref:`parameter precedence <Parameter Precedence>` to keep track of which value
 will get used if set in multiple locations.
 
-**Example: Configuring a pipeline/step with keyword arguments**
+Example: Configuring a pipeline/step with keyword arguments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -141,7 +146,8 @@ The second example shows the same configuration to the jump step, but this time
 when the step is run standalone. Here, there is no ``steps`` dictionary argument
 and all arguments can be passed to the step directly since it is now at the step level.
 
-**Example: Configuring a pipeline/step with a parameter file**
+Example: Configuring a pipeline/step with a parameter file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To use a custom parameter file, set the ``config_file`` parameter::
 
@@ -162,21 +168,44 @@ Setting Step Parameters on a Pipeline or Individual Step
 --------------------------------------------------------
 
 All steps have parameters that can be set to change various aspects
-of how they execute (e.g switching on and off certain options in a step,
+of how they execute (e.g., switching on and off certain options in a step,
 setting thresholds). By default, the values of these parameters are set in
 the CRDS-chosen parameter file (and if absent, defer to the coded defaults),
 but they can be overridden if desired.
 
-**As Arguments to a Pipeline / Step**
+As Arguments to a Pipeline / Step
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As discussed in :ref:`above<configuring_pipeline_python>`, when setting a
-step-level parameter when that step is a substep of a pipeline, it must be passed
-to the ``steps`` argument dictionary. For example, to change the ``rejection_threshold``
-parameter of the jump detection step when running the full Detector1Pipeline::
+As discussed in :ref:`above <configuring_pipeline_python>`, when setting a
+step-level parameter when that step is a substep of a pipeline,
+it must be passed via the ``steps`` argument as a *nested dictionary*::
+
+    parameter_dict = {
+        step_1_name: {
+            step_1_key_1: step_1_key_1_value,
+            step_1_key_2: step_1_key_2_value,
+            ...
+        },
+        step_2_name: {
+            step_2_key_1: step_2_key_1_value,
+            step_2_key_2: step_2_key_2_value,
+            ...
+        },
+        ...
+    }
+    result = SomePipeline.call(..., steps=parameter_dict)
+
+For example, to change the ``rejection_threshold``
+parameter of the jump detection step when running the full ``Detector1Pipeline``::
 
     from jwst.pipeline import Detector1Pipeline
+    parameter_dict = {
+        'jump': {
+            'rejection_threshold': 12.0
+        }
+    }
     result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits',
-                                     steps={'jump': {'rejection_threshold':12.0)}})
+                                     steps=parameter_dict)
 
 When running a single step, step-level parameters can be passed in directly as
 keyword arguments. For example, to change the parameter
@@ -185,7 +214,8 @@ keyword arguments. For example, to change the parameter
     from jwst.jump import JumpStep
     result = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', rejection_threshold=12.0)
 
-**Using a Parameter File**
+Using a Parameter File
+^^^^^^^^^^^^^^^^^^^^^^
 
 Alternatively, if using a :ref:`parameter file<parameter_files>`, edit the
 file to add the following snippet (in this example, to a file named
@@ -217,7 +247,8 @@ Overriding Reference Files
 
 To override the reference file for a step selected by CRDS:
 
-**As Arguments to a Pipeline / Step**
+As Arguments to a Pipeline / Step
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To override a reference file for a step within a pipeline, for example the ``saturation``
 step in the Detector1Pipeline the ``override_saturation`` argument can be set in the
@@ -244,7 +275,8 @@ can be passed directly as a keyword argument to that step's ``call`` method::
     SaturationStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
                         override_saturation='/path/to/new_saturation_ref_file.fits')
 
-**Using a Parameter File**
+Using a Parameter File
+^^^^^^^^^^^^^^^^^^^^^^
 
 If  using a :ref:`parameter file<parameter_files>` for configuration, to override
 a reference edit the file to add the following snippet (in this example, to a file named
@@ -277,7 +309,8 @@ Skipping a Pipeline Step
 When using the Python interface you wish to run a pipeline but skip one or some
 of the steps contained in that pipeline, this can be done in two different ways:
 
-**As Arguments to a Pipeline / Step**
+As Arguments to a Pipeline / Step
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Every step in a pipeline has a ``skip`` parameter that when set to true, will entirely
 skip that step. For example, to skip the saturation step in the Detector1Pipeline::
@@ -286,7 +319,8 @@ skip that step. For example, to skip the saturation step in the Detector1Pipelin
     from jwst.pipeline import Detector1Pipeline
     result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', steps={"saturation": {"skip": True}})
 
-**Using a Parameter File**
+Using a Parameter File
+^^^^^^^^^^^^^^^^^^^^^^
 
 The equivalent to the above example can be done by adding the following snippet
 to your parameter file (in this example, to a file named ``my_config_file.asdf``
@@ -335,7 +369,8 @@ In this example, the following output files will be written in the current worki
 * ``jw00017001001_01101_00001_nrca1_rate.fits``
 * ``jw00017001001_01101_00001_nrca1_rateints.fits``
 
-**Changing Output File Name**
+Changing Output File Name
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Setting ``output_file`` at the pipeline-level indicates that the pipeline's final result
 should be saved (so, also setting ``save_results`` is redundant), and that a new file
@@ -354,7 +389,8 @@ In this example, the following output files will be written in the current worki
 * ``detector_1_final_result_rate.fits``
 * ``detector_1_final_result_rateints.fits``
 
-**Changing Output File Directory**
+Changing Output File Directory
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When set at the pipeline level, the ``output_dir`` parameter will set where the final
 pipeline output products are placed. The default is the current working directory.
@@ -392,7 +428,8 @@ that the final result from that step should be saved::
     from jwst.linearity import SaturationStep
     SaturationStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', save_results=True)
 
-**Setting Output File Name**
+Setting Output File Name
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Setting ``output_file`` at the step-level indicates that the step's result should
 be saved (so, also setting ``save_results`` is redundant), and that a new file
@@ -414,7 +451,8 @@ appropriate suffix::
     from jwst.linearity import SaturationStep
     SaturationStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', output_file="saturation_result")
 
-**Setting Output File Directory**
+Setting Output File Directory
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Setting ``output_dir`` indicates that the files
 should be saved in the directory specified instead of the current working directory.
@@ -473,140 +511,3 @@ individual step parameter must be set when using this method, or else the coded
 defaults will be used, which may be inappropriate for the dataset being processed.
 
 See :ref:`call_examples` for more information.
-
-
-.. _multiprocessing:
-
-Multiprocessing
-===============
-
-Multiprocessing is supported to speed up certain computationally-intensive steps
-in the pipeline, including the :ref:`jump detection <jump_step>`,
-:ref:`ramp fitting <ramp_fitting_step>`, and
-:ref:`WFSS contamination correction <wfss_contam_step>` steps. The examples below show how
-multiprocessing can be enabled for these steps, as well as how to set up
-multiprocessing to simultaneously run the entire pipeline on multiple observations.
-
-Since the pipeline uses multiprocessing it is critical that any code using the pipeline adhere
-to the guidelines described in the
-`Python multiprocessing documentation <https://docs.python.org/3/library/multiprocessing.html#multiprocessing-programming>`_.
-The pipeline uses the ``spawn`` start method internally and it is recommended that any
-multiprocessing scripts that use the pipeline use the same start. As detailed in the
-`Python documentation <https://docs.python.org/3/library/multiprocessing.html#the-spawn-and-forkserver-start-methods>`_
-this will require that code be "protected" with a ``if __name__ == '__main__':`` check as follows::
-
-    if __name__ = '__main__':
-        [code used in multiprocessing]
-
-There are a couple of scenarios to use multiprocessing with the pipeline:
-
-.. note::
-    For more details on how to adjust ``.call(...)`` inputs in the examples below,
-    please see :ref:`setting_parameters_python`.
-
-1. Multiprocessing within a pipeline step. At the moment, the steps that
-   support this are the :ref:`jump <jump_step>`,
-   :ref:`ramp_fitting <ramp_fitting_step>`,
-   and :ref:`wfss_contam <wfss_contam_step>` steps. To enable multiprocessing, the
-   optional parameter is ``maximum_cores`` for the ``jump``, ``ramp_fitting``, and
-   ``wfss_contam`` steps. This parameter can be set to a numerical value given
-   as a string or it can be set to the words ``quarter``, ``half``, ``all``,
-   or ``none``, which is the default value.
-
-   The following example turns on a step's multiprocessing option. Notice only
-   one of the steps has multiprocessing turned on.
-
-::
-
-    # SampleScript1
-
-    import os, sys
-    from jwst.pipeline import Detector1Pipeline
-
-    uncal_file = 'jw0000_0000_uncal.fits'
-    output_dir = '/my_project'
-
-    def main():
-        parameter_dict = {"ramp_fit": {"maximum_cores": 'all'}}
-        Detector1Pipeline.call(uncal_file, save_results=True, steps=parameter_dict, output_dir=output_dir)
-
-    if __name__ = '__main__':
-        sys.exit(main())
-
-2. Calling the pipeline using multiprocessing via its :py:meth:`multiprocessing.pool.Pool.starmap`
-   method and using :py:func:`zip` to pack its inputs. The following example uses an
-   option to set up a text file with the full traceback in case there is a crash.
-   Notice that the ``import`` statement of the pipeline is within the multiprocessing
-   block that gets called by every worker; this is to avoid a known memory leak.
-
-::
-
-    # SampleScript2
-
-    import os
-    import sys
-    import traceback
-    import configparser
-    import multiprocessing
-    from glob import glob
-
-
-    def run_det1(uncal_file, output_dir):
-        """
-        Run the Detector1 pipeline on the given file.
-        Args:
-            uncal_file: str, name of uncalibrated file to run
-            output_dir: str, path of the output directory
-        """
-        from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
-
-        log_name = os.path.basename(uncal_file).replace('.fits', '')
-
-        pipe_success = False
-        try:
-            # Run the pipeline, turning off terminal logging messages
-            Detector1Pipeline.call(uncal_file, output_dir=output_dir, save_results=True, configure_log=False)
-            pipe_success = True
-            print('\n * Pipeline finished for file: ', uncal_file, ' \n')
-        except Exception:
-            print('\n *** OH NO! The detector1 pipeline crashed! *** \n')
-            pipe_crash_msg = traceback.print_exc()
-        if not pipe_success:
-            crashfile = open(log_name+'_pipecrash.txt', 'w')
-            print('Printing file with full traceback')
-            print(pipe_crash_msg, file=crashfile)
-
-    def main():
-        input_data_dir = '/my_project_dir'
-        output_dir = input_data_dir
-
-        # get the files to run
-        files_to_run = glob(os.path.join(input_data_dir, '*_uncal.fits'))
-        print('Will run the pipeline on {} files'.format(len(files_to_run)))
-
-        # the output list should be the same length as the files to run
-        outptd = [output_dir for _ in range(len(files_to_run))]
-
-        # get the cores to use
-        cores2use = int(os.cpu_count()/2)   # half of all available cores
-        print('* Using ', cores2use, ' cores for multiprocessing.')
-
-        # set the pool and run multiprocess
-        with multiprocessing.Pool(cores2use) as pool:
-            pool.starmap(run_det1, zip(files_to_run, outptd))
-
-        print('\n * Finished multiprocessing! \n')
-
-    if __name__ == '__main__':
-        sys.exit(main())
-
-.. warning::
-    Although it is technically possible to call the pipeline with
-    multiprocessing while also enabling this option in a step, we
-    strongly recommend not to do this. This scenario would be the same as
-    ``SampleScript2`` except with adding and calling the parameter dictionary
-    ``parameter_dict`` in ``SampleScript1``. However, Python will crash
-    if both multiprocessing options are set to use all the cores or even
-    less, because it is not permitted that a worker has children processes.
-    We recommend not enabling step multiprocessing for parallel pipeline
-    runs to avoid potentially running out of memory.
