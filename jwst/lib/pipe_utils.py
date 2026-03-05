@@ -13,6 +13,14 @@ log = logging.getLogger(__name__)
 __all__ = ["is_tso", "is_irs2", "match_nans_and_flags"]
 
 
+SUPERSTRIPE_SUBARRAY_MAPPING = {
+    "SUB17STRIPE_SOSS": "SUBSTRIP256",
+    "SUB60STRIPE_SOSS": "SUBSTRIP256",
+    "SUB204STRIPE_SOSS": "SUBSTRIP256",
+    "SUB680STRIPE_SOSS": "SUBSTRIP256",
+}
+
+
 def is_tso(model):
     """
     Check if data is a Time Series Observation (TSO).
@@ -150,3 +158,179 @@ def match_nans_and_flags(input_model):
         if data.shape != data_shape:
             continue
         data[is_invalid] = np.nan
+
+
+def generate_substripe_ranges(sci_model):
+    """
+    TBD.
+
+    Parameters
+    ----------
+    sci_model : JwstDataModel
+        The input datamodel with multistripe params defined.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys as int counter, values as ranges of array index in slowaxis
+        corresponding to stripe shapes.
+    """
+    nreads1 = sci_model.meta.subarray.multistripe_reads1
+    nskips1 = sci_model.meta.subarray.multistripe_skips1
+    nreads2 = sci_model.meta.subarray.multistripe_reads2
+    nskips2 = sci_model.meta.subarray.multistripe_skips2
+    repeat_stripe = sci_model.meta.subarray.repeat_stripe
+    interleave_reads1 = sci_model.meta.subarray.interleave_reads1
+    ysize_sci = sci_model.meta.subarray.ysize
+
+    ranges = {}
+    range_counter = 0
+    # Track the read position in the full frame with linecount, and number of lines
+    # read into subarray with sub_lines
+    linecount = 0
+    sub_lines = 0
+
+    # Start at 0, make nreads1 row reads
+    linecount += nreads1
+    sub_lines += nreads1
+    # Now skip nskips1
+    linecount += nskips1
+    # Nreads2
+    ranges[range_counter] = (linecount, linecount + nreads2)
+    range_counter += 1
+    linecount += nreads2
+    sub_lines += nreads2
+
+    # Now, while the output size is less than the science array size:
+    # 1a. If repeat_stripe, reset linecount (HEAD) to initial position
+    #     after every nreads2.
+    # 1b. Else, do nskips2 followed by nreads2 until subarray complete.
+    # 2.  Following 1a., repeat sequence of nreads1, skips*, nreads2
+    #     until complete. For skips*:
+    # 3a. If interleave_reads1, value of skips increments by nreads2 +
+    #     nskips2 for each stripe read.
+    # 3b. If not interleave, each loop after linecount reset is simply
+    #     nreads1 + nskips1 + nreads2.
+    interleave_skips = nskips1
+    if nreads2 <= 0:
+        raise ValueError(
+            "Invalid value for multistripe_reads2 - "
+            "cutout for reference file could not be "
+            "generated!"
+        )
+    while sub_lines < ysize_sci:
+        # If repeat_stripe, add interleaved rows to output and increment sub_lines
+        if repeat_stripe > 0:
+            linecount = 0
+            linecount += nreads1
+            sub_lines += nreads1
+            if interleave_reads1:
+                interleave_skips += nskips2 + nreads2
+                linecount += interleave_skips
+            else:
+                linecount += nskips1
+        else:
+            linecount += nskips2
+        ranges[range_counter] = (linecount, linecount + nreads2)
+        range_counter += 1
+        linecount += nreads2
+        sub_lines += nreads2
+
+    if sub_lines != ysize_sci:
+        raise ValueError(
+            "Stripe readout resulted in mismatched reference array shape "
+            "with respect to science array!"
+        )
+
+    return ranges
+
+
+def generate_superstripe_ranges(sci_model):
+    """
+    TBD.
+
+    Parameters
+    ----------
+    sci_model : JwstDataModel
+        The input datamodel with multistripe params defined.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys as int counter, values as ranges of array index in slowaxis
+        corresponding to stripe shapes.
+    """
+    nreads1 = sci_model.meta.subarray.multistripe_reads1
+    nskips1 = sci_model.meta.subarray.multistripe_skips1
+    nreads2 = sci_model.meta.subarray.multistripe_reads2
+    nskips2 = sci_model.meta.subarray.multistripe_skips2
+    repeat_stripe = sci_model.meta.subarray.repeat_stripe
+    interleave_reads1 = sci_model.meta.subarray.interleave_reads1
+    superstripe_step = sci_model.meta.subarray.superstripe_step
+    num_superstripe = sci_model.meta.subarray.num_superstripe
+    xsize_sci = sci_model.meta.subarray.xsize
+    ysize_sci = sci_model.meta.subarray.ysize
+    fastaxis = sci_model.meta.subarray.fastaxis
+
+    if np.abs(fastaxis) == 1:
+        slow_size = ysize_sci
+    else:
+        slow_size = xsize_sci
+
+    ranges = {}
+    range_counter = 0
+
+    for stripe in range(num_superstripe):
+        # Track the read position in the full frame with linecount, and number of lines
+        # read into subarray with sub_lines
+        linecount = 0
+        sub_lines = 0
+
+        # Start at 0, make nreads1 row reads
+        linecount += nreads1
+        sub_lines += nreads1
+        # Now skip nskips1 + superstripe_step * stripe
+        linecount += nskips1 + superstripe_step * stripe
+        # Nreads2
+        ranges[range_counter] = [(linecount, linecount + nreads2)]
+        linecount += nreads2
+        sub_lines += nreads2
+
+        # Now, while the output size is less than the science array size:
+        # 1a. If repeat_stripe, reset linecount (HEAD) to initial position
+        #     after every nreads2.
+        # 1b. Else, do nskips2 followed by nreads2 until subarray complete.
+        # 2.  Following 1a., repeat sequence of nreads1, skips*, nreads2
+        #     until complete. For skips*:
+        # 3a. If interleave_reads1, value of skips increments by nreads2 +
+        #     nskips2 for each stripe read.
+        # 3b. If not interleave, each loop after linecount reset is simply
+        #     nreads1 + nskips1 + nreads2.
+        interleave_skips = nskips1
+
+        while sub_lines < slow_size:
+            # If repeat_stripe, add interleaved rows to output and increment sub_lines
+            if repeat_stripe > 0:
+                linecount = 0
+
+                linecount += nreads1
+                sub_lines += nreads1
+
+                if interleave_reads1:
+                    interleave_skips += nskips2 + nreads2
+                    linecount += interleave_skips
+                else:
+                    linecount += nskips1
+            else:
+                linecount += nskips2
+            ranges[range_counter].append((linecount, linecount + nreads2))
+            linecount += nreads2
+            sub_lines += nreads2
+        range_counter += 1
+
+        if sub_lines != slow_size:
+            raise ValueError(
+                "Stripe readout resulted in mismatched reference array shape "
+                "with respect to science array!"
+            )
+    return ranges
