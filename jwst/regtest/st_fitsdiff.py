@@ -38,7 +38,11 @@ def set_variable_to_empty_list(variable):
 
 
 class STFITSDiffFilterWarnings(FITSDiff):
-    """FITSDiff class that just filters warnings from astropy FITSDiff."""
+    """
+    FITSDiff class that just filters warnings from astropy FITSDiff.
+
+    This class remains here in case we need to quickly revert to astropy FITSDiff.
+    """
 
     def _report(self):
         with warnings.catch_warnings():
