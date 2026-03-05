@@ -1,6 +1,7 @@
 """JWST-specific Step and Pipeline base classes."""
 
 import logging
+from functools import partial
 from pathlib import Path
 
 from stdatamodels.jwst import datamodels
@@ -249,6 +250,55 @@ class JwstStep(_Step):
                 ) from None
 
         return input_models
+
+    def add_asn_id_to_output_name(self, models):
+        """
+        Set up output path name to include the association ID.
+
+        The input models are checked for an ASN ID in either a ModelContainer
+        ``asn_table`` attribute or a ModelLibrary ``asn`` attribute.
+
+        If not found, the current step and its parents are searched
+        for an ``asn_id`` attribute.
+
+        If an ASN ID is found, the ``_make_output_path`` function is updated
+        to include it in output filenames.
+
+        If no ASN ID is found, ``_make_output_path`` is updated to pass
+        ``asn_id=None``.  This will override any previously passed ASN IDs, so
+        that no ASN ID appears in the output filename.
+
+        Parameters
+        ----------
+        models : `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+                 `~jwst.datamodels.container.ModelContainer`,  or \
+                 `~jwst.datamodels.library.ModelLibrary`
+            The model or models to search for an ASN ID.
+
+        Returns
+        -------
+        asn_id : str or None
+            The ASN ID, as found in the models or step.
+        """
+        # Check the input models for an association ID
+        try:
+            if isinstance(models, ModelLibrary):
+                asn_id = models.asn["asn_id"]
+            elif isinstance(models, ModelContainer):
+                asn_id = models.asn_table["asn_id"]
+            else:
+                asn_id = None
+        except (AttributeError, KeyError):
+            asn_id = None
+
+        if asn_id is None:
+            # This will return None if not found
+            asn_id = self.search_attr("asn_id")
+
+        _make_output_path = self.search_attr("_make_output_path", parent_first=True)
+        self._make_output_path = partial(_make_output_path, asn_id=asn_id)
+
+        return asn_id
 
     def finalize_result(self, result, reference_files_used):
         """

@@ -128,7 +128,6 @@ def make_resamp(input_models):
         kernel="square",
         fillval="INDEF",
         good_bits="~DO_NOT_USE",
-        asn_id="test",
         enable_var=False,
         enable_ctx=False,
         compute_err="driz_err",
