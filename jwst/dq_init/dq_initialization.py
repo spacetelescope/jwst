@@ -117,7 +117,10 @@ def check_dimensions(input_model):
             # If the shape is different, then the mask model should have
             # a shape of (0,0).
             # If that's the case, create the array
-            if input_model.pixeldq.shape == (0, 0):
+            if (
+                input_model.pixeldq.shape == (0, 0)
+                or input_model.pixeldq.shape == input_model.data.shape
+            ):
                 input_model.pixeldq = np.zeros(input_shape[-2:], dtype=np.uint32)
             else:
                 log.error(f"Pixeldq array has the wrong shape: {input_model.pixeldq.shape}")
