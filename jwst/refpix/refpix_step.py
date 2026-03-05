@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.lib import pipe_utils
@@ -155,4 +156,127 @@ class RefPixStep(Step):
             elif status == reference_pixels.SUBARRAY_SKIPPED:
                 result.meta.cal_step.refpix = "SKIPPED"
 
+            if (
+                result.meta.subarray.num_superstripe is not None
+                and result.meta.subarray.num_superstripes > 0
+            ):
+                result = collate_superstripes(result)
+
             return result
+
+
+def collate_superstripes(input_model):
+    """
+    Collate superstripes into arrays resembling the full detector/subarray shape.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
+        The datamodel containing a reference-pixel corrected ramp
+        for superstripe data.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.RampModel`
+        The datamodel with superstripes collated into a single frame per set of stripes.
+    """
+    # First define the parent array shape
+    fastaxis = np.abs(input_model.meta.subarray.fastaxis)
+
+    slowsize = 2048
+    slowdir = np.sign(input_model.meta.subarray.slowaxis)
+    nreads1 = input_model.meta.subarray.multistripe_reads1
+
+    # Generate slowaxis ranges to place stripes into parent frame
+    stripe_ranges = pipe_utils.generate_superstripe_ranges(input_model)
+    srlist = []
+    for key in stripe_ranges:
+        if slowdir < 0:
+            # If slowaxis is negative, need to read the stripes in reverse order
+            # (but not reverse column order within a stripe, as they've been
+            # transformed to science frame)
+            srlist.append([slowsize - (x - nreads1) for x in stripe_ranges[key][0][::-1]])
+        else:
+            srlist.append([(x - nreads1) for x in stripe_ranges[key][0]])
+
+    # Determine integration/stripe numbers
+    nints, ngroups, ny, nx = input_model.data.shape
+    n_sstr = input_model.meta.subarray.num_superstripe
+    nints_sci = nints // n_sstr
+
+    # Initialize new array shapes
+    if fastaxis == 1:
+        newdata = np.full((nints_sci, ngroups, slowsize, nx), np.nan, dtype=">f4")
+        newgdq = np.full((nints_sci, ngroups, slowsize, nx), 0, dtype="uint8")
+        newpdq = np.full((slowsize, nx), 2**31, dtype="uint32")
+    else:
+        newdata = np.full((nints_sci, ngroups, ny, slowsize), np.nan, dtype=">f4")
+        newgdq = np.full((nints_sci, ngroups, ny, slowsize), 0, dtype="uint8")
+        newpdq = np.full((ny, slowsize), 2**31, dtype="uint32")
+
+    # Work through each set of stripes, pushing them into a common frame
+    for integ in range(nints_sci):
+        for stripe in range(n_sstr):
+            # Determine fast orient
+            if fastaxis == 1:
+                newslice = np.s_[integ, :, srlist[stripe][0] : srlist[stripe][1], :]
+                # Determine end of slowread to drop refpix from
+                if slowdir < 0:
+                    dataslice = np.s_[integ * n_sstr + stripe, :, :-nreads1, :]
+                else:
+                    dataslice = np.s_[integ * n_sstr + stripe, :, nreads1:, :]
+                newdata[newslice] = input_model.data[dataslice]
+                newgdq[newslice] = input_model.groupdq[dataslice]
+                if integ == 0:
+                    newpdq[newslice[-2], newslice[-1]] = input_model.pixeldq[
+                        stripe, dataslice[-2], dataslice[-1]
+                    ]
+            else:
+                newslice = np.s_[integ, :, :, srlist[stripe][0] : srlist[stripe][1]]
+                if slowdir < 0:
+                    dataslice = np.s_[integ * n_sstr + stripe, :, :, :-nreads1]
+                else:
+                    dataslice = np.s_[integ * n_sstr + stripe, :, :, nreads1:]
+                newdata[newslice] = input_model.data[dataslice]
+                newgdq[newslice] = input_model.groupdq[dataslice]
+                if integ == 0:
+                    newpdq[newslice[-2], newslice[-1]] = input_model.pixeldq[
+                        stripe, dataslice[-2], dataslice[-1]
+                    ]
+
+    input_model.data = newdata
+    input_model.groupdq = newgdq
+    input_model.pixeldq = newpdq
+
+    input_model = clean_superstripe_metadata(input_model)
+
+    return input_model
+
+
+def clean_superstripe_metadata(input_model):
+    """
+    Update metadata in input_model to reflect new subarray characteristics.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
+        The model with updated data array shapes to reflect
+        the new subarray/full shape, but outdated metadata.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.RampModel`
+        The model cleaned of metadata indicating the presence
+        of superstripe data.
+    """
+    input_model.meta.subarray.multistripe_reads1 = None
+    input_model.meta.subarray.multistripe_reads2 = None
+    input_model.meta.subarray.multistripe_skips1 = None
+    input_model.meta.subarray.multistripe_skips2 = None
+    input_model.meta.subarray.repeat_stripe = None
+    input_model.meta.subarray.interleave_reads1 = None
+    input_model.meta.subarray.num_superstripe = None
+    input_model.meta.subarray.superstripe_step = None
+    input_model.meta.subarray.ysize, input_model.meta.subarray.xsize = input_model.data.shape[-2:]
+
+    return input_model
