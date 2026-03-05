@@ -54,7 +54,7 @@ turned on.
     from jwst.pipeline import Detector1Pipeline
 
     uncal_file = 'jw0000_0000_uncal.fits'
-    output_dir = '/path/to/my_project'
+    output_dir = 'my_project'
     parameter_dict = {
         "ramp_fit": {
             "maximum_cores": 'half'
@@ -71,7 +71,7 @@ turned on.
 Alternately, you can also run the equivalent call as above via
 :ref:`strun <run_from_strun>`::
 
-    strun calwebb_detector1 jw0000_0000_uncal.fits --steps.ramp_fit.save_results=true --steps.ramp_fit.maximum_cores=half --output_dir=/path/to/my_project
+    strun calwebb_detector1 jw0000_0000_uncal.fits --steps.ramp_fit.save_results=true --steps.ramp_fit.maximum_cores=half --output_dir=my_project
 
 .. _multiproc_multiple-obs:
 
@@ -83,7 +83,7 @@ the entire pipeline on multiple observations.
 You must *not* use :ref:`multiproc_within_pipeline_step` if
 you choose this option. It is recommended that you refer to the
 :ref:`Python multiprocessing documentation <python:multiprocessing-programming>`
-in order to follow its best practices; When in doubt, stick to
+in order to follow its best practices. When in doubt, stick to
 the pattern in the given example below.
 
 The pipeline uses the ``spawn`` start method
@@ -162,7 +162,7 @@ this is to avoid a known memory leak.
                 print(pipe_crash_msg, file=crashfile)
 
     def main():
-        input_data_dir = '/path/to/my_project_dir'
+        input_data_dir = 'my_project_dir'
         output_dir = input_data_dir
 
         # get the files to run
