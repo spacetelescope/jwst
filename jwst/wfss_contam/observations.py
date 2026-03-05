@@ -187,7 +187,6 @@ class Observation:
 
     def _create_pixel_list(self):
         """Create flat lists of pixels to be dispersed, grouped per object ID."""
-        # Single pass: np.nonzero(self.seg) returns all non-zero (non-background) pixels
         self.ys, self.xs = np.nonzero(self.seg)
         self.source_ids_per_pixel = self.seg[self.ys, self.xs]
         self.fluxes = self.dimage[self.ys, self.xs]
