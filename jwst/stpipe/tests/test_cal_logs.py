@@ -5,8 +5,8 @@ from stdatamodels.jwst import datamodels
 
 import jwst.stpipe._cal_logs
 from jwst.lib.basic_utils import LoggingContext
-from jwst.pipeline import Detector1Pipeline, Image2Pipeline, Image3Pipeline
-from jwst.pipeline.tests.helpers import make_miri_ramp_model
+from jwst.pipeline import Image3Pipeline
+from jwst.pipeline.tests.helpers import make_nircam_image_cal_model
 from jwst.stpipe._cal_logs import _scrub
 from jwst.stpipe.tests.steps import CalLogsPipeline, CalLogsStep
 
@@ -85,37 +85,26 @@ def test_path_scrub(msg, expected):
     assert scrubbed == expected
 
 
-def test_miri_pipeline_cal_logs(tmp_cwd):
-    input_model = make_miri_ramp_model()
-    input_model.meta.exposure.type = "MIR_IMAGE"
-    Detector1Pipeline.call(input_model, save_results=True)
-
-    par2_dict = {
-        "assign_wcs": {"skip": True},
-        "flat_field": {"skip": True},
-        "photom": {"skip": True},
-        "resample": {"skip": True},
-    }
-    Image2Pipeline.call(
-        "test_miri_rate.fits", steps=par2_dict, output_file="test_miri", save_results=True
-    )
-
+def test_nircam_pipeline_cal_logs(tmp_cwd):
+    input_model = make_nircam_image_cal_model()
     par3_dict = {
         "tweakreg": {"skip": True},
         "skymatch": {"skip": True},
         "outlier_detection": {"skip": True},
-        "resample": {"skip": True},
+        "resample": {"skip": False},
         "source_catalog": {"skip": True},
     }
-    Image3Pipeline.call(
-        "test_miri_cal.fits", steps=par3_dict, output_file="test_miri", save_results=True
-    )
+    Image3Pipeline.call(input_model, steps=par3_dict, output_file="test_nircam", save_results=True)
 
     # https://github.com/spacetelescope/jwst/issues/9862
     n_image3_steps_found = 0
     expected_steps = ["outlier_detection", "resample", "skymatch", "tweakreg"]
-    with datamodels.open("test_miri_i2d.fits") as im:
-        assert sorted(im.cal_logs.instance.keys()) == ["calwebb_image2", "calwebb_image3"]
+    with datamodels.open("test_nircam_i2d.fits") as im:
+        # Steps run standalone appear by themselves, so "assign_wcs" appears
+        # here since it was run on the synthetic data.
+        # Steps run as part of a pipeline do not appear individually. All image3
+        # steps are logged under "calwebb_image3"
+        assert sorted(im.cal_logs.instance.keys()) == ["assign_wcs", "calwebb_image3"]
         image3_logs = im.cal_logs.calwebb_image3
         for step_name in expected_steps:
             for line in image3_logs:
