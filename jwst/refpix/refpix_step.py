@@ -158,7 +158,7 @@ class RefPixStep(Step):
 
             if (
                 result.meta.subarray.num_superstripe is not None
-                and result.meta.subarray.num_superstripes > 0
+                and result.meta.subarray.num_superstripe > 0
             ):
                 result = collate_superstripes(result)
 
@@ -269,6 +269,9 @@ def clean_superstripe_metadata(input_model):
         The model cleaned of metadata indicating the presence
         of superstripe data.
     """
+    input_model.meta.subarray.name = pipe_utils.SUPERSTRIPE_SUBARRAY_MAPPING[
+        input_model.meta.subarray.name
+    ]
     input_model.meta.subarray.multistripe_reads1 = None
     input_model.meta.subarray.multistripe_reads2 = None
     input_model.meta.subarray.multistripe_skips1 = None
