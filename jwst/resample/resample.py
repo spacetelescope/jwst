@@ -55,7 +55,6 @@ class ResampleImage(Resample):
         enable_var=True,
         report_var=True,
         compute_err=None,
-        asn_id=None,
         pixmap_stepsize=1,
         pixmap_order=1,
     ):
@@ -266,10 +265,6 @@ class ResampleImage(Resample):
                 At this time, output error array is not equivalent to
                 error propagation results.
 
-        asn_id : str, None, optional
-            The association id. The id is what appears in
-            the :ref:`asn-jwst-naming`.
-
         pixmap_stepsize : float, optional
             Indicates the spacing in pixels
             at which the WCS is evaluated when computing the pixel map.
@@ -300,8 +295,6 @@ class ResampleImage(Resample):
                     "meta.filename",
                 ]
             )
-
-        self.asn_id = asn_id
 
         # check wcs_pars has supported keywords:
         if wcs_pars is None:
