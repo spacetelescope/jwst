@@ -280,7 +280,7 @@ class JwstStep(_Step):
         asn_id : str or None
             The ASN ID, as found in the models or step.
         """
-        # Check the input models for an association
+        # Check the input models for an association ID
         try:
             if isinstance(models, ModelLibrary):
                 asn_id = models.asn["asn_id"]

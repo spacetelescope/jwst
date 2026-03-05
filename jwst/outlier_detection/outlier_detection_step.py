@@ -222,6 +222,9 @@ class OutlierDetectionStep(Step):
         # handle if input_models isn't open
         if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)
+
+        # Set up output path name to include the ASN ID if available
         asn_id = self.add_asn_id_to_output_name(input_models)
         log.info(f"Outlier Detection asn_id: {asn_id}")
+
         return
