@@ -187,20 +187,10 @@ class Observation:
 
     def _create_pixel_list(self):
         """Create flat lists of pixels to be dispersed, grouped per object ID."""
-        self.xs = []
-        self.ys = []
-        self.source_ids_per_pixel = []
-        self.fluxes = []
-        for source_id in self.source_ids:
-            ys, xs = np.nonzero(self.seg == source_id)
-            self.xs.extend(xs)
-            self.ys.extend(ys)
-            self.source_ids_per_pixel.extend([source_id] * len(xs))
-            self.fluxes.extend(self.dimage[ys, xs])
-        self.xs = np.array(self.xs)
-        self.ys = np.array(self.ys)
-        self.fluxes = np.array(self.fluxes)
-        self.source_ids_per_pixel = np.array(self.source_ids_per_pixel)
+        # Single pass: np.nonzero(self.seg) returns all non-zero (non-background) pixels
+        self.ys, self.xs = np.nonzero(self.seg)
+        self.source_ids_per_pixel = self.seg[self.ys, self.xs]
+        self.fluxes = self.dimage[self.ys, self.xs]
 
     def chunk_sources(
         self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, max_pixels=1e5
