@@ -186,7 +186,7 @@ class Observation:
         self.simulated_image = np.zeros(self.dims, float)
 
     def _create_pixel_list(self):
-        """Create flat lists of pixels to be dispersed, grouped per object ID."""
+        """Create flat lists of pixels to be dispersed."""
         self.ys, self.xs = np.nonzero(self.seg)
         self.source_ids_per_pixel = self.seg[self.ys, self.xs]
         self.fluxes = self.dimage[self.ys, self.xs]
