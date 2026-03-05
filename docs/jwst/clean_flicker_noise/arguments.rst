@@ -22,6 +22,8 @@ the behavior of the processing.
   after fitting the noise is a simple median of the background data.
   If 'model', the background data is fit with a low-resolution model
   via `~photutils.background.Background2D`.
+  If 'median_image' and the input has multiple integrations, a median
+  image across integrations will be computed and subtracted as the background.
   If None, the background value is set to 0.0.
 
 ``--background_box_size`` (list of int, default=None)
@@ -34,7 +36,8 @@ the behavior of the processing.
   For NIRSpec, mask regions of the image defined by WCS bounding
   boxes for slits/slices, as well as any regions known to be
   affected by failed-open MSA shutters.  For MIRI imaging, mask
-  regions of the detector not used for science.
+  regions of the detector not used for science. For NIRISS SOSS,
+  mask the expected spectral traces.
 
 ``--apply_flat_field`` (boolean, default=False)
   If set, images are flat-corrected prior to fitting background
@@ -48,7 +51,7 @@ the behavior of the processing.
 ``--n_sigma`` (float, default=2.0)
   The sigma-clipping threshold to use when searching for outliers
   and illuminated pixels to be excluded from use in the background
-  and noise fitting processes.
+  and noise fitting processes. Set to 0 to turn off outlier rejection.
 
 ``--fit_histogram`` (boolean, default=False)
   If set, the 'sigma' used with ``n_sigma`` for clipping outliers

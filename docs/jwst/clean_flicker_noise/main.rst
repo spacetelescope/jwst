@@ -112,6 +112,13 @@ Regions marked with DQ value "DO_NOT_USE" by the
 :ref:`flat_field <flatfield_step>` step are set to `False` in the
 scene mask.
 
+NIRISS SOSS Traces
+^^^^^^^^^^^^^^^^^^
+For NIRISS SOSS, the PASTASOSS reference file provides predicted trace
+centroids across the array for all spectral orders.  The footprints of the SOSS
+spectral traces are masked by setting to `False` a fixed number of pixels above
+and below the predicted center of each trace.
+
 Missing Data
 ^^^^^^^^^^^^
 Any pixel in the draft rate image that has a value of NaN or exactly zero
@@ -142,25 +149,27 @@ images from each instrument and observing mode.
 
 .. |c| unicode:: U+2713 .. checkmark
 
-+--------------------------+-----+-----+-----+-------+--------+--------+
-|                          |    NIRSpec      | MIRI  | NIRCam | NIRISS |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-|                          | IFU | MOS |  FS | Image | All    | All    |
-+==========================+=====+=====+=====+=======+========+========+
-| IFU Slices\ :sup:`1`     | |c| |     |     |       |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| Slits/Slitlets\ :sup:`1` |     | |c| | |c| |       |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| MSA_FAILED_OPEN\ :sup:`1`| |c| | |c| |     |       |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| Non-science\ :sup:`1`    |     |     |     | |c|   |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| FS Region\ :sup:`1`      | |c| | |c| |     |       |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| Missing Data             | |c| | |c| | |c| | |c|   | |c|    | |c|    |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| Outliers                 | |c| | |c| | |c| | |c|   | |c|    | |c|    |
-+--------------------------+-----+-----+-----+-------+--------+--------+
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+|                          |    NIRSpec      | MIRI  | NIRCam |     NIRISS      |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+|                          | IFU | MOS |  FS | Image | All    | SOSS   | Other  |
++==========================+=====+=====+=====+=======+========+========+========+
+| IFU Slices\ :sup:`1`     | |c| |     |     |       |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| Slits/Slitlets\ :sup:`1` |     | |c| | |c| |       |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| MSA_FAILED_OPEN\ :sup:`1`| |c| | |c| |     |       |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| Non-science\ :sup:`1`    |     |     |     | |c|   |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| FS Region\ :sup:`1`      | |c| | |c| |     |       |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| SOSS Traces\ :sup:`1`    |     |     |     |       |        | |c|    |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| Missing Data             | |c| | |c| | |c| | |c|   | |c|    | |c|    | |c|    |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| Outliers                 | |c| | |c| | |c| | |c|   | |c|    | |c|    | |c|    |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
 
 :sup:`1`\ These steps are only applied if the
 :ref:`step parameter <clean_flicker_noise_arguments>`
@@ -210,11 +219,36 @@ information on all referenced parameters.
    #. Mask data more than ``n_sigma * sigma`` above the center as signal
       (not background).
 
+#. If ``background_method = "median_image"``, create a scaled median image across
+   integrations to use as background.
+
+   #. Subtract a reference background from the input ramp and rate data
+      (NIRISS SOSS only).
+   #. Compute a representative flux for scaling for each integration
+      from the rate data.
+
+      a. For TSO spectral modes, extract a spectrum from a simple box
+         and compute the whitelight flux for each integration.
+      #. For TSO imaging modes, sum the flux over an aperture at the
+         expected source location for each integration.
+      #. For any other mode, take the median of the flux in each
+         integration.
+
+   #. Median combine all data across integrations to make a median
+      ramp or image.
+   #. Scale the median image by the representative flux for each
+      integration.
+   #. Add the subtracted background level back into the median image
+      (NIRISS SOSS only).
+
 #. Iterate over each integration and group in the data, to fit and correct
    for noise.
 
    #. For ramp data, make a diff image (current group – previous group) to correct.
       For rate data, use the current image directly as the diff image.
+
+      For either ramp or rate data with ``background_method = "median_image"``,
+      directly subtract the median ramp or image matching the input data.
 
    #. If ``apply_flat_field`` is set and a flat file is available, divide the
       diff image by the flat image.
@@ -238,7 +272,7 @@ information on all referenced parameters.
 
    #. Fit and remove the residual noise in the background-subtracted image.
 
-      #. If ``fit_method='fft'``, the `~jwst.clean_flicker_noise.lib.NSClean` library is called to fit
+      #. If ``fit_method='fft'``, the `~jwst.clean_flicker_noise.nsclean.NSClean` library is called to fit
          and remove the noise in frequency space (also see :ref:`nsclean-algo-references`).
 
       #. If ``fit_method='median'``, the noise is fit with a simple median
@@ -249,7 +283,7 @@ information on all referenced parameters.
          the median value is computed and subtracted independently for each
          detector channel.
 
-   #. Restore the background level to the cleaned, background-subtracted
+   #. Restore the background level or median image to the cleaned, background-subtracted
       diff image.  Also restore the flat structure if needed by multiplying the
       cleaned diff by the flat image.
 
@@ -316,3 +350,6 @@ Automated parameter decisions for NIRISS and NIRCam imaging are based on
 work by Paul Goudfrooij. The ``clean_flicker_noise`` implementation
 was adapted from an example implementation available on GitHub at
 `goudfroo/1_f_utils <https://github.com/goudfroo/1_f_utils/tree/main/optimize_one_f_params>`__.
+
+TSO-specific processing with ``background_method = "median_image"`` is based on
+work by Rachel Cooper and Aarynn Carter, for the NIRISS team.
