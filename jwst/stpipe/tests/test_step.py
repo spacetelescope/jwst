@@ -780,21 +780,24 @@ def test_add_asn_id_to_output_name_from_step():
     assert output_name == "test_cal.fits"
 
     # If input has no ASN ID, the path is unmodified
-    step.add_asn_id_to_output_name(model)
+    found_asn_id = step.add_asn_id_to_output_name(model)
     output_name = step.make_output_path(basepath="test", suffix="cal")
     assert output_name == "test_cal.fits"
+    assert found_asn_id is None
 
     # Add the ASN ID to the step attributes: it appears in the output name
     step.asn_id = asn_id_step
-    step.add_asn_id_to_output_name(model)
+    found_asn_id = step.add_asn_id_to_output_name(model)
     output_name = step.make_output_path(basepath="test", suffix="cal")
     assert output_name == f"test_{asn_id_step}_cal.fits"
+    assert found_asn_id == asn_id_step
 
     # Reset the ASN ID and update again: it no longer appears in the output name
     step.asn_id = None
-    step.add_asn_id_to_output_name(model)
+    found_asn_id = step.add_asn_id_to_output_name(model)
     output_name = step.make_output_path(basepath="test", suffix="cal")
     assert output_name == "test_cal.fits"
+    assert found_asn_id is None
 
 
 def test_add_asn_id_to_output_name_from_step_parent():
@@ -808,15 +811,17 @@ def test_add_asn_id_to_output_name_from_step_parent():
     model = datamodels.ImageModel()
 
     # Parent ASN ID appears in output name
-    step.add_asn_id_to_output_name(model)
+    found_asn_id = step.add_asn_id_to_output_name(model)
     output_name = step.make_output_path(basepath="test", suffix="cal")
     assert output_name == f"test_{asn_id_parent}_cal.fits"
+    assert found_asn_id == asn_id_parent
 
     # If the step has an asn_id defined, that overrides the parent
     step.asn_id = asn_id_step
-    step.add_asn_id_to_output_name(model)
+    found_asn_id = step.add_asn_id_to_output_name(model)
     output_name = step.make_output_path(basepath="test", suffix="cal")
     assert output_name == f"test_{asn_id_step}_cal.fits"
+    assert found_asn_id == asn_id_step
 
 
 @pytest.mark.parametrize("models", ["container", "library"])
@@ -837,12 +842,14 @@ def test_add_asn_id_to_output_name_from_model(models):
     step = Step()
 
     # Add the ASN ID from the model
-    step.add_asn_id_to_output_name(input_models)
+    found_asn_id = step.add_asn_id_to_output_name(input_models)
     output_name = step.make_output_path(basepath="test", suffix="cal")
     assert output_name == f"test_{asn_id_model}_cal.fits"
+    assert found_asn_id == asn_id_model
 
     # If the step has an asn_id, it still uses the one from the model
     step.asn_id = asn_id_step
-    step.add_asn_id_to_output_name(input_models)
+    found_asn_id = step.add_asn_id_to_output_name(input_models)
     output_name = step.make_output_path(basepath="test", suffix="cal")
     assert output_name == f"test_{asn_id_model}_cal.fits"
+    assert found_asn_id == asn_id_model
