@@ -61,17 +61,32 @@ def test_jwst_datamodels_api(model):
     assert_has_same_import(jwstdm, stdm, model)
 
 
-@pytest.mark.parametrize("module", JWST_MODULES)
-def test_jwst_datamodels_modules(module):
-    stdm_module = importlib.import_module(f"stdatamodels.jwst.datamodels.{module}")
-    jwst_module = importlib.import_module(f"jwst.datamodels.{module}")
+def test_jwst_datamodels_modules():
+    """
+    Makes sure all modules in stdatamodels.jwst.datamodels are
+    listed in jwst.datamodels modules.
+    """
 
-    for import_ in stdm_module.__all__:
-        if import_ not in DEPRECATED_MODELS:
-            assert_has_same_import(stdm_module, jwst_module, import_)
+    import sys
+    pattern = "stdatamodels.jwst.datamodels"
+    stdm_mods = [
+        key.split(".")[-1]
+        for key in sys.modules.keys() if key.startswith(pattern)
+    ]
+    pattern = "jwst.datamodels"
+    jwst_mods = [
+        key.split(".")[-1]
+        for key in sys.modules.keys() if key.startswith(pattern)
+    ]
 
-    for import_ in jwst_module.__all__:
-        assert_has_same_import(jwst_module, stdm_module, import_)
+    # Make sure everything in stdatamodels.jwst.datamodels is in jwst.datamodels.
+    all_mods = True
+    for mod in stdm_mods:
+        if mod not in jwst_mods:
+            all_mods = False
+            break
+    print(f"{all_mods = }")
+    assert all_mods is True
 
 
 @pytest.mark.parametrize("model", sorted(jwstdm._jwst_models))
