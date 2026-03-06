@@ -63,6 +63,7 @@ def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
 
 
 def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
+    """Test that fit failure triggers a single retry with fewer knots"""
     # mock a quiet failure in the fit: always return None
     class MockFit(object):
         def __init__(self):
