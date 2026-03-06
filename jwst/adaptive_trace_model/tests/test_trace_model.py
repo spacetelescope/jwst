@@ -25,19 +25,17 @@ def fit_2d_spline_input(nrs_slit_model):
 
 def test_fit_2d_spline_trace(fit_2d_spline_input):
     slit, flux, alpha = fit_2d_spline_input
-    splines, scales = tm.fit_2d_spline_trace(flux, alpha)
+    splines = tm.fit_2d_spline_trace(flux, alpha)
 
     assert len(splines) == flux.shape[1]
-    assert len(scales) == flux.shape[1]
+    scales = [s["scale"] for s in splines.values()]
 
     # for unscaled fits, output scales should be close to 1
-    np.testing.assert_allclose(list(scales.values()), 1.0, atol=0.06)
+    np.testing.assert_allclose(list(scales), 1.0, atol=0.06)
 
     # evaluated fits should be close to input data
     region_map = (~np.isnan(slit.wavelength)).astype(int)
-    trace_used, full_trace = tm._trace_image(
-        flux.shape, {1: splines}, {1: scales}, region_map, alpha
-    )
+    trace_used, full_trace = tm._trace_image(flux.shape, {1: splines}, region_map, alpha)
 
     # Fit values should be close to flux
     atol = 0.25 * np.nanmax(flux)
@@ -59,10 +57,31 @@ def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
     monkeypatch.setattr(tm, "bspline_fit", mock_fit)
 
     slit, flux, alpha = fit_2d_spline_input
-    splines, scales = tm.fit_2d_spline_trace(flux, alpha)
+    splines = tm.fit_2d_spline_trace(flux, alpha)
     assert len(splines) == 0
-    assert len(scales) == 0
     assert "Spline fit failed" in caplog.text
+
+
+def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
+    # mock a quiet failure in the fit: always return None
+    class MockFit(object):
+        def __init__(self):
+            self.call_count = 0
+
+        def __call__(self, *args, **kwargs):
+            # Track how many times this mock was called
+            self.call_count += 1
+            return None
+
+    mock_fit = MockFit()
+    monkeypatch.setattr(tm, "bspline_fit", mock_fit)
+
+    slit, flux, alpha = fit_2d_spline_input
+    splines = tm.fit_2d_spline_trace(flux, alpha)
+    assert len(splines) == 0
+
+    # The fit is re-attempted once at every column
+    assert mock_fit.call_count == 2 * flux.shape[1]
 
 
 @pytest.mark.parametrize(
@@ -74,7 +93,7 @@ def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                 "require_ngood": 15,
-                "spline_bkpt": 62,
+                "spline_bkpt": 68,
                 "space_ratio": 1.6,
             },
         ),
@@ -84,7 +103,7 @@ def test_fit_2d_spline_trace_fail(monkeypatch, caplog, fit_2d_spline_input):
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
                 "require_ngood": 15,
-                "spline_bkpt": 62,
+                "spline_bkpt": 68,
                 "space_ratio": 1.6,
             },
         ),
