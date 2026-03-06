@@ -13,16 +13,16 @@
             "members": [
                 {
                     "exptype": "SCIENCE",
-                    "expname": "test.fits",
+                    "expname": "test.fits"
                 },
                 {
                     "exptype": "SCIENCE",
-                    "expname": "test.fits",
+                    "expname": "test.fits"
                 },
                 {
                     "exptype": "sourcecat",
-                    "expname": "test_cat.ecsv",
-                },
+                    "expname": "test_cat.ecsv"
+                }
             ]
         }
     ],
