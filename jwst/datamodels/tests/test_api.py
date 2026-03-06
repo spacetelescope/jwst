@@ -56,8 +56,7 @@ def test_jwst_datamodels_api(model):
 
 def test_jwst_datamodels_modules():
     """
-    Makes sure all modules in stdatamodels.jwst.datamodels are
-    listed in jwst.datamodels modules.
+    Test JWST modules to ensure it doesn't contain any unexpected modules.
     """
     JWST_MODULES = sorted(
         [
