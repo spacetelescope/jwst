@@ -281,6 +281,27 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(IRAFStarFinder).parameters)
+
+    # Translate old kwargs to new ones for photutils v3.0 and later
+    if "sharpness_range" in finder_args:
+        # sharplo, sharphi -> sharpness_range
+        # roundlo, roundhi -> roundness_range
+        # peakmax -> peak_max
+        # brightest -> n_brightest
+        # minsep_fwhm -> min_separation
+        kwargs = kwargs.copy()  # avoid modifying original dict
+        if "sharplo" in kwargs and "sharphi" in kwargs:
+            kwargs["sharpness_range"] = (kwargs.pop("sharplo"), kwargs.pop("sharphi"))
+        if "roundlo" in kwargs and "roundhi" in kwargs:
+            kwargs["roundness_range"] = (kwargs.pop("roundlo"), kwargs.pop("roundhi"))
+        if "peakmax" in kwargs:
+            kwargs["peak_max"] = kwargs.pop("peakmax")
+        if "brightest" in kwargs:
+            kwargs["n_brightest"] = kwargs.pop("brightest")
+        if "minsep_fwhm" in kwargs:
+            min_sep_pix = max(2, int(kwargs.pop("minsep_fwhm") * kernel_fwhm + 0.5))
+            kwargs["min_separation"] = min_sep_pix
+
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
@@ -324,6 +345,23 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(DAOStarFinder).parameters)
+
+    # Translate old kwargs to new ones for photutils v3.0 and later
+    if "sharpness_range" in finder_args:
+        # sharplo, sharphi -> sharpness_range
+        # roundlo, roundhi -> roundness_range
+        # peakmax -> peak_max
+        # brightest -> n_brightest
+        kwargs = kwargs.copy()  # avoid modifying original dict
+        if "sharplo" in kwargs and "sharphi" in kwargs:
+            kwargs["sharpness_range"] = (kwargs.pop("sharplo"), kwargs.pop("sharphi"))
+        if "roundlo" in kwargs and "roundhi" in kwargs:
+            kwargs["roundness_range"] = (kwargs.pop("roundlo"), kwargs.pop("roundhi"))
+        if "peakmax" in kwargs:
+            kwargs["peak_max"] = kwargs.pop("peakmax")
+        if "brightest" in kwargs:
+            kwargs["n_brightest"] = kwargs.pop("brightest")
+
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
