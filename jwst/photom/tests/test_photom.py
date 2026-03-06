@@ -707,7 +707,7 @@ def create_photom_niriss_wfss(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
         dtype=dtype,
     )
     ftab = datamodels.NisWfssPhotomModel(phot_table=reftab)
-
+    ftab.phot_unit = "MJy micron s / (DN sr)"
     return ftab
 
 
@@ -1162,7 +1162,7 @@ def create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0):
     )
 
     ftab = datamodels.NrcWfssPhotomModel(phot_table=reftab)
-
+    ftab.phot_unit = "Angstrom MJy s / (DN sr)"
     return ftab
 
 
