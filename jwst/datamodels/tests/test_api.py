@@ -56,7 +56,8 @@ def test_jwst_datamodels_api(model):
 
 def test_jwst_datamodels_modules():
     """
-    Test JWST modules to ensure it doesn't contain any unexpected modules.
+    Test all classes defined in `jwst.datamodels` and `stdatamodels.jwst.datamodels`
+    are also in `jwst.datamodels.__init__`.
     """
     jwst_modules = sorted(
         [
