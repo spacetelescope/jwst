@@ -29,16 +29,18 @@ Detailed explanations of specific calibration stages, reference files, and pipel
 > If you have trouble installing this package, have encountered a bug while running the pipeline, or wish to request a new feature,
 > please [open an issue on GitHub](https://github.com/spacetelescope/jwst/issues) or [contact the JWST Help Desk](https://jwsthelp.stsci.edu).
 
-### On This Page
 <!--toc:start-->
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [Testing](#testing)
-- [Software vs DMS build version map](#software-vs-dms-build-version-map)
+- [Quick Start](#quick-start)
+  - [1. Install the Pipeline](#1-install-the-pipeline)
+  - [2. Set up the Calibration References Data System (CRDS)](#2-set-up-the-calibration-references-data-system-crds)
+  - [3. Run the Pipeline](#3-run-the-pipeline)
+- [Code Contributions](#code-contributions)
+- [DMS Operational Build Versions](#dms-operational-build-versions)
 <!--toc:end-->
 
-## Installation
+## Quick Start
+
+### 1. Install the Pipeline
 
 We recommend using an isolated Python environment to install `jwst`.
 Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
@@ -97,7 +99,7 @@ Remember to `mamba activate` the environment you wish to use before running comm
 > pip install jwst
 > ```
 
-### Installing the latest unreleased development version directly from the source code
+#### Installing the latest unreleased development version directly from the source code
 
 > [!IMPORTANT]
 > You need a C compiler in order to build the JWST calibration pipeline (and dependencies) from source.
@@ -108,7 +110,7 @@ To install the latest bleeding-edge development version directly from the source
 pip install git+https://github.com/spacetelescope/jwst
 ```
 
-### Installing a DMS Operational Build
+#### Installing a DMS Operational Build
 
 There may be occasions where an exact copy of an operational DMS build is
 desired (e.g. for validation testing or debugging issues in operations).
@@ -116,7 +118,7 @@ We package releases for DMS builds [as environment snapshots that specify the ex
 
 Note that these environment files are delivered as Conda YAMLs. To install one, you will need to have `conda`, `mamba`, or `micromamba` installed on your computer.
 
-The [Software vs DMS build version map](#software-vs-dms-build-version-map), shown below, displays the `jwst` version for each DMS build.
+See the [DMS Operational Build Versions](#dms-operational-build-versions) table for the version of the pipeline corresponding to each DMS operational build.
 For example, use `jwst==1.17.1` for DMS build **11.2**.
 Also note that Linux and macOS systems require different snapshot files:
 ```shell
@@ -132,12 +134,7 @@ conda activate JWSTDP-1.18.1-1-py312-macos-arm64
 > pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.0/reqs_macos-stable-deps.txt
 > ```
 
-## Usage
-
-This package allows users to run and configure the calibration pipeline themselves for custom processing of JWST data,
-either [from the command line with `strun`](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/running_pipeline_command_line.html)
-or [from a Python script via the public API](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/running_pipeline_python.html).
-Additionally, this package provides [JWST datamodel classes](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/datamodels.html), the recommended method for reading and writing JWST data files in Python.
+### 2. Set up the Calibration References Data System (CRDS)
 
 Before running the pipeline, you must first set up your local machine to retrieve files from the [Calibration References Data System (CRDS)](https://jwst-crds.stsci.edu/static/users_guide/index.html>)
 CRDS provides calibration reference files for several telescopes, including JWST.
@@ -165,7 +162,14 @@ export CRDS_CONTEXT=jwst_1179.pmap
 
 For more information, see [the docs page on JWST CRDS reference files](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/reference_files_crds.html#reference-files-crds).
 
-## Contributing
+### 3. Run the Pipeline
+
+This package allows users to run and configure the calibration pipeline themselves for custom processing of JWST data,
+either [from the command line with `strun`](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/running_pipeline_command_line.html)
+or [from a Python script via the public API](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/running_pipeline_python.html).
+Additionally, this package provides [JWST datamodel classes](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/datamodels.html), the recommended method for reading and writing JWST data files in Python.
+
+## Code Contributions
 
 `jwst` is an open source package written in Python.
 The source code is [available on GitHub](https://github.com/spacetelescope/jwst).
@@ -176,15 +180,17 @@ and the [public API deprecation policy](https://jwst-pipeline.readthedocs.io/en/
 
 We strive to provide a welcoming community by abiding with our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
-## Testing
+See [`TESTING.md`](./TESTING.md) for instructions on automated testing.
 
-See [`TESTING.md`](./TESTING.md)
+## DMS Operational Build Versions
 
-## Software vs DMS build version map
+The table below provides information on each release of the `jwst` package and its relationship to software builds used in STScI JWST DMS operations.
+Each `jwst` tag was released on PyPI on the date given in `Released`, and then subsequently installed into operations on the date given in `Ops Install`.
 
-The table below provides information on each release of the `jwst` package and its relationship to software builds used in the STScI JWST DMS operations environment.
-The `Released` column gives the date on which the `jwst` tag was released on PyPI, and the `Ops Install` column gives the date on which the build incorporating that release was installed in DMS operations.
-Note that the `CRDS_CONTEXT` listed is a minimum context that can be used with that release. A release should work with any contexts between the specified context and the context specified for the next release.
+> [!NOTE]
+> The `CRDS_CONTEXT` column indicates the minimum CRDS context supported by the corresponding release.
+> CRDS contexts up to the one specified for the *next* release should work;
+> for instance, `jwst==1.20.0` officially supports contexts `1462` through `1464`.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
