@@ -4,7 +4,6 @@ import gc
 import logging
 from pathlib import Path
 
-import gwcs
 import stcal.tweakreg.tweakreg as twk
 from astropy.table import Table
 from astropy.time import Time
@@ -263,12 +262,26 @@ class TweakRegStep(Step):
                     image_model.meta.tweakreg_catalog = self._write_catalog(catalog, filename)
 
                 # construct the corrector since the model is open (and already has a group_id)
-                correctors[model_index] = twk.construct_wcs_corrector(
-                    image_model.meta.wcs,
-                    image_model.meta.wcsinfo.instance,
-                    catalog,
-                    image_model.meta.group_id,
+                catalog = twk.filter_catalog_by_bounding_box(
+                    catalog, image_model.meta.wcs.bounding_box
                 )
+                wcsinfo = image_model.meta.wcsinfo.instance
+                corrector = JWSTWCSCorrector(
+                    wcs=image_model.meta.wcs,
+                    wcsinfo={
+                        "roll_ref": wcsinfo["roll_ref"],
+                        "v2_ref": wcsinfo["v2_ref"],
+                        "v3_ref": wcsinfo["v3_ref"],
+                    },
+                    # catalog and group_id are required meta
+                    meta={
+                        "catalog": catalog,
+                        "name": catalog.meta.get("name"),
+                        "group_id": image_model.meta.group_id,
+                    },
+                )
+                correctors[model_index] = corrector
+
                 images.shelve(image_model, model_index)
 
         log.info("")
@@ -565,46 +578,3 @@ def _rename_catalog_columns(catalog):
                     "'ycentroid'."
                 )
     return catalog
-
-
-def construct_wcs_corrector(
-    wcs: gwcs.WCS,
-    refang: dict,
-    catalog: Table,
-    group_id: str,
-) -> JWSTWCSCorrector:
-    """
-    Construct a JWSTWCSCorector for the provided wcs.
-
-    pre-compute skycoord here so we can later use it
-    to check for a small wcs correction.
-
-    Parameters
-    ----------
-    wcs : `gwcs.WCS`
-        WCS object to be corrected.
-
-    refang : dict
-        Dictionary containing WCSreference angles.
-
-    Returns
-    -------
-    `JWSTWCSCorrector`
-        A WCS corrector object for the provided WCS.
-    """
-    catalog = twk.filter_catalog_by_bounding_box(catalog, wcs.bounding_box)
-
-    return JWSTWCSCorrector(
-        wcs=wcs,
-        wcsinfo={
-            "roll_ref": refang["roll_ref"],
-            "v2_ref": refang["v2_ref"],
-            "v3_ref": refang["v3_ref"],
-        },
-        # catalog and group_id are required meta
-        meta={
-            "catalog": catalog,
-            "name": catalog.meta.get("name"),
-            "group_id": group_id,
-        },
-    )
