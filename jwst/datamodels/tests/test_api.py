@@ -58,7 +58,7 @@ def test_jwst_datamodels_modules():
     """
     Test JWST modules to ensure it doesn't contain any unexpected modules.
     """
-    JWST_MODULES = sorted(
+    jwst_modules = sorted(
         [
             mdl.name
             for mdl in pkgutil.iter_modules(jwstdm.__path__)
@@ -66,7 +66,7 @@ def test_jwst_datamodels_modules():
         ]
     )
 
-    for module in JWST_MODULES:
+    for module in jwst_modules:
         stdm_module = importlib.import_module(f"stdatamodels.jwst.datamodels.{module}")
         jwst_module = importlib.import_module(f"jwst.datamodels.{module}")
 
