@@ -128,7 +128,6 @@ def fit_2d_spline_trace(
         Keys are column index numbers, values are floating point giving the upper bound
         for which the spline model is valid, to pair with the returned models. If a
         spline model could not be fit, the column index number is not present.
-
     """
     # Define a fallback spline model, initialize to None
     spline_model_save = None
