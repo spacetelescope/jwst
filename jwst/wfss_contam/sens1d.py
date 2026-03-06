@@ -1,7 +1,7 @@
 import logging
 
+import astropy.units as u
 import numpy as np
-import stdatamodels.jwst.datamodels as dm
 
 from jwst.photom.photom import find_row
 
@@ -46,15 +46,10 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     tabdata = phot_table[row]
 
     # Scalar conversion factor
-    if isinstance(phot_model, dm.NrcWfssPhotomModel):
-        # NIRCam: convert from Angstrom to micron
-        scalar_conversion = tabdata["photmjsr"] / 1e4
-    elif isinstance(phot_model, dm.NisWfssPhotomModel):
-        # NIRISS: no conversion needed
-        scalar_conversion = tabdata["photmjsr"]
-    else:
-        log.error("Unsupported photom model type: %s", type(phot_model))
-        raise TypeError("Unsupported photom model type")
+    photunit = phot_model.phot_unit
+    expected_unit = "MJy micron s / (DN sr)"
+    conversion_factor = u.Unit(photunit).to(u.Unit(expected_unit))
+    scalar_conversion = conversion_factor * tabdata["photmjsr"]
 
     # Get the length of the relative response arrays in this row
     nelem = tabdata["nelem"]
