@@ -1,0 +1,1 @@
+Fix a couple minor bugs in intermediate products, edge clipping, and spline knots for the adaptive_trace_model step.
