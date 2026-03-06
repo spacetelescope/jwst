@@ -1,0 +1,1 @@
+Remove unnecessary loop during setup of disperse, improving runtime. For one NIRISS case tested, contam step runtime was cut by 35 percent
