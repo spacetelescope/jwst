@@ -17,8 +17,9 @@ def test_warning_inside_capture_logging():
 
 def test_unexpected_warning_inside_capture_logging():
     """
-    This test catches the exception raised due to warnings not matching.
-    We're testing that pytest.warns fails to catch a warnings.
+    This tests catches the exceptions raised when `UserWarning` does not
+    match the actual warning expected to be caught. The warning is not
+    caught because of this mismatch, so an exception is raised.
     """
     with pytest.raises(UserWarning, match="not the warning"):
         with _help_pytest_warns(), pytest.warns(UserWarning, match="expected"):
