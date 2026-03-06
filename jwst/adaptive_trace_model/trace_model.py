@@ -189,8 +189,8 @@ def fit_2d_spline_trace(
             )
 
             # If this routine could not get a fit (returned None) use the saved fit if available
-            # If no saved fit is available try the fitting routine again with slightly fewer breakpoints
-            # to resolve occasional numerical issues.
+            # If no saved fit is available try the fitting routine again with slightly fewer
+            # breakpoints to resolve occasional numerical issues.
             if ((bspline is None) & (spline_model_save is not None)):
                 spline_model = spline_model_save
                 spline_lobound = spline_lobound_save
@@ -427,7 +427,8 @@ def _trace_image(shape, spline_models, spline_scales, spline_lobounds,
 
             # Evaluate the spline model for relevant data
             col_alpha = alpha_slice[:, i]
-            valid_alpha = (np.isfinite(col_alpha) & (col_alpha >= lobound[i]) & (col_alpha <= hibound[i]))
+            valid_alpha = (np.isfinite(col_alpha) & (col_alpha >= lobound[i])
+                           & (col_alpha <= hibound[i]))
             col_fit = splines[i](col_alpha[valid_alpha])
 
             # Set the edges to NaN to avoid edge effects
@@ -851,7 +852,8 @@ def oversample_flux(
                 spline_bkpt = len(np.unique(spline_model.t)) - 1
 
             # Get valid input locations and evaluate the spline
-            valid_alpha = (np.isfinite(col_alpha) & (col_alpha >= spline_lobound) & (col_alpha <= spline_hibound))
+            valid_alpha = (np.isfinite(col_alpha) & (col_alpha >= spline_lobound)
+                           & (col_alpha <= spline_hibound))
             col_fit = spline_model(col_alpha[valid_alpha])
             scaled_fit = col_fit * spline_scale
 
@@ -878,7 +880,8 @@ def oversample_flux(
             alpha_ptsource.append(col_alpha[valid_alpha][highslope])
 
             # Store the oversampled alpha values to check against later
-            inbounds = np.where((alpha_os[newy, ii] >= spline_lobound) & (alpha_os[newy, ii] <= spline_hibound))
+            inbounds = np.where((alpha_os[newy, ii] >= spline_lobound)
+                                & (alpha_os[newy, ii] <= spline_hibound))
             alpha_os_slice[newy[inbounds], ii] = alpha_os[newy[inbounds], ii]
 
             # Evaluate the bspline at the oversampled alpha for this column
