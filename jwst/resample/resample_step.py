@@ -145,7 +145,6 @@ class ResampleStep(Step):
                 enable_var=enable_var,
                 report_var=report_var,
                 compute_err=compute_err,
-                propagate_dq=self.propagate_dq,
                 **kwargs,
             )
             result = resamp.resample_many_to_one()
@@ -217,6 +216,7 @@ class ResampleStep(Step):
             "blendheaders": self.blendheaders,
             "pixmap_stepsize": self.pixmap_stepsize,
             "pixmap_order": self.pixmap_order,
+            "propagate_dq": self.propagate_dq,
         }
 
         # Custom output WCS parameters.
