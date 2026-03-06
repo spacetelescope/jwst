@@ -731,12 +731,12 @@ class DataSet:
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 continue
-            photunit = getattr(ftab, "phot_unit", None)
+            phot_unit = getattr(ftab, "phot_unit", None)
             self.photom_io(
-                ftab.phot_table[row], time_correction=correction_table[row], photunit=photunit
+                ftab.phot_table[row], time_correction=correction_table[row], phot_unit=phot_unit
             )
 
-    def photom_io(self, tabdata, order=None, time_correction=None, photunit=None):
+    def photom_io(self, tabdata, order=None, time_correction=None, phot_unit=None):
         """
         Combine photometric conversion factors and apply to the science dataset.
 
@@ -752,7 +752,7 @@ class DataSet:
             recorded on the zero-day MJD (t0).  The scalar conversion factor
             will be divided by the correction value if provided, and if
             ``self.apply_time_correction`` is True.
-        photunit : str or None
+        phot_unit : str or None
             Unit string for the photometric conversion factor from the reference file
             ``phot_unit`` attribute (e.g. ``"MJy Angstrom s / (DN sr)"``).
             When provided, it is used to compute a numeric conversion factor to the
@@ -907,7 +907,7 @@ class DataSet:
                         relresps,
                         order,
                         include_dispersion=True,
-                        photunit=photunit,
+                        phot_unit=phot_unit,
                     )
 
                 else:
@@ -933,7 +933,7 @@ class DataSet:
                         relresps,
                         order,
                         include_dispersion=True,
-                        photunit=photunit,
+                        phot_unit=phot_unit,
                     )
 
                 else:
@@ -1066,7 +1066,7 @@ class DataSet:
         order,
         use_wavecorr=None,
         include_dispersion=False,
-        photunit=None,
+        phot_unit=None,
     ):
         """
         Create a 2D array of photometric conversion values.
@@ -1095,7 +1095,7 @@ class DataSet:
         include_dispersion : bool or None
             Flag indicating whether the dispersion needs to be incorporated
             into the 2-d conversion factors.
-        photunit : str or None
+        phot_unit : str or None
             Unit string for the photometric conversion factor from the reference file
             ``phot_unit`` attribute (e.g. ``"MJy Angstrom s / (DN sr)"``).
             When provided, it is used to compute a numeric conversion factor to the
@@ -1122,9 +1122,9 @@ class DataSet:
         if include_dispersion:
             dispaxis = get_dispersion_direction(self.exptype, self.grating, self.filter, self.pupil)
             if dispaxis is not None:
-                if photunit is not None:
+                if phot_unit is not None:
                     expected_unit = "MJy micron s / (DN sr)"
-                    conversion_factor = u.Unit(photunit).to(u.Unit(expected_unit))
+                    conversion_factor = u.Unit(phot_unit).to(u.Unit(expected_unit))
                 else:
                     conversion_factor = 1.0
                 dispersion_array = self.get_dispersion_array(wl_array, dispaxis) / conversion_factor

@@ -46,9 +46,8 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     tabdata = phot_table[row]
 
     # Scalar conversion factor
-    photunit = phot_model.phot_unit
     expected_unit = "MJy micron s / (DN sr)"
-    conversion_factor = u.Unit(photunit).to(u.Unit(expected_unit))
+    conversion_factor = u.Unit(phot_model.phot_unit).to(u.Unit(expected_unit))
     scalar_conversion = conversion_factor * tabdata["photmjsr"]
 
     # Get the length of the relative response arrays in this row
