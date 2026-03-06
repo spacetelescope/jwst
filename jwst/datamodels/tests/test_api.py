@@ -24,13 +24,6 @@ STDM_MODULES = sorted(
         and mdl.name not in DEPRECATED_MODULES
     ]
 )
-JWST_MODULES = sorted(
-    [
-        mdl.name
-        for mdl in pkgutil.iter_modules(jwstdm.__path__)
-        if not mdl.ispkg and mdl.name not in jwstdm._jwst_modules
-    ]
-)
 
 
 def assert_has_same_import(module_a, module_b, import_):
@@ -66,27 +59,24 @@ def test_jwst_datamodels_modules():
     Makes sure all modules in stdatamodels.jwst.datamodels are
     listed in jwst.datamodels modules.
     """
+    JWST_MODULES = sorted(
+        [
+            mdl.name
+            for mdl in pkgutil.iter_modules(jwstdm.__path__)
+            if not mdl.ispkg and mdl.name not in jwstdm._jwst_modules
+        ]
+    )
 
-    import sys
-    pattern = "stdatamodels.jwst.datamodels"
-    stdm_mods = [
-        key.split(".")[-1]
-        for key in sys.modules.keys() if key.startswith(pattern)
-    ]
-    pattern = "jwst.datamodels"
-    jwst_mods = [
-        key.split(".")[-1]
-        for key in sys.modules.keys() if key.startswith(pattern)
-    ]
+    for module in JWST_MODULES:
+        stdm_module = importlib.import_module(f"stdatamodels.jwst.datamodels.{module}")
+        jwst_module = importlib.import_module(f"jwst.datamodels.{module}")
 
-    # Make sure everything in stdatamodels.jwst.datamodels is in jwst.datamodels.
-    all_mods = True
-    for mod in stdm_mods:
-        if mod not in jwst_mods:
-            all_mods = False
-            break
-    print(f"{all_mods = }")
-    assert all_mods is True
+        for import_ in stdm_module.__all__:
+            if import_ not in DEPRECATED_MODELS:
+                assert_has_same_import(stdm_module, jwst_module, import_)
+
+        for import_ in jwst_module.__all__:
+            assert_has_same_import(jwst_module, stdm_module, import_)
 
 
 @pytest.mark.parametrize("model", sorted(jwstdm._jwst_models))
