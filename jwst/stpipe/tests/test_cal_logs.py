@@ -37,6 +37,24 @@ def test_cal_logs_pipeline():
     assert any(("foo" in l for l in m.cal_logs.cal_logs_pipeline))
 
 
+def test_cal_logs_step_in_pipeline(tmp_cwd):
+    # Set the log level to INFO, since it is not directly configured in `run`
+    with LoggingContext(logging.getLogger("jwst"), level=logging.INFO):
+        pipe = CalLogsPipeline()
+        pipe.output_file = "passenger_side"
+        pipe.a_step.save_results = True
+        m = pipe.run("scrub")
+
+    # Final output has pipeline logs
+    assert list(m.cal_logs.instance.keys()) == ["cal_logs_pipeline"]
+    assert any(("scrub" in l for l in m.cal_logs.cal_logs_pipeline))
+
+    # Step output also has pipeline logs
+    with datamodels.open("passenger_side_a_step.fits") as m:
+        assert list(m.cal_logs.instance.keys()) == ["cal_logs_pipeline"]
+        assert any(("scrub" in l for l in m.cal_logs.cal_logs_pipeline))
+
+
 @pytest.mark.parametrize(
     "msg, is_empty",
     [
