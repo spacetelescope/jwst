@@ -114,15 +114,19 @@ def fit_2d_spline_trace(
     Returns
     -------
     splines : dict
-        Keys are column index numbers, values are `~scipy.interpolate.BSpline`.
-        If a spline model could not be fit, the column index number is not present.
-    scales : dict
-        Keys are column index numbers, values are floating point scales, to pair with
-        the returned models. If a spline model could not be fit, the column index
-        number is not present.
+        Keys are column index numbers, values are dicts.  Each dict contains a
+        normalized ``model`` with `~scipy.interpolate.BSpline` value, a ``scale``
+        with a float value to scale to the data, and ``bounds`` with a 2-tuple of
+        floating point values, corresponding to the lower and upper bounds of the
+        alpha coordinates used in the fit. If a spline model could not be fit,
+        the column index number is not present.
     """
     # Define a fallback spline model, initialize to None
     spline_model_save = None
+
+    # Similarly define the bounds of the fallback model
+    spline_lobound_save = None
+    spline_hibound_save = None
 
     # Set up the column fitting order if not provided
     xsize = flux.shape[-1]
@@ -137,7 +141,6 @@ def fit_2d_spline_trace(
 
     # Loop over columns in the slit/slice
     splines = {}
-    scales = {}
     for i in col_index:
         col_flux = flux[:, i]
         col_alpha = alpha[:, i]
@@ -174,22 +177,45 @@ def fit_2d_spline_trace(
                 verbose=False,
             )
 
-            # If this routine could not get a fit (returned None) use the saved fit
-            if bspline is None:
+            # If the fit failed (returned None) and no saved fit is available,
+            # try the fitting routine again with slightly fewer
+            # breakpoints to resolve occasional numerical issues.
+            if bspline is None and spline_model_save is None and spline_bkpt > 3:
+                bspline = bspline_fit(
+                    local_alpha,
+                    local_data,
+                    nbkpts=spline_bkpt - 3,
+                    wrapsig_low=2.5,
+                    wrapsig_high=2.5,
+                    wrapiter=3,
+                    space_ratio=space_ratio,
+                    verbose=False,
+                )
+
+            # If bspline is still None, use the saved fit if available
+            if bspline is None and spline_model_save is not None:
                 spline_model = spline_model_save
+                spline_lobound = spline_lobound_save
+                spline_hibound = spline_hibound_save
             else:
-                spline_model = bspline
+                spline_model = bspline  # may be valid fit or None
+                spline_lobound = np.nanmin(local_alpha)
+                spline_hibound = np.nanmax(local_alpha)
+
         except (ValueError, RuntimeError) as err:
             log.warning(f"Spline fit failed at column {i}: {str(err)}")
-            spline_model = spline_model_save
+            spline_model = spline_model_save  # may be valid fit or None
+            spline_lobound = spline_lobound_save
+            spline_hibound = spline_hibound_save
 
         # Check for a good model
         if spline_model is None:
             continue
 
-        # Store the spline model for the column
-        splines[i] = spline_model
+        # Store the spline model and bounds for the column
         spline_model_save = spline_model
+        spline_lobound_save = spline_lobound
+        spline_hibound_save = spline_hibound
 
         # Evaluate the bspline at the valid input locations to determine
         # a scale factor for the fit
@@ -209,10 +235,14 @@ def fit_2d_spline_trace(
             weights = _get_weights_for_fit_scale(ratio, col_fit)
             wmeanratio = np.nansum(ratio * weights)
 
-        # Store the scale factor for the column
-        scales[i] = wmeanratio
+        # Store the model, scale, and bounds to return
+        splines[i] = {
+            "model": spline_model,
+            "scale": wmeanratio,
+            "bounds": (spline_lobound, spline_hibound),
+        }
 
-    return splines, scales
+    return splines
 
 
 def _reindex(xmin, xmax, scale=2.0):
@@ -311,7 +341,7 @@ def _is_compact_source(
     return is_compact
 
 
-def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_limit=0.1, pad=3):
+def _trace_image(shape, spline_models, region_map, alpha, slope_limit=0.1, pad=3):
     """
     Evaluate spline models at all pixels to generate a trace image.
 
@@ -326,8 +356,6 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_l
         Data shape for the output image.
     spline_models : dict
         Spline models to evaluate.
-    spline_scales : dict
-        Scaling factors for spline models.
     region_map : ndarray
         2D image matching shape, mapping valid region numbers.
     alpha : ndarray
@@ -359,7 +387,7 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_l
     spline_bkpt = None
     for slnum in spline_models:
         splines = spline_models[slnum]
-        scales = spline_scales[slnum]
+
         alpha_slice[:] = np.nan
         trace_slice[:] = np.nan
 
@@ -374,17 +402,20 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_l
         for i in range(shape[-1]):
             if i not in splines:
                 continue
+            spline = splines[i]["model"]
+            scale = splines[i]["scale"]
+            lobound, hibound = splines[i]["bounds"]
 
             # Evaluate the spline model for relevant data
             col_alpha = alpha_slice[:, i]
-            valid_alpha = np.isfinite(col_alpha)
-            col_fit = splines[i](col_alpha[valid_alpha])
+            valid_alpha = np.isfinite(col_alpha) & (col_alpha >= lobound) & (col_alpha <= hibound)
+            col_fit = spline(col_alpha[valid_alpha])
 
             # Set the edges to NaN to avoid edge effects
             col_fit[0] = np.nan
             col_fit[-1] = np.nan
 
-            scaled_fit = scales[i] * col_fit
+            scaled_fit = scale * col_fit
             trace_slice[:, i][valid_alpha] = scaled_fit
 
             # Get the slope of the model fit prior to scaling
@@ -399,7 +430,7 @@ def _trace_image(shape, spline_models, spline_scales, region_map, alpha, slope_l
 
             # Get the number of spline breakpoints used from the first real model
             if spline_bkpt is None:
-                spline_bkpt = len(np.unique(splines[i].t)) - 1
+                spline_bkpt = len(np.unique(spline.t)) - 1
 
         full_trace[indx] = trace_slice[indx]
         if slope_limit <= 0:
@@ -557,21 +588,17 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
     Returns
     -------
     spline_models : dict
-        Keys are region numbers, values are dicts containing a spline model for
-        each column index in the region. If a spline model could not be fit, the
-        column index number is not present.
-    scales : dict
-        Keys are region numbers, values are dicts containing a floating point scale
-        for each spline model, by column index number. If a spline model could not
-        be fit, the column index number is not present.
+        Keys are region numbers, values are dicts containing a spline model,
+        scale, and bounds for each column index in the region. If a spline model
+        could not be fit, the column index number is not present.
     """
     # Arrays to reset with NaNs for each slice
     data_slice = np.full_like(flux, np.nan)
     alpha_slice = np.full_like(flux, np.nan)
 
     spline_models = {}
-    spline_scales = {}
     slice_numbers = np.unique(region_map[region_map > 0])
+
     for slnum in slice_numbers:
         log.info("Fitting slice %s", slnum)
 
@@ -601,16 +628,12 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
             dospline = True
 
         if dospline:
-            splines, scales = fit_2d_spline_trace(
-                data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs
-            )
+            splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
         else:
             splines = {}
-            scales = {}
         spline_models[slnum] = splines
-        spline_scales[slnum] = scales
 
-    return spline_models, spline_scales
+    return spline_models
 
 
 def oversample_flux(
@@ -618,7 +641,6 @@ def oversample_flux(
     alpha,
     region_map,
     spline_models,
-    spline_scales,
     oversample_factor,
     alpha_os,
     require_ngood=10,
@@ -659,13 +681,9 @@ def oversample_flux(
         Map containing the slice or slit number for valid regions.
         Values are >0 for pixels in valid regions, 0 otherwise.
     spline_models : dict
-        Keys are region numbers, values are dicts containing a spline model for
-        each column index in the region. If a spline model could not be fit, the
-        column index number is not present.
-    spline_scales : dict
-        Keys are region numbers, values are dicts containing a floating point scale
-        for each spline model, by column index number. If a spline model could not
-        be fit, the column index number is not present.
+        Keys are region numbers, values are dicts containing a spline model,
+        scale, and bounds for each column index in the region. If a spline model
+        could not be fit, the column index number is not present.
     oversample_factor : float
         Scaling factor to oversample by.
     alpha_os : ndarray
@@ -766,15 +784,21 @@ def oversample_flux(
             # Check for a spline fit for this column
             if slnum not in spline_models or ii not in spline_models[slnum]:
                 continue
-            spline_model = spline_models[slnum][ii]
-            spline_scale = spline_scales[slnum][ii]
+            spline_model = spline_models[slnum][ii]["model"]
+            spline_scale = spline_models[slnum][ii]["scale"]
+            spline_lobound = spline_models[slnum][ii]["bounds"][0]
+            spline_hibound = spline_models[slnum][ii]["bounds"][1]
 
             # Get the number of spline breakpoints used from the first real model
             if spline_bkpt is None:
                 spline_bkpt = len(np.unique(spline_model.t)) - 1
 
             # Get valid input locations and evaluate the spline
-            valid_alpha = np.isfinite(col_alpha)
+            valid_alpha = (
+                np.isfinite(col_alpha)
+                & (col_alpha >= spline_lobound)
+                & (col_alpha <= spline_hibound)
+            )
             col_fit = spline_model(col_alpha[valid_alpha])
             scaled_fit = col_fit * spline_scale
 
@@ -801,15 +825,18 @@ def oversample_flux(
             alpha_ptsource.append(col_alpha[valid_alpha][highslope])
 
             # Store the oversampled alpha values to check against later
-            alpha_os_slice[newy, ii] = alpha_os[newy, ii]
+            inbounds = np.where(
+                (alpha_os[newy, ii] >= spline_lobound) & (alpha_os[newy, ii] <= spline_hibound)
+            )
+            alpha_os_slice[newy[inbounds], ii] = alpha_os[newy[inbounds], ii]
 
             # Evaluate the bspline at the oversampled alpha for this column
-            oversampled_fit = spline_model(alpha_os[newy, ii]) * spline_scale
+            oversampled_fit = spline_model(alpha_os[newy[inbounds], ii]) * spline_scale
             if trim_ends and edge_limit >= 1:
                 oversampled_fit[0:edge_limit] = np.nan
                 oversampled_fit[-edge_limit:] = np.nan
 
-            flux_os_bspline_full[newy, ii] = oversampled_fit
+            flux_os_bspline_full[newy[inbounds], ii] = oversampled_fit
 
         # Now that our initial loop along the slice is done, we have a spline model everywhere
 
@@ -834,7 +861,7 @@ def oversample_flux(
 
     # Insert the bspline interpolated values into the final combined oversampled array,
     # starting from the linearly interpolated array
-    flux_os = flux_os_linear
+    flux_os = flux_os_linear.copy()
     indx = np.where(np.isfinite(flux_os_bspline_use))
     flux_os[indx] = flux_os_bspline_use[indx]
 
@@ -879,7 +906,7 @@ def _set_fit_kwargs(detector, xsize):
     # Empirical parameters for this mode
     if detector.startswith("NRS"):
         require_ngood = 15
-        spline_bkpt = 62
+        spline_bkpt = 68
         lrange = 50
 
         # This factor of 1.6 was dialed based on inspection of the results
@@ -1336,7 +1363,7 @@ def fit_and_oversample(
 
     # Fit spline models to all regions
     fit_kwargs = _set_fit_kwargs(detector, xsize)
-    spline_models, spline_scales = fit_all_regions(
+    spline_models = fit_all_regions(
         flux_orig, alpha_orig, region_map, signal_threshold, **fit_kwargs
     )
 
@@ -1350,7 +1377,6 @@ def fit_and_oversample(
         trace_used, full_trace = _trace_image(
             flux_orig.shape,
             spline_models,
-            spline_scales,
             region_map,
             alpha_orig,
             slope_limit=slope_limit,
@@ -1391,7 +1417,6 @@ def fit_and_oversample(
         alpha_orig,
         region_map,
         spline_models,
-        spline_scales,
         oversample_factor,
         alpha_os,
         slope_limit=slope_limit,

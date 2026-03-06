@@ -37,6 +37,7 @@ class ResampleSpecStep(Step):
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
         in_memory = boolean(default=True)  # Keep images in memory
+        propagate_dq = boolean(default=False)  # propagate DQ during resampling
     """  # noqa: E501
 
     def process(self, input_data):
@@ -73,15 +74,8 @@ class ResampleSpecStep(Step):
 
         if isinstance(output_model, ModelContainer):
             input_models = output_model
-
-            try:
-                output = input_models.meta.asn_table.products[0].name
-            except AttributeError:
-                # NIRSpec MOS data goes through this path, as the container
-                # is only ModelContainer-like, and doesn't have an asn_table
-                # attribute attached.  Output name handling gets done in
-                # _process_multislit() via the update method
-                # TODO: the container-like object should retain asn_table
+            output = input_models.asn_table["products"][0].get("name", "")
+            if str(output).strip() == "":
                 output = None
         else:
             input_models = ModelContainer([output_model])
@@ -209,6 +203,7 @@ class ResampleSpecStep(Step):
             "weight_type": self.weight_type,
             "good_bits": GOOD_BITS,
             "blendheaders": self.blendheaders,
+            "propagate_dq": self.propagate_dq,
         }
 
         # Custom output WCS parameters
