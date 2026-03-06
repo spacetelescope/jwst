@@ -1,46 +1,39 @@
-.. jwst documentation master file
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. image:: _static/stsci_logo.png
+   :width: 15%
+   :target: https://stsci.edu
 
-:ref:`genindex`  |  :ref:`modindex`
+.. image:: _static/stsci_name.png
+   :width: 68%
+   :target: https://stsci.edu
 
-.. image:: _static/webb_logo.png
-   :width: 400
-   :align: center
+.. image:: _static/jwst_logo.png
+   :width: 15%
+   :target: https://science.nasa.gov/mission/webb/
 
+=========================
+JWST Calibration Pipeline
+=========================
 
 **Version**: |release|
 
+This package processes uncalibrated data from both imagers and spectrographs onboard the `James Webb Space Telescope (JWST) <https://science.nasa.gov/mission/webb/>`_, an orbiting infrared observatory stationed at Earth-Sun L :subscript:`2`.
+The pipeline performs a series of calibration steps that result in standard data products,
+applying various corrections to produce science-ready, calibrated output products including
+individual exposures and high-level data products (mosaics, extracted spectra, etc.).
 
-Welcome to the documentation for ``jwst``. This package contains the Python
-software suite for the James Webb Space Telescope (JWST) calibration pipeline,
-which processes data from all JWST instruments by applying various corrections to
-produce science-ready, calibrated output products including fully calibrated
-individual exposures as well as high-level data products (mosaics, extracted
-spectra, etc.). The tools in this package allow users to run and configure the
-pipeline to custom process their JWST data. Additionally, the ``jwst`` package
-contains the interface to JWST datamodels, the recommended method of reading and
-writing JWST data files in Python.
+`See README.md for installation and usage instructions <https://github.com/spacetelescope/jwst?tab=readme-ov-file#installation>`_.
 
-If you have questions or concerns regarding the software, please contact the JWST Help
-desk at `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
+This package allows users to run and configure the calibration pipeline themselves for custom processing of JWST data, 
+either :ref:`from the command line <run_from_strun>` with ``strun``
+or :ref:`from a Python script via the public API <run_from_python>`.
+Additionally, this package provides :ref:`JWST datamodel classes <jwst-data-models>`, the recommended method for reading and writing JWST data files in Python.
 
-Additional user-focused documentation on the
-`JWST science calibration pipeline <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline>`__
-and the
-`latest build information <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information>`__
-is also available on `JDox <https://jwst-docs.stsci.edu>`__.
+.. note::
 
+   If you have trouble installing this package, have encountered a bug while running the pipeline, or wish to request a new feature,
+   please `open an issue on GitHub <https://github.com/spacetelescope/jwst/issues>`_ or `contact the JWST Help Desk <https://jwsthelp.stsci.edu>`_.
 
---------------------------------
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Getting Started
-
-   getting_started/quickstart.rst
-   getting_started/install.rst
-   getting_started/contributing.rst
+Detailed explanations of specific calibration stages, reference files, and pipeline builds can be found on `JDox <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline>`_.
 
 .. _user-docs:
 
@@ -87,3 +80,18 @@ Package Documentation
 
    jwst/package_index.rst
    jwst/changes.rst
+
+============
+Contributing
+============
+
+``jwst`` is an open source package written in Python.
+The source code is `available on GitHub <https://github.com/spacetelescope/jwst>`_.
+New contributions and contributors are very welcome!
+
+Please read `CONTRIBUTING.md <https://github.com/spacetelescope/jwst/blob/main/CONTRIBUTING.md>`_,
+the :ref:`public API definition <jwst-public-vs-private-api>`,
+and the :ref:`public API deprecation policy <jwst-deprecation-policy>`.
+
+We strive to provide a welcoming community by abiding with our `CODE_OF_CONDUCT.md <https://github.com/spacetelescope/jwst/blob/main/CODE_OF_CONDUCT.md>`_.
+
