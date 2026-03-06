@@ -6,10 +6,11 @@ import warnings
 
 import astropy.units as u
 import numpy as np
+import photutils
 from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import Table
-from astropy.utils import lazyproperty
+from astropy.utils import lazyproperty, minversion
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
 from photutils.detection import DAOStarFinder, IRAFStarFinder
@@ -22,6 +23,8 @@ log = logging.getLogger(__name__)
 
 
 __all__ = ["make_tweakreg_catalog"]
+
+PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
 
 
 SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
@@ -281,6 +284,34 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(IRAFStarFinder).parameters)
+
+    # Translate old kwargs to new ones for photutils v3.0 and later
+    if PHOTUTILS_GE_3:
+        # sharplo, sharphi -> sharpness_range
+        # roundlo, roundhi -> roundness_range
+        # peakmax -> peak_max
+        # brightest -> n_brightest
+        # minsep_fwhm -> min_separation
+        kwargs = kwargs.copy()  # avoid modifying original dict
+
+        # This allows for backward compatibility with old kwargs even if
+        # only one of the two is specified. The default values are the
+        # same using by photutils IRAFStarFinder.
+        sharplo = kwargs.pop("sharplo", 0.5)
+        sharphi = kwargs.pop("sharphi", 2.0)
+        roundlo = kwargs.pop("roundlo", 0.0)
+        roundhi = kwargs.pop("roundhi", 0.2)
+        kwargs["sharpness_range"] = (sharplo, sharphi)
+        kwargs["roundness_range"] = (roundlo, roundhi)
+
+        if "peakmax" in kwargs:
+            kwargs["peak_max"] = kwargs.pop("peakmax")
+        if "brightest" in kwargs:
+            kwargs["n_brightest"] = kwargs.pop("brightest")
+        if "minsep_fwhm" in kwargs:
+            min_sep_pix = max(2, int(kwargs.pop("minsep_fwhm") * kernel_fwhm + 0.5))
+            kwargs["min_separation"] = min_sep_pix
+
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
@@ -324,6 +355,30 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(DAOStarFinder).parameters)
+
+    # Translate old kwargs to new ones for photutils v3.0 and later
+    if PHOTUTILS_GE_3:
+        # sharplo, sharphi -> sharpness_range
+        # roundlo, roundhi -> roundness_range
+        # peakmax -> peak_max
+        # brightest -> n_brightest
+        kwargs = kwargs.copy()  # avoid modifying original dict
+
+        # This allows for backward compatibility with old kwargs even if
+        # only one of the two is specified. The default values are the
+        # same using by photutils DAOStarFinder.
+        sharplo = kwargs.pop("sharplo", 0.2)
+        sharphi = kwargs.pop("sharphi", 1.0)
+        roundlo = kwargs.pop("roundlo", -1.0)
+        roundhi = kwargs.pop("roundhi", 1.0)
+        kwargs["sharpness_range"] = (sharplo, sharphi)
+        kwargs["roundness_range"] = (roundlo, roundhi)
+
+        if "peakmax" in kwargs:
+            kwargs["peak_max"] = kwargs.pop("peakmax")
+        if "brightest" in kwargs:
+            kwargs["n_brightest"] = kwargs.pop("brightest")
+
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
