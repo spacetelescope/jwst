@@ -109,7 +109,7 @@ def grism_wcs():
 
 
 @pytest.fixture(scope="module")
-def photom_ref_model():
+def phot_table():
     """
     Make a mock photom reference model for NIRISS WFSS.
 
@@ -147,15 +147,67 @@ def photom_ref_model():
         ("relresponse", "<f4", (relresponse[0].size,)),
         ("reluncertainty", "<f4", (reluncertainty[0].size,)),
     ]
-    phot_table = np.recarray((5,), dtype=dtype)
+    phot = np.recarray((5,), dtype=dtype)
 
-    phot_table["filter"] = filt
-    phot_table["pupil"] = pupil
-    phot_table["order"] = order
-    phot_table["photmjsr"] = photmjsr
-    phot_table["uncertainty"] = uncertainty
-    phot_table["nelem"] = nelem
-    phot_table["wavelength"] = wavelength
-    phot_table["relresponse"] = relresponse
-    phot_table["reluncertainty"] = reluncertainty
+    phot["filter"] = filt
+    phot["pupil"] = pupil
+    phot["order"] = order
+    phot["photmjsr"] = photmjsr
+    phot["uncertainty"] = uncertainty
+    phot["nelem"] = nelem
+    phot["wavelength"] = wavelength
+    phot["relresponse"] = relresponse
+    phot["reluncertainty"] = reluncertainty
+    return phot
+
+
+@pytest.fixture(scope="module")
+def photom_ref_model_niriss(phot_table):
+    """
+    Make a mock photom reference model for NIRISS WFSS.
+
+    Parameters
+    ----------
+    phot_table : np.recarray
+        Photometry table.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
+        Photom ref file model.
+    """
     return dm.NisWfssPhotomModel(phot_table=phot_table)
+
+
+@pytest.fixture(scope="module")
+def photom_ref_model_nircam(phot_table):
+    """
+    Make a mock photom reference model for NIRCam WFSS.
+
+    Parameters
+    ----------
+    phot_table : np.recarray
+        Photometry table.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`
+        Photom ref file model.
+    """
+    return dm.NrcWfssPhotomModel(phot_table=phot_table)
+
+
+@pytest.fixture
+def photom_ref_model(request):
+    """
+    Make a mock photom reference model that can be parameterized for any WFSS mode.
+
+    If request.param is not set, defaults to NIRISS.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Photom ref file model of the appropriate type based on the parameterization.
+    """
+    fixture_name = getattr(request, "param", "photom_ref_model_niriss")
+    return request.getfixturevalue(fixture_name)

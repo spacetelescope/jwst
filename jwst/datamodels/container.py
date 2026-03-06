@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from astropy.io import fits
-from stdatamodels.jwst.datamodels.model_base import JwstDataModel
+from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst.datamodels.util import is_association
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
 

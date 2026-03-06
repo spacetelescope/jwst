@@ -1,8 +1,13 @@
 import numpy as np
+import pytest
+import stdatamodels.jwst.datamodels as dm
 
 from jwst.wfss_contam.sens1d import create_1d_sens, get_photom_data
 
 
+@pytest.mark.parametrize(
+    "photom_ref_model", ["photom_ref_model_niriss", "photom_ref_model_nircam"], indirect=True
+)
 def test_get_photom_data(photom_ref_model):
     filter_name = "GR150C"
     pupil = "F200W"
@@ -28,8 +33,13 @@ def test_get_photom_data(photom_ref_model):
 
     # get the flux scaling out of the table: F200W is the 3rd row
     scalar_conversion = refmodel.phot_table["photmjsr"][2]
-    assert np.isclose(ref_relresp[0], 10 * scalar_conversion)
-    assert np.isclose(ref_relresp[-1], 99 * scalar_conversion)
+    if isinstance(photom_ref_model, dm.NrcWfssPhotomModel):
+        # NIRCam gets scaled by 1e-4 to account for per-inverse-angstrom units
+        assert np.isclose(ref_relresp[0], 10 * 1e-4 * scalar_conversion)
+        assert np.isclose(ref_relresp[-1], 99 * 1e-4 * scalar_conversion)
+    else:
+        assert np.isclose(ref_relresp[0], 10 * scalar_conversion)
+        assert np.isclose(ref_relresp[-1], 99 * scalar_conversion)
 
 
 def test_create_1d_sens(photom_ref_model):

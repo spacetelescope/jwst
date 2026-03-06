@@ -1499,6 +1499,8 @@ def test_niriss_wfss():
         input_data = slit.data  # this is from save_input
         output = ds.input.slits[k].data  # ds.input is the output
         sp_order = slit.meta.wcsinfo.spectral_order
+
+        # retrieve relevant photom table data
         rownum = find_row_in_ftab(
             save_input, ftab, ["filter", "pupil"], slitname=None, order=sp_order
         )
@@ -1510,8 +1512,15 @@ def test_niriss_wfss():
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
+
+        # compute dispersion
+        dispersion_array = np.gradient(slit.wavelength[:, ix])
+        dispersion = dispersion_array[iy]
+
+        # compute expected value
         rel_resp = np.interp(wl, wavelength, relresponse, left=np.nan, right=np.nan)
-        compare = photmjsr * rel_resp
+        compare = photmjsr * rel_resp / np.abs(dispersion)
+
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input_data[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.0e-7))

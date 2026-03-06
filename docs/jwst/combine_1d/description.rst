@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.combine_1d.Combine1dStep`
+:Class: `jwst.combine_1d.combine_1d_step.Combine1dStep`
 :Alias: combine_1d
 
 The ``combine_1d`` step computes a weighted average of 1-D spectra and writes
@@ -24,7 +24,7 @@ wavelengths will be increasing, regardless of the order of the input
 wavelengths.  In the ideal case, all input spectra would have wavelength
 arrays that were very nearly the same.  In this case, each output
 wavelength would be computed as the average of the wavelengths at the same
-pixel in all the input files.  The combine_1d step is intended to handle a
+pixel in all the input files.  The ``combine_1d`` step is intended to handle a
 more general case where the input wavelength arrays may be offset with
 respect to each other, or they might not align well due to different
 distortions.  All the input wavelength arrays will be concatenated and then

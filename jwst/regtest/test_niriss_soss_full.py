@@ -14,7 +14,10 @@ def run_tso_spec2(rtdata_module):
 
     # Run tso-spec2 pipeline on a _rateints file
     rtdata.get_data("niriss/soss/jw02113004001_02101_00001-seg001_nis_rateints.fits")
-    args = ["calwebb_spec2", rtdata.input]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+    ]
     Step.from_cmdline(args)
 
 
@@ -26,7 +29,10 @@ def run_tso_tso3(rtdata_module, run_tso_spec2, resource_tracker):
     # Get the level3 association json file (though not its members) and run
     # the tso3 pipeline on all the _calints file listed in association
     rtdata.get_data("niriss/soss/jw02113-o004_20250910t061917_tso3_00001_asn.json")
-    args = ["calwebb_tso3", rtdata.input]
+    args = [
+        "calwebb_tso3",
+        rtdata.input,
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
