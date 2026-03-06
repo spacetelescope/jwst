@@ -265,13 +265,12 @@ class TweakRegStep(Step):
                 catalog = twk.filter_catalog_by_bounding_box(
                     catalog, image_model.meta.wcs.bounding_box
                 )
-                wcsinfo = image_model.meta.wcsinfo.instance
                 corrector = JWSTWCSCorrector(
                     wcs=image_model.meta.wcs,
                     wcsinfo={
-                        "roll_ref": wcsinfo["roll_ref"],
-                        "v2_ref": wcsinfo["v2_ref"],
-                        "v3_ref": wcsinfo["v3_ref"],
+                        "roll_ref": image_model.meta.wcsinfo.roll_ref,
+                        "v2_ref": image_model.meta.wcsinfo.v2_ref,
+                        "v3_ref": image_model.meta.wcsinfo.v3_ref,
                     },
                     # catalog and group_id are required meta
                     meta={
