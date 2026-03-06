@@ -27,14 +27,13 @@ def two_spectra():
 
 @pytest.fixture
 def three_spectra():
-    spec1 = create_spec_model(flux=1e-9)
-    spec2 = create_spec_model(flux=1e-9)
-    spec3 = create_spec_model(flux=1e-9)
     ms = datamodels.MultiSpecModel()
     ms.meta.exposure.exposure_time = 1
-    ms.spec.append(spec1)
-    ms.spec.append(spec2)
-    ms.spec.append(spec3)
+    for _ in range(3):
+        spec = create_spec_model(flux=1e-9)
+        spec.source_id = 0
+        spec.spectral_order = 1
+        ms.spec.append(spec)
     yield ms
     ms.close()
 
@@ -175,7 +174,7 @@ def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
     npixels = np.zeros(npoints)
 
     # This data type is used for creating an output table.
-    spec_dtype = datamodels.SpecModel().spec_table.dtype
+    spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
 
     otab = np.array(
         list(
@@ -238,6 +237,7 @@ def test_allnan_skip(wfss_multiexposure, monkeypatch):
     # Set all flux values to NaN
     for spec in wfss_multiexposure.spec:
         spec.spec_table["FLUX"][:] = np.nan
+        spec.spectral_order = 1
 
     # message when a single spectrum has no valid flux values
     watcher0 = LogWatcher(

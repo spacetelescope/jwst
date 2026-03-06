@@ -54,7 +54,7 @@ def make_maskmodel(ysize, xsize):
         (5, 32, "REFERENCE_PIXEL", "Reference Pixel"),
     ]
 
-    dq_def = np.array((dqdef), dtype=mask.dq_def.dtype)
+    dq_def = np.array((dqdef), dtype=mask.get_dtype("dq_def"))
 
     return dq, dq_def
 

@@ -105,16 +105,22 @@ class DarkCurrentStep(Step):
             The dark reference file datamodel.
         """
         if self.average_dark_current is not None:
-            input_model.average_dark_current[:, :] = self.average_dark_current
+            input_model.average_dark_current = (
+                input_model.get_default("average_dark_current") + self.average_dark_current
+            )
             log.info(
                 "Using Poisson noise from average dark current %s e-/sec", self.average_dark_current
             )
         else:
             # First prioritize a 2D average_dark_current, if defined in dark.
             # If not present, apply scalar to datamodel array, if scalar is present.
-            if np.sum(dark_model.average_dark_current) == 0.0:
-                input_model.average_dark_current[:, :] = (
-                    dark_model.meta.exposure.average_dark_current
+            if (
+                dark_model.average_dark_current is None
+                or np.sum(dark_model.average_dark_current) == 0.0
+            ):
+                input_model.average_dark_current = (
+                    input_model.get_default("average_dark_current")
+                    + dark_model.meta.exposure.average_dark_current
                 )
             elif np.shape(input_model.average_dark_current) != np.shape(
                 dark_model.average_dark_current

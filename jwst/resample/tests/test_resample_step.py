@@ -57,7 +57,9 @@ def miri_rate_model():
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.data += 5
-    im.var_rnoise += 1
+    im.dq = im.get_default("dq")
+    im.err = im.get_default("err")
+    im.var_rnoise = np.ones(shape)
     im.meta.wcsinfo = {
         "dec_ref": 40,
         "ra_ref": 100,
@@ -131,6 +133,7 @@ def miri_rate_zero_crossing():
     )
     shape = (ysize, xsize)
     im = ImageModel(shape)
+    im.dq = im.get_default("dq")
     im.var_rnoise = np.random.random(shape)
     im.meta.wcsinfo = {
         "dec_ref": 2.16444343946559e-05,
@@ -198,7 +201,9 @@ def nircam_rate():
     ysize = 204
     shape = (ysize, xsize)
     im = ImageModel(shape)
-    im.var_rnoise += 0
+    im.dq = im.get_default("dq")
+    im.err = im.get_default("err")
+    im.var_rnoise = np.ones(shape)
     im.meta.wcsinfo = {
         "ctype1": "RA---TAN",
         "ctype2": "DEC--TAN",
@@ -277,7 +282,10 @@ def nirspec_rate():
     xsize = 2048
     shape = (ysize, xsize)
     im = ImageModel(shape)
-    im.var_rnoise += 1
+    im.dq = im.get_default("dq")
+    im.err = im.get_default("err")
+    im.var_rnoise = np.ones(shape)
+    im.var_poisson = np.ones(shape)
     im.meta.target = {"ra": 100.1237, "dec": 39.86}
     im.meta.wcsinfo = {
         "dec_ref": 40,
@@ -926,9 +934,9 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
     var_poisson = 0.00025
     im = AssignWcsStep.call(nircam_rate)
     _set_photom_kwd(im)
-    im.var_rnoise += var_rnoise
-    im.var_poisson += var_poisson
-    im.err += err
+    im.var_rnoise = im.get_default("var_rnoise") + var_rnoise
+    im.var_poisson = im.get_default("var_poisson") + var_poisson
+    im.err = im.get_default("err") + err
     im.meta.filename = "foo.fits"
 
     c = ModelLibrary([im.copy() for _ in range(n_images)])
@@ -957,9 +965,9 @@ def test_resample_variance_context_disable(
     var_poisson = 0.00025
     im = AssignWcsStep.call(nircam_rate)
     _set_photom_kwd(im)
-    im.var_rnoise += var_rnoise
-    im.var_poisson += var_poisson
-    im.err += err
+    im.var_rnoise = im.get_default("var_rnoise") + var_rnoise
+    im.var_poisson = im.get_default("var_poisson") + var_poisson
+    im.err = im.get_default("err") + err
     im.meta.filename = "foo.fits"
     # Adding bunit_err covers a bug where the ERR extension was being created just to hold that
     im.meta.bunit_err = "MJy/sr"
@@ -1016,9 +1024,9 @@ def test_resample_variance_context_disable(
 def test_resample_undefined_variance(caplog, nircam_rate, shape):
     """Test that resampled variance and error arrays are computed properly"""
     im = AssignWcsStep.call(nircam_rate)
-    im.var_rnoise = np.ones(shape, dtype=im.var_rnoise.dtype.type)
-    im.var_poisson = np.ones(shape, dtype=im.var_poisson.dtype.type)
-    im.var_flat = np.ones(shape, dtype=im.var_flat.dtype.type)
+    im.var_rnoise = np.ones(shape, dtype=im.get_dtype("var_rnoise"))
+    im.var_poisson = np.ones(shape, dtype=im.get_dtype("var_poisson"))
+    im.var_flat = np.ones(shape, dtype=im.get_dtype("var_flat"))
     im.meta.filename = "foo.fits"
     c = ModelLibrary([im])
 

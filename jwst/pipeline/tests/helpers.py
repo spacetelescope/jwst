@@ -58,8 +58,12 @@ def make_nircam_rate_model():
     rate : `stdatamodels.jwst.datamodels.ImageModel`
         The rate model.
     """
-    image = datamodels.ImageModel((2048, 2048))
+    shp = (2048, 2048)
+    image = datamodels.ImageModel(shp)
     image.data[:, :] = 1
+    image.dq = image.get_default("dq")
+    image.var_rnoise = np.full(shp, 0.01)
+    image.var_poisson = np.full(shp, 0.01)
     image.meta.instrument.name = "NIRCAM"
     image.meta.instrument.filter = "F200W"
     image.meta.instrument.pupil = "CLEAR"
