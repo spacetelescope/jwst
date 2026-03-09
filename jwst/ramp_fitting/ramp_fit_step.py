@@ -268,11 +268,11 @@ class RampFitStep(Step):
             chisq_model = datamodels.ImageModel(image_info["chisq"].shape)
             chisq_model.update(result)
             chisq_model.data = image_info["chisq"]
-            chisq_model.dq = None
-            chisq_model.var_poisson = None
-            chisq_model.var_rnoise = None
-            chisq_model.err = None
-            self.save_model(chisq_model, "likely_chisq", output_file=result.meta.filename)
+            if self.opt_name:
+                filename = self.opt_name
+            else:
+                filename = result.meta.filename
+            self.save_model(chisq_model, "likely_chisq", output_file=filename)
 
         # Create models from possibly updated info
         out_model, int_model = None, None
