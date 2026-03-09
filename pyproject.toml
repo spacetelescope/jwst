@@ -20,8 +20,8 @@ classifiers = [
 dependencies = [
     "asdf>=4.2,<6",
     "astropy>=6.1",
-    "BayesicFitting>=3.2.2",
-    "crds>=12.0.3",
+    "BayesicFitting>=3.2.3",
+    "crds>=12.0.4",
     "drizzle>=2.2.0,<2.3.0",
     "gwcs>=1.0.3,<2",
     "numpy>=1.25",
@@ -87,7 +87,7 @@ docs = [
     "sphinxcontrib-jquery",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
-    "pytest-doctestplus>=0.11",
+    "pytest-doctestplus>=1.7",
 ]
 sdp = [
     "jplephem>=2.9",
@@ -96,9 +96,8 @@ sdp = [
 test = [
     "ci-watson>=0.10",
     "pysiaf>=0.13.0",
-    "pytest>=6.0.0",
-    "pytest-cov>=2.9.0",
-    "pytest-doctestplus>=0.10.0",
+    "pytest>=9.0.0",
+    "pytest-doctestplus>=1.7",
     "requests_mock>=1.0",
 ]
 contrib = [
@@ -203,7 +202,7 @@ upload-dir = "docs/_build/html"
 show-response = 1
 
 [tool.pytest.ini_options]
-minversion = "6.0"
+minversion = "9.0"
 norecursedirs = [
     "docs/_build",
     "docs/exts",

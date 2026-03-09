@@ -63,7 +63,7 @@ jobs:
       artifact-path: |
         results.xml
       envs: |
-        - linux: py311-oldestdeps-xdist-cov
+        - linux: py311-oldestdeps-xdist
           pytest-results-summary: true
         - linux: py311-xdist
           posargs: -vv
