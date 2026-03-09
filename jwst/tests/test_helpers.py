@@ -15,13 +15,13 @@ def test_warning_inside_capture_logging():
         warnings.warn("expected", UserWarning)
 
 
+@pytest.mark.filterwarnings("ignore:not the warning you're looking for")
 def test_unexpected_warning_inside_capture_logging():
     """
-    This tests catches the exceptions raised when `UserWarning` does not
-    match the actual warning expected to be caught. The warning is not
-    caught because of this mismatch, so an exception is raised.
+    Check that pytest.warns with _help_pytest_warns correctly
+    raises an exception when no warning matches.
     """
-    with pytest.raises(UserWarning, match="not the warning"):
+    with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
         with _help_pytest_warns(), pytest.warns(UserWarning, match="expected"):
             warnings.warn("not the warning you're looking for", UserWarning)
 
