@@ -1,9 +1,12 @@
 import logging
 
 import pytest
+from stdatamodels.jwst import datamodels
 
 import jwst.stpipe._cal_logs
 from jwst.lib.basic_utils import LoggingContext
+from jwst.pipeline import Image3Pipeline
+from jwst.pipeline.tests.helpers import make_nircam_image_cal_model
 from jwst.stpipe._cal_logs import _scrub
 from jwst.stpipe.tests.steps import CalLogsPipeline, CalLogsStep
 
@@ -32,6 +35,24 @@ def test_cal_logs_pipeline():
         m = CalLogsPipeline().run("foo")
     assert not hasattr(m.cal_logs, "cal_logs_step")
     assert any(("foo" in l for l in m.cal_logs.cal_logs_pipeline))
+
+
+def test_cal_logs_step_in_pipeline(tmp_cwd):
+    # Set the log level to INFO, since it is not directly configured in `run`
+    with LoggingContext(logging.getLogger("jwst"), level=logging.INFO):
+        pipe = CalLogsPipeline()
+        pipe.output_file = "passenger_side"
+        pipe.a_step.save_results = True
+        m = pipe.run("scrub")
+
+    # Final output has pipeline logs
+    assert list(m.cal_logs.instance.keys()) == ["cal_logs_pipeline"]
+    assert any(("scrub" in l for l in m.cal_logs.cal_logs_pipeline))
+
+    # Step output also has pipeline logs
+    with datamodels.open("passenger_side_a_step.fits") as m:
+        assert list(m.cal_logs.instance.keys()) == ["cal_logs_pipeline"]
+        assert any(("scrub" in l for l in m.cal_logs.cal_logs_pipeline))
 
 
 @pytest.mark.parametrize(
@@ -80,3 +101,32 @@ def test_scrub(msg, is_empty):
 def test_path_scrub(msg, expected):
     scrubbed = _scrub(msg)
     assert scrubbed == expected
+
+
+def test_nircam_pipeline_cal_logs(tmp_cwd):
+    input_model = make_nircam_image_cal_model()
+    par3_dict = {
+        "tweakreg": {"skip": True},
+        "skymatch": {"skip": True},
+        "outlier_detection": {"skip": True},
+        "resample": {"skip": False},
+        "source_catalog": {"skip": True},
+    }
+    Image3Pipeline.call(input_model, steps=par3_dict, output_file="test_nircam", save_results=True)
+
+    # https://github.com/spacetelescope/jwst/issues/9862
+    n_image3_steps_found = 0
+    expected_steps = ["outlier_detection", "resample", "skymatch", "tweakreg"]
+    with datamodels.open("test_nircam_i2d.fits") as im:
+        # Steps run standalone appear by themselves, so "assign_wcs" appears
+        # here since it was run on the synthetic data.
+        # Steps run as part of a pipeline do not appear individually. All image3
+        # steps are logged under "calwebb_image3"
+        assert sorted(im.cal_logs.instance.keys()) == ["assign_wcs", "calwebb_image3"]
+        image3_logs = im.cal_logs.calwebb_image3
+        for step_name in expected_steps:
+            for line in image3_logs:
+                if f"INFO - Step {step_name} running" in line:
+                    n_image3_steps_found += 1
+                    break
+        assert n_image3_steps_found == len(expected_steps)

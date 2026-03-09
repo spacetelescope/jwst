@@ -1252,7 +1252,7 @@ def _corrections_for_lrs(data, pathloss, user_slit_loc):
             data.meta.wcs, location, disp_axis=data.meta.wcsinfo.dispersion_direction
         )
         scale_arcsec = scale_degrees * 3600.0
-        user_slit_loc_pix = user_slit_loc * scale_arcsec
+        user_slit_loc_pix = user_slit_loc / scale_arcsec
         yusr_recenter = ycenter + user_slit_loc_pix
         _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(
             pathloss_data, pathloss_wcs, xcenter, yusr_recenter, calc_wave=False

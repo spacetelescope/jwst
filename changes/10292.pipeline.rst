@@ -1,0 +1,1 @@
+Fixed datamodel ``cal_logs`` not grouping log messages from steps into the pipeline category for some products.
