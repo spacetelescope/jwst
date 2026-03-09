@@ -1,0 +1,1 @@
+Deprecate YAML as a valid format for reading and writing association files
