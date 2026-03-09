@@ -134,6 +134,11 @@ image.
   but note that the variances are still computed internally if ``enable_err`` is `True`
   because they are needed to compute the error array.
 
+``--propagate_dq`` (boolean, default=False)
+    Indicates whether to propagate DQ flags from input models to the output
+    model. DQ flags are propagated by ``bitwise-OR`` of all input DQ flags that
+    contribute to a given output pixel.
+
 ``--pixmap_stepsize``
   Indicates the spacing in pixels at which the WCS is evaluated when computing the pixel map.
   Larger step sizes result in faster performance at the cost of accuracy.
