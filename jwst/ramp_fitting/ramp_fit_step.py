@@ -1,6 +1,5 @@
 import logging
 
-import asdf
 import numpy as np
 from stcal.ramp_fitting import ramp_fit
 from stcal.ramp_fitting.likely_fit import LIKELY_MIN_NGROUPS
