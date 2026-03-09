@@ -1,1 +1,0 @@
-Updating or removing tests that are marked ``xfail`` or ``skip``.
