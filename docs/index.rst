@@ -25,8 +25,10 @@ individual exposures and high-level data products (mosaics, extracted spectra, e
 
 This package allows users to run and configure the calibration pipeline themselves for custom processing of JWST data, 
 either :ref:`from the command line <run_from_strun>` with ``strun``
-or :ref:`from a Python script via the public API <run_from_python>`.
-Additionally, this package provides :ref:`JWST datamodel classes <jwst-data-models>`, the recommended method for reading and writing JWST data files in Python.
+or from Python with :ref:`pipeline and step functions and classes <run_from_python>` in the ``jwst`` package
+(see `this curated set of Jupyter notebooks <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-pipeline-notebooks>`_ for example usage).
+Additionally, the ``jwst`` package provides :ref:`JWST datamodel classes <jwst-data-models>`,
+the recommended method for reading and writing JWST data files in Python.
 
 .. note::
 

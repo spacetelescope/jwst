@@ -32,7 +32,7 @@ Detailed explanations of specific calibration stages, reference files, and pipel
 <!--toc:start-->
 - [Quick Start](#quick-start)
   - [1. Install the Pipeline](#1-install-the-pipeline)
-  - [2. Set up the Calibration References Data System (CRDS)](#2-set-up-the-calibration-references-data-system-crds)
+  - [2. Set up the Calibration Reference Data System (CRDS)](#2-set-up-the-calibration-reference-data-system-crds)
   - [3. Run the Pipeline](#3-run-the-pipeline)
 - [Code Contributions](#code-contributions)
 - [DMS Operational Build Versions](#dms-operational-build-versions)
@@ -134,9 +134,9 @@ conda activate JWSTDP-1.18.1-1-py312-macos-arm64
 > pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.0/reqs_macos-stable-deps.txt
 > ```
 
-### 2. Set up the Calibration References Data System (CRDS)
+### 2. Set up the Calibration Reference Data System (CRDS)
 
-Before running the pipeline, you must first set up your local machine to retrieve files from the [Calibration References Data System (CRDS)](https://jwst-crds.stsci.edu/static/users_guide/index.html>)
+Before running the pipeline, you must first set up your local machine to retrieve files from the [Calibration Reference Data System (CRDS)](https://jwst-crds.stsci.edu/static/users_guide/index.html>)
 CRDS provides calibration reference files for several telescopes, including JWST.
 
 Set `CRDS_SERVER_URL` and `CRDS_PATH` to run the pipeline with access to reference files from CRDS:
@@ -150,7 +150,7 @@ export CRDS_PATH=$HOME/data/crds_cache/
 > To use historical files from the PUB server, [contact the JWST Help Desk](https://jwsthelp.stsci.edu).
 
 The pipeline will automatically download individual reference files and cache them in the `CRDS_PATH` directory.
-Expect to use upwards of 200 gigabytes of disk space for reference files.
+**Expect to use 50 gigabytes (or more) of disk space for reference files**, depending on the instrument modes in use.
 
 > [!TIP]
 > Users within the STScI network do not need to set `CRDS_PATH` (it defaults to shared network storage).
@@ -164,10 +164,12 @@ For more information, see [the docs page on JWST CRDS reference files](https://j
 
 ### 3. Run the Pipeline
 
-This package allows users to run and configure the calibration pipeline themselves for custom processing of JWST data,
+Once installed, the pipeline allows users to run and configure calibration themselves for custom processing of JWST data,
 either [from the command line with `strun`](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/running_pipeline_command_line.html)
-or [from a Python script via the public API](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/running_pipeline_python.html).
-Additionally, this package provides [JWST datamodel classes](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/datamodels.html), the recommended method for reading and writing JWST data files in Python.
+or from Python with [pipeline and step functions and classes in the `jwst` package](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/running_pipeline_python.html)
+(see [this curated set of Jupyter notebooks](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-pipeline-notebooks) for example usage).
+Additionally, the `jwst` package provides [JWST datamodel classes](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/datamodels.html),
+the recommended method for reading and writing JWST data files in Python.
 
 ## Code Contributions
 
@@ -186,11 +188,6 @@ See [`TESTING.md`](./TESTING.md) for instructions on automated testing.
 
 The table below provides information on each release of the `jwst` package and its relationship to software builds used in STScI JWST DMS operations.
 Each `jwst` tag was released on PyPI on the date given in `Released`, and then subsequently installed into operations on the date given in `Ops Install`.
-
-> [!NOTE]
-> The `CRDS_CONTEXT` column indicates the minimum CRDS context supported by the corresponding release.
-> CRDS contexts up to the one specified for the *next* release should work;
-> for instance, `jwst==1.20.0` officially supports contexts `1462` through `1464`.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
