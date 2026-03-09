@@ -1,0 +1,1 @@
+Fixed bug in application of pixel scale to user-provided cross-slit source position

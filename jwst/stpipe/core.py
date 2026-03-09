@@ -1,6 +1,7 @@
 """JWST-specific Step and Pipeline base classes."""
 
 import logging
+from copy import deepcopy
 from functools import partial
 from pathlib import Path
 
@@ -329,7 +330,15 @@ class JwstStep(_Step):
             if self.class_alias:
                 if not hasattr(result, "cal_logs"):
                     result.cal_logs = {}
-                setattr(result.cal_logs, self.class_alias, self._log_records)
+
+                if self.parent is None or not self.parent.class_alias:
+                    setattr(result.cal_logs, self.class_alias, self._log_records)
+                else:  # Capture step log as pipeline log
+                    setattr(
+                        result.cal_logs,
+                        self.parent.class_alias,
+                        deepcopy(self.parent._log_records),  # noqa: SLF001
+                    )
 
     def remove_suffix(self, name):
         """
@@ -396,10 +405,5 @@ class JwstPipeline(Pipeline, JwstStep):
             if self.class_alias:
                 if not hasattr(result, "cal_logs"):
                     result.cal_logs = {}
-
-                # remove the step logs as they're captured by the pipeline log
-                for _, step in self.step_defs.items():
-                    if hasattr(result.cal_logs, step.class_alias):
-                        delattr(result.cal_logs, step.class_alias)
 
                 setattr(result.cal_logs, self.class_alias, self._log_records)
