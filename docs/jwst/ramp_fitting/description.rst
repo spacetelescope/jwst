@@ -61,7 +61,12 @@ to "COMPLETE".
 There is a new algorithm available for testing in ramp fitting, which is the
 likelihood algorithm.  It is selected by setting ``--ramp_fitting.algorithm=LIKELY``.
 The details are in the ``stcal`` documentation at
-:ref:`Likelihood Algorithm Details <stcal:likelihood_algo>`.
+:ref:`Likelihood Algorithm Details <stcal:likelihood_algo>`. When using this algorithm
+there is an additional ``chisq`` array that is returned from ramp fitting that
+can now be saved, it desired. When using the ``LIKLELY`` algorithm, this can be
+saved by setting the step parameter ``save_opt`` to true. By default, this will
+modify the ``RampModel`` file name or you choose a file  name using ``opt_name``.
+Both will be modified to use the "likely_chisq" suffix for the output file.
 
 Multiprocessing
 ---------------
