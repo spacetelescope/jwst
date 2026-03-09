@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import GainModel, ImageModel, RampModel, ReadnoiseModel, dqflags
 
-import asdf
-
 from jwst.lib.tests.test_reffile_utils import generate_test_refmodel_metadata
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep, set_groupdq
 
@@ -75,7 +73,7 @@ def setup_inputs():
 
         rampmodel = RampModel((nints, ngroups, nrows, ncols), int_times=int_times)
 
-        rampmodel.meta.filename = "dummy_uncal.fits"
+        rampmodel.meta.filename = "mock_uncal.fits"
 
         rampmodel.meta.instrument.name = "MIRI"
         rampmodel.meta.instrument.detector = "MIRIMAGE"
@@ -402,7 +400,7 @@ def test_likely_output(tmp_path, setup_inputs):
 
     # Check the chisq output array
     chk_chisq = np.array([[0.43144223, 0.25806388]])
-    fname = "dummy_likely_chisq.fits"
+    fname = "mock_likely_chisq.fits"
     with ImageModel(fname) as chisq:
         chisq_data = chisq.data
     np.testing.assert_allclose(chisq_data, chk_chisq, rtol=tol)
