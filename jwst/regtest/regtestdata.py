@@ -1,7 +1,6 @@
 import os
 import os.path as op
 import pprint
-import shutil
 import sys
 from difflib import unified_diff
 from glob import glob as _sys_glob
@@ -16,7 +15,7 @@ from ci_watson.artifactory_helpers import (
     get_bigdata_root,
 )
 
-from jwst.associations import AssociationNotValidError, load_asn
+from jwst.associations import load_asn
 from jwst.lib.file_utils import pushdir
 from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
@@ -364,10 +363,11 @@ def run_step_from_dict(rtdata, **step_params):
     # already been retrieved.
     input_path = step_params.get("input_path", None)
     if input_path:
-        try:
-            rtdata.get_asn(input_path)
-        except AssociationNotValidError:
+        ext = Path(input_path).suffix
+        if ext in (".fits", ".asdf"):
             rtdata.get_data(input_path)
+        else:
+            rtdata.get_asn(input_path)
 
     # Figure out whether we have a config or class
     step = step_params["step"]
@@ -380,57 +380,6 @@ def run_step_from_dict(rtdata, **step_params):
     full_args.extend(step_params["args"])
 
     Step.from_cmdline(full_args)
-
-    return rtdata
-
-
-def run_step_from_dict_mock(rtdata, source, **step_params):
-    """
-    Pretend to run Steps with given parameter but just copy data.
-
-    For long running steps where the result already exists, just
-    copy the data from source
-
-    Parameters
-    ----------
-    rtdata : RegtestData
-        The artifactory instance
-
-    source : Path-like folder
-        The folder to copy from. All regular files are copied.
-
-    **step_params : dict
-        The parameters defining what step to run with what input
-
-    Returns
-    -------
-    rtdata : RegtestData
-        Updated `RegtestData` object with inputs set.
-
-    Notes
-    -----
-    `step_params` looks like this:
-    {
-        'input_path': str or None  # The input file path, relative to artifactory
-        'step': str                # The step to run, either a class or a config file
-        'args': list,              # The arguments passed to `Step.from_cmdline`
-    }
-    """
-    # Get the data. If `step_params['input_path]` is not
-    # specified, the presumption is that `rtdata.input` has
-    # already been retrieved.
-    input_path = step_params.get("input_path", None)
-    if input_path:
-        try:
-            rtdata.get_asn(input_path)
-        except AssociationNotValidError:
-            rtdata.get_data(input_path)
-
-    # Copy the data
-    for file_name in os.listdir(source):
-        file_path = os.path.join(source, file_name)
-        if os.path.isfile(file_path):
-            shutil.copy(file_path, ".")
 
     return rtdata
 
