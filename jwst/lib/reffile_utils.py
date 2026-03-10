@@ -377,7 +377,7 @@ def stripe_read(sci_model, ref_model, attribs):
     # Get the science model multistripe params
     sci_meta = sci_model.meta
 
-    num_superstripe = getattr(sci_model.meta.subarray, "num_superstripe", 0)
+    num_superstripe = getattr(sci_meta.subarray, "num_superstripe", 0)
     # We need to extract the number of science integrations in this file, which is tangled up with
     #  - the number of integrations in the exposure
     #  - the number of superstripes each science integration may be divided between
@@ -419,8 +419,7 @@ def stripe_read(sci_model, ref_model, attribs):
             faststop = faststart + fastsize_sci
             ref_array = ref_array[..., faststart:faststop, :]
 
-        tmp = generate_stripe_array(ref_array, sci_meta, sci_nints)
-        sub_model[attrib] = tmp
+        sub_model[attrib] = generate_stripe_array(ref_array, sci_meta, sci_nints)
     return sub_model
 
 
@@ -625,13 +624,13 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
         # rather than broadcast a 2-D array into many wasted dims, just provide the minimal
         # 3-D array, with one slice per superstripe in the third dimension. Expect steps
         # to handle the extra dimension.
-        if num_superstripe > 0 and ref_native_dims == 2:
+        if ref_native_dims == 2:
             stripe_out = stripe_out[:, 0, :, :]
         # If multistripe and output currently has one plane per stripe only,
         # and reference file is expected to have 4 dimensions,
         # broadcast arrays into sci_nints copies so that direct application
         # of the reference array to the science array is possible
-        elif num_superstripe > 0 and stripe_out.shape[0] == num_superstripe:
+        elif stripe_out.shape[0] == num_superstripe:
             stripe_out = np.tile(stripe_out, reps=(sci_nints, 1, 1, 1))
 
         # Transform from detector frame back to science frame
