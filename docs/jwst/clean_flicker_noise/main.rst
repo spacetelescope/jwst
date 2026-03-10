@@ -352,4 +352,4 @@ was adapted from an example implementation available on GitHub at
 `goudfroo/1_f_utils <https://github.com/goudfroo/1_f_utils/tree/main/optimize_one_f_params>`__.
 
 TSO-specific processing with ``background_method = "median_image"`` is based on
-work by Rachel Cooper and Aarynn Carter, for the NIRISS team.
+work by Rachel Cooper and Aarynn Carter, for the NIRISS team (in prep).
