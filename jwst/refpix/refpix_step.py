@@ -281,10 +281,6 @@ def clean_superstripe_metadata(input_model):
         The model cleaned of metadata indicating the presence
         of superstripe data.
     """
-    input_model.meta.subarray.name = pipe_utils.SUPERSTRIPE_SUBARRAY_MAPPING[
-        input_model.meta.subarray.name
-    ]
-
     input_model.meta.exposure.integration_start = np.ceil(
         input_model.meta.exposure.integration_start / input_model.meta.subarray.num_superstripe
     ).astype(int)
