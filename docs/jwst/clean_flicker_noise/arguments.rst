@@ -18,6 +18,8 @@ the behavior of the processing.
   Ignored for MIRI, for subarray data, and for ``fit_method = 'fft'``.
 
 ``--background_method`` (str, default='median')
+  Options are 'median', 'model', 'median_image', or None.
+
   If 'median', the preliminary background to remove and restore
   after fitting the noise is a simple median of the background data.
   If 'model', the background data is fit with a low-resolution model
