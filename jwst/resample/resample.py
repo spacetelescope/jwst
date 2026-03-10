@@ -55,7 +55,7 @@ class ResampleImage(Resample):
         enable_var=True,
         report_var=True,
         compute_err=None,
-        asn_id=None,
+        propagate_dq=False,
         pixmap_stepsize=1,
         pixmap_order=1,
     ):
@@ -266,9 +266,10 @@ class ResampleImage(Resample):
                 At this time, output error array is not equivalent to
                 error propagation results.
 
-        asn_id : str, None, optional
-            The association id. The id is what appears in
-            the :ref:`asn-jwst-naming`.
+        propagate_dq : bool
+            If `True`, propagate DQ during resampling. DQ flags are propagated
+            by bitwise OR of all input DQ flags that contribute to a given
+            output pixel.
 
         pixmap_stepsize : float, optional
             Indicates the spacing in pixels
@@ -300,8 +301,6 @@ class ResampleImage(Resample):
                     "meta.filename",
                 ]
             )
-
-        self.asn_id = asn_id
 
         # check wcs_pars has supported keywords:
         if wcs_pars is None:
@@ -352,6 +351,7 @@ class ResampleImage(Resample):
             enable_ctx=enable_ctx,
             enable_var=enable_var,
             compute_err=compute_err,
+            propagate_dq=propagate_dq,
             pixmap_stepsize=pixmap_stepsize,
             pixmap_order=pixmap_order,
         )
@@ -377,7 +377,10 @@ class ResampleImage(Resample):
             A dictionary of keywords and values expected by `stcal.resample`.
         """
         return input_jwst_model_to_dict(
-            model=model, weight_type=weight_type, enable_var=enable_var, compute_err=compute_err
+            model=model,
+            weight_type=weight_type,
+            enable_var=enable_var,
+            compute_err=compute_err,
         )
 
     def create_output_jwst_model(self, ref_input_model=None):
@@ -415,14 +418,21 @@ class ResampleImage(Resample):
         """
         model.data = info_dict["data"]
         model.wht = info_dict["wht"]
-        if self._enable_ctx:
+
+        if self.enable_ctx:
             model.con = info_dict["con"]
-        if self._compute_err:
+
+        if self.propagate_dq:
+            model.dq = info_dict["dq"]
+
+        if self.compute_err:
             model.err = info_dict["err"]
+
         elif model.meta.hasattr("bunit_err"):
             # bunit_err metadata is mapped to the err extension, so it must be removed
             # in order to fully remove the err extension.
             del model.meta.bunit_err
+
         if self._enable_var and self._report_var:
             model.var_rnoise = info_dict["var_rnoise"]
             model.var_flat = info_dict["var_flat"]
