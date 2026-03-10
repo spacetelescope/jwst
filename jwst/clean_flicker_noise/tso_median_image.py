@@ -57,26 +57,25 @@ def _soss_box_extract(rateints, soss_refmodel=None):
     # Extract only order 1 for scaling purposes
     order = 1
 
+    # Get trace x,y positions
+    _, xtrace, ytrace, _ = pastasoss.get_soss_traces(pwcpos, order=order, refmodel=soss_refmodel)
+    box_weights = soss_extract.get_box_weights(ytrace, width, img_shape, cols=xtrace.astype(int))
+
+    # Get wavelengths
+    wavemaps = pastasoss.get_soss_wavemaps(
+        pwcpos, subarray=subarray, refmodel=soss_refmodel, orders_requested=[order]
+    )
+    wave_grid = wavemaps[0]
+
     # Extract a spectrum from each integration
     spec_list = []
     for i in range(nints):
         sci_data = rateints.data[i]
         sci_mask = (rateints.dq[i] & datamodels.dqflags.pixel["DO_NOT_USE"]) > 0
 
-        # Get trace x,y positions
-        _, xtrace, ytrace, _ = pastasoss.get_soss_traces(
-            pwcpos, order=order, refmodel=soss_refmodel
-        )
-        box_weights = soss_extract.get_box_weights(
-            ytrace, width, img_shape, cols=xtrace.astype(int)
-        )
+        weights = box_weights.copy()
+        weights[sci_mask] = 0
 
-        wavemaps = pastasoss.get_soss_wavemaps(
-            pwcpos, subarray=subarray, refmodel=soss_refmodel, orders_requested=[1]
-        )
-        wave_grid = wavemaps[0]
-
-        box_weights[sci_mask] = 0
         npix = np.sum(box_weights, axis=0)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
@@ -210,7 +209,7 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
     # Run background subtraction for rateints files
     exp_type = input_model.meta.exposure.type
     if exp_type == "NIS_SOSS":
-        log.info("Subtracting SOSS background")
+        log.info("Calling the bkg_subtract step on the rate file to subtract SOSS background")
         with disable_logging(level=logging.WARNING):
             step = BackgroundStep()
             bgsub_rateints = step.run(rateints_model)
@@ -240,6 +239,7 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         # Simple direct box extraction for SOSS
         multi_spec = _soss_box_extract(bgsub_rateints, soss_refmodel=soss_refmodel)
     elif exp_type in ["NRS_BRIGHTOBJ", "NRC_TSGRISM"]:
+        log.info("Calling the extract_2d and extract_1d steps to extract a representative spectrum")
         with disable_logging(level=logging.WARNING):
             # Run extract2d to assign a slit-appropriate WCS
             # (required for extract_1d)
@@ -260,11 +260,13 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         # Not a TSO spectral mode
         multi_spec = None
 
-    # Sum the flux for each integration.
-    # Use the whitelight step to retrieve and use a wavelengthrange
-    # file as appropriate.
+    # Sum the flux for each integration and normalize by the median across all integrations
     if multi_spec is not None:
-        log.info("Computing an approximate whitelight curve for scaling")
+        # For spectra, use the whitelight step to sum the flux, using a wavelengthrange
+        # file as appropriate.
+        log.info(
+            "Calling the white_light step to compute an approximate whitelight curve for scaling"
+        )
         with disable_logging(level=logging.WARNING):
             step = WhiteLightStep()
             whitelight_table = step.run(multi_spec)
@@ -281,8 +283,11 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
             norm_flux = wlc_flux / np.nanmedian(wlc_flux)
 
     elif exp_type == "NRC_TSIMAGE" or (exp_type == "MIR_IMAGE" and is_tso(input_model)):
-        # Call tso_photometry with latest CRDS parameters (via call),
-        # since the recommended defaults may vary by mode.
+        # For imaging, call tso_photometry with latest CRDS parameters (via call),
+        # to sum the flux. The recommended defaults for this step may vary by mode.
+        log.info(
+            "Calling the tso_photometry step to compute an approximate aperture flux for scaling"
+        )
         with disable_logging(level=logging.WARNING):
             phot_table = TSOPhotometryStep.call(bgsub_rateints)
 
@@ -306,6 +311,10 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         raise ValueError("No valid flux for scaling")
     elif np.any(invalid):
         # Otherwise replace with a median value to avoid losing a whole integration
+        log.warning(
+            f"{np.sum(invalid)} integration(s) out of {nints} had non-finite "
+            "extracted flux and will be scaled by the median flux instead."
+        )
         norm_flux[invalid] = np.median(norm_flux[~invalid])
 
     # Make a background corrected ramp
