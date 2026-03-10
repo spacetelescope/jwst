@@ -56,21 +56,22 @@ def clip_to_background(
         for the clipping limit. Values above this limit are marked
         `False` in the mask.
     fit_histogram :  bool, optional
-        If set, the center value and standard deviation used with
+        If `True`, the center value and standard deviation used with
         ``sigma_lower`` and ``sigma_upper`` for clipping outliers is derived
         from a Gaussian fit to a histogram of values. Otherwise, the
         center and standard deviation are derived from a simple iterative
         sigma clipping.
     lower_half_only : bool, optional
-        If set, the data used to compute the center and standard deviation
+        If `True`, the data used to compute the center and standard deviation
         for clipping is the lower half of the distribution only. Values
         below the median are mirrored around the median value to simulate
         a symmetric distribution.  This is intended to account for
         asymmetrical value distributions, with long tails in the upper
         half of the distribution, due to diffuse emission, for example.
     verbose : bool, optional
-        If set, DEBUG level messages are issued with details on the
-        computed statistics.
+        If `True`, additional DEBUG-level log messages are issued with
+        details on the computed statistics. Otherwise, only ERROR-level log
+        messages are emitted by this function.
     """
     # Use float64 for stats computations
     image = image.astype(np.float64)
