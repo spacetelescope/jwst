@@ -85,9 +85,18 @@ Usage
 Users should not need to run the generator. Instead, it is expected that one
 edits an already existing association that accompanies the user's JWST data.
 
-Care should be taken if editing an association file.  Keep in mind that generally
+Care should be taken if editing an association file. Association files must be
+in valid JSON format, and we encourage use of a JSON linter, for example
+`jsonlint <https://jsonlint.com/>`__, to validate the file. Keep in mind that generally
 all input files listed in the association files are assumed to be in the same
 directory as the association file and no path information is put in ``expname``.
+
+.. note::
+
+   In previous versions of the pipeline, association files with additional trailing commas
+   that rendered them invalid according to the JSON specification were quietly accepted.
+   This behavior has been deprecated and will be removed in a future release; please ensure
+   that trailing commas are removed from hand-edited association files.
 
 If need be, an association can be created based on the existing
 :ref:`Stage 2 <asn-level2-example>` or :ref:`Stage 3 <asn-level3-example>` examples,
@@ -112,7 +121,7 @@ Programmatically, to read in an Association, one uses the
 
 What exactly is returned depends on what the association is. However,
 for all Stage 2 and Stage 3 associations, a Python :py:obj:`dict` is returned
-and its structure matches that of the JSON or YAML file. Continuing
+and its structure matches that of the JSON file. Continuing
 from the above example, the following shows how to access the first
 exposure file name of a Stage 3 associations:
 

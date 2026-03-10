@@ -1,6 +1,8 @@
 import numpy as np
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs import AssignWcsStep
+
 __all__ = ["make_miri_ramp_model", "make_nircam_rate_model", "make_nirspec_ifu_rate_model"]
 
 
@@ -64,6 +66,7 @@ def make_nircam_rate_model():
     image.meta.instrument.filter = "F200W"
     image.meta.instrument.pupil = "CLEAR"
     image.meta.exposure.type = "NRC_IMAGE"
+    image.meta.exposure.exposure_time = 1.0
     image.meta.observation.date = "2019-02-27"
     image.meta.observation.time = "13:37:18.548"
     image.meta.date = "2019-02-27T13:37:18.548"
@@ -77,7 +80,7 @@ def make_nircam_rate_model():
     image.meta.instrument.module = "A"
     image.meta.instrument.detector = "NRCA1"
 
-    # bare minimum wcs info to get assign_wcs step to pass
+    # bare minimum wcs info to get assign_wcs and resample to pass
     image.meta.wcsinfo.crpix1 = 693.5
     image.meta.wcsinfo.crpix2 = 512.5
     image.meta.wcsinfo.v2_ref = -453.37849
@@ -85,6 +88,8 @@ def make_nircam_rate_model():
     image.meta.wcsinfo.roll_ref = 272.3237653262276
     image.meta.wcsinfo.ra_ref = 80.54724018120017
     image.meta.wcsinfo.dec_ref = -69.5081101864959
+    image.meta.wcsinfo.v3yangle = 0.0
+    image.meta.wcsinfo.vparity = 1
 
     return image
 
@@ -123,5 +128,22 @@ def make_nirspec_ifu_rate_model():
     image.meta.wcsinfo.roll_ref = 272.3237653262276
     image.meta.wcsinfo.ra_ref = 80.54724018120017
     image.meta.wcsinfo.dec_ref = -69.5081101864959
+
+    return image
+
+
+def make_nircam_image_cal_model():
+    """
+    Make a NIRCam image model with a WCS assigned.
+
+    Suitable to mock a cal file, for input to the image3 pipeline.
+
+    Returns
+    -------
+    cal : `stdatamodels.jwst.datamodels.ImageModel`
+        The calibrated model.
+    """
+    image = make_nircam_rate_model()
+    image = AssignWcsStep.call(image)
 
     return image

@@ -14,41 +14,41 @@
                 {
                     "exptype": "SCIENCE",
                     "expname": "headers.fits",
-                    "group_id": "1",
+                    "group_id": "1"
                 },
                 {
                     "exptype": "SCIENCE",
                     "expname": "headers.fits",
-                    "group_id": "2",
+                    "group_id": "2"
                 },
                 {
                     "exptype": "SCIENCE",
                     "expname": "headers.fits",
-                    "group_id": 3,
+                    "group_id": 3
                 },
                 {
                     "exptype": "SCIENCE",
                     "expname": "headers.fits",
-                    "group_id": 1234,
+                    "group_id": 1234
                 },
                 {
                     "exptype": "SCIENCE",
                     "expname": "headers.fits",
-                    "group_id": Null,
+                    "group_id": null
                 },
                 {
                     "exptype": "SCIENCE",
                     "expname": "headers.fits",
-                    "group_id": Null,
+                    "group_id": null
                 },
                 {
                     "exptype": "SCIENCE",
-                    "expname": "headers.fits",
+                    "expname": "headers.fits"
                 },
                 {
                     "exptype": "SCIENCE",
-                    "expname": "headers.fits",
-                },
+                    "expname": "headers.fits"
+                }
             ]
         }
     ],
