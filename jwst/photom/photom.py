@@ -709,8 +709,8 @@ class DataSet:
         Apply photometric calibration to all slits in a WFSS exposure.
 
         Iterates over each slit in the input ``MultiSlitModel``, looks up the
-        matching row in the photom reference table by filter, pupil, and
-        spectral order, and calls ``photom_io`` to apply the conversion.
+        row in the photom reference table matched by the attributes specified
+        in ``match_fields``, and calls ``photom_io`` to apply the conversion.
 
         Parameters
         ----------
