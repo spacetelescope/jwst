@@ -620,16 +620,19 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
                         "Stripe readout resulted in mismatched reference array shape "
                         "with respect to science array!"
                     )
-        # If multistripe, broadcast arrays into nints copies so that direct application
-        # of the reference array to the science array is possible
-        if num_superstripe > 0 and ref_native_dims == 4:
-            stripe_out = np.tile(stripe_out, reps=(sci_nints, 1, 1, 1))
+
         # If multistripe but ref array is typically 2-D:
         # rather than broadcast a 2-D array into many wasted dims, just provide the minimal
         # 3-D array, with one slice per superstripe in the third dimension. Expect steps
         # to handle the extra dimension.
-        elif num_superstripe > 0 and ref_native_dims == 2:
+        if num_superstripe > 0 and ref_native_dims == 2:
             stripe_out = stripe_out[:, 0, :, :]
+        # If multistripe and output currently has one plane per stripe only,
+        # and reference file is expected to have 4 dimensions,
+        # broadcast arrays into sci_nints copies so that direct application
+        # of the reference array to the science array is possible
+        elif num_superstripe > 0 and stripe_out.shape[0] == num_superstripe:
+            stripe_out = np.tile(stripe_out, reps=(sci_nints, 1, 1, 1))
 
         # Transform from detector frame back to science frame
         stripe_out = detector_science_frame_transform(stripe_out, fastaxis, slowaxis)

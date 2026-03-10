@@ -43,12 +43,13 @@
 
 import logging
 from copy import deepcopy
+from pathlib import Path
 
 import numpy as np
 from scipy import stats
-from stdatamodels.jwst.datamodels import dqflags
+from stdatamodels.jwst.datamodels import CubeModel, dqflags
 
-from jwst.lib import pipe_utils, reffile_utils
+from jwst.lib import pipe_utils, reffile_utils, suffix
 from jwst.refpix.irs2_subtract_reference import make_irs2_mask
 from jwst.refpix.optimized_convolution import apply_conv_kernel, make_kernels
 
@@ -1317,6 +1318,7 @@ class NIRDataset(Dataset):
             evenrefpixindices = (np.array(evenrefpixindices_row), np.array(evenrefpixindices_col))
             oddrefpixindices = (np.array(oddrefpixindices_row), np.array(oddrefpixindices_col))
 
+        store_refpix = CubeModel(data=np.full((self.ngroups, 2, self.nints), np.nan))
         for integration in range(self.nints):
             for group in range(self.ngroups):
                 # Get the reference values from the top and bottom reference pixels
@@ -1339,6 +1341,15 @@ class NIRDataset(Dataset):
                     thisgroup -= refpixvalue
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration, group)
+                store_refpix.data[group, :, integration] = np.array(
+                    [
+                        oddrefpixvalue,
+                        evenrefpixvalue,
+                    ]
+                )
+        file = Path(self.input_model.meta.filename).stem
+        store_refpix.save(suffix.remove_suffix(file)[0] + "_refval.fits")
+
         return
 
     def get_multistripe_refvalues(self, group, stripe_idx, fastmin):
@@ -1370,6 +1381,9 @@ class NIRDataset(Dataset):
         """
         refpix = {}
 
+        refdq = dqflags.pixel["REFERENCE_PIXEL"]
+        dnudq = dqflags.pixel["DO_NOT_USE"]
+
         # Multistripe will have 3D pixeldq, so we index on stripe.
         if stripe_idx >= 0:
             pixeldq = self.pixeldq[stripe_idx]
@@ -1384,7 +1398,10 @@ class NIRDataset(Dataset):
             amp_xf -= fastmin
             refpix[amplifier] = {}
             mask = np.where(
-                pixeldq[:, amp_xi:amp_xf] & dqflags.pixel["REFERENCE_PIXEL"] > 0, True, False
+                (pixeldq[:, amp_xi:amp_xf] & refdq == refdq)
+                & (pixeldq[:, amp_xi:amp_xf] & dnudq != dnudq),
+                True,
+                False,
             )
             if self.odd_even_columns:
                 odd_mask = mask.copy()
@@ -1469,6 +1486,7 @@ class NIRDataset(Dataset):
                 self.input_model.meta.subarray.ystart - 1 + self.input_model.meta.subarray.ysize,
             )
 
+        store_refpix = CubeModel(data=np.full((self.ngroups, 2, self.nints), np.nan))
         for integration_num in range(self.nints):
             # Multistripe requires passing the stripe index to access the correct
             # pixeldq plane
@@ -1490,7 +1508,14 @@ class NIRDataset(Dataset):
                 self.group = thisgroup
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration_num, group_num)
-
+                store_refpix.data[group_num, :, integration_num] = np.array(
+                    [
+                        refvalues["D"]["odd"],
+                        refvalues["D"]["even"],
+                    ]
+                )
+        file = Path(self.input_model.meta.filename).stem
+        store_refpix.save(suffix.remove_suffix(file)[0] + "_refval.fits")
         return
 
     def dms_to_detector(self, integration, group):

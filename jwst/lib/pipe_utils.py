@@ -162,7 +162,13 @@ def match_nans_and_flags(input_model):
 
 def generate_superstripe_ranges(sci_model):
     """
-    TBD.
+    Return a dict of slowaxis ranges read into stripes.
+
+    Given an input model with a multistripe parameter set,
+    this will return the slowaxis read ranges corresponding
+    to the nreads2 positions read into each stripe of a set
+    of superstripes. Dictionary keys are 0-indexed stripe
+    labels.
 
     Parameters
     ----------
