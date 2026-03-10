@@ -535,8 +535,6 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
                 "with respect to science array!"
             )
 
-        # Transform from detector frame back to science frame
-        stripe_out = detector_science_frame_transform(stripe_out, fastaxis, slowaxis)
     else:
         # SUPERSTRIPE MODE
         # First alter subarray shape to broadcast stripe size to fill "full" subarray
@@ -633,8 +631,8 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
         elif stripe_out.shape[0] == num_superstripe:
             stripe_out = np.tile(stripe_out, reps=(sci_nints, 1, 1, 1))
 
-        # Transform from detector frame back to science frame
-        stripe_out = detector_science_frame_transform(stripe_out, fastaxis, slowaxis)
+    # Transform from detector frame back to science frame
+    stripe_out = detector_science_frame_transform(stripe_out, fastaxis, slowaxis)
 
     return stripe_out
 
