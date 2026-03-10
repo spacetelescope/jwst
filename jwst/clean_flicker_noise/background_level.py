@@ -211,58 +211,58 @@ def background_level(image, mask, background_method="median", background_box_siz
         if ``background_method`` is 'model'.
     """
     if background_method is None:
-        background = 0.0
+        return 0.0
 
-    else:
-        # Sigma limit for basic stats
-        sigma_limit = 3.0
+    # Sigma limit for basic stats
+    sigma_limit = 3.0
 
-        # Flag more signal in the background subtracted image,
-        # with sigma set by the lower half of the distribution only
-        clip_to_background(
-            image, mask, sigma_lower=sigma_limit, sigma_upper=sigma_limit, lower_half_only=True
+    # Flag more signal in the background subtracted image,
+    # with sigma set by the lower half of the distribution only
+    clip_to_background(
+        image, mask, sigma_lower=sigma_limit, sigma_upper=sigma_limit, lower_half_only=True
+    )
+
+    if background_method == "model":
+        sigma_clip_for_bkg = SigmaClip(sigma=sigma_limit, maxiters=5)
+        bkg_estimator = MedianBackground()
+
+        if background_box_size is None:
+            # use 32 x 32 if possible, otherwise take next largest box
+            # size that evenly divides the image (minimum 1)
+            background_box_size = []
+            recommended = np.arange(1, 33)
+            for i_size in image.shape:
+                divides_evenly = i_size % recommended == 0
+                background_box_size.append(int(recommended[divides_evenly][-1]))
+            log.debug(f"Using box size {background_box_size}")
+
+        box_division_remainder = (
+            image.shape[0] % background_box_size[0],
+            image.shape[1] % background_box_size[1],
         )
-
-        if background_method == "model":
-            sigma_clip_for_bkg = SigmaClip(sigma=sigma_limit, maxiters=5)
-            bkg_estimator = MedianBackground()
-
-            if background_box_size is None:
-                # use 32 x 32 if possible, otherwise take next largest box
-                # size that evenly divides the image (minimum 1)
-                background_box_size = []
-                recommended = np.arange(1, 33)
-                for i_size in image.shape:
-                    divides_evenly = i_size % recommended == 0
-                    background_box_size.append(int(recommended[divides_evenly][-1]))
-                log.debug(f"Using box size {background_box_size}")
-
-            box_division_remainder = (
-                image.shape[0] % background_box_size[0],
-                image.shape[1] % background_box_size[1],
+        if not np.allclose(box_division_remainder, 0):
+            log.warning(
+                f"Background box size {background_box_size} "
+                f"does not divide evenly into the image "
+                f"shape {image.shape}."
             )
-            if not np.allclose(box_division_remainder, 0):
-                log.warning(
-                    f"Background box size {background_box_size} "
-                    f"does not divide evenly into the image "
-                    f"shape {image.shape}."
-                )
 
-            try:
-                with warnings.catch_warnings():
-                    warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
-                    bkg = Background2D(
-                        image,
-                        box_size=background_box_size,
-                        filter_size=(5, 5),
-                        mask=~mask,
-                        sigma_clip=sigma_clip_for_bkg,
-                        bkg_estimator=bkg_estimator,
-                    )
-                background = bkg.background
-            except ValueError:
-                log.error("Background fit failed, using median value.")
-                background = np.nanmedian(image[mask])
-        else:
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
+                bkg = Background2D(
+                    image,
+                    box_size=background_box_size,
+                    filter_size=(5, 5),
+                    mask=~mask,
+                    sigma_clip=sigma_clip_for_bkg,
+                    bkg_estimator=bkg_estimator,
+                )
+            background = bkg.background
+        except ValueError:
+            log.error("Background fit failed, using median value.")
             background = np.nanmedian(image[mask])
+    else:
+        background = np.nanmedian(image[mask])
+
     return background

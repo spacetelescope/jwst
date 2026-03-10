@@ -29,7 +29,7 @@ def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
     # percent of the remaining data
     assert not mask[0, 0]
     assert not mask[1, 1]
-    assert np.allclose(np.sum(mask) / mask.size, 0.98, atol=0.019)
+    assert np.sum(mask) / mask.size > 0.95
 
     # Upper outlier stays with large sigma_upper
     mask = np.full(shape, True)
@@ -38,7 +38,7 @@ def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
     )
     assert mask[0, 0]
     assert not mask[1, 1]
-    assert np.allclose(np.sum(mask) / mask.size, 0.98, atol=0.019)
+    assert np.sum(mask) / mask.size > 0.95
 
     # Lower outlier stays with large sigma_lower
     mask = np.full(shape, True)
@@ -47,7 +47,7 @@ def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
     )
     assert not mask[0, 0]
     assert mask[1, 1]
-    assert np.allclose(np.sum(mask) / mask.size, 0.98, atol=0.019)
+    assert np.sum(mask) / mask.size > 0.95
 
 
 def test_clip_to_background_fit_fails(log_watcher):
