@@ -829,7 +829,7 @@ class DataSet:
                 expected_unit = "MJy micron s / (DN sr)"
             if expected_unit is None:
                 log.warning(
-                    f"phot_unit provided ({phot_unit}), but no expected unit defined for "
+                    f"phot_unit attribute found ({phot_unit}), but no expected unit defined for "
                     f"exptype {self.exptype}. No unit conversion will be applied."
                 )
                 factor = 1.0

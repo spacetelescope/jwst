@@ -1869,6 +1869,23 @@ def test_nircam_spec():
         assert_allclose(ratio, compare, rtol=1.0e-7)
 
 
+def test_wfss_no_expected_unit(log_watcher):
+    """Test catch for phot_unit specified but no expected_unit defined."""
+    input_model = create_input(
+        "NIRCAM", "NRCALONG", "NRC_WFSS", filter_used="F356W", pupil="GRISMR"
+    )
+    input_model.meta.exposure.type = "NRC_IMAGE"
+    ds = photom.DataSet(input_model)
+    ftab = create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0)
+    watcher = log_watcher(
+        "jwst.photom.photom",
+        message="phot_unit attribute found (placeholder), but no expected unit defined",
+        level="warning",
+    )
+    ds.photom_io(ftab.phot_table[0], phot_unit="placeholder")
+    watcher.assert_seen()
+
+
 def test_fgs():
     """Test the calc_fgs method of the DataSet class in photom.py."""
     input_model = create_input("FGS", "GUIDER1", "FGS_IMAGE")
