@@ -13,14 +13,6 @@ log = logging.getLogger(__name__)
 __all__ = ["is_tso", "is_irs2", "match_nans_and_flags"]
 
 
-SUPERSTRIPE_SUBARRAY_MAPPING = {
-    "SUB17STRIPE_SOSS": "SUBSTRIP256",
-    "SUB60STRIPE_SOSS": "SUBSTRIP256",
-    "SUB204STRIPE_SOSS": "SUBSTRIP256",
-    "SUB680STRIPE_SOSS": "SUBSTRIP256",
-}
-
-
 def is_tso(model):
     """
     Check if data is a Time Series Observation (TSO).

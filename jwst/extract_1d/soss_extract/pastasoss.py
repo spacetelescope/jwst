@@ -583,7 +583,13 @@ def get_soss_wavemaps(
         wavemap[:subarray_ymin, :] = wavemap[subarray_ymin]
 
         # Trim to subarray
-        if subarray == "SUBSTRIP256":
+        if subarray in [
+            "SUBSTRIP256",
+            "SUB17STRIPE_SOSS",
+            "SUB60STRIPE_SOSS",
+            "SUB204STRIPE_SOSS",
+            "SUB680STRIPE_SOSS",
+        ]:
             wavemap = wavemap[subarray_ymin:soss_xdim, :]
         if subarray == "SUBSTRIP96":
             wavemap = wavemap[subarray_ymin : subarray_ymin + 96, :]
