@@ -195,9 +195,9 @@ def collate_superstripes(input_model):
             # If slowaxis is negative, need to read the stripes in reverse order
             # (but not reverse column order within a stripe, as they've been
             # transformed to science frame)
-            srlist.append([slowsize - (x - nreads1) for x in stripe_ranges[key][0][::-1]])
+            srlist.append([slowsize - x for x in stripe_ranges[key][0][::-1]])
         else:
-            srlist.append([(x - nreads1) for x in stripe_ranges[key][0]])
+            srlist.append(list(stripe_ranges[key][0]))
 
     # Determine integration/stripe numbers
     nints, ngroups, ny, nx = input_model.data.shape
@@ -217,6 +217,12 @@ def collate_superstripes(input_model):
     # Work through each set of stripes, pushing them into a common frame
     for integ in range(nints_sci):
         for stripe in range(n_sstr):
+            """
+            Long term, there may be cases where stripes overlap.
+            This could be refactored to store each stripe in a separate
+            plane, and overlaps could be reduced using a function of choice,
+            e.g. np.median.
+            """
             # Determine fast orient
             if fastaxis == 1:
                 newslice = np.s_[integ, :, srlist[stripe][0] : srlist[stripe][1], :]
@@ -244,24 +250,30 @@ def collate_superstripes(input_model):
                         stripe, dataslice[-2], dataslice[-1]
                     ]
 
-    input_model.data = newdata
-    input_model.groupdq = newgdq
-    input_model.pixeldq = newpdq
+    new_model = datamodels.RampModel(
+        data=newdata,
+        groupdq=newgdq,
+        pixeldq=newpdq,
+        int_times=input_model.int_times,
+    )
+    new_model.update(input_model)
 
-    input_model = clean_superstripe_metadata(input_model)
+    new_model = generate_stripe_int_times(new_model)
+    new_model = clean_superstripe_metadata(new_model)
 
-    return input_model
+    return new_model
 
 
 def clean_superstripe_metadata(input_model):
     """
-    Update metadata in input_model to reflect new subarray characteristics.
+    Update model metadata to match changes to arrays.
 
     Parameters
     ----------
     input_model : `~stdatamodels.jwst.datamodels.RampModel`
-        The model with updated data array shapes to reflect
-        the new subarray/full shape, but outdated metadata.
+        The model with updated data array shapes matching a parent
+        frame, e.g. full frame or a subarray, which consist of
+        multiple superstripe integrations.
 
     Returns
     -------
@@ -272,6 +284,17 @@ def clean_superstripe_metadata(input_model):
     input_model.meta.subarray.name = pipe_utils.SUPERSTRIPE_SUBARRAY_MAPPING[
         input_model.meta.subarray.name
     ]
+
+    input_model.meta.exposure.integration_start = np.ceil(
+        input_model.meta.exposure.integration_start / input_model.meta.subarray.num_superstripe
+    ).astype(int)
+    input_model.meta.exposure.integration_end = np.ceil(
+        input_model.meta.exposure.integration_end / input_model.meta.subarray.num_superstripe
+    ).astype(int)
+    input_model.meta.exposure.nints = np.ceil(
+        input_model.meta.exposure.nints / input_model.meta.subarray.num_superstripe
+    ).astype(int)
+
     input_model.meta.subarray.multistripe_reads1 = None
     input_model.meta.subarray.multistripe_reads2 = None
     input_model.meta.subarray.multistripe_skips1 = None
@@ -281,5 +304,83 @@ def clean_superstripe_metadata(input_model):
     input_model.meta.subarray.num_superstripe = None
     input_model.meta.subarray.superstripe_step = None
     input_model.meta.subarray.ysize, input_model.meta.subarray.xsize = input_model.data.shape[-2:]
+
+    return input_model
+
+
+def generate_stripe_int_times(input_model):
+    """
+    Move input model INT_TIMES to stripe table, then condense ints to parent frame.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
+        The model with updated data array shapes matching a parent
+        frame, e.g. full frame or a subarray, which consist of
+        multiple superstripe integrations.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.RampModel`
+        The model now with two INT_TIMES tables - one reflecting per-stripe
+        information, preserved from input, and one reflecting times
+        corresponding to the new parent frames.
+    """
+    nstr = input_model.meta.subarray.num_superstripe
+    nints_sci = len(input_model.int_times) // nstr
+
+    otab = np.array(
+        list(
+            zip(
+                np.repeat(np.arange(len(input_model.int_times) // nstr) + 1, nstr),
+                np.arange(len(input_model.int_times)) % nstr + 1,
+                [integ["int_start_MJD_UTC"] for integ in input_model.int_times],
+                [integ["int_mid_MJD_UTC"] for integ in input_model.int_times],
+                [integ["int_end_MJD_UTC"] for integ in input_model.int_times],
+                [integ["int_start_BJD_TDB"] for integ in input_model.int_times],
+                [integ["int_mid_BJD_TDB"] for integ in input_model.int_times],
+                [integ["int_end_BJD_TDB"] for integ in input_model.int_times],
+                strict=True,
+            )
+        ),
+        dtype=input_model.int_times_stripe.dtype,
+    )
+
+    input_model.int_times_stripe = otab
+
+    cds_mjd_beg = np.full(nints_sci, np.nan, dtype="<f8")
+    cds_mjd_mid = np.full(nints_sci, np.nan, dtype="<f8")
+    cds_mjd_end = np.full(nints_sci, np.nan, dtype="<f8")
+    cds_bjd_beg = np.full(nints_sci, np.nan, dtype="<f8")
+    cds_bjd_mid = np.full(nints_sci, np.nan, dtype="<f8")
+    cds_bjd_end = np.full(nints_sci, np.nan, dtype="<f8")
+
+    input_inttimes = input_model.int_times
+    nints_sci = len(input_inttimes) // nstr
+    for i in range(nints_sci):
+        cds_mjd_beg[i] = input_inttimes[i * nstr]["int_start_MJD_UTC"]
+        cds_mjd_end[i] = input_inttimes[(i + 1) * nstr - 1]["int_end_MJD_UTC"]
+        cds_mjd_mid[i] = (cds_mjd_end[i] - cds_mjd_beg[i]) / 2.0 + cds_mjd_beg[i]
+        cds_bjd_beg[i] = input_inttimes[i * nstr]["int_start_BJD_TDB"]
+        cds_bjd_end[i] = input_inttimes[(i + 1) * nstr - 1]["int_end_BJD_TDB"]
+        cds_bjd_mid[i] = (cds_bjd_end[i] - cds_bjd_beg[i]) / 2.0 + cds_bjd_beg[i]
+
+    otab2 = np.array(
+        list(
+            zip(
+                np.arange(len(input_model.int_times) // nstr) + 1,
+                cds_mjd_beg,
+                cds_mjd_mid,
+                cds_mjd_end,
+                cds_bjd_beg,
+                cds_bjd_mid,
+                cds_bjd_end,
+                strict=True,
+            )
+        ),
+        dtype=input_model.int_times.dtype,
+    )
+
+    input_model.int_times = otab2
 
     return input_model
