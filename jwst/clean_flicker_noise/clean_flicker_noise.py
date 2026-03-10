@@ -1306,8 +1306,9 @@ def do_correction(
     flat_filename : str, optional
         Path to a flat field image to apply to the data before fitting
         noise/background.
-    pastasoss_filename : str, optional
+    pastasoss_filename : str or None, optional
         Path to a ``pastasoss`` reference file name. Used for NIS_SOSS only.
+        If None, a default model will be retrieved if needed.
     n_sigma : float, optional
         N-sigma rejection level for finding outliers. Set to 0 to skip
         outlier rejection.
