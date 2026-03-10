@@ -609,7 +609,6 @@ def get_soss_wavemaps(
             wavemap = wavemap[subarray_ymin - padsize : soss_xdim + padsize, :]
         if subarray == "SUBSTRIP96":
             wavemap = wavemap[subarray_ymin - padsize : subarray_ymin + 96 + padsize, :]
-
         # remove padding if necessary
         if not do_padding and padsize != 0:
             wavemap = wavemap[padsize:-padsize, padsize:-padsize]
