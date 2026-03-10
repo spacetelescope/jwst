@@ -52,6 +52,13 @@ def do_correction(output_model, rscd_model):
 
     group_skip_int1 = param["skip_int1"]  # integration 1
     group_skip_int2p = param["skip_int2p"]  # integration 2,  plus higher integrations
+
+    if group_skip_int1 < 0:
+        log.info(" WARNING: RSCD reference file is of a depreciated model.")
+        log.info(" WARNING: There are no values for first integration")
+        log.info(" Setting number of groups to skip in first integration to 1")
+        group_skip_int1 = 1
+
     log.info(f" # groups from RSCD reference file for int 1 to flag  {group_skip_int1}")
     log.info(f" # groups from RSCD reference file for int 2 and higher to flag  {group_skip_int2p}")
     output_model = correction_skip_groups(output_model, group_skip_int1, group_skip_int2p)
