@@ -15,20 +15,23 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     rtdata = rtdata_module
     # These are the WFSS exposures we'll be processing
 
-    photom_file = "jwst_miri_photom_WFSS_20260220_v2.fits"
+    photom_file = "jwst_miri_photom_0231.fits"
     bkg_file = "MIRI_WFSS_bkg_February2026.fits"
     flat_file = "jwst_miri_flat_WFSS_20260220.fits"
+    filteroffset_file = "jwst_miri_filteroffset_0019.asdf"
     rtdata.get_data(f"miri/wfss/{photom_file}")
     rtdata.get_data(f"miri/wfss/{bkg_file}")
     rtdata.get_data(f"miri/wfss/{flat_file}")
+    rtdata.get_data(f"miri/wfss/{filteroffset_file}")
 
-    rtdata.get_asn("miri/wfss/jw03224-miri_wfss_spec2_00001_asn.json")
+    rtdata.get_asn("miri/wfss/jw09505-o001_spec2_00001_asn.json")
     args = [
         "calwebb_spec2",
         rtdata.input,
         f"--steps.photom.override_photom={photom_file}",
         f"--steps.flat_field.override_flat={flat_file}",
         f"--steps.bkg_subtract.override_bkg={bkg_file}",
+        f"--steps.assign_wcs.override_filteroffset={filteroffset_file}",
         "--steps.bkg_subtract.skip=false",
         "--steps.flat_field.skip=false",
         "--steps.assign_wcs.save_results=true",
@@ -46,13 +49,13 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
 @pytest.mark.skip(reason="Work in progress: updating the Reference Files")
 @pytest.mark.parametrize(
     "suffix",
-    ["assign_wcs", "cal", "extract_2d", "photom", "srctype", "x1d", "bsub", "flat"],
+    ["assign_wcs", "cal", "extract_2d", "photom", "srctype", "x1d", "bsub", "flat_field"],
 )
 def test_miri_wfss_spec2(run_miri_wfss_spec2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 applied to MIRI WFSS data"""
     rtdata = rtdata_module
-    rtdata.input = "jw03224024001_03103_00001_mirimage_rate.fits"
-    output = "jw03224_miri_wfss_" + suffix + ".fits"
+    rtdata.input = "jw09505001001_02102_00004_mirimage_rate.fits"
+    output = "jw09505001001_02102_00004_mirimage_" + suffix + ".fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_miri_wfss/{output}")
 
