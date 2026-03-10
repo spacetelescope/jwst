@@ -1,0 +1,1 @@
+Add the ``add_asn_id_to_output_name`` method to ``JwstStep`` to allow an ASN ID to be automatically appended to output filenames.
