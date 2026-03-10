@@ -593,7 +593,6 @@ def get_soss_wavemaps(
             wavemap = wavemap[subarray_ymin:soss_xdim, :]
         if subarray == "SUBSTRIP96":
             wavemap = wavemap[subarray_ymin : subarray_ymin + 96, :]
-
         wavemaps.append(wavemap)
         traces.append(spectrace)
 
