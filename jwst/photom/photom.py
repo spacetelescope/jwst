@@ -414,7 +414,7 @@ class DataSet:
 
         # Handle MultiSlit models separately, which are used for NIRISS WFSS
         if isinstance(self.input, datamodels.MultiSlitModel):
-            self.calc_wfss(ftab, correction_table)
+            self.calc_wfss(ftab, correction_table, ["filter", "pupil", "order"])
 
         elif isinstance(self.input, datamodels.CubeModel):
             raise DataModelTypeError(
@@ -587,7 +587,7 @@ class DataSet:
 
         # Handle WFSS data separately from regular imaging
         if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == "NRC_WFSS":
-            self.calc_wfss(ftab, correction_table)
+            self.calc_wfss(ftab, correction_table, ["filter", "pupil", "order"])
         elif self.exptype == "NRC_TSGRISM":
             fields_to_match = {"filter": self.filter, "pupil": self.pupil, "order": self.order}
             row = find_row(ftab.phot_table, fields_to_match)
@@ -704,7 +704,7 @@ class DataSet:
 
         return wave2d, area2d, dqmap
 
-    def calc_wfss(self, ftab, correction_table):
+    def calc_wfss(self, ftab, correction_table, match_fields):
         """
         Apply photometric calibration to all slits in a WFSS exposure.
 
@@ -718,15 +718,22 @@ class DataSet:
             Photom reference file data model.
         correction_table : array-like
             Time-dependence correction values.
+        match_fields : list of str
+            List of field names to use for matching rows in the photom reference table.
         """
+        fields_to_match = {}
+        for field in match_fields:
+            value = getattr(self, field)
+            fields_to_match[field] = value
         for slit in self.input.slits:
             log.info(f"Working on slit {slit.name}")
             # Increment slit number
             self.slitnum += 1
 
             # Get the spectral order number for this slit
-            order = slit.meta.wcsinfo.spectral_order
-            fields_to_match = {"filter": self.filter, "pupil": self.pupil, "order": order}
+            if "order" in match_fields:
+                order = slit.meta.wcsinfo.spectral_order
+                fields_to_match["order"] = order
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 continue
