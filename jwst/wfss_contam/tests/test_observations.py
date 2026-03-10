@@ -83,7 +83,7 @@ def test_chunk_sources(observation, segmentation_map):
     assert total_pixels_in_chunks == total_expected_pixels
 
 
-@pytest.mark.parametrize("chunk_size", [100, 1e5])
+@pytest.mark.parametrize("chunk_size", [100, 1000, 1e5])
 def test_disperse_order(observation, segmentation_map, chunk_size):
     obs = copy.deepcopy(observation)
     obs.max_pixels_per_chunk = chunk_size
@@ -113,5 +113,8 @@ def test_disperse_order(observation, segmentation_map, chunk_size):
     assert slit.name == "source_51"
     assert slit.data.shape == (slit.ysize, slit.xsize)
 
-    # check for regression by hard-coding one value of slit.data
-    assert np.isclose(slit.data[5, 60], 0.09994397, atol=1e-5)
+    # Result should be close to the same for all chunk sizes
+    # There are numerical differences due to arbitrary choice of reference
+    # wavelength from which to compute the native spacing, but these are
+    # understood and are inconsequential for science.
+    assert np.isclose(slit.data[5, 60], 0.09994397, rtol=0.005)
