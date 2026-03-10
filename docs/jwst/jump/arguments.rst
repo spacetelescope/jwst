@@ -29,14 +29,13 @@ The details for each are listed below.
   used for multi-processing in this step. The default value is '1', which does not use
   multi-processing. The other options are either an integer, 'quarter', 'half', or 'all'.
   Note that these fractions refer to the total available cores and on most CPUs these include
-  physical and virtual cores. The clock time for the step is reduced almost linearly by the
-  number of physical cores used on all machines. For example, on an Intel CPU with
-  six real cores and six virtual cores, setting maximum_cores to 'half' results in a
-  decrease of a factor of six in the clock time for the step to run. Depending on the system,
-  the clock time can also decrease even more with maximum_cores is set to 'all'.
-  Setting the number of cores to an integer can be useful when running on machines with a
-  large number of cores where the user is limited in how many cores they can use.
-  Note that, currently, snowball and shower detection does not use multiprocessing.
+  physical and virtual cores. Multiprocessing only occurs during the two point difference,
+  which does not include finding snowballs, nor finding showers. The reduction in clock time
+  is linear for only the two point difference portion of the jump step, but will not be linear
+  for the totality of running the jump step. If the time needed to compute snowballs and/or
+  showers, the reduction in processing time for the jump step when using multiprocessing
+  may not be as significant as expected, since the only part of the jump step that will
+  be reduced linearly with the number of processors is the two point difference.
 
 * ``--flag_4_neighbors``: If set to True (default is True) it will cause the four perpendicular
   neighbors of all detected jumps to also be flagged as a jump. This is needed because of
