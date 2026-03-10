@@ -813,6 +813,23 @@ class DataSet:
             log.info(f"Multiplicative time dependence correction is {time_correction:.6g}")
             conversion /= time_correction
 
+        if phot_unit is not None:
+            # expected_unit is the unit we decide is "standard" for photmj or photmjsr.
+            # real reference files may use a different unit, passed in as phot_unit, but
+            # phot_unit must be compatible with expected_unit for a given mode.
+            expected_unit = None
+            if self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
+                expected_unit = "MJy micron s / (DN sr)"
+            if expected_unit is None:
+                log.warning(
+                    f"phot_unit provided ({phot_unit}), but no expected unit defined for "
+                    f"exptype {self.exptype}. No unit conversion will be applied."
+                )
+                factor = 1.0
+            else:
+                factor = u.Unit(phot_unit).to(u.Unit(expected_unit))
+            conversion *= factor
+
         # Store the conversion factor in the meta data
         log.info(f"PHOTMJSR value: {conversion:.6g}")
         if isinstance(self.input, datamodels.MultiSlitModel):
@@ -906,7 +923,6 @@ class DataSet:
                         relresps,
                         order,
                         include_dispersion=True,
-                        phot_unit=phot_unit,
                     )
 
                 else:
@@ -932,7 +948,6 @@ class DataSet:
                         relresps,
                         order,
                         include_dispersion=True,
-                        phot_unit=phot_unit,
                     )
 
                 else:
@@ -1065,7 +1080,6 @@ class DataSet:
         order,
         use_wavecorr=None,
         include_dispersion=False,
-        phot_unit=None,
     ):
         """
         Create a 2D array of photometric conversion values.
@@ -1094,12 +1108,6 @@ class DataSet:
         include_dispersion : bool or None
             Flag indicating whether the dispersion needs to be incorporated
             into the 2-d conversion factors.
-        phot_unit : str or None
-            Unit string for the photometric conversion factor from the reference file
-            ``phot_unit`` attribute (e.g. ``"MJy Angstrom s / (DN sr)"``).
-            When provided, it is used to compute a numeric conversion factor to the
-            expected unit for the relevant observing mode. If ``None``, no unit conversion
-            is applied. Currently only implemented for WFSS data.
 
         Returns
         -------
@@ -1121,12 +1129,7 @@ class DataSet:
         if include_dispersion:
             dispaxis = get_dispersion_direction(self.exptype, self.grating, self.filter, self.pupil)
             if dispaxis is not None:
-                if phot_unit is not None:
-                    expected_unit = "MJy micron s / (DN sr)"
-                    conversion_factor = u.Unit(phot_unit).to(u.Unit(expected_unit))
-                else:
-                    conversion_factor = 1.0
-                dispersion_array = self.get_dispersion_array(wl_array, dispaxis) / conversion_factor
+                dispersion_array = self.get_dispersion_array(wl_array, dispaxis)
                 conv_2d /= np.abs(dispersion_array)
             else:
                 log.warning(
