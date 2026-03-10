@@ -1,0 +1,1 @@
+Fix a few runtime bottlenecks. Runtime gains depend a lot on input parameters, but for one NIRCam test case with multiprocessing disabled, step runtime decreased by a factor of 1.8 from 170s to 94s.
