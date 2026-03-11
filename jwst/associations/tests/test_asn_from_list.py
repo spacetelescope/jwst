@@ -66,7 +66,10 @@ def test_file_ext():
     name, serialized = asn.dump(fmt="json")
     assert name.endswith("json")
     # check that extension with format = 'yaml'  returns yaml
-    name, serialized = asn.dump(fmt="yaml")
+    with pytest.warns(
+        DeprecationWarning, match="Support for associations as YAML files is deprecated"
+    ):
+        name, serialized = asn.dump(fmt="yaml")
     assert name.endswith("yaml")
 
 
@@ -200,9 +203,21 @@ def test_cmdline_success(fmt, tmp_path):
     inlist = ["a", "b", "c"]
     args = ["-o", str(path), "--product-name", product_name, "--format", fmt]
     args = args + inlist
-    Main.cli(args)
+    if fmt == "yaml":
+        with pytest.warns(
+            DeprecationWarning, match="Support for associations as YAML files is deprecated"
+        ):
+            Main.cli(args)
+    else:
+        Main.cli(args)
     with open(path, "r") as fp:
-        asn = load_asn(fp, fmt=fmt)
+        if fmt == "yaml":
+            with pytest.warns(
+                DeprecationWarning, match="Association file has json suffix but is invalid JSON"
+            ):
+                asn = load_asn(fp, fmt=fmt)
+        else:
+            asn = load_asn(fp, fmt=fmt)
     assert len(asn["products"]) == 1
     assert asn["products"][0]["name"] == product_name
     members = asn["products"][0]["members"]

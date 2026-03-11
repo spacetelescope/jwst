@@ -1,0 +1,1 @@
+Added support for propagating DQ flags in resampling. DQ flags are propagated by bitwise OR of all input DQ flags that contribute to a given output pixel.

@@ -1,0 +1,1 @@
+For WFSS modes, get photom reference table units from the reference file metadata instead of hard-coding it

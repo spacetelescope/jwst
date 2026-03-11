@@ -1,141 +1,179 @@
-# JWST Calibration Pipeline
+<a href="https://stsci.edu">
+  <img src="docs/_static/stsci_logo.png" alt="STScI Logo" width="15%" style="margin-left: auto;"/>
+  <img src="docs/_static/stsci_name.png" alt="STScI Logo" width="68%"/>
+</a>
+<a href="https://science.nasa.gov/mission/webb/">
+  <img src="docs/_static/jwst_logo.png" alt="JWST Logo" width="15%" style="margin-right: auto;"/>
+</a>
 
-[![Build Status](https://github.com/spacetelescope/jwst/actions/workflows/ci.yml/badge.svg)](https://github.com/spacetelescope/jwst/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/main/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
-[![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](https://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
-[![Pre-Commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](https://www.stsci.edu)
-[![Powered by Astropy Badge](https://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](https://www.astropy.org/)
+# James Webb Space Telescope Calibration Pipeline
+
 [![DOI](https://zenodo.org/badge/60551519.svg)](https://zenodo.org/badge/latestdoi/60551519)
-[![Python Versions](https://img.shields.io/pypi/pyversions/jwst)](https://pypi.org/project/jwst/)
+[![PyPI](https://img.shields.io/pypi/v/jwst.svg)](https://pypi.org/project/jwst)
+[![Python Support](https://img.shields.io/pypi/pyversions/jwst)](https://pypi.org/project/jwst/)
+[![Powered by STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](https://www.stsci.edu)
+[![Powered by Astropy](https://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](https://www.astropy.org/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![build](https://github.com/spacetelescope/jwst/actions/workflows/build.yml/badge.svg)](https://github.com/spacetelescope/jwst/actions/workflows/build.yml)
+[![tests](https://github.com/spacetelescope/jwst/actions/workflows/tests.yml/badge.svg)](https://github.com/spacetelescope/jwst/actions/workflows/tests.yml)
+[![readthedocs](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](https://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
+[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/main/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
 
-![STScI Logo](docs/_static/stsci_logo.png)
+This package (`jwst`) processes uncalibrated data from both imagers and spectrographs onboard the [James Webb Space Telescope (JWST)](https://science.nasa.gov/mission/webb/), an orbiting infrared observatory stationed at Earth-Sun L<sub>2</sub>.
+The pipeline performs a series of calibration steps that result in standard data products usable for science.
 
-This package processes uncalibrated data for both imagers and spectrographs onboard the James Webb Space Telescope (JWST), an orbiting infrared observatory stationed at Earth-Sun L<sub>2</sub>. It performs a series of calibration steps that result in standard data products usable for science.
-More information on running this pipeline, including explanations of specific stages and how to obtain reference files,
-can be found [here](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline).
+Detailed explanations of specific calibration stages, reference files, and pipeline builds can be found on the [ReadTheDocs pages](https://jwst-pipeline.readthedocs.io) and [JDox](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline).
+
+> [!NOTE]
+> If you have trouble installing this package, have encountered a bug while running the pipeline, or wish to request a new feature,
+> please [open an issue on GitHub](https://github.com/spacetelescope/jwst/issues) or [contact the JWST Help Desk](https://jwsthelp.stsci.edu).
+
+<!--toc:start-->
+- [Quick Start](#quick-start)
+  - [1. Install the Pipeline](#1-install-the-pipeline)
+    - [Option: Build Pipeline Directly from Source Code](#option-build-pipeline-directly-from-source-code)
+    - [Option: Install Exact Operational Environment](#option-install-exact-operational-environment)
+  - [2. Set up the Calibration Reference Data System (CRDS)](#2-set-up-the-calibration-reference-data-system-crds)
+  - [3. Run the Pipeline](#3-run-the-pipeline)
+- [Code Contributions](#code-contributions)
+- [DMS Operational Build Versions](#dms-operational-build-versions)
+<!--toc:end-->
+
+## Quick Start
+
+### 1. Install the Pipeline
 
 > [!IMPORTANT]
 > The JWST calibration pipeline currently supports Linux and macOS.
 > Native Windows builds are **not** currently supported; [use WSL instead](https://stenv.readthedocs.io/en/latest/windows.html).
 
-## Installation
-
 We recommend using an isolated Python environment to install `jwst`.
+Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
+You can manage environments with `mamba` / `conda`, `virtualenv`, `uv`, etc.
 
-> [!TIP]
-> Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries. Examples of commonly-used environments are `virtualenv`, `conda`, `mamba`, `uv`, etc.
+These instructions assume you are creating Conda environments with the `mamba` command
+(see [Miniforge for installation instructions](https://github.com/conda-forge/miniforge/blob/main/README.md));
+to use `conda` instead, simply replace `mamba` with `conda` in the following commands.
 
-You can create multiple environments to allow for switching between different versions of the `jwst` package (e.g. a released version versus the current development version).
-
-In all cases, installing to an environment is a 3-step process:
-* Create a new environment
-* Activate that environment (change shell variables in the current session to point to the isolated Python installation)
-* Install the desired version of the `jwst` package into that environment
-
+First, create an empty environment with Python installed:
 ```shell
-virtualenv jwst_env/
-source jwst_env/bin/activate
-pip install jwst==1.20.1
+mamba create -n jwst_env python=3.13
 ```
 
-> [!WARNING]
-> Installing `jwst` version `1.15.1` through `1.16.1` pulls an incompatible version of `gwcs`.
-> Remedy this issue by downgrading `gwcs`:
-> ```shell
-> pip install 'gwcs<0.22'
-> ```
+Then, **activate** that environment (necessary to be able to access this isolated Python installation):
+```shell
+mamba activate jwst_env
+```
 
-> [!NOTE]
-> Please contact the [JWST Help Desk](https://jwsthelp.stsci.edu) if you have issues installing `jwst`.
+Finally, install `jwst` into the environment:
+```shell
+pip install jwst
+```
 
-### Installing the latest unreleased development version directly from the source code
+Without a specified version, `pip` defaults to the latest released version that supports your environment.
+To install a specific version of `jwst`, explicitly set that version in your `pip install` command:
+```shell
+pip install jwst==1.20.2
+```
+
+To install a different version of `jwst`, simply create a new environment for that version:
+```shell
+mamba create -n jwst1.20_env python=3.13
+mamba activate jwst1.20_env
+pip install jwst==1.20
+
+mamba create -n jwst1.19_env python=3.12
+mamba activate jwst1.19_env
+pip install jwst==1.19
+```
+
+#### Option: Build Pipeline Directly from Source Code
 
 > [!IMPORTANT]
-> You need a C compiler in order to build the JWST calibration pipeline (and dependencies) from source.
+> You need a C compiler to build the JWST calibration pipeline (and dependencies) from source.
+
+To install the latest unreleased (and unstable) development version directly from the source code on GitHub:
 
 ```shell
 pip install git+https://github.com/spacetelescope/jwst
 ```
 
-### Installing a DMS Operational Build
+#### Option: Install Exact Operational Environment
 
-There may be occasions where an exact copy of an operational DMS build is
-desired (e.g. for validation testing or debugging issues in operations).
-We package releases for DMS builds [as environment snapshots that specify the exact versions of all packages to be installed](https://ssb.stsci.edu/stasis/releases/jwst/).
+There may be occasions where you need to replicate the exact environment used for canonical calibration operations by STScI (e.g. for validation testing or debugging issues).
+We package releases for operations [as environment snapshots that specify exact versions for both the pipeline and all dependencies](https://ssb.stsci.edu/stasis/releases/jwst/).
 
-Note that these environment files are delivered as Conda YAMLs. To install one, you will need to have `conda`, `mamba`, or `micromamba` installed on your computer.
-
-The [Software vs DMS build version map](#software-vs-dms-build-version-map), shown below, displays the `jwst` version for each DMS build.
-For example, use `jwst==1.17.1` for DMS build **11.2**.
+See the [DMS Operational Build Versions](#dms-operational-build-versions) table for the version of the pipeline corresponding to each operational build.
+For example, use `jwst==1.17.1` for **DMS build 11.2**.
 Also note that Linux and macOS systems require different snapshot files:
 ```shell
-conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.18.1/delivery/latest-py312-macos-arm64.yml
-conda activate JWSTDP-1.18.1-1-py312-macos-arm64
+mamba env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.18.1/delivery/latest-py312-macos-arm64.yml
+mamba activate JWSTDP-1.18.1-1-py312-macos-arm64
 ```
 
 > [!NOTE]
 > Starting with `jwst==1.16.1`, the JWST pipeline uses [`stasis`](https://github.com/spacetelescope/stasis) to package environments and deliver releases. If you need a version of `jwst` prior to `1.16.1`, use a slightly different procedure:
 > ```shell
-> conda create -n jwstdp-1.16.0 --file https://ssb.stsci.edu/releases/jwstdp/1.16.0/conda_python_macos-stable-deps.txt
-> conda activate jwstdp-1.16.0
+> mamba create -n jwstdp-1.16.0 --file https://ssb.stsci.edu/releases/jwstdp/1.16.0/conda_python_macos-stable-deps.txt
+> mamba activate jwstdp-1.16.0
 > pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.0/reqs_macos-stable-deps.txt
 > ```
 
-## Calibration References Data System (CRDS) Setup
+### 2. Set up the Calibration Reference Data System (CRDS)
 
-The [Calibration References Data System (CRDS)](https://jwst-crds.stsci.edu/static/users_guide/index.html) serves and manages reference files for several telescope calibration pipelines, including `jwst`.
+Before running the pipeline, you must first set up your local machine to retrieve files from the [Calibration Reference Data System (CRDS)](https://jwst-crds.stsci.edu/static/users_guide/index.html>)
+CRDS provides calibration reference files for several telescopes, including JWST.
 
-The JWST CRDS server is available at https://jwst-crds.stsci.edu
-
-> [!WARNING]
-> The CRDS PUB Server (`https://jwst-crds-pub.stsci.edu`) was decommissioned in March 2023.
-> To use historical files from the PUB server, contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
-
-Set `CRDS_SERVER_URL` and `CRDS_PATH` to run the calibration pipeline with access to reference files from CRDS:
+Set `CRDS_SERVER_URL` and `CRDS_PATH` to run the pipeline with access to reference files from CRDS:
 ```shell
 export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 export CRDS_PATH=$HOME/data/crds_cache/
 ```
 
+> [!NOTE]
+> The CRDS PUB Server (`https://jwst-crds-pub.stsci.edu`) was decommissioned in March 2023.
+> To use historical files from the PUB server, [contact the JWST Help Desk](https://jwsthelp.stsci.edu).
+
 The pipeline will automatically download individual reference files and cache them in the `CRDS_PATH` directory.
-Expect to use upwards of 200 gigabytes of disk space for reference files.
+**Expect to use 50 gigabytes (or more) of disk space for reference files**, depending on the instrument modes in use.
 
 > [!TIP]
-> If you are inside the STScI network, physically or via VPN, you do not need to set the `CRDS_PATH` environment variable (it defaults to shared network storage).
+> Users within the STScI network do not need to set `CRDS_PATH` (it defaults to shared network storage).
 
-To use a specific CRDS context other than that [automatically associated with a given pipeline version](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates), you may also explicitly set the ``CRDS_CONTEXT`` environment variable:
+To use a specific CRDS context other than that [automatically associated with a given pipeline version](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates), explicitly set the `CRDS_CONTEXT` environment variable:
 ```shell
 export CRDS_CONTEXT=jwst_1179.pmap
 ```
 
-## Documentation
+For more information, see [the docs page on JWST CRDS reference files](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/reference_files_crds.html#reference-files-crds).
 
-Package documentation is available at https://jwst-pipeline.readthedocs.io
+### 3. Run the Pipeline
 
-For more user-focused documentation, see the JDox pages at https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline
+Once installed, the pipeline allows users to run and configure calibration themselves for custom processing of JWST data,
+either [from the command line with `strun`](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/running_pipeline_command_line.html)
+or from Python with [pipeline and step functions and classes in the `jwst` package](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/running_pipeline_python.html)
+(see [this curated set of Jupyter notebooks](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-pipeline-notebooks) for example usage).
+Additionally, the `jwst` package provides [JWST datamodel classes](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/datamodels.html),
+the recommended method for reading and writing JWST data files in Python.
 
-> [!TIP]
-> Information on the latest build is available on JDox at https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information
+## Code Contributions
 
-> [!TIP]
-> Public API and its deprecation policy is described at https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/more_information.html
+`jwst` is an open source package written in Python.
+The source code is [available on GitHub](https://github.com/spacetelescope/jwst).
+New contributions and contributors are very welcome!
+Please read [`CONTRIBUTING.md`](CONTRIBUTING.md),
+the [public API definition](https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private),
+and the [public API deprecation policy](https://jwst-pipeline.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-deprecation-policy)
 
-## Contributions and Feedback
+We strive to provide a welcoming community by abiding with our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
-We welcome contributions and feedback on the project. Please follow [`CONTRIBUTING.md`](CONTRIBUTING.md) to submit an issue or a pull request.
+See [`TESTING.md`](./TESTING.md) for instructions on automated testing.
 
-We strive to provide a welcoming community to all of our users by abiding with [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+## DMS Operational Build Versions
 
-If you have questions or concerns regarding the software, please open an issue at https://github.com/spacetelescope/jwst/issues or contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
-
-
-## Software vs DMS build version map
-
-The table below provides information on each release of the `jwst` package and its relationship to software builds used in the STScI JWST DMS operations environment.
-The `Released` column gives the date on which the `jwst` tag was released on PyPI, and the `Ops Install` column gives the date on which the build incorporating that release was installed in DMS operations.
-Note that the `CRDS_CONTEXT` listed is a minimum context that can be used with that release. A release should work with any contexts between the specified context and the context specified for the next release.
+The table below provides information on each release of the `jwst` package and its relationship to software builds used in STScI JWST DMS operations.
+Each `jwst` tag was released on PyPI on the date given in `Released`, and then subsequently installed into operations on the date given in `Ops Install`.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
@@ -254,8 +292,3 @@ Note that the `CRDS_CONTEXT` listed is a minimum context that can be used with t
 | 0.8.0               | B7.1.1    |          | 0422         | 2017-11-06 |             | DMS patch release to I&T 2018-01-17           |
 | 0.8.0               | B7.1      | 2017_1   | 0422         | 2017-11-06 |             | Final release for Build 7.1                   |
 | 0.7.7               | B7.0      | 2016_2   | 0303         | 2016-12-13 |             | Final release for Build 7.0                   |
-
-
-## Testing
-
-See [`TESTING.md`](./TESTING.md)
