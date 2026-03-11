@@ -150,6 +150,8 @@ def create_wfss_image(pupil, filtername="F444W"):
     hdul = create_hdul(exptype="NRC_WFSS", filtername=filtername, pupil=pupil, wcskeys=wcs_wfss_kw)
     hdul["sci"].data = np.ones((hdul[0].header["SUBSIZE1"], hdul[0].header["SUBSIZE2"]))
     im = ImageModel(hdul)
+    im.dq = im.get_default("dq")
+    im.err = im.get_default("err")
     return AssignWcsStep.call(im)
 
 

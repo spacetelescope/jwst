@@ -30,6 +30,7 @@ def nircam_rate():
 
     shape = (ysize, xsize)
     im = ImageModel(shape)
+    im.dq = im.get_default("dq")
 
     im.meta.wcsinfo = {
         "ctype1": "RA---TAN",

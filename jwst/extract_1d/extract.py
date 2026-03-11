@@ -1371,11 +1371,11 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         var_flat = data_model.var_flat
 
     # Make sure variances match data
-    if var_rnoise.shape != data.shape:
+    if getattr(data_model, "var_rnoise", None) is None or var_rnoise.shape != data.shape:
         var_rnoise = np.zeros_like(data)
-    if var_poisson.shape != data.shape:
+    if getattr(data_model, "var_poisson", None) is None or var_poisson.shape != data.shape:
         var_poisson = np.zeros_like(data)
-    if var_flat.shape != data.shape:
+    if getattr(data_model, "var_flat", None) is None or var_flat.shape != data.shape:
         var_flat = np.zeros_like(data)
 
     # Transpose data for extraction
@@ -1819,7 +1819,7 @@ def create_extraction(
                     strict=False,
                 )
             ),
-            dtype=datamodels.SpecModel().spec_table.dtype,
+            dtype=datamodels.SpecModel().get_dtype("spec_table"),
         )
 
         spec = datamodels.SpecModel(spec_table=otab)
@@ -1982,7 +1982,7 @@ def _make_output_model(data_model, meta_source):
         output_model = datamodels.TSOMultiSpecModel()
     else:
         output_model = datamodels.MultiSpecModel()
-    if hasattr(meta_source, "int_times"):
+    if getattr(meta_source, "int_times", None) is not None:
         output_model.int_times = meta_source.int_times.copy()
     output_model.update(meta_source, only="PRIMARY")
     return output_model
@@ -2274,7 +2274,7 @@ def run_extract1d(
             populate_time_keywords(input_model, output_model)
     else:
         log.debug("Not copying from the INT_TIMES table because this is not a TSO exposure.")
-        if hasattr(output_model, "int_times"):
+        if getattr(output_model, "int_times", None) is not None:
             del output_model.int_times
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.

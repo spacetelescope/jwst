@@ -573,11 +573,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
         A list of `~stdatamodels.jwst.transforms.models.Slit` objects.
     """
     exp_type = input_model.meta.exposure.type.lower()
-    lamp_mode = input_model.meta.instrument.lamp_mode
-    if isinstance(lamp_mode, str):
-        lamp_mode = lamp_mode.lower()
-    else:
-        lamp_mode = "none"
+    lamp_mode = str(input_model.meta.instrument.lamp_mode).lower()
 
     # MOS/MSA exposure requiring MSA metadata file
     if exp_type in ["nrs_msaspec", "nrs_autoflat"] or (
@@ -2833,11 +2829,7 @@ def nrs_lamp(input_model, reference_files, slit_y_range):
     pipeline : list
         The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
-    lamp_mode = input_model.meta.instrument.lamp_mode
-    if isinstance(lamp_mode, str):
-        lamp_mode = lamp_mode.lower()
-    else:
-        lamp_mode = "none"
+    lamp_mode = str(input_model.meta.instrument.lamp_mode).lower()
     if lamp_mode in ["fixedslit", "brightobj"]:
         return slits_wcs(input_model, reference_files, slit_y_range)
     elif lamp_mode == "ifu":

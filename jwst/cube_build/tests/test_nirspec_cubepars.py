@@ -111,7 +111,10 @@ def nirspec_cube_pars(tmp_path_factory):
     hdu4 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
     hdu4.header["EXTNAME"] = "MULTICHAN_MED_MSM"
 
-    hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4])
+    hdu5 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
+    hdu5.header["EXTNAME"] = "MULTICHAN_HIGH_MSM"
+
+    hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5])
     hdu.writeto(filename, overwrite=True)
     return filename
 

@@ -94,6 +94,7 @@ def make_small_rate_model(shape=(3, 5, 10, 10)):
     ratemodel = datamodels.ImageModel(shape[2:])
     add_metadata(ratemodel, shape)
     ratemodel.data[:] = 1.0
+    ratemodel.dq = ratemodel.get_default("dq")
     return ratemodel
 
 
@@ -222,6 +223,7 @@ def make_nirspec_fs_model():
     hdul["SCI"].data = np.ones((2048, 2048), dtype=float)
     rate_model = datamodels.ImageModel(hdul)
     hdul.close()
+    rate_model.dq = rate_model.get_default("dq")
 
     # add the slow axis and subarray information
     rate_model.meta.subarray.slowaxis = 1

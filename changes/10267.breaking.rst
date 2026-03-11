@@ -1,0 +1,5 @@
+Fix a bug where accessing array-like attributes that did not exist would set them to default values.
+For example, creating ``ImageModel((10,10))`` and then accessing ``model.err`` no longer sets ``model.err``
+to its default (in this case, a 10x10 array of zeros). 
+``model.get_default()`` must now be used instead.
+Setting the value must be done explicitly, e.g. ``model.err = model.get_default("err")``.
