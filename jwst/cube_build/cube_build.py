@@ -17,28 +17,28 @@ __all__ = [
 
 
 class CubeData:
-    """Hold top level information on the ifucube."""
+    """
+    Hold top-level information on the IFU cube.
+
+    This class holds information on what type of cube is being
+    created and how the cube is to be constructed, including:
+
+    1. Bands covered by data (channel/sub-channel or filter/grating)
+    2. If the IFU cube is a single or multiple band
+    3. What instrument the data is for
+    4. Weighting function to use to construct the IFU cube
+
+    Parameters
+    ----------
+    input_models : list
+        List of data models
+    par_filename : str
+        Cube parameter reference filename
+    **pars : dict
+        Holds top level cube parameters
+    """
 
     def __init__(self, input_models, par_filename, **pars):
-        """
-        Initialize high level of information for the ifu cube.
-
-        The class CubeData holds information on what type of cube is being
-        created and how the cube is to be constructed. This information includes:
-        1. Bands covered by data (channel/sub-channel or filter/grating)
-        2. If the IFU cube is a single or multiple band
-        3. What instrument the data is for
-        4. weighting function to use to construct the ifu cube
-
-        Parameters
-        ----------
-        input_models : list
-            List of data models
-        par_filename : str
-            Cube parameter reference filename
-        **pars : dict
-            Holds top level cube parameters
-        """
         self.input_models = input_models
         self.par_filename = par_filename
         self.single = pars.get("single")
@@ -63,15 +63,15 @@ class CubeData:
         """
         Set up IFU Cube, determine band coverage, and read in reference files.
 
-        Read in the input_models and fill in the dictionary, master_table, that
+        Read in the ``input_models`` and fill in the dictionary, ``master_table``, that
         stores the data  for each channel/subchannel or grating/filter.
         If the channel/subchannel or grating/filter are not set by the user,
         then determine which ones are found in the data
 
-        This routine fills in the instrument_info dictionary, which holds the
+        This routine fills in the ``instrument_info`` dictionary, which holds the
         default spatial and spectral size of the output cube, as well as,
         the region of influence size in the spatial and spectral dimensions.
-        The dictionary master_table is also filled in. This dictionary contains
+        The dictionary ``master_table`` is also filled in. This dictionary contains
         list of datamodels for each band (channel/subchannel or grating/filter
         combination).
 
@@ -135,17 +135,18 @@ class CubeData:
         Determine which bands are covered by the cube.
 
         To determine which bands are covered by the output cube:
-        1. If MIRI data then check if the user has set either the channel or
-        band to use. If these have not been set then read in the data to find
-        out which bands the input data  covered.
-        2. If NIRSPEC data then check if the user has set the grating and
-        filter to use. If these have not been set then read in the data to find
-        out which bands the input data covers.
+
+        1. If MIRI data, then check if the user has set either the channel or
+           band to use. If these have not been set, then read in the data to find
+           out which bands the input data covered.
+        2. If NIRSpec data, then check if the user has set the grating and
+           filter to use. If these have not been set, then read in the data to find
+           out which bands the input data covers.
 
         Function to determine which files contain channels and subchannels
         are used in the creation of the cubes.
-        For MIRI The channels  to be used are set by the association and the
-        subchannels are  determined from the data.
+        For MIRI The channels to be used are set by the association and the
+        subchannels are determined from the data.
 
         Parameters
         ----------
@@ -330,21 +331,23 @@ class CubeData:
 
     def number_cubes(self):
         """
-        Determine the number of IFUcubes to create.
+        Determine the number of IFU cubes to create.
 
         The number of cubes depends if the cube is created from a single
-        band or multiple bands. In calspec2,  1 cube is created. If the data
-        is MIRI MRS then 2 channels worth of data is combined into one IFUCube.
-        For calspec3 data, the default is to create multiple cubes containing
+        band or multiple bands. In :ref:`calwebb_spec2 <calwebb_spec2>`,
+        1 cube is created. If the data
+        is MIRI MRS, then 2 channels worth of data is combined into one IFU cube.
+        For :ref:`calwebb_spec3 <calwebb_spec3>` data, the default is to
+        create multiple cubes containing
         single band data. However, the user can override this option and combine
-        multiple bands in a single IFUcube.
+        multiple bands in a single IFU cube.
 
         Returns
         -------
         num_cubes : int
             Number of IFU cubes being created
         cube_pars : list
-            For each IFUcube, cube_pars holds 2 parameters. For MIRI data the
+            For each IFU cube, ``cube_pars`` holds 2 parameters. For MIRI data the
             parameters hold channel type and band type, while for NIRSpec data
             the pamaters hold grating type and filter type.
         """
@@ -473,30 +476,30 @@ class CubeData:
 
 
 class NoChannelsError(Exception):
-    """Raises Exception if the user-selected channels are not in the data."""
+    """The user-selected channels are not in the data."""
 
     pass
 
 
 class NoSubchannelsError(Exception):
-    """Raises Exception if the user-selected subchannels are not in the data."""
+    """The user-selected subchannels are not in the data."""
 
     pass
 
 
 class NoFiltersError(Exception):
-    """Raises Exception if the user-selected filters are not in the data."""
+    """The user-selected filters are not in the data."""
 
     pass
 
 
 class NoGratingsError(Exception):
-    """Raises Exception if the user-selected gratings are not in the data."""
+    """The user-selected gratings are not in the data."""
 
     pass
 
 
 class MissingParameterError(Exception):
-    """Raises Exception if provided grating but not filter or vice versa."""
+    """Grating is provided but not filter or vice versa."""
 
     pass
