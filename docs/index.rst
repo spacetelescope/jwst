@@ -37,6 +37,22 @@ the recommended method for reading and writing JWST data files in Python.
 
 Detailed explanations of specific calibration stages, reference files, and pipeline builds can be found on `JDox <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline>`_.
 
+============
+Contributing
+============
+
+``jwst`` is an open source package written in Python.
+The source code is `available on GitHub <https://github.com/spacetelescope/jwst>`_.
+New contributions and contributors are very welcome!
+
+Please read `CONTRIBUTING.md <https://github.com/spacetelescope/jwst/blob/main/CONTRIBUTING.md>`_,
+the :ref:`public API definition <jwst-public-vs-private-api>`,
+and the :ref:`public API deprecation policy <jwst-deprecation-policy>`.
+
+We strive to provide a welcoming community by abiding with our `CODE_OF_CONDUCT.md <https://github.com/spacetelescope/jwst/blob/main/CODE_OF_CONDUCT.md>`_.
+
+--------------------------------
+
 .. _user-docs:
 
 .. toctree::
@@ -82,18 +98,4 @@ Package Documentation
 
    jwst/package_index.rst
    jwst/changes.rst
-
-============
-Contributing
-============
-
-``jwst`` is an open source package written in Python.
-The source code is `available on GitHub <https://github.com/spacetelescope/jwst>`_.
-New contributions and contributors are very welcome!
-
-Please read `CONTRIBUTING.md <https://github.com/spacetelescope/jwst/blob/main/CONTRIBUTING.md>`_,
-the :ref:`public API definition <jwst-public-vs-private-api>`,
-and the :ref:`public API deprecation policy <jwst-deprecation-policy>`.
-
-We strive to provide a welcoming community by abiding with our `CODE_OF_CONDUCT.md <https://github.com/spacetelescope/jwst/blob/main/CODE_OF_CONDUCT.md>`_.
 
