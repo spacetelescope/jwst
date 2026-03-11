@@ -20,12 +20,12 @@ def read_cubepars(
     instrument_info,
 ):
     """
-    Read in cube parameter reference file.
+    Read in :ref:`cubepar_reffile`.
 
     Based on the instrument and channel/subchannels (MIRI) or
-    grating/filter(NIRSPEC), read in the appropriate columns in the
-    cube parameter reference file and fill in the corresponding dictionary in
-    instrument_info
+    grating/filter (NIRSPEC), read in the appropriate columns in the
+    :ref:`cubepar_reffile` and fill in the corresponding dictionary in
+    ``instrument_info``.
 
     Parameters
     ----------
@@ -34,7 +34,7 @@ def read_cubepars(
     instrument : str
         Either MIRI or NIRSPEC
     weighting : str
-        Type of weighting, msm, emem or drizzle
+        Type of weighting: msm, emem or drizzle
     all_channel : list
         All the channels contained in input data
     all_subchannel : list
@@ -44,7 +44,7 @@ def read_cubepars(
     all_filter : list
         All the filters contained in the input data
     instrument_info : dictionary
-        Holds the default spatial scales, spectral scales, roi size,
+        Holds the default spatial scales, spectral scales, ROI size,
         weighting parameters, and min and max wavelengths for each
         for each band
     """
