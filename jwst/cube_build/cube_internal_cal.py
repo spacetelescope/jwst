@@ -1,4 +1,4 @@
-"""Routines for creating IFUCubes with interpolation method = area , coord_system = internal_cal."""
+"""Routines for creating IFU cubes with interpolation ``method=area, coord_system=internal_cal``."""
 
 import numpy as np
 from gwcs.utils import to_index
@@ -28,13 +28,19 @@ def match_det2cube(
     """
     Match detector pixels to output plane in local IFU coordinate system.
 
-    This routine assumes a 1-1 mapping in across slice to slice no.
-    This routine assumes the output coordinate systems is local IFU plane.
-    The user can not change scaling in across slice dimension
-    Map the corners of the x, y detector values to a cube defined by local IFU plane.
-    In the along slice, lambda plane find the % area of the detector pixel
-    which it overlaps with in the cube. For each spaxel record the detector
-    pixels that overlap with it - store flux,  % overlap, beta_distance.
+    This routine assumes:
+
+    * a 1-1 mapping in across slice to slice no, and
+    * the output coordinate systems is local IFU plane.
+
+    The user cannot change scaling in across slice dimension
+    Map the corners of the ``x, y`` detector values to a cube defined by local IFU plane.
+    In the along slice, lambda plane find the percentage area of the detector pixel
+    which it overlaps with in the cube. For each spaxel, record the detector
+    pixels that overlap with it - store flux, percentage overlap, and ``beta_distance``.
+
+    Results are obtained from running C code to determine the internal coordinate system
+    of the IFU cubes.
 
     Parameters
     ----------
@@ -44,16 +50,16 @@ def match_det2cube(
        Detector y pixel values in the slice
     sliceno : int
        Slice number
-    input_model : IFUImage model
+    input_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
        Input calibrated model or file
-    transform : transform
-       WCS transform to transform x, y to alpha, beta, lambda
+    transform : obj
+       WCS transform to transform ``x, y`` to ``alpha, beta, lambda``
     acoord : ndarray
-       Array of along slice valuee defining the along slice spatial dimension the  of IFU cube
+       Array of along slice value defining the along slice spatial dimension of the IFU cube
     zcoord : ndarray
        Array of wavelength values defining the wavelength dimension of the IFU cube
     crval_along : float
-       Along slixe reference value in the IFU cube
+       Along slice reference value in the IFU cube
     crval3 : float
        Wavelength reference value in the IFU cube
     cdelt_along : float
@@ -67,22 +73,47 @@ def match_det2cube(
 
     Returns
     -------
-    result : tuple
-       Results from running c code to determine internal coordinate system IFU Cubes
-       Values contained in result:
-        instrument_no: integer. NIRSpec = 1, MIRI = 0
-        naxis1 & naxis2: output axis of IFU cube
-        crval_along : reference value in along slice dimension
-        cdelt_along : sampling in along slice dimension
-        crval3 : reference value in wavelength dimension
-        cdelt3 : wavelength sampling
-        a1, a2, a3, a4: Array of corners of pixels holding along slice coordinates
-        lam1, lam2, lam3, lam4: Array of corners of pixels holding wavelength coordinates
-        acoord: array holding slice coordinates of the IFU internal cube
-        zcoord: array holding wavelength coordinates of the IFU internal cube
-        ss: array holding the slice number of each pixel
-        pixel_flux: array of pixel fluxes
-        pixel_err: array of pixel errors
+    instrument_no : int
+        Integer representing the instrument:
+
+        * 0 = MIRI
+        * 1 = NIRSpec
+
+    naxis1, naxis2 : int
+        Output axes of IFU cube
+
+    crval_along : float
+        Reference value in along slice dimension
+
+    cdelt_along : float
+        Sampling in along slice dimension
+
+    crval3 : float
+        Reference value in wavelength dimension
+
+    cdelt3 : float
+        Wavelength sampling
+
+    a1, a2, a3, a4 : float
+        Array of corners of pixels holding along slice coordinates
+
+    lam1, lam2, lam3, lam4 : float
+        Array of corners of pixels holding wavelength coordinates
+
+    acoord : ndarray
+        Array holding slice coordinates of the IFU internal cube
+
+    zcoord : ndarray
+        Array holding wavelength coordinates of the IFU internal cube
+
+    ss : ndarray
+        Array holding the slice number of each pixel
+
+    pixel_flux : ndarray
+        Array of pixel fluxes
+
+    pixel_err : ndarray
+        Array of pixel errors
     """
     x = to_index(x)
     y = to_index(y)
