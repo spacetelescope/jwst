@@ -707,7 +707,7 @@ def create_photom_niriss_wfss(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
         dtype=dtype,
     )
     ftab = datamodels.NisWfssPhotomModel(phot_table=reftab)
-
+    ftab.phot_unit = "MJy micron s / (DN sr)"
     return ftab
 
 
@@ -1162,7 +1162,7 @@ def create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0):
     )
 
     ftab = datamodels.NrcWfssPhotomModel(phot_table=reftab)
-
+    ftab.phot_unit = "Angstrom MJy s / (DN sr)"
     return ftab
 
 
@@ -1867,6 +1867,35 @@ def test_nircam_spec():
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input_data[iy, ix]
         assert_allclose(ratio, compare, rtol=1.0e-7)
+
+
+def test_unit_handling_no_expected_unit(log_watcher):
+    """Test catch for phot_unit specified but no expected_unit defined."""
+    input_model = create_input(
+        "NIRCAM", "NRCALONG", "NRC_WFSS", filter_used="F356W", pupil="GRISMR"
+    )
+    input_model.meta.exposure.type = "NRC_IMAGE"
+    ds = photom.DataSet(input_model)
+    ftab = create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0)
+    watcher = log_watcher(
+        "jwst.photom.photom",
+        message="phot_unit attribute found (placeholder), but no expected unit defined",
+        level="warning",
+    )
+    ds.photom_io(ftab.phot_table[0], phot_unit="placeholder")
+    watcher.assert_seen()
+
+
+def test_unit_handling_phot_unit_not_astropy():
+    """Test phot_unit specified but not an astropy unit raises an exception within Astropy."""
+    input_model = create_input(
+        "NIRCAM", "NRCALONG", "NRC_WFSS", filter_used="F356W", pupil="GRISMR"
+    )
+    ds = photom.DataSet(input_model)
+    ftab = create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0)
+    ftab.phot_unit = "not_a_unit"
+    with pytest.raises(ValueError, match="did not parse as unit"):
+        ds.calc_nircam(ftab)
 
 
 def test_fgs():
