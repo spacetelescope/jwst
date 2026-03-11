@@ -32,6 +32,8 @@ Detailed explanations of specific calibration stages, reference files, and pipel
 <!--toc:start-->
 - [Quick Start](#quick-start)
   - [1. Install the Pipeline](#1-install-the-pipeline)
+    - [Option: Build Pipeline Directly from Source Code](#option-build-pipeline-directly-from-source-code)
+    - [Option: Install Exact Operational Environment](#option-install-exact-operational-environment)
   - [2. Set up the Calibration Reference Data System (CRDS)](#2-set-up-the-calibration-reference-data-system-crds)
   - [3. Run the Pipeline](#3-run-the-pipeline)
 - [Code Contributions](#code-contributions)
@@ -99,38 +101,35 @@ Remember to `mamba activate` the environment you wish to use before running comm
 > pip install jwst
 > ```
 
-#### Installing the latest unreleased development version directly from the source code
+#### Option: Build Pipeline Directly from Source Code
 
 > [!IMPORTANT]
-> You need a C compiler in order to build the JWST calibration pipeline (and dependencies) from source.
+> You need a C compiler to build the JWST calibration pipeline (and dependencies) from source.
 
-To install the latest bleeding-edge development version directly from the source code on GitHub, use `pip install` with the url of this repository:
+To install the latest unreleased (and unstable) development version directly from the source code on GitHub:
 
 ```shell
 pip install git+https://github.com/spacetelescope/jwst
 ```
 
-#### Installing a DMS Operational Build
+#### Option: Install Exact Operational Environment
 
-There may be occasions where an exact copy of an operational DMS build is
-desired (e.g. for validation testing or debugging issues in operations).
-We package releases for DMS builds [as environment snapshots that specify the exact versions of all packages to be installed](https://ssb.stsci.edu/stasis/releases/jwst/).
+There may be occasions where you need to replicate the exact environment used for canonical calibration operations by STScI (e.g. for validation testing or debugging issues).
+We package releases for operations [as environment snapshots that specify exact versions for both the pipeline and all dependencies](https://ssb.stsci.edu/stasis/releases/jwst/).
 
-Note that these environment files are delivered as Conda YAMLs. To install one, you will need to have `conda`, `mamba`, or `micromamba` installed on your computer.
-
-See the [DMS Operational Build Versions](#dms-operational-build-versions) table for the version of the pipeline corresponding to each DMS operational build.
-For example, use `jwst==1.17.1` for DMS build **11.2**.
+See the [DMS Operational Build Versions](#dms-operational-build-versions) table for the version of the pipeline corresponding to each operational build.
+For example, use `jwst==1.17.1` for **DMS build 11.2**.
 Also note that Linux and macOS systems require different snapshot files:
 ```shell
-conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.18.1/delivery/latest-py312-macos-arm64.yml
-conda activate JWSTDP-1.18.1-1-py312-macos-arm64
+mamba env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.18.1/delivery/latest-py312-macos-arm64.yml
+mamba activate JWSTDP-1.18.1-1-py312-macos-arm64
 ```
 
 > [!NOTE]
 > Starting with `jwst==1.16.1`, the JWST pipeline uses [`stasis`](https://github.com/spacetelescope/stasis) to package environments and deliver releases. If you need a version of `jwst` prior to `1.16.1`, use a slightly different procedure:
 > ```shell
-> conda create -n jwstdp-1.16.0 --file https://ssb.stsci.edu/releases/jwstdp/1.16.0/conda_python_macos-stable-deps.txt
-> conda activate jwstdp-1.16.0
+> mamba create -n jwstdp-1.16.0 --file https://ssb.stsci.edu/releases/jwstdp/1.16.0/conda_python_macos-stable-deps.txt
+> mamba activate jwstdp-1.16.0
 > pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.0/reqs_macos-stable-deps.txt
 > ```
 
