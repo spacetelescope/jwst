@@ -44,33 +44,29 @@ Detailed explanations of specific calibration stages, reference files, and pipel
 
 ### 1. Install the Pipeline
 
-We recommend using an isolated Python environment to install `jwst`.
-Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
-You can manage environments with `mamba` / `conda`, `virtualenv`, `uv`, etc.
-
 > [!IMPORTANT]
 > The JWST calibration pipeline currently supports Linux and macOS.
 > Native Windows builds are **not** currently supported; [use WSL instead](https://stenv.readthedocs.io/en/latest/windows.html).
 
-First, create an empty `mamba` environment with Python installed:
+We recommend using an isolated Python environment to install `jwst`.
+Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
+You can manage environments with `mamba` / `conda`, `virtualenv`, `uv`, etc.
+
+These instructions assume you are creating Conda environments with the `mamba` command
+(see [Miniforge for installation instructions](https://github.com/conda-forge/miniforge/blob/main/README.md));
+to use `conda` instead, simply replace `mamba` with `conda` in the following commands.
+
+First, create an empty environment with Python installed:
 ```shell
 mamba create -n jwst_env python=3.13
 ```
 
-Then, activate the environment.
-This step is necessary to be able to access this isolated Python installation:
+Then, **activate** that environment (necessary to be able to access this isolated Python installation):
 ```shell
 mamba activate jwst_env
 ```
 
-> [!CAUTION]
-> The Anaconda organization has [updated their terms of service](https://legal.anaconda.com/policies/en/#:~:text=2.1%20Organizational%20Use.%C2%A0) to indicate that any usage of their services requires a paid license, if used by an organization of more than 200 users.
-> This includes pulling packages from the Anaconda `defaults` channels, as well as installing the `conda` command.
-> 
-> `mamba` is the recommended drop-in replacement for the `conda` command.
-> We recommend that you use `mamba` and pull packages from the `conda-forge` channel, instead of using `conda` and the `defaults` channel.
-
-Finally, install `jwst` into the new Python installation:
+Finally, install `jwst` into the environment:
 ```shell
 pip install jwst
 ```
@@ -81,7 +77,7 @@ To install a specific version of `jwst`, explicitly set that version in your `pi
 pip install jwst==1.20.2
 ```
 
-If you need to switch between multiple versions of `jwst`, simply create an environment for each one:
+To install a different version of `jwst`, simply create a new environment for that version:
 ```shell
 mamba create -n jwst1.20_env python=3.13
 mamba activate jwst1.20_env
@@ -91,15 +87,6 @@ mamba create -n jwst1.19_env python=3.12
 mamba activate jwst1.19_env
 pip install jwst==1.19
 ```
-
-Remember to `mamba activate` the environment you wish to use before running commands like `strun`. 
-
-> [!TIP]
-> To upgrade your installed version of `jwst`, instead of running `pip install jwst --upgrade` you should uninstall and reinstall to ensure that dependencies are set to the correct versions:
-> ```shell
-> pip uninstall jwst
-> pip install jwst
-> ```
 
 #### Option: Build Pipeline Directly from Source Code
 
