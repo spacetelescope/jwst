@@ -376,18 +376,17 @@ def test_likely_output(tmp_path, setup_inputs):
         deltatime=grouptime,
     )
 
-    base_arr = np.array([k * 15.75 for k in range(1, ngroups+1)])
+    base_arr = np.array([k * 15.75 for k in range(1, ngroups + 1)])
 
-    rnd1 = np.array([-2.67780363,  2.41978396,  1.11415405,  3.4904681 ,  2.14907302])
-    rnd2 = np.array([ 1.44133809,  0.13063589,  0.89151771,  3.14430635, -0.0463224 ])
+    rnd1 = np.array([-2.67780363, 2.41978396, 1.11415405, 3.4904681, 2.14907302])
+    rnd2 = np.array([1.44133809, 0.13063589, 0.89151771, 3.14430635, -0.0463224])
     model.data[0, :, 0, 0] = base_arr + rnd1
     model.data[0, :, 0, 1] = base_arr + 20 + rnd2
-
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
         model,
-        algorithm = 'LIKELY',
+        algorithm="LIKELY",
         override_gain=gain,
         override_readnoise=rnModel,
         save_opt=True,
@@ -404,7 +403,6 @@ def test_likely_output(tmp_path, setup_inputs):
     with ImageModel(fname) as chisq:
         chisq_data = chisq.data
     np.testing.assert_allclose(chisq_data, chk_chisq, rtol=tol)
-
 
 
 def one_group_suppressed(nints, suppress, setup_inputs):
