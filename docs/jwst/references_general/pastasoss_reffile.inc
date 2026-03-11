@@ -1,3 +1,5 @@
+.. _pastasoss_reffile:
+
 PASTASOSS Reference File
 ------------------------
 
