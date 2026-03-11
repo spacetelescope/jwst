@@ -65,8 +65,9 @@ The details are in the ``stcal`` documentation at
 there is an additional ``chisq`` array that is returned from ramp fitting that
 can now be saved, if desired. When using the ``LIKELY`` algorithm, this can be
 saved by setting the step parameter ``save_opt`` to true. The ``chisq`` array
-contains the information from the equation model equation defined at the link
-below in "Detailed Algorithms" in the "Likelihood Algorithm Details" section.
+contains the chi-squared fit quality measure for each pixel. This quantity is
+defined at the link below in "Detailed Algorithms" in the "Likelihood Algorithm
+Details" section.
 
 
 Multiprocessing
