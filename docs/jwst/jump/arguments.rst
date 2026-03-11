@@ -34,8 +34,7 @@ The details for each are listed below.
   is linear for only the two point difference portion of the jump step, but will not be linear
   for the totality of running the jump step. If the time needed to compute snowballs and/or
   showers, the reduction in processing time for the jump step when using multiprocessing
-  may not be as significant as expected, since the only part of the jump step that will
-  be reduced linearly with the number of processors is the two point difference.
+  may not be as significant as expected.
 
 * ``--flag_4_neighbors``: If set to True (default is True) it will cause the four perpendicular
   neighbors of all detected jumps to also be flagged as a jump. This is needed because of
