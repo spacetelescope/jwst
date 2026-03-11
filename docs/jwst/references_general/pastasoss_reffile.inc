@@ -42,9 +42,10 @@ The top-level structure of the reference file is as follows:
     :pwcpos_bounds: Two-element array giving the valid range of the pupil wheel position angle (degrees).
     :order2_separation_cutoff: Wavelengths short of which to consider Order 2 to be
         well-separated from order 1.
-        Two values are defined. The first is the cutoff longwave of which should be included
-        in the combined extraction; the second is the cutoff shortwave of which should be
-        included in the extraction of just that order. Some overlap is helpful to avoid numerical issues.
+        Two values are defined. The first marks where longer wavelengths should be included
+        in the combined extraction; the second marks where shorter wavelengths should be
+        included in the "well-separated" component of Order 2. The values are different so
+        that the extractions overlap in wavelength a bit, ameliorating numerical issues.
     :soss_xdim: Number of columns in the SOSS subarray.
     :soss_ydim: Number of rows in the SOSS subarray.
     :subarray_ymin: Starting y-pixel row of the SOSS subarray relative to the full detector frame.
