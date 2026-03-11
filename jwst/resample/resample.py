@@ -2,9 +2,9 @@ import json
 import logging
 import re
 from pathlib import Path
+import warnings
 
 import numpy as np
-from spherical_geometry.polygon import SphericalPolygon
 from stcal.alignment import combine_sregions
 from stcal.resample import Resample
 from stcal.resample.utils import is_imaging_wcs
@@ -877,74 +877,15 @@ def compute_image_pixel_area(wcs):
     float
         Pixel area in steradians.
     """
-    if wcs.array_shape is None:
-        raise ValueError("WCS must have array_shape attribute set.")
 
-    valid_polygon = False
-    spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == "SPATIAL")[0]
-
-    ny, nx = wcs.array_shape
-    ((xmin, xmax), (ymin, ymax)) = wcs.bounding_box
-
-    xmin = max(0, int(xmin + 0.5))
-    xmax = min(nx - 1, int(xmax - 0.5))
-    ymin = max(0, int(ymin + 0.5))
-    ymax = min(ny - 1, int(ymax - 0.5))
-    if xmin > xmax:
-        (xmin, xmax) = (xmax, xmin)
-    if ymin > ymax:
-        (ymin, ymax) = (ymax, ymin)
-
-    k = 0
-    dxy = [1, -1, -1, 1]
-    ra, dec, center = np.nan, np.nan, (np.nan, np.nan)
-    while xmin < xmax and ymin < ymax:
-        try:
-            x, y, image_area, center, b, r, t, l = _get_boundary_points(
-                xmin=xmin,
-                xmax=xmax,
-                ymin=ymin,
-                ymax=ymax,
-                dx=min((xmax - xmin) // 4, 15),
-                dy=min((ymax - ymin) // 4, 15),
-            )
-        except ValueError:
-            return None
-
-        world = wcs(x, y)
-        ra = world[spatial_idx[0]]
-        dec = world[spatial_idx[1]]
-
-        limits = [ymin, xmax, ymax, xmin]
-
-        for _ in range(4):
-            sl = [b, r, t, l][k]
-            if not (np.all(np.isfinite(ra[sl])) and np.all(np.isfinite(dec[sl]))):
-                limits[k] += dxy[k]
-                k = (k + 1) % 4
-                break
-            k = (k + 1) % 4
-        else:
-            valid_polygon = True
-            break
-
-        ymin, xmax, ymax, xmin = limits
-
-    if not valid_polygon:
-        return None
-
-    world = wcs(*center)
-    wcenter = (world[spatial_idx[0]], world[spatial_idx[1]])
-
-    sky_area = SphericalPolygon.from_radec(ra, dec, center=wcenter).area()
-    if sky_area > 2 * np.pi:
-        log.warning(
-            "Unexpectedly large computed sky area for an image. Setting area to: 4*Pi - area"
-        )
-        sky_area = 4 * np.pi - sky_area
-    pix_area = sky_area / image_area
-
-    return pix_area
+    warnings.warn(
+        "`jwst.resample.compute_mean_pixel_area` is deprecated and will be removed in a future release. "
+        "Use `stcal.resample.computer_mean_pixel_area` instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from stcal.resample import compute_mean_pixel_area
+    return compute_mean_pixel_area(wcs)
 
 
 def copy_asn_info_from_library(library, output_model):
