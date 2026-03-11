@@ -57,21 +57,21 @@ class CubeBuildStep(Step):
     # ________________________________________________________________________________
     def process(self, input_data):
         """
-        Build an IFUCube from overlapping IFUImage data.
+        Build an IFU cube from overlapping IFU image data.
 
-        This is the controlling routine for building IFU Spectral Cubes.
+        This is the controlling routine for building IFU spectral cubes.
         It loads and sets the various input data and parameters needed by
-        the cube_build_step.
+        the ``cube_build`` step.
 
         This routine does the following operations:
 
-           1. Extracts the input parameters from the cubepars reference file and
-              merges them with any user-provided values.
-           2. Creates the output WCS from the input images and defines the mapping
-              between all the input arrays and the output array.
-           3. Passes the input data to the function to map all their input data
-              to the output array.
-           4. Updates the output data model with correct meta data.
+        1. Extracts the input parameters from the cubepars reference file and
+           merges them with any user-provided values.
+        2. Creates the output WCS from the input images and defines the mapping
+           between all the input arrays and the output array.
+        3. Passes the input data to the function to map all their input data
+           to the output array.
+        4. Updates the output data model with correct meta data.
 
         Parameters
         ----------
@@ -85,7 +85,7 @@ class CubeBuildStep(Step):
         Returns
         -------
         cube_container : `~jwst.datamodels.container.ModelContainer`
-           Container (list) of IFUCube models.
+           Container (list) of `~stdatamodels.jwst.datamodels.IFUCubeModel`.
         """
         log.info("Starting IFU Cube Building Step")
 
@@ -460,10 +460,10 @@ class CubeBuildStep(Step):
 
         Determine if any of the input parameters channel, band, filter or
         grating have been set by the user.
-        This routine updates the dictionary self.pars_input with any user
-        provided inputs. In particular it sets pars_input['channel'],
-        pars_input['sub_channel'], pars_input['grating'], and
-        pars_input['filter'] with user provided values.
+        This routine updates the dictionary ``self.pars_input`` with any user
+        provided inputs. In particular it sets ``pars_input['channel']``,
+        ``pars_input['sub_channel']``, ``pars_input['grating']``, and
+        ``pars_input['filter']`` with user provided values.
         """
         valid_channel = ["1", "2", "3", "4", "all"]
         valid_subchannel = [
@@ -582,9 +582,9 @@ class CubeBuildStep(Step):
 
     def check_offset_file(self, input_models):
         """
-        Read in an optional ra and dec offset for each file.
+        Read in an optional RA and Dec offset for each file.
 
-        Check that the offset file is an asdf file.
+        Check that the offset file is an ASDF file.
         Check that the file has the correct format using an local schema file.
         For each file in the input association check that there is a corresponding
         file in the offset file.

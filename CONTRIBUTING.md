@@ -6,8 +6,12 @@ New contributions and contributors are very welcome!
 Do not hesitate to reach out to the package maintainers if you are new to open-source development or if you have any questions/concerns.
 We only ask that all contributors adhere to the Space Telescope [Code of Conduct](./CODE_OF_CONDUCT.md).
 
+> [!TIP]
+> The `jwst` public API and deprecation policy is at https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private
+
 ## Reporting bugs / requesting a new feature
-To submit a bug report or feature request, [open a new issue in this repository](https://github.com/spacetelescope/jwst/issues).
+If you have encountered a bug when running the pipeline, or wish to request a new feature,
+[open an issue](https://github.com/spacetelescope/jwst/issues) or contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 ## Suggesting code changes / contributions
 
@@ -96,22 +100,22 @@ When developing `jwst` (or any other Python package), you should install the pac
 > [!TIP]
 > Python "environments" are isolated Python installations, confined to a single directory, where you can install packages, dependencies, and tools without cluttering your system Python libraries.
 
-The easiest way to create a development environment is with `virtualenv`:
+You can create a development environment with `mamba` / `conda`:
 ```shell
-virtualenv .venv/
-source .venv/bin/activate
+mamba create -n jwst_dev_env python=3.13
+mamba activate jwst_dev_env
 pip install -e .
 hx .
 ```
 
 Breaking down what these lines do:
-1. Create a new empty Python environment in the `.venv/` directory:
+1. Create a new empty environment called `jwst_dev_env`:
    ```shell
-   virtualenv .venv/
+   mamba create -n jwst_dev_env python=3.13
    ```
 2. "Activate" the environment (change shell variables in the current session to point to the isolated Python installation):
    ```shell
-   source .venv/bin/activate
+   mamba activate jwst_dev_env
    ```
 3. Install the local package (`jwst`) to your environment in "editable mode", so that any code changes will be instantly reflected in the installed package (useful for testing):
    ```shell
@@ -121,13 +125,6 @@ Breaking down what these lines do:
    ```shell
    hx .
    ```
-
-> [!TIP]
-> There are other ways of managing environments.
-> For instance, if you have `uv` installed, you can accomplish the same as above with a single command:
-> ```shell
-> uv run hx .
-> ```
 
 ## Making simultaneous changes to `jwst` and one of its dependencies
 
@@ -140,10 +137,10 @@ pip install -e ../stcal
 ```
 
 > [!TIP]
-> It might be easier to use a separate Python environment (`virtualenv`, `uv`, `conda`, etc.) for this work:
+> It might be easier to use a separate Python environment (`mamba` / `conda`, `virtualenv`, `uv`, etc.) for this work:
 > ```shell
-> virtualenv .venv_jwst_stcal_dev
-> source .venv_jwst_stcal_dev/bin/activate
+> mamba create -n jwst_stcal_dev_env python=3.13
+> mamba activate jwst_stcal_dev_env
 > ```
 
 Since we do not use a single repository (sometimes called a "monorepo") for these coupled packages, when making a change like this, you will need to make two pull requests: one in the `jwst` repository, and one in the dependency's repository.
