@@ -38,7 +38,11 @@ The top-level structure of the reference file is as follows:
 
     :pwcpos_cmd: Commanded pupil wheel position angle (degrees).
     :pwcpos_bounds: Two-element array giving the valid range of the pupil wheel position angle (degrees).
-    :order2_separation_cutoff: Two-element array giving the wavelength bounds (microns) where order 2 is separable from order 1.
+    :order2_separation_cutoff: Wavelengths short of which to consider Order 2 to be
+        well-separated from order 1.
+        Two values are defined. The first is the cutoff longwave of which should be included
+        in the combined extraction; the second is the cutoff shortwave of which should be
+        included in the extraction of just that order. Some overlap is helpful to avoid numerical issues.
     :soss_xdim: Number of columns in the SOSS subarray.
     :soss_ydim: Number of rows in the SOSS subarray.
     :subarray_ymin: Starting y-pixel row of the SOSS subarray relative to the full detector frame.
@@ -48,25 +52,25 @@ The top-level structure of the reference file is as follows:
 
 :traces: List of trace tables, one per spectral order, each containing:
 
-    :spectral_order: Spectral order number (1, 2, or 3).
+    :spectral_order: Spectral order number.
     :trace: 2D array of shape (N, 2) giving the (x, y) centroid positions of the trace.
     :cutoff: Maximum x pixel column to consider for this spectral order.
     :short_cutoff: Minimum wavelength (microns) cutoff for trace validity.
     :pivot_x: X pixel coordinate of the pivot point used for the rotation transformation.
     :pivot_y: Y pixel coordinate of the pivot point used for the rotation transformation.
-    :oversampling: Pixel oversampling factor.
-    :padding: Native padding around the image in pixels.
+    :oversampling: Oversampling factor.
 
-:wavecal_models: List of wavelength calibration model tables, one per spectral order, each containing:
+:wavecal_models: List of wavelength calibration model tables, one per spectral order, defining 2-D polynomials
+    that map (scaled) x pixel and (scaled) pupil wheel offset to wavelength. Each table contains:
 
-    :spectral_order: Integer spectral order number (1, 2, or 3).
-    :polynomial_degree: Degree of the 2D polynomial wavelength calibration model.
-    :coefficients: 1D array of 2D polynomial coefficients in order C00, C10, C01, C20, C11, C02, ... mapping (scaled x pixel, scaled pupil wheel offset) to wavelength.
-    :coefficient_labels: String describing the coefficient ordering convention.
+    :spectral_order: Spectral order number.
+    :polynomial_degree: Degree of the polynomial wavelength calibration model.
+    :coefficients: 1D array of polynomial coefficients.
+    :coefficient_labels: 1D arrays of strings describing the coefficient ordering convention.
     :scale_extents: 2D array ``[[x_min, offset_min], [x_max, offset_max]]`` used to normalize inputs to [0, 1] before evaluating the polynomial.
 
 :throughputs: List of throughput tables, one per spectral order, each containing:
 
-    :spectral_order: Integer spectral order number (1, 2, or 3).
+    :spectral_order: Spectral order number.
     :wavelength: 1D array of wavelength values (microns).
     :throughput: 1D array of fractional throughput values corresponding to each wavelength.

@@ -105,6 +105,8 @@ documentation on each reference file.
 |                                                       | SPECKERNEL (NIRISS SOSS ATOCA only)              |
 +                                                       +--------------------------------------------------+
 |                                                       | SPECPROFILE (NIRISS SOSS ATOCA only)             |
++                                                       +--------------------------------------------------+
+|                                                       | :ref:`PASTASOSS <pastasoss_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`extract_2d <extract_2d_step>`                   | :ref:`WAVECORR <wavecorr_reffile>`               |
 +                                                       +--------------------------------------------------+
@@ -267,6 +269,8 @@ documentation on each reference file.
 | :ref:`MSAOPER <msaoper_reffile>`                 | :ref:`msaflagopen <msaflagopen_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`OTE <ote_reffile>`                         | :ref:`assign_wcs <assign_wcs_step>`                   |
++--------------------------------------------------+-------------------------------------------------------+
+| :ref:`PASTASOSS <pastasoss_reffile>`             | :ref:`extract_1d <extract_1d_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PATHLOSS <pathloss_reffile>`               | :ref:`pathloss <pathloss_step>`                       |
 +--------------------------------------------------+-------------------------------------------------------+
