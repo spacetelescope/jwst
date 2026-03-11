@@ -108,7 +108,7 @@ Some of the more useful decorators include:
 
 # Regression Tests
 
-Whereas unit tests focus on functionality on individual features with small datasets, regression tests in `jwst/regtest/` are focused mainly on large-scale functionality and thus require access to large datasets:
+Whereas unit tests focus on functionality on individual features with small datasets, regression tests in `jwst/regtest/` are focused mainly on large-scale functionality and thus require access to large datasets (see above):
 ```shell
 pytest --bigdata --slow jwst/regtest/
 ```
