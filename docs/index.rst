@@ -51,7 +51,9 @@ and the :ref:`public API deprecation policy <jwst-deprecation-policy>`.
 
 We strive to provide a welcoming community by abiding with our `CODE_OF_CONDUCT.md <https://github.com/spacetelescope/jwst/blob/main/CODE_OF_CONDUCT.md>`_.
 
+
 --------------------------------
+
 
 .. _user-docs:
 
@@ -59,7 +61,6 @@ We strive to provide a welcoming community by abiding with our `CODE_OF_CONDUCT.
    :maxdepth: 2
    :caption: User Documentation
 
-   jwst/user_documentation/background_subtraction_methods/index.rst
    jwst/user_documentation/introduction.rst
    jwst/user_documentation/reference_files_crds.rst
    jwst/user_documentation/parameters.rst
@@ -68,33 +69,31 @@ We strive to provide a welcoming community by abiding with our `CODE_OF_CONDUCT.
    jwst/user_documentation/multiprocessing.rst
    jwst/user_documentation/available_pipelines.rst
    jwst/user_documentation/input_output_file_conventions.rst
+   jwst/user_documentation/background_subtraction_methods/index.rst
    jwst/user_documentation/logging.rst
    jwst/user_documentation/datamodels.rst
    jwst/user_documentation/more_information.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: Data Products Documentation
+   :caption: Data Products
 
    jwst/data_products/index.rst
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Error Propagation Documentation
+   :caption: Error Propagation
 
    jwst/error_propagation/index.rst
 
 
 --------------------------------
 
-=====================
-Package Documentation
-=====================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Package Documentation
+   :caption: Package Structure
 
    jwst/package_index.rst
    jwst/changes.rst
