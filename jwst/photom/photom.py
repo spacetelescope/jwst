@@ -820,6 +820,20 @@ class DataSet:
             log.info(f"Multiplicative time dependence correction is {time_correction:.6g}")
             conversion /= time_correction
 
+        # Store the conversion factor in the meta data
+        log.info(f"PHOTMJSR value: {conversion:.6g}")
+        if isinstance(self.input, datamodels.MultiSlitModel):
+            self.input.slits[self.slitnum].meta.photometry.conversion_megajanskys = conversion
+            self.input.slits[self.slitnum].meta.photometry.conversion_microjanskys = (
+                conversion * MJSR_TO_UJA2
+            )
+        elif isinstance(self.input, datamodels.TSOMultiSpecModel):
+            # No place in the schema to store photometry info
+            pass
+        else:
+            self.input.meta.photometry.conversion_megajanskys = conversion
+            self.input.meta.photometry.conversion_microjanskys = conversion * MJSR_TO_UJA2
+
         if phot_unit is not None:
             # expected_unit is the unit we decide is "standard" for photmj or photmjsr.
             # real reference files may use a different unit, passed in as phot_unit, but
@@ -836,20 +850,6 @@ class DataSet:
             else:
                 factor = u.Unit(phot_unit).to(u.Unit(expected_unit))
             conversion *= factor
-
-        # Store the conversion factor in the meta data
-        log.info(f"PHOTMJSR value: {conversion:.6g}")
-        if isinstance(self.input, datamodels.MultiSlitModel):
-            self.input.slits[self.slitnum].meta.photometry.conversion_megajanskys = conversion
-            self.input.slits[self.slitnum].meta.photometry.conversion_microjanskys = (
-                conversion * MJSR_TO_UJA2
-            )
-        elif isinstance(self.input, datamodels.TSOMultiSpecModel):
-            # No place in the schema to store photometry info
-            pass
-        else:
-            self.input.meta.photometry.conversion_megajanskys = conversion
-            self.input.meta.photometry.conversion_microjanskys = conversion * MJSR_TO_UJA2
 
         # If the photom reference file is for spectroscopic data, the table
         # in the reference file should contain a "wavelength" column (among
