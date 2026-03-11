@@ -189,7 +189,7 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
 
     Returns
     -------
-    median_image : ndarray
+    scaled_median : ndarray
         The scaled median image to subtract, matching the dimensions of
         the input model.
 
@@ -317,12 +317,21 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         )
         norm_flux[invalid] = np.median(norm_flux[~invalid])
 
-    # Make a background corrected ramp
+    # Make a background corrected ramp if needed
     if ndim > 3:
-        background_ramp = _make_background_ramp(input_model, background_rate)
-        bgsub_ramp = input_model.data - background_ramp
+        # Check for a real background image (SOSS only)
+        if not np.isscalar(background_rate):
+            # Extrapolate a background ramp from the rate
+            background_ramp = _make_background_ramp(input_model, background_rate)
+            # Subtract it from the data for the median computation below
+            bgsub_ramp = input_model.data - background_ramp
+        else:
+            # Otherwise, the background is zero everywhere and we will take
+            # the median over the input data
+            background_ramp = 0.0
+            bgsub_ramp = input_model.data
     else:
-        background_ramp = background_rate
+        background_ramp = background_rate  # may be 0.0
         bgsub_ramp = bgsub_rateints.data
 
     # Make a median background-subtracted ramp
@@ -339,11 +348,11 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
 
     # Scale the median ramp by the normalized flux
     if ndim == 3:
-        scaled_median_ramp = norm_flux[:, None, None] * median_ramp[None, ...]
+        scaled_median = norm_flux[:, None, None] * median_ramp[None, ...]
     else:
-        scaled_median_ramp = norm_flux[:, None, None, None] * median_ramp[None, ...]
+        scaled_median = norm_flux[:, None, None, None] * median_ramp[None, ...]
 
     # Final data to subtract is background ramp + scaled median
-    median_image = background_ramp + scaled_median_ramp
+    scaled_median += background_ramp
 
-    return median_image
+    return scaled_median
