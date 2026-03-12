@@ -85,7 +85,7 @@ def create_image_model(input_model, image_info):
     return out_model
 
 
-def create_integration_model(input_model, integ_info, int_times):
+def create_integration_model(input_model, integ_info, int_times, int_times_stripe=None):
     """
     Create an ImageModel from the computed arrays from ramp_fit.
 
@@ -97,6 +97,8 @@ def create_integration_model(input_model, integ_info, int_times):
         The ramp fitting arrays needed for the CubeModel for each integration.
     int_times : astropy.io.fits.fitsrec.FITS_rec or None
         Integration times.
+    int_times_stripe : astropy.io.fits.fitsrec.FITS_rec or None
+        Integration times table for superstripe data.
 
     Returns
     -------
@@ -116,6 +118,8 @@ def create_integration_model(input_model, integ_info, int_times):
     int_model.var_rnoise = integ_info["var_rnoise"]
     int_model.err = integ_info["err"]
     int_model.int_times = int_times
+    if int_times_stripe is not None and len(int_times_stripe) > 0:
+        int_model.int_times_stripe = int_times_stripe
 
     return int_model
 
@@ -232,6 +236,11 @@ class RampFitStep(Step):
 
         int_times = result.int_times
 
+        if len(result.int_times_stripe) > 0:
+            int_times_stripe = result.int_times_stripe
+        else:
+            int_times_stripe = None
+
         # Set the DO_NOT_USE bit in the groupdq values for groups before firstgroup
         # and groups after lastgroup
         firstgroup = self.firstgroup
@@ -290,7 +299,7 @@ class RampFitStep(Step):
             ):
                 out_model = datamodels.IFUImageModel(out_model)
 
-            int_model = create_integration_model(result, integ_info, int_times)
+            int_model = create_integration_model(result, integ_info, int_times, int_times_stripe)
             int_model.meta.bunit_data = "DN/s"
             int_model.meta.bunit_err = "DN/s"
             int_model.meta.cal_step.ramp_fit = "COMPLETE"
