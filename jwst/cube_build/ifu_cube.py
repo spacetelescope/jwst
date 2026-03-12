@@ -2622,7 +2622,21 @@ class IFUCubeData:
 
         var = np.sqrt(var)
         if self.linear_wavelength:
-            ifucube_model = datamodels.IFUCubeModel(data=flux, dq=dq, err=var, weightmap=wmap)
+            crval3 = self.crval3
+            cdelt3 = self.cdelt3
+            crpix3 = self.crpix3
+            pixels = np.arange(self.naxis3)
+
+            # Calculate wavelengths
+            # We add 1 to 'pixels' to convert 0-based Python indexing to 1-based FITS indexing
+            wavelength_table = crval3 + (pixels + 1 - crpix3) * cdelt3
+            wave = np.asarray(wavelength_table, dtype=np.float32)
+            num = len(wave)
+            alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
+            # ifucube_model = datamodels.IFUCubeModel(data=flux, dq=dq, err=var, weightmap=wmap)
+            ifucube_model = datamodels.IFUCubeModel(
+                data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
+            )
         else:
             wave = np.asarray(self.wavelength_table, dtype=np.float32)
             num = len(wave)
@@ -2693,6 +2707,12 @@ class IFUCubeData:
             ifucube_model.meta.wcsinfo.crpix3 = self.crpix3
             ifucube_model.meta.ifu.roi_spatial = float(self.rois)
             ifucube_model.meta.ifu.roi_wave = float(self.roiw)
+
+            # add this
+            ifucube_model.meta.wcsinfo.ctype3 = "WAVE-TAB"
+            ifucube_model.meta.wcsinfo.ps3_0 = "WCS-TABLE"
+            ifucube_model.meta.wcsinfo.ps3_1 = "wavelength"
+
         else:
             ifucube_model.meta.wcsinfo.ctype3 = "WAVE-TAB"
             ifucube_model.meta.wcsinfo.ps3_0 = "WCS-TABLE"
