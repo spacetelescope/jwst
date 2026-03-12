@@ -23,7 +23,8 @@ corrected by similar methods, so it is also addressed by this step.
 To correct for flicker noise, the algorithm requires that the noise
 generated between one group readout and the next be isolated as much
 as possible from the astronomical signal.  The step accomplishes this by creating
-a scene mask from a draft rate image. The residual noise in the identified background
+a scene mask from a draft rate image and optionally fitting and removing non-noise
+background structures. The residual noise in the identified background
 data may then be fit in frequency space, via an FFT, or may be characterized by a
 median along the rows or columns, as appropriate for the detector.
 The modeled noise is then directly subtracted from each group readout.
@@ -189,21 +190,26 @@ information on all referenced parameters.
 
 #. Create a scene mask from the rate data.
 
-   #. If ``mask_science_regions`` is set and the input is NIRSpec data,
-      run :ref:`assign_wcs <assign_wcs_step>` and
-      :ref:`msaflagopen <msaflagopen_step>` on the draft rate data,
-      then mask any known science areas or failed-open MSA shutters.
+   #. If ``mask_science_regions`` is set:
 
-      This will mask out regions that are likely to contain significant
-      astronomical signal.
+      #. If the input is NIRSpec data, run :ref:`assign_wcs <assign_wcs_step>` and
+         :ref:`msaflagopen <msaflagopen_step>` on the draft rate data,
+         then mask any known science areas or failed-open MSA shutters.
 
-   #. If ``mask_science_regions`` is set and the input is MIRI imaging data,
-      run :ref:`flat_field <flatfield_step>` on the draft rate data,
-      and extract just the DQ plane from the output. Pixels flagged
-      as 'DO_NOT_USE' by the flat fielding process are masked.
+         This will mask out regions that are likely to contain significant
+         astronomical signal.
 
-      This will mask out regions of the detector under the metering
-      structure.
+      #. If the input is MIRI imaging data,
+         run :ref:`flat_field <flatfield_step>` on the draft rate data,
+         and extract just the DQ plane from the output. Pixels flagged
+         as 'DO_NOT_USE' by the flat fielding process are masked.
+
+         This will mask out regions of the detector under the metering
+         structure.
+
+      #. If the input is NIRISS SOSS data, mask the predicted spectral
+         trace locations.  As for NIRSpec data, this will mask regions likely
+         to contain significant astronomical signal.
 
    #. If ``apply_flat_field`` is set and a flat file is available, divide the
       draft rate data by the flat image.
@@ -219,10 +225,15 @@ information on all referenced parameters.
    #. Mask data more than ``n_sigma * sigma`` above the center as signal
       (not background).
 
-#. If ``background_method = "median_image"``, create a scaled median image across
-   integrations to use as background.
+#. If ``background_method = "median_image"`` and the input has multiple integrations,
+   create a scaled median image across the integrations.  Subtracting the median image
+   removes much of the source and background structure from the image, leaving only the
+   residual noise to fit.
 
-   #. Subtract a reference background from the input ramp and rate data
+   To create the median image:
+
+   #. Subtract a reference background level from the input ramp and rate data
+      by running the :ref:`bkg_subtract <background_subtraction>` step
       (NIRISS SOSS only).
    #. Compute a representative flux for scaling for each integration
       from the rate data.
@@ -238,7 +249,7 @@ information on all referenced parameters.
       ramp or image.
    #. Scale the median image by the representative flux for each
       integration.
-   #. Add the subtracted background level back into the median image
+   #. Add the subtracted reference background level back into the median image
       (NIRISS SOSS only).
 
 #. Iterate over each integration and group in the data, to fit and correct
@@ -253,21 +264,27 @@ information on all referenced parameters.
    #. If ``apply_flat_field`` is set and a flat file is available, divide the
       diff image by the flat image.
 
-   #. Fit and remove a background level, using the scene mask to identify
+   #. Fit and remove a background level or structure, using the scene mask to identify
       background pixels.
 
       #. Clip the background data in the diff image to remove more outliers.
 
-      #. If ``background_method='median'``, the background value is a simple
-         median of the remaining values.
+      #. If needed, fit the background level in the remaining values.
 
-      #. If ``background_method='model'``, the background data is fit with
-         a low-resolution model via the photutils
-         `~photutils.background.Background2D`
-         utility. The resolution box size is set by ``background_box_size``.
+          #. If ``background_method='median'``, the background level is a simple
+             median of the remaining values.
 
-      #. Subtract the background level from the diff image and clip again
-         to ``n_sigma * sigma``, with sigma recomputed from the
+          #. If ``background_method='model'``, the background data is fit with
+             a low-resolution model via the photutils
+             `~photutils.background.Background2D`
+             utility. The resolution box size is set by ``background_box_size``.
+             The 2D model is used as the background level.
+
+          #. For either ``background_method='median_image'`` or ``background_method=None``,
+             no background level is fit at this stage. It is taken to be 0.0.
+
+      #. If non-zero, subtract the background level from the diff image and clip
+         again to ``n_sigma * sigma``, with sigma recomputed from the
          background-subtracted data in the remaining background pixels.
 
    #. Fit and remove the residual noise in the background-subtracted image.

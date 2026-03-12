@@ -18,15 +18,23 @@ the behavior of the processing.
   Ignored for MIRI, for subarray data, and for ``fit_method = 'fft'``.
 
 ``--background_method`` (str, default='median')
+  Background structure fitting method to use.
   Options are 'median', 'model', 'median_image', or None.
 
-  If 'median', the preliminary background to remove and restore
-  after fitting the noise is a simple median of the background data.
+  If 'median', the preliminary background to remove prior to cleaning
+  noise (and restore afterward) is a simple median of the all non-masked
+  background data.
+
   If 'model', the background data is fit with a low-resolution model
-  via `~photutils.background.Background2D`.
+  via `~photutils.background.Background2D` and the model is subtracted
+  prior to cleaning.
+
   If 'median_image' and the input has multiple integrations, a median
-  image across integrations will be computed and subtracted as the background.
-  If None, the background value is set to 0.0.
+  image across integrations will be computed, scaled to each integration,
+  and subtracted prior to cleaning.
+
+  If None, the background value is set to 0.0; no background values
+  are removed before fitting.
 
 ``--background_box_size`` (list of int, default=None)
   Box size for the data grid used by `~photutils.background.Background2D`
@@ -82,9 +90,11 @@ the behavior of the processing.
   with suffix 'mask'.
 
 ``--save_background`` (boolean, default=False)
-  If set, the background fit to the group diff images will be saved
-  to a file with suffix 'flicker_bkg'.
+  If set, the background fit to the group diff images and removed before
+  cleaning will be saved to a file with suffix 'flicker_bkg'.
 
 ``--save_noise`` (boolean, default=False)
   If set, the residual noise fit and removed from the input data
-  will be saved to a file with suffix 'flicker_noise'.
+  will be saved to a file with suffix 'flicker_noise'. Saved values
+  are the residual differences from the input data (computed as output
+  data - input data).
