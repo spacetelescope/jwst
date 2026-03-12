@@ -15,9 +15,9 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     rtdata = rtdata_module
     # These are the WFSS exposures we'll be processing
 
-    photom_file = "jwst_miri_photom_0231.fits"
-    bkg_file = "MIRI_WFSS_bkg_February2026.fits"
-    flat_file = "jwst_miri_flat_WFSS_20260220.fits"
+    photom_file = "jwst_miri_photom_WFSS_20260311_v2.fits"
+    bkg_file = "jwst_miri_bkg_20260311.fits"
+    flat_file = "jwst_miri_flat_0850.fits"
     filteroffset_file = "jwst_miri_filteroffset_0019.asdf"
     rtdata.get_data(f"miri/wfss/{photom_file}")
     rtdata.get_data(f"miri/wfss/{bkg_file}")
