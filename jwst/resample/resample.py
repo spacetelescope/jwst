@@ -2,7 +2,6 @@ import json
 import logging
 import re
 from pathlib import Path
-import warnings
 
 import numpy as np
 from stcal.alignment import combine_sregions
@@ -861,31 +860,6 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
     center = (0.5 * (xmin + xmax), 0.5 * (ymin + ymax))
 
     return x, y, area, center, b, r, t, l
-
-
-def compute_image_pixel_area(wcs):
-    """
-    Compute pixel area in steradians from a WCS.
-
-    Parameters
-    ----------
-    wcs : gwcs.wcs.WCS
-        A WCS object.
-
-    Returns
-    -------
-    float
-        Pixel area in steradians.
-    """
-
-    warnings.warn(
-        "`jwst.resample.compute_mean_pixel_area` is deprecated and will be removed in a future release. "
-        "Use `stcal.resample.computer_mean_pixel_area` instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    from stcal.resample import compute_mean_pixel_area
-    return compute_mean_pixel_area(wcs)
 
 
 def copy_asn_info_from_library(library, output_model):
