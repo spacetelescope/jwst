@@ -7,8 +7,6 @@ import pytest
 from astropy.io import fits
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-from spherical_geometry.great_circle_arc import length as great_circle_length
-from spherical_geometry.vector import lonlat_to_vector
 from stcal.alignment.util import compute_scale
 from stcal.resample.utils import build_driz_weight, compute_mean_pixel_area
 from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, dqflags
@@ -45,18 +43,11 @@ def _set_photom_kwd(im):
 
     if mean_pixel_area == 0.0:
         # we have a degenerate boundary on sky, so we can't compute the pixel
-        # area from the corners. Instead, estimate area as pixel_length**2,
-        # using the center of the image:
-        y, x = np.indices(im.data.shape)
-
-        ra, dec, _ = im.meta.wcs(x, y)
-        idx = np.argwhere(np.isfinite(ra) & np.isfinite(dec))
-        ycen, xcen = np.mean(idx, axis=0)
-
-        c0 = lonlat_to_vector(*im.meta.wcs(xcen, ycen))
-        c1 = lonlat_to_vector(*im.meta.wcs(xcen + 1, ycen))
-        c2 = lonlat_to_vector(*im.meta.wcs(xcen, ycen + 1))
-        mean_pixel_area = great_circle_length(c0, c1) * great_circle_length(c0, c2)
+        # area from the corners. This should not be happening for imaging data,
+        # but it can happen for spectroscopic data with a very small slit.
+        # Raise an error to let developers know about possible issues with
+        # the WCS.
+        raise RuntimeError("Degenerate WCS boundary detected. Cannot compute pixel area.")
 
     if mean_pixel_area:
         im.meta.photometry.pixelarea_steradians = mean_pixel_area
@@ -129,7 +120,10 @@ def miri_rate():
 @pytest.fixture
 def miri_cal(miri_rate):
     im = AssignWcsStep.call(miri_rate)
-    _set_photom_kwd(im)
+    # cannot use _set_photom_kwd(im) since the boundary is degenerate for this
+    # slit, so set the photometry keywords directly.
+    im.meta.photometry.pixelarea_steradians = 2.86e-13
+    im.meta.photometry.pixelarea_arcsecsq = 2.86e-13 * np.rad2deg(3600) ** 2
 
     # Add non-zero values to check flux conservation
     im.data += 1.0
