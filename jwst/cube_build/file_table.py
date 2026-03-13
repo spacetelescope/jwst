@@ -8,7 +8,7 @@ __all__ = ["FileTable", "NoAssignWCSError", "NotIFUImageModelError"]
 
 
 class FileTable:
-    """Dictionary contains defaults for MIRI and NIRSPEC data."""
+    """Dictionary contains defaults for MIRI and NIRSpec data."""
 
     def __init__(self):
         self.FileMap = {}
@@ -93,24 +93,25 @@ class FileTable:
 
     def set_file_table(self, input_models):
         """
-        Set up the master_table dictionary.
+        Set up the ``self.FileMap`` dictionary.
 
-        Fill in the master_table which holds the files that the cube will be constructed
-        from. Since MIRI has 2 channels per image this MASTERTable dictionary helps to figure out
+        Fill in the master table which holds the files that the cube will be constructed
+        from. Since MIRI has 2 channels per image, this dictionary helps to figure out
         which data needs to be use.
-        The master_table for MIRI is broken down by channel and subchannel.
-        For each channel/subchannel combination - a file is listed that covers those options
-        For NIRSPEC the table contains the grating and filter for each file.
+        The master table for MIRI is broken down by channel and subchannel.
+        For each channel/subchannel combination, a file is listed that covers those options.
+        For NIRSPEC, the table contains the grating and filter for each file.
 
         Parameters
         ----------
-        input_models : IFUImageModel
-           The input datamodels used the set up the class FileTable
+        input_models : `~stdatamodels.jwst.datamodels.IFUImageModel`
+           The input data models used the set up this class.
 
         Returns
         -------
-        master_table : dict
-            Dictionary containing the filename/model for each channel/band or grating/filter
+        instrument : str
+            Instrument name extracted from data models.
+            If multiple models are given, the last one processed is returned.
         """
         # ________________________________________________________________________________
         # Loop over input list of files and fill in the master_table with filename
@@ -143,18 +144,17 @@ class FileTable:
                 self.FileMap["NIRSPEC"][gwa][fwa].append(model)
             else:
                 log.info("Instrument not valid for cube")
-                pass
 
         return instrument
 
 
 class NoAssignWCSError(Exception):
-    """Raise Exception if assign_wcs has not been run."""
+    """:ref:`assign_wcs <assign_wcs_step>` has not been run."""
 
     pass
 
 
 class NotIFUImageModelError(Exception):
-    """Raise Exception if data is not of type IFUImageModel."""
+    """Data is not of type `~stdatamodels.jwst.datamodels.IFUImageModel`."""
 
     pass

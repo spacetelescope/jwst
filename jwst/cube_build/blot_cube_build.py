@@ -15,27 +15,26 @@ __all__ = ["CubeBlot"]
 
 
 class CubeBlot:
-    """Main module for blotting a sky cube back to detector space."""
+    """
+    Main module for blotting a sky cube back to detector space.
+
+    Information is pulled out of the median sky cube created by a previous
+    run of ``cube_build`` in single mode and stored in the class. These
+    variables include the WCS of median sky cube, the weighting parameters
+    used to create this median sky image, and basic information of the input
+    data (instrument, channel, band, grating, or filter).
+
+    Parameters
+    ----------
+    median_model : `~stdatamodels.jwst.datamodels.IFUCubeModel`
+       The median input sky cube is created from a median stack of all the
+       individual input models mapped to the full IFU cube imprint on the
+       sky.
+    input_models : `~jwst.datamodels.container.ModelContainer`
+       The input models used to create the median sky cube.
+    """
 
     def __init__(self, median_model, input_models):
-        """
-        Initialize main variables for blotting a sky cube to detector space.
-
-        Information is pulled out of the median sky cube created by a previous
-        run of cube_build in single mode and stored in the ClassBlot.These
-        variables include the WCS of median sky cube, the weighting parameters
-        used to create this median sky image and basic information of the input
-        data (instrument, channel, band, grating or filter).
-
-        Parameters
-        ----------
-        median_model : IFUCubeModel
-           The median input sky cube is created from a median stack of all the
-           individual input_models mapped to the full IFU cube imprint on the
-           sky.
-        input_models : ModelContainer
-           The input models used to create the median sky cube.
-        """
         # Pull out the needed information from the Median IFUCube
         self.median_skycube = median_model
         self.instrument = median_model.meta.instrument.name
@@ -134,10 +133,10 @@ class CubeBlot:
 
         Returns
         -------
-        blotmodels : ModelContainer
+        blotmodels : `~jwst.datamodels.container.ModelContainer`
            Blotted IFU image models
         input_list_number : list of int
-           List containing index of blot model in input_models
+           List containing index of blot model in input models
         """
         if self.instrument == "MIRI":
             blotmodels = self.blot_images_miri()
@@ -152,21 +151,22 @@ class CubeBlot:
         Core blotting routine for MIRI.
 
         This is the main routine for blotting the MIRI median sky cube back to
-        the detector space and creating a blotting image for each input model
-        1. Loop over every data model to be blotted and find ra, dec and
+        the detector space and creating a blotting image for each input model:
+
+        1. Loop over every data model to be blotted and find RA, Dec, and
            wavelength for every pixel in a valid slice on the detector.
         2. Loop over every input model and using the inverse (backwards) transform
-           convert the median sky cube values ra, dec, lambda to the blotted
-           x, y detector value (x_cube, y_cube).
-        3. For each input model loop over the blotted x,y values and find
-           the x, y detector values that fall within the roi region.
-           The blotted flux  = the weighted flux, where the weight is based on
+           convert the median sky cube values RA, Dec, lambda to the blotted
+           x, y detector value ``(x_cube, y_cube)``.
+        3. For each input model loop over the blotted x, y values and find
+           the x, y detector values that fall within the ROI.
+           The blotted flux is the weighted flux, where the weight is based on
            distance between the center of the blotted pixel and the detector pixel.
 
         Returns
         -------
-        blot_models : ModelContainer
-            Container of blotted IFUImage models
+        blot_models : `~jwst.datamodels.container.ModelContainer`
+            Container of blotted `~stdatamodels.jwst.datamodels.IFUImageModel`
         """
         blot_models = ModelContainer()
         instrument_info = instrument_defaults.InstrumentInfo()
@@ -246,24 +246,25 @@ class CubeBlot:
         This routine was split from the MIRI routine because the blotting for NIRSpec
         needs to be done slice by slice and an error in the inverse mapping (sky to
         detector) mapped too many values back to the detector. This routine adds
-        a check and first pulls out the min and max ra and dec values in the slice
+        a check and first pulls out the min and max RA and Dec values in the slice
         and only inverts the slice values back to the detector.
         For each data model loop over the 30 slices and find:
-        a. the x,y bounding box of slice
-        b. the ra, dec, lambda values for the x,y pixels in the slice
-        c. from step b, determine the min and max ra and dec for slice values
-        d. pull out the valid ra, dec and lambda values from the median sky cube that
-           fall within the min and max ra,dec determined in step c
-        e. invert the valid ra,dec, and lambda values for the slice determined in
-           step d to the detector.
-        f. blot the inverted x,y values to the detector plane. This steps finds the
-           determines the overlap of the blotted x,y values with a regular grid setup
+
+        a. the x, y bounding box of slice
+        b. the RA, Dec, lambda values for the x, y pixels in the slice
+        c. from step b, determine the min and max RA and Dec for slice values
+        d. pull out the valid RA, Dec and lambda values from the median sky cube that
+           fall within the min and max RA and Dec determined in step c
+        e. invert the valid RA, Dec, and lambda values for the slice determined in
+           step d to the detector
+        f. blot the inverted x, y values to the detector plane. This step
+           determines the overlap of the blotted x, y values with a regular grid setup
            in the detector plane which is the blotted image.
 
         Returns
         -------
-        blot_models : ModelContainer
-            Container of blotted IFUImage models
+        blot_models : `~jwst.datamodels.container.ModelContainer`
+            Container of blotted `~stdatamodels.jwst.datamodels.IFUImageModel`.
         """
         blot_models = ModelContainer()
 

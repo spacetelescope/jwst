@@ -33,7 +33,7 @@ concurrency:
 
 jobs:
   check:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@99401c364fa51c9c507d3cd6d272049278ac0b2c # v2.4.0
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@a138926f6e4f9667d1306c24f24f5bdcaa01fbab # v2.5.0
     with:
       default_python: "3.12"
       envs: |
@@ -49,7 +49,7 @@ jobs:
     outputs:
       context: ${{ steps.context.outputs.context }}
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@99401c364fa51c9c507d3cd6d272049278ac0b2c  # v2.4.0
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@a138926f6e4f9667d1306c24f24f5bdcaa01fbab  # v2.5.0
     needs: [ crds_context ]
     with:
       setenv: |
