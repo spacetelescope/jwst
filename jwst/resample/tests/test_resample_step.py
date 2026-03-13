@@ -36,27 +36,18 @@ def _set_photom_kwd(im):
         bb = ((xmin - 0.5, xmax - 0.5), (ymin - 0.5, ymax - 0.5))
         im.meta.wcs.bounding_box = bb
 
-    if "SPECTRAL" in im.meta.wcs.output_frame.axes_type:
-        # we have either spectral data or a degenerate boundary on sky,
-        # so we can't compute the pixel area from the corners.
-        # This should not be happening for imaging data.
-        mean_pixel_area = (
-            compute_spectral_pixel_scale(
-                im.meta.wcs, disp_axis=2 if im.meta.instrument.name == "MIRI" else 1
-            )
-            ** 2
-        )
-    else:
+    if "SPECTRAL" not in im.meta.wcs.output_frame.axes_type:
         mean_pixel_area = compute_mean_pixel_area(
             im.meta.wcs,
             shape=im.data.shape,
         )
+
         if mean_pixel_area == 0.0:
             raise RuntimeError("Degenerate WCS boundary detected. Cannot compute pixel area.")
 
-    if mean_pixel_area:
-        im.meta.photometry.pixelarea_steradians = mean_pixel_area
-        im.meta.photometry.pixelarea_arcsecsq = mean_pixel_area * np.rad2deg(3600) ** 2
+        if mean_pixel_area:
+            im.meta.photometry.pixelarea_steradians = mean_pixel_area
+            im.meta.photometry.pixelarea_arcsecsq = mean_pixel_area * np.rad2deg(3600) ** 2
 
 
 def miri_rate_model():
@@ -113,8 +104,8 @@ def miri_rate_model():
         "zero_frame": False,
     }
     im.meta.photometry = {
-        "pixelarea_steradians": 2.6106e-13,
-        "pixelarea_arcsecsq": 0.0111,
+        "pixelarea_steradians": 2.844e-13,
+        "pixelarea_arcsecsq": 0.011,
     }
 
     return im
@@ -190,8 +181,8 @@ def miri_rate_zero_crossing():
         "zero_frame": False,
     }
     im.meta.photometry = {
-        "pixelarea_steradians": 2.6106e-13,
-        "pixelarea_arcsecsq": 0.0111,
+        "pixelarea_steradians": 2.844e-13,
+        "pixelarea_arcsecsq": 0.011,
     }
 
     yield im
@@ -352,8 +343,8 @@ def nirspec_rate():
         "zero_frame": False,
     }
     im.meta.photometry = {
-        "pixelarea_steradians": 2.6106e-13,
-        "pixelarea_arcsecsq": 0.0111,
+        "pixelarea_steradians": 2.844e-13,
+        "pixelarea_arcsecsq": 0.011,
     }
 
     yield im
