@@ -1,0 +1,1 @@
+Remove padsize argument from ``jwst.extract_1d.soss_extract.pastasoss.get_soss_wavemaps``
