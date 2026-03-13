@@ -32,7 +32,7 @@ def _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders):
 
     Parameters
     ----------
-    slit : `~jwst.datamodels.SlitModel`
+    slit : `~stdatamodels.jwst.datamodels.SlitModel`
         Source slit model
     simul_slit_sids : list
         List of source IDs for simulated slits
@@ -64,7 +64,7 @@ def _cut_frame_to_match_slit(contam, slit):
     ----------
     contam : 2D array
         Contamination image for the full grism exposure
-    slit : `~jwst.datamodels.SlitModel`
+    slit : `~stdatamodels.jwst.datamodels.SlitModel`
         Source slit model
 
     Returns
@@ -99,14 +99,14 @@ def match_backplane_prefer_first(slit0, slit1):
 
     Parameters
     ----------
-    slit0 : `~jwst.datamodels.SlitModel`
+    slit0 : `~stdatamodels.jwst.datamodels.SlitModel`
         Slit model for the first slit, which is used as reference.
-    slit1 : `~jwst.datamodels.SlitModel`
+    slit1 : `~stdatamodels.jwst.datamodels.SlitModel`
         Slit model for the second slit, which is reshaped to match slit0.
 
     Returns
     -------
-    slit0, slit1 : `~jwst.datamodels.SlitModel`
+    slit0, slit1 : `~stdatamodels.jwst.datamodels.SlitModel`
         Reshaped slit models slit0, slit1.
     """
     data0 = slit0.data
@@ -146,12 +146,12 @@ def match_backplane_encompass_both(slit0, slit1):
 
     Parameters
     ----------
-    slit0, slit1 : `~jwst.datamodels.SlitModel`
+    slit0, slit1 : `~stdatamodels.jwst.datamodels.SlitModel`
         Slit model for the first and second slit.
 
     Returns
     -------
-    slit0, slit1 : `~jwst.datamodels.SlitModel`
+    slit0, slit1 : `~stdatamodels.jwst.datamodels.SlitModel`
         Reshaped slit models slit0, slit1.
     """
     data0 = slit0.data
@@ -356,12 +356,13 @@ def contam_corr(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.MultiSlitModel`
+    input_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         Input data model containing 2D spectral cutouts. May be modified by processing:
         make a copy before calling this function, if needed.
-    waverange : `~jwst.datamodels.WavelengthrangeModel`
+    waverange : `~stdatamodels.jwst.datamodels.WavelengthrangeModel`
         Wavelength range reference file model
-    photom : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
+    photom : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel` or \
+        `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
         Photom (flux cal) reference file model
     max_cores : str or int
         Number of cores to use for multiprocessing. If set to 'none'
@@ -386,11 +387,11 @@ def contam_corr(
 
     Returns
     -------
-    output_model : `~jwst.datamodels.MultiSlitModel`
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         A copy of the input_model that has been corrected
-    simul_model : `~jwst.datamodels.ImageModel`
+    simul_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Full-frame simulated image of the grism exposure
-    contam_model : `~jwst.datamodels.MultiSlitModel`
+    contam_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         Contamination estimate images for each source slit
     """
     max_available_cores = multiprocessing.cpu_count()
