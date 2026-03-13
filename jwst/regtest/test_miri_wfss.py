@@ -15,41 +15,31 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     rtdata = rtdata_module
     # These are the WFSS exposures we'll be processing
 
-    foffset_file = "jwst_miri_filteroffset_0008.asdf"
-    photom_file = "jwst_miri_photom_0217.fits"
-    extract1d_file = "jwst_miri_extract1d_0006.json"
-    distortion_file = "jwst_miri_distortion_0047.asdf"
-    specwcs_file = "MIRI_WFSS_specwcs_20250911.asdf"
-    wave_file = "miri_wfss_wavelengthrange.asdf"
-    apcorr_file = "jwst_miri_apcorr_0015.fits"
-    rtdata.get_data(f"miri/wfss/{foffset_file}")
+    photom_file = "jwst_miri_photom_0231.fits"
+    bkg_file = "MIRI_WFSS_bkg_February2026.fits"
+    flat_file = "jwst_miri_flat_WFSS_20260220.fits"
+    filteroffset_file = "jwst_miri_filteroffset_0019.asdf"
     rtdata.get_data(f"miri/wfss/{photom_file}")
-    rtdata.get_data(f"miri/wfss/{extract1d_file}")
-    rtdata.get_data(f"miri/wfss/{distortion_file}")
-    rtdata.get_data(f"miri/wfss/{wave_file}")
-    rtdata.get_data(f"miri/wfss/{apcorr_file}")
-    rtdata.get_data(f"miri/wfss/{specwcs_file}")
+    rtdata.get_data(f"miri/wfss/{bkg_file}")
+    rtdata.get_data(f"miri/wfss/{flat_file}")
+    rtdata.get_data(f"miri/wfss/{filteroffset_file}")
 
-    rtdata.get_asn("miri/wfss/jw03224-miri_wfss_spec2_00001_asn.json")
+    rtdata.get_asn("miri/wfss/jw09505-o001_spec2_00001_asn.json")
     args = [
         "calwebb_spec2",
         rtdata.input,
-        "--steps.assign_wcs.save_results=true",
-        "--steps.assign_wcs.skip=false",
-        f"--steps.assign_wcs.override_filteroffset={foffset_file}",
-        f"--steps.assign_wcs.override_distortion={distortion_file}",
-        f"--steps.assign_wcs.override_specwcs={specwcs_file}",
-        "--steps.assign_wcs.override_regions=N/A",
-        f"--steps.assign_wcs.override_wavelengthrange={wave_file}",
-        f"--steps.extract_2d.override_wavelengthrange={wave_file}",
         f"--steps.photom.override_photom={photom_file}",
-        f"--steps.extract_1d.override_extract1d={extract1d_file}",
-        f"--steps.extract_1d.override_apcorr={apcorr_file}",
-        "--steps.bkg_subtract.skip=true",
-        "--steps.flat_field.skip=true",
+        f"--steps.flat_field.override_flat={flat_file}",
+        f"--steps.bkg_subtract.override_bkg={bkg_file}",
+        f"--steps.assign_wcs.override_filteroffset={filteroffset_file}",
+        "--steps.bkg_subtract.skip=false",
+        "--steps.flat_field.skip=false",
+        "--steps.assign_wcs.save_results=true",
         "--steps.extract_2d.save_results=true",
         "--steps.srctype.save_results=true",
         "--steps.photom.save_results=true",
+        "--steps.flat_field.save_results=true",
+        "--steps.bkg_subtract.save_results=true",
         "--steps.extract_1d.save_results=true",
     ]
 
@@ -59,13 +49,13 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
 @pytest.mark.skip(reason="Work in progress: updating the Reference Files")
 @pytest.mark.parametrize(
     "suffix",
-    ["assign_wcs", "cal", "extract_2d", "photom", "srctype", "x1d"],
+    ["assign_wcs", "cal", "extract_2d", "photom", "srctype", "x1d", "bsub", "flat_field"],
 )
 def test_miri_wfss_spec2(run_miri_wfss_spec2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 applied to MIRI WFSS data"""
     rtdata = rtdata_module
-    rtdata.input = "jw03224024001_03103_00001_mirimage_rate.fits"
-    output = "jw03224_miri_wfss_" + suffix + ".fits"
+    rtdata.input = "jw09505001001_02102_00004_mirimage_rate.fits"
+    output = "jw09505001001_02102_00004_mirimage_" + suffix + ".fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_miri_wfss/{output}")
 
