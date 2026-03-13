@@ -36,12 +36,7 @@ def _set_photom_kwd(im):
         bb = ((xmin - 0.5, xmax - 0.5), (ymin - 0.5, ymax - 0.5))
         im.meta.wcs.bounding_box = bb
 
-    mean_pixel_area = compute_mean_pixel_area(
-        im.meta.wcs,
-        shape=im.data.shape,
-    )
-
-    if mean_pixel_area == 0.0 or "SPECTRAL" in im.meta.wcs.output_frame.axes_type:
+    if "SPECTRAL" in im.meta.wcs.output_frame.axes_type:
         # we have either spectral data or a degenerate boundary on sky,
         # so we can't compute the pixel area from the corners.
         # This should not be happening for imaging data.
@@ -51,6 +46,13 @@ def _set_photom_kwd(im):
             )
             ** 2
         )
+    else:
+        mean_pixel_area = compute_mean_pixel_area(
+            im.meta.wcs,
+            shape=im.data.shape,
+        )
+        if mean_pixel_area == 0.0:
+            raise RuntimeError("Degenerate WCS boundary detected. Cannot compute pixel area.")
 
     if mean_pixel_area:
         im.meta.photometry.pixelarea_steradians = mean_pixel_area
