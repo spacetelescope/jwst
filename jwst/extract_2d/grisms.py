@@ -13,7 +13,7 @@ from gwcs.utils import to_index
 from gwcs.wcstools import grid_from_bounding_box
 from stcal.alignment.util import wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import ImageModel, SlitModel, WavelengthrangeModel
+from stdatamodels.jwst.datamodels import ImageModel, WavelengthrangeModel
 from stdatamodels.jwst.transforms.models import IdealToV2V3
 
 from jwst.assign_wcs import util
@@ -30,6 +30,92 @@ __all__ = [
     "compute_tso_offset_center",
     "compute_wfss_wavelength",
 ]
+
+
+def build_grism_submodel(
+    sub_model, input_model, xmin, xmax, ymin, ymax, subwcs, compute_wavelength, order, name
+):
+    """
+    Build a grism SlitModel from the input data.
+
+    Parameters
+    ----------
+    sub_model : `~stdatamodels.jwst.datamodels.SlitModel`
+        The SlitModel to be filled with arrays and WCS information.
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        The parent model from which the 2D extraction is taken.
+    xmin : int
+        The minimum x pixel column value for the extracted region.
+    xmax : int
+        The maximum x pixel column value for the extracted region.
+    ymin : int
+        The minimum y pixel column value for the extracted region.
+    ymax : int
+        The maximum y pixel column value for the extracted region.
+    subwcs : `~gwcs.wcs.WCS`
+        The WCS object from the parent model, modified to fit the
+        extracted region.
+    compute_wavelength : bool
+        If True, compute the wavelength array of the extracted region.
+    order : int
+        The spectral order of the extracted region.
+    name : str
+        The name of the extracted region; typically a placeholder
+        for NRC_TSGRISM data but will be the stripe number for DHS.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.SlitModel`
+        The sub_model updated in-place.
+    """
+    # Cut out the subarray from the input data arrays
+    ext_data = input_model.data[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+    ext_err = input_model.err[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+    ext_dq = input_model.dq[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+    if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
+        var_poisson = input_model.var_poisson[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+    else:
+        var_poisson = None
+    if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
+        var_rnoise = input_model.var_rnoise[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+    else:
+        var_rnoise = None
+    if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
+        var_flat = input_model.var_flat[..., ymin : ymax + 1, xmin : xmax + 1].copy()
+    else:
+        var_flat = None
+
+    # Finish populating the output model and meta data
+    sub_model.data = ext_data
+    sub_model.err = ext_err
+    sub_model.dq = ext_dq
+    sub_model.var_poisson = var_poisson
+    sub_model.var_rnoise = var_rnoise
+    sub_model.var_flat = var_flat
+    sub_model.meta.wcs = subwcs
+    sub_model.meta.wcs.bounding_box = wcs_bbox_from_shape(ext_data.shape)
+    if compute_wavelength:
+        sub_model.wavelength = compute_tso_wavelength_array(sub_model)
+    # sub_model.meta.wcsinfo.siaf_yref_sci = 34  # update after move, vals are the same
+    # sub_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
+    sub_model.meta.wcsinfo.spectral_order = order
+    sub_model.meta.wcsinfo.dispersion_direction = input_model.meta.wcsinfo.dispersion_direction
+    sub_model.meta.instrument.name = "NIRCAM"
+    sub_model.name = name
+    sub_model.source_type = input_model.meta.target.source_type
+    sub_model.source_name = input_model.meta.target.catalog_name
+    sub_model.source_alias = input_model.meta.target.proposer_name
+    sub_model.xstart = 1  # FITS pixels are 1-indexed
+    sub_model.xsize = ext_data.shape[-1]
+    sub_model.ystart = ymin + 1  # FITS pixels are 1-indexed
+    sub_model.ysize = ext_data.shape[-2]
+    # sub_model.source_xpos = source_xpos
+    # sub_model.source_ypos = 34
+    sub_model.source_id = 1
+    sub_model.bunit_data = input_model.meta.bunit_data
+    sub_model.bunit_err = input_model.meta.bunit_err
+    if hasattr(input_model, "int_times"):
+        sub_model.int_times = input_model.int_times.copy()
 
 
 def extract_tso_object(
@@ -136,7 +222,6 @@ def extract_tso_object(
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
 
-        # TODO: Moved this from above to segment DHS vs. non-DHS data - check compat
         # If an extraction height is not supplied, default to entire
         # cross-dispersion size of the stripe
         if tsgrism_extract_height is None:
@@ -165,25 +250,7 @@ def extract_tso_object(
                         and x[fieldpoint_idx] in input_model.meta.aperture.pps_name
                     )
                 ][0]
-                # TODO: Do we need to constrain on xfrm solution?
-                """
-                # Create the order bounding box
-                distortion = subwcs.get_transform("v2v3", "direct_image")
-                # 1-indexing already handled here
-                source_xpos, _ = compute_tso_offset_center(input_model, distortion)
-                # Remove FITS 1-indexed offset
-                source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1
-                transform = input_model.meta.wcs.get_transform("direct_image", "grism_detector")
-                xt, yt, _ = transform(
-                    [source_xpos]*2,
-                    [source_ypos]*2,
-                    [lmin, lmax],
-                    [order]*2,
-                    [stripe_id]*2
-                )
-                xfrm_xmin, xfrm_xmax = np.sort(xt)
-                xfrm_ymin, xfrm_ymax = np.sort(yt)
-                """
+
                 # Find extent of stripe as defined by regions
                 stripe_x = np.where(all_stripes == stripe_id, xx, np.nan)
                 stripe_xmin = np.nanmin(stripe_x)
@@ -217,60 +284,18 @@ def extract_tso_object(
                     f"Extraction limits: (xmin: {xmin}, ymin: {ymin}), (xmax: {xmax}, ymax: {ymax})"
                 )
 
-                # Cut out the subarray from the input data arrays
-                ext_data = input_model.data[..., ymin : ymax + 1, xmin : xmax + 1].copy()
-                ext_err = input_model.err[..., ymin : ymax + 1, xmin : xmax + 1].copy()
-                ext_dq = input_model.dq[..., ymin : ymax + 1, xmin : xmax + 1].copy()
-                if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
-                    var_poisson = input_model.var_poisson[
-                        ..., ymin : ymax + 1, xmin : xmax + 1
-                    ].copy()
-                else:
-                    var_poisson = None
-                if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
-                    var_rnoise = input_model.var_rnoise[
-                        ..., ymin : ymax + 1, xmin : xmax + 1
-                    ].copy()
-                else:
-                    var_rnoise = None
-                if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
-                    var_flat = input_model.var_flat[..., ymin : ymax + 1, xmin : xmax + 1].copy()
-                else:
-                    var_flat = None
-
-                # Finish populating the output model and meta data
-                sub_model.data = ext_data
-                sub_model.err = ext_err
-                sub_model.dq = ext_dq
-                sub_model.var_poisson = var_poisson
-                sub_model.var_rnoise = var_rnoise
-                sub_model.var_flat = var_flat
-                sub_model.meta.wcs = subwcs
-                sub_model.meta.wcs.bounding_box = wcs_bbox_from_shape(ext_data.shape)
-                if compute_wavelength:
-                    sub_model.wavelength = compute_tso_wavelength_array(sub_model)
-                # sub_model.meta.wcsinfo.siaf_yref_sci = 34  # update after move, vals are the same
-                # sub_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
-                sub_model.meta.wcsinfo.spectral_order = order
-                sub_model.meta.wcsinfo.dispersion_direction = (
-                    input_model.meta.wcsinfo.dispersion_direction
+                build_grism_submodel(
+                    sub_model,
+                    input_model,
+                    xmin,
+                    xmax,
+                    ymin,
+                    ymax,
+                    subwcs,
+                    compute_wavelength,
+                    order,
+                    name=str(stripe_id),
                 )
-                sub_model.meta.instrument.name = "NIRCAM"
-                sub_model.name = str(stripe_id)
-                sub_model.source_type = input_model.meta.target.source_type
-                sub_model.source_name = input_model.meta.target.catalog_name
-                sub_model.source_alias = input_model.meta.target.proposer_name
-                sub_model.xstart = 1  # FITS pixels are 1-indexed
-                sub_model.xsize = ext_data.shape[-1]
-                sub_model.ystart = ymin + 1  # FITS pixels are 1-indexed
-                sub_model.ysize = ext_data.shape[-2]
-                # sub_model.source_xpos = source_xpos
-                # sub_model.source_ypos = 34
-                sub_model.source_id = 1
-                sub_model.bunit_data = input_model.meta.bunit_data
-                sub_model.bunit_err = input_model.meta.bunit_err
-                if hasattr(input_model, "int_times"):
-                    sub_model.int_times = input_model.int_times.copy()
                 output_model.slits.append(sub_model)
         if hasattr(input_model, "int_times"):
             output_model.int_times = input_model.int_times.copy()
@@ -386,65 +411,18 @@ def extract_tso_object(
                 f" (xmax: {xmax_ext}, ymax: {ymax})"
             )
 
-            # Cut out the subarray from the input data arrays
-            ext_data = input_model.data[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
-            ext_err = input_model.err[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
-            ext_dq = input_model.dq[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
-            if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
-                var_poisson = input_model.var_poisson[
-                    ..., ymin : ymax + 1, xmin_ext : xmax_ext + 1
-                ].copy()
-            else:
-                var_poisson = None
-            if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
-                var_rnoise = input_model.var_rnoise[
-                    ..., ymin : ymax + 1, xmin_ext : xmax_ext + 1
-                ].copy()
-            else:
-                var_rnoise = None
-            if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
-                var_flat = input_model.var_flat[
-                    ..., ymin : ymax + 1, xmin_ext : xmax_ext + 1
-                ].copy()
-            else:
-                var_flat = None
-
-            # Finish populating the output model and meta data
-            if isinstance(output_model, SlitModel):
-                output_model.data = ext_data
-                output_model.err = ext_err
-                output_model.dq = ext_dq
-                output_model.var_poisson = var_poisson
-                output_model.var_rnoise = var_rnoise
-                output_model.var_flat = var_flat
-                output_model.meta.wcs = subwcs
-                output_model.meta.wcs.bounding_box = wcs_bbox_from_shape(ext_data.shape)
-                if compute_wavelength:
-                    output_model.wavelength = compute_tso_wavelength_array(output_model)
-                output_model.meta.wcsinfo.siaf_yref_sci = (
-                    34  # update for the move, vals are the same
-                )
-                output_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
-                output_model.meta.wcsinfo.spectral_order = order
-                output_model.meta.wcsinfo.dispersion_direction = (
-                    input_model.meta.wcsinfo.dispersion_direction
-                )
-                output_model.name = "1"
-                output_model.source_type = input_model.meta.target.source_type
-                output_model.source_name = input_model.meta.target.catalog_name
-                output_model.source_alias = input_model.meta.target.proposer_name
-                output_model.xstart = 1  # FITS pixels are 1-indexed
-                output_model.xsize = ext_data.shape[-1]
-                output_model.ystart = ymin + 1  # FITS pixels are 1-indexed
-                output_model.ysize = ext_data.shape[-2]
-                output_model.source_xpos = source_xpos
-                output_model.source_ypos = 34
-                output_model.source_id = 1
-                output_model.bunit_data = input_model.meta.bunit_data
-                output_model.bunit_err = input_model.meta.bunit_err
-                if hasattr(input_model, "int_times"):
-                    output_model.int_times = input_model.int_times.copy()
-
+            build_grism_submodel(
+                output_model,
+                input_model,
+                xmin,
+                xmax,
+                ymin,
+                ymax,
+                subwcs,
+                compute_wavelength,
+                order,
+                name="1",
+            )
     del subwcs
     log.info("Finished extraction")
     return output_model
