@@ -56,6 +56,7 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     Step.from_cmdline(args)
 
 
+@pytest.mark.skip(reason="Work in progress: updating the Reference Files")
 @pytest.mark.parametrize(
     "suffix",
     ["assign_wcs", "cal", "extract_2d", "photom", "srctype", "x1d"],

@@ -419,7 +419,6 @@ def _calc_2d_wave_map(
     y_dms,
     tilt,
     oversample=2,
-    padding=0,
     maxiter=5,
     dtol=1e-2,
     dimx=2048,
@@ -440,8 +439,6 @@ def _calc_2d_wave_map(
         The trace tilt angle in degrees.
     oversample : int
         The oversampling factor of the input coordinates.
-    padding : int
-        The native pixel padding around the edge of the detector.
     maxiter : int
         The maximum number of iterations used when solving for the wavelength at each pixel.
     dtol : float
@@ -457,16 +454,14 @@ def _calc_2d_wave_map(
         An array containing the wavelength at each pixel on the detector.
     """
     os = np.copy(oversample)
-    xpad = np.copy(padding)
-    ypad = np.copy(padding)
 
     # No need to compute wavelengths across the entire detector,
     # slightly larger than SUBSTRIP256 will do.
     y_dms = y_dms + (dimy - dimx)  # Adjust y-coordinate to area of interest.
 
     # Generate the oversampled grid of pixel coordinates.
-    x_vec = np.arange((dimx + 2 * xpad) * os) / os - (os - 1) / (2 * os) - xpad
-    y_vec = np.arange((dimy + 2 * ypad) * os) / os - (os - 1) / (2 * os) - ypad
+    x_vec = np.arange(dimx * os) / os - (os - 1) / (2 * os)
+    y_vec = np.arange(dimy * os) / os - (os - 1) / (2 * os)
     x_grid, y_grid = np.meshgrid(x_vec, y_vec)
 
     # Iteratively compute the wavelength at each pixel.
@@ -500,8 +495,8 @@ def _calc_2d_wave_map(
     )
 
     # Extend to full detector size.
-    tmp = np.full((os * (dimx + 2 * xpad), os * (dimx + 2 * xpad)), fill_value=np.nan)
-    tmp[-os * (dimy + 2 * ypad) :] = wave_map_2d
+    tmp = np.full((os * dimx, os * dimx), fill_value=np.nan)
+    tmp[(-os * dimy) :] = wave_map_2d
     wave_map_2d = tmp
 
     return wave_map_2d
@@ -511,7 +506,6 @@ def get_soss_wavemaps(
     pwcpos,
     subarray="SUBSTRIP256",
     refmodel=None,
-    padsize=None,
     spectraces=False,
     orders_requested=None,
 ):
@@ -529,8 +523,6 @@ def get_soss_wavemaps(
     refmodel : PastasossModel, optional
         The reference model for the SOSS extraction. If not set, it will be fetched
         from CRDS.
-    padsize : int, optional
-        The padding to apply to the wavelength maps.
     spectraces : bool, optional
         If True, return the interpolated spectraces as well.
     orders_requested : list
@@ -560,14 +552,7 @@ def get_soss_wavemaps(
     if not pwcpos_is_valid:
         raise ValueError(f"PWC position {pwcpos} is outside bounds ({pwcpos_bounds}).")
 
-    if padsize is None:
-        padsize = getattr(refmodel.traces[0], "padding", 0)
-    if padsize > 0:
-        do_padding = True
-    else:
-        do_padding = False
-
-    # Make wavemap from trace center wavelengths, padding to shape (296, 2088)
+    # Make wavemap from trace center wavelengths
     wave_grid = np.linspace(
         refmodel.meta.wavemap_wlmin, refmodel.meta.wavemap_wlmax, refmodel.meta.wavemap_nwl
     )
@@ -591,22 +576,18 @@ def get_soss_wavemaps(
             ytrace,
             np.zeros_like(xtrace),
             oversample=1,
-            padding=padsize,
             dimx=soss_xdim,
             dimy=soss_ydim,
         )
         # Extrapolate wavemap to FULL frame
-        wavemap[: subarray_ymin - padsize, :] = wavemap[subarray_ymin - padsize]
+        wavemap[:subarray_ymin, :] = wavemap[subarray_ymin]
 
         # Trim to subarray
         if subarray == "SUBSTRIP256":
-            wavemap = wavemap[subarray_ymin - padsize : soss_xdim + padsize, :]
+            wavemap = wavemap[subarray_ymin:soss_xdim, :]
         if subarray == "SUBSTRIP96":
-            wavemap = wavemap[subarray_ymin - padsize : subarray_ymin + 96 + padsize, :]
+            wavemap = wavemap[subarray_ymin : subarray_ymin + 96, :]
 
-        # remove padding if necessary
-        if not do_padding and padsize != 0:
-            wavemap = wavemap[padsize:-padsize, padsize:-padsize]
         wavemaps.append(wavemap)
         traces.append(spectrace)
 

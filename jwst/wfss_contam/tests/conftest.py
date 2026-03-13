@@ -176,7 +176,9 @@ def photom_ref_model_niriss(phot_table):
     `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
         Photom ref file model.
     """
-    return dm.NisWfssPhotomModel(phot_table=phot_table)
+    model = dm.NisWfssPhotomModel(phot_table=phot_table)
+    model.phot_unit = "MJy micron s / (DN sr)"
+    return model
 
 
 @pytest.fixture(scope="module")
@@ -194,7 +196,9 @@ def photom_ref_model_nircam(phot_table):
     `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`
         Photom ref file model.
     """
-    return dm.NrcWfssPhotomModel(phot_table=phot_table)
+    model = dm.NrcWfssPhotomModel(phot_table=phot_table)
+    model.phot_unit = "MJy Angstrom s / (DN sr)"
+    return model
 
 
 @pytest.fixture
