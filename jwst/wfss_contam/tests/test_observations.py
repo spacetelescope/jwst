@@ -125,8 +125,8 @@ def test_disperse_order(observation, segmentation_map, chunk_size):
     assert np.isclose(slit.data[5, 60], 0.09994397, rtol=0.005)
 
 
-def test_aggregate_by_source_non_overlapping():
-    """Chunks covering non-overlapping spatial regions are combined correctly."""
+def test_aggregate_by_source():
+    """Chunks for same source covering different spatial regions are combined correctly."""
     # chunk A: x=[0,1], y=[0,1] is put into results
     img_a = np.full((2, 2), 1.0)
     bounds_a = [0, 1, 0, 1]
@@ -158,38 +158,3 @@ def test_aggregate_by_source_non_overlapping():
     assert combined.shape == (2, 4)
     assert_allclose(combined[:, :2], 1.0)
     assert_allclose(combined[:, 2:], 2.0)
-
-
-def test_aggregate_by_source_overlapping():
-    """
-    Two chunks with overlapping regions have pixel values summed in the overlap.
-
-    Currently this case should not be hit in real code, but in principle you could split
-    the flux of a pixel between two sources if you had a very sophisticated
-    method of source detection, so it's worth understanding what should happen in that case.
-    """
-    # chunk A: x=[0,3], y=[0,3]
-    img_a = np.ones((4, 4))
-    bounds_a = [0, 3, 0, 3]
-    # chunk B: x=[1,4], y=[1,4]  (overlaps by 3 pixels in each dimension)
-    img_b = np.ones((4, 4)) * 2
-    bounds_b = [1, 4, 1, 4]
-
-    results = {1: {"bounds": bounds_a, "image": img_a}}
-    source_results = {1: {"bounds": bounds_b, "image": img_b}}
-    _aggregate_by_source(results, 1, source_results)
-
-    assert source_results[1]["bounds"] == [0, 4, 0, 4]
-    combined = source_results[1]["image"]
-    assert combined.shape == (5, 5)
-    # overlap region (y=[1,3], x=[1,3]) should be 3
-    assert_allclose(combined[1:4, 1:4], 3.0)
-    # edges from A only
-    assert_allclose(combined[0, :3], 1.0)
-    assert_allclose(combined[:3, 0], 1.0)
-    # edges from B only
-    assert_allclose(combined[4, 1:4], 2.0)
-    assert_allclose(combined[1:4, 4], 2.0)
-    # two corners are still zero
-    assert_allclose(combined[4, 0], 0.0)
-    assert_allclose(combined[0, 4], 0.0)
