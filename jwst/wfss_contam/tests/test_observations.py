@@ -125,10 +125,6 @@ def test_disperse_order(observation, segmentation_map, chunk_size):
     assert np.isclose(slit.data[5, 60], 0.09994397, rtol=0.005)
 
 
-def test_aggregate_by_source():
-    """New source ID is inserted verbatim into source_results."""
-
-
 def test_aggregate_by_source_non_overlapping():
     """Chunks covering non-overlapping spatial regions are combined correctly."""
     # chunk A: x=[0,1], y=[0,1] is put into results
@@ -165,7 +161,13 @@ def test_aggregate_by_source_non_overlapping():
 
 
 def test_aggregate_by_source_overlapping():
-    """Two chunks with overlapping regions have pixel values summed in the overlap."""
+    """
+    Two chunks with overlapping regions have pixel values summed in the overlap.
+
+    Currently this case should not be hit in real code, but in principle you could split
+    the flux of a pixel between two sources if you had a very sophisticated
+    method of source detection, so it's worth understanding what should happen in that case.
+    """
     # chunk A: x=[0,3], y=[0,3]
     img_a = np.ones((4, 4))
     bounds_a = [0, 3, 0, 3]
