@@ -160,9 +160,10 @@ def substripe_subarray_transforms(input_model, regions_model):
 
     Parameters
     ----------
-    input_model : JwstDataModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or
+        `~stdatamodels.jwst.datamodels.CubeModel`
         The science model with defined multistripe parameters.
-    regions_model : ~stdatamodels.jwst.datamodels.RegionsModel
+    regions_model : `~stdatamodels.jwst.datamodels.RegionsModel`
         The regions reference model that defines stripe labels given pixel position.
 
     Returns
@@ -838,6 +839,7 @@ def compute_footprint_nrs_slit(slit):
 
 
 def update_s_region_nrs_slit(slit):
+    """Update the S_REGION keyword for NIRSpec slit."""
     footprint, spectral_region = compute_footprint_nrs_slit(slit)
     update_s_region_keyword(slit, footprint)
     slit.meta.wcsinfo.spectral_region = spectral_region

@@ -248,10 +248,8 @@ def tsgrism(input_model, reference_files):
     )
 
     # Add in the wavelength shift from the velocity dispersion
-    try:
-        velosys = input_model.meta.wcsinfo.velosys
-    except AttributeError:
-        pass
+    velosys = input_model.meta.wcsinfo.velosys
+
     if velosys is not None:
         velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
         log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")

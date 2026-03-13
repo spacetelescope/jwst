@@ -387,7 +387,7 @@ def test_output_is_not_input(request, dataset):
 
 
 def test_extract_nircam_dhs(mock_nircam_dhs, simple_wcs):
-    # input is a SourceModelContainer
+    # input is a MultiSlitModel
     result = Extract1dStep.call(mock_nircam_dhs)
 
     # output is a single spectral model (not a container)
