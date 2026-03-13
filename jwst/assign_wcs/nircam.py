@@ -370,10 +370,10 @@ def dhs(input_model, reference_files):
         sub_trans_dict = substripe_subarray_transforms(input_model, regs_model)
 
         if regs_model.regions.shape == input_model.data.shape[-2:]:
-            regions = regs_model.regions.copy()
+            regions = regs_model.regions
         else:
             sub_regs_model = reffile_utils.get_subarray_model(input_model, regs_model)
-            regions = sub_regs_model.regions.copy()
+            regions = sub_regs_model.regions
             sub_regs_model.close()
 
     label_mapper = selector.LabelMapperArray(
