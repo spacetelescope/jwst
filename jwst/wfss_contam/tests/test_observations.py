@@ -6,7 +6,12 @@ import stdatamodels.jwst.datamodels as dm
 from astropy.stats import sigma_clipped_stats
 from numpy.testing import assert_allclose
 
-from jwst.wfss_contam.observations import Observation, _select_ids, background_subtract
+from jwst.wfss_contam.observations import (
+    Observation,
+    _aggregate_by_source,
+    _select_ids,
+    background_subtract,
+)
 
 
 @pytest.fixture
@@ -118,3 +123,71 @@ def test_disperse_order(observation, segmentation_map, chunk_size):
     # wavelength from which to compute the native spacing, but these are
     # understood and are inconsequential for science.
     assert np.isclose(slit.data[5, 60], 0.09994397, rtol=0.005)
+
+
+def test_aggregate_by_source():
+    """New source ID is inserted verbatim into source_results."""
+
+
+def test_aggregate_by_source_non_overlapping():
+    """Chunks covering non-overlapping spatial regions are combined correctly."""
+    # chunk A: x=[0,1], y=[0,1] is put into results
+    img_a = np.full((2, 2), 1.0)
+    bounds_a = [0, 1, 0, 1]
+    results = {1: {"bounds": bounds_a, "image": img_a}}
+
+    # chunk B: x=[2,3], y=[0,1]  (adjacent in x, same y range) is put into source_results
+    img_b = np.full((2, 2), 2.0)
+    bounds_b = [2, 3, 0, 1]
+    source_results = {1: {"bounds": bounds_b, "image": img_b}}
+
+    # add another source to results
+    img = np.ones((3, 3))
+    bounds = [5, 7, 5, 7]
+    results[0] = {"bounds": bounds, "image": img}
+
+    # aggregate both sources
+    for sid in [0, 1]:
+        _aggregate_by_source(results, sid, source_results)
+
+    # check that source 0 is unchanged
+    assert 0 in source_results
+    assert source_results[0]["bounds"] == bounds
+    assert_allclose(source_results[0]["image"], img)
+
+    # check that source 1 is combined correctly
+    assert 1 in source_results
+    assert source_results[1]["bounds"] == [0, 3, 0, 1]
+    combined = source_results[1]["image"]
+    assert combined.shape == (2, 4)
+    assert_allclose(combined[:, :2], 1.0)
+    assert_allclose(combined[:, 2:], 2.0)
+
+
+def test_aggregate_by_source_overlapping():
+    """Two chunks with overlapping regions have pixel values summed in the overlap."""
+    # chunk A: x=[0,3], y=[0,3]
+    img_a = np.ones((4, 4))
+    bounds_a = [0, 3, 0, 3]
+    # chunk B: x=[1,4], y=[1,4]  (overlaps by 3 pixels in each dimension)
+    img_b = np.ones((4, 4)) * 2
+    bounds_b = [1, 4, 1, 4]
+
+    results = {1: {"bounds": bounds_a, "image": img_a}}
+    source_results = {1: {"bounds": bounds_b, "image": img_b}}
+    _aggregate_by_source(results, 1, source_results)
+
+    assert source_results[1]["bounds"] == [0, 4, 0, 4]
+    combined = source_results[1]["image"]
+    assert combined.shape == (5, 5)
+    # overlap region (y=[1,3], x=[1,3]) should be 3
+    assert_allclose(combined[1:4, 1:4], 3.0)
+    # edges from A only
+    assert_allclose(combined[0, :3], 1.0)
+    assert_allclose(combined[:3, 0], 1.0)
+    # edges from B only
+    assert_allclose(combined[4, 1:4], 2.0)
+    assert_allclose(combined[1:4, 4], 2.0)
+    # two corners are still zero
+    assert_allclose(combined[4, 0], 0.0)
+    assert_allclose(combined[0, 4], 0.0)

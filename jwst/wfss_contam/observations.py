@@ -199,6 +199,18 @@ class Observation:
 
         Parameters
         ----------
+        order : int
+            Spectral order to process
+        wmin : float
+            Minimum wavelength for dispersed spectra
+        wmax : float
+            Maximum wavelength for dispersed spectra
+        sens_waves : ndarray
+            Wavelength array from photom reference file
+        sens_response : ndarray
+            Response (flux calibration) array from photom reference file
+        selected_ids : list, optional
+            List of source IDs to process. If None, all sources are processed.
         max_pixels : int, optional
             Maximum number of pixels per chunk.
 
@@ -341,45 +353,61 @@ class Observation:
 
 
 def _aggregate_by_source(results, sid, source_results):
+    """
+    Combine results from different chunks into a single image and bounds for each source ID.
+
+    Parameters
+    ----------
+    results : dict
+        Dictionary containing the results for each source ID in the current chunk, in the format:
+        {source_id: {"bounds": [xmin, xmax, ymin, ymax], "image": 2D array}}
+    sid : int
+        Source ID
+    source_results : dict
+        Dictionary to store simulated image and bounds for each source ID, in the format:
+        {source_id: {"bounds": [xmin, xmax, ymin, ymax], "image": 2D array}}
+        Updated in place.
+    """
     if sid not in source_results:
         source_results[sid] = {
             "bounds": results[sid]["bounds"],
-            "image": results[sid]["image"].copy(),
+            "image": results[sid]["image"],
         }
-    else:
-        # Combine bounds
-        old_bounds = source_results[sid]["bounds"]
-        new_bounds = results[sid]["bounds"]
-        combined_bounds = [
-            min(old_bounds[0], new_bounds[0]),
-            max(old_bounds[1], new_bounds[1]),
-            min(old_bounds[2], new_bounds[2]),
-            max(old_bounds[3], new_bounds[3]),
-        ]
+        return
 
-        # Create combined image with the union of bounds
-        combined_shape = (
-            combined_bounds[3] - combined_bounds[2] + 1,
-            combined_bounds[1] - combined_bounds[0] + 1,
-        )
-        combined_image = np.zeros(combined_shape, dtype=float)
+    # Combine bounds
+    old_bounds = source_results[sid]["bounds"]
+    new_bounds = results[sid]["bounds"]
+    combined_bounds = [
+        min(old_bounds[0], new_bounds[0]),
+        max(old_bounds[1], new_bounds[1]),
+        min(old_bounds[2], new_bounds[2]),
+        max(old_bounds[3], new_bounds[3]),
+    ]
 
-        # Add existing image to combined image
-        old_y_start = old_bounds[2] - combined_bounds[2]
-        old_y_end = old_y_start + source_results[sid]["image"].shape[0]
-        old_x_start = old_bounds[0] - combined_bounds[0]
-        old_x_end = old_x_start + source_results[sid]["image"].shape[1]
-        combined_image[old_y_start:old_y_end, old_x_start:old_x_end] += source_results[sid]["image"]
+    # Create combined image with the union of bounds
+    combined_shape = (
+        combined_bounds[3] - combined_bounds[2] + 1,
+        combined_bounds[1] - combined_bounds[0] + 1,
+    )
+    combined_image = np.zeros(combined_shape, dtype=float)
 
-        # Add new image to combined image
-        new_y_start = new_bounds[2] - combined_bounds[2]
-        new_y_end = new_y_start + results[sid]["image"].shape[0]
-        new_x_start = new_bounds[0] - combined_bounds[0]
-        new_x_end = new_x_start + results[sid]["image"].shape[1]
-        combined_image[new_y_start:new_y_end, new_x_start:new_x_end] += results[sid]["image"]
+    # Add existing image to combined image
+    old_y_start = old_bounds[2] - combined_bounds[2]
+    old_y_end = old_y_start + source_results[sid]["image"].shape[0]
+    old_x_start = old_bounds[0] - combined_bounds[0]
+    old_x_end = old_x_start + source_results[sid]["image"].shape[1]
+    combined_image[old_y_start:old_y_end, old_x_start:old_x_end] += source_results[sid]["image"]
 
-        # Update source results
-        source_results[sid] = {"bounds": combined_bounds, "image": combined_image}
+    # Add new image to combined image
+    new_y_start = new_bounds[2] - combined_bounds[2]
+    new_y_end = new_y_start + results[sid]["image"].shape[0]
+    new_x_start = new_bounds[0] - combined_bounds[0]
+    new_x_end = new_x_start + results[sid]["image"].shape[1]
+    combined_image[new_y_start:new_y_end, new_x_start:new_x_end] += results[sid]["image"]
+
+    # Update source results
+    source_results[sid] = {"bounds": combined_bounds, "image": combined_image}
 
 
 def _construct_slitmodel(
