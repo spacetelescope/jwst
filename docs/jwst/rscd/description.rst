@@ -6,9 +6,7 @@ Description
 
 Assumptions
 -----------
-This correction is currently only implemented for MIRI data and is only applied
-to integrations after the first integration (i.e. this step does not correct the
-first integration).
+This correction is currently only implemented for MIRI data.
 It is assumed this step occurs before the dark subtraction, but after linearity
 correction.
 
@@ -28,29 +26,49 @@ However, the reset FETs do not instantaneously reset the level. Instead, the exp
 adjustment of the FET after a reset causes the initial frames in an integration to be offset
 from their expected values. Between exposures, the MIRI detectors are continually reset;
 however, for a multiple integration exposure there is a single reset between integrations.
-The effects of this decay are not measurable in the first integration because a number
-of resets have occurred from the last exposure and the effect has decayed away by the time
+The effects of this decay are reduced in the first integration because a number
+of resets have occurred from the last exposure and the effect has partially decayed  by the time
 it takes to read out the last exposure, set up the next exposure, and begin exposing.
-There are low level reset effects in the first integration that are related to the strength of the dark
-current and can be removed with an integration-dependent dark.
+Because of these physical transients, the JWST pipeline includes a dedicated RSCD step
+that automatically applies these group_skip flags to ensure that the subsequent Jump Detection
+and Ramp Fitting steps only use the linear portion of the integration
 
 The Reset Switch Charge Decay (RSCD) step corrects for these effects by simply
-flagging the first N groups as DO_NOT_USE.  An actual correction algorithm allowing for the first N groups to be
-used is under development.
+flagging the first N groups as DO_NOT_USE. 
+
 
 Algorithm
 _________
 
-This correction is only applied to integrations > 1.
-This step flags the N groups at the beginning of all 2nd and higher integrations
+The RSCD (Reset Switch Charge Decay) step identifies and flags groups at the beginning of
+MIRI integrations that are affected by non-linear transients. These transients are caused
+by the exponential settling of the detector’s Field Effect Transistor (FET) switches
+immediately following a reset.
+
+This step flags the N groups at the beginning of all integrations
 as bad (the "DO_NOT_USE" bit is set in the
-GROUPDQ flag array), but only if the total number of groups in each
-integration is greater than N+3.
-This results in the data contained in the the first N groups
+GROUPDQ flag array). The number of groups to skip is depends on the readout pattern,
+subarray size and integration. To maintain the statistical viability of the ramp, the step
+only applies flags if the integration contains at least three more groups than the required
+skip number (Groups > NSkip + 3). If this condition is not met, the step is bypassed to allow
+later pipeline stages enough data points to perform a linear fit.
+
+Standard RSCD correction flags the first N groups as DO_NOT_USE. However, for very bright sources,
+the pixel might saturate immediately after those skipped groups. If the algorithm blindly skips
+the RSCD groups, it might leave the pixel with zero or one valid group, making it impossible to
+calculate a flux (slope). Instead the algorithm "backs off" the number of skipped groups for
+specific pixels that are at risk of losing all their unsaturated data.
+Because reducing the RSCD skip introduces some non-linear FET transient data back into the fit,
+these pixels are flagged The algorithm flags them in the PIXELDQ array as FLUX_ESTIMATED to warn
+the users that the flux value may be slightly biased by the RSCD effect.
+If the back-off is so severe that only one group is left valid, the algorithm records this state.
+This allows the ramp_fit step to still derive a flux value (provided the user has enabled suppress_group1 = False).
+
+This step results in the data contained in the the first N groups
 being excluded from subsequent steps, such as :ref:`jump detection <jump_step>`
 and :ref:`ramp_fitting <ramp_fitting_step>`.
-No flags are added if NGROUPS <= N+3, because doing so would leave too few good
-groups to work with in later steps.
 
-Only the GROUPDQ array is modified. The SCI, ERR, and PIXELDQ arrays are unchanged.
+Only the GROUPDQ array is modified. The SCI and ERR arrays remain unchanged. The PIXELDQ arrays are
+only updated in the case of bright saturating data when the RSCD skip count is lowered
+to preserve valid groups, triggering the FLUX_ESTIMATED flag to indicate a potential bias from the FET transient.
 
