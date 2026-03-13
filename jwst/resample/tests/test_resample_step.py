@@ -41,13 +41,16 @@ def _set_photom_kwd(im):
         shape=im.data.shape,
     )
 
-    if mean_pixel_area == 0.0:
-        # we have a degenerate boundary on sky, so we can't compute the pixel
-        # area from the corners. This should not be happening for imaging data,
-        # but it can happen for spectroscopic data with a very small slit.
-        # Raise an error to let developers know about possible issues with
-        # the WCS.
-        raise RuntimeError("Degenerate WCS boundary detected. Cannot compute pixel area.")
+    if mean_pixel_area == 0.0 or "SPECTRAL" in im.meta.wcs.output_frame.axes_type:
+        # we have either spectral data or a degenerate boundary on sky,
+        # so we can't compute the pixel area from the corners.
+        # This should not be happening for imaging data.
+        mean_pixel_area = (
+            compute_spectral_pixel_scale(
+                im.meta.wcs, disp_axis=2 if im.meta.instrument.name == "MIRI" else 1
+            )
+            ** 2
+        )
 
     if mean_pixel_area:
         im.meta.photometry.pixelarea_steradians = mean_pixel_area
@@ -107,6 +110,11 @@ def miri_rate_model():
         "type": "MIR_LRS-SLITLESS",
         "zero_frame": False,
     }
+    im.meta.photometry = {
+        "pixelarea_steradians": 2.6106e-13,
+        "pixelarea_arcsecsq": 0.0111,
+    }
+
     return im
 
 
@@ -120,10 +128,6 @@ def miri_rate():
 @pytest.fixture
 def miri_cal(miri_rate):
     im = AssignWcsStep.call(miri_rate)
-    # cannot use _set_photom_kwd(im) since the boundary is degenerate for this
-    # slit, so set the photometry keywords directly.
-    im.meta.photometry.pixelarea_steradians = 2.86e-13
-    im.meta.photometry.pixelarea_arcsecsq = 2.86e-13 * np.rad2deg(3600) ** 2
 
     # Add non-zero values to check flux conservation
     im.data += 1.0
@@ -182,6 +186,10 @@ def miri_rate_zero_crossing():
         "start_time": 58119.8333,
         "type": "MIR_LRS-FIXEDSLIT",
         "zero_frame": False,
+    }
+    im.meta.photometry = {
+        "pixelarea_steradians": 2.6106e-13,
+        "pixelarea_arcsecsq": 0.0111,
     }
 
     yield im
@@ -277,8 +285,8 @@ def nircam_rate():
         "type": "NRC_IMAGE",
     }
     im.meta.photometry = {
-        "pixelarea_steradians": 1e-13,
-        "pixelarea_arcsecsq": 4e-3,
+        "pixelarea_steradians": 9.4e-14,
+        "pixelarea_arcsecsq": 4.0e-3,
     }
     yield im
     im.close()
@@ -340,6 +348,10 @@ def nirspec_rate():
         "start_time": 58119.8333,
         "type": "NRS_FIXEDSLIT",
         "zero_frame": False,
+    }
+    im.meta.photometry = {
+        "pixelarea_steradians": 2.6106e-13,
+        "pixelarea_arcsecsq": 0.0111,
     }
 
     yield im
