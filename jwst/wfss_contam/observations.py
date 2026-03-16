@@ -109,9 +109,9 @@ class Observation:
     The Observation class is responsible for calling the various WCS transforms that convert
     a direct image and a segmentation image into a simulation of the grism image, making
     assumptions about the spectral properties of the direct image sources.
-    When the disperse_order method is called one or more times, two products are created:
-    the simulated dispersed image (simulated_image attribute) and
-    the simulated MultiSlitModel (simulated_slits attribute).
+    When the `disperse_order` method is called one or more times, two products are created:
+    the simulated dispersed image (``simulated_image`` attribute) and
+    the simulated `~stdatamodels.jwst.datamodels.MultiSlitModel` (``simulated_slits`` attribute).
     """
 
     def __init__(
@@ -284,7 +284,7 @@ class Observation:
         """
         Disperse the sources for a given spectral order, with multiprocessing.
 
-        The simulated_slits and simulated_image attributes are updated in place.
+        The ``simulated_slits`` and ``simulated_image`` attributes are updated in place.
 
         Parameters
         ----------
