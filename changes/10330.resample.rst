@@ -1,0 +1,1 @@
+remove ``jwst.resample.compute_image_pixel_area()`` (use ``stcal.resample.compute_mean_pixel_area()`` instead)

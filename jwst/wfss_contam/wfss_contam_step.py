@@ -23,7 +23,7 @@ class WfssContamStep(Step):
         orders = list(default=None)  # Spectral orders to process, e.g. 1, or 1,2,3
         magnitude_limit = float(default=None) # Isophotal AB magnitude limit for sources to be included in the contamination correction
         wl_oversample = integer(default=2) # oversampling factor for wavelength grid
-        max_pixels_per_chunk = integer(default=50000) # max number of pixels to disperse at once
+        max_pixels_per_chunk = integer(default=5000) # max number of pixels to disperse at once
     """  # noqa: E501
 
     reference_file_types = ["photom", "wavelengthrange"]

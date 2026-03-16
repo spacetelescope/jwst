@@ -8,10 +8,18 @@ The ramp fitting step has the following optional arguments that can be set by th
   approach.  The algorithm defaults to "OLS_C".
 
 * ``--save_opt``: A True/False value that specifies whether to write
-  the optional output product. Default is False.
+  the optional output product. When using the "OLS_C" algorithm, the
+  optional results product is a set of intermediate calculations captured
+  in the RampFitOutputModel data model. The output file will have the suffix
+  "fitopt". For the "LIKELY" algorithm, the file saved is an ImageModel
+  containing the ``chisq`` array computed and stored in the ``data`` element
+  of the ImageModel. The output file will have the suffix "likely_chisq".
+  Default is False.
 
 * ``--opt_name``: A string that can be used to override the default name
-  for the optional output product.
+  for the optional output product. If no optional name is provided, but
+  saving the optional product is true, then this step will use the input
+  file name as the base name.
 
 * ``--int_name``: A string that can be used to override the default name
   for the per-integration product.

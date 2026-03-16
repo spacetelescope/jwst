@@ -36,14 +36,18 @@ def _set_photom_kwd(im):
         bb = ((xmin - 0.5, xmax - 0.5), (ymin - 0.5, ymax - 0.5))
         im.meta.wcs.bounding_box = bb
 
-    mean_pixel_area = compute_mean_pixel_area(
-        im.meta.wcs,
-        shape=im.data.shape,
-    )
+    if "SPECTRAL" not in im.meta.wcs.output_frame.axes_type:
+        mean_pixel_area = compute_mean_pixel_area(
+            im.meta.wcs,
+            shape=im.data.shape,
+        )
 
-    if mean_pixel_area:
-        im.meta.photometry.pixelarea_steradians = mean_pixel_area
-        im.meta.photometry.pixelarea_arcsecsq = mean_pixel_area * np.rad2deg(3600) ** 2
+        if mean_pixel_area == 0.0:
+            raise RuntimeError("Degenerate WCS boundary detected. Cannot compute pixel area.")
+
+        if mean_pixel_area:
+            im.meta.photometry.pixelarea_steradians = mean_pixel_area
+            im.meta.photometry.pixelarea_arcsecsq = mean_pixel_area * np.rad2deg(3600) ** 2
 
 
 def miri_rate_model():
@@ -99,6 +103,11 @@ def miri_rate_model():
         "type": "MIR_LRS-SLITLESS",
         "zero_frame": False,
     }
+    im.meta.photometry = {
+        "pixelarea_steradians": 2.844e-13,
+        "pixelarea_arcsecsq": 0.011,
+    }
+
     return im
 
 
@@ -112,7 +121,6 @@ def miri_rate():
 @pytest.fixture
 def miri_cal(miri_rate):
     im = AssignWcsStep.call(miri_rate)
-    _set_photom_kwd(im)
 
     # Add non-zero values to check flux conservation
     im.data += 1.0
@@ -171,6 +179,10 @@ def miri_rate_zero_crossing():
         "start_time": 58119.8333,
         "type": "MIR_LRS-FIXEDSLIT",
         "zero_frame": False,
+    }
+    im.meta.photometry = {
+        "pixelarea_steradians": 2.844e-13,
+        "pixelarea_arcsecsq": 0.011,
     }
 
     yield im
@@ -266,8 +278,8 @@ def nircam_rate():
         "type": "NRC_IMAGE",
     }
     im.meta.photometry = {
-        "pixelarea_steradians": 1e-13,
-        "pixelarea_arcsecsq": 4e-3,
+        "pixelarea_steradians": 9.4e-14,
+        "pixelarea_arcsecsq": 4.0e-3,
     }
     yield im
     im.close()
@@ -329,6 +341,10 @@ def nirspec_rate():
         "start_time": 58119.8333,
         "type": "NRS_FIXEDSLIT",
         "zero_frame": False,
+    }
+    im.meta.photometry = {
+        "pixelarea_steradians": 2.844e-13,
+        "pixelarea_arcsecsq": 0.011,
     }
 
     yield im

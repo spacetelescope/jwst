@@ -61,7 +61,14 @@ to "COMPLETE".
 There is a new algorithm available for testing in ramp fitting, which is the
 likelihood algorithm.  It is selected by setting ``--ramp_fitting.algorithm=LIKELY``.
 The details are in the ``stcal`` documentation at
-:ref:`Likelihood Algorithm Details <stcal:likelihood_algo>`.
+:ref:`Likelihood Algorithm Details <stcal:likelihood_algo>`. When using this algorithm
+there is an additional ``chisq`` array that is returned from ramp fitting that
+can now be saved, if desired. When using the ``LIKELY`` algorithm, this can be
+saved by setting the step parameter ``save_opt`` to true. The ``chisq`` array
+contains the chi-squared fit quality measure for each pixel. This quantity is
+defined at the link below in "Detailed Algorithms" in the "Likelihood Algorithm
+Details" section.
+
 
 Multiprocessing
 ---------------
