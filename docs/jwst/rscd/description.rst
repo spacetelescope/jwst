@@ -11,7 +11,7 @@ It is assumed this step occurs before the dark subtraction, but after linearity
 correction.
 
 Background
-__________
+----------
 
 The MIRI Focal Plane System (FPS) consists of the detectors and the electronics to control them.
 There are a number of non-ideal detector and readout effects that produce reset offsets,
@@ -50,7 +50,7 @@ as bad (the "DO_NOT_USE" bit is set in the
 GROUPDQ flag array). The number of groups to skip is depends on the readout pattern,
 subarray size and integration number. To maintain the statistical viability of the ramp, the step
 only applies flags if the integration contains at least three more groups than the required
-skip number (Groups > `n_skip` + 3). If this condition is not met, the step is bypassed to allow
+skip number (Groups > ``n_skip`` + 3). If this condition is not met, the step is bypassed to allow
 later pipeline stages enough data points to perform a linear fit.
 
 Standard RSCD correction flags the first N groups as DO_NOT_USE. However, for very bright sources,
@@ -64,14 +64,14 @@ the users that the flux value may be slightly biased by the RSCD effect.
 If only one group is left valid, the algorithm records information header (more information given
 the table below). This allows the :ref:`ramp_fitting <ramp_fitting_step>` to still derive a flux value (provided the user has enabled suppress_one_group = False).
 
-
-This step results in the data contained in the the first `n_skip` groups
+`
+This step results in the data contained in the the first ``n_skip`` groups
 being excluded from subsequent steps, such as :ref:`jump detection <jump_step>`
 and :ref:`ramp_fitting <ramp_fitting_step>`.
 
 Only the GROUPDQ array is modified. The SCI and ERR arrays remain unchanged. The PIXELDQ arrays are
 only updated in the case of bright saturating data when the RSCD skip count is lowered
-to preserve valid groups. In this case,  the FLUX_ESTIMATED flag isadded  to indicate a potential
+to preserve valid groups. In this case, the FLUX_ESTIMATED flag is added  to indicate a potential
 bias from the FET transient.
 
 RSCD Keywords   Meaning

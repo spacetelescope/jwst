@@ -54,13 +54,13 @@ def do_correction(output_model, rscd_model):
     group_skip_int2p = param["skip_int2p"]  # integration 2,  plus higher integrations
 
     if group_skip_int1 < 0:
-        log.warning(" RSCD reference file is of a deprecated model.")
-        log.warning(" There are no values for first integration")
-        log.warning(" Setting number of groups to skip in first integration to 1")
+        log.warning("RSCD reference file is of a deprecated model.")
+        log.warning("There are no values for first integration")
+        log.warning("Setting number of groups to skip in first integration to 1")
         group_skip_int1 = 1
 
-    log.info(f" # groups from RSCD reference file for int 1 to flag  {group_skip_int1}")
-    log.info(f" # groups from RSCD reference file for int 2 and higher to flag  {group_skip_int2p}")
+    log.info(f"# groups from RSCD reference file for int 1 to flag: {group_skip_int1}")
+    log.info(f"# groups from RSCD reference file for int 2 and higher to flag: {group_skip_int2p}")
     output_model = correction_skip_groups(output_model, group_skip_int1, group_skip_int2p)
     return output_model
 
@@ -196,7 +196,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
         Starting integration
 
     int_end : int
-        Endinging integration
+        Ending integration
 
     rscd_skip : int
         Number of groups to skip at the beginning of the ramp for integration range.
@@ -219,7 +219,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
     skip_array[:, :, :] = rscd_skip
 
     # --- If we encounter saturation, we might need to back off the rscd correction.
-    # Ideally we want at least  two valid groups, but we need to allow there to only
+    # Ideally we want at least two valid groups, but we need to allow there to only
     # be 1 valid group. The user can set the ramp_fit parameter suppress_one_group = False
     # to derive a value for this point.
 
