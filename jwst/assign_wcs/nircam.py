@@ -391,8 +391,6 @@ def dhs(input_model, reference_files):
         displ = f.displ.instance
         dispx = f.dispx.instance
         dispy = f.dispy.instance
-        invdispx = f.invdispx.instance
-        invdispl = f.invdispl.instance
         orders = f.orders.instance
         stripes = f.stripes.instance
 
@@ -407,19 +405,6 @@ def dhs(input_model, reference_files):
         displ = [displ] * subarray_stripenum
         dispx = [dispx] * subarray_stripenum
         dispy = [dispy] * subarray_stripenum
-
-    # Ensure inverse dispersion models exist in expected shape if empty
-    if len(invdispx) == 0:
-        invdispx = [[]] * len(stripes)
-
-    if len(invdispl) == 0:
-        invdispl = [[]] * len(stripes)
-
-    # Normalize per-stripe entries: if a stripe's inner order lists are all empty,
-    # replace with [] so NIRCAMBackwardGrismDispersion's `if not self.inv_lmodels:`
-    # fallback triggers correctly and uses the forward models for numerical inversion.
-    invdispx = [s if any(len(o) > 0 for o in s) else [] for s in invdispx]
-    invdispl = [s if any(len(o) > 0 for o in s) else [] for s in invdispl]
 
     # Define some models to support all stripes
     setra = Const1D(input_model.meta.wcsinfo.ra_ref)
@@ -438,8 +423,6 @@ def dhs(input_model, reference_files):
             lmodels=displ[i],
             xmodels=dispx[i],
             ymodels=dispy[i],
-            inv_lmodels=invdispl[i],
-            inv_xmodels=invdispx[i],
         )
 
         det2det.inverse = NIRCAMBackwardGrismDispersion(
@@ -447,8 +430,6 @@ def dhs(input_model, reference_files):
             lmodels=displ[i],
             xmodels=dispx[i],
             ymodels=dispy[i],
-            inv_lmodels=invdispl[i],
-            inv_xmodels=invdispx[i],
         )
 
         # Add in the wavelength shift from the velocity dispersion
