@@ -25,7 +25,7 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     Parameters
     ----------
     phot_model : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel` or \
-        `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
+                 `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
         Photom ref file data model
     filter_name : str
         Filter value
