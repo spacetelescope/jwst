@@ -415,6 +415,12 @@ def dhs(input_model, reference_files):
     if len(invdispl) == 0:
         invdispl = [[]] * len(stripes)
 
+    # Normalize per-stripe entries: if a stripe's inner order lists are all empty,
+    # replace with [] so NIRCAMBackwardGrismDispersion's `if not self.inv_lmodels:`
+    # fallback triggers correctly and uses the forward models for numerical inversion.
+    invdispx = [s if any(len(o) > 0 for o in s) else [] for s in invdispx]
+    invdispl = [s if any(len(o) > 0 for o in s) else [] for s in invdispl]
+
     # Define some models to support all stripes
     setra = Const1D(input_model.meta.wcsinfo.ra_ref)
     setra.inverse = Const1D(input_model.meta.wcsinfo.ra_ref)
