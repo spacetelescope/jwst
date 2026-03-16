@@ -43,10 +43,10 @@ group_skip1   int         number of initial groups in integration 1 to flag
 group_skip    int         number of initial groups in integration 2 and higher to flag
 ============  ==========  ============================================================
 
-The entries, subarray and readpatt, are used as selection criteria, matching the
+The entries ``subarray`` and ``readpatt`` are used as selection criteria, matching the
 exposure properties of the data.
-Group_skip1 is the number of initial groups in Integration 1 to flag as 'DO_NOT_USE'.
-Group_skip is the number of initial groups to flag in each subsequent integration
+The column ``group_skip1`` is the number of initial groups in Integration 1 to flag as 'DO_NOT_USE'.
+The column ``group_skip`` is the number of initial groups to flag in each subsequent integration
 (Integration 2 and higher). These groups are excluded to mitigate the non-linear
 effects of Reset Switch Charge Decay (RSCD).
 
