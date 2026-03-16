@@ -54,9 +54,9 @@ def do_correction(output_model, rscd_model):
     group_skip_int2p = param["skip_int2p"]  # integration 2,  plus higher integrations
 
     if group_skip_int1 < 0:
-        log.info(" WARNING: RSCD reference file is of a depreciated model.")
-        log.info(" WARNING: There are no values for first integration")
-        log.info(" Setting number of groups to skip in first integration to 1")
+        log.warning(" RSCD reference file is of a deprecated model.")
+        log.warning(" There are no values for first integration")
+        log.warning(" Setting number of groups to skip in first integration to 1")
         group_skip_int1 = 1
 
     log.info(f" # groups from RSCD reference file for int 1 to flag  {group_skip_int1}")
@@ -125,14 +125,11 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
             group_skip_int1 = max_groups_skip
 
     # checks for integration 2
-    if sci_nints > 1:
-        if sci_ngroups < (group_skip_int2p + 3):  # second and higher checks on the number of groups
-            max_groups_skip = max(0, sci_ngroups - 3)
-            if max_groups_skip != group_skip_int2p:
-                group_skip_int2p = max_groups_skip
-                log.info(
-                    f"Changing the # of groups to skip in int 2 and higher to {max_groups_skip}"
-                )
+    if sci_nints > 1 and sci_ngroups < (group_skip_int2p + 3):
+        max_groups_skip = max(0, sci_ngroups - 3)
+        if max_groups_skip != group_skip_int2p:
+            group_skip_int2p = max_groups_skip
+            log.info(f"Changing the # of groups to skip in int 2 and higher to {max_groups_skip}")
 
     # Note For segmented data the first integration in the file may not be the first
     # integration in the exposure. The value in meta.exposure.integration_start
@@ -140,8 +137,6 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
 
     # Flag RSCD  groups in integration 1
     # __________________________________
-    log.info(f"Number of groups to skip for integration 1: {group_skip_int1}")
-
     if sci_int_start == 1:  # Using sci_int_start to cover segmented data case.
         rscd_skip_array, num_rscd_lowered, num_only_one_group = flag_rscd(
             output, sci_int_start - 1, sci_int_start - 1, group_skip_int1
@@ -160,8 +155,9 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     # Flag RSCD  groups in integration 2 and higher
     # ______________________________________________
     int_start = 2
-    s = output.data.shape
-    int_end = s[0]  # use the data shape instead of sci_ints in case we have segmented data
+
+    int_end = output.data.shape[0]
+    # use the data shape instead of sci_ints in case we have segmented data
     # in segmented data the sci_ints can be much larger than data.shape[0]
     # depending on which segment number we are on.
 
@@ -169,8 +165,6 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
         int_start = 1
 
     if sci_nints > 1:
-        log.info(f"Number of groups to skip for integrations 2 and higher: {group_skip_int2p}")
-
         rscd_skip_array, num_rscd_lowered, num_only_one_group = flag_rscd(
             output, int_start - 1, int_end - 1, group_skip_int2p
         )
@@ -209,20 +203,14 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
 
     Returns
     -------
-    skip_array : np array int
-        Array for each integration, group , pixel containing the number of rscd groups
-        skip.
+    skip_array : ndarray
+        Array containing the number of groups to skip based on pixel location and integration.
     num_rscd_lowered : int
         The number of pixels where the number of RSCD groups to flag as DO_NOT_USE was
         changed because of saturation.
     num_only_one_group : int
         The number of pixels where there is only 1 valid group after checking for saturation.
     """
-    if int_end == 0:
-        log.info(f"Number of groups to skip for integration 1 : {rscd_skip}")
-    else:
-        log.info(f"Number of groups to skip for integration 2 and higher : {rscd_skip}")
-
     n_ints = int_end - int_start + 1
     x_dim = output_model.groupdq.shape[3]
     y_dim = output_model.groupdq.shape[2]
@@ -231,9 +219,9 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
     skip_array[:, :, :] = rscd_skip
 
     # --- If we encounter saturation, we might need to back off the rscd correction.
-    # Ideally we want at least  two valid groups, but
-    # we need to allow there to only be 1 group valid group. The user can set the
-    # ramp_fit parameter suppress_group1 = False to derive a value for this point.
+    # Ideally we want at least  two valid groups, but we need to allow there to only
+    # be 1 valid group. The user can set the ramp_fit parameter suppress_one_group = False
+    # to derive a value for this point.
 
     min_group = rscd_skip + 2
 
@@ -256,7 +244,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
 
     # 3. Remove Group 1 saturation from the original problem mask
     # This keeps saturation flags ONLY if they are NOT saturated in Group 1
-    is_sat_problem = is_sat_problem & ~is_group_1_sat
+    is_sat_problem &= ~is_group_1_sat
 
     num_rscd_lowered = None
     num_only_one_group_pixels = None
@@ -272,15 +260,12 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
         #  do dynamic rscd flagging - based on saturation group of every pixel
 
         n_ints = int_end - int_start + 1
-        skip_array = np.zeros((n_ints, y_dim, x_dim))
-        skip_array[:, :, :] = rscd_skip
+        skip_array = np.full((n_ints, y_dim, x_dim), rscd_skip)
 
-        while num_sat > 0 and min_group > 0:
+        while num_sat > 0 and min_group > 1:
             # subtract 1 from skip_array
             skip_array[is_sat_problem] = np.maximum(skip_array[is_sat_problem] - 1, 0)
             min_group = min_group - 1
-            if min_group < 0:  # Safety check
-                break
 
             # re-evaluate the saturation at the lower group level
             is_sat_problem = (
@@ -294,7 +279,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
             # Re-apply the group 1 guard
             # (Otherwise, if we drop to Group 1, we might process pixels
             # we already deemed "unrecoverable")
-            is_sat_problem = is_sat_problem & ~is_group_1_sat
+            is_sat_problem &= ~is_group_1_sat
 
             num_sat = is_sat_problem.sum()
 
@@ -330,7 +315,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
 
 def apply_rscd_flags(output_model, int_start, int_end, skip_array):
     """
-    Find the initial groups to set to DO_NOT_USE based on RSCD rules.
+    Apply flags for RSCD correction setting  DO_NOT_USE to the dq values.
 
     Parameters
     ----------
@@ -341,9 +326,9 @@ def apply_rscd_flags(output_model, int_start, int_end, skip_array):
         Starting integration
 
     int_end : int
-        Endinging integration
+        Ending integration
 
-    skip_array : int array
+    skip_array : ndarray
         Number of groups to skip at the beginning of the ramp for integration range.
 
     Returns

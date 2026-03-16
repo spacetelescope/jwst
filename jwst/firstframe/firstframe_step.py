@@ -30,7 +30,7 @@ class FirstFrameStep(Step):
     def __init__(self, *args, **kwargs):
         deprecation_message = (
             "'FirstFrameStep' has been deprecated since 2.0.0 and "
-            "will be removed in a future release. Flagging the first group  has been"
+            "will be removed in a future release. Flagging the first group has been"
             " added to the RSCD step.  "
         )
         warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
