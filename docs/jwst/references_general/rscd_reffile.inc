@@ -47,6 +47,6 @@ The entries ``subarray`` and ``readpatt`` are used as selection criteria, matchi
 exposure properties of the data.
 The column ``group_skip1`` is the number of initial groups in Integration 1 to flag as 'DO_NOT_USE'.
 The column ``group_skip`` is the number of initial groups to flag in each subsequent integration
-(Integration 2 and higher). These groups are excluded to mitigate the non-linear
+(integration 2 and higher). These groups are excluded to mitigate the non-linear
 effects of Reset Switch Charge Decay (RSCD).
 
