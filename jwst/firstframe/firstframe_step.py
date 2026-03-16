@@ -15,7 +15,7 @@ class FirstFrameStep(Step):
     """
     Set data quality flags for the first group in MIRI ramps.
 
-    .. deprecated:: 1.21.0
+    .. deprecated:: 2.0.0
         The `FirstFrameStep` has been deprecated and will be removed
         in a future release. Flagging the first groups  has been added to the RSCD step.
     """
@@ -29,7 +29,7 @@ class FirstFrameStep(Step):
 
     def __init__(self, *args, **kwargs):
         deprecation_message = (
-            "'FirstFrameStep' has been deprecated since 1.21.0 and "
+            "'FirstFrameStep' has been deprecated since 2.0.0 and "
             "will be removed in a future release. Flagging the first group  has been"
             " added to the RSCD step.  "
         )

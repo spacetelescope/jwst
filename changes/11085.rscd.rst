@@ -1,1 +1,1 @@
-The RSCD correction now flags groups in the first integration, replacing the first frame step. It now includes dynamic RSCD flagging: the number of groups can be reduced to allow at least two valid groups (excluding the last group) . This dynamic flagging can occur if the number of groups in an integrations is small or saturation affects the number of valid.
+RSCD  updates to flag the first integration, replacing the first frame step. New dynamic RSCD flagging now adjusts group counts to maintain at least two valid groups, compensating for small integrations or saturation.

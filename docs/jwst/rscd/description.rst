@@ -61,8 +61,9 @@ specific pixels that are at risk of losing all their unsaturated data.
 Because reducing the RSCD skip introduces some non-linear FET transient data back into the fit,
 these pixels are flagged The algorithm flags them in the PIXELDQ array as FLUX_ESTIMATED to warn
 the users that the flux value may be slightly biased by the RSCD effect.
-If the back-off is so severe that only one group is left valid, the algorithm records this state.
-This allows the ramp_fit step to still derive a flux value (provided the user has enabled suppress_group1 = False).
+If only one group is left valid, the algorithm records information header (more information given
+the table below). This allows the ramp_fit step to still derive a flux value (provided the user has enabled suppress_group1 = False).
+
 
 This step results in the data contained in the the first N groups
 being excluded from subsequent steps, such as :ref:`jump detection <jump_step>`
@@ -72,3 +73,12 @@ Only the GROUPDQ array is modified. The SCI and ERR arrays remain unchanged. The
 only updated in the case of bright saturating data when the RSCD skip count is lowered
 to preserve valid groups, triggering the FLUX_ESTIMATED flag to indicate a potential bias from the FET transient.
 
+RSCD Keywords   Meaning
+
+=============   ======================================================================================================
+INT1SKIP        Number of groups skipped in integration 1
+INT2SKIP        Number of groups skipped in integration 2 and higher
+INT1UGP1        Number of pixels where 1st the group is kept for integration 1
+INT2UGP2        Number of pixels where 1st the group is kept for integration 2 and higher
+INT1BORS        Number of pixels where RSCD reduced the groups skipped due to saturation for integration 1
+INT2BORS        Number of pixels where RSCD reduced the groups skipped due to saturation for integration 2 and higher
