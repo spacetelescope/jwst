@@ -27,16 +27,6 @@ class FirstFrameStep(Step):
         skip = boolean(default=True) # Do not run this step.
     """  # noqa: E501
 
-    def __init__(self, *args, **kwargs):
-        deprecation_message = (
-            "'FirstFrameStep' has been deprecated since 2.0.0 and "
-            "will be removed in a future release. Flagging the first group has been"
-            " added to the RSCD step.  "
-        )
-        warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
-        log.warning(deprecation_message)
-        super().__init__(*args, **kwargs)
-
     def process(self, step_input):
         """
         For MIRI data with more than 3 groups, set first group dq to DO_NOT_USE.
@@ -51,6 +41,14 @@ class FirstFrameStep(Step):
         output_model : `~stdatamodels.jwst.datamodels.RampModel`
             First frame corrected datamodel.
         """
+        deprecation_message = (
+            "'FirstFrameStep' has been deprecated since 2.0.0 and "
+            "will be removed in a future release. Flagging the first group has been"
+            " added to the RSCD step.  "
+        )
+        warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+        log.warning(deprecation_message)
+
         # Open the input data model
         result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 

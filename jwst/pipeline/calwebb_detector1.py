@@ -113,7 +113,6 @@ class Detector1Pipeline(Pipeline):
                     " future release. "
                     "Flagging the first groups has been added to the RSCD step"
                 )
-                self.firstframe.skip = True
             input_data = self.firstframe.run(input_data)
             input_data = self.lastframe.run(input_data)
             input_data = self.reset.run(input_data)
