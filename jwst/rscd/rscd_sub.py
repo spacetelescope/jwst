@@ -246,8 +246,8 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
     # This keeps saturation flags ONLY if they are NOT saturated in Group 1
     is_sat_problem &= ~is_group_1_sat
 
-    num_rscd_lowered = None
-    num_only_one_group_pixels = None
+    num_rscd_lowered = 0
+    num_only_one_group_pixels = 0
 
     num_sat = np.sum(is_sat_problem)
     log.info(
@@ -291,8 +291,6 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
         # If a pixel was backed off in ANY integration, we flag it.
         is_backed_off_2d = np.any(was_backed_off, axis=0)
         num_rscd_lowered = is_backed_off_2d.sum()
-        if num_rscd_lowered == 0:
-            num_rscd_lowered = None
 
         # 3. Apply the FLUX_ESTIMATED flag
         if np.any(is_backed_off_2d):
@@ -306,9 +304,10 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
 
         # now record if we have to back off all the way to group 1
         is_only_one_group = skip_array == 0
+        # check = np.where(is_only_one_group)
+        # print(check)
+
         num_only_one_group_pixels = np.any(is_only_one_group, axis=0).sum()
-        if num_only_one_group_pixels == 0:
-            num_only_one_group_pixels = None
 
     return skip_array, num_rscd_lowered, num_only_one_group_pixels
 
