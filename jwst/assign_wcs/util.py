@@ -172,8 +172,14 @@ def substripe_subarray_transforms(input_model, regions_model):
         The dictionary of subarray shift models to apply to each substripe transform.
     """
     # Start by finding defined stripes in region
-    stripe_ids = np.unique(regions_model.regions).astype(int)
-    stripe_ids = stripe_ids[stripe_ids != 0]
+    if "NRCALONG" in input_model.meta.instrument.detector.upper():
+        # For NRCALONG, the stripes are all read from the same position.
+        # Determine stripe_ids from the number of stripes used in the subarray.
+        subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
+        stripe_ids = np.array(range(subarray_stripenum)) + 1
+    else:
+        stripe_ids = np.unique(regions_model.regions).astype(int)
+        stripe_ids = stripe_ids[stripe_ids != 0]
 
     subarray_transforms = {}
     for stripe in stripe_ids:
@@ -214,6 +220,13 @@ def substripe_subarray_transforms(input_model, regions_model):
         else:
             log.info(f"Substripe subarray shifts: x: {xrefstart} y: {yrefstart}")
             subarray_transforms[stripe] = tr_xstart & tr_ystart
+
+    # We need have a workaround for cases where stripes are read from the same
+    # detector position - copy generated transform for defined regions area to
+    # all stripe_ids
+    if "NRCALONG" in input_model.meta.instrument.detector.upper():
+        for stripe in stripe_ids[:-1]:
+            subarray_transforms[stripe] = subarray_transforms[stripe_ids[-1]]
 
     return subarray_transforms
 

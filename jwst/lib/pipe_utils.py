@@ -155,7 +155,7 @@ def match_nans_and_flags(input_model):
         input_model.dq[is_invalid] |= dqflags.pixel["DO_NOT_USE"]
 
 
-def generate_substripe_ranges(sci_model):
+def generate_substripe_ranges(sci_model, subarray_ranges=False):
     """
     TBD.
 
@@ -163,12 +163,15 @@ def generate_substripe_ranges(sci_model):
     ----------
     sci_model : JwstDataModel
         The input datamodel with multistripe params defined.
+    subarray_ranges : bool
+        If true, dict containing ranges in subarray frame will also be provided.
 
     Returns
     -------
-    dict
+    dict or tuple(dict)
         Dictionary with keys as int counter, values as ranges of array index in slowaxis
-        corresponding to stripe shapes.
+        corresponding to stripe shapes. If subarray_ranges was True, a second dictionary
+        will be provided with equivalent ranges in the subarray frame.
     """
     nreads1 = sci_model.meta.subarray.multistripe_reads1
     nskips1 = sci_model.meta.subarray.multistripe_skips1
@@ -176,8 +179,13 @@ def generate_substripe_ranges(sci_model):
     nskips2 = sci_model.meta.subarray.multistripe_skips2
     repeat_stripe = sci_model.meta.subarray.repeat_stripe
     interleave_reads1 = sci_model.meta.subarray.interleave_reads1
-    ysize_sci = sci_model.meta.subarray.ysize
+    slowaxis = sci_model.meta.subarray.slowaxis
+    if np.abs(slowaxis) > 1:
+        slowsize = sci_model.meta.subarray.ysize
+    else:
+        slowsize = sci_model.meta.subarray.xsize
 
+    sub_ranges = {}
     ranges = {}
     range_counter = 0
     # Track the read position in the full frame with linecount, and number of lines
@@ -191,7 +199,8 @@ def generate_substripe_ranges(sci_model):
     # Now skip nskips1
     linecount += nskips1
     # Nreads2
-    ranges[range_counter] = (linecount, linecount + nreads2)
+    ranges[range_counter] = [linecount, linecount + nreads2]
+    sub_ranges[range_counter] = [sub_lines, sub_lines + nreads2]
     range_counter += 1
     linecount += nreads2
     sub_lines += nreads2
@@ -213,7 +222,7 @@ def generate_substripe_ranges(sci_model):
             "cutout for reference file could not be "
             "generated!"
         )
-    while sub_lines < ysize_sci:
+    while sub_lines < slowsize:
         # If repeat_stripe, add interleaved rows to output and increment sub_lines
         if repeat_stripe > 0:
             linecount = 0
@@ -226,15 +235,25 @@ def generate_substripe_ranges(sci_model):
                 linecount += nskips1
         else:
             linecount += nskips2
-        ranges[range_counter] = (linecount, linecount + nreads2)
+        ranges[range_counter] = [linecount, linecount + nreads2]
+        sub_ranges[range_counter] = [sub_lines, sub_lines + nreads2]
         range_counter += 1
         linecount += nreads2
         sub_lines += nreads2
 
-    if sub_lines != ysize_sci:
+    if sub_lines != slowsize:
         raise ValueError(
             "Stripe readout resulted in mismatched reference array shape "
             "with respect to science array!"
         )
 
-    return ranges
+    if slowaxis < 0:
+        for rge in ranges.keys():
+            for i, row in enumerate(ranges[rge]):
+                ranges[rge][i] = 2048 - row
+                sub_ranges[rge][i] = 2048 - row
+
+    if subarray_ranges:
+        return ranges, sub_ranges
+    else:
+        return ranges

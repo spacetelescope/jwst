@@ -2,6 +2,7 @@ import logging
 
 import asdf
 import gwcs.coordinate_frames as cf
+import numpy as np
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling import bind_bounding_box
@@ -208,12 +209,11 @@ def tsgrism(input_model, reference_files):
     if input_model.meta.instrument.module != "A":
         raise ValueError("NRC_TSGRISM mode only supports module A")
 
-    if input_model.meta.instrument.pupil != "GRISMR":
-        if "DHS" in input_model.meta.instrument.pupil:
-            log.info("Building WCS for DHS data.")
-            return dhs(input_model, reference_files)
-        else:
-            raise ValueError("NRC_TSGRISM mode only supports GRISMR and DHS pupil values.")
+    if "DHS" in input_model.meta.subarray.name:
+        log.info("Building WCS for DHS data.")
+        return dhs(input_model, reference_files)
+    elif "GRISMR" not in input_model.meta.instrument.pupil:
+        raise ValueError("NRC_TSGRISM mode only supports GRISMR and DHS pupil values.")
 
     frames = create_coord_frames()
 
@@ -396,9 +396,24 @@ def dhs(input_model, reference_files):
         orders = f.orders.instance
         stripes = f.stripes.instance
 
+    longflag = False
+    if "LONG" in input_model.meta.instrument.detector.upper():
+        longflag = True
+        # Because nrcalong DHS uses existing transforms, we need to mock
+        # the new structure to allow both to pass through this method.
+
+        subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
+        stripes = np.array(range(subarray_stripenum)) + 1
+        displ = [displ] * subarray_stripenum
+        dispx = [dispx] * subarray_stripenum
+        dispy = [dispy] * subarray_stripenum
+
     # Ensure inverse dispersion models exist in expected shape if empty
     if len(invdispx) == 0:
         invdispx = [[]] * len(stripes)
+
+    if len(invdispl) == 0:
+        invdispl = [[]] * len(stripes)
 
     # Define some models to support all stripes
     setra = Const1D(input_model.meta.wcsinfo.ra_ref)
@@ -446,8 +461,13 @@ def dhs(input_model, reference_files):
         # crpix1 <--> xref_sci and crpix2 <--> yref_sci
         # offsets in X are handled in extract_2d, e.g. if an offset
         # special requirement was specified in the APT.
-        xc, yc = (0, 0)  # TODO: Wait for ref files to be delivered with siaf ref positions
-        # (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
+        if longflag:
+            xc, yc = (
+                input_model.meta.wcsinfo.siaf_xref_sci,
+                input_model.meta.wcsinfo.siaf_yref_sci,
+            )
+        else:
+            xc, yc = (0, 0)  # TODO: Wait for ref files to be delivered with siaf ref positions
 
         if xc is None:
             raise ValueError("XREF_SCI is missing.")
