@@ -542,8 +542,8 @@ def test_single_spec_file_input(miri_cal, tmp_cwd, propagate_dq):
         assert np.all(result_from_file.dq == result_from_memory.dq)
         assert np.bitwise_or.reduce(result_from_memory.dq, axis=(0, 1)) == good_bits
     else:
-        assert np.all(result_from_file.dq == 0)
-        assert np.all(result_from_memory.dq == 0)
+        assert result_from_file.dq is None
+        assert result_from_memory.dq is None
 
     # Check that input model was not modified
     assert im is not result_from_memory
