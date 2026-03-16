@@ -24,13 +24,6 @@ STDM_MODULES = sorted(
         and mdl.name not in DEPRECATED_MODULES
     ]
 )
-JWST_MODULES = sorted(
-    [
-        mdl.name
-        for mdl in pkgutil.iter_modules(jwstdm.__path__)
-        if not mdl.ispkg and mdl.name not in jwstdm._jwst_modules
-    ]
-)
 
 
 def assert_has_same_import(module_a, module_b, import_):
@@ -61,17 +54,29 @@ def test_jwst_datamodels_api(model):
     assert_has_same_import(jwstdm, stdm, model)
 
 
-@pytest.mark.parametrize("module", JWST_MODULES)
-def test_jwst_datamodels_modules(module):
-    stdm_module = importlib.import_module(f"stdatamodels.jwst.datamodels.{module}")
-    jwst_module = importlib.import_module(f"jwst.datamodels.{module}")
+def test_jwst_datamodels_modules():
+    """
+    Test all classes defined in `jwst.datamodels` and `stdatamodels.jwst.datamodels`
+    are also in `jwst.datamodels.__init__`.
+    """
+    jwst_modules = sorted(
+        [
+            mdl.name
+            for mdl in pkgutil.iter_modules(jwstdm.__path__)
+            if not mdl.ispkg and mdl.name not in jwstdm._jwst_modules
+        ]
+    )
 
-    for import_ in stdm_module.__all__:
-        if import_ not in DEPRECATED_MODELS:
-            assert_has_same_import(stdm_module, jwst_module, import_)
+    for module in jwst_modules:
+        stdm_module = importlib.import_module(f"stdatamodels.jwst.datamodels.{module}")
+        jwst_module = importlib.import_module(f"jwst.datamodels.{module}")
 
-    for import_ in jwst_module.__all__:
-        assert_has_same_import(jwst_module, stdm_module, import_)
+        for import_ in stdm_module.__all__:
+            if import_ not in DEPRECATED_MODELS:
+                assert_has_same_import(stdm_module, jwst_module, import_)
+
+        for import_ in jwst_module.__all__:
+            assert_has_same_import(jwst_module, stdm_module, import_)
 
 
 @pytest.mark.parametrize("model", sorted(jwstdm._jwst_models))

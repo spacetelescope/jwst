@@ -7,3 +7,4 @@ reference file.
 .. include:: ../references_general/extract1d_reffile.inc
 .. include:: ../references_general/apcorr_reffile.inc
 .. include:: ../references_general/psf_reffile.inc
+.. include:: ../references_general/pastasoss_reffile.inc

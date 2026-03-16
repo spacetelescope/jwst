@@ -238,7 +238,6 @@ def get_ref_file_args(ref_files, orders_requested=None):
         ref_files["pwcpos"],
         refmodel=pastasoss_ref,
         subarray=ref_files["subarray"],
-        padsize=None,
         spectraces=True,
         orders_requested=orders_requested,
     )
