@@ -28,7 +28,7 @@ def test_rscd_baseline_set_groupdq(create_miri_model):
     np.testing.assert_array_equal(
         np.full((nflag_int2, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
     )
 
     # test that the groupdq flags are not changed for the rest of the groups
@@ -40,7 +40,7 @@ def test_rscd_baseline_set_groupdq(create_miri_model):
     np.testing.assert_array_equal(
         np.full((ngroups - nflag_int2, ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="groupdq flags changed after " + "maximum requested",
+        err_msg="groupdq flags changed after maximum requested",
     )
 
     # test that the groupdq flags for first integration are correct
@@ -50,7 +50,7 @@ def test_rscd_baseline_set_groupdq(create_miri_model):
     np.testing.assert_array_equal(
         np.full((nflag_int1, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
     )
 
     # test that the groupdq flags are not changed for the rest of the groups
@@ -62,15 +62,14 @@ def test_rscd_baseline_set_groupdq(create_miri_model):
     np.testing.assert_array_equal(
         np.full((ngroups - nflag_int1, ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="groupdq flags changed after " + "maximum requested",
+        err_msg="groupdq flags changed after maximum requested",
     )
 
 
 def test_rscd_baseline_set_groupdq_test2(create_miri_model):
     """
-    For a 2 integration exposure, set the number of groups to reject
-    more than the would leave us with 3 good groups. Test that the number
-    actually rejected is what will give us 3 remaining groups
+    Test that there are at least 3 remaining groups when n_skip is
+    set too high.
     """
     ngroups = 10
     nints = 2
@@ -97,7 +96,7 @@ def test_rscd_baseline_set_groupdq_test2(create_miri_model):
     np.testing.assert_array_equal(
         np.full((nflag_int2_used, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
     )
 
     # test that the groupdq flags are not changed for the rest of the groups
@@ -109,7 +108,7 @@ def test_rscd_baseline_set_groupdq_test2(create_miri_model):
     np.testing.assert_array_equal(
         np.full((ngroups - nflag_int2_used, ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="groupdq flags changed after " + "maximum requested",
+        err_msg="groupdq flags changed after maximum requested",
     )
 
     # test that the groupdq flags for first integration are correct
@@ -122,7 +121,7 @@ def test_rscd_baseline_set_groupdq_test2(create_miri_model):
     np.testing.assert_array_equal(
         np.full((nflag_int1_used, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
     )
 
     # test that the groupdq flags are not changed for the rest of the groups
@@ -134,7 +133,7 @@ def test_rscd_baseline_set_groupdq_test2(create_miri_model):
     np.testing.assert_array_equal(
         np.full((ngroups - nflag_int1_used, ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="groupdq flags changed after " + "maximum requested",
+        err_msg="groupdq flags changed after maximum requested",
     )
 
 
@@ -195,7 +194,7 @@ def test_rscd_tso(create_miri_model):
     np.testing.assert_array_equal(
         np.full((nflag_int2, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
     )
 
     # test that the groupdq flags are not changed for the rest of the groups
@@ -207,7 +206,7 @@ def test_rscd_tso(create_miri_model):
     np.testing.assert_array_equal(
         np.full((ngroups - nflag_int2, ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="groupdq flags changed after " + "maximum requested",
+        err_msg="groupdq flags changed after maximum requested",
     )
 
 
