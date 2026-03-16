@@ -1,0 +1,1 @@
+remove direct dependency on ``spherical_geometry`` (offloaded to ``stcal`` and ``tweakwcs``)
