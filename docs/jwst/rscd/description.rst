@@ -38,7 +38,7 @@ flagging the first N groups as DO_NOT_USE.
 
 
 Algorithm
-_________
+---------
 
 The RSCD (Reset Switch Charge Decay) step identifies and flags groups at the beginning of
 MIRI integrations that are affected by non-linear transients. These transients are caused
@@ -64,7 +64,7 @@ the users that the flux value may be slightly biased by the RSCD effect.
 If only one group is left valid, the algorithm records information header (more information given
 the table below). This allows the :ref:`ramp_fitting <ramp_fitting_step>` to still derive a flux value (provided the user has enabled suppress_one_group = False).
 
-`
+
 This step results in the data contained in the the first ``n_skip`` groups
 being excluded from subsequent steps, such as :ref:`jump detection <jump_step>`
 and :ref:`ramp_fitting <ramp_fitting_step>`.
@@ -74,12 +74,13 @@ only updated in the case of bright saturating data when the RSCD skip count is l
 to preserve valid groups. In this case, the FLUX_ESTIMATED flag is added  to indicate a potential
 bias from the FET transient.
 
-RSCD Keywords   Meaning
-
-=============   ======================================================================================================
-INT1SKIP        Number of groups skipped in integration 1
-INT2SKIP        Number of groups skipped in integration 2 and higher
-INT1UGP1        Number of pixels where 1st the group is kept for integration 1
-INT2UGP2        Number of pixels where 1st the group is kept for integration 2 and higher
-INT1BORS        Number of pixels where RSCD reduced the groups skipped due to saturation for integration 1
-INT2BORS        Number of pixels where RSCD reduced the groups skipped due to saturation for integration 2 and higher
+=============  ====================================================================================
+RSCD Keywords  Meaning
+=============  ====================================================================================
+INT1SKIP       Number of groups skipped in integration 1
+INT2SKIP       Number of groups skipped in integration 2 and higher
+INT1UGP1       Number of pixels where 1st the group is kept for integration 1
+INT2UGP2       Number of pixels where 1st the group is kept for integration 2 and higher
+INT1BORS       Number of pixels where RSCD reduced the groups skipped due to saturation for int 1
+INT2BORS       Number of pixels where RSCD reduced the groups skipped due to saturation for int 2+
+=============  ====================================================================================
