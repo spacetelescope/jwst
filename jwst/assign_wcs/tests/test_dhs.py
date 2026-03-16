@@ -78,20 +78,12 @@ def create_dhs_nrca1_wcs(mock_dhs_nrca1_rate):
 
 
 def test_dhs_roundtrip(create_dhs_nrca1_wcs):
-    """Test the DHS WCS dispersion roundtrip through intermediate frames.
-
-    Transforms grism_detector → direct_image → grism_detector and checks that
-    the x (dispersion-axis) pixel coordinate is recovered. This pattern mirrors
-    ``test_traverse_tso_grism`` for the standard TSO mode.
-
-    The y (cross-dispersion) pixel is not part of the roundtrip because the
-    forward transform collapses all y positions to the source reference point
-    (y0 = 0 for NRC_SHORT DHS), so y information is intentionally lost in the
-    direct-image frame.
+    """
+    Test that the DHS mode WCS round-trips.
 
     Also verifies that:
     - Sky coordinates from the full forward pipeline are physically near the
-      reference pointing and in a plausible NIRCam spectral range.
+      reference pointing and in a plausible spectral range.
     - Spectral dispersion varies along the x axis.
     - The stripe ID is one of the expected DHS stripe IDs.
     """
@@ -101,12 +93,14 @@ def test_dhs_roundtrip(create_dhs_nrca1_wcs):
     # Roundtrip: grism_detector -> direct_image -> grism_detector
     # Only the x (dispersion) coordinate is expected to round-trip, because the
     # forward transform collapses all y positions to the source reference point.
-    x_in, y_in, order_in = 1000, 20, 1
+    x_in = np.array([500, 1000, 1500])
+    y_in = np.array([20, 20, 20])
+    order_in = np.array([1, 1, 1])
     x0, y0, lam, order_mid, stripe = grism_to_direct(x_in, y_in, order_in)
     x_rec, y_rec, order_rec = grism_to_direct.inverse(x0, y0, lam, order_mid, stripe)
 
     assert_allclose(x_rec, x_in, atol=1e-3)
-    assert order_rec == order_in
+    assert np.all(order_rec == order_in)
 
     # Source should be pinned to the reference position (xc=0, yc=0 for NRC_SHORT DHS)
     assert_allclose(x0, 0.0, atol=1e-6)
@@ -114,16 +108,18 @@ def test_dhs_roundtrip(create_dhs_nrca1_wcs):
 
     # Full forward pipeline: (x, y, order) -> (ra, dec, lam, order, stripe)
     ra, dec, lam_world, order_out, stripe_out = wcsobj(x_in, y_in, order_in)
-    assert np.isfinite(ra)
-    assert np.isfinite(dec)
-    assert np.isfinite(lam_world)
-    assert_allclose(ra, 80.0, atol=1.0)
-    assert_allclose(dec, -69.5, atol=1.0)
-    assert 0.5 < lam_world < 5.0
-    assert order_out == order_in
-    assert stripe_out in [7, 8, 9, 10]
 
-    # Spectral dispersion: different x positions yield different wavelengths
-    _, _, lam_blue, _, _ = wcsobj(500, y_in, order_in)
-    _, _, lam_red, _, _ = wcsobj(1500, y_in, order_in)
-    assert lam_blue != lam_red
+    # Test we are in the ballpark of the reference RA/Dec
+    # No attempt to test the actual expected values for these exact pixels
+    assert_allclose(ra, 80.0, atol=0.1)
+    assert_allclose(dec, -69.5, atol=0.1)
+
+    # Similarly test wavelength makes sense for F150W2
+    assert np.all(lam_world > 1.0)
+    assert np.all(lam_world < 2.25)
+
+    assert np.all(order_out == order_in)
+    assert np.all(np.isin(stripe_out, [7, 8, 9, 10]))
+
+    # Test that dispersion is happening
+    assert np.all(lam_world[:-1] - lam_world[1:] > 0)
