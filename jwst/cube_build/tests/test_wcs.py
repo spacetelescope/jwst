@@ -205,6 +205,7 @@ def test_setup_wcs():
     input_model = None
     output_name_base = None
     output_type = None
+    wavelinear = True
     instrument = None
     list_par1 = None
     list_par2 = None
@@ -215,6 +216,7 @@ def test_setup_wcs():
         input_model,
         output_name_base,
         output_type,
+        wavelinear,
         instrument,
         list_par1,
         list_par2,

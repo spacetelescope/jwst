@@ -1,0 +1,1 @@
+Always create a wavetab extension and added wavelinear as option
