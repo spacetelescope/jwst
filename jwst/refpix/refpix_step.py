@@ -165,6 +165,9 @@ class RefPixStep(Step):
             return result
 
 
+# TODO: reorganize stripe handling utilities into a separate module
+
+
 def collate_superstripes(input_model):
     """
     Collate superstripes into arrays resembling the full detector/subarray shape.
@@ -208,11 +211,15 @@ def collate_superstripes(input_model):
     if fastaxis == 1:
         newdata = np.full((nints_sci, ngroups, slowsize, nx), np.nan, dtype=">f4")
         newgdq = np.full((nints_sci, ngroups, slowsize, nx), 0, dtype="uint8")
-        newpdq = np.full((slowsize, nx), 2**31, dtype="uint32")
+        newpdq = np.full(
+            (slowsize, nx), datamodels.dqflags.pixel["REFERENCE_PIXEL"], dtype="uint32"
+        )
     else:
         newdata = np.full((nints_sci, ngroups, ny, slowsize), np.nan, dtype=">f4")
         newgdq = np.full((nints_sci, ngroups, ny, slowsize), 0, dtype="uint8")
-        newpdq = np.full((ny, slowsize), 2**31, dtype="uint32")
+        newpdq = np.full(
+            (ny, slowsize), datamodels.dqflags.pixel["REFERENCE_PIXEL"], dtype="uint32"
+        )
 
     # Work through each set of stripes, pushing them into a common frame
     for integ in range(nints_sci):

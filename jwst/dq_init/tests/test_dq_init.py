@@ -5,6 +5,7 @@ from stdatamodels.jwst.datamodels import GuiderRawModel, ImageModel, MaskModel, 
 
 from jwst.dq_init import DQInitStep, dq_init_step
 from jwst.dq_init.dq_initialization import do_dqinit
+from jwst.refpix.refpix_step import collate_superstripes
 
 # Set parameters for multiple runs of data
 args = "xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type"
@@ -398,6 +399,45 @@ def test_open_unknown_error(monkeypatch, caplog):
         DQInitStep.call(dm_ramp)
 
 
+def test_superstripe():
+    # NIRISS SOSS model with 10 superstripes
+    model = make_superstripe_model()
+    nstripe = model.meta.subarray.num_superstripe
+
+    # full frame mask model with the same bad pixels in each stripe
+    mask = make_superstripe_mask_model()
+
+    # run the step
+    result = DQInitStep.call(model, override_mask=mask)
+
+    # groupdq matches the data shape
+    assert result.groupdq.shape == result.data.shape
+
+    # pixeldq matches stripe + image shape
+    assert result.pixeldq.shape == (nstripe, *result.data.shape[-2:])
+
+    # check that each stripe has the same pixels marked in pixeldq and
+    # and DO_NOT_USE is also set in groupdq
+    expected = one_stripe_mask(result.data.shape[-2:])
+    for i in range(result.data.shape[0]):
+        for j in range(result.data.shape[1]):
+            np.testing.assert_equal(result.groupdq[i, j], expected & dqflags.pixel["DO_NOT_USE"])
+    for i in range(nstripe):
+        np.testing.assert_equal(result.pixeldq[i], expected)
+
+    # reassemble the stripes into a full frame image
+    reassembled = collate_superstripes(result)
+
+    # check that the reassembled pixel DQ is the same as the full frame mask,
+    # extracted to the subarray region, except for the edges which are
+    # filled with the refpix flag
+    ystart = model.meta.subarray.ystart - 1
+    ystop = model.meta.subarray.ystart + model.meta.subarray.ysize
+    np.testing.assert_equal(reassembled.pixeldq[:, 4:-4], mask.dq[ystart:ystop, 4:-4])
+    np.testing.assert_equal(reassembled.pixeldq[:, :4], dqflags.pixel["REFERENCE_PIXEL"])
+    np.testing.assert_equal(reassembled.pixeldq[:, -4:], dqflags.pixel["REFERENCE_PIXEL"])
+
+
 def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type=None):
     # create the data and groupdq arrays
     csize = (nints, ngroups, ysize, xsize)
@@ -416,6 +456,13 @@ def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_t
     dm_ramp.meta.subarray.xsize = xsize
     dm_ramp.meta.subarray.ystart = ystart
     dm_ramp.meta.subarray.ysize = ysize
+
+    # add some basic metadata
+    dm_ramp.meta.instrument.name = instrument
+    dm_ramp.meta.observation.date = "2026-01-01"
+    dm_ramp.meta.observation.time = "00:00:00"
+    dm_ramp.meta.exposure.nints = nints
+    dm_ramp.meta.exposure.ngroups = ngroups
 
     return dm_ramp
 
@@ -461,3 +508,95 @@ def make_maskmodel(ysize, xsize):
     dq_def = np.array((dqdef), dtype=mask.get_dtype("dq_def"))
 
     return dq, dq_def
+
+
+def make_superstripe_model():
+    # Make a NIRISS SOSS superstripe raw file
+    nints = 3
+    nstripe = 10
+    ngroups = 5
+    ysize = 256
+    xsize = 208
+    xstart = 1
+    ystart = 1793
+    model = make_rawramp("NIRISS", nints * nstripe, ngroups, ysize, xsize, ystart, xstart)
+
+    # Add some more basic metadata
+    model.meta.instrument.detector = "NIS"
+    model.meta.subarray.name = "SUB204STRIPE_SOSS"
+    model.meta.subarray.fastaxis = -2
+    model.meta.subarray.slowaxis = -1
+    model.meta.exposure.integration_start = 1
+    model.meta.exposure.integration_end = nints
+
+    # Add the superstripe metadata
+    model.meta.subarray.multistripe_reads1 = 4
+    model.meta.subarray.multistripe_reads2 = 204
+    model.meta.subarray.multistripe_skips1 = 0
+    model.meta.subarray.multistripe_skips2 = 0
+    model.meta.subarray.num_superstripe = nstripe
+    model.meta.subarray.repeat_stripe = 1
+    model.meta.subarray.interleave_reads1 = 1
+    model.meta.subarray.superstripe_step = 204
+
+    return model
+
+
+def one_stripe_mask(shape):
+    """
+    Make a DQ mask with a range of bad pixels for a single stripe.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Stripe data shape.
+
+    Returns
+    -------
+    dq : ndarray
+        DQ array matching the stripe with bad pixels.
+    """
+    dq = np.zeros(shape, dtype=np.uint32)
+    dq[2, 100] = dqflags.pixel["DEAD"]
+    dq[4, 100] = dqflags.pixel["HOT"]
+    dq[6, 100] = dqflags.pixel["UNRELIABLE_SLOPE"]
+    dq[8, 100] = dqflags.pixel["RC"]
+    dq[10, 100] = dqflags.pixel["DO_NOT_USE"]
+    dq[2, 200] = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["DEAD"]
+    dq[4, 200] = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["HOT"]
+    dq[6, 200] = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["UNRELIABLE_SLOPE"]
+    dq[8, 200] = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["RC"]
+    return dq
+
+
+def make_superstripe_mask_model():
+    """Create a MaskModel with bad pixels in a superstripe region."""
+    ysize = 2048
+    xsize = 2048
+    dq = np.zeros((ysize, xsize), dtype=np.uint32)
+
+    # edit reference file with known bad pixel values
+    substart = 1792
+    subsize = 256
+    nstripe = 10
+    stripe = 204
+    stripe_shape = (subsize, stripe)
+    for i in range(nstripe):
+        xstart = stripe * i + 4
+        xstop = xstart + stripe
+        dq[substart : substart + subsize, xstart:xstop] = one_stripe_mask(stripe_shape)
+
+    # write mask model
+    ref_data = MaskModel(dq=dq)
+    ref_data.meta.instrument.name = "NIRISS"
+    ref_data.meta.subarray.xstart = 1
+    ref_data.meta.subarray.xsize = xsize
+    ref_data.meta.subarray.ystart = 1
+    ref_data.meta.subarray.ysize = ysize
+    ref_data.meta.description = "Test description"
+    ref_data.meta.reftype = "mask"
+    ref_data.meta.author = "Test Author"
+    ref_data.meta.pedigree = "test"
+    ref_data.meta.useafter = "2024-01-01"
+
+    return ref_data

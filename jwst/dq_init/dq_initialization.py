@@ -39,6 +39,7 @@ def do_dqinit(output_model, mask_model, user_dq=None):
     check_dimensions(output_model)
 
     # Extract subarray from reference data, if necessary
+    # TODO: is it possible for stripe mask to match the input model? If so, this will fail.
     if reffile_utils.ref_matches_sci(output_model, mask_model):
         mask_array = mask_model.dq
     else:
@@ -57,13 +58,10 @@ def do_dqinit(output_model, mask_model, user_dq=None):
         mask_array |= user_dq
 
     # Set model-specific data quality in output
+    num_superstripe = getattr(output_model.meta.subarray, "num_superstripe", None)
     if output_model.meta.exposure.type in guider_list:
         output_model.dq |= mask_array
-    elif (
-        hasattr(output_model.meta.subarray, "num_superstripe")
-        and isinstance(num_superstripe := output_model.meta.subarray.num_superstripe, int)
-        and num_superstripe > 0
-    ):
+    elif num_superstripe is not None and num_superstripe > 0:
         # Store 3-D DQ array in pixeldq
         output_model.pixeldq = mask_array
         # Generate 4-D groupdq mask_array from pixeldq array, given output groupdq shape
