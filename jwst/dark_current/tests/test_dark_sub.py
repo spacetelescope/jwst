@@ -491,6 +491,7 @@ def make_darkmodel():
         dark.meta.author = "Alicia"
         dark.meta.pedigree = "Dummy"
         dark.meta.useafter = "2015-10-01T00:00:00"
+        dark.meta.exposure.average_dark_current = 0.0
 
         return dark
 
