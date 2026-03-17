@@ -164,6 +164,7 @@ def example_input(example_wcs):
     point_source[3, 3] = 1.0
 
     m0.data[:] = BKG_LEVEL
+    m0.dq = m0.get_default("dq")
     n_sources = N_EXAMPLE_SOURCES  # a few more than default minobj
     rng = np.random.default_rng(26)
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
