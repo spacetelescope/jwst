@@ -152,7 +152,7 @@ class CubeBuildStep(Step):
             self.weighting = "emsm"
             if self.output_type is None:  # when running stand alone
                 self.output_type = "band"
-
+                self.wavelinear = True
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified Shepard method
         # 2. EMSM
@@ -242,24 +242,31 @@ class CubeBuildStep(Step):
         # The calspec2 pipeline sets up output_type for each instrument. When running cube_build
         # stand alone we to set output_type.
 
-        # Running cube build stand-alone without setting self.pipeline will default to pipeline=2
-        if self.pipeline == 2 and self.output_type is None:
-            if instrument == "MIRI":
-                self.output_type = "multi"
-            elif instrument == "NIRSPEC":
+        # Running cube build stand-alone without setting self.pipeline will default to pipeline=3
+
+        # for NIRSPEC the type of cubes to make are based on self.wavelinear
+        if instrument == "NIRSPEC":
+            if self.output_type == "mulit":  # keep this for now
+                self.wavelinear = False
+
+            if self.wavelinear:
                 self.output_type = "band"
+            else:
+                self.output_type = "mult"
+
+        # set up default pipeline 2
+        if self.pipeline == 2 and self.output_type is None and instrument == "MIRI":
+            self.output_type = "multi"
+
         # Set up output_type for pipeline 3 type cubes.
         # In calspec3 the output_type default type is grating for NIRSpec and band for MIRI.
         # MIRI sets output_type in the calspec3 parameter reference file.
 
-        if self.pipeline == 3 and self.output_type is None:
-            if instrument == "NIRSPEC":
-                self.output_type = "band"  # we might switch that to grating
-
-            elif instrument == "MIRI":
-                self.output_type = "band"
+        if self.pipeline == 3 and self.output_type is None and instrument == "MIRI":
+            self.output_type = "band"
 
         self.pars_input["output_type"] = self.output_type
+        self.pars_input["wavelinear"] = self.wavelinear
         log.info(f"Setting output type to: {self.output_type}")
         # ________________________________________________________________________________
         # If an offset file is provided do some basic checks on the file and its contents.
@@ -377,6 +384,7 @@ class CubeBuildStep(Step):
                 input_models,
                 self.output_name_base,
                 self.pars_input["output_type"],
+                self.pars_input["wavelinear"],
                 instrument,
                 list_par1,
                 list_par2,
