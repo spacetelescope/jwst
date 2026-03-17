@@ -329,6 +329,9 @@ def generate_stripe_int_times(input_model):
         information, preserved from input, and one reflecting times
         corresponding to the new parent frames.
     """
+    if input_model.int_times is None or len(input_model.int_times) == 0:
+        return input_model
+
     nstr = input_model.meta.subarray.num_superstripe
     nints_sci = len(input_model.int_times) // nstr
 
@@ -346,7 +349,7 @@ def generate_stripe_int_times(input_model):
                 strict=True,
             )
         ),
-        dtype=input_model.int_times_stripe.dtype,
+        dtype=input_model.get_dtype("int_times_stripe"),
     )
 
     input_model.int_times_stripe = otab

@@ -236,7 +236,7 @@ class RampFitStep(Step):
 
         int_times = result.int_times
 
-        if len(result.int_times_stripe) > 0:
+        if result.int_times_stripe is not None and len(result.int_times_stripe) > 0:
             int_times_stripe = result.int_times_stripe
         else:
             int_times_stripe = None
