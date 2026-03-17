@@ -246,13 +246,13 @@ class CubeBuildStep(Step):
 
         # for NIRSPEC the type of cubes to make are based on self.wavelinear
         if instrument == "NIRSPEC":
-            if self.output_type == "mulit":  # keep this for now
+            if self.output_type == "multi":  # keep this for now
                 self.wavelinear = False
 
             if self.wavelinear:
                 self.output_type = "band"
             else:
-                self.output_type = "mult"
+                self.output_type = "multi"
 
         # set up default pipeline 2
         if self.pipeline == 2 and self.output_type is None and instrument == "MIRI":
