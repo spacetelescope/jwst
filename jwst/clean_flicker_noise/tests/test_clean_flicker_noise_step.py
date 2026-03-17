@@ -49,6 +49,7 @@ def test_run_in_pipeline(skip):
             "ipc": {"skip": True},
             "reset": {"skip": True},
             "dark_current": {"skip": True},
+            "saturation": {"skip": True},
         },
     )
 

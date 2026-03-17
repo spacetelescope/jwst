@@ -413,6 +413,8 @@ def make_nrs_bots_rateints():
     shape = (3, 2048, 2048)
     model.data = np.ones(shape)
     model.err = np.ones(shape)
+    model.var_rnoise = np.ones(shape)
+    model.var_poisson = np.ones(shape)
     model.dq = np.zeros(shape, dtype=np.uint32)
 
     model.int_times = _int_times_table()

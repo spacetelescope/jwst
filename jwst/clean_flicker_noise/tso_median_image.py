@@ -90,9 +90,7 @@ def _soss_box_extract(rateints, soss_refmodel=None):
         valid = np.isfinite(wavelength)
         spec = datamodels.SpecModel()
 
-        # todo: this line needs updating when stdatamodels support
-        #  for get_dtype is added
-        spec.spec_table = np.zeros((valid.sum(),), dtype=spec.spec_table.dtype)
+        spec.spec_table = np.zeros((valid.sum(),), dtype=spec.get_dtype("spec_table"))
         spec.spec_table["FLUX"] = flux[valid]
         spec.spec_table["WAVELENGTH"] = wavelength[valid]
         spec_list.append(spec)
