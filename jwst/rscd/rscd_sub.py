@@ -215,9 +215,7 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
     x_dim = output_model.groupdq.shape[3]
     y_dim = output_model.groupdq.shape[2]
 
-    skip_array = np.zeros((n_ints, y_dim, x_dim))
-    skip_array[:, :, :] = rscd_skip
-
+    skip_array = np.full((n_ints, y_dim, x_dim), rscd_skip)
     # --- If we encounter saturation, we might need to back off the rscd correction.
     # Ideally we want at least two valid groups, but we need to allow there to only
     # be 1 valid group. The user can set the ramp_fit parameter suppress_one_group = False
