@@ -98,9 +98,9 @@ def create_hdul(
     phdu.header["time-obs"] = "8:59:37"
     phdu.header["date-obs"] = "2023-01-01"
     phdu.header["exp_type"] = exptype
+    phdu.header["SUBARRAY"] = subarray
     scihdu = fits.ImageHDU()
     scihdu.header["EXTNAME"] = "SCI"
-    scihdu.header["SUBARRAY"] = subarray
     scihdu.header.update(wcskeys)
     hdul.append(phdu)
     hdul.append(scihdu)
