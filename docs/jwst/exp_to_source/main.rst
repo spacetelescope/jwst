@@ -5,8 +5,8 @@ Description
 Stage 2 exposure-based data products to Stage 3 source-based data products.
 It is only used when there is a known source list for the exposure data,
 which is required in order to reorganize the data by source. Hence it is
-only usable for NIRSpec MOS, NIRSpec fixed-slit, NIRCam WFSS, and NIRISS
-WFSS data. Details on the operation for each mode are given below.
+only usable for NIRSpec MOS, NIRSpec fixed-slit, NIRCam WFSS,MIRI WFSS
+and NIRISS WFSS data. Details on the operation for each mode are given below.
 
 The tool is run near the beginning of the :ref:`calwebb_spec3 <calwebb_spec3>`
 pipeline, immediately after the :ref:`master background <master_background_step>`
@@ -65,8 +65,8 @@ S200B1         5
 The assigned source ID values are used by ``exp_to_source`` to sort the data
 from each slit into the appropriate source-based output product.
 
-NIRCam and NIRISS WFSS
-^^^^^^^^^^^^^^^^^^^^^^
+NIRCam, MIRI and NIRISS WFSS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Wide-Field Slitless Spectroscopy (WFSS) modes do not have a predefined
 source list, but a source list is created by the
 :ref:`calwebb_image3 <calwebb_image3>` pipeline when it processes the
