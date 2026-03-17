@@ -60,7 +60,47 @@ def mock_dhs_nrca1_rate():
 
 
 @pytest.fixture
-def create_dhs_nrca1_wcs(mock_dhs_nrca1_rate):
+def mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path):
+    """
+    Create a mock NIRCam DHS regions reference file.
+
+    Stripe positions are computed from the multistripe readout parameters
+    set in ``mock_dhs_nrca1_rate``. The full-frame row layout is:
+
+      reads1 reference rows → skips1 skipped rows → reads2 stripe rows
+      → skips2 skipped rows → reads2 stripe rows → ... (repeated for each stripe)
+    """
+    sci = mock_dhs_nrca1_rate
+    reads1 = sci.meta.subarray.multistripe_reads1
+    skips1 = sci.meta.subarray.multistripe_skips1
+    reads2 = sci.meta.subarray.multistripe_reads2
+    skips2 = sci.meta.subarray.multistripe_skips2
+
+    # Full-frame (2048 x 2048) regions array; zero means "not in any stripe".
+    regions = np.zeros((2048, 2048), dtype=np.float64)
+    # Stripe IDs run from highest to lowest as row index increases
+    stripe_ids = [10, 9, 8, 7]
+    row_start = reads1 + skips1
+    for stripe_id in stripe_ids:
+        regions[row_start : row_start + reads2, :] = stripe_id
+        row_start += reads2 + skips2
+
+    regions_path = tmp_path / "mock_nrca1_regions.asdf"
+    model = dm.RegionsModel()
+    model.regions = regions
+    model.meta.description = "Mock DHS regions for testing"
+    model.meta.author = "test"
+    model.meta.pedigree = "GROUND"
+    model.meta.useafter = "2000-01-01T00:00:00"
+    model.meta.instrument.name = "NIRCAM"
+    model.save(str(regions_path))
+    model.close()
+
+    return str(regions_path)
+
+
+@pytest.fixture
+def create_dhs_nrca1_wcs(mock_dhs_nrca1_rate, mock_dhs_nrca1_regions):
 
     im = mock_dhs_nrca1_rate
 
@@ -68,9 +108,7 @@ def create_dhs_nrca1_wcs(mock_dhs_nrca1_rate):
     ref["specwcs"] = get_pkg_data_filename(
         "data/nircam_nrca1_specwcs.asdf", package="jwst.assign_wcs.tests"
     )
-    ref["regions"] = get_pkg_data_filename(
-        "data/tpauly_nrca1_regions.asdf", package="jwst.assign_wcs.tests"
-    )
+    ref["regions"] = mock_dhs_nrca1_regions
 
     pipeline = nircam.dhs(im, ref)
     wcsobj = wcs.WCS(pipeline)
