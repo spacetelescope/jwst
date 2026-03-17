@@ -2709,9 +2709,9 @@ class IFUCubeData:
             ifucube_model.meta.ifu.roi_wave = float(self.roiw)
 
             # add this
-            ifucube_model.meta.wcsinfo.ctype3 = "WAVE-TAB"
-            ifucube_model.meta.wcsinfo.ps3_0 = "WCS-TABLE"
-            ifucube_model.meta.wcsinfo.ps3_1 = "wavelength"
+            # ifucube_model.meta.wcsinfo.ctype3 = "WAVE-TAB"
+            # ifucube_model.meta.wcsinfo.ps3_0 = "WCS-TABLE"
+            # ifucube_model.meta.wcsinfo.ps3_1 = "wavelength"
 
         else:
             ifucube_model.meta.wcsinfo.ctype3 = "WAVE-TAB"
