@@ -454,6 +454,7 @@ class DataSet:
         Apply photometric calibration data to dataset and update conversion factor.
 
         For MIRI imaging and LRS modes, matching is based on FILTER and SUBARRAY.
+        For MIRI WFSS the matching is based on FILTER
         MIRI MRS uses dedicated photom reference files per CHANNEL+BAND.
 
         For Imaging and LRS, the routine will find the corresponding row of
@@ -477,7 +478,7 @@ class DataSet:
             self.calc_wfss(ftab, correction_table, ["filter"])
 
         # Imaging detector
-        if self.detector == "MIRIMAGE":
+        elif self.detector == "MIRIMAGE":
             # Get the subarray value of the input data model
             log.info(" subarray: %s", self.subarray)
             fields_to_match = {"subarray": self.subarray, "filter": self.filter}
@@ -845,7 +846,7 @@ class DataSet:
             # real reference files may use a different unit, passed in as phot_unit, but
             # phot_unit must be compatible with expected_unit for a given mode.
             expected_unit = None
-            if self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
+            if self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS", "MIR_WFSS"]:
                 expected_unit = "MJy micron s / (DN sr)"
             if expected_unit is None:
                 log.warning(
