@@ -468,24 +468,13 @@ class DataSet:
                or `~jwst.datamodels.MirLrsPhotomModel`
             MIRI photom reference file data model.
         """
-        # Handle MultiSlit models separately
+        # Get a time-dependent correction from the reference file if available
+        mid_time = self.input.meta.exposure.mid_time
+        correction_table = time_dependence.get_correction_table(ftab, mid_time)
 
+        # Handle MultiSlit models and MIRI WFSS
         if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == "MIR_WFSS":
-            # We have to find and apply a separate set of flux cal
-            # data for each of the slits/orders in the input
-            for slit in self.input.slits:
-                # Increment slit number
-                self.slitnum += 1
-
-                log.info(f"Working on slit {slit.name}")
-                fields_to_match = {"filter": self.filter}
-
-                row = find_row(ftab.phot_table, fields_to_match)
-                if row is None:
-                    continue
-                mid_time = self.input.meta.exposure.mid_time
-                correction_table = time_dependence.get_correction_table(ftab, mid_time)
-                self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
+            self.calc_wfss(ftab, correction_table, ["filter"])
 
         # Imaging detector
         if self.detector == "MIRIMAGE":
@@ -500,9 +489,6 @@ class DataSet:
                 if row is None:
                     return
 
-            # Get a time-dependent correction from the reference file if available
-            mid_time = self.input.meta.exposure.mid_time
-            correction_table = time_dependence.get_correction_table(ftab, mid_time)
             self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
         # MRS detectors
@@ -796,6 +782,7 @@ class DataSet:
         # of the photom step will be in units of surface brightness, as for
         # other types of data.
         unit_is_surface_brightness = True  # default
+
         try:
             conversion = tabdata["photmjsr"]  # unit is MJy / sr
         except KeyError:
@@ -939,7 +926,7 @@ class DataSet:
                     )
                     slit.photom_point = conversion  # store the result
 
-                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
+                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS", "MIR_WFSS"]:
                     log.info("Including spectral dispersion in 2-d flux calibration")
                     conversion, no_cal = self.create_2d_conversion(
                         slit,
