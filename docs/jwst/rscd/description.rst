@@ -60,7 +60,7 @@ specific pixels that are at risk of losing all their unsaturated data.
 Because reducing the ``n_skip`` introduces some non-linear FET transient data back into the fit,
 these pixels are flagged  in the PIXELDQ array as FLUX_ESTIMATED to warn
 the users that the flux value may be slightly biased by the RSCD effect.
-If only one group is left valid, the algorithm records information header (more information given
+If only one group is left valid, the algorithm records the information header (see more information given
 the table below). This allows the :ref:`ramp_fitting <ramp_fitting_step>` to still derive a flux value (provided the user has enabled suppress_one_group = False).
 
 
@@ -73,21 +73,29 @@ only updated in the case of bright saturating data when the RSCD skip count is l
 to preserve valid groups. In this case, the FLUX_ESTIMATED flag is added  to indicate a potential
 bias from the FET transient.
 
-
-This table outlines the keywords written to the output header from  in the RSCD  step, specifically
+This table outlines the keywords written to the output header by the RSCD  step, specifically
 focusing on how groups are skipped or retained.
 
-* Group skipping
+
+* Group skipping:
+
   These keywords track the total number of groups that were discarded at the beginning of an
   integration to avoid "charge decay" effects.
+
   * INT1SKIP: Applies specifically to the first integration.
   * INT2SKIP: Applies to the second and all subsequent integrations.
-* Group Retention (UGP)
+
+* Group Retention (UGP):
+
   These keywords count the pixels where the very first group was actually kept rather than skipped.
-  * INT1UGP1: The count of pixels where Group 1 was retained during the first integration
-  * INT2UGP2: The count of pixels where Group 1 was retained during integration 2 and higher
-* Saturation Adjustments (BORS, Back-Off Reduced Skipping)
+
+  * INT1UGP1: The count of pixels where Group 1 was retained during the first integration.
+  * INT2UGP2: The count of pixels where Group 1 was retained during integration 2 and higher.
+
+* Saturation Adjustments (BORS, Back-Off Reduced Skipping):
+
   These keywords track instances where the software intended to skip groups but "backed off" because skipping them would have left too few groups before the pixel hit saturation.
+
   * INT1BORS: The count of pixels where skipping was reduced for the first integration.
   * INT2BORS: The count of pixels where skipping was reduced for integrations 2 and higher.
 
@@ -98,7 +106,7 @@ INT1SKIP        meta.rscd.ngroups_skip_int1                  # of groups skipped
 INT2SKIP        meta.rscd.ngroups_skip_int2p                 # of groups skipped in int 2 and higher
 INT1UGP1        meta.rscd.keep_bright_firstgroup_int1        # of pixels where 1st the group is kept for int 1
 INT2UGP2        meta.rscd.keep_bright_firstgroup_int2p       # of pixels where 1st the group is kept for int 2 and higher
-INT1BORS        meta.rscd.keep.groups_saturation_int1        # of pixels where RSCD reduced the groups skipped due to saturation for int 1
+INT1BORS        meta.rscd.keep_groups_saturation_int1        # of pixels where RSCD reduced the groups skipped due to saturation for int 1
 INT2BORS        meta.rscd.keep.groups_saturation_int2p       # of pixels where RSCD reduced the groups skipped due to saturation for int 2+
 ==============  ===========================================  ==============================================================================
 

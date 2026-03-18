@@ -214,7 +214,6 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
     n_ints = int_end - int_start + 1
     x_dim = output_model.groupdq.shape[3]
     y_dim = output_model.groupdq.shape[2]
-
     skip_array = np.full((n_ints, y_dim, x_dim), rscd_skip)
     # --- If we encounter saturation, we might need to back off the rscd correction.
     # Ideally we want at least two valid groups, but we need to allow there to only
@@ -255,9 +254,6 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
     # Find the first non-saturating group
     if num_sat > 0:
         #  do dynamic rscd flagging - based on saturation group of every pixel
-
-        n_ints = int_end - int_start + 1
-        skip_array = np.full((n_ints, y_dim, x_dim), rscd_skip)
 
         while num_sat > 0 and min_group > 1:
             # subtract 1 from skip_array
