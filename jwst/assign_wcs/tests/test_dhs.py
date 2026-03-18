@@ -1,113 +1,29 @@
 import numpy as np
 import pytest
-import stdatamodels.jwst.datamodels as dm
 from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcs
 from numpy.testing import assert_allclose
 
 from jwst.assign_wcs import AssignWcsStep, nircam
+from jwst.assign_wcs.tests.helpers import (
+    make_mock_dhs_nrca1_rate,
+    make_mock_dhs_nrca1_regions,
+    make_mock_dhs_nrcalong_rate,
+    make_mock_dhs_nrcalong_regions,
+)
 from jwst.assign_wcs.tests.test_nircam import get_reference_files
-
-
-def _populate_shared_metadata(model):
-    """
-    Give model metadata that's identical between NRCA1 and NRCALONG modes.
-
-    Updates model in place.
-    """
-    # Exposure
-    model.meta.exposure.type = "NRC_TSGRISM"
-    model.meta.exposure.ngroups = 5
-
-    # Observation
-    model.meta.observation.date = "2026-05-03"
-    model.meta.observation.time = "00:00:00.000"
-
-    # Subarray
-    model.meta.subarray.name = "SUB164STRIPE4_DHS"
-    model.meta.subarray.fastaxis = -1
-    model.meta.subarray.slowaxis = 2
-    model.meta.subarray.num_superstripe = 0
-    model.meta.subarray.repeat_stripe = 1
-    model.meta.subarray.xstart = 1
-    model.meta.subarray.xsize = 2048
-    model.meta.subarray.ystart = 1
-    model.meta.subarray.ysize = 164
-
-    # WCS info
-    model.meta.wcsinfo.ra_ref = 80.0
-    model.meta.wcsinfo.dec_ref = -69.5
-    model.meta.wcsinfo.v2_ref = 120.576793
-    model.meta.wcsinfo.v3_ref = -527.501431
-    model.meta.wcsinfo.roll_ref = 305.03225951982046
-    model.meta.wcsinfo.velosys = -9378.83
-
-    # Velocity aberration
-    model.meta.velocity_aberration.scale_factor = 1.0
 
 
 @pytest.fixture
 def mock_dhs_nrca1_rate():
     """Create a mock DHS NRCA1 rate file."""
-    model = dm.CubeModel((5, 164, 2048))
-    _populate_shared_metadata(model)
-
-    # Instrument
-    model.meta.instrument.name = "NIRCAM"
-    model.meta.instrument.channel = "SHORT"
-    model.meta.instrument.detector = "NRCA1"
-    model.meta.instrument.filter = "F150W2"
-    model.meta.instrument.pupil = "GDHS0"
-    model.meta.instrument.module = "A"
-
-    # Subarray
-    model.meta.subarray.multistripe_reads1 = 1
-    model.meta.subarray.multistripe_reads2 = 40
-    model.meta.subarray.multistripe_skips1 = 1526
-    model.meta.subarray.multistripe_skips2 = 85
-
-    return model
-
-
-def _populate_shared_regions_metadata(model):
-    """
-    Give model metadata that's identical between NRCA1 and NRCALONG regions files.
-
-    Updates model in place.
-    """
-    model.meta.description = "Mock DHS regions for testing"
-    model.meta.author = "test"
-    model.meta.pedigree = "GROUND"
-    model.meta.useafter = "2000-01-01T00:00:00"
-    model.meta.instrument.name = "NIRCAM"
+    return make_mock_dhs_nrca1_rate()
 
 
 @pytest.fixture
 def mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path):
-    """Create a mock NIRCam DHS regions reference file."""
-    sci = mock_dhs_nrca1_rate
-    reads1 = sci.meta.subarray.multistripe_reads1
-    skips1 = sci.meta.subarray.multistripe_skips1
-    reads2 = sci.meta.subarray.multistripe_reads2
-    skips2 = sci.meta.subarray.multistripe_skips2
-
-    # Full-frame (2048 x 2048) regions array; zero means "not in any stripe".
-    regions = np.zeros((2048, 2048), dtype=np.float64)
-    # Stripe IDs run from highest to lowest as row index increases
-    stripe_ids = [10, 9, 8, 7]
-    row_start = reads1 + skips1
-    for stripe_id in stripe_ids:
-        regions[row_start : row_start + reads2, :] = stripe_id
-        row_start += reads2 + skips2
-
-    regions_path = tmp_path / "mock_nrca1_regions.asdf"
-    model = dm.RegionsModel()
-    model.regions = regions
-    _populate_shared_regions_metadata(model)
-    model.save(str(regions_path))
-    model.close()
-
-    return str(regions_path)
+    """Create a mock NIRCam DHS NRCA1 regions reference file."""
+    return make_mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path)
 
 
 @pytest.fixture
@@ -168,57 +84,13 @@ def test_dhs_nrca1_roundtrip(create_dhs_nrca1_wcs):
 @pytest.fixture
 def mock_dhs_nrcalong_rate():
     """Create a mock DHS NRCALONG rate file."""
-    model = dm.CubeModel((5, 164, 2048))
-    _populate_shared_metadata(model)
-
-    # Instrument
-    model.meta.instrument.name = "NIRCAM"
-    model.meta.instrument.channel = "LONG"
-    model.meta.instrument.detector = "NRCALONG"
-    model.meta.instrument.filter = "F444W"
-    model.meta.instrument.pupil = "GRISMR"
-    model.meta.instrument.module = "A"
-
-    # Subarray
-    model.meta.subarray.multistripe_reads1 = 1
-    model.meta.subarray.multistripe_reads2 = 40
-    model.meta.subarray.multistripe_skips1 = 971
-    model.meta.subarray.multistripe_skips2 = 0
-
-    # WCS information
-    model.meta.wcsinfo.siaf_xref_sci = 862
-    model.meta.wcsinfo.siaf_yref_sci = 20.5
-
-    return model
+    return make_mock_dhs_nrcalong_rate()
 
 
 @pytest.fixture
 def mock_dhs_nrcalong_regions(mock_dhs_nrcalong_rate, tmp_path):
-    """
-    Create a mock NRCALONG regions ref file.
-
-    For NRCALONG the same detector region is read in every readout, so this file is pretty
-    trivial: it's nonzero in that single 40-pixel-tall stripe, and zero elsewhere.
-    """
-    sci = mock_dhs_nrcalong_rate
-    reads1 = sci.meta.subarray.multistripe_reads1
-    skips1 = sci.meta.subarray.multistripe_skips1
-    reads2 = sci.meta.subarray.multistripe_reads2
-
-    # The same 40-row detector stripe is read repeatedly into the SUB164STRIPE4_DHS
-    # subarray, so the full-frame regions map only needs that single physical band.
-    regions = np.zeros((2048, 2048), dtype=np.float64)
-    row_start = reads1 + skips1
-    regions[row_start : row_start + reads2, :] = 1
-
-    regions_path = tmp_path / "mock_nrcalong_regions.asdf"
-    model = dm.RegionsModel()
-    model.regions = regions
-    _populate_shared_regions_metadata(model)
-    model.save(str(regions_path))
-    model.close()
-
-    return str(regions_path)
+    """Create a mock NIRCam DHS NRCALONG regions reference file."""
+    return make_mock_dhs_nrcalong_regions(mock_dhs_nrcalong_rate, tmp_path)
 
 
 @pytest.fixture
