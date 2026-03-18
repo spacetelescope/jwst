@@ -593,15 +593,15 @@ the spectrum in each row.  The structure of the "EXTRACT1D" table extension for
 +-------------------+-----------+------------------------+---------------+-----------+
 | WAVELENGTH        | float64   | Wavelength values      | :math:`\mu` m |    2D     |
 +-------------------+-----------+------------------------+---------------+-----------+
-| FLUX              | float64   | Flux values            | Jy            |    2D     |
+| FLUX              | float64   | Flux values            | Jy or DN/s    |    2D     |
 +-------------------+-----------+------------------------+---------------+-----------+
-| FLUX_ERROR        | float64   | Error values           | Jy            |    2D     |
+| FLUX_ERROR        | float64   | Error values           | Same as FLUX  |    2D     |
 +-------------------+-----------+------------------------+---------------+-----------+
-| FLUX_VAR_POISSON  | float64   | Error values           | Jy^2          |    2D     |
+| FLUX_VAR_POISSON  | float64   | Error values           | FLUX^2        |    2D     |
 +-------------------+-----------+------------------------+---------------+-----------+
-| FLUX_VAR_RNOISE   | float64   | Error values           | Jy^2          |    2D     |
+| FLUX_VAR_RNOISE   | float64   | Error values           | FLUX^2        |    2D     |
 +-------------------+-----------+------------------------+---------------+-----------+
-| FLUX_VAR_FLAT     | float64   | Error values           | Jy^2          |    2D     |
+| FLUX_VAR_FLAT     | float64   | Error values           | FLUX^2        |    2D     |
 +-------------------+-----------+------------------------+---------------+-----------+
 | SURF_BRIGHT       | float64   | Surface Brightness     | MJy/sr        |    2D     |
 +-------------------+-----------+------------------------+---------------+-----------+
