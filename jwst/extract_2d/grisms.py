@@ -34,7 +34,18 @@ __all__ = [
 
 
 def build_grism_submodel(
-    sub_model, input_model, xmin, xmax, ymin, ymax, subwcs, compute_wavelength, order, name
+    sub_model,
+    input_model,
+    xmin,
+    xmax,
+    ymin,
+    ymax,
+    subwcs,
+    compute_wavelength,
+    order,
+    name,
+    source_xpos=None,
+    source_ypos=None,
 ):
     """
     Build a grism SlitModel from the input data.
@@ -63,6 +74,13 @@ def build_grism_submodel(
     name : str
         The name of the extracted region; typically a placeholder
         for NRC_TSGRISM data but will be the stripe number for DHS.
+    source_xpos : float, optional
+        The x position of the source in the direct image frame (0-indexed).
+        When provided, sets ``sub_model.source_xpos`` and updates
+        ``sub_model.meta.wcsinfo.siaf_xref_sci``.
+    source_ypos : float, optional
+        The y position of the source in the direct image frame (0-indexed).
+        When provided, sets ``sub_model.source_ypos``.
 
     Returns
     -------
@@ -98,7 +116,8 @@ def build_grism_submodel(
     if compute_wavelength:
         sub_model.wavelength = compute_tso_wavelength_array(sub_model)
     # sub_model.meta.wcsinfo.siaf_yref_sci = 34  # update after move, vals are the same
-    # sub_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
+    if source_xpos is not None:
+        sub_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
     sub_model.meta.wcsinfo.spectral_order = order
     sub_model.meta.wcsinfo.dispersion_direction = input_model.meta.wcsinfo.dispersion_direction
     sub_model.meta.instrument.name = "NIRCAM"
@@ -110,8 +129,10 @@ def build_grism_submodel(
     sub_model.xsize = ext_data.shape[-1]
     sub_model.ystart = ymin + 1  # FITS pixels are 1-indexed
     sub_model.ysize = ext_data.shape[-2]
-    # sub_model.source_xpos = source_xpos
-    # sub_model.source_ypos = 34
+    if source_xpos is not None:
+        sub_model.source_xpos = source_xpos
+    if source_ypos is not None:
+        sub_model.source_ypos = source_ypos
     sub_model.source_id = 1
     sub_model.bunit_data = input_model.meta.bunit_data
     sub_model.bunit_err = input_model.meta.bunit_err
@@ -439,6 +460,8 @@ def extract_tso_object(
                 compute_wavelength,
                 order,
                 name="1",
+                source_xpos=source_xpos,
+                source_ypos=34,
             )
     del subwcs
     log.info("Finished extraction")
