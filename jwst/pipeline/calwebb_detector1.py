@@ -109,7 +109,7 @@ class Detector1Pipeline(Pipeline):
             input_data = self.ipc.run(input_data)
             if not self.firstframe.skip:
                 log.info(
-                    " The firstframe step has been deprecated and will be removed in a "
+                    " The firstframe step has been deprecated and will be removed in a"
                     " future release. "
                     "Flagging the first groups has been added to the RSCD step"
                 )
