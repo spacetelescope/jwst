@@ -170,6 +170,111 @@ def imaging_distortion(input_model, reference_files):
     return transform
 
 
+def _load_grism_models(specwcs_path):
+    """Load dispersion models from a NIRCAMGrismModel reference file."""  # numpydoc ignore=RT01
+    with NIRCAMGrismModel(specwcs_path) as f:
+        displ = f.displ.instance
+        dispx = f.dispx.instance
+        dispy = f.dispy.instance
+        invdispx = f.invdispx.instance if f.invdispx is not None else None
+        invdispy = f.invdispy.instance if f.invdispy is not None else None
+        invdispl = f.invdispl.instance if f.invdispl is not None else None
+        orders = f.orders.instance
+    return displ, dispx, dispy, invdispl, invdispx, invdispy, orders
+
+
+def _build_grism_det2det(
+    orders,
+    displ,
+    dispx,
+    dispy,
+    inv_lmodels=None,
+    inv_xmodels=None,
+    inv_ymodels=None,
+    pupil="GRISMR",
+):
+    """Build the forward and backward grism dispersion transform pair."""  # numpydoc ignore=RT01
+    if pupil == "GRISMC":
+        forward_cls = NIRCAMForwardColumnGrismDispersion
+    else:
+        forward_cls = NIRCAMForwardRowGrismDispersion
+    det2det = forward_cls(
+        orders,
+        lmodels=displ,
+        xmodels=dispx,
+        ymodels=dispy,
+        inv_lmodels=inv_lmodels,
+        inv_xmodels=inv_xmodels,
+        inv_ymodels=inv_ymodels,
+    )
+    det2det.inverse = NIRCAMBackwardGrismDispersion(
+        orders,
+        lmodels=displ,
+        xmodels=dispx,
+        ymodels=dispy,
+        inv_lmodels=inv_lmodels,
+        inv_xmodels=inv_xmodels,
+        inv_ymodels=inv_ymodels,
+    )
+    return det2det
+
+
+def _apply_velocity_correction(det2det, velosys):
+    """Apply barycentric velocity correction to the dispersion transform."""  # numpydoc ignore=RT01
+    if velosys is not None:
+        velocity_corr = velocity_correction(velosys)
+        log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
+        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+    return det2det
+
+
+def _build_sky_pipeline_steps(input_model, reference_files, n_passthrough):
+    """
+    Build the distortion, DVA, and sky coordinate transforms for DHS and tsgrism modes.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        The input data model.
+    reference_files : dict
+        Mapping between reftype (keys) and reference file name (vals).
+        Requires 'distortion' and 'filteroffset' reference files.
+    n_passthrough : int
+        Number of extra dimensions to pass through unchanged alongside v2/v3.
+        Use 2 for tsgrism (lam, order) and 3 for dhs (lam, order, stripe).
+
+    Returns
+    -------
+    distortion, va_corr, tel2sky : astropy models
+        The three transforms ready to slot into the WCS pipeline.
+    """
+    setra = Const1D(input_model.meta.wcsinfo.ra_ref)
+    setra.inverse = Const1D(input_model.meta.wcsinfo.ra_ref)
+    setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
+    setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
+
+    distortion = imaging_distortion(input_model, reference_files) & Identity(n_passthrough)
+
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref,
+    ) & Identity(n_passthrough)
+
+    tel2sky = pointing.v23tosky(input_model) & Identity(n_passthrough)
+    t2skyinverse = tel2sky.inverse
+
+    if n_passthrough == 2:
+        # inputs: (ra, dec, lam, order); fix ra/dec to reference values for inverse
+        newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
+    elif n_passthrough == 3:
+        # inputs: (ra, dec, lam, order, stripe); fix ra/dec to reference values for inverse
+        newinverse = Mapping((0, 1, 0, 3, 4)) | setra & setdec & Identity(3) | t2skyinverse
+
+    tel2sky.inverse = newinverse
+    return distortion, va_corr, tel2sky
+
+
 def tsgrism(input_model, reference_files):
     """
     Create WCS pipeline for a NIRCAM Time Series Grism observation.
@@ -217,43 +322,14 @@ def tsgrism(input_model, reference_files):
 
     frames = create_coord_frames()
 
-    # translate the x,y detector-in to x,y detector out coordinates
-    # Get the disperser parameters which are defined as a model for each
-    # spectral order
-    with NIRCAMGrismModel(reference_files["specwcs"]) as f:
-        displ = f.displ.instance
-        dispx = f.dispx.instance
-        dispy = f.dispy.instance
-        invdispx = f.invdispx.instance
-        invdispl = f.invdispl.instance
-        orders = f.orders.instance
-
-    # now create the appropriate model for the grismr
-    det2det = NIRCAMForwardRowGrismDispersion(
-        orders,
-        lmodels=displ,
-        xmodels=dispx,
-        ymodels=dispy,
-        inv_lmodels=invdispl,
-        inv_xmodels=invdispx,
+    # Load disperser parameters and build the forward/backward transform pair.
+    displ, dispx, dispy, invdispl, invdispx, _invdispy, orders = _load_grism_models(
+        reference_files["specwcs"]
     )
-
-    det2det.inverse = NIRCAMBackwardGrismDispersion(
-        orders,
-        lmodels=displ,
-        xmodels=dispx,
-        ymodels=dispy,
-        inv_lmodels=invdispl,
-        inv_xmodels=invdispx,
+    det2det = _build_grism_det2det(
+        orders, displ, dispx, dispy, inv_lmodels=invdispl, inv_xmodels=invdispx
     )
-
-    # Add in the wavelength shift from the velocity dispersion
-    velosys = input_model.meta.wcsinfo.velosys
-
-    if velosys is not None:
-        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-        log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
-        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+    det2det = _apply_velocity_correction(det2det, input_model.meta.wcsinfo.velosys)
 
     # input into the forward transform is x,y,x0,y0,order
     # where x,y is the pixel location in the grism image
@@ -276,11 +352,6 @@ def tsgrism(input_model, reference_files):
     ycenter = Const1D(yc)
     ycenter.inverse = Const1D(yc)
 
-    setra = Const1D(input_model.meta.wcsinfo.ra_ref)
-    setra.inverse = Const1D(input_model.meta.wcsinfo.ra_ref)
-    setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
-    setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
-
     # x, y, order in goes to transform to full array location and order
     # get the shift to full frame coordinates
     sub_trans = subarray_transform(input_model)
@@ -296,25 +367,9 @@ def tsgrism(input_model, reference_files):
             Mapping((0, 1, 0, 1, 2)) | (Identity(2) & xcenter & ycenter & Identity(1)) | det2det
         )
 
-    # take us from full frame detector to v2v3
-    distortion = imaging_distortion(input_model, reference_files) & Identity(2)
-
-    # Compute differential velocity aberration (DVA) correction:
-    va_corr = pointing.dva_corr_model(
-        va_scale=input_model.meta.velocity_aberration.scale_factor,
-        v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref,
-    ) & Identity(2)
-
-    # v2v3 to the sky
-    # remap the tel2sky inverse as well since we can feed it the values of
-    # crval1, crval2 which correspond to crpix1, crpix2. This leaves
-    # us with a calling structure:
-    #  (x, y, order) <-> (wavelength, order)
-    tel2sky = pointing.v23tosky(input_model) & Identity(2)
-    t2skyinverse = tel2sky.inverse
-    newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
-    tel2sky.inverse = newinverse
+    distortion, va_corr, tel2sky = _build_sky_pipeline_steps(
+        input_model, reference_files, n_passthrough=2
+    )
 
     pipeline = [
         (frames["grism_detector"], sub2direct),
@@ -394,60 +449,27 @@ def dhs(input_model, reference_files):
         orders = f.orders.instance
         stripes = f.stripes.instance
 
-    longflag = False
     if "LONG" in input_model.meta.instrument.detector.upper():
         longflag = True
         # Because nrcalong DHS uses existing transforms, we need to mock
         # the new structure to allow both to pass through this method.
-
         subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
         stripes = np.array(range(subarray_stripenum)) + 1
         displ = [displ] * subarray_stripenum
         dispx = [dispx] * subarray_stripenum
         dispy = [dispy] * subarray_stripenum
-
-    # Define some models to support all stripes
-    setra = Const1D(input_model.meta.wcsinfo.ra_ref)
-    setra.inverse = Const1D(input_model.meta.wcsinfo.ra_ref)
-    setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
-    setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
+    else:
+        longflag = False
 
     # Initialize transforms dictionary to store stripe IDs as keys, transform models as values.
     # Used in RegionsSelector to choose correct transform given a stripe ID.
     transforms = {}
 
+    velosys = input_model.meta.wcsinfo.velosys
     for i, stripe in enumerate(stripes):
-        # now create the appropriate model for the grismr
-        det2det = NIRCAMForwardRowGrismDispersion(
-            orders,
-            lmodels=displ[i],
-            xmodels=dispx[i],
-            ymodels=dispy[i],
-        )
+        det2det = _build_grism_det2det(orders, displ[i], dispx[i], dispy[i])
+        det2det = _apply_velocity_correction(det2det, velosys)
 
-        det2det.inverse = NIRCAMBackwardGrismDispersion(
-            orders,
-            lmodels=displ[i],
-            xmodels=dispx[i],
-            ymodels=dispy[i],
-        )
-
-        # Add in the wavelength shift from the velocity dispersion
-        velosys = input_model.meta.wcsinfo.velosys
-
-        if velosys is not None:
-            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-            log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
-            det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
-
-        # input into the forward transform is x,y,x0,y0,order
-        # where x,y is the pixel location in the grism image
-        # and x0,y0 is the source location in the "direct" image.
-        # For this mode (tsgrism), it is assumed that the source is
-        # at the nominal aperture reference point, i.e.,
-        # crpix1 <--> xref_sci and crpix2 <--> yref_sci
-        # offsets in X are handled in extract_2d, e.g. if an offset
-        # special requirement was specified in the APT.
         if longflag:
             xc, yc = (
                 input_model.meta.wcsinfo.siaf_xref_sci,
@@ -455,10 +477,8 @@ def dhs(input_model, reference_files):
             )
         else:
             xc, yc = (0, 0)  # TODO: Wait for ref files to be delivered with siaf ref positions
-
         if xc is None:
             raise ValueError("XREF_SCI is missing.")
-
         if yc is None:
             raise ValueError("YREF_SCI is missing.")
 
@@ -493,25 +513,9 @@ def dhs(input_model, reference_files):
         selector=transforms,
     )
 
-    # take us from full frame detector to v2v3
-    distortion = imaging_distortion(input_model, reference_files) & Identity(3)
-
-    # Compute differential velocity aberration (DVA) correction:
-    va_corr = pointing.dva_corr_model(
-        va_scale=input_model.meta.velocity_aberration.scale_factor,
-        v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref,
-    ) & Identity(3)
-
-    # v2v3 to the sky
-    # remap the tel2sky inverse as well since we can feed it the values of
-    # crval1, crval2 which correspond to crpix1, crpix2. This leaves
-    # us with a calling structure:
-    #  (x, y, order, stripe) <-> (wavelength, order)
-    tel2sky = pointing.v23tosky(input_model) & Identity(3)
-    t2skyinverse = tel2sky.inverse
-    newinverse = Mapping((0, 1, 0, 3, 4)) | setra & setdec & Identity(3) | t2skyinverse
-    tel2sky.inverse = newinverse
+    distortion, va_corr, tel2sky = _build_sky_pipeline_steps(
+        input_model, reference_files, n_passthrough=3
+    )
 
     pipeline = [
         (frames["grism_detector"], stripe2det),
@@ -593,57 +597,26 @@ def wfss(input_model, reference_files):
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
     # spectral order
-    with NIRCAMGrismModel(reference_files["specwcs"]) as f:
-        displ = f.displ.instance
-        dispx = f.dispx.instance
-        dispy = f.dispy.instance
-        invdispx = f.invdispx.instance
-        invdispy = f.invdispy.instance
-        invdispl = f.invdispl.instance
-        orders = f.orders.instance
-
-    # now create the appropriate model for the grism[R/C]
-    if "GRISMR" in input_model.meta.instrument.pupil:
-        det2det = NIRCAMForwardRowGrismDispersion(
-            orders,
-            lmodels=displ,
-            xmodels=dispx,
-            ymodels=dispy,
-            inv_lmodels=invdispl,
-            inv_xmodels=invdispx,
-            inv_ymodels=invdispy,
-        )
-
-    elif "GRISMC" in input_model.meta.instrument.pupil:
-        det2det = NIRCAMForwardColumnGrismDispersion(
-            orders,
-            lmodels=displ,
-            xmodels=dispx,
-            ymodels=dispy,
-            inv_lmodels=invdispl,
-            inv_xmodels=invdispx,
-            inv_ymodels=invdispy,
-        )
-
-    det2det.inverse = NIRCAMBackwardGrismDispersion(
+    displ, dispx, dispy, invdispl, invdispx, invdispy, orders = _load_grism_models(
+        reference_files["specwcs"]
+    )
+    det2det = _build_grism_det2det(
         orders,
-        lmodels=displ,
-        xmodels=dispx,
-        ymodels=dispy,
+        displ,
+        dispx,
+        dispy,
         inv_lmodels=invdispl,
         inv_xmodels=invdispx,
         inv_ymodels=invdispy,
+        pupil=input_model.meta.instrument.pupil,
     )
 
     # Add in the wavelength shift from the velocity dispersion
     try:
         velosys = input_model.meta.wcsinfo.velosys
     except AttributeError:
-        pass
-    if velosys is not None:
-        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-        log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
-        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+        velosys = None
+    det2det = _apply_velocity_correction(det2det, velosys)
 
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
