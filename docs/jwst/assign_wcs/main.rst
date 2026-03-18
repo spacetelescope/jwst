@@ -83,7 +83,7 @@ corresponding world coordinates. Using MIRI LRS fixed slit as an example:
   >>> print(ra, dec, lam)
   (329.97260532549336, 372.0242999250267, 5.4176100046836675)
 
-The WFSS modes for NIRCam, MIRI and NIRISS have a slightly different calling structure.
+The WFSS modes for NIRCam, MIRI, and NIRISS have a slightly different calling structure.
 In addition to the (x, y) coordinates, they need to know other information about the
 spectrum or source object. In the JWST backward direction (going from the sky to
 the detector) the WCS model also looks for the wavelength and order and returns
@@ -205,9 +205,9 @@ WCS of WFSS exposures
 ---------------------
 
 The WCS forward transforms for slitless grism exposures (``NIS_WFSS``, ``NRC_WFSS``, ``NRC_TSGRISM``)
-and slitless prism (``MIR_WFSS``) 
-take as input the ``x, y`` coordinates on the dispersed image, the ``x0, y0`` coordinate of
-the center of the object in the direct image and ``spectral order``. They return the ``x0, y0`` coordinate of the center
+and slitless prism (``MIR_WFSS``) exposures take as input the ``x, y`` coordinates on the
+dispersed image, the ``x0, y0`` coordinate of the center of the object in the direct image
+and ``spectral order``. They return the ``x0, y0`` coordinate of the center
 of the object in the direct image, ``wavelength`` and ``spectral order``.
 
 For NIRISS WFSS data the reference files contain a reference value for the filter wheel
