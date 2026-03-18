@@ -91,7 +91,7 @@ class IFUCubeData:
         input_models,
         output_name_base,
         output_type,
-        wavelinear,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -115,7 +115,7 @@ class IFUCubeData:
         self.instrument_info = instrument_info  # dictionary class imported in cube_build.py
         self.master_table = master_table
         self.output_type = output_type
-        self.wavelinear = wavelinear
+        self.linear_wave = linear_wave
         self.scalexy = pars_cube.get("scalexy")
         self.scalew = pars_cube.get("scalew")
         self.ra_center = pars_cube.get("ra_center")
@@ -1275,7 +1275,7 @@ class IFUCubeData:
             self.scalerad = np.amin(scalerad)
 
         # if we have NIRSPEC Prism then force wavelength to be non-linear
-        elif self.instrument == "NIRSPEC" and not self.wavelinear:
+        elif self.instrument == "NIRSPEC" and not self.linear_wave:
             self.linear_wavelength = False
             (
                 table_wavelength,

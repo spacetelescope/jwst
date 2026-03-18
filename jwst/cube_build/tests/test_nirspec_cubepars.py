@@ -181,7 +181,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
     input_model = None
     output_name_base = None
     output_type = "band"
-    wavelinear = True
+    linear_wave = True
     instrument = "NIRSPEC"
     list_par1 = all_grating
     list_par2 = all_filter
@@ -192,7 +192,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
         input_model,
         output_name_base,
         output_type,
-        wavelinear,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -215,7 +215,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
     input_model = None
     output_name_base = None
     output_type = "multi"
-    wavelinear = False
+    linear_wave = False
     instrument = "NIRSPEC"
     list_par1 = all_grating
     list_par2 = all_filter
@@ -226,7 +226,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
         input_model,
         output_name_base,
         output_type,
-        wavelinear,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -306,7 +306,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
     input_model = None
     output_name_base = None
     output_type = "band"
-    wavelinear = True
+    linear_wave = True
     instrument = "NIRSPEC"
     list_par1 = all_grating
     list_par2 = all_filter
@@ -317,7 +317,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
         input_model,
         output_name_base,
         output_type,
-        wavelinear,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -371,7 +371,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
         input_model,
         output_name_base,
         output_type,
-        wavelinear,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,

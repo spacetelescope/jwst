@@ -247,7 +247,7 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     list_par1 = ["1", "2"]
     list_par2 = ["short", "short"]
     output_name_base = "TEMP"
-    wavelinear = True
+    linear_wave = True
     instrument_info = instrument_defaults.InstrumentInfo()
 
     thiscube = ifu_cube.IFUCubeData(
@@ -255,7 +255,7 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
         miri_ifushort_short_2files,
         output_name_base,
         output_type,
-        wavelinear,
+        linear_wave,
         this_instrument,
         list_par1,
         list_par2,

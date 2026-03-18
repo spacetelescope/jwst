@@ -29,7 +29,7 @@ class CubeBuildStep(Step):
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
          output_type = option('band','channel','grating','multi',default=None) # Type IFUcube to create.
-         wavelinear = boolean(default=True) # Toggle between linear (True) and nonlinear (False) wavelength dimensions
+         linear_wave = boolean(default=True) # Toggle between linear (True) and nonlinear (False) wavelength dimensions
          scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
@@ -152,7 +152,7 @@ class CubeBuildStep(Step):
             self.weighting = "emsm"
             if self.output_type is None:  # when running stand alone
                 self.output_type = "band"
-                self.wavelinear = True
+                self.linear_wave = True
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified Shepard method
         # 2. EMSM
@@ -244,12 +244,12 @@ class CubeBuildStep(Step):
 
         # Running cube build stand-alone without setting self.pipeline will default to pipeline=3
 
-        # for NIRSPEC the type of cubes to make are based on self.wavelinear
+        # for NIRSPEC the type of cubes to make are based on self.linear_wave
         if instrument == "NIRSPEC":
             if self.output_type == "multi":  # keep this for now
-                self.wavelinear = False
+                self.linear_wave = False
 
-            if self.wavelinear:
+            if self.linear_wave:
                 self.output_type = "band"
             else:
                 self.output_type = "multi"
@@ -266,7 +266,7 @@ class CubeBuildStep(Step):
             self.output_type = "band"
 
         self.pars_input["output_type"] = self.output_type
-        self.pars_input["wavelinear"] = self.wavelinear
+        self.pars_input["linear_wave"] = self.linear_wave
         log.info(f"Setting output type to: {self.output_type}")
         # ________________________________________________________________________________
         # If an offset file is provided do some basic checks on the file and its contents.
@@ -384,7 +384,7 @@ class CubeBuildStep(Step):
                 input_models,
                 self.output_name_base,
                 self.pars_input["output_type"],
-                self.pars_input["wavelinear"],
+                self.pars_input["linear_wave"],
                 instrument,
                 list_par1,
                 list_par2,
