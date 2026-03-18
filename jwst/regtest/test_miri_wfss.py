@@ -15,14 +15,14 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     rtdata = rtdata_module
     # These are the WFSS exposures we'll be processing
 
-    photom_file = "jwst_miri_photom_WFSS_20260311_v2.fits"
-    bkg_file = "jwst_miri_bkg_20260311.fits"
+    photom_file = "jwst_miri_photom_WFSS_20260317_dlambda.fits"
     flat_file = "jwst_miri_flat_0850.fits"
     filteroffset_file = "jwst_miri_filteroffset_0019.asdf"
+    specwcs_file = "MIRI_WFSS_specwcs_20260316.asdf"
     rtdata.get_data(f"miri/wfss/{photom_file}")
-    rtdata.get_data(f"miri/wfss/{bkg_file}")
     rtdata.get_data(f"miri/wfss/{flat_file}")
     rtdata.get_data(f"miri/wfss/{filteroffset_file}")
+    rtdata.get_data(f"miri/wfss/{specwcs_file}")
 
     rtdata.get_asn("miri/wfss/jw09505-o001_spec2_00001_asn.json")
     args = [
@@ -30,7 +30,7 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
         rtdata.input,
         f"--steps.photom.override_photom={photom_file}",
         f"--steps.flat_field.override_flat={flat_file}",
-        f"--steps.bkg_subtract.override_bkg={bkg_file}",
+        f"--steps.assign_wcs.override_specwcs={specwcs_file}",
         f"--steps.assign_wcs.override_filteroffset={filteroffset_file}",
         "--steps.bkg_subtract.skip=false",
         "--steps.flat_field.skip=false",
@@ -46,7 +46,7 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     Step.from_cmdline(args)
 
 
-@pytest.mark.skip(reason="Work in progress: updating the Reference Files")
+# @pytest.mark.skip(reason="Work in progress: updating the Reference Files")
 @pytest.mark.parametrize(
     "suffix",
     ["assign_wcs", "cal", "extract_2d", "photom", "srctype", "x1d", "bsub", "flat_field"],
