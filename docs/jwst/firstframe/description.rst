@@ -4,7 +4,7 @@ Description
 :Class: `jwst.firstframe.FirstFrameStep`
 :Alias: firstframe
 
-The `FirstFrameStep` has been deprecated and will be removed
+The ``firstframe`` step has been deprecated and will be removed
 in a future release. Flagging the first group  has been added to the RSCD step.
 
 The MIRI first frame correction step flags the first group in every integration

@@ -105,9 +105,9 @@ RSCD Keywords   Datamodel attributes                         Meaning
 INT1SKIP        meta.rscd.ngroups_skip_int1                  # of groups skipped in int 1
 INT2SKIP        meta.rscd.ngroups_skip_int2p                 # of groups skipped in int 2 and higher
 INT1UGP1        meta.rscd.keep_bright_firstgroup_int1        # of pixels where 1st the group is kept for int 1
-INT2UGP2        meta.rscd.keep_bright_firstgroup_int2p       # of pixels where 1st the group is kept for int 2 and higher
+INT2UGP1        meta.rscd.keep_bright_firstgroup_int2p       # of pixels where 1st the group is kept for int 2 and higher
 INT1BORS        meta.rscd.keep_groups_saturation_int1        # of pixels where RSCD reduced the groups skipped due to saturation for int 1
-INT2BORS        meta.rscd.keep.groups_saturation_int2p       # of pixels where RSCD reduced the groups skipped due to saturation for int 2+
+INT2BORS        meta.rscd.keep_groups_saturation_int2p       # of pixels where RSCD reduced the groups skipped due to saturation for int 2+
 ==============  ===========================================  ==============================================================================
 
 
