@@ -218,10 +218,11 @@ For WFSS modes (``NIS_WFSS``, ``NRC_WFSS``, and ``MIR_WFSS``), an approximation 
 associated with a direct image with the same instrument configuration as the grism/prism image
 is saved as FITS WCS in the headers of grism/prism images.
 
- Corrections Due to Spacecraft Motion
- ------------------------------------
+Corrections Due to Spacecraft Motion
+------------------------------------
 
 The WCS transforms contain two corrections due to motion of the observatory.
+
 Absolute velocity aberration is calculated onboard when acquiring the guide star, but
 differential velocity aberration effects are calculated during the ``assign_wcs`` step.
 This introduces corrections in the conversion from sky coordinates to observatory
