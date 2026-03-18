@@ -20,7 +20,7 @@ This step uses the ``bounding_box`` attribute of the WCS stored in the data mode
 which is populated by the ``assign_wcs`` step. Hence the ``assign_wcs`` step
 must be applied to the science exposure before running this step.
 
-For NIRCam and NIRISS WFSS modes, no ``bounding_box`` is attached to the data
+For NIRCam, MIRI and NIRISS WFSS modes, no ``bounding_box`` is attached to the data
 model by the ``assign_wcs`` step.
 This is to keep the WCS flexible enough to be used with any
 source catalog or similar list of objects that may be associated with the dispersed image.
@@ -90,8 +90,8 @@ these source locations are directly used, instead of recomputing the source
 position from the WCS information.
 
 
-NIRCam and NIRISS WFSS
-++++++++++++++++++++++
+NIRCam, MIRI and NIRISS WFSS
+++++++++++++++++++++++++++++
 
 During normal, automated processing of WFSS grism images, the
 step parameter ``grism_objects`` is left unspecified, in which case the ``extract_2d``

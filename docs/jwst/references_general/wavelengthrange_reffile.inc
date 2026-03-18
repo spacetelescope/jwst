@@ -7,7 +7,7 @@ WAVELENGTHRANGE Reference File
 The WAVELENGTHRANGE reference file contains information on the minimum and
 maximum wavelengths of various spectroscopic modes, which can be
 order-dependent. The reference data are used to construct bounding boxes
-around the spectral traces produced by each object in the NIRCam and NIRISS
+around the spectral traces produced by each object in the NIRCam, MIRI and NIRISS
 WFSS modes.
 If a list of `~stdatamodels.jwst.transforms.GrismObject` is supplied, then no reference file is necessary.
 
@@ -55,9 +55,9 @@ wavelength range and spectral order for each combination of filter and grating.
                  :order: Default spectral order
                  :range: Default wavelength range
 
-NIRCam WFSS, NIRCam TSGRISM, NIRISS WFSS
-:::::::::::::::::::::::::::::::::::::::::
-For NIRCam WFSS and TSGRIM modes, as well as NIRISS WFSS mode, the WAVELENGTHRANGE
+NIRCam WFSS, NIRCam TSGRISM, NIRISS WFSS, MIRI WFSS
+:::::::::::::::::::::::::::::::::::::::::::::::::::
+For NIRCam WFSS and TSGRIM modes, MIRI WFSS mode and NIRISS WFSS mode, the WAVELENGTHRANGE
 reference file contains the wavelength limits to use when calculating the minimum
 and maximum dispersion extents on the detector. It also contains the default list
 of orders that should be extracted for each filter.
