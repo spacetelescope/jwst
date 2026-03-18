@@ -42,6 +42,7 @@ def nrs_slit_model(nrs_fs_model):
     slit.update(im_ex2d)
     slit.meta.wcs = im_ex2d.slits[0].meta.wcs
     slit.source_type = "POINT"
+    slit.source_xpos = 0.1
     slit.name = "S1600A1"
     slit.var_rnoise = im_ex2d.slits[0].var_rnoise
     slit.var_poisson = im_ex2d.slits[0].var_poisson

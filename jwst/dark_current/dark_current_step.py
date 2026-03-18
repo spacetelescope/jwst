@@ -118,9 +118,11 @@ class DarkCurrentStep(Step):
                 dark_model.average_dark_current is None
                 or np.sum(dark_model.average_dark_current) == 0.0
             ):
+                scalar_dark_current = dark_model.meta.exposure.average_dark_current
+                if scalar_dark_current is None:
+                    scalar_dark_current = 0.0
                 input_model.average_dark_current = (
-                    input_model.get_default("average_dark_current")
-                    + dark_model.meta.exposure.average_dark_current
+                    input_model.get_default("average_dark_current") + scalar_dark_current
                 )
             elif np.shape(input_model.average_dark_current) != np.shape(
                 dark_model.average_dark_current

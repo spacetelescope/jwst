@@ -1,0 +1,6 @@
+Fix a bug where accessing metadata attributes that did not exist would set them to their
+schema-defined default, if one was defined.
+For example, creating an empty ``SlitModel()`` and then accessing ``model.source_id``
+no longer sets ``model.source_id`` to its default of 0. Instead, it remains empty
+until specifically set. Use ``model.source_id = model.get_default("source_id")``
+to set it to the default value if desired.
