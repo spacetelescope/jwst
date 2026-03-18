@@ -8,7 +8,7 @@ Overview
 --------
 The ``extract_1d`` step extracts a 1D signal from a 2D or 3D dataset and
 writes spectral data to an "x1d" product (or "x1dints" for time series data).
-This step works on all JWST spectroscopic modes, including MIRI LRS (slit and slitless), MIRI WFSS, 
+This step works on all JWST spectroscopic modes, including MIRI LRS (slit and slitless) and MIRI WFSS, 
 and MRS, NIRCam WFSS and TSGRISM, NIRISS WFSS and SOSS, and NIRSpec fixed-slit, IFU, and MOS.
 
 An EXTRACT1D reference file is used for most modes to specify the location and

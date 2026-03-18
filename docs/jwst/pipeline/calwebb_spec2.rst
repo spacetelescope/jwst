@@ -96,7 +96,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 
 :sup:`1`\ The exact order of the :ref:`extract_2d <extract_2d_step>`, :ref:`srctype <srctype_step>`,
 and :ref:`flat_field <flatfield_step>` steps depends on the observing mode.
-For NIRISS, MIRI WFSS, NIRCam WFSS, as well as NIRCam TSO grism exposures, the order is
+For NIRISS, MIRI, NIRCam WFSS, as well as NIRCam TSO grism exposures, the order is
 flat_field, extract_2d, and srctype (no wavecorr).
 For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
 
@@ -417,7 +417,7 @@ input to subsequent Stage 3 processing.
 
 All types of inputs result in a 1D extracted spectral data product, which is saved
 as a "_x1d" or "_x1dints" file, depending on the input type. Observing modes
-such as MIRI LRS fixed slit and MRS, MIRI WFSS, NIRCam and NIRISS WFSS, and NIRSpec
+such as MIRI LRS fixed slit and MRS, MIRI, NIRCam and NIRISS WFSS, and NIRSpec
 fixed slit, MOS, and IFU result in an "_x1d" product containing extracted spectral
 data for one or more slits/sources. TSO modes, such as MIRI LRS slitless, NIRCam
 TSO grism, NIRISS SOSS, and NIRSpec Bright Object, for which the data are 3D

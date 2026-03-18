@@ -101,9 +101,9 @@ TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
 +            +       +----------------+-----------+------------+--------------------------+
 |            |       | subarray       | string    | 15         | N/A                      |
 +            +       +----------------+-----------+------------+--------------------------+
-|            |       | photmjsr       | float     | scalar     | Angstrom MJy s / (DN sr) |
+|            |       | photmjsr       | float     | scalar     | MJy micron s / (DN sr)   |
 +            +       +----------------+-----------+------------+--------------------------+
-|            |       | uncertainty    | float     | scalar     | Angstrom MJy s / (DN sr) |
+|            |       | uncertainty    | float     | scalar     | MJy micron s / (DN sr)   |
 +            +       +----------------+-----------+------------+--------------------------+
 |            |       | nelem          | integer   | scalar     | N/A                      |
 +            +       +----------------+-----------+------------+--------------------------+
