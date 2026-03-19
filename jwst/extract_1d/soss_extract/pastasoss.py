@@ -618,4 +618,8 @@ def _check_pwcpos_bounds(pwcpos, bounds):
     bool
         True if the PWC position is within bounds, False otherwise.
     """
-    return bounds[0] <= pwcpos <= bounds[1]
+    if bounds is not None and len(bounds) == 2:
+        return bounds[0] <= pwcpos <= bounds[1]
+
+    # No bounds found: return False
+    return False
