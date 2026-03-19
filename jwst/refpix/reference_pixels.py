@@ -1342,7 +1342,7 @@ class NIRDataset(Dataset):
 
         return
 
-    def get_multistripe_refvalues(self, group, stripe_idx, fastmin):
+    def get_multistripe_refvalues(self, group, stripe_idx, fastmin, fastmax):
         """
         Collect refpix values for each amplifier.
 
@@ -1382,33 +1382,41 @@ class NIRDataset(Dataset):
 
         for amplifier in self.amplifiers:
             amp_xi, amp_xf = MULTISTRIPE_AMPLIFIER_REGIONS[amplifier]
+            if not ((fastmin < amp_xf) and (fastmax > amp_xi)):
+                continue
             # For simplicity, move amp region into subarray frame by
             # offsetting the fastread location.
-            amp_xi -= fastmin
-            amp_xf -= fastmin
+            # amp_xi -= fastmin
+            # amp_xf -= fastmin
             refpix[amplifier] = {}
-            mask = np.where(
-                (pixeldq[:, amp_xi:amp_xf] & refdq == refdq)
-                & (pixeldq[:, amp_xi:amp_xf] & dnudq != dnudq),
-                True,
-                False,
-            )
+            # mask = np.where(
+            #    (pixeldq[:, amp_xi:amp_xf] & refdq == refdq)
+            #    & (pixeldq[:, amp_xi:amp_xf] & dnudq != dnudq),
+            #    True,
+            #    False,
+            # )
+            mask = (pixeldq & refdq > 0) & (pixeldq & dnudq == 0)
             if self.odd_even_columns:
                 odd_mask = mask.copy()
                 odd_mask[:, ::2] = False
                 even_mask = mask.copy()
                 even_mask[:, 1::2] = False
 
-                even_ref = group[:, amp_xi:amp_xf][even_mask]
-                even_dq = pixeldq[:, amp_xi:amp_xf][even_mask]
+                # even_ref = group[:, amp_xi:amp_xf][even_mask]
+                # even_dq = pixeldq[:, amp_xi:amp_xf][even_mask]
+                even_ref = group[even_mask]
+                even_dq = pixeldq[even_mask]
                 even = self.sigma_clip(even_ref, even_dq)
-                odd_ref = group[:, amp_xi:amp_xf][odd_mask]
-                odd_dq = pixeldq[:, amp_xi:amp_xf][odd_mask]
+                # odd_ref = group[:, amp_xi:amp_xf][odd_mask]
+                # odd_dq = pixeldq[:, amp_xi:amp_xf][odd_mask]
+                odd_ref = group[odd_mask]
+                odd_dq = pixeldq[odd_mask]
                 odd = self.sigma_clip(odd_ref, odd_dq)
 
                 refpix[amplifier]["odd"] = odd
                 refpix[amplifier]["even"] = even
             else:
+                # todo - fix this too
                 ref = group[:, amp_xi:amp_xf][mask]
                 dq = pixeldq[:, amp_xi:amp_xf][mask]
                 mean = self.sigma_clip(ref, dq)
@@ -1442,15 +1450,21 @@ class NIRDataset(Dataset):
             amp_xi, amp_xf = MULTISTRIPE_AMPLIFIER_REGIONS[amplifier]
             # Ensure that fast read region lies within amp region
             if (fastmin < amp_xf) and (fastmax > amp_xi):
+                # print(fastmin, fastmax, amp_xi, amp_xf) # 1792 2048 1536 2044
                 if self.odd_even_columns:
-                    group[:, amp_xi - fastmin : amp_xf - fastmin : 2] -= refvalues[amplifier][
-                        "even"
-                    ]
-                    group[:, amp_xi - fastmin + 1 : amp_xf - fastmin : 2] -= refvalues[amplifier][
-                        "odd"
-                    ]
+                    even = refvalues[amplifier]["even"]
+                    odd = refvalues[amplifier]["odd"]
+                    # print(group.shape, amp_xi- fastmin, amp_xf- fastmin) # (208, 256) -256 252
+                    if even is not None and odd is not None:
+                        group[:, ::2] -= even
+                        group[:, 1::2] -= odd
+                        # group[:, amp_xi - fastmin : amp_xf - fastmin : 2] -= even
+                        # group[:, amp_xi - fastmin + 1 : amp_xf - fastmin : 2] -= odd
                 else:
-                    group[:, amp_xi - fastmin : amp_xf - fastmin] -= refvalues[amplifier]["mean"]
+                    mean = refvalues[amplifier]["mean"]
+                    if mean is not None:
+                        # todo - fix this too
+                        group[:, amp_xi - fastmin : amp_xf - fastmin] -= mean
 
         return group
 
@@ -1488,7 +1502,7 @@ class NIRDataset(Dataset):
                 self.dms_to_detector(integration_num, group_num)
                 thisgroup = self.group
 
-                refvalues = self.get_multistripe_refvalues(thisgroup, stripe_idx, fastmin)
+                refvalues = self.get_multistripe_refvalues(thisgroup, stripe_idx, fastmin, fastmax)
 
                 thisgroup = self.apply_multistripe_correction(
                     thisgroup, refvalues, fastmin, fastmax
