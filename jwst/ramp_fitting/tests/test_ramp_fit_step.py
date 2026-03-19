@@ -361,7 +361,7 @@ def test_set_group_warnings(firstgroup, lastgroup, message, log_watcher):
     watcher.assert_seen()
 
 
-def test_likely_output(tmp_cwd, setup_inputs):
+def test_likely_output(tmp_path, setup_inputs):
     """Test the LIKELY algorithm and the chisq output."""
     ingain, inreadnoise = 6, 7
     grouptime = 3.0
