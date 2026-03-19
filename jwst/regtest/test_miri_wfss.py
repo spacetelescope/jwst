@@ -15,7 +15,7 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     rtdata = rtdata_module
     # These are the WFSS exposures we'll be processing
 
-    photom_file = "jwst_miri_photom_WFSS_20260317_dlambda.fits"
+    photom_file = "drlphotom.fits"
     flat_file = "jwst_miri_flat_0850.fits"
     filteroffset_file = "jwst_miri_filteroffset_0019.asdf"
     specwcs_file = "MIRI_WFSS_specwcs_20260316.asdf"
@@ -46,7 +46,6 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     Step.from_cmdline(args)
 
 
-# @pytest.mark.skip(reason="Work in progress: updating the Reference Files")
 @pytest.mark.parametrize(
     "suffix",
     ["assign_wcs", "cal", "extract_2d", "photom", "srctype", "x1d", "bsub", "flat_field"],
