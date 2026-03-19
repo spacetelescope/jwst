@@ -480,23 +480,6 @@ def _extract_tso_dhs_object(
                 min(stripe_ymax, input_model.meta.subarray.ysize),
             )
 
-            output_model.name = "1"
-            output_model.source_type = input_model.meta.target.source_type
-            output_model.source_name = input_model.meta.target.catalog_name
-            output_model.source_alias = input_model.meta.target.proposer_name
-            output_model.xstart = 1  # FITS pixels are 1-indexed
-            output_model.xsize = ext_data.shape[-1]
-            output_model.ystart = ymin + 1  # FITS pixels are 1-indexed
-            output_model.ysize = ext_data.shape[-2]
-            output_model.source_xpos = source_xpos
-            output_model.source_ypos = 34
-            output_model.source_id = 1
-            output_model.bunit_data = input_model.meta.bunit_data
-            output_model.bunit_err = input_model.meta.bunit_err
-            if getattr(input_model, "int_times", None) is not None:
-                output_model.int_times = input_model.int_times.copy()
-
-
             _set_tso_subwcs_transform(input_model, subwcs, xmin, ymin, order)
 
             xmin = int(xmin)
