@@ -476,6 +476,7 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
         sub_lines = 0
 
         # Start at 0, make nreads1 row reads
+        # TODO: this line throws an error for DHS
         stripe_out[..., sub_lines : sub_lines + nreads1, :] = ref_array[
             ..., linecount : linecount + nreads1, :
         ]
@@ -564,7 +565,6 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
                 sub_lines = 0
 
                 # Start at 0, make nreads1 row reads
-                # TODO: this line throws an error for DHS
                 stripe_out[
                     integ * num_superstripe + stripe, :, sub_lines : sub_lines + nreads1, :
                 ] = ref_array[integ, :, linecount : linecount + nreads1, :]
