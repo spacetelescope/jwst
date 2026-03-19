@@ -34,25 +34,15 @@ def test_find_row():
     assert result is None
 
 
-def assign_metadata(metanode, pars_list):
+def assign_metadata(metanode, keys, vals):
     """
     Assign a list of values to parameters in a datamodel
     for ease of testing.
     Stripe params: xsize_sci, ysize_sci, nreads1, nreads2, nskips1,
                    nskips2, repeat_stripe, interleave_reads1, fastaxis, slowaxis
     """
-    metanode.subarray.xsize = pars_list[0]
-    metanode.subarray.ysize = pars_list[1]
-    metanode.subarray.multistripe_reads1 = pars_list[2]
-    metanode.subarray.multistripe_reads2 = pars_list[3]
-    metanode.subarray.multistripe_skips1 = pars_list[4]
-    metanode.subarray.multistripe_skips2 = pars_list[5]
-    metanode.subarray.repeat_stripe = pars_list[6]
-    metanode.subarray.interleave_reads1 = pars_list[7]
-    metanode.subarray.superstripe_step = pars_list[8]
-    metanode.subarray.num_superstripe = pars_list[9]
-    metanode.subarray.fastaxis = pars_list[10]
-    metanode.subarray.slowaxis = pars_list[11]
+    for key, val in zip(keys, vals):
+        setattr(metanode.subarray, key, val)
 
 
 def test_generate_stripe():
@@ -79,12 +69,9 @@ def test_generate_stripe():
     # equal to row number in detector frame.
     test_array = (np.ones((2048, 2048), dtype=int) * np.arange(2048)).T
 
-    # Initialize a datamodel to spawn a metadata tree.
-    sci_meta = RampModel().meta
-
     # SUB41STRIPE1_DHS nrca1 case
     stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, 0, 0, -1, 2)
-    assign_metadata(sci_meta, stripe_params)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
 
     # Function presumes input in science frame, so move test array to science frame
     # before supplying to function.
@@ -93,7 +80,7 @@ def test_generate_stripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         sci_meta,
-        1,
+        sci_nints,
     )
     assert stripe1_array.shape == (41, 2048)
     assert stripe1_array[0, 1024] == 0
@@ -101,14 +88,14 @@ def test_generate_stripe():
 
     # SUB82STRIPE2_DHS nrca2 case
     stripe_params = (2048, 82, 1, 40, 1662, 82, 1, 1, 0, 0, 1, -2)
-    assign_metadata(sci_meta, stripe_params)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
 
     stripe2_array = generate_stripe_array(
         science_detector_frame_transform(
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         sci_meta,
-        1,
+        sci_nints,
     )
     assert stripe2_array.shape == (82, 2048)
     # nrca2 has flipped row direction, so in science frame the row indices are flipped.
@@ -119,14 +106,14 @@ def test_generate_stripe():
 
     # SUB164STRIPE4_DHS nrcalong case
     stripe_params = (2048, 164, 1, 40, 971, 0, 1, 0, 0, 0, -1, 2)
-    assign_metadata(sci_meta, stripe_params)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
 
     stripe4_array = generate_stripe_array(
         science_detector_frame_transform(
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         sci_meta,
-        1,
+        sci_nints,
     )
     assert stripe4_array.shape == (164, 2048)
     assert stripe4_array[0, 1024] == 0
@@ -135,7 +122,6 @@ def test_generate_stripe():
     assert stripe4_array[83, 1024] == 972  # nreads1 + nskips1, stripe 3
 
 
-@pytest.mark.skip(reason="DHS mode conflict with active superstripe development")
 def test_multistripe_subarray_model():
     mock_rn = ReadnoiseModel(data=(np.ones((2048, 2048), dtype=int) * np.arange(2048)).T)
     mock_rn.meta.instrument.name = "NIRCAM"
