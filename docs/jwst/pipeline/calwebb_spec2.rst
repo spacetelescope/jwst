@@ -36,7 +36,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 - MIRI SL = LRS Slitless
 - MIRI MRS = Medium Resolution Spectroscopy (IFU)
 - NIRISS SOSS = Single Object Slitless Spectroscopy
-- NIRISS, MIRI and NIRCam WFSS = Wide-Field Slitless Spectroscopy
+- NIRISS, MIRI, and NIRCam WFSS = Wide-Field Slitless Spectroscopy
 
 .. |c| unicode:: U+2713 .. checkmark
 
@@ -92,7 +92,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 | :ref:`cube_build <cube_build_step>`                                |     |     | |c| |     |     | |c| |     |                |      |        |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----+----------------+------+--------+-----+
 | :ref:`extract_1d <extract_1d_step>`                                | |c| | |c| | |c| | |c| | |c| | |c| | |c| | |c| \ :sup:`3` | |c|  |  |c|   | |c| |
-+--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
++--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----+----------------+------+--------+-----+
 
 :sup:`1`\ The exact order of the :ref:`extract_2d <extract_2d_step>`, :ref:`srctype <srctype_step>`,
 and :ref:`flat_field <flatfield_step>` steps depends on the observing mode.

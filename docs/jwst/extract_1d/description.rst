@@ -103,7 +103,7 @@ same structure as a ``MultiSpecModel``, except that there are three additional
 columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
 
-For NIRCam, MIRI and NIRISS WFSS data, hundreds to thousands of spectra from different sources
+For NIRCam, MIRI, and NIRISS WFSS data, hundreds to thousands of spectra from different sources
 may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
 The data in this model is stored in the ``spec`` attribute, such that one spectral table
 is created for each exposure for each spectral order in the input data.
