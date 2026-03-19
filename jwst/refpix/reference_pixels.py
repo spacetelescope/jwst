@@ -1364,11 +1364,17 @@ class NIRDataset(Dataset):
             as the mean value.
         """
         refpix = {}
+        refdq = dqflags.pixel["REFERENCE_PIXEL"]
+        dnudq = dqflags.pixel["DO_NOT_USE"]
+
         for amplifier in self.amplifiers:
             amp_xi, amp_xf = MULTISTRIPE_AMPLIFIER_REGIONS[amplifier]
             refpix[amplifier] = {}
             mask = np.where(
-                self.pixeldq[:, amp_xi:amp_xf] & dqflags.pixel["REFERENCE_PIXEL"] > 0, True, False
+                (self.pixeldq[:, amp_xi:amp_xf] & refdq == refdq)
+                & (self.pixeldq[:, amp_xi:amp_xf] & dnudq != dnudq),
+                True,
+                False,
             )
             if self.odd_even_columns:
                 odd_mask = mask.copy()
