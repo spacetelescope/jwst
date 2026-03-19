@@ -24,7 +24,6 @@ log = logging.getLogger(__name__)
 
 __all__ = [
     "extract_tso_object",
-    "extract_tso_dhs_object",
     "extract_grism_objects",
     "clamp",
     "compute_dispersion",
@@ -141,6 +140,15 @@ def build_grism_submodel(
         sub_model.int_times = input_model.int_times.copy()
 
 
+def _set_tso_subwcs_transform(input_model, subwcs, xstart, ymin, order):
+    """Make grism to direct image transform for the subwcs."""  # numpydoc ignore:RT01
+    order_model = Const1D(order)
+    order_model.inverse = Const1D(order)
+    tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
+    tr = Mapping((0, 1, 0)) | Shift(xstart) & Shift(ymin) & order_model | tr
+    subwcs.set_transform("grism_detector", "direct_image", tr)
+
+
 def extract_tso_object(
     input_model,
     reference_files=None,
@@ -232,14 +240,27 @@ def extract_tso_object(
 
     # Split the logic on DHS vs. non-DHS data
     if "DHS" in input_model.meta.subarray.name.upper():
-        output_model = extract_tso_dhs_object(
+        output_model = _extract_tso_dhs_object(
             input_model, wavelengthrange, available_orders, compute_wavelength
         )
-        log.info("Finished extraction")
-        return output_model
+    else:
+        output_model = _extract_tso_tsgrism_object(
+            input_model,
+            wavelengthrange,
+            available_orders,
+            compute_wavelength,
+            tsgrism_extract_height=tsgrism_extract_height,
+        )
+    log.info("Finished extraction")
+    return output_model
 
+
+def _extract_tso_tsgrism_object(
+    input_model, wavelengthrange, available_orders, compute_wavelength, tsgrism_extract_height=None
+):
     # Check for the existence of the aperture reference location meta data
-    # TODO: in principle DHS mode needs this check too, but at time of writing
+    # TODO: in principle DHS mode needs this check too, and it should move above
+    # into extract_tso_object, but right now for DHS
     # nrca1 ref positions are not provided in the headers. Skip check for now
     if (
         input_model.meta.wcsinfo.siaf_xref_sci is None
@@ -334,11 +355,7 @@ def extract_tso_object(
         xmin_ext = 0  # hardwire min x for extraction to zero
         xmax_ext = input_model.data.shape[-1] - 1  # hardwire max x for extraction to size of data
 
-        order_model = Const1D(order)
-        order_model.inverse = Const1D(order)
-        tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
-        tr = Mapping((0, 1, 0)) | Shift(xmin_ext) & Shift(ymin) & order_model | tr
-        subwcs.set_transform("grism_detector", "direct_image", tr)
+        _set_tso_subwcs_transform(input_model, subwcs, xmin_ext, ymin, order)
 
         xmin = int(xmin)
         xmax = int(xmax)
@@ -368,11 +385,10 @@ def extract_tso_object(
             source_ypos=34,
         )
     del subwcs
-    log.info("Finished extraction")
     return output_model
 
 
-def extract_tso_dhs_object(
+def _extract_tso_dhs_object(
     input_model,
     wavelengthrange,
     available_orders,
@@ -464,11 +480,7 @@ def extract_tso_dhs_object(
                 min(stripe_ymax, input_model.meta.subarray.ysize),
             )
 
-            order_model = Const1D(order)
-            order_model.inverse = Const1D(order)
-            tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
-            tr = Mapping((0, 1, 0)) | Shift(xmin) & Shift(ymin) & order_model | tr
-            subwcs.set_transform("grism_detector", "direct_image", tr)
+            _set_tso_subwcs_transform(input_model, subwcs, xmin, ymin, order)
 
             xmin = int(xmin)
             xmax = int(xmax)
