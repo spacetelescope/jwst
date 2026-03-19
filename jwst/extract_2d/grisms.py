@@ -34,7 +34,18 @@ __all__ = [
 
 
 def build_grism_submodel(
-    sub_model, input_model, xmin, xmax, ymin, ymax, subwcs, compute_wavelength, order, name
+    sub_model,
+    input_model,
+    xmin,
+    xmax,
+    ymin,
+    ymax,
+    subwcs,
+    compute_wavelength,
+    order,
+    name,
+    source_xpos=None,
+    source_ypos=None,
 ):
     """
     Build a grism SlitModel from the input data.
@@ -63,6 +74,13 @@ def build_grism_submodel(
     name : str
         The name of the extracted region; typically a placeholder
         for NRC_TSGRISM data but will be the stripe number for DHS.
+    source_xpos : float, optional
+        The x position of the source in the direct image frame (0-indexed).
+        When provided, sets ``sub_model.source_xpos`` and updates
+        ``sub_model.meta.wcsinfo.siaf_xref_sci``.
+    source_ypos : float, optional
+        The y position of the source in the direct image frame (0-indexed).
+        When provided, sets ``sub_model.source_ypos``.
 
     Returns
     -------
@@ -98,7 +116,8 @@ def build_grism_submodel(
     if compute_wavelength:
         sub_model.wavelength = compute_tso_wavelength_array(sub_model)
     # sub_model.meta.wcsinfo.siaf_yref_sci = 34  # update after move, vals are the same
-    # sub_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
+    if source_xpos is not None:
+        sub_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
     sub_model.meta.wcsinfo.spectral_order = order
     sub_model.meta.wcsinfo.dispersion_direction = input_model.meta.wcsinfo.dispersion_direction
     sub_model.meta.instrument.name = "NIRCAM"
@@ -110,13 +129,24 @@ def build_grism_submodel(
     sub_model.xsize = ext_data.shape[-1]
     sub_model.ystart = ymin + 1  # FITS pixels are 1-indexed
     sub_model.ysize = ext_data.shape[-2]
-    # sub_model.source_xpos = source_xpos
-    # sub_model.source_ypos = 34
+    if source_xpos is not None:
+        sub_model.source_xpos = source_xpos
+    if source_ypos is not None:
+        sub_model.source_ypos = source_ypos
     sub_model.source_id = 1
     sub_model.bunit_data = input_model.meta.bunit_data
     sub_model.bunit_err = input_model.meta.bunit_err
     if hasattr(input_model, "int_times"):
         sub_model.int_times = input_model.int_times.copy()
+
+
+def _set_tso_subwcs_transform(input_model, subwcs, xstart, ymin, order):
+    """Make grism to direct image transform for the subwcs."""  # numpydoc ignore:RT01
+    order_model = Const1D(order)
+    order_model.inverse = Const1D(order)
+    tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
+    tr = Mapping((0, 1, 0)) | Shift(xstart) & Shift(ymin) & order_model | tr
+    subwcs.set_transform("grism_detector", "direct_image", tr)
 
 
 def extract_tso_object(
@@ -208,226 +238,262 @@ def extract_tso_object(
     if len(available_orders) > 1:
         raise NotImplementedError("Multiple order extraction for TSO is not currently implemented.")
 
+    # Split the logic on DHS vs. non-DHS data
+    if "DHS" in input_model.meta.subarray.name.upper():
+        output_model = _extract_tso_dhs_object(
+            input_model, wavelengthrange, available_orders, compute_wavelength
+        )
+    else:
+        output_model = _extract_tso_tsgrism_object(
+            input_model,
+            wavelengthrange,
+            available_orders,
+            compute_wavelength,
+            tsgrism_extract_height=tsgrism_extract_height,
+        )
+    log.info("Finished extraction")
+    return output_model
+
+
+def _extract_tso_tsgrism_object(
+    input_model, wavelengthrange, available_orders, compute_wavelength, tsgrism_extract_height=None
+):
     # Check for the existence of the aperture reference location meta data
+    # TODO: in principle DHS mode needs this check too, and it should move above
+    # into extract_tso_object, but right now for DHS
+    # nrca1 ref positions are not provided in the headers. Skip check for now
     if (
         input_model.meta.wcsinfo.siaf_xref_sci is None
         or input_model.meta.wcsinfo.siaf_yref_sci is None
     ):
         raise ValueError("XREF_SCI and YREF_SCI are required for TSO mode.")
 
-    # Split the logic on DHS vs. non-DHS data here
-    if "DHS" in input_model.meta.subarray.name.upper():
-        output_model = datamodels.MultiSlitModel()
-        output_model.update(input_model)
+    # Processing non-DHS NRC_TSGRISM data
+    # Create the extracted output as a SlitModel
+    log.info(f"Extracting order: {available_orders}")
+    output_model = datamodels.SlitModel()
+    output_model.update(input_model)
 
-        data_shape = input_model.data.shape
-        xx, yy = np.meshgrid(np.arange(data_shape[-1]), np.arange(data_shape[-2]))
-        fwd_xfrm = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
-        all_stripes = fwd_xfrm(xx, yy, np.ones_like(xx))[-1]
-        if "LONG" in input_model.meta.instrument.detector.upper():
-            # Because nrcalong DHS repeats reads of the same detector position
-            # for all stripes, generate a list of stripe numbers from the subarray
-            # name rather than unique regions values.
-            subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
-            stripe_set = np.array(range(subarray_stripenum)) + 1
-            _, sub_ranges = generate_substripe_ranges(input_model, subarray_ranges=True)
+    subwcs = copy.deepcopy(input_model.meta.wcs)
+
+    # TODO: Moved this from above to segment DHS vs. non-DHS data - check compat
+    # If an extraction height is not supplied, default to entire
+    # cross-dispersion size of the data array
+    if tsgrism_extract_height is None:
+        tsgrism_extract_height = input_model.meta.subarray.ysize
+    log.info(f"Setting extraction height to {tsgrism_extract_height}")
+
+    # Loop over spectral orders
+    for order in available_orders:
+        _, _, _, lmin, lmax = [
+            x
+            for x in wavelengthrange
+            if (x[0] == order and x[2] == input_model.meta.instrument.filter)
+        ][0]
+
+        # Create the order bounding box
+        distortion = subwcs.get_transform("v2v3", "direct_image")
+        # 1-indexing already handled here
+        source_xpos, _ = compute_tso_offset_center(input_model, distortion)
+        # Remove FITS 1-indexed offset
+        source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1
+        transform = input_model.meta.wcs.get_transform("direct_image", "grism_detector")
+        xmin, ymin, _ = transform(source_xpos, source_ypos, lmin, order)
+        xmax, ymax, _ = transform(source_xpos, source_ypos, lmax, order)
+
+        # Add the shift to the lower corner to the subarray WCS object.
+        # The shift should just be the lower bounding box corner.
+        # Also replace the object center location inputs to the GrismDispersion
+        # model with the known object center and order information (in pixels of direct image)
+        # This changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
+        #
+        # The team wants the object to fall near row 34 for all cutouts, but the default cutout
+        # height is 64 pixels (32 on either side). So bump the extraction ycenter, when
+        # necessary, so that the height is 30 above and 34 below
+        # (in full frame) the object center.
+        bump = source_ypos - 34
+        extract_y_center = source_ypos - bump
+
+        splitheight = int(tsgrism_extract_height / 2)
+        below = extract_y_center - splitheight
+        if below == 34:
+            extract_y_min = 0
+            extract_y_max = extract_y_center + splitheight
+        elif below < 0:
+            extract_y_min = 0
+            extract_y_max = tsgrism_extract_height - 1
         else:
-            # For short wavelength detectors, use region values directly
-            stripe_set = np.unique(all_stripes[~np.isnan(all_stripes)].astype(int))
+            extract_y_min = extract_y_center - 34  # always return source at row 34 in cutout
+            extract_y_max = extract_y_center + tsgrism_extract_height - 34 - 1
 
-        for i, stripe_id in enumerate(stripe_set):
-            for order in available_orders:
-                sub_model = datamodels.SlitModel()
-                subwcs = copy.deepcopy(input_model.meta.wcs)
+        # Check for bad results
+        if extract_y_min > extract_y_max:
+            raise ValueError("Something bad happened calculating extraction y-size")
 
-                fieldpoint_idx = 1
-                filter_idx = 2
+        # Limit the bounding box to the detector edges
+        # The bounding box is limited to the size of the detector in the dispersion direction
+        # and 64 pixels in the cross-dispersion direction (at request of instrument team).
+        ymin, ymax = (
+            max(extract_y_min, 0),
+            min(extract_y_max, input_model.meta.subarray.ysize),
+        )
+        xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
 
-                waverange_match = [
-                    x
-                    for x in wavelengthrange
-                    if (x[0] == order and x[filter_idx] == input_model.meta.instrument.filter)
-                ]
+        # The order and source position are put directly into the new WCS of the subarray
+        # for the forward transform.
+        #
+        # NOTE NOTE NOTE  2020-02-14
+        # We would normally use x-axis (along dispersion) extraction limits calculated
+        # above based on the min/max wavelength range and the source position to do the
+        # subarray extraction and set the subarray WCS accordingly. HOWEVER, the NIRCam
+        # team has asked for all data along the dispersion direction to be included in
+        # subarray cutout, so here we override the xmin/xmax values calculated above and
+        # instead hardwire the extraction limits for the x (dispersion) direction to
+        # cover the entire range of the data and use this new minimum x value in the
+        # subarray WCS transform. If the team ever decides to change the extraction limits,
+        # the following two constants must be modified accordingly.
+        xmin_ext = 0  # hardwire min x for extraction to zero
+        xmax_ext = input_model.data.shape[-1] - 1  # hardwire max x for extraction to size of data
 
-                if len(waverange_match) > 1:
-                    _, _, _, lmin, lmax = [
-                        x
-                        for x in waverange_match
-                        if x[fieldpoint_idx] in input_model.meta.aperture.pps_name
-                    ][0]
-                else:
-                    _, _, _, lmin, lmax = waverange_match[0]
+        _set_tso_subwcs_transform(input_model, subwcs, xmin_ext, ymin, order)
 
-                # Find extent of stripe as defined by regions
-                # For nrcalong, the regions is not helpful, so rely on
-                # ranges generated by readout recreation
-                if "LONG" in input_model.meta.instrument.detector.upper():
-                    stripe_x = xx
-                    # Range generated from array slice, which causes unwanted
-                    # extra row - drop it here.
-                    stripe_y = np.array([sub_ranges[i][0], sub_ranges[i][1] - 1])
-                else:
-                    stripe_x = np.where(all_stripes == stripe_id, xx, np.nan)
-                    stripe_y = np.where(all_stripes == stripe_id, yy, np.nan)
-                stripe_xmin = np.nanmin(stripe_x)
-                stripe_xmax = np.nanmax(stripe_x)
-                stripe_ymin = np.nanmin(stripe_y)
-                stripe_ymax = np.nanmax(stripe_y)
+        xmin = int(xmin)
+        xmax = int(xmax)
+        ymin = int(ymin)
+        ymax = int(ymax)
 
-                xmin, xmax = (
-                    max(stripe_xmin, 0),
-                    min(stripe_xmax, input_model.meta.subarray.xsize),
-                )
-                ymin, ymax = (
-                    max(stripe_ymin, 0),
-                    min(stripe_ymax, input_model.meta.subarray.ysize),
-                )
+        log.info(f"WCS made explicit for order: {order}")
+        log.info(
+            f"Spectral trace extents: (xmin: {xmin}, ymin: {ymin}), (xmax: {xmax}, ymax: {ymax})"
+        )
+        log.info(
+            f"Extraction limits: (xmin: {xmin_ext}, ymin: {ymin}), (xmax: {xmax_ext}, ymax: {ymax})"
+        )
 
-                order_model = Const1D(order)
-                order_model.inverse = Const1D(order)
-                tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
-                tr = Mapping((0, 1, 0)) | Shift(xmin) & Shift(ymin) & order_model | tr
-                subwcs.set_transform("grism_detector", "direct_image", tr)
+        build_grism_submodel(
+            output_model,
+            input_model,
+            xmin,
+            xmax,
+            ymin,
+            ymax,
+            subwcs,
+            compute_wavelength,
+            order,
+            name="1",
+            source_xpos=source_xpos,
+            source_ypos=34,
+        )
+    del subwcs
+    return output_model
 
-                xmin = int(xmin)
-                xmax = int(xmax)
-                ymin = int(ymin)
-                ymax = int(ymax)
 
-                log.info(f"WCS made explicit for stripe {stripe_id}, order {order}.")
-                log.info(
-                    f"Extraction limits: (xmin: {xmin}, ymin: {ymin}), (xmax: {xmax}, ymax: {ymax})"
-                )
+def _extract_tso_dhs_object(
+    input_model,
+    wavelengthrange,
+    available_orders,
+    compute_wavelength=True,
+):
+    """
+    Extract the spectra for a NIRCam DHS TSO observation.
 
-                build_grism_submodel(
-                    sub_model,
-                    input_model,
-                    xmin,
-                    xmax,
-                    ymin,
-                    ymax,
-                    subwcs,
-                    compute_wavelength,
-                    order,
-                    name=str(stripe_id),
-                )
-                output_model.slits.append(sub_model)
-        if hasattr(input_model, "int_times"):
-            output_model.int_times = input_model.int_times.copy()
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel` or \
+                  `~stdatamodels.jwst.datamodels.ImageModel`
+        The input TSO DHS data.
+    wavelengthrange : list
+        The wavelength range table from the wavelengthrange reference file.
+    available_orders : list of int
+        The spectral orders to extract.
+    compute_wavelength : bool
+        Compute a wavelength array for the datamodel.
 
+    Returns
+    -------
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        Output MultiSlitModel with one slit per stripe.
+    """
+    output_model = datamodels.MultiSlitModel()
+    output_model.update(input_model)
+
+    data_shape = input_model.data.shape
+    xx, yy = np.meshgrid(np.arange(data_shape[-1]), np.arange(data_shape[-2]))
+    fwd_xfrm = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
+    all_stripes = fwd_xfrm(xx, yy, np.ones_like(xx))[-1]
+    if "LONG" in input_model.meta.instrument.detector.upper():
+        # Because nrcalong DHS repeats reads of the same detector position
+        # for all stripes, generate a list of stripe numbers from the subarray
+        # name rather than unique regions values.
+        subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
+        stripe_set = np.array(range(subarray_stripenum)) + 1
+        _, sub_ranges = generate_substripe_ranges(input_model, subarray_ranges=True)
     else:
-        # Processing non-DHS NRC_TSGRISM data
-        # Create the extracted output as a SlitModel
-        log.info(f"Extracting order: {available_orders}")
-        output_model = datamodels.SlitModel()
-        output_model.update(input_model)
+        # For short wavelength detectors, use region values directly
+        stripe_set = np.unique(all_stripes[~np.isnan(all_stripes)].astype(int))
 
-        subwcs = copy.deepcopy(input_model.meta.wcs)
-
-        # TODO: Moved this from above to segment DHS vs. non-DHS data - check compat
-        # If an extraction height is not supplied, default to entire
-        # cross-dispersion size of the data array
-        if tsgrism_extract_height is None:
-            tsgrism_extract_height = input_model.meta.subarray.ysize
-        log.info(f"Setting extraction height to {tsgrism_extract_height}")
-
-        # Loop over spectral orders
+    for i, stripe_id in enumerate(stripe_set):
         for order in available_orders:
-            _, _, _, lmin, lmax = [
+            sub_model = datamodels.SlitModel()
+            subwcs = copy.deepcopy(input_model.meta.wcs)
+
+            fieldpoint_idx = 1
+            filter_idx = 2
+
+            waverange_match = [
                 x
                 for x in wavelengthrange
-                if (x[0] == order and x[2] == input_model.meta.instrument.filter)
-            ][0]
+                if (x[0] == order and x[filter_idx] == input_model.meta.instrument.filter)
+            ]
 
-            # Create the order bounding box
-            distortion = subwcs.get_transform("v2v3", "direct_image")
-            # 1-indexing already handled here
-            source_xpos, _ = compute_tso_offset_center(input_model, distortion)
-            # Remove FITS 1-indexed offset
-            source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1
-            transform = input_model.meta.wcs.get_transform("direct_image", "grism_detector")
-            xmin, ymin, _ = transform(source_xpos, source_ypos, lmin, order)
-            xmax, ymax, _ = transform(source_xpos, source_ypos, lmax, order)
-
-            # Add the shift to the lower corner to the subarray WCS object.
-            # The shift should just be the lower bounding box corner.
-            # Also replace the object center location inputs to the GrismDispersion
-            # model with the known object center and order information (in pixels of direct image)
-            # This changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
-            #
-            # The team wants the object to fall near row 34 for all cutouts, but the default cutout
-            # height is 64 pixels (32 on either side). So bump the extraction ycenter, when
-            # necessary, so that the height is 30 above and 34 below
-            # (in full frame) the object center.
-            bump = source_ypos - 34
-            extract_y_center = source_ypos - bump
-
-            splitheight = int(tsgrism_extract_height / 2)
-            below = extract_y_center - splitheight
-            if below == 34:
-                extract_y_min = 0
-                extract_y_max = extract_y_center + splitheight
-            elif below < 0:
-                extract_y_min = 0
-                extract_y_max = tsgrism_extract_height - 1
+            if len(waverange_match) > 1:
+                _, _, _, lmin, lmax = [
+                    x
+                    for x in waverange_match
+                    if x[fieldpoint_idx] in input_model.meta.aperture.pps_name
+                ][0]
             else:
-                extract_y_min = extract_y_center - 34  # always return source at row 34 in cutout
-                extract_y_max = extract_y_center + tsgrism_extract_height - 34 - 1
+                _, _, _, lmin, lmax = waverange_match[0]
 
-            # Check for bad results
-            if extract_y_min > extract_y_max:
-                raise ValueError("Something bad happened calculating extraction y-size")
+            # Find extent of stripe as defined by regions
+            # For nrcalong, the regions is not helpful, so rely on
+            # ranges generated by readout recreation
+            if "LONG" in input_model.meta.instrument.detector.upper():
+                stripe_x = xx
+                # Range generated from array slice, which causes unwanted
+                # extra row - drop it here.
+                stripe_y = np.array([sub_ranges[i][0], sub_ranges[i][1] - 1])
+            else:
+                stripe_x = np.where(all_stripes == stripe_id, xx, np.nan)
+                stripe_y = np.where(all_stripes == stripe_id, yy, np.nan)
+            stripe_xmin = np.nanmin(stripe_x)
+            stripe_xmax = np.nanmax(stripe_x)
+            stripe_ymin = np.nanmin(stripe_y)
+            stripe_ymax = np.nanmax(stripe_y)
 
-            # Limit the bounding box to the detector edges
-            # The bounding box is limited to the size of the detector in the dispersion direction
-            # and 64 pixels in the cross-dispersion direction (at request of instrument team).
-            ymin, ymax = (
-                max(extract_y_min, 0),
-                min(extract_y_max, input_model.meta.subarray.ysize),
+            xmin, xmax = (
+                max(stripe_xmin, 0),
+                min(stripe_xmax, input_model.meta.subarray.xsize),
             )
-            xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
+            ymin, ymax = (
+                max(stripe_ymin, 0),
+                min(stripe_ymax, input_model.meta.subarray.ysize),
+            )
 
-            # The order and source position are put directly into the new WCS of the subarray
-            # for the forward transform.
-            #
-            # NOTE NOTE NOTE  2020-02-14
-            # We would normally use x-axis (along dispersion) extraction limits calculated
-            # above based on the min/max wavelength range and the source position to do the
-            # subarray extraction and set the subarray WCS accordingly. HOWEVER, the NIRCam
-            # team has asked for all data along the dispersion direction to be included in
-            # subarray cutout, so here we override the xmin/xmax values calculated above and
-            # instead hardwire the extraction limits for the x (dispersion) direction to
-            # cover the entire range of the data and use this new minimum x value in the
-            # subarray WCS transform. If the team ever decides to change the extraction limits,
-            # the following two constants must be modified accordingly.
-            xmin_ext = 0  # hardwire min x for extraction to zero
-            xmax_ext = (
-                input_model.data.shape[-1] - 1
-            )  # hardwire max x for extraction to size of data
-
-            order_model = Const1D(order)
-            order_model.inverse = Const1D(order)
-            tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
-            tr = Mapping((0, 1, 0)) | Shift(xmin_ext) & Shift(ymin) & order_model | tr
-            subwcs.set_transform("grism_detector", "direct_image", tr)
+            _set_tso_subwcs_transform(input_model, subwcs, xmin, ymin, order)
 
             xmin = int(xmin)
             xmax = int(xmax)
             ymin = int(ymin)
             ymax = int(ymax)
 
-            log.info(f"WCS made explicit for order: {order}")
+            log.info(f"WCS made explicit for stripe {stripe_id}, order {order}.")
             log.info(
-                f"Spectral trace extents: (xmin: {xmin}, ymin: {ymin}),"
-                f" (xmax: {xmax}, ymax: {ymax})"
-            )
-            log.info(
-                f"Extraction limits: (xmin: {xmin_ext}, ymin: {ymin}),"
-                f" (xmax: {xmax_ext}, ymax: {ymax})"
+                f"Extraction limits: (xmin: {xmin}, ymin: {ymin}), (xmax: {xmax}, ymax: {ymax})"
             )
 
             build_grism_submodel(
-                output_model,
+                sub_model,
                 input_model,
                 xmin,
                 xmax,
@@ -436,10 +502,11 @@ def extract_tso_object(
                 subwcs,
                 compute_wavelength,
                 order,
-                name="1",
+                name=str(stripe_id),
             )
-    del subwcs
-    log.info("Finished extraction")
+            output_model.slits.append(sub_model)
+    if hasattr(input_model, "int_times"):
+        output_model.int_times = input_model.int_times.copy()
     return output_model
 
 
