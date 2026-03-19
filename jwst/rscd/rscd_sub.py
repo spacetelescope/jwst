@@ -120,6 +120,10 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     if sci_ngroups < (group_skip_int1 + 3):
         max_groups_skip = max(0, sci_ngroups - 3)
 
+        # check for sci_ngroups <= 5
+        if sci_ngroups <= 5:
+            max_groups_skip = 1
+
         if max_groups_skip != group_skip_int1:
             log.info(f"Changing the # of groups to skip in int 1 to {max_groups_skip}")
             group_skip_int1 = max_groups_skip
@@ -127,6 +131,10 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     # checks for integration 2
     if sci_nints > 1 and sci_ngroups < (group_skip_int2p + 3):
         max_groups_skip = max(0, sci_ngroups - 3)
+        # check for sci_ngroups <= 5
+        if sci_ngroups <= 5:
+            max_groups_skip = 1
+
         if max_groups_skip != group_skip_int2p:
             group_skip_int2p = max_groups_skip
             log.info(f"Changing the # of groups to skip in int 2 and higher to {max_groups_skip}")
