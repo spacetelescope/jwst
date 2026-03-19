@@ -90,7 +90,7 @@ focusing on how groups are skipped or retained.
   These keywords count the pixels where the very first group was actually kept rather than skipped.
 
   * INT1UGP1: The count of pixels where Group 1 was retained during the first integration.
-  * INT2UGP2: The count of pixels where Group 1 was retained during integration 2 and higher.
+  * INT2UGP1: The count of pixels where Group 1 was retained during integration 2 and higher.
 
 * Saturation Adjustments (BORS, Back-Off Reduced Skipping):
 
