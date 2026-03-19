@@ -580,70 +580,70 @@ input filename for the corresponding exposure.
 See the :ref:`extract_1d <extract_1d_step>` step documentation for more details.
 
 For ``x1dints`` products, each row in the table holds the full spectrum for a single
-integration.  The spectral data columns listed above are each 2-D: each row is a 1-D
+integration. The spectral data columns listed above are each 2-D: each row is a 1-D
 vector containing all data points for the spectrum in that integration.
 The spectral tables for this model have extra 1D columns to contain the metadata for
-the spectrum in each row.  The structure of the "EXTRACT1D" table extension for
-``x1dints`` products is as follows:
+the spectrum in each row. The data units depend on whether the pipeline ran
+flux calibration or not (instrument/mode dependent). The structure of the "EXTRACT1D"
+table extension for ``x1dints`` products is as follows:
 
-+-------------------+-----------+------------------------+---------------+-----------+
-| Column Name       | Data Type | Contents               | Units         | Dimension |
-+===================+===========+========================+===============+===========+
-| INT_NUM           | int32     | Integration number     | N/A           |    1D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| WAVELENGTH        | float64   | Wavelength values      | :math:`\mu` m |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| FLUX              | float64   | Flux values            | Jy            |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| FLUX_ERROR        | float64   | Error values           | Jy            |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| FLUX_VAR_POISSON  | float64   | Error values           | Jy^2          |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| FLUX_VAR_RNOISE   | float64   | Error values           | Jy^2          |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| FLUX_VAR_FLAT     | float64   | Error values           | Jy^2          |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| SURF_BRIGHT       | float64   | Surface Brightness     | MJy/sr        |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| SB_ERROR          | float64   | Surf. Brt. errors      | MJy/sr        |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| SB_VAR_POISSON    | float64   | Surf. Brt. errors      | (MJy/sr)^2    |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| SB_VAR_RNOISE     | float64   | Surf. Brt. errors      | (MJy/sr)^2    |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| SB_VAR_FLAT       | float64   | Surf. Brt. errors      | (MJy/sr)^2    |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| DQ                | uint32    | DQ flags               | N/A           |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| BACKGROUND        | float64   | Background signal      | MJy/sr        |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| BKGD_ERROR        | float64   | Background error       | MJy/sr        |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| BKGD_VAR_POISSON  | float64   | Background error       | (MJy/sr)^2    |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| BKGD_VAR_RNOISE   | float64   | Background error       | (MJy/sr)^2    |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| BKGD_VAR_FLAT     | float64   | Background error       | (MJy/sr)^2    |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| NPIXELS           | float64   | Number of pixels       | N/A           |    2D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| N_ALONGDISP       | int32     | Nbr. spectral elements | N/A           |    1D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| SEGMENT           | int32     | Segment number         | N/A           |    1D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| MJD-BEG           | float64   | Start time (MJD UTC)   | d             |    1D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| MJD-AVG           | float64   | Mid time (MJD UTC)     | d             |    1D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| MJD-END           | float64   | End time (MJD UTC)     | d             |    1D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| TDB-BEG           | float64   | Start time (BJD TDB)   | d             |    1D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| TDB-MID           | float64   | Mid time (BJD TDB)     | d             |    1D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-| TDB-END           | float64   | End time (BJD TDB)     | d             |    1D     |
-+-------------------+-----------+------------------------+---------------+-----------+
-
++-------------------+-----------+------------------------+---------------------+-----------+
+| Column Name       | Data Type | Contents               | Units               | Dimension |
++===================+===========+========================+=====================+===========+
+| INT_NUM           | int32     | Integration number     | N/A                 |    1D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| WAVELENGTH        | float64   | Wavelength values      | :math:`\mu` m       |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| FLUX              | float64   | Flux values            | Jy or DN/s          |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| FLUX_ERROR        | float64   | Error values           | Same as FLUX        |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| FLUX_VAR_POISSON  | float64   | Error values           | FLUX^2              |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| FLUX_VAR_RNOISE   | float64   | Error values           | FLUX^2              |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| FLUX_VAR_FLAT     | float64   | Error values           | FLUX^2              |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| SURF_BRIGHT       | float64   | Surface Brightness     | MJy/sr or DN/s      |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| SB_ERROR          | float64   | Surf. Brt. errors      | Same as SURF_BRIGHT |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| SB_VAR_POISSON    | float64   | Surf. Brt. errors      | SURF_BRIGHT^2       |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| SB_VAR_RNOISE     | float64   | Surf. Brt. errors      | SURF_BRIGHT^2       |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| SB_VAR_FLAT       | float64   | Surf. Brt. errors      | SURF_BRIGHT^2       |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| DQ                | uint32    | DQ flags               | N/A                 |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| BACKGROUND        | float64   | Background signal      | MJy/sr or DN/s      |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| BKGD_ERROR        | float64   | Background error       | Same as BACKGROUND  |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| BKGD_VAR_POISSON  | float64   | Background error       | BACKGROUND^2        |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| BKGD_VAR_RNOISE   | float64   | Background error       | BACKGROUND^2        |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| BKGD_VAR_FLAT     | float64   | Background error       | BACKGROUND^2        |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| NPIXELS           | float64   | Number of pixels       | N/A                 |    2D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| N_ALONGDISP       | int32     | Nbr. spectral elements | N/A                 |    1D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| SEGMENT           | int32     | Segment number         | N/A                 |    1D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| MJD-BEG           | float64   | Start time (MJD UTC)   | d                   |    1D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| MJD-AVG           | float64   | Mid time (MJD UTC)     | d                   |    1D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| MJD-END           | float64   | End time (MJD UTC)     | d                   |    1D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| TDB-BEG           | float64   | Start time (BJD TDB)   | d                   |    1D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| TDB-MID           | float64   | Mid time (BJD TDB)     | d                   |    1D     |
++-------------------+-----------+------------------------+---------------------+-----------+
+| TDB-END           | float64   | End time (BJD TDB)     | d                   |    1D     |
++-------------------+-----------+------------------------+---------------------+-----------+
 
 Note that for point sources observed with NIRSpec or NIRISS SOSS mode, it is not
 possible to express the extracted spectrum as surface brightness and hence the

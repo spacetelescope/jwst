@@ -390,6 +390,7 @@ def test_likely_output(tmp_cwd, setup_inputs):
         override_gain=gain,
         override_readnoise=rnModel,
         save_opt=True,
+        output_dir=str(tmp_path),
     )
 
     # Check the output slopes
@@ -399,7 +400,7 @@ def test_likely_output(tmp_cwd, setup_inputs):
 
     # Check the chisq output array
     chk_chisq = np.array([[0.43144223, 0.25806388]])
-    fname = "mock_likely_chisq.fits"
+    fname = tmp_path / "mock_likely_chisq.fits"
     with ImageModel(fname) as chisq:
         chisq_data = chisq.data
     np.testing.assert_allclose(chisq_data, chk_chisq, rtol=tol)
