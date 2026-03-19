@@ -112,7 +112,7 @@ def user_bkg_spec_a():
     m_bkg_spec : `~jwst.datamodels.MultiSpecModel`
     """
     # This data type is used for creating a MultiSpecModel.
-    spec_dtype = datamodels.SpecModel().spec_table.dtype
+    spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
 
     # m_bkg_spec doesn't have to be a MultiSpecModel, but that's an option.
     m_bkg_spec = datamodels.MultiSpecModel()
@@ -176,7 +176,7 @@ def user_bkg_spec_b():
     m_bkg_spec : `~jwst.datamodels.MultiSpecModel`
     """
     # This data type is used for creating a MultiSpecModel.
-    spec_dtype = datamodels.SpecModel().spec_table.dtype
+    spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
 
     m_bkg_spec = datamodels.MultiSpecModel()
     wavelength = np.geomspace(1.5, 4.5, num=25, endpoint=True, dtype=np.float64)[::-1]
@@ -231,7 +231,7 @@ def user_bkg_spec_c():
     m_bkg_spec : `~jwst.datamodels.CombinedSpecModel`
     """
     # This is the data type of an output table from combine_1d.
-    spec_table_dtype = datamodels.CombinedSpecModel().spec_table.dtype
+    spec_table_dtype = datamodels.CombinedSpecModel().get_dtype("spec_table")
 
     wavelength = np.geomspace(1.5, 4.5, num=25, endpoint=True, dtype=np.float64)
     flux = np.zeros_like(wavelength)

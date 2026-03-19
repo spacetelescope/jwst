@@ -242,7 +242,7 @@ def test_prepare_output_from_library(mock_copy, step, input_data):
 
 
 def test_prepare_output_open_as_type_from_model():
-    input_data = datamodels.ImageModel()
+    input_data = datamodels.ImageModel((10, 10))
     result = PrepareOutputAsTypeStep.call(input_data)
 
     # Output is a deep copy of the input

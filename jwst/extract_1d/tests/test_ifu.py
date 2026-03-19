@@ -54,7 +54,7 @@ def setup_extended(extract_params, shape):
     y_center = height / 2.0 - 0.5
     theta = 0.0
     position = (x_center, y_center)
-    aperture = RectangularAperture(position, width, height, theta)
+    aperture = RectangularAperture(position, width, height, theta=theta)
     return aperture, method, subpixels
 
 

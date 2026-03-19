@@ -19,6 +19,7 @@ MSA_FAILED_OPEN = dqflags.pixel["MSA_FAILED_OPEN"]
 
 def make_nirspec_mos_model():
     im = ImageModel((2048, 2048))
+    im.dq = im.get_default("dq")
     im.meta.wcsinfo = {
         "dec_ref": -0.00601415671349804,
         "ra_ref": -0.02073605215697509,

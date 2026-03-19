@@ -45,6 +45,5 @@ The ``wfss_contam`` step uses the following optional arguments.
 
 ``--max_pixels_per_chunk``
   Sets the maximum number of direct image pixels to run through the grism transforms at once.
-  Decreasing this value will reduce the memory usage of the step, but will
-  increase the runtime. Note that if a single source has more pixels than the value of 
-  ``max_pixels_per_chunk``, that source will be skipped. Defaults to 50,000.
+  Decreasing this value will typically reduce the memory usage of the step. The effect on runtime
+  depends on the machine hardware and whether multi-processing is enabled. Defaults to 5,000.

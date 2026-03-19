@@ -14,6 +14,7 @@ def make_imagemodel(ysize, xsize, value=None):
         im.data = rng.random((ysize, xsize))
     else:
         im.data = np.full((ysize, xsize), value)
+    im.dq = im.get_default("dq")
     return im
 
 

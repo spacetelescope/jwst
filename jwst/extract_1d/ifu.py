@@ -108,10 +108,10 @@ def ifu_extract1d(
 
     if input_model.meta.instrument.name == "MIRI":
         output_model = datamodels.MRSMultiSpecModel()
-        spec_dtype = datamodels.MRSSpecModel().spec_table.dtype
+        spec_dtype = datamodels.MRSSpecModel().get_dtype("spec_table")
     else:
         output_model = datamodels.MultiSpecModel()
-        spec_dtype = datamodels.SpecModel().spec_table.dtype
+        spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
 
     output_model.update(input_model, only="PRIMARY")
 
@@ -774,7 +774,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
     # get aperture for extended it will not change with wavelength
     if source_type == "EXTENDED":
-        aperture = RectangularAperture(position, width, height, theta)
+        aperture = RectangularAperture(position, width, height, theta=theta)
 
     for k in range(shape[0]):  # looping over wavelength
         inner_bkg = None

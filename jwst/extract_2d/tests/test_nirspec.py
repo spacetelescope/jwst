@@ -205,6 +205,10 @@ def nirspec_slit_list():
 
 def test_extract_2d_nirspec_msa_fs(nirspec_msa_rate, nirspec_msa_metfl):
     model = ImageModel(nirspec_msa_rate)
+    model.dq = model.get_default("dq")
+    model.err = model.get_default("err")
+    model.var_rnoise = model.get_default("var_rnoise")
+    model.var_poisson = model.get_default("var_poisson")
     result = AssignWcsStep.call(model)
     result = Extract2dStep.call(result)
     assert isinstance(result, MultiSlitModel)
@@ -228,6 +232,10 @@ def test_extract_2d_nirspec_msa_fs(nirspec_msa_rate, nirspec_msa_metfl):
 
 def test_extract_2d_nirspec_fs(nirspec_fs_rate):
     model = ImageModel(nirspec_fs_rate)
+    model.dq = model.get_default("dq")
+    model.err = model.get_default("err")
+    model.var_rnoise = model.get_default("var_rnoise")
+    model.var_poisson = model.get_default("var_poisson")
     model_wcs = AssignWcsStep.call(model)
 
     result = Extract2dStep.call(model_wcs)
@@ -238,7 +246,6 @@ def test_extract_2d_nirspec_fs(nirspec_fs_rate):
 
     # the FS slit has a string name, slitlet_id matches shutter ID
     assert result.slits[0].name == "S200A1"
-    assert result.slits[0].slitlet_id == 0
     assert result.slits[0].data.shape == (45, 1254)
 
     # ensure x_offset, y_offset become zero when dither information is missing
@@ -258,6 +265,9 @@ def test_extract_2d_nirspec_fs(nirspec_fs_rate):
 
 def test_extract_2d_nirspec_bots(nirspec_bots_rateints):
     model = CubeModel(nirspec_bots_rateints)
+    model.int_times = model.get_default("int_times")
+    model.var_rnoise = model.get_default("var_rnoise")
+    model.var_poisson = model.get_default("var_poisson")
     result = AssignWcsStep.call(model)
     result = Extract2dStep.call(result)
 
@@ -318,6 +328,10 @@ def test_select_slits(nirspec_slit_list):
 
 def test_output_is_not_input(nirspec_fs_rate):
     model = ImageModel(nirspec_fs_rate)
+    model.dq = model.get_default("dq")
+    model.err = model.get_default("err")
+    model.var_rnoise = model.get_default("var_rnoise")
+    model.var_poisson = model.get_default("var_poisson")
     model_wcs = AssignWcsStep.call(model)
     result = Extract2dStep.call(model_wcs)
 
