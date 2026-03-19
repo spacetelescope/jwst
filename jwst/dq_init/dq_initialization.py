@@ -61,6 +61,7 @@ def do_dqinit(output_model, mask_model, user_dq=None):
     num_superstripe = getattr(output_model.meta.subarray, "num_superstripe", None)
     if output_model.meta.exposure.type in guider_list:
         output_model.dq |= mask_array
+
     elif num_superstripe is not None and num_superstripe > 0:
         # Store 3-D DQ array in pixeldq
         output_model.pixeldq = mask_array

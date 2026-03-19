@@ -166,8 +166,6 @@ class RefPixStep(Step):
 
 
 # TODO: reorganize stripe handling utilities into a separate module
-
-
 def collate_superstripes(input_model):
     """
     Collate superstripes into arrays resembling the full detector/subarray shape.
