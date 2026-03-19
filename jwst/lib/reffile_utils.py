@@ -469,7 +469,7 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
 
     if num_superstripe == 0:
         # SUBSTRIPE MODE
-        stripe_out = np.zeros((*ref_shape[:-2], fast_size, slow_size), dtype=ref_array.dtype)
+        stripe_out = np.zeros((*ref_shape[:-2], slow_size, fast_size), dtype=ref_array.dtype)
         # Track the read position in the full frame with linecount, and number of lines
         # read into subarray with sub_lines
         linecount = 0
