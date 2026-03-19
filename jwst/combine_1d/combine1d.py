@@ -27,6 +27,7 @@ __all__ = [
     "compute_output_wl",
     "check_exptime",
     "combine_1d_spectra",
+    "check_monotonic",
 ]
 
 
@@ -749,6 +750,15 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
                 )
             log.warning(msg)
             continue
+        wavelength = in_spec.spec_table.field("wavelength")
+        monotonic = check_monotonic(wavelength)
+        if not monotonic:
+            log.warning(
+                f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
+                "has does not have monotonic wavelengths; skipping."
+            )
+            continue
+
         spectral_order = in_spec.spectral_order
         if spectral_order not in input_spectra:
             input_spectra[spectral_order] = []
@@ -831,3 +841,27 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
         output_spectra[order].close()
 
     return output_model
+
+
+def check_monotonic(arr):
+    """
+    Check if an array is strictly monotonic (purely increasing or decreasing).
+
+    Parameters
+    ----------
+    arr : list or array-like
+        A sequence of comparable numeric elements to evaluate.
+
+    Returns
+    -------
+    bool
+        True if the array is strictly increasing or strictly decreasing,
+        False otherwise. Note that duplicates will return False.
+    """
+    if len(arr) < 2:
+        return True
+
+    is_increasing = all(arr[i] < arr[i + 1] for i in range(len(arr) - 1))
+    is_decreasing = all(arr[i] > arr[i + 1] for i in range(len(arr) - 1))
+
+    return is_increasing or is_decreasing
