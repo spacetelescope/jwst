@@ -68,3 +68,5 @@ and filters that are valid with the file.
 :wavelengthrange: A list containing the list of [order, filter, wavelength min, wavelength max]
 :waverange_selector: The list of FILTER names available
 :extract_orders: A list containing the list of orders to extract for each filter
+
+TODO: Do we need to add anything here, e.g. explanation of how the fieldpoint idx is handled?

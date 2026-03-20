@@ -34,7 +34,7 @@ from jwst.lib import reffile_utils
 log = logging.getLogger(__name__)
 
 
-__all__ = ["create_pipeline", "imaging", "tsgrism", "wfss"]
+__all__ = ["create_pipeline", "dhs", "imaging", "tsgrism", "wfss"]
 
 
 def create_pipeline(input_model, reference_files):

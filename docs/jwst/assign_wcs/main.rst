@@ -218,6 +218,11 @@ For WFSS modes (``NIS_WFSS``, ``NRC_WFSS``, and ``MIR_WFSS``), an approximation 
 associated with a direct image with the same instrument configuration as the grism/prism image
 is saved as FITS WCS in the headers of grism/prism images.
 
+WCS of substripe (DHS) and superstripe exposures
+------------------------------------------------
+
+ADD HERE
+
 Corrections Due to Spacecraft Motion
 ------------------------------------
 

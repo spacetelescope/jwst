@@ -265,6 +265,8 @@ each object and the actual extracted data arrays, e.g.:
 NIRCam TSGRISM
 ++++++++++++++
 
+TODO: Add details for DHS mode
+
 There is no source catalog created for TSO grism observations, because no associated
 direct images are obtained from which to derive such a catalog. So the ``extract_2d``
 step relies on the fact that the source of interest is placed at the aperture reference

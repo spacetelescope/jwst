@@ -157,6 +157,10 @@ each spectrum in a TSO model::
             wave = spectrum.spec_table["WAVELENGTH"][i]
             flux = spectrum.spec_table["FLUX"][i]
 
+TODO: does this differ for DHS mode data? If so add a note here about that.
+Overall there isn't much about how NRC_TSGRISM data works on this page, so it's
+hard to tell where we need to make distinctions/clarifications for DHS data.
+
 Data sources
 ^^^^^^^^^^^^
 
