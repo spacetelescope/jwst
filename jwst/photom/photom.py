@@ -454,7 +454,7 @@ class DataSet:
         Apply photometric calibration data to dataset and update conversion factor.
 
         For MIRI imaging and LRS modes, matching is based on FILTER and SUBARRAY.
-        For MIRI WFSS the matching is based on FILTER
+        For MIRI WFSS the matching is based on FILTER and SUBARRAY.
         MIRI MRS uses dedicated photom reference files per CHANNEL+BAND.
 
         For Imaging and LRS, the routine will find the corresponding row of
