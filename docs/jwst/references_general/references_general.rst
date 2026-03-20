@@ -422,7 +422,7 @@ EXP_TYPE  MIR_MRS             Exposure type.
                               FGS allowed values: FGS_IMAGE, FGS_FOCUS, FGS_SKYFLAT, FGS_INTFLAT, FGS_DARK
 
                               MIRI allowed values: MIR_IMAGE, MIR_TACQ, MIR_LYOT, MIR_4QPM, MIR_LRS-FIXEDSLIT,
-                              MIR_LRS-SLITLESS, MIR_MRS, MIR_DARK, MIR_FLATIMAGE, MIR_FLATMRS, MIR_CORONCAL
+                              MIR_LRS-SLITLESS, MIR_MRS, MIR_DARK, MIR_FLATIMAGE, MIR_FLATMRS, MIR_CORONCAL, MIR_WFSS
 
                               NIRCam allowed values: NRC_IMAGE, NRC_GRISM, NRC_TACQ, NRC_TACONFIRM, NRC_CORON,
                               NRC_TSIMAGE, NRC_TSGRISM, NRC_FOCUS, NRC_DARK, NRC_FLAT, NRC_LED

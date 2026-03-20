@@ -454,6 +454,7 @@ class DataSet:
         Apply photometric calibration data to dataset and update conversion factor.
 
         For MIRI imaging and LRS modes, matching is based on FILTER and SUBARRAY.
+        For MIRI WFSS the matching is based on FILTER and SUBARRAY.
         MIRI MRS uses dedicated photom reference files per CHANNEL+BAND.
 
         For Imaging and LRS, the routine will find the corresponding row of
@@ -468,8 +469,15 @@ class DataSet:
                or `~jwst.datamodels.MirLrsPhotomModel`
             MIRI photom reference file data model.
         """
+        # Handle MultiSlit models and MIRI WFSS
+        if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == "MIR_WFSS":
+            # Get a time-dependent correction from the reference file if available
+            mid_time = self.input.meta.exposure.mid_time
+            correction_table = time_dependence.get_correction_table(ftab, mid_time)
+            self.calc_wfss(ftab, correction_table, ["filter", "subarray"])
+
         # Imaging detector
-        if self.detector == "MIRIMAGE":
+        elif self.detector == "MIRIMAGE":
             # Get the subarray value of the input data model
             log.info(" subarray: %s", self.subarray)
             fields_to_match = {"subarray": self.subarray, "filter": self.filter}
@@ -480,7 +488,6 @@ class DataSet:
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     return
-
             # Get a time-dependent correction from the reference file if available
             mid_time = self.input.meta.exposure.mid_time
             correction_table = time_dependence.get_correction_table(ftab, mid_time)
@@ -777,6 +784,7 @@ class DataSet:
         # of the photom step will be in units of surface brightness, as for
         # other types of data.
         unit_is_surface_brightness = True  # default
+
         try:
             conversion = tabdata["photmjsr"]  # unit is MJy / sr
         except KeyError:
@@ -839,7 +847,7 @@ class DataSet:
             # real reference files may use a different unit, passed in as phot_unit, but
             # phot_unit must be compatible with expected_unit for a given mode.
             expected_unit = None
-            if self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
+            if self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS", "MIR_WFSS"]:
                 expected_unit = "MJy micron s / (DN sr)"
             if expected_unit is None:
                 log.warning(
@@ -920,7 +928,7 @@ class DataSet:
                     )
                     slit.photom_point = conversion  # store the result
 
-                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
+                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS", "MIR_WFSS"]:
                     log.info("Including spectral dispersion in 2-d flux calibration")
                     conversion, no_cal = self.create_2d_conversion(
                         slit,
