@@ -1262,7 +1262,8 @@ def test_refpix_bad_reference_pixels(monkeypatch, caplog):
 
 
 @pytest.mark.parametrize("use_refpix", [True, False])
-def test_refpix_superstripe(use_refpix):
+@pytest.mark.parametrize("odd_even_columns", [True, False])
+def test_refpix_superstripe(use_refpix, odd_even_columns):
     """Smoke test for superstripe handling."""
     # make ramp model
     model = make_superstripe_model()
@@ -1277,7 +1278,7 @@ def test_refpix_superstripe(use_refpix):
         model.pixeldq[:, -4:, :] = dqflags.pixel["REFERENCE_PIXEL"]
         model.pixeldq[:, :, -4:] = dqflags.pixel["REFERENCE_PIXEL"]
 
-    result = RefPixStep.call(model)
+    result = RefPixStep.call(model, odd_even_columns=odd_even_columns)
 
     # step is marked complete
     assert result.meta.cal_step.refpix == "COMPLETE"
