@@ -119,6 +119,14 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     if sci_ngroups <= 5:
         group_skip_int1 = 1
         group_skip_int2p = 1
+        log.info(
+            f"Number of groups to skip for integration 1 (for data with <= 5 groups): "
+            f"{group_skip_int1}"
+        )
+        log.info(
+            f"Number of groups to skip for integration 2+ (for data with <= 5 groups): "
+            f"{group_skip_int2p}"
+        )
 
     # General Checks for RSCD dynamic flagging.
     # checks for integration 1:
