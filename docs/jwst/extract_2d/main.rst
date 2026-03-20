@@ -306,12 +306,12 @@ NIRCam DHS TSGRISM
 Similarly to non-DHS TSGRISM, for DHS modes the source location is determined from the
 aperture reference point, and those values are used to set the source location
 for all computations involving the extent of the spectral trace and pixel wavelength
-assignments.  The major difference is that each strip is extracted separately;
-the output model is a MultiSlitModel with one slit for each DHS strip.  The slit ID
-corresponds to the strip number, e.g. 10, 9, 8, 7 for NRCA1.
+assignments.  The major difference is that each stripe is extracted separately;
+the output model is a MultiSlitModel with one slit for each DHS stripe.  The slit ID
+corresponds to the stripe number, e.g. 10, 9, 8, 7 for NRCA1.
 
 The cutout height in the cross-dispersion direction is no longer hard-set at 64 pixels;
-instead it's equal to the height of the strip, which is set by the ``nreads2`` attribute
+instead it's equal to the height of the stripe, which is set by the ``nreads2`` attribute
 of the input model. In the along-dispersion direction, similar to non-DHS TSGRISM modes,
 the entire extent of the image is included in the cutout.
 
