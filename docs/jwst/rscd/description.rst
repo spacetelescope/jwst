@@ -52,6 +52,8 @@ only applies flags if the integration contains at least three more groups than t
 skip number (Groups > ``n_skip`` + 3). If this condition is not met, the step is bypassed to allow
 later pipeline stages enough data points to perform a linear fit.
 
+An additional check **resets the skip threshold to 1** for any integration containing five or fewer groups.
+
 Standard RSCD correction flags the first ``n_skip`` groups as DO_NOT_USE. However, for very bright sources,
 a pixel might saturate immediately after those skipped groups. If the algorithm always skips
 the RSCD groups, it might leave the pixel with zero or one valid group, making it impossible to
