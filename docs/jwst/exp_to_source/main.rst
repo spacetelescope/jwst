@@ -65,7 +65,7 @@ S200B1         5
 The assigned source ID values are used by ``exp_to_source`` to sort the data
 from each slit into the appropriate source-based output product.
 
-NIRCam, MIRI and NIRISS WFSS
+NIRCam, MIRI, and NIRISS WFSS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Wide-Field Slitless Spectroscopy (WFSS) modes do not have a predefined
 source list, but a source list is created by the
