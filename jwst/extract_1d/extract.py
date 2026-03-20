@@ -489,14 +489,14 @@ def populate_time_keywords(input_model, output_model):
     int_start = input_model.meta.exposure.integration_start
 
     if hasattr(input_model, "data"):
-        shape = input_model.data.shape
-    elif hasattr(input_model, "slits"):
-        shape = input_model.slits[0].data.shape
+        ndim = input_model.data.ndim
+    elif hasattr(input_model, "slits") and len(input_model.slits) > 0:
+        ndim = input_model.slits[0].data.ndim
     else:
-        shape = None
-    if len(shape) == 3:
-        num_integ = shape[0]
-    elif len(shape) == 2:
+        ndim = None
+    if ndim == 3:
+        num_integ = input_model.data.shape[0]
+    elif ndim == 2:
         num_integ = 1
     else:
         log.warning("Not using INT_TIMES table because of unexpected input shape.")
