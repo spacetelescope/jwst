@@ -64,6 +64,11 @@ class IFUCubeData:
         The default type of cube for :ref:`calwebb_spec3 <calwebb_spec3>`
         is ``'band'``. These cubes will contain a single band of data.
 
+    linear_wave : bool
+        If true then create a linear wavelength dimension for output cubes. If
+        false then output cubes have a non-linear wavelength spacing. The
+        non-linear spacing is determined by the cube_pars reference file.
+
     instrument : str
         Instrument name, either "MIRI" or "NIRSpec"
 

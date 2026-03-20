@@ -87,7 +87,7 @@ each band will be created.
   - :ref:`calwebb_spec2 <calwebb_spec2>` pipeline rules for MIRI is to produce ``output_type=multi``.
   - :ref:`calwebb_spec3 <calwebb_spec3>` pipeline rules for MIRI is to produce ``output_type=band``.
 
-``linear_wavelength [boolean]``
+``linear_wave [boolean]``
 Sets the wavelength range of the output cubes (default is True). Currently, this option is limited
 to NIRSpec data and can be used with prism data to create non-linear wavelength cubes.
 Whether MIRI cubes have linear or non-linear wavelength dimensions is determined

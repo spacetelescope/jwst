@@ -1,1 +1,1 @@
-Always create a wavetab extension and added wavelinear as option
+Always create a wavetab extension and added ``linear_wave`` as option.
