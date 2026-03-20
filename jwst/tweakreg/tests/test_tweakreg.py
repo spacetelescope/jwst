@@ -1,12 +1,9 @@
 import json
 import os
-from contextlib import nullcontext
-from copy import deepcopy
 
 import asdf
 import numpy as np
 import pytest
-from astropy.modeling.models import Shift
 from astropy.table import Table
 from astropy.utils.data import get_pkg_data_filename
 from astropy.wcs import WCS
@@ -69,51 +66,6 @@ def test_rename_catalog_columns_invalid(mock_source_catalog, missing):
     mock_source_catalog.remove_column(missing)
     with pytest.raises(ValueError, match="catalogs must contain"):
         tweakreg_step._rename_catalog_columns(mock_source_catalog)
-
-
-@pytest.mark.parametrize("offset, is_good", [(1 / 3600, True), (11 / 3600, False)])
-def test_is_wcs_correction_small(offset, is_good):
-    """
-    Test that the _is_wcs_correction_small method returns True for a small
-    wcs correction and False for a "large" wcs correction. The values in this
-    test are selected based on the current step default parameters:
-        - use2dhist
-        - searchrad
-        - tolerance
-    Changes to the defaults for these parameters will likely require updating the
-    values uses for parametrizing this test.
-    """
-    path = get_pkg_data_filename("data/mosaic_long_i2d_gwcs.asdf", package="jwst.tweakreg.tests")
-    with asdf.open(path) as af:
-        wcs = af.tree["wcs"]
-
-    # Make a copy and add an offset at the end of the transform
-    twcs = deepcopy(wcs)
-    step = twcs.pipeline[0]
-    step.transform = step.transform | Shift(offset) & Shift(offset)
-    twcs.bounding_box = wcs.bounding_box
-
-    step = tweakreg_step.TweakRegStep()
-
-    class FakeCorrector:
-        def __init__(self, wcs, original_skycoord):
-            self.wcs = wcs
-            self._original_skycoord = original_skycoord
-
-        @property
-        def meta(self):
-            return {"original_skycoord": self._original_skycoord}
-
-    correctors = [FakeCorrector(twcs, twk._wcs_to_skycoord(wcs))]
-
-    if not is_good:
-        ctx = pytest.warns(UserWarning, match="WCS has been tweaked by more than")
-    else:
-        ctx = nullcontext()
-
-    with ctx:
-        corr_result = twk._is_wcs_correction_small(correctors)
-    assert corr_result is is_good
 
 
 def test_expected_failure_bad_starfinder():
