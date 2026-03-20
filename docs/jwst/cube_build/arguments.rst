@@ -88,10 +88,11 @@ each band will be created.
   - :ref:`calwebb_spec3 <calwebb_spec3>` pipeline rules for MIRI is to produce ``output_type=band``.
 
 ``linear_wave [boolean]``
-Sets the wavelength range of the output cubes (default is True). Currently, this option is limited
-to NIRSpec data and can be used with prism data to create non-linear wavelength cubes.
-Whether MIRI cubes have linear or non-linear wavelength dimensions is determined
-by the bands and channels included in the cubes.
+Sets the wavelength sampling for the output cubes (default is True). If True, the output cubes have equally
+spaced (linear) wavelengths. If False, the cubes use a non-linear wavelength sampling as defined by the
+cube_pars reference file. Currently, this non-linear option is limited to NIRSpec data (e.g., prism observations).
+For MIRI cubes, the wavelength sampling (linear vs. non-linear) is automatically determined by the specific
+bands and channels included.
 
 The following arguments control the size and sampling characteristics of the output IFU cube.
 
