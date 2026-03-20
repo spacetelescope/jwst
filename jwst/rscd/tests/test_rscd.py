@@ -242,7 +242,7 @@ def test_rscd_bright(create_miri_model):
 
     # size of ramp
     nints = 2
-    ngroups = 5
+    ngroups = 6
     xsize = 15
     ysize = 15
 
@@ -307,4 +307,75 @@ def test_rscd_bright(create_miri_model):
         expected_diff,
         dq_diff,
         err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
+    )
+
+
+def test_rscd_5groups(create_miri_model):
+    """
+    Test that with 5 groups data or less the step reset the number to
+    skip to 1
+    """
+    ngroups = 5
+    nints = 2
+    xsize = 10
+    ysize = 10
+    dm_ramp = create_miri_model(nints, ngroups, ysize, xsize)
+
+    # set the number of groups to flag in int 1 and int 2
+    nflag_int1 = 2
+    nflag_int2 = 3
+
+    # run the RSCD baseline correction step on a copy (the copy is created at the step script)
+    dm_ramp_rscd = correction_skip_groups(dm_ramp.copy(), nflag_int1, nflag_int2)
+
+    # what should happen
+    nflag_int2_used = 1
+    nflag_int1_used = 1
+    # check that the difference in the groupdq flags is equal to
+    #   the 'do_not_use' flag for the 1st integration
+    dq_diff = (
+        dm_ramp_rscd.groupdq[0, 0:nflag_int1_used, :, :]
+        - dm_ramp.groupdq[0, 0:nflag_int1_used, :, :]
+    )
+    np.testing.assert_array_equal(
+        np.full((nflag_int1_used, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
+    )
+
+    # test that the groupdq flags are not changed for the rest of the groups
+    # in the 1st integration
+    dq_diff = (
+        dm_ramp_rscd.groupdq[0, nflag_int1_used:ngroups, :, :]
+        - dm_ramp.groupdq[0, nflag_int1_used:ngroups, :, :]
+    )
+    np.testing.assert_array_equal(
+        np.full((ngroups - nflag_int1_used, ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="groupdq flags changed after maximum requested",
+    )
+
+    # test that the groupdq flags for 2nf integration are correct
+    # check that the difference in the groupdq flags is equal to
+    #   the 'do_not_use' flag for the 1st integration
+    dq_diff = (
+        dm_ramp_rscd.groupdq[1, 0:nflag_int2_used, :, :]
+        - dm_ramp.groupdq[1, 0:nflag_int2_used, :, :]
+    )
+    np.testing.assert_array_equal(
+        np.full((nflag_int2_used, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int),
+        dq_diff,
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
+    )
+
+    # test that the groupdq flags are not changed for the rest of the groups
+    # in the 2nd integration
+    dq_diff = (
+        dm_ramp_rscd.groupdq[1, nflag_int2_used:ngroups, :, :]
+        - dm_ramp.groupdq[1, nflag_int2_used:ngroups, :, :]
+    )
+    np.testing.assert_array_equal(
+        np.full((ngroups - nflag_int2_used, ysize, xsize), 0, dtype=int),
+        dq_diff,
+        err_msg="groupdq flags changed after maximum requested",
     )
