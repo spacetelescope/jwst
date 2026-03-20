@@ -115,14 +115,15 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     # Will we have at least 3 groups. The last frame step has rejected 1 group so we have 2 to
     # find a slope.
 
+    # check for sci_ngroups <= 5
+    if sci_ngroups <= 5:
+        group_skip_int1 = 1
+        group_skip_int2p = 1
+
     # General Checks for RSCD dynamic flagging.
     # checks for integration 1:
     if sci_ngroups < (group_skip_int1 + 3):
         max_groups_skip = max(0, sci_ngroups - 3)
-
-        # check for sci_ngroups <= 5
-        if sci_ngroups <= 5:
-            max_groups_skip = 1
 
         if max_groups_skip != group_skip_int1:
             log.info(f"Changing the # of groups to skip in int 1 to {max_groups_skip}")
@@ -131,9 +132,6 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     # checks for integration 2
     if sci_nints > 1 and sci_ngroups < (group_skip_int2p + 3):
         max_groups_skip = max(0, sci_ngroups - 3)
-        # check for sci_ngroups <= 5
-        if sci_ngroups <= 5:
-            max_groups_skip = 1
 
         if max_groups_skip != group_skip_int2p:
             group_skip_int2p = max_groups_skip
