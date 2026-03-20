@@ -90,8 +90,8 @@ these source locations are directly used, instead of recomputing the source
 position from the WCS information.
 
 
-NIRCam, MIRI and NIRISS WFSS
-++++++++++++++++++++++++++++
+NIRCam, MIRI, and NIRISS WFSS
++++++++++++++++++++++++++++++
 
 During normal, automated processing of WFSS grism images, the
 step parameter ``grism_objects`` is left unspecified, in which case the ``extract_2d``
