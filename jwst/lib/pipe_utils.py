@@ -151,10 +151,6 @@ def match_nans_and_flags(input_model):
             continue
         data[is_invalid] = np.nan
 
-    # Update the DQ extension
-    if input_model.dq.shape == data_shape:
-        input_model.dq[is_invalid] |= dqflags.pixel["DO_NOT_USE"]
-
 
 def generate_substripe_ranges(sci_model, subarray_ranges=False):
     """
