@@ -2710,9 +2710,11 @@ class IFUCubeData:
             ifucube_model.meta.ifu.roi_spatial = float(self.rois)
             ifucube_model.meta.ifu.roi_wave = float(self.roiw)
             # even though we are writing a WAVE-TAB we
-            # do not want to set ctype3="WAVE-TAB", ps3_0 = 'WCS-TABLE'
-            # or ps3_1 = 'wavelength because standard viewer (DS9)
-            # report an incorrect wavelength range
+            # do not want to set these parameters:
+            #   ctype3="WAVE-TAB",
+            #   ps3_0 = 'WCS-TABLE'
+            #   ps3_1 = 'wavelength'
+            # because some viewers (e.g. DS9) report an incorrect wavelength range
         else:
             ifucube_model.meta.wcsinfo.ctype3 = "WAVE-TAB"
             ifucube_model.meta.wcsinfo.ps3_0 = "WCS-TABLE"
