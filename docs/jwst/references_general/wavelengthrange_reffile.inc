@@ -69,4 +69,4 @@ and filters that are valid with the file.
 :waverange_selector: The list of FILTER names available
 :extract_orders: A list containing the list of orders to extract for each filter
 
-TODO: Do we need to add anything here, e.g. explanation of how the fieldpoint idx is handled?
+TODO: Do we need to add anything here for DHS, e.g. explanation of how the fieldpoint idx is handled?
