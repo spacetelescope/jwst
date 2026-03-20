@@ -67,7 +67,8 @@ For NIRISS SOSS mode the SPECWCS file is in ASDF format with the following struc
 
 NIRCam Grism modes
 ::::::::::::::::::
-For NIRCam WFSS and TSGRISM modes the SPECWCS file is in ASDF format with the following structure:
+For NIRCam WFSS and TSGRISM (including DHS) modes the SPECWCS file
+is in ASDF format with the following structure:
 
 :displ: The wavelength transform models
 :dispx: The x-dispersion models
@@ -76,9 +77,6 @@ For NIRCam WFSS and TSGRISM modes the SPECWCS file is in ASDF format with the fo
 :invdispy: The inverse y-dispersion models
 :invdispl: The inverse wavelength transform models
 :orders: a list of order numbers that the models relate to, in the same order as the models
-
-TODO: maybe some kind of note here for DHS saying there's a slightly different specwcs
-per stripe?
 
 NIRISS WFSS mode
 ::::::::::::::::
