@@ -85,6 +85,60 @@ def test_generate_stripe():
     assert stripe4_array[83, 1024] == 972  # nreads1 + nskips1, stripe 3
 
 
+def test_generate_stripe_repeat_stripe_zero():
+    """
+    Test generate_stripe_array in DHS mode when repeat_stripe=0.
+
+    When repeat_stripe=0 the read head does not reset between stripes;
+    successive nreads2 blocks are separated by nskips2 rows advancing
+    monotonically through the detector.
+    """
+    # Array where every pixel value equals its row index.
+    test_array = (np.ones((2048, 2048), dtype=int) * np.arange(2048)).T
+
+    xsize_sci = 2048
+    nreads1, nreads2 = 1, 20
+    nskips1, nskips2 = 10, 5
+    repeat_stripe = 0
+    interleave_reads1 = 0
+    superstripe_step, num_superstripe = 0, 0
+    fastaxis, slowaxis, ngroups = -1, 2, 1
+    # Detector read sequence: row 0 (nreads1), skip 10 (nskips1),
+    # rows 11-30 (nreads2), skip 5 (nskips2), rows 36-55 (nreads2),
+    # skip 5 (nskips2), rows 61-80 (nreads2) → 61 output rows total.
+    ysize_sci = nreads1 + nreads2 * 3  # 1 + 20*3 = 61
+
+    stripe_params = (
+        xsize_sci,
+        ysize_sci,
+        nreads1,
+        nreads2,
+        nskips1,
+        nskips2,
+        repeat_stripe,
+        interleave_reads1,
+        superstripe_step,
+        num_superstripe,
+        fastaxis,
+        slowaxis,
+        ngroups,
+    )
+    test_array_sciframe = science_detector_frame_transform(test_array, *stripe_params[-3:-1])
+    stripe_array = generate_stripe_array(test_array_sciframe, *stripe_params)
+
+    assert stripe_array.shape == (ysize_sci, xsize_sci)
+    # Output row 0: first nreads1 read from detector row 0.
+    assert stripe_array[0, 1024] == 0
+    # Output row 1: start of first nreads2 block; head advanced by nreads1 + nskips1.
+    assert stripe_array[1, 1024] == nreads1 + nskips1
+    # Output row nreads1 + nreads2: start of second nreads2 block;
+    # head advanced by an additional nreads2 + nskips2 (no reset).
+    assert stripe_array[nreads1 + nreads2, 1024] == nreads1 + nskips1 + nreads2 + nskips2
+    # Output row nreads1 + 2*nreads2: start of third nreads2 block;
+    # head advanced by yet another nreads2 + nskips2
+    assert stripe_array[nreads1 + 2 * nreads2, 1024] == nreads1 + nskips1 + 2 * (nreads2 + nskips2)
+
+
 def test_multistripe_subarray_model():
     mock_rn = ReadnoiseModel(data=(np.ones((2048, 2048), dtype=int) * np.arange(2048)).T)
     mock_rn.meta.instrument.name = "NIRCAM"
