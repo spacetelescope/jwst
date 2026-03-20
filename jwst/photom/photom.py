@@ -474,7 +474,7 @@ class DataSet:
             # Get a time-dependent correction from the reference file if available
             mid_time = self.input.meta.exposure.mid_time
             correction_table = time_dependence.get_correction_table(ftab, mid_time)
-            self.calc_wfss(ftab, correction_table, ["filter"], ["subarray"])
+            self.calc_wfss(ftab, correction_table, ["filter", "subarray"])
 
         # Imaging detector
         elif self.detector == "MIRIMAGE":
