@@ -384,7 +384,6 @@ def stripe_read(sci_model, ref_model, attribs):
 
     # Get the reference model subarray params
     sub_model = type(ref_model)()
-    sub_model.update(ref_model)
     for attrib in attribs:
         ref_array = getattr(ref_model, attrib)
 
@@ -434,6 +433,7 @@ def stripe_read(sci_model, ref_model, attribs):
             slowaxis,
             ngroups,
         )
+    sub_model.update(ref_model)
 
     return sub_model
 
