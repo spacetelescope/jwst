@@ -201,8 +201,8 @@ and (x, y) grid as above, to get the coordinates for slice 1:
 Slice IDs in the regions image are one-indexed, with values between 1 and 30.
 Zero indicates a pixel outside any valid slice region.
 
-WCS of WFSS exposures
----------------------
+WCS of slitless prism/grism exposures
+-------------------------------------
 
 The WCS forward transforms for slitless grism exposures (``NIS_WFSS``, ``NRC_WFSS``, ``NRC_TSGRISM``)
 and slitless prism (``MIR_WFSS``) exposures take as input the ``x, y`` coordinates on the

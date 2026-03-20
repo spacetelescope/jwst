@@ -57,7 +57,7 @@ wavelength range and spectral order for each combination of filter and grating.
 
 NIRCam WFSS, NIRCam TSGRISM, NIRISS WFSS, MIRI WFSS
 :::::::::::::::::::::::::::::::::::::::::::::::::::
-For NIRCam WFSS and TSGRIM modes, MIRI WFSS mode and NIRISS WFSS mode, the WAVELENGTHRANGE
+For NIRCam WFSS and TSGRIM modes, MIRI WFSS mode, and NIRISS WFSS mode, the WAVELENGTHRANGE
 reference file contains the wavelength limits to use when calculating the minimum
 and maximum dispersion extents on the detector. It also contains the default list
 of orders that should be extracted for each filter.

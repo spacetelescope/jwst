@@ -21,7 +21,7 @@ Simple imaging data, usually in the form of an ImageModel, and some
 spectroscopic modes, use a straight-forward approach that involves applying
 a single flat-field reference file to the science image. The spectroscopic
 modes included in this category are NIRCam WFSS and Time-Series Grism,
-NIRISS WFSS and SOSS, and MIRI MRS, MIRI WFSS and LRS. All of these modes are processed
+NIRISS WFSS and SOSS, and MIRI MRS, MIRI WFSS, and LRS. All of these modes are processed
 as follows:
 
 #. If the science data have been taken using a subarray and the FLAT

@@ -469,13 +469,12 @@ class DataSet:
                or `~jwst.datamodels.MirLrsPhotomModel`
             MIRI photom reference file data model.
         """
-        # Get a time-dependent correction from the reference file if available
-        mid_time = self.input.meta.exposure.mid_time
-        correction_table = time_dependence.get_correction_table(ftab, mid_time)
-
         # Handle MultiSlit models and MIRI WFSS
         if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == "MIR_WFSS":
-            self.calc_wfss(ftab, correction_table, ["filter"])
+            # Get a time-dependent correction from the reference file if available
+            mid_time = self.input.meta.exposure.mid_time
+            correction_table = time_dependence.get_correction_table(ftab, mid_time)
+            self.calc_wfss(ftab, correction_table, ["filter"], ["subarray"])
 
         # Imaging detector
         elif self.detector == "MIRIMAGE":
@@ -489,7 +488,9 @@ class DataSet:
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     return
-
+            # Get a time-dependent correction from the reference file if available
+            mid_time = self.input.meta.exposure.mid_time
+            correction_table = time_dependence.get_correction_table(ftab, mid_time)
             self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
         # MRS detectors

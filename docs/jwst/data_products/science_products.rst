@@ -567,7 +567,7 @@ These contain the FLUX, SURF_BRIGHT, and BACKGROUND data, with additional
 corrections for residual fringing (see :ref:`MIRI-MRS-1D-residual-fringe`
 for more information).
 
-For NIRCam, MIRI and NIRISS WFSS ``x1d`` products, each row in the table holds the full
+For NIRCam, MIRI, and NIRISS WFSS ``x1d`` products, each row in the table holds the full
 spectrum for a single source, such that all extracted sources are present in the
 same binary table. The spectral data columns listed above are each 2-D: each row is a 1-D
 vector containing all data points for the spectrum in that integration.
