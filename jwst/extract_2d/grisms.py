@@ -136,7 +136,7 @@ def build_grism_submodel(
     sub_model.source_id = 1
     sub_model.bunit_data = input_model.meta.bunit_data
     sub_model.bunit_err = input_model.meta.bunit_err
-    if hasattr(input_model, "int_times"):
+    if getattr(input_model, "int_times", None) is not None:
         sub_model.int_times = input_model.int_times.copy()
 
 
@@ -505,7 +505,7 @@ def _extract_tso_dhs_object(
                 name=str(stripe_id),
             )
             output_model.slits.append(sub_model)
-    if hasattr(input_model, "int_times"):
+    if getattr(input_model, "int_times", None) is not None:
         output_model.int_times = input_model.int_times.copy()
     return output_model
 
