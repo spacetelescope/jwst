@@ -843,14 +843,14 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     return output_model
 
 
-def check_monotonic(arr):
+def check_monotonic(wavelength):
     """
-    Check if an array is strictly monotonic (purely increasing or decreasing).
+    Check if wavelength array is strictly monotonic (purely increasing or decreasing).
 
     Parameters
     ----------
-    arr : list or array-like
-        A sequence of comparable numeric elements to evaluate.
+    wavelength : list or array
+        An array of wavelengths
 
     Returns
     -------
@@ -858,10 +858,10 @@ def check_monotonic(arr):
         True if the array is strictly increasing or strictly decreasing,
         False otherwise. Note that duplicates will return False.
     """
-    if len(arr) < 2:
+    if len(wavelength) < 2:
         return True
 
-    is_increasing = all(arr[i] < arr[i + 1] for i in range(len(arr) - 1))
-    is_decreasing = all(arr[i] > arr[i + 1] for i in range(len(arr) - 1))
+    is_increasing = all(np.diff(wavelength) > 0)
+    is_decreasing = all(np.diff(wavelength) < 0)
 
     return is_increasing or is_decreasing

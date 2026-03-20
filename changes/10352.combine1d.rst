@@ -1,0 +1,1 @@
+Combine spectra if wavelengths are monotonic.

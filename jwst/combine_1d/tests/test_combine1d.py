@@ -7,7 +7,7 @@ import pytest
 
 from jwst import datamodels
 from jwst.combine_1d import Combine1dStep
-from jwst.combine_1d.combine1d import InputSpectrumModel, check_exptime
+from jwst.combine_1d.combine1d import InputSpectrumModel, check_exptime, check_monotonic
 from jwst.datamodels.utils.tests.wfss_helpers import N_SOURCES, wfss_multi
 from jwst.tests.helpers import LogWatcher
 
@@ -312,3 +312,29 @@ def test_combination_error(caplog):
     # Input is not modified
     assert result is not bad_model
     assert bad_model.meta.cal_step.combine_1d is None
+
+
+def test_monotonic():
+    # test_strictly_increasing
+    assert check_monotonic([400, 500, 600, 700]) is True
+
+    # test_strictly_decreasing
+    assert check_monotonic([700, 600, 500, 400]) is True
+
+    # test_not_monotonic
+    assert check_monotonic([400, 600, 500, 700]) is False
+
+    # test_duplicates_return_false
+    # Documentation says duplicates should return False
+    assert check_monotonic([400, 500, 500, 600]) is False
+
+    # test_single_element
+    assert check_monotonic([500]) is True
+
+    # test_empty_list():
+    assert check_monotonic([]) is True
+
+    # test_numpy_array_input
+    # Ensuring it handles actual numpy arrays, not just lists
+    arr = np.array([1.1, 1.2, 1.3])
+    assert check_monotonic(arr) is True
