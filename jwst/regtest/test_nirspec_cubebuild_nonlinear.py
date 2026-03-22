@@ -50,7 +50,7 @@ def test_cube_build_nirspec_prism_nonlinear(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_cube_build_nirspec_medium_nonlinear(rtdata, fitsdiff_default_kwargs):
-    """Run cube_build on medium resolition data and produce a non-linear wavelength"""
+    """Run cube_build on medium resolution data and produce a non-linear wavelength"""
     input_file = "jw01536003001_06101_00001_nrs1_cal.fits"
     rtdata.get_data(f"nirspec/ifu/{input_file}")
 
