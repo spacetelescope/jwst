@@ -208,6 +208,61 @@ def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
     return spec_model
 
 
+def create_spec_model_nonmonotonic(npoints=10, flux=1e-9, error=1e-10, wave_range=(5, 12)):
+    """Create a SpecModel."""
+    wavelength = np.arange(*wave_range, step=(wave_range[1] - wave_range[0]) / npoints)
+
+    # To break monotonicity, swap the last two elements.
+    if npoints > 1:
+        wavelength[-1], wavelength[-2] = wavelength[-2], wavelength[-1]
+
+    flux = np.full(npoints, flux)
+    error = np.full(npoints, error)
+
+    surf_bright = np.full(npoints, flux)
+    sb_error = np.full(npoints, error)
+
+    var = np.zeros(npoints)
+    dq = np.zeros(npoints)
+    background = np.zeros(npoints)
+    berror = np.zeros(npoints)
+    npixels = np.zeros(npoints)
+
+    # This data type is used for creating an output table.
+    spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
+
+    otab = np.array(
+        list(
+            zip(
+                wavelength,
+                flux,
+                error,
+                var,
+                var,
+                var,
+                surf_bright,
+                sb_error,
+                var,
+                var,
+                var,
+                dq,
+                background,
+                berror,
+                var,
+                var,
+                var,
+                npixels,
+                strict=False,
+            ),
+        ),
+        dtype=spec_dtype,
+    )
+
+    spec_model = datamodels.SpecModel(spec_table=otab)
+
+    return spec_model
+
+
 @pytest.fixture
 def wfss_multiexposure():
     return wfss_multi()
@@ -338,3 +393,54 @@ def test_monotonic():
     # Ensuring it handles actual numpy arrays, not just lists
     arr = np.array([1.1, 1.2, 1.3])
     assert check_monotonic(arr) is True
+
+
+def test_combine1d_wavelength_merging_test1():
+    """Test that Combine1dStep ignores a spectrum with non-monotonic wavelengths."""
+
+    # 1. Setup Input Spectra: monotonic
+    spec1 = create_spec_model(flux=1e-9, wave_range=(5, 12))
+    # 2. Set up non-monotonuc wavelength
+    spec2 = create_spec_model_nonmonotonic(flux=1e-9, wave_range=(5, 12))
+
+    ms = datamodels.MultiSpecModel()
+    ms.meta.exposure.exposure_time = 1.0
+    ms.meta.exposure.integration_time = 2.0
+    ms.spec.append(spec1)
+    ms.spec.append(spec2)
+
+    # 2. Initialize and Run the Step
+    step = Combine1dStep()
+    result = step.run(ms)
+
+    # 3. get wavelengths
+    combined_wave = result.spec[0].spec_table["wavelength"]
+    spec1_wave = spec1.spec_table["wavelength"]
+
+    # 4. Assert they are the same within a small tolerance
+    assert np.allclose(combined_wave, spec1_wave, atol=1e-12)
+
+
+def test_combine1d_wavelength_merging_test2():
+    """Test that Combine1dStep combines wavelengths."""
+
+    # 1. Setup with npoints=100
+    spec1 = create_spec_model(npoints=1000, flux=1e-9, wave_range=(6, 12))
+    spec2 = create_spec_model(npoints=1000, flux=1e-9, wave_range=(5, 11))
+
+    ms = datamodels.MultiSpecModel()
+    ms.spec.append(spec1)
+    ms.spec.append(spec2)
+
+    # 2. Run Step
+    step = Combine1dStep()
+    result = step.run(ms)
+    combined_wave = result.spec[0].spec_table["wavelength"]
+
+    # 3. Assertions
+    expected_min = 6.0
+    expected_max = 12.0
+
+    assert combined_wave.min() <= expected_min + 0.1
+    assert combined_wave.max() >= expected_max - 0.1
+    assert np.all(np.diff(combined_wave) > 0)
