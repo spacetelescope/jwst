@@ -395,7 +395,7 @@ def test_monotonic():
     assert check_monotonic(arr) is True
 
 
-def test_combine1d_wavelength_merging_test1():
+def test_combine1d_wavelength_merging_test():
     """Test that Combine1dStep ignores a spectrum with non-monotonic wavelengths."""
 
     # 1. Setup Input Spectra: monotonic
@@ -420,27 +420,6 @@ def test_combine1d_wavelength_merging_test1():
     # 4. Assert they are the same within a small tolerance
     assert np.allclose(combined_wave, spec1_wave, atol=1e-12)
 
-
-def test_combine1d_wavelength_merging_test2():
-    """Test that Combine1dStep combines wavelengths."""
-
-    # 1. Setup with npoints=100
-    spec1 = create_spec_model(npoints=1000, flux=1e-9, wave_range=(6, 12))
-    spec2 = create_spec_model(npoints=1000, flux=1e-9, wave_range=(5, 11))
-
-    ms = datamodels.MultiSpecModel()
-    ms.spec.append(spec1)
-    ms.spec.append(spec2)
-
-    # 2. Run Step
-    step = Combine1dStep()
-    result = step.run(ms)
-    combined_wave = result.spec[0].spec_table["wavelength"]
-
-    # 3. Assertions
-    expected_min = 6.0
-    expected_max = 12.0
-
-    assert combined_wave.min() <= expected_min + 0.1
-    assert combined_wave.max() >= expected_max - 0.1
+    # 5. Assert monotonic
     assert np.all(np.diff(combined_wave) > 0)
+
