@@ -422,4 +422,3 @@ def test_combine1d_wavelength_merging_test():
 
     # 5. Assert monotonic
     assert np.all(np.diff(combined_wave) > 0)
-
