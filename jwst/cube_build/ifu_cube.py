@@ -1282,14 +1282,28 @@ class IFUCubeData:
         # if we have NIRSPEC Prism then force wavelength to be non-linear
         elif self.instrument == "NIRSPEC" and not self.linear_wave:
             self.linear_wavelength = False
-            (
-                table_wavelength,
-                table_sroi,
-                table_wroi,
-                table_power,
-                table_softrad,
-                table_scalerad,
-            ) = self.instrument_info.get_prism_table()
+
+            # determine if have Prism, Medium or High resolution
+            med = ["g140m", "g235m", "g395m"]
+            high = ["g140h", "g235h", "g395h"]
+            prism = ["prism"]
+
+            for i in range(number_bands):
+                par1 = self.list_par1[i]
+                if par1 in prism:
+                    table = self.instrument_info.get_prism_table()
+                if par1 in med:
+                    table = self.instrument_info.get_med_table()
+                if par1 in high:
+                    table = self.instrument_info.get_high_table()
+                (
+                    table_wavelength,
+                    table_sroi,
+                    table_wroi,
+                    table_power,
+                    table_softrad,
+                    table_scalerad,
+                ) = table
 
         # if all bands have the same spectral size then linear_wavelength
         elif all_same_spectral:
