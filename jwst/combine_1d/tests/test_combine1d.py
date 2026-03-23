@@ -425,4 +425,4 @@ def test_combine1d_wavelength_merging_test():
 
     # 6. Test only 1 spectra was used to make the final combined spectra
     n_input = result.spec[0].spec_table["n_input"]
-    assert np.all(n_input ==1) 
+    assert np.all(n_input == 1)
