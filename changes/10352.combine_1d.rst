@@ -1,0 +1,1 @@
+Add a failsafe that skips processing an input spectrum if its wavelength array is not monotonic
