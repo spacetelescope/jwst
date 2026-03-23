@@ -345,7 +345,7 @@ The FITS file structure for a ``cal`` product is as follows:
  - ADSF: The data model meta data.
 
 For spectroscopic modes that contain data for multiple sources, such as NIRSpec MOS,
-NIRCam WFSS, and NIRISS WFSS, there will be multiple tuples of the SCI, ERR, DQ, VAR_POISSON,
+NIRCam WFSS, MIRI WFSS, and NIRISS WFSS, there will be multiple tuples of the SCI, ERR, DQ, VAR_POISSON,
 VAR_RNOISE, etc. extensions, where each tuple contains the data for a given source or
 slit, as created by the :ref:`extract_2d <extract_2d_step>` step. FITS "EXTVER" keywords are
 used in each extension header to segregate the multiple instances of each extension type by
@@ -567,7 +567,7 @@ These contain the FLUX, SURF_BRIGHT, and BACKGROUND data, with additional
 corrections for residual fringing (see :ref:`MIRI-MRS-1D-residual-fringe`
 for more information).
 
-For NIRCam and NIRISS WFSS ``x1d`` products, each row in the table holds the full
+For NIRCam, MIRI, and NIRISS WFSS ``x1d`` products, each row in the table holds the full
 spectrum for a single source, such that all extracted sources are present in the
 same binary table. The spectral data columns listed above are each 2-D: each row is a 1-D
 vector containing all data points for the spectrum in that integration.
