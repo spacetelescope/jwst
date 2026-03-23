@@ -51,6 +51,8 @@ jobs:
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@ccd2f9f4a24f34ea1165a717af125260d93bb5c1  # v2.6.1
     needs: [ crds_context ]
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
       setenv: |
         CRDS_PATH: /tmp/data/crds_cache
@@ -62,8 +64,11 @@ jobs:
       cache-key: crds-${{ needs.crds_context.outputs.context }}
       artifact-path: |
         results.xml
+      submodules: false
+      coverage: ''
       envs: |
         - linux: py311-oldestdeps-xdist-cov
+          coverage: codecov
           pytest-results-summary: true
         - linux: py311-xdist
           posargs: -vv
