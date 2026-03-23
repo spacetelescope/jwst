@@ -93,6 +93,7 @@ def _soss_box_extract(rateints, soss_refmodel=None):
         spec.spec_table = np.zeros((valid.sum(),), dtype=spec.get_dtype("spec_table"))
         spec.spec_table["FLUX"] = flux[valid]
         spec.spec_table["WAVELENGTH"] = wavelength[valid]
+        spec.spectral_order = order
         spec_list.append(spec)
 
     # Make a multispec model to hold the spectra
