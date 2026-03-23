@@ -42,7 +42,7 @@ def test_cube_build_nirspec_prism_nonlinear(rtdata, fitsdiff_default_kwargs):
 
     rtdata.output = output
 
-    rtdata.get_truth(f"truth/test_nirspec_cubebuild_nonlineaer/{output}")
+    rtdata.get_truth(f"truth/test_nirspec_cubebuild_nonlinear/{output}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -66,7 +66,7 @@ def test_cube_build_nirspec_medium_nonlinear(rtdata, fitsdiff_default_kwargs):
 
     rtdata.output = output
 
-    rtdata.get_truth(f"truth/test_nirspec_cubebuild_nonlineaer/{output}")
+    rtdata.get_truth(f"truth/test_nirspec_cubebuild_nonlinear/{output}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -90,7 +90,7 @@ def test_cube_build_nirspec_high_nonlinear(rtdata, fitsdiff_default_kwargs):
 
     rtdata.output = output
 
-    rtdata.get_truth(f"truth/test_nirspec_cubebuild_nonlineaer/{output}")
+    rtdata.get_truth(f"truth/test_nirspec_cubebuild_nonlinear/{output}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
