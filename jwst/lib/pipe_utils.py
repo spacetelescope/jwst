@@ -154,11 +154,11 @@ def match_nans_and_flags(input_model):
 
 def generate_substripe_ranges(sci_model, subarray_ranges=False):
     """
-    TBD.
+    Determine the bounds of each substripe based on the input model multistripe metadata.
 
     Parameters
     ----------
-    sci_model : JwstDataModel
+    sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel with multistripe params defined.
     subarray_ranges : bool
         If true, dict containing ranges in subarray frame will also be provided.
