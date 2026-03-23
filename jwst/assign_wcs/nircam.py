@@ -262,16 +262,7 @@ def _build_sky_pipeline_steps(input_model, reference_files, n_passthrough):
     ) & Identity(n_passthrough)
 
     tel2sky = pointing.v23tosky(input_model) & Identity(n_passthrough)
-    t2skyinverse = tel2sky.inverse
 
-    if n_passthrough == 2:
-        # inputs: (ra, dec, lam, order); fix ra/dec to reference values for inverse
-        newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
-    elif n_passthrough == 3:
-        # inputs: (ra, dec, lam, order, stripe); fix ra/dec to reference values for inverse
-        newinverse = Mapping((0, 1, 0, 3, 4)) | setra & setdec & Identity(3) | t2skyinverse
-
-    tel2sky.inverse = newinverse
     return distortion, va_corr, tel2sky
 
 
@@ -448,6 +439,7 @@ def dhs(input_model, reference_files):
         dispy = f.dispy.instance
         orders = f.orders.instance
         stripes = f.stripes.instance
+        fieldpoints = f.fieldpoints.instance
 
     if "LONG" in input_model.meta.instrument.detector.upper():
         longflag = True
@@ -460,6 +452,13 @@ def dhs(input_model, reference_files):
         dispy = [dispy] * subarray_stripenum
     else:
         longflag = False
+        # Short-wavelength GrismModels contain stripe transforms for both fieldpoints.
+        # Down-select the transform lists to the relevant entries.
+        fp_mask = [f in input_model.meta.aperture.pps_name for f in fieldpoints]
+        displ = [b for (a, b) in zip(fp_mask, displ, strict=True) if a]
+        dispx = [b for (a, b) in zip(fp_mask, dispx, strict=True) if a]
+        dispy = [b for (a, b) in zip(fp_mask, dispy, strict=True) if a]
+        stripes = [b for (a, b) in zip(fp_mask, stripes, strict=True) if a]
 
     # Initialize transforms dictionary to store stripe IDs as keys, transform models as values.
     # Used in RegionsSelector to choose correct transform given a stripe ID.
@@ -470,22 +469,26 @@ def dhs(input_model, reference_files):
         det2det = _build_grism_det2det(orders, displ[i], dispx[i], dispy[i])
         det2det = _apply_velocity_correction(det2det, velosys)
 
-        if longflag:
-            xc, yc = (
-                input_model.meta.wcsinfo.siaf_xref_sci,
-                input_model.meta.wcsinfo.siaf_yref_sci,
-            )
-        else:
-            xc, yc = (0, 0)  # TODO: Wait for ref files to be delivered with siaf ref positions
+        xc, yc = (
+            input_model.meta.wcsinfo.siaf_xref_sci,
+            input_model.meta.wcsinfo.siaf_yref_sci,
+        )
         if xc is None:
             raise ValueError("XREF_SCI is missing.")
         if yc is None:
             raise ValueError("YREF_SCI is missing.")
 
-        xcenter = Const1D(xc)
-        xcenter.inverse = Const1D(xc)
-        ycenter = Const1D(yc)
-        ycenter.inverse = Const1D(yc)
+        if longflag:
+            xform_refx = xform_refx.inverse = xcenter = xcenter.inverse = Const1D(xc)
+            xform_refy = xform_refy.inverse = ycenter = ycenter.inverse = Const1D(yc)
+
+        else:
+            xcenter = Const1D(xc)
+            xcenter.inverse = Const1D(0.0)
+            ycenter = Const1D(yc)
+            ycenter.inverse = Const1D(0.0)
+
+            xform_refx = xform_refy = xform_refx.inverse = xform_refy.inverse = Const1D(0.0)
 
         stripe_model = Const1D(stripe)
         stripe_model.inverse = Const1D(stripe)
@@ -494,14 +497,16 @@ def dhs(input_model, reference_files):
             sub2direct = (
                 sub_trans_dict[stripe] & Identity(1)
                 | Mapping((0, 1, 0, 1, 2, 2))
-                | (Identity(2) & xcenter & ycenter & Identity(2))
+                | (Identity(2) & xform_refx & xform_refy & Identity(2))
                 | det2det & stripe_model
+                | (xcenter & ycenter & Identity(3))
             )
         else:
             sub2direct = (
                 Mapping((0, 1, 0, 1, 2, 2))
-                | (Identity(2) & xcenter & ycenter & Identity(2))
+                | (Identity(2) & xform_refx & xform_refy & Identity(2))
                 | det2det & stripe_model
+                | (xcenter & ycenter & Identity(3))
             )
 
         transforms[stripe] = sub2direct
