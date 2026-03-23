@@ -60,12 +60,9 @@ def test_miri_wfss_spec2(run_miri_wfss_spec2, rtdata_module, fitsdiff_default_kw
 
     # Ignore the custom extract1d file because it contains a full path.
     fitsdiff_default_kwargs["ignore_keywords"].append("R_PHOTOM")
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_FLAT")
     fitsdiff_default_kwargs["ignore_keywords"].append("R_SPCWCS")
-    fitsdiff_default_kwargs["ignore_keywords"].append("R_DISTOR")
-    fitsdiff_default_kwargs["ignore_keywords"].append("R_WAVRAN")
     fitsdiff_default_kwargs["ignore_keywords"].append("R_FILOFF")
-    fitsdiff_default_kwargs["ignore_keywords"].append("R_EXTR1D")
-    fitsdiff_default_kwargs["ignore_keywords"].append("R_REGION")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
