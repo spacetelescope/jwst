@@ -171,7 +171,8 @@ def make_superstripe_model():
     model.meta.subarray.fastaxis = -2
     model.meta.subarray.slowaxis = -1
     model.meta.exposure.integration_start = 1
-    model.meta.exposure.integration_end = nints
+    model.meta.exposure.integration_end = nints * nstripe
+    model.meta.exposure.nints = nints * nstripe
 
     # Add the superstripe metadata
     model.meta.subarray.multistripe_reads1 = 4

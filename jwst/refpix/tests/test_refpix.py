@@ -1264,7 +1264,7 @@ def test_refpix_bad_reference_pixels(monkeypatch, caplog):
 @pytest.mark.parametrize("use_refpix", [True, False])
 @pytest.mark.parametrize("odd_even_columns", [True, False])
 def test_refpix_superstripe(use_refpix, odd_even_columns):
-    """Smoke test for superstripe handling."""
+    """Test superstripe handling."""
     # make ramp model
     model = make_superstripe_model()
     nstripe = model.meta.subarray.num_superstripe
@@ -1309,3 +1309,10 @@ def test_refpix_superstripe(use_refpix, odd_even_columns):
     assert result.data.shape == (nint, ngroup, ny, nx)
     assert result.pixeldq.shape == (ny, nx)
     assert result.groupdq.shape == (nint, ngroup, ny, nx)
+
+    # metadata is reset to regular subarray values
+    assert model.meta.exposure.nints == nint * nstripe
+    assert result.meta.exposure.nints == nint
+    assert result.meta.exposure.integration_start == 1
+    assert result.meta.exposure.integration_end == nint
+    assert result.meta.subarray.num_superstripe is None
