@@ -34,8 +34,8 @@ __all__ = ["Spec3Pipeline"]
 
 # Group exposure types
 IFU_EXPTYPES = ["MIR_MRS", "NRS_IFU"]
-SLITLESS_TYPES = ["NIS_SOSS", "NIS_WFSS", "NRC_WFSS"]
-WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
+SLITLESS_TYPES = ["NIS_SOSS", "NIS_WFSS", "NRC_WFSS", "MIR_WFSS"]
+WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS", "MIR_WFSS"]
 
 
 class Spec3Pipeline(Pipeline):
