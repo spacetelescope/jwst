@@ -494,9 +494,9 @@ def populate_time_keywords(input_model, output_model):
         shape = input_model.slits[0].data.shape
     else:
         shape = 0
-    if shape == 3:
+    if len(shape) == 3:
         num_integ = shape[0]
-    elif shape == 2:
+    elif len(shape) == 2:
         num_integ = 1
     else:
         log.warning("Not using INT_TIMES table because of unexpected input shape.")
