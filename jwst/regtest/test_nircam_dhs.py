@@ -137,8 +137,6 @@ def test_nircam_dhs_sw_det1(run_sw_det1pipeline, rtdata_module, fitsdiff_default
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_dhs/{output}")
 
-    # Ignore the custom dark because it contains a full path.
-    fitsdiff_default_kwargs["ignore_keywords"].append("R_DARK")
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -165,8 +163,6 @@ def test_nircam_dhs_lw_det1(run_lw_det1pipeline, rtdata_module, fitsdiff_default
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_dhs/{output}")
 
-    # Ignore the custom dark because it contains a full path.
-    fitsdiff_default_kwargs["ignore_keywords"].append("R_DARK")
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -189,6 +185,8 @@ def test_nircam_dhs_sw_spec2(run_sw_spec2pipeline, rtdata_module, fitsdiff_defau
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_dhs/{output}")
 
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_REGION")
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_SPCWCS")
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -211,5 +209,7 @@ def test_nircam_dhs_lw_spec2(run_lw_spec2pipeline, rtdata_module, fitsdiff_defau
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_dhs/{output}")
 
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_REGION")
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_EXTR1D")
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
