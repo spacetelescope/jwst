@@ -238,6 +238,13 @@ def extract_tso_object(
     if len(available_orders) > 1:
         raise NotImplementedError("Multiple order extraction for TSO is not currently implemented.")
 
+    # Check for the existence of the aperture reference location meta data
+    if (
+        input_model.meta.wcsinfo.siaf_xref_sci is None
+        or input_model.meta.wcsinfo.siaf_yref_sci is None
+    ):
+        raise ValueError("XREF_SCI and YREF_SCI are required for TSO mode.")
+
     # Split the logic on DHS vs. non-DHS data
     if "DHS" in input_model.meta.subarray.name.upper():
         output_model = _extract_tso_dhs_object(
@@ -258,16 +265,6 @@ def extract_tso_object(
 def _extract_tso_tsgrism_object(
     input_model, wavelengthrange, available_orders, compute_wavelength, tsgrism_extract_height=None
 ):
-    # Check for the existence of the aperture reference location meta data
-    # TODO: in principle DHS mode needs this check too, and it should move above
-    # into extract_tso_object, but right now for DHS
-    # nrca1 ref positions are not provided in the headers. Skip check for now
-    if (
-        input_model.meta.wcsinfo.siaf_xref_sci is None
-        or input_model.meta.wcsinfo.siaf_yref_sci is None
-    ):
-        raise ValueError("XREF_SCI and YREF_SCI are required for TSO mode.")
-
     # Processing non-DHS NRC_TSGRISM data
     # Create the extracted output as a SlitModel
     log.info(f"Extracting order: {available_orders}")

@@ -96,6 +96,9 @@ def make_mock_dhs_nrca1_rate():
     model.meta.subarray.multistripe_skips1 = 1526
     model.meta.subarray.multistripe_skips2 = 85
 
+    model.meta.wcsinfo.siaf_xref_sci = 1024.5
+    model.meta.wcsinfo.siaf_yref_sci = 24.5
+
     # Fill each packed stripe row range with the stripe's ID value so tests
     # can verify that the correct detector region ends up in each output slit.
     _, sub_ranges = generate_substripe_ranges(model, subarray_ranges=True)
