@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 from stdatamodels.jwst import datamodels
 
@@ -14,14 +15,16 @@ class FirstFrameStep(Step):
     """
     Set data quality flags for the first group in MIRI ramps.
 
-    If the number of groups is > than 3, the DO_NOT_USE group data
-    quality flag is added to first group.
+    .. deprecated:: 2.0.0
+        The `FirstFrameStep` has been deprecated and will be removed
+        in a future release. Flagging the first group  has been added to the RSCD step.
     """
 
     class_alias = "firstframe"
 
     spec = """
         bright_use_group1 = boolean(default=True) # do not flag group1 if group3 is saturated
+        skip = boolean(default=True) # Do not run this step.
     """  # noqa: E501
 
     def process(self, step_input):
@@ -38,6 +41,14 @@ class FirstFrameStep(Step):
         output_model : `~stdatamodels.jwst.datamodels.RampModel`
             First frame corrected datamodel.
         """
+        deprecation_message = (
+            "'FirstFrameStep' has been deprecated since 2.0.0 and "
+            "will be removed in a future release. Flagging the first group has been"
+            " added to the RSCD step.  "
+        )
+        warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+        log.warning(deprecation_message)
+
         # Open the input data model
         result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
