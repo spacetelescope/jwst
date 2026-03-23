@@ -29,6 +29,7 @@ class CubeBuildStep(Step):
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
          output_type = option('band','channel','grating','multi',default=None) # Type IFUcube to create.
+         linear_wave = boolean(default=True) # Toggle between linear (True) and nonlinear (False) wavelength dimensions
          scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
@@ -151,7 +152,7 @@ class CubeBuildStep(Step):
             self.weighting = "emsm"
             if self.output_type is None:  # when running stand alone
                 self.output_type = "band"
-
+                self.linear_wave = True
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified Shepard method
         # 2. EMSM
@@ -241,24 +242,31 @@ class CubeBuildStep(Step):
         # The calspec2 pipeline sets up output_type for each instrument. When running cube_build
         # stand alone we to set output_type.
 
-        # Running cube build stand-alone without setting self.pipeline will default to pipeline=2
-        if self.pipeline == 2 and self.output_type is None:
-            if instrument == "MIRI":
-                self.output_type = "multi"
-            elif instrument == "NIRSPEC":
+        # Running cube build stand-alone without setting self.pipeline will default to pipeline=3
+
+        # for NIRSPEC the type of cubes to make are based on self.linear_wave
+        if instrument == "NIRSPEC":
+            if self.output_type == "multi":  # keep this for now
+                self.linear_wave = False
+
+            if self.linear_wave:
                 self.output_type = "band"
+            else:
+                self.output_type = "multi"
+
+        # set up default pipeline 2
+        if self.pipeline == 2 and self.output_type is None and instrument == "MIRI":
+            self.output_type = "multi"
+
         # Set up output_type for pipeline 3 type cubes.
         # In calspec3 the output_type default type is grating for NIRSpec and band for MIRI.
         # MIRI sets output_type in the calspec3 parameter reference file.
 
-        if self.pipeline == 3 and self.output_type is None:
-            if instrument == "NIRSPEC":
-                self.output_type = "band"  # we might switch that to grating
-
-            elif instrument == "MIRI":
-                self.output_type = "band"
+        if self.pipeline == 3 and self.output_type is None and instrument == "MIRI":
+            self.output_type = "band"
 
         self.pars_input["output_type"] = self.output_type
+        self.pars_input["linear_wave"] = self.linear_wave
         log.info(f"Setting output type to: {self.output_type}")
         # ________________________________________________________________________________
         # If an offset file is provided do some basic checks on the file and its contents.
@@ -376,6 +384,7 @@ class CubeBuildStep(Step):
                 input_models,
                 self.output_name_base,
                 self.pars_input["output_type"],
+                self.pars_input["linear_wave"],
                 instrument,
                 list_par1,
                 list_par2,
