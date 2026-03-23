@@ -24,7 +24,7 @@ def run_detector1(rtdata_module, resource_tracker):
         "--steps.linearity.save_results=True",
         "--steps.dark_current.save_results=True",
         "--steps.jump.save_results=True",
-        "--save_calibrated_ramp=True"
+        "--save_calibrated_ramp=True",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)
