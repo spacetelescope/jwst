@@ -32,12 +32,10 @@ def run_detector1pipeline(rtdata_module, resource_tracker):
         Step.from_cmdline(args)
 
 
-@pytest.mark.skip(reason="DHS mode conflict with active superstripe development")
 def test_log_tracked_resources_det1(log_tracked_resources, run_detector1pipeline):
     log_tracked_resources()
 
 
-@pytest.mark.skip(reason="DHS mode conflict with active superstripe development")
 @pytest.mark.parametrize(
     "suffix",
     [
