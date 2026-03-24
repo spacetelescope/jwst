@@ -488,7 +488,7 @@ def populate_time_keywords(input_model, output_model):
     nints = input_model.meta.exposure.nints
     int_start = input_model.meta.exposure.integration_start
 
-    if not hasattr(input_model, "int_times"):
+    if getattr(input_model, "int_times", None) is None:
         log.warning("INT_TIMES table not found - time keywords will not be populated.")
         return
 
