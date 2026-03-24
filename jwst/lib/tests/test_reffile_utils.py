@@ -34,39 +34,68 @@ def test_find_row():
     assert result is None
 
 
+def assign_metadata(metanode, keys, vals):
+    """
+    Assign a list of values to parameters in a datamodel
+    for ease of testing.
+    Stripe params: xsize_sci, ysize_sci, nreads1, nreads2, nskips1,
+                   nskips2, repeat_stripe, interleave_reads1, fastaxis, slowaxis
+    """
+    for key, val in zip(keys, vals):
+        setattr(metanode.subarray, key, val)
+
+
 def test_generate_stripe():
+    # Mock model for metadata
+    model = RampModel()
+    sci_meta = model.meta
+    sci_nints = 3
+    subarray_keys = (
+        "xsize",
+        "ysize",
+        "multistripe_reads1",
+        "multistripe_reads2",
+        "multistripe_skips1",
+        "multistripe_skips2",
+        "repeat_stripe",
+        "interleave_reads1",
+        "superstripe_step",
+        "num_superstripe",
+        "fastaxis",
+        "slowaxis",
+    )
+
     # Generate test array with pixel values
     # equal to row number in detector frame.
     test_array = (np.ones((2048, 2048), dtype=int) * np.arange(2048)).T
 
-    # Use two NIRCam subarray cases to test.
-    # Stripe params: xsize_sci, ysize_sci, nreads1, nreads2, nskips1,
-    #                nskips2, repeat_stripe, interleave_reads1, fastaxis, slowaxis
-
     # SUB41STRIPE1_DHS nrca1 case
-    stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, -1, 2)
+    stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, 0, 0, -1, 2)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
 
     # Function presumes input in science frame, so move test array to science frame
     # before supplying to function.
     stripe1_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
+        science_detector_frame_transform(
+            test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
+        ),
+        sci_meta,
+        sci_nints,
     )
     assert stripe1_array.shape == (41, 2048)
     assert stripe1_array[0, 1024] == 0
     assert stripe1_array[1, 1024] == 1902  # nreads1 + nskips1
 
-    # Test swapped axes
-    stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, 2, 1)
-    stripe1swap_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
-    )
-    assert stripe1swap_array.shape == (2048, 41)
-    assert stripe1swap_array[1024, 1] == 1902  # nreads1 + nskips1
-
     # SUB82STRIPE2_DHS nrca2 case
-    stripe_params = (2048, 82, 1, 40, 1662, 82, 1, 1, 1, -2)
+    stripe_params = (2048, 82, 1, 40, 1662, 82, 1, 1, 0, 0, 1, -2)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
+
     stripe2_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
+        science_detector_frame_transform(
+            test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
+        ),
+        sci_meta,
+        sci_nints,
     )
     assert stripe2_array.shape == (82, 2048)
     # nrca2 has flipped row direction, so in science frame the row indices are flipped.
@@ -76,9 +105,15 @@ def test_generate_stripe():
     assert stripe2_array[-43, 1024] == 1785  # nreads1 + nskips1 + nreads2 + nskips2
 
     # SUB164STRIPE4_DHS nrcalong case
-    stripe_params = (2048, 164, 1, 40, 971, 0, 1, 0, -1, 2)
+    stripe_params = (2048, 164, 1, 40, 971, 0, 1, 0, 0, 0, -1, 2)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
+
     stripe4_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
+        science_detector_frame_transform(
+            test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
+        ),
+        sci_meta,
+        sci_nints,
     )
     assert stripe4_array.shape == (164, 2048)
     assert stripe4_array[0, 1024] == 0
@@ -90,6 +125,7 @@ def test_generate_stripe():
 def test_multistripe_subarray_model():
     mock_rn = ReadnoiseModel(data=(np.ones((2048, 2048), dtype=int) * np.arange(2048)).T)
     mock_rn.meta.instrument.name = "NIRCAM"
+    mock_rn.meta.subarray.xstart = 1
     generate_test_refmodel_metadata(mock_rn)
     mock_sci = RampModel(data=np.ones((5, 5, 164, 2048)))
     mock_sci.meta.subarray = {
