@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import RampModel, dqflags
 
+from jwst.dq_init.tests.helpers import make_superstripe_model
 from jwst.refpix import reference_pixels
 from jwst.refpix.reference_pixels import (
     Dataset,
@@ -1258,3 +1259,60 @@ def test_refpix_bad_reference_pixels(monkeypatch, caplog):
     # input is not modified
     assert out is not im
     assert im.meta.cal_step.refpix is None
+
+
+@pytest.mark.parametrize("use_refpix", [True, False])
+@pytest.mark.parametrize("odd_even_columns", [True, False])
+def test_refpix_superstripe(use_refpix, odd_even_columns):
+    """Test superstripe handling."""
+    # make ramp model
+    model = make_superstripe_model()
+    nstripe = model.meta.subarray.num_superstripe
+    stripe_size = model.meta.subarray.multistripe_reads1 + model.meta.subarray.multistripe_reads2
+    model.pixeldq = np.zeros((nstripe, *model.data.shape[-2:]), dtype=np.uint32)
+
+    ref_value = 0.2
+    if use_refpix:
+        model.data[:, :, -4:, :] = ref_value
+        model.data[:, :, :, -4:] = ref_value
+        model.pixeldq[:, -4:, :] = dqflags.pixel["REFERENCE_PIXEL"]
+        model.pixeldq[:, :, -4:] = dqflags.pixel["REFERENCE_PIXEL"]
+
+    result = RefPixStep.call(model, odd_even_columns=odd_even_columns)
+
+    # step is marked complete
+    assert result.meta.cal_step.refpix == "COMPLETE"
+
+    # input is not modified
+    assert result is not model
+    assert model.meta.cal_step.refpix is None
+
+    is_nan = np.isnan(result.data)
+    is_ref = result.pixeldq & dqflags.pixel["REFERENCE_PIXEL"] > 0
+    if not use_refpix:
+        # input had no good reference pixels: the data values should be unchanged
+        np.testing.assert_equal(result.data[~is_nan], 1.0)
+    else:
+        np.testing.assert_allclose(result.data[:, :, ~is_ref], 1.0 - ref_value)
+
+    # NaN values are added where reference pixels would have been
+    np.testing.assert_equal(
+        result.pixeldq[np.any(is_nan, axis=(0, 1))], dqflags.pixel["REFERENCE_PIXEL"]
+    )
+
+    # output data is reformed to a regular subarray ramp
+    nint = result.meta.exposure.nints
+    ngroup = result.meta.exposure.ngroups
+    ny = 256
+    nx = 2048
+    assert model.data.shape == (nint * nstripe, ngroup, ny, stripe_size)
+    assert result.data.shape == (nint, ngroup, ny, nx)
+    assert result.pixeldq.shape == (ny, nx)
+    assert result.groupdq.shape == (nint, ngroup, ny, nx)
+
+    # metadata is reset to regular subarray values
+    assert model.meta.exposure.nints == nint * nstripe
+    assert result.meta.exposure.nints == nint
+    assert result.meta.exposure.integration_start == 1
+    assert result.meta.exposure.integration_end == nint
+    assert result.meta.subarray.num_superstripe is None
