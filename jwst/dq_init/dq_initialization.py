@@ -17,12 +17,12 @@ __all__ = ["do_dqinit", "check_dimensions"]
 
 def do_dqinit(output_model, mask_model, user_dq=None):
     """
-    Perform the dq_init step on a JWST datamodel.
+    Perform the :ref:`dq_init step <dq_init_step>` on a JWST datamodel.
 
     Parameters
     ----------
-    output_model : `~stdatamodels.jwst.datamodels.RampModel` \
-                   or `~stdatamodels.jwst.datamodels.GuiderRawModel`
+    output_model : `~stdatamodels.jwst.datamodels.RampModel` or \
+                   `~stdatamodels.jwst.datamodels.GuiderRawModel`
         The JWST datamodel to be corrected.
     mask_model : `~stdatamodels.jwst.datamodels.MaskModel`
         The mask model to use in the correction.
@@ -31,8 +31,8 @@ def do_dqinit(output_model, mask_model, user_dq=None):
 
     Returns
     -------
-    output_model : `~stdatamodels.jwst.datamodels.RampModel` \
-                   or `~stdatamodels.jwst.datamodels.GuiderRawModel`
+    output_model : `~stdatamodels.jwst.datamodels.RampModel` or \
+                   `~stdatamodels.jwst.datamodels.GuiderRawModel`
         The corrected JWST datamodel, updated in place.
     """
     # Inflate empty DQ array, if necessary
@@ -85,18 +85,19 @@ def do_dqinit(output_model, mask_model, user_dq=None):
 
 def check_dimensions(input_model):
     """
-    Check the input model pixeldq dimensions.
+    Check the input model ``pixeldq`` dimensions.
 
-    The pixeldq attribute should have the same dimensions as
+    The ``pixeldq`` attribute should have the same dimensions as
     the image plane of the input model science data
-    If it has dimensions (0,0), create an array of zeros with the same shape
+    If it has dimensions ``(0, 0)``, create an array of zeroes with the same shape
     as the image plane of the input model. For the FGS modes, the
-    GuiderRawModel has only a regular dq array (no pixeldq or groupdq)
+    `~stdatamodels.jwst.datamodels.GuiderRawModel`
+    has only a regular DQ array (no ``pixeldq`` nor ``groupdq``).
 
     Parameters
     ----------
-    input_model : `~stdatamodels.jwst.datamodels.RampModel` \
-                  or `~stdatamodels.jwst.datamodels.GuiderRawModel`
+    input_model : `~stdatamodels.jwst.datamodels.RampModel` or \
+                  `~stdatamodels.jwst.datamodels.GuiderRawModel`
         Input datamodel.
     """
     input_shape = input_model.data.shape
