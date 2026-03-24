@@ -115,7 +115,6 @@ def build_grism_submodel(
     sub_model.meta.wcs.bounding_box = wcs_bbox_from_shape(ext_data.shape)
     if compute_wavelength:
         sub_model.wavelength = compute_tso_wavelength_array(sub_model)
-    # sub_model.meta.wcsinfo.siaf_yref_sci = 34  # update after move, vals are the same
     if source_xpos is not None:
         sub_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
     sub_model.meta.wcsinfo.spectral_order = order
@@ -370,8 +369,8 @@ def _extract_tso_tsgrism_object(
         build_grism_submodel(
             output_model,
             input_model,
-            xmin,
-            xmax,
+            xmin_ext,
+            xmax_ext,
             ymin,
             ymax,
             subwcs,
@@ -381,6 +380,7 @@ def _extract_tso_tsgrism_object(
             source_xpos=source_xpos,
             source_ypos=34,
         )
+        output_model.meta.wcsinfo.siaf_yref_sci = 34  # update after move, vals are the same
     del subwcs
     return output_model
 

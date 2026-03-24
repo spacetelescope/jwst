@@ -455,8 +455,8 @@ def dhs(input_model, reference_files):
         det2det = _apply_velocity_correction(det2det, velosys)
 
         xc, yc = (
-            input_model.meta.wcsinfo.siaf_xref_sci,
-            input_model.meta.wcsinfo.siaf_yref_sci,
+            input_model.meta.wcsinfo.siaf_xref_sci - 1,
+            input_model.meta.wcsinfo.siaf_yref_sci - 1,
         )
         if xc is None:
             raise ValueError("XREF_SCI is missing.")
