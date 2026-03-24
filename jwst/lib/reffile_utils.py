@@ -466,21 +466,21 @@ def generate_stripe_array(
     ysize_sci : int
         Output shape in y dim.
     nreads1 : int
-        Multistripe header keyword.
+        Number of rows read in the first read, starting at SUBSTRT1 (FITS keyword MSTR_RD1).
     nreads2 : int
-        Multistripe header keyword.
+        Number of rows read in subsequent substripes (FITS keyword MSTR_RD2).
     nskips1 : int
-        Multistripe header keyword.
+        Number of rows to skip after the first read (FITS keyword MSTR_SK1).
     nskips2 : int
-        Multistripe header keyword.
+        Number of rows to skip between subsequent substripes (FITS keyword MSTR_SK2).
     repeat_stripe : int
-        Multistripe header keyword.
+        Repeat reading MSTR_RD2 rows at first position (FITS keyword MSTR_RPT).
     interleave_reads1 : int
-        Multistripe header keyword.
+        Interleave MSTR_RD1 rows between substripes (FITS keyword MSTR_ILV).
     superstripe_step : int
-        Multistripe header keyword.
+        Rows to advance superstripe position between integrations (FITS keyword SSTR_STP).
     num_superstripe : int
-        Multistripe header keyword.
+        Number of superstripe positions in a super-integration (FITS keyword SSTR_NST).
     fastaxis : int
         The subarray keyword describing
         the fast readout axis and direction.

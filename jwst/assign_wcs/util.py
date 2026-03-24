@@ -153,7 +153,7 @@ def substripe_subarray_transforms(input_model, regions_model):
 
     This method does not yet generalize to arbitrary fastaxis values, only +/- 1.
 
-    The dictionary will have key value pairs of stripe number and astropy
+    The dictionary will have key-value pairs of stripe number and astropy
     CompoundModel or None. Due to the packing of stripes into a condensed,
     subarray-like shape, the stripe x and y start values must be calculated
     rather than taken from subarray metadata.

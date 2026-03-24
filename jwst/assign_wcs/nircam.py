@@ -389,26 +389,11 @@ def dhs(input_model, reference_files):
     -------
     pipeline : list
         The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
-
-    Notes
-    -----
-    The TSGRISM mode should function effectively like the grism mode
-    except that subarrays will be allowed. Since the transform models
-    depend on the original full frame coordinates of the observation,
-    the regular grism transforms will need to be shifted to the full
-    frame coordinates around the trace transform.
-
-    TSGRISM is only slated to work with GRISMR and Mod A
-
-    For this mode, the source is typically at crpix1 x crpix2, which
-    are stored in keywords XREF_SCI, YREF_SCI.
-    offset special requirements may be encoded in the X_OFFSET parameter,
-    but those are handled in extract_2d.
     """
-    frames = create_coord_frames()
-
     if reference_files["regions"] == "":
         raise FileNotFoundError("No regions reference file provided.")
+
+    frames = create_coord_frames()
 
     with RegionsModel(reference_files["regions"]) as regs_model:
         # Get the shift to full frame coordinates from stripe coords

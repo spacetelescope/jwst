@@ -48,7 +48,7 @@ def build_grism_submodel(
     source_ypos=None,
 ):
     """
-    Build a grism SlitModel from the input data.
+    Build a grism model from the input data.
 
     Parameters
     ----------
