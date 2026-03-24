@@ -28,7 +28,7 @@ The actual process consists of the following steps:
    matching subarray from the full-frame :ref:`mask_reffile`.
 
 #. Propagate the DQ flags from the reference file DQ array to the science data "PIXELDQ"
-   array using :func:`numpy.bitwise_or` function.
+   array using `numpy.bitwise_or` function.
 
 #. Propagate any DO_NOT_USE flags from the reference file DQ array to the science data
    "GROUPDQ" array, if present; this avoids generating a ramp in
