@@ -113,9 +113,8 @@ def check_dimensions(input_model):
 
     else:  # RampModel
         if input_model.pixeldq.shape != input_shape[-2:]:
-            # If the shape is different, then the mask model should have
-            # a shape of (0,0).
-            # If that's the case, create the array
+            # Make sure the pixeldq has 2 dimensions, matching the last two
+            # dimensions of the data array.
             if (
                 input_model.pixeldq.shape == (0, 0)
                 or input_model.pixeldq.shape == input_model.data.shape

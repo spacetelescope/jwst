@@ -313,6 +313,11 @@ def generate_stripe_int_times(input_model):
     """
     Move input model INT_TIMES to stripe table, then condense ints to parent frame.
 
+    Each output integration in the parent frame will have the start time from
+    the first stripe readout and the end time from the last stripe readout included
+    in the integration.  The mid time for the integration is assigned to the average
+    of the start and end times.
+
     Parameters
     ----------
     input_model : `~stdatamodels.jwst.datamodels.RampModel`

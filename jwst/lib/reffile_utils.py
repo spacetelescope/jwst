@@ -431,7 +431,7 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
     ----------
     ref_array : np.array
         The scene to be sliced.
-    sci_meta : `stdatamodels.properties.ObjectNode`
+    sci_meta : `~stdatamodels.properties.ObjectNode`
         The science datamodel metadata tree.
     sci_nints : int
         The number of science integrations in the science datamodel. Not equivalent to nints when

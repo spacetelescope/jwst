@@ -1355,8 +1355,8 @@ class NIRDataset(Dataset):
         group : np.array[float]
             The current group to be corrected.
         stripe_idx : int
-            The stripe index for superstripe observations. If data
-            is substripe, this will be set to -1.
+            The stripe index for superstripe observations. For substripe,
+            this should be set to -1.
         fastmin : int
             The subarray offset in the fast read direction.
 

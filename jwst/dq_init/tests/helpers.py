@@ -47,8 +47,6 @@ def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_t
     if instrument == "FGS":
         dm_ramp = GuiderRawModel(data=data)
         dm_ramp.meta.exposure.type = exp_type
-    elif instrument == "MIRI":
-        dm_ramp = RampModel(data=data)
     else:
         dm_ramp = RampModel(data=data)
 
@@ -70,7 +68,7 @@ def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_t
 
 def make_rampmodel(nints=1, ngroups=5, ysize=1024, xsize=1032):
     """
-    Make a MIRI ramp model with sufficient metadata to run the full step on.
+    Make a MIRI ramp model with sufficient metadata to run the full step.
 
     Parameters
     ----------

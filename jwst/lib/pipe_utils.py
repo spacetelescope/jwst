@@ -156,15 +156,15 @@ def generate_superstripe_ranges(sci_model):
     """
     Return a dict of slowaxis ranges read into stripes.
 
-    Given an input model with a multistripe parameter set,
-    this will return the slowaxis read ranges corresponding
+    Given an input model with multistripe parameters in its metadata,
+    return the slowaxis pixel ranges corresponding
     to the nreads2 positions read into each stripe of a set
     of superstripes. Dictionary keys are 0-indexed stripe
     labels.
 
     Parameters
     ----------
-    sci_model : JwstDataModel
+    sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel with multistripe params defined.
 
     Returns
