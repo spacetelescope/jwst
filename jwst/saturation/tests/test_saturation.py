@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import RampModel, SaturationModel, SuperBiasModel, dqflags
 
+from jwst.dq_init.tests.helpers import make_superstripe_model
+from jwst.lib import reffile_utils
 from jwst.saturation import SaturationStep
 from jwst.saturation.saturation import flag_saturation, irs2_flag_saturation
 
@@ -487,6 +489,59 @@ def test_skip_missing_reffile(setup_nrc_cube):
     assert data.meta.cal_step.saturation is None
 
 
+@pytest.mark.parametrize("use_bias", [True, False])
+def test_superstripe(setup_nis_superstripe_cube, use_bias):
+    data, satmap, bias_model = setup_nis_superstripe_cube()
+
+    # Add ramp values up to the saturation limit
+    satvalue = 60000
+    pix = 5
+    data.data[:, 0, pix, pix] = 0
+    data.data[:, 1, pix, pix] = 20000
+    data.data[:, 2, pix, pix] = satvalue  # Signal reaches saturation limit
+    data.data[:, 3, pix, pix] = satvalue
+    data.data[:, 4, pix, pix] = satvalue
+
+    # Set saturation value in the saturation model at the
+    # expected location for each stripe
+    substart = 1792
+    nstripe = 10
+    stripe = 204
+    for i in range(nstripe):
+        xstart = stripe * i + 4
+        satmap.data[substart + pix, xstart + pix] = satvalue
+
+    if use_bias:
+        bias_model = reffile_utils.get_subarray_model(data, bias_model)
+    else:
+        bias_model = None
+
+    # Run the pipeline
+    output = flag_saturation(
+        data, satmap, n_pix_grow_sat=1, use_readpatt=False, bias_model=bias_model
+    )
+
+    # Make sure that groups with signal > saturation limit get flagged
+    satindex = np.argmax(output.data[:, :, pix - 1 : pix + 1, pix - 1 : pix + 1] == satvalue)
+    assert np.all(
+        output.groupdq[0, satindex:, pix - 1 : pix + 1, pix - 1 : pix + 1]
+        == dqflags.group["SATURATED"]
+    )
+
+    # Make sure the pixeldq is reset properly. No new flags are expected.
+    assert output.pixeldq.shape == (nstripe, *data.data.shape[-2:])
+    assert np.all(output.pixeldq == 0)
+
+
+def add_test_refmodel_metadata(refmodel):
+    refmodel.meta.telescope = "JWST"
+    refmodel.meta.description = "filler"
+    refmodel.meta.reftype = "filler"
+    refmodel.meta.author = "Py Test"
+    refmodel.meta.pedigree = "Pytest"
+    refmodel.meta.useafter = "2015-01-01T01:00:00"
+
+
 @pytest.fixture(scope="function")
 def setup_nrc_cube():
     """Set up fake NIRCam data to test."""
@@ -512,12 +567,7 @@ def setup_nrc_cube():
         saturation_model.meta.subarray.xsize = 2048
         saturation_model.meta.subarray.ysize = 2048
         saturation_model.meta.instrument.name = "NIRCAM"
-        saturation_model.meta.description = "Fake data."
-        saturation_model.meta.telescope = "JWST"
-        saturation_model.meta.reftype = "SaturationModel"
-        saturation_model.meta.author = "Alicia"
-        saturation_model.meta.pedigree = "Dummy"
-        saturation_model.meta.useafter = "2015-10-01T00:00:00"
+        add_test_refmodel_metadata(saturation_model)
 
         return data_model, saturation_model
 
@@ -551,18 +601,13 @@ def setup_miri_cube():
 
         # create a saturation model for the saturation step
         saturation_model = SaturationModel((1032, 1024))
-        saturation_model.meta.description = "Fake data."
-        saturation_model.meta.telescope = "JWST"
-        saturation_model.meta.reftype = "SaturationModel"
-        saturation_model.meta.author = "Alicia"
-        saturation_model.meta.pedigree = "Dummy"
-        saturation_model.meta.useafter = "2015-10-01T00:00:00"
         saturation_model.meta.instrument.name = "MIRI"
         saturation_model.meta.instrument.detector = "MIRIMAGE"
         saturation_model.meta.subarray.xstart = 1
         saturation_model.meta.subarray.xsize = 1024
         saturation_model.meta.subarray.ystart = 1
         saturation_model.meta.subarray.ysize = 1032
+        add_test_refmodel_metadata(saturation_model)
 
         return data_model, saturation_model
 
@@ -599,35 +644,23 @@ def setup_nrs_irs2_cube():
         saturation_model.data = (
             np.ones((2048, 2048)) * 60000
         )  # saturation limit for every pixel is 60000
-        saturation_model.meta.description = "Fake data."
-        saturation_model.meta.telescope = "JWST"
-        saturation_model.meta.reftype = "SaturationModel"
-        saturation_model.meta.useafter = "2015-10-01T00:00:00"
-        saturation_model.meta.instrument.name = "NIRSPEC"
-        saturation_model.meta.instrument.detector = "NRS1"
-        saturation_model.meta.author = "Clare"
-        saturation_model.meta.pedigree = "Dummy"
         saturation_model.meta.subarray.xstart = 1
         saturation_model.meta.subarray.xsize = 2048
         saturation_model.meta.subarray.ystart = 1
         saturation_model.meta.subarray.ysize = 2048
+        add_test_refmodel_metadata(saturation_model)
 
         # create a bias model for group 2 saturation checking
         bias_model = SuperBiasModel((3200, 2048))
         bias_model.data = np.ones((3200, 2048)) * 15000  # bias for every pixel is 15000
-        bias_model.meta.description = "Fake data."
-        bias_model.meta.telescope = "JWST"
-        bias_model.meta.reftype = "SuperBiasModel"
-        bias_model.meta.useafter = "2015-10-01T00:00:00"
         bias_model.meta.instrument.name = "NIRSPEC"
         bias_model.meta.instrument.detector = "NRS1"
-        bias_model.meta.author = "Clare"
-        bias_model.meta.pedigree = "Dummy"
         bias_model.meta.subarray.xstart = 1
         bias_model.meta.subarray.xsize = 2048
         bias_model.meta.subarray.ystart = 1
         bias_model.meta.subarray.ysize = 2048
         bias_model.meta.exposure.readpatt = "NRSIRS2"
+        add_test_refmodel_metadata(bias_model)
 
         return data_model, saturation_model, bias_model
 
@@ -664,19 +697,50 @@ def setup_nrs_nrs_cube():
         saturation_model.data = (
             np.ones((2048, 2048)) * 60000
         )  # saturation limit for every pixel is 60000
-        saturation_model.meta.description = "Fake data."
-        saturation_model.meta.telescope = "JWST"
-        saturation_model.meta.reftype = "SaturationModel"
-        saturation_model.meta.useafter = "2015-10-01T00:00:00"
         saturation_model.meta.instrument.name = "NIRSPEC"
         saturation_model.meta.instrument.detector = "NRS1"
-        saturation_model.meta.author = "David"
-        saturation_model.meta.pedigree = "Dummy"
         saturation_model.meta.subarray.xstart = 1
         saturation_model.meta.subarray.xsize = 2048
         saturation_model.meta.subarray.ystart = 1
         saturation_model.meta.subarray.ysize = 2048
+        add_test_refmodel_metadata(saturation_model)
 
         return data_model, saturation_model
+
+    return _cube
+
+
+@pytest.fixture(scope="function")
+def setup_nis_superstripe_cube():
+    """Set up mock NIRISS superstripe data to test."""
+
+    def _cube():
+        data_model = make_superstripe_model()
+        num_stripes = data_model.meta.subarray.num_superstripe
+        data_model.pixeldq = np.zeros((num_stripes, *data_model.data.shape[-2:]), dtype=np.uint32)
+
+        saturation_model = SaturationModel((2048, 2048))
+        saturation_model.meta.subarray.xstart = 1
+        saturation_model.meta.subarray.ystart = 1
+        saturation_model.meta.subarray.xsize = 2048
+        saturation_model.meta.subarray.ysize = 2048
+        saturation_model.meta.instrument.name = "NIRISS"
+        add_test_refmodel_metadata(saturation_model)
+
+        # create a bias model
+        bias_model = SuperBiasModel((2028, 2048))
+        bias_model.data = np.ones((2048, 2048)) * 15000  # bias for every pixel is 15000
+        bias_model.meta.instrument.name = "NIRISS"
+        bias_model.meta.instrument.detector = "NIS"
+        bias_model.meta.subarray.xstart = 1
+        bias_model.meta.subarray.xsize = 2048
+        bias_model.meta.subarray.ystart = 1793
+        bias_model.meta.subarray.ysize = 256
+        bias_model.meta.subarray.fastaxis = -2
+        bias_model.meta.subarray.slowaxis = -1
+        bias_model.meta.exposure.readpatt = "ANY"
+        add_test_refmodel_metadata(bias_model)
+
+        return data_model, saturation_model, bias_model
 
     return _cube

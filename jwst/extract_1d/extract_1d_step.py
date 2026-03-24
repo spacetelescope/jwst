@@ -136,7 +136,13 @@ class Extract1dStep(Step):
             return model
 
         # Set the subarray mode being processed
-        if model.meta.subarray.name == "SUBSTRIP256":
+        if model.meta.subarray.name in [
+            "SUBSTRIP256",
+            "SUB17STRIPE_SOSS",
+            "SUB60STRIPE_SOSS",
+            "SUB204STRIPE_SOSS",
+            "SUB680STRIPE_SOSS",
+        ]:
             log.info("Exposure is in the SUBSTRIP256 subarray.")
             log.info("Traces 1 and 2 will be modelled and decontaminated before extraction.")
             subarray = "SUBSTRIP256"
