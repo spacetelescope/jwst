@@ -43,7 +43,7 @@ def build_grism_submodel(
     subwcs,
     compute_wavelength,
     order,
-    name,
+    name="1",
     source_xpos=None,
     source_ypos=None,
 ):
@@ -71,7 +71,7 @@ def build_grism_submodel(
         If True, compute the wavelength array of the extracted region.
     order : int
         The spectral order of the extracted region.
-    name : str
+    name : str, optional
         The name of the extracted region; typically a placeholder
         for NRC_TSGRISM data but will be the stripe number for DHS.
     source_xpos : float, optional
@@ -380,7 +380,9 @@ def _extract_tso_tsgrism_object(
             source_xpos=source_xpos,
             source_ypos=34,
         )
-        output_model.meta.wcsinfo.siaf_yref_sci = 34  # update after move, vals are the same
+        # This preserves existing behavior, but appears to be 0-indexed.
+        # SIAF values typically 1-indexed - maybe needs removing. Default value is 35.
+        output_model.meta.wcsinfo.siaf_yref_sci = 34
     del subwcs
     return output_model
 

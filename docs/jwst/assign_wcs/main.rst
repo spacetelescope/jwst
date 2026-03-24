@@ -219,7 +219,7 @@ associated with a direct image with the same instrument configuration as the gri
 is saved as FITS WCS in the headers of grism/prism images.
 
 WCS of substripe (DHS) exposures
-------------------------------------------------
+--------------------------------
 
 ``NRC_TSGRISM`` exposures in substripe (DHS) modes have a similar WCS to that of normal ``NRC_TSGRISM``
 exposures, except that each stripe has its own dispersion transform model, and
