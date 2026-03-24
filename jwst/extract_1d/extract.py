@@ -492,16 +492,18 @@ def populate_time_keywords(input_model, output_model):
         log.warning("INT_TIMES table not found - time keywords will not be populated.")
         return
 
+    shape = None
     if hasattr(input_model, "data"):
         shape = input_model.data.shape
     elif hasattr(input_model, "slits") and len(input_model.slits) > 0:
         shape = input_model.slits[0].data.shape
-    else:
-        shape = 0
-    if len(shape) == 3:
-        num_integ = shape[0]
-    elif len(shape) == 2:
-        num_integ = 1
+
+    if shape is not None:
+        if len(shape) == 2:
+            num_integ = 1
+        else:
+            # len(shape) == 3
+            num_integ = shape[0]
     else:
         log.warning("Not using INT_TIMES table because of unexpected input shape.")
         return
@@ -569,11 +571,6 @@ def populate_time_keywords(input_model, output_model):
             datamodels.SlitModel,
         ),
     ):
-        if hasattr(input_model, "slits"):
-            shape = input_model.slits[0].data.shape
-        else:
-            shape = input_model.data.shape
-
         if len(shape) == 2 and num_integrations > 1:
             log.warning(
                 "Not using INT_TIMES table because the data have been averaged over integrations."
