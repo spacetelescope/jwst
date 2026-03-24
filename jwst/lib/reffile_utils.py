@@ -388,7 +388,10 @@ def stripe_read(sci_model, ref_model, attribs):
         ref_array = getattr(ref_model, attrib)
 
         # Apply subarray shape in fastaxis; slowaxis cutouts determined in generate_stripe_array
-        if np.abs(sci_meta.subarray.fastaxis) == 1:
+        if (
+            np.abs(sci_meta.subarray.fastaxis) == 1
+            and getattr(ref_model.meta.subarray, "xstart", None) is not None
+        ):
             faststart_sci = sci_model.meta.subarray.xstart
             fastsize_sci = sci_meta.subarray.xsize
 
@@ -399,7 +402,7 @@ def stripe_read(sci_model, ref_model, attribs):
             faststart = faststart_sci - faststart_ref
             faststop = faststart + fastsize_sci
             ref_array = ref_array[..., faststart:faststop]
-        else:
+        elif getattr(ref_model.meta.subarray, "ystart", None) is not None:
             faststart_sci = sci_model.meta.subarray.ystart
             fastsize_sci = sci_meta.subarray.ysize
 
@@ -412,6 +415,7 @@ def stripe_read(sci_model, ref_model, attribs):
             ref_array = ref_array[..., faststart:faststop, :]
 
         sub_model[attrib] = generate_stripe_array(ref_array, sci_meta, sci_nints)
+    sub_model.update(ref_model)
     return sub_model
 
 
