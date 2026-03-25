@@ -49,9 +49,7 @@ jobs:
     outputs:
       context: ${{ steps.context.outputs.context }}
   test:
-    # TODO: Upgrade this version when we can, see
-    # https://github.com/OpenAstronomy/github-actions-workflows/issues/383
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@99401c364fa51c9c507d3cd6d272049278ac0b2c  # v2.4.0
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@e97344095b099e1d729fe97429078c9975921d8a  # v2.6.2
     needs: [ crds_context ]
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
