@@ -1,5 +1,6 @@
 import logging
 import warnings
+from dataclasses import dataclass
 
 import numpy as np
 from scipy.optimize import minimize
@@ -10,6 +11,43 @@ from jwst.assign_wcs import nirspec
 log = logging.getLogger(__name__)
 
 __all__ = ["PixelReplacement"]
+
+
+@dataclass
+class PixelReplaceInputs:
+    """
+    Container for data arrays and dispersion direction.
+
+    Algorithms operate on this dataclass rather than on a DataModel,
+    avoiding the overhead of constructing intermediate DataModel objects,
+    which was slowing runtime for TSO data with thousands of integrations.
+
+    Attributes
+    ----------
+    data : np.ndarray
+        2-D science pixel array.
+    dq : np.ndarray
+        2-D data quality array.
+    err : np.ndarray
+        2-D total error array.
+    var_poisson : np.ndarray
+        2-D Poisson variance array.
+    var_rnoise : np.ndarray
+        2-D read-noise variance array.
+    var_flat : np.ndarray
+        2-D flat-field variance array.
+    dispersion_direction : int
+        1 = HORIZONTAL (spectral axis along columns),
+        2 = VERTICAL (spectral axis along rows).
+    """
+
+    data: np.ndarray
+    dq: np.ndarray
+    err: np.ndarray
+    var_poisson: np.ndarray
+    var_rnoise: np.ndarray
+    var_flat: np.ndarray
+    dispersion_direction: int
 
 
 class PixelReplacement:
@@ -65,6 +103,29 @@ class PixelReplacement:
             )
             raise KeyError from err
 
+    @staticmethod
+    def _inputs_from_model(model):
+        """Extract PixelReplaceInputs from DataModel, copying arrays."""  # numpydoc ignore: RT01
+        return PixelReplaceInputs(
+            data=model.data.copy(),
+            dq=model.dq.copy(),
+            err=model.err.copy(),
+            var_poisson=model.var_poisson.copy(),
+            var_rnoise=model.var_rnoise.copy(),
+            var_flat=model.var_flat.copy(),
+            dispersion_direction=model.meta.wcsinfo.dispersion_direction,
+        )
+
+    @staticmethod
+    def _write_back_to_model(arrays, model):
+        """Write PixelReplaceInputs back into a DataModel in place."""  # numpydoc ignore: RT01
+        model.data = arrays.data
+        model.dq = arrays.dq
+        model.err = arrays.err
+        model.var_poisson = arrays.var_poisson
+        model.var_rnoise = arrays.var_rnoise
+        model.var_flat = arrays.var_flat
+
     def replace(self):
         """
         Unpack model and apply pixel replacement algorithm.
@@ -78,7 +139,9 @@ class PixelReplacement:
         if isinstance(self.input, datamodels.ImageModel) or (
             isinstance(self.input, datamodels.SlitModel) and self.input.data.ndim == 2
         ):
-            self.input = self.algorithm(self.input)
+            arrays = self._inputs_from_model(self.input)
+            arrays = self.algorithm(arrays)
+            self._write_back_to_model(arrays, self.input)
             n_replaced = np.count_nonzero(self.input.dq & self.FLUX_ESTIMATED)
             log.info(f"Input model had {n_replaced} pixels replaced.")
         elif isinstance(self.input, datamodels.IFUImageModel):
@@ -88,7 +151,9 @@ class PixelReplacement:
             if self.input.meta.exposure.type == "MIR_MRS":
                 if self.pars["algorithm"] == "mingrad":
                     # mingrad method
-                    self.input = self.algorithm(self.input)
+                    arrays = self._inputs_from_model(self.input)
+                    arrays = self.algorithm(arrays)
+                    self._write_back_to_model(arrays, self.input)
                 else:
                     # fit_profile method
                     det2ab = self.input.meta.wcs.get_transform(
@@ -100,49 +165,42 @@ class PixelReplacement:
                     for i, beta in enumerate(unique_beta):
                         # Define a mask that is True where this trace is located
                         trace_mask = beta_array == beta
-                        trace_model = self.input.copy()
-                        trace_model.dq = np.where(
+                        arrays = self._inputs_from_model(self.input)
+                        arrays.dq = np.where(
                             # When not in this trace, set NON_SCIENCE and DO_NOT_USE
                             ~trace_mask,
-                            trace_model.dq | self.DO_NOT_USE | self.NON_SCIENCE,
-                            trace_model.dq,
+                            arrays.dq | self.DO_NOT_USE | self.NON_SCIENCE,
+                            arrays.dq,
                         )
 
-                        trace_model = self.algorithm(trace_model)
-                        self.input.data = np.where(
-                            # Where trace is located, set replaced values
-                            trace_mask,
-                            trace_model.data,
-                            self.input.data,
-                        )
-
-                        # do the same for dq, err, and var
-                        self.input.dq = np.where(trace_mask, trace_model.dq, self.input.dq)
-                        self.input.err = np.where(trace_mask, trace_model.err, self.input.err)
+                        arrays = self.algorithm(arrays)
+                        self.input.data = np.where(trace_mask, arrays.data, self.input.data)
+                        self.input.dq = np.where(trace_mask, arrays.dq, self.input.dq)
+                        self.input.err = np.where(trace_mask, arrays.err, self.input.err)
                         self.input.var_poisson = np.where(
-                            trace_mask, trace_model.var_poisson, self.input.var_poisson
+                            trace_mask, arrays.var_poisson, self.input.var_poisson
                         )
                         self.input.var_rnoise = np.where(
-                            trace_mask, trace_model.var_rnoise, self.input.var_rnoise
+                            trace_mask, arrays.var_rnoise, self.input.var_rnoise
                         )
                         self.input.var_flat = np.where(
-                            trace_mask, trace_model.var_flat, self.input.var_flat
+                            trace_mask, arrays.var_flat, self.input.var_flat
                         )
 
-                        n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
+                        n_replaced = np.count_nonzero(arrays.dq & self.FLUX_ESTIMATED)
                         log.info(
                             f"Input MRS frame had {n_replaced} pixels replaced "
                             f"in IFU slice {i + 1}."
                         )
-
-                        trace_model.close()
 
                 n_replaced = np.count_nonzero(self.input.dq & self.FLUX_ESTIMATED)
                 log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
             else:
                 if self.pars["algorithm"] == "mingrad":
                     # mingrad method
-                    self.input = self.algorithm(self.input)
+                    arrays = self._inputs_from_model(self.input)
+                    arrays = self.algorithm(arrays)
+                    self._write_back_to_model(arrays, self.input)
                 else:
                     # fit_profile method - iterate over IFU slices
                     for i in range(30):
@@ -154,43 +212,33 @@ class PixelReplacement:
 
                         # Define a mask that is True where this trace is located
                         trace_mask = wave > 0
-                        trace_model = self.input.copy()
-                        trace_model.dq = np.where(
+                        arrays = self._inputs_from_model(self.input)
+                        arrays.dq = np.where(
                             # When not in this trace, set NON_SCIENCE and DO_NOT_USE
                             ~trace_mask,
-                            trace_model.dq | self.DO_NOT_USE | self.NON_SCIENCE,
-                            trace_model.dq,
+                            arrays.dq | self.DO_NOT_USE | self.NON_SCIENCE,
+                            arrays.dq,
                         )
 
-                        trace_model = self.algorithm(trace_model)
-
-                        # Where trace is located, set replaced values
-                        self.input.data = np.where(
-                            trace_mask,
-                            trace_model.data,
-                            self.input.data,
-                        )
-
-                        # do the same for dq, err, and var
-                        self.input.dq = np.where(trace_mask, trace_model.dq, self.input.dq)
-                        self.input.err = np.where(trace_mask, trace_model.err, self.input.err)
+                        arrays = self.algorithm(arrays)
+                        self.input.data = np.where(trace_mask, arrays.data, self.input.data)
+                        self.input.dq = np.where(trace_mask, arrays.dq, self.input.dq)
+                        self.input.err = np.where(trace_mask, arrays.err, self.input.err)
                         self.input.var_poisson = np.where(
-                            trace_mask, trace_model.var_poisson, self.input.var_poisson
+                            trace_mask, arrays.var_poisson, self.input.var_poisson
                         )
                         self.input.var_rnoise = np.where(
-                            trace_mask, trace_model.var_rnoise, self.input.var_rnoise
+                            trace_mask, arrays.var_rnoise, self.input.var_rnoise
                         )
                         self.input.var_flat = np.where(
-                            trace_mask, trace_model.var_flat, self.input.var_flat
+                            trace_mask, arrays.var_flat, self.input.var_flat
                         )
 
-                        n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
+                        n_replaced = np.count_nonzero(arrays.dq & self.FLUX_ESTIMATED)
                         log.info(
                             f"Input NRS_IFU frame had {n_replaced} pixels "
                             f"replaced in IFU slice {i + 1}."
                         )
-
-                        trace_model.close()
 
                 n_replaced = np.count_nonzero(self.input.dq & self.FLUX_ESTIMATED)
                 log.info(f"Input NRS_IFU frame had {n_replaced} total pixels replaced.")
@@ -199,39 +247,45 @@ class PixelReplacement:
         elif isinstance(self.input, datamodels.MultiSlitModel):
             for i, _slit in enumerate(self.input.slits):
                 slit_model = datamodels.SlitModel(self.input.slits[i].instance)
+                arrays = self._inputs_from_model(slit_model)
+                slit_model.close()
 
-                slit_replaced = self.algorithm(slit_model)
+                arrays = self.algorithm(arrays)
 
-                n_replaced = np.count_nonzero(slit_replaced.dq & self.FLUX_ESTIMATED)
+                n_replaced = np.count_nonzero(arrays.dq & self.FLUX_ESTIMATED)
                 log.info(f"Slit {i} had {n_replaced} pixels replaced.")
 
-                self.input.slits[i] = slit_replaced
+                self.input.slits[i].data = arrays.data
+                self.input.slits[i].dq = arrays.dq
+                self.input.slits[i].err = arrays.err
+                self.input.slits[i].var_poisson = arrays.var_poisson
+                self.input.slits[i].var_rnoise = arrays.var_rnoise
+                self.input.slits[i].var_flat = arrays.var_flat
 
         # CubeModel inputs are TSO (so far?); SlitModel may be NRS_BRIGHTOBJ,
         # also requiring a re-packaging of the data into 2D inputs for the algorithm
         elif isinstance(self.input, datamodels.CubeModel | datamodels.SlitModel):
+            dispaxis = self.input.meta.wcsinfo.dispersion_direction
             for i in range(len(self.input.data)):
-                img_model = datamodels.ImageModel(
-                    data=self.input.data[i],
-                    dq=self.input.dq[i],
-                    err=self.input.err[i],
-                    var_poisson=self.input.var_poisson[i],
-                    var_rnoise=self.input.var_rnoise[i],
-                    var_flat=self.input.var_flat[i],
+                arrays = PixelReplaceInputs(
+                    data=self.input.data[i].copy(),
+                    dq=self.input.dq[i].copy(),
+                    err=self.input.err[i].copy(),
+                    var_poisson=self.input.var_poisson[i].copy(),
+                    var_rnoise=self.input.var_rnoise[i].copy(),
+                    var_flat=self.input.var_flat[i].copy(),
+                    dispersion_direction=dispaxis,
                 )
-                img_model.update(self.input)
-                img_replaced = self.algorithm(img_model)
-                n_replaced = np.count_nonzero(img_replaced.dq & self.FLUX_ESTIMATED)
+                arrays = self.algorithm(arrays)
+                n_replaced = np.count_nonzero(arrays.dq & self.FLUX_ESTIMATED)
                 log.info(f"Input TSO integration {i} had {n_replaced} pixels replaced.")
 
-                self.input.data[i] = img_replaced.data
-                self.input.dq[i] = img_replaced.dq
-                self.input.err[i] = img_replaced.err
-                self.input.var_poisson[i] = img_replaced.var_poisson
-                self.input.var_rnoise[i] = img_replaced.var_rnoise
-                self.input.var_flat[i] = img_replaced.var_flat
-                img_replaced.close()
-                img_model.close()
+                self.input.data[i] = arrays.data
+                self.input.dq[i] = arrays.dq
+                self.input.err[i] = arrays.err
+                self.input.var_poisson[i] = arrays.var_poisson
+                self.input.var_rnoise[i] = arrays.var_rnoise
+                self.input.var_flat[i] = arrays.var_flat
 
         else:
             # This should never happen, as these should be caught in the step code.
@@ -240,7 +294,7 @@ class PixelReplacement:
             )
             return
 
-    def fit_profile(self, model):
+    def fit_profile(self, arrays):
         """
         Replace pixels with the profile fit method.
 
@@ -254,29 +308,25 @@ class PixelReplacement:
 
         Parameters
         ----------
-        model : DataModel
-            Either the input to the pixel_replace step in the
-            case of DataModels containing only one 2D spectrum,
-            or a single 2D spectrum from the input DataModel
-            containing multiple spectra (i.e. MultiSlitModel).
-            Requires data and dq attributes.
+        arrays : PixelReplaceInputs
+            Pixel arrays and dispersion direction for the 2D spectrum to process.
+            Arrays are modified in place.
 
         Returns
         -------
-        model : DataModel
-            The same DataModel with bad pixels now flagged with
-            FLUX_ESTIMATED and holding a flux value estimated
-            from spatial profile, derived from adjacent columns.
+        arrays : PixelReplaceInputs
+            The same PixelReplaceInputs with bad pixels now flagged with FLUX_ESTIMATED
+            and holding a flux value estimated from the spatial profile.
         """
         # np.nanmedian() entry full of NaN values would produce a numpy
         # warning (despite well-defined behavior - return a NaN)
         # so we suppress that here.
         warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
 
-        dispaxis = model.meta.wcsinfo.dispersion_direction
+        dispaxis = arrays.dispersion_direction
 
         # Make a copy of the input DQ, before replacement
-        input_dq = model.dq.copy()
+        input_dq = arrays.dq.copy()
 
         # Truncate array to region where good pixels exist
         good_pixels = np.where(~input_dq & self.DO_NOT_USE)
@@ -285,7 +335,7 @@ class PixelReplacement:
                 "No good pixels in at least one dimension of "
                 "data array - skipping pixel replacement."
             )
-            return model
+            return arrays
         x_range = [np.min(good_pixels[0]), np.max(good_pixels[0]) + 1]
         y_range = [np.min(good_pixels[1]), np.max(good_pixels[1]) + 1]
 
@@ -333,8 +383,8 @@ class PixelReplacement:
 
             # Cut out valid neighboring profiles
             adjacent_condition = self.custom_slice(dispaxis, valid_adjacent_inds)
-            profile_data = model.data[adjacent_condition]
-            profile_err = model.err[adjacent_condition]
+            profile_data = arrays.data[adjacent_condition]
+            profile_err = arrays.err[adjacent_condition]
             if profile_data.size == 0:
                 log.info(
                     f"Profile in {self.LOG_SLICE[dispaxis - 1]} {ind} "
@@ -369,9 +419,9 @@ class PixelReplacement:
             norm_errors = {}
             for err_name in err_names:
                 if err_name.startswith("var"):
-                    err = np.sqrt(getattr(model, err_name))
+                    err = np.sqrt(getattr(arrays, err_name))
                 else:
-                    err = getattr(model, err_name)
+                    err = getattr(arrays, err_name)
                 norm_err = err[adjacent_condition]
                 norm_err[invalid_condition] = np.nan
                 norm_errors[err_name] = norm_err[region_condition] / profile_norm_scale
@@ -388,7 +438,7 @@ class PixelReplacement:
 
             # Clean current profile of values flagged as bad
             current_condition = self.custom_slice(dispaxis, ind)
-            current_profile = model.data[current_condition]
+            current_profile = arrays.data[current_condition]
             cleaned_current = np.where(
                 input_dq[current_condition] & self.DO_NOT_USE, np.nan, current_profile
             )[range(*profile_cut)]
@@ -441,44 +491,44 @@ class PixelReplacement:
             )
 
             # Update data and DQ in the output model
-            model.data[current_condition][range(*profile_cut)] = replaced_current
-            model.dq[current_condition][range(*profile_cut)] = replaced_dq
+            arrays.data[current_condition][range(*profile_cut)] = replaced_current
+            arrays.dq[current_condition][range(*profile_cut)] = replaced_dq
 
             # Also update the errors and variances
-            current_err = model.err[current_condition][range(*profile_cut)]
+            current_err = arrays.err[current_condition][range(*profile_cut)]
             replaced_err = np.where(
                 replace_condition, norm_errors["err"] * norm_scale * scale, current_err
             )
-            model.err[current_condition][range(*profile_cut)] = replaced_err
+            arrays.err[current_condition][range(*profile_cut)] = replaced_err
 
             # Some values in NIRSpec variances may overflow in the squares - ignore the warning.
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
-                current_var = model.var_poisson[current_condition][range(*profile_cut)]
+                current_var = arrays.var_poisson[current_condition][range(*profile_cut)]
                 replaced_var = np.where(
                     replace_condition,
                     (norm_errors["var_poisson"] * norm_scale * scale) ** 2,
                     current_var,
                 )
-                model.var_poisson[current_condition][range(*profile_cut)] = replaced_var
+                arrays.var_poisson[current_condition][range(*profile_cut)] = replaced_var
 
-                current_var = model.var_rnoise[current_condition][range(*profile_cut)]
+                current_var = arrays.var_rnoise[current_condition][range(*profile_cut)]
                 replaced_var = np.where(
                     replace_condition,
                     (norm_errors["var_rnoise"] * norm_scale * scale) ** 2,
                     current_var,
                 )
-                model.var_rnoise[current_condition][range(*profile_cut)] = replaced_var
+                arrays.var_rnoise[current_condition][range(*profile_cut)] = replaced_var
 
-                current_var = model.var_flat[current_condition][range(*profile_cut)]
+                current_var = arrays.var_flat[current_condition][range(*profile_cut)]
                 replaced_var = np.where(
                     replace_condition,
                     (norm_errors["var_flat"] * norm_scale * scale) ** 2,
                     current_var,
                 )
-                model.var_flat[current_condition][range(*profile_cut)] = replaced_var
+                arrays.var_flat[current_condition][range(*profile_cut)] = replaced_var
 
-        return model
+        return arrays
 
     @staticmethod
     def _interp_neighbors(arr, yindx, xindx):
@@ -501,7 +551,7 @@ class PixelReplacement:
         vert = (arr[yindx - 1, xindx] + arr[yindx + 1, xindx]) / 2.0
         return np.array([horiz, vert])
 
-    def mingrad(self, model):
+    def mingrad(self, arrays):
         """
         Replace pixels with the minimum gradient replacement method.
 
@@ -520,19 +570,15 @@ class PixelReplacement:
 
         Parameters
         ----------
-        model : DataModel
-            Either the input to the pixel_replace step in the
-            case of DataModels containing only one 2D spectrum,
-            or a single 2D spectrum from the input DataModel
-            containing multiple spectra (i.e. MultiSlitModel).
-            Requires data and dq attributes.
+        arrays : PixelReplaceInputs
+            Pixel arrays and dispersion direction for the 2D spectrum to process.
+            Arrays are modified in place.
 
         Returns
         -------
-        model : DataModel
-            The same DataModel with flagged bad pixels now flagged with
-            FLUX_ESTIMATED and holding a flux value estimated
-            from spatial profile, derived from adjacent columns.
+        arrays : PixelReplaceInputs
+            The same PixelReplaceInputs with flagged bad pixels now flagged with FLUX_ESTIMATED
+            and holding a flux value estimated from adjacent pixels.
         """
         # np.nanmedian() entry full of NaN values would produce a numpy
         # warning (despite well-defined behavior - return a NaN)
@@ -542,18 +588,18 @@ class PixelReplacement:
         log.info("Using minimum gradient method.")
 
         # Propagate variance components as errors to get the scales right
-        in_var_p = np.sqrt(model.var_poisson)
-        in_var_r = np.sqrt(model.var_rnoise)
-        in_var_f = np.sqrt(model.var_flat)
+        in_var_p = np.sqrt(arrays.var_poisson)
+        in_var_r = np.sqrt(arrays.var_rnoise)
+        in_var_f = np.sqrt(arrays.var_flat)
 
         # Make an array of x/y values on the detector
-        (ysize, xsize) = model.data.shape
+        (ysize, xsize) = arrays.data.shape
         basex, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
         pad = 1  # Padding around edge of array to ensure we don't look for neighbors outside array
 
         # Find NaN-valued pixels
         indx = np.where(
-            (~np.isfinite(model.data))
+            (~np.isfinite(arrays.data))
             & (basey > pad)
             & (basey < ysize - pad)
             & (basex > pad)
@@ -565,14 +611,14 @@ class PixelReplacement:
         # Absolute gradient along each axis from indata, shape (2, N), used to choose direction
         diffs = np.array(
             [
-                np.abs(model.data[yindx, xindx - 1] - model.data[yindx, xindx + 1]),
-                np.abs(model.data[yindx - 1, xindx] - model.data[yindx + 1, xindx]),
+                np.abs(arrays.data[yindx, xindx - 1] - arrays.data[yindx, xindx + 1]),
+                np.abs(arrays.data[yindx - 1, xindx] - arrays.data[yindx + 1, xindx]),
             ]
         )
 
         # Interpolated values for each quantity in both directions, shape (2, N)
-        interp_data = self._interp_neighbors(model.data, yindx, xindx)
-        interp_err = self._interp_neighbors(model.err, yindx, xindx)
+        interp_data = self._interp_neighbors(arrays.data, yindx, xindx)
+        interp_err = self._interp_neighbors(arrays.err, yindx, xindx)
         interp_vp = self._interp_neighbors(in_var_p, yindx, xindx)
         interp_vr = self._interp_neighbors(in_var_r, yindx, xindx)
         interp_vf = self._interp_neighbors(in_var_f, yindx, xindx)
@@ -590,23 +636,23 @@ class PixelReplacement:
         # Select the minimium-gradient interpolated values and update model with them
         indmin = indmin[mask]
         col_idx = col_idx[mask]
-        model.data[yindx[mask], xindx[mask]] = interp_data[indmin, col_idx]
-        model.err[yindx[mask], xindx[mask]] = interp_err[indmin, col_idx]
-        model.var_poisson[yindx[mask], xindx[mask]] = interp_vp[indmin, col_idx] ** 2
-        model.var_rnoise[yindx[mask], xindx[mask]] = interp_vr[indmin, col_idx] ** 2
-        model.var_flat[yindx[mask], xindx[mask]] = interp_vf[indmin, col_idx] ** 2
+        arrays.data[yindx[mask], xindx[mask]] = interp_data[indmin, col_idx]
+        arrays.err[yindx[mask], xindx[mask]] = interp_err[indmin, col_idx]
+        arrays.var_poisson[yindx[mask], xindx[mask]] = interp_vp[indmin, col_idx] ** 2
+        arrays.var_rnoise[yindx[mask], xindx[mask]] = interp_vr[indmin, col_idx] ** 2
+        arrays.var_flat[yindx[mask], xindx[mask]] = interp_vf[indmin, col_idx] ** 2
 
         # Update DQ flags for pixels that were replaced.
-        orig_dq = model.dq[yindx, xindx]  # (N,)
+        orig_dq = arrays.dq[yindx, xindx]  # (N,)
         remove_dnu = (
             mask
             & (orig_dq & self.DO_NOT_USE).astype(bool)
             & ~(orig_dq & self.NON_SCIENCE).astype(bool)
         )
-        model.dq[yindx[remove_dnu], xindx[remove_dnu]] -= self.DO_NOT_USE
-        model.dq[yindx[mask], xindx[mask]] |= self.FLUX_ESTIMATED
+        arrays.dq[yindx[remove_dnu], xindx[remove_dnu]] -= self.DO_NOT_USE
+        arrays.dq[yindx[mask], xindx[mask]] |= self.FLUX_ESTIMATED
 
-        return model
+        return arrays
 
     def custom_slice(self, dispaxis, index):
         """
