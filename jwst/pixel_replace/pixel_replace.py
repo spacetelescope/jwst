@@ -596,8 +596,7 @@ class PixelReplacement:
         model.var_rnoise[yindx[mask], xindx[mask]] = interp_vr[indmin, col_idx] ** 2
         model.var_flat[yindx[mask], xindx[mask]] = interp_vf[indmin, col_idx] ** 2
 
-        # Update DQ flags for replaceable pixels.
-        # Reads use the pre-write DQ so ordering doesn't matter.
+        # Update DQ flags for pixels that were replaced.
         orig_dq = model.dq[yindx, xindx]  # (N,)
         remove_dnu = (
             mask
