@@ -62,12 +62,12 @@ def test_log_tracked_resources_lwdet1(log_tracked_resources, run_lw_det1pipeline
 
 
 @pytest.fixture(scope="module")
-def run_sw_spec2pipeline(rtdata_module, resource_tracker):
+def run_sw_spec2pipeline(run_sw_det1pipeline, rtdata_module, resource_tracker):
     """Run calwebb_detector1 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.get_data("nircam/dhs/nircam_nrca1_SUB164STRIPE4_DHS_regions.asdf")
     rtdata.get_data("nircam/dhs/nircam_nrca1_specwcs.asdf")
-    rtdata.get_data("nircam/dhs/jw04453010001_02106_00001_nrca1_genheader_rateints.fits")
+    rtdata.input("jw04453010001_02106_00001_nrca1_genheader_rateints.fits")
 
     # Run spec2 pipeline on rateints file
     args = [
@@ -89,12 +89,12 @@ def test_log_tracked_resources_sw_spec2(log_tracked_resources, run_sw_spec2pipel
 
 
 @pytest.fixture(scope="module")
-def run_lw_spec2pipeline(rtdata_module, resource_tracker):
+def run_lw_spec2pipeline(run_lw_det1pipeline, rtdata_module, resource_tracker):
     """Run calwebb_detector1 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.get_data("nircam/dhs/nircam_nrcalong_SUB164STRIPE4_DHS_regions.asdf")
     rtdata.get_data("nircam/dhs/nircam_nrcalong_dhs_extract1d.json")
-    rtdata.get_data("nircam/dhs/jw04453010001_02106_00001_nrcalong_genheader_rateints.fits")
+    rtdata.input("jw04453010001_02106_00001_nrcalong_genheader_rateints.fits")
 
     # Run spec2 pipeline on rateints file
     args = [
