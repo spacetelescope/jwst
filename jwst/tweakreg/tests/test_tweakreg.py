@@ -269,8 +269,13 @@ def test_custom_catalog(
         - `use_custom_catalogs` (True/False)
         - a "valid" file passed as `catfile`
     """
+
     example_input[0].meta.group_id = "a"
     example_input[1].meta.group_id = "b"
+    name2group = {
+        example_input[0].meta.filename.split(".")[0]: "a",
+        example_input[1].meta.filename.split(".")[0]: "b",
+    }
 
     # this worked because if use_custom_catalogs was true but
     # catfile was blank tweakreg still uses custom catalogs
@@ -338,19 +343,30 @@ def test_custom_catalog(
 
     step = tweakreg_step.TweakRegStep(**kwargs)
 
-    # patch _construct_wcs_corrector to check the correct catalog was loaded
-    def patched_construct_wcs_corrector(wcs, wcsinfo, catalog, group_id, _seen=[]):
-        # we don't need to continue
-        if group_id == "a":
-            assert len(catalog) == n_custom_sources
-        elif group_id == "b":
-            assert len(catalog) == N_EXAMPLE_SOURCES
-        _seen.append(wcs)
+    def patched_xyxymatch_call(self, refcat, imcat, _seen=[], **kwargs):
+        # Check that the catalogs passed to xyxymatch are correct
+        catname = imcat.meta["name"]
+        grp_id = name2group[catname]
+        _seen.append(1)
+        if grp_id == "a":
+            assert len(imcat) == n_custom_sources
+        elif grp_id == "b":
+            assert len(imcat) == N_EXAMPLE_SOURCES
+
         if len(_seen) == 2:
             raise ValueError("done testing")
-        return None
 
-    monkeypatch.setattr(twk, "construct_wcs_corrector", patched_construct_wcs_corrector)
+        xyxymatch = twk.XYXYMatch(
+            use2dhist=step.use2dhist,
+            separation=step.separation,
+            tolerance=step.tolerance,
+            searchrad=step.searchrad,
+            xoffset=step.xoffset,
+            yoffset=step.yoffset,
+        )
+        return xyxymatch(refcat, imcat, **kwargs)
+
+    monkeypatch.setattr(twk.XYXYMatch, "__call__", patched_xyxymatch_call)
 
     with pytest.raises(ValueError, match="done testing"):
         step.run(str(asn_path))
