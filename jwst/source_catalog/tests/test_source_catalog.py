@@ -8,7 +8,11 @@ from astropy.table import QTable
 from numpy.testing import assert_allclose
 
 from jwst.source_catalog import SourceCatalogStep
-from jwst.source_catalog.tests.helpers import make_nircam_model, make_nircam_model_without_apcorr
+from jwst.source_catalog.tests.helpers import (
+    make_nircam_model,
+    make_nircam_model_without_apcorr,
+    mock_apcorr,
+)
 
 
 @pytest.fixture
@@ -29,8 +33,14 @@ def nircam_model_without_apcorr():
     ),
 )
 def test_source_catalog(nircam_model, npixels, nsources):
+    apcorr = mock_apcorr()
     step = SourceCatalogStep(
-        snr_threshold=0.5, npixels=npixels, bkg_boxsize=50, kernel_fwhm=2.0, save_results=False
+        snr_threshold=0.5,
+        npixels=npixels,
+        bkg_boxsize=50,
+        kernel_fwhm=2.0,
+        save_results=False,
+        override_apcorr=apcorr,
     )
     cat = step.run(nircam_model)
     assert len(cat) == nsources
@@ -41,9 +51,9 @@ def test_source_catalog(nircam_model, npixels, nsources):
         # test values of some specific computed quantities
         assert np.isclose(cat["xcentroid"][1], 19.453064764431833)
         assert np.isclose(cat["ycentroid"][1], 41.963065678485115)
-        # assert np.isclose(cat["aper_bkg_flux"][1].value, 5.62e-8)
+        assert np.isclose(cat["aper_bkg_flux"][1].value, 5.62e-8)
         assert np.isclose(cat["aper_bkg_flux_err"][1].value, 8.52237054e-09)
-        # assert np.isclose(cat["CI_50_30"][1], 1.9655824649976499)
+        assert np.isclose(cat["CI_50_30"][1], 1.9655824649976499)
         assert np.isclose(cat["sharpness"][1], 0.9102634628764403)
         assert np.isclose(cat["roundness"][1], 1.5954264)
         assert np.isclose(cat["nn_dist"][1].value, 53.07168773319497)
@@ -54,7 +64,9 @@ def test_source_catalog(nircam_model, npixels, nsources):
         assert np.isclose(cat["semimajor_sigma"][1].value, 18.84372169911978)
         assert np.isclose(cat["semiminor_sigma"][1].value, 7.024931388267103)
         assert np.isclose(cat["ellipticity"][1].value, 0.62720043)
-        assert np.isclose(cat["orientation"][1].value, -72.78329207140818)
+        assert np.isclose(cat["orientation"][1].value, -72.78329207140818) or np.isclose(
+            cat["orientation"][1].value, 287.2167079285918
+        )
 
 
 def test_source_catalog_no_sources(nircam_model, monkeypatch):
