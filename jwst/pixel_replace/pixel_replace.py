@@ -546,87 +546,68 @@ class PixelReplacement:
         # X and Y indices
         yindx, xindx = indx[0], indx[1]
 
-        # Loop over these NaN-valued pixels
-        nreplaced = 0
-        for ii in range(0, len(xindx)):
-            left_data, right_data = (
-                indata[yindx[ii], xindx[ii] - 1],
-                indata[yindx[ii], xindx[ii] + 1],
-            )
-            top_data, bottom_data = (
-                indata[yindx[ii] - 1, xindx[ii]],
-                indata[yindx[ii] + 1, xindx[ii]],
-            )
+        # Gather all four neighbors at once for every bad pixel.
+        # Reads come from the pre-loop copies so writes below never affect them.
+        left_data = indata[yindx, xindx - 1]
+        right_data = indata[yindx, xindx + 1]
+        top_data = indata[yindx - 1, xindx]
+        bot_data = indata[yindx + 1, xindx]
 
-            left_err, right_err = inerr[yindx[ii], xindx[ii] - 1], inerr[yindx[ii], xindx[ii] + 1]
-            top_err, bottom_err = inerr[yindx[ii] - 1, xindx[ii]], inerr[yindx[ii] + 1, xindx[ii]]
+        left_err = inerr[yindx, xindx - 1]
+        right_err = inerr[yindx, xindx + 1]
+        top_err = inerr[yindx - 1, xindx]
+        bot_err = inerr[yindx + 1, xindx]
 
-            left_var_p, right_var_p = (
-                in_var_p[yindx[ii], xindx[ii] - 1],
-                in_var_p[yindx[ii], xindx[ii] + 1],
-            )
-            top_var_p, bottom_var_p = (
-                in_var_p[yindx[ii] - 1, xindx[ii]],
-                in_var_p[yindx[ii] + 1, xindx[ii]],
-            )
+        left_vp = in_var_p[yindx, xindx - 1]
+        right_vp = in_var_p[yindx, xindx + 1]
+        top_vp = in_var_p[yindx - 1, xindx]
+        bot_vp = in_var_p[yindx + 1, xindx]
 
-            left_var_r, right_var_r = (
-                in_var_r[yindx[ii], xindx[ii] - 1],
-                in_var_r[yindx[ii], xindx[ii] + 1],
-            )
-            top_var_r, bottom_var_r = (
-                in_var_r[yindx[ii] - 1, xindx[ii]],
-                in_var_r[yindx[ii] + 1, xindx[ii]],
-            )
+        left_vr = in_var_r[yindx, xindx - 1]
+        right_vr = in_var_r[yindx, xindx + 1]
+        top_vr = in_var_r[yindx - 1, xindx]
+        bot_vr = in_var_r[yindx + 1, xindx]
 
-            left_var_f, right_var_f = (
-                in_var_f[yindx[ii], xindx[ii] - 1],
-                in_var_f[yindx[ii], xindx[ii] + 1],
-            )
-            top_var_f, bottom_var_f = (
-                in_var_f[yindx[ii] - 1, xindx[ii]],
-                in_var_f[yindx[ii] + 1, xindx[ii]],
-            )
+        left_vf = in_var_f[yindx, xindx - 1]
+        right_vf = in_var_f[yindx, xindx + 1]
+        top_vf = in_var_f[yindx - 1, xindx]
+        bot_vf = in_var_f[yindx + 1, xindx]
 
-            # Compute absolute difference (slope) and average value in each direction (may be NaN)
-            diffs = np.array([np.abs(left_data - right_data), np.abs(top_data - bottom_data)])
-            interp_data = np.array([(left_data + right_data) / 2.0, (top_data + bottom_data) / 2.0])
-            interp_err = np.array([(left_err + right_err) / 2.0, (top_err + bottom_err) / 2.0])
-            interp_var_p = np.array(
-                [(left_var_p + right_var_p) / 2.0, (top_var_p + bottom_var_p) / 2.0]
-            )
-            interp_var_r = np.array(
-                [(left_var_r + right_var_r) / 2.0, (top_var_r + bottom_var_r) / 2.0]
-            )
-            interp_var_f = np.array(
-                [(left_var_f + right_var_f) / 2.0, (top_var_f + bottom_var_f) / 2.0]
-            )
+        # Absolute gradient and interpolated value for each axis, shape (2, N)
+        diffs = np.array([np.abs(left_data - right_data), np.abs(top_data - bot_data)])
+        interp_data = np.array([(left_data + right_data) / 2.0, (top_data + bot_data) / 2.0])
+        interp_err = np.array([(left_err + right_err) / 2.0, (top_err + bot_err) / 2.0])
+        interp_vp = np.array([(left_vp + right_vp) / 2.0, (top_vp + bot_vp) / 2.0])
+        interp_vr = np.array([(left_vr + right_vr) / 2.0, (top_vr + bot_vr) / 2.0])
+        interp_vf = np.array([(left_vf + right_vf) / 2.0, (top_vf + bot_vf) / 2.0])
 
-            # Replace with the value from the lowest absolute slope estimator that was not NaN
-            try:
-                indmin = np.nanargmin(diffs)
-                model.data[yindx[ii], xindx[ii]] = interp_data[indmin]
-                model.err[yindx[ii], xindx[ii]] = interp_err[indmin]
+        # Replace NaN diffs with inf so argmin naturally prefers the valid direction.
+        # Pixels where both diffs are inf have no usable neighbor pair and are skipped.
+        safe_diffs = np.where(np.isnan(diffs), np.inf, diffs)  # (2, N)
+        replaceable = ~np.all(np.isinf(safe_diffs), axis=0)  # (N,)
 
-                # Square the interpolated errors back into variance
-                model.var_poisson[yindx[ii], xindx[ii]] = interp_var_p[indmin] ** 2
-                model.var_rnoise[yindx[ii], xindx[ii]] = interp_var_r[indmin] ** 2
-                model.var_flat[yindx[ii], xindx[ii]] = interp_var_f[indmin] ** 2
+        # Per-pixel direction index: 0 = horizontal, 1 = vertical
+        indmin = np.argmin(safe_diffs, axis=0)  # (N,)
+        col_idx = np.arange(len(yindx))
 
-                # If original pixel was in the science array, remove
-                # the DO_NOT_USE flag
-                if (indq[yindx[ii], xindx[ii]] & self.DO_NOT_USE) and not (
-                    indq[yindx[ii], xindx[ii]] & self.NON_SCIENCE
-                ):
-                    model.dq[yindx[ii], xindx[ii]] -= self.DO_NOT_USE
+        # Select the winning interpolated values, then write back to model
+        ri = replaceable  # shorthand
+        model.data[yindx[ri], xindx[ri]] = interp_data[indmin[ri], col_idx[ri]]
+        model.err[yindx[ri], xindx[ri]] = interp_err[indmin[ri], col_idx[ri]]
+        model.var_poisson[yindx[ri], xindx[ri]] = interp_vp[indmin[ri], col_idx[ri]] ** 2
+        model.var_rnoise[yindx[ri], xindx[ri]] = interp_vr[indmin[ri], col_idx[ri]] ** 2
+        model.var_flat[yindx[ri], xindx[ri]] = interp_vf[indmin[ri], col_idx[ri]] ** 2
 
-                # Either way, add the FLUX_ESTIMATED flag
-                model.dq[yindx[ii], xindx[ii]] |= self.FLUX_ESTIMATED
-
-                nreplaced += 1
-
-            except (IndexError, ValueError):
-                pass
+        # Update DQ flags for replaceable pixels.
+        # Reads use the pre-loop copy (indq) so ordering doesn't matter.
+        orig_dq = indq[yindx, xindx]  # (N,)
+        remove_dnu = (
+            ri
+            & (orig_dq & self.DO_NOT_USE).astype(bool)
+            & ~(orig_dq & self.NON_SCIENCE).astype(bool)
+        )
+        model.dq[yindx[remove_dnu], xindx[remove_dnu]] -= self.DO_NOT_USE
+        model.dq[yindx[ri], xindx[ri]] |= self.FLUX_ESTIMATED
 
         return model
 
