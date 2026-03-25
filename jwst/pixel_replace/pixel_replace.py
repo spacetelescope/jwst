@@ -14,31 +14,32 @@ __all__ = ["PixelReplacement"]
 
 
 @dataclass
-class PixelReplaceInputs:
+class PixelReplaceArrays:
     """
     Container for data arrays and dispersion direction.
 
-    Algorithms operate on this dataclass rather than on a DataModel,
-    avoiding the overhead of constructing intermediate DataModel objects,
-    which was slowing runtime for TSO data with thousands of integrations.
+    Algorithms operate on this dataclass rather than on a
+    `~stdatamodels.jwst.datamodels.JwstDataModel`.
+    This avoids the overhead of constructing intermediate DataModel objects,
+    which was slowing runtime for TSO data with thousands of integrations,
+    and provides a consistent interface for mingrad and fit_profile.
 
     Attributes
     ----------
     data : np.ndarray
-        2-D science pixel array.
+        Science array.
     dq : np.ndarray
-        2-D data quality array.
+        Data quality array.
     err : np.ndarray
-        2-D total error array.
+        Total error array.
     var_poisson : np.ndarray
-        2-D Poisson variance array.
+        Poisson variance array.
     var_rnoise : np.ndarray
-        2-D read-noise variance array.
+        Read-noise variance array.
     var_flat : np.ndarray
-        2-D flat-field variance array.
+        Flat-field variance array.
     dispersion_direction : int
-        1 = HORIZONTAL (spectral axis along columns),
-        2 = VERTICAL (spectral axis along rows).
+        Dispersion direction.
     """
 
     data: np.ndarray
@@ -104,9 +105,9 @@ class PixelReplacement:
             raise KeyError from err
 
     @staticmethod
-    def _inputs_from_model(model):
-        """Extract PixelReplaceInputs from DataModel, copying arrays."""  # numpydoc ignore: RT01
-        return PixelReplaceInputs(
+    def _arrays_from_model(model):
+        """Extract PixelReplaceArrays from DataModel, copying arrays."""  # numpydoc ignore: RT01
+        return PixelReplaceArrays(
             data=model.data.copy(),
             dq=model.dq.copy(),
             err=model.err.copy(),
@@ -117,8 +118,8 @@ class PixelReplacement:
         )
 
     @staticmethod
-    def _write_back_to_model(arrays, model):
-        """Write PixelReplaceInputs back into a DataModel in place."""  # numpydoc ignore: RT01
+    def _model_from_arrays(arrays, model):
+        """Write PixelReplaceArrays back into a DataModel in place."""  # numpydoc ignore: RT01
         model.data = arrays.data
         model.dq = arrays.dq
         model.err = arrays.err
@@ -139,9 +140,9 @@ class PixelReplacement:
         if isinstance(self.input, datamodels.ImageModel) or (
             isinstance(self.input, datamodels.SlitModel) and self.input.data.ndim == 2
         ):
-            arrays = self._inputs_from_model(self.input)
+            arrays = self._arrays_from_model(self.input)
             arrays = self.algorithm(arrays)
-            self._write_back_to_model(arrays, self.input)
+            self._model_from_arrays(arrays, self.input)
             n_replaced = np.count_nonzero(self.input.dq & self.FLUX_ESTIMATED)
             log.info(f"Input model had {n_replaced} pixels replaced.")
         elif isinstance(self.input, datamodels.IFUImageModel):
@@ -151,9 +152,9 @@ class PixelReplacement:
             if self.input.meta.exposure.type == "MIR_MRS":
                 if self.pars["algorithm"] == "mingrad":
                     # mingrad method
-                    arrays = self._inputs_from_model(self.input)
+                    arrays = self._arrays_from_model(self.input)
                     arrays = self.algorithm(arrays)
-                    self._write_back_to_model(arrays, self.input)
+                    self._model_from_arrays(arrays, self.input)
                 else:
                     # fit_profile method
                     det2ab = self.input.meta.wcs.get_transform(
@@ -165,7 +166,7 @@ class PixelReplacement:
                     for i, beta in enumerate(unique_beta):
                         # Define a mask that is True where this trace is located
                         trace_mask = beta_array == beta
-                        arrays = self._inputs_from_model(self.input)
+                        arrays = self._arrays_from_model(self.input)
                         arrays.dq = np.where(
                             # When not in this trace, set NON_SCIENCE and DO_NOT_USE
                             ~trace_mask,
@@ -198,9 +199,9 @@ class PixelReplacement:
             else:
                 if self.pars["algorithm"] == "mingrad":
                     # mingrad method
-                    arrays = self._inputs_from_model(self.input)
+                    arrays = self._arrays_from_model(self.input)
                     arrays = self.algorithm(arrays)
-                    self._write_back_to_model(arrays, self.input)
+                    self._model_from_arrays(arrays, self.input)
                 else:
                     # fit_profile method - iterate over IFU slices
                     for i in range(30):
@@ -212,7 +213,7 @@ class PixelReplacement:
 
                         # Define a mask that is True where this trace is located
                         trace_mask = wave > 0
-                        arrays = self._inputs_from_model(self.input)
+                        arrays = self._arrays_from_model(self.input)
                         arrays.dq = np.where(
                             # When not in this trace, set NON_SCIENCE and DO_NOT_USE
                             ~trace_mask,
@@ -247,7 +248,7 @@ class PixelReplacement:
         elif isinstance(self.input, datamodels.MultiSlitModel):
             for i, _slit in enumerate(self.input.slits):
                 slit_model = datamodels.SlitModel(self.input.slits[i].instance)
-                arrays = self._inputs_from_model(slit_model)
+                arrays = self._arrays_from_model(slit_model)
                 slit_model.close()
 
                 arrays = self.algorithm(arrays)
@@ -255,19 +256,14 @@ class PixelReplacement:
                 n_replaced = np.count_nonzero(arrays.dq & self.FLUX_ESTIMATED)
                 log.info(f"Slit {i} had {n_replaced} pixels replaced.")
 
-                self.input.slits[i].data = arrays.data
-                self.input.slits[i].dq = arrays.dq
-                self.input.slits[i].err = arrays.err
-                self.input.slits[i].var_poisson = arrays.var_poisson
-                self.input.slits[i].var_rnoise = arrays.var_rnoise
-                self.input.slits[i].var_flat = arrays.var_flat
+                self._model_from_arrays(arrays, self.input.slits[i])
 
         # CubeModel inputs are TSO (so far?); SlitModel may be NRS_BRIGHTOBJ,
         # also requiring a re-packaging of the data into 2D inputs for the algorithm
         elif isinstance(self.input, datamodels.CubeModel | datamodels.SlitModel):
             dispaxis = self.input.meta.wcsinfo.dispersion_direction
             for i in range(len(self.input.data)):
-                arrays = PixelReplaceInputs(
+                arrays = PixelReplaceArrays(
                     data=self.input.data[i].copy(),
                     dq=self.input.dq[i].copy(),
                     err=self.input.err[i].copy(),
@@ -308,14 +304,14 @@ class PixelReplacement:
 
         Parameters
         ----------
-        arrays : PixelReplaceInputs
+        arrays : PixelReplaceArrays
             Pixel arrays and dispersion direction for the 2D spectrum to process.
             Arrays are modified in place.
 
         Returns
         -------
-        arrays : PixelReplaceInputs
-            The same PixelReplaceInputs with bad pixels now flagged with FLUX_ESTIMATED
+        arrays : PixelReplaceArrays
+            The same PixelReplaceArrays with bad pixels now flagged with FLUX_ESTIMATED
             and holding a flux value estimated from the spatial profile.
         """
         # np.nanmedian() entry full of NaN values would produce a numpy
@@ -570,14 +566,14 @@ class PixelReplacement:
 
         Parameters
         ----------
-        arrays : PixelReplaceInputs
+        arrays : PixelReplaceArrays
             Pixel arrays and dispersion direction for the 2D spectrum to process.
             Arrays are modified in place.
 
         Returns
         -------
-        arrays : PixelReplaceInputs
-            The same PixelReplaceInputs with flagged bad pixels now flagged with FLUX_ESTIMATED
+        arrays : PixelReplaceArrays
+            The same PixelReplaceArrays with flagged bad pixels now flagged with FLUX_ESTIMATED
             and holding a flux value estimated from adjacent pixels.
         """
         # np.nanmedian() entry full of NaN values would produce a numpy
