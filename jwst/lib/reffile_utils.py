@@ -338,21 +338,14 @@ def get_multistripe_subarray_model(sci_model, ref_model):
     sub_model : JWST data model
         Subarray cutout reference file model.
     """
-    if isinstance(ref_model, datamodels.MaskModel):
-        sub_model = stripe_read(sci_model, ref_model, ["dq"])
-    elif isinstance(ref_model, datamodels.GainModel):
-        sub_model = stripe_read(sci_model, ref_model, ["data"])
-    elif isinstance(ref_model, datamodels.LinearityModel):
-        sub_model = stripe_read(sci_model, ref_model, ["coeffs", "dq"])
-    elif isinstance(ref_model, datamodels.ReadnoiseModel):
-        sub_model = stripe_read(sci_model, ref_model, ["data"])
-    elif isinstance(ref_model, datamodels.SaturationModel):
-        sub_model = stripe_read(sci_model, ref_model, ["data", "dq"])
-    elif isinstance(ref_model, datamodels.SuperBiasModel):
-        sub_model = stripe_read(sci_model, ref_model, ["data", "err", "dq"])
-    else:
-        log.warning("Unsupported reference file model type for multistripe subarray cutouts.")
-        sub_model = None
+    primary = ref_model.get_primary_array_name()
+    attrs = {primary}
+
+    for att in ["err", "dq"]:
+        if ref_model.hasattr(att):
+            attrs.add(att)
+
+    sub_model = stripe_read(sci_model, ref_model, attrs)
 
     return sub_model
 
@@ -391,12 +384,16 @@ def stripe_read(sci_model, ref_model, attribs):
     else:
         sub_model = type(ref_model)()
 
-    sub_model.update(ref_model)
     for attrib in attribs:
         ref_array = getattr(ref_model, attrib)
 
         # Apply subarray shape in fastaxis; slowaxis cutouts determined in generate_stripe_array
-        if np.abs(sci_meta.subarray.fastaxis) == 1:
+        # DHS reference files will likely be in FULL frame and will not have these subarray
+        # values defined - they should pass over this if/elif block.
+        if (
+            np.abs(sci_meta.subarray.fastaxis) == 1
+            and getattr(ref_model.meta.subarray, "xstart", None) is not None
+        ):
             faststart_sci = sci_model.meta.subarray.xstart
             fastsize_sci = sci_meta.subarray.xsize
 
@@ -407,7 +404,7 @@ def stripe_read(sci_model, ref_model, attribs):
             faststart = faststart_sci - faststart_ref
             faststop = faststart + fastsize_sci
             ref_array = ref_array[..., faststart:faststop]
-        else:
+        elif getattr(ref_model.meta.subarray, "ystart", None) is not None:
             faststart_sci = sci_model.meta.subarray.ystart
             fastsize_sci = sci_meta.subarray.ysize
 
@@ -420,6 +417,7 @@ def stripe_read(sci_model, ref_model, attribs):
             ref_array = ref_array[..., faststart:faststop, :]
 
         sub_model[attrib] = generate_stripe_array(ref_array, sci_meta, sci_nints)
+    sub_model.update(ref_model)
     return sub_model
 
 

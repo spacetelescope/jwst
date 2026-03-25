@@ -28,6 +28,6 @@ REFTYPE                                           Description                   
 :ref:`MSA <msa_reffile>`                          Transform in the NIRSpec MSA plane                    NIRSpec
 :ref:`OTE <ote_reffile>`                          Transform through the Optical Telescope Element       NIRSpec
 :ref:`SPECWCS <specwcs_reffile>`                  Wavelength calibration models                         MIRI, NIRCam, NIRISS
-:ref:`REGIONS <regions_reffile>`                  Stores location of the regions on the detector        MIRI
+:ref:`REGIONS <regions_reffile>`                  Stores location of the regions on the detector        MIRI, NIRCam
 :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>`  Typical wavelength ranges                             MIRI, NIRCam, NIRISS, NIRSpec
 ================================================  ====================================================  =============================
