@@ -2282,7 +2282,7 @@ def run_extract1d(
     if pipe_utils.is_tso(input_model):
         # int_times extension can stay for all TSO observations, but time
         # keywords are only populated for multi-int spectra
-        if isinstance(output_model, (datamodels.TSOMultiSpecModel, datamodels.MultiSpecModel)):
+        if isinstance(output_model, datamodels.TSOMultiSpecModel):
             populate_time_keywords(input_model, output_model)
     else:
         log.debug("Not copying from the INT_TIMES table because this is not a TSO exposure.")

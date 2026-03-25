@@ -311,8 +311,9 @@ the output model is a MultiSlitModel with one slit for each DHS stripe.  The sli
 corresponds to the stripe number, e.g. 10, 9, 8, 7 for NRCA1.
 
 The cutout height in the cross-dispersion direction is no longer hard-set at 64 pixels;
-instead it's equal to the height of the stripe, which is set by the ``nreads2`` attribute
-of the input model. In the along-dispersion direction, similar to non-DHS TSGRISM modes,
+instead it's equal to the height of the stripe, which is set by the
+``meta.subarray.multistripe_reads2`` attribute of the input model. In the
+along-dispersion direction, similar to non-DHS TSGRISM modes,
 the entire extent of the image is included in the cutout.
 
 Step Arguments
