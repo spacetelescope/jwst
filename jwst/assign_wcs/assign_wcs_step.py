@@ -78,7 +78,7 @@ class AssignWcsStep(Step):
         - msa: Metrology of the MSA plane (NIRSPEC)
         - ote: Transform through the Optical Telescope Element (NIRSPEC)
         - specwcs: Wavelength calibration models (MIRI, NIRCAM, NIRISS)
-        - regions: Stores location of the regions on the detector (MIRI)
+        - regions: Stores location of the regions on the detector (MIRI, NIRCAM DHS)
         - wavelengthrange: Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
 
         Parameters

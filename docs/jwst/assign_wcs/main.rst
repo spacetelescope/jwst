@@ -218,6 +218,17 @@ For WFSS modes (``NIS_WFSS``, ``NRC_WFSS``, and ``MIR_WFSS``), an approximation 
 associated with a direct image with the same instrument configuration as the grism/prism image
 is saved as FITS WCS in the headers of grism/prism images.
 
+WCS of substripe (DHS) exposures
+--------------------------------
+
+``NRC_TSGRISM`` exposures in substripe (DHS) modes have a similar WCS to that of normal ``NRC_TSGRISM``
+exposures, except that each stripe has its own dispersion transform model, and
+the grism-to-direct transform therefore includes a selector to determine the DHS stripe
+at each pixel. The forward transform takes inputs ``x``, ``y`` and ``order`` in
+the dispersed image frame, transforms to ``x0``, ``y0``, ``wavelength``, ``order`` and ``stripe`` in the direct
+image frame, and then transforms to ``ra``, ``dec``, ``wavelength``, ``order``, and ``stripe`` in the world frame.
+
+
 Corrections Due to Spacecraft Motion
 ------------------------------------
 
