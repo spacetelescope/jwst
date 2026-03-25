@@ -480,6 +480,27 @@ class PixelReplacement:
 
         return model
 
+    @staticmethod
+    def _interp_neighbors(arr, yindx, xindx):
+        """
+        Interpolate using neighboring pixels in both horizontal and vertical directions.
+
+        Parameters
+        ----------
+        arr : np.ndarray
+            2-D input array.
+        yindx, xindx : np.ndarray
+            1D arrays, each length N, of row/column indices of the bad pixels.
+
+        Returns
+        -------
+        np.ndarray, shape (2, N)
+            Interpolations in the horizontal (0th index) and vertical (1st index) directions.
+        """
+        horiz = (arr[yindx, xindx - 1] + arr[yindx, xindx + 1]) / 2.0
+        vert = (arr[yindx - 1, xindx] + arr[yindx + 1, xindx]) / 2.0
+        return np.array([horiz, vert])
+
     def mingrad(self, model):
         """
         Replace pixels with the minimum gradient replacement method.
@@ -520,24 +541,19 @@ class PixelReplacement:
 
         log.info("Using minimum gradient method.")
 
-        # Copy input data, err, and dq values
-        indata = model.data.copy()
-        indq = model.dq.copy()
-        inerr = model.err.copy()
-
         # Propagate variance components as errors to get the scales right
         in_var_p = np.sqrt(model.var_poisson)
         in_var_r = np.sqrt(model.var_rnoise)
         in_var_f = np.sqrt(model.var_flat)
 
         # Make an array of x/y values on the detector
-        (ysize, xsize) = indata.shape
+        (ysize, xsize) = model.data.shape
         basex, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
         pad = 1  # Padding around edge of array to ensure we don't look for neighbors outside array
 
         # Find NaN-valued pixels
         indx = np.where(
-            (~np.isfinite(indata))
+            (~np.isfinite(model.data))
             & (basey > pad)
             & (basey < ysize - pad)
             & (basex > pad)
@@ -546,68 +562,50 @@ class PixelReplacement:
         # X and Y indices
         yindx, xindx = indx[0], indx[1]
 
-        # Gather all four neighbors at once for every bad pixel.
-        # Reads come from the pre-loop copies so writes below never affect them.
-        left_data = indata[yindx, xindx - 1]
-        right_data = indata[yindx, xindx + 1]
-        top_data = indata[yindx - 1, xindx]
-        bot_data = indata[yindx + 1, xindx]
+        # Absolute gradient along each axis from indata, shape (2, N), used to choose direction
+        diffs = np.array(
+            [
+                np.abs(model.data[yindx, xindx - 1] - model.data[yindx, xindx + 1]),
+                np.abs(model.data[yindx - 1, xindx] - model.data[yindx + 1, xindx]),
+            ]
+        )
 
-        left_err = inerr[yindx, xindx - 1]
-        right_err = inerr[yindx, xindx + 1]
-        top_err = inerr[yindx - 1, xindx]
-        bot_err = inerr[yindx + 1, xindx]
-
-        left_vp = in_var_p[yindx, xindx - 1]
-        right_vp = in_var_p[yindx, xindx + 1]
-        top_vp = in_var_p[yindx - 1, xindx]
-        bot_vp = in_var_p[yindx + 1, xindx]
-
-        left_vr = in_var_r[yindx, xindx - 1]
-        right_vr = in_var_r[yindx, xindx + 1]
-        top_vr = in_var_r[yindx - 1, xindx]
-        bot_vr = in_var_r[yindx + 1, xindx]
-
-        left_vf = in_var_f[yindx, xindx - 1]
-        right_vf = in_var_f[yindx, xindx + 1]
-        top_vf = in_var_f[yindx - 1, xindx]
-        bot_vf = in_var_f[yindx + 1, xindx]
-
-        # Absolute gradient and interpolated value for each axis, shape (2, N)
-        diffs = np.array([np.abs(left_data - right_data), np.abs(top_data - bot_data)])
-        interp_data = np.array([(left_data + right_data) / 2.0, (top_data + bot_data) / 2.0])
-        interp_err = np.array([(left_err + right_err) / 2.0, (top_err + bot_err) / 2.0])
-        interp_vp = np.array([(left_vp + right_vp) / 2.0, (top_vp + bot_vp) / 2.0])
-        interp_vr = np.array([(left_vr + right_vr) / 2.0, (top_vr + bot_vr) / 2.0])
-        interp_vf = np.array([(left_vf + right_vf) / 2.0, (top_vf + bot_vf) / 2.0])
+        # Interpolated values for each quantity in both directions, shape (2, N)
+        interp_data = self._interp_neighbors(model.data, yindx, xindx)
+        interp_err = self._interp_neighbors(model.err, yindx, xindx)
+        interp_vp = self._interp_neighbors(in_var_p, yindx, xindx)
+        interp_vr = self._interp_neighbors(in_var_r, yindx, xindx)
+        interp_vf = self._interp_neighbors(in_var_f, yindx, xindx)
 
         # Replace NaN diffs with inf so argmin naturally prefers the valid direction.
-        # Pixels where both diffs are inf have no usable neighbor pair and are skipped.
-        safe_diffs = np.where(np.isnan(diffs), np.inf, diffs)  # (2, N)
-        replaceable = ~np.all(np.isinf(safe_diffs), axis=0)  # (N,)
+        # Mask is True where at least one valid direction, False elsewhere,
+        # such that pixels where both diffs are inf have no usable neighbor pair and are skipped.
+        diffs_with_infs = np.where(np.isnan(diffs), np.inf, diffs)  # (2, N)
+        mask = ~np.all(np.isinf(diffs_with_infs), axis=0)  # (N,)
 
         # Per-pixel direction index: 0 = horizontal, 1 = vertical
-        indmin = np.argmin(safe_diffs, axis=0)  # (N,)
+        indmin = np.argmin(diffs_with_infs, axis=0)  # (N,)
         col_idx = np.arange(len(yindx))
 
-        # Select the winning interpolated values, then write back to model
-        ri = replaceable  # shorthand
-        model.data[yindx[ri], xindx[ri]] = interp_data[indmin[ri], col_idx[ri]]
-        model.err[yindx[ri], xindx[ri]] = interp_err[indmin[ri], col_idx[ri]]
-        model.var_poisson[yindx[ri], xindx[ri]] = interp_vp[indmin[ri], col_idx[ri]] ** 2
-        model.var_rnoise[yindx[ri], xindx[ri]] = interp_vr[indmin[ri], col_idx[ri]] ** 2
-        model.var_flat[yindx[ri], xindx[ri]] = interp_vf[indmin[ri], col_idx[ri]] ** 2
+        # Select the minimium-gradient interpolated values and update model with them
+        indmin = indmin[mask]
+        col_idx = col_idx[mask]
+        model.data[yindx[mask], xindx[mask]] = interp_data[indmin, col_idx]
+        model.err[yindx[mask], xindx[mask]] = interp_err[indmin, col_idx]
+        model.var_poisson[yindx[mask], xindx[mask]] = interp_vp[indmin, col_idx] ** 2
+        model.var_rnoise[yindx[mask], xindx[mask]] = interp_vr[indmin, col_idx] ** 2
+        model.var_flat[yindx[mask], xindx[mask]] = interp_vf[indmin, col_idx] ** 2
 
         # Update DQ flags for replaceable pixels.
-        # Reads use the pre-loop copy (indq) so ordering doesn't matter.
-        orig_dq = indq[yindx, xindx]  # (N,)
+        # Reads use the pre-write DQ so ordering doesn't matter.
+        orig_dq = model.dq[yindx, xindx]  # (N,)
         remove_dnu = (
-            ri
+            mask
             & (orig_dq & self.DO_NOT_USE).astype(bool)
             & ~(orig_dq & self.NON_SCIENCE).astype(bool)
         )
         model.dq[yindx[remove_dnu], xindx[remove_dnu]] -= self.DO_NOT_USE
-        model.dq[yindx[ri], xindx[ri]] |= self.FLUX_ESTIMATED
+        model.dq[yindx[mask], xindx[mask]] |= self.FLUX_ESTIMATED
 
         return model
 
