@@ -1367,25 +1367,28 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         Residual image from the input minus the scene model.
     """
     # Get the data and variance arrays
+    data = data_model.data
+    var_rnoise = data_model.var_rnoise
+    var_poisson = data_model.var_poisson
+    var_flat = data_model.var_flat
+
     if integration > -1:
         log.debug(f"Extracting integration {integration + 1}")
-        data = data_model.data[integration]
-        var_rnoise = data_model.var_rnoise[integration]
-        var_poisson = data_model.var_poisson[integration]
-        var_flat = data_model.var_flat[integration]
-    else:
-        data = data_model.data
-        var_rnoise = data_model.var_rnoise
-        var_poisson = data_model.var_poisson
-        var_flat = data_model.var_flat
+        data = data[integration]
 
     # Make sure variances match data
-    if getattr(data_model, "var_rnoise", None) is None or var_rnoise.shape != data.shape:
+    if var_rnoise is None or var_rnoise.shape[-2:] != data.shape:
         var_rnoise = np.zeros_like(data)
-    if getattr(data_model, "var_poisson", None) is None or var_poisson.shape != data.shape:
+    elif integration > -1:
+        var_rnoise = var_rnoise[integration]
+    if var_poisson is None or var_poisson.shape[-2:] != data.shape:
         var_poisson = np.zeros_like(data)
-    if getattr(data_model, "var_flat", None) is None or var_flat.shape != data.shape:
+    elif integration > -1:
+        var_poisson = var_poisson[integration]
+    if var_flat is None or var_flat.shape[-2:] != data.shape:
         var_flat = np.zeros_like(data)
+    elif integration > -1:
+        var_flat = var_flat[integration]
 
     # Transpose data for extraction
     if extract_params["dispaxis"] == HORIZONTAL:
