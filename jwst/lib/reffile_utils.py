@@ -388,6 +388,8 @@ def stripe_read(sci_model, ref_model, attribs):
         ref_array = getattr(ref_model, attrib)
 
         # Apply subarray shape in fastaxis; slowaxis cutouts determined in generate_stripe_array
+        # DHS reference files will likely be in FULL frame and will not have these subarray
+        # values defined - they should pass over this if/elif block.
         if (
             np.abs(sci_meta.subarray.fastaxis) == 1
             and getattr(ref_model.meta.subarray, "xstart", None) is not None
