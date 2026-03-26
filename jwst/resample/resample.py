@@ -698,12 +698,6 @@ class ResampleImage(Resample):
             projection=prj_code,
         )
 
-        model.meta.wcsinfo.ctype1 = w.wcs.ctype[0]
-        model.meta.wcsinfo.ctype2 = w.wcs.ctype[1]
-        model.meta.wcsinfo.cunit1 = str(w.wcs.cunit[0])
-        model.meta.wcsinfo.cunit2 = str(w.wcs.cunit[1])
-        model.meta.wcsinfo.radesys = w.wcs.radesys
-
         if isinstance(transform, FITSImagingWCSTransform):
             model.meta.wcsinfo.crpix1 = transform.crpix[0] + 1
             model.meta.wcsinfo.crpix2 = transform.crpix[1] + 1
@@ -715,6 +709,11 @@ class ResampleImage(Resample):
             model.meta.wcsinfo.pc1_2 = transform.pc[0][1]
             model.meta.wcsinfo.pc2_1 = transform.pc[1][0]
             model.meta.wcsinfo.pc2_2 = transform.pc[1][1]
+            model.meta.wcsinfo.ctype1 = w.wcs.ctype[0]
+            model.meta.wcsinfo.ctype2 = w.wcs.ctype[1]
+            model.meta.wcsinfo.cunit1 = str(w.wcs.cunit[0])
+            model.meta.wcsinfo.cunit2 = str(w.wcs.cunit[1])
+            model.meta.wcsinfo.radesys = w.wcs.radesys
 
         else:
             log.warning(
