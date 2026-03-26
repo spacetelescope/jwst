@@ -700,8 +700,8 @@ class ResampleImage(Resample):
 
         model.meta.wcsinfo.ctype1 = w.wcs.ctype[0]
         model.meta.wcsinfo.ctype2 = w.wcs.ctype[1]
-        model.meta.wcsinfo.cunit1 = w.wcs.cunit[0]
-        model.meta.wcsinfo.cunit2 = w.wcs.cunit[1]
+        model.meta.wcsinfo.cunit1 = str(w.wcs.cunit[0])
+        model.meta.wcsinfo.cunit2 = str(w.wcs.cunit[1])
         model.meta.wcsinfo.radesys = w.wcs.radesys
 
         if isinstance(transform, FITSImagingWCSTransform):
@@ -717,53 +717,22 @@ class ResampleImage(Resample):
             model.meta.wcsinfo.pc2_2 = transform.pc[1][1]
 
         else:
-            try:
-                # This assumes a specific structure of the GWCS forward
-                # transform: Shift, Affine transform, Scale, projection,
-                # celestial rotation. If this structure changes,
-                # this code will need to be updated.
-                model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
-                model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
-                model.meta.wcsinfo.cdelt1 = transform[3].factor.value
-                model.meta.wcsinfo.cdelt2 = transform[4].factor.value
-                model.meta.wcsinfo.crval1 = transform[6].lon.value
-                model.meta.wcsinfo.crval2 = transform[6].lat.value
-                model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
-                model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
-                model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
-                model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
-            except Exception as e:
-                log.warning(
-                    f"Could not extract WCS parameters from GWCS transform: {e}. "
-                    "Setting wcsinfo by fitting a linear FITS WCS to the resampled "
-                    "image WCS. This may not produce correct WCS parameters."
-                )
+            log.warning(
+                "Custom 'output_wcs' does does not match expected GWCS "
+                "structure for an imaging WCS "
+                "(it is not using 'FITSImagingWCSTransform')."
+                "Setting wcsinfo by fitting a linear FITS WCS to the resampled "
+                "image WCS. This may not produce correct WCS parameters if "
+                "custom 'output_wcs' contains distortions."
+            )
 
-                assign_wcs_util.update_fits_wcsinfo(
-                    model,
-                    degree=1,
-                    inv_degree=0,
-                    npoints=12,
-                    projection=prj_code,
-                )
-
-                # Alternatively, set some default values that likely are
-                # incorrect:
-                # model.meta.wcsinfo.crpix1 = 0.0
-                # model.meta.wcsinfo.crpix2 = 0.0
-                # model.meta.wcsinfo.cdelt1 = 1.0
-                # model.meta.wcsinfo.cdelt2 = 1.0
-                # model.meta.wcsinfo.ra_ref = 0.0
-                # model.meta.wcsinfo.dec_ref = 0.0
-                # model.meta.wcsinfo.crval1 = 0.0
-                # model.meta.wcsinfo.crval2 = 0.0
-                # model.meta.wcsinfo.pc1_1 = 1.0
-                # model.meta.wcsinfo.pc1_2 = 0.0
-                # model.meta.wcsinfo.pc2_1 = 0.0
-                # model.meta.wcsinfo.pc2_2 = 1.0
-
-                # Alternatively keep wcsinfo from the input model,
-                # but this may not be correct for the resampled image.
+            assign_wcs_util.update_fits_wcsinfo(
+                model,
+                degree=1,
+                inv_degree=0,
+                npoints=12,
+                projection=prj_code,
+            )
 
         # Remove no longer relevant WCS keywords
         rm_keys = ["v2_ref", "v3_ref", "ra_ref", "dec_ref", "roll_ref", "v3yangle", "vparity"]
