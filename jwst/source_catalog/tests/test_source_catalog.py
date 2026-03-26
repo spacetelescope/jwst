@@ -67,6 +67,7 @@ def test_source_catalog(nircam_model, npixels, nsources):
         assert np.isclose(cat["orientation"][1].value, -72.78329207140818) or np.isclose(
             cat["orientation"][1].value, 287.2167079285918
         )
+        assert np.isclose(cat["sky_orientation"][1].value, 77.21670804980704)
 
 
 def test_source_catalog_no_sources(nircam_model, monkeypatch):
