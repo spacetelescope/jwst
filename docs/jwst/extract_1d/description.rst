@@ -565,3 +565,7 @@ smoothest solution for the flux that fits the observations within the measured u
 The resulting spectral trace solutions are at a higher resolution than the observed data since an oversampled
 wavelength grid is used by the ATOCA algorithm for decontamination. These results are then reconvolved onto the native
 wavelength grid before the 1D spectra for each order are extracted.
+
+See this technical report for more implementation details, including ways in which the pipeline implementation
+differs from the original ATOCA algorithm described in Darveau-Bernier et al. 2022:
+`A Revised Implementation of the ATOCA Algorithm for Spectral Extraction of NIRISS/SOSS Data <https://www.stsci.edu/files/live/sites/www/files/home/jwst/documentation/technical-documents/_documents/JWST-STScI-009313.pdf>`__.
