@@ -761,8 +761,6 @@ class ResampleImage(Resample):
                 # model.meta.wcsinfo.pc1_2 = 0.0
                 # model.meta.wcsinfo.pc2_1 = 0.0
                 # model.meta.wcsinfo.pc2_2 = 1.0
-                # model.meta.wcsinfo.ctype1 = w.wcs.ctype[0]
-                # model.meta.wcsinfo.ctype2 = w.wcs.ctype[1]
 
                 # Alternatively keep wcsinfo from the input model,
                 # but this may not be correct for the resampled image.
