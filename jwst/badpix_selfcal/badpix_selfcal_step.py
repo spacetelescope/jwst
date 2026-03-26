@@ -114,7 +114,7 @@ class BadpixSelfcalStep(Step):
         In that case, the input exposure will be used as the sole background exposure,
         i.e., true self-calibration.
         """
-        input_sci, selfcal_models, bkg_models = self._parse_inputs(
+        input_sci, selfcal_models, bkg_models, selfcal_opened = self._parse_inputs(
             input_data, selfcal_list, bkg_list
         )
 
@@ -193,10 +193,9 @@ class BadpixSelfcalStep(Step):
 
         input_sci.meta.cal_step.badpix_selfcal = "COMPLETE"
 
-        # Since selfcal_models are not returned, close them here
-        for model in selfcal_models:
-            if model not in bkg_models:
-                model.close()
+        # Since selfcal_models are not returned, close them
+        for model in selfcal_opened:
+            model.close()
 
         return input_sci, bkg_models
 
@@ -229,6 +228,9 @@ class BadpixSelfcalStep(Step):
             Image datamodels to use for self-calibration.
         bkg_list : list
             Image datamodels to use as background exposures.
+        selfcal_opened : list
+            A reference to selfcal models opened here, so that they can be closed
+            later.
         """
         # Open the input, making a copy if needed
         output_model = self.prepare_output(input_data)
@@ -243,10 +245,10 @@ class BadpixSelfcalStep(Step):
         # copy if needed. They will be closed at the end of the step.
         if selfcal_list is None:
             selfcal_list = []
-        selfcal_list = [dm.open(selfcal) for selfcal in selfcal_list]
+        selfcal_opened = [dm.open(selfcal) for selfcal in selfcal_list]
 
         # Add any background models to the selfcal list
-        selfcal_list = selfcal_list + bkg_list
+        selfcal_list = selfcal_opened + bkg_list
 
         # find science and background exposures in association file
         if isinstance(output_model, dm.ModelContainer):
@@ -256,6 +258,7 @@ class BadpixSelfcalStep(Step):
 
             selfcal_list = selfcal_list + list(bkg_list_asn) + list(selfcal_list_asn)
             bkg_list += list(bkg_list_asn)
+            selfcal_opened += list(selfcal_list_asn)
 
             if len(sci_models) > 1:
                 raise ValueError(
@@ -272,7 +275,7 @@ class BadpixSelfcalStep(Step):
                 "Input data is not a ModelContainer, ImageModel, or IFUImageModel. Cannot continue."
             )
 
-        return output_sci, selfcal_list, bkg_list
+        return output_sci, selfcal_list, bkg_list, selfcal_opened
 
 
 def split_container_by_asn_exptype(container: dm.ModelContainer, exptypes: list) -> list:
