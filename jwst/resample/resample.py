@@ -4,12 +4,15 @@ import re
 from pathlib import Path
 
 import numpy as np
+from astropy.wcs.utils import celestial_frame_to_wcs
+from gwcs.fitswcs import FITSImagingWCSTransform
 from stcal.alignment import combine_sregions
 from stcal.resample import Resample
 from stcal.resample.utils import is_imaging_wcs
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
+from jwst.assign_wcs import util as assign_wcs_util
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels import ModelLibrary
 from jwst.model_blender.blender import ModelBlender
@@ -686,22 +689,83 @@ class ResampleImage(Resample):
             if regex.match(key):
                 del model.meta.wcsinfo.instance[key]
 
-        # Write new PC-matrix-based WCS based on GWCS model
+        # Write FITS WCS parameters based on GWCS model to wcsinfo:
         transform = model.meta.wcs.forward_transform
-        model.meta.wcsinfo.crpix1 = transform.crpix[0] + 1
-        model.meta.wcsinfo.crpix2 = transform.crpix[1] + 1
-        model.meta.wcsinfo.cdelt1 = transform.cdelt[0]
-        model.meta.wcsinfo.cdelt2 = transform.cdelt[1]
-        model.meta.wcsinfo.ra_ref = transform.crval[0]
-        model.meta.wcsinfo.dec_ref = transform.crval[1]
-        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
-        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
-        model.meta.wcsinfo.pc1_1 = transform.pc[0][0]
-        model.meta.wcsinfo.pc1_2 = transform.pc[0][1]
-        model.meta.wcsinfo.pc2_1 = transform.pc[1][0]
-        model.meta.wcsinfo.pc2_2 = transform.pc[1][1]
-        model.meta.wcsinfo.ctype1 = "RA---TAN"
-        model.meta.wcsinfo.ctype2 = "DEC--TAN"
+
+        prj_code = transform.projection.prjprm.code
+        w = celestial_frame_to_wcs(
+            frame=model.meta.wcs.pipeline[-1].frame.reference_frame,
+            projection=prj_code,
+        )
+
+        model.meta.wcsinfo.ctype1 = w.wcs.ctype[0]
+        model.meta.wcsinfo.ctype2 = w.wcs.ctype[1]
+        model.meta.wcsinfo.cunit1 = w.wcs.cunit[0]
+        model.meta.wcsinfo.cunit2 = w.wcs.cunit[1]
+        model.meta.wcsinfo.radesys = w.wcs.radesys
+
+        if isinstance(transform, FITSImagingWCSTransform):
+            model.meta.wcsinfo.crpix1 = transform.crpix[0] + 1
+            model.meta.wcsinfo.crpix2 = transform.crpix[1] + 1
+            model.meta.wcsinfo.cdelt1 = transform.cdelt[0]
+            model.meta.wcsinfo.cdelt2 = transform.cdelt[1]
+            model.meta.wcsinfo.crval1 = transform.crval[0]
+            model.meta.wcsinfo.crval2 = transform.crval[1]
+            model.meta.wcsinfo.pc1_1 = transform.pc[0][0]
+            model.meta.wcsinfo.pc1_2 = transform.pc[0][1]
+            model.meta.wcsinfo.pc2_1 = transform.pc[1][0]
+            model.meta.wcsinfo.pc2_2 = transform.pc[1][1]
+
+        else:
+            try:
+                # This assumes a specific structure of the GWCS forward
+                # transform: Shift, Affine transform, Scale, projection,
+                # celestial rotation. If this structure changes,
+                # this code will need to be updated.
+                model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+                model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+                model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+                model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+                model.meta.wcsinfo.crval1 = transform[6].lon.value
+                model.meta.wcsinfo.crval2 = transform[6].lat.value
+                model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+                model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+                model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+                model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+            except Exception as e:
+                log.warning(
+                    f"Could not extract WCS parameters from GWCS transform: {e}. "
+                    "Setting wcsinfo by fitting a linear FITS WCS to the resampled "
+                    "image WCS. This may not produce correct WCS parameters."
+                )
+
+                assign_wcs_util.update_fits_wcsinfo(
+                    model,
+                    degree=1,
+                    inv_degree=0,
+                    npoints=12,
+                    projection=prj_code,
+                )
+
+                # Alternatively, set some default values that likely are
+                # incorrect:
+                # model.meta.wcsinfo.crpix1 = 0.0
+                # model.meta.wcsinfo.crpix2 = 0.0
+                # model.meta.wcsinfo.cdelt1 = 1.0
+                # model.meta.wcsinfo.cdelt2 = 1.0
+                # model.meta.wcsinfo.ra_ref = 0.0
+                # model.meta.wcsinfo.dec_ref = 0.0
+                # model.meta.wcsinfo.crval1 = 0.0
+                # model.meta.wcsinfo.crval2 = 0.0
+                # model.meta.wcsinfo.pc1_1 = 1.0
+                # model.meta.wcsinfo.pc1_2 = 0.0
+                # model.meta.wcsinfo.pc2_1 = 0.0
+                # model.meta.wcsinfo.pc2_2 = 1.0
+                # model.meta.wcsinfo.ctype1 = w.wcs.ctype[0]
+                # model.meta.wcsinfo.ctype2 = w.wcs.ctype[1]
+
+                # Alternatively keep wcsinfo from the input model,
+                # but this may not be correct for the resampled image.
 
         # Remove no longer relevant WCS keywords
         rm_keys = ["v2_ref", "v3_ref", "ra_ref", "dec_ref", "roll_ref", "v3yangle", "vparity"]
