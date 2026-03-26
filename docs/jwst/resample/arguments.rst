@@ -87,6 +87,14 @@ image.
         ``pixel_scale_ratio``, ``pixel_scale``, ``rotation``, ``crpix``,
         and ``crval`` will be ignored.
 
+    When ``output_wcs`` is a FITS WCS-like GWCS, it is recommended that it be
+    constructed using `~gwcs.fitswcs.FITSImagingWCSTransform` object which
+    allows for proper writing of the WCS parameters to the output
+    model's ``wcsinfo`` which is used to assign FITS WCS keywords to resampled
+    image's header. Otherwise FITS WCS keywords will be determined by fitting
+    a linear FITS WCS to the output GWCS, which may not result in correct WCS
+    parameters if ``output_wcs`` contains distortions.
+
 ``--fillval`` (str, default='NAN')
     The value to assign to output pixels that have zero weight or do not
     receive any flux from any input pixels during drizzling.
