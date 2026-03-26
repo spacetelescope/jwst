@@ -381,7 +381,7 @@ class JWSTSourceCatalog:
         )
         _, _, angle = pixel_scale_angle_at_skycoord(skycoord, self.wcs)
 
-        return (180.0 * u.deg) - angle + self.orientation
+        return ((180.0 * u.deg) - angle + self.orientation) % (360 * u.deg)
 
     def _make_aperture_colnames(self, name):
         """
