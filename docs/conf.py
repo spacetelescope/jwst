@@ -77,7 +77,7 @@ intersphinx_mapping = {
     'asdf': ('https://asdf.readthedocs.io/en/stable/', None),
     'astropy': ('https://docs.astropy.org/en/stable/', None),
     'drizzle': ('https://spacetelescope-drizzle.readthedocs.io/en/latest/', None),
-    'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
+    'gwcs': ('https://gwcs.readthedocs.io/en/latest/', None),
     'matplotlib': ('https://matplotlib.org/', None),
     'numpy': ('https://numpy.org/devdocs', None),
     'photutils': ('https://photutils.readthedocs.io/en/stable/', None),
