@@ -498,10 +498,7 @@ class DMSBaseMixin(ACIDMixin):
         bool
             True if item is a member.
         """
-        try:
-            return item["filename"] in self._item_ids
-        except (KeyError, TypeError):
-            return False
+        return item["filename"] in self._item_ids
 
     def is_item_ami(self, item):
         """
