@@ -64,6 +64,11 @@ class IFUCubeData:
         The default type of cube for :ref:`calwebb_spec3 <calwebb_spec3>`
         is ``'band'``. These cubes will contain a single band of data.
 
+    linear_wave : bool
+        If true then create a linear wavelength dimension for output cubes. If
+        false then output cubes have a non-linear wavelength spacing. The
+        non-linear spacing is determined by the cube_pars reference file.
+
     instrument : str
         Instrument name, either "MIRI" or "NIRSpec"
 
@@ -91,6 +96,7 @@ class IFUCubeData:
         input_models,
         output_name_base,
         output_type,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -114,7 +120,7 @@ class IFUCubeData:
         self.instrument_info = instrument_info  # dictionary class imported in cube_build.py
         self.master_table = master_table
         self.output_type = output_type
-
+        self.linear_wave = linear_wave
         self.scalexy = pars_cube.get("scalexy")
         self.scalew = pars_cube.get("scalew")
         self.ra_center = pars_cube.get("ra_center")
@@ -1274,20 +1280,30 @@ class IFUCubeData:
             self.scalerad = np.amin(scalerad)
 
         # if we have NIRSPEC Prism then force wavelength to be non-linear
-        elif (
-            self.instrument == "NIRSPEC"
-            and "prism" in self.list_par1
-            and self.output_type == "multi"
-        ):
+        elif self.instrument == "NIRSPEC" and not self.linear_wave:
             self.linear_wavelength = False
-            (
-                table_wavelength,
-                table_sroi,
-                table_wroi,
-                table_power,
-                table_softrad,
-                table_scalerad,
-            ) = self.instrument_info.get_prism_table()
+
+            # determine if have Prism, Medium or High resolution
+            med = ["g140m", "g235m", "g395m"]
+            high = ["g140h", "g235h", "g395h"]
+            prism = ["prism"]
+
+            for i in range(number_bands):
+                par1 = self.list_par1[i]
+                if par1 in prism:
+                    table = self.instrument_info.get_prism_table()
+                if par1 in med:
+                    table = self.instrument_info.get_med_table()
+                if par1 in high:
+                    table = self.instrument_info.get_high_table()
+                (
+                    table_wavelength,
+                    table_sroi,
+                    table_wroi,
+                    table_power,
+                    table_softrad,
+                    table_scalerad,
+                ) = table
 
         # if all bands have the same spectral size then linear_wavelength
         elif all_same_spectral:
@@ -2622,7 +2638,21 @@ class IFUCubeData:
 
         var = np.sqrt(var)
         if self.linear_wavelength:
-            ifucube_model = datamodels.IFUCubeModel(data=flux, dq=dq, err=var, weightmap=wmap)
+            crval3 = self.crval3
+            cdelt3 = self.cdelt3
+            crpix3 = self.crpix3
+            pixels = np.arange(self.naxis3)
+
+            # Calculate wavelengths
+            # We add 1 to 'pixels' to convert 0-based Python indexing to 1-based FITS indexing
+            wavelength_table = crval3 + (pixels + 1 - crpix3) * cdelt3
+            wave = np.asarray(wavelength_table, dtype=np.float32)
+            num = len(wave)
+            alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
+            # always write the wavetable
+            ifucube_model = datamodels.IFUCubeModel(
+                data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
+            )
         else:
             wave = np.asarray(self.wavelength_table, dtype=np.float32)
             num = len(wave)
@@ -2693,6 +2723,12 @@ class IFUCubeData:
             ifucube_model.meta.wcsinfo.crpix3 = self.crpix3
             ifucube_model.meta.ifu.roi_spatial = float(self.rois)
             ifucube_model.meta.ifu.roi_wave = float(self.roiw)
+            # even though we are writing a WAVE-TAB we
+            # do not want to set these parameters:
+            #   ctype3="WAVE-TAB",
+            #   ps3_0 = 'WCS-TABLE'
+            #   ps3_1 = 'wavelength'
+            # because some viewers (e.g. DS9) report an incorrect wavelength range
         else:
             ifucube_model.meta.wcsinfo.ctype3 = "WAVE-TAB"
             ifucube_model.meta.wcsinfo.ps3_0 = "WCS-TABLE"

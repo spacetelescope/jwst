@@ -1,0 +1,2 @@
+Add an option to correct 1/f noise in TSO data with reference to a median image (``background_method=median_image``).
+Add support for masking expected spectral traces for NIRISS SOSS data when ``mask_science_regions=True``.

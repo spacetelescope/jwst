@@ -115,6 +115,8 @@ def background():
     wcsobj = wcs.WCS(pipeline)
     im.meta.wcs = wcsobj
 
+    im.var_rnoise = np.ones(shp)
+
     return im
 
 
@@ -184,13 +186,14 @@ def test_input_parsing(asn, sci, background):
     step = BadpixSelfcalStep()
 
     # basic association case. Both background and selfcal get into the list
-    input_sci, selfcal_list, bkg_list = step._parse_inputs(asn, [], [])
+    input_sci, selfcal_list, bkg_list, selfcal_opened = step._parse_inputs(asn, [], [])
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 2
     assert len(selfcal_list) == 4
+    assert len(selfcal_opened) == 2
 
     # association with background_list provided
-    input_sci, selfcal_list, bkg_list = step._parse_inputs(
+    input_sci, selfcal_list, bkg_list, selfcal_opened = step._parse_inputs(
         asn,
         [],
         [
@@ -201,9 +204,10 @@ def test_input_parsing(asn, sci, background):
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 5
     assert len(selfcal_list) == 7
+    assert len(selfcal_opened) == 2
 
     # association with selfcal_list provided
-    input_sci, selfcal_list, bkg_list = step._parse_inputs(
+    input_sci, selfcal_list, bkg_list, selfcal_opened = step._parse_inputs(
         asn,
         [
             background,
@@ -214,15 +218,17 @@ def test_input_parsing(asn, sci, background):
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 2
     assert len(selfcal_list) == 7
+    assert len(selfcal_opened) == 5
 
     # single science exposure
-    input_sci, selfcal_list, bkg_list = step._parse_inputs(sci, [], [])
+    input_sci, selfcal_list, bkg_list, selfcal_opened = step._parse_inputs(sci, [], [])
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 0
     assert len(selfcal_list) == 0
+    assert len(selfcal_opened) == 0
 
     # single science exposure with selfcal_list and bkg_list provided
-    input_sci, selfcal_list, bkg_list = step._parse_inputs(
+    input_sci, selfcal_list, bkg_list, selfcal_opened = step._parse_inputs(
         sci,
         [
             background,
@@ -236,6 +242,7 @@ def test_input_parsing(asn, sci, background):
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 1
     assert len(selfcal_list) == 4
+    assert len(selfcal_opened) == 3
 
 
 def test_bad_input():
@@ -246,7 +253,9 @@ def test_bad_input():
 
 
 def test_bad_input_in_container():
-    input_data = dm.ModelContainer([dm.ImageModel(), dm.ImageModel()])
+    model = dm.ImageModel()
+    model.meta.asn.exptype = "science"
+    input_data = dm.ModelContainer([model, model.copy()])
     step = BadpixSelfcalStep()
     with pytest.raises(ValueError, match="multiple science exposures"):
         step._parse_inputs(input_data, [], [])
@@ -287,9 +296,11 @@ def test_apply_flags(background):
     for idx in outlier_indices:
         assert np.isnan(flagged.data[idx])
         assert np.isnan(flagged.err[idx])
-        assert np.isnan(flagged.var_poisson[idx])
         assert np.isnan(flagged.var_rnoise[idx])
-        assert np.isnan(flagged.var_flat[idx])
+
+    # ensure arrays not initially present in test data are not created by the step
+    assert flagged.var_poisson is None
+    assert flagged.var_flat is None
 
     # check that DQ flag is set properly
     for idx in outlier_indices:

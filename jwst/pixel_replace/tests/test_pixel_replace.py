@@ -28,6 +28,7 @@ def cal_data(shape, bad_idx, dispaxis=1, model="slit"):
     # to correct at the middle of the array
     ones = np.ones(shape, dtype=float)
     model.data = ones.copy()
+    model.dq = model.get_default("dq")
     model.err = ones.copy()
     model.var_poisson = ones.copy()
     model.var_rnoise = ones.copy()

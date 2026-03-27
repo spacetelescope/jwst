@@ -480,24 +480,33 @@ def populate_time_keywords(input_model, output_model):
 
     Parameters
     ----------
-    input_model : TSOMultiSpecModel
+    input_model : TSOMultiSpecModel or MultiSlitModel
         The input science model.
-    output_model : TSOMultiSpecModel
+    output_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
         The output science model.  This may be modified in-place.
     """
     nints = input_model.meta.exposure.nints
     int_start = input_model.meta.exposure.integration_start
 
+    if getattr(input_model, "int_times", None) is None:
+        log.warning("INT_TIMES table not found - time keywords will not be populated.")
+        return
+
+    shape = None
     if hasattr(input_model, "data"):
         shape = input_model.data.shape
+    elif hasattr(input_model, "slits") and len(input_model.slits) > 0:
+        shape = input_model.slits[0].data.shape
+
+    if shape is not None:
         if len(shape) == 2:
             num_integ = 1
         else:
             # len(shape) == 3
             num_integ = shape[0]
     else:
-        # e.g. MultiSlit data
-        num_integ = 1
+        log.warning("Not using INT_TIMES table because of unexpected input shape.")
+        return
 
     # This assumes that the spec attribute of output_model has already been created,
     # and spectra have been appended to the spec_table
@@ -553,15 +562,15 @@ def populate_time_keywords(input_model, output_model):
     # int_times-related header keywords.
     skip = False  # initial value
 
-    if isinstance(input_model, (datamodels.MultiSlitModel, datamodels.ImageModel)):
-        if num_integrations > 1:
-            log.warning(
-                "Not using INT_TIMES table because the data have been averaged over integrations."
-            )
-            skip = True
-    elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
-        shape = input_model.data.shape
-
+    if isinstance(
+        input_model,
+        (
+            datamodels.ImageModel,
+            datamodels.CubeModel,
+            datamodels.MultiSlitModel,
+            datamodels.SlitModel,
+        ),
+    ):
         if len(shape) == 2 and num_integrations > 1:
             log.warning(
                 "Not using INT_TIMES table because the data have been averaged over integrations."
@@ -1358,25 +1367,28 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         Residual image from the input minus the scene model.
     """
     # Get the data and variance arrays
+    data = data_model.data
+    var_rnoise = data_model.var_rnoise
+    var_poisson = data_model.var_poisson
+    var_flat = data_model.var_flat
+
     if integration > -1:
         log.debug(f"Extracting integration {integration + 1}")
-        data = data_model.data[integration]
-        var_rnoise = data_model.var_rnoise[integration]
-        var_poisson = data_model.var_poisson[integration]
-        var_flat = data_model.var_flat[integration]
-    else:
-        data = data_model.data
-        var_rnoise = data_model.var_rnoise
-        var_poisson = data_model.var_poisson
-        var_flat = data_model.var_flat
+        data = data[integration]
 
     # Make sure variances match data
-    if var_rnoise.shape != data.shape:
+    if var_rnoise is None or var_rnoise.shape[-2:] != data.shape:
         var_rnoise = np.zeros_like(data)
-    if var_poisson.shape != data.shape:
+    elif integration > -1:
+        var_rnoise = var_rnoise[integration]
+    if var_poisson is None or var_poisson.shape[-2:] != data.shape:
         var_poisson = np.zeros_like(data)
-    if var_flat.shape != data.shape:
+    elif integration > -1:
+        var_poisson = var_poisson[integration]
+    if var_flat is None or var_flat.shape[-2:] != data.shape:
         var_flat = np.zeros_like(data)
+    elif integration > -1:
+        var_flat = var_flat[integration]
 
     # Transpose data for extraction
     if extract_params["dispaxis"] == HORIZONTAL:
@@ -1819,7 +1831,7 @@ def create_extraction(
                     strict=False,
                 )
             ),
-            dtype=datamodels.SpecModel().spec_table.dtype,
+            dtype=datamodels.SpecModel().get_dtype("spec_table"),
         )
 
         spec = datamodels.SpecModel(spec_table=otab)
@@ -1913,19 +1925,19 @@ def create_extraction(
             if integ == -1:
                 pass
             elif integ == 0:
-                if input_model.data.shape[0] == 1:
+                if data_model.data.shape[0] == 1:
                     log.info("1 integration done")
                     progress_msg_printed = True
                 else:
                     log.info("... 1 integration done")
-            elif integ == input_model.data.shape[0] - 1:
-                log.info(f"All {input_model.data.shape[0]} integrations done")
+            elif integ == data_model.data.shape[0] - 1:
+                log.info(f"All {data_model.data.shape[0]} integrations done")
                 progress_msg_printed = True
             else:
                 log.info(f"... {integ + 1} integrations done")
 
     if not progress_msg_printed:
-        log.info(f"All {input_model.data.shape[0]} integrations done")
+        log.info(f"All {data_model.data.shape[0]} integrations done")
 
     if isinstance(output_model, datamodels.TSOMultiSpecModel):
         # For multi-int data, assemble a single TSOSpecModel from the list of spectra
@@ -1982,7 +1994,7 @@ def _make_output_model(data_model, meta_source):
         output_model = datamodels.TSOMultiSpecModel()
     else:
         output_model = datamodels.MultiSpecModel()
-    if hasattr(meta_source, "int_times"):
+    if getattr(meta_source, "int_times", None) is not None:
         output_model.int_times = meta_source.int_times.copy()
     output_model.update(meta_source, only="PRIMARY")
     return output_model
@@ -2274,7 +2286,7 @@ def run_extract1d(
             populate_time_keywords(input_model, output_model)
     else:
         log.debug("Not copying from the INT_TIMES table because this is not a TSO exposure.")
-        if hasattr(output_model, "int_times"):
+        if getattr(output_model, "int_times", None) is not None:
             del output_model.int_times
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.

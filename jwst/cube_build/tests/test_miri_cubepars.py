@@ -170,6 +170,7 @@ def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
     output_name_base = None
     output_type = "band"
     instrument = "MIRI"
+    linear_wave = True
     list_par1 = all_channel
     list_par2 = all_subchannel
     master_table = None
@@ -179,6 +180,7 @@ def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
         input_model,
         output_name_base,
         output_type,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -271,6 +273,7 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
     output_name_base = None
     output_type = "band"
     instrument = "MIRI"
+    linear_wave = True
     list_par1 = all_channel
     list_par2 = all_subchannel
     master_table = None
@@ -280,6 +283,7 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
         input_model,
         output_name_base,
         output_type,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -332,6 +336,7 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
         input_model,
         output_name_base,
         output_type,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -440,6 +445,7 @@ def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
     output_name_base = None
     output_type = "multi"
     instrument = "MIRI"
+    linear_wave = False
     list_par1 = all_channel
     list_par2 = all_subchannel
     master_table = None
@@ -449,6 +455,7 @@ def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
         input_model,
         output_name_base,
         output_type,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,

@@ -86,6 +86,12 @@ def miri_cube_pars(tmp_path_factory):
     hdu2 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5, col6])
     hdu2.header["EXTNAME"] = "CUBEPAR_MSM"
 
+    # need EMSM to be defined for test_invalid_coord_sys because setting to internal_cal
+    # will hard-code weighting to emsm
+    col5 = fits.Column(name="SCALERAD", format="E", array=softrad, unit="arcsec")
+    hdu4 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
+    hdu4.header["EXTNAME"] = "CUBEPAR_EMSM"
+
     # make the third extension
     # Define the multiextension wavelength solution - only use a few number for testing
     finalwave = np.array([5, 10, 15, 20, 25])
@@ -103,7 +109,13 @@ def miri_cube_pars(tmp_path_factory):
     hdu3 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
     hdu3.header["EXTNAME"] = "MULTICHANNEL_MSM"
 
-    hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3])
+    # need EMSM to be defined for test_invalid_coord_sys because setting to internal_cal
+    # will hard-code weighting to emsm
+    col4 = fits.Column(name="SCALERAD", format="E", array=softrad, unit="arcsec")
+    hdu5 = fits.BinTableHDU.from_columns([col1, col2, col3, col4])
+    hdu5.header["EXTNAME"] = "MULTICHANNEL_EMSM"
+
+    hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5])
     hdu.writeto(filename, overwrite=True)
     return filename
 

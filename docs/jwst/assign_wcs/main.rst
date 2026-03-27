@@ -83,7 +83,7 @@ corresponding world coordinates. Using MIRI LRS fixed slit as an example:
   >>> print(ra, dec, lam)
   (329.97260532549336, 372.0242999250267, 5.4176100046836675)
 
-The WFSS modes for NIRCam and NIRISS have a slightly different calling structure.
+The WFSS modes for NIRCam, MIRI, and NIRISS have a slightly different calling structure.
 In addition to the (x, y) coordinates, they need to know other information about the
 spectrum or source object. In the JWST backward direction (going from the sky to
 the detector) the WCS model also looks for the wavelength and order and returns
@@ -201,21 +201,33 @@ and (x, y) grid as above, to get the coordinates for slice 1:
 Slice IDs in the regions image are one-indexed, with values between 1 and 30.
 Zero indicates a pixel outside any valid slice region.
 
-WCS of slitless grism exposures
--------------------------------
+WCS of slitless prism/grism exposures
+-------------------------------------
 
 The WCS forward transforms for slitless grism exposures (``NIS_WFSS``, ``NRC_WFSS``, ``NRC_TSGRISM``)
-take as input the ``x, y`` coordinates on the dispersed image, the ``x0, y0`` coordinate of
-the center of the object in the direct image and ``spectral order``. They return the ``x0, y0`` coordinate of the center
+and slitless prism (``MIR_WFSS``) exposures take as input the ``x, y`` coordinates on the
+dispersed image, the ``x0, y0`` coordinate of the center of the object in the direct image
+and ``spectral order``. They return the ``x0, y0`` coordinate of the center
 of the object in the direct image, ``wavelength`` and ``spectral order``.
 
 For NIRISS WFSS data the reference files contain a reference value for the filter wheel
 position angle. The trace is rotated about an angle which is the difference between
 the reference and actual angles.
 
-For WFSS modes (``NIS_WFSS``, ``NRC_WFSS``), an approximation of the GWCS object
-associated with a direct image with the same instrument configuration as the grism image
-is saved as FITS WCS in the headers of grism images.
+For WFSS modes (``NIS_WFSS``, ``NRC_WFSS``, and ``MIR_WFSS``), an approximation of the GWCS object
+associated with a direct image with the same instrument configuration as the grism/prism image
+is saved as FITS WCS in the headers of grism/prism images.
+
+WCS of substripe (DHS) exposures
+--------------------------------
+
+``NRC_TSGRISM`` exposures in substripe (DHS) modes have a similar WCS to that of normal ``NRC_TSGRISM``
+exposures, except that each stripe has its own dispersion transform model, and
+the grism-to-direct transform therefore includes a selector to determine the DHS stripe
+at each pixel. The forward transform takes inputs ``x``, ``y`` and ``order`` in
+the dispersed image frame, transforms to ``x0``, ``y0``, ``wavelength``, ``order`` and ``stripe`` in the direct
+image frame, and then transforms to ``ra``, ``dec``, ``wavelength``, ``order``, and ``stripe`` in the world frame.
+
 
 Corrections Due to Spacecraft Motion
 ------------------------------------

@@ -8,13 +8,13 @@ Overview
 --------
 The ``extract_1d`` step extracts a 1D signal from a 2D or 3D dataset and
 writes spectral data to an "x1d" product (or "x1dints" for time series data).
-This step works on all JWST spectroscopic modes, including MIRI LRS (slit and slitless)
+This step works on all JWST spectroscopic modes, including MIRI LRS (slit and slitless) and MIRI WFSS, 
 and MRS, NIRCam WFSS and TSGRISM, NIRISS WFSS and SOSS, and NIRSpec fixed-slit, IFU, and MOS.
 
 An EXTRACT1D reference file is used for most modes to specify the location and
 size of the target and background extraction apertures.
 The EXTRACT1D reference file is not used for Wide-Field Slitless Spectroscopy data
-(NIS_WFSS or NRC_WFSS). For these modes the extraction region is instead taken to be
+(MIRI_WFSS, NIS_WFSS or NRC_WFSS). For these modes the extraction region is instead taken to be
 the full size of the input 2D subarray or cutout for each source, or restricted to
 the region within which the world coordinate system (WCS) is defined in each cutout.
 
@@ -57,7 +57,7 @@ CubeModel, SlitModel, IFUCubeModel, ImageModel, MultiSlitModel, or a ModelContai
 For some JWST modes this is usually a resampled product, such as the "s2d" products
 for MIRI LRS fixed-slit, NIRSpec fixed-slit, and NIRSpec MOS, or the "s3d" products
 for MIRI MRS and NIRSpec IFU. For other modes that are not resampled (e.g. MIRI
-LRS slitless, NIRISS SOSS, NIRSpec BOTS, and NIRCam and NIRISS WFSS), this will
+LRS slitless, MIRI WFSS, NIRISS SOSS, NIRSpec BOTS, and NIRCam and NIRISS WFSS), this will
 be a "cal" or "calints" product.
 For modes that have multiple slit instances (NIRSpec fixed-slit and MOS, WFSS),
 the SCI extensions should have the keyword SLTNAME to specify which slit was extracted.
@@ -103,7 +103,7 @@ same structure as a ``MultiSpecModel``, except that there are three additional
 columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
 
-For NIRCam and NIRISS WFSS data, hundreds to thousands of spectra from different sources
+For NIRCam, MIRI, and NIRISS WFSS data, hundreds to thousands of spectra from different sources
 may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
 The data in this model is stored in the ``spec`` attribute, such that one spectral table
 is created for each exposure for each spectral order in the input data.
@@ -565,3 +565,7 @@ smoothest solution for the flux that fits the observations within the measured u
 The resulting spectral trace solutions are at a higher resolution than the observed data since an oversampled
 wavelength grid is used by the ATOCA algorithm for decontamination. These results are then reconvolved onto the native
 wavelength grid before the 1D spectra for each order are extracted.
+
+See this technical report for more implementation details, including ways in which the pipeline implementation
+differs from the original ATOCA algorithm described in Darveau-Bernier et al. 2022:
+`A Revised Implementation of the ATOCA Algorithm for Spectral Extraction of NIRISS/SOSS Data <https://www.stsci.edu/files/live/sites/www/files/home/jwst/documentation/technical-documents/_documents/JWST-STScI-009313.pdf>`__.

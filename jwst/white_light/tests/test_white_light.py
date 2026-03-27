@@ -67,7 +67,7 @@ def make_datamodel():
     npixels = np.zeros(n_points)
 
     # This data type is used for creating an output table.
-    spec_dtype = datamodels.SpecModel().spec_table.dtype
+    spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
 
     otab = np.array(
         list(

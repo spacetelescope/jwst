@@ -143,6 +143,8 @@ def miri_rate_model(data_shape, value=1.0):
         image = datamodels.CubeModel(data_shape)
 
     image.data[:, :] = value
+    image.dq = image.get_default("dq")
+    image.err = image.get_default("err")
     image.meta.instrument.name = "MIRI"
     image.meta.instrument.detector = "MIRIMAGE"
     image.meta.instrument.filter = "F2100W"

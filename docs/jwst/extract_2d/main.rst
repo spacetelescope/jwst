@@ -20,7 +20,7 @@ This step uses the ``bounding_box`` attribute of the WCS stored in the data mode
 which is populated by the ``assign_wcs`` step. Hence the ``assign_wcs`` step
 must be applied to the science exposure before running this step.
 
-For NIRCam and NIRISS WFSS modes, no ``bounding_box`` is attached to the data
+For NIRCam, MIRI, and NIRISS WFSS modes, no ``bounding_box`` is attached to the data
 model by the ``assign_wcs`` step.
 This is to keep the WCS flexible enough to be used with any
 source catalog or similar list of objects that may be associated with the dispersed image.
@@ -90,8 +90,8 @@ these source locations are directly used, instead of recomputing the source
 position from the WCS information.
 
 
-NIRCam and NIRISS WFSS
-++++++++++++++++++++++
+NIRCam, MIRI, and NIRISS WFSS
++++++++++++++++++++++++++++++
 
 During normal, automated processing of WFSS grism images, the
 step parameter ``grism_objects`` is left unspecified, in which case the ``extract_2d``
@@ -262,8 +262,8 @@ each object and the actual extracted data arrays, e.g.:
   array([[..., ..., ...]])
 
 
-NIRCam TSGRISM
-++++++++++++++
+NIRCam non-DHS TSGRISM
+++++++++++++++++++++++
 
 There is no source catalog created for TSO grism observations, because no associated
 direct images are obtained from which to derive such a catalog. So the ``extract_2d``
@@ -281,13 +281,13 @@ offset special requirement, and shows up in the header keyword "XOFFSET". The
 the appropriate amount. The WCS information remains unchanged. Note that offsets in the
 Y-direction (cross-dispersion direction) are not supported and should not be attempted.
 
-NIRCam subarrays used for TSGRISM observations always have their "bottom" edge located
+NIRCam subarrays used for non-DHS TSGRISM observations always have their "bottom" edge located
 at the physical bottom edge of the detector and vary in size vertically.
 The source spectrum trace will always be centered somewhere near row 34 in the vertical
 direction (dispersion running parallel to rows) of the dispersed image.
 So the larger subarrays just result in a larger region of sky above the spectrum.
 
-For TSGRISM, ``extract_2d`` always produces a cutout that is 64 pixels in height
+For non-DHS TSGRISM, ``extract_2d`` always produces a cutout that is 64 pixels in height
 (cross-dispersion direction), regardless of whether the original image is full-frame
 or subarray.
 This cutout height is equal to the height of the smallest available subarray (2048 x 64).
@@ -300,6 +300,21 @@ The dispersion direction is horizontal for this mode, and it will be
 documented by copying the keyword "DISPAXIS" (with value 1) from the input file
 to the output cutout.
 
+NIRCam DHS TSGRISM
+++++++++++++++++++
+
+Similarly to non-DHS TSGRISM, for DHS modes the source location is determined from the
+aperture reference point, and those values are used to set the source location
+for all computations involving the extent of the spectral trace and pixel wavelength
+assignments.  The major difference is that each stripe is extracted separately;
+the output model is a MultiSlitModel with one slit for each DHS stripe.  The slit ID
+corresponds to the stripe number, e.g. 10, 9, 8, 7 for NRCA1.
+
+The cutout height in the cross-dispersion direction is no longer hard-set at 64 pixels;
+instead it's equal to the height of the stripe, which is set by the
+``meta.subarray.multistripe_reads2`` attribute of the input model. In the
+along-dispersion direction, similar to non-DHS TSGRISM modes,
+the entire extent of the image is included in the cutout.
 
 Step Arguments
 ==============

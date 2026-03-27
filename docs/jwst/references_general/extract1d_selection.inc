@@ -12,5 +12,6 @@ Instrument Keywords
 MIRI       INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 NIRISS     INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 NIRSpec    INSTRUME, EXP_TYPE, LAMP, OPMODE, DATE-OBS, TIME-OBS
+NIRCam     INSTRUME, EXP_TYPE, FILTER, DATE-OBS, TIME-OBS
 ========== ====================================================
 

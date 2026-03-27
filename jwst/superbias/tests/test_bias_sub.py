@@ -142,3 +142,20 @@ def test_zeroframe(setup_full_cube):
 
     check = np.array([zarr[0], zarr[1] - bval, zarr[2] - bval])
     np.testing.assert_equal(check, output.zeroframe[0, 0, :])
+
+
+def test_superstripe_correction(setup_nis_superstripe_cube):
+    """Smoke test for superstripe handling."""
+
+    # Create superstripe model and full frame bias model
+    data, bias = setup_nis_superstripe_cube()
+
+    # The bias model has a single flat value
+    blevel = bias.data[0, 0]
+
+    # Run the pipeline on a copy of the model
+    output = do_correction(data.copy(), bias)
+
+    # Make sure the output has correct dimensions and expected bias was subtracted
+    assert output.data.shape == data.data.shape
+    np.testing.assert_equal(output.data, data.data - blevel)

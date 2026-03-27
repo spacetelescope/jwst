@@ -48,6 +48,17 @@ For the MIRI MRS the SPECWCS file is in ASDF format with the following structure
         :slice_number: The wavelength solution for each slice.
                        <slice_number> is the actual slice number (s), computed by s = channel * 100 + slice
 
+MIRI WFSS mode
+::::::::::::::::
+For MIRI WFSS mode the SPECWCS file is in ASDF format with the following structure:
+
+:displ: The wavelength transform models
+:dispx: The x-dispersion models
+:dispy: The y-dispersion models
+:invdispx: The inverse x-dispersion models
+:invdispl: The inverse wavelength transform models
+:orders: a list of order numbers that the models relate to, in the same order as the models
+
 NIRISS SOSS mode
 ::::::::::::::::
 For NIRISS SOSS mode the SPECWCS file is in ASDF format with the following structure.
@@ -56,7 +67,8 @@ For NIRISS SOSS mode the SPECWCS file is in ASDF format with the following struc
 
 NIRCam Grism modes
 ::::::::::::::::::
-For NIRCam WFSS and TSGRISM modes the SPECWCS file is in ASDF format with the following structure:
+For NIRCam WFSS and TSGRISM (including DHS) modes the SPECWCS file
+is in ASDF format with the following structure:
 
 :displ: The wavelength transform models
 :dispx: The x-dispersion models

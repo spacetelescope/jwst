@@ -187,6 +187,7 @@ def subtract_soss_bkg(
             mask[data_mask] = False
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", "divide by zero")
+                warnings.filterwarnings("ignore", "invalid value")
                 ratio = data[mask] / template[mask]
 
             q1, q2 = np.nanpercentile(ratio, [soss_bkg_percentile[0], soss_bkg_percentile[1]])

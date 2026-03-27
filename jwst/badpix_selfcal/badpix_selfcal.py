@@ -90,10 +90,10 @@ def apply_flags(input_model: IFUImageModel, flagged_indices: np.ndarray) -> IFUI
     """
     input_model.dq[flagged_indices] |= pixel["DO_NOT_USE"] + pixel["OTHER_BAD_PIXEL"]
 
-    input_model.data[flagged_indices] = np.nan
-    input_model.err[flagged_indices] = np.nan
-    input_model.var_poisson[flagged_indices] = np.nan
-    input_model.var_rnoise[flagged_indices] = np.nan
-    input_model.var_flat[flagged_indices] = np.nan
+    for attr in ("data", "err", "var_poisson", "var_rnoise", "var_flat"):
+        arr = getattr(input_model, attr)
+        if isinstance(arr, np.ndarray):
+            arr[flagged_indices] = np.nan
+            setattr(input_model, attr, arr)
 
     return input_model

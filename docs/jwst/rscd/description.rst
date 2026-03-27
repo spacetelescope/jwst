@@ -6,14 +6,12 @@ Description
 
 Assumptions
 -----------
-This correction is currently only implemented for MIRI data and is only applied
-to integrations after the first integration (i.e. this step does not correct the
-first integration).
+This correction is currently only implemented for MIRI data.
 It is assumed this step occurs before the dark subtraction, but after linearity
 correction.
 
 Background
-__________
+----------
 
 The MIRI Focal Plane System (FPS) consists of the detectors and the electronics to control them.
 There are a number of non-ideal detector and readout effects that produce reset offsets,
@@ -28,29 +26,90 @@ However, the reset FETs do not instantaneously reset the level. Instead, the exp
 adjustment of the FET after a reset causes the initial frames in an integration to be offset
 from their expected values. Between exposures, the MIRI detectors are continually reset;
 however, for a multiple integration exposure there is a single reset between integrations.
-The effects of this decay are not measurable in the first integration because a number
-of resets have occurred from the last exposure and the effect has decayed away by the time
+The effects of this decay are reduced in the first integration because a number
+of resets have occurred from the last exposure and the effect has partially decayed by the time
 it takes to read out the last exposure, set up the next exposure, and begin exposing.
-There are low level reset effects in the first integration that are related to the strength of the dark
-current and can be removed with an integration-dependent dark.
+Because of these physical transients, the JWST pipeline includes a dedicated RSCD step
+that automatically applies data quality flags to groups that should be skipped to ensure that
+the subsequent Jump Detection  :ref:`jump <jump_step>`
+and Ramp Fitting :ref:`ramp_fitting <ramp_fitting_step>` steps only use the linear portion
+of the integration.
 
-The Reset Switch Charge Decay (RSCD) step corrects for these effects by simply
-flagging the first N groups as DO_NOT_USE.  An actual correction algorithm allowing for the first N groups to be
-used is under development.
 
 Algorithm
-_________
+---------
 
-This correction is only applied to integrations > 1.
-This step flags the N groups at the beginning of all 2nd and higher integrations
+The Reset Switch Charge Decay (RSCD) step identifies and flags groups at the beginning of
+MIRI integrations that are affected by non-linear transients. These transients are caused
+by the exponential settling of the detector’s Field Effect Transistor (FET) switches
+immediately following a reset.
+
+This step flags the some of the first groups at the beginning of all integrations
 as bad (the "DO_NOT_USE" bit is set in the
-GROUPDQ flag array), but only if the total number of groups in each
-integration is greater than N+3.
-This results in the data contained in the the first N groups
+GROUPDQ flag array). The number of groups to skip depends on the readout pattern,
+subarray size and integration number. To maintain the statistical viability of the ramp, the step
+only applies flags if the integration contains at least three more groups than the required
+skip number (Groups > ``n_skip`` + 3). If this condition is not met, the step is bypassed to allow
+later pipeline stages enough data points to perform a linear fit.
+
+An additional check **resets the skip threshold to 1** for any integration containing five or fewer groups.
+
+Standard RSCD correction flags the first ``n_skip`` groups as DO_NOT_USE. However, for very bright sources,
+a pixel might saturate immediately after those skipped groups. If the algorithm always skips
+the RSCD groups, it might leave the pixel with zero or one valid group, making it impossible to
+calculate a flux (slope). Instead the algorithm "backs off" the number of skipped groups for
+specific pixels that are at risk of losing all their unsaturated data.
+Because reducing the ``n_skip`` introduces some non-linear FET transient data back into the fit,
+these pixels are flagged  in the PIXELDQ array as FLUX_ESTIMATED to warn
+the users that the flux value may be slightly biased by the RSCD effect.
+If only one group is left valid, the algorithm records the information header (see more information given
+the table below). This allows the :ref:`ramp_fitting <ramp_fitting_step>` to still derive a flux value (provided the user has enabled suppress_one_group = False).
+
+
+This step results in the data contained in the the first ``n_skip`` groups
 being excluded from subsequent steps, such as :ref:`jump detection <jump_step>`
 and :ref:`ramp_fitting <ramp_fitting_step>`.
-No flags are added if NGROUPS <= N+3, because doing so would leave too few good
-groups to work with in later steps.
 
-Only the GROUPDQ array is modified. The SCI, ERR, and PIXELDQ arrays are unchanged.
+Only the GROUPDQ array is modified. The SCI and ERR arrays remain unchanged. The PIXELDQ arrays are
+only updated in the case of bright saturating data when the RSCD skip count is lowered
+to preserve valid groups. In this case, the FLUX_ESTIMATED flag is added  to indicate a potential
+bias from the FET transient.
+
+This table outlines the keywords written to the output header by the RSCD  step, specifically
+focusing on how groups are skipped or retained.
+
+
+* Group skipping:
+
+  These keywords track the total number of groups that were discarded at the beginning of an
+  integration to avoid "charge decay" effects.
+
+  * INT1SKIP: Applies specifically to the first integration.
+  * INT2SKIP: Applies to the second and all subsequent integrations.
+
+* Group Retention (UGP):
+
+  These keywords count the pixels where the very first group was actually kept rather than skipped.
+
+  * INT1UGP1: The count of pixels where Group 1 was retained during the first integration.
+  * INT2UGP1: The count of pixels where Group 1 was retained during integration 2 and higher.
+
+* Saturation Adjustments (BORS, Back-Off Reduced Skipping):
+
+  These keywords track instances where the software intended to skip groups but "backed off" because skipping them would have left too few groups before the pixel hit saturation.
+
+  * INT1BORS: The count of pixels where skipping was reduced for the first integration.
+  * INT2BORS: The count of pixels where skipping was reduced for integrations 2 and higher.
+
+==============  ===========================================  ==============================================================================
+RSCD Keywords   Datamodel attributes                         Meaning
+==============  ===========================================  ==============================================================================
+INT1SKIP        meta.rscd.ngroups_skip_int1                  # of groups skipped in int 1
+INT2SKIP        meta.rscd.ngroups_skip_int2p                 # of groups skipped in int 2 and higher
+INT1UGP1        meta.rscd.keep_bright_firstgroup_int1        # of pixels where 1st the group is kept for int 1
+INT2UGP1        meta.rscd.keep_bright_firstgroup_int2p       # of pixels where 1st the group is kept for int 2 and higher
+INT1BORS        meta.rscd.keep_groups_saturation_int1        # of pixels where RSCD reduced the groups skipped due to saturation for int 1
+INT2BORS        meta.rscd.keep_groups_saturation_int2p       # of pixels where RSCD reduced the groups skipped due to saturation for int 2+
+==============  ===========================================  ==============================================================================
+
 

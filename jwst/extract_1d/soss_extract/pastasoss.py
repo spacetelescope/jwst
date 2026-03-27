@@ -583,11 +583,16 @@ def get_soss_wavemaps(
         wavemap[:subarray_ymin, :] = wavemap[subarray_ymin]
 
         # Trim to subarray
-        if subarray == "SUBSTRIP256":
+        if subarray in [
+            "SUBSTRIP256",
+            "SUB17STRIPE_SOSS",
+            "SUB60STRIPE_SOSS",
+            "SUB204STRIPE_SOSS",
+            "SUB680STRIPE_SOSS",
+        ]:
             wavemap = wavemap[subarray_ymin:soss_xdim, :]
         if subarray == "SUBSTRIP96":
             wavemap = wavemap[subarray_ymin : subarray_ymin + 96, :]
-
         wavemaps.append(wavemap)
         traces.append(spectrace)
 
@@ -613,4 +618,8 @@ def _check_pwcpos_bounds(pwcpos, bounds):
     bool
         True if the PWC position is within bounds, False otherwise.
     """
-    return bounds[0] <= pwcpos <= bounds[1]
+    if bounds is not None and len(bounds) == 2:
+        return bounds[0] <= pwcpos <= bounds[1]
+
+    # No bounds found: return False
+    return False
