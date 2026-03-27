@@ -269,6 +269,7 @@ class DMSBaseMixin(ACIDMixin):
         self._acid = None
         self._asn_name = None
         self.current_sequence = None
+        self._item_ids = set()
         if "degraded_status" not in self.data:
             self.data["degraded_status"] = _DEGRADED_STATUS_OK
         if "program" not in self.data:
@@ -497,7 +498,7 @@ class DMSBaseMixin(ACIDMixin):
         bool
             True if item is a member.
         """
-        return item in self.from_items
+        return item["filename"] in self._item_ids
 
     def is_item_ami(self, item):
         """
