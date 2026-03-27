@@ -2,23 +2,30 @@ import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs.tests.test_miri import wcs_kw
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_nirspec_ifu_file
 from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
 
 __all__ = [
-    "add_metadata",
     "make_small_ramp_model",
     "make_small_rate_model",
     "make_small_rateints_model",
     "make_flat_model",
     "make_nirspec_ifu_model",
+    "make_nirspec_mos_model",
     "make_nirspec_mos_fs_model",
     "make_nirspec_fs_model",
-    "make_nirspec_mos_model",
+    "make_niriss_rate_model",
+    "make_nircam_rate_model",
+    "make_nrs_fs_full_ramp",
+    "make_nrs_bots_rateints",
+    "make_miri_image_tso_rateints",
+    "make_niriss_soss_rateints",
+    "make_niriss_soss_ramp",
 ]
 
 
-def add_metadata(model, shape):
+def _add_metadata(model, shape):
     """
     Add basic MIRI image metadata to a model.
 
@@ -66,7 +73,7 @@ def make_small_ramp_model(shape=(3, 5, 10, 10)):
         A ramp model with specified shape.
     """
     rampmodel = datamodels.RampModel(shape)
-    add_metadata(rampmodel, shape)
+    _add_metadata(rampmodel, shape)
 
     # Make data with a constant rate
     for group in range(shape[1]):
@@ -92,8 +99,9 @@ def make_small_rate_model(shape=(3, 5, 10, 10)):
         An rate model with specified shape.
     """
     ratemodel = datamodels.ImageModel(shape[2:])
-    add_metadata(ratemodel, shape)
+    _add_metadata(ratemodel, shape)
     ratemodel.data[:] = 1.0
+    ratemodel.dq = ratemodel.get_default("dq")
     return ratemodel
 
 
@@ -114,7 +122,7 @@ def make_small_rateints_model(shape=(3, 5, 10, 10)):
         A rateints model with specified shape.
     """
     ratemodel = datamodels.CubeModel((shape[0], shape[2], shape[3]))
-    add_metadata(ratemodel, shape)
+    _add_metadata(ratemodel, shape)
     ratemodel.data[:] = 1.0
     return ratemodel
 
@@ -222,6 +230,7 @@ def make_nirspec_fs_model():
     hdul["SCI"].data = np.ones((2048, 2048), dtype=float)
     rate_model = datamodels.ImageModel(hdul)
     hdul.close()
+    rate_model.dq = rate_model.get_default("dq")
 
     # add the slow axis and subarray information
     rate_model.meta.subarray.slowaxis = 1
@@ -289,6 +298,14 @@ def make_nircam_rate_model(shape=None):
 
 
 def make_nrs_fs_full_ramp():
+    """
+    Make a NIRSpec FS full frame ramp model.
+
+    Returns
+    -------
+    RampModel
+        A NIRSpec fixed slit ramp model.
+    """
     shape = (1, 2, 2048, 2048)
     model = datamodels.RampModel(shape)
 
@@ -309,5 +326,187 @@ def make_nrs_fs_full_ramp():
     model.meta.exposure.group_time = 1.0
     model.meta.exposure.frame_time = 14.5
     model.meta.exposure.readpatt = "NRS"
+
+    return model
+
+
+def _int_times_table():
+    """
+    Make an int_times table for 3 integrations.
+
+    The values don't necessarily match the metadata. They
+    are borrowed from a helper function in extract_1d tests.
+
+    Returns
+    -------
+    ndarray
+        A numpy record with integration times information.
+    """
+    integrations = [
+        (
+            1,
+            59729.04367729,
+            59729.04378181,
+            59729.04388632,
+            59729.04731706,
+            59729.04742158,
+            59729.04752609,
+        ),
+        (
+            2,
+            59729.04389677,
+            59729.04400128,
+            59729.04410579,
+            59729.04753654,
+            59729.04764105,
+            59729.04774557,
+        ),
+        (
+            3,
+            59729.04411625,
+            59729.04422076,
+            59729.04432527,
+            59729.04775602,
+            59729.04786053,
+            59729.04796504,
+        ),
+    ]
+
+    integration_table = np.array(
+        integrations,
+        dtype=[
+            ("integration_number", "i4"),
+            ("int_start_MJD_UTC", "f8"),
+            ("int_mid_MJD_UTC", "f8"),
+            ("int_end_MJD_UTC", "f8"),
+            ("int_start_BJD_TDB", "f8"),
+            ("int_mid_BJD_TDB", "f8"),
+            ("int_end_BJD_TDB", "f8"),
+        ],
+    )
+    return integration_table
+
+
+def make_nrs_bots_rateints():
+    """
+    Make a NIRSpec BOTS rateints model with basic metadata.
+
+    Returns
+    -------
+    CubeModel
+        A NIRSpec BOTS rateints model.
+    """
+    model = datamodels.CubeModel()
+
+    # Borrow wcs info from a FS rate model
+    image_model = make_nirspec_fs_model()
+    model.update(image_model)
+    image_model.close()
+
+    # Set some BOTS-specific values
+    model.meta.instrument.fixed_slit = "S1600A1"
+    model.meta.exposure.type = "NRS_BRIGHTOBJ"
+    model.meta.exposure.nints = 3
+    model.meta.exposure.segment_number = 1
+    model.meta.visit.tsovisit = True
+
+    shape = (3, 2048, 2048)
+    model.data = np.ones(shape)
+    model.err = np.ones(shape)
+    model.var_rnoise = np.ones(shape)
+    model.var_poisson = np.ones(shape)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+
+    model.int_times = _int_times_table()
+
+    return model
+
+
+def make_miri_image_tso_rateints():
+    """
+    Make a MIRI image TSO rateints model with basic metadata.
+
+    Returns
+    -------
+    CubeModel
+        A MIRI image rateints model.
+    """
+    model = make_small_rateints_model()
+    model.meta.visit.tsovisit = True
+    model.meta.wcsinfo = wcs_kw.copy()
+    model.meta.wcsinfo.siaf_xref_sci = 0.0
+    model.meta.wcsinfo.siaf_yref_sci = 0.0
+    model.meta.bunit_data = "DN/s"
+    model.meta.bunit_err = "DN/s"
+    model.meta.exposure.integration_time = 1.0
+    model.meta.exposure.integration_start = 1
+    model.int_times = _int_times_table()
+    return model
+
+
+def _add_niriss_soss_meta(model):
+    """
+    Add some basic NIRISS SOSS metadata.
+
+    Assumes subarray 256, shape (5, 3, 256, 2048).
+    """
+    model.meta.instrument.name = "NIRISS"
+    model.meta.instrument.detector = "NIS"
+    model.meta.instrument.filter = "CLEAR"
+    model.meta.instrument.pupil_position = 245.79
+    model.meta.observation.date = "2023-07-22"
+    model.meta.observation.time = "06:24:45.569"
+    model.meta.exposure.type = "NIS_SOSS"
+    model.meta.subarray.name = "SUBSTRIP256"
+    model.meta.subarray.slowaxis = -1
+    model.meta.subarray.fastaxis = -2
+    model.meta.subarray.xstart = 1
+    model.meta.subarray.ystart = 1793
+    model.meta.subarray.xsize = 2048
+    model.meta.subarray.ysize = 256
+
+    # Add ramp information, assuming shape = (5, 3, 256, 2048)
+    model.meta.exposure.nints = 5
+    model.meta.exposure.ngroups = 3
+    model.meta.exposure.nframes = 1
+    model.meta.exposure.groupgap = 0
+    model.meta.exposure.group_time = 1.0
+    model.meta.exposure.frame_time = 14.5
+
+
+def make_niriss_soss_rateints():
+    """
+    Make a NIRISS SOSS rateints model with basic metadata.
+
+    Returns
+    -------
+    CubeModel
+        A NIRISS SOSS rateints model.
+    """
+    shape = (5, 3, 256, 2048)
+    model = make_small_rateints_model(shape)
+    _add_niriss_soss_meta(model)
+
+    return model
+
+
+def make_niriss_soss_ramp():
+    """
+    Make a NIRISS SOSS ramp model with basic metadata.
+
+    Returns
+    -------
+    RampModel
+        A NIRISS SOSS ramp model.
+    """
+    shape = (5, 3, 256, 2048)
+    model = datamodels.RampModel(shape)
+
+    # Make data with a constant rate
+    for group in range(shape[1]):
+        model.data[:, group, :, :] = group
+
+    # Add NIRISS SOSS metadata
+    _add_niriss_soss_meta(model)
 
     return model

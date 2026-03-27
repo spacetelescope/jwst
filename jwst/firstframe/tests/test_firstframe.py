@@ -1,8 +1,21 @@
+"""Unit tests for firstframe  module and step."""
+
 import numpy as np
+import pytest
 from stdatamodels.jwst.datamodels import RampModel, dqflags
 
-from jwst.firstframe import FirstFrameStep
+from jwst.firstframe.firstframe_step import FirstFrameStep
 from jwst.firstframe.firstframe_sub import do_correction
+
+
+def test_firstframe_raises_deprecation_warning(create_miri_model):
+    """Test that calling FirstFrameStep triggers a DeprecationWarning."""
+    model = create_miri_model(nints=1, ngroups=4, ysize=128, xsize=136)
+
+    # pytest.warns captures the warning and checks the message
+    with pytest.warns(DeprecationWarning, match="deprecated"):
+        step = FirstFrameStep()
+        step.process(model)
 
 
 def test_firstframe_set_groupdq():
@@ -144,6 +157,8 @@ def test_firstframe_3groups():
     )
 
 
+# --- ADD THIS DECORATOR to ignore DeprecationWarning
+@pytest.mark.filterwarnings("ignore:'FirstFrameStep' has been deprecated:DeprecationWarning")
 def test_nircam():
     # test that the code skips processing for a NIR instrument
 
@@ -182,6 +197,8 @@ def test_nircam():
     assert dm_ramp.meta.cal_step.firstframe is None
 
 
+# --- ADD THIS DECORATOR to ignore DeprecationWarning
+@pytest.mark.filterwarnings("ignore:'FirstFrameStep' has been deprecated:DeprecationWarning")
 def test_miri():
     # test that the code runs given MIRI as an instrument
 

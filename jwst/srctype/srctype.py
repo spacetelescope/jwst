@@ -146,6 +146,11 @@ def set_source_type(input_model, source_type=None):
                     slit.source_type = default_type
                 log.debug(f" slit {slit.name} = {slit.source_type}")
 
+        elif isinstance(input_model, datamodels.MultiSlitModel):
+            # Non-NRS-FS MultiSlitModels should be contained to NRC_TSGRISM/DHS
+            for slit in input_model.slits:
+                slit.source_type = src_type
+
     # For NIRSpec MSA exposures, read the stellarity value for the
     # source in each extracted slit and set the point/extended value
     # based on the stellarity.

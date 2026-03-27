@@ -1,0 +1,1 @@
+Added support for NIRISS SOSS superstripe mode to detector1, spec2, and tso3 pipelines.

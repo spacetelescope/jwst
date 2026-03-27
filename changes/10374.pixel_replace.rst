@@ -1,0 +1,2 @@
+Vectorize mingrad method and reduce unnecessary per-integration datamodel operations,
+reducing step runtime for some TSO datasets tested by a factor of roughly 100.

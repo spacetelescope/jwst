@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.wfss_contam.WfssContamStep`
+:Class: `~jwst.wfss_contam.wfss_contam_step.WfssContamStep`
 :Alias: wfss_contam
 
 The Wide Field Slitless Spectroscopy (WFSS) contamination correction

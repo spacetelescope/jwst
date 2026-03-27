@@ -34,39 +34,90 @@ def test_find_row():
     assert result is None
 
 
+def assign_metadata(metanode, keys, vals):
+    """
+    Assign a list of values to parameters in a datamodel
+    for ease of testing.
+    Stripe params: xsize_sci, ysize_sci, nreads1, nreads2, nskips1,
+                   nskips2, repeat_stripe, interleave_reads1, fastaxis, slowaxis
+    """
+    for key, val in zip(keys, vals):
+        setattr(metanode.subarray, key, val)
+
+
+def substripe_subarray_keys():
+    """
+    Returns the metadata keys that we'll assign values to for testing purposes.
+    """
+    return (
+        "xsize",
+        "ysize",
+        "multistripe_reads1",
+        "multistripe_reads2",
+        "multistripe_skips1",
+        "multistripe_skips2",
+        "repeat_stripe",
+        "interleave_reads1",
+        "superstripe_step",
+        "num_superstripe",
+        "fastaxis",
+        "slowaxis",
+    )
+
+
 def test_generate_stripe():
+    # Mock model for metadata
+    model = RampModel()
+    sci_meta = model.meta
+    sci_nints = 3
+    subarray_keys = substripe_subarray_keys()
+
     # Generate test array with pixel values
     # equal to row number in detector frame.
     test_array = (np.ones((2048, 2048), dtype=int) * np.arange(2048)).T
 
-    # Use two NIRCam subarray cases to test.
-    # Stripe params: xsize_sci, ysize_sci, nreads1, nreads2, nskips1,
-    #                nskips2, repeat_stripe, interleave_reads1, fastaxis, slowaxis
-
     # SUB41STRIPE1_DHS nrca1 case
-    stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, -1, 2)
+    stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, 0, 0, -1, 2)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
 
     # Function presumes input in science frame, so move test array to science frame
     # before supplying to function.
     stripe1_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
+        science_detector_frame_transform(
+            test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
+        ),
+        sci_meta,
+        sci_nints,
     )
     assert stripe1_array.shape == (41, 2048)
     assert stripe1_array[0, 1024] == 0
     assert stripe1_array[1, 1024] == 1902  # nreads1 + nskips1
 
     # Test swapped axes
-    stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, 2, 1)
+    # Note: If axes are swapped, substriped array will also be rotated, e.g.
+    # xsize corresponds to slowaxis, such that ysize will be full detector size.
+    stripe_params = (41, 2048, 1, 40, 1901, 0, 1, 1, 0, 0, 2, 1)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
     stripe1swap_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
+        science_detector_frame_transform(
+            test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
+        ),
+        sci_meta,
+        sci_nints,
     )
     assert stripe1swap_array.shape == (2048, 41)
     assert stripe1swap_array[1024, 1] == 1902  # nreads1 + nskips1
 
     # SUB82STRIPE2_DHS nrca2 case
-    stripe_params = (2048, 82, 1, 40, 1662, 82, 1, 1, 1, -2)
+    stripe_params = (2048, 82, 1, 40, 1662, 82, 1, 1, 0, 0, 1, -2)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
+
     stripe2_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
+        science_detector_frame_transform(
+            test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
+        ),
+        sci_meta,
+        sci_nints,
     )
     assert stripe2_array.shape == (82, 2048)
     # nrca2 has flipped row direction, so in science frame the row indices are flipped.
@@ -76,15 +127,81 @@ def test_generate_stripe():
     assert stripe2_array[-43, 1024] == 1785  # nreads1 + nskips1 + nreads2 + nskips2
 
     # SUB164STRIPE4_DHS nrcalong case
-    stripe_params = (2048, 164, 1, 40, 971, 0, 1, 0, -1, 2)
+    stripe_params = (2048, 164, 1, 40, 971, 0, 1, 0, 0, 0, -1, 2)
+    assign_metadata(sci_meta, subarray_keys, stripe_params)
+
     stripe4_array = generate_stripe_array(
-        science_detector_frame_transform(test_array, *stripe_params[-2:]), *stripe_params
+        science_detector_frame_transform(
+            test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
+        ),
+        sci_meta,
+        sci_nints,
     )
     assert stripe4_array.shape == (164, 2048)
     assert stripe4_array[0, 1024] == 0
     assert stripe4_array[1, 1024] == 972  # nreads1 + nskips1
     assert stripe4_array[42, 1024] == 972  # nreads1 + nskips1, stripe 2
     assert stripe4_array[83, 1024] == 972  # nreads1 + nskips1, stripe 3
+
+
+def test_generate_stripe_repeat_stripe_zero():
+    """
+    Test generate_stripe_array in DHS mode when repeat_stripe=0.
+
+    When repeat_stripe=0 the read head does not reset between stripes;
+    successive nreads2 blocks are separated by nskips2 rows advancing
+    monotonically through the detector.
+    """
+    # Array where every pixel value equals its row index.
+    test_array = (np.ones((2048, 2048), dtype=int) * np.arange(2048)).T
+
+    xsize_sci = 2048
+    nreads1, nreads2 = 1, 20
+    nskips1, nskips2 = 10, 5
+    repeat_stripe = 0
+    interleave_reads1 = 0
+    superstripe_step, num_superstripe = 0, 0
+    fastaxis, slowaxis, ngroups = -1, 2, 1
+    # Detector read sequence: row 0 (nreads1), skip 10 (nskips1),
+    # rows 11-30 (nreads2), skip 5 (nskips2), rows 36-55 (nreads2),
+    # skip 5 (nskips2), rows 61-80 (nreads2) → 61 output rows total.
+    ysize_sci = nreads1 + nreads2 * 3  # 1 + 20*3 = 61
+    sci_nints = 1
+
+    stripe_params = (
+        xsize_sci,
+        ysize_sci,
+        nreads1,
+        nreads2,
+        nskips1,
+        nskips2,
+        repeat_stripe,
+        interleave_reads1,
+        superstripe_step,
+        num_superstripe,
+        fastaxis,
+        slowaxis,
+    )
+    sci_meta = RampModel().meta
+    assign_metadata(sci_meta, substripe_subarray_keys(), stripe_params)
+    stripe_array = generate_stripe_array(
+        science_detector_frame_transform(
+            test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
+        ),
+        sci_meta,
+        sci_nints,
+    )
+    assert stripe_array.shape == (ysize_sci, xsize_sci)
+    # Output row 0: first nreads1 read from detector row 0.
+    assert stripe_array[0, 1024] == 0
+    # Output row 1: start of first nreads2 block; head advanced by nreads1 + nskips1.
+    assert stripe_array[1, 1024] == nreads1 + nskips1
+    # Output row nreads1 + nreads2: start of second nreads2 block;
+    # head advanced by an additional nreads2 + nskips2 (no reset).
+    assert stripe_array[nreads1 + nreads2, 1024] == nreads1 + nskips1 + nreads2 + nskips2
+    # Output row nreads1 + 2*nreads2: start of third nreads2 block;
+    # head advanced by yet another nreads2 + nskips2
+    assert stripe_array[nreads1 + 2 * nreads2, 1024] == nreads1 + nskips1 + 2 * (nreads2 + nskips2)
 
 
 def test_multistripe_subarray_model():

@@ -27,6 +27,7 @@ __all__ = [
     "compute_output_wl",
     "check_exptime",
     "combine_1d_spectra",
+    "check_monotonic",
 ]
 
 
@@ -241,7 +242,7 @@ class OutputSpectrumModel:
         # This is the data type for the output spectrum.  We'll use double
         # precision for accumulating sums for most columns, but for the DQ
         # array, use the correct output data type.
-        cmb_dtype = datamodels.CombinedSpecModel().spec_table.dtype
+        cmb_dtype = datamodels.CombinedSpecModel().get_dtype("spec_table")
         dq_dtype = cmb_dtype.fields["DQ"][0]
 
         nelem = self.wavelength.shape[0]
@@ -423,7 +424,7 @@ class OutputSpectrumModel:
         if not self.normalized:
             log.warning("Data have not been divided by the sum of the weights.")
 
-        cmb_dtype = datamodels.CombinedSpecModel().spec_table.dtype
+        cmb_dtype = datamodels.CombinedSpecModel().get_dtype("spec_table")
 
         # Note that these arrays have to be in the right order.
         data = np.array(
@@ -749,6 +750,15 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
                 )
             log.warning(msg)
             continue
+        wavelength = in_spec.spec_table.field("wavelength")
+        monotonic = check_monotonic(wavelength)
+        if not monotonic:
+            log.warning(
+                f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
+                "has does not have monotonic wavelengths; skipping."
+            )
+            continue
+
         spectral_order = in_spec.spectral_order
         if spectral_order not in input_spectra:
             input_spectra[spectral_order] = []
@@ -831,3 +841,27 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
         output_spectra[order].close()
 
     return output_model
+
+
+def check_monotonic(wavelength):
+    """
+    Check if wavelength array is strictly monotonic (purely increasing or decreasing).
+
+    Parameters
+    ----------
+    wavelength : list or array
+        An array of wavelengths
+
+    Returns
+    -------
+    bool
+        True if the array is strictly increasing or strictly decreasing,
+        False otherwise. Note that duplicates will return False.
+    """
+    if len(wavelength) < 2:
+        return True
+
+    is_increasing = all(np.diff(wavelength) > 0)
+    is_decreasing = all(np.diff(wavelength) < 0)
+
+    return is_increasing or is_decreasing

@@ -139,6 +139,10 @@ Image2Pipeline.
      - target_acquisition
      - N/A
      - image2
+   * - MIR_WFSS
+     - science
+     - N/A
+     - spec2
    * -
      -
      -

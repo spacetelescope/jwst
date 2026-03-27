@@ -150,6 +150,8 @@ def create_wfss_image(pupil, filtername="F444W"):
     hdul = create_hdul(exptype="NRC_WFSS", filtername=filtername, pupil=pupil, wcskeys=wcs_wfss_kw)
     hdul["sci"].data = np.ones((hdul[0].header["SUBSIZE1"], hdul[0].header["SUBSIZE2"]))
     im = ImageModel(hdul)
+    im.dq = im.get_default("dq")
+    im.err = im.get_default("err")
     return AssignWcsStep.call(im)
 
 
@@ -333,7 +335,8 @@ def test_create_specific_orders():
         assert [1] == list(ids[0].order_bounding.keys())
 
 
-def test_extract_tso_subarray():
+@pytest.mark.parametrize("subarray", [True, False])
+def test_extract_tso_subarray(subarray):
     """Test extraction of a TSO object.
 
     NRC_TSGRISM mode doesn't use the catalog since
@@ -342,7 +345,7 @@ def test_extract_tso_subarray():
     extraction with a small CubeModel
     """
 
-    wcsimage = create_tso_wcsimage(subarray=True)
+    wcsimage = create_tso_wcsimage(subarray=subarray)
     refs = get_reference_files(wcsimage)
     outmodel = extract_tso_object(wcsimage, reference_files=refs)
     assert isinstance(outmodel, SlitModel)
@@ -352,7 +355,10 @@ def test_extract_tso_subarray():
     assert outmodel.xstart > 0
     assert outmodel.ystart > 0
     assert outmodel.meta.wcsinfo.spectral_order == 1
-
+    wcs_test_xpix = 6
+    np.testing.assert_allclose(
+        wcs_test_xpix, outmodel.meta.wcs.invert(*outmodel.meta.wcs(wcs_test_xpix, 10))[0], atol=2e-2
+    )
     # These are the sizes of the valid wavelength regions
     # not the size of the cutout
     assert outmodel.ysize > 0

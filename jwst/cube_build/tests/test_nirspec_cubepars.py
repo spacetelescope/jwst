@@ -111,7 +111,10 @@ def nirspec_cube_pars(tmp_path_factory):
     hdu4 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
     hdu4.header["EXTNAME"] = "MULTICHAN_MED_MSM"
 
-    hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4])
+    hdu5 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
+    hdu5.header["EXTNAME"] = "MULTICHAN_HIGH_MSM"
+
+    hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5])
     hdu.writeto(filename, overwrite=True)
     return filename
 
@@ -178,6 +181,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
     input_model = None
     output_name_base = None
     output_type = "band"
+    linear_wave = True
     instrument = "NIRSPEC"
     list_par1 = all_grating
     list_par2 = all_filter
@@ -188,6 +192,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
         input_model,
         output_name_base,
         output_type,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -210,6 +215,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
     input_model = None
     output_name_base = None
     output_type = "multi"
+    linear_wave = False
     instrument = "NIRSPEC"
     list_par1 = all_grating
     list_par2 = all_filter
@@ -220,6 +226,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
         input_model,
         output_name_base,
         output_type,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -299,6 +306,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
     input_model = None
     output_name_base = None
     output_type = "band"
+    linear_wave = True
     instrument = "NIRSPEC"
     list_par1 = all_grating
     list_par2 = all_filter
@@ -309,6 +317,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
         input_model,
         output_name_base,
         output_type,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,
@@ -362,6 +371,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
         input_model,
         output_name_base,
         output_type,
+        linear_wave,
         instrument,
         list_par1,
         list_par2,

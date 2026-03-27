@@ -585,7 +585,7 @@ class RawOifits:
         """
         if self.method == "multi":
             # update dimensions of arrays for multi-integration oifits
-            target_dtype = oimodel.target.dtype
+            target_dtype = oimodel.get_dtype("target")
             wavelength_dtype = np.dtype([("EFF_WAVE", "<f4"), ("EFF_BAND", "<f4")])
             array_dtype = np.dtype(
                 [
@@ -670,8 +670,8 @@ class RawOifits:
                 ]
             )
         else:
-            target_dtype = oimodel.target.dtype
-            wavelength_dtype = oimodel.wavelength.dtype
+            target_dtype = oimodel.get_dtype("target")
+            wavelength_dtype = oimodel.get_dtype("wavelength")
             array_dtype = np.dtype(
                 [
                     ("TEL_NAME", "S16"),
@@ -686,10 +686,10 @@ class RawOifits:
                     ("PIST_ERR", "<f8"),
                 ]
             )
-            vis_dtype = oimodel.vis.dtype
-            vis2_dtype = oimodel.vis2.dtype
-            t3_dtype = oimodel.t3.dtype
-            q4_dtype = oimodel.q4.dtype
+            vis_dtype = oimodel.get_dtype("vis")
+            vis2_dtype = oimodel.get_dtype("vis2")
+            t3_dtype = oimodel.get_dtype("t3")
+            q4_dtype = oimodel.get_dtype("q4")
         oimodel.array = np.zeros(self.n_holes, dtype=array_dtype)
         oimodel.target = np.zeros(1, dtype=target_dtype)
         oimodel.vis = np.zeros(self.n_baselines, dtype=vis_dtype)
