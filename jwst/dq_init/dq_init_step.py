@@ -17,11 +17,11 @@ class DQInitStep(Step):
     """
     Initialize the Data Quality (DQ) extension from the mask reference file.
 
-    The :ref:`dq_init step <dq_init_step>` initializes the ``pixeldq`` attribute of the
-    input datamodel using the :ref:`mask_reffile`.  For some
-    FGS exposure types, initialize the ``dq`` attribute of the input model
-    instead.  The ``dq`` attribute of the MASK model is bitwise OR'd
-    with the ``pixeldq`` (or ``dq``) attribute of the input model.
+    The dq_init step initializes the pixeldq attribute of the
+    input datamodel using the MASK reference file.  For some
+    FGS exp_types, initialize the dq attribute of the input model
+    instead.  The dq attribute of the MASK model is bitwise OR'd
+    with the pixeldq (or dq) attribute of the input model.
     """
 
     class_alias = "dq_init"

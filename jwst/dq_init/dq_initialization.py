@@ -17,7 +17,7 @@ __all__ = ["do_dqinit", "check_dimensions"]
 
 def do_dqinit(output_model, mask_model, user_dq=None):
     """
-    Perform the :ref:`dq_init step <dq_init_step>` on a JWST datamodel.
+    Perform the dq_init step on a JWST datamodel.
 
     Parameters
     ----------
