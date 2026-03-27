@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 
 import numpy as np
+from astropy.modeling import CompoundModel
+from astropy.modeling.projections import Projection
 from astropy.wcs.utils import celestial_frame_to_wcs
 from gwcs.fitswcs import FITSImagingWCSTransform
 from stcal.alignment import combine_sregions
@@ -692,13 +694,13 @@ class ResampleImage(Resample):
         # Write FITS WCS parameters based on GWCS model to wcsinfo:
         transform = model.meta.wcs.forward_transform
 
-        prj_code = transform.projection.prjprm.code
-        w = celestial_frame_to_wcs(
-            frame=model.meta.wcs.pipeline[-1].frame.reference_frame,
-            projection=prj_code,
-        )
-
         if isinstance(transform, FITSImagingWCSTransform):
+            prj_code = transform.projection.prjprm.code
+            w = celestial_frame_to_wcs(
+                frame=model.meta.wcs.pipeline[-1].frame.reference_frame,
+                projection=prj_code,
+            )
+
             model.meta.wcsinfo.crpix1 = transform.crpix[0] + 1
             model.meta.wcsinfo.crpix2 = transform.crpix[1] + 1
             model.meta.wcsinfo.cdelt1 = transform.cdelt[0]
@@ -717,20 +719,42 @@ class ResampleImage(Resample):
 
         else:
             log.warning(
-                "Custom 'output_wcs' does does not match expected GWCS "
-                "structure for an imaging WCS "
-                "(it is not using 'FITSImagingWCSTransform')."
+                "Custom 'output_wcs' is not using 'FITSImagingWCSTransform'."
                 "Setting wcsinfo by fitting a linear FITS WCS to the resampled "
                 "image WCS. This may not produce correct WCS parameters if "
                 "custom 'output_wcs' contains distortions."
             )
+            # we need to find projection type:
+            if not isinstance(transform, CompoundModel):
+                raise TypeError("Expected the output WCS transform to be a CompoundModel.")
+
+            prj_code = None
+            for m in transform.traverse_postorder():
+                if isinstance(m, Projection):
+                    prj_code = m.prjprm.code
+                    break
+            else:
+                raise RuntimeError(
+                    "Custom 'output_wcs' does not match expected GWCS "
+                    "structure for an imaging WCS: could not find a "
+                    "Projection model in the output WCS transform."
+                )
+
+            kwargs = {}
+            if model.meta.wcs.bounding_box is None:
+                kwargs["bounding_box"] = (
+                    (-0.5, model.data.shape[1] - 0.5),
+                    (-0.5, model.data.shape[0] - 0.5),
+                )
 
             assign_wcs_util.update_fits_wcsinfo(
                 model,
                 degree=1,
+                max_inv_pix_error=None,
                 inv_degree=0,
                 npoints=12,
                 projection=prj_code,
+                **kwargs,
             )
 
         # Remove no longer relevant WCS keywords

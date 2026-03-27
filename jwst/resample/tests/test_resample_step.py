@@ -4,7 +4,11 @@ from copy import deepcopy
 import asdf
 import numpy as np
 import pytest
+from astropy import coordinates as coord
 from astropy.io import fits
+from astropy.modeling import models
+from gwcs import coordinate_frames as cf
+from gwcs import wcs
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 from stcal.alignment.util import compute_scale
@@ -48,6 +52,40 @@ def _set_photom_kwd(im):
         if mean_pixel_area:
             im.meta.photometry.pixelarea_steradians = mean_pixel_area
             im.meta.photometry.pixelarea_arcsecsq = mean_pixel_area * np.rad2deg(3600) ** 2
+
+
+def _build_imaging_refwcs_basic_models(model):
+    crpix1 = model.meta.wcsinfo.crpix1
+    crpix2 = model.meta.wcsinfo.crpix2
+    cdelt1 = model.meta.wcsinfo.cdelt1
+    cdelt2 = model.meta.wcsinfo.cdelt2
+    crval1 = model.meta.wcsinfo.crval1
+    crval2 = model.meta.wcsinfo.crval2
+    pc11 = model.meta.wcsinfo.pc1_1
+    pc12 = model.meta.wcsinfo.pc1_2
+    pc21 = model.meta.wcsinfo.pc2_1
+    pc22 = model.meta.wcsinfo.pc2_2
+
+    shift = models.Shift(-crpix1 + 1) & models.Shift(-crpix2 + 1)
+    cd = np.dot(np.diag([cdelt1, cdelt2]), np.array([[pc11, pc12], [pc21, pc22]]))
+    rotation = models.AffineTransformation2D(cd, translation=[0, 0])
+
+    assert model.meta.wcsinfo.ctype1.endswith("-TAN"), "Only TAN projections are supported for now"
+    tan = models.Pix2Sky_TAN()
+    celestial_rotation = models.RotateNative2Celestial(crval1, crval2, 180)
+    det2sky = shift | rotation | tan | celestial_rotation
+
+    detector_frame = cf.Frame2D(name="detector", axes_names=("x", "y"))
+    sky_frame = cf.CelestialFrame(reference_frame=coord.ICRS(), name="world")
+    pipeline = [(detector_frame, det2sky), (sky_frame, None)]
+    refwcs = wcs.WCS(pipeline)
+
+    refwcs.bounding_box = (
+        (-0.5, model.data.shape[1] - 0.5),
+        (-0.5, model.data.shape[0] - 0.5),
+    )
+
+    return refwcs
 
 
 def miri_rate_model():
@@ -1163,10 +1201,13 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
     result.close()
 
 
+@pytest.mark.parametrize("use_fits_transforms", [False, True])
 @pytest.mark.parametrize(
     "output_shape2, match", [((1205, 1100), True), ((1222, 1111), False), (None, True)]
 )
-def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match, tmp_path):
+def test_custom_refwcs_resample_imaging(
+    nircam_rate, output_shape2, match, use_fits_transforms, tmp_path
+):
     # make some data with a WCS and some random values
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     rng = np.random.default_rng(seed=77)
@@ -1200,7 +1241,11 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match, tmp_p
         assert_allclose(result.meta.wcs(*crpix), crval, rtol=1e-12, atol=0)
 
     refwcs = str(tmp_path / "resample_refwcs.asdf")
-    asdf.AsdfFile({"wcs": result.meta.wcs, "array_shape": data1.shape}).write_to(refwcs)
+    if use_fits_transforms:
+        w = _build_imaging_refwcs_basic_models(result)
+    else:
+        w = result.meta.wcs
+    asdf.AsdfFile({"wcs": w, "array_shape": data1.shape}).write_to(refwcs)
 
     result = ResampleStep.call(im, output_shape=output_shape2, output_wcs=refwcs)
 
