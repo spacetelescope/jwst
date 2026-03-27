@@ -1,3 +1,5 @@
+"""Initialize the data with data quality information."""
+
 import logging
 
 from astropy.io import fits
@@ -13,7 +15,7 @@ log = logging.getLogger(__name__)
 
 class DQInitStep(Step):
     """
-    Initialize the Data Quality extension from the mask reference file.
+    Initialize the Data Quality (DQ) extension from the mask reference file.
 
     The dq_init step initializes the pixeldq attribute of the
     input datamodel using the MASK reference file.  For some
@@ -31,17 +33,17 @@ class DQInitStep(Step):
 
     def process(self, step_input):
         """
-        Perform the dq_init calibration step.
+        Perform the ``dq_init`` calibration step.
 
         Parameters
         ----------
         step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
-            Input JWST datamodel or filename.
+            Input JWST filename or datamodel.
 
         Returns
         -------
-        output_model : `~stdatamodels.jwst.datamodels.RampModel` \
-                       or `~stdatamodels.jwst.datamodels.GuiderRawModel`
+        output_model : `~stdatamodels.jwst.datamodels.RampModel` or \
+                       `~stdatamodels.jwst.datamodels.GuiderRawModel`
             Result JWST datamodel.
         """
         # Try to open the input as a regular RampModel
