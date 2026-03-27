@@ -89,7 +89,7 @@ def check_dimensions(input_model):
 
     The ``pixeldq`` attribute should have the same dimensions as
     the image plane of the input model science data
-    If it has dimensions ``(0, 0)``, create an array of zeroes with the same shape
+    If it has dimensions ``(0, 0)``, create an array of zeros with the same shape
     as the image plane of the input model. For the FGS modes, the
     `~stdatamodels.jwst.datamodels.GuiderRawModel`
     has only a regular DQ array (no ``pixeldq`` nor ``groupdq``).

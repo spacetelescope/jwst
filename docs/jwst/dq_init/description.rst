@@ -21,14 +21,14 @@ The actual process consists of the following steps:
    which is sometimes the case for raw input products, create these arrays in
    the input data model and initialize them to zero. The "PIXELDQ" array will be
    2D, with the same number of rows and columns as the input science data.
-   The "GROUPDQ" array will be 4D with the same dimensions in
+   The "GROUPDQ" array will be 4D with the same dimensions
    ``(nints, ngroups, nrows, ncols)`` as the input science data array.
 
 #. Check to see if the input science data is in subarray mode. If so, extract a
    matching subarray from the full-frame :ref:`mask_reffile`.
 
 #. Propagate the DQ flags from the reference file DQ array to the science data "PIXELDQ"
-   array using `numpy.bitwise_or` function.
+   array using a bitwise-or operation.
 
 #. Propagate any DO_NOT_USE flags from the reference file DQ array to the science data
    "GROUPDQ" array, if present; this avoids generating a ramp in
