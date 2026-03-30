@@ -45,9 +45,9 @@ class PixelReplaceArrays:
     data: np.ndarray
     dq: np.ndarray
     err: np.ndarray
-    var_poisson: np.ndarray
-    var_rnoise: np.ndarray
-    var_flat: np.ndarray
+    var_poisson: np.ndarray | None
+    var_rnoise: np.ndarray | None
+    var_flat: np.ndarray | None
     dispersion_direction: int
 
 
@@ -262,19 +262,25 @@ class PixelReplacement:
         # also requiring a re-packaging of the data into 2D inputs for the algorithm
         elif isinstance(self.input, datamodels.CubeModel | datamodels.SlitModel):
             dispaxis = self.input.meta.wcsinfo.dispersion_direction
-            # Ensure variance arrays exist
-            for var in ["var_poisson", "var_rnoise", "var_flat"]:
-                if self.input[var] is None:
-                    self.input[var] = np.zeros_like(self.input.data)
 
             for i in range(len(self.input.data)):
+                # Ensure variance arrays exist
+                var_dict = {
+                    "var_poisson": None,
+                    "var_rnoise": None,
+                    "var_flat": None,
+                }
+                for key in var_dict.keys():
+                    if self.input[key] is not None:
+                        var_dict[key] = self.input[key][i].copy()
+
                 arrays = PixelReplaceArrays(
                     data=self.input.data[i].copy(),
                     dq=self.input.dq[i].copy(),
                     err=self.input.err[i].copy(),
-                    var_poisson=self.input.var_poisson[i].copy(),
-                    var_rnoise=self.input.var_rnoise[i].copy(),
-                    var_flat=self.input.var_flat[i].copy(),
+                    var_poisson=var_dict["var_poisson"],
+                    var_rnoise=var_dict["var_rnoise"],
+                    var_flat=var_dict["var_flat"],
                     dispersion_direction=dispaxis,
                 )
                 arrays = self.algorithm(arrays)
@@ -284,9 +290,9 @@ class PixelReplacement:
                 self.input.data[i] = arrays.data
                 self.input.dq[i] = arrays.dq
                 self.input.err[i] = arrays.err
-                self.input.var_poisson[i] = arrays.var_poisson
-                self.input.var_rnoise[i] = arrays.var_rnoise
-                self.input.var_flat[i] = arrays.var_flat
+                for key in var_dict.keys():
+                    if self.input[key] is not None:
+                        self.input[key][i] = getattr(arrays, key)
 
         else:
             # This should never happen, as these should be caught in the step code.
@@ -420,7 +426,9 @@ class PixelReplacement:
             norm_errors = {}
             for err_name in err_names:
                 if err_name.startswith("var"):
-                    err = np.sqrt(getattr(arrays, err_name))
+                    if err_arr := getattr(arrays, err_name) is None:
+                        continue
+                    err = np.sqrt(err_arr)
                 else:
                     err = getattr(arrays, err_name)
                 norm_err = err[adjacent_condition]
@@ -505,29 +513,15 @@ class PixelReplacement:
             # Some values in NIRSpec variances may overflow in the squares - ignore the warning.
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
-                current_var = arrays.var_poisson[current_condition][range(*profile_cut)]
-                replaced_var = np.where(
-                    replace_condition,
-                    (norm_errors["var_poisson"] * norm_scale * scale) ** 2,
-                    current_var,
-                )
-                arrays.var_poisson[current_condition][range(*profile_cut)] = replaced_var
-
-                current_var = arrays.var_rnoise[current_condition][range(*profile_cut)]
-                replaced_var = np.where(
-                    replace_condition,
-                    (norm_errors["var_rnoise"] * norm_scale * scale) ** 2,
-                    current_var,
-                )
-                arrays.var_rnoise[current_condition][range(*profile_cut)] = replaced_var
-
-                current_var = arrays.var_flat[current_condition][range(*profile_cut)]
-                replaced_var = np.where(
-                    replace_condition,
-                    (norm_errors["var_flat"] * norm_scale * scale) ** 2,
-                    current_var,
-                )
-                arrays.var_flat[current_condition][range(*profile_cut)] = replaced_var
+                for var in ["var_poisson", "var_rnoise", "var_flat"]:
+                    if arrays[var] is not None:
+                        current_var = arrays[var][current_condition][range(*profile_cut)]
+                        replaced_var = np.where(
+                            replace_condition,
+                            (norm_errors[var] * norm_scale * scale) ** 2,
+                            current_var,
+                        )
+                        arrays[var][current_condition][range(*profile_cut)] = replaced_var
 
         return arrays
 
@@ -589,9 +583,14 @@ class PixelReplacement:
         log.info("Using minimum gradient method.")
 
         # Propagate variance components as errors to get the scales right
-        in_var_p = np.sqrt(arrays.var_poisson)
-        in_var_r = np.sqrt(arrays.var_rnoise)
-        in_var_f = np.sqrt(arrays.var_flat)
+        var_dict = {
+            "var_poisson": None,
+            "var_rnoise": None,
+            "var_flat": None,
+        }
+        for key in var_dict.keys():
+            if getattr(arrays, key) is not None:
+                var_dict[key] = np.sqrt(getattr(arrays, key))
 
         # Make an array of x/y values on the detector
         (ysize, xsize) = arrays.data.shape
@@ -620,9 +619,9 @@ class PixelReplacement:
         # Interpolated values for each quantity in both directions, shape (2, N)
         interp_data = self._interp_neighbors(arrays.data, yindx, xindx)
         interp_err = self._interp_neighbors(arrays.err, yindx, xindx)
-        interp_vp = self._interp_neighbors(in_var_p, yindx, xindx)
-        interp_vr = self._interp_neighbors(in_var_r, yindx, xindx)
-        interp_vf = self._interp_neighbors(in_var_f, yindx, xindx)
+        for key in var_dict.keys():
+            if var_dict[key] is not None:
+                var_dict[key] = self._interp_neighbors(var_dict[key], yindx, xindx)
 
         # Replace NaN diffs with inf so argmin naturally prefers the valid direction.
         # Mask is True where at least one valid direction, False elsewhere,
@@ -639,9 +638,9 @@ class PixelReplacement:
         col_idx = col_idx[mask]
         arrays.data[yindx[mask], xindx[mask]] = interp_data[indmin, col_idx]
         arrays.err[yindx[mask], xindx[mask]] = interp_err[indmin, col_idx]
-        arrays.var_poisson[yindx[mask], xindx[mask]] = interp_vp[indmin, col_idx] ** 2
-        arrays.var_rnoise[yindx[mask], xindx[mask]] = interp_vr[indmin, col_idx] ** 2
-        arrays.var_flat[yindx[mask], xindx[mask]] = interp_vf[indmin, col_idx] ** 2
+        for key in var_dict.keys():
+            if var_dict[key] is not None:
+                arrays.var_poisson[yindx[mask], xindx[mask]] = var_dict[key][indmin, col_idx] ** 2
 
         # Update DQ flags for pixels that were replaced.
         orig_dq = arrays.dq[yindx, xindx]  # (N,)
