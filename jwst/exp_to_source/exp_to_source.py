@@ -1,4 +1,4 @@
-"""Reformat Level2b multi-source data to be source-based."""
+"""Conversion of Stage 2b exposure-based data products to Stage 3 source-based data products."""
 
 import logging
 from collections import defaultdict
@@ -17,18 +17,24 @@ def exp_to_source(inputs):
     """
     Reformat exposure-based MSA data to source-based.
 
+    There is a command-line interface for this function;
+    For help, use::
+
+        exp_to_source -h
+
     Parameters
     ----------
-    inputs : [~jwst.datamodels.MultiSlitModel, ...]
-        List of MultiSlitModel instances to reformat.
+    inputs : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        List of `~stdatamodels.jwst.datamodels.MultiSlitModel` instances to reformat.
 
     Returns
     -------
     multiexposures : dict
-        Returns a dict of MultiExposureModel instances wherein each
+        Returns a dictionary of `~stdatamodels.jwst.datamodels.MultiExposureModel`
+        instances wherein each
         instance contains slits belonging to the same source.
-        The key is the ID of each source, i.e. ``source_id``.
-    """
+        The key is the ID of each source, i.e., ``source_id``.
+    """  # fmt: skip
     result = defaultdict(MultiExposureModel)
 
     for exposure in inputs:
@@ -94,16 +100,20 @@ def multislit_to_container(inputs):
 
     Parameters
     ----------
-    inputs : [~jwst.datamodels.MultiSlitModel, ...]
-        List of MultiSlitModel instances to reformat, or just a
-        ModelContainer full of MultiSlitModels.
+    inputs : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        List of `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        instances to reformat, or just a
+        `~jwst.datamodels.container.ModelContainer` full of
+        `~stdatamodels.jwst.datamodels.MultiSlitModel`.
 
     Returns
     -------
     containers : dict
-        Returns a dict of ModelContainer instances wherein each
-        instance contains ImageModels of slits belonging to the same source.
-        The key is the ID of each slit, i.e. ``source_id``.
+        Returns a dictionary of `~jwst.datamodels.container.ModelContainer`
+        instances wherein each instance contains
+        `~stdatamodels.jwst.datamodels.ImageModel` of slits belonging
+        to the same source.
+        The key is the ID of each slit, i.e., ``source_id``.
     """
     containers = exp_to_source(inputs)
     for container_id in containers:

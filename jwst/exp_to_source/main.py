@@ -13,22 +13,21 @@ class Main:
     """
     Convert exposure-based slits data to source-based data.
 
-    Command-line interface to the exp_to_source step. For help, use
-    exp_to_source -h. See also the exp_to_source readthedocs page:
-    https://jwst-pipeline.readthedocs.io/en/latest/api/jwst.exp_to_source.exp_to_source.html#jwst.exp_to_source.exp_to_source
-    """
+    Command-line interface to the exp_to_source step. For help, use::
+
+        exp_to_source -h
+
+    See also the exp_to_source readthedocs page: :ref:`exp_to_source`
+
+    Parameters
+    ----------
+    args : str or [str, ...] or None
+        The command-line arguments. This is passed to
+        :py:func:`argparse.parse_args`. If None, ``sys.argv``
+        is used.
+    """  # fmt: skip
 
     def __init__(self, args=None):
-        """
-        Initialize and run the exp_to_source step.
-
-        Parameters
-        ----------
-        args : str or [str,...]
-            The command-line arguments. This is passed to
-            `argparse.parse_args`. If None, `sys.argv`
-            is used.
-        """
         if args is None:
             args = sys.argv[1:]
         if isinstance(args, str):
