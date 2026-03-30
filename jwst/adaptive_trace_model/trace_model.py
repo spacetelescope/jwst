@@ -569,7 +569,7 @@ def linear_oversample(
     return os_data
 
 
-def fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **fit_kwargs):
+def _fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **fit_kwargs):
     """
     Fit a trace model to a single region in the flux image.
 
@@ -632,7 +632,7 @@ def fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **f
     return splines
 
 
-def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="1", **fit_kwargs):
+def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="none", **fit_kwargs):
     """
     Fit a trace model to all regions in the flux image.
 
@@ -650,7 +650,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="1"
         the median peak value across columns in the region is below this
         threshold, a fit will not be attempted for that region.
     maximum_cores : str
-        Number of cores to use for multiprocessing. If set to '1' (the default),
+        Number of cores to use for multiprocessing. If set to 'none' (the default),
         then no multiprocessing will be done. The other allowable values are 'quarter',
         'half', 'all', and string integers. This is the fraction of available or
         the explicit number of cores to use for multiprocessing.
@@ -678,17 +678,17 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="1"
 
         for slnum in slice_numbers:
             log.info("Fitting slice %s", slnum)
-            spline_models[slnum] = fit_one_region(
+            spline_models[slnum] = _fit_one_region(
                 flux, alpha, region_map, signal_threshold, slnum, **fit_kwargs
             )
     else:
         # Parallelized computation
         log.info(f"Fitting slices, multiprocessing on {number_slices} cores")
 
-        # Use functools.partial to supply all other inputs to fit_one_region except slice number
+        # Use functools.partial to supply all other inputs to _fit_one_region except slice number
         # This is needed since pool.starmap doesn't support passing **fit_kwargs
         fit_one_region_with_args = functools.partial(
-            fit_one_region, flux, alpha, region_map, signal_threshold, **fit_kwargs
+            _fit_one_region, flux, alpha, region_map, signal_threshold, **fit_kwargs
         )
 
         # Run the parallelized calc and collect results
@@ -1297,7 +1297,7 @@ def fit_and_oversample(
     psf_optimal=False,
     oversample_factor=1.0,
     return_intermediate_models=False,
-    maximum_cores="1",
+    maximum_cores="none",
 ):
     """
     Fit a trace model and optionally oversample an IFU datamodel.
@@ -1326,7 +1326,7 @@ def fit_and_oversample(
         spline model, the spline model as used for compact sources, the residual
         model, and the linearly interpolated data.
     maximum_cores : str
-        Number of cores to use for multiprocessing. If set to '1' (the default),
+        Number of cores to use for multiprocessing. If set to 'none' (the default),
         then no multiprocessing will be done. The other allowable values are 'quarter',
         'half', 'all', and string integers. This is the fraction of available or
         the explicit number of cores to use for multiprocessing.
