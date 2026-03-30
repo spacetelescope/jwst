@@ -89,6 +89,11 @@ Regions for which a spline model could not be computed, or which did not meet th
 criteria, are set to NaN in the image. The step then returns without further changes to the input
 datamodel.  The rest of the algorithm description, below, applies only to oversampling.
 
+The trace modeling portion of the code can optionally use multiprocessing to speed up this
+portion of the step. If multiprocessing is enabled, the spectral regions (i.e. each slice or slit)
+will be handled independently in separate processes.
+
+
 Oversample the Flux
 ^^^^^^^^^^^^^^^^^^^
 

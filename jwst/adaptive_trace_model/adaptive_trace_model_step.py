@@ -24,6 +24,7 @@ class AdaptiveTraceModelStep(Step):
     save_intermediate_results = boolean(default=False)  # Save the full spline model and residuals.
     skip = boolean(default=True) # By default, skip the step.
     output_use_model = boolean(default=True) # Use input filenames in the output models
+    maximum_cores = string(default='1') # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
     """  # noqa: E501
 
     def process(self, input_data):
@@ -99,6 +100,7 @@ class AdaptiveTraceModelStep(Step):
                 oversample_factor=self.oversample,
                 psf_optimal=self.psf_optimal,
                 return_intermediate_models=self.save_intermediate_results,
+                maximum_cores=self.maximum_cores
             )
 
             model.meta.cal_step.adaptive_trace_model = "COMPLETE"

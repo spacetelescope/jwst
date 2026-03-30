@@ -40,3 +40,14 @@ The ``adaptive_trace_model`` step has the following step-specific arguments:
   ``spline_full``, ``spline_used``, ``linear_interp``, and ``spline_residual``,
   respectively.  The linear interpolation and residual flux files are saved only
   if oversampling was performed.
+
+``--maximum_cores``: The number of available cores that will be
+  used for multi-processing in this step. The default value is '1', which does not use
+  multi-processing. The other options are either an integer, 'quarter', 'half', or 'all'.
+  Note that these fractions refer to the total available cores and on most CPUs these include
+  physical and virtual cores.  Note that only the spline fitting portion of the code will
+  use multiprocessing. The oversampling portion is not affected by this flag. Thus the
+  speed up will be less than linear with the number of cores, since only a portion of
+  the code is affected. The relative fractional speedup will be largest for cases in
+  which the fit_threshold and slope_limit parameter values, and/or the psf_optimal flag,
+  result in a larger fraction of the image having the spline fit performed.
