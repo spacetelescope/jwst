@@ -632,7 +632,7 @@ def fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **f
     return splines
 
 
-def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores='1', **fit_kwargs):
+def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="1", **fit_kwargs):
     """
     Fit a trace model to all regions in the flux image.
 
@@ -649,6 +649,11 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores='1'
         Threshold values for each valid region in the region map. If
         the median peak value across columns in the region is below this
         threshold, a fit will not be attempted for that region.
+    maximum_cores : str
+        Number of cores to use for multiprocessing. If set to '1' (the default),
+        then no multiprocessing will be done. The other allowable values are 'quarter',
+        'half', 'all', and string integers. This is the fraction of available or
+        the explicit number of cores to use for multiprocessing.
     **fit_kwargs
         Keyword arguments to pass to the fitting routine (see `fit_2d_spline_trace`).
 
@@ -665,31 +670,35 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores='1'
     # Determine number of slices to use for multi-processor computations
     num_available_cores = cpu_count()
     number_slices = compute_num_cores(maximum_cores, len(slice_numbers), num_available_cores)
-    log.info(f"Number of multiprocessing slices: {number_slices}")
 
     # Call adaptive trace model for the single processor (1 data slice) case
     if number_slices == 1:
-        log.info("Running single-process calculation")
         # Single threaded computation
+        log.info("Running single-process calculation")
 
         for slnum in slice_numbers:
             log.info("Fitting slice %s", slnum)
-            spline_models[slnum] = fit_one_region(flux, alpha, region_map, signal_threshold, slnum,
-                                                  **fit_kwargs)
+            spline_models[slnum] = fit_one_region(
+                flux, alpha, region_map, signal_threshold, slnum, **fit_kwargs
+            )
     else:
-        # parallelized computation
-        log.info(f"Fitting slices,multiprocessing on {number_slices} slices")
+        # Parallelized computation
+        log.info(f"Fitting slices, multiprocessing on {number_slices} cores")
+
         # Use functools.partial to supply all other inputs to fit_one_region except slice number
         # This is needed since pool.starmap doesn't support passing **fit_kwargs
-        fit_one_region_with_args = functools.partial(fit_one_region, flux, alpha, region_map,
-                                                     signal_threshold, **fit_kwargs)
+        fit_one_region_with_args = functools.partial(
+            fit_one_region, flux, alpha, region_map, signal_threshold, **fit_kwargs
+        )
 
         # Run the parallelized calc and collect results
         ctx = multiprocessing.get_context("spawn")
         pool = ctx.Pool(processes=number_slices)
-        pool_results = pool.starmap(fit_one_region_with_args, [(n,) for n in slice_numbers])
-        pool.close()
-        pool.join()
+        try:
+            pool_results = pool.starmap(fit_one_region_with_args, [(n,) for n in slice_numbers])
+        finally:
+            pool.close()
+            pool.join()
         for slnum, result in zip(slice_numbers, pool_results, strict=True):
             spline_models[slnum] = result
 
@@ -1288,7 +1297,7 @@ def fit_and_oversample(
     psf_optimal=False,
     oversample_factor=1.0,
     return_intermediate_models=False,
-    maximum_cores='1',
+    maximum_cores="1",
 ):
     """
     Fit a trace model and optionally oversample an IFU datamodel.
@@ -1316,6 +1325,11 @@ def fit_and_oversample(
         If True, additional image models will be returned, containing the full
         spline model, the spline model as used for compact sources, the residual
         model, and the linearly interpolated data.
+    maximum_cores : str
+        Number of cores to use for multiprocessing. If set to '1' (the default),
+        then no multiprocessing will be done. The other allowable values are 'quarter',
+        'half', 'all', and string integers. This is the fraction of available or
+        the explicit number of cores to use for multiprocessing.
 
     Returns
     -------
@@ -1425,8 +1439,12 @@ def fit_and_oversample(
     # Fit spline models to all regions
     fit_kwargs = _set_fit_kwargs(detector, xsize)
     spline_models = fit_all_regions(
-        flux_orig, alpha_orig, region_map, signal_threshold, maximum_cores=maximum_cores,
-        **fit_kwargs
+        flux_orig,
+        alpha_orig,
+        region_map,
+        signal_threshold,
+        maximum_cores=maximum_cores,
+        **fit_kwargs,
     )
 
     # If oversampling is not needed, evaluate the spline models to create the
