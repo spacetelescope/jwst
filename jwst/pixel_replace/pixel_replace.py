@@ -584,14 +584,19 @@ class PixelReplacement:
         log.info("Using minimum gradient method.")
 
         # Propagate variance components as errors to get the scales right
-        var_dict = {
+        in_var_dict = {
             "var_poisson": None,
             "var_rnoise": None,
             "var_flat": None,
         }
-        for key in var_dict.keys():
+        interp_var_dict = {
+            "var_poisson": None,
+            "var_rnoise": None,
+            "var_flat": None,
+        }
+        for key in in_var_dict.keys():
             if getattr(arrays, key) is not None:
-                var_dict[key] = np.sqrt(getattr(arrays, key))
+                in_var_dict[key] = np.sqrt(getattr(arrays, key))
 
         # Make an array of x/y values on the detector
         (ysize, xsize) = arrays.data.shape
@@ -620,9 +625,9 @@ class PixelReplacement:
         # Interpolated values for each quantity in both directions, shape (2, N)
         interp_data = self._interp_neighbors(arrays.data, yindx, xindx)
         interp_err = self._interp_neighbors(arrays.err, yindx, xindx)
-        for key in var_dict.keys():
-            if var_dict[key] is not None:
-                var_dict[key] = self._interp_neighbors(var_dict[key], yindx, xindx)
+        for key in in_var_dict.keys():
+            if in_var_dict[key] is not None:
+                interp_var_dict[key] = self._interp_neighbors(in_var_dict[key], yindx, xindx)
 
         # Replace NaN diffs with inf so argmin naturally prefers the valid direction.
         # Mask is True where at least one valid direction, False elsewhere,
@@ -639,9 +644,12 @@ class PixelReplacement:
         col_idx = col_idx[mask]
         arrays.data[yindx[mask], xindx[mask]] = interp_data[indmin, col_idx]
         arrays.err[yindx[mask], xindx[mask]] = interp_err[indmin, col_idx]
-        for key in var_dict.keys():
-            if var_dict[key] is not None:
-                arrays.var_poisson[yindx[mask], xindx[mask]] = var_dict[key][indmin, col_idx] ** 2
+        for key in interp_var_dict.keys():
+            if interp_var_dict[key] is not None:
+                in_var_dict[key][yindx[mask], xindx[mask]] = (
+                    interp_var_dict[key][indmin, col_idx] ** 2
+                )
+                setattr(arrays, key, in_var_dict[key])
 
         # Update DQ flags for pixels that were replaced.
         orig_dq = arrays.dq[yindx, xindx]  # (N,)
