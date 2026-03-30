@@ -100,21 +100,21 @@ def apply_emicorr(
         requires a reference waveform but can successfully fit EMI in ramps with
         3 or more groups.
     nints_to_phase : int or None, optional
-        Number of integrations to phase, when `algorithm` is 'sequential'.
+        Number of integrations to phase, when ``algorithm`` is 'sequential'.
     nbins : int or None, optional
-        Number of bins to use in one phased wave, when `algorithm` is 'sequential'.
+        Number of bins to use in one phased wave, when ``algorithm`` is 'sequential'.
     scale_reference : bool, optional
-        If True and `algorithm` is 'sequential', the reference wavelength will be scaled
+        If True and ``algorithm`` is 'sequential', the reference wavelength will be scaled
         to the data's phase amplitude.
     onthefly_corr_freq : list of float or None, optional
         Frequency values to use to create a correction on-the-fly.  If provided,
-        any input `emicorr_model` is ignored and the `algorithm` is set to
+        any input ``emicorr_model`` is ignored and the ``algorithm`` is set to
         'sequential'.
     use_n_cycles : int, optional
         Only use N cycles to calculate the phase to reduce code running time,
-        when `algorithm` is 'sequential'.
+        when ``algorithm`` is 'sequential'.
     fit_ints_separately : bool, optional
-        If True, fit each integration separately, when `algorithm` is 'joint'.
+        If True, fit each integration separately, when ``algorithm`` is 'joint'.
 
     Returns
     -------
@@ -327,15 +327,15 @@ def _run_sequential_algorithm(
     save_onthefly_reffile : str or None, optional
         Full path and root name to save an on-the-fly reference file to.
     nints_to_phase : int or None, optional
-        Number of integrations to phase, when `algorithm` is 'sequential'.
+        Number of integrations to phase, when ``algorithm`` is 'sequential'.
     nbins : int or None, optional
-        Number of bins to use in one phased wave, when `algorithm` is 'sequential'.
+        Number of bins to use in one phased wave, when ``algorithm`` is 'sequential'.
     scale_reference : bool, optional
-        If True and `algorithm` is 'sequential', the reference wavelength will be scaled
+        If True and ``algorithm`` is 'sequential', the reference wavelength will be scaled
         to the data's phase amplitude.
     use_n_cycles : int, optional
         Only use N cycles to calculate the phase to reduce code running time,
-        when `algorithm` is 'sequential'.
+        when ``algorithm`` is 'sequential'.
 
     Returns
     -------
