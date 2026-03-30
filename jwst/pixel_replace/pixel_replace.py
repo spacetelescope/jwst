@@ -262,6 +262,11 @@ class PixelReplacement:
         # also requiring a re-packaging of the data into 2D inputs for the algorithm
         elif isinstance(self.input, datamodels.CubeModel | datamodels.SlitModel):
             dispaxis = self.input.meta.wcsinfo.dispersion_direction
+            # Ensure variance arrays exist
+            for var in ["var_poisson", "var_rnoise", "var_flat"]:
+                if self.input[var] is None:
+                    self.input[var] = np.zeros_like(self.input.data)
+
             for i in range(len(self.input.data)):
                 arrays = PixelReplaceArrays(
                     data=self.input.data[i].copy(),
