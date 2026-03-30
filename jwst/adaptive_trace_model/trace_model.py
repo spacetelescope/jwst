@@ -572,12 +572,13 @@ def linear_oversample(
 
 def fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **fit_kwargs):
     """
-    Fit a trace model to a singleregion in the flux image.
-    Called from fit_all_regions, optionally parallelized.
+    Fit a trace model to a single region in the flux image.
+
+    Called from fit_all_regions, optionally parallelized via multiprocessing.
 
     Parameters
     ----------
-   flux : ndarray
+    flux : ndarray
         The flux image to fit.
     alpha : ndarray
         Alpha coordinates for all flux values.
@@ -599,7 +600,6 @@ def fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **f
         Dict containing a spline model, scale, and bounds for each column index in the region.
         If a spline model could not be fit, the column index number is not present.
     """
-
     # Arrays to reset with NaNs for each slice
     data_slice = np.full_like(flux, np.nan)
     alpha_slice = np.full_like(flux, np.nan)
@@ -660,10 +660,6 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores='1'
         scale, and bounds for each column index in the region. If a spline model
         could not be fit, the column index number is not present.
     """
-    # Arrays to reset with NaNs for each slice
-    data_slice = np.full_like(flux, np.nan)
-    alpha_slice = np.full_like(flux, np.nan)
-
     spline_models = {}
     slice_numbers = np.unique(region_map[region_map > 0])
 
@@ -679,13 +675,15 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores='1'
 
         for slnum in slice_numbers:
             log.info("Fitting slice %s", slnum)
-            spline_models[slnum] = fit_one_region(flux, alpha, region_map, signal_threshold, slnum, **fit_kwargs)
+            spline_models[slnum] = fit_one_region(flux, alpha, region_map, signal_threshold, slnum,
+                                                  **fit_kwargs)
     else:
         # parallelized computation
         log.info(f"Fitting slices,multiprocessing on {number_slices} slices")
-        # first, use functools.partial to supply all other inputs to fit_one_region except slice number
+        # Use functools.partial to supply all other inputs to fit_one_region except slice number
         # This is needed since pool.starmap doesn't support passing **fit_kwargs
-        fit_one_region_with_args = functools.partial(fit_one_region, flux, alpha, region_map, signal_threshold, **fit_kwargs)
+        fit_one_region_with_args = functools.partial(fit_one_region, flux, alpha, region_map,
+                                                     signal_threshold, **fit_kwargs)
 
         # Run the parallelized calc and collect results
         ctx = multiprocessing.get_context("spawn")
@@ -693,7 +691,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores='1'
         pool_results = pool.starmap(fit_one_region_with_args, [(n,) for n in slice_numbers])
         pool.close()
         pool.join()
-        for slnum, result in zip(slice_numbers, pool_results):
+        for slnum, result in zip(slice_numbers, pool_results, strict=True):
             spline_models[slnum] = result
 
     return spline_models
@@ -1428,7 +1426,8 @@ def fit_and_oversample(
     # Fit spline models to all regions
     fit_kwargs = _set_fit_kwargs(detector, xsize)
     spline_models = fit_all_regions(
-        flux_orig, alpha_orig, region_map, signal_threshold, maximum_cores=maximum_cores, **fit_kwargs
+        flux_orig, alpha_orig, region_map, signal_threshold, maximum_cores=maximum_cores,
+        **fit_kwargs
     )
 
     # If oversampling is not needed, evaluate the spline models to create the
