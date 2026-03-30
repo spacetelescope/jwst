@@ -10,7 +10,4 @@ Data Quality (DQ) Initialization
    description.rst
    arguments.rst
    reference_files.rst
-
-
-.. automodapi:: jwst.dq_init
-   :no-inheritance-diagram:
+   api_ref.rst
