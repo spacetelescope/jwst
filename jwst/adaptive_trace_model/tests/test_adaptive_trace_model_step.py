@@ -178,13 +178,18 @@ def test_adaptive_trace_model_step_oversample(miri_mrs_model):
     "dataset",
     ["miri_mrs_model_with_source", "nirspec_ifu_model_with_source", "nirspec_ifu_slice_wcs"],
 )
-def test_adaptive_trace_model_step_oversample_with_source(request, dataset):
+@pytest.mark.parametrize("cores", ["none", "2"])
+def test_adaptive_trace_model_step_oversample_with_source(request, dataset, cores):
     model = request.getfixturevalue(dataset)
 
     fit_threshold = 10.0
     slope_limit = 0.05
     result = AdaptiveTraceModelStep.call(
-        model, oversample=2, slope_limit=slope_limit, fit_threshold=fit_threshold
+        model,
+        oversample=2,
+        slope_limit=slope_limit,
+        fit_threshold=fit_threshold,
+        maximum_cores=cores,
     )
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
@@ -247,9 +252,16 @@ def test_adaptive_trace_model_unsupported_model(caplog):
 
 
 @pytest.mark.slow
-def test_adaptive_trace_model_step_psf_optimal(caplog, miri_mrs_model_with_source):
+@pytest.mark.parametrize("cores", ["none", "2", "quarter", "half", "all"])
+def test_adaptive_trace_model_step_psf_optimal(caplog, miri_mrs_model_with_source, cores):
+    """
+    Set psf_optimal to ensure all slices are fit and process in parallel.
+
+    Also test with multiprocessing, since it is meaningful in this case, where
+    multiple slices may be fit simultaneously.
+    """
     model = miri_mrs_model_with_source
-    result = AdaptiveTraceModelStep.call(model, oversample=2, psf_optimal=True)
+    result = AdaptiveTraceModelStep.call(model, oversample=2, psf_optimal=True, maximum_cores=cores)
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
     assert "Ignoring fit threshold and slope limit" in caplog.text
 
