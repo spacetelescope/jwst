@@ -1,8 +1,8 @@
-import logging
-import warnings
-import multiprocessing
-from multiprocessing import cpu_count
 import functools
+import logging
+import multiprocessing
+import warnings
+from multiprocessing import cpu_count
 
 import gwcs
 import numpy as np
@@ -10,10 +10,9 @@ from astropy.modeling.models import Identity, Scale, Shift
 from astropy.stats import sigma_clipped_stats as scs
 from astropy.utils.exceptions import AstropyUserWarning
 from scipy.signal import find_peaks
+from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
-
-from stcal.multiprocessing import compute_num_cores
 
 from jwst.adaptive_trace_model.bspline import bspline_fit
 from jwst.assign_wcs.nirspec import nrs_ifu_wcs
