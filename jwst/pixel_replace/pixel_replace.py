@@ -32,11 +32,11 @@ class PixelReplaceArrays:
         Data quality array.
     err : np.ndarray
         Total error array.
-    var_poisson : np.ndarray
+    var_poisson : np.ndarray | None
         Poisson variance array.
-    var_rnoise : np.ndarray
+    var_rnoise : np.ndarray | None
         Read-noise variance array.
-    var_flat : np.ndarray
+    var_flat : np.ndarray | None
         Flat-field variance array.
     dispersion_direction : int
         Dispersion direction.
