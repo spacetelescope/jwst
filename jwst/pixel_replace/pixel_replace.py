@@ -426,7 +426,7 @@ class PixelReplacement:
             norm_errors = {}
             for err_name in err_names:
                 if err_name.startswith("var"):
-                    if err_arr := getattr(arrays, err_name) is None:
+                    if (err_arr := getattr(arrays, err_name)) is None:
                         continue
                     err = np.sqrt(err_arr)
                 else:
@@ -514,14 +514,15 @@ class PixelReplacement:
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
                 for var in ["var_poisson", "var_rnoise", "var_flat"]:
-                    if arrays[var] is not None:
-                        current_var = arrays[var][current_condition][range(*profile_cut)]
+                    if (var_arr := getattr(arrays, var)) is not None:
+                        current_var = var_arr[current_condition][range(*profile_cut)]
                         replaced_var = np.where(
                             replace_condition,
                             (norm_errors[var] * norm_scale * scale) ** 2,
                             current_var,
                         )
-                        arrays[var][current_condition][range(*profile_cut)] = replaced_var
+                        var_arr[current_condition][range(*profile_cut)] = replaced_var
+                        setattr(arrays, var, var_arr)
 
         return arrays
 
