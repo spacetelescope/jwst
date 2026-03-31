@@ -9,7 +9,6 @@ from jwst.wfss_contam.wfss_contam import (
     _cut_frame_to_match_slit,
     _find_matching_simul_slit,
     _validate_orders_against_reference,
-    match_backplane_encompass_both,
     match_backplane_prefer_first,
 )
 
@@ -73,27 +72,7 @@ def test_cut_frame_to_match_slit(slit0, contam):
     assert np.all(cut_contam == 0.1)
 
 
-def test_common_slit_encompass(slit0, slit1):
-    slit0_final, slit1_final = match_backplane_encompass_both(slit0.copy(), slit1.copy())
-
-    # check indexing in metadata
-    assert slit0_final.xstart == slit1_final.xstart
-    assert slit0_final.ystart == slit1_final.ystart
-    assert slit0_final.xsize == slit1_final.xsize
-    assert slit0_final.ysize == slit1_final.ysize
-    assert slit0_final.data.shape == slit1_final.data.shape
-
-    # check data overlap
-    assert np.count_nonzero(slit0_final.data) == 15
-    assert np.count_nonzero(slit1_final.data) == 16
-    assert np.count_nonzero(slit0_final.data * slit1_final.data) == 6
-
-    # check data values
-    assert np.all(slit0_final.data[1:6, 0:3] == 1)
-    assert np.all(slit1_final.data[0:4, 1:5] == 0.5)
-
-
-def test_common_slit_prefer(slit0, slit1):
+def test_match_backplane_prefer_first(slit0, slit1):
     slit0_final, slit1_final = match_backplane_prefer_first(slit0.copy(), slit1.copy())
     assert slit0_final.xstart == slit0.xstart
     assert slit0_final.ystart == slit0.ystart
@@ -108,6 +87,41 @@ def test_common_slit_prefer(slit0, slit1):
     assert slit1_final.ysize == slit0.ysize
     assert slit1_final.data.shape == slit0.data.shape
     assert np.count_nonzero(slit1_final.data) == 6
+
+
+def test_match_backplane_prefer_first_yoffset():
+    """
+    Cover an indexing bug in match_backplane_prefer_first.
+
+    When slit1 starts below slit0 (y1 > 0), the old code dropped the first y1 rows
+    of data1 and placed the wrong rows in the output.
+    """
+    slit0 = SlitModel(data=np.zeros((4, 4)))
+    slit0.xstart, slit0.ystart = 0, 0  # origin at (0, 0)
+    slit0.xsize, slit0.ysize = 4, 4
+
+    # Give each row a distinct value so we can tell which rows end up where.
+    data1 = np.array([[1.0] * 4, [2.0] * 4, [3.0] * 4, [4.0] * 4])
+    wl1 = np.array([[0.1] * 4, [0.2] * 4, [0.3] * 4, [0.4] * 4])
+    slit1 = SlitModel(data=data1.copy())
+    slit1.wavelength = wl1.copy()
+    slit1.xstart, slit1.ystart = 0, 2  # starts 2 rows below slit0
+    slit1.xsize, slit1.ysize = 4, 4
+
+    _, slit1_out = match_backplane_prefer_first(slit0.copy(), slit1)
+
+    # Overlap: slit1 rows 0-1 (values 1.0, 2.0) map to backplane rows 2-3.
+    # Rows 0-1 of the backplane are outside slit1 so should be zero.
+    assert slit1_out.data.shape == (4, 4)
+    assert np.all(slit1_out.data[0:2, :] == 0.0)
+    assert np.all(slit1_out.data[2, :] == 1.0)
+    assert np.all(slit1_out.data[3, :] == 2.0)
+
+    # Wavelength array should be reprojected with the same offsets.
+    assert slit1_out.wavelength.shape == (4, 4)
+    assert np.all(slit1_out.wavelength[0:2, :] == 0.0)
+    assert np.all(slit1_out.wavelength[2, :] == pytest.approx(0.1))
+    assert np.all(slit1_out.wavelength[3, :] == pytest.approx(0.2))
 
 
 def test_common_slit_prefer_expected_raise(slit0, slit2):
