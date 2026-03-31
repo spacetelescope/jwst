@@ -719,7 +719,7 @@ class ResampleImage(Resample):
 
         else:
             log.warning(
-                "Custom 'output_wcs' is not using 'FITSImagingWCSTransform'."
+                "Custom 'output_wcs' is not using 'FITSImagingWCSTransform'. "
                 "Setting wcsinfo by fitting a linear FITS WCS to the resampled "
                 "image WCS. This may not produce correct WCS parameters if "
                 "custom 'output_wcs' contains distortions."
