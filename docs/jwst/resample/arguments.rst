@@ -90,7 +90,7 @@ image.
     When ``output_wcs`` is a FITS WCS-like GWCS, it is recommended that it be
     constructed using `~gwcs.fitswcs.FITSImagingWCSTransform` object which
     allows for proper writing of the WCS parameters to the output
-    model's ``wcsinfo`` which is used to assign FITS WCS keywords to resampled
+    model's ``wcsinfo`` which is used to assign FITS WCS keywords to the resampled
     image's header. Otherwise FITS WCS keywords will be determined by fitting
     a linear FITS WCS to the output GWCS, which may not result in correct WCS
     parameters if ``output_wcs`` contains distortions.
