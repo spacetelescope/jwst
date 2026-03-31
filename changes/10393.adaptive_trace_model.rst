@@ -1,0 +1,1 @@
+Fix an out-of-bounds issue with the ``adaptive_trace_model`` step when scaling the spline model in some regions.
