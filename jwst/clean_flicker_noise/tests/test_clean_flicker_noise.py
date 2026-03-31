@@ -575,6 +575,22 @@ def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
     cleaned.close()
 
 
+@pytest.mark.parametrize("none_value", [None, "none", "None"])
+def test_do_correction_user_mask_none(none_value):
+    ramp_model = helpers.make_small_ramp_model()
+
+    # User mask is ignored, even if it is a string: no error is raised
+    cleaned, _, _, _, status = cfn.do_correction(ramp_model, user_mask=none_value)
+
+    # uniform data, correction has no effect
+    assert cleaned.data.shape == ramp_model.shape
+    assert np.allclose(cleaned.data, ramp_model.data)
+    assert status == "COMPLETE"
+
+    ramp_model.close()
+    cleaned.close()
+
+
 @pytest.mark.parametrize("subarray", ["SUBS200A1", "ALLSLITS"])
 def test_do_correction_fft_subarray(subarray):
     ramp_model = helpers.make_small_ramp_model()
