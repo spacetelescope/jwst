@@ -328,7 +328,7 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
             # Otherwise, the background is zero everywhere and we will take
             # the median over the input data
             background_ramp = 0.0
-            bgsub_ramp = input_model.data
+            bgsub_ramp = input_model.data.copy()
     else:
         background_ramp = background_rate  # may be 0.0
         bgsub_ramp = bgsub_rateints.data
