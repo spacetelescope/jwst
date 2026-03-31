@@ -117,7 +117,7 @@ def _disperse_onto_grism(x0_sky, y0_sky, sky_to_imgxy, imgxy_to_grismxy, lambdas
     return x0s, y0s, lambdas
 
 
-def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel):
+def _collect_outputs_by_source(xs, ys, lambdas, areas, counts, source_ids_per_pixel):
     """
     Collect the dispersed pixel values into separate images for each source.
 
@@ -127,6 +127,10 @@ def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel):
         X coordinates of dispersed pixels
     ys : ndarray
         Y coordinates of dispersed pixels
+    lambdas : ndarray
+        Wavelengths corresponding to each dispersed pixel
+    areas : ndarray
+        Fractional pixel areas corresponding to each dispersed pixel
     counts : ndarray
         Count rates of dispersed pixels
     source_ids_per_pixel : int array
@@ -142,6 +146,8 @@ def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel):
     sorted_ids = source_ids_per_pixel[sort_idx]
     sorted_xs = xs[sort_idx]
     sorted_ys = ys[sort_idx]
+    sorted_lambdas = lambdas[sort_idx]
+    sorted_areas = areas[sort_idx]
     sorted_counts = counts[sort_idx]
 
     # Compute per-source bounds in a vectorized way
@@ -159,13 +165,19 @@ def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel):
         end = split_points[i + 1] if i + 1 < len(split_points) else len(sorted_xs)
         this_xs = sorted_xs[start:end]
         this_ys = sorted_ys[start:end]
+        this_lambdas = sorted_lambdas[start:end]
+        this_areas = sorted_areas[start:end]
         this_flxs = sorted_counts[start:end]
 
         bounds = [int(minxs[i]), int(maxxs[i]), int(minys[i]), int(maxys[i])]
         img = _build_dispersed_image_of_source(this_xs, this_ys, this_flxs, bounds)
+        lam = _build_mean_wavelength_image_of_source(
+            this_xs, this_ys, this_lambdas, this_areas, bounds
+        )
         outputs_by_source[this_sid] = {
             "bounds": bounds,
             "image": img,
+            "wavelengths": lam,
         }
     return outputs_by_source
 
@@ -194,6 +206,44 @@ def _build_dispersed_image_of_source(x, y, flux, bounds):
     return sparse.coo_matrix(
         (flux, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)
     ).toarray()
+
+
+def _build_mean_wavelength_image_of_source(x, y, values, areas, bounds):
+    """
+    Convert a flattened list of per-pixel values to a 2-D image, using a weighted mean.
+
+    Unlike ``_build_dispersed_image_of_source``, pixels that map to the same output
+    location are averaged rather than summed.
+    The mean is weighted by ``areas`` so pixels that contribute more area to an output pixel
+    carry proportionally more weight.
+
+    Parameters
+    ----------
+    x : ndarray
+        X coordinates of pixels in the grism image
+    y : ndarray
+        Y coordinates of pixels in the grism image
+    values : ndarray
+        Per-pixel values to average (e.g. wavelengths)
+    areas : ndarray
+        Per-pixel areas (e.g. fractional pixel areas)
+    bounds : list
+        Pre-computed [minx, maxx, miny, maxy] bounds for the source.
+
+    Returns
+    -------
+    img : ndarray
+        2-D image of weighted-mean values; zero where no pixel falls.
+    """
+    minx, maxx, miny, maxy = bounds
+    shape = (maxy - miny + 1, maxx - minx + 1)
+    rows, cols = y - miny, x - minx
+    weighted_sum = sparse.coo_matrix((areas * values, (rows, cols)), shape=shape).toarray()
+    weight_sum = sparse.coo_matrix((areas, (rows, cols)), shape=shape).toarray()
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        img = np.where(weight_sum > 0, weighted_sum / weight_sum, 0.0)
+    return img
 
 
 def disperse(
@@ -323,7 +373,6 @@ def disperse(
 
     # compute 1D sensitivity array corresponding to list of wavelengths
     sens, no_cal = create_1d_sens(lambdas, sens_waves, sens_resp)
-    del lambdas
 
     # Compute countrates for dispersed pixels.
     # The input direct image data is already photometrically calibrated,
@@ -335,10 +384,12 @@ def disperse(
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
         counts = fluxes * areas * dlam / sens
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
-    del fluxes, areas, sens, dlam, no_cal
+    del fluxes, sens, dlam, no_cal
 
-    outputs_by_source = _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel)
-    del xs, ys, counts, source_ids_per_pixel
+    outputs_by_source = _collect_outputs_by_source(
+        xs, ys, lambdas, areas, counts, source_ids_per_pixel
+    )
+    del xs, ys, counts, source_ids_per_pixel, lambdas, areas
     n_out = len(outputs_by_source)
     log.debug(
         f"{mp.current_process()} finished order {order} with {n_out} "
