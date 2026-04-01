@@ -583,7 +583,6 @@ class PixelReplacement:
 
         log.info("Using minimum gradient method.")
 
-        # Propagate variance components as errors to get the scales right
         in_var_dict = {
             "var_poisson": None,
             "var_rnoise": None,
@@ -625,6 +624,7 @@ class PixelReplacement:
         # Interpolated values for each quantity in both directions, shape (2, N)
         interp_data = self._interp_neighbors(arrays.data, yindx, xindx)
         interp_err = self._interp_neighbors(arrays.err, yindx, xindx)
+        # Propagate variance components as errors to get the scales right
         for key in in_var_dict.keys():
             if in_var_dict[key] is not None:
                 interp_rootvar_dict[key] = self._interp_neighbors(
@@ -646,6 +646,7 @@ class PixelReplacement:
         col_idx = col_idx[mask]
         arrays.data[yindx[mask], xindx[mask]] = interp_data[indmin, col_idx]
         arrays.err[yindx[mask], xindx[mask]] = interp_err[indmin, col_idx]
+        # Square the interpolated errors back to variances for insertion
         for key in interp_rootvar_dict.keys():
             if interp_rootvar_dict[key] is not None:
                 in_var_dict[key][yindx[mask], xindx[mask]] = (
