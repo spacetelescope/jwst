@@ -1,0 +1,1 @@
+Fixed a bug in resample where updating ``wcsinfo`` may fail for custom reference WCS.

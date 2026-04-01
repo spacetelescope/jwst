@@ -223,7 +223,9 @@ def fit_2d_spline_trace(
 
         # Evaluate the bspline at the valid input locations to determine
         # a scale factor for the fit
-        idx = np.isfinite(col_alpha)
+        idx = np.where(
+            (np.isfinite(col_alpha)) & (col_alpha >= spline_lobound) & (col_alpha <= spline_hibound)
+        )
         col_alpha = col_alpha[idx]
         col_flux = col_flux[idx]
         col_fit = spline_model(col_alpha)

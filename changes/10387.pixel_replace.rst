@@ -1,0 +1,1 @@
+Let uninitialized variance arrays pass through step without error or assignment. 

@@ -124,11 +124,7 @@ def make_rate(input_model, input_dir="", return_cube=False):
     with disable_logging(level=logging.WARNING):
         step = RampFitStep()
         step.input_dir = input_dir
-
-        # Note: the copy is currently needed because ramp fit
-        # closes the input model when it's done, and we need
-        # it to stay open.
-        rate, rateints = step.run(input_model.copy())
+        rate, rateints = step.run(input_model)
 
     if return_cube:
         output_model = rateints
@@ -825,7 +821,7 @@ def _check_input(exp_type, fit_method):
 
 
 def _standardize_parameters(
-    exp_type, subarray, slowaxis, background_method, fit_by_channel, single_mask
+    user_mask, exp_type, subarray, slowaxis, background_method, fit_by_channel, single_mask
 ):
     """
     Standardize input parameters.
@@ -835,6 +831,8 @@ def _standardize_parameters(
 
     Parameters
     ----------
+    user_mask : str or None
+        Input user mask filename.
     exp_type : str
         Exposure type for the input data.
     subarray : str
@@ -864,6 +862,10 @@ def _standardize_parameters(
         Frequency cutoff values for use with FFT correction,
         by input subarray.
     """
+    # Standardize user mask input
+    if str(user_mask).lower() == "none":
+        user_mask = None
+
     # Get axis to correct, by instrument
     if exp_type.startswith("MIR"):
         # MIRI doesn't have 1/f-noise, but it does have a vertical flickering.
@@ -896,7 +898,7 @@ def _standardize_parameters(
     else:
         fc = (1061, 1211, 49943, 49957)
 
-    return axis_to_correct, background_method, fit_by_channel, single_mask, fc
+    return user_mask, axis_to_correct, background_method, fit_by_channel, single_mask, fc
 
 
 def _make_processed_rate_image(
@@ -1359,8 +1361,10 @@ def do_correction(
 
     # Get parameters needed for subsequent corrections, as appropriate
     # to the input data
-    axis_to_correct, background_method, fit_by_channel, single_mask, fc = _standardize_parameters(
-        exp_type, subarray, slowaxis, background_method, fit_by_channel, single_mask
+    (user_mask, axis_to_correct, background_method, fit_by_channel, single_mask, fc) = (
+        _standardize_parameters(
+            user_mask, exp_type, subarray, slowaxis, background_method, fit_by_channel, single_mask
+        )
     )
 
     # Read the flat and pastasoss files, if provided
