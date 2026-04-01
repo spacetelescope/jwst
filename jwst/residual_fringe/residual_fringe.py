@@ -546,7 +546,7 @@ class ResidualFringeCorrection:
             log.info(f"Saving intermediate fit results output {fit_results_name}")
 
             # Get a primary header from the input model
-            hdul = fits_support.to_fits(self.input_model._instance, self.input_model._schema)  # noqa: SLF001
+            hdul = fits_support.to_fits(self.input_model.instance, self.input_model._schema)  # noqa: SLF001
             hdr = hdul[0].header
             hdul.close()
 
