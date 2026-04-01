@@ -44,6 +44,40 @@ def run_tso_spec2_pipeline(rtdata_module, resource_tracker):
 
 
 @pytest.fixture(scope="module")
+def run_tso_spec2_pixrep(rtdata_module, resource_tracker):
+    """
+    Run the calwebb_spec2 pipeline on NRS_BRIGHTOBJ data.
+
+    This fixture covers the TSO case where flat_field and photom
+    are skipped, but pixel_replace is enabled.
+    """
+
+    rtdata = rtdata_module
+
+    # Get the input exposure
+    # Input data is from jw02420001001_04101_00001-seg001_nrs1_rateints.fits,
+    # modified to truncate the data to the first 100 integrations, for
+    # faster processing.
+    rtdata.get_data("nirspec/tso/jw02420001001_04101_00001-first100_nrs1_rateints.fits")
+
+    # Run the calwebb_spec2 pipeline;
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.flat_field.skip=True",
+        "--steps.photom.skip=True",
+        "--steps.pixel_replace.skip=False",
+        "--steps.pixel_replace.algorithm=mingrad",
+        "--steps.pixel_replace.save_results=True",
+        "--output_file=jw02420001001_04101_00001_pixrep",
+    ]
+    with resource_tracker.track():
+        Step.from_cmdline(args)
+
+    return rtdata
+
+
+@pytest.fixture(scope="module")
 def run_tso3_pipeline(rtdata_module, resource_tracker):
     """Run the calwebb_tso3 pipeline on NRS_BRIGHTOBJ (S1600A1 slit) data."""
 
@@ -66,6 +100,10 @@ def run_tso3_pipeline(rtdata_module, resource_tracker):
 
 
 def test_log_tracked_resources_spec2(log_tracked_resources, run_tso_spec2_pipeline):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_pixrep(log_tracked_resources, run_tso_spec2_pixrep):
     log_tracked_resources()
 
 
@@ -157,3 +195,22 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
 
     # make sure NaNs are only at do_not_use pixels
     assert np.all(unflatted.dq[is_nan] & dm.dqflags.pixel["DO_NOT_USE"])
+
+
+@pytest.mark.parametrize("suffix", ["pixel_replace", "calints", "x1dints"])
+def test_nirspec_brightobj_pixrep(run_tso_spec2_pixrep, fitsdiff_default_kwargs, suffix):
+    """
+    Regression test of calwebb_spec2 pipeline performed on NIRSpec
+    fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit).
+    """
+    rtdata = run_tso_spec2_pixrep
+    basename = "jw02420001001_04101_00001_pixrep"
+    output = f"{basename}_{suffix}.fits"
+    rtdata.output = output
+
+    # Get the truth files
+    rtdata.get_truth(os.path.join("truth/test_nirspec_brightobj_spec2", output))
+
+    # Compare the results
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
