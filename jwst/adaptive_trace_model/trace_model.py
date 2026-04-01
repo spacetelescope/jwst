@@ -1381,7 +1381,7 @@ def _intermediate_models(model, data_arrays):
         # make a SlitModel from its instance dictionary to use it for
         # metadata updates.
         if isinstance(model, ObjectNode):
-            model_for_update = datamodels.SlitModel(model._instance)  # noqa: SLF001
+            model_for_update = datamodels.SlitModel(model.instance)
 
     new_models = []
     for data in data_arrays:
@@ -1451,11 +1451,11 @@ def fit_and_oversample(
             `~stdatamodels.jwst.datamodels.SlitModel`
         The datamodel, updated with a trace image and optionally oversampled
         arrays.
-    full_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`or \
+    full_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
                         `~stdatamodels.jwst.datamodels.SlitModel`, optional
         The spline model evaluated at all pixels. Returned only if
         ``return_intermediate_models`` is True.
-    source_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`or \
+    source_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
                           `~stdatamodels.jwst.datamodels.SlitModel`, optional
         The spline model evaluated at compact source locations only.
         Returned only if ``return_intermediate_models`` is True.
@@ -1465,7 +1465,7 @@ def fit_and_oversample(
         Returned only if ``return_intermediate_models`` is True.  Will be None if
         ``oversample_factor`` is 1.0.
     residual_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
-                     `~stdatamodels.jwst.datamodels.SlitModel`or None, optional
+                     `~stdatamodels.jwst.datamodels.SlitModel` or None, optional
         Residuals from the spline fit, linearly interpolated onto the oversampled grid
         Returned only if ``return_intermediate_models`` is True.  Will be None if
         ``oversample_factor`` is 1.0.

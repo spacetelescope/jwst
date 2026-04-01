@@ -128,7 +128,6 @@ class AdaptiveTraceModelStep(Step):
                     psf_optimal=self.psf_optimal,
                     return_intermediate_models=self.save_intermediate_results,
                     maximum_cores=self.maximum_cores,
-
                 )
             else:
                 log.warning(
