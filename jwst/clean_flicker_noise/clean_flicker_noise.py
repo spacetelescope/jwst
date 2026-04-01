@@ -124,11 +124,7 @@ def make_rate(input_model, input_dir="", return_cube=False):
     with disable_logging(level=logging.WARNING):
         step = RampFitStep()
         step.input_dir = input_dir
-
-        # Note: the copy is currently needed because ramp fit
-        # closes the input model when it's done, and we need
-        # it to stay open.
-        rate, rateints = step.run(input_model.copy())
+        rate, rateints = step.run(input_model)
 
     if return_cube:
         output_model = rateints
