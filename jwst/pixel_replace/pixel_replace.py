@@ -26,17 +26,17 @@ class PixelReplaceArrays:
 
     Attributes
     ----------
-    data : np.ndarray
+    data : ndarray
         Science array.
-    dq : np.ndarray
+    dq : ndarray
         Data quality array.
-    err : np.ndarray
+    err : ndarray
         Total error array.
-    var_poisson : np.ndarray | None
+    var_poisson : ndarray or None
         Poisson variance array.
-    var_rnoise : np.ndarray | None
+    var_rnoise : ndarray or None
         Read-noise variance array.
-    var_flat : np.ndarray | None
+    var_flat : ndarray or None
         Flat-field variance array.
     dispersion_direction : int
         Dispersion direction.
@@ -533,14 +533,14 @@ class PixelReplacement:
 
         Parameters
         ----------
-        arr : np.ndarray
+        arr : ndarray
             2-D input array.
-        yindx, xindx : np.ndarray
+        yindx, xindx : ndarray
             1D arrays, each length N, of row/column indices of the bad pixels.
 
         Returns
         -------
-        np.ndarray, shape (2, N)
+        ndarray, shape (2, N)
             Interpolations in the horizontal (0th index) and vertical (1st index) directions.
         """
         horiz = (arr[yindx, xindx - 1] + arr[yindx, xindx + 1]) / 2.0
