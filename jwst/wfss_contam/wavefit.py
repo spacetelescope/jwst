@@ -43,14 +43,6 @@ def fit_spectral_shape(observed_slit, simul_slit, degree=2):
     scaled_sim : ndarray
         The simulated data with the wavelength solution applied, same shape as ``simul_slit.data``.
         Zero where ``simul.data == 0`` or ``wavelength == 0``.
-    coeffs : ndarray, shape (degree+1,)
-        Best-fit coefficients ordered such that ``coeffs[0]`` is the constant term,
-        ``coeffs[1]`` is the linear term, etc.
-    lam_ref : float
-        The reference wavelength used to center the polynomial.
-        Needed to evaluate ``p`` externally::
-
-            p(λ) = sum(coeffs[k] * (λ - lam_ref)**k  for k in range(degree+1))
 
     Notes
     -----
@@ -64,11 +56,11 @@ def fit_spectral_shape(observed_slit, simul_slit, degree=2):
     If too few valid pixels remain for the requested polynomial degree, a
     ``ValueError`` is raised.
     """
-    data_obs = observed_slit.data
-    data_sim = simul_slit.data
+    data = observed_slit.data
+    sim = simul_slit.data
     wavelength = simul_slit.wavelength
 
-    if wavelength is None or wavelength.shape != data_sim.shape:
+    if wavelength is None or wavelength.shape != sim.shape:
         raise ValueError(
             "simul_slit.wavelength must be a 2-D array with the same shape as simul_slit.data"
         )
@@ -76,10 +68,10 @@ def fit_spectral_shape(observed_slit, simul_slit, degree=2):
     # Build pixel validity mask
     dq = np.asarray(observed_slit.dq, dtype=np.uint32)
     mask = (
-        (data_sim != 0)  # simulation has signal here
+        (sim != 0)  # simulation has signal here
         & (wavelength > 0)  # wavelength was assigned
-        & np.isfinite(data_obs)  # observed pixel is valid
-        & np.isfinite(data_sim)  # simulated pixel is valid
+        & np.isfinite(data)  # observed pixel is valid
+        & np.isfinite(sim)  # simulated pixel is valid
         & ((dq & 1) == 0)  # dq bit 0 is DO_NOT_USE
     )
 
@@ -90,8 +82,8 @@ def fit_spectral_shape(observed_slit, simul_slit, degree=2):
             f"(need at least {degree + 1}). Reduce the fitting degree or check the input data."
         )
 
-    y = data_obs[mask]
-    s = data_sim[mask]
+    data_masked = data[mask]
+    sim_masked = sim[mask]
     lam = wavelength[mask]
 
     # Center wavelengths around zero for numerical stability
@@ -99,19 +91,18 @@ def fit_spectral_shape(observed_slit, simul_slit, degree=2):
     dlam = lam - lam_ref
 
     # Design matrix: column k is  s * (λ - λ_ref)^k
-    design_matrix = np.column_stack([s * dlam**k for k in range(degree + 1)])
-
-    coeffs, _residuals, _rank, _sv = np.linalg.lstsq(design_matrix, y, rcond=None)
+    # coeffs in result are: p(λ) = sum(coeffs[k] * (λ - lam_ref)**k  for k in range(degree+1))
+    design_matrix = np.column_stack([sim_masked * dlam**k for k in range(degree + 1)])
+    coeffs, _residuals, _rank, _sv = np.linalg.lstsq(design_matrix, data_masked, rcond=None)
 
     # Evaluate the polynomial over the full 2-D footprint of the simulation.
     # Pixels outside the simulation footprint stay at zero.
-    sim_footprint = (data_sim != 0) & (wavelength > 0)
+    sim_footprint = (sim != 0) & (wavelength > 0)
     dlam_2d = np.where(sim_footprint, wavelength - lam_ref, 0.0)
-    poly = np.zeros(data_sim.shape, dtype=float)
+    poly_surface = np.zeros(sim.shape, dtype=float)
     for k in range(degree + 1):
-        poly += coeffs[k] * dlam_2d**k
-    poly = np.where(sim_footprint, poly, 0.0)
+        poly_surface += coeffs[k] * dlam_2d**k
+    poly_surface = np.where(sim_footprint, poly_surface, 0.0)
 
-    scaled_sim = data_sim * poly
-
-    return scaled_sim, coeffs, lam_ref
+    scaled_sim = sim * poly_surface
+    return scaled_sim
