@@ -87,9 +87,10 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
 
 
 @pytest.mark.parametrize(
-    "detector,expected",
+    "mode, detector,expected",
     [
         (
+            "NRS_IFU",
             "NRS1",
             {
                 "lrange": 50,
@@ -100,6 +101,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
             },
         ),
         (
+            "NRS_IFU",
             "NRS2",
             {
                 "lrange": 50,
@@ -110,6 +112,18 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
             },
         ),
         (
+            "NRS_SLIT",
+            "NRS2",
+            {
+                "lrange": 50,
+                "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+                "require_ngood": 8,
+                "spline_bkpt": 62,
+                "space_ratio": 3.0,
+            },
+        ),
+        (
+            "MIR_MRS",
             "MIRIFUSHORT",
             {
                 "lrange": 50,
@@ -120,6 +134,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
             },
         ),
         (
+            "MIR_MRS",
             "MIRIFULONG",
             {
                 "lrange": 50,
@@ -129,10 +144,21 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
                 "space_ratio": 1.2,
             },
         ),
+        (
+            "MIR_LRS",
+            "MIRIMAGE",
+            {
+                "lrange": 20,
+                "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
+                "require_ngood": 8,
+                "spline_bkpt": 36,
+                "space_ratio": 1.2,
+            },
+        ),
     ],
 )
-def test_set_fit_kwargs(detector, expected):
-    fit_kwargs = tm._set_fit_kwargs(detector, 10)
+def test_set_fit_kwargs(mode, detector, expected):
+    fit_kwargs = tm._set_fit_kwargs(mode, detector, 10)
     assert list(fit_kwargs.keys()) == list(expected.keys())
     for key in expected:
         if key == "col_index":
@@ -143,13 +169,14 @@ def test_set_fit_kwargs(detector, expected):
 
 def test_set_fit_kwargs_error():
     with pytest.raises(ValueError, match="Unknown detector"):
-        tm._set_fit_kwargs("NIS", 10)
+        tm._set_fit_kwargs("NRS_SLIT", "NIS", 10)
 
 
 @pytest.mark.parametrize(
-    "detector,expected",
+    "mode, detector,expected",
     [
         (
+            "NRS_IFU",
             "NRS1",
             {
                 "pad": 2,
@@ -157,6 +184,15 @@ def test_set_fit_kwargs_error():
             },
         ),
         (
+            "NRS_SLIT",
+            "NRS1",
+            {
+                "pad": 1,
+                "trim_ends": True,
+            },
+        ),
+        (
+            "MIR_MRS",
             "MIRIFUSHORT",
             {
                 "pad": 3,
@@ -165,22 +201,18 @@ def test_set_fit_kwargs_error():
         ),
     ],
 )
-def test_set_oversample_kwargs(detector, expected):
-    oversample_kwargs = tm._set_oversample_kwargs(detector)
+def test_set_oversample_kwargs(mode, detector, expected):
+    oversample_kwargs = tm._set_oversample_kwargs(mode, detector)
     assert oversample_kwargs == expected
 
 
 def test_set_oversample_kwargs_error():
     with pytest.raises(ValueError, match="Unknown detector"):
-        tm._set_oversample_kwargs("NIS")
+        tm._set_oversample_kwargs("NRS_SLIT", "NIS")
 
 
-@pytest.mark.parametrize(
-    "detector,message",
-    [("NRS1", "Unsupported mode"), ("MIRIFULONG", "Unsupported mode"), ("NIS", "Unknown detector")],
-)
-def test_fit_and_oversample_unsupported_model(detector, message):
+def test_fit_and_oversample_unsupported_mode():
     model = ImageModel((10, 10))
-    model.meta.instrument.detector = detector
-    with pytest.raises(ValueError, match=message):
+    model.meta.instrument.detector = "NIS"
+    with pytest.raises(ValueError, match="Unknown detector"):
         tm.fit_and_oversample(model)
