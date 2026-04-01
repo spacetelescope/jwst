@@ -379,3 +379,19 @@ def test_skip_unexpected_type_in_container():
     # Input is not modified
     assert result[0] is not bad_model
     assert bad_model.meta.cal_step.pixel_replace is None
+
+
+@pytest.mark.parametrize("variance", ["var_poisson", "var_rnoise", "var_flat"])
+@pytest.mark.parametrize("algorithm", ["fit_profile", "mingrad"])
+def test_unset_variances(algorithm, variance):
+    """
+    Test that the step handles unset variance arrays gracefully.
+
+    They should be left as None and raise no errors.
+    """
+    input_model, bad_idx = nirspec_tso()
+    # Set variance to None
+    input_model[variance] = None
+
+    result = PixelReplaceStep.call(input_model, algorithm=algorithm)
+    assert result[variance] is None
