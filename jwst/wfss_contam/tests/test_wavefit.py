@@ -3,7 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from stdatamodels.jwst.datamodels import SlitModel
 
-from jwst.wfss_contam.wavefit import fit_spectral_shape
+from jwst.wfss_contam.wavefit import SlitPolynomialFitter
 
 
 @pytest.fixture
@@ -48,7 +48,7 @@ def test_higher_degree_reduces_residuals_for_sinusoidal_spectrum(make_slits):
     inside = sim_data != 0
     rms_values = []
     for degree in range(5):
-        scaled_sim = fit_spectral_shape(observed_slit, simul_slit, degree=degree)
+        scaled_sim = SlitPolynomialFitter(degree=degree)(observed_slit, simul_slit)
         rms = np.sqrt(np.mean((scaled_sim[inside] - obs_data[inside]) ** 2))
         rms_values.append(rms)
 
@@ -75,7 +75,8 @@ def test_dq_mask_excludes_bad_pixels(make_slits):
     observed_slit.dq = dq
 
     # fit with dq flags: should ignore bad pixels
-    scaled_sim_masked = fit_spectral_shape(observed_slit, simul_slit, degree=5)
+    fitter = SlitPolynomialFitter(degree=5)
+    scaled_sim_masked = fitter(observed_slit, simul_slit)
 
     inside = simul_slit.data != 0
     good = (observed_slit.dq & 1) == 0
@@ -84,7 +85,7 @@ def test_dq_mask_excludes_bad_pixels(make_slits):
     # fit without flags: should give a much worse fit
     observed_slit_unmasked = observed_slit.copy()
     observed_slit_unmasked.dq = np.zeros_like(dq)
-    scaled_sim_unmasked = fit_spectral_shape(observed_slit_unmasked, simul_slit, degree=5)
+    scaled_sim_unmasked = fitter(observed_slit_unmasked, simul_slit)
 
     rms_masked = np.sqrt(
         np.mean((scaled_sim_masked[inside & good] - observed_slit.data[inside & good]) ** 2)
@@ -115,7 +116,7 @@ def test_raises_when_too_few_pixels_for_degree():
 
     # degree=2 requires 3 pixels; only 1 available
     with pytest.raises(ValueError, match="valid pixel"):
-        fit_spectral_shape(observed_slit, simul_slit, degree=2)
+        SlitPolynomialFitter()(observed_slit, simul_slit)
 
 
 def test_error_missing_wavelength():
@@ -128,7 +129,7 @@ def test_error_missing_wavelength():
     simul_slit.wavelength = None
 
     with pytest.raises(ValueError, match="wavelength"):
-        fit_spectral_shape(observed_slit, simul_slit)
+        SlitPolynomialFitter()(observed_slit, simul_slit)
 
 
 def test_error_wavelength_shape_mismatch():
@@ -141,4 +142,4 @@ def test_error_wavelength_shape_mismatch():
     simul_slit.wavelength = np.ones((3, 3))  # wrong shape
 
     with pytest.raises(ValueError, match="wavelength"):
-        fit_spectral_shape(observed_slit, simul_slit)
+        SlitPolynomialFitter()(observed_slit, simul_slit)
