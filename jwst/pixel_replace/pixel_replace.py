@@ -589,14 +589,14 @@ class PixelReplacement:
             "var_rnoise": None,
             "var_flat": None,
         }
-        interp_var_dict = {
+        interp_rootvar_dict = {
             "var_poisson": None,
             "var_rnoise": None,
             "var_flat": None,
         }
         for key in in_var_dict.keys():
             if getattr(arrays, key) is not None:
-                in_var_dict[key] = np.sqrt(getattr(arrays, key))
+                in_var_dict[key] = getattr(arrays, key)
 
         # Make an array of x/y values on the detector
         (ysize, xsize) = arrays.data.shape
@@ -627,7 +627,9 @@ class PixelReplacement:
         interp_err = self._interp_neighbors(arrays.err, yindx, xindx)
         for key in in_var_dict.keys():
             if in_var_dict[key] is not None:
-                interp_var_dict[key] = self._interp_neighbors(in_var_dict[key], yindx, xindx)
+                interp_rootvar_dict[key] = self._interp_neighbors(
+                    np.sqrt(in_var_dict[key]), yindx, xindx
+                )
 
         # Replace NaN diffs with inf so argmin naturally prefers the valid direction.
         # Mask is True where at least one valid direction, False elsewhere,
@@ -644,10 +646,10 @@ class PixelReplacement:
         col_idx = col_idx[mask]
         arrays.data[yindx[mask], xindx[mask]] = interp_data[indmin, col_idx]
         arrays.err[yindx[mask], xindx[mask]] = interp_err[indmin, col_idx]
-        for key in interp_var_dict.keys():
-            if interp_var_dict[key] is not None:
+        for key in interp_rootvar_dict.keys():
+            if interp_rootvar_dict[key] is not None:
                 in_var_dict[key][yindx[mask], xindx[mask]] = (
-                    interp_var_dict[key][indmin, col_idx] ** 2
+                    interp_rootvar_dict[key][indmin, col_idx] ** 2
                 )
                 setattr(arrays, key, in_var_dict[key])
 
