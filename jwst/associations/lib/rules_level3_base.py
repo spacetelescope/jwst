@@ -353,7 +353,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.update_validity(member)
         members = self.current_product["members"]
         members.append(member)
-        self._item_ids.add(item["filename"])
         if member["exposerr"] not in _EMPTY:
             logger.warning(
                 'Member {} has exposure error "{}"'.format(item["filename"], member["exposerr"])

@@ -260,7 +260,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             return
         members = self.current_product["members"]
         members.append(member)
-        self._item_ids.add(item["filename"])
         self.update_validity(member)
 
         # Update association state due to new member
