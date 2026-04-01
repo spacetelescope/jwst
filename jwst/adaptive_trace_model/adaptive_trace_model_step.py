@@ -141,20 +141,19 @@ class AdaptiveTraceModelStep(Step):
             model.meta.cal_step.adaptive_trace_model = "COMPLETE"
             if self.save_intermediate_results:
                 _, full_spline, used_spline, linear, residual = results
-                basepath = model.meta.filename
 
-                outpath = self.make_output_path(basepath=basepath, suffix="spline_full")
+                outpath = self.make_output_path(suffix="spline_full")
                 full_spline.save(outpath)
                 full_spline.close()
                 log.info(f"Saved full spline model in {outpath}")
 
-                outpath = self.make_output_path(basepath=basepath, suffix="spline_used")
+                outpath = self.make_output_path(suffix="spline_used")
                 used_spline.save(outpath)
                 used_spline.close()
                 log.info(f"Saved spline model for compact sources in {outpath}")
 
                 if linear is not None:
-                    outpath = self.make_output_path(basepath=basepath, suffix="linear_interp")
+                    outpath = self.make_output_path(suffix="linear_interp")
                     linear.save(outpath)
                     linear.close()
                     log.info(f"Saved linearly interpolated data in {outpath}")
@@ -163,7 +162,7 @@ class AdaptiveTraceModelStep(Step):
                         f"No linearly interpolated data to save for oversample={self.oversample}"
                     )
                 if residual is not None:
-                    outpath = self.make_output_path(basepath=basepath, suffix="spline_residual")
+                    outpath = self.make_output_path(suffix="spline_residual")
                     residual.save(outpath)
                     residual.close()
                     log.info(f"Saved spline residuals in {outpath}")

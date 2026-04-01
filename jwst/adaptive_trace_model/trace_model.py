@@ -141,7 +141,9 @@ def fit_2d_spline_trace(
 
     # Scale the flux for fitting
     if fit_scale is not None:
-        scaled_flux = flux / fit_scale
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            scaled_flux = flux / fit_scale
     else:
         scaled_flux = flux
 
@@ -1388,7 +1390,11 @@ def _intermediate_models(model, data_arrays):
         else:
             new_model = model_type(data=data)
             new_model.update(model_for_update)
+
+            # prevent empty error arrays
             new_model.err = None
+            new_model.meta.bunit_err = None
+
         new_models.append(new_model)
 
     if model_for_update is not model:
