@@ -1,0 +1,1 @@
+Interpret string values of "none" or "None" as Python None, for the user_mask parameter.
