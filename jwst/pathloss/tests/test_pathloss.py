@@ -4,6 +4,7 @@ Unit tests for pathloss correction
 
 import gwcs
 import numpy as np
+import pytest
 from astropy.modeling.models import Const1D, Mapping
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel, PathlossModel
 
@@ -433,6 +434,30 @@ def test_do_correction_nis_soss_aperture_is_none():
 
     result, _ = do_correction(datmod, pathlossmod)
     assert result.meta.cal_step.pathloss == "SKIPPED"
+
+
+@pytest.mark.parametrize(
+    "param,value", [("inverse", True), ("source_type", "POINT"), ("correction_pars", {1: 2})]
+)
+def test_do_correction_nis_soss_unexpected_pars(caplog, param, value):
+    """Skip correction for SOSS if unexpected parameters are provided."""
+
+    datmod = MultiSlitModel()
+    pathlossmod = PathlossModel()
+    datmod.meta.exposure.type = "NIS_SOSS"
+
+    kwargs = {param: value}
+    result, _ = do_correction(datmod, pathlossmod, **kwargs)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+
+    assert "not implemented" in caplog.text
+
+
+def test_do_correction_no_pathloss():
+    model = ImageModel()
+    msg = "Neither a PathLossModel nor PathLossStep correction parameters given"
+    with pytest.raises(RuntimeError, match=msg):
+        do_correction(model)
 
 
 def test_interpolate_onto_grid():
