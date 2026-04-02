@@ -1,0 +1,1 @@
+Wrap ``sky_orientation`` angles into the range 0-360 degrees.
