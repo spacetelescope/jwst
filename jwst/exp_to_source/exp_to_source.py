@@ -17,11 +17,6 @@ def exp_to_source(inputs):
     """
     Reformat exposure-based MSA data to source-based.
 
-    There is a command-line interface for this function;
-    For help, use::
-
-        exp_to_source -h
-
     Parameters
     ----------
     inputs : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
@@ -34,7 +29,7 @@ def exp_to_source(inputs):
         instances wherein each
         instance contains slits belonging to the same source.
         The key is the ``source_id`` of each source.
-    """  # fmt: skip
+    """
     result = defaultdict(MultiExposureModel)
 
     for exposure in inputs:
