@@ -375,7 +375,7 @@ def _aggregate_by_source(results, sid, source_results):
         Dictionary to store simulated image, wavelengths, and bounds for each source ID,
         in the format:
         {source_id: {"bounds": [xmin, xmax, ymin, ymax], "image": 2D array,
-        "wavelengths": 2D array, "weight_sum": 2D float array (occupancy count)}}
+        "wavelengths": 2D array, "weight_sum": 2D array}}
         Updated in place.
     """
     if sid not in source_results:
@@ -384,7 +384,7 @@ def _aggregate_by_source(results, sid, source_results):
             "image": results[sid]["image"],
             "wavelengths": results[sid]["wavelengths"],
             # weight_sum is the sum of pixel areas that contributed to each grism pixel.
-            # Necessary to find the area-weighted mean when combining across chunks.
+            # Needed to find the area-weighted mean when combining across chunks later.
             "weight_sum": results[sid]["wavelength_weights"],
         }
         return

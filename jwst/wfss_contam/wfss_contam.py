@@ -254,7 +254,7 @@ def _build_simulated_image_from_slits(simulated_slits, shape):
     Reconstruct the full-frame simulated image from the simulated slits.
 
     This replaces just using ``obs.simulated_image`` because the simulated slits
-    get modified by the spectral fitting, while ``obs.simulated_image`` is still
+    get modified by spectral fitting, while ``obs.simulated_image`` is still
     the original flat-spectrum simulation.
 
     Parameters

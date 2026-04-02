@@ -6,14 +6,14 @@ __all__ = ["SlitPolynomialFitter", "apply_flam_to_slit"]
 
 
 class SlitFitError(Exception):
-    """Base class for exceptions in this module."""
+    """Raise when spectral fitting fails."""
 
     pass
 
 
 class SlitPolynomialFitter:
     """
-    Fit a polynomial spectral shape to observed and simulated slits.
+    Fit a polynomial spectral shape to the simulated slit using the observed slit as truth.
 
     Parameters
     ----------
@@ -53,16 +53,15 @@ class SlitPolynomialFitter:
         Returns
         -------
         f_lam : callable
-            A function ``flam(wavelength)`` that evaluates the best-fit
-            polynomial $p(λ)$ at every point in a wavelength array and
-            returns an array of the same shape.
+            A function ``f_lam(wavelength)`` that evaluates the best-fit
+            polynomial p(λ).
 
         Raises
         ------
-        ValueError
+        SlitFitError
             If ``simul_slit.wavelength`` is ``None`` or has a different shape
             from ``simul_slit.data``.
-        ValueError
+        SlitFitError
             If the number of valid pixels (after masking) is smaller than
             ``self.degree + 1``.
 
@@ -75,9 +74,6 @@ class SlitPolynomialFitter:
         * ``np.isfinite(observed_slit.data)``  (observed pixel is valid)
         * ``np.isfinite(simul_slit.data)``  (simulated pixel is valid)
         * DQ bit 0 (DO_NOT_USE) is not set in ``observed_slit.dq``
-
-        Before fitting, a single 3-sigma clip is applied to remove outliers in
-        the observed data residuals from the initial flat-spectrum ratio.
         """
         degree = self.degree
         data = np.asarray(observed_slit.data)
@@ -145,12 +141,12 @@ def apply_flam_to_slit(sim_data, wavelength, f_lam):
     wavelength : array-like
         2-D wavelength array with the same shape as ``sim_data``.
     f_lam : callable
-        Function returned by a SlitFitter
+        Function returned by a SlitFitter object.
 
     Returns
     -------
     scaled : ndarray
-        ``sim_data`` scaled by the polynomial, zeroed outside the footprint.
+        The rescaled data.
     """
     sim_data = np.asarray(sim_data)
     wavelength = np.asarray(wavelength)
