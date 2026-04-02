@@ -21,7 +21,7 @@ The ``emicorr`` step has the following step-specific arguments.
     If True and ``algorithm`` is 'sequential', the reference wavelength will be scaled
     to the data's phase amplitude.
 
-``--onthefly_corr_freq``  (list, default=None)
+``--onthefly_corr_freq`` (list, default=None)
     Frequency values to use to create a correction on-the-fly.  If provided,
     any input EMICORR reference model is ignored and the ``algorithm`` is set to
     'sequential'.
