@@ -3,7 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from stdatamodels.jwst.datamodels import SlitModel
 
-from jwst.wfss_contam.wavefit import SlitPolynomialFitter
+from jwst.wfss_contam.wavefit import SlitFitError, SlitPolynomialFitter
 
 
 @pytest.fixture
@@ -115,7 +115,7 @@ def test_raises_when_too_few_pixels_for_degree():
     simul_slit.wavelength = wavelength
 
     # degree=2 requires 3 pixels; only 1 available
-    with pytest.raises(ValueError, match="valid pixel"):
+    with pytest.raises(SlitFitError, match="valid pixel"):
         SlitPolynomialFitter()(observed_slit, simul_slit)
 
 
@@ -128,7 +128,7 @@ def test_error_missing_wavelength():
     simul_slit.data = np.ones((5, 5))
     simul_slit.wavelength = None
 
-    with pytest.raises(ValueError, match="wavelength"):
+    with pytest.raises(SlitFitError, match="wavelength"):
         SlitPolynomialFitter()(observed_slit, simul_slit)
 
 
@@ -141,5 +141,5 @@ def test_error_wavelength_shape_mismatch():
     simul_slit.data = np.ones((5, 5))
     simul_slit.wavelength = np.ones((3, 3))  # wrong shape
 
-    with pytest.raises(ValueError, match="wavelength"):
+    with pytest.raises(SlitFitError, match="wavelength"):
         SlitPolynomialFitter()(observed_slit, simul_slit)

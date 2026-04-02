@@ -1,11 +1,12 @@
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import SlitModel
+from stdatamodels.jwst.datamodels import MultiSlitModel, SlitModel
 
 from jwst.wfss_contam.wfss_contam import (
     SlitOverlapError,
     UnmatchedSlitIDError,
     _apply_magnitude_limit,
+    _build_simulated_image_from_slits,
     _cut_frame_to_match_slit,
     _find_matching_simul_slit,
     _validate_orders_against_reference,
@@ -73,13 +74,7 @@ def test_cut_frame_to_match_slit(slit0, contam):
 
 
 def test_match_backplane_prefer_first(slit0, slit1):
-    slit0_final, slit1_final = match_backplane_prefer_first(slit0.copy(), slit1.copy())
-    assert slit0_final.xstart == slit0.xstart
-    assert slit0_final.ystart == slit0.ystart
-    assert slit0_final.xsize == slit0.xsize
-    assert slit0_final.ysize == slit0.ysize
-    assert slit0_final.data.shape == slit0.data.shape
-    assert np.all(slit0_final.data == slit0.data)
+    slit1_final = match_backplane_prefer_first(slit0.copy(), slit1.copy())
 
     assert slit1_final.xstart == slit0.xstart
     assert slit1_final.ystart == slit0.ystart
@@ -108,7 +103,7 @@ def test_match_backplane_prefer_first_yoffset():
     slit1.xstart, slit1.ystart = 0, 2  # starts 2 rows below slit0
     slit1.xsize, slit1.ysize = 4, 4
 
-    _, slit1_out = match_backplane_prefer_first(slit0.copy(), slit1)
+    slit1_out = match_backplane_prefer_first(slit0.copy(), slit1)
 
     # Overlap: slit1 rows 0-1 (values 1.0, 2.0) map to backplane rows 2-3.
     # Rows 0-1 of the backplane are outside slit1 so should be zero.
@@ -197,3 +192,56 @@ def test_constrain_orders_warn_subset(log_watcher):
     constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array([1]))
     watcher.assert_seen()
+
+
+def test_build_simulated_image_from_slits():
+    shape = (10, 10)
+    simulated_slits = MultiSlitModel()
+
+    slit_a = SlitModel(data=np.ones((3, 4)) * 2.0)
+    slit_a.xstart = 1
+    slit_a.ystart = 1
+    slit_a.xsize = 4
+    slit_a.ysize = 3
+
+    slit_b = SlitModel(data=np.ones((3, 4)) * 5.0)
+    slit_b.xstart = 3
+    slit_b.ystart = 2
+    slit_b.xsize = 4
+    slit_b.ysize = 3
+
+    simulated_slits.slits.append(slit_a)
+    simulated_slits.slits.append(slit_b)
+
+    full_image = _build_simulated_image_from_slits(simulated_slits, shape)
+
+    assert full_image.shape == shape
+    assert np.all(full_image[1:4, 1:3] == 2.0)
+    assert np.all(full_image[2:5, 5:7] == 5.0)
+    assert np.all(full_image[2:4, 3:5] == 7.0)  # overlap region: values add
+    # pixels not covered by either slit are zero
+    covered = np.zeros(shape, dtype=bool)
+    covered[1:5, 1:7] = True  # bounding box enclosing both slits
+    assert np.all(full_image[~covered] == 0.0)
+
+
+def test_build_simulated_image_from_slits_overflow():
+    """Slit data extending beyond the frame boundary should be clipped without error."""
+    shape = (5, 5)
+    simulated_slits = MultiSlitModel()
+
+    slit = SlitModel(data=np.ones((4, 4)) * 3.0)
+    slit.xstart = 3
+    slit.ystart = 3
+    slit.xsize = 4
+    slit.ysize = 4
+
+    simulated_slits.slits.append(slit)
+
+    full_image = _build_simulated_image_from_slits(simulated_slits, shape)
+
+    assert full_image.shape == shape
+    assert np.all(full_image[3:5, 3:5] == 3.0)
+    # other pixels are zero
+    assert np.all(full_image[:3, :] == 0.0)
+    assert np.all(full_image[:, :3] == 0.0)

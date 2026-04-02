@@ -14,6 +14,7 @@ from stdatamodels.jwst.transforms.models import (
 from jwst.lib.catalog_utils import read_source_catalog
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
+from jwst.wfss_contam.wavefit import SlitFitError, SlitPolynomialFitter
 
 log = logging.getLogger(__name__)
 
@@ -106,8 +107,8 @@ def match_backplane_prefer_first(slit0, slit1):
 
     Returns
     -------
-    slit0, slit1 : `~stdatamodels.jwst.datamodels.SlitModel`
-        Reshaped slit models slit0, slit1.
+    slit1 : `~stdatamodels.jwst.datamodels.SlitModel`
+        Reshaped slit model slit1.
     """
     data0 = slit0.data
     data1 = slit1.data
@@ -141,7 +142,7 @@ def match_backplane_prefer_first(slit0, slit1):
     slit1.xsize = slit0.xsize
     slit1.ysize = slit0.ysize
 
-    return slit0, slit1
+    return slit1
 
 
 def _validate_orders_against_reference(orders, spec_orders):
@@ -247,6 +248,38 @@ def _find_min_relresp(sens_waves, sens_response):
     return np.nanmin(sens_response[good])
 
 
+def _build_simulated_image_from_slits(simulated_slits, shape):
+    """
+    Reconstruct the full-frame simulated image from the simulated slits.
+
+    This replaces just using ``obs.simulated_image`` because the simulated slits
+    get modified by the spectral fitting, while ``obs.simulated_image`` is still
+    the original flat-spectrum simulation.
+
+    Parameters
+    ----------
+    simulated_slits : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        The simulated slits.
+    shape : tuple of int
+        ``(nrows, ncols)`` of the full detector frame.
+
+    Returns
+    -------
+    full_image : ndarray
+        Full-frame simulated image.
+    """
+    full_image = np.zeros(shape, dtype=float)
+    nrows, ncols = shape
+    for slit in simulated_slits.slits:
+        x0 = slit.xstart
+        y0 = slit.ystart
+        # Clip to frame boundaries in case a slit overflows
+        x1 = min(x0 + slit.xsize, ncols)
+        y1 = min(y0 + slit.ysize, nrows)
+        full_image[y0:y1, x0:x1] += slit.data[: y1 - y0, : x1 - x0]
+    return full_image
+
+
 def _apply_magnitude_limit(
     order, source_catalog, sens_wave, sens_response, magnitude_limit, min_relresp_order1
 ):
@@ -303,6 +336,7 @@ def contam_corr(
     magnitude_limit=None,
     max_pixels_per_chunk=5e4,
     oversample_factor=2,
+    polyfit_degree=None,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -337,6 +371,9 @@ def contam_corr(
         Maximum number of pixels to disperse simultaneously.
     oversample_factor : int, optional
         Wavelength oversampling factor.
+    polyfit_degree : int, optional
+        Degree of polynomial fit to spectral shape. If None (the default), do not attempt
+        polynomial fitting and just use the flat-spectrum simulated slit.
 
     Returns
     -------
@@ -412,6 +449,7 @@ def contam_corr(
         max_pixels_per_chunk=max_pixels_per_chunk,
         oversample_factor=oversample_factor,
     )
+    seg_model.close()
 
     no_sources = True
     for order in spec_orders:
@@ -452,10 +490,6 @@ def contam_corr(
         )
         return input_model, None, None, None
 
-    # Initialize the full-frame simulated grism image
-    simul_model = datamodels.ImageModel(data=obs.simulated_image)
-    simul_model.update(input_model, only="PRIMARY")
-
     simul_slit_sids = [slit.source_id for slit in obs.simulated_slits.slits]
     simul_slit_orders = [slit.meta.wcsinfo.spectral_order for slit in obs.simulated_slits.slits]
 
@@ -475,18 +509,43 @@ def contam_corr(
     contam_model.update(input_model, only="PRIMARY")
     simul_slits = datamodels.MultiSlitModel()
     simul_slits.update(input_model, only="PRIMARY")
+    if polyfit_degree is not None:
+        fitter = SlitPolynomialFitter(polyfit_degree)
     for slit in output_model.slits:
         try:
             good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
             this_simul = obs.simulated_slits.slits[good_idx]
-            slit, this_simul = match_backplane_prefer_first(slit, this_simul)
-            simul_all_cut = _cut_frame_to_match_slit(obs.simulated_image, slit)
-            contam_cut = simul_all_cut - this_simul.data
-            simul_slits.slits.append(this_simul)
+            this_simul = match_backplane_prefer_first(slit, this_simul)
 
         except (UnmatchedSlitIDError, SlitOverlapError) as e:
             log.warning(e)
+            this_simul = None
+
+        if this_simul is None:
+            # Cannot compute contamination correction for this slit, so set to zero
+            # No simul_slits model will be created for this slit in this case
             contam_cut = np.zeros_like(slit.data)
+        else:
+            # do a polynomial fit if requested
+            if polyfit_degree is not None:
+                log.info(
+                    f"Fitting polynomial of degree {polyfit_degree} to the simulated slit "
+                    f"for source ID {slit.source_id}, order {slit.meta.wcsinfo.spectral_order}"
+                )
+                try:
+                    this_simul.data = fitter(slit, this_simul)
+                except SlitFitError as e:
+                    log.warning(
+                        f"Polynomial fitting failed for slit with source ID {slit.source_id}, "
+                        f"order {slit.meta.wcsinfo.spectral_order}: {e}. "
+                        "Using the original simulated slit without fitting."
+                    )
+
+            # Create the contamination cutout by cutting the full-frame simulated image
+            # to the slit size
+            simul_all_cut = _cut_frame_to_match_slit(obs.simulated_image, slit)
+            contam_cut = simul_all_cut - this_simul.data
+            simul_slits.slits.append(this_simul)
 
         contam_slit = datamodels.SlitModel()
         contam_slit.data = contam_cut
@@ -495,8 +554,12 @@ def contam_corr(
         # Subtract the contamination from the source slit
         slit.data -= contam_cut
 
+    # Make the full-frame simulated grism image from the slits
+    simul_data = _build_simulated_image_from_slits(obs.simulated_slits, obs.simulated_image.shape)
+    simul_model = datamodels.ImageModel(data=simul_data)
+    simul_model.update(input_model, only="PRIMARY")
+
     output_model.update(input_model, only="PRIMARY")
     output_model.meta.cal_step.wfss_contam = "COMPLETE"
-    seg_model.close()
 
     return output_model, simul_model, contam_model, simul_slits

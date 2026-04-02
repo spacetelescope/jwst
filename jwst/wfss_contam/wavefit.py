@@ -2,6 +2,14 @@
 
 import numpy as np
 
+__all__ = ["SlitPolynomialFitter"]
+
+
+class SlitFitError(Exception):
+    """Base class for exceptions in this module."""
+
+    pass
+
 
 class SlitPolynomialFitter:
     """
@@ -74,7 +82,7 @@ class SlitPolynomialFitter:
         wavelength = simul_slit.wavelength
 
         if wavelength is None or wavelength.shape != sim.shape:
-            raise ValueError(
+            raise SlitFitError(
                 "simul_slit.wavelength must be a 2-D array with the same shape as simul_slit.data"
             )
 
@@ -90,7 +98,7 @@ class SlitPolynomialFitter:
 
         n_valid = int(np.sum(mask))
         if n_valid < degree + 1:
-            raise ValueError(
+            raise SlitFitError(
                 f"Only {n_valid} valid pixel(s) available for a degree-{degree} polynomial fit "
                 f"(need at least {degree + 1}). Reduce the fitting degree or check the input data."
             )
