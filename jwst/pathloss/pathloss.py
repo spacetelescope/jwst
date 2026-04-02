@@ -785,10 +785,6 @@ def do_correction_lrs(data, pathloss, user_slit_loc):
     """
     correction = _corrections_for_lrs(data, pathloss, user_slit_loc)
 
-    if not correction:
-        log.warning("No correction available; skipping step")
-        return
-
     # LRS correction is multiplicative
     data.data *= correction.data
     data.err *= correction.data
@@ -1223,8 +1219,6 @@ def _corrections_for_lrs(data, pathloss, user_slit_loc):
     correction : jwst.datamodels.JwstDataModel
         The correction arrays
     """
-    correction = None
-
     # Get location of target
     xcenter, ycenter, offset_1, offset_2 = get_center(data.meta.exposure.type, data, offsets=True)
 
