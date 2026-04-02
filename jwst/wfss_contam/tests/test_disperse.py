@@ -52,10 +52,12 @@ def test_build_mean_image_of_source_duplicates_unequal_weights():
     values = np.array([1.0, 3.0])
     areas = np.array([3.0, 1.0])  # first value has 3x the area
     bounds = [0, 0, 0, 0]
-    result = _build_mean_wavelength_image_of_source(x, y, values, areas, bounds)
+    result, weights = _build_mean_wavelength_image_of_source(x, y, values, areas, bounds)
     assert result.shape == (1, 1)
     # expected = (3*1 + 1*3) / (3+1) = 6/4 = 1.5
     assert_allclose(result[0, 0], 1.5)
+    # weight_sum should equal the total area contributed to the pixel
+    assert_allclose(weights[0, 0], 4.0)
 
 
 def test_build_mean_image_of_source_empty_pixels_are_zero():
@@ -65,7 +67,7 @@ def test_build_mean_image_of_source_empty_pixels_are_zero():
     values = np.array([5.0])
     areas = np.array([1.0])
     bounds = [0, 1, 0, 1]  # 2x2 output, only (0,0) filled
-    result = _build_mean_wavelength_image_of_source(x, y, values, areas, bounds)
+    result, _weights = _build_mean_wavelength_image_of_source(x, y, values, areas, bounds)
     assert result.shape == (2, 2)
     assert_allclose(result[0, 0], 5.0)
     assert_allclose(result[0, 1], 0.0)

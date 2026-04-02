@@ -171,13 +171,14 @@ def _collect_outputs_by_source(xs, ys, lambdas, areas, counts, source_ids_per_pi
 
         bounds = [int(minxs[i]), int(maxxs[i]), int(minys[i]), int(maxys[i])]
         img = _build_dispersed_image_of_source(this_xs, this_ys, this_flxs, bounds)
-        lam = _build_mean_wavelength_image_of_source(
+        lam, lam_weights = _build_mean_wavelength_image_of_source(
             this_xs, this_ys, this_lambdas, this_areas, bounds
         )
         outputs_by_source[this_sid] = {
             "bounds": bounds,
             "image": img,
             "wavelengths": lam,
+            "wavelength_weights": lam_weights,
         }
     return outputs_by_source
 
@@ -234,6 +235,9 @@ def _build_mean_wavelength_image_of_source(x, y, values, areas, bounds):
     -------
     img : ndarray
         2-D image of weighted-mean values; zero where no pixel falls.
+    weight_sum : ndarray
+        2-D image of summed areas; used as the denominator for combining
+        wavelength means across chunks in the aggregation step.
     """
     minx, maxx, miny, maxy = bounds
     shape = (maxy - miny + 1, maxx - minx + 1)
@@ -243,7 +247,7 @@ def _build_mean_wavelength_image_of_source(x, y, values, areas, bounds):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning)
         img = np.where(weight_sum > 0, weighted_sum / weight_sum, 0.0)
-    return img
+    return img, weight_sum
 
 
 def disperse(

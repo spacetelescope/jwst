@@ -3,7 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from stdatamodels.jwst.datamodels import SlitModel
 
-from jwst.wfss_contam.wavefit import SlitFitError, SlitPolynomialFitter
+from jwst.wfss_contam.wavefit import SlitFitError, SlitPolynomialFitter, apply_flam_to_slit
 
 
 @pytest.fixture
@@ -48,7 +48,8 @@ def test_higher_degree_reduces_residuals_for_sinusoidal_spectrum(make_slits):
     inside = sim_data != 0
     rms_values = []
     for degree in range(5):
-        scaled_sim = SlitPolynomialFitter(degree=degree)(observed_slit, simul_slit)
+        poly_fn = SlitPolynomialFitter(degree=degree)(observed_slit, simul_slit)
+        scaled_sim = apply_flam_to_slit(simul_slit.data, simul_slit.wavelength, poly_fn)
         rms = np.sqrt(np.mean((scaled_sim[inside] - obs_data[inside]) ** 2))
         rms_values.append(rms)
 
@@ -76,7 +77,8 @@ def test_dq_mask_excludes_bad_pixels(make_slits):
 
     # fit with dq flags: should ignore bad pixels
     fitter = SlitPolynomialFitter(degree=5)
-    scaled_sim_masked = fitter(observed_slit, simul_slit)
+    poly_fn_masked = fitter(observed_slit, simul_slit)
+    scaled_sim_masked = apply_flam_to_slit(simul_slit.data, simul_slit.wavelength, poly_fn_masked)
 
     inside = simul_slit.data != 0
     good = (observed_slit.dq & 1) == 0
@@ -85,7 +87,10 @@ def test_dq_mask_excludes_bad_pixels(make_slits):
     # fit without flags: should give a much worse fit
     observed_slit_unmasked = observed_slit.copy()
     observed_slit_unmasked.dq = np.zeros_like(dq)
-    scaled_sim_unmasked = fitter(observed_slit_unmasked, simul_slit)
+    poly_fn_unmasked = fitter(observed_slit_unmasked, simul_slit)
+    scaled_sim_unmasked = apply_flam_to_slit(
+        simul_slit.data, simul_slit.wavelength, poly_fn_unmasked
+    )
 
     rms_masked = np.sqrt(
         np.mean((scaled_sim_masked[inside & good] - observed_slit.data[inside & good]) ** 2)

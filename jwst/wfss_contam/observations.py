@@ -383,14 +383,9 @@ def _aggregate_by_source(results, sid, source_results):
             "bounds": results[sid]["bounds"],
             "image": results[sid]["image"],
             "wavelengths": results[sid]["wavelengths"],
-            # weight_sum tracks how many chunks have contributed to each output pixel so far.
-            # It acts as the denominator for an incremental mean: each time a new chunk is
-            # merged, the running mean is updated as
-            #   (old_weight * old_mean + new_weight * new_mean) / (old_weight + new_weight)
-            # Using a boolean occupancy mask (0 or 1 per chunk) rather than flux or area
-            # keeps weight_sum strictly non-negative, avoiding sign-cancellation from
-            # background-subtracted pixels with negative flux.
-            "weight_sum": (results[sid]["wavelengths"] > 0).astype(float),
+            # weight_sum is the sum of pixel areas that contributed to each grism pixel.
+            # Necessary to find the area-weighted mean when combining across chunks.
+            "weight_sum": results[sid]["wavelength_weights"],
         }
         return
 
@@ -421,10 +416,10 @@ def _aggregate_by_source(results, sid, source_results):
     new_img = _place(results[sid]["image"], new_bounds)
     combined_image = old_img + new_img
 
-    # Occupancy-count weighted mean for wavelengths:
-    # each chunk contributes equally, regardless of flux sign or area magnitude.
+    # Area-weighted mean for wavelengths:
+    # weight each chunk's contribution by the total area it contributed to each pixel.
     old_w = _place(source_results[sid]["weight_sum"], old_bounds)
-    new_w = _place((results[sid]["wavelengths"] > 0).astype(float), new_bounds)
+    new_w = _place(results[sid]["wavelength_weights"], new_bounds)
     old_lam = _place(source_results[sid]["wavelengths"], old_bounds)
     new_lam = _place(results[sid]["wavelengths"], new_bounds)
     combined_weight = old_w + new_w

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-__all__ = ["SlitPolynomialFitter"]
+__all__ = ["SlitPolynomialFitter", "apply_flam_to_slit"]
 
 
 class SlitFitError(Exception):
@@ -52,10 +52,10 @@ class SlitPolynomialFitter:
 
         Returns
         -------
-        scaled_sim : ndarray
-            The simulated data multiplied by the best-fit polynomial, with the
-            same shape as ``simul_slit.data``.  Zero outside the simulation
-            footprint (where ``simul_slit.data == 0`` or ``wavelength == 0``).
+        f_lam : callable
+            A function ``flam(wavelength)`` that evaluates the best-fit
+            polynomial $p(λ)$ at every point in a wavelength array and
+            returns an array of the same shape.
 
         Raises
         ------
@@ -75,11 +75,14 @@ class SlitPolynomialFitter:
         * ``np.isfinite(observed_slit.data)``  (observed pixel is valid)
         * ``np.isfinite(simul_slit.data)``  (simulated pixel is valid)
         * DQ bit 0 (DO_NOT_USE) is not set in ``observed_slit.dq``
+
+        Before fitting, a single 3-sigma clip is applied to remove outliers in
+        the observed data residuals from the initial flat-spectrum ratio.
         """
         degree = self.degree
-        data = observed_slit.data
-        sim = simul_slit.data
-        wavelength = simul_slit.wavelength
+        data = np.asarray(observed_slit.data)
+        sim = np.asarray(simul_slit.data)
+        wavelength = np.asarray(simul_slit.wavelength)
 
         if wavelength is None or wavelength.shape != sim.shape:
             raise SlitFitError(
@@ -88,7 +91,7 @@ class SlitPolynomialFitter:
 
         # Build pixel validity mask
         dq = np.asarray(observed_slit.dq, dtype=np.uint32)
-        mask = (
+        base_mask = (
             (sim != 0)  # simulation has signal here
             & (wavelength > 0)  # wavelength was assigned
             & np.isfinite(data)  # observed pixel is valid
@@ -96,34 +99,61 @@ class SlitPolynomialFitter:
             & ((dq & 1) == 0)  # dq bit 0 is DO_NOT_USE
         )
 
-        n_valid = int(np.sum(mask))
+        n_valid = int(np.sum(base_mask))
         if n_valid < degree + 1:
             raise SlitFitError(
                 f"Only {n_valid} valid pixel(s) available for a degree-{degree} polynomial fit "
                 f"(need at least {degree + 1}). Reduce the fitting degree or check the input data."
             )
 
-        data_masked = data[mask]
-        sim_masked = sim[mask]
-        lam = wavelength[mask]
+        data_masked = data[base_mask]
+        sim_masked = sim[base_mask]
+        lam = wavelength[base_mask]
 
         # Center wavelengths around zero for numerical stability
         lam_ref = float(np.median(lam))
         dlam = lam - lam_ref
 
         # Design matrix: column k is  s * (λ - λ_ref)^k
-        # coeffs in result are: p(λ) = sum(coeffs[k] * (λ - lam_ref)**k  for k in range(degree+1))
         design_matrix = np.column_stack([sim_masked * dlam**k for k in range(degree + 1)])
-        coeffs, _residuals, _rank, _sv = np.linalg.lstsq(design_matrix, data_masked, rcond=None)
+        coeffs, *_ = np.linalg.lstsq(design_matrix, data_masked, rcond=None)
 
-        # Evaluate the polynomial over the full 2-D footprint of the simulation.
-        # Pixels outside the simulation footprint stay at zero.
-        sim_footprint = (sim != 0) & (wavelength > 0)
-        dlam_2d = np.where(sim_footprint, wavelength - lam_ref, 0.0)
-        poly_surface = np.zeros(sim.shape, dtype=float)
-        for k in range(degree + 1):
-            poly_surface += coeffs[k] * dlam_2d**k
-        poly_surface = np.where(sim_footprint, poly_surface, 0.0)
+        def f_lam(wavelength):
+            # Return should be an f(wavelength) so we can apply it to multiple slits
+            wavelength = np.asarray(wavelength)
+            dlam = wavelength - lam_ref
+            poly_vals = np.zeros(wavelength.shape, dtype=float)
+            for k in range(degree + 1):
+                poly_vals += coeffs[k] * dlam**k
+            return poly_vals
 
-        scaled_sim = sim * poly_surface
-        return scaled_sim
+        return f_lam
+
+
+def apply_flam_to_slit(sim_data, wavelength, f_lam):
+    """
+    Apply a fitted spectral polynomial to simulated slit data.
+
+    Evaluates ``f_lam`` on the wavelength grid, zeros pixels outside the
+    simulation footprint (where ``sim_data == 0`` or ``wavelength <= 0``),
+    and returns the scaled simulated data.
+
+    Parameters
+    ----------
+    sim_data : array-like
+        2-D simulated flux array.
+    wavelength : array-like
+        2-D wavelength array with the same shape as ``sim_data``.
+    f_lam : callable
+        Function returned by a SlitFitter
+
+    Returns
+    -------
+    scaled : ndarray
+        ``sim_data`` scaled by the polynomial, zeroed outside the footprint.
+    """
+    sim_data = np.asarray(sim_data)
+    wavelength = np.asarray(wavelength)
+    footprint = (sim_data != 0) & (wavelength > 0)
+    poly_surface = np.where(footprint, f_lam(wavelength), 0.0)
+    return sim_data * poly_surface
