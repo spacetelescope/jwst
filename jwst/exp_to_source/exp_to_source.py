@@ -33,7 +33,7 @@ def exp_to_source(inputs):
         Returns a dictionary of `~stdatamodels.jwst.datamodels.MultiExposureModel`
         instances wherein each
         instance contains slits belonging to the same source.
-        The key is the ID of each source, i.e., ``source_id``.
+        The key is the ``source_id`` of each source.
     """  # fmt: skip
     result = defaultdict(MultiExposureModel)
 
@@ -100,11 +100,10 @@ def multislit_to_container(inputs):
 
     Parameters
     ----------
-    inputs : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
+    inputs : list or `~jwst.datamodels.container.ModelContainer` of \
+             `~stdatamodels.jwst.datamodels.MultiSlitModel`
         List of `~stdatamodels.jwst.datamodels.MultiSlitModel`
-        instances to reformat, or just a
-        `~jwst.datamodels.container.ModelContainer` full of
-        `~stdatamodels.jwst.datamodels.MultiSlitModel`.
+        instances to reformat
 
     Returns
     -------
