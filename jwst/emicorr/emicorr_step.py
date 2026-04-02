@@ -1,3 +1,5 @@
+"""Apply MIRI EMI correction."""
+
 import logging
 import warnings
 
