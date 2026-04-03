@@ -279,7 +279,7 @@ class IFUCubeData:
                 newname = self.output_name_base + ch_name + "-" + b_name + "_internal"
             elif self.output_type == "single":
                 newname = self.output_name_base + ch_name + "-" + b_name + "_single"
-            #elif self.pipeline == 2:
+            # elif self.pipeline == 2:
             #    newname = self.output_name_base + "_" + self.suffix + ".fits"
 
         elif self.instrument == "NIRSPEC":
@@ -302,7 +302,7 @@ class IFUCubeData:
                 newname = self.output_name_base + fg_name + "_single"
             elif self.coord_system == "internal_cal":
                 newname = self.output_name_base + fg_name + "_internal"
-            #elif self.pipeline == 2:
+            # elif self.pipeline == 2:
             #    newname = self.output_name_base + "_" + self.suffix + ".fits"
 
         if self.output_type != "single":
