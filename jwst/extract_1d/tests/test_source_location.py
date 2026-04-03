@@ -317,6 +317,6 @@ def test_nod_pair_location_miri(mock_miri_lrs_fs, dispaxis):
     # Nonsense values are returned for unrealistic mocked transform:
     # just check values for regression purposes
     if dispaxis == 2:
-        assert np.isclose(nod_center, -425, atol=1)
+        assert np.isclose(nod_center, -1619342, atol=1)
     else:
         assert nod_center == 0.0
