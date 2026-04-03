@@ -38,10 +38,12 @@ def _wheeltol(vals):
 
     Returns
     -------
-    value : str
+    value : str or None
         'outside calibration tolerance' if any value in list matches that string,
-        otherwise 'within commanded tolerance'.
+        otherwise 'within commanded tolerance'. Returns None if the input list is empty.
     """
+    if not vals:
+        return None
     if any(val == "outside calibration tolerance" for val in vals):
         return "outside calibration tolerance"
     return "within commanded tolerance"
