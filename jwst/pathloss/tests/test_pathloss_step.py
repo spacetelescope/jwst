@@ -269,6 +269,21 @@ def test_pathloss_step_miri_lrs_extended(miri_lrs_model_extended):
     assert not model.hasattr("pathloss_point")
 
 
+def test_pathloss_step_miri_lrs_user_slit_loc(caplog, miri_lrs_model_point):
+    model = miri_lrs_model_point.copy()
+
+    result = PathLossStep.call(model, user_slit_loc=0.1)
+    assert result.meta.cal_step.pathloss == "COMPLETE"
+    assert not np.allclose(result.data, model.data)
+    assert np.mean(result.pathloss_point) > 1.0
+
+    # Check for the expected target location
+    # Mock spatial scale is 0.1 arcsec, offset is along dispersion direction (y),
+    # so expected location is (0, 1)
+    assert "target center offset: 0.1 arcsec" in caplog.text
+    assert "New target location = (0.000, 1.000)" in caplog.text
+
+
 @pytest.mark.parametrize("mode", ["mos", "fs"])
 def test_pathloss_correction_pars(mode, nirspec_mos_model_point, nirspec_fs_model_point):
     if mode == "mos":
