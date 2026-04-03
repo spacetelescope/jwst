@@ -279,8 +279,8 @@ class IFUCubeData:
                 newname = self.output_name_base + ch_name + "-" + b_name + "_internal"
             elif self.output_type == "single":
                 newname = self.output_name_base + ch_name + "-" + b_name + "_single"
-            elif self.pipeline == 2:
-                newname = self.output_name_base + "_" + self.suffix + ".fits"
+            #elif self.pipeline == 2:
+            #    newname = self.output_name_base + "_" + self.suffix + ".fits"
 
         elif self.instrument == "NIRSPEC":
             # Check to see if the output base name already has a grating/prism
@@ -302,8 +302,8 @@ class IFUCubeData:
                 newname = self.output_name_base + fg_name + "_single"
             elif self.coord_system == "internal_cal":
                 newname = self.output_name_base + fg_name + "_internal"
-            elif self.pipeline == 2:
-                newname = self.output_name_base + "_" + self.suffix + ".fits"
+            #elif self.pipeline == 2:
+            #    newname = self.output_name_base + "_" + self.suffix + ".fits"
 
         if self.output_type != "single":
             log.info(f"Output Name: {newname}")
@@ -2663,7 +2663,8 @@ class IFUCubeData:
             )
 
         ifucube_model.update(model_ref)
-        ifucube_model.meta.filename = self.output_name
+        if self.output_name is not None:
+            ifucube_model.meta.filename = self.output_name
 
         # Call model_blender if there are multiple inputs
         if len(self.input_models) > 1:

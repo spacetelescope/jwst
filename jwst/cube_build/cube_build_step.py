@@ -208,6 +208,7 @@ class CubeBuildStep(Step):
             if self.weighting == "emsm":
                 self.interpolation = "pointcloud"
 
+        print("******************",self.parent.output_file)
         # read_user_input:
         # if options channel, band, grating, or  filter are set on the command lines
         # then set self.pars_input['output_type'] = 'user' and fill in  par_input with values
