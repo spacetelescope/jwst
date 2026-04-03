@@ -40,8 +40,9 @@ def simple_wcs_func():
     shape = (50, 50)
     xcenter = shape[1] // 2.0
 
-    cdelt1 = 0.1
-    cdelt2 = 1e-7
+    # Set up for a simple spatial scale of 0.1 arcsec/pix
+    cdelt1 = 1e-7 / 3600  # negligible in RA to avoid cos(Dec) effects
+    cdelt2 = 0.1 / 3600  # 0.1 arcsec / pixel in Dec
     cdelt3 = 0.01
 
     crval1 = 45.0
@@ -49,14 +50,21 @@ def simple_wcs_func():
     crval3 = 7.5
 
     ra = Shift(1 - xcenter) | Scale(cdelt1) | Shift(crval1)
-    dec = Scale(cdelt2) | Shift(crval2)
+    dec = Shift(1 - xcenter) | Scale(cdelt2) | Shift(crval2)
     wave = Scale(cdelt3) | Shift(crval3)
     det2slit = Mapping((1, 1, 0), n_inputs=2) | Identity(2) & wave
     slit2world = ra & dec & Identity(1)
 
     input_frame = gwcs.Frame2D(name="detector")
-    slit_frame = gwcs.Frame2D(name="slit_frame")
-    output_frame = gwcs.Frame2D(name="world")
+    slit_frame = gwcs.CoordinateFrame(
+        name="slit_frame",
+        naxes=3,
+        axes_order=(0, 1, 2),
+        axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"],
+    )
+    output_frame = gwcs.CoordinateFrame(
+        name="world", naxes=3, axes_order=(0, 1, 2), axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"]
+    )
     pipeline = [(input_frame, det2slit), (slit_frame, slit2world), (output_frame, None)]
     wcs = gwcs.WCS(pipeline)
 
@@ -76,24 +84,27 @@ def simple_wcs_transpose_func():
         The WCS object.
     """
     shape = (50, 50)
-    xcenter = shape[1] // 2.0
+    ycenter = shape[0] // 2.0
 
-    cdelt1 = 0.1
-    cdelt2 = 1e-7
+    # Set up for a simple spatial scale of 0.1 arcsec/pix
+    cdelt1 = 1e-7 / 3600  # negligible in RA to avoid cos(Dec) effects
+    cdelt2 = 0.1 / 3600  # 0.1 arcsec / pixel in Dec
     cdelt3 = -0.01
 
     crval1 = 45.0
     crval2 = 45.1
     crval3 = 7.5
 
-    ra = Shift(1 - xcenter) | Scale(cdelt1) | Shift(crval1)
-    dec = Scale(cdelt2) | Shift(crval2)
+    ra = Shift(1 - ycenter) | Scale(cdelt1) | Shift(crval1)
+    dec = Shift(1 - ycenter) | Scale(cdelt2) | Shift(crval2)
     wave = Scale(cdelt3) | Shift(crval3)
     mapping = Mapping((0, 0, 1), n_inputs=2)
     transform = mapping | ra & dec & wave
 
     input_frame = gwcs.Frame2D(name="detector")
-    output_frame = gwcs.Frame2D(name="world")
+    output_frame = gwcs.CoordinateFrame(
+        name="world", naxes=3, axes_order=(0, 1, 2), axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"]
+    )
     wcs = gwcs.WCS(transform, input_frame=input_frame, output_frame=output_frame)
 
     # Add a bounding box
