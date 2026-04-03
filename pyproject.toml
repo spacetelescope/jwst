@@ -347,6 +347,11 @@ directory = "pipeline"
 name = 'Pipeline'
 showcontent = true
 
+[[tool.towncrier.type]]
+directory = "model_blender"
+name = 'model_blender'
+showcontent = true
+
 # step changes
 
 [[tool.towncrier.type]]
