@@ -368,7 +368,7 @@ def test_is_pointsource():
     assert result is False
 
 
-def test_do_correction_msa_slit_size_eq_0():
+def test_do_correction_msa_slit_size_eq_0(caplog):
     """If slits have size 0, quit calibration."""
 
     datmod = MultiSlitModel()
@@ -377,10 +377,11 @@ def test_do_correction_msa_slit_size_eq_0():
     datmod.meta.exposure.type = "NRS_MSASPEC"
 
     result, _ = do_correction(datmod, pathlossmod)
-    assert result.meta.cal_step.pathloss == "COMPLETE"
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+    assert "Slit has data size = 0" in caplog.text
 
 
-def test_do_correction_fixed_slit_exception():
+def test_do_correction_fixed_slit_aperture_not_found(caplog):
     """If no matching aperture name found, exit."""
 
     datmod = MultiSlitModel()
@@ -391,7 +392,21 @@ def test_do_correction_fixed_slit_exception():
     datmod.meta.exposure.type = "NRS_FIXEDSLIT"
 
     result, _ = do_correction(datmod, pathlossmod)
-    assert result.meta.cal_step.pathloss == "COMPLETE"
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+    assert "Cannot find matching" in caplog.text
+
+
+def test_do_correction_mos_aperture_not_found(caplog):
+    """If no matching aperture name found, exit."""
+    datmod = MultiSlitModel()
+    datmod.slits.append({"data": np.zeros((10, 10)), "shutter_state": ""})
+
+    pathlossmod = PathlossModel()
+    datmod.meta.exposure.type = "NRS_MSASPEC"
+
+    result, _ = do_correction(datmod, pathlossmod)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+    assert "Cannot find matching" in caplog.text
 
 
 def test_do_correction_nis_soss_tso():
