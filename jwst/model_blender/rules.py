@@ -27,6 +27,26 @@ def _multi(vals):
         return "MULTIPLE"
 
 
+def _wheeltol(vals):
+    """
+    Return 'outside calibration tolerance' if any value in list matches that string.
+
+    Parameters
+    ----------
+    vals : list
+        List of values to check.
+
+    Returns
+    -------
+    value : str
+        'outside calibration tolerance' if any value in list matches that string,
+        otherwise 'within commanded tolerance'.
+    """
+    if any(val == "outside calibration tolerance" for val in vals):
+        return "outside calibration tolerance"
+    return "within commanded tolerance"
+
+
 RULE_FUNCTIONS = {
     "multi": _multi,
     "mean": np.mean,
@@ -42,6 +62,7 @@ RULE_FUNCTIONS = {
     "maxdate": max,
     "mindatetime": min,
     "maxdatetime": max,
+    "wheeltol": _wheeltol,
 }
 """
 Mapping of rule names to functions.
