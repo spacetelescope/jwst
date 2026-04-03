@@ -1221,6 +1221,7 @@ def _corrections_for_lrs(data, pathloss, user_slit_loc):
     """
     # Get location of target
     xcenter, ycenter, offset_1, offset_2 = get_center(data.meta.exposure.type, data, offsets=True)
+    log.info(f"Target location relative to aperture center = ({xcenter:.3f}, {ycenter:.3f})")
 
     # Get 1-d wavelength vector from reference file data
     wavelength_vector = pathloss.pathloss_table["wavelength"]
@@ -1234,7 +1235,8 @@ def _corrections_for_lrs(data, pathloss, user_slit_loc):
         )
 
     else:
-        log.info(f"Correction now using provided target center correction: {user_slit_loc}")
+        log.info(f"Correcting location from provided target center offset: {user_slit_loc} arcsec")
+
         # The slit is oriented with the long axis (the spatial
         # axis) horizontal, so the edges in the dispersion direction (the
         # narrow axis) would be negative down and positive up. Because the
@@ -1242,12 +1244,16 @@ def _corrections_for_lrs(data, pathloss, user_slit_loc):
         # +/-0.255 arcsec. Hence, the xcenter coordinate remains the same.
         ra, dec, wav = data.meta.wcs(offset_1, offset_2)
         location = (ra, dec, wav)
+
+        # Compute the spatial pixel scale from the WCS. Assume pixels are square.
         scale_degrees = compute_scale(
             data.meta.wcs, location, disp_axis=data.meta.wcsinfo.dispersion_direction
         )
         scale_arcsec = scale_degrees * 3600.0
+
         user_slit_loc_pix = user_slit_loc / scale_arcsec
         yusr_recenter = ycenter + user_slit_loc_pix
+        log.info(f"New target location = ({xcenter:.3f}, {yusr_recenter:.3f})")
         _, pathloss_vector, is_inside_slit = calculate_pathloss_vector(
             pathloss_data, pathloss_wcs, xcenter, yusr_recenter, calc_wave=False
         )
