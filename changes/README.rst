@@ -35,6 +35,7 @@ Shared Pipeline Modules
 - ``<PR#>.set_telescope_pointing.rst``
 - ``<PR#>.pipeline.rst``
 - ``<PR#>.associations.rst``
+- ``<PR#>.model_blender.rst``
 
 Stage 1 Steps
 =============
