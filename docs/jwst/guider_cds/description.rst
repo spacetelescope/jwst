@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.guider_cds..guider_cds_step.GuiderCdsStep`
+:Class: `jwst.guider_cds.guider_cds_step.GuiderCdsStep`
 :Alias: guider_cds
 
 The ``guider_cds`` step computes countrate images from the
