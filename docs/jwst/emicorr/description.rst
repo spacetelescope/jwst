@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.emicorr.EmiCorrStep`
+:Class: `jwst.emicorr.emicorr_step.EmiCorrStep`
 :Alias: emicorr
 
 Overview
@@ -43,7 +43,7 @@ the following (repeated iteratively for each discrete EMI frequency desired):
 #. Subtract the scaled slope image and bias from each frame of each integration.
 
 #. Calculate the phase of every pixel in the image at the desired EMI frequency
-   (e.g. 390 Hz), relative to the first pixel in the image.
+   (e.g., 390 Hz), relative to the first pixel in the image.
 
 #. Make a binned phased amplitude (PA) waveform from the cleaned data.
 
@@ -76,11 +76,11 @@ requires a reference waveform but can successfully fit EMI in ramps with
 Input
 -----
 The input file is the ``_uncal`` file after the
-:ref:`dq_init_step <dq_init_step>` step has been applied, in the
+:ref:`dq_init step <dq_init_step>` step has been applied, in the
 :ref:`calwebb_detector1 <calwebb_detector1>` pipeline.
 
 Output
 ------
-The output will be a partially-processed ``RampModel`` with the
+The output will be a partially-processed `~stdatamodels.jwst.datamodels.RampModel` with the
 EMI-corrected data in the SCI extension. All other extensions will
 remain the same.

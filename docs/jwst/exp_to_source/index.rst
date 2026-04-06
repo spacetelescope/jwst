@@ -8,5 +8,4 @@ Exposure to Source Conversion
    :maxdepth: 2
 
    main.rst
-
-.. automodapi:: jwst.exp_to_source
+   api_ref.rst
