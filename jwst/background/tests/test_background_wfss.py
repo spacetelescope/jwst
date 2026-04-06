@@ -112,11 +112,11 @@ def make_wfss_datamodel(mock_data):
 
     image = datamodels.ImageModel(DETECTOR_SHAPE)
 
-    image.meta.wcsinfo._instance.update(wcsinfo)
-    image.meta.instrument._instance.update(instrument)
-    image.meta.observation._instance.update(observation)
-    image.meta.subarray._instance.update(subarray)
-    image.meta.exposure._instance.update(exposure)
+    image.meta.wcsinfo.instance.update(wcsinfo)
+    image.meta.instrument.instance.update(instrument)
+    image.meta.observation.instance.update(observation)
+    image.meta.subarray.instance.update(subarray)
+    image.meta.exposure.instance.update(exposure)
 
     image.data = mock_data[0]
     image.err = mock_data[1]
