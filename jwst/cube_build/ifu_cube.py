@@ -674,6 +674,8 @@ class IFUCubeData:
             An IFU cube of combined IFU image data.
         """
         self.output_name = self.define_cubename()
+
+        print('RETURN ',self.output_name)
         total_num = self.naxis1 * self.naxis2 * self.naxis3
 
         self.spaxel_flux = np.zeros(total_num, dtype=np.float64)
@@ -2663,9 +2665,12 @@ class IFUCubeData:
             )
 
         ifucube_model.update(model_ref)
+
+
         if self.output_name is not None:
             ifucube_model.meta.filename = self.output_name
 
+        print('setting the name to ', ifucube_model.meta.filename)
         # Call model_blender if there are multiple inputs
         if len(self.input_models) > 1:
             saved_model_type = ifucube_model.meta.model_type

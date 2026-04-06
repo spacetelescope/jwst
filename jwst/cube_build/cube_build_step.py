@@ -10,6 +10,8 @@ from jwst.cube_build import cube_build, data_types, ifu_cube
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe import Step, record_step_status
+from stdatamodels.jwst import datamodels
+from jwst.datamodels import ModelContainer
 
 __all__ = ["CubeBuildStep"]
 
@@ -208,33 +210,50 @@ class CubeBuildStep(Step):
             if self.weighting == "emsm":
                 self.interpolation = "pointcloud"
 
-        print("******************", self.parent.output_file)
-        # read_user_input:
-        # if options channel, band, grating, or  filter are set on the command lines
-        # then set self.pars_input['output_type'] = 'user' and fill in  par_input with values
-        self.read_user_input()
 
         # Read in the input data and make a copy as needed.
         read_in_models = self.prepare_output(input_data)
+                
+        # read_user_input:
+        # if options channel, band, grating, or  filter are set on the command lines
+        # then set self.pars_input['output_type'] = 'user' and fill in  par_input with values
+        self.read_user_input()  # what channels/subchannels grating/filters did the user set
 
-        # ________________________________________________________________________________
-        # DataTypes
-        # Read in the input data - 2 formats are expected:
-        # 1. single model
-        # 2. model container
-        # figure out what type of data we have. Fill in the input_table.input_models.
-        # input_table.input_models is used in the rest of IFU Cube Building
-        # We need to do this in cube_build_step because we need to pass the data_model
-        # to CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
-        # if the user has provided the filename - strip out .fits and pull out the
-        # base name. The cube_build software will attached the needed information:
-        #  channel, sub-channel  grating or filter to filename
-        # ________________________________________________________________________________
-        input_table = data_types.DataTypes(
-            read_in_models, self.single, self.output_file, self.output_dir
-        )
-        input_models = input_table.input_models
-        self.output_name_base = input_table.output_name
+        input_models = [] # initalize input_models to empty list
+        
+        if self.parent is None: # cube build is run stand alone
+            print('***** running cube build stand alone')
+            # Cube Build is called stand alone
+            # Determine if we have:
+            # 1. single model
+            # 2. model container
+            # Based on input data - set out the output file name (output_name_base)
+            
+            # figure out what type of data we have. Fill in the input_table.input_models.
+            # input_table.input_models is used in the rest of IFU Cube Building
+            # We need to do this in cube_build_step because we need to pass the data_model
+            # to CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
+            # if the user has provided the filename - strip out .fits and pull out the
+            # base name. The cube_build software will attached the needed information:
+            #  channel, sub-channel  grating or filter to filename
+
+            input_table = data_types.DataTypes(
+                read_in_models, self.single, self.output_file, self.output_dir
+            )
+            input_models = input_table.input_models
+            self.output_name_base = input_table.output_name
+            
+        else:
+            print("******************", self.parent.output_file)
+            self.output_name_base = self.parent.output_file
+
+            if isinstance(read_in_models, datamodels.IFUImageModel):
+                
+                input_models.append(read_in_models)
+            elif isinstance(input_models, ModelContainer):
+                input_models = read_in_models
+
+
 
         # Read in the first input model to determine with instrument we have
         # output type is by default 'Channel' for MIRI and 'Band' for NIRSpec
@@ -427,7 +446,7 @@ class CubeBuildStep(Step):
             # the result returned from build_ifucube will be 1 IFU CUBE
             else:
                 result, status = thiscube.build_ifucube()
-
+                print("*****", result.meta.filename)
                 # check if cube_build failed
                 # **************************
                 if status == 1:
@@ -443,7 +462,8 @@ class CubeBuildStep(Step):
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
-
+            print('Last time', cube.meta.filename)
+            
             # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
             for key in rm_keys:
                 if key in cube.meta.wcsinfo.instance:
