@@ -307,6 +307,7 @@ class IFUCubeData:
 
         if self.output_type != "single":
             log.info(f"Output Name: {newname}")
+        
         return newname
 
     # _______________________________________________________________________
@@ -2664,7 +2665,8 @@ class IFUCubeData:
 
         ifucube_model.update(model_ref)
         ifucube_model.meta.filename = self.output_name
-
+        print('before blending', ifucube_model.meta.filename)
+        
         # Call model_blender if there are multiple inputs
         if len(self.input_models) > 1:
             saved_model_type = ifucube_model.meta.model_type
