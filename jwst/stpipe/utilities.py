@@ -158,14 +158,14 @@ def record_step_status(datamodel, cal_step, success=True):
 
     if isinstance(datamodel, Sequence):
         for model in datamodel:
-            model.meta.cal_step._instance[cal_step] = status  # noqa: SLF001
+            model.meta.cal_step.instance[cal_step] = status
     elif isinstance(datamodel, datamodels.ModelLibrary):
         with datamodel:
             for model in datamodel:
-                model.meta.cal_step._instance[cal_step] = status  # noqa: SLF001
+                model.meta.cal_step.instance[cal_step] = status
                 datamodel.shelve(model)
     else:
-        datamodel.meta.cal_step._instance[cal_step] = status  # noqa: SLF001
+        datamodel.meta.cal_step.instance[cal_step] = status
 
     # TODO: standardize cal_step naming to point to the official step name
 
