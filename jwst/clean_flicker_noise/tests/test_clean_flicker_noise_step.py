@@ -260,3 +260,13 @@ def test_missing_pastasoss(caplog):
     assert cleaned.meta.cal_step.clean_flicker_noise == "SKIPPED"
     input_model.close()
     cleaned.close()
+
+
+def test_soss_full_frame(caplog):
+    input_model = make_niriss_soss_ramp()
+    input_model.meta.subarray.name = "FULL"
+    cleaned = CleanFlickerNoiseStep.call(input_model, background_method="median_image")
+    assert "median_image processing is not available for SOSS subarray FULL" in caplog.text
+    assert cleaned.meta.cal_step.clean_flicker_noise == "SKIPPED"
+    input_model.close()
+    cleaned.close()
