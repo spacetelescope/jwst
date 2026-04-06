@@ -38,7 +38,7 @@ def simple_wcs_func():
         The WCS object.
     """
     shape = (50, 50)
-    xcenter = shape[1] // 2.0
+    ycenter = shape[0] // 2.0
 
     # Set up for a simple spatial scale of 0.1 arcsec/pix
     cdelt1 = 1e-7 / 3600  # negligible in RA to avoid cos(Dec) effects
@@ -49,8 +49,8 @@ def simple_wcs_func():
     crval2 = 45.1
     crval3 = 7.5
 
-    ra = Shift(1 - xcenter) | Scale(cdelt1) | Shift(crval1)
-    dec = Shift(1 - xcenter) | Scale(cdelt2) | Shift(crval2)
+    ra = Shift(1 - ycenter) | Scale(cdelt1) | Shift(crval1)
+    dec = Shift(1 - ycenter) | Scale(cdelt2) | Shift(crval2)
     wave = Scale(cdelt3) | Shift(crval3)
     det2slit = Mapping((1, 1, 0), n_inputs=2) | Identity(2) & wave
     slit2world = ra & dec & Identity(1)
@@ -84,7 +84,7 @@ def simple_wcs_transpose_func():
         The WCS object.
     """
     shape = (50, 50)
-    ycenter = shape[0] // 2.0
+    xcenter = shape[1] // 2.0
 
     # Set up for a simple spatial scale of 0.1 arcsec/pix
     cdelt1 = 1e-7 / 3600  # negligible in RA to avoid cos(Dec) effects
@@ -95,8 +95,8 @@ def simple_wcs_transpose_func():
     crval2 = 45.1
     crval3 = 7.5
 
-    ra = Shift(1 - ycenter) | Scale(cdelt1) | Shift(crval1)
-    dec = Shift(1 - ycenter) | Scale(cdelt2) | Shift(crval2)
+    ra = Shift(1 - xcenter) | Scale(cdelt1) | Shift(crval1)
+    dec = Shift(1 - xcenter) | Scale(cdelt2) | Shift(crval2)
     wave = Scale(cdelt3) | Shift(crval3)
     mapping = Mapping((0, 0, 1), n_inputs=2)
     transform = mapping | ra & dec & wave
