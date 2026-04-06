@@ -62,10 +62,10 @@ def get_center(exp_type, input_model, offsets=False):
     ycenter : float
         Y-coordinate center of the target in the aperture
 
-    imx : float
+    imx : float, optional
         X-location relative to LRS aperture reference point
 
-    imy : float
+    imy : float, optional
         Y-location relative to LRS aperture reference point
     """
     if exp_type not in [
@@ -353,22 +353,24 @@ def calculate_two_shutter_uniform_pathloss(pathloss_model):
         elif aperture_name == "MOS1X3":
             aperture1x3 = aperture
         if aperture_name not in ["MOS1X1", "MOS1X3"]:
-            log.warning(f"Unexpected aperture name {aperture_name} (Expected 'MOS1X1' or 'MOS1X3')")
-            return (None, None)
+            log.warning(
+                f"Unexpected aperture name '{aperture_name}' (Expected 'MOS1X1' or 'MOS1X3')"
+            )
+            return None, None
     pathloss1x1 = aperture1x1.uniform_data
     pathloss1x3 = aperture1x3.uniform_data
     if len(pathloss1x1) != len(pathloss1x3):
         log.warning("Pathloss 1x1 and 1x3 arrays have different sizes")
-        return (None, None)
-    if aperture1x1.uniform_wcs.crval1 != aperture1x3.uniform_wcs.crval1:
-        log.warning("1x1 and 1x3 apertures have different WCS CRVAL1")
-        return (None, None)
-    if aperture1x1.uniform_wcs.crpix1 != aperture1x3.uniform_wcs.crpix1:
-        log.warning("1x1 and 1x3 apertures have different WCS CRPIX1")
-        return (None, None)
-    if aperture1x1.uniform_wcs.cdelt1 != aperture1x3.uniform_wcs.cdelt1:
-        log.warning("1x1 and 1x3 apertures have different WCS CDELT1")
-        return (None, None)
+        return None, None
+    if pathloss1x1.ndim != 1:
+        log.warning(f"Pathloss arrays have unexpected shape {pathloss1x1.shape} (Expected 1D)")
+        return None, None
+    wcs_key = ["crval1", "crpix1", "cdelt1"]
+    for key in wcs_key:
+        if getattr(aperture1x1.uniform_wcs, key) != getattr(aperture1x3.uniform_wcs, key):
+            log.warning("1x1 and 1x3 apertures have different WCS")
+            return None, None
+
     wavesize = len(pathloss1x1)
     wavelength = np.zeros(wavesize)
     crpix1 = aperture1x1.uniform_wcs.crpix1
@@ -378,7 +380,8 @@ def calculate_two_shutter_uniform_pathloss(pathloss_model):
         wavelength[i] = crval1 + (float(i + 1) - crpix1) * cdelt1
     average_pathloss = 0.5 * (pathloss1x1 + pathloss1x3)
     log.info("2 shutter slit: Uniform correction averages corrections for 1x1 and 1x3 apertures")
-    return (wavelength, average_pathloss)
+
+    return wavelength, average_pathloss
 
 
 def do_correction(
