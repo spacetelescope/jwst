@@ -1829,7 +1829,7 @@ class IFUCubeData:
 
         x_all = x
         y_all = y
-        # Pre-select only data within a given wavelength range
+        # Preselect only data within a given wavelength range
         # This range is defined to include all pixels for which the chosen wavelength region
         # of interest would have them fall within one of the cube spectral planes
         # Note that the cube lambda refer to the spaxel midpoints, so we must account for both

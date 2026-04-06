@@ -212,7 +212,7 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
     num_cubes, cube_pars = cubeinfo.number_cubes()
-    # test with output_type = mulit we get 1 cube
+    # test with output_type = multi we get 1 cube
     # test that cube info sets up the correct channels and band for data
     assert num_cubes == 1
     assert cube_pars["1"]["par1"] == ["1", "2"]
