@@ -9,22 +9,22 @@ __all__ = ["do_correction"]
 
 def do_correction(output_model, gain_factor):
     """
-    Rescale all integrations in an exposure by gain_factor.
+    Rescale all integrations in an exposure by gain factor.
 
-    Rescales all integrations in an exposure by gain_factor, to
+    Rescales all integrations in an exposure by gain factor, to
     account for non-standard detector gain settings. The SCI,
     ERR, and variance arrays are rescaled.
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.JwstDataModel`
+    output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input datamodel to be corrected.
     gain_factor : float
         Scale gain factor.
 
     Returns
     -------
-    output_model : `~jwst.datamodels.JwstDataModel`
+    output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Output datamodel with rescaled data.
     """
     # Apply the gain factor to the SCI and ERR arrays
