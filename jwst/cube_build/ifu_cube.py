@@ -2843,6 +2843,9 @@ class IFUCubeData:
         ifu_cube : `~stdatamodels.jwst.datamodels.IFUCubeModel`
             IFU cube data model
         """
+
+        print(ifu_cube)
+        print(self.input_models_this_cube)
         blendmeta.blendmodels(
             ifu_cube,
             self.input_models_this_cube,
