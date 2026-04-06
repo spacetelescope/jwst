@@ -137,6 +137,15 @@ class CleanFlickerNoiseStep(Step):
             pastasoss = self.get_reference_file(output_model, "pastasoss")
             if pastasoss == "N/A":
                 log.warning("No PASTASOSS reference file found")
+
+                if self.background_method == "median_image":
+                    log.warning(
+                        "Skipping: median_image processing is not available "
+                        "without a pastasoss file."
+                    )
+                    output_model.meta.cal_step.clean_flicker_noise = "SKIPPED"
+                    return output_model
+
             else:
                 pastasoss_filename = pastasoss
                 log.info(f"Using PASTASOSS reference file: {pastasoss_filename}")

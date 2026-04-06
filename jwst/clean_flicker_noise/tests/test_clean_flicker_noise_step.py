@@ -251,8 +251,12 @@ def test_tso_median_image(caplog, tmp_path):
 
 def test_missing_pastasoss(caplog):
     input_model = make_niriss_soss_ramp()
-    cleaned = CleanFlickerNoiseStep.call(input_model, override_pastasoss="N/A")
+    cleaned = CleanFlickerNoiseStep.call(
+        input_model, override_pastasoss="N/A", background_method="median_image"
+    )
     assert "No PASTASOSS reference file" in caplog.text
+    assert "median_image processing is not available" in caplog.text
     assert cleaned.meta.ref_file.pastasoss.name == "N/A"
+    assert cleaned.meta.cal_step.clean_flicker_noise == "SKIPPED"
     input_model.close()
     cleaned.close()
