@@ -8,6 +8,7 @@ from stpipe.step import preserve_step_pars
 from jwst.barshadow import barshadow_step
 from jwst.extract_1d import extract_1d_step
 from jwst.flatfield import flat_field_step
+from jwst.lib.basic_utils import disable_logging
 from jwst.master_background import nirspec_utils
 from jwst.pathloss import pathloss_step
 from jwst.photom import photom_step
@@ -272,6 +273,10 @@ class MasterBackgroundMosStep(Pipeline):
             self.barshadow.source_type = "EXTENDED"
             self.photom.source_type = "EXTENDED"
 
+            log.info(
+                "Applying flat_field, pathloss, barshadow, and photom "
+                "corrections for background data "
+            )
             pre_calibrated = self.flat_field.run(pre_calibrated)
             pre_calibrated = self.pathloss.run(pre_calibrated)
             pre_calibrated = self.barshadow.run(pre_calibrated)
@@ -311,9 +316,15 @@ class MasterBackgroundMosStep(Pipeline):
             self.pathloss.inverse = True
             self.flat_field.inverse = True
 
-            mb_multislit = self.photom.run(mb_multislit)
-            mb_multislit = self.barshadow.run(mb_multislit)
-            mb_multislit = self.pathloss.run(mb_multislit)
-            mb_multislit = self.flat_field.run(mb_multislit)
+            # Disable logs for the second time through
+            log.info(
+                "Inverting photom, barshadow, pathloss, and flat_field "
+                "corrections for background data "
+            )
+            with disable_logging(level=logging.WARNING):
+                mb_multislit = self.photom.run(mb_multislit)
+                mb_multislit = self.barshadow.run(mb_multislit)
+                mb_multislit = self.pathloss.run(mb_multislit)
+                mb_multislit = self.flat_field.run(mb_multislit)
 
         return master_background, mb_multislit, bkg_x1d_spectra
