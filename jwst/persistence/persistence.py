@@ -158,9 +158,9 @@ class DataSet:
 
         # Set persistence flag for any group in persistence window
         if self.persistence_dnu:
-            flag = dqflags.group["DO_NOT_USE"] | dqflags.pixel["PERSISTENCE"]
+            flag = dqflags.group["DO_NOT_USE"] | dqflags.group["PERSISTENCE"]
         else:
-            flag = dqflags.pixel["PERSISTENCE"]
+            flag = dqflags.group["PERSISTENCE"]
 
         gdq_plane[self.persistence_array > 0.0] |= flag
         self.output_obj.groupdq[integ, group, :, :] = gdq_plane
