@@ -305,15 +305,10 @@ class MasterBackgroundMosStep(Pipeline):
             mb_multislit = nirspec_utils.map_to_science_slits(pre_calibrated, master_background)
 
             # Now that the master background is pretending to be science,
-            # walk backwards through the steps to uncalibrate, using the
-            # calibration factors carried from `pre_calibrated`.
-            self.photom.use_correction_pars = True
+            # walk backwards through the steps to uncalibrate
             self.photom.inverse = True
-            self.barshadow.use_correction_pars = True
             self.barshadow.inverse = True
-            self.pathloss.use_correction_pars = True
             self.pathloss.inverse = True
-            self.flat_field.use_correction_pars = True
             self.flat_field.inverse = True
 
             mb_multislit = self.photom.run(mb_multislit)
