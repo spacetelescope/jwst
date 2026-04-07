@@ -25,11 +25,7 @@ __all__ = [
 
 
 def do_correction(
-    input_model,
-    barshadow_model=None,
-    inverse=False,
-    source_type=None,
-    correction_pars=None,
+    input_model, barshadow_model=None, inverse=False, source_type=None, return_corrections=True
 ):
     """
     Correct MSA data for bar shadows.
@@ -44,15 +40,16 @@ def do_correction(
         Invert the math operations used to apply the flat field.
     source_type : str or None, optional
         Force processing using the specified source type.
-    correction_pars : dict or None, optional
-        Correction parameters to use instead of recalculation.
+    return_corrections : bool, optional
+        If True, a model containing the applied corrections is returned.
 
     Returns
     -------
     input_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         Science data model with correction applied and barshadow extensions added.
-    corrections : `~stdatamodels.jwst.datamodels.MultiSlitModel`
-        A model of the correction arrays.
+    corrections : `~stdatamodels.jwst.datamodels.MultiSlitModel`, optional
+        A model of the correction arrays, returned if ``return_corrections``
+        is True.
     """
     # Input is a MultiSlitModel science data model.
     # A MultislitModel has a member ".slits" that behaves like
@@ -71,14 +68,11 @@ def do_correction(
 
     # Loop over all the slits in the input model
     corrections = datamodels.MultiSlitModel()
-    for slit_idx, slitlet in enumerate(input_model.slits):
+    for slitlet in input_model.slits:
         slitlet_number = slitlet.slitlet_id
         log.info(f"Working on slitlet {slitlet_number}")
 
-        if correction_pars:
-            correction = correction_pars.slits[slit_idx]
-        else:
-            correction = _calc_correction(slitlet, barshadow_model, source_type)
+        correction = _calc_correction(slitlet, barshadow_model, source_type)
         corrections.slits.append(correction)
 
         if correction is None:
@@ -114,7 +108,11 @@ def do_correction(
                 slitlet.var_flat *= correction.data**2
         slitlet.barshadow = correction.data
 
-    return input_model, corrections
+    if return_corrections:
+        return input_model, corrections
+    else:
+        corrections.close()
+        return input_model
 
 
 def _calc_correction(slitlet, barshadow_model, source_type):
