@@ -1,6 +1,4 @@
-#
-#  Module for IPC correction.
-#
+"""Functions for IPC correction."""
 
 import logging
 from collections import namedtuple
@@ -25,16 +23,16 @@ def do_correction(input_model, ipc_model):
 
     Parameters
     ----------
-    input_model : data model object
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data to be corrected.
 
-    ipc_model : ipc model object
+    ipc_model : `~stdatamodels.jwst.datamodels.IPCModel`
         Deconvolution kernel, either a 2-D or 4-D image in the first
         extension.
 
     Returns
     -------
-    output_model : data model object
+    output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         IPC-corrected science data.
     """
     # Save some data params for easy use later
@@ -60,16 +58,16 @@ def ipc_correction(output, ipc_model):
 
     Parameters
     ----------
-    output : data model object
+    output : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science data.
 
-    ipc_model : IPCModel object
+    ipc_model : `~stdatamodels.jwst.datamodels.IPCModel`
         The IPC kernel.  The input is corrected for IPC by convolving
         with this 2-D or 4-D array.
 
     Returns
     -------
-    output : data model object
+    output : `~stdatamodels.jwst.datamodels.JwstDataModel`
         IPC-corrected science data.
     """
     log.debug(
@@ -125,13 +123,14 @@ def get_num_ref_pixels(input_model):
 
     Parameters
     ----------
-    input_model : data model object
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science data.
 
     Returns
     -------
     nref : namedtuple
-        Tuple containing the number of reference pixels at each edge
+        Tuple containing the number of reference pixels at each edge:
+
         bottom_rows : int
             The number of reference rows at the bottom of the image.
         top_rows : int
@@ -169,17 +168,17 @@ def get_ipc_slice(input_model, ipc_model):
 
     Parameters
     ----------
-    input_model : data model object
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science data.
 
-    ipc_model : data model object
+    ipc_model : `~stdatamodels.jwst.datamodels.IPCModel`
         The IPC kernel model.
 
     Returns
     -------
-    kernel : numpy.ndarray, either 2-D or 4-D
+    kernel : ndarray, either 2-D or 4-D
         The data array for the IPC kernel.  If the IPC kernel is 4-D and
-        the science data array is a subarray, `kernel` will be a slice of
+        the science data array is a subarray, ``kernel`` will be a slice of
         the reference image; otherwise, this will be the full image.
     """
     if len(ipc_model.data.shape) == 2:
@@ -207,17 +206,18 @@ def ipc_convolve(output_data, kernel, nref):
 
     Parameters
     ----------
-    output_data : numpy.ndarray, 2-D
-        A copy of the input science data for one group; this will be
+    output_data : ndarray
+        A copy of the 2-D input science data for one group; this will be
         modified in-place.
 
-    kernel : numpy.ndarray, 2-D or 4-D
-        The IPC kernel; the input is corrected for IPC by convolving with
-        this array.  If it is 4-D the last two dimensions will be a slice
-        that matches the last two dimensions of `output_data`.
+    kernel : ndarray
+        The IPC kernel (2-D or 4-D); the input is corrected for IPC by convolving with
+        this array.  If it is 4-D, the last two dimensions will be a slice
+        that matches the last two dimensions of ``output_data``.
 
     nref : namedtuple
         Tuple containing number of reference pixels at each edge:
+
         bottom_rows : int
             The number of reference rows at the bottom of the image.
         top_rows : int
