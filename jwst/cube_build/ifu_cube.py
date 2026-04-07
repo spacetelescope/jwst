@@ -32,7 +32,6 @@ class IFUCubeData:
 
     Parameters
     ----------
-
     input_models : `~jwst.datamodels.container.ModelContainer`
         Container of multiple `~stdatamodels.jwst.datamodels.IFUImageModel`
 
@@ -223,7 +222,7 @@ class IFUCubeData:
         """
         Determine the suffix name consisting of channels/sub channels or gratings/filters
 
-        The base name is defined by the pipeline. 
+        The base name is defined by the pipeline.
         Cube_build determines which channels, bands, gratings, or filters are used to make
         the IFU cube.
 
@@ -240,10 +239,10 @@ class IFUCubeData:
             # list of optical elements in the final output name.
 
             # JEM 4/7/2026 - NOT SURE IF THIS IS TRUE - DON'T THINK
-            # we need it anymore  Commenting out for now. 
+            # we need it anymore  Commenting out for now.
             # basename = self.output_name_base
             # suffix = basename[basename.rfind("_") + 1 :]
-            #if suffix in ["clear"]:
+            # if suffix in ["clear"]:
             #    self.output_name_base = basename[: basename.rfind("_")]
 
             # Now compose the appropriate list of optical element suffix names
@@ -268,20 +267,20 @@ class IFUCubeData:
                 b_name = b_name + subchannels[i]
             b_name = b_name.lower()
             cb_suffix = ch_name + "-" + b_name
-            
+
             if self.coord_system == "internal_cal":
-                cb_suffix +=  "_internal"
+                cb_suffix += "_internal"
             elif self.output_type == "single":
-                cb_suffix +=  "_single"
+                cb_suffix += "_single"
 
         elif self.instrument == "NIRSPEC":
             # Check to see if the output base name already has a grating/prism
             # suffix attached. If so, strip it off, and let the following logic
             # add all necessary grating and filter suffixes.
             # JEM 4/7/206  DO WE WANT THIS ?  Commenting out for now
-            #basename = self.output_name_base
-            #suffix = basename[basename.rfind("_") + 1 :]
-            #if suffix in ["g140m", "g235m", "g395m", "g140h", "g235h", "g395h", "prism"]:
+            # basename = self.output_name_base
+            # suffix = basename[basename.rfind("_") + 1 :]
+            # if suffix in ["g140m", "g235m", "g395m", "g140h", "g235h", "g395h", "prism"]:
             #    self.output_name_base = basename[: basename.rfind("_")]
 
             fg_name = "_"
@@ -293,14 +292,14 @@ class IFUCubeData:
             cb_suffix = fg_name
 
             if self.output_type == "single":
-                cb_suffix +=  "_single"
+                cb_suffix += "_single"
             elif self.coord_system == "internal_cal":
-                cb_suffix +=  "_internal"
+                cb_suffix += "_internal"
 
         if self.output_type != "single":
             log.info(f"Output Suffix Name: {cb_suffix}")
-        
-        return  cb_suffix
+
+        return cb_suffix
 
     # _______________________________________________________________________
     def set_geometry(self, corner_a, corner_b, lambda_min, lambda_max):
@@ -666,12 +665,11 @@ class IFUCubeData:
         result : `~stdatamodels.jwst.datamodels.IFUCubeModel`
             An IFU cube of combined IFU image data.
         """
-        #self.output_name = self.define_cubename()
+        # self.output_name = self.define_cubename()
         cb_suffix = self.define_cubename()
         self.output_name = self.output_name_base + cb_suffix
-        print('OUTPUT name', self.output_name)
-        
-        
+        print("OUTPUT name", self.output_name)
+
         total_num = self.naxis1 * self.naxis2 * self.naxis3
 
         self.spaxel_flux = np.zeros(total_num, dtype=np.float64)
@@ -2662,8 +2660,8 @@ class IFUCubeData:
 
         ifucube_model.update(model_ref)
         ifucube_model.meta.filename = self.output_name
-        print('before blending', ifucube_model.meta.filename)
-        
+        print("before blending", ifucube_model.meta.filename)
+
         # Call model_blender if there are multiple inputs
         if len(self.input_models) > 1:
             saved_model_type = ifucube_model.meta.model_type
@@ -2840,7 +2838,6 @@ class IFUCubeData:
         ifu_cube : `~stdatamodels.jwst.datamodels.IFUCubeModel`
             IFU cube data model
         """
-
         print(ifu_cube)
         print(self.input_models_this_cube)
         blendmeta.blendmodels(
