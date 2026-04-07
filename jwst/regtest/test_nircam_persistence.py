@@ -23,15 +23,8 @@ def run_persistence_step(rtdata_module):
     args = [
         "jwst.persistence.PersistenceStep",
         rtdata.input,
-    ]
-    Step.from_cmdline(args)
-
-    # Now run the step on the following exposure using the _trapsfilled file
-    # created by the above run
-    rtdata.get_data("nircam/persistence/jw01076101001_02101_00002_nrca1_linearity.fits")
-    args = [
-        "jwst.persistence.PersistenceStep",
-        rtdata.input,
+        "--steps.persistence.persistence_time=500",
+        "--steps.persistence.save_persistence_time=False",
     ]
     Step.from_cmdline(args)
 
