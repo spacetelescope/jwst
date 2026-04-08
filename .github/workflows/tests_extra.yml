@@ -45,7 +45,7 @@ jobs:
       context: ${{ steps.context.outputs.context }}
   test:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@e97344095b099e1d729fe97429078c9975921d8a  # v2.6.2
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v2
     needs: [ crds_context ]
     with:
       setenv: |
@@ -61,15 +61,12 @@ jobs:
       envs: |
         - linux: check-docs-links
           python-version: '3.13'
-        - macos: py311-xdist
-          pytest-results-summary: true
-        - macos: py312-xdist
-          pytest-results-summary: true
-        - linux: py314-stdevdeps-xdist
-          pytest-results-summary: true
-        - macos: py313-stdevdeps-xdist
-          pytest-results-summary: true
-        - linux: py314-devdeps-xdist
-          pytest-results-summary: true
-        - macos: py313-devdeps-xdist
-          pytest-results-summary: true
+        # `tox` does not currently respect `requires-python` versions when creating testing environments;
+        # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
+        - linux: py3-stdevdeps-xdist
+        - linux: py3-devdeps-xdist
+        - macos: py3-stdevdeps-xdist
+        - macos: py3-devdeps-xdist
+      fill: true
+      fill_platforms: macos
+      fill_factors: xdist
