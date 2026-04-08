@@ -21,17 +21,17 @@ def apply_master_background(source_model, bkg_model, inverse=False):
 
     Parameters
     ----------
-    source_model : `~jwst.datamodels.MultiSlitModel`
+    source_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The input data model containing all source slit instances.
         Updated in place.
-    bkg_model : `~jwst.datamodels.MultiSlitModel`
+    bkg_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The data model containing 2D background slit instances.
     inverse : bool
         Invert the math operations used to apply the background.
 
     Returns
     -------
-    source_model: `~jwst.datamodels.MultiSlitModel`
+    source_model: `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The output background-subtracted data model.
     """
     from jwst.master_background.master_background_step import subtract_2d_background
@@ -64,14 +64,14 @@ def map_to_science_slits(input_model, master_bkg):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.MultiSlitModel`
+    input_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The input data model containing all slit instances.
-    master_bkg : `~jwst.datamodels.CombinedSpecModel`
+    master_bkg : `~stdatamodels.jwst.datamodels.CombinedSpecModel`
         The 1D master background spectrum.
 
     Returns
     -------
-    output_model: `~jwst.datamodels.MultiSlitModel`
+    output_model: `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The output data model containing background signal.
     """
     from jwst.master_background.expand_to_2d import expand_to_2d
@@ -94,7 +94,7 @@ def create_background_from_multispec(bkg_model, sigma_clip=3, median_kernel=1):
 
     Parameters
     ----------
-    bkg_model : `~jwst.datamodels.MultiSpecModel`
+    bkg_model : `~stdatamodels.jwst.datamodels.MultiSpecModel`
         The input data model containing all slit instances.
     sigma_clip : None or float, optional
         Optional factor for sigma clipping outliers when combining background spectra.
@@ -105,9 +105,9 @@ def create_background_from_multispec(bkg_model, sigma_clip=3, median_kernel=1):
 
     Returns
     -------
-    master_bkg: `~jwst.datamodels.CombinedSpecModel`
+    master_bkg : `~stdatamodels.jwst.datamodels.CombinedSpecModel`
         The 1D master background spectrum created from the inputs.
-    x1d: `jwst.datamodels.MultiSpecModel`
+    x1d : `~stdatamodels.jwst.datamodels.MultiSpecModel`
         The 1D extracted background spectra of the inputs.
     """
     from jwst.combine_1d.combine1d import combine_1d_spectra
@@ -143,13 +143,13 @@ def correct_nrs_ifu_bkg(input_model):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.IFUImageModel`
+    input_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The input background data.
 
     Returns
     -------
-    input_model : `~jwst.datamodels.IFUIMAGEModel`
-        An updated (in place) version of the input with the data
+    input_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        An updated (in-place) version of the input with the data
         replaced by the corrected 2D background.
     """
     log.info("Applying point source pathloss updates to IFU background")
@@ -181,13 +181,13 @@ def correct_nrs_fs_bkg(input_model):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.SlitModel`
+    input_model : `~stdatamodels.jwst.datamodels.SlitModel`
         The input background data.
 
     Returns
     -------
-    input_model : `~jwst.datamodels.SlitModel`
-        An updated (in place) version of the input with the data
+    input_model : `~stdatamodels.jwst.datamodels.SlitModel`
+        An updated (in-place) version of the input with the data
         replaced by the corrected 2D background.
     """
     log.info("Applying point source updates to FS background")
@@ -254,13 +254,13 @@ def is_background_msa_slit(slit):
 
     Parameters
     ----------
-    slit : `~jwst.datamodels.SlitModel`
+    slit : `~stdatamodels.jwst.datamodels.SlitModel`
         The slit model to check.
 
     Returns
     -------
     bool
-        True if the slit is background; False if it is not.
+        `True` if the slit is background; `False` otherwise.
     """
     name = str(slit.source_name).upper()
     if ("BKG" in name) or ("BACKGROUND" in name):
