@@ -1,11 +1,13 @@
 Description
 ===========
 
-:Class: `jwst.firstframe.FirstFrameStep`
+:Class: `jwst.firstframe.firstframe_step.FirstFrameStep`
 :Alias: firstframe
 
-The ``firstframe`` step has been deprecated and will be removed
-in a future release. Flagging the first group  has been added to the RSCD step.
+.. warning::
+    The ``firstframe`` step has been deprecated and will be removed
+    in a future release. Flagging the first group  has been added to
+    the :ref:`RSCD step <rscd_step>`.
 
 The MIRI first frame correction step flags the first group in every integration
 as bad (the "DO_NOT_USE" data quality flag is added to the GROUPDQ array), but
