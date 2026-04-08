@@ -62,10 +62,10 @@ def miri_ifushort_short():
     """Generate a IFU image"""
 
     input_model = datamodels.IFUImageModel()
-    input_model.meta.wcsinfo._instance.update(wcsinfo)
-    input_model.meta.instrument._instance.update(mirifushort_short)
-    input_model.meta.observation._instance.update(observation)
-    input_model.meta.subarray._instance.update(subarray)
+    input_model.meta.wcsinfo.instance.update(wcsinfo)
+    input_model.meta.instrument.instance.update(mirifushort_short)
+    input_model.meta.observation.instance.update(observation)
+    input_model.meta.subarray.instance.update(subarray)
     input_model.meta.cal_step.assign_wcs = "COMPLETE"
     return input_model
 
@@ -75,45 +75,45 @@ def miri_full_coverage():
     """Generate a IFU images SHORT, LONG for all three bands"""
 
     input_model1 = datamodels.IFUImageModel()
-    input_model1.meta.wcsinfo._instance.update(wcsinfo)
-    input_model1.meta.instrument._instance.update(mirifushort_short)
-    input_model1.meta.observation._instance.update(observation)
-    input_model1.meta.subarray._instance.update(subarray)
+    input_model1.meta.wcsinfo.instance.update(wcsinfo)
+    input_model1.meta.instrument.instance.update(mirifushort_short)
+    input_model1.meta.observation.instance.update(observation)
+    input_model1.meta.subarray.instance.update(subarray)
     input_model1.meta.cal_step.assign_wcs = "COMPLETE"
 
     input_model2 = datamodels.IFUImageModel()
-    input_model2.meta.wcsinfo._instance.update(wcsinfo)
-    input_model2.meta.instrument._instance.update(mirifushort_medium)
-    input_model2.meta.observation._instance.update(observation)
-    input_model2.meta.subarray._instance.update(subarray)
+    input_model2.meta.wcsinfo.instance.update(wcsinfo)
+    input_model2.meta.instrument.instance.update(mirifushort_medium)
+    input_model2.meta.observation.instance.update(observation)
+    input_model2.meta.subarray.instance.update(subarray)
     input_model2.meta.cal_step.assign_wcs = "COMPLETE"
 
     input_model3 = datamodels.IFUImageModel()
-    input_model3.meta.wcsinfo._instance.update(wcsinfo)
-    input_model3.meta.instrument._instance.update(mirifushort_long)
-    input_model3.meta.observation._instance.update(observation)
-    input_model3.meta.subarray._instance.update(subarray)
+    input_model3.meta.wcsinfo.instance.update(wcsinfo)
+    input_model3.meta.instrument.instance.update(mirifushort_long)
+    input_model3.meta.observation.instance.update(observation)
+    input_model3.meta.subarray.instance.update(subarray)
     input_model3.meta.cal_step.assign_wcs = "COMPLETE"
 
     input_model4 = datamodels.IFUImageModel()
-    input_model4.meta.wcsinfo._instance.update(wcsinfo)
-    input_model4.meta.instrument._instance.update(mirifulong_short)
-    input_model4.meta.observation._instance.update(observation)
-    input_model4.meta.subarray._instance.update(subarray)
+    input_model4.meta.wcsinfo.instance.update(wcsinfo)
+    input_model4.meta.instrument.instance.update(mirifulong_short)
+    input_model4.meta.observation.instance.update(observation)
+    input_model4.meta.subarray.instance.update(subarray)
     input_model4.meta.cal_step.assign_wcs = "COMPLETE"
 
     input_model5 = datamodels.IFUImageModel()
-    input_model5.meta.wcsinfo._instance.update(wcsinfo)
-    input_model5.meta.instrument._instance.update(mirifulong_medium)
-    input_model5.meta.observation._instance.update(observation)
-    input_model5.meta.subarray._instance.update(subarray)
+    input_model5.meta.wcsinfo.instance.update(wcsinfo)
+    input_model5.meta.instrument.instance.update(mirifulong_medium)
+    input_model5.meta.observation.instance.update(observation)
+    input_model5.meta.subarray.instance.update(subarray)
     input_model5.meta.cal_step.assign_wcs = "COMPLETE"
 
     input_model6 = datamodels.IFUImageModel()
-    input_model6.meta.wcsinfo._instance.update(wcsinfo)
-    input_model6.meta.instrument._instance.update(mirifulong_long)
-    input_model6.meta.observation._instance.update(observation)
-    input_model6.meta.subarray._instance.update(subarray)
+    input_model6.meta.wcsinfo.instance.update(wcsinfo)
+    input_model6.meta.instrument.instance.update(mirifulong_long)
+    input_model6.meta.observation.instance.update(observation)
+    input_model6.meta.subarray.instance.update(subarray)
     input_model6.meta.cal_step.assign_wcs = "COMPLETE"
 
     # full range and 2 dithers (12 files, 2 dithers of each band)
@@ -138,17 +138,17 @@ def nirspec_medium_coverage():
     """Generate a IFU images NIRSpec G140M, G235M"""
 
     input_model1 = datamodels.IFUImageModel()
-    input_model1.meta.wcsinfo._instance.update(wcsinfo)
-    input_model1.meta.instrument._instance.update(nirspec_G140M)
-    input_model1.meta.observation._instance.update(observation)
-    input_model1.meta.subarray._instance.update(subarray_nirspec)
+    input_model1.meta.wcsinfo.instance.update(wcsinfo)
+    input_model1.meta.instrument.instance.update(nirspec_G140M)
+    input_model1.meta.observation.instance.update(observation)
+    input_model1.meta.subarray.instance.update(subarray_nirspec)
     input_model1.meta.cal_step.assign_wcs = "COMPLETE"
 
     input_model2 = datamodels.IFUImageModel()
-    input_model2.meta.wcsinfo._instance.update(wcsinfo)
-    input_model2.meta.instrument._instance.update(nirspec_G235M)
-    input_model2.meta.observation._instance.update(observation)
-    input_model2.meta.subarray._instance.update(subarray_nirspec)
+    input_model2.meta.wcsinfo.instance.update(wcsinfo)
+    input_model2.meta.instrument.instance.update(nirspec_G235M)
+    input_model2.meta.observation.instance.update(observation)
+    input_model2.meta.subarray.instance.update(subarray_nirspec)
     input_model2.meta.cal_step.assign_wcs = "COMPLETE"
 
     input_models = []

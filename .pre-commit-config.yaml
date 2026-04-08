@@ -31,7 +31,7 @@ repos:
       - id: text-unicode-replacement-char
   # lint and format
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.4
+    rev: v0.15.9
     hooks:
       - id: ruff-check
         args:
@@ -40,18 +40,18 @@ repos:
       - id: ruff-format
   # C style
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v22.1.0
+    rev: v22.1.2
     hooks:
       - id: clang-format
         types_or: [c]
   # type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+    rev: v1.20.0
     hooks:
       - id: mypy
   # spell-checking
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.2
     hooks:
       - id: codespell
         args:

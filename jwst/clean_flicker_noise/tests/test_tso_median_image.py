@@ -177,3 +177,33 @@ def test_miri_image_tso():
 
     input_model.close()
     wcs_model.close()
+
+
+@pytest.mark.parametrize("use_ramp", [True, False])
+def test_input_not_modified(use_ramp):
+    rateints_model = helpers.make_small_rateints_model()
+    if use_ramp:
+        input_model = helpers.make_small_ramp_model()
+    else:
+        input_model = rateints_model.copy()
+
+    # add some noise to the input to make the median meaningful
+    rng = np.random.default_rng(seed=42)
+    input_model.data += rng.normal(0, 0.01, input_model.data.shape)
+    rateints_model.data += rng.normal(0, 0.01, rateints_model.data.shape)
+
+    input_copy = input_model.data.copy()
+    rate_copy = rateints_model.data.copy()
+
+    med_img = tmi.make_median_image(input_model, rateints_model)
+    assert med_img.shape == input_model.data.shape
+
+    # The median image should be close to the input data
+    np.testing.assert_allclose(med_img, input_model.data, atol=0.05)
+
+    # Input is not modified
+    np.testing.assert_array_equal(input_model.data, input_copy)
+    np.testing.assert_array_equal(rateints_model.data, rate_copy)
+
+    input_model.close()
+    rateints_model.close()

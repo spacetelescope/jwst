@@ -96,20 +96,20 @@ def miri_ifushort_short_2files():
 
     input_model1 = datamodels.IFUImageModel()
     input_model1.meta.exposure.type = "MIR_MRS"
-    input_model1.meta.wcsinfo._instance.update(wcsinfo)
-    input_model1.meta.instrument._instance.update(mirifushort_short)
-    input_model1.meta.observation._instance.update(observation)
-    input_model1.meta.subarray._instance.update(subarray)
+    input_model1.meta.wcsinfo.instance.update(wcsinfo)
+    input_model1.meta.instrument.instance.update(mirifushort_short)
+    input_model1.meta.observation.instance.update(observation)
+    input_model1.meta.subarray.instance.update(subarray)
     input_model1.meta.cal_step.assign_wcs = "COMPLETE"
     input_model1.meta.filename = "test1.fits"
     input_model1.data = np.random.random((1024, 1032))
 
     input_model2 = datamodels.IFUImageModel()
     input_model2.meta.exposure.type = "MIR_MRS"
-    input_model2.meta.wcsinfo._instance.update(wcsinfo)
-    input_model2.meta.instrument._instance.update(mirifushort_short)
-    input_model2.meta.observation._instance.update(observation)
-    input_model2.meta.subarray._instance.update(subarray)
+    input_model2.meta.wcsinfo.instance.update(wcsinfo)
+    input_model2.meta.instrument.instance.update(mirifushort_short)
+    input_model2.meta.observation.instance.update(observation)
+    input_model2.meta.subarray.instance.update(subarray)
     input_model2.meta.cal_step.assign_wcs = "COMPLETE"
     input_model2.meta.filename = "test2.fits"
     input_model2.data = np.random.random((1024, 1032))
@@ -212,7 +212,7 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
     num_cubes, cube_pars = cubeinfo.number_cubes()
-    # test with output_type = mulit we get 1 cube
+    # test with output_type = multi we get 1 cube
     # test that cube info sets up the correct channels and band for data
     assert num_cubes == 1
     assert cube_pars["1"]["par1"] == ["1", "2"]

@@ -53,24 +53,24 @@ def apply_emicorr(
     """
     Apply an EMI correction to MIRI ramps.
 
-    The sequential algorithm corrects data for EMI by the following procedure:
-         [repeat iteratively for each discrete EMI frequency desired]
+    The sequential algorithm corrects data for EMI by the following procedure
+    (repeat iteratively for each discrete EMI frequency desired):
 
-    1) Make very crude slope image and fixed pattern superbias for each
+    1. Make very crude slope image and fixed pattern superbias for each
        integration, ignoring everything (nonlin, saturation, badpix, etc).
-    2) Subtract scaled slope image and bias from each frame of each integration.
-    3) Calculate phase of every pixel in the image at the desired EMI frequency
-       (e.g. 390 Hz) relative to the first pixel in the image.
-    4) Make a binned, phased amplitude (PA) wave from the cleaned data.
-    5) Either:
-       -  Measure the phase shift between the binned pa wave and the input
-          reference wave. Use look-up table to get the aligned reference wave
-          value for each pixel (the noise array corresponding to the input image).
-       Or:
-       - Use the binned PA wave instead of the reference wave to "self-correct".
-    6) Subtract the noise array from the input image and return the cleaned result.
+    2. Subtract scaled slope image and bias from each frame of each integration.
+    3. Calculate phase of every pixel in the image at the desired EMI frequency
+       (e.g., 390 Hz) relative to the first pixel in the image.
+    4. Make a binned, phased amplitude (PA) wave from the cleaned data.
+    5. Either:
 
-         [repeat for next frequency using cleaned output as input]
+       - measure the phase shift between the binned PA wave and the input
+         reference wave. Use look-up table to get the aligned reference wave
+         value for each pixel (the noise array corresponding to the input image); or
+       - use the binned PA wave instead of the reference wave to "self-correct".
+
+    6. Subtract the noise array from the input image and return the cleaned result.
+    7. (Repeat for next frequency using cleaned output as input.)
 
     The joint algorithm proceeds similarly, except that the linear ramps and
     the EMI noise are fit simultaneously. It works by choosing pixels with modest
@@ -100,21 +100,21 @@ def apply_emicorr(
         requires a reference waveform but can successfully fit EMI in ramps with
         3 or more groups.
     nints_to_phase : int or None, optional
-        Number of integrations to phase, when `algorithm` is 'sequential'.
+        Number of integrations to phase, when ``algorithm`` is 'sequential'.
     nbins : int or None, optional
-        Number of bins to use in one phased wave, when `algorithm` is 'sequential'.
+        Number of bins to use in one phased wave, when ``algorithm`` is 'sequential'.
     scale_reference : bool, optional
-        If True and `algorithm` is 'sequential', the reference wavelength will be scaled
+        If True and ``algorithm`` is 'sequential', the reference wavelength will be scaled
         to the data's phase amplitude.
     onthefly_corr_freq : list of float or None, optional
         Frequency values to use to create a correction on-the-fly.  If provided,
-        any input `emicorr_model` is ignored and the `algorithm` is set to
+        any input ``emicorr_model`` is ignored and the ``algorithm`` is set to
         'sequential'.
     use_n_cycles : int, optional
         Only use N cycles to calculate the phase to reduce code running time,
-        when `algorithm` is 'sequential'.
+        when ``algorithm`` is 'sequential'.
     fit_ints_separately : bool, optional
-        If True, fit each integration separately, when `algorithm` is 'joint'.
+        If True, fit each integration separately, when ``algorithm`` is 'joint'.
 
     Returns
     -------
@@ -238,7 +238,7 @@ def _run_joint_algorithm(
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input datamodel.  Will be modified in place.
     freq_numbers : list of float
         Frequency values to correct.
@@ -258,7 +258,7 @@ def _run_joint_algorithm(
 
     Returns
     -------
-    DataModel
+    `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel, with noise fit and subtracted.
     """
     # Additional frame time to account for the extra frame reset between
@@ -309,7 +309,7 @@ def _run_sequential_algorithm(
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input datamodel.  Will be modified in place.
     freqs2correct : list of str
         Names of the frequencies to correct.
@@ -327,19 +327,19 @@ def _run_sequential_algorithm(
     save_onthefly_reffile : str or None, optional
         Full path and root name to save an on-the-fly reference file to.
     nints_to_phase : int or None, optional
-        Number of integrations to phase, when `algorithm` is 'sequential'.
+        Number of integrations to phase, when ``algorithm`` is 'sequential'.
     nbins : int or None, optional
-        Number of bins to use in one phased wave, when `algorithm` is 'sequential'.
+        Number of bins to use in one phased wave, when ``algorithm`` is 'sequential'.
     scale_reference : bool, optional
-        If True and `algorithm` is 'sequential', the reference wavelength will be scaled
+        If True and ``algorithm`` is 'sequential', the reference wavelength will be scaled
         to the data's phase amplitude.
     use_n_cycles : int, optional
         Only use N cycles to calculate the phase to reduce code running time,
-        when `algorithm` is 'sequential'.
+        when ``algorithm`` is 'sequential'.
 
     Returns
     -------
-    DataModel
+    `~stdatamodels.jwst.datamodels.JwstDataModel`
         The output datamodel, with noise fit and subtracted.
 
     Notes
@@ -643,7 +643,7 @@ def sloper(data):
     -------
     outarray : ndarray
         3-D integration data array
-    intercept: ndarray
+    intercept : ndarray
         Slope intercept values
     """
     ngroups, ny, nx = np.shape(data)
@@ -704,7 +704,7 @@ def get_subarcase(emi_model, subarray, readpatt, detector):
 
     Parameters
     ----------
-    emi_model : EmiModel
+    emi_model : `~stdatamodels.jwst.datamodels.EmiModel`
         EMI datamodel containing subarray_cases.
     subarray : str
         Keyword value
@@ -766,7 +766,7 @@ def get_frequency_info(emi_model, frequency_name):
 
     Parameters
     ----------
-    emi_model : EmiModel
+    emi_model : `~stdatamodels.jwst.datamodels.EmiModel`
         EMI reference datamodel.
     frequency_name : str
         Frequency of interest.
@@ -781,7 +781,7 @@ def get_frequency_info(emi_model, frequency_name):
     Raises
     ------
     AttributeError
-        If the `frequency_name` was not found in the `emi_model`.
+        If the ``frequency_name`` was not found in the ``emi_model``.
     """
     freq_set = getattr(emi_model.frequencies, frequency_name)
     freq_number = freq_set.frequency
@@ -812,7 +812,7 @@ def rebin(arr, newshape):
     Notes
     -----
     The intent for this function is to replicate the behavior of the
-    IDL function `congrid`, without the /INTERP flag.
+    IDL function ``congrid``, without the ``/INTERP`` flag.
     """
     if len(arr.shape) != len(newshape):
         raise ValueError("New shape dimensions must match old shape")
@@ -832,12 +832,12 @@ def rebin(arr, newshape):
 
 def mk_reffile(freq_pa_dict, emicorr_ref_filename):
     """
-    Create the reference file hdulist object.
+    Create the reference file HDU list object.
 
     Parameters
     ----------
     freq_pa_dict : dict
-        Dictionary containing the phase amplitude (pa) array
+        Dictionary containing the phase amplitude (PA) array
         corresponding to the appropriate frequency
     emicorr_ref_filename : str
         Full path and root name of on-the-fly reference file
@@ -1036,17 +1036,17 @@ def get_best_phase(phases, chisq):
     Parameters
     ----------
     phases : ndarray
-        1D array of phases. Assumed to be periodic: phases[0] comes
-        after phases[-1]
+        1D array of phases. Assumed to be periodic: ``phases[0]`` comes
+        after ``phases[-1]``
     chisq : ndarray
         1D array of chi squared values.
 
     Returns
     -------
     bestphase : float
-        Phase where chisq is minimized, computed by fitting a parabola
+        Phase where ``chisq`` is minimized, computed by fitting a parabola
         to the three points centered on the input phase with the
-        lowest chisq.
+        lowest ``chisq``.
     """
     if np.all(~np.isfinite(chisq)):
         log.warning("Chi squared values are all NaN")
@@ -1086,14 +1086,14 @@ def get_best_phase(phases, chisq):
 
 def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
     """
-    Compute chi2 and amplitude of EMI waveform at phase(s).
+    Compute chi2 and amplitudes of EMI waveform at phase(s).
 
-    This routine has the math from the writeup in it; see that for the
+    This routine has the math from the write-up in it; see that for the
     definitions and derivations.
 
     Parameters
     ----------
-    emifitter : EMIFitter
+    emifitter : `EMIfitter`
         Convenience object containing all the parameters and intermediate
         arrays needed to compute the best amplitude and the corresponding
         chi squared value at one or more input phases.
@@ -1102,16 +1102,16 @@ def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
         squared. If None, use all integrations.
     phases : list of float or None
         Phase(s) at which to compute the amplitude and best chi squared.
-        If None, use all phases in emifitter.phaselist.
+        If None, use all phases in ``emifitter.phaselist``.
 
     Returns
     -------
     chisq : list of float
         Best chi squared value for each phase used. Will be the same
-        length as phases (or emifitter.phaselist, if phases is None).
+        length as phases (or ``emifitter.phaselist``, if phases is None).
     amplitudes : list of float
         Best-fit amplitudes for each phase used. Will be the same
-        length as phases (or emifitter.phaselist, if phases is None).
+        length as phases (or ``emifitter.phaselist``, if phases is None).
     """
     ef = emifitter  # Alias to simplify subsequent references
 
@@ -1188,42 +1188,41 @@ def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
 
 
 class EMIfitter:
-    """Convenience class to facilitate chi2, amplitude calculation."""
+    """
+    Convenience class to facilitate chi2, amplitude calculation.
+
+    This class precomputes a series of arrays so that the sums in
+    :func:`calc_chisq_amplitudes` do not need to be fully recomputed at every
+    possible phase of the EMI signal.
+
+    Sums of pixel read values are precomputed over pixels that share the
+    same EMI phase to avoid double sums over pixels and reads later. Sums over
+    the EMI waveform itself are also precomputed at each trial phase offset for
+    the same reason.
+
+    Parameters
+    ----------
+    all_y : ndarray
+        3D array of phased, summed y values,
+        shape (nints, nphases, ngroups).
+    all_n : ndarray
+        2D array of the number of pixels used for the calculation
+        shape (nints, nphases): number of values summed to create
+        ``all_y`` at each group.
+    phasefunc : callable
+        Spline function to compute the waveform as a function of
+        input phase (input phase should be between 0 and 1).
+    phases_template : ndarray
+        2D array of phases corresponding to ``all_y[0]``.
+    phaselist : ndarray
+        1D array of phases at which to pre-compute quantities
+        needed for chi squared, amplitude calculation.  ypically
+        uniformly spaced between 0 and 1.
+    dphase_frame : float
+        Phase difference between successive integrations.
+    """
 
     def __init__(self, all_y, all_n, phasefunc, phases_template, phaselist, dphase_frame):
-        """
-        Compute and store quantities needed for chi2, amplitude calculation.
-
-        This class precomputes a series of arrays so that the sums in
-        `calc_chisq_amplitudes` do not need to be fully recomputed at every
-        possible phase of the EMI signal.
-
-        Sums of pixel read values are precomputed over pixels that share the
-        same EMI phase to avoid double sums over pixels and reads later. Sums over
-        the EMI waveform itself are also precomputed at each trial phase offset for
-        the same reason.
-
-        Parameters
-        ----------
-        all_y : ndarray
-            3D array of phased, summed y values,
-            shape (nints, nphases, ngroups)
-        all_n : ndarray
-            2D array of the number of pixels used for the calculation
-            shape (nints, nphases): number of values summed to create
-            all_y at each group
-        phasefunc : callable
-            Spline function to compute the waveform as a function of
-            input phase (input phase should be between 0 and 1).
-        phases_template : ndarray
-            2D array of phases corresponding to all_y[0]
-        phaselist : ndarray
-            1D array of phases at which to pre-compute quantities
-            needed for chi squared, amplitude calculation.  Typically
-            uniformly spaced between 0 and 1.
-        dphase_frame : float
-            Phase difference between successive integrations
-        """
         self.all_y = all_y
         self.all_n = all_n
 

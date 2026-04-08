@@ -1,4 +1,4 @@
-"""Test for the detector1 pipeline with clean_flicker_noise, using NIRISS SOSS data."""
+"""Test for the detector1 pipeline with clean_flicker_noise, using NIRSpec BOTS data."""
 
 import pytest
 
@@ -11,15 +11,20 @@ pytestmark = [pytest.mark.bigdata]
 
 @pytest.fixture(scope="module")
 def run_detector1_with_clean_flicker_noise(rtdata_module):
-    """Run calwebb_detector1 pipeline on NIRISS SOSS data with clean_flicker_noise."""
+    """Run calwebb_detector1 pipeline on NIRSpec BOTS data with clean_flicker_noise."""
     rtdata = rtdata_module
-    rtdata.get_data("niriss/soss/jw02734002001_04101_00001-seg003_nis_uncal.fits")
+    rtdata.get_data("nirspec/tso/jw01366003001_04101_00001-seg002_nrs1_first20_uncal.fits")
 
     Step.from_cmdline(
         [
             "calwebb_detector1",
             rtdata.input,
             "--steps.clean_flicker_noise.skip=False",
+            "--steps.clean_flicker_noise.single_mask=False",
+            "--steps.clean_flicker_noise.fit_method=median",
+            "--steps.clean_flicker_noise.background_method=median_image",
+            "--steps.clean_flicker_noise.mask_science_regions=False",
+            "--steps.clean_flicker_noise.n_sigma=1.5",
             "--steps.clean_flicker_noise.save_results=True",
             "--steps.clean_flicker_noise.save_background=True",
             "--steps.clean_flicker_noise.save_mask=True",
@@ -38,15 +43,15 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
         "rateints",
     ],
 )
-def test_niriss_soss_detector1_with_clean_flicker_noise(
+def test_nirspec_bots_detector1_with_clean_flicker_noise(
     run_detector1_with_clean_flicker_noise, rtdata_module, fitsdiff_default_kwargs, suffix
 ):
-    """Test detector1 pipeline for NIRISS SOSS with 1/f noise cleaning."""
+    """Test detector1 pipeline for NIRSpec BOTS with 1/f noise cleaning."""
     rtdata = rtdata_module
 
-    output_filename = f"jw02734002001_04101_00001-seg003_nis_{suffix}.fits"
+    output_filename = f"jw01366003001_04101_00001-seg002_nrs1_first20_{suffix}.fits"
     rtdata.output = output_filename
-    rtdata.get_truth(f"truth/test_niriss_soss_clean_flicker_noise/{output_filename}")
+    rtdata.get_truth(f"truth/test_nirspec_bots_clean_flicker_noise/{output_filename}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
