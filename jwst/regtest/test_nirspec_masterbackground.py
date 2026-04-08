@@ -71,25 +71,6 @@ def test_masterbkg_rerun(rtdata):
     assert not bad_slits, f"rerun failed for slits {bad_slits}"
 
 
-def test_masterbkg_corrpars(rtdata):
-    """Test for correction parameters"""
-    with dm.open(
-        rtdata.get_data("nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits")
-    ) as data:
-        mbs = MasterBackgroundMosStep()
-        corrected = mbs.run(data)
-
-        mbs.use_correction_pars = True
-        corrected_corrpars = mbs.run(data)
-
-    bad_slits = []
-    for idx, slits in enumerate(zip(corrected.slits, corrected_corrpars.slits)):
-        corrected_slit, corrected_corrpars_slit = slits
-        if not np.allclose(corrected_slit.data, corrected_corrpars_slit.data, equal_nan=True):
-            bad_slits.append(idx)
-    assert not bad_slits, f"correction_pars failed for slits {bad_slits}"
-
-
 @pytest.mark.parametrize("suffix", ["masterbg1d", "masterbg2d", "bkgx1d", "cal", "s2d", "x1d"])
 def test_nirspec_mos_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
     """Run spec2 with master background"""
