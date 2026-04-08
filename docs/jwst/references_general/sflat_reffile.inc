@@ -10,7 +10,7 @@ There are 3 types of NIRSpec SFLAT reference files:
 
 * :ref:`sflat_fixed_slit`
 * :ref:`sflat_msa`
-* IFU
+* :ref:`sflat_ifu`
 
 For each type, the primary HDU does not contain a data array.
 
@@ -76,3 +76,11 @@ using the WCS interface).
 The flat-field value for that pixel will then be obtained by
 interpolating within the wavelength and data arrays from the FAST_VARIATION
 table.
+
+.. _sflat_ifu:
+
+IFU
++++
+The IFU SFLAT file has essentially the same structure as
+:ref:`sflat_fixed_slit`, except that there is only one row in the
+FAST_VARIATION table.
