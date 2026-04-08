@@ -1,3 +1,5 @@
+"""Set data quality flag of last group in MIRI data."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -14,7 +16,7 @@ class LastFrameStep(Step):
     """
     Set data quality flags for the last group in MIRI ramps.
 
-    If the number of groups > 2, the GROUP
+    If the number of groups is greater than 2, the GROUP
     data quality flag for the final group will be set to DO_NOT_USE.
     """
 
@@ -25,7 +27,7 @@ class LastFrameStep(Step):
 
     def process(self, step_input):
         """
-        For MIRI data with more than 2 groups, set final group dq to DO_NOT_USE.
+        For MIRI data with more than 2 groups, set final group DQ to DO_NOT_USE.
 
         Parameters
         ----------
