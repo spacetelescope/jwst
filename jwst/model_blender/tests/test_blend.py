@@ -21,6 +21,11 @@ DETECTOR_NAMES = ["NRCA1", "NRCA2", "NRCA3"]
 CORONAGRAPHS = ["4QPM", "4QPM_1065", "4QPM_1140"]
 EXP_ONLYS = [True] * N_MODELS
 POLYNOMIAL_INFOS = [[{"degree": [1]}]] * N_MODELS
+WHEELTOLS = [
+    "within commanded tolerance",
+    "within commanded tolerance",
+    "outside calibration tolerance",
+]
 
 # even though this won't be in the schema the blender
 # copies the metadata from the first model so the
@@ -64,6 +69,7 @@ def _make_data():
         "meta.instrument.coronagraph": CORONAGRAPHS,
         "meta.instrument.name": INSTRUMENT_NAMES,
         "meta.instrument.detector": DETECTOR_NAMES,
+        "meta.instrument.filter_wheel_tolerance": WHEELTOLS,
         "meta.date": DATETIMES,
         "meta.observation.date": DATES,
         "meta.observation.date_beg": DATETIMES,
@@ -85,6 +91,7 @@ def _make_data():
         "meta.instrument.coronagraph": CORONAGRAPHS[0],
         "meta.instrument.name": INSTRUMENT_NAMES[0],
         "meta.instrument.detector": "MULTIPLE",
+        "meta.instrument.filter_wheel_tolerance": "outside calibration tolerance",
         "meta.date": DATETIMES[0],
         "meta.observation.date": DATES[1],
         "meta.observation.date_beg": DATETIMES[1],
