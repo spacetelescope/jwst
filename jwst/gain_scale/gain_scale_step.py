@@ -1,3 +1,5 @@
+"""Perform gain scale step."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
