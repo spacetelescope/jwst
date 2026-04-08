@@ -1,8 +1,8 @@
 .. _emicorr_step:
 
-===================
-MIRI EMI Correction
-===================
+=======================
+EMI Correction for MIRI
+=======================
 
 .. toctree::
    :maxdepth: 2
@@ -10,5 +10,4 @@ MIRI EMI Correction
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.emicorr
+   api_ref.rst

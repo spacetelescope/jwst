@@ -15,7 +15,7 @@ def test_detector1_miri(tmp_path):
 
     # Input is not modified
     np.testing.assert_allclose(input_model.data, input_model_copy.data)
-    assert input_model.meta.cal_step._instance == input_model_copy.meta.cal_step._instance
+    assert input_model.meta.cal_step.instance == input_model_copy.meta.cal_step.instance
 
     input_model.close()
     input_model_copy.close()

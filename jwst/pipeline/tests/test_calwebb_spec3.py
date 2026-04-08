@@ -190,5 +190,5 @@ def test_spec3_nrs_fs(tmp_cwd):
     assert Path("test_spec3_x1d.fits").exists()
 
     # make sure input model was not modified
-    assert input_model.meta.cal_step._instance == model_copy.meta.cal_step._instance
+    assert input_model.meta.cal_step.instance == model_copy.meta.cal_step.instance
     np.testing.assert_allclose(input_model.data, model_copy.data)

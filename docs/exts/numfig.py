@@ -105,3 +105,7 @@ def setup(app):
     app.connect("builder-inited", clean_env)
     app.connect('doctree-read', doctree_read)
     app.connect('doctree-resolved', doctree_resolved)
+    return {
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }

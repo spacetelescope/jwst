@@ -21,7 +21,7 @@ def run_detector1(rtdata_module):
 
     rtdata.get_data("niriss/imaging/jw01094001002_02107_00001_nis_uncal.fits")
 
-    # Run detector1 pipeline on an _uncal files
+    # Run detector1 pipeline on an _uncal files, skipping clean_flicker_noise
     args = [
         "calwebb_detector1",
         rtdata.input,
@@ -35,6 +35,7 @@ def run_detector1(rtdata_module):
         "--steps.charge_migration.skip=False",
         "--steps.charge_migration.save_results=True",
         "--steps.jump.save_results=True",
+        "--steps.clean_flicker_noise.skip=True",
         "--steps.ramp_fit.algorithm=OLS_C",
     ]
 
@@ -62,6 +63,7 @@ def run_detector1_multiprocess_rate(rtdata_module):
         "--steps.charge_migration.skip=False",
         "--steps.charge_migration.save_results=True",
         "--steps.jump.save_results=True",
+        "--steps.clean_flicker_noise.skip=True",
         "--steps.ramp_fit.algorithm=OLS_C",
         "--steps.ramp_fit.maximum_cores=2",  # Multiprocessing
     ]
@@ -90,6 +92,7 @@ def run_detector1_multiprocess_rate_save_opt(rtdata_module, resource_tracker):
         "--steps.charge_migration.skip=False",
         "--steps.charge_migration.save_results=True",
         "--steps.jump.save_results=True",
+        "--steps.clean_flicker_noise.skip=True",
         "--steps.ramp_fit.algorithm=OLS_C",
         "--steps.ramp_fit.maximum_cores=2",  # Multiprocessing
         "--steps.ramp_fit.save_opt=True",
@@ -121,6 +124,7 @@ def run_detector1_multiprocess_jump(rtdata_module):
         "--steps.charge_migration.save_results=True",
         "--steps.jump.save_results=True",
         "--steps.jump.maximum_cores=2",  # Multiprocessing
+        "--steps.clean_flicker_noise.skip=True",
         "--steps.ramp_fit.skip=True",
     ]
 
@@ -162,6 +166,7 @@ def run_detector1_with_likelihood_fitting(rtdata_module, resource_tracker):
         rtdata_module.input,
         "--output_file=jw01094001002_02107_00001_nis_likely",
         "--steps.ramp_fit.algorithm=LIKELY",
+        "--steps.clean_flicker_noise.skip=True",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)

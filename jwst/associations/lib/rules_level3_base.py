@@ -385,7 +385,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         -----
         This is a low-level shortcut into adding members, such as file names,
         to an association. All defined shortcuts and other initializations are
-        by-passed, resulting in a potentially unusable association.
+        bypassed, resulting in a potentially unusable association.
         """
         if product_name is None:
             raise AssociationNotValidError("Product name needs to be specified")

@@ -200,6 +200,5 @@ def test_copy(container):
         assert in_exp.meta.filename == out_exp.meta.filename
         assert np.all(in_exp.data == out_exp.data)
 
-        # Equal comparison fails when underlying instance is not a shallow copy
-        with pytest.raises(ValueError, match="truth value of an array"):
-            assert in_exp == out_exp
+        # Equal comparison returns False when underlying instance is not a shallow copy
+        assert in_exp != out_exp
