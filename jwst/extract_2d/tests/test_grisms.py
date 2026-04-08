@@ -568,7 +568,7 @@ def test_wfss_extract_custom_height():
     object 26 should have order 2 excluded at order 1 partial
     """
     imwcs, refs = setup_image_cat()
-    imwcs.meta.wcsinfo._instance["dispersion_direction"] = 1
+    imwcs.meta.wcsinfo.instance["dispersion_direction"] = 1
     extract_orders = [1]  # just extract the first order
     test_boxes = create_grism_bbox(
         imwcs, refs, mmag_extract=99.0, extract_orders=extract_orders, wfss_extract_half_height=5

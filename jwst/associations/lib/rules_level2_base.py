@@ -297,7 +297,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         -----
         This is a low-level shortcut into adding members, such as file names,
         to an association. All defined shortcuts and other initializations are
-        by-passed, resulting in a potentially unusable association.
+        bypassed, resulting in a potentially unusable association.
 
         `product_name_func` is used to define the product names instead of
         the default methods. The call signature is::

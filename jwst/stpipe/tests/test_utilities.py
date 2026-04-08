@@ -41,14 +41,14 @@ def test_record_query_step_status():
     model2.append(dm.MultiSpecModel())
     model2.append(dm.MultiSpecModel())
     record_step_status(model2, "test_step", success=False)
-    assert model2[0].meta.cal_step._instance["test_step"] == "SKIPPED"
-    assert model2[1].meta.cal_step._instance["test_step"] == "SKIPPED"
+    assert model2[0].meta.cal_step.instance["test_step"] == "SKIPPED"
+    assert model2[1].meta.cal_step.instance["test_step"] == "SKIPPED"
     assert query_step_status(model2, "test_step") == "SKIPPED"
 
     # modelcontainer case with at least one complete
     # currently the zeroth is checked, so this should return SKIPPED
     model2.append(dm.MultiSpecModel())
-    model2[2].meta.cal_step._instance["test_step"] = "COMPLETE"
+    model2[2].meta.cal_step.instance["test_step"] = "COMPLETE"
     assert query_step_status(model2, "test_step") == "SKIPPED"
 
     # test query not set

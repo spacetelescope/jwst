@@ -713,8 +713,8 @@ class ResampleImage(Resample):
             model.meta.wcsinfo.pc2_2 = transform.pc[1][1]
             model.meta.wcsinfo.ctype1 = w.wcs.ctype[0]
             model.meta.wcsinfo.ctype2 = w.wcs.ctype[1]
-            model.meta.wcsinfo.cunit1 = str(w.wcs.cunit[0])
-            model.meta.wcsinfo.cunit2 = str(w.wcs.cunit[1])
+            model.meta.wcsinfo.cunit1 = str(model.meta.wcs.output_frame.unit[0])
+            model.meta.wcsinfo.cunit2 = str(model.meta.wcs.output_frame.unit[1])
             model.meta.wcsinfo.radesys = w.wcs.radesys
 
         else:

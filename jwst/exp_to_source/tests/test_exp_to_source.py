@@ -25,7 +25,7 @@ def test_model_structure(run_exp_to_source):
             assert in_model.meta.filename in fnames
             for exposure in exposures:
                 assert (exposure.data == slit.data).all()
-                assert len(exposure.meta._instance) >= len(in_model.meta._instance)
+                assert len(exposure.meta.instance) >= len(in_model.meta.instance)
 
             assert outputs[str(slit.source_id)].meta.filename != in_model.meta.filename
 
