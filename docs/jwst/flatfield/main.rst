@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.flatfield.FlatFieldStep`
+:Class: `jwst.flatfield.flat_field_step.FlatFieldStep`
 :Alias: flat_field
 
 At its basic level this step flat-fields an input science dataset by dividing
@@ -17,7 +17,7 @@ to "COMPLETE" in the output science data.
 
 Imaging and Non-NIRSpec Spectroscopic Data
 ------------------------------------------
-Simple imaging data, usually in the form of an ImageModel, and some
+Simple imaging data, usually in the form of an `~stdatamodels.jwst.datamodels.ImageModel`, and some
 spectroscopic modes, use a straight-forward approach that involves applying
 a single flat-field reference file to the science image. The spectroscopic
 modes included in this category are NIRCam WFSS and Time-Series Grism,
@@ -75,7 +75,7 @@ that is divided into the SCI and ERR arrays is constructed on-the-fly
 by extracting the relevant section from the reference files, and then --
 for each pixel -- interpolating to the appropriate wavelength for that
 pixel.  This interpolation requires knowledge of the dispersion direction,
-which is read from keyword "DISPAXIS."  See the Reference File section for
+which is read from keyword "DISPAXIS."  See :ref:`flat_ref_nirspec_spec` for
 further details.
 
 For NIRSpec Fixed Slit (FS) and MOS exposures, an on-the-fly flat-field is
@@ -84,8 +84,8 @@ exposure. For NIRSpec IFU exposures, a single full-frame flat-field is
 constructed, which is applied to the entire science image.
 
 NIRSpec NRS_BRIGHTOBJ data are processed just like NIRSpec fixed slit
-data, except that NRS_BRIGHTOBJ data are stored in a CubeModel,
-rather than a MultiSlitModel.  A 2-D flat-field image is constructed
+data, except that NRS_BRIGHTOBJ data are stored in a `~stdatamodels.jwst.datamodels.CubeModel`,
+rather than a `~stdatamodels.jwst.datamodels.MultiSlitModel`.  A 2-D flat-field image is constructed
 on-the-fly as usual, but this image is then divided into each plane of
 the 3-D science data arrays.
 
