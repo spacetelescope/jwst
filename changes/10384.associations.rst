@@ -1,0 +1,1 @@
+Bypass unnecessary compare_asns calls to improve generator runtime. Factor-of-3 runtime improvement is realized for one large NRC_WFSS pool tested
