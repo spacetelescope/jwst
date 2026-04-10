@@ -4,7 +4,7 @@ from jwst.stpipe import Pipeline, Step
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel
-from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.datamodels import ModelContainer
 from jwst.stpipe.utilities import record_step_status
 
 
@@ -428,6 +428,20 @@ class PrepareOutputAsTypeStep(Step):
         log.info(f"Input data is {type(input_data)}")
 
         result = self.prepare_output(input_data, open_as_type=datamodels.IFUImageModel)
+        record_step_status(result, "prepare_output", True)
+        log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputAsRampStep(Step):
+    """Step to test the prepare_output method with a datamodel type specified."""
+    class_alias = "prepare_output_as_ramp"
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data, open_as_ramp=True)
         record_step_status(result, "prepare_output", True)
         log.info(f"Output data is {type(result)}")
 

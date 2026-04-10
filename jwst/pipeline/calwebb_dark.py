@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import logging
 
-from stdatamodels.jwst import datamodels
-
 from jwst.dq_init import dq_init_step
 from jwst.emicorr import emicorr_step
 from jwst.firstframe import firstframe_step
@@ -70,7 +68,7 @@ class DarkPipeline(Pipeline):
         log.info("Starting calwebb_dark ...")
 
         # open the input
-        input_data = self.prepare_output(input_data, open_as_type=datamodels.RampModel)
+        input_data = self.prepare_output(input_data, open_as_ramp=True)
 
         if input_data.meta.instrument.name == "MIRI":
             # process MIRI exposures;

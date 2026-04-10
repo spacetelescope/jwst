@@ -1,10 +1,12 @@
 """JWST-specific Step and Pipeline base classes."""
 
 import logging
+import warnings
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
 
+from stdatamodels.exceptions import ValidationWarning
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import JwstDataModel, read_metadata
 from stpipe import Pipeline, crds_client
@@ -12,6 +14,7 @@ from stpipe import Step as _Step
 
 from jwst import __version__, __version_commit__
 from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.lib import exposure_types
 from jwst.lib.suffix import remove_suffix
 from jwst.stpipe._cal_logs import _LOG_FORMATTER
 
@@ -147,7 +150,48 @@ class JwstStep(_Step):
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
 
-    def prepare_output(self, init, make_copy=None, open_models=True, open_as_type=None, **kwargs):
+    @staticmethod
+    def _ramp_type(input_data):
+        """
+        Get the appropriate ramp type for the input data.
+
+        Parameters
+        ----------
+        input_data : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
+            Input filename or datamodel.
+
+        Returns
+        -------
+        ramp_type : class
+            The ramp class appropriate to the data.  May be
+            `~stdatamodels.jwst.datamodels.RampModel`,
+            `~stdatamodels.jwst.datamodels.SuperstripeRampModel`, or
+            `~stdatamodels.jwst.datamodels.GuiderRawModel`.
+        """
+        if isinstance(input_data, datamodels.JwstDataModel):
+            exp_type = str(input_data.meta.exposure.type).lower()
+            nstripe = input_data.meta.subarray.num_superstripe
+        else:
+            metadata = read_metadata(input_data, flatten=True)
+            exp_type = str(metadata.get("meta.exposure.type", None)).lower()
+            nstripe = metadata.get("meta.subarray.num_superstripe", None)
+
+        if exp_type in exposure_types.FGS_GUIDE_EXP_TYPES:
+            return datamodels.GuiderRawModel
+        if nstripe is not None and nstripe > 0:
+            return datamodels.SuperstripeRampModel
+
+        return datamodels.RampModel
+
+    def prepare_output(
+        self,
+        init,
+        make_copy=None,
+        open_models=True,
+        open_as_type=None,
+        open_as_ramp=False,
+        **kwargs,
+    ):
         """
         Open the input data as a model, making a copy if necessary.
 
@@ -173,20 +217,28 @@ class JwstStep(_Step):
         ----------
         init : str, list, JwstDataModel, ModelContainer, or ModelLibrary
             Input data to open.
-        make_copy : bool or None
+        make_copy : bool or None, optional
             If True, a copy of the input will always be made.
             If False, a copy will never be made.  If None, a copy is
             conditionally made, depending on the input and whether the
             step is called in a standalone context.
-        open_models : bool
+        open_models : bool, optional
             If True and the input is a filename or list of filenames,
             then datamodels.open will be called to open the input.
             If False, the input is returned as is.
-        open_as_type : class or None
+        open_as_type : class or None, optional
             If provided, the input will be opened as the specified class
             before returning. Intended for use with simple datamodel input
             only: container types and associations should be handled directly
             in the calling code.
+        open_as_ramp : bool, optional
+            If True, the input will be opened as one of several ramp-type models,
+            depending on the metadata in the file.  If the exposure type indicates
+            a guider, the input is opened as `~stdatamodels.jwst.datamodels.GuiderRawModel`.
+            If the input has superstripes, it is opened as
+            `~stdatamodels.jwst.datamodels.SuperstripeRampModel`. Otherwise,
+            it is opened as `~stdatamodels.jwst.datamodels.RampModel`. Ignored
+            if ``open_as_type`` is not None.
         **kwargs
             Additional keyword arguments to pass to datamodels.open. Used
             only if the input is a str or list.
@@ -219,6 +271,9 @@ class JwstStep(_Step):
                 if open_as_type is not None:
                     # It is assumed the provided class is appropriate for the input.
                     input_models = open_as_type(init, **kwargs)
+                elif open_as_ramp:
+                    ramp_type = self._ramp_type(init)
+                    input_models = ramp_type(init, **kwargs)
                 else:
                     input_models = datamodels.open(init, **kwargs)
             else:
@@ -230,6 +285,31 @@ class JwstStep(_Step):
             if open_as_type is not None and type(init) is not open_as_type:
                 # This will make a shallow copy.
                 input_models = open_as_type(init, **kwargs)
+            elif open_as_ramp:
+                ramp_type = self._ramp_type(init)
+                if type(init) is ramp_type:
+                    input_models = init
+                else:
+                    # Try to convert; may raise ValidationWarning
+                    try:
+                        with warnings.catch_warnings():
+                            warnings.filterwarnings(
+                                "error",
+                                message=r"(?s:.*)Array datatype .* not compatible",
+                                category=ValidationWarning,
+                            )
+                            input_models = ramp_type(init, **kwargs)
+                    except ValidationWarning as err:
+                        log.error(err)
+
+                        # Inform the user and raise a clearer error message
+                        msg = (
+                            "Input data model is not compatible. "
+                            f"The file should be opened as a {ramp_type.__name__} "
+                            "before calling the step."
+                        )
+                        log.error(msg)
+                        raise TypeError(msg) from None
             else:
                 # Otherwise use the init model directly
                 input_models = init
