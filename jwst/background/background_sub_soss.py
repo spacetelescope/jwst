@@ -207,9 +207,7 @@ def subtract_soss_bkg(
                 continue
 
             scales[i] = np.nanmedian(ratio[valid_pixels])
-            rmse[i] = _rms_error(
-                data[mask][finite] - (template[mask][finite] * scales[i])
-            )
+            rmse[i] = _rms_error(data[mask][finite] - (template[mask][finite] * scales[i]))
 
         if np.sum(rmse) < best_rmse:
             best_rmse = np.sum(rmse)
