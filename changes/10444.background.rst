@@ -1,0 +1,1 @@
+Bug fix for non-finite values causing the SOSS background subtraction to skip
