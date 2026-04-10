@@ -660,6 +660,7 @@ def test_level1b(algorithm):
     l1b_model.update(input_model)
 
     with pytest.raises(
-        TypeError, match="The file should be opened as a RampModel before calling the step"
+        TypeError,
+        match="The file should be opened as a RampModel before calling the step",
     ):
         emicorr_step.EmiCorrStep.call(l1b_model, algorithm=algorithm)
