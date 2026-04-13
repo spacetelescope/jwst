@@ -1,1 +1,0 @@
-Add new step ``targ_centroid`` to spec2 pipeline for MIRI LRS fixed-slit and slitless data, off by default
