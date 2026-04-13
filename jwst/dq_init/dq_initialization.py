@@ -20,6 +20,7 @@ def do_dqinit(output_model, mask_model, user_dq=None):
     Parameters
     ----------
     output_model : `~stdatamodels.jwst.datamodels.RampModel` or \
+                   `~stdatamodels.jwst.datamodels.SuperstripeRampModel` or \
                    `~stdatamodels.jwst.datamodels.GuiderRawModel`
         The JWST datamodel to be corrected.
     mask_model : `~stdatamodels.jwst.datamodels.MaskModel`
@@ -30,6 +31,7 @@ def do_dqinit(output_model, mask_model, user_dq=None):
     Returns
     -------
     output_model : `~stdatamodels.jwst.datamodels.RampModel` or \
+                   `~stdatamodels.jwst.datamodels.SuperstripeRampModel` or \
                    `~stdatamodels.jwst.datamodels.GuiderRawModel`
         The corrected JWST datamodel, updated in place.
     """

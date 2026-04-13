@@ -37,7 +37,9 @@ class DQInitStep(Step):
 
         Parameters
         ----------
-        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel` or \
+                     `~stdatamodels.jwst.datamodels.SuperstripeRampModel` or \
+                     `~stdatamodels.jwst.datamodels.GuiderRawModel`
             Input JWST filename or datamodel.
 
         Returns
