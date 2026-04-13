@@ -1,1 +1,0 @@
-Remove legacy support for the old-style NIRSpec WCS. All processed data should now have a full slit-based WCS implementation.
