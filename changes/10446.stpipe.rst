@@ -1,0 +1,1 @@
+Add an option (``open_as_ramp``) to ``Step.prepare_output`` to open the input as a ramp-type model appropriate to the data.
