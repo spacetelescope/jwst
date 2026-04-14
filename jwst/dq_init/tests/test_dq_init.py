@@ -31,7 +31,7 @@ def test_dq_im_default(xstart, ystart, xsize, ysize, nints, ngroups, instrument,
     )
 
     # create a MaskModel for the dq input mask
-    dq, dq_def = helpers.make_maskmodel(ysize, xsize)
+    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
 
     # edit reference file with known bad pixel values
     dq[100, 100] = 2  # Dead pixel
@@ -92,7 +92,7 @@ def test_dq_im_wrong_shape():
     dm_ramp = helpers.make_rawramp(
         instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type
     )
-    dq, dq_def = helpers.make_maskmodel(ysize, xsize)
+    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
 
     ref_data = datamodels.MaskModel(dq=dq, dq_def=dq_def)
     ref_data.meta.instrument.name = instrument
@@ -121,7 +121,7 @@ def test_groupdq():
     dm_ramp = helpers.make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart)
 
     # create a MaskModel for the dq input mask
-    dq, dq_def = helpers.make_maskmodel(ysize, xsize)
+    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
 
     # write mask model
     ref_data = datamodels.MaskModel(dq=dq, dq_def=dq_def)
@@ -179,7 +179,7 @@ def test_dq_subarray():
     im.meta.subarray.ysize = ysize
 
     # create full size mask model
-    dq, dq_def = helpers.make_maskmodel(fullysize, fullxsize)
+    dq, dq_def = helpers.make_dq_arrays(fullysize, fullxsize)
 
     # place dq flags in dq array that would be in subarray
     # MASK1550 file has colstart=1, rowstart=467
@@ -229,7 +229,7 @@ def test_dq_add1_groupdq():
     dm_ramp = helpers.make_rampmodel(nints, ngroups, ysize, xsize)
 
     # create a MaskModel for the dq input mask
-    dq, dq_def = helpers.make_maskmodel(ysize, xsize)
+    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
 
     # write reference file with known bad pixel values
 
@@ -317,7 +317,7 @@ def test_fullstep_userdq(tmp_path):
     dm_ramp.meta.observation.time = "00:00:00"
 
     # create a MaskModel for the dq input mask
-    dq, dq_def = helpers.make_maskmodel(ysize, xsize)
+    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
 
     # write mask model
     ref_data = datamodels.MaskModel(dq=dq, dq_def=dq_def)
