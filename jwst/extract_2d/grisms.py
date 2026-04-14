@@ -18,7 +18,7 @@ from stdatamodels.jwst.transforms.models import IdealToV2V3
 
 from jwst.assign_wcs import util
 from jwst.lib.catalog_utils import read_source_catalog
-from jwst.lib.pipe_utils import generate_substripe_ranges
+from jwst.lib.stripe_utils import generate_substripe_ranges
 
 log = logging.getLogger(__name__)
 
