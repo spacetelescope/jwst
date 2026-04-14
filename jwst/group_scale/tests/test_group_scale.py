@@ -121,7 +121,8 @@ def test_level1b(make_rampmodel):
     l1b_model.update(model)
 
     with pytest.raises(
-        TypeError, match="The file should be opened as a RampModel before calling the step"
+        TypeError,
+        match="The file should be opened as a RampModel before calling the step",
     ):
         GroupScaleStep.call(l1b_model)
 
