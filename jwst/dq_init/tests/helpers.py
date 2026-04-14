@@ -10,7 +10,7 @@ from stdatamodels.jwst.datamodels import (
 __all__ = [
     "make_rawramp",
     "make_rampmodel",
-    "make_maskmodel",
+    "make_dq_arrays",
     "make_superstripe_model",
     "one_stripe_mask",
     "make_superstripe_mask_model",
@@ -110,7 +110,7 @@ def make_rampmodel(nints=1, ngroups=5, ysize=1024, xsize=1032):
     return dm_ramp
 
 
-def make_maskmodel(ysize, xsize):
+def make_dq_arrays(ysize, xsize):
     """
     Make dq and dq_def arrays for use in creating a DQ mask model.
 
@@ -128,9 +128,10 @@ def make_maskmodel(ysize, xsize):
     dq_def : ndarray
         The corresponding DQ definition table.
     """
-    # create a mask model for the dq_init step
+    # create a DQ array to use in a mask model
     csize = (ysize, xsize)
     dq = np.zeros(csize, dtype=int)
+
     # define a dq_def extension
     mask = MaskModel()
 
