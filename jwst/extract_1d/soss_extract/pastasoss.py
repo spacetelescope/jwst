@@ -8,6 +8,8 @@ from astropy.modeling.polynomial import Polynomial2D
 from scipy.interpolate import interp1d
 from stpipe import crds_client
 
+from jwst.lib.exposure_types import NIS_SOSS_SUPPORTED_SUBARRAYS
+
 log = logging.getLogger(__name__)
 
 DEFAULT_CRDS_PARAMS = {
@@ -583,16 +585,11 @@ def get_soss_wavemaps(
         wavemap[:subarray_ymin, :] = wavemap[subarray_ymin]
 
         # Trim to subarray
-        if subarray in [
-            "SUBSTRIP256",
-            "SUB17STRIPE_SOSS",
-            "SUB60STRIPE_SOSS",
-            "SUB204STRIPE_SOSS",
-            "SUB680STRIPE_SOSS",
-        ]:
-            wavemap = wavemap[subarray_ymin:soss_xdim, :]
         if subarray == "SUBSTRIP96":
             wavemap = wavemap[subarray_ymin : subarray_ymin + 96, :]
+        elif subarray in NIS_SOSS_SUPPORTED_SUBARRAYS:
+            wavemap = wavemap[subarray_ymin:soss_xdim, :]
+
         wavemaps.append(wavemap)
         traces.append(spectrace)
 
