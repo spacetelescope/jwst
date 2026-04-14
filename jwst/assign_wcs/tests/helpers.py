@@ -1,7 +1,7 @@
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 
-from jwst.lib.pipe_utils import generate_substripe_ranges
+from jwst.lib.stripe_utils import generate_substripe_ranges
 
 # Ordered from lowest to highest subarray row (= order in which stripes are
 # packed into the packed subarray by generate_stripe_array).  The regions
