@@ -85,7 +85,7 @@ def test_log_tracked_resources_spec3(log_tracked_resources, run_tso_spec3):
     log_tracked_resources()
 
 
-@pytest.mark.parametrize("suffix", ["calints", "flat_field", "srctype", "x1dints"])
+@pytest.mark.parametrize("suffix", ["calints", "flat_field", "srctype", "x1dints", "bsubints"])
 def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
     rtdata = rtdata_module

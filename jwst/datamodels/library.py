@@ -349,7 +349,7 @@ def _read_meta_from_open_model(model, flatten):
         Parameters
         ----------
         tree : dict
-            An asdf-like nested dictionary structure, e.g. model._instance.
+            An asdf-like nested dictionary structure, e.g. model.instance.
 
         Returns
         -------
@@ -384,4 +384,4 @@ def _read_meta_from_open_model(model, flatten):
                 continue  # skip unsupported types
         return new_tree
 
-    return recurse(model._instance)  # noqa: SLF001
+    return recurse(model.instance)

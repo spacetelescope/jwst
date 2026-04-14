@@ -179,5 +179,5 @@ def test_tso3_single_model_input(tmp_path):
         assert (tmp_path / filename).exists()
 
     # Input is not modified
-    assert input_model.meta.cal_step._instance == model_copy.meta.cal_step._instance
+    assert input_model.meta.cal_step.instance == model_copy.meta.cal_step.instance
     np.testing.assert_allclose(input_model.data, model_copy.data)

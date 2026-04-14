@@ -1,1 +1,0 @@
-Add wfss_mask parameter to allow user-supplied background mask for wfss data

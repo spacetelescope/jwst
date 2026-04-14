@@ -1,1 +1,0 @@
-Added support of MIRI WFSS mode to calwebb_spec2
