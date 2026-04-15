@@ -1,1 +1,0 @@
-Refactor to skip unnecessary data copies and remove the ``subtract_images`` and ``asn_intake`` modules.

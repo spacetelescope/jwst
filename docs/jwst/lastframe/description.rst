@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.lastframe.LastFrameStep`
+:Class: `jwst.lastframe.lastframe_step.LastFrameStep`
 :Alias: lastframe
 
 The last frame correction step is only applied to MIRI data and flags the
@@ -14,6 +14,10 @@ No flags are added if ``NGROUPS <= 2``, because doing so would leave too few goo
 groups to work with in later steps.
 
 Only the GROUPDQ array is modified. The SCI, ERR, and PIXELDQ arrays are unchanged.
+
+Step Arguments
+--------------
+The ``lastframe`` step does not have any step-specific arguments.
 
 Reference Files
 ---------------

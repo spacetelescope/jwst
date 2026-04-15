@@ -393,6 +393,18 @@ class DMSBaseMixin(ACIDMixin):
         return items
 
     @property
+    def item_ids(self):
+        """
+        Set of all item IDs in all products of this association.
+
+        Returns
+        -------
+        set
+            Set of item IDs.
+        """
+        return {item["filename"] for item in self.from_items}
+
+    @property
     def member_ids(self):
         """
         Set of all member IDs in all products of this association.
@@ -497,7 +509,7 @@ class DMSBaseMixin(ACIDMixin):
         bool
             True if item is a member.
         """
-        return item in self.from_items
+        return item["filename"] in self.item_ids
 
     def is_item_ami(self, item):
         """

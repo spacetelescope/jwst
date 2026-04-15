@@ -1,6 +1,5 @@
-#
-#  Module for the lastframe correction for MIRI science data sets
-#
+"""Utility functions for the lastframe correction for MIRI science data sets."""
+
 import logging
 
 from stdatamodels.jwst.datamodels import dqflags
@@ -20,12 +19,12 @@ def do_correction(output):
 
     Parameters
     ----------
-    output : DataModel
+    output : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data to be corrected
 
     Returns
     -------
-    output : DataModel
+    output : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Lastframe-corrected science data
     """
     # Save some data params for easy use later
