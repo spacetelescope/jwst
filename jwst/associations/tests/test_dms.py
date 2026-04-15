@@ -22,7 +22,7 @@ def dms_registry():
 @pytest.fixture(scope="module")
 def dms_asns(dms_registry):
     """Create basic associations"""
-    result = dms_registry.match("item")
+    result = dms_registry.match({"filename": "item.fits"})
     return result
 
 

@@ -21,7 +21,7 @@ def do_correction(output, bright_use_group1=False):
 
     Parameters
     ----------
-    output : DataModel
+    output : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data to be corrected
     bright_use_group1 : bool
         If True, setting first group data quality flag to DO_NOT_USE will not be
@@ -29,7 +29,7 @@ def do_correction(output, bright_use_group1=False):
 
     Returns
     -------
-    output : DataModel
+    output : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Firstframe-corrected science data
     """
     # Save some data params for easy use later

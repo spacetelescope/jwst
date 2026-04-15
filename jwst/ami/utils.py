@@ -1044,7 +1044,7 @@ def degrees_per_pixel(datamodel):
     float
         Pixel scale in degrees/pixel
     """
-    wcsinfo = datamodel.meta.wcsinfo._instance  # noqa: SLF001
+    wcsinfo = datamodel.meta.wcsinfo.instance
     if "cd1_1" in wcsinfo and "cd1_2" in wcsinfo and "cd2_1" in wcsinfo and "cd2_2" in wcsinfo:
         cd11 = datamodel.meta.wcsinfo.cd1_1
         cd12 = datamodel.meta.wcsinfo.cd1_2

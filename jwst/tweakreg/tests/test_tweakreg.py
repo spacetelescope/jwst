@@ -3,8 +3,10 @@ import os
 
 import asdf
 import numpy as np
+import photutils
 import pytest
-from astropy.table import Table
+from astropy.table import QTable, Table
+from astropy.utils import minversion
 from astropy.utils.data import get_pkg_data_filename
 from astropy.wcs import WCS
 from gwcs.wcstools import grid_from_bounding_box
@@ -20,11 +22,22 @@ BKG_LEVEL = 0.001
 N_EXAMPLE_SOURCES = 21
 N_CUSTOM_SOURCES = 15
 REFCAT = "GAIADR3"
+PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
+
+# The tweakreg catalog output always uses 'xcentroid'/'ycentroid',
+# but _rename_catalog_columns and user-supplied catalogs may use
+# either the old or new photutils column names.
+if PHOTUTILS_GE_3:
+    X_NAME = "x_centroid"
+    Y_NAME = "y_centroid"
+else:
+    X_NAME = "xcentroid"
+    Y_NAME = "ycentroid"
 
 
 @pytest.fixture
 def mock_source_catalog():
-    columns = ["id", "xcentroid", "ycentroid", "flux"]
+    columns = ["id", X_NAME, Y_NAME, "flux"]
     catalog = Table(names=columns, dtype=(int, float, float, float))
     catalog.add_row([1, 100.0, 100.0, 100.0])
 
@@ -34,9 +47,10 @@ def mock_source_catalog():
 @pytest.mark.parametrize("inplace", [True, False])
 def test_rename_catalog_columns(mock_source_catalog, inplace):
     """
-    Test that a catalog with 'xcentroid' and 'ycentroid' columns
-    passed to _renamed_catalog_columns successfully renames those columns
-    to 'x' and 'y' (and does so "inplace" modifying the input catalog)
+    Test that a catalog with 'x_centroid'/'xcentroid' and
+    'y_centroid'/'ycentroid' columns passed to _renamed_catalog_columns
+    successfully renames those columns to 'x' and 'y' (and does so
+    "inplace" modifying the input catalog)
     """
     renamed_catalog = tweakreg_step._rename_catalog_columns(mock_source_catalog)
 
@@ -46,18 +60,19 @@ def test_rename_catalog_columns(mock_source_catalog, inplace):
     else:
         catalog = renamed_catalog
 
-    assert "xcentroid" not in catalog.colnames
-    assert "ycentroid" not in catalog.colnames
+    assert X_NAME not in catalog.colnames
+    assert Y_NAME not in catalog.colnames
     assert "x" in catalog.colnames
     assert "y" in catalog.colnames
 
 
-@pytest.mark.parametrize("missing", ["x", "y", "xcentroid", "ycentroid"])
+@pytest.mark.parametrize("missing", ["x", "y", X_NAME, Y_NAME])
 def test_rename_catalog_columns_invalid(mock_source_catalog, missing):
     """
-    Test that passing a catalog that is missing either "x" or "y"
-    (or "xcentroid" and "ycentroid" which is renamed to "x" or "y")
-    results in an exception indicating that a required column is missing
+    Test that passing a catalog that is missing either "x" or "y" (or
+    "x_centroid"/"xcentroid" and "y_centroid"/"ycentroid" which is
+    renamed to "x" or "y") results in an exception indicating that a
+    required column is missing
     """
     # if the column we want to remove is not in the table, first run
     # rename to rename columns this should add the column we want to remove
@@ -481,7 +496,7 @@ def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input, finder, l
 
     watcher.assert_seen()
     assert len(cat) == 0
-    assert type(cat) == Table
+    assert type(cat) == QTable
 
 
 def test_make_tweakreg_catalog_graceful_fail_bad_background(example_input, log_watcher):
@@ -497,4 +512,4 @@ def test_make_tweakreg_catalog_graceful_fail_bad_background(example_input, log_w
 
     watcher.assert_seen()
     assert len(cat) == 0
-    assert type(cat) == Table
+    assert type(cat) == QTable

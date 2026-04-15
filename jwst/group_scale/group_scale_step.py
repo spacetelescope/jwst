@@ -1,3 +1,5 @@
+"""Perform the group scale step."""
+
 import logging
 import warnings
 

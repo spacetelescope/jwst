@@ -51,7 +51,7 @@ class SourceModelContainer(ModelContainer):
             models = []
             for exposure in init.exposures:
                 model = SlitModel()
-                model._instance.update(exposure._instance)  # noqa: SLF001
+                model.instance.update(exposure.instance)
                 models.append(model)
             self._models = models
             self._multiexposure = init
@@ -70,7 +70,7 @@ class SourceModelContainer(ModelContainer):
         """  # noqa: D205  # numpydoc ignore=SS06
         # Reapply models back to the exposures
         for exposure, model in zip(self._multiexposure.exposures, self._models, strict=True):
-            exposure._instance.update(model._instance)  # noqa: SLF001
+            exposure.instance.update(model.instance)
 
         return self._multiexposure
 
