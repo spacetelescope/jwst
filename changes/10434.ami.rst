@@ -1,0 +1,1 @@
+Add U4COORD and V4COORD to the oifits q4 table
