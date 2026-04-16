@@ -61,6 +61,12 @@ def _build_fit_arrays(observed_slit, simul_slit):
         & ((dq & 1) == 0)  # dq bit 0 is DO_NOT_USE
     )
 
+    if not np.any(mask):
+        raise SlitFitError(
+            "No valid pixels found after masking. Check that simul_slit has nonzero signal, "
+            "valid wavelengths, and that observed_slit has finite data with no DO_NOT_USE pixels."
+        )
+
     lam_ref = float(np.median(wavelength[mask]))
     return data[mask], sim[mask], wavelength[mask], lam_ref
 
@@ -176,45 +182,44 @@ class SlitPolynomialFitter:
 
 class SlitIterativePolynomialFitter:
     """
-    Iteratively fit polynomials of increasing degree to a WFSS slit.
+    Fit a polynomial spectral shape to a WFSS slit by incrementally adding terms.
 
-    Fits are performed successively: after each step the current simulated
-    spectrum is multiplied by the fitted polynomial before the next fit is
-    performed.  For example, ``degree_sequence=[1, 5]`` first fits a
-    degree-1 polynomial to capture the broad spectral shape, then fits a
-    degree-5 polynomial to the residuals, and returns their product as the
-    final spectral shape function.
+    Starting from a constant (degree-0) scaling, one coefficient at a time is added
+    up to ``max_degree``.  At each step ``k`` the previously fitted coefficients are
+    held fixed and only the new ``c_k * (λ - λ_ref)^k`` term is determined by a
+    1-D linear least-squares solve::
+
+        c_k = (sim * (λ - λ_ref)^k) · residual_k
+              ─────────────────────────────────────
+              ‖ sim * (λ - λ_ref)^k ‖²
+
+    where ``residual_k = data - sim * p_{k-1}(λ)``.  The result is a single
+    polynomial of degree at most ``max_degree``.
+
+    Because each step is a 1-D solve, the previous solution acts as a warm start:
+    each new term explains only the multiplicative residual left by all lower-degree
+    terms, without re-fitting those coefficients.
 
     Parameters
     ----------
-    degree_sequence : list of int
-        Sequence of polynomial degrees to fit in order.
+    max_degree : int
+        Maximum degree of the fitted polynomial.
     improvement_threshold : float or None, optional
         Minimum required relative improvement in the residual sum-of-squares
-        (RSS) for each successive fit step to be accepted.  Computed as
-        ``(RSS_before - RSS_after) / RSS_before``.  If a fit step improves
-        the RSS by less than this fraction, that polynomial is rejected and
-        iteration stops early.  ``None`` (default) disables the check and
-        always applies every step in ``degree_sequence``.
+        (RSS) for each successive term (degree ≥ 1) to be accepted.  Computed as
+        ``(RSS_before - RSS_after) / RSS_before``.  The constant term (degree 0)
+        is always fitted.  If a higher-degree term does not meet the threshold,
+        iteration stops and the polynomial built so far is returned.  ``None``
+        (default) disables early stopping.
     """
 
-    def __init__(self, degree_sequence, improvement_threshold=None):
-        self.degree_sequence = list(degree_sequence)
+    def __init__(self, max_degree, improvement_threshold=None):
+        self.max_degree = max_degree
         self.improvement_threshold = improvement_threshold
 
     def __call__(self, observed_slit, simul_slit):
         """
-        Scale the simulation by a product of successively fitted polynomials.
-
-        At each step the current simulated spectrum (initialised to
-        ``simul_slit.data``) is multiplied by the polynomial found at the previous step,
-        and a new polynomial ``p_i`` is fitted to::
-
-            min  ||observed.data  -  current_sim * p_i(λ)||²
-
-        The function returned is the product of all per-step polynomials::
-
-            f(λ) = p_1(λ) · p_2(λ) · … · p_n(λ)
+        Fit a polynomial spectral shape by incrementally adding one term at a time.
 
         Parameters
         ----------
@@ -227,8 +232,7 @@ class SlitIterativePolynomialFitter:
         Returns
         -------
         f_lam : callable
-            A function ``f_lam(wavelength)`` that evaluates the combined
-            best-fit polynomial spectral shape.
+            A function ``f_lam(wavelength)`` that evaluates the best-fit polynomial.
 
         Raises
         ------
@@ -237,7 +241,7 @@ class SlitIterativePolynomialFitter:
             from ``simul_slit.data``.
         SlitFitError
             If the number of valid pixels (after masking) is smaller than
-            ``max(self.degree_sequence) + 1``.
+            ``self.max_degree + 1``.
 
         Notes
         -----
@@ -252,48 +256,46 @@ class SlitIterativePolynomialFitter:
         data_masked, sim_masked, lam, lam_ref = _build_fit_arrays(observed_slit, simul_slit)
 
         n_valid = len(data_masked)
-        max_degree = max(self.degree_sequence)
-        if n_valid < max_degree + 1:
+        if n_valid < self.max_degree + 1:
             raise SlitFitError(
-                f"Only {n_valid} valid pixel(s) available for a degree-{max_degree} polynomial fit "
-                f"(need at least {max_degree + 1}). Reduce the fitting degree "
+                f"Only {n_valid} valid pixel(s) available for a degree-{self.max_degree} "
+                f"polynomial fit (need at least {self.max_degree + 1}). Reduce the fitting degree "
                 "or check the input data."
             )
 
         dlam = lam - lam_ref
-        f_lam_factors = []
-        current_sim_masked = sim_masked.copy()
-        for degree in self.degree_sequence:
-            design_matrix = np.column_stack(
-                [current_sim_masked * dlam**k for k in range(degree + 1)]
-            )
-            coeffs, *_ = np.linalg.lstsq(design_matrix, data_masked, rcond=None)
-            f_k = _make_poly(coeffs.copy(), lam_ref)
+        coeffs = np.zeros(self.max_degree + 1)
+        current_poly_vals = np.zeros(n_valid)
 
-            if self.improvement_threshold is not None:
-                rss_before = float(np.sum((data_masked - current_sim_masked) ** 2))
-                rss_after = float(np.sum((data_masked - current_sim_masked * f_k(lam)) ** 2))
+        for k in range(self.max_degree + 1):
+            residual = data_masked - sim_masked * current_poly_vals
+            col = sim_masked * dlam**k
+            col_sq = float(np.dot(col, col))
+            if col_sq == 0:
+                break
+            # Because the model is linear in the coefficients, the optimal c_k can be found
+            # by a simple projection of the residual onto the new column
+            c_k = float(np.dot(col, residual)) / col_sq
+
+            if k >= 1 and self.improvement_threshold is not None:
+                # Compute residual sum of squares
+                rss_before = float(np.dot(residual, residual))
+                new_residual = residual - c_k * col
+                rss_after = float(np.dot(new_residual, new_residual))
                 relative_improvement = (
                     (rss_before - rss_after) / rss_before if rss_before > 0 else 0.0
                 )
                 if relative_improvement < self.improvement_threshold:
                     log.debug(
-                        f"Degree-{degree} fit rejected: relative RSS improvement "
-                        f"{relative_improvement:.3f} < threshold {self.improvement_threshold:.3f}"
+                        f"Degree-{k} fit rejected: relative RSS improvement "
+                        f"{relative_improvement:.6f} < threshold {self.improvement_threshold:.6f}"
                     )
                     break
 
-            f_lam_factors.append(f_k)
-            current_sim_masked = current_sim_masked * f_k(lam)
+            coeffs[k] = c_k
+            current_poly_vals = current_poly_vals + c_k * dlam**k
 
-        def f_lam(wavelength, _factors=f_lam_factors):
-            wavelength = np.asarray(wavelength)
-            result = np.ones(wavelength.shape, dtype=float)
-            for f in _factors:
-                result *= f(wavelength)
-            return result
-
-        return f_lam
+        return _make_poly(coeffs, lam_ref)
 
 
 def apply_flam_to_slit(sim_data, wavelength, f_lam):

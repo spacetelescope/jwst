@@ -513,9 +513,8 @@ def contam_corr(
     simul_slits = datamodels.MultiSlitModel()
     simul_slits.update(input_model, only="PRIMARY")
     if polyfit_degree is not None:
-        degree_sequence = np.arange(1, polyfit_degree + 1)
         fitter = SlitIterativePolynomialFitter(
-            degree_sequence, improvement_threshold=improvement_threshold
+            polyfit_degree, improvement_threshold=improvement_threshold
         )
 
     # Match simulated slits to observed, apply polynomial fitting if requested,
