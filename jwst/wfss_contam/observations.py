@@ -264,7 +264,8 @@ class Observation:
                 [
                     chunk_xs,
                     chunk_ys,
-                    chunk_fluxes,
+                    chunk_fluxes[np.newaxis, :],  # add extra axis for N=1 band dimension
+                    np.array([1]),  # band wavelengths are trivial for now
                     chunk_source_ids,
                     order,
                     wmin,
