@@ -163,6 +163,15 @@ def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
     """
     Calculate the median of a moving window over the zeroth axis of an N-d array.
 
+    Slide a window of size w over the array along axis 0, and for each position,
+    calculate the median of the values inside that window (across axis 0 only).
+    The result at each step is stored in the center position of the window,
+    producing an output array with the same shape as the input.
+
+    Because the window cannot fully overlap the data at the beginning and end,
+    those edge positions are filled with the nearest computed median value to
+    avoid missing data.
+
     Parameters
     ----------
     x : ndarray
