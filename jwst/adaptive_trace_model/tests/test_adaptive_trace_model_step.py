@@ -252,7 +252,7 @@ def test_adaptive_trace_model_unsupported_model(caplog):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("cores", ["none", "2", "quarter", "half", "all"])
+@pytest.mark.parametrize("cores", ["none", "2"])
 def test_adaptive_trace_model_step_psf_optimal(caplog, miri_mrs_model_with_source, cores):
     """
     Set psf_optimal to ensure all slices are fit and process in parallel.

@@ -82,17 +82,16 @@ Slope values higher than a threshold value (step parameter ``slope_limit``) indi
 a compact source region.  The trace model will be evaluated for these regions, with some
 padding for nearby pixels; it will not be evaluated in other regions.
 
-If no oversampling is desired (i.e. the ``oversample`` parameter is set to 1.0), then the trace
+If no oversampling is desired (i.e., the ``oversample`` parameter is set to 1.0), then the trace
 model is evaluated at every input pixel in a compact source region to create a wavelength-dependent
 spatial profile.  This image is stored in the output datamodel, in the ``trace_model`` attribute.
 Regions for which a spline model could not be computed, or which did not meet the compact source
 criteria, are set to NaN in the image. The step then returns without further changes to the input
 datamodel.  The rest of the algorithm description, below, applies only to oversampling.
 
-The trace modeling portion of the code can optionally use multiprocessing to speed up this
-portion of the step. If multiprocessing is enabled, the spectral regions (i.e. each slice or slit)
-will be handled independently in separate processes.
-
+The trace modeling portion of the code can optionally use multiprocessing to improve
+runtime by modeling the spectral regions (i.e., each slice or slit) independently in
+separate processes.
 
 Oversample the Flux
 ^^^^^^^^^^^^^^^^^^^
