@@ -563,6 +563,8 @@ class RawOifits:
         oim.q4["V2COORD"] = self.quads[:, 1, 0]
         oim.q4["U3COORD"] = self.quads[:, 2, 1]
         oim.q4["V3COORD"] = self.quads[:, 2, 0]
+        oim.q4["U4COORD"] = -(self.quads[:, 1, 0] + self.quads[:, 2, 0])  # -(v2coord + v3coord)
+        oim.q4["V4COORD"] = -(self.quads[:, 1, 1] + self.quads[:, 2, 1])  # -(u2coord + u3coord)
         oim.q4["STA_INDEX"] = self._format_staindex(self.qholes)
         oim.q4["FLAG"] = flag_q4
 
@@ -665,6 +667,8 @@ class RawOifits:
                     ("V2COORD", "<f8"),
                     ("U3COORD", "<f8"),
                     ("V3COORD", "<f8"),
+                    ("U4COORD", "<f8"),
+                    ("V4COORD", "<f8"),
                     ("STA_INDEX", "<i2", (4,)),
                     ("FLAG", "i1"),
                 ]
