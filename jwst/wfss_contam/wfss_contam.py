@@ -15,7 +15,7 @@ from stdatamodels.jwst.transforms.models import (
 from jwst.lib.catalog_utils import read_source_catalog
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
-from jwst.wfss_contam.wavefit import SlitFitError, SlitPolynomialFitter, apply_flam_to_slit
+from jwst.wfss_contam.wavefit import SlitFitError, SlitIterativePolynomialFitter, apply_flam_to_slit
 
 log = logging.getLogger(__name__)
 
@@ -338,6 +338,7 @@ def contam_corr(
     max_pixels_per_chunk=5e4,
     oversample_factor=2,
     polyfit_degree=None,
+    improvement_threshold=None,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -375,6 +376,9 @@ def contam_corr(
     polyfit_degree : int, optional
         Degree of polynomial fit to spectral shape. If None (the default), do not attempt
         polynomial fitting and just use the flat-spectrum simulated slit.
+    improvement_threshold : float, optional
+        Minimum relative RSS improvement required to accept each successive polynomial fit step.
+        If None (the default), all steps in the degree sequence are always applied.
 
     Returns
     -------
@@ -509,7 +513,10 @@ def contam_corr(
     simul_slits = datamodels.MultiSlitModel()
     simul_slits.update(input_model, only="PRIMARY")
     if polyfit_degree is not None:
-        fitter = SlitPolynomialFitter(polyfit_degree)
+        degree_sequence = np.arange(1, polyfit_degree + 1)
+        fitter = SlitIterativePolynomialFitter(
+            degree_sequence, improvement_threshold=improvement_threshold
+        )
 
     # Match simulated slits to observed, apply polynomial fitting if requested,
     # and update obs.simulated_slits in-place so the full-frame reconstruction below
@@ -528,7 +535,7 @@ def contam_corr(
             this_simul = None
 
         if this_simul is not None and polyfit_degree is not None:
-            log.info(
+            log.debug(
                 f"Fitting polynomial of degree {polyfit_degree} to the simulated slit "
                 f"for source ID {slit.source_id}, order {slit.meta.wcsinfo.spectral_order}"
             )
