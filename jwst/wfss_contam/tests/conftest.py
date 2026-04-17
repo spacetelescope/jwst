@@ -54,6 +54,47 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
     return model
 
 
+CUBE_BAND_WAVELENGTHS = np.array([1.75, 1.90, 2.05, 2.20], dtype=np.float32)
+CUBE_DIR_IMAGE = "direct_image_cube.fits"
+
+
+@pytest.fixture(scope="module")
+def direct_image_cube_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
+    """
+    Build a multi-band direct image cube and save it as an IFUCubeModel.
+
+    Each wavelength plane is a copy of the direct image with a different linear
+    gradient added, so the planes are not identical and tests can distinguish
+    which wavelength was sampled.  Wavelengths are stored in the ``wavetable``
+    following the convention used by ``cube_build``.
+
+    Returns
+    -------
+    IFUCubeModel
+        Multi-band direct image with one plane per entry in
+        ``CUBE_BAND_WAVELENGTHS``, saved to ``CUBE_DIR_IMAGE``.
+    """
+    ny, nx = direct_image.shape
+    y, x = np.mgrid[:ny, :nx]
+
+    n_bands = len(CUBE_BAND_WAVELENGTHS)
+    cube = np.zeros((n_bands, ny, nx), dtype=np.float32)
+    for i, wl in enumerate(CUBE_BAND_WAVELENGTHS):
+        # Scale the gradient by wavelength so each plane is distinct
+        gradient = wl * x * y / 5000.0
+        cube[i] = direct_image + gradient
+
+    waves = CUBE_BAND_WAVELENGTHS
+    num = len(waves)
+    wavetable = np.array([(waves[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
+
+    model = dm.IFUCubeModel(data=cube, wavetable=wavetable)
+    model.meta.wcs = create_imaging_wcs("F200W")
+    model.save(CUBE_DIR_IMAGE)
+
+    return model
+
+
 @pytest.fixture(scope="module")
 def segmentation_map(direct_image):
     """
