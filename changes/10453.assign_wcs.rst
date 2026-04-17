@@ -1,0 +1,1 @@
+For NIRCam DHS data, only generate transforms for stripes present in both the regions and specwcs reference files.
