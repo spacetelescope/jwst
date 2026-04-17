@@ -7,7 +7,8 @@ FLAT Reference File
 :Data model: `~stdatamodels.jwst.datamodels.FlatModel`
 
 The FLAT reference file contains pixel-by-pixel detector response values.
-It is used for all instrument modes except the NIRSpec spectroscopic modes.
+It is used for all instrument modes except for the
+:ref:`NIRSpec spectroscopic modes <flat_ref_nirspec_spec>`.
 
 .. include:: ../references_general/flat_selection.inc
 
@@ -55,5 +56,5 @@ used in the DQ array.
 
 For application to imaging data, the FITS file contains a single set of SCI,
 ERR, DQ, and DQ_DEF extensions.  Image dimensions should be 2048x2048 for the
-NIR detectors and 1032x1024 for MIRI (i.e. they include reference pixels),
+NIR detectors and 1032x1024 for MIRI (i.e., they include reference pixels),
 unless data were taken in subarray mode.

@@ -9,7 +9,7 @@ import numpy as np
 import photutils
 from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
-from astropy.table import Table
+from astropy.table import QTable
 from astropy.utils import lazyproperty, minversion
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 __all__ = ["make_tweakreg_catalog"]
 
 PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
+photutils.future_column_names = True  # needed until photutils 4.0
 
 
 SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
@@ -179,6 +180,8 @@ def _rename_columns(sources):
         "npix": "area",  # for iraf and dao star finder compatibility with source_catalog step
         "segment_flux": "flux",  # for sourcefinder compatibility with tweakreg step
         "label": "id",  # for sourcefinder compatibility with tweakreg step
+        "x_centroid": "xcentroid",  # for photutils 3+ compatibility
+        "y_centroid": "ycentroid",  # for photutils 3+ compatibility
     }
     for old_col, new_col in rename_map.items():
         if old_col in sources.colnames:
@@ -225,6 +228,15 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     }
     kwargs = {**default_kwargs, **kwargs}
 
+    # Normalize old-style kwargs to new-style for photutils >= 3.0
+    if PHOTUTILS_GE_3:
+        alias_map = {
+            "n_pixels": "npixels",
+            "n_levels": "nlevels",
+            "n_processes": "nproc",
+        }
+        _normalize_kwargs(kwargs, alias_map)
+
     # convolve the data with a Gaussian kernel
     if kernel_fwhm > 0:
         conv_data = _convolve_data(data, kernel_fwhm, mask=mask)
@@ -257,6 +269,38 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     return sources, segment_map
 
 
+def _normalize_kwargs(kwargs, alias_map):
+    """
+    Normalize kwargs in-place using an alias map.
+
+    Parameters
+    ----------
+    kwargs : dict
+        Dictionary of keyword arguments to normalize. This dictionary is
+        modified in place and returned for convenience.
+
+    alias_map : dict
+        Dictionary mapping canonical keyword names to their aliases.
+
+    Returns
+    -------
+    kwargs : dict
+        The input kwargs dictionary with aliases normalized to canonical
+        names.
+    """
+    for canonical, aliases in alias_map.items():
+        if isinstance(aliases, str):
+            aliases = [aliases]
+
+        for alias in aliases:
+            if canonical not in kwargs and alias in kwargs:
+                kwargs[canonical] = kwargs.pop(alias)
+            else:
+                kwargs.pop(alias, None)
+
+    return kwargs
+
+
 def _translate_starfinder_kwargs(
     kwargs,
     kernel_fwhm,
@@ -276,6 +320,10 @@ def _translate_starfinder_kwargs(
     - ``peakmax`` -> ``peak_max``
     - ``brightest`` -> ``n_brightest``
     - ``minsep_fwhm`` -> ``min_separation``
+    - ``npixels`` -> ``n_pixels``
+    - ``nlevels`` -> ``n_levels``
+    - ``apermask_method`` -> ``aperture_mask_method``
+    - ``localbkg_width`` -> ``local_bkg_width``
 
     For photutils < 3.0, new-style keyword arguments are translated
     to their old equivalents:
@@ -284,6 +332,10 @@ def _translate_starfinder_kwargs(
     - ``roundness_range`` -> ``roundlo``, ``roundhi``
     - ``peak_max`` -> ``peakmax``
     - ``n_brightest`` -> ``brightest``
+    - ``n_pixels`` -> ``npixels``
+    - ``n_levels`` -> ``nlevels``
+    - ``aperture_mask_method`` -> ``apermask_method``
+    - ``local_bkg_width`` -> ``localbkg_width``
 
     If both old-style and new-style keyword arguments are provided
     for the same parameter, the style matching the installed photutils
@@ -313,6 +365,15 @@ def _translate_starfinder_kwargs(
     """
     kwargs = kwargs.copy()  # avoid modifying original dict
 
+    old_to_new_aliases = {
+        "peakmax": "peak_max",
+        "brightest": "n_brightest",
+        "npixels": "n_pixels",
+        "nlevels": "n_levels",
+        "apermask_method": "aperture_mask_method",
+        "localbkg_width": "local_bkg_width",
+    }
+
     if PHOTUTILS_GE_3:
         # Translate old-style to new-style. If new-style kwargs are
         # already present, they take precedence.
@@ -332,21 +393,15 @@ def _translate_starfinder_kwargs(
             kwargs.pop("roundlo", None)
             kwargs.pop("roundhi", None)
 
-        if "peak_max" not in kwargs and "peakmax" in kwargs:
-            kwargs["peak_max"] = kwargs.pop("peakmax")
-        else:
-            kwargs.pop("peakmax", None)
-
-        if "n_brightest" not in kwargs and "brightest" in kwargs:
-            kwargs["n_brightest"] = kwargs.pop("brightest")
-        else:
-            kwargs.pop("brightest", None)
-
         if "min_separation" not in kwargs and "minsep_fwhm" in kwargs:
             minsep = kwargs.pop("minsep_fwhm")
             kwargs["min_separation"] = max(2, int(minsep * kernel_fwhm + 0.5))
         else:
             kwargs.pop("minsep_fwhm", None)
+
+        new_to_old_aliases = {v: k for k, v in old_to_new_aliases.items()}
+        _normalize_kwargs(kwargs, new_to_old_aliases)
+
     else:
         # Translate new-style to old-style. If old-style kwargs are
         # already present, they take precedence.
@@ -366,15 +421,7 @@ def _translate_starfinder_kwargs(
         else:
             kwargs.pop("roundness_range", None)
 
-        if "peakmax" not in kwargs and "peak_max" in kwargs:
-            kwargs["peakmax"] = kwargs.pop("peak_max")
-        else:
-            kwargs.pop("peak_max", None)
-
-        if "brightest" not in kwargs and "n_brightest" in kwargs:
-            kwargs["brightest"] = kwargs.pop("n_brightest")
-        else:
-            kwargs.pop("n_brightest", None)
+        _normalize_kwargs(kwargs, old_to_new_aliases)
 
     return kwargs
 
@@ -612,9 +659,9 @@ def _empty_table():
 
     Returns
     -------
-    `~astropy.table.Table`
+    `~astropy.table.QTable`
         An empty table with the correct column names and dtypes.
     """
     default_names = ["id", "xcentroid", "ycentroid", "flux"]
     default_dtypes = (int, float, float, float)
-    return Table(names=default_names, dtype=default_dtypes).copy()
+    return QTable(names=default_names, dtype=default_dtypes).copy()

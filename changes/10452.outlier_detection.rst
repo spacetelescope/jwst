@@ -1,0 +1,1 @@
+Reduce memory usage and improve runtime for rolling median used for tso data. For a MIRI dataset including 2 files each with 40 integrations the memory usage was reduced by a factor of 7 and runtime improved by a factor of 3.

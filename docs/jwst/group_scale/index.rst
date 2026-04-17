@@ -8,6 +8,4 @@ Group Scale Correction
    :maxdepth: 2
 
    description.rst
-   arguments.rst
-
-.. automodapi:: jwst.group_scale
+   api_ref.rst
