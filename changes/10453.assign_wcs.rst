@@ -1,1 +1,1 @@
-For NIRCam DHS data, only generate transforms for stripes present in both the regions and specwcs reference files.
+Fix a bug where attempting to generate transforms for stripes present in the specwcs file but not the regions file caused crashes for NIRCam DHS stripe1 and stripe2 subarray data.
