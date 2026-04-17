@@ -1,7 +1,7 @@
 Description
-============
+===========
 
-:Class: `jwst.gain_scale.GainScaleStep`
+:Class: `jwst.gain_scale.gain_scale_step.GainScaleStep`
 :Alias: gain_scale
 
 The ``gain_scale`` step rescales pixel values in JWST countrate
@@ -14,9 +14,9 @@ This currently only applies to NIRSpec exposures that are read out
 using a subarray pattern, in which case a gain setting of 2 is used
 instead of the standard setting of 1. Note that this only applies
 to NIRSpec subarray data obtained after April 2017, which is when
-the change was made in the instrument flight software to use gain=2.
+the change was made in the instrument flight software to use ``gain=2``.
 NIRSpec subarray data obtained previous to that time used the
-standard gain=1 setting.
+standard ``gain=1`` setting.
 
 The ``gain_scale`` step is applied at the end of the
 :ref:`calwebb_detector1 <calwebb_detector1>` pipeline, after the
@@ -29,20 +29,24 @@ variance (VAR_POISSON) and read noise variance (VAR_RNOISE) arrays
 are multiplied by the square of the gain factor.
 
 The scaling factor is obtained from the "GAINFACT" keyword in the
-header of the gain reference file. Normally the
+header of the :ref:`gain_reffile`. Normally the
 :ref:`ramp_fit <ramp_fitting_step>` step
 reads that keyword value during its execution and stores the value in
-the science data "GAINFACT" keyword, so that the gain reference file
+the science data "GAINFACT" keyword, so that the :ref:`gain_reffile`
 does not have to be loaded again by the ``gain_scale`` step. If, however,
 the step does not find that keyword populated in the science data, it
-loads the gain reference file to retrieve it. If all attempts to
+loads the :ref:`gain_reffile` to retrieve it. If all attempts to
 find the scaling factor fail, the step is skipped.
 
-Gain reference files for instruments or modes that use the standard
+:ref:`gain_reffile` for instruments or modes that use the standard
 gain setting will typically not have the "GAINFACT" keyword in their
 header, which causes the ``gain_scale`` step to be skipped. Alternatively,
-gain reference files for modes that use the standard gain can have
-GAINFACT=1.0, in which case the correction is benign.
+:ref:`gain_reffile` for modes that use the standard gain can have
+``GAINFACT=1.0``, in which case the correction is benign.
 
 Upon successful completion of the step, the "S_GANSCL" keyword in the
 science data is set to "COMPLETE".
+
+Step Arguments
+--------------
+The ``gain_scale`` correction has no step-specific arguments.

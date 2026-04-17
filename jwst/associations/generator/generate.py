@@ -215,12 +215,16 @@ def match_item(item, associations):
                 List of process events.
     """
     item_associations = []
+    seen_ids = set()
     process_list = []
     for asn in associations:
-        if asn in item_associations:
+        # Can't use just `if asn in item_associations` because this triggers compare_asns call
+        # and is slow.
+        if id(asn) in seen_ids:
             continue
         matches, reprocess = asn.add(item)
         process_list.extend(reprocess)
         if matches:
             item_associations.append(asn)
+            seen_ids.add(id(asn))
     return item_associations, process_list

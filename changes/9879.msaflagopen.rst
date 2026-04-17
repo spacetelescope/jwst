@@ -1,1 +1,0 @@
-Simplify WCS access for flagging open MSA shutters and remove unnecessary data copies.

@@ -1,1 +1,0 @@
-Enabling sigma_clipping in the background annulus for IFU source_type POINT.

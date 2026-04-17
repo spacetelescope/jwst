@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.group_scale.GroupScaleStep`
+:Class: `jwst.group_scale.group_scale_step.GroupScaleStep`
 :Alias: group_scale
 
 The ``group_scale`` step rescales pixel values in raw JWST science
@@ -26,9 +26,9 @@ power of 2. When NFRAMES is not a power of 2, the next largest
 divisor is used to perform the averaging. For example, when
 ``NFRAMES=5``, a divisor of 8 (bit shift of 3) is used to compute the
 average. This results in averaged values for each group that
-are too low by the factor NFRAMES/FRMDIVSR. This step rescales the
+are too low by the factor ``NFRAMES/FRMDIVSR``. This step rescales the
 pixel values by multiplying all groups in all integrations by the
-factor FRMDIVSR/NFRAMES.
+factor ``FRMDIVSR/NFRAMES``.
 
 The step decides whether rescaling is necessary by comparing the
 values of the NFRAMES and FRMDIVSR keywords. If they are equal,
@@ -62,10 +62,14 @@ per group and the number of groups per integration that are downlinked
 from the instrument are stored in the special keywords "MIRNFRMS" and
 "MIRNGRPS", respectively, so that their values are preserved. During
 Stage 1 processing in the pipeline, the value of the NFRAMES keyword is
-computed from MIRNFRMS * FRMDIVSR. The result is that when 4 frames
+computed from ```MIRNFRMS * FRMDIVSR``. The result is that when 4 frames
 are averaged together on board, both NFRAMES and FRMDIVSR will have a
 value of 4, which allows the ``group_scale`` step to correctly
 determine that no rescaling of the data is necessary.
+
+Step Arguments
+--------------
+The ``group_scale`` step does not have any step-specific arguments.
 
 Reference Files
 ---------------

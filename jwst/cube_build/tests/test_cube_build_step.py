@@ -7,6 +7,7 @@ import os
 import numpy as np
 import pytest
 from astropy.io import fits
+from astropy.modeling.models import Identity, Shift
 from stdatamodels.jwst.datamodels import IFUImageModel
 
 from jwst.adaptive_trace_model import AdaptiveTraceModelStep
@@ -271,3 +272,22 @@ def test_cube_build_oversampled(request, oversample, dataset, output_shape):
 
     # Input data is flat, so output data should have the same mean value
     np.testing.assert_allclose(np.nanmean(cube.data), np.nanmean(model.data))
+
+
+@pytest.mark.parametrize("shift_ra", [True, False])
+def test_output_crval1_positive(miri_data, shift_ra):
+    model = miri_data.copy()
+
+    expected_ra = 164
+    if shift_ra:
+        # Shift RA by 100 degrees to make it > 180
+        model.meta.wcs.pipeline[-2].transform |= Shift(100) & Identity(2)
+        model.meta.wcsinfo.ra_ref += 100
+        model.meta.wcsinfo.s_region = model.meta.wcsinfo.s_region.replace("164", "264")
+        expected_ra += 100
+
+    result = CubeBuildStep.call(model)
+
+    # Output RA should be between 0 and 360
+    for cube in result:
+        assert np.isclose(cube.meta.wcsinfo.crval1, expected_ra, atol=1)

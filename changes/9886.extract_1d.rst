@@ -1,1 +1,0 @@
-Refactor SOSS extraction to compute reference wavelength maps and spectral traces only once, instead of every integration.

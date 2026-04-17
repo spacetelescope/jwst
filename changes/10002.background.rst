@@ -1,1 +1,0 @@
-Add a catch for missing bkg reference file in NIRISS SOSS processing.

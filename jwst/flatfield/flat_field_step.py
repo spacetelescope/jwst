@@ -1,3 +1,5 @@
+"""Correct rate data for flat field effects."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -69,7 +71,7 @@ class FlatFieldStep(Step):
 
             correction_pars : dict
                 After the step has successfully run, the flat field applied is
-                stored, as {'flat': DataModel}.
+                stored, as ``{'flat': DataModel}``.
             use_correction_pars : bool
                 Use the flat stored in ``correction_pars``.
 
@@ -81,7 +83,7 @@ class FlatFieldStep(Step):
 
         Returns
         -------
-        DataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             Output data of the same type as input, with flat corrections applied.
         """
         output_model = self.prepare_output(input_data)
@@ -168,7 +170,7 @@ class FlatFieldStep(Step):
 
         Parameters
         ----------
-        data : DataModel
+        data : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The data to base the CRDS lookups on.
         exposure_type : str
             The exposure type keyword value.
