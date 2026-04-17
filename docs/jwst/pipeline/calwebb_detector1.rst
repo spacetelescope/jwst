@@ -43,6 +43,24 @@ the same calibrations and corrections applied as the first group in the various
 :ref:`linearity <linearity_step>` steps. Other steps do not have a direct effect
 on either the first group or frame zero pixel values.
 
+Several steps in this pipeline also include special handling for data taken in
+multistripe readout modes (substripe or superstripe).  Substripe modes enable readout from
+non-contiguous sections of the detector array into the same ramp, skipping regions containing
+no science data.  These modes generally require specialized reference file handling throughout
+the pipeline, since the integrations contain non-contiguous detector regions.
+For more information on the NIRCam DHS substripe mode, see the
+`NIRCam JDox documentation <https://jwst-docs.stsci.edu/jwst-near-infrared-camera/nircam-instrumentation/nircam-detector-overview/nircam-detector-subarrays/nircam-multistripe-subarrays-for-grism-time-series-spectroscopy>`__.
+
+Superstripe modes enable readout from sections of
+the detector into separate ramps, such that the integrations in the same raw file
+cover different regions of the detector.  Superstripe modes require special handling
+through the :ref:`refpix step <refpix_step>`, but at the end of that step, the stripes are
+reassembled into a contiguous integration image and thereafter can be treated like any other
+ramp exposure. For more information on the superstripe readout mode for NIRISS SOSS exposures,
+see the
+`NIRISS JDox documentation <https://jwst-docs.stsci.edu/jwst-near-infrared-imager-and-slitless-spectrograph/niriss-observing-modes/niriss-single-object-slitless-spectroscopy>`__.
+
+
 .. |check| unicode:: U+2713 .. checkmark
 
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+

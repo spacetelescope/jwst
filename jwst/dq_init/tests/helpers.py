@@ -1,10 +1,15 @@
 import numpy as np
-from stdatamodels.jwst.datamodels import GuiderRawModel, MaskModel, RampModel, dqflags
+from stdatamodels.jwst.datamodels import (
+    GuiderRawModel,
+    MaskModel,
+    RampModel,
+    dqflags,
+)
 
 __all__ = [
     "make_rawramp",
     "make_rampmodel",
-    "make_maskmodel",
+    "make_dq_arrays",
     "make_superstripe_model",
     "one_stripe_mask",
     "make_superstripe_mask_model",
@@ -32,11 +37,12 @@ def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_t
     xstart : int
         X-start value for the subarray.
     exp_type : str, optional
-        Exposure type.
+        Exposure type.  If "FGS", a ``GuiderRawModel`` is returned.
 
     Returns
     -------
-    `~stdatamodels.jwst.datamodels.RampModel`
+    dm_ramp : `~stdatamodels.jwst.datamodels.RampModel`, or \
+              `~stdatamodels.jwst.datamodels.GuiderRawModel`
         The ramp model.
     """
     # create the data and groupdq arrays
@@ -46,10 +52,10 @@ def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_t
     # create a JWST datamodel
     if instrument == "FGS":
         dm_ramp = GuiderRawModel(data=data)
-        dm_ramp.meta.exposure.type = exp_type
     else:
         dm_ramp = RampModel(data=data)
 
+    dm_ramp.meta.exposure.type = exp_type
     dm_ramp.meta.subarray.xstart = xstart
     dm_ramp.meta.subarray.xsize = xsize
     dm_ramp.meta.subarray.ystart = ystart
@@ -86,28 +92,15 @@ def make_rampmodel(nints=1, ngroups=5, ysize=1024, xsize=1032):
     `~stdatamodels.jwst.datamodels.RampModel`
         The ramp model.
     """
-    # create the data and groupdq arrays
-    csize = (nints, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0)
-    pixeldq = np.zeros((ysize, xsize), dtype=int)
-    groupdq = np.zeros(csize, dtype=int)
+    dm_ramp = make_rawramp("MIRI", nints, ngroups, ysize, xsize, 1, 1)
 
-    # create a JWST datamodel for MIRI data
-    dm_ramp = RampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
-
-    dm_ramp.meta.instrument.name = "MIRI"
+    # Add the detector
     dm_ramp.meta.instrument.detector = "MIRIMAGE"
-    dm_ramp.meta.observation.date = "2018-01-01"
-    dm_ramp.meta.observation.time = "00:00:00"
-    dm_ramp.meta.subarray.xstart = 1
-    dm_ramp.meta.subarray.xsize = xsize
-    dm_ramp.meta.subarray.ystart = 1
-    dm_ramp.meta.subarray.ysize = ysize
 
     return dm_ramp
 
 
-def make_maskmodel(ysize, xsize):
+def make_dq_arrays(ysize, xsize):
     """
     Make dq and dq_def arrays for use in creating a DQ mask model.
 
@@ -125,9 +118,10 @@ def make_maskmodel(ysize, xsize):
     dq_def : ndarray
         The corresponding DQ definition table.
     """
-    # create a mask model for the dq_init step
+    # create a DQ array to use in a mask model
     csize = (ysize, xsize)
     dq = np.zeros(csize, dtype=int)
+
     # define a dq_def extension
     mask = MaskModel()
 
@@ -173,6 +167,7 @@ def make_superstripe_model():
     model.meta.exposure.nints = nints * nstripe
 
     # Add the superstripe metadata
+    model.meta.subarray.num_superstripe = nstripe
     model.meta.subarray.multistripe_reads1 = 4
     model.meta.subarray.multistripe_reads2 = 204
     model.meta.subarray.multistripe_skips1 = 0
