@@ -1,3 +1,5 @@
+"""Correct MIRI MRS data for fringes by applying a fringe reference image."""
+
 import logging
 
 from stdatamodels.jwst import datamodels

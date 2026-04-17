@@ -1,3 +1,5 @@
+"""Set data quality flag of first group in MIRI data."""
+
 import logging
 import warnings
 
