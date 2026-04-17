@@ -6,27 +6,36 @@ SFLAT Reference File
 :REFTYPE: SFLAT
 :Data model: `~stdatamodels.jwst.datamodels.NirspecFlatModel`
 
-There are 3 types of NIRSpec SFLAT reference files: fixed slit, MSA spec, and IFU.
-For each type the primary HDU does not contain a data array.
+There are 3 types of NIRSpec SFLAT reference files:
+
+* :ref:`sflat_fixed_slit`
+* :ref:`sflat_msa`
+* :ref:`sflat_ifu`
+
+For each type, the primary HDU does not contain a data array.
 
 .. include:: ../references_general/sflat_selection.inc
 
-*Fixed Slit*
-++++++++++++
-The fixed slit references files have EXP_TYPE=NRS_FIXEDSLIT, and have a BINTABLE
+.. _sflat_fixed_slit:
+
+Fixed Slit
+++++++++++
+The fixed slit references files have ``EXP_TYPE=NRS_FIXEDSLIT``, and have a BINTABLE
 extension labeled FAST_VARIATION. The table contains four columns:
 
-* slit_name: string, name of slit
-* nelem: integer, maximum number of wavelengths
-* wavelength: float 1-D array, values of wavelength
-* data: float 1-D array, flat field values for each wavelength
+* ``slit_name``: string, name of slit
+* ``nelem``: integer, maximum number of wavelengths
+* ``wavelength``: float 1-D array, values of wavelength
+* ``data``: float 1-D array, flat field values for each wavelength
 
 The number of rows in the table is given by NAXIS2, and each row corresponds to a
 separate slit.
 
-*MSA Spec*
-++++++++++
-The MSA Spec SFLAT files have EXP_TYPE=NRS_MSASPEC.
+.. _sflat_msa:
+
+MSA Spec
+++++++++
+The MSA Spec SFLAT files have ``EXP_TYPE=NRS_MSASPEC``.
 They contain 6 extensions, with the following characteristics:
 
 ============== ======== ===== ===================== =========
@@ -42,22 +51,22 @@ DQ_DEF         BINTABLE   2   TFIELDS = 4           N/A
 
 .. include:: ../includes/dq_def.inc
 
-The keyword NAXIS3 in the 3 IMAGE extensions specifies the number, n_wl, of monochromatic
-slices, each of which gives the flat_field value for every pixel for the corresponding
+The keyword NAXIS3 in the 3 IMAGE extensions specifies the number, ``n_wl``, of monochromatic
+slices, each of which gives the ``flat_field`` value for every pixel for the corresponding
 wavelength, which is specified in the WAVELENGTH table.
 
 The WAVELENGTH table contains a single column:
 
-* wavelength: float 1-D array, values of wavelength
+* ``wavelength``: float 1-D array, values of wavelength
 
 Each of these wavelength values corresponds to a single plane of the IMAGE arrays.
 
 The FAST_VARIATION table contains four columns:
 
-* slit_name: the string "ANY"
-* nelem: integer, maximum number of wavelengths
-* wavelength: float 1-D array, values of wavelength
-* data: float 1-D array, flat field values for each wavelength
+* ``slit_name``: the string "ANY"
+* ``nelem``: integer, maximum number of wavelengths
+* ``wavelength``: float 1-D array, values of wavelength
+* ``data``: float 1-D array, flat field values for each wavelength
 
 The flat field values in this table are used to account for a wavelength-dependence on a
 much finer scale than given by the values in the SCI array.  For each pixel in the
@@ -67,3 +76,11 @@ using the WCS interface).
 The flat-field value for that pixel will then be obtained by
 interpolating within the wavelength and data arrays from the FAST_VARIATION
 table.
+
+.. _sflat_ifu:
+
+IFU
++++
+The IFU SFLAT file has essentially the same structure as
+:ref:`sflat_fixed_slit`, except that there is only one row in the
+FAST_VARIATION table.

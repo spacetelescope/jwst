@@ -1,6 +1,4 @@
-#
-#  Module for applying fringe correction
-#
+"""Functions for applying fringe correction."""
 
 import logging
 
@@ -22,7 +20,7 @@ def apply_fringe(input_model, fringe):
     Parameters
     ----------
     input_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
-        Input science data model to be fringe-corrected. Updated in place.
+        Input science data model to be fringe-corrected; updated in place.
 
     fringe : `~stdatamodels.jwst.datamodels.FringeModel`
         Fringe reference file image model.

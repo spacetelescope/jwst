@@ -1,1 +1,0 @@
-Associations that used to produce ``asn_type`` of "wfs-image2" now produces "image2" instead.
