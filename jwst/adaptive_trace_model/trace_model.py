@@ -1,5 +1,8 @@
+import functools
 import logging
+import multiprocessing
 import warnings
+from multiprocessing import cpu_count
 
 import gwcs
 import numpy as np
@@ -7,6 +10,7 @@ from astropy.modeling.models import Identity, Scale, Shift
 from astropy.stats import sigma_clipped_stats as scs
 from astropy.utils.exceptions import AstropyUserWarning
 from scipy.signal import find_peaks
+from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -567,7 +571,70 @@ def linear_oversample(
     return os_data
 
 
-def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
+def _fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **fit_kwargs):
+    """
+    Fit a trace model to a single region in the flux image.
+
+    Called from fit_all_regions, optionally parallelized via multiprocessing.
+
+    Parameters
+    ----------
+    flux : ndarray
+        The flux image to fit.
+    alpha : ndarray
+        Alpha coordinates for all flux values.
+    region_map : ndarray of int
+        Map containing the slice or slit number for valid regions.
+        Values are >0 for pixels in valid regions, 0 otherwise.
+    signal_threshold : dict
+        Threshold values for each valid region in the region map. If
+        the median peak value across columns in the region is below this
+        threshold, a fit will not be attempted for that region.
+    region_number : int
+        Index number for the single region to be fit in this invocation.
+    **fit_kwargs
+        Keyword arguments to pass to the fitting routine (see `fit_2d_spline_trace`).
+
+    Returns
+    -------
+    splines : dict
+        Dict containing a spline model, scale, and bounds for each column index in the region.
+        If a spline model could not be fit, the column index number is not present.
+    """
+    # Arrays to reset with NaNs for each slice
+    data_slice = np.full_like(flux, np.nan)
+    alpha_slice = np.full_like(flux, np.nan)
+
+    # Copy the relevant data for this slice into the holding arrays
+    indx = region_map == region_number
+    data_slice[indx] = flux[indx]
+    alpha_slice[indx] = alpha[indx]
+
+    # A running sum in a given detector column (used for normalization)
+    runsum = np.nansum(data_slice, axis=0)
+
+    # Collapse the slice along Y to get max in each column
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        collapse = np.nanmax(data_slice, axis=0)
+
+    # Median column max across all columns
+    medcmax = np.nanmedian(collapse)
+
+    # Is medcmax over threshold?  If so, do bspline for this slice.
+    dospline = False
+    if medcmax > signal_threshold[region_number]:
+        dospline = True
+
+    if dospline:
+        splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
+    else:
+        splines = {}
+
+    return splines
+
+
+def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="none", **fit_kwargs):
     """
     Fit a trace model to all regions in the flux image.
 
@@ -584,6 +651,11 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
         Threshold values for each valid region in the region map. If
         the median peak value across columns in the region is below this
         threshold, a fit will not be attempted for that region.
+    maximum_cores : str
+        Number of cores to use for multiprocessing. If set to 'none' (the default),
+        then no multiprocessing will be done. The other allowable values are 'quarter',
+        'half', 'all', and string integers. This is the fraction of available or
+        the explicit number of cores to use for multiprocessing.
     **fit_kwargs
         Keyword arguments to pass to the fitting routine (see `fit_2d_spline_trace`).
 
@@ -594,46 +666,43 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
         scale, and bounds for each column index in the region. If a spline model
         could not be fit, the column index number is not present.
     """
-    # Arrays to reset with NaNs for each slice
-    data_slice = np.full_like(flux, np.nan)
-    alpha_slice = np.full_like(flux, np.nan)
-
     spline_models = {}
     slice_numbers = np.unique(region_map[region_map > 0])
 
-    for slnum in slice_numbers:
-        log.info("Fitting slice %s", slnum)
+    # Determine number of slices to use for multi-processor computations
+    num_available_cores = cpu_count()
+    number_slices = compute_num_cores(maximum_cores, len(slice_numbers), num_available_cores)
 
-        # Reset holding arrays to NaN
-        data_slice[:] = np.nan
-        alpha_slice[:] = np.nan
+    # Call adaptive trace model for the single processor (1 data slice) case
+    if number_slices == 1:
+        # Single threaded computation
+        log.info("Running single-process calculation")
 
-        # Copy the relevant data for this slice into the holding arrays
-        indx = region_map == slnum
-        data_slice[indx] = flux[indx]
-        alpha_slice[indx] = alpha[indx]
+        for slnum in slice_numbers:
+            log.info("Fitting slice %s", slnum)
+            spline_models[slnum] = _fit_one_region(
+                flux, alpha, region_map, signal_threshold, slnum, **fit_kwargs
+            )
+    else:
+        # Parallelized computation
+        log.info(f"Fitting slices, multiprocessing on {number_slices} cores")
 
-        # A running sum in a given detector column (used for normalization)
-        runsum = np.nansum(data_slice, axis=0)
+        # Use functools.partial to supply all other inputs to _fit_one_region except slice number
+        # This is needed since pool.starmap doesn't support passing **fit_kwargs
+        fit_one_region_with_args = functools.partial(
+            _fit_one_region, flux, alpha, region_map, signal_threshold, **fit_kwargs
+        )
 
-        # Collapse the slice along Y to get max in each column
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=RuntimeWarning)
-            collapse = np.nanmax(data_slice, axis=0)
-
-        # Median column max across all columns
-        medcmax = np.nanmedian(collapse)
-
-        # Is medcmax over threshold?  If so, do bspline for this slice.
-        dospline = False
-        if medcmax > signal_threshold[slnum]:
-            dospline = True
-
-        if dospline:
-            splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
-        else:
-            splines = {}
-        spline_models[slnum] = splines
+        # Run the parallelized calc and collect results
+        ctx = multiprocessing.get_context("spawn")
+        pool = ctx.Pool(processes=number_slices)
+        try:
+            pool_results = pool.starmap(fit_one_region_with_args, [(n,) for n in slice_numbers])
+        finally:
+            pool.close()
+            pool.join()
+        for slnum, result in zip(slice_numbers, pool_results, strict=True):
+            spline_models[slnum] = result
 
     return spline_models
 
@@ -1230,6 +1299,7 @@ def fit_and_oversample(
     psf_optimal=False,
     oversample_factor=1.0,
     return_intermediate_models=False,
+    maximum_cores="none",
 ):
     """
     Fit a trace model and optionally oversample an IFU datamodel.
@@ -1257,6 +1327,11 @@ def fit_and_oversample(
         If True, additional image models will be returned, containing the full
         spline model, the spline model as used for compact sources, the residual
         model, and the linearly interpolated data.
+    maximum_cores : str
+        Number of cores to use for multiprocessing. If set to 'none' (the default),
+        then no multiprocessing will be done. The other allowable values are 'quarter',
+        'half', 'all', and string integers. This is the fraction of available or
+        the explicit number of cores to use for multiprocessing.
 
     Returns
     -------
@@ -1366,7 +1441,12 @@ def fit_and_oversample(
     # Fit spline models to all regions
     fit_kwargs = _set_fit_kwargs(detector, xsize)
     spline_models = fit_all_regions(
-        flux_orig, alpha_orig, region_map, signal_threshold, **fit_kwargs
+        flux_orig,
+        alpha_orig,
+        region_map,
+        signal_threshold,
+        maximum_cores=maximum_cores,
+        **fit_kwargs,
     )
 
     # If oversampling is not needed, evaluate the spline models to create the
