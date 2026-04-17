@@ -56,8 +56,14 @@ def assign_moving_target_wcs(input_models):
             # map index in science_indices to index in mt_ra/mt_dec arrays
             # mt_ra, mt_dec have length equal to number of science exposures
             j = science_indices.index(i)
-            mt_ra[j] = meta["meta"]["wcsinfo"]["mt_ra"]
-            mt_dec[j] = meta["meta"]["wcsinfo"]["mt_dec"]
+            if "slits" in meta:
+                # if it's a MultiSlitModel take this from the 0th slit
+                slit = meta["slits"][0]
+                mt_ra[j] = slit["meta"]["wcsinfo"]["mt_ra"]
+                mt_dec[j] = slit["meta"]["wcsinfo"]["mt_dec"]
+            else:
+                mt_ra[j] = meta["meta"]["wcsinfo"]["mt_ra"]
+                mt_dec[j] = meta["meta"]["wcsinfo"]["mt_dec"]
 
     # Compute the mean MT RA/Dec over all exposures
     if not mt_valid:
@@ -164,14 +170,16 @@ def _is_mt_meta_valid(meta):
     bool
         True if valid, False otherwise.
     """
-    # check all the slits
-    for slit in meta.get("slits", []):
-        if (
-            slit["meta"]["wcsinfo"].get("mt_ra", None) is None
-            or slit["meta"]["wcsinfo"].get("mt_dec", None) is None
-        ):
-            return False
-    # check the top-level wcsinfo
+    has_slits = "slits" in meta and len(meta["slits"]) > 0
+    if has_slits:
+        # check all the slits
+        for slit in meta["slits"]:
+            if (
+                slit["meta"]["wcsinfo"].get("mt_ra", None) is None
+                or slit["meta"]["wcsinfo"].get("mt_dec", None) is None
+            ):
+                return False
+        return True
     if (
         meta["meta"]["wcsinfo"].get("mt_ra", None) is None
         or meta["meta"]["wcsinfo"].get("mt_dec", None) is None
