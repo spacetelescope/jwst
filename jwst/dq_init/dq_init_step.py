@@ -6,6 +6,7 @@ from astropy.io import fits
 from stdatamodels.jwst import datamodels
 
 from jwst.dq_init import dq_initialization
+from jwst.lib.exposure_types import FGS_GUIDE_EXP_TYPES
 from jwst.stpipe import Step
 
 __all__ = ["DQInitStep"]
@@ -37,7 +38,8 @@ class DQInitStep(Step):
 
         Parameters
         ----------
-        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel` or \
+                     `~stdatamodels.jwst.datamodels.GuiderRawModel`
             Input JWST filename or datamodel.
 
         Returns
@@ -50,7 +52,7 @@ class DQInitStep(Step):
         try:
             result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
             # Check to see if it's Guider raw data
-            if result.meta.exposure.type in dq_initialization.guider_list:
+            if str(result.meta.exposure.type).lower() in FGS_GUIDE_EXP_TYPES:
                 # Close and delete the current model if it's not the same as the input
                 if result is not step_input:
                     del result
