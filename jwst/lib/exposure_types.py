@@ -36,6 +36,15 @@ NRS_LAMP_MODE_SPEC_TYPES = [
     "msaspec",
 ]
 
+NIS_SOSS_SUPPORTED_SUBARRAYS = [
+    "SUBSTRIP256",
+    "SUB17STRIPE_SOSS",
+    "SUB60STRIPE_SOSS",
+    "SUB204STRIPE_SOSS",
+    "SUB680STRIPE_SOSS",
+    "SUBSTRIP96",
+]
+
 __all__ = [
     "is_nrs_lamp",
     "is_nrs_linelamp",
@@ -49,6 +58,11 @@ __all__ = [
     "is_nrs_msaspec_flatlamp",
     "is_nrs_autoflat",
     "is_moving_target",
+    "FGS_GUIDE_EXP_TYPES",
+    "IMAGING_TYPES",
+    "SPEC_TYPES",
+    "NRS_LAMP_MODE_SPEC_TYPES",
+    "NIS_SOSS_SUPPORTED_SUBARRAYS",
 ]
 
 
