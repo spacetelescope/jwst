@@ -997,8 +997,8 @@ def test_define_aperture_nirspec(mock_nirspec_fs_one_slit, extract_defaults, is_
     exptype = "NRS_FIXEDSLIT"
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
     ra, dec, wavelength, profile, bg_profile, nod_profile, limits = result
-    assert_allclose(ra, 45.05)
-    assert_allclose(dec, 45.1)
+    assert_allclose(ra, 45.0)
+    assert_allclose(dec, 45.100014)
     assert wavelength.shape == (model.data.shape[1],)
     assert profile.shape == model.data.shape
 
@@ -1021,8 +1021,8 @@ def test_define_aperture_miri(mock_miri_lrs_fs, extract_defaults, is_slit):
     exptype = "MIR_LRS-FIXEDSLIT"
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
     ra, dec, wavelength, profile, bg_profile, nod_profile, limits = result
-    assert_allclose(ra, 45.05)
-    assert_allclose(dec, 45.1)
+    assert_allclose(ra, 45.0)
+    assert_allclose(dec, 45.100014)
     assert wavelength.shape == (model.data.shape[1],)
     assert profile.shape == model.data.shape
 

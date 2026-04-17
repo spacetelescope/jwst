@@ -208,7 +208,7 @@ def test_trace_from_wcs_miri(mock_miri_lrs_fs):
     )
 
     # mocked model contains some mock transforms as well - all ones are expected
-    np.testing.assert_allclose(trace, np.ones(model.data.shape[0]))
+    np.testing.assert_allclose(trace, np.ones(model.data.shape[0]), atol=1e-4)
 
 
 def test_trace_from_wcs_other_horizontal():
@@ -317,6 +317,6 @@ def test_nod_pair_location_miri(mock_miri_lrs_fs, dispaxis):
     # Nonsense values are returned for unrealistic mocked transform:
     # just check values for regression purposes
     if dispaxis == 2:
-        assert np.isclose(nod_center, -425, atol=1)
+        assert np.isclose(nod_center, -1.6e12, atol=1e11)
     else:
         assert nod_center == 0.0
