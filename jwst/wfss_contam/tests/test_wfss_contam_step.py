@@ -111,6 +111,20 @@ def test_wfss_contam_skip_bad_order(multislitmodel, tmp_cwd_module):
     assert result.meta.cal_step.wfss_contam == "SKIPPED"
 
 
+def test_wfss_contam_step_cube_direct_image(multislitmodel, direct_image_cube_with_gradient):
+    """
+    Smoke test that the step completes when the direct image is an IFUCubeModel.
+
+    Reuses the multislitmodel fixture (slits, WCS, segmentation map, source catalog)
+    and swaps in the cube as the direct image.
+    """
+    with dm.open(multislitmodel) as model:
+        model.meta.direct_image = "direct_image_cube.fits"
+        result = WfssContamStep.call(model, magnitude_limit=25, orders=[1])
+    assert isinstance(result, dm.MultiSlitModel)
+    assert result.meta.cal_step.wfss_contam == "COMPLETE"
+
+
 def test_output_is_not_input(multislitmodel, tmp_cwd_module):
     """Check that input is not modified by the step."""
     datamodel = dm.open(multislitmodel)
