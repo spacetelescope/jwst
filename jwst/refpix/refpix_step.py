@@ -258,13 +258,18 @@ def collate_superstripes(input_model):
     new_model = datamodels.RampModel(
         data=newdata,
         groupdq=newgdq,
-        pixeldq=newpdq,
         int_times=input_model.int_times,
     )
+    # Set pixeldq to None to avoid a validation warning in update,
+    # for the temporary mismatch between num_superstripe and pixeldq shape
+    new_model.pixeldq = None
     new_model.update(input_model)
 
     new_model = generate_stripe_int_times(new_model)
     new_model = clean_superstripe_metadata(new_model)
+
+    # Now that metadata is cleaned up, assign the new 2D pixeldq
+    new_model.pixeldq = newpdq
 
     return new_model
 
