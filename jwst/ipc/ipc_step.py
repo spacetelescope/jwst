@@ -1,3 +1,5 @@
+"""Perform the IPC (Inter-Pixel Capacitance) correction step."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
