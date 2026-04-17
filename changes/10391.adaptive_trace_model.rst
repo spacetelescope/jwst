@@ -1,0 +1,1 @@
+Add multiprocessing support to adaptive trace model step. Processing time reduced by a factor of 7 for one NIRSpec IFU test case, fitting all 30 slices with 10 cores.

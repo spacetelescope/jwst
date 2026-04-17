@@ -8,7 +8,5 @@ Fringe Correction
    :maxdepth: 2
 
    main.rst
-   arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.fringe
+   api_ref.rst

@@ -1,1 +1,0 @@
-Remove ``kwargs`` from the ``JwstStep.run`` signature to match the parent method (``Step.run``).

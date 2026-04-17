@@ -5,11 +5,12 @@ import warnings
 
 import astropy.units as u
 import numpy as np
+import photutils
 from astropy.convolution import Gaussian2DKernel
 from astropy.nddata.utils import NoOverlapError, extract_array
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import QTable
-from astropy.utils import lazyproperty
+from astropy.utils import lazyproperty, minversion
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils.aperture import CircularAnnulus, CircularAperture, aperture_photometry
 from scipy import ndimage
@@ -22,6 +23,8 @@ from jwst.source_catalog._wcs_helpers import pixel_scale_angle_at_skycoord
 log = logging.getLogger(__name__)
 
 __all__ = ["JWSTSourceCatalog"]
+
+PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
 
 
 class JWSTSourceCatalog:
@@ -230,16 +233,28 @@ class JWSTSourceCatalog:
         """
         self.meta.update(self.segm_cat.meta)
 
-        # rename some columns in the output catalog
-        prop_names = {}
-        prop_names["label"] = "id"
-        prop_names["isophotal_flux"] = "flux"
-        prop_names["isophotal_flux_err"] = "segment_fluxerr"
-        prop_names["isophotal_area"] = "area"
+        # Mapping from JWST column names to the photutils catalog column
+        # names. The catalog from make_tweakreg_catalog always uses
+        # 'xcentroid' and 'ycentroid' (normalized from any photutils
+        # version), but other column names depend on the photutils
+        # version.
+        rename_map = {
+            "label": "id",
+            "isophotal_flux": "flux",
+            "isophotal_flux_err": "segment_fluxerr",
+            "isophotal_area": "area",
+        }
+        if PHOTUTILS_GE_3:
+            rename_new = {
+                "semimajor_sigma": "semimajor_axis",
+                "semiminor_sigma": "semiminor_axis",
+                "isophotal_flux_err": "segment_flux_err",
+            }
+            rename_map.update(rename_new)
 
         for column in self.segment_colnames:
             # define the property name
-            prop_name = prop_names.get(column, column)
+            prop_name = rename_map.get(column, column)
             if prop_name in self.segm_cat.colnames:
                 value = self.segm_cat[prop_name]
             else:
