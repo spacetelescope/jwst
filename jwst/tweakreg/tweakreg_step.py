@@ -4,9 +4,11 @@ import gc
 import logging
 from pathlib import Path
 
+import photutils
 import stcal.tweakreg.tweakreg as twk
 from astropy.table import Table
 from astropy.time import Time
+from astropy.utils import minversion
 from tweakwcs.correctors import JWSTWCSCorrector
 
 from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
@@ -15,6 +17,8 @@ from jwst.stpipe import Step, record_step_status
 from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
 
 log = logging.getLogger(__name__)
+
+PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
 
 
 def _oxford_or_str_join(str_list):
@@ -554,13 +558,15 @@ def _rename_catalog_columns(catalog):
     """
     for axis in ["x", "y"]:
         if axis not in catalog.colnames:
-            long_axis = axis + "centroid"
-            if long_axis in catalog.colnames:
-                catalog.rename_column(long_axis, axis)
+            long_names = [axis + "centroid", axis + "_centroid"]
+            for long_axis in long_names:
+                if long_axis in catalog.colnames:
+                    catalog.rename_column(long_axis, axis)
+                    break
             else:
                 raise ValueError(
                     "'tweakreg' source catalogs must contain either "
-                    "columns 'x' and 'y' or 'xcentroid' and "
-                    "'ycentroid'."
+                    f"columns {axis!r}, {long_names[0]!r}, "
+                    f"or {long_names[1]!r}."
                 )
     return catalog

@@ -1,1 +1,0 @@
-Add the option to output the ``chisq`` array when using the ``LIKELY`` algorithm.

@@ -1,1 +1,0 @@
-Processing of MIRI WFSS data added to calwebb_spec3 pipeline.
