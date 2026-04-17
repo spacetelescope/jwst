@@ -72,8 +72,6 @@ def assign_moving_target_wcs(input_models):
     with input_models:
         for i in science_indices:
             model = input_models.borrow(i)
-            model.meta.wcsinfo.mt_avra = mt_avra
-            model.meta.wcsinfo.mt_avdec = mt_avdec
             if isinstance(model, datamodels.MultiSlitModel):
                 for ind, slit in enumerate(model.slits):
                     new_wcs = add_mt_frame(
@@ -85,6 +83,8 @@ def assign_moving_target_wcs(input_models):
                     )
                     del model.slits[ind].meta.wcs
                     model.slits[ind].meta.wcs = new_wcs
+                    model.slits[ind].meta.wcsinfo.mt_avra = mt_avra
+                    model.slits[ind].meta.wcsinfo.mt_avdec = mt_avdec
             else:
                 new_wcs = add_mt_frame(
                     model.meta.wcs,
@@ -95,6 +95,8 @@ def assign_moving_target_wcs(input_models):
                 )
                 del model.meta.wcs
                 model.meta.wcs = new_wcs
+                model.meta.wcsinfo.mt_avra = mt_avra
+                model.meta.wcsinfo.mt_avdec = mt_avdec
             if model.meta.exposure.type.lower() in IMAGING_TYPES:
                 update_s_region_imaging(model)
             record_step_status(model, "assign_mtwcs", True)
