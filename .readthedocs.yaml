@@ -1,6 +1,5 @@
-# .readthedocs.yaml
-# Read the Docs configuration file
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+# yaml-language-server: $schema=https://raw.githubusercontent.com/readthedocs/readthedocs.org/refs/heads/main/readthedocs/rtd_tests/fixtures/spec/v2/schema.json
+# https://docs.readthedocs.io/en/stable/config-file/v2.html
 
 # Required
 version: 2
@@ -17,21 +16,21 @@ formats:
   - pdf
 
 build:
-  os: ubuntu-24.04
+  os: ubuntu-lts-latest
   tools:
-    python: mambaforge-latest
+    python: latest
+  apt_packages:
+    - graphviz
   jobs:
     post_checkout:
       - git fetch --unshallow || true
       - git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' || true
       - git fetch --all --tags || true
     pre_install:
-      - git update-index --assume-unchanged docs/rtd_environment.yaml docs/conf.py
+      - git update-index --assume-unchanged docs/conf.py
     post_install:
+      - pip install towncrier
       - git describe --exact-match || towncrier build --keep
-
-conda:
-  environment: docs/rtd_environment.yaml
 
 python:
   install:
