@@ -517,6 +517,8 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglow = 3.0
+    sighigh = 3.0
 
     left_rpix = 5
     bottom_rpix = 7
@@ -540,6 +542,8 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglow,
+        sighigh,
     )
 
     init_dataset.do_corrections()
@@ -569,6 +573,8 @@ def test_do_corrections_subarray(setup_subarray_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglow = 3.0
+    sighigh = 3.0
 
     left_rpix = 5
     bottom_rpix = 7
@@ -592,6 +598,8 @@ def test_do_corrections_subarray(setup_subarray_cube):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglow,
+        sighigh,
     )
 
     init_dataset.do_corrections()
@@ -621,6 +629,8 @@ def test_do_corrections_subarray_4amp(setup_subarray_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglow = 3.0
+    sighigh = 3.0
 
     left_rpix = 0
     right_rpix = 1
@@ -672,6 +682,8 @@ def test_do_corrections_subarray_4amp(setup_subarray_cube):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglow,
+        sighigh,
     )
 
     init_dataset.do_corrections()
@@ -694,6 +706,8 @@ def test_get_restore_group_subarray(setup_subarray_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglow = 3.0
+    sighigh = 3.0
 
     input_model = setup_subarray_cube(
         "SUB320A335R", "NRCALONG", xstart, ystart, ngroups, nrows, ncols
@@ -708,6 +722,8 @@ def test_get_restore_group_subarray(setup_subarray_cube):
         side_gain,
         conv_kernel_params,
         odd_even_rows,
+        siglow,
+        sighigh,
     )
 
     # Make sure get_group properly copied the subarray
@@ -736,6 +752,8 @@ def test_do_top_bottom_correction(setup_cube):
     use_side_ref_pixels = True
     side_smoothing_length = 11
     side_gain = 1.0
+    siglow = 3.0
+    sighigh = 3.0
 
     input_model = setup_cube("NIRCAM", "NRCALONG", ngroups, nrows, ncols)
     input_model.meta.subarray.name = "FULL"
@@ -746,6 +764,8 @@ def test_do_top_bottom_correction(setup_cube):
         side_smoothing_length,
         side_gain,
         conv_kernel_params,
+        siglow,
+        sighigh,
     )
 
     abounds = [0, 512, 1024, 1536, 2048]
@@ -816,6 +836,8 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
     use_side_ref_pixels = True
     side_smoothing_length = 11
     side_gain = 1.0
+    siglow = 3.0
+    sighigh = 3.0
 
     input_model = setup_cube("NIRCAM", "NRCALONG", ngroups, nrows, ncols)
     input_model.meta.subarray.name = "FULL"
@@ -826,6 +848,8 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
         side_smoothing_length,
         side_gain,
         conv_kernel_params,
+        siglow,
+        sighigh,
     )
 
     abounds = [0, 512, 1024, 1536, 2048]
@@ -1033,6 +1057,8 @@ def test_correct_model(setup_cube, instr, det):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglow = 3.0
+    sighigh = 3.0
 
     rpix = 7
     dataval = 150
@@ -1049,6 +1075,8 @@ def test_correct_model(setup_cube, instr, det):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglow,
+        sighigh,
     )
 
     np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, :4, 4:-4]), 0, decimal=0)
@@ -1071,6 +1099,8 @@ def test_zero_frame(setup_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglow = 3.0
+    sighigh = 3.0
 
     rpix = 7
     dataval = 150
@@ -1098,6 +1128,8 @@ def test_zero_frame(setup_cube):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglow,
+        sighigh,
     )
 
     # Make sure the SCI data is as expected.
