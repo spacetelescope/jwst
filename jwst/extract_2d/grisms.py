@@ -426,7 +426,7 @@ def _extract_tso_dhs_object(
         # name rather than unique regions values.
         subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
         stripe_set = np.array(range(subarray_stripenum)) + 1
-        _, sub_ranges = generate_substripe_ranges(input_model, subarray_ranges=True)
+        sub_ranges = generate_substripe_ranges(input_model)["subarray"]
     else:
         # For short wavelength detectors, use region values directly
         stripe_set = np.unique(all_stripes[~np.isnan(all_stripes)].astype(int))

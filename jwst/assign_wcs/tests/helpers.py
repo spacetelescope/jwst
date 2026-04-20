@@ -101,7 +101,7 @@ def make_mock_dhs_nrca1_rate():
 
     # Fill each packed stripe row range with the stripe's ID value so tests
     # can verify that the correct detector region ends up in each output slit.
-    _, sub_ranges = generate_substripe_ranges(model, subarray_ranges=True)
+    sub_ranges = generate_substripe_ranges(model)["subarray"]
     for i, stripe_id in enumerate(NRCA1_DHS_STRIPE_IDS):
         y0, y1 = sub_ranges[i]
         model.data[:, y0:y1, :] = stripe_id
@@ -178,7 +178,7 @@ def make_mock_dhs_nrcalong_rate():
 
     # Fill each packed stripe row range with the same pattern
     # since for NRCALONG all readouts should be from the same physical detector region
-    _, sub_ranges = generate_substripe_ranges(model, subarray_ranges=True)
+    sub_ranges = generate_substripe_ranges(model)["subarray"]
     for sub_range in sub_ranges.values():
         y0, y1 = sub_range
         model.data[:, y0 + 5 : y1 - 5, :] = 1.0

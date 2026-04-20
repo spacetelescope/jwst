@@ -10,7 +10,7 @@ __all__ = [
 ]
 
 
-def generate_substripe_ranges(sci_model, subarray_ranges=False):
+def generate_substripe_ranges(sci_model):
     """
     Determine the bounds of each substripe based on the input model multistripe metadata.
 
@@ -18,15 +18,15 @@ def generate_substripe_ranges(sci_model, subarray_ranges=False):
     ----------
     sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel with multistripe params defined.
-    subarray_ranges : bool
-        If true, dict containing ranges in subarray frame will also be provided.
 
     Returns
     -------
-    dict or tuple(dict)
-        Dictionary with keys as int counter, values as ranges of array index in slowaxis
-        corresponding to stripe shapes. If subarray_ranges was True, a second dictionary
-        will be provided with equivalent ranges in the subarray frame.
+    dict
+        Dictionary with keys "full", "subarray", "reference_full", and
+        "reference_subarray". Each key has another dictionary as the value, with
+        integer counter keys. Values are the ranges of array index in slowaxis
+        corresponding to stripe shapes in the full array, striped subarray for the
+        science and reference regions respectively.
     """
     nreads1 = sci_model.meta.subarray.multistripe_reads1
     nskips1 = sci_model.meta.subarray.multistripe_skips1
@@ -40,21 +40,36 @@ def generate_substripe_ranges(sci_model, subarray_ranges=False):
     else:
         slowsize = sci_model.meta.subarray.xsize
 
+    # Check for valid input
+    if nreads2 <= 0:
+        raise ValueError(
+            "Invalid value for multistripe_reads2 - stripe ranges could not be generated."
+        )
+
     sub_ranges = {}
-    ranges = {}
+    full_ranges = {}
+    reference_sub_ranges = {}
+    reference_full_ranges = {}
     range_counter = 0
+    reference_range_counter = 0
+
     # Track the read position in the full frame with linecount, and number of lines
     # read into subarray with sub_lines
     linecount = 0
     sub_lines = 0
 
     # Start at 0, make nreads1 row reads
+    reference_full_ranges[reference_range_counter] = [linecount, linecount + nreads1]
+    reference_sub_ranges[reference_range_counter] = [sub_lines, sub_lines + nreads1]
+    reference_range_counter += 1
     linecount += nreads1
     sub_lines += nreads1
+
     # Now skip nskips1
     linecount += nskips1
+
     # Nreads2
-    ranges[range_counter] = [linecount, linecount + nreads2]
+    full_ranges[range_counter] = [linecount, linecount + nreads2]
     sub_ranges[range_counter] = [sub_lines, sub_lines + nreads2]
     range_counter += 1
     linecount += nreads2
@@ -71,16 +86,14 @@ def generate_substripe_ranges(sci_model, subarray_ranges=False):
     # 3b. If not interleave, each loop after linecount reset is simply
     #     nreads1 + nskips1 + nreads2.
     interleave_skips = nskips1
-    if nreads2 <= 0:
-        raise ValueError(
-            "Invalid value for multistripe_reads2 - "
-            "cutout for reference file could not be "
-            "generated!"
-        )
     while sub_lines < slowsize:
         # If repeat_stripe, add interleaved rows to output and increment sub_lines
         if repeat_stripe > 0:
             linecount = 0
+            reference_full_ranges[reference_range_counter] = [linecount, linecount + nreads1]
+            reference_sub_ranges[reference_range_counter] = [sub_lines, sub_lines + nreads1]
+            reference_range_counter += 1
+
             linecount += nreads1
             sub_lines += nreads1
             if interleave_reads1:
@@ -90,7 +103,7 @@ def generate_substripe_ranges(sci_model, subarray_ranges=False):
                 linecount += nskips1
         else:
             linecount += nskips2
-        ranges[range_counter] = [linecount, linecount + nreads2]
+        full_ranges[range_counter] = [linecount, linecount + nreads2]
         sub_ranges[range_counter] = [sub_lines, sub_lines + nreads2]
         range_counter += 1
         linecount += nreads2
@@ -99,19 +112,15 @@ def generate_substripe_ranges(sci_model, subarray_ranges=False):
     if sub_lines != slowsize:
         raise ValueError(
             "Stripe readout resulted in mismatched reference array shape "
-            "with respect to science array!"
+            "with respect to science array."
         )
 
-    if slowaxis < 0:
-        for rge in ranges.keys():
-            for i, row in enumerate(ranges[rge]):
-                ranges[rge][i] = 2048 - row
-                sub_ranges[rge][i] = 2048 - row
-
-    if subarray_ranges:
-        return ranges, sub_ranges
-    else:
-        return ranges
+    return {
+        "full": full_ranges,
+        "subarray": sub_ranges,
+        "reference_full": reference_full_ranges,
+        "reference_subarray": reference_sub_ranges,
+    }
 
 
 def generate_superstripe_ranges(sci_model):
@@ -132,8 +141,11 @@ def generate_superstripe_ranges(sci_model):
     Returns
     -------
     dict
-        Dictionary with keys as int counter, values as ranges of array index in slowaxis
-        corresponding to stripe shapes.
+        Dictionary with keys "full", "subarray", "reference_full", and
+        "reference_subarray". Each key has another dictionary as the value, with
+        0-indexed stripe labels as keys. Values are the ranges of array index
+        in slowaxis corresponding to stripe shapes in the full array, striped
+        subarray for the science and reference regions respectively.
     """
     nreads1 = sci_model.meta.subarray.multistripe_reads1
     nskips1 = sci_model.meta.subarray.multistripe_skips1
@@ -146,15 +158,21 @@ def generate_superstripe_ranges(sci_model):
     xsize_sci = sci_model.meta.subarray.xsize
     ysize_sci = sci_model.meta.subarray.ysize
     fastaxis = sci_model.meta.subarray.fastaxis
-
     if np.abs(fastaxis) == 1:
         slow_size = ysize_sci
     else:
         slow_size = xsize_sci
 
-    ranges = {}
-    range_counter = 0
+    # Check for valid input
+    if nreads2 <= 0:
+        raise ValueError(
+            "Invalid value for multistripe_reads2 - stripe ranges could not be generated."
+        )
 
+    sub_ranges = {}
+    full_ranges = {}
+    reference_sub_ranges = {}
+    reference_full_ranges = {}
     for stripe in range(num_superstripe):
         # Track the read position in the full frame with linecount, and number of lines
         # read into subarray with sub_lines
@@ -162,12 +180,17 @@ def generate_superstripe_ranges(sci_model):
         sub_lines = 0
 
         # Start at 0, make nreads1 row reads
+        reference_full_ranges[stripe] = [(linecount, linecount + nreads1)]
+        reference_sub_ranges[stripe] = [(sub_lines, sub_lines + nreads1)]
         linecount += nreads1
         sub_lines += nreads1
+
         # Now skip nskips1 + superstripe_step * stripe
         linecount += nskips1 + superstripe_step * stripe
+
         # Nreads2
-        ranges[range_counter] = [(linecount, linecount + nreads2)]
+        full_ranges[stripe] = [(linecount, linecount + nreads2)]
+        sub_ranges[stripe] = [(sub_lines, sub_lines + nreads2)]
         linecount += nreads2
         sub_lines += nreads2
 
@@ -188,6 +211,8 @@ def generate_superstripe_ranges(sci_model):
             if repeat_stripe > 0:
                 linecount = 0
 
+                reference_full_ranges[stripe].append((linecount, linecount + nreads1))
+                reference_sub_ranges[stripe].append((sub_lines, sub_lines + nreads1))
                 linecount += nreads1
                 sub_lines += nreads1
 
@@ -198,17 +223,23 @@ def generate_superstripe_ranges(sci_model):
                     linecount += nskips1
             else:
                 linecount += nskips2
-            ranges[range_counter].append((linecount, linecount + nreads2))
+            full_ranges[stripe].append((linecount, linecount + nreads2))
+            sub_ranges[stripe].append((sub_lines, sub_lines + nreads2))
             linecount += nreads2
             sub_lines += nreads2
-        range_counter += 1
 
         if sub_lines != slow_size:
             raise ValueError(
                 "Stripe readout resulted in mismatched reference array shape "
-                "with respect to science array!"
+                "with respect to science array"
             )
-    return ranges
+
+    return {
+        "full": full_ranges,
+        "subarray": sub_ranges,
+        "reference_full": reference_full_ranges,
+        "reference_subarray": reference_sub_ranges,
+    }
 
 
 def collate_superstripes(input_model):
@@ -234,7 +265,9 @@ def collate_superstripes(input_model):
     nreads1 = input_model.meta.subarray.multistripe_reads1
 
     # Generate slowaxis ranges to place stripes into parent frame
-    stripe_ranges = generate_superstripe_ranges(input_model)
+    # TODO: this does not account for stripes with multiple subranges.
+    #     It just uses the first range in the list.
+    stripe_ranges = generate_superstripe_ranges(input_model)["full"]
     srlist = []
     for key in stripe_ranges:
         if slowdir < 0:
