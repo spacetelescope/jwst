@@ -27,9 +27,9 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
         bkg_boxsize=10.0,
         starfinder_name=starfinder,
         starfinder_kwargs={
-            "brightest": None,
-            "sharphi": 3.0,
-            "minsep_fwhm": 2.5,
+            "n_brightest": None,
+            "sharpness_range": (0.5, 3.0),
+            "min_separation": max(2, int(2.5 * 2.5 + 0.5)),
             "sigma_radius": 2.5,
         },
     )
