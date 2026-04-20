@@ -3,10 +3,8 @@ import os
 
 import asdf
 import numpy as np
-import photutils
 import pytest
 from astropy.table import QTable, Table
-from astropy.utils import minversion
 from astropy.utils.data import get_pkg_data_filename
 from astropy.wcs import WCS
 from gwcs.wcstools import grid_from_bounding_box
@@ -22,17 +20,12 @@ BKG_LEVEL = 0.001
 N_EXAMPLE_SOURCES = 21
 N_CUSTOM_SOURCES = 15
 REFCAT = "GAIADR3"
-PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
 
 # The tweakreg catalog output always uses 'xcentroid'/'ycentroid',
 # but _rename_catalog_columns and user-supplied catalogs may use
 # either the old or new photutils column names.
-if PHOTUTILS_GE_3:
-    X_NAME = "x_centroid"
-    Y_NAME = "y_centroid"
-else:
-    X_NAME = "xcentroid"
-    Y_NAME = "ycentroid"
+X_NAME = "x_centroid"
+Y_NAME = "y_centroid"
 
 
 @pytest.fixture

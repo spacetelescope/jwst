@@ -4,11 +4,9 @@ import gc
 import logging
 from pathlib import Path
 
-import photutils
 import stcal.tweakreg.tweakreg as twk
 from astropy.table import Table
 from astropy.time import Time
-from astropy.utils import minversion
 from tweakwcs.correctors import JWSTWCSCorrector
 
 from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
@@ -17,8 +15,6 @@ from jwst.stpipe import Step, record_step_status
 from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
 
 log = logging.getLogger(__name__)
-
-PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
 
 
 def _oxford_or_str_join(str_list):
@@ -450,24 +446,27 @@ class TweakRegStep(Step):
         return catalog_filename
 
     def _find_sources(self, image_model):
+        # preserve original behavior
+        min_separation = (
+            max(2, int(self.minsep_fwhm * self.kernel_fwhm + 0.5)) if self.minsep_fwhm else None
+        )
+
         # source finding
         starfinder_kwargs = {
             "sigma_radius": self.sigma_radius,
-            "minsep_fwhm": self.minsep_fwhm,
-            "sharplo": self.sharplo,
-            "sharphi": self.sharphi,
-            "roundlo": self.roundlo,
-            "roundhi": self.roundhi,
-            "peakmax": self.peakmax,
-            "brightest": self.brightest,
-            "npixels": self.npixels,
+            "min_separation": min_separation,
+            "sharpness_range": (self.sharplo, self.sharphi),
+            "roundness_range": (self.roundlo, self.roundhi),
+            "peak_max": self.peakmax,
+            "n_brightest": self.brightest,
+            "n_pixels": self.npixels,
             "connectivity": int(self.connectivity),  # option returns a string, so cast to int
-            "nlevels": self.nlevels,
+            "n_levels": self.nlevels,
             "contrast": self.contrast,
             "mode": self.multithresh_mode,
             "error": image_model.err,
-            "localbkg_width": self.localbkg_width,
-            "apermask_method": self.apermask_method,
+            "local_bkg_width": self.localbkg_width,
+            "aperture_mask_method": self.apermask_method,
             "kron_params": self.kron_params,
             "deblend": self.deblend,
         }
@@ -544,7 +543,11 @@ def _parse_catfile(catfile):
 
 def _rename_catalog_columns(catalog):
     """
-    Rename columns 'xcentroid' and 'ycentroid' to 'x' and 'y', respectively.
+    Rename catalog columns for source position.
+
+    This function renames:
+    * 'xcentroid' or 'x_centroid' to 'x'
+    * 'ycentroid' or 'y_centroid' to 'y'
 
     Parameters
     ----------
