@@ -6,11 +6,10 @@ import warnings
 
 import astropy.units as u
 import numpy as np
-import photutils
 from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import QTable
-from astropy.utils import lazyproperty, minversion
+from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils import use_future_column_names
 from photutils.background import Background2D, MedianBackground
@@ -25,7 +24,6 @@ log = logging.getLogger(__name__)
 
 __all__ = ["make_tweakreg_catalog"]
 
-PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
 SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
     "ellipticity",
     "sky_bbox_ll",
@@ -178,8 +176,8 @@ def _rename_columns(sources):
         "npix": "area",  # for iraf and dao star finder compatibility with source_catalog step
         "segment_flux": "flux",  # for sourcefinder compatibility with tweakreg step
         "label": "id",  # for sourcefinder compatibility with tweakreg step
-        "x_centroid": "xcentroid",  # for photutils 3+ compatibility
-        "y_centroid": "ycentroid",  # for photutils 3+ compatibility
+        "x_centroid": "xcentroid",  # photutils 3+ to jwst tweakreg name
+        "y_centroid": "ycentroid",  # photutils 3+ to jwst tweakreg name
     }
     for old_col, new_col in rename_map.items():
         if old_col in sources.colnames:
@@ -221,19 +219,10 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     :ref:`photutils segmentation tutorial <photutils:image_segmentation>`.
     """
     default_kwargs = {
-        "npixels": 10,
+        "n_pixels": 10,
         "progress_bar": False,
     }
     kwargs = {**default_kwargs, **kwargs}
-
-    # Normalize old-style kwargs to new-style for photutils >= 3.0
-    if PHOTUTILS_GE_3:
-        alias_map = {
-            "n_pixels": "npixels",
-            "n_levels": "nlevels",
-            "n_processes": "nproc",
-        }
-        _normalize_kwargs(kwargs, alias_map)
 
     # convolve the data with a Gaussian kernel
     if kernel_fwhm > 0:
@@ -268,163 +257,6 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     return sources, segment_map
 
 
-def _normalize_kwargs(kwargs, alias_map):
-    """
-    Normalize kwargs in-place using an alias map.
-
-    Parameters
-    ----------
-    kwargs : dict
-        Dictionary of keyword arguments to normalize. This dictionary is
-        modified in place and returned for convenience.
-
-    alias_map : dict
-        Dictionary mapping canonical keyword names to their aliases.
-
-    Returns
-    -------
-    kwargs : dict
-        The input kwargs dictionary with aliases normalized to canonical
-        names.
-    """
-    for canonical, aliases in alias_map.items():
-        if isinstance(aliases, str):
-            aliases = [aliases]
-
-        for alias in aliases:
-            if canonical not in kwargs and alias in kwargs:
-                kwargs[canonical] = kwargs.pop(alias)
-            else:
-                kwargs.pop(alias, None)
-
-    return kwargs
-
-
-def _translate_starfinder_kwargs(
-    kwargs,
-    kernel_fwhm,
-    sharplo_default,
-    sharphi_default,
-    roundlo_default,
-    roundhi_default,
-):
-    """
-    Translate starfinder keyword arguments for cross-version compatibility.
-
-    For photutils >= 3.0, old-style keyword arguments are translated
-    to their new equivalents:
-
-    - ``sharplo``, ``sharphi`` -> ``sharpness_range``
-    - ``roundlo``, ``roundhi`` -> ``roundness_range``
-    - ``peakmax`` -> ``peak_max``
-    - ``brightest`` -> ``n_brightest``
-    - ``minsep_fwhm`` -> ``min_separation``
-    - ``npixels`` -> ``n_pixels``
-    - ``nlevels`` -> ``n_levels``
-    - ``apermask_method`` -> ``aperture_mask_method``
-    - ``localbkg_width`` -> ``local_bkg_width``
-
-    For photutils < 3.0, new-style keyword arguments are translated
-    to their old equivalents:
-
-    - ``sharpness_range`` -> ``sharplo``, ``sharphi``
-    - ``roundness_range`` -> ``roundlo``, ``roundhi``
-    - ``peak_max`` -> ``peakmax``
-    - ``n_brightest`` -> ``brightest``
-    - ``n_pixels`` -> ``npixels``
-    - ``n_levels`` -> ``nlevels``
-    - ``aperture_mask_method`` -> ``apermask_method``
-    - ``local_bkg_width`` -> ``localbkg_width``
-
-    If both old-style and new-style keyword arguments are provided
-    for the same parameter, the style matching the installed photutils
-    version takes precedence.
-
-    Parameters
-    ----------
-    kwargs : dict
-        The keyword arguments to translate.
-    kernel_fwhm : float
-        The FWHM of the Gaussian kernel, used for ``minsep_fwhm``
-        conversion to ``min_separation`` in pixels.
-    sharplo_default : float
-        Default lower bound for the sharpness range.
-    sharphi_default : float
-        Default upper bound for the sharpness range.
-    roundlo_default : float
-        Default lower bound for the roundness range.
-    roundhi_default : float
-        Default upper bound for the roundness range.
-
-    Returns
-    -------
-    kwargs : dict
-        A copy of the input kwargs with keywords translated to match
-        the installed photutils version.
-    """
-    kwargs = kwargs.copy()  # avoid modifying original dict
-
-    old_to_new_aliases = {
-        "peakmax": "peak_max",
-        "brightest": "n_brightest",
-        "npixels": "n_pixels",
-        "nlevels": "n_levels",
-        "apermask_method": "aperture_mask_method",
-        "localbkg_width": "local_bkg_width",
-    }
-
-    if PHOTUTILS_GE_3:
-        # Translate old-style to new-style. If new-style kwargs are
-        # already present, they take precedence.
-        if "sharpness_range" not in kwargs:
-            sharplo = kwargs.pop("sharplo", sharplo_default)
-            sharphi = kwargs.pop("sharphi", sharphi_default)
-            kwargs["sharpness_range"] = (sharplo, sharphi)
-        else:
-            kwargs.pop("sharplo", None)
-            kwargs.pop("sharphi", None)
-
-        if "roundness_range" not in kwargs:
-            roundlo = kwargs.pop("roundlo", roundlo_default)
-            roundhi = kwargs.pop("roundhi", roundhi_default)
-            kwargs["roundness_range"] = (roundlo, roundhi)
-        else:
-            kwargs.pop("roundlo", None)
-            kwargs.pop("roundhi", None)
-
-        if "min_separation" not in kwargs and "minsep_fwhm" in kwargs:
-            minsep = kwargs.pop("minsep_fwhm")
-            kwargs["min_separation"] = max(2, int(minsep * kernel_fwhm + 0.5))
-        else:
-            kwargs.pop("minsep_fwhm", None)
-
-        new_to_old_aliases = {v: k for k, v in old_to_new_aliases.items()}
-        _normalize_kwargs(kwargs, new_to_old_aliases)
-
-    else:
-        # Translate new-style to old-style. If old-style kwargs are
-        # already present, they take precedence.
-        if "sharplo" not in kwargs and "sharphi" not in kwargs:
-            if "sharpness_range" in kwargs:
-                sr = kwargs.pop("sharpness_range")
-                kwargs["sharplo"] = sr[0]
-                kwargs["sharphi"] = sr[1]
-        else:
-            kwargs.pop("sharpness_range", None)
-
-        if "roundlo" not in kwargs and "roundhi" not in kwargs:
-            if "roundness_range" in kwargs:
-                rr = kwargs.pop("roundness_range")
-                kwargs["roundlo"] = rr[0]
-                kwargs["roundhi"] = rr[1]
-        else:
-            kwargs.pop("roundness_range", None)
-
-        _normalize_kwargs(kwargs, old_to_new_aliases)
-
-    return kwargs
-
-
 def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs):
     """
     Make input and output of IRAFStarFinder consistent with SourceFinder and DAOStarFinder.
@@ -452,16 +284,6 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(IRAFStarFinder).parameters)
-
-    kwargs = _translate_starfinder_kwargs(
-        kwargs,
-        kernel_fwhm,
-        sharplo_default=0.5,
-        sharphi_default=2.0,
-        roundlo_default=0.0,
-        roundhi_default=0.2,
-    )
-
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
@@ -495,27 +317,9 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     segmentation_image : ndarray or None
         The segmentation image, or None if not applicable.
     """
-    # For consistency with IRAFStarFinder, allow minsep_fwhm to be
-    # passed in and convert to pixels. DAOStarFinder never natively
-    # supported minsep_fwhm in any version of photutils.
-    # For photutils 3.0+, _translate_starfinder_kwargs handles this.
-    if not PHOTUTILS_GE_3 and "minsep_fwhm" in kwargs:
-        min_sep_pix = max(2, int(kwargs.pop("minsep_fwhm") * kernel_fwhm + 0.5))
-        kwargs["min_separation"] = min_sep_pix
-
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(DAOStarFinder).parameters)
-
-    kwargs = _translate_starfinder_kwargs(
-        kwargs,
-        kernel_fwhm,
-        sharplo_default=0.2,
-        sharphi_default=1.0,
-        roundlo_default=-1.0,
-        roundhi_default=1.0,
-    )
-
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
@@ -572,26 +376,6 @@ def make_tweakreg_catalog(
         - 'dao': fwhm=2.5
         - 'iraf': fwhm=2.5
         - 'segmentation': npixels=10, progress_bar=False
-
-        For 'dao' and 'iraf', either old-style or new-style keyword
-        argument names may be used regardless of the installed
-        photutils version. They are automatically translated to
-        match the installed version:
-
-        - ``sharplo``, ``sharphi`` <-> ``sharpness_range``
-        - ``roundlo``, ``roundhi`` <-> ``roundness_range``
-        - ``peakmax`` <-> ``peak_max``
-        - ``brightest`` <-> ``n_brightest``
-        - ``minsep_fwhm`` -> ``min_separation``
-
-        If both old-style and new-style keyword arguments are given
-        for the same parameter, the style matching the installed
-        photutils version takes precedence.
-
-        Note that ``minsep_fwhm`` is converted to pixels using the
-        formula ``min_separation = max(2, int(minsep_fwhm *
-        kernel_fwhm + 0.5))`` to be consistent with the way that
-        IRAFStarFinder handles this parameter.
 
     Returns
     -------
