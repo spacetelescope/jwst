@@ -1559,6 +1559,11 @@ class STTableDataDiff(TableDataDiff):
             for tline in tlines:
                 self._writeln(tline)
 
+        if self.non_numeric_diff_columns:
+            self._writeln("\nNon-numeric columns with differences:")
+            for colname, ndiffs in self.non_numeric_diff_columns:
+                self._writeln(f" Column {colname} has {ndiffs} different element(s).")
+
         if self.identical_columns:
             if len(self.identical_columns) == 1:
                 self._writeln(
