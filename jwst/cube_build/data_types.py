@@ -25,9 +25,7 @@ class DataTypes:
     input_models : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
                    `~jwst.datamodels.container.ModelContainer`
        Input data to ``cube_build``, either a single model or a model container.
-    single : bool
-       If `True`, then create single mode IFU cubes for outlier detection.
-       If `False`, then create standard IFU cubes.
+
     output_file : str
        Optional user-provided output file name.
     output_dir : str
@@ -47,7 +45,7 @@ class DataTypes:
         "products": [{"name": "", "members": [{"exptype": "", "expname": ""}]}],
     }
 
-    def __init__(self, input_models, single, output_file, output_dir):
+    def __init__(self, input_models, output_file, output_dir):
         self.input_models = []
         self.output_name = None
 
@@ -59,10 +57,8 @@ class DataTypes:
             self.output_name = self.build_product_name(filename)
 
         elif isinstance(input_models, ModelContainer):
-            self.output_name = "Temp"
             self.input_models = input_models
-            if not single:  # find the name of the output file from the association
-                self.output_name = input_models.asn_table["products"][0]["name"]
+            self.output_name = input_models.asn_table["products"][0]["name"]
         else:
             raise TypeError(f"Failed to process file type {type(input_models)}")
 
@@ -73,7 +69,7 @@ class DataTypes:
         if output_file is not None:
             self.output_name = Path(output_file).stem
 
-        if output_dir is not None:
+        if output_dir is not None and self.output_name is not None:
             self.output_name = output_dir + "/" + self.output_name
 
     def build_product_name(self, filename):

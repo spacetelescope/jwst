@@ -189,7 +189,6 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     pars_input["grating"] = []
     weighting = "drizzle"
     output_type = "multi"
-    single = False
     par_filename = "None"
 
     # set up pars needed for CubeData class
@@ -199,7 +198,6 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
         "grating": pars_input["grating"],
         "filter": pars_input["filter"],
         "weighting": weighting,
-        "single": single,
         "output_type": output_type,
         "offset_file": offset_file,
     }
