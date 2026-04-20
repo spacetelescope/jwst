@@ -66,7 +66,7 @@ cores on the host computer and the value of the ``max_cores`` input parameter. B
 default the step runs on a single processor. At the other extreme, if ``max_cores`` is
 set to "all", it will use all available cores (real and virtual). It is important to
 note that multiprocessing is used only for the two point difference portion of the jump
-step. The snowball and finding showers calculations do not use mulitprocessing even
+step. The snowball and finding showers calculations do not use multiprocessing even
 when multiprocessing is selected. Testing has shown a reduction in the elapsed time
 for the two point difference portion of the jump  step proportional to the number of
 real cores used. It is possible the snowball and finding showers portion of the jump
