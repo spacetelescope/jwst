@@ -16,7 +16,7 @@ The master background subtraction step uses the following optional arguments.
   When a user background spectrum is supplied, it is used for the subtraction instead of
   a computed master background, and the name of the user-supplied file is recorded in the
   MSTRBKGD keyword in the output product(s).
-  Defaults to ``None``.
+  Defaults to None.
 
 ``--save_background``
   A boolean indicating whether the computed 1-D master background spectrum should be saved
@@ -26,18 +26,18 @@ The master background subtraction step uses the following optional arguments.
   for each MOS slitlet (with the suffix "masterbg2d"), and the 1-D background spectra
   that were combined into the master background spectrum (with the suffix "bkgx1d").
   If a user-supplied background is specified, this argument is ignored.
-  Defaults to ``False``.
+  Defaults to `False`.
 
 ``--force_subtract``
   A boolean indicating whether or not to override the step's built-in logic for determining
   if the step should be applied. By default, the step will be skipped if the
   :ref:`calwebb_spec2 <calwebb_spec2>` :ref:`background <background_subtraction>` step has
-  already been applied. If ``--force_subtract = True``, the master background will be
+  already been applied. If ``--force_subtract=True``, the master background will be
   applied.
 
 ``--output_use_model``
   A boolean indicating whether to use the "filename" meta attribute in the data model to
-  determine the name of the output file created by the step. Defaults to ``True``.
+  determine the name of the output file created by the step. Defaults to `True`.
 
 ``--sigma_clip``
   Factor for sigma clipping outliers and contaminated spectra when combining MOS

@@ -1,3 +1,5 @@
+"""Combine background observations and subtract from science exposures."""
+
 import logging
 from pathlib import Path
 
@@ -36,16 +38,16 @@ class MasterBackgroundStep(Step):
         ----------
         input_data : `~stdatamodels.jwst.datamodels.ImageModel`, \
                      `~stdatamodels.jwst.datamodels.IFUImageModel`, \
-                     `~jwst.datamodels.container.ModelContainer`, str
+                     `~jwst.datamodels.container.ModelContainer`, or str
             Input target datamodel(s) or association file to which master background
             subtraction is to be applied.
 
         Returns
         -------
         result : `~stdatamodels.jwst.datamodels.ImageModel`, \
-                 `~stdatamodels.jwst.datamodels.IFUImageModel`, \
+                 `~stdatamodels.jwst.datamodels.IFUImageModel`, or \
                  `~jwst.datamodels.container.ModelContainer`
-            The background-subtracted science datamodel(s)
+            The background-subtracted science datamodel(s).
         """
         output_model = self.prepare_output(input_data)
 
@@ -260,13 +262,30 @@ class MasterBackgroundStep(Step):
         return do_sub
 
     def save_container(self, container, suffix="", asn_id="", force=True):
-        """Save all models in container for intermediate background subtraction."""
+        """
+        Save all models in container for intermediate background subtraction.
+
+        Parameters
+        ----------
+        container : `~jwst.datamodels.container.ModelContainer`
+            Model container to save.
+
+        suffix, asn_id, force : obj
+            See :meth:`~stpipe.Step.save_model`.
+        """
         for i, model in enumerate(container):
             self.save_model(model, suffix=suffix, force=force, asn_id=asn_id, idx=i)
 
 
 def copy_background_to_surf_bright(spectrum):
-    """Copy the background column to the surf_bright column in a MultiSpecModel in-place."""
+    """
+    Copy the background column to the surf_bright column in a MultiSpecModel in-place.
+
+    Parameters
+    ----------
+    spectrum : `~stdatamodels.jwst.datamodels.MultiSpecModel`
+        Data model to perform copy on.
+    """
     for spec in spectrum.spec:
         spec.spec_table["SURF_BRIGHT"][:] = spec.spec_table["BACKGROUND"].copy()
         spec.spec_table["SB_ERROR"][:] = spec.spec_table["BKGD_ERROR"].copy()
@@ -282,14 +301,14 @@ def split_container(container):
 
     Parameters
     ----------
-    container : ModelContainer
+    container : `~jwst.datamodels.container.ModelContainer`
         Input model container
 
     Returns
     -------
-    science : ModelContainer
+    science : `~jwst.datamodels.container.ModelContainer`
         Container for science data.
-    background : ModelContainer
+    background : `~jwst.datamodels.container.ModelContainer`
         Container for background data.
     """
     background = ModelContainer()
@@ -321,7 +340,7 @@ def subtract_2d_background(source, background):
              `~jwst.datamodels.container.ModelContainer`
         The input science data, updated in place.
     background : `~stdatamodels.jwst.datamodels.JwstDataModel`
-        The input background data.  Must be the same datamodel type as `source`.
+        The input background data.  Must be the same datamodel type as ``source``.
         For a `~jwst.datamodels.container.ModelContainer`,
         the source and background
         models in the input containers must match one-to-one.
