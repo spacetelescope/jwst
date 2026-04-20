@@ -1,14 +1,14 @@
 Description
-============
+===========
 
-:Class: `jwst.linearity.LinearityStep`
+:Class: `jwst.linearity.linearity_step.LinearityStep`
 :Alias: linearity
 
 Assumptions
 -----------
 It is assumed that the input science exposure data for near-IR instruments
 have had the :ref:`superbias <superbias_step>` subtraction step applied,
-therefore the correction coefficients stored in the linearity reference files
+therefore the correction coefficients stored in the :ref:`linearity_reffile`
 for those instruments must have been derived from data that has also been
 bias subtracted.
 MIRI data, on the other hand, do not receive bias subtraction
@@ -30,8 +30,8 @@ for detector non-linearity. The correction is applied pixel-by-pixel,
 group-by-group, integration-by-integration within a science exposure.
 
 The correction is represented by an nth-order polynomial for
-each pixel in the detector, with n+1 arrays of coefficients read from the
-linearity reference file.
+each pixel in the detector, with ``n+1`` arrays of coefficients read from the
+:ref:`linearity_reffile`.
 
 The algorithm for correcting the observed pixel value in each group of an
 integration is currently of the form:
@@ -42,7 +42,7 @@ integration is currently of the form:
 where :math:`F` is the observed counts (in DN), :math:`c_n` are the polynomial
 coefficients, and :math:`F_\text{c}` is the corrected counts. There is no
 limit to the order of the polynomial correction; all coefficients contained in
-the reference file will be applied.
+the :ref:`linearity_reffile` will be applied.
 
 Upon successful completion of the linearity correction the S_LINEAR keyword is
 set to "COMPLETE".
@@ -54,8 +54,8 @@ Special Handling
    the linearity correction applied and the DQ flag "NO_LIN_CORR" is added to
    the science exposure PIXELDQ array.
 
-#. Pixels that have the "NO_LIN_CORR" flag set in the DQ array of the linearity
-   reference file will not have the correction applied and the "NO_LIN_CORR" flag
+#. Pixels that have the "NO_LIN_CORR" flag set in the DQ array of the
+   :ref:`linearity_reffile` will not have the correction applied and the "NO_LIN_CORR" flag
    is added to the science exposure PIXELDQ array.
 
 #. Pixel values that have the "SATURATED" flag set in a particular group of the
@@ -63,7 +63,7 @@ Special Handling
    applied to that group. Any groups for that pixel that are not flagged as
    saturated will be corrected.
 
-The flags from the linearity reference file DQ array are propagated into the
+The flags from the :ref:`linearity_reffile` DQ array are propagated into the
 PIXELDQ array of the science exposure using a bitwise OR operation.
 
 NIRCam Frame 0
@@ -81,7 +81,11 @@ Subarrays
 This step handles input science exposures that were taken in subarray modes
 in a flexible way. If the reference data arrays are the same size as the
 science data, they will be applied directly. If there is a mismatch, the
-routine will extract a matching subarray from the reference file data arrays
+routine will extract a matching subarray from the :ref:`linearity_reffile` data arrays
 and apply them to the science data. Hence full-frame reference files can be
 used for both full-frame and subarray science exposures, or
 subarray-dependent reference files can be provided if desired.
+
+Step Arguments
+--------------
+The linearity correction has no step-specific arguments.

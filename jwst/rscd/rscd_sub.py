@@ -1,6 +1,4 @@
-#
-#  Module for the RSCD correction for MIRI science data
-#
+"""Functions for the RSCD correction for MIRI science data."""
 
 import logging
 
@@ -29,15 +27,15 @@ def do_correction(output_model, rscd_model):
 
     Parameters
     ----------
-    output_model : RampModel
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Input ramp datamodel
 
-    rscd_model : RSCDModel
+    rscd_model : `~stdatamodels.jwst.datamodels.RSCDModel`
         RSCD reference datamodel
 
     Returns
     -------
-    output_model : RampModel
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Ramp datamodel with RSCD affected groups flagged as DO_NOT_USE
     """
     # Retrieve the reference parameters for this exposure type
@@ -71,7 +69,7 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
 
     Parameters
     ----------
-    output : RampModel
+    output : `~stdatamodels.jwst.datamodels.RampModel`
         Science data to be flagged
 
     group_skip_int1 : int
@@ -82,7 +80,7 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
 
     Returns
     -------
-    output: RampModel
+    output: `~stdatamodels.jwst.datamodels.RampModel`
         Ramp datamodel with RSCD affected groups flagged as DO_NOT_USE
     """
     # General exposure parameters
@@ -203,14 +201,14 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
 
     Parameters
     ----------
-    output_model : RampModel
-        Science data to be flagged
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Science data to be flagged.
 
     int_start : int
-        Starting integration
+        Starting integration.
 
     int_end : int
-        Ending integration
+        Ending integration.
 
     rscd_skip : int
         Number of groups to skip at the beginning of the ramp for integration range.
@@ -318,11 +316,11 @@ def flag_rscd(output_model, int_start, int_end, rscd_skip):
 
 def apply_rscd_flags(output_model, int_start, int_end, skip_array):
     """
-    Apply flags for RSCD correction setting  DO_NOT_USE to the dq values.
+    Apply flags for RSCD correction setting DO_NOT_USE to the dq values.
 
     Parameters
     ----------
-    output_model : RampModel
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Science data to be flagged
 
     int_start : int
@@ -336,7 +334,7 @@ def apply_rscd_flags(output_model, int_start, int_end, skip_array):
 
     Returns
     -------
-    output_model: RampModel
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Ramp datamodel with RSCD affected groups flagged as DO_NOT_USE
     """
     # Redefine starting at 0
@@ -372,10 +370,10 @@ def get_rscd_parameters(input_model, rscd_model):
 
     Parameters
     ----------
-    input_model : RampModel
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
         Science data to be flagged
 
-    rscd_model : RSCDModel
+    rscd_model : `~stdatamodels.jwst.datamodels.RSCDModel`
         RSCD reference file data
 
     Returns

@@ -7,8 +7,7 @@ RSCD is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
 ========== ======================================
-Instrument Keywords                               
+Instrument Keywords
 ========== ======================================
-MIRI       INSTRUME, DETECTOR, DATE-OBS, TIME-OBS 
+MIRI       INSTRUME, DETECTOR, DATE-OBS, TIME-OBS
 ========== ======================================
-

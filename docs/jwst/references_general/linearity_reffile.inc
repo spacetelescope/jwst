@@ -1,7 +1,7 @@
 .. _linearity_reffile:
 
 LINEARITY Reference File
--------------------------
+------------------------
 
 :REFTYPE: LINEARITY
 :Data model: `~stdatamodels.jwst.datamodels.LinearityModel`
@@ -14,7 +14,7 @@ coefficients.
 .. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for LINEARITY
-+++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++
 In addition to the standard reference file keywords listed above,
 the following keywords are *required* in LINEARITY reference files,
 because they are used as CRDS selectors

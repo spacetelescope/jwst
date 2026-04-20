@@ -1,3 +1,5 @@
+"""Remove NIRSpec MSA imprint structure from an exposure."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -45,14 +47,14 @@ class ImprintStep(Step):
 
         Parameters
         ----------
-        input_data : `~stdatamodels.jwst.datamodels.JwstDataModel` or str
+        input_data : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input exposure to be corrected.
         imprint : list of str or `~stdatamodels.jwst.datamodels.JwstDataModel`
             Imprint exposures associated with the input.
 
         Returns
         -------
-        DataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The imprint subtracted exposure.
         """
         # Open the input science image and get its dither pattern position number

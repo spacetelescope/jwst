@@ -1,3 +1,5 @@
+"""Apply linearity correction to ramp data."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
