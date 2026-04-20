@@ -3,6 +3,8 @@ import logging
 import numpy as np
 from stdatamodels.jwst import datamodels
 
+from jwst.lib import stripe_utils
+
 log = logging.getLogger(__name__)
 
 __all__ = [
@@ -416,12 +418,12 @@ def stripe_read(sci_model, ref_model, attribs):
             faststop = faststart + fastsize_sci
             ref_array = ref_array[..., faststart:faststop, :]
 
-        sub_model[attrib] = generate_stripe_array(ref_array, sci_meta, sci_nints)
+        sub_model[attrib] = generate_stripe_array(ref_array, sci_model, sci_nints)
     sub_model.update(ref_model)
     return sub_model
 
 
-def generate_stripe_array(ref_array, sci_meta, sci_nints):
+def generate_stripe_array(ref_array, sci_model, sci_nints):
     """
     Generate stripe array.
 
@@ -429,7 +431,7 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
     ----------
     ref_array : np.array
         The scene to be sliced.
-    sci_meta : `~stdatamodels.properties.ObjectNode`
+    sci_model : `~stdatamodels.datamodels.JwstDataModel`
         The science datamodel metadata tree.
     sci_nints : int
         The number of science integrations in the science datamodel. Not equivalent to nints when
@@ -440,14 +442,9 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
     stripe_out : ndarray
         Generated stripe array.
     """
+    sci_meta = sci_model.meta
+
     # Extract science metadata
-    nreads1 = sci_meta.subarray.multistripe_reads1
-    nskips1 = sci_meta.subarray.multistripe_skips1
-    nreads2 = sci_meta.subarray.multistripe_reads2
-    nskips2 = sci_meta.subarray.multistripe_skips2
-    repeat_stripe = sci_meta.subarray.repeat_stripe
-    interleave_reads1 = sci_meta.subarray.interleave_reads1
-    superstripe_step = sci_meta.subarray.superstripe_step
     num_superstripe = sci_meta.subarray.num_superstripe
     xsize_sci = sci_meta.subarray.xsize
     ysize_sci = sci_meta.subarray.ysize
@@ -468,70 +465,15 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
     if num_superstripe == 0:
         # SUBSTRIPE MODE
         stripe_out = np.zeros((*ref_shape[:-2], slow_size, fast_size), dtype=ref_array.dtype)
-        # Track the read position in the full frame with linecount, and number of lines
-        # read into subarray with sub_lines
-        linecount = 0
-        sub_lines = 0
-
-        # Start at 0, make nreads1 row reads
-        stripe_out[..., sub_lines : sub_lines + nreads1, :] = ref_array[
-            ..., linecount : linecount + nreads1, :
-        ]
-        linecount += nreads1
-        sub_lines += nreads1
-        # Now skip nskips1
-        linecount += nskips1
-        # Nreads2
-        stripe_out[..., sub_lines : sub_lines + nreads2, :] = ref_array[
-            ..., linecount : linecount + nreads2, :
-        ]
-        linecount += nreads2
-        sub_lines += nreads2
-
-        # Now, while the output size is less than the science array size:
-        # 1a. If repeat_stripe, reset linecount (HEAD) to initial position
-        #     after every nreads2.
-        # 1b. Else, do nskips2 followed by nreads2 until subarray complete.
-        # 2.  Following 1a., repeat sequence of nreads1, skips*, nreads2
-        #     until complete. For skips*:
-        # 3a. If interleave_reads1, value of skips increments by nreads2 +
-        #     nskips2 for each stripe read.
-        # 3b. If not interleave, each loop after linecount reset is simply
-        #     nreads1 + nskips1 + nreads2.
-        interleave_skips = nskips1
-        if nreads2 <= 0:
-            raise ValueError(
-                "Invalid value for multistripe_reads2 - "
-                "cutout for reference file could not be "
-                "generated!"
-            )
-        while sub_lines < slow_size:
-            # If repeat_stripe, add interleaved rows to output and increment sub_lines
-            if repeat_stripe > 0:
-                linecount = 0
-                stripe_out[..., sub_lines : sub_lines + nreads1, :] = ref_array[
-                    ..., linecount : linecount + nreads1, :
-                ]
-                linecount += nreads1
-                sub_lines += nreads1
-                if interleave_reads1:
-                    interleave_skips += nskips2 + nreads2
-                    linecount += interleave_skips
-                else:
-                    linecount += nskips1
-            else:
-                linecount += nskips2
-            stripe_out[..., sub_lines : sub_lines + nreads2, :] = ref_array[
-                ..., linecount : linecount + nreads2, :
-            ]
-            linecount += nreads2
-            sub_lines += nreads2
-
-        if sub_lines != slow_size:
-            raise ValueError(
-                "Stripe readout resulted in mismatched reference array shape "
-                "with respect to science array!"
-            )
+        all_ranges = stripe_utils.generate_substripe_ranges(sci_model)
+        for idx in all_ranges["full"]:
+            f_reg = all_ranges["full"][idx]
+            s_reg = all_ranges["subarray"][idx]
+            stripe_out[..., s_reg[0] : s_reg[1], :] = ref_array[..., f_reg[0] : f_reg[1], :]
+        for idx in all_ranges["reference_full"]:
+            f_reg = all_ranges["reference_full"][idx]
+            s_reg = all_ranges["reference_subarray"][idx]
+            stripe_out[..., s_reg[0] : s_reg[1], :] = ref_array[..., f_reg[0] : f_reg[1], :]
 
     else:
         # SUPERSTRIPE MODE
@@ -553,68 +495,22 @@ def generate_stripe_array(ref_array, sci_meta, sci_nints):
         stripe_out = np.zeros(
             (nints * num_superstripe, ngroups, slow_size, fast_size), dtype=ref_array.dtype
         )
-
+        all_ranges = stripe_utils.generate_superstripe_ranges(sci_model)
         for integ in range(nints):
             for stripe in range(num_superstripe):
-                # Track the read position in the full frame with linecount, and number of lines
-                # read into subarray with sub_lines
-                linecount = 0
-                sub_lines = 0
-
-                # Start at 0, make nreads1 row reads
-                stripe_out[
-                    integ * num_superstripe + stripe, :, sub_lines : sub_lines + nreads1, :
-                ] = ref_array[integ, :, linecount : linecount + nreads1, :]
-                linecount += nreads1
-                sub_lines += nreads1
-                # Now skip nskips1 + superstripe_step * stripe
-                linecount += nskips1 + superstripe_step * stripe
-                # Nreads2
-                stripe_out[
-                    integ * num_superstripe + stripe, :, sub_lines : sub_lines + nreads2, :
-                ] = ref_array[integ, :, linecount : linecount + nreads2, :]
-                linecount += nreads2
-                sub_lines += nreads2
-
-                # Now, while the output size is less than the science array size:
-                # 1a. If repeat_stripe, reset linecount (HEAD) to initial position
-                #     after every nreads2.
-                # 1b. Else, do nskips2 followed by nreads2 until subarray complete.
-                # 2.  Following 1a., repeat sequence of nreads1, skips*, nreads2
-                #     until complete. For skips*:
-                # 3a. If interleave_reads1, value of skips increments by nreads2 +
-                #     nskips2 for each stripe read.
-                # 3b. If not interleave, each loop after linecount reset is simply
-                #     nreads1 + nskips1 + nreads2.
-                interleave_skips = nskips1
-
-                while sub_lines < slow_size:
-                    # If repeat_stripe, add interleaved rows to output and increment sub_lines
-                    if repeat_stripe > 0:
-                        linecount = 0
-                        stripe_out[..., sub_lines : sub_lines + nreads1, :] = ref_array[
-                            ..., linecount : linecount + nreads1, :
-                        ]
-                        linecount += nreads1
-                        sub_lines += nreads1
-                        if interleave_reads1:
-                            interleave_skips += nskips2 + nreads2
-                            linecount += interleave_skips
-                        else:
-                            linecount += nskips1
-                    else:
-                        linecount += nskips2
-                    stripe_out[..., sub_lines : sub_lines + nreads2, :] = ref_array[
-                        ..., linecount : linecount + nreads2, :
+                stripe_idx = integ * num_superstripe + stripe
+                full_range = all_ranges["full"]
+                sub_range = all_ranges["subarray"]
+                for s_reg, f_reg in zip(sub_range[stripe], full_range[stripe], strict=True):
+                    stripe_out[stripe_idx, :, s_reg[0] : s_reg[1], :] = ref_array[
+                        integ, :, f_reg[0] : f_reg[1], :
                     ]
-                    linecount += nreads2
-                    sub_lines += nreads2
-
-                if sub_lines != slow_size:
-                    raise ValueError(
-                        "Stripe readout resulted in mismatched reference array shape "
-                        "with respect to science array!"
-                    )
+                full_range = all_ranges["reference_full"]
+                sub_range = all_ranges["reference_subarray"]
+                for s_reg, f_reg in zip(sub_range[stripe], full_range[stripe], strict=True):
+                    stripe_out[stripe_idx, :, s_reg[0] : s_reg[1], :] = ref_array[
+                        integ, :, f_reg[0] : f_reg[1], :
+                    ]
 
         # If multistripe but ref array is typically 2-D:
         # rather than broadcast a 2-D array into many wasted dims, just provide the minimal

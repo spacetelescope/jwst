@@ -86,7 +86,7 @@ def test_generate_stripe():
         science_detector_frame_transform(
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
-        sci_meta,
+        model,
         sci_nints,
     )
     assert stripe1_array.shape == (41, 2048)
@@ -102,7 +102,7 @@ def test_generate_stripe():
         science_detector_frame_transform(
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
-        sci_meta,
+        model,
         sci_nints,
     )
     assert stripe1swap_array.shape == (2048, 41)
@@ -116,7 +116,7 @@ def test_generate_stripe():
         science_detector_frame_transform(
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
-        sci_meta,
+        model,
         sci_nints,
     )
     assert stripe2_array.shape == (82, 2048)
@@ -134,7 +134,7 @@ def test_generate_stripe():
         science_detector_frame_transform(
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
-        sci_meta,
+        model,
         sci_nints,
     )
     assert stripe4_array.shape == (164, 2048)
@@ -182,13 +182,14 @@ def test_generate_stripe_repeat_stripe_zero():
         fastaxis,
         slowaxis,
     )
-    sci_meta = RampModel().meta
+    model = RampModel()
+    sci_meta = model.meta
     assign_metadata(sci_meta, substripe_subarray_keys(), stripe_params)
     stripe_array = generate_stripe_array(
         science_detector_frame_transform(
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
-        sci_meta,
+        model,
         sci_nints,
     )
     assert stripe_array.shape == (ysize_sci, xsize_sci)
