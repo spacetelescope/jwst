@@ -42,6 +42,7 @@ def run_spec2(rtdata_module):
         "--steps.photom.save_results=true",
         "--steps.resample_spec.save_results=true",
         "--steps.cube_build.save_results=true",
+        "--steps.cube_build.output_type='multi",
         "--steps.extract_1d.save_results=true",
     ]
     Step.from_cmdline(args)

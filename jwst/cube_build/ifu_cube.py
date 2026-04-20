@@ -18,7 +18,6 @@ from jwst.assign_wcs.util import wrap_ra
 from jwst.cube_build import coord, cube_build_wcs_util, cube_internal_cal
 from jwst.cube_build.cube_match_sky_driz import cube_wrapper_driz  # c extension
 from jwst.cube_build.cube_match_sky_pointcloud import cube_wrapper  # c extension
-from jwst.datamodels import ModelContainer
 from jwst.model_blender import blendmeta
 
 log = logging.getLogger(__name__)
@@ -138,7 +137,7 @@ class IFUCubeData:
         self.skip_dqflagging = pars_cube.get("skip_dqflagging")
         self.suffix = pars_cube.get("suffix")
         self.num_bands = 0
-        self.output_name = ""
+        self.output_name = None
 
         self.wavemin_user = False  # Check for NIRSpec if user has set wavelength limits
         self.wavemax_user = False
@@ -220,7 +219,7 @@ class IFUCubeData:
     # ________________________________________________________________________________
     def define_cubename(self):
         """
-        Determine the suffix name consisting of channels/sub channels or gratings/filters
+        Determine the suffix name consisting of channels/sub channels or gratings/filters.
 
         The base name is defined by the pipeline.
         Cube_build determines which channels, bands, gratings, or filters are used to make
@@ -231,6 +230,7 @@ class IFUCubeData:
         suffix : str
             Output suffix of the IFU cube.
         """
+        cb_suffix = ""
         if self.instrument == "MIRI":
             # Check to see if the output base name already contains the
             # field "clear", which sometimes shows up in IFU product
@@ -270,18 +270,16 @@ class IFUCubeData:
 
             if self.coord_system == "internal_cal":
                 cb_suffix += "_internal"
-            elif self.output_type == "single":
-                cb_suffix += "_single"
 
         elif self.instrument == "NIRSPEC":
             # Check to see if the output base name already has a grating/prism
             # suffix attached. If so, strip it off, and let the following logic
             # add all necessary grating and filter suffixes.
-            # JEM 4/7/206  DO WE WANT THIS ?  Commenting out for now
-            # basename = self.output_name_base
-            # suffix = basename[basename.rfind("_") + 1 :]
-            # if suffix in ["g140m", "g235m", "g395m", "g140h", "g235h", "g395h", "prism"]:
-            #    self.output_name_base = basename[: basename.rfind("_")]
+
+            basename = self.output_name_base
+            suffix = basename[basename.rfind("_") + 1 :]
+            if suffix in ["g140m", "g235m", "g395m", "g140h", "g235h", "g395h", "prism"]:
+                self.output_name_base = basename[: basename.rfind("_")]
 
             fg_name = "_"
             for i in range(len(self.list_par1)):
@@ -291,13 +289,8 @@ class IFUCubeData:
             fg_name = fg_name.lower()
             cb_suffix = fg_name
 
-            if self.output_type == "single":
-                cb_suffix += "_single"
-            elif self.coord_system == "internal_cal":
+            if self.coord_system == "internal_cal":
                 cb_suffix += "_internal"
-
-        if self.output_type != "single":
-            log.info(f"Output Suffix Name: {cb_suffix}")
 
         return cb_suffix
 
@@ -665,10 +658,8 @@ class IFUCubeData:
         result : `~stdatamodels.jwst.datamodels.IFUCubeModel`
             An IFU cube of combined IFU image data.
         """
-        # self.output_name = self.define_cubename()
         cb_suffix = self.define_cubename()
         self.output_name = self.output_name_base + cb_suffix
-        print("OUTPUT name", self.output_name)
 
         total_num = self.naxis1 * self.naxis2 * self.naxis3
 
@@ -976,189 +967,6 @@ class IFUCubeData:
         return result
 
     # ________________________________________________________________________________
-    def build_ifucube_single(self):
-        """
-        Build a set of single mode IFU cubes.
-
-        Loop over every band contained in the IFU cube and read in the data
-        associated with the band. Map each band to the output cube coordinate
-        system.
-
-        Returns
-        -------
-        single_ifucube_container : `~stdatamodels.jwst.datamodels.IFUCubeModel`
-           A single type IFU cube datamodel
-        """
-        # loop over input models
-        single_ifucube_container = ModelContainer()
-
-        weight_type = 0  # default to emsm instead of msm
-        if self.weighting == "msm":
-            weight_type = 1
-        number_bands = len(self.list_par1)
-        this_par1 = self.list_par1[0]  # single IFUcube only have a single channel
-        j = 0
-        for i in range(number_bands):
-            this_par2 = self.list_par2[i]
-            nfiles = len(self.master_table.FileMap[self.instrument][this_par1][this_par2])
-
-            # loop over the files that cover the spectral range the cube is for
-            for k in range(nfiles):
-                input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
-                self.input_models_this_cube.append(input_model)
-                log.debug(f"Working on next Single IFU Cube = {j + 1}")
-
-                # for each new data model create a new spaxel
-                total_num = self.naxis1 * self.naxis2 * self.naxis3
-                self.spaxel_flux = np.zeros(total_num, dtype=np.float64)
-                self.spaxel_weight = np.zeros(total_num, dtype=np.float64)
-                self.spaxel_iflux = np.zeros(total_num)
-                self.spaxel_dq = np.zeros(total_num, dtype=np.uint32)
-                self.spaxel_var = np.zeros(total_num, dtype=np.float64)
-
-                pixelresult = self.map_detector_to_outputframe(this_par1, input_model)
-
-                (
-                    coord1,
-                    coord2,
-                    corner_coord,
-                    wave,
-                    dwave,
-                    flux,
-                    err,
-                    slice_no,
-                    rois_pixel,
-                    roiw_pixel,
-                    weight_pixel,
-                    softrad_pixel,
-                    scalerad_pixel,
-                    _,
-                    _,
-                ) = pixelresult
-
-                build_cube = True
-                # there is no valid data on the detector. Pixels are flagged as DO_NOT_USE.
-                if wave is None:
-                    build_cube = False
-                # The following values are not needed in cube_wrapper because the DQ plane
-                # is not being filled in.
-                flag_dq_plane = 0
-                start_region = 0
-                end_region = 0
-                roiw_ave = 0
-
-                if self.instrument == "MIRI":
-                    instrument = 0
-                else:  # NIRSPEC
-                    instrument = 1
-
-                result = None
-
-                if self.interpolation == "pointcloud" and build_cube:
-                    roiw_ave = np.mean(roiw_pixel)
-                    result = cube_wrapper(
-                        instrument,
-                        flag_dq_plane,
-                        weight_type,
-                        start_region,
-                        end_region,
-                        self.overlap_partial,
-                        self.overlap_full,
-                        self.xcoord,
-                        self.ycoord,
-                        self.zcoord,
-                        coord1,
-                        coord2,
-                        wave,
-                        flux,
-                        err,
-                        slice_no,
-                        rois_pixel,
-                        roiw_pixel,
-                        scalerad_pixel,
-                        weight_pixel,
-                        softrad_pixel,
-                        self.cdelt3_normal,
-                        roiw_ave,
-                        self.cdelt1,
-                        self.cdelt2,
-                    )
-                    spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
-
-                    self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
-                    self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
-                    self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
-                    self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
-                    result = None
-                    del result, spaxel_flux, spaxel_var, spaxel_iflux
-
-                if self.weighting == "drizzle" and build_cube:
-                    cdelt3_mean = np.nanmean(self.cdelt3_normal)
-                    xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
-                    linear = 0
-                    if self.linear_wavelength:
-                        linear = 1
-                        x_det = None
-                        y_det = None
-                        debug_cube = -1
-                    result = cube_wrapper_driz(
-                        instrument,
-                        flag_dq_plane,
-                        start_region,
-                        end_region,
-                        self.overlap_partial,
-                        self.overlap_full,
-                        self.xcoord,
-                        self.ycoord,
-                        self.zcoord,
-                        coord1,
-                        coord2,
-                        wave,
-                        flux,
-                        err,
-                        slice_no,
-                        xi1,
-                        eta1,
-                        xi2,
-                        eta2,
-                        xi3,
-                        eta3,
-                        xi4,
-                        eta4,
-                        dwave,
-                        self.cdelt3_normal,
-                        self.cdelt1,
-                        self.cdelt2,
-                        cdelt3_mean,
-                        linear,
-                        x_det,
-                        y_det,
-                        debug_cube,
-                    )
-
-                    spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
-                    self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
-                    self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
-                    self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
-                    self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
-                    result = None
-                    del result, spaxel_flux, spaxel_var, spaxel_iflux
-
-                # shove Flux and iflux in the  final ifucube
-                self.find_spaxel_flux()
-
-                # determine Cube Spaxel flux
-                status = 0
-                result = self.setup_final_ifucube_model(input_model)
-                ifucube_model, status = result
-
-                single_ifucube_container.append(ifucube_model)
-                if status != 0:
-                    log.debug("Possible problem with single ifu cube, no valid data in cube")
-                j = j + 1
-        return single_ifucube_container
-
-    # ________________________________________________________________________________
     def determine_cube_parameters_internal(self):
         """Determine the spatial and spectral IFU size for ``coord_system=internal_cal``."""
         # internal_cal is for only 1 file and weighting= area
@@ -1387,7 +1195,7 @@ class IFUCubeData:
             # default rois in tables is designed with a 4 dither pattern
             # increase rois if less than 4 file
 
-            if self.output_type == "single" or self.num_files < 4:
+            if self.num_files < 4:
                 # We don't need to increase it if using 'emsm' weighting
                 if self.weighting.lower() != "emsm":
                     self.rois = self.rois * 1.5
@@ -1396,8 +1204,7 @@ class IFUCubeData:
                         f"default value set for 4 dithers {self.rois}"
                     )
 
-                # set wave_roi and  weight_power to same values if they are in  list
-
+        # set wave_roi and  weight_power to same values if they are in  list
         if self.roiw == 0:
             self.roiw = wave_roi
         if self.weight_power == 0:
@@ -2659,8 +2466,8 @@ class IFUCubeData:
             )
 
         ifucube_model.update(model_ref)
-        ifucube_model.meta.filename = self.output_name
-        print("before blending", ifucube_model.meta.filename)
+        if self.output_name is not None:
+            ifucube_model.meta.filename = self.output_name
 
         # Call model_blender if there are multiple inputs
         if len(self.input_models) > 1:
@@ -2680,26 +2487,6 @@ class IFUCubeData:
             outchannel = "".join(set(outchannel))
             outchannel = "".join(sorted(outchannel))
             ifucube_model.meta.instrument.channel = outchannel
-
-        # single files are created for a single band,
-        if self.output_type == "single":
-            with datamodels.open(model_ref) as input_ref:
-                # define the cubename for each single
-                filename = input_ref.meta.filename
-                indx = filename.rfind(".fits")
-                self.output_name_base = filename[:indx]
-                self.output_file = None
-                newname = self.define_cubename()
-                ifucube_model.meta.filename = newname
-
-                if self.instrument == "MIRI":
-                    outchannel = self.list_par1[0]
-                    outband = self.list_par2[0]
-                    ifucube_model.meta.instrument.channel = outchannel
-                    ifucube_model.meta.instrument.band = outband.upper()
-                else:
-                    outgrating = self.list_par1[0]
-                    ifucube_model.meta.instrument.grating = outgrating.upper()
 
         ifucube_model.meta.wcsinfo.crval1 = self.crval1
         ifucube_model.meta.wcsinfo.crval2 = self.crval2
@@ -2767,13 +2554,7 @@ class IFUCubeData:
         ifucube_model.meta.ifu.error_type = "ERR"
         ifucube_model.meta.ifu.dq_extension = "DQ"
         ifucube_model.meta.ifu.weighting = str(self.weighting)
-        # weight_power is needed for single cubes. Linear Wavelengths
-        # if non-linear wavelengths then this will be None
         ifucube_model.meta.ifu.weight_power = self.weight_power
-
-        with datamodels.open(model_ref) as input_ref:
-            ifucube_model.meta.bunit_data = input_ref.meta.bunit_data
-            ifucube_model.meta.bunit_err = input_ref.meta.bunit_err
 
         if self.interpolation == "drizzle":
             # stick in values of 0, otherwise it is NaN and
@@ -2838,8 +2619,6 @@ class IFUCubeData:
         ifu_cube : `~stdatamodels.jwst.datamodels.IFUCubeModel`
             IFU cube data model
         """
-        print(ifu_cube)
-        print(self.input_models_this_cube)
         blendmeta.blendmodels(
             ifu_cube,
             self.input_models_this_cube,
