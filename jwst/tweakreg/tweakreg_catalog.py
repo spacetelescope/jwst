@@ -12,6 +12,7 @@ from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import QTable
 from astropy.utils import lazyproperty, minversion
 from astropy.utils.exceptions import AstropyUserWarning
+from photutils import use_future_column_names
 from photutils.background import Background2D, MedianBackground
 from photutils.detection import DAOStarFinder, IRAFStarFinder
 from photutils.segmentation import SourceCatalog, SourceFinder
@@ -25,9 +26,6 @@ log = logging.getLogger(__name__)
 __all__ = ["make_tweakreg_catalog"]
 
 PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
-photutils.future_column_names = True  # needed until photutils 4.0
-
-
 SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
     "ellipticity",
     "sky_bbox_ll",
@@ -258,13 +256,14 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     segment_map = finder(conv_data, threshold_img, mask=mask)
     if segment_map is None:
         return None, None
-    sources = SourceCatalog(
-        data,
-        segment_map,
-        mask=mask,
-        convolved_data=conv_data,
-        **catalog_dict,
-    ).to_table(columns=SOURCECAT_COLUMNS)
+    with use_future_column_names():  # remove when photutils 4.0+ is required
+        sources = SourceCatalog(
+            data,
+            segment_map,
+            mask=mask,
+            convolved_data=conv_data,
+            **catalog_dict,
+        ).to_table(columns=SOURCECAT_COLUMNS)
 
     return sources, segment_map
 
@@ -467,7 +466,8 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = IRAFStarFinder(threshold, kernel_fwhm, **finder_dict)
-    sources = starfind(data, mask=mask)
+    with use_future_column_names():  # remove when photutils 4.0+ is required
+        sources = starfind(data, mask=mask)
     return sources, None
 
 
@@ -520,7 +520,8 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = DAOStarFinder(threshold, kernel_fwhm, **finder_dict)
-    sources = starfind(data, mask=mask)
+    with use_future_column_names():  # remove when photutils 4.0+ is required
+        sources = starfind(data, mask=mask)
     return sources, None
 
 
