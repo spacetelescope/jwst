@@ -4,7 +4,7 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.lib.stripe_utils import generate_substripe_ranges
 
 # Ordered from lowest to highest subarray row (= order in which stripes are
-# packed into the packed subarray by generate_stripe_array).  The regions
+# packed into the packed subarray by generate_stripe_reference).  The regions
 # reference file is built with the same ordering, so the two stay in sync.
 NRCA1_DHS_STRIPE_IDS = [10, 9, 8, 7]
 
