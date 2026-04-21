@@ -164,8 +164,6 @@ def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
         "debug_spaxel": "0 0 0",
     }
 
-    pipeline = 3
-
     input_model = None
     output_name_base = None
     output_type = "band"
@@ -176,7 +174,6 @@ def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
     master_table = None
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -268,7 +265,6 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
         "debug_spaxel": "0 0 0",
     }
 
-    pipeline = 3
     input_model = None
     output_name_base = None
     output_type = "band"
@@ -279,7 +275,6 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
     master_table = None
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -332,7 +327,6 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
     }
 
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -440,7 +434,6 @@ def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
         "debug_spaxel": "0 0 0",
     }
 
-    pipeline = 3
     input_model = None
     output_name_base = None
     output_type = "multi"
@@ -451,7 +444,6 @@ def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
     master_table = None
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,

@@ -241,7 +241,6 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
         "debug_spaxel": "0 0 0",
     }
 
-    pipeline = 3
     list_par1 = ["1", "2"]
     list_par2 = ["short", "short"]
     output_name_base = "TEMP"
@@ -249,7 +248,6 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     instrument_info = instrument_defaults.InstrumentInfo()
 
     thiscube = ifu_cube.IFUCubeData(
-        pipeline,
         miri_ifushort_short_2files,
         output_name_base,
         output_type,
