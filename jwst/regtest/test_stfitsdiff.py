@@ -1018,7 +1018,7 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "col_name dtype rel_diffs rel_max  rel_mean rel_std",
         "-------- ----- --------- -------- -------- --------",
         "FLUX    f8         2       99       50       49",
-        "All other columns are identical.",
+        "The other 17 columns are identical.",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -1053,7 +1053,7 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "col_name dtype rel_diffs rel_max  rel_mean rel_std",
         "-------- ----- --------- -------- -------- --------",
         "FLUX    f8         4        1        1        0",
-        "All other columns are identical.",
+        "The other 17 columns are identical.",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -1088,7 +1088,7 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "col_name  dtype rel_diffs rel_max  rel_mean rel_std",
         "---------- ----- --------- -------- -------- --------",
         "WAVELENGTH    f8       100      nan      nan      nan",
-        "All other columns are identical.",
+        "The other 17 columns are identical.",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -1487,7 +1487,7 @@ def test_hdus_tables_misc(fitsdiff_default_kwargs):
         "ERROR float32         5      nan      nan      nan",
         "INDEX   int32         5      N/A      N/A      N/A",
         "WAVELENGTH float32         6        1    0.457     0.29",
-        "All other columns are identical.",
+        "The other column is identical.",
         "* Pixel indices below are 1-based.",
         "Column ERROR data differs in row 90:",
         "a> 90.0",
@@ -1582,7 +1582,7 @@ def test_hdus_tables_non_numeric(fitsdiff_default_kwargs):
     diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
     report = diff.report()
     assert "12 different table data element(s) found (30.00% different)." in report
-    assert "All other columns are identical." in report
+    assert "The other column is identical." in report
 
 
 def test_table_pq_different_array_sizes(mock_table, fitsdiff_default_kwargs):
@@ -1617,7 +1617,7 @@ def test_table_pq_different_array_sizes(mock_table, fitsdiff_default_kwargs):
     assert result is False
     assert "Extra column col_1 of format PI(4) in a" in report
     assert "Extra column col_1 of format PI(5) in b" in report
-    assert "All other columns are identical." in report
+    assert "The other column is identical." in report
 
 
 def test_table_edge_cases(fitsdiff_default_kwargs):
@@ -1640,13 +1640,13 @@ def test_table_edge_cases(fitsdiff_default_kwargs):
     diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
     report = diff.report()
     assert "Found 12 different table data element(s)" in report
-    assert "All other columns are identical." in report
+    assert "The other column is identical." in report
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     fitsdiff_default_kwargs["numdiffs"] = -1
     diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
     report = diff.report()
     assert "12 different table data element(s) found (37.50% different)." in report
-    assert "All other columns are identical." in report
+    assert "The other column is identical." in report
 
 
 def test_hdus_image_one_nan(fitsdiff_default_kwargs):
