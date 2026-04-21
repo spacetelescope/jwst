@@ -9,9 +9,8 @@ from jwst.lib.reffile_utils import (
 __all__ = [
     "generate_substripe_ranges",
     "generate_superstripe_ranges",
-    "get_multistripe_subarray_model",
     "stripe_read",
-    "generate_reference_stripe_array",
+    "generate_stripe_reference",
     "collate_superstripes",
     "clean_superstripe_metadata",
     "generate_stripe_int_times",
@@ -118,10 +117,7 @@ def generate_substripe_ranges(sci_model):
         sub_lines += nreads2
 
     if sub_lines != slowsize:
-        raise ValueError(
-            "Stripe readout resulted in mismatched reference array shape "
-            "with respect to science array."
-        )
+        raise ValueError("Stripe readout does not match science array shape.")
 
     return {
         "full": full_ranges,
@@ -187,16 +183,17 @@ def generate_superstripe_ranges(sci_model):
         linecount = 0
         sub_lines = 0
 
-        # Start at 0, make nreads1 row reads
+        # Start at 0, make nreads1 row reads for reference pixels
         reference_full_ranges[stripe] = [(linecount, linecount + nreads1)]
         reference_sub_ranges[stripe] = [(sub_lines, sub_lines + nreads1)]
         linecount += nreads1
         sub_lines += nreads1
 
-        # Now skip nskips1 + superstripe_step * stripe
+        # Now skip nskips1 + superstripe_step * stripe, to get to the
+        # beginning of the current stripe
         linecount += nskips1 + superstripe_step * stripe
 
-        # Nreads2
+        # Read Nreads2 for the stripe
         full_ranges[stripe] = [(linecount, linecount + nreads2)]
         sub_ranges[stripe] = [(sub_lines, sub_lines + nreads2)]
         linecount += nreads2
@@ -213,7 +210,6 @@ def generate_superstripe_ranges(sci_model):
         # 3b. If not interleave, each loop after linecount reset is simply
         #     nreads1 + nskips1 + nreads2.
         interleave_skips = nskips1
-
         while sub_lines < slow_size:
             # If repeat_stripe, add interleaved rows to output and increment sub_lines
             if repeat_stripe > 0:
@@ -237,10 +233,7 @@ def generate_superstripe_ranges(sci_model):
             sub_lines += nreads2
 
         if sub_lines != slow_size:
-            raise ValueError(
-                "Stripe readout resulted in mismatched reference array shape "
-                "with respect to science array"
-            )
+            raise ValueError("Stripe readout does not match science array shape.")
 
     return {
         "full": full_ranges,
@@ -248,40 +241,6 @@ def generate_superstripe_ranges(sci_model):
         "reference_full": reference_full_ranges,
         "reference_subarray": reference_sub_ranges,
     }
-
-
-def get_multistripe_subarray_model(sci_model, ref_model):
-    """
-    Create a multistripe subarray cutout of a reference file.
-
-    Use the multistripe subarray characteristics of a science
-    data model to generate a new reference file datamodel,
-    containing subarray cutouts of all relevant data arrays
-    contained in the reference file model.
-
-    Parameters
-    ----------
-    sci_model : JWST data model
-        The science data model.
-
-    ref_model : JWST data model
-        The reference file data model.
-
-    Returns
-    -------
-    sub_model : JWST data model
-        Subarray cutout reference file model.
-    """
-    primary = ref_model.get_primary_array_name()
-    attrs = {primary}
-
-    for att in ["err", "dq"]:
-        if ref_model.hasattr(att):
-            attrs.add(att)
-
-    sub_model = stripe_read(sci_model, ref_model, attrs)
-
-    return sub_model
 
 
 def stripe_read(sci_model, ref_model, attribs):
@@ -322,7 +281,7 @@ def stripe_read(sci_model, ref_model, attribs):
         ref_array = getattr(ref_model, attrib)
 
         # Apply subarray shape in fastaxis; slowaxis cutouts determined
-        # in generate_reference_stripe_array
+        # in generate_stripe_reference
         # DHS reference files will likely be in FULL frame and will not have these subarray
         # values defined - they should pass over this if/elif block.
         if (
@@ -351,14 +310,14 @@ def stripe_read(sci_model, ref_model, attribs):
             faststop = faststart + fastsize_sci
             ref_array = ref_array[..., faststart:faststop, :]
 
-        sub_model[attrib] = generate_reference_stripe_array(ref_array, sci_model, sci_nints)
+        sub_model[attrib] = generate_stripe_reference(ref_array, sci_model, sci_nints)
     sub_model.update(ref_model)
     return sub_model
 
 
-def generate_reference_stripe_array(ref_array, sci_model, sci_nints):
+def generate_stripe_reference(ref_array, sci_model, sci_nints):
     """
-    Generate stripe array from a full size reference array.
+    Generate stripe array from a reference array matching the full subarray size.
 
     Parameters
     ----------

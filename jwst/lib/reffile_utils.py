@@ -9,6 +9,7 @@ __all__ = [
     "is_subarray",
     "ref_matches_sci",
     "get_subarray_model",
+    "get_multistripe_subarray_model",
     "science_detector_frame_transform",
     "detector_science_frame_transform",
     "MatchRowError",
@@ -246,9 +247,6 @@ def get_subarray_model(sci_model, ref_model):
     if not isinstance(ref_model, datamodels.JwstDataModel):
         raise TypeError("Reference model must be a JWST data model.")
     if getattr(sci_model.meta.subarray, "multistripe_reads1", None) is not None:
-        # lazy import to avoid circular import error
-        from jwst.lib.stripe_utils import get_multistripe_subarray_model
-
         return get_multistripe_subarray_model(sci_model, ref_model)
 
     # Get the science model subarray params
@@ -312,6 +310,43 @@ def get_subarray_model(sci_model, ref_model):
             sub_data = getattr(ref_model, attr)[..., ystart:ystop, xstart:xstop]
             setattr(sub_model, attr, sub_data)
     sub_model.update(ref_model)
+
+    return sub_model
+
+
+def get_multistripe_subarray_model(sci_model, ref_model):
+    """
+    Create a multistripe subarray cutout of a reference file.
+
+    Use the multistripe subarray characteristics of a science
+    data model to generate a new reference file datamodel,
+    containing subarray cutouts of all relevant data arrays
+    contained in the reference file model.
+
+    Parameters
+    ----------
+    sci_model : JWST data model
+        The science data model.
+
+    ref_model : JWST data model
+        The reference file data model.
+
+    Returns
+    -------
+    sub_model : JWST data model
+        Subarray cutout reference file model.
+    """
+    # lazy import to avoid circular import error
+    from jwst.lib.stripe_utils import stripe_read
+
+    primary = ref_model.get_primary_array_name()
+    attrs = {primary}
+
+    for att in ["err", "dq"]:
+        if ref_model.hasattr(att):
+            attrs.add(att)
+
+    sub_model = stripe_read(sci_model, ref_model, attrs)
 
     return sub_model
 
