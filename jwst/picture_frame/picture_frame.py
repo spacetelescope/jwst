@@ -186,7 +186,8 @@ def correct_picture_frame(
 
     if is_ramp:
         # Skip processing the zero group, subtract it from each subsequent group
-        zero_group = input_model.data[:, 0]
+        nint, ngroup, ny, nx = input_model.data.shape
+        zero_group = input_model.data[:, 0].reshape((nint, 1, ny, nx))
         image = input_model.data[:, 1:]
         image -= zero_group
     else:
