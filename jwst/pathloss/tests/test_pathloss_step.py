@@ -9,9 +9,10 @@ import jwst
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_nirspec import (
     create_nirspec_fs_file,
+    create_nirspec_ifu_file,
     create_nirspec_mos_file,
 )
-from jwst.extract_1d.tests.helpers import mock_miri_lrs_fs_func
+from jwst.extract_1d.tests.helpers import mock_miri_lrs_fs_func, mock_niriss_soss_96_func
 from jwst.extract_2d import Extract2dStep
 from jwst.pathloss import PathLossStep
 
@@ -80,6 +81,26 @@ def create_nirspec_mos_model(source_type="POINT"):
     return im_ex2d
 
 
+def create_nirspec_ifu_model(source_type="POINT"):
+    hdul = create_nirspec_ifu_file(
+        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
+    )
+    im = datamodels.IFUImageModel(hdul)
+    hdul.close()
+
+    im.meta.target.source_type = source_type
+    im.data = np.full((2048, 2048), 1.0)
+    im.dq = np.zeros((2048, 2048), dtype=np.uint32)
+    im.err = im.data * 0.1
+    im.var_rnoise = im.data * 0.01
+    im.var_poisson = im.data * 0.01
+    im.var_flat = im.data * 0.01
+    im_wcs = AssignWcsStep.call(im)
+
+    im.close()
+    return im_wcs
+
+
 @pytest.fixture(scope="module")
 def nirspec_mos_model_point():
     return create_nirspec_mos_model(source_type="POINT")
@@ -101,6 +122,16 @@ def nirspec_fs_model_extended():
 
 
 @pytest.fixture(scope="module")
+def nirspec_ifu_model_point():
+    return create_nirspec_ifu_model(source_type="POINT")
+
+
+@pytest.fixture(scope="module")
+def nirspec_ifu_model_extended():
+    return create_nirspec_ifu_model(source_type="EXTENDED")
+
+
+@pytest.fixture(scope="module")
 def miri_lrs_model_point():
     model = mock_miri_lrs_fs_func()
 
@@ -116,6 +147,20 @@ def miri_lrs_model_point():
 @pytest.fixture(scope="module")
 def miri_lrs_model_extended():
     model = mock_miri_lrs_fs_func()
+    return model
+
+
+@pytest.fixture(scope="module")
+def niriss_soss_model():
+    cube_model = mock_niriss_soss_96_func()
+
+    # Make a non-TSO rate image from the cube model
+    model = datamodels.ImageModel()
+    for attr in ["data", "dq", "err", "var_rnoise", "var_poisson", "var_flat"]:
+        setattr(model, attr, getattr(cube_model, attr)[0, :, :])
+    model.update(cube_model)
+    cube_model.close()
+
     return model
 
 
@@ -239,6 +284,56 @@ def test_pathloss_step_fs_uniform(nirspec_fs_model_extended):
         assert slit.pathloss_correction_type == "UNIFORM"
 
 
+@pytest.mark.parametrize("dataset", ["nirspec_fs_model_point", "nirspec_mos_model_point"])
+@pytest.mark.parametrize("all_slits", [True, False])
+def test_pathloss_step_source_outside_slit(caplog, request, dataset, all_slits):
+    # Datamodel with all source positions outside slit
+    model = request.getfixturevalue(dataset).copy()
+    if all_slits:
+        for slit in model.slits:
+            slit.source_xpos = 100
+            slit.source_type = "POINT"
+    else:
+        # only the point source slit is outside the slit
+        model.slits[0].source_xpos = 100
+
+    result = PathLossStep.call(model)
+    assert "outside slit" in caplog.text
+
+    if all_slits:
+        # No slits were corrected
+        assert result.meta.cal_step.pathloss == "SKIPPED"
+    else:
+        # Some slits were corrected
+        assert result.meta.cal_step.pathloss == "COMPLETE"
+
+
+def test_pathloss_step_ifu_point(caplog, nirspec_ifu_model_point):
+    model = nirspec_ifu_model_point.copy()
+    result = PathLossStep.call(model)
+    assert result.meta.cal_step.pathloss == "COMPLETE"
+
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
+
+    # correction type should be "POINT"
+    assert "Correction type used: POINT" in caplog.text
+
+
+def test_pathloss_step_ifu_uniform(caplog, nirspec_ifu_model_extended):
+    model = nirspec_ifu_model_extended.copy()
+    result = PathLossStep.call(model)
+    assert result.meta.cal_step.pathloss == "COMPLETE"
+
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
+
+    # correction type should be "UNIFORM"
+    assert "Correction type used: UNIFORM" in caplog.text
+
+
 def test_pathloss_step_miri_lrs_point(miri_lrs_model_point):
     model = miri_lrs_model_point.copy()
 
@@ -246,6 +341,8 @@ def test_pathloss_step_miri_lrs_point(miri_lrs_model_point):
     assert result.meta.cal_step.pathloss == "COMPLETE"
     assert isinstance(result, datamodels.ImageModel)
     assert not np.allclose(result.data, model.data)
+
+    # LRS correction is multiplicative: it will be > 1
     assert np.mean(result.pathloss_point) > 1.0
 
     # make sure input is not modified
@@ -269,18 +366,77 @@ def test_pathloss_step_miri_lrs_extended(miri_lrs_model_extended):
     assert not model.hasattr("pathloss_point")
 
 
-@pytest.mark.parametrize("mode", ["mos", "fs"])
-def test_pathloss_correction_pars(mode, nirspec_mos_model_point, nirspec_fs_model_point):
-    if mode == "mos":
-        model = nirspec_mos_model_point.copy()
-    else:
-        model = nirspec_fs_model_point.copy()
+def test_pathloss_step_miri_lrs_user_slit_loc(caplog, miri_lrs_model_point):
+    model = miri_lrs_model_point.copy()
+
+    result = PathLossStep.call(model, user_slit_loc=0.1)
+    assert result.meta.cal_step.pathloss == "COMPLETE"
+    assert not np.allclose(result.data, model.data)
+    assert np.mean(result.pathloss_point) > 1.0
+
+    # Check for the expected target location
+    # Mock spatial scale is 0.1 arcsec, offset is along dispersion direction (y),
+    # so expected location is (0, 1)
+    assert "target center offset: 0.1 arcsec" in caplog.text
+    assert "New target location = (0.000, 1.000)" in caplog.text
+
+
+def test_pathloss_step_miri_lrs_outside_slit(caplog, miri_lrs_model_point):
+    model = miri_lrs_model_point.copy()
+
+    # Call the step once with default values: source is at the center
+    result_center = PathLossStep.call(model)
+
+    # Call again but place the target outside the slit
+    result_outside = PathLossStep.call(model, user_slit_loc=5)
+
+    # Results are the same: the correction falls back to using the center of the slit
+    np.testing.assert_allclose(result_center.data, result_outside.data)
+    assert "Source is outside slit. Correction defaulting to center of the slit" in caplog.text
+
+
+def test_pathloss_step_niriss_soss_non_tso(niriss_soss_model):
+    model = niriss_soss_model.copy()
+
+    result = PathLossStep.call(model)
+    assert result.meta.cal_step.pathloss == "COMPLETE"
+    assert isinstance(result, datamodels.ImageModel)
+    assert not np.allclose(result.data, model.data)
+
+    # SOSS correction divides out: it will be < 1
+    assert np.mean(result.pathloss_point) < 1.0
+
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
+    assert not model.hasattr("pathloss_point")
+
+
+def test_pathloss_step_niriss_soss_pupil_out_of_range(niriss_soss_model):
+    model = niriss_soss_model.copy()
+    model.meta.instrument.pupil_position = 1
+
+    result = PathLossStep.call(model)
+    assert result.meta.cal_step.pathloss == "COMPLETE"
+    assert isinstance(result, datamodels.ImageModel)
+
+    # SOSS correction is set to 1.0
+    assert np.allclose(result.data, model.data)
+    assert np.allclose(result.pathloss_point, 1.0)
+
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
+    assert not model.hasattr("pathloss_point")
+
+
+@pytest.mark.parametrize(
+    "dataset", ["nirspec_fs_model_point", "nirspec_mos_model_point", "nirspec_ifu_model_point"]
+)
+def test_pathloss_correction_pars(request, dataset):
+    model = request.getfixturevalue(dataset).copy()
     step = PathLossStep()
     result = step.run(model)
-
-    # output data is not the same
-    nnan = ~np.isnan(model.slits[0].data) & ~np.isnan(result.slits[0].data)
-    assert not np.allclose(result.slits[0].data[nnan], model.slits[0].data[nnan])
 
     # use the computed correction and invert
     new_step = PathLossStep()
@@ -289,12 +445,27 @@ def test_pathloss_correction_pars(mode, nirspec_mos_model_point, nirspec_fs_mode
     new_step.inverse = True
     inverse_result = new_step.run(result)
 
+    if "ifu" in dataset:
+        compare_image = model
+        result_image = result
+        inverse_image = inverse_result
+    else:
+        compare_image = model.slits[0]
+        result_image = result.slits[0]
+        inverse_image = inverse_result.slits[0]
+
+    # output data is not the same, except for IFU,
+    # for which the correction currently has no effect
+    nnan = ~np.isnan(compare_image.data) & ~np.isnan(result_image.data)
+    if "ifu" not in dataset:
+        assert not np.allclose(result_image.data[nnan], compare_image.data[nnan])
+
     # output data is the same as input, except that NaNs do not invert
-    assert np.allclose(inverse_result.slits[0].data[nnan], model.slits[0].data[nnan])
-    assert np.allclose(inverse_result.slits[0].err[nnan], model.slits[0].err[nnan])
-    assert np.allclose(inverse_result.slits[0].var_rnoise[nnan], model.slits[0].var_rnoise[nnan])
-    assert np.allclose(inverse_result.slits[0].var_poisson[nnan], model.slits[0].var_poisson[nnan])
-    assert np.allclose(inverse_result.slits[0].var_flat[nnan], model.slits[0].var_flat[nnan])
+    assert np.allclose(inverse_image.data[nnan], compare_image.data[nnan])
+    assert np.allclose(inverse_image.err[nnan], compare_image.err[nnan])
+    assert np.allclose(inverse_image.var_rnoise[nnan], compare_image.var_rnoise[nnan])
+    assert np.allclose(inverse_image.var_poisson[nnan], compare_image.var_poisson[nnan])
+    assert np.allclose(inverse_image.var_flat[nnan], compare_image.var_flat[nnan])
 
     result.close()
     inverse_result.close()

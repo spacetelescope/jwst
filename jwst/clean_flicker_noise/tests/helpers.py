@@ -306,7 +306,7 @@ def make_nrs_fs_full_ramp():
     RampModel
         A NIRSpec fixed slit ramp model.
     """
-    shape = (1, 2, 2048, 2048)
+    shape = (2, 2, 2048, 2048)
     model = datamodels.RampModel(shape)
 
     # Make data with a constant rate

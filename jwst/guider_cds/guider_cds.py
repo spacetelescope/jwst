@@ -29,16 +29,16 @@ def guider_cds(model, gain_model, readnoise_model):
 
     Parameters
     ----------
-    model : `datamodels.GuiderRawModel`
+    model : `~stdatamodels.jwst.datamodels.GuiderRawModel`
         Input data model
-    gain_model : `datamodels.GainModel`
+    gain_model : `~stdatamodels.jwst.datamodels.GainModel`
         Gain for all pixels
-    readnoise_model : `datamodels.ReadnoiseModel`
+    readnoise_model : `~stdatamodels.jwst.datamodels.ReadnoiseModel`
         Readnoise for all pixels
 
     Returns
     -------
-    new_model : 'datamodels.GuiderCalModel'
+    new_model : `~stdatamodels.jwst.datamodels.GuiderCalModel`
         Output data model
     """
     # get needed sizes and shapes
@@ -139,15 +139,16 @@ def get_ref_arr(model, reference_model):
 
     Parameters
     ----------
-    model : `datamodels.GuiderRawModel`
+    model : `~stdatamodels.jwst.datamodels.GuiderRawModel`
         Input data model
-    reference_model : `datamodels.ReferenceFileModel`
+    reference_model : `~stdatamodels.jwst.datamodels.ReferenceFileModel`
         Reference file containing the relevant array;
-        typically either a GainModel or a ReadnoiseModel
+        typically either a `~stdatamodels.jwst.datamodels.GainModel`
+        or a `~stdatamodels.jwst.datamodels.ReadnoiseModel`
 
     Returns
     -------
-    ref_arr : ndarray, 2-D, float
+    ref_arr : ndarray
         Values from the reference file
     """
     # extract subarray from reference file, if necessary
