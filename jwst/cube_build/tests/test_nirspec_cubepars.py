@@ -177,7 +177,6 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
 
     # By default Prism/Clear will produce a linear wavelength plane.
 
-    pipeline = 3
     input_model = None
     output_name_base = None
     output_type = "band"
@@ -188,7 +187,6 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
     master_table = None
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -211,7 +209,6 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
 
     # Add output_type = 'multi' and  Prism/Clear will produce a non-linear wavelength plane.
 
-    pipeline = 3
     input_model = None
     output_name_base = None
     output_type = "multi"
@@ -222,7 +219,6 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
     master_table = None
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -302,7 +298,6 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
         "debug_spaxel": "0 0 0",
     }
 
-    pipeline = 3
     input_model = None
     output_name_base = None
     output_type = "band"
@@ -313,7 +308,6 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
     master_table = None
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -367,7 +361,6 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
     }
 
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
