@@ -29,6 +29,7 @@ def run_spec2_trace_model(rtdata_module):
         "--steps.adaptive_trace_model.oversample=1.0",
         "--steps.adaptive_trace_model.skip=false",
         "--steps.adaptive_trace_model.save_results=true",
+        "--steps.cube_build.output_type='multi'",
     ]
     Step.from_cmdline(args)
     return rtdata

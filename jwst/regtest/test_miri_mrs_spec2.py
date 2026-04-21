@@ -63,6 +63,7 @@ def run_spec2_with_residual_fringe(rtdata_module, resource_tracker):
         "--output_file=jw01024001001_04101_00001_mirifulong_rf",
         "--steps.residual_fringe.skip=false",
         "--steps.residual_fringe.save_results=true",
+        "--steps.cube_build.output_type='multi'",
     ]
 
     with resource_tracker.track():
