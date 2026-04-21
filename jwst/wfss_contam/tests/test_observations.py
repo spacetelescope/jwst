@@ -124,17 +124,6 @@ def test_disperse_order(observation, segmentation_map, chunk_size):
     # understood and are inconsequential for science.
     assert np.isclose(slit.data[5, 60], 0.09994397, rtol=0.005)
 
-    # every slit should carry a wavelength array with the correct shape,
-    # non-zero pixels, and values within [wmin, wmax] to within float32 rounding
-    atol = 0.003  # µm — accounts for dlam step size (~1.5 nm) at the wmax boundary
-    for slit in obs.simulated_slits.slits:
-        assert slit.wavelength is not None
-        assert slit.wavelength.shape == slit.data.shape
-        filled = slit.wavelength[slit.wavelength > 0]
-        assert len(filled) > 0, f"slit {slit.name} has no non-zero wavelength pixels"
-        assert np.all(filled >= wmin - atol), f"slit {slit.name} has wavelengths below wmin"
-        assert np.all(filled <= wmax + atol), f"slit {slit.name} has wavelengths above wmax"
-
 
 def test_aggregate_by_source():
     """Chunks for same source covering different spatial regions are combined correctly."""
@@ -247,4 +236,3 @@ def test_aggregate_by_source_wavelength_weighted_mean():
     _aggregate_by_source(results_c, 1, source_results)
 
     assert_allclose(source_results[1]["image"], [[4.0, 12.0]])
-    assert_allclose(source_results[1]["wavelengths"], [[1.25, 25 / 7]])

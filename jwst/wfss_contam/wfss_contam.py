@@ -15,7 +15,7 @@ from stdatamodels.jwst.transforms.models import (
 from jwst.lib.catalog_utils import read_source_catalog
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
-from jwst.wfss_contam.wavefit import SlitFitError, SlitIterativePolynomialFitter, apply_flam_to_slit
+from jwst.wfss_contam.wavefit import SlitFitError, apply_basis_coeffs, fit_slit_by_basis_images
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +26,20 @@ class UnmatchedSlitIDError(Exception):
     """Exception raised when a slit ID is not found in the list of simulated slits."""
 
     pass
+
+
+class _PowerFluxModel:
+    """
+    Picklable callable that evaluates ``x**k``.
+
+    Callables need to be picklable so that they can be used in multiprocessing contexts.
+    """
+
+    def __init__(self, k):
+        self.k = k
+
+    def __call__(self, x):
+        return x**self.k
 
 
 def _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders):
@@ -133,6 +147,16 @@ def match_backplane_prefer_first(slit0, slit1):
     backplane1[i0:i1, j0:j1] = data1[di : di + (i1 - i0), dj : dj + (j1 - j0)]
 
     slit1.data = backplane1
+    k = 1
+    while True:
+        attr = f"fluxmodel_{k}"
+        mc = getattr(slit1, attr, None)
+        if mc is None:
+            break
+        mc_bp = np.zeros_like(data0)
+        mc_bp[i0:i1, j0:j1] = np.asarray(mc)[di : di + (i1 - i0), dj : dj + (j1 - j0)]
+        setattr(slit1, attr, mc_bp)
+        k += 1
     # Anticipate slits carrying around wavelength arrays for future changes
     if getattr(slit1, "wavelength", None) is not None and slit1.wavelength.shape == data1.shape:
         wl_backplane = np.zeros_like(data0)
@@ -338,7 +362,6 @@ def contam_corr(
     max_pixels_per_chunk=5e4,
     oversample_factor=2,
     polyfit_degree=None,
-    improvement_threshold=None,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -376,9 +399,6 @@ def contam_corr(
     polyfit_degree : int, optional
         Degree of polynomial fit to spectral shape. If None (the default), do not attempt
         polynomial fitting and just use the flat-spectrum simulated slit.
-    improvement_threshold : float, optional
-        Minimum relative RSS improvement required to accept each successive polynomial fit step.
-        If None (the default), all steps in the degree sequence are always applied.
 
     Returns
     -------
@@ -456,6 +476,14 @@ def contam_corr(
     )
     seg_model.close()
 
+    # Build polynomial basis flux models for disperse() if polynomial fitting is requested.
+    # lambda^k terms (k=1..polyfit_degree) are the higher-degree basis images; the constant
+    # term (k=0, i.e. slit.data) is always included in the fit.
+    flux_models = None
+    if polyfit_degree is not None:
+        # Can't use lambda x: x**k here because that's not picklable for multiprocessing
+        flux_models = [_PowerFluxModel(k) for k in range(1, polyfit_degree + 1)]
+
     no_sources = True
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
@@ -487,7 +515,9 @@ def contam_corr(
 
         # Compute the dispersion for all sources in this order
         log.info(f"Creating full simulated grism image for order {order}")
-        obs.disperse_order(order, wmin, wmax, sens_waves, sens_response, selected_ids)
+        obs.disperse_order(
+            order, wmin, wmax, sens_waves, sens_response, selected_ids, flux_models=flux_models
+        )
 
     if no_sources:
         log.error(
@@ -512,10 +542,6 @@ def contam_corr(
     contam_model.update(input_model, only="PRIMARY")
     simul_slits = datamodels.MultiSlitModel()
     simul_slits.update(input_model, only="PRIMARY")
-    if polyfit_degree is not None:
-        fitter = SlitIterativePolynomialFitter(
-            polyfit_degree, improvement_threshold=improvement_threshold
-        )
 
     # Match simulated slits to observed, apply polynomial fitting if requested,
     # and update obs.simulated_slits in-place so the full-frame reconstruction below
@@ -533,20 +559,23 @@ def contam_corr(
             log.warning(e)
             this_simul = None
 
-        if this_simul is not None and polyfit_degree is not None:
+        if (
+            this_simul is not None
+            and polyfit_degree is not None
+            and getattr(this_simul, "fluxmodel_1", None) is not None
+        ):
             log.debug(
                 f"Fitting polynomial of degree {polyfit_degree} to the simulated slit "
                 f"for source ID {slit.source_id}, order {slit.meta.wcsinfo.spectral_order}"
             )
             try:
-                f_lam = fitter(slit, this_simul)
-                this_simul.data = apply_flam_to_slit(this_simul.data, this_simul.wavelength, f_lam)
-                # Apply the same spectral polynomial to the original, unclipped
-                # simulated slit so the full-frame reconstruction below is also scaled.
+                coeffs = fit_slit_by_basis_images(slit, this_simul)
+                fitted = apply_basis_coeffs(this_simul, coeffs)
+                this_simul.data = fitted
+                # Apply the same coefficients to the original, unclipped simulated slit
+                # so the full-frame reconstruction below is also scaled.
                 orig = obs.simulated_slits.slits[good_idx]
-                orig.data = apply_flam_to_slit(
-                    np.asarray(orig.data), np.asarray(orig.wavelength), f_lam
-                )
+                orig.data = apply_basis_coeffs(orig, coeffs)
             except SlitFitError as e:
                 log.warning(
                     f"Polynomial fitting failed for slit with source ID {slit.source_id}, "

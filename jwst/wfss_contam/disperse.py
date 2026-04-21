@@ -117,7 +117,7 @@ def _disperse_onto_grism(x0_sky, y0_sky, sky_to_imgxy, imgxy_to_grismxy, lambdas
     return x0s, y0s, lambdas
 
 
-def _collect_outputs_by_source(xs, ys, lambdas, areas, counts, source_ids_per_pixel):
+def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel, model_counts=None):
     """
     Collect the dispersed pixel values into separate images for each source.
 
@@ -127,14 +127,12 @@ def _collect_outputs_by_source(xs, ys, lambdas, areas, counts, source_ids_per_pi
         X coordinates of dispersed pixels
     ys : ndarray
         Y coordinates of dispersed pixels
-    lambdas : ndarray
-        Wavelengths corresponding to each dispersed pixel
-    areas : ndarray
-        Fractional pixel areas corresponding to each dispersed pixel
     counts : ndarray
         Count rates of dispersed pixels
     source_ids_per_pixel : int array
         Source IDs of the dispersed pixels
+    model_counts : list of ndarray, optional
+        List of count rate arrays corresponding to each flux model
 
     Returns
     -------
@@ -146,9 +144,9 @@ def _collect_outputs_by_source(xs, ys, lambdas, areas, counts, source_ids_per_pi
     sorted_ids = source_ids_per_pixel[sort_idx]
     sorted_xs = xs[sort_idx]
     sorted_ys = ys[sort_idx]
-    sorted_lambdas = lambdas[sort_idx]
-    sorted_areas = areas[sort_idx]
     sorted_counts = counts[sort_idx]
+    if model_counts is not None and len(model_counts) > 0:
+        sorted_model_counts = [mc[sort_idx] for mc in model_counts]
 
     # Compute per-source bounds in a vectorized way
     unique_ids, split_points = np.unique(sorted_ids, return_index=True)
@@ -165,21 +163,19 @@ def _collect_outputs_by_source(xs, ys, lambdas, areas, counts, source_ids_per_pi
         end = split_points[i + 1] if i + 1 < len(split_points) else len(sorted_xs)
         this_xs = sorted_xs[start:end]
         this_ys = sorted_ys[start:end]
-        this_lambdas = sorted_lambdas[start:end]
-        this_areas = sorted_areas[start:end]
         this_flxs = sorted_counts[start:end]
 
         bounds = [int(minxs[i]), int(maxxs[i]), int(minys[i]), int(maxys[i])]
         img = _build_dispersed_image_of_source(this_xs, this_ys, this_flxs, bounds)
-        lam, lam_weights = _build_mean_wavelength_image_of_source(
-            this_xs, this_ys, this_lambdas, this_areas, bounds
-        )
         outputs_by_source[this_sid] = {
             "bounds": bounds,
             "image": img,
-            "wavelengths": lam,
-            "wavelength_weights": lam_weights,
         }
+        if model_counts is not None and len(model_counts) > 0:
+            outputs_by_source[this_sid]["model_counts"] = [
+                _build_dispersed_image_of_source(this_xs, this_ys, mc[start:end], bounds)
+                for mc in sorted_model_counts
+            ]
     return outputs_by_source
 
 
@@ -209,47 +205,6 @@ def _build_dispersed_image_of_source(x, y, flux, bounds):
     ).toarray()
 
 
-def _build_mean_wavelength_image_of_source(x, y, values, areas, bounds):
-    """
-    Convert a flattened list of per-pixel values to a 2-D image, using a weighted mean.
-
-    Unlike ``_build_dispersed_image_of_source``, pixels that map to the same output
-    location are averaged rather than summed.
-    The mean is weighted by ``areas`` so pixels that contribute more area to an output pixel
-    carry proportionally more weight.
-
-    Parameters
-    ----------
-    x : ndarray
-        X coordinates of pixels in the grism image
-    y : ndarray
-        Y coordinates of pixels in the grism image
-    values : ndarray
-        Per-pixel values to average (e.g. wavelengths)
-    areas : ndarray
-        Per-pixel areas (e.g. fractional pixel areas)
-    bounds : list
-        Pre-computed [minx, maxx, miny, maxy] bounds for the source.
-
-    Returns
-    -------
-    img : ndarray
-        2-D image of weighted-mean values; zero where no pixel falls.
-    weight_sum : ndarray
-        2-D image of summed areas; used as the denominator for combining
-        wavelength means across chunks in the aggregation step.
-    """
-    minx, maxx, miny, maxy = bounds
-    shape = (maxy - miny + 1, maxx - minx + 1)
-    rows, cols = y - miny, x - minx
-    weighted_sum = sparse.coo_matrix((areas * values, (rows, cols)), shape=shape).toarray()
-    weight_sum = sparse.coo_matrix((areas, (rows, cols)), shape=shape).toarray()
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        img = np.where(weight_sum > 0, weighted_sum / weight_sum, 0.0)
-    return img, weight_sum
-
-
 def disperse(
     xs,
     ys,
@@ -264,6 +219,7 @@ def disperse(
     grism_wcs,
     naxis,
     oversample_factor=2,
+    flux_models=None,
 ):
     """
     Compute the dispersed image pixel values from the direct image.
@@ -274,9 +230,10 @@ def disperse(
         Flat array of X coordinates of pixels in the direct image
     ys : ndarray
         Flat array of Y coordinates of pixels in the direct image
-    fluxes : ndarray
-        Fluxes of the pixels in the direct image corresponding to xs, ys.
-        These should have units of MJy/sr.
+    fluxes : ndarray of shape (N, n_pixels)
+        Fluxes of the pixels in the direct image corresponding to xs, ys,
+        in units of MJy/sr.  N is the number of photometric bands; use N=1
+        for a flat (wavelength-independent) SED. Note in that case the array must still be 2-D.
     source_ids_per_pixel : int array
         Source IDs of the input pixels in the segmentation map
     order : int
@@ -298,6 +255,10 @@ def disperse(
         Dimensions of the grism image (naxis[0], naxis[1])
     oversample_factor : int, optional
         Factor by which to oversample the wavelength grid
+    flux_models : list[Callable], optional
+        Flux distributions to evaluate at each wavelength. Typically these will be single
+        polynomial orders, e.g. [lambda x: x, lambda x: x^2], ...] the coefficients of which
+        are linearly fit later.
 
     Returns
     -------
@@ -343,6 +304,8 @@ def disperse(
     )
     nlam = len(lambdas)
     dlam = lambdas[1] - lambdas[0]
+    fluxes = np.repeat(fluxes[np.newaxis, :], nlam, axis=0)
+    source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], nlam, axis=0)
 
     x0s, y0s, lambdas = _disperse_onto_grism(
         x0_sky,
@@ -359,9 +322,6 @@ def disperse(
     if x0s.min() >= naxis[0] or x0s.max() < 0 or y0s.min() >= naxis[1] or y0s.max() < 0:
         return
 
-    source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], nlam, axis=0)
-    fluxes = np.repeat(fluxes[np.newaxis, :], nlam, axis=0)
-
     # Discretize x and y coordinates to integer pixel values, keeping track of the fractional area
     # that each pixel contributes to the final grism image.
     # The resulting x, y coordinate pairs are non-unique: there are multiple wavelengths
@@ -370,10 +330,16 @@ def disperse(
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     del x0s, y0s
 
+    # Evaluate flux models on the full lambda grid before discretizing to pixel coordinates.
+    # Otherwise real flux information is lost.
+    model_f = []
+    if flux_models is not None:
+        for flam in flux_models:
+            model_f.append(flam(lambdas))
+
     lambdas = np.take(lambdas, index)
     fluxes = np.take(fluxes, index)
     source_ids_per_pixel = np.take(source_ids_per_pixel, index)
-    del index
 
     # compute 1D sensitivity array corresponding to list of wavelengths
     sens, no_cal = create_1d_sens(lambdas, sens_waves, sens_resp)
@@ -385,15 +351,29 @@ def disperse(
     # Note that the photom reference files are constructed with per-wavelength units,
     # so oversampling is accounted for by the spacing of dlam.
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
+        warnings.filterwarnings(
+            "ignore", category=RuntimeWarning, message="divide by zero|invalid value"
+        )
         counts = fluxes * areas * dlam / sens
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
-    del fluxes, sens, dlam, no_cal
+
+    # Apply the same steps to the basis vector models: index them down and convert to counts
+    model_counts = []
+    for f in model_f:
+        f = np.take(f, index)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=RuntimeWarning, message="divide by zero|invalid value"
+            )
+            model_counts_i = fluxes * f * areas * dlam / sens
+        model_counts_i[no_cal] = 0.0
+        model_counts.append(model_counts_i)
+    del fluxes, areas, sens, dlam, no_cal, lambdas, index
 
     outputs_by_source = _collect_outputs_by_source(
-        xs, ys, lambdas, areas, counts, source_ids_per_pixel
+        xs, ys, counts, source_ids_per_pixel, model_counts
     )
-    del xs, ys, counts, source_ids_per_pixel, lambdas, areas
+    del xs, ys, counts, source_ids_per_pixel
     n_out = len(outputs_by_source)
     log.debug(
         f"{mp.current_process()} finished order {order} with {n_out} "

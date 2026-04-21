@@ -1,11 +1,36 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from jwst.wfss_contam.disperse import (
-    _build_mean_wavelength_image_of_source,
-    _collect_outputs_by_source,
-    disperse,
-)
+from jwst.wfss_contam.disperse import disperse
+
+_SENS_WAVES = np.linspace(1.708, 2.28, 100)
+_WMIN, _WMAX = _SENS_WAVES[0], _SENS_WAVES[-1]
+_NAXIS = (300, 500)
+_SOURCE_ID = 50
+
+
+def _disperse_one_pixel(grism_wcs, direct_image_wcs, flux_models=None):
+    """Run disperse() for a single pixel with flat unit sensitivity."""
+    xs = np.array([200])
+    ys = np.array([200])
+    fluxes = np.array([1.0])
+    source_ids = np.array([_SOURCE_ID])
+    sens_resp = np.ones_like(_SENS_WAVES)
+    return disperse(
+        xs,
+        ys,
+        fluxes,
+        source_ids,
+        1,
+        _WMIN,
+        _WMAX,
+        _SENS_WAVES,
+        sens_resp,
+        direct_image_wcs,
+        grism_wcs,
+        _NAXIS,
+        flux_models=flux_models,
+    )
 
 
 def test_disperse_oversample_same_result(grism_wcs, direct_image_with_gradient):
@@ -43,55 +68,35 @@ def test_disperse_oversample_same_result(grism_wcs, direct_image_with_gradient):
     # different oversampling gives different effects at the ends
     # unsure if this is a bug or not, but the middle should definitely be the same
     assert_allclose(output_images[0][2:-2, :], output_images[1][2:-2], rtol=1e-5)
+    assert "model_counts" not in src[source_id[0]]
 
 
-def test_build_mean_image_of_source_duplicates_unequal_weights():
-    """Two inputs at the same location with unequal weights: result is the weighted mean."""
-    x = np.array([0, 0])
-    y = np.array([0, 0])
-    values = np.array([1.0, 3.0])
-    areas = np.array([3.0, 1.0])  # first value has 3x the area
-    bounds = [0, 0, 0, 0]
-    result, weights = _build_mean_wavelength_image_of_source(x, y, values, areas, bounds)
-    assert result.shape == (1, 1)
-    # expected = (3*1 + 1*3) / (3+1) = 6/4 = 1.5
-    assert_allclose(result[0, 0], 1.5)
-    # weight_sum should equal the total area contributed to the pixel
-    assert_allclose(weights[0, 0], 4.0)
+def test_flux_models_output_structure(grism_wcs, direct_image_with_gradient):
+    """Each source dict should have a 'model_counts' list with one entry per model."""
+    models = [lambda x: x, lambda x: x**2]
+    src = _disperse_one_pixel(grism_wcs, direct_image_with_gradient.meta.wcs, flux_models=models)
+    assert "model_counts" in src[_SOURCE_ID]
+    assert len(src[_SOURCE_ID]["model_counts"]) == 2
+    for mc in src[_SOURCE_ID]["model_counts"]:
+        assert mc.shape == src[_SOURCE_ID]["image"].shape
 
 
-def test_build_mean_image_of_source_empty_pixels_are_zero():
-    """Pixels with no input contribution should be zero, not NaN."""
-    x = np.array([0])
-    y = np.array([0])
-    values = np.array([5.0])
-    areas = np.array([1.0])
-    bounds = [0, 1, 0, 1]  # 2x2 output, only (0,0) filled
-    result, _weights = _build_mean_wavelength_image_of_source(x, y, values, areas, bounds)
-    assert result.shape == (2, 2)
-    assert_allclose(result[0, 0], 5.0)
-    assert_allclose(result[0, 1], 0.0)
-    assert_allclose(result[1, 0], 0.0)
-    assert_allclose(result[1, 1], 0.0)
+def test_flux_models_scalar_scaling(grism_wcs, direct_image_with_gradient):
+    """Scaling a flux model by a constant should scale the model_counts image by the same factor."""
+    wcs = direct_image_with_gradient.meta.wcs
+    src1 = _disperse_one_pixel(grism_wcs, wcs, flux_models=[lambda x: x])
+    src3 = _disperse_one_pixel(grism_wcs, wcs, flux_models=[lambda x: 3.0 * x])
+    assert_allclose(src3[_SOURCE_ID]["model_counts"][0], 3.0 * src1[_SOURCE_ID]["model_counts"][0])
 
 
-def test_collect_outputs_by_source_wavelengths_present():
-    """_collect_outputs_by_source stores a 'wavelengths' array for each source."""
-    rng = np.random.default_rng(42)
-    n = 20
-    xs = rng.integers(0, 5, n)
-    ys = rng.integers(0, 5, n)
-    lambdas = rng.uniform(1.7, 2.3, n)
-    areas = rng.uniform(0.1, 1.0, n)
-    counts = rng.uniform(0.0, 1.0, n)
-    source_ids = np.ones(n, dtype=int)  # single source
+def test_flux_models_superposition(grism_wcs, direct_image_with_gradient):
+    """The sum of two separate model images should equal the image from their combined model."""
+    wcs = direct_image_with_gradient.meta.wcs
+    f1 = lambda x: x
+    f2 = lambda x: x**2
 
-    out = _collect_outputs_by_source(xs, ys, lambdas, areas, counts, source_ids)
-    assert 1 in out
-    assert "wavelengths" in out[1]
-    lam = out[1]["wavelengths"]
-    img = out[1]["image"]
-    assert lam.shape == img.shape
-    # wavelengths should be within the input lambda range or zero (empty pixels)
-    assert np.all((lam >= 1.7) | (lam == 0.0))
-    assert np.all((lam <= 2.3) | (lam == 0.0))
+    src_sep = _disperse_one_pixel(grism_wcs, wcs, flux_models=[f1, f2])
+    src_sum = _disperse_one_pixel(grism_wcs, wcs, flux_models=[lambda x: f1(x) + f2(x)])
+
+    combined = src_sep[_SOURCE_ID]["model_counts"][0] + src_sep[_SOURCE_ID]["model_counts"][1]
+    assert_allclose(combined, src_sum[_SOURCE_ID]["model_counts"][0], rtol=1e-10)

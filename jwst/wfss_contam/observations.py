@@ -192,7 +192,15 @@ class Observation:
         self.fluxes = self.dimage[self.ys, self.xs]
 
     def chunk_sources(
-        self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, max_pixels=1e5
+        self,
+        order,
+        wmin,
+        wmax,
+        sens_waves,
+        sens_response,
+        selected_ids=None,
+        max_pixels=1e5,
+        flux_models=None,
     ):
         """
         Chunk the sources into groups of max_pixels.
@@ -275,12 +283,15 @@ class Observation:
                     self.grism_wcs,
                     self.naxis,
                     self.oversample_factor,
+                    flux_models,
                 ]
             )
 
         return disperse_args
 
-    def disperse_order(self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None):
+    def disperse_order(
+        self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, flux_models=None
+    ):
         """
         Disperse the sources for a given spectral order, with multiprocessing.
 
@@ -300,6 +311,9 @@ class Observation:
             Response (flux calibration) array from photom reference file
         selected_ids : list, optional
             List of source IDs to process. If None, all sources are processed.
+        flux_models : list of callables, optional
+            List of functions that take a wavelength array and return a scaling factor to apply to
+            the input flux for that wavelength. If None, no models are included in the output.
         """
         # generate lists of input parameters for the disperse function
         # for each chunk of sources
@@ -311,6 +325,7 @@ class Observation:
             sens_response,
             selected_ids=selected_ids,
             max_pixels=self.max_pixels_per_chunk,
+            flux_models=flux_models,
         )
         t0 = time.time()
         if self.max_cpu > 1:
@@ -348,7 +363,11 @@ class Observation:
             bounds = source_results[sid]["bounds"]
             img = source_results[sid]["image"]
             slit = _construct_slitmodel(img, bounds, sid, order)
-            slit.wavelength = source_results[sid]["wavelengths"]
+            fluxmodels = source_results[sid].get("model_counts", [])
+            for i, fm in enumerate(fluxmodels):
+                # use i+1 indexing because typically the first model will be the linear order
+                # for polynomial fitting. The 0th order is what's already in slit.data
+                setattr(slit, f"fluxmodel_{i + 1}", fm)
             self.simulated_image[bounds[2] : bounds[3] + 1, bounds[0] : bounds[1] + 1] += img
             self.simulated_slits.slits.append(slit)
 
@@ -382,10 +401,7 @@ def _aggregate_by_source(results, sid, source_results):
         source_results[sid] = {
             "bounds": results[sid]["bounds"],
             "image": results[sid]["image"],
-            "wavelengths": results[sid]["wavelengths"],
-            # weight_sum is the sum of pixel areas that contributed to each grism pixel.
-            # Needed to find the area-weighted mean when combining across chunks later.
-            "weight_sum": results[sid]["wavelength_weights"],
+            "model_counts": results[sid].get("model_counts", []),
         }
         return
 
@@ -416,26 +432,18 @@ def _aggregate_by_source(results, sid, source_results):
     new_img = _place(results[sid]["image"], new_bounds)
     combined_image = old_img + new_img
 
-    # Area-weighted mean for wavelengths:
-    # weight each chunk's contribution by the total area it contributed to each pixel.
-    old_w = _place(source_results[sid]["weight_sum"], old_bounds)
-    new_w = _place(results[sid]["wavelength_weights"], new_bounds)
-    old_lam = _place(source_results[sid]["wavelengths"], old_bounds)
-    new_lam = _place(results[sid]["wavelengths"], new_bounds)
-    combined_weight = old_w + new_w
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        combined_wavelengths = np.where(
-            combined_weight > 0,
-            (old_w * old_lam + new_w * new_lam) / combined_weight,
-            0.0,
-        )
+    # Sum model_counts across chunks (same as image)
+    old_mcs = source_results[sid].get("model_counts", [])
+    new_mcs = results[sid].get("model_counts", [])
+    combined_mcs = [
+        _place(old_mc, old_bounds) + _place(new_mc, new_bounds)
+        for old_mc, new_mc in zip(old_mcs, new_mcs, strict=True)
+    ]
 
     source_results[sid] = {
         "bounds": combined_bounds,
         "image": combined_image,
-        "wavelengths": combined_wavelengths,
-        "weight_sum": combined_weight,
+        "model_counts": combined_mcs,
     }
 
 
