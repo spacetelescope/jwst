@@ -21,6 +21,8 @@ def generate_substripe_ranges(sci_model):
     """
     Determine the bounds of each substripe based on the input model multistripe metadata.
 
+    All ranges are indexed in detector orientation.
+
     Parameters
     ----------
     sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
@@ -134,8 +136,9 @@ def generate_superstripe_ranges(sci_model):
     Given an input model with multistripe parameters in its metadata,
     return the slowaxis pixel ranges corresponding
     to the nreads2 positions read into each stripe of a set
-    of superstripes. Dictionary keys are 0-indexed stripe
-    labels.
+    of superstripes.
+
+    All ranges are indexed in detector orientation.
 
     Parameters
     ----------
@@ -487,7 +490,7 @@ def collate_superstripes(input_model):
                 if integ == 0:
                     newpdq[f_reg[0] : f_reg[1], :] = oldpdq[stripe, s_reg[0] : s_reg[1]]
 
-    # Swap back to detector frame
+    # Swap back to science frame
     newdata = detector_science_frame_transform(newdata, fastaxis, slowaxis)
     newgdq = detector_science_frame_transform(newgdq, fastaxis, slowaxis)
     newpdq = detector_science_frame_transform(newpdq, fastaxis, slowaxis)

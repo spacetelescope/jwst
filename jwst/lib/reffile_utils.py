@@ -353,16 +353,16 @@ def get_multistripe_subarray_model(sci_model, ref_model):
 
 def science_detector_frame_transform(data, fastaxis, slowaxis):
     """
-    Swap data array between science and detector frames.
+    Swap data array from science to detector frame.
 
     Use the fastaxis and slowaxis keywords to invert
-    and/or transpose data array axes to move between the
-    science frame and the detector frame.
+    and/or transpose data array axes to move from the
+    science frame to the detector frame.
 
     Parameters
     ----------
     data : np.array
-        Science array containing at least two dimensions.
+        Data array containing at least two dimensions in science orientation.
     fastaxis : int
         Value of the fastaxis keyword for the data array
         to be transformed.
@@ -373,8 +373,7 @@ def science_detector_frame_transform(data, fastaxis, slowaxis):
     Returns
     -------
     np.array
-        Data array transformed between science and
-        detector frames.
+        Data array transformed to detector orientation.
     """
     # If fastaxis is x-axis
     if np.abs(fastaxis) == 1:
@@ -389,16 +388,16 @@ def science_detector_frame_transform(data, fastaxis, slowaxis):
 
 def detector_science_frame_transform(data, fastaxis, slowaxis):
     """
-    Swap data array between detector and science frames.
+    Swap data array from detector to science frame.
 
     Use the fastaxis and slowaxis keywords to invert
-    and/or transpose data array axes to move between the
-    detector frame and the science frame.
+    and/or transpose data array axes to move from the
+    detector frame to the science frame.
 
     Parameters
     ----------
     data : np.array
-        Science array containing at least two dimensions.
+        Data array containing at least two dimensions in detector orientation.
     fastaxis : int
         Value of the fastaxis keyword for the data array
         to be transformed.
@@ -409,8 +408,7 @@ def detector_science_frame_transform(data, fastaxis, slowaxis):
     Returns
     -------
     np.array
-        Data array transformed between detector and
-        science frames.
+        Data array transformed to science orientation.
     """
     # If fastaxis is x-axis
     if np.abs(fastaxis) == 1:
