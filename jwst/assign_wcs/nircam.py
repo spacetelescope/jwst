@@ -444,6 +444,13 @@ def dhs(input_model, reference_files):
         dispx = [b for (a, b) in zip(fp_mask, dispx, strict=True) if a]
         dispy = [b for (a, b) in zip(fp_mask, dispy, strict=True) if a]
         stripes = [b for (a, b) in zip(fp_mask, stripes, strict=True) if a]
+        # Short-wavelength regions and specwcs files must both have a stripe present
+        # for calibration to proceed. Currently, specwcs files will have transforms
+        # for all possible stripes on the detector, and we rely on the regions file
+        # to down-select to the appropriate stripes given the subarray.
+        stripes = set(stripes) & set(regions.flatten())
+        if len(stripes) == 0:
+            raise ValueError("No stripes present in both regions and specwcs reference files.")
 
     # Initialize transforms dictionary to store stripe IDs as keys, transform models as values.
     # Used in RegionsSelector to choose correct transform given a stripe ID.
