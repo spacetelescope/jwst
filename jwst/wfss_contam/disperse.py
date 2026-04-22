@@ -302,10 +302,8 @@ def disperse(
         wmax,
         oversample_factor=oversample_factor,
     )
-    nlam = len(lambdas)
     dlam = lambdas[1] - lambdas[0]
-    fluxes = np.repeat(fluxes[np.newaxis, :], nlam, axis=0)
-    source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], nlam, axis=0)
+    n_pix = len(fluxes)
 
     x0s, y0s, lambdas = _disperse_onto_grism(
         x0_sky,
@@ -330,16 +328,19 @@ def disperse(
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     del x0s, y0s
 
-    # Evaluate flux models on the full lambda grid before discretizing to pixel coordinates.
-    # Otherwise real flux information is lost.
+    # Only lambdas varies along the wavelength axis
+    # fluxes and source_ids are wavelength-independent: index % n_pix recovers the correct
+    # source pixel column without needing np.take.
+    lambdas = np.take(lambdas, index)
+    fluxes = fluxes[index % n_pix]
+    source_ids_per_pixel = source_ids_per_pixel[index % n_pix]
+
+    # Evaluate basis models on the 1-D lambda array; flam is element-wise so this is
+    # still full resolution
     model_f = []
     if basis_models is not None:
         for flam in basis_models:
             model_f.append(flam(lambdas))
-
-    lambdas = np.take(lambdas, index)
-    fluxes = np.take(fluxes, index)
-    source_ids_per_pixel = np.take(source_ids_per_pixel, index)
 
     # compute 1D sensitivity array corresponding to list of wavelengths
     sens, no_cal = create_1d_sens(lambdas, sens_waves, sens_resp)
@@ -357,10 +358,9 @@ def disperse(
         counts = fluxes * areas * dlam / sens
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
-    # Apply the same steps to the basis vector models: index them down and convert to counts
+    # Also convert basis models to counts.
     model_counts = []
     for f in model_f:
-        f = np.take(f, index)
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore", category=RuntimeWarning, message="divide by zero|invalid value"
