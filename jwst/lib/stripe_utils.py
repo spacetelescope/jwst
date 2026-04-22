@@ -17,16 +17,19 @@ __all__ = [
 ]
 
 
-def generate_substripe_ranges(sci_model):
+def generate_substripe_ranges(sci_model, science_frame=False):
     """
     Determine the bounds of each substripe based on the input model multistripe metadata.
 
-    All ranges are indexed in detector orientation.
+    All ranges are indexed in detector orientation by default.
 
     Parameters
     ----------
     sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel with multistripe params defined.
+    science_frame : bool, optional
+        If True, the slow axis ranges are returned in science orientation
+        instead of detector orientation.
 
     Returns
     -------
@@ -121,15 +124,27 @@ def generate_substripe_ranges(sci_model):
     if sub_lines != slowsize:
         raise ValueError("Stripe readout does not match science array shape.")
 
-    return {
+    all_ranges = {
         "full": full_ranges,
         "subarray": sub_ranges,
         "reference_full": reference_full_ranges,
         "reference_subarray": reference_sub_ranges,
     }
 
+    # Swap slow axis indices to science frame if needed
+    full_size = 2048
+    if science_frame and slowaxis < 0:
+        for range_set in all_ranges:
+            for key, rge in all_ranges[range_set].items():
+                if "full" in range_set:
+                    all_ranges[range_set][key] = [full_size - x for x in rge[::-1]]
+                else:
+                    all_ranges[range_set][key] = [slowsize - x for x in rge[::-1]]
 
-def generate_superstripe_ranges(sci_model):
+    return all_ranges
+
+
+def generate_superstripe_ranges(sci_model, science_frame=False):
     """
     Return a dict of slowaxis ranges read into stripes.
 
@@ -144,6 +159,9 @@ def generate_superstripe_ranges(sci_model):
     ----------
     sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel with multistripe params defined.
+    science_frame : bool, optional
+        If True, the slow axis ranges are returned in science orientation
+        instead of detector orientation.
 
     Returns
     -------
@@ -165,6 +183,7 @@ def generate_superstripe_ranges(sci_model):
     xsize_sci = sci_model.meta.subarray.xsize
     ysize_sci = sci_model.meta.subarray.ysize
     fastaxis = sci_model.meta.subarray.fastaxis
+    slowaxis = sci_model.meta.subarray.slowaxis
     if np.abs(fastaxis) == 1:
         slow_size = ysize_sci
     else:
@@ -238,12 +257,24 @@ def generate_superstripe_ranges(sci_model):
         if sub_lines != slow_size:
             raise ValueError("Stripe readout does not match science array shape.")
 
-    return {
+    all_ranges = {
         "full": full_ranges,
         "subarray": sub_ranges,
         "reference_full": reference_full_ranges,
         "reference_subarray": reference_sub_ranges,
     }
+
+    # Swap slow axis indices to science frame if needed
+    full_size = 2048
+    if science_frame and slowaxis < 0:
+        for range_set in all_ranges:
+            for key, range_list in all_ranges[range_set].items():
+                for i, rge in enumerate(range_list):
+                    if "full" in range_set:
+                        all_ranges[range_set][key][i] = [full_size - x for x in rge[::-1]]
+                    else:
+                        all_ranges[range_set][key][i] = [slow_size - x for x in rge[::-1]]
+    return all_ranges
 
 
 def stripe_read(sci_model, ref_model, attribs):
