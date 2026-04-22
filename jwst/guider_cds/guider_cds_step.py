@@ -1,3 +1,5 @@
+"""Countrate calculations for all FGS data."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -19,7 +21,7 @@ class GuiderCdsStep(Step):
 
     def process(self, input_data):
         """
-        Execute the step.
+        Execute the guider_cds step.
 
         Parameters
         ----------
@@ -30,8 +32,10 @@ class GuiderCdsStep(Step):
         -------
         output_model : `~stdatamodels.jwst.datamodels.GuiderRawModel` or \
                        `~stdatamodels.jwst.datamodels.GuiderCalModel`
-            This will be a GuiderRawModel if the step was skipped; otherwise,
-            it will be a GuiderCalModel containing calibrated count rates.
+            This will be a `~stdatamodels.jwst.datamodels.GuiderRawModel`
+            if the step was skipped; otherwise,
+            it will be a `~stdatamodels.jwst.datamodels.GuiderCalModel`
+            containing calibrated count rates.
         """
         output_model = self.prepare_output(input_data, open_as_type=datamodels.GuiderRawModel)
 

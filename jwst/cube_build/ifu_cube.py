@@ -340,7 +340,7 @@ class IFUCubeData:
 
         # astropy circmean assumes angles are in radians,
         # we have angles in degrees
-        ra_ave = circmean(ravalues * u.deg).value
+        ra_ave = circmean(ravalues * u.deg).value % 360
 
         if self.ra_center is not None:
             self.crval1 = self.ra_center
