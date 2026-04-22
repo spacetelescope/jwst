@@ -271,9 +271,9 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
             for key, range_list in all_ranges[range_set].items():
                 for i, rge in enumerate(range_list):
                     if "full" in range_set:
-                        all_ranges[range_set][key][i] = [full_size - x for x in rge[::-1]]
+                        all_ranges[range_set][key][i] = tuple([full_size - x for x in rge[::-1]])
                     else:
-                        all_ranges[range_set][key][i] = [slow_size - x for x in rge[::-1]]
+                        all_ranges[range_set][key][i] = tuple([slow_size - x for x in rge[::-1]])
     return all_ranges
 
 
@@ -297,15 +297,8 @@ def stripe_read(sci_model, ref_model, attribs):
     # Get the science model multistripe params
     sci_meta = sci_model.meta
 
-    num_superstripe = getattr(sci_meta.subarray, "num_superstripe", 0)
-    # We need to extract the number of science integrations in this file, which is tangled up with
-    #  - the number of integrations in the exposure
-    #  - the number of superstripes each science integration may be divided between
-    # Substripe data may have 0 for num_superstripe, so we use 1 as the integration divisor
-    int_divisor = max(num_superstripe, 1)
-    sci_nints = sci_model.data.shape[0] // int_divisor
-
     # Get the reference model subarray params
+    num_superstripe = getattr(sci_meta.subarray, "num_superstripe", 0)
     if num_superstripe > 0:
         sub_model = datamodels.ReferenceFileModel()
     else:
@@ -344,12 +337,12 @@ def stripe_read(sci_model, ref_model, attribs):
             faststop = faststart + fastsize_sci
             ref_array = ref_array[..., faststart:faststop, :]
 
-        sub_model[attrib] = generate_stripe_reference(ref_array, sci_model, sci_nints)
+        sub_model[attrib] = generate_stripe_reference(ref_array, sci_model)
     sub_model.update(ref_model)
     return sub_model
 
 
-def generate_stripe_reference(ref_array, sci_model, sci_nints):
+def generate_stripe_reference(ref_array, sci_model):
     """
     Generate stripe array from a reference array matching the full subarray size.
 
@@ -359,9 +352,6 @@ def generate_stripe_reference(ref_array, sci_model, sci_nints):
         The scene to be sliced.
     sci_model : `~stdatamodels.datamodels.JwstDataModel`
         The science datamodel metadata tree.
-    sci_nints : int
-        The number of science integrations in the science datamodel. Not equivalent to nints when
-        the science exposure is segmented.
 
     Returns
     -------
@@ -376,7 +366,6 @@ def generate_stripe_reference(ref_array, sci_model, sci_nints):
     ysize_sci = sci_meta.subarray.ysize
     fastaxis = sci_meta.subarray.fastaxis
     slowaxis = sci_meta.subarray.slowaxis
-    ngroups = sci_meta.exposure.ngroups
 
     # Transform science data to detector frame
     ref_array = science_detector_frame_transform(ref_array, fastaxis, slowaxis)
@@ -403,53 +392,27 @@ def generate_stripe_reference(ref_array, sci_model, sci_nints):
 
     else:
         # SUPERSTRIPE MODE
-        # First alter subarray shape to broadcast stripe size to fill "full" subarray
-        ref_native_dims = len(ref_shape)
-        if len(ref_shape) == 2:
-            ref_array = ref_array[np.newaxis, np.newaxis, :].repeat(ngroups, axis=1)
-            ref_shape = ref_array.shape
-        if len(ref_shape) == 4:
-            ref_nints, _, ysize, xsize = ref_shape
-        else:
+        # All expected reference types for superstripe ramps are 2D
+        if len(ref_shape) != 2:
             raise ValueError(f"Unsupported shape: len(ref_shape) == {len(ref_array.shape)}")
 
-        # If reference file has more integrations than science, only process through
-        # necessary integrations.
-        # If science has more integrations, we'll broadcast the reference arrays to
-        # match the number of arrays in the science frame.
-        nints = min(ref_nints, sci_nints)
-        stripe_out = np.zeros(
-            (nints * num_superstripe, ngroups, slow_size, fast_size), dtype=ref_array.dtype
-        )
-        all_ranges = generate_superstripe_ranges(sci_model)
-        for integ in range(nints):
-            for stripe in range(num_superstripe):
-                stripe_idx = integ * num_superstripe + stripe
-                full_range = all_ranges["full"]
-                sub_range = all_ranges["subarray"]
-                for s_reg, f_reg in zip(sub_range[stripe], full_range[stripe], strict=True):
-                    stripe_out[stripe_idx, :, s_reg[0] : s_reg[1], :] = ref_array[
-                        integ, :, f_reg[0] : f_reg[1], :
-                    ]
-                full_range = all_ranges["reference_full"]
-                sub_range = all_ranges["reference_subarray"]
-                for s_reg, f_reg in zip(sub_range[stripe], full_range[stripe], strict=True):
-                    stripe_out[stripe_idx, :, s_reg[0] : s_reg[1], :] = ref_array[
-                        integ, :, f_reg[0] : f_reg[1], :
-                    ]
-
-        # If multistripe but ref array is typically 2-D:
-        # rather than broadcast a 2-D array into many wasted dims, just provide the minimal
+        # Rather than broadcast a 2-D array into many wasted dims, just provide the minimal
         # 3-D array, with one slice per superstripe in the third dimension. Expect steps
         # to handle the extra dimension.
-        if ref_native_dims == 2:
-            stripe_out = stripe_out[:, 0, :, :]
-        # If multistripe and output currently has one plane per stripe only,
-        # and reference file is expected to have 4 dimensions,
-        # broadcast arrays into sci_nints copies so that direct application
-        # of the reference array to the science array is possible
-        elif stripe_out.shape[0] == num_superstripe:
-            stripe_out = np.tile(stripe_out, reps=(sci_nints, 1, 1, 1))
+        stripe_out = np.zeros((num_superstripe, slow_size, fast_size), dtype=ref_array.dtype)
+        all_ranges = generate_superstripe_ranges(sci_model)
+        for stripe in range(num_superstripe):
+            # read in pixels over science areas
+            full_range = all_ranges["full"]
+            sub_range = all_ranges["subarray"]
+            for s_reg, f_reg in zip(sub_range[stripe], full_range[stripe], strict=True):
+                stripe_out[stripe, s_reg[0] : s_reg[1], :] = ref_array[f_reg[0] : f_reg[1], :]
+
+            # read in reference pixels
+            full_range = all_ranges["reference_full"]
+            sub_range = all_ranges["reference_subarray"]
+            for s_reg, f_reg in zip(sub_range[stripe], full_range[stripe], strict=True):
+                stripe_out[stripe, s_reg[0] : s_reg[1], :] = ref_array[f_reg[0] : f_reg[1], :]
 
     # Transform from detector frame back to science frame
     stripe_out = detector_science_frame_transform(stripe_out, fastaxis, slowaxis)
