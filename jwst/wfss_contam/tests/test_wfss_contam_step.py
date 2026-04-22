@@ -137,11 +137,7 @@ def test_output_is_not_input(multislitmodel, tmp_cwd_module):
 
 
 def test_wfss_contam_step_with_polyfit(multislitmodel, tmp_cwd_module):
-    """Smoke test that the step completes when polyfit_degree is set."""
-    result = WfssContamStep.call(
-        multislitmodel,
-        orders=[1],
-        polyfit_degree=2,
-    )
+    """Smoke test that the step completes when polyfit_degree and n_iterations are set."""
+    result = WfssContamStep.call(multislitmodel, orders=[1], polyfit_degree=2, n_iterations=2)
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"

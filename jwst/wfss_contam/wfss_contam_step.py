@@ -25,6 +25,7 @@ class WfssContamStep(Step):
         wl_oversample = integer(default=2) # oversampling factor for wavelength grid
         max_pixels_per_chunk = integer(default=5000) # max number of pixels to disperse at once
         polyfit_degree = integer(default=None)  # Degree of polynomial fit to spectral shape
+        n_iterations = integer(default=1)  # Number of contamination-correction iterations
     """  # noqa: E501
 
     reference_file_types = ["photom", "wavelengthrange"]
@@ -71,6 +72,7 @@ class WfssContamStep(Step):
                 oversample_factor=self.wl_oversample,
                 max_pixels_per_chunk=self.max_pixels_per_chunk,
                 polyfit_degree=self.polyfit_degree,
+                n_iterations=self.n_iterations,
             )
         if simul is None:
             # Input model is returned as result, no intermediate models created

@@ -9,7 +9,7 @@ _NAXIS = (300, 500)
 _SOURCE_ID = 50
 
 
-def _disperse_one_pixel(grism_wcs, direct_image_wcs, flux_models=None):
+def _disperse_one_pixel(grism_wcs, direct_image_wcs, basis_models=None):
     """Run disperse() for a single pixel with flat unit sensitivity."""
     xs = np.array([200])
     ys = np.array([200])
@@ -29,7 +29,7 @@ def _disperse_one_pixel(grism_wcs, direct_image_wcs, flux_models=None):
         direct_image_wcs,
         grism_wcs,
         _NAXIS,
-        flux_models=flux_models,
+        basis_models=basis_models,
     )
 
 
@@ -74,7 +74,7 @@ def test_disperse_oversample_same_result(grism_wcs, direct_image_with_gradient):
 def test_flux_models_output_structure(grism_wcs, direct_image_with_gradient):
     """Each source dict should have a 'model_counts' list with one entry per model."""
     models = [lambda x: x, lambda x: x**2]
-    src = _disperse_one_pixel(grism_wcs, direct_image_with_gradient.meta.wcs, flux_models=models)
+    src = _disperse_one_pixel(grism_wcs, direct_image_with_gradient.meta.wcs, basis_models=models)
     assert "model_counts" in src[_SOURCE_ID]
     assert len(src[_SOURCE_ID]["model_counts"]) == 2
     for mc in src[_SOURCE_ID]["model_counts"]:
@@ -84,8 +84,8 @@ def test_flux_models_output_structure(grism_wcs, direct_image_with_gradient):
 def test_flux_models_scalar_scaling(grism_wcs, direct_image_with_gradient):
     """Scaling a flux model by a constant should scale the model_counts image by the same factor."""
     wcs = direct_image_with_gradient.meta.wcs
-    src1 = _disperse_one_pixel(grism_wcs, wcs, flux_models=[lambda x: x])
-    src3 = _disperse_one_pixel(grism_wcs, wcs, flux_models=[lambda x: 3.0 * x])
+    src1 = _disperse_one_pixel(grism_wcs, wcs, basis_models=[lambda x: x])
+    src3 = _disperse_one_pixel(grism_wcs, wcs, basis_models=[lambda x: 3.0 * x])
     assert_allclose(src3[_SOURCE_ID]["model_counts"][0], 3.0 * src1[_SOURCE_ID]["model_counts"][0])
 
 
@@ -95,8 +95,8 @@ def test_flux_models_superposition(grism_wcs, direct_image_with_gradient):
     f1 = lambda x: x
     f2 = lambda x: x**2
 
-    src_sep = _disperse_one_pixel(grism_wcs, wcs, flux_models=[f1, f2])
-    src_sum = _disperse_one_pixel(grism_wcs, wcs, flux_models=[lambda x: f1(x) + f2(x)])
+    src_sep = _disperse_one_pixel(grism_wcs, wcs, basis_models=[f1, f2])
+    src_sum = _disperse_one_pixel(grism_wcs, wcs, basis_models=[lambda x: f1(x) + f2(x)])
 
     combined = src_sep[_SOURCE_ID]["model_counts"][0] + src_sep[_SOURCE_ID]["model_counts"][1]
     assert_allclose(combined, src_sum[_SOURCE_ID]["model_counts"][0], rtol=1e-10)

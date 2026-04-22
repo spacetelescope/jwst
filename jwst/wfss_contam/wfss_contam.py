@@ -352,6 +352,93 @@ def _apply_magnitude_limit(
     return good_sources["label"].tolist()
 
 
+def _match_simulated_slits(output_model, obs):
+    """
+    Match each observed slit to its flat-spectrum simulated counterpart.
+
+    Reprojects the simulated slit onto the same backplane as the observed slit.
+    Slits that have no matching simulation (wrong source ID or no spatial overlap)
+    are represented as ``None`` in the returned lists.
+
+    Parameters
+    ----------
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        The observed slits to match against.
+    obs : `~jwst.wfss_contam.observations.Observation`
+        The observation object containing the dispersed simulated slits.
+
+    Returns
+    -------
+    matched_flat_simuls : list of `~stdatamodels.jwst.datamodels.SlitModel` or None
+        Flat-spectrum simulated slit reprojected onto each observed slit's backplane,
+        or ``None`` where no match was found.
+    good_idxs : list of int or None
+        Index into ``obs.simulated_slits.slits`` for each observed slit,
+        or ``None`` where no match was found.
+    """
+    simul_slit_sids = [slit.source_id for slit in obs.simulated_slits.slits]
+    simul_slit_orders = [slit.meta.wcsinfo.spectral_order for slit in obs.simulated_slits.slits]
+
+    matched_flat_simuls = []
+    good_idxs = []
+    for slit in output_model.slits:
+        try:
+            good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
+            matched_flat = copy.deepcopy(obs.simulated_slits.slits[good_idx])
+            matched_flat = match_backplane_prefer_first(slit, matched_flat)
+            matched_flat_simuls.append(matched_flat)
+            good_idxs.append(good_idx)
+        except (UnmatchedSlitIDError, SlitOverlapError) as e:
+            log.warning(e)
+            matched_flat_simuls.append(None)
+            good_idxs.append(None)
+
+    return matched_flat_simuls, good_idxs
+
+
+def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree):
+    """
+    Fit a polynomial spectral shape to one slit and apply the result in-place.
+
+    If ``polyfit_degree`` is ``None``, or if the simulated slit carries no
+    ``fluxmodel_1`` basis image, the slit is left unchanged.
+
+    Parameters
+    ----------
+    observed_slit : `~stdatamodels.jwst.datamodels.SlitModel`
+        Observed slit whose ``.data`` is used as the target for the fit.
+        Typically this holds the contamination-corrected data from the previous
+        iteration.
+    simul_slit : `~stdatamodels.jwst.datamodels.SlitModel`
+        Simulated slit (matched to ``observed_slit``'s backplane).
+        Its ``.data`` is updated in-place with the spectrally fitted result.
+    full_res_slit : `~stdatamodels.jwst.datamodels.SlitModel`
+        The corresponding full-resolution entry in ``obs.simulated_slits``.
+        Its ``.data`` is updated in-place so the full-frame reconstruction
+        reflects the fitted spectral shape.
+    polyfit_degree : int or None
+        Degree of the polynomial spectral model.  ``None`` means no fitting.
+    """
+    if polyfit_degree is None or getattr(simul_slit, "fluxmodel_1", None) is None:
+        return
+
+    log.debug(
+        f"Fitting polynomial of degree {polyfit_degree} to the simulated slit "
+        f"for source ID {observed_slit.source_id}, "
+        f"order {observed_slit.meta.wcsinfo.spectral_order}"
+    )
+    try:
+        coeffs = fit_slit_by_basis_images(observed_slit, simul_slit)
+        simul_slit.data = apply_basis_coeffs(simul_slit, coeffs)
+        full_res_slit.data = apply_basis_coeffs(full_res_slit, coeffs)
+    except SlitFitError as e:
+        log.warning(
+            f"Polynomial fitting failed for slit with source ID {observed_slit.source_id}, "
+            f"order {observed_slit.meta.wcsinfo.spectral_order}: {e}. "
+            "Using the original simulated slit without fitting."
+        )
+
+
 def contam_corr(
     input_model,
     waverange,
@@ -362,6 +449,7 @@ def contam_corr(
     max_pixels_per_chunk=5e4,
     oversample_factor=2,
     polyfit_degree=None,
+    n_iterations=1,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -399,6 +487,13 @@ def contam_corr(
     polyfit_degree : int, optional
         Degree of polynomial fit to spectral shape. If None (the default), do not attempt
         polynomial fitting and just use the flat-spectrum simulated slit.
+    n_iterations : int, optional
+        Number of times to iterate the contamination correction. On each iteration the
+        polynomial fit is re-run using the contamination-corrected spectrum from the
+        previous iteration, yielding a progressively better estimate of each source's
+        true spectral shape (and therefore a better contamination estimate for its
+        neighbours). Requires ``polyfit_degree`` to be set; if ``polyfit_degree`` is
+        None this parameter is ignored and a single iteration is performed.
 
     Returns
     -------
@@ -515,7 +610,7 @@ def contam_corr(
         # Compute the dispersion for all sources in this order
         log.info(f"Creating full simulated grism image for order {order}")
         obs.disperse_order(
-            order, wmin, wmax, sens_waves, sens_response, selected_ids, flux_models=basis_models
+            order, wmin, wmax, sens_waves, sens_response, selected_ids, basis_models=basis_models
         )
 
     if no_sources:
@@ -523,9 +618,6 @@ def contam_corr(
             f"No sources found that met the magnitude limit {magnitude_limit}. Step will be SKIPPED"
         )
         return input_model, None, None, None
-
-    simul_slit_sids = [slit.source_id for slit in obs.simulated_slits.slits]
-    simul_slit_orders = [slit.meta.wcsinfo.spectral_order for slit in obs.simulated_slits.slits]
 
     # Initialize output multislitmodel
     output_model = datamodels.MultiSlitModel()
@@ -542,69 +634,80 @@ def contam_corr(
     simul_slits = datamodels.MultiSlitModel()
     simul_slits.update(input_model, only="PRIMARY")
 
-    # Match simulated slits to observed, apply polynomial fitting if requested,
-    # and update obs.simulated_slits in-place so the full-frame reconstruction below
-    # reflects any fitted spectral shapes.
+    # Hold onto original input data so iterative corrections always start from the same baseline.
+    original_data = [np.array(slit.data) for slit in output_model.slits]
+
+    if n_iterations > 1 and polyfit_degree is None:
+        log.warning(
+            "n_iterations > 1 has no effect when polyfit_degree is None "
+            "(there is no spectral fit to iterate). Only one iteration will be performed."
+        )
+        n_iterations = 1
+
+    # Match simulated slits to observed slits
+    matched_flat_simuls, good_idxs = _match_simulated_slits(output_model, obs)
+
+    # Hold onto the flat-spectrum full-resolution data for obs.simulated_slits so we can
+    # reset it at the start of each iteration before applying new spectral fits.
+    flat_full_data = [np.array(s.data) for s in obs.simulated_slits.slits]
+
+    # Iterate: each pass re-fits spectral shapes using the contamination-corrected
+    # data from the previous pass, giving progressively better contamination estimates.
     per_slit_simuls = []
-    for slit in output_model.slits:
-        try:
-            good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
-            # Copy so that match_backplane_prefer_first does not change obs.simulated_slits,
-            # which is used later to reconstruct the full-frame simulated image.
-            this_simul = copy.deepcopy(obs.simulated_slits.slits[good_idx])
-            this_simul = match_backplane_prefer_first(slit, this_simul)
+    contam_cuts = []
+    for iteration in range(n_iterations):
+        if n_iterations > 1:
+            log.info(f"Contamination correction iteration {iteration + 1} of {n_iterations}")
 
-        except (UnmatchedSlitIDError, SlitOverlapError) as e:
-            log.warning(e)
-            this_simul = None
+        # Reset obs.simulated_slits to flat-spectrum before applying new spectral fits.
+        for s, d in zip(obs.simulated_slits.slits, flat_full_data, strict=True):
+            s.data = d.copy()
 
-        if (
-            this_simul is not None
-            and polyfit_degree is not None
-            and getattr(this_simul, "fluxmodel_1", None) is not None
-        ):
-            log.debug(
-                f"Fitting polynomial of degree {polyfit_degree} to the simulated slit "
-                f"for source ID {slit.source_id}, order {slit.meta.wcsinfo.spectral_order}"
+        per_slit_simuls = []
+        for i, slit in enumerate(output_model.slits):
+            matched_flat = matched_flat_simuls[i]
+            if matched_flat is None:
+                per_slit_simuls.append(None)
+                continue
+
+            # Fresh copy of the flat-spectrum matched slit for this iteration's fit.
+            this_simul = copy.deepcopy(matched_flat)
+            # slit.data holds the contamination-corrected data from the previous iteration
+            # (or the original input on the first pass).
+            _fit_spectral_shape(
+                slit, this_simul, obs.simulated_slits.slits[good_idxs[i]], polyfit_degree
             )
-            try:
-                coeffs = fit_slit_by_basis_images(slit, this_simul)
-                this_simul.data = apply_basis_coeffs(this_simul, coeffs)
-                # Apply the same coefficients to the original, unclipped simulated slit
-                # so the full-frame reconstruction below is also scaled.
-                orig = obs.simulated_slits.slits[good_idx]
-                orig.data = apply_basis_coeffs(orig, coeffs)
-            except SlitFitError as e:
-                log.warning(
-                    f"Polynomial fitting failed for slit with source ID {slit.source_id}, "
-                    f"order {slit.meta.wcsinfo.spectral_order}: {e}. "
-                    "Using the original simulated slit without fitting."
-                )
+            per_slit_simuls.append(this_simul)
 
-        per_slit_simuls.append(this_simul)
+        # Rebuild full-frame simulation from the (possibly fitted) simulated slits.
+        simul_data = _build_simulated_image_from_slits(
+            obs.simulated_slits, obs.simulated_image.shape
+        )
 
-    # Reconstruct the full-frame simulated image from the simulated slits.
-    # This must happen after fitting so that spectral fits have been applied first.
-    simul_data = _build_simulated_image_from_slits(obs.simulated_slits, obs.simulated_image.shape)
+        # Compute per-slit contamination and update corrected data for the next iteration.
+        contam_cuts = []
+        for i, (slit, this_simul) in enumerate(
+            zip(output_model.slits, per_slit_simuls, strict=True)
+        ):
+            if this_simul is None:
+                contam_cut = np.zeros_like(slit.data)
+            else:
+                simul_all_cut = _cut_frame_to_match_slit(simul_data, slit)
+                contam_cut = simul_all_cut - this_simul.data
+            # Always subtract from the original input, not the previous iteration's output,
+            # so errors do not accumulate across iterations.
+            slit.data = original_data[i] - contam_cut
+            contam_cuts.append(contam_cut)
 
-    # Compute per-slit contamination using the updated full-frame and subtract.
+    # Build output contam_model and simul_slits from the final iteration's results.
     log.info("Creating contamination image for each individual source")
-    for slit, this_simul in zip(output_model.slits, per_slit_simuls, strict=True):
-        if this_simul is None:
-            # Cannot compute contamination correction for this slit, so set to zero
-            # No simul_slits model will be created for this slit in this case
-            contam_cut = np.zeros_like(slit.data)
-        else:
-            simul_all_cut = _cut_frame_to_match_slit(simul_data, slit)
-            contam_cut = simul_all_cut - this_simul.data
+    for this_simul, contam_cut in zip(per_slit_simuls, contam_cuts, strict=True):
+        if this_simul is not None:
             simul_slits.slits.append(this_simul)
 
         contam_slit = datamodels.SlitModel()
         contam_slit.data = contam_cut
         contam_model.slits.append(contam_slit)
-
-        # Subtract the contamination from the source slit
-        slit.data -= contam_cut
 
     simul_model = datamodels.ImageModel(data=simul_data)
     simul_model.update(input_model, only="PRIMARY")
