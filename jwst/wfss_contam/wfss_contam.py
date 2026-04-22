@@ -651,8 +651,18 @@ def contam_corr(
     # reset it at the start of each iteration before applying new spectral fits.
     flat_full_data = [np.array(s.data) for s in obs.simulated_slits.slits]
 
+    # Save the flat-spectrum .data for each matched slit so we can reset it each iteration
+    # without deepcopying the whole SlitModel.  _fit_spectral_shape only reassigns .data
+    # (never modifies fluxmodel_N), so restoring just the data array is sufficient.
+    flat_matched_data = [np.array(s.data) if s is not None else None for s in matched_flat_simuls]
+
     # Iterate: each pass re-fits spectral shapes using the contamination-corrected
     # data from the previous pass, giving progressively better contamination estimates.
+    if polyfit_degree is not None:
+        log.info(
+            f"Using polyfit_degree={polyfit_degree} "
+            f"for spectral fitting over {n_iterations} iterations"
+        )
     per_slit_simuls = []
     contam_cuts = []
     for iteration in range(n_iterations):
@@ -670,14 +680,15 @@ def contam_corr(
                 per_slit_simuls.append(None)
                 continue
 
-            # Fresh copy of the flat-spectrum matched slit for this iteration's fit.
-            this_simul = copy.deepcopy(matched_flat)
+            # Reset to flat-spectrum data; avoids a deepcopy each iteration because
+            # _fit_spectral_shape only reassigns .data and never modifies fluxmodel_N.
+            matched_flat.data = flat_matched_data[i].copy()
             # slit.data holds the contamination-corrected data from the previous iteration
             # (or the original input on the first pass).
             _fit_spectral_shape(
-                slit, this_simul, obs.simulated_slits.slits[good_idxs[i]], polyfit_degree
+                slit, matched_flat, obs.simulated_slits.slits[good_idxs[i]], polyfit_degree
             )
-            per_slit_simuls.append(this_simul)
+            per_slit_simuls.append(matched_flat)
 
         # Rebuild full-frame simulation from the (possibly fitted) simulated slits.
         simul_data = _build_simulated_image_from_slits(
