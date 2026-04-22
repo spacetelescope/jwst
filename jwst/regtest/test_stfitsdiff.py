@@ -1673,20 +1673,28 @@ def test_hdus_table_non_numeric_report(fitsdiff_default_kwargs):
     a.append(fits.PrimaryHDU())
     b.append(fits.PrimaryHDU())
     ct = fits.Column(name="NAME", format="10A")
+    co = fits.Column(name="STRINGS", format="10A")
     cn = fits.Column(name="Numbers", format="E")
-    cd_a = fits.ColDefs([ct, cn])
-    cd_b = fits.ColDefs([ct, cn])
+    cd_a = fits.ColDefs([ct, co, cn])
+    cd_b = fits.ColDefs([ct, co, cn])
     table_a = fits.BinTableHDU.from_columns(cd_a, nrows=10)
     table_b = fits.BinTableHDU.from_columns(cd_b, nrows=10)
     table_a.data["NAME"] = np.array(
         ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
     )
-    table_b.data["NAME"] = table_a.data["NAME"].copy()
+    table_b.data["NAME"] = np.array(
+        ["Zero", "One", "Two", "Three", "Four", "Five", "Four", "Seven", "Eight", "Nine"]
+    )
+    table_a.data["STRINGS"] = np.array(
+        ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH", "III", "JJJ"]
+    )
+    table_b.data["STRINGS"] = table_a.data["STRINGS"].copy()
     table_a.data["Numbers"] = np.arange(10.0)
     table_b.data["Numbers"] = np.arange(10.0)
-    table_b.data["Numbers"][6] = 0.0
     a.append(table_a)
     b.append(table_b)
     diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
     report = diff.report()
-    assert "The other column is identical." in report
+    assert "Non-numeric columns with differences:" in report
+    assert "Column NAME has 1 different element(s)." in report
+    assert "The other 2 columns are identical." in report
