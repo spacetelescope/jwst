@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import RampModel
+from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.tests.helpers import make_mock_dhs_nrca1_rate
-from jwst.dq_init.tests.helpers import make_superstripe_model
+from jwst.dq_init.tests.helpers import make_superstripe_mask_model, make_superstripe_model
 from jwst.lib import stripe_utils
 from jwst.lib.reffile_utils import science_detector_frame_transform
 
@@ -18,13 +18,43 @@ def superstripe_model():
     return make_superstripe_model()
 
 
-def test_generate_substripe_ranges(substripe_model):
-    all_ranges = stripe_utils.generate_substripe_ranges(substripe_model)
+@pytest.mark.parametrize("science_frame", [True, False])
+def test_generate_substripe_ranges(substripe_model, science_frame):
+    all_ranges = stripe_utils.generate_substripe_ranges(
+        substripe_model, science_frame=science_frame
+    )
     expected = {
         "full": {0: [1527, 1567], 1: [1652, 1692], 2: [1777, 1817], 3: [1902, 1942]},
         "subarray": {0: [1, 41], 1: [42, 82], 2: [83, 123], 3: [124, 164]},
         "reference_full": {0: [0, 1], 1: [0, 1], 2: [0, 1], 3: [0, 1]},
         "reference_subarray": {0: [0, 1], 1: [41, 42], 2: [82, 83], 3: [123, 124]},
+    }
+
+    # Since slowaxis is positive, science and detector frames are the same
+    assert all_ranges == expected
+
+
+def test_generate_substripe_ranges_swap_slow(substripe_model):
+    model = substripe_model.copy()
+    model.meta.subarray.slowaxis *= -1
+
+    # Detector orientation: same as for positive slowaxis
+    all_ranges = stripe_utils.generate_substripe_ranges(model)
+    expected = {
+        "full": {0: [1527, 1567], 1: [1652, 1692], 2: [1777, 1817], 3: [1902, 1942]},
+        "subarray": {0: [1, 41], 1: [42, 82], 2: [83, 123], 3: [124, 164]},
+        "reference_full": {0: [0, 1], 1: [0, 1], 2: [0, 1], 3: [0, 1]},
+        "reference_subarray": {0: [0, 1], 1: [41, 42], 2: [82, 83], 3: [123, 124]},
+    }
+    assert all_ranges == expected
+
+    # Since slowaxis is negative, science ranges will be swapped
+    all_ranges = stripe_utils.generate_substripe_ranges(model, science_frame=True)
+    expected = {
+        "full": {0: [481, 521], 1: [356, 396], 2: [231, 271], 3: [106, 146]},
+        "subarray": {0: [123, 163], 1: [82, 122], 2: [41, 81], 3: [0, 40]},
+        "reference_full": {0: [2047, 2048], 1: [2047, 2048], 2: [2047, 2048], 3: [2047, 2048]},
+        "reference_subarray": {0: [163, 164], 1: [122, 123], 2: [81, 82], 3: [40, 41]},
     }
     assert all_ranges == expected
 
@@ -63,6 +93,31 @@ def test_generate_superstripe_ranges(superstripe_model):
     expected_sub = dict.fromkeys(range(10), [(4, 208)])
     expected_ref_full = dict.fromkeys(range(10), [(0, 4)])
     expected_ref_sub = dict.fromkeys(range(10), [(0, 4)])
+    assert all_ranges["full"] == expected_full
+    assert all_ranges["subarray"] == expected_sub
+    assert all_ranges["reference_full"] == expected_ref_full
+    assert all_ranges["reference_subarray"] == expected_ref_sub
+
+
+def test_generate_superstripe_ranges_science_frame(superstripe_model):
+    all_ranges = stripe_utils.generate_superstripe_ranges(superstripe_model, science_frame=True)
+
+    # Swapped from the detector frame values
+    expected_full = {
+        0: [(1840, 2044)],
+        1: [(1636, 1840)],
+        2: [(1432, 1636)],
+        3: [(1228, 1432)],
+        4: [(1024, 1228)],
+        5: [(820, 1024)],
+        6: [(616, 820)],
+        7: [(412, 616)],
+        8: [(208, 412)],
+        9: [(4, 208)],
+    }
+    expected_sub = dict.fromkeys(range(10), [(0, 204)])
+    expected_ref_full = dict.fromkeys(range(10), [(2044, 2048)])
+    expected_ref_sub = dict.fromkeys(range(10), [(204, 208)])
     assert all_ranges["full"] == expected_full
     assert all_ranges["subarray"] == expected_sub
     assert all_ranges["reference_full"] == expected_ref_full
@@ -118,9 +173,8 @@ def _multistripe_subarray_keys():
 
 def test_generate_stripe_reference_substripe():
     # Mock model for metadata
-    model = RampModel()
+    model = datamodels.RampModel()
     sci_meta = model.meta
-    sci_nints = 3
     subarray_keys = _multistripe_subarray_keys()
 
     # Generate test array with pixel values
@@ -138,7 +192,6 @@ def test_generate_stripe_reference_substripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe1_array.shape == (41, 2048)
     assert stripe1_array[0, 1024] == 0
@@ -154,7 +207,6 @@ def test_generate_stripe_reference_substripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe1swap_array.shape == (2048, 41)
     assert stripe1swap_array[1024, 1] == 1902  # nreads1 + nskips1
@@ -168,7 +220,6 @@ def test_generate_stripe_reference_substripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe2_array.shape == (82, 2048)
     # nrca2 has flipped row direction, so in science frame the row indices are flipped.
@@ -186,7 +237,6 @@ def test_generate_stripe_reference_substripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe4_array.shape == (164, 2048)
     assert stripe4_array[0, 1024] == 0
@@ -217,7 +267,6 @@ def test_generate_stripe_reference_substripe_repeat_stripe_zero():
     # rows 11-30 (nreads2), skip 5 (nskips2), rows 36-55 (nreads2),
     # skip 5 (nskips2), rows 61-80 (nreads2) → 61 output rows total.
     ysize_sci = nreads1 + nreads2 * 3  # 1 + 20*3 = 61
-    sci_nints = 1
 
     stripe_params = (
         xsize_sci,
@@ -233,7 +282,7 @@ def test_generate_stripe_reference_substripe_repeat_stripe_zero():
         fastaxis,
         slowaxis,
     )
-    model = RampModel()
+    model = datamodels.RampModel()
     sci_meta = model.meta
     _assign_metadata(sci_meta, _multistripe_subarray_keys(), stripe_params)
     stripe_array = stripe_utils.generate_stripe_reference(
@@ -241,7 +290,6 @@ def test_generate_stripe_reference_substripe_repeat_stripe_zero():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe_array.shape == (ysize_sci, xsize_sci)
     # Output row 0: first nreads1 read from detector row 0.
@@ -258,10 +306,9 @@ def test_generate_stripe_reference_substripe_repeat_stripe_zero():
 
 def test_generate_stripe_reference_superstripe():
     # Mock model for metadata
-    model = RampModel()
+    model = datamodels.RampModel()
     sci_meta = model.meta
     sci_meta.exposure.ngroups = 5
-    sci_nints = 3
     subarray_keys = _multistripe_subarray_keys()
 
     # Generate test array with pixel values equal to row number in detector frame.
@@ -278,7 +325,6 @@ def test_generate_stripe_reference_superstripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe1_array.shape == (10, 256, 208)
     # detector row numbers count backwards in columns, but sections increase, left to right
@@ -295,7 +341,6 @@ def test_generate_stripe_reference_superstripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     # Dimensions are swapped, values are the same
     assert stripe1swap_array.shape == (10, 208, 256)
@@ -312,7 +357,6 @@ def test_generate_stripe_reference_superstripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe2_array.shape == (10, 256, 208)
     # detector row numbers count forward in columns
@@ -331,10 +375,9 @@ def test_generate_stripe_reference_superstripe_repeat_stripe_zero():
     monotonically through the detector.
     """
     # Mock model for metadata
-    model = RampModel()
+    model = datamodels.RampModel()
     sci_meta = model.meta
     sci_meta.exposure.ngroups = 5
-    sci_nints = 3
     subarray_keys = _multistripe_subarray_keys()
 
     # Generate test array with pixel values equal to row number in detector frame.
@@ -350,7 +393,6 @@ def test_generate_stripe_reference_superstripe_repeat_stripe_zero():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe_array.shape == (10, 256, 200)
     np.testing.assert_allclose(stripe_array[0, 0], np.arange(199, -1, -1))
@@ -361,10 +403,9 @@ def test_generate_stripe_reference_superstripe_repeat_stripe_zero():
 def test_generate_stripe_reference_super_sub_stripe():
     """Test generate_stripe_reference in superstripe mode with substripes."""
     # Mock model for metadata
-    model = RampModel()
+    model = datamodels.RampModel()
     sci_meta = model.meta
     sci_meta.exposure.ngroups = 5
-    sci_nints = 3
     subarray_keys = _multistripe_subarray_keys()
 
     # Generate test array with pixel values equal to row number in detector frame.
@@ -381,7 +422,6 @@ def test_generate_stripe_reference_super_sub_stripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe_array.shape == (10, 256, 216)
 
@@ -405,7 +445,6 @@ def test_generate_stripe_reference_super_sub_stripe():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe_array.shape == (10, 256, 216)
 
@@ -422,10 +461,9 @@ def test_generate_stripe_reference_super_sub_stripe():
 def test_generate_stripe_reference_super_sub_stripe_repeat_0():
     """Test generate_stripe_reference in superstripe mode with substripes, no repeat."""
     # Mock model for metadata
-    model = RampModel()
+    model = datamodels.RampModel()
     sci_meta = model.meta
     sci_meta.exposure.ngroups = 5
-    sci_nints = 3
     subarray_keys = _multistripe_subarray_keys()
 
     # Generate test array with pixel values equal to row number in detector frame.
@@ -442,7 +480,6 @@ def test_generate_stripe_reference_super_sub_stripe_repeat_0():
             test_array, sci_meta.subarray.fastaxis, sci_meta.subarray.slowaxis
         ),
         model,
-        sci_nints,
     )
     assert stripe_array.shape == (10, 256, 204)
 
@@ -460,3 +497,30 @@ def test_generate_stripe_reference_super_sub_stripe_repeat_0():
     # check the values in the last stripe: same, but start value is different
     expected[:-4] += 2042 - 206
     np.testing.assert_allclose(stripe_array[-1, 0], expected)
+
+
+def test_generate_stripe_reference_invalid_shape(superstripe_model):
+    ref_array = np.ones((2, 3, 4, 5, 6))
+    with pytest.raises(ValueError, match=r"Unsupported shape: len\(ref_shape\) == 5"):
+        stripe_utils.generate_stripe_reference(ref_array, superstripe_model)
+
+
+def test_stripe_read_substripe(substripe_model):
+    mask_model = make_superstripe_mask_model()
+    striped_mask_model = stripe_utils.stripe_read(substripe_model, mask_model, ["dq"])
+    assert type(striped_mask_model) is datamodels.MaskModel
+
+    expected_shape = substripe_model.data.shape[-2:]
+    assert striped_mask_model.dq.shape == expected_shape
+
+
+def test_stripe_read_superstripe(superstripe_model):
+    mask_model = make_superstripe_mask_model()
+    striped_mask_model = stripe_utils.stripe_read(superstripe_model, mask_model, ["dq"])
+    assert type(striped_mask_model) is datamodels.ReferenceFileModel
+
+    expected_shape = (
+        superstripe_model.meta.subarray.num_superstripe,
+        *superstripe_model.data.shape[-2:],
+    )
+    assert striped_mask_model.dq.shape == expected_shape
