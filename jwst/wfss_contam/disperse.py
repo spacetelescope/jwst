@@ -219,7 +219,7 @@ def disperse(
     grism_wcs,
     naxis,
     oversample_factor=2,
-    flux_models=None,
+    basis_models=None,
 ):
     """
     Compute the dispersed image pixel values from the direct image.
@@ -255,7 +255,7 @@ def disperse(
         Dimensions of the grism image (naxis[0], naxis[1])
     oversample_factor : int, optional
         Factor by which to oversample the wavelength grid
-    flux_models : list[Callable], optional
+    basis_models : list[Callable], optional
         Flux distributions to evaluate at each wavelength. Typically these will be single
         polynomial orders, e.g. [lambda x: x, lambda x: x^2], ...] the coefficients of which
         are linearly fit later.
@@ -333,8 +333,8 @@ def disperse(
     # Evaluate flux models on the full lambda grid before discretizing to pixel coordinates.
     # Otherwise real flux information is lost.
     model_f = []
-    if flux_models is not None:
-        for flam in flux_models:
+    if basis_models is not None:
+        for flam in basis_models:
             model_f.append(flam(lambdas))
 
     lambdas = np.take(lambdas, index)

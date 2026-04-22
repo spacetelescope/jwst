@@ -477,12 +477,11 @@ def contam_corr(
     seg_model.close()
 
     # Build polynomial basis flux models for disperse() if polynomial fitting is requested.
-    # lambda^k terms (k=1..polyfit_degree) are the higher-degree basis images; the constant
-    # term (k=0, i.e. slit.data) is always included in the fit.
-    flux_models = None
+    basis_models = None
     if polyfit_degree is not None:
-        # Can't use lambda x: x**k here because that's not picklable for multiprocessing
-        flux_models = [_PowerFluxModel(k) for k in range(1, polyfit_degree + 1)]
+        # Can't use `lambda x: x**k` here because that's not picklable for multiprocessing.
+        # Start at degree 1; the constant term (k=0, i.e. slit.data) is always included in the fit.
+        basis_models = [_PowerFluxModel(k) for k in range(1, polyfit_degree + 1)]
 
     no_sources = True
     for order in spec_orders:
@@ -516,7 +515,7 @@ def contam_corr(
         # Compute the dispersion for all sources in this order
         log.info(f"Creating full simulated grism image for order {order}")
         obs.disperse_order(
-            order, wmin, wmax, sens_waves, sens_response, selected_ids, flux_models=flux_models
+            order, wmin, wmax, sens_waves, sens_response, selected_ids, flux_models=basis_models
         )
 
     if no_sources:
@@ -570,8 +569,7 @@ def contam_corr(
             )
             try:
                 coeffs = fit_slit_by_basis_images(slit, this_simul)
-                fitted = apply_basis_coeffs(this_simul, coeffs)
-                this_simul.data = fitted
+                this_simul.data = apply_basis_coeffs(this_simul, coeffs)
                 # Apply the same coefficients to the original, unclipped simulated slit
                 # so the full-frame reconstruction below is also scaled.
                 orig = obs.simulated_slits.slits[good_idx]

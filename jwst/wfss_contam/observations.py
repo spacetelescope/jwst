@@ -200,7 +200,7 @@ class Observation:
         sens_response,
         selected_ids=None,
         max_pixels=1e5,
-        flux_models=None,
+        basis_models=None,
     ):
         """
         Chunk the sources into groups of max_pixels.
@@ -221,6 +221,10 @@ class Observation:
             List of source IDs to process. If None, all sources are processed.
         max_pixels : int, optional
             Maximum number of pixels per chunk.
+        basis_models : list of callables, optional
+            Flux distributions to evaluate at each wavelength. Typically these will be single
+            polynomial orders, e.g. [lambda x: x, lambda x: x^2], ...] the coefficients of which
+            are linearly fit later. If None, no models are included in the output.
 
         Returns
         -------
@@ -283,14 +287,14 @@ class Observation:
                     self.grism_wcs,
                     self.naxis,
                     self.oversample_factor,
-                    flux_models,
+                    basis_models,
                 ]
             )
 
         return disperse_args
 
     def disperse_order(
-        self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, flux_models=None
+        self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, basis_models=None
     ):
         """
         Disperse the sources for a given spectral order, with multiprocessing.
@@ -311,9 +315,10 @@ class Observation:
             Response (flux calibration) array from photom reference file
         selected_ids : list, optional
             List of source IDs to process. If None, all sources are processed.
-        flux_models : list of callables, optional
-            List of functions that take a wavelength array and return a scaling factor to apply to
-            the input flux for that wavelength. If None, no models are included in the output.
+        basis_models : list of callables, optional
+            Flux distributions to evaluate at each wavelength. Typically these will be single
+            polynomial orders, e.g. [lambda x: x, lambda x: x^2], ...] the coefficients of which
+            are linearly fit later. If None, no models are included in the output.
         """
         # generate lists of input parameters for the disperse function
         # for each chunk of sources
@@ -325,7 +330,7 @@ class Observation:
             sens_response,
             selected_ids=selected_ids,
             max_pixels=self.max_pixels_per_chunk,
-            flux_models=flux_models,
+            basis_models=basis_models,
         )
         t0 = time.time()
         if self.max_cpu > 1:
