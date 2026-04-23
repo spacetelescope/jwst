@@ -107,22 +107,23 @@ class SourceCatalogStep(Step):
         # convert to Jy before calling make_tweakreg_catalog so the outputs end up in Jy
         JWSTSourceCatalog.convert_mjysr_to_jy(output_model)
 
+        min_separation = (
+            max(2, int(self.minsep_fwhm * self.kernel_fwhm + 0.5)) if self.minsep_fwhm else None
+        )
         starfinder_kwargs = {
             "sigma_radius": self.sigma_radius,
-            "minsep_fwhm": self.minsep_fwhm,
-            "sharplo": self.sharplo,
-            "sharphi": self.sharphi,
-            "roundlo": self.roundlo,
-            "roundhi": self.roundhi,
-            "peakmax": self.peakmax,
-            "brightest": self.brightest,
-            "npixels": self.npixels,
+            "min_separation": min_separation,
+            "sharpness_range": (self.sharplo, self.sharphi),
+            "roundness_range": (self.roundlo, self.roundhi),
+            "peak_max": self.peakmax,
+            "n_brightest": self.brightest,
+            "n_pixels": self.npixels,
             "connectivity": int(self.connectivity),  # option returns a string, so cast to int
-            "nlevels": self.nlevels,
+            "n_levels": self.nlevels,
             "contrast": self.contrast,
             "mode": self.multithresh_mode,
-            "localbkg_width": self.localbkg_width,
-            "apermask_method": self.apermask_method,
+            "local_bkg_width": self.localbkg_width,
+            "aperture_mask_method": self.apermask_method,
             "kron_params": self.kron_params,
             "deblend": self.deblend,
             "error": output_model.err,

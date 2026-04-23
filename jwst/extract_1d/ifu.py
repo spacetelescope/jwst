@@ -2,10 +2,8 @@ import logging
 import warnings
 
 import numpy as np
-import photutils
 from astropy import stats
 from astropy.stats import sigma_clipped_stats as sigclip
-from astropy.utils import minversion
 from photutils.aperture import (
     CircularAnnulus,
     CircularAperture,
@@ -662,10 +660,7 @@ def extract_ifu(input_model, source_type, extract_params):
                 # Identify brightest source as the target
                 indx = np.argmax(vals)
 
-                if minversion(photutils, "2.3.1.dev"):
-                    x_center, y_center = sources[indx]["x_centroid"], sources[indx]["y_centroid"]
-                else:
-                    x_center, y_center = sources[indx]["xcentroid"], sources[indx]["ycentroid"]
+                x_center, y_center = sources[indx]["x_centroid"], sources[indx]["y_centroid"]
                 locn = None
                 log.info("Auto source detection success.")
                 log.info("Using x_center = %g, y_center = %g", x_center, y_center)

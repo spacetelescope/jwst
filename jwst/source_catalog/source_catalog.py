@@ -5,12 +5,11 @@ import warnings
 
 import astropy.units as u
 import numpy as np
-import photutils
 from astropy.convolution import Gaussian2DKernel
 from astropy.nddata.utils import NoOverlapError, extract_array
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import QTable
-from astropy.utils import lazyproperty, minversion
+from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils.aperture import CircularAnnulus, CircularAperture, aperture_photometry
 from scipy import ndimage
@@ -23,8 +22,6 @@ from jwst.source_catalog._wcs_helpers import pixel_scale_angle_at_skycoord
 log = logging.getLogger(__name__)
 
 __all__ = ["JWSTSourceCatalog"]
-
-PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
 
 
 class JWSTSourceCatalog:
@@ -241,16 +238,11 @@ class JWSTSourceCatalog:
         rename_map = {
             "label": "id",
             "isophotal_flux": "flux",
-            "isophotal_flux_err": "segment_fluxerr",
             "isophotal_area": "area",
+            "semimajor_sigma": "semimajor_axis",
+            "semiminor_sigma": "semiminor_axis",
+            "isophotal_flux_err": "segment_flux_err",
         }
-        if PHOTUTILS_GE_3:
-            rename_new = {
-                "semimajor_sigma": "semimajor_axis",
-                "semiminor_sigma": "semiminor_axis",
-                "isophotal_flux_err": "segment_flux_err",
-            }
-            rename_map.update(rename_new)
 
         for column in self.segment_colnames:
             # define the property name

@@ -19,15 +19,15 @@ classifiers = [
 ]
 dependencies = [
     "asdf>=4.2,<6",
-    "astropy>=6.1",
+    "astropy>=6.1.4",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
     "gwcs>=1.0.3,<2",
-    "numpy>=1.25",
-    "photutils>=2.1.0,<3",
+    "numpy>=2.0",
+    "photutils>=3.0",
     "pyyaml>=6",
     "requests>=2.31",
-    "scikit-image>=0.21.0",
+    "scikit-image>=0.23.0",
     "scipy>=1.14.1",
     # "stdatamodels>=5.0.1,<6",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
@@ -35,7 +35,7 @@ dependencies = [
     "stpipe>=0.12,<2",
     "synphot>=1.3",
     "tweakwcs>=0.8.8",
-    "packaging>=21.0",
+    "packaging>=23.0",
     "importlib-metadata>=4.11.4",
     "jsonschema>=4.8",
 ]
