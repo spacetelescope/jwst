@@ -356,21 +356,24 @@ class JwstStep(_Step):
         """
         return remove_suffix(name)
 
-    def run(self, *args):
+    def run(self, *args, **kwargs):
         """
         Run the step.
 
         Parameters
         ----------
-        *args
-            Arguments passed to `stpipe.Step.run`.
+        *args : tuple
+            Positional arguments passed to :meth:`stpipe.Step.run`.
+
+        **kwargs : dict
+            Keyword arguments passed to :meth:`stpipe.Step.run`.
 
         Returns
         -------
         result : Any
             The step output
         """
-        result = super().run(*args)
+        result = super().run(*args, **kwargs)
         if not self.parent:
             log.info(f"Results used jwst version: {__version__}")
         return result
