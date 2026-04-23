@@ -1,3 +1,5 @@
+"""Flag initial groups of MIRI ramp data to 'DO_NOT_USE' in integrations 2 and higher."""
+
 import logging
 
 from stdatamodels.jwst import datamodels

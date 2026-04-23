@@ -25,6 +25,7 @@ the processing of a particular dataset running computationally-intensive steps:
 * :ref:`jump <jump_step>` (jump detection)
 * :ref:`ramp_fitting <ramp_fitting_step>`
 * :ref:`wfss_contam <wfss_contam_step>` (WFSS contamination correction)
+* :ref:`adaptive_trace_model <adaptive_trace_model_step>`
 
 Unlike :ref:`multiproc_multiple-obs`, this usage is compatible with running
 the pipeline within Jupyter Notebook/Lab.

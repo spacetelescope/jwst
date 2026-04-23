@@ -1,0 +1,1 @@
+Fix memory leak by adding missing reference decrements for x_det and y_det.

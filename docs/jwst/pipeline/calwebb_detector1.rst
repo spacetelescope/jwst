@@ -101,7 +101,7 @@ The ``calwebb_detector1`` pipeline has one optional argument::
   --save_calibrated_ramp  boolean  default=False
 
 If set to ``True``, the pipeline will save intermediate data to a file as it
-exists at the end of the :ref:`jump <jump_step>` step. The data
+exists just before entering the :ref:`ramp fitting <ramp_fitting_step>` step. The data
 at this stage of the pipeline are still in the form of the original 4D ramps
 (ncols x nrows x ngroups x nints) and have had all of the detector-level
 correction steps applied to it, including the detection and flagging of
