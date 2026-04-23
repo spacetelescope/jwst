@@ -97,6 +97,41 @@ There is one primary output and two optional outputs from the step:
    contamination cutouts (the result of step 3 above) are saved to a file.
    See :ref:`wfss_contam_step_args`.
 
+Polynomial Flux Modeling
+------------------------
+
+By default, each source is simulated with a spectrally flat flux model - that is, the
+flux at every wavelength is taken directly from the direct image pixel values. 
+When the step argument ``--polyfit_degree`` is set to an integer *N*, the step
+fits a more flexible spectral model to each source. The procedure is:
+
+1. In addition to the standard flat-spectrum simulation (the constant, degree-0 term),
+   *N* additional grism-frame images are simulated for each source, one for each
+   polynomial basis function :math:`\lambda^k` (:math:`k = 1, 2, \ldots, N`), where
+   :math:`\lambda` is the wavelength. Recall that each dispersed-image pixel represents
+   a linear combination of the contribution of several direct-image pixels at different
+   wavelengths. These basis functions therefore must be computed before the dispersed image
+   is discretized onto a pixel grid, i.e., just after the dispersion calculation.
+
+2. For each source, the observed 2D spectrum is fit as a linear combination of
+   these :math:`N+1` basis images, i.e.
+
+   .. math::
+
+      \text{observed} \approx c_0 \cdot B_0 + c_1 \cdot B_1 + \cdots + c_N \cdot B_N
+
+   where :math:`B_0` is the flat-spectrum simulation and :math:`B_k` is the simulation
+   driven by the :math:`\lambda^k` flux model.  The coefficients :math:`c_k` are
+   determined by linear least-squares over all valid (finite, non-flagged) pixels.
+3. The best-fit linear combination replaces the original simulation for that source, and
+   this spectrally corrected simulation is used as the contamination model.
+
+The ``--n_iterations`` argument controls how many times the polynomial fit is repeated.
+On the first iteration the observed spectrum still contains contamination from neighboring
+sources; on subsequent iterations it is replaced by the contamination-corrected spectrum
+from the previous pass, so the polynomial flux fit is less biased by contamination
+from other sources. Iteration has no effect when ``--polyfit_degree`` is not set.
+
 Multiprocessing
 ---------------
 The step can make use of multiple CPU cores to speed up the simulation of the
