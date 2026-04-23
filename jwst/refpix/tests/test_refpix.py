@@ -468,6 +468,23 @@ def test_above_sigma():
     assert out.data[0, 3, 50, 7] == 28.5
 
 
+def test_change_sig_limits():
+    ngroups = 5
+    xstart = 1
+    ystart = 1
+    nrows = 256
+    ncols = 2048
+    input_model = setup_subarray_cube("SUBGRISM256", "NRCA3", xstart, ystart, ngroups, nrows, ncols)
+    input_model.data = 100.0
+    # set reference pixel values odd and even rows.
+    # Every 4th pixel changes the standard deviation by
+    input_model.data[:, :, :4, ::4] = 100.1
+    input_model.data[:, :, :4, 1::4] = 100.2
+
+    # set reference pixels to "REFERENCE_PIXEL"
+    input_model.pixeldq[:, :4] = dqflags.pixel["REFERENCE_PIXEL"]
+
+
 def test_nan_refpix():
     """
     Verify that the reference pixels flagged DO_NOT_USE are not used in the calculation.
