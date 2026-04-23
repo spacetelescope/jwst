@@ -15,7 +15,7 @@ def substripe_model():
 
 @pytest.fixture(scope="module")
 def superstripe_model():
-    return make_superstripe_model()
+    return make_superstripe_model(add_inttimes=True)
 
 
 @pytest.mark.parametrize("science_frame", [True, False])
@@ -527,9 +527,13 @@ def test_stripe_read_superstripe(superstripe_model):
 
 
 @pytest.mark.parametrize("with_dq", [True, False])
+@pytest.mark.parametrize("with_int_times", [True, False])
 @pytest.mark.parametrize("swap_axes", [True, False])
-def test_collate_superstripes(superstripe_model, with_dq, swap_axes):
+def test_collate_superstripes(superstripe_model, with_dq, with_int_times, swap_axes):
     model = superstripe_model.copy()
+
+    if not with_int_times:
+        model.int_times = None
 
     if swap_axes:
         # transpose axes, use positive orientation
@@ -607,3 +611,12 @@ def test_collate_superstripes(superstripe_model, with_dq, swap_axes):
     else:
         # rows match expected
         assert np.allclose(collated.data, expected[None, None, None, :], equal_nan=True)
+
+    if with_int_times:
+        # old int_times copied to int_times_stripe
+        assert len(collated.int_times_stripe) == nint_before
+        # new int_times matches new integration size
+        assert len(collated.int_times) == nint_after
+    else:
+        assert collated.int_times is None
+        assert collated.int_times_stripe is None
