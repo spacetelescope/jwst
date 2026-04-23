@@ -1,0 +1,1 @@
+Remove usages of the schema-undefined model.meta.wcsinfo for MultiSlitModel types and use wcsinfo from the model's member slits instead
