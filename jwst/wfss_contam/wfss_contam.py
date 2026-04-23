@@ -72,8 +72,8 @@ def _cut_frame_to_match_slit(contam, slit):
     cutout : 2D array
         Contamination image cutout that matches the extent of the source slit
     """
-    x1 = slit.xstart
-    y1 = slit.ystart
+    x1 = slit.xstart - 1  # convert FITS 1-indexed to 0-indexed for array access
+    y1 = slit.ystart - 1  # convert FITS 1-indexed to 0-indexed for array access
     xf = x1 + slit.xsize
     yf = y1 + slit.ysize
 

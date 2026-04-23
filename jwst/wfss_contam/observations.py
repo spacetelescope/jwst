@@ -439,9 +439,9 @@ def _construct_slitmodel(
     slit = datamodels.SlitModel()
     slit.source_id = sid
     slit.name = f"source_{sid}"
-    slit.xstart = thisobj_minx
+    slit.xstart = thisobj_minx + 1  # FITS pixels are 1-indexed, matching extract_2d convention
     slit.xsize = thisobj_maxx - thisobj_minx + 1
-    slit.ystart = thisobj_miny
+    slit.ystart = thisobj_miny + 1  # FITS pixels are 1-indexed, matching extract_2d convention
     slit.ysize = thisobj_maxy - thisobj_miny + 1
     slit.meta.wcsinfo.spectral_order = order
     slit.data = img
