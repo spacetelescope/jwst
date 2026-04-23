@@ -449,12 +449,13 @@ def collate_superstripes(input_model):
     n_sstr = input_model.meta.subarray.num_superstripe
     nints_sci = nints // n_sstr
 
-    # Generate slowaxis ranges to place stripes into parent frame
+    # Generate slowaxis ranges to place science regions from stripes into parent frame
     all_ranges = generate_superstripe_ranges(input_model)
     full_range = all_ranges["full"]
     sub_range = all_ranges["subarray"]
 
     # Initialize new array shapes in detector space
+    # TODO: add zeroframe handling
     newdata = np.full((nints_sci, ngroups, slow_size, fast_size), np.nan, dtype="float32")
     newgdq = np.full((nints_sci, ngroups, slow_size, fast_size), 0, dtype="uint8")
     newpdq = np.full(
@@ -463,8 +464,14 @@ def collate_superstripes(input_model):
 
     # Transform old data to detector frame for indexing
     olddata = science_detector_frame_transform(input_model.data, fastaxis, slowaxis)
-    oldgdq = science_detector_frame_transform(input_model.groupdq, fastaxis, slowaxis)
-    oldpdq = science_detector_frame_transform(input_model.pixeldq, fastaxis, slowaxis)
+    if input_model.groupdq is None or input_model.groupdq.shape != (nints, ngroups, ny, nx):
+        oldgdq = None
+    else:
+        oldgdq = science_detector_frame_transform(input_model.groupdq, fastaxis, slowaxis)
+    if input_model.pixeldq is None or input_model.pixeldq.shape != (n_sstr, ny, nx):
+        oldpdq = None
+    else:
+        oldpdq = science_detector_frame_transform(input_model.pixeldq, fastaxis, slowaxis)
 
     # Work through each set of stripes, pushing them into a common frame
     # Long term, there may be cases where stripes overlap.
@@ -475,14 +482,24 @@ def collate_superstripes(input_model):
         for stripe in range(n_sstr):
             stripe_idx = integ * n_sstr + stripe
             for s_reg, f_reg in zip(sub_range[stripe], full_range[stripe], strict=True):
+                # Propagate the science data
                 newdata[integ, :, f_reg[0] : f_reg[1], :] = olddata[
                     stripe_idx, :, s_reg[0] : s_reg[1], :
                 ]
-                newgdq[integ, :, f_reg[0] : f_reg[1], :] = oldgdq[
-                    stripe_idx, :, s_reg[0] : s_reg[1], :
-                ]
+
+                # Propagate input groupdq only if appropriate
+                if oldgdq is not None:
+                    newgdq[integ, :, f_reg[0] : f_reg[1], :] = oldgdq[
+                        stripe_idx, :, s_reg[0] : s_reg[1], :
+                    ]
+
+                # Propagate pixeldq only for the first integration if appropriate
                 if integ == 0:
-                    newpdq[f_reg[0] : f_reg[1], :] = oldpdq[stripe, s_reg[0] : s_reg[1]]
+                    if oldpdq is None:
+                        # If not present, set a default DQ value in science regions
+                        newpdq[f_reg[0] : f_reg[1], :] = 0
+                    else:
+                        newpdq[f_reg[0] : f_reg[1], :] = oldpdq[stripe, s_reg[0] : s_reg[1]]
 
     # Swap back to science frame
     newdata = detector_science_frame_transform(newdata, fastaxis, slowaxis)

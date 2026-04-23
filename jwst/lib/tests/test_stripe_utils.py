@@ -524,3 +524,86 @@ def test_stripe_read_superstripe(superstripe_model):
         *superstripe_model.data.shape[-2:],
     )
     assert striped_mask_model.dq.shape == expected_shape
+
+
+@pytest.mark.parametrize("with_dq", [True, False])
+@pytest.mark.parametrize("swap_axes", [True, False])
+def test_collate_superstripes(superstripe_model, with_dq, swap_axes):
+    model = superstripe_model.copy()
+
+    if swap_axes:
+        # transpose axes, use positive orientation
+        model.meta.subarray.fastaxis = 1
+        model.meta.subarray.slowaxis = 2
+        model.meta.subarray.xsize = superstripe_model.meta.subarray.ysize
+        model.meta.subarray.ysize = superstripe_model.meta.subarray.xsize
+        model.data = np.swapaxes(model.data, -2, -1)
+
+    # expected data shapes
+    nint_before, ngroup, ny_before, nx_before = model.data.shape
+    nstripe = model.meta.subarray.num_superstripe
+    nint_after = nint_before // nstripe
+    if swap_axes:
+        nx_after = nx_before
+        ny_after = (ny_before - 4) * nstripe + 8
+    else:
+        nx_after = (nx_before - 4) * nstripe + 8
+        ny_after = ny_before
+
+    # set the data value to the stripe number
+    for integ in range(nint_before):
+        model.data[integ] = integ % nstripe
+
+    # test with and without input dq
+    if with_dq:
+        model.pixeldq = np.zeros((nstripe, ny_before, nx_before))
+        model.groupdq = np.zeros((nint_before, ngroup, ny_before, nx_before))
+    else:
+        model.pixeldq = None
+        model.groupdq = None
+    collated = stripe_utils.collate_superstripes(model)
+
+    assert collated.data.shape == (nint_after, ngroup, ny_after, nx_after)
+    assert collated.groupdq.shape == (nint_after, ngroup, ny_after, nx_after)
+    assert collated.pixeldq.shape == (ny_after, nx_after)
+
+    # groupdq all zeros
+    np.testing.assert_equal(collated.groupdq, 0)
+
+    # pixeldq all zeros except refpix edges
+    if swap_axes:
+        np.testing.assert_equal(collated.pixeldq[4:-4, :], 0)
+        np.testing.assert_equal(
+            collated.pixeldq[:4, :], datamodels.dqflags.pixel["REFERENCE_PIXEL"]
+        )
+        np.testing.assert_equal(
+            collated.pixeldq[-4:, :], datamodels.dqflags.pixel["REFERENCE_PIXEL"]
+        )
+    else:
+        np.testing.assert_equal(collated.pixeldq[:, 4:-4], 0)
+        np.testing.assert_equal(
+            collated.pixeldq[:, :4], datamodels.dqflags.pixel["REFERENCE_PIXEL"]
+        )
+        np.testing.assert_equal(
+            collated.pixeldq[:, -4:], datamodels.dqflags.pixel["REFERENCE_PIXEL"]
+        )
+
+    # data for each integration is composed from all stripes
+    expected = [np.full(4, np.nan)]
+    if swap_axes:
+        # added in order from bottom to top for swapped data
+        for stripe in range(nstripe):
+            expected.extend(np.full(204, stripe))
+    else:
+        # added in reverse order from left to right for original data
+        for stripe in range(nstripe - 1, -1, -1):
+            expected.extend(np.full(204, stripe))
+    expected.extend([np.full(4, np.nan)])
+    expected = np.hstack(expected)
+
+    if swap_axes:
+        # columns match expected
+        assert np.allclose(collated.data, expected[None, None, :, None], equal_nan=True)
+    else:
+        # rows match expected
+        assert np.allclose(collated.data, expected[None, None, None, :], equal_nan=True)
