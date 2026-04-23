@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 from astropy.modeling.mappings import Mapping
 from scipy import sparse
+from scipy.interpolate import interp1d
 
 from jwst.lib.winclip import get_clipped_pixels
 from jwst.wfss_contam.sens1d import create_1d_sens
@@ -200,6 +201,7 @@ def disperse(
     xs,
     ys,
     fluxes,
+    band_wavelengths,
     source_ids_per_pixel,
     order,
     wmin,
@@ -220,9 +222,15 @@ def disperse(
         Flat array of X coordinates of pixels in the direct image
     ys : ndarray
         Flat array of Y coordinates of pixels in the direct image
-    fluxes : ndarray
-        Fluxes of the pixels in the direct image corresponding to xs, ys.
-        These should have units of MJy/sr.
+    fluxes : ndarray of shape (N, n_pixels)
+        Fluxes of the pixels in the direct image corresponding to xs, ys,
+        in units of MJy/sr.  N is the number of photometric bands; use N=1
+        for a flat (wavelength-independent) SED. Note in that case the array must still be 2-D.
+    band_wavelengths : ndarray
+        Central wavelengths (in microns) of each photometric band in
+        ``fluxes`` (shape (N,)).  Fluxes are linearly interpolated onto the internal
+        wavelength grid; fluxes are held constant (flat extrapolation)
+        outside the covered wavelength range. For a flat SED this can be any length-1 array.
     source_ids_per_pixel : int array
         Source IDs of the input pixels in the segmentation map
     order : int
@@ -289,6 +297,7 @@ def disperse(
     )
     nlam = len(lambdas)
     dlam = lambdas[1] - lambdas[0]
+    lambdas_1d = lambdas  # save 1-D grid before _disperse_onto_grism tiles it
 
     x0s, y0s, lambdas = _disperse_onto_grism(
         x0_sky,
@@ -305,8 +314,22 @@ def disperse(
     if x0s.min() >= naxis[0] or x0s.max() < 0 or y0s.min() >= naxis[1] or y0s.max() < 0:
         return
 
+    # Interpolate the input fluxes onto the wavelength grid of the dispersed image.
     source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], nlam, axis=0)
-    fluxes = np.repeat(fluxes[np.newaxis, :], nlam, axis=0)
+    if len(band_wavelengths) >= 2:
+        interp_fn = interp1d(
+            band_wavelengths,
+            fluxes,
+            axis=0,
+            kind="linear",
+            bounds_error=False,
+            fill_value=(fluxes[0], fluxes[-1]),  # flat extrapolation
+        )
+        fluxes = interp_fn(lambdas_1d)  # (nlam, n_pixels)
+    else:
+        # N=1: constant flux across all wavelengths
+        fluxes = np.repeat(fluxes[0][np.newaxis, :], nlam, axis=0)
+    del lambdas_1d, band_wavelengths
 
     # Discretize x and y coordinates to integer pixel values, keeping track of the fractional area
     # that each pixel contributes to the final grism image.
@@ -332,7 +355,9 @@ def disperse(
     # Note that the photom reference files are constructed with per-wavelength units,
     # so oversampling is accounted for by the spacing of dlam.
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
+        warnings.filterwarnings(
+            "ignore", category=RuntimeWarning, message="divide by zero|invalid value"
+        )
         counts = fluxes * areas * dlam / sens
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
     del fluxes, areas, sens, dlam, no_cal
