@@ -1,0 +1,2 @@
+Added the capability to specify siglow and sighigh for the sigma clipping algorithm
+
