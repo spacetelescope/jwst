@@ -194,9 +194,18 @@ def int_times_table(n_entry):
     return integration_table
 
 
-def make_superstripe_model(add_inttimes=False):
+def make_superstripe_model(add_inttimes=False, add_zeroframe=False):
     """
     Make a NIRISS SOSS superstripe raw ramp model.
+
+    Parameters
+    ----------
+    add_inttimes : bool, optional
+        If True, an `int_times` table will be attached to the output datamodel.
+    add_zeroframe : bool, optional
+        If True, a `zeroframe` array will be attached to the output datamodel.
+        In real data, the zeroframe is only used for NIRCam. It is attached to
+        this NIRISS model for testing convenience.
 
     Returns
     -------
@@ -235,6 +244,10 @@ def make_superstripe_model(add_inttimes=False):
 
     if add_inttimes:
         model.int_times = int_times_table(nints * nstripe)
+
+    if add_zeroframe:
+        model.meta.exposure.zero_frame = True
+        model.zeroframe = model.data[:, 0, :, :].copy()
 
     return model
 

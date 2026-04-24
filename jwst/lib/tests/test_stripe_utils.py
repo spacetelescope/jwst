@@ -15,7 +15,7 @@ def substripe_model():
 
 @pytest.fixture(scope="module")
 def superstripe_model():
-    return make_superstripe_model(add_inttimes=True)
+    return make_superstripe_model(add_inttimes=True, add_zeroframe=True)
 
 
 @pytest.mark.parametrize("science_frame", [True, False])
@@ -528,12 +528,18 @@ def test_stripe_read_superstripe(superstripe_model):
 
 @pytest.mark.parametrize("with_dq", [True, False])
 @pytest.mark.parametrize("with_int_times", [True, False])
+@pytest.mark.parametrize("with_zeroframe", [True, False])
 @pytest.mark.parametrize("swap_axes", [True, False])
-def test_collate_superstripes(superstripe_model, with_dq, with_int_times, swap_axes):
+def test_collate_superstripes(
+    superstripe_model, with_dq, with_int_times, with_zeroframe, swap_axes
+):
     model = superstripe_model.copy()
 
     if not with_int_times:
         model.int_times = None
+    if not with_zeroframe:
+        model.meta.exposure.zero_frame = False
+        model.zeroframe = None
 
     if swap_axes:
         # transpose axes, use positive orientation
@@ -620,3 +626,8 @@ def test_collate_superstripes(superstripe_model, with_dq, with_int_times, swap_a
     else:
         assert collated.int_times is None
         assert collated.int_times_stripe is None
+
+    if with_zeroframe:
+        assert collated.zeroframe.shape == (nint_after, ny_after, nx_after)
+    else:
+        assert collated.zeroframe is None

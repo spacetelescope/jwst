@@ -166,3 +166,7 @@ def test_superstripe_correction():
     # Make sure the output has correct dimensions and expected bias was subtracted
     assert output.data.shape == data.data.shape
     np.testing.assert_equal(output.data, data.data - blevel)
+
+    # Zeroframe also handled
+    assert output.zeroframe.shape == data.zeroframe.shape
+    np.testing.assert_equal(output.zeroframe, data.zeroframe - blevel)

@@ -1266,7 +1266,7 @@ def test_refpix_bad_reference_pixels(monkeypatch, caplog):
 def test_refpix_superstripe(use_refpix, odd_even_columns):
     """Test superstripe handling."""
     # make ramp model
-    model = make_superstripe_model(add_inttimes=True)
+    model = make_superstripe_model(add_inttimes=True, add_zeroframe=True)
     nstripe = model.meta.subarray.num_superstripe
     stripe_size = model.meta.subarray.multistripe_reads1 + model.meta.subarray.multistripe_reads2
     model.pixeldq = np.zeros((nstripe, *model.data.shape[-2:]), dtype=np.uint32)
@@ -1309,6 +1309,7 @@ def test_refpix_superstripe(use_refpix, odd_even_columns):
     assert result.data.shape == (nint, ngroup, ny, nx)
     assert result.pixeldq.shape == (ny, nx)
     assert result.groupdq.shape == (nint, ngroup, ny, nx)
+    assert result.zeroframe.shape == (nint, ny, nx)
 
     # metadata is reset to regular subarray values
     assert model.meta.exposure.nints == nint * nstripe

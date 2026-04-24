@@ -455,12 +455,15 @@ def collate_superstripes(input_model):
     sub_range = all_ranges["subarray"]
 
     # Initialize new array shapes in detector space
-    # TODO: add zeroframe handling
     newdata = np.full((nints_sci, ngroups, slow_size, fast_size), np.nan, dtype="float32")
     newgdq = np.full((nints_sci, ngroups, slow_size, fast_size), 0, dtype="uint8")
     newpdq = np.full(
         (slow_size, fast_size), datamodels.dqflags.pixel["REFERENCE_PIXEL"], dtype="uint32"
     )
+    if input_model.meta.exposure.zero_frame:
+        newzf = np.full((nints_sci, slow_size, fast_size), np.nan, dtype="float32")
+    else:
+        newzf = None
 
     # Transform old data to detector frame for indexing
     olddata = science_detector_frame_transform(input_model.data, fastaxis, slowaxis)
@@ -472,6 +475,14 @@ def collate_superstripes(input_model):
         oldpdq = None
     else:
         oldpdq = science_detector_frame_transform(input_model.pixeldq, fastaxis, slowaxis)
+    if (
+        newzf is None
+        or input_model.zeroframe is None
+        or input_model.zeroframe.shape != (nints, ny, nx)
+    ):
+        oldzf = None
+    else:
+        oldzf = science_detector_frame_transform(input_model.zeroframe, fastaxis, slowaxis)
 
     # Work through each set of stripes, pushing them into a common frame
     # Long term, there may be cases where stripes overlap.
@@ -501,15 +512,22 @@ def collate_superstripes(input_model):
                     else:
                         newpdq[f_reg[0] : f_reg[1], :] = oldpdq[stripe, s_reg[0] : s_reg[1]]
 
+                # Propagate zeroframe if present
+                if oldzf is not None:
+                    newzf[integ, f_reg[0] : f_reg[1], :] = oldzf[stripe_idx, s_reg[0] : s_reg[1], :]
+
     # Swap back to science frame
     newdata = detector_science_frame_transform(newdata, fastaxis, slowaxis)
     newgdq = detector_science_frame_transform(newgdq, fastaxis, slowaxis)
     newpdq = detector_science_frame_transform(newpdq, fastaxis, slowaxis)
+    if newzf is not None:
+        newzf = detector_science_frame_transform(newzf, fastaxis, slowaxis)
 
     new_model = datamodels.RampModel(
         data=newdata,
         groupdq=newgdq,
         pixeldq=newpdq,
+        zeroframe=newzf,
         int_times=input_model.int_times,
     )
     new_model.update(input_model)
