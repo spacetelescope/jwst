@@ -43,6 +43,24 @@ the same calibrations and corrections applied as the first group in the various
 :ref:`linearity <linearity_step>` steps. Other steps do not have a direct effect
 on either the first group or frame zero pixel values.
 
+Several steps in this pipeline also include special handling for data taken in
+multistripe readout modes (substripe or superstripe).  Substripe modes enable readout from
+non-contiguous sections of the detector array into the same ramp, skipping regions containing
+no science data.  These modes generally require specialized reference file handling throughout
+the pipeline, since the integrations contain non-contiguous detector regions.
+For more information on the NIRCam DHS substripe mode, see the
+`NIRCam JDox documentation <https://jwst-docs.stsci.edu/jwst-near-infrared-camera/nircam-instrumentation/nircam-detector-overview/nircam-detector-subarrays/nircam-multistripe-subarrays-for-grism-time-series-spectroscopy>`__.
+
+Superstripe modes enable readout from sections of
+the detector into separate ramps, such that the integrations in the same raw file
+cover different regions of the detector.  Superstripe modes require special handling
+through the :ref:`refpix step <refpix_step>`, but at the end of that step, the stripes are
+reassembled into a contiguous integration image and thereafter can be treated like any other
+ramp exposure. For more information on the superstripe readout mode for NIRISS SOSS exposures,
+see the
+`NIRISS JDox documentation <https://jwst-docs.stsci.edu/jwst-near-infrared-imager-and-slitless-spectrograph/niriss-observing-modes/niriss-single-object-slitless-spectroscopy>`__.
+
+
 .. |check| unicode:: U+2713 .. checkmark
 
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
@@ -129,7 +147,14 @@ input will be in the form of a `~stdatamodels.jwst.datamodels.Level1bModel`, whi
 contains the 4D array of detector pixel values, along with some optional
 extensions. When such a file is loaded into the pipeline, it is immediately
 converted into a `~stdatamodels.jwst.datamodels.RampModel`, and has all additional data arrays
-for Data Quality flags created and initialized to zero.
+for Data Quality (DQ) flags created and initialized to zero.
+
+Note, however, that some specialized data may be loaded in an alternate
+ramp-style datamodel for the initial steps of the pipeline. Exposures taken with
+superstripe array readouts are loaded as
+`~stdatamodels.jwst.datamodels.SuperstripeRampModel`. This model has a 3D pixel DQ array,
+where each image plane in the first dimension corresponds to a different detector
+region (stripe).  For more information on DQ handling, see the :ref:`dq_init step <dq_init_step>`.
 
 The input can also contain a 3D cube of NIRCam "Frame 0" data, where
 each image plane in the 3D cube is the initial frame for each integration in

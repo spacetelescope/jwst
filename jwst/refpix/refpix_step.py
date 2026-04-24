@@ -57,7 +57,7 @@ class RefPixStep(Step):
         }
 
         # Open the input data model
-        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
+        result = self.prepare_output(step_input, open_as_ramp=True)
 
         if pipe_utils.is_irs2(result):
             # Flag bad reference pixels first

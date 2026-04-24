@@ -5,12 +5,10 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import dqflags  # type: ignore[attr-defined]
 from jwst.lib import reffile_utils
+from jwst.lib.exposure_types import FGS_GUIDE_EXP_TYPES
 
 log = logging.getLogger(__name__)
 
-
-# FGS guide star mode exposure types
-guider_list = ["FGS_ID-IMAGE", "FGS_ID-STACK", "FGS_ACQ1", "FGS_ACQ2", "FGS_TRACK", "FGS_FINEGUIDE"]
 
 __all__ = ["do_dqinit", "check_dimensions"]
 
@@ -22,6 +20,7 @@ def do_dqinit(output_model, mask_model, user_dq=None):
     Parameters
     ----------
     output_model : `~stdatamodels.jwst.datamodels.RampModel` or \
+                   `~stdatamodels.jwst.datamodels.SuperstripeRampModel` or \
                    `~stdatamodels.jwst.datamodels.GuiderRawModel`
         The JWST datamodel to be corrected.
     mask_model : `~stdatamodels.jwst.datamodels.MaskModel`
@@ -32,6 +31,7 @@ def do_dqinit(output_model, mask_model, user_dq=None):
     Returns
     -------
     output_model : `~stdatamodels.jwst.datamodels.RampModel` or \
+                   `~stdatamodels.jwst.datamodels.SuperstripeRampModel` or \
                    `~stdatamodels.jwst.datamodels.GuiderRawModel`
         The corrected JWST datamodel, updated in place.
     """
@@ -59,12 +59,13 @@ def do_dqinit(output_model, mask_model, user_dq=None):
 
     # Set model-specific data quality in output
     num_superstripe = getattr(output_model.meta.subarray, "num_superstripe", None)
-    if output_model.meta.exposure.type in guider_list:
+    if str(output_model.meta.exposure.type).lower() in FGS_GUIDE_EXP_TYPES:
         output_model.dq |= mask_array
 
     elif num_superstripe is not None and num_superstripe > 0:
-        # Store 3-D DQ array in pixeldq
-        output_model.pixeldq = mask_array
+        # Store 3-D DQ array in pixeldq.
+        output_model.pixeldq |= mask_array
+
         # Generate 4-D groupdq mask_array from pixeldq array, given output groupdq shape
         nints, ngroups, _, _ = output_model.groupdq.shape
         nsci_ints = nints // num_superstripe
@@ -85,48 +86,39 @@ def do_dqinit(output_model, mask_model, user_dq=None):
 
 def check_dimensions(input_model):
     """
-    Check the input model ``pixeldq`` dimensions.
+    Check the input model DQ array dimensions.
 
-    The ``pixeldq`` attribute should have the same dimensions as
-    the image plane of the input model science data
-    If it has dimensions ``(0, 0)``, create an array of zeros with the same shape
-    as the image plane of the input model. For the FGS modes, the
-    `~stdatamodels.jwst.datamodels.GuiderRawModel`
-    has only a regular DQ array (no ``pixeldq`` nor ``groupdq``).
+    For `~stdatamodels.jwst.datamodels.GuiderRawModel`, compare
+    the ``dq`` array to the expected default dimensions. For
+    `~stdatamodels.jwst.datamodels.RampModel` or
+    `~stdatamodels.jwst.datamodels.SuperstripeRampModel`,
+    compare ``pixeldq`` and ``groupdq``.
+
+    If the dimensions do not match, replace the current array with
+    a default zero-filled one of the correct dimensions.
 
     Parameters
     ----------
     input_model : `~stdatamodels.jwst.datamodels.RampModel` or \
+                  `~stdatamodels.jwst.datamodels.SuperstripeRampModel`, or \
                   `~stdatamodels.jwst.datamodels.GuiderRawModel`
-        Input datamodel.
+        Input datamodel; updated in place.
     """
     input_shape = input_model.data.shape
-
     if isinstance(input_model, datamodels.GuiderRawModel):
-        if input_model.dq.shape != input_shape[-2:]:
-            # If the shape is different, then the mask model should have
-            # a shape of (0,0).
-            # If that's the case, create the array
-            if input_model.dq.shape == (0, 0):
-                input_model.dq = np.zeros(input_shape[-2:], dtype=np.uint32)
-            else:
-                log.error(f"DQ array has the wrong shape: {input_model.dq.shape}")
+        default_dq = input_model.get_default("dq")
+        if input_model.dq is None or input_model.dq.shape != default_dq.shape:
+            log.warning("Setting input DQ to default array")
+            input_model.dq = default_dq
 
-    else:  # RampModel
-        if input_model.pixeldq.shape != input_shape[-2:]:
-            # Make sure the pixeldq has 2 dimensions, matching the last two
-            # dimensions of the data array.
-            if (
-                input_model.pixeldq.shape == (0, 0)
-                or input_model.pixeldq.shape == input_model.data.shape
-            ):
-                input_model.pixeldq = np.zeros(input_shape[-2:], dtype=np.uint32)
-            else:
-                log.error(f"Pixeldq array has the wrong shape: {input_model.pixeldq.shape}")
+    else:  # RampModel or SuperstripeRampModel
+        default_pixeldq = input_model.get_default("pixeldq")
+        if input_model.pixeldq is None or input_model.pixeldq.shape != default_pixeldq.shape:
+            log.warning("Setting input pixel DQ to default array")
+            input_model.pixeldq = default_pixeldq
 
         # Perform the same check for the input model groupdq array
-        if input_model.groupdq.shape != input_shape:
-            if input_model.groupdq.shape == (0, 0, 0, 0):
-                input_model.groupdq = np.zeros(input_shape, dtype=np.uint8)
-            else:
-                log.error(f"Groupdq array has wrong shape: {input_model.groupdq.shape}")
+        # This array should always match the input data
+        if input_model.groupdq is None or input_model.groupdq.shape != input_shape:
+            log.warning("Setting input group DQ to default array")
+            input_model.groupdq = input_model.get_default("groupdq")
