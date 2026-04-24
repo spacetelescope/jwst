@@ -468,21 +468,33 @@ def test_above_sigma():
     assert out.data[0, 3, 50, 7] == 28.5
 
 
-def test_change_sig_limits():
+def test_change_sig_limits(setup_subarray_cube):
     ngroups = 5
     xstart = 1
     ystart = 1
     nrows = 256
     ncols = 2048
     input_model = setup_subarray_cube("SUBGRISM256", "NRCA3", xstart, ystart, ngroups, nrows, ncols)
-    input_model.data = 100.0
+    input_model.data[:, :, :, :] = 100.0
     # set reference pixel values odd and even rows.
-    # Every 4th pixel changes the standard deviation by
-    input_model.data[:, :, :4, ::4] = 100.1
-    input_model.data[:, :, :4, 1::4] = 100.2
+    # Making every 16th pixel different will mean siglow and sighigh of 3 will do no rejection,
+    # while siglow and sighigh of 2 will reject the different pixels.
+    input_model.data[:, :, :4, ::16] = 100.1
+    input_model.data[:, :, :4, 1::16] = 100.2
 
     # set reference pixels to "REFERENCE_PIXEL"
-    input_model.pixeldq[:, :4] = dqflags.pixel["REFERENCE_PIXEL"]
+    input_model.pixeldq[:4] = dqflags.pixel["REFERENCE_PIXEL"]
+    input_model.meta.subarray.fastaxis, input_model.meta.subarray.slowaxis = AXES["NRCA3"]
+    input_model.meta.exposure.noutputs = 1
+
+    # This calls the step with the default values of siglow and sighigh (3.0)
+    out = RefPixStep.call(input_model)
+    assert out.data[0, 0, 10, 100] != 0.0
+    assert out.data[0, 0, 10, 101] != 0.0
+
+    out = RefPixStep.call(input_model, siglow=2.0, sighigh=2.0)
+    assert out.data[0, 0, 10, 100] == 0.0
+    assert out.data[0, 0, 10, 101] == 0.0
 
 
 def test_nan_refpix():
