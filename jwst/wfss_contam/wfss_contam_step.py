@@ -26,7 +26,7 @@ class WfssContamStep(Step):
         max_pixels_per_chunk = integer(default=5000) # max number of pixels to disperse at once
         polyfit_degree = integer(default=None)  # Degree of polynomial fit to spectral shape
         n_iterations = integer(default=1)  # Number of contamination-correction iterations
-        l2_alpha = float(default=0.2)  # L2 regularisation strength for polynomial spectral fit
+        l2_alpha = float(default=0.1)  # L2 regularization strength for polynomial spectral fit
     """  # noqa: E501
 
     reference_file_types = ["photom", "wavelengthrange"]

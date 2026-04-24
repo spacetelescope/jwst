@@ -28,18 +28,30 @@ class UnmatchedSlitIDError(Exception):
     pass
 
 
-class _PowerFluxModel:
+class _LegendreFluxModel:
     """
-    Picklable callable that evaluates ``x**k``.
+    Picklable callable that evaluates the k-th Legendre polynomial.
+
+    The wavelength argument is mapped from ``[wmin, wmax]`` to ``[-1, 1]`` before
+    evaluation.  Using an orthogonal Legendre basis rather than standard monomials
+    (``x**k``) keeps the design matrix well-conditioned, avoiding the large
+    sign-alternating coefficients that arise when monomial basis images are nearly
+    collinear over a bounded wavelength interval.
 
     Callables need to be picklable so that they can be used in multiprocessing contexts.
     """
 
-    def __init__(self, k):
+    def __init__(self, k, wmin, wmax):
         self.k = k
+        self.wmin = wmin
+        self.wmax = wmax
+        # Coefficient vector with 1 at position k and 0 elsewhere.
+        self._coeffs = np.zeros(k + 1)
+        self._coeffs[k] = 1.0
 
     def __call__(self, x):
-        return x**self.k
+        x_norm = 2.0 * (x - self.wmin) / (self.wmax - self.wmin) - 1.0
+        return np.polynomial.legendre.legval(x_norm, self._coeffs)
 
 
 def _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders):
@@ -577,13 +589,6 @@ def contam_corr(
     )
     seg_model.close()
 
-    # Build polynomial basis flux models for disperse() if polynomial fitting is requested.
-    basis_models = None
-    if polyfit_degree is not None:
-        # Can't use `lambda x: x**k` here because that's not picklable for multiprocessing.
-        # Start at degree 1; the constant term (k=0, i.e. slit.data) is always included in the fit.
-        basis_models = [_PowerFluxModel(k) for k in range(1, polyfit_degree + 1)]
-
     no_sources = True
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
@@ -592,6 +597,14 @@ def contam_corr(
         wmax = wavelength_range[order][1]
         log.debug(f"wmin={wmin}, wmax={wmax} for order {order}")
         sens_waves, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
+
+        # Build Legendre basis flux models for disperse() if polynomial fitting is requested.
+        # wmin/wmax are order-specific, so construction must happen inside the order loop.
+        # The constant term (k=0, i.e. slit.data) is always included; start at degree 1.
+        # Can't use lambdas here because they are not picklable for multiprocessing.
+        basis_models = None
+        if polyfit_degree is not None:
+            basis_models = [_LegendreFluxModel(k, wmin, wmax) for k in range(1, polyfit_degree + 1)]
 
         # Constrain the source IDs to those that are below the magnitude limit
         selected_ids = None
@@ -616,7 +629,13 @@ def contam_corr(
         # Compute the dispersion for all sources in this order
         log.info(f"Creating full simulated grism image for order {order}")
         obs.disperse_order(
-            order, wmin, wmax, sens_waves, sens_response, selected_ids, basis_models=basis_models
+            order,
+            wmin,
+            wmax,
+            sens_waves,
+            sens_response,
+            selected_ids,
+            basis_models=basis_models,
         )
 
     if no_sources:
