@@ -136,7 +136,6 @@ class Spec2Pipeline(Pipeline):
         self.resample_spec.suffix = "s2d"
         self.cube_build.save_results = False
         self.cube_build.skip_dqflagging = True
-        self.cube_build.pipeline = 2
         self.extract_1d.save_results = self.save_results
         # Retrieve the input(s)
         asn = self.load_as_level2_asn(data)

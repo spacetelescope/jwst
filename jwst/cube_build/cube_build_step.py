@@ -22,13 +22,12 @@ class CubeBuildStep(Step):
     class_alias = "cube_build"
 
     spec = """
-         pipeline = integer(2,3, default=3) # Set calwebb_spec2 or calwebb_spec3
          channel = option('1','2','3','4','all',default='all') # Channel
          band = option('short','medium','long','short-medium','short-long','medium-short', \
                 'medium-long', 'long-short', 'long-medium','all',default='all') # Band
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
-         output_type = option('band','channel','grating','multi',default=None) # Type IFUcube to create.
+         output_type = option('band','channel','grating','multi',default='band') # Type IFUcube to create.
          linear_wave = boolean(default=True) # Toggle between linear (True) and nonlinear (False) wavelength dimensions
          scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
@@ -44,9 +43,7 @@ class CubeBuildStep(Step):
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
-         single = boolean(default=false) # Internal pipeline option used by outlier detection
          skip_dqflagging = boolean(default=false) # skip setting the DQ plane of the IFU
-         search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
          offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files.
@@ -190,25 +187,6 @@ class CubeBuildStep(Step):
 
         self.pars_input["coord_system"] = self.coord_system
 
-        if self.single:
-            self.pars_input["output_type"] = "single"
-            log.info("Cube Type: Single cubes")
-            self.pars_input["coord_system"] = "skyalign"
-
-            # Don't allow anything but drizzle, msm, or emsm weightings
-            if self.weighting not in ["msm", "emsm", "drizzle"]:
-                self.weighting = "drizzle"
-
-            if self.weighting == "drizzle":
-                self.interpolation = "drizzle"
-
-            if self.weighting == "msm":
-                self.interpolation = "pointcloud"
-
-            if self.weighting == "emsm":
-                self.interpolation = "pointcloud"
-
-        # read_user_input:
         # if options channel, band, grating, or  filter are set on the command lines
         # then set self.pars_input['output_type'] = 'user' and fill in  par_input with values
         self.read_user_input()
@@ -216,21 +194,9 @@ class CubeBuildStep(Step):
         # Read in the input data and make a copy as needed.
         read_in_models = self.prepare_output(input_data)
 
-        # ________________________________________________________________________________
-        # DataTypes
-        # Read in the input data - 2 formats are expected:
-        # 1. single model
-        # 2. model container
-        # figure out what type of data we have. Fill in the input_table.input_models.
-        # input_table.input_models is used in the rest of IFU Cube Building
-        # We need to do this in cube_build_step because we need to pass the data_model
-        # to CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
-        # if the user has provided the filename - strip out .fits and pull out the
-        # base name. The cube_build software will attached the needed information:
-        #  channel, sub-channel  grating or filter to filename
-        # ________________________________________________________________________________
+        # set the output base name
         input_table = data_types.DataTypes(
-            read_in_models, self.single, self.output_file, self.output_dir
+            read_in_models, self.search_attr("output_file"), self.output_dir
         )
         input_models = input_table.input_models
         self.output_name_base = input_table.output_name
@@ -238,11 +204,6 @@ class CubeBuildStep(Step):
         # Read in the first input model to determine with instrument we have
         # output type is by default 'Channel' for MIRI and 'Band' for NIRSpec
         instrument = input_models[0].meta.instrument.name.upper()
-
-        # The calspec2 pipeline sets up output_type for each instrument. When running cube_build
-        # stand alone we to set output_type.
-
-        # Running cube build stand-alone without setting self.pipeline will default to pipeline=3
 
         # for NIRSPEC the type of cubes to make are based on self.linear_wave
         if instrument == "NIRSPEC":
@@ -253,17 +214,6 @@ class CubeBuildStep(Step):
                 self.output_type = "band"
             else:
                 self.output_type = "multi"
-
-        # set up default pipeline 2
-        if self.pipeline == 2 and self.output_type is None and instrument == "MIRI":
-            self.output_type = "multi"
-
-        # Set up output_type for pipeline 3 type cubes.
-        # In calspec3 the output_type default type is grating for NIRSpec and band for MIRI.
-        # MIRI sets output_type in the calspec3 parameter reference file.
-
-        if self.pipeline == 3 and self.output_type is None and instrument == "MIRI":
-            self.output_type = "band"
 
         self.pars_input["output_type"] = self.output_type
         self.pars_input["linear_wave"] = self.linear_wave
@@ -296,7 +246,6 @@ class CubeBuildStep(Step):
             "grating": self.pars_input["grating"],
             "filter": self.pars_input["filter"],
             "weighting": self.weighting,
-            "single": self.single,
             "output_type": self.pars_input["output_type"],
         }
 
@@ -354,10 +303,6 @@ class CubeBuildStep(Step):
             log.error("use coord_system = ifualign instead")
             raise ValueError("The 'internal_cal' coordinate system is not supported for MIRI")
 
-        # filenames = master_table.FileMap["filename"] # This was used to determine if we have
-        # pipeline 2 or 3. I don't think we need it - but saving it just in case I need know if
-        # there is only 1 filename
-
         # ________________________________________________________________________________
         # How many and what type of cubes will be made.
         # send self.pars_input['output_type'], all_channel, all_subchannel, all_grating, all_filter
@@ -366,21 +311,17 @@ class CubeBuildStep(Step):
         # list_pars2 (value subchannel or filter)
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
-        if not self.single:
-            log.info(f"Number of IFU cubes produced by this run = {num_cubes}")
+        log.info(f"Number of IFU cubes produced by this run = {num_cubes}")
 
         # ModelContainer of ifucubes
         cube_container = ModelContainer()
         status_cube = 0
 
-        # for single type cubes num_cubes always = 1, Looping over
-        # bands is done in outlier detection.
         for i in range(num_cubes):
             icube = str(i + 1)
             list_par1 = cube_pars[icube]["par1"]
             list_par2 = cube_pars[icube]["par2"]
             thiscube = ifu_cube.IFUCubeData(
-                self.pipeline,
                 input_models,
                 self.output_name_base,
                 self.pars_input["output_type"],
@@ -413,27 +354,14 @@ class CubeBuildStep(Step):
             # build the IFU Cube
 
             status = 0
+            result, status = thiscube.build_ifucube()
 
-            # If single = True: map each file to output grid and return single mapped file
-            # to output grid. # This option is used for background matching and outlier rejection
+            # check if cube_build failed
+            if status == 1:
+                status_cube = 1
 
-            if self.single:
-                self.output_file = None
-                cube_container = thiscube.build_ifucube_single()
-                log.info("Number of Single IFUCube models returned %i ", len(cube_container))
-
-            # Else standard IFU cube building
-            # the result returned from build_ifucube will be 1 IFU CUBE
-            else:
-                result, status = thiscube.build_ifucube()
-
-                # check if cube_build failed
-                # **************************
-                if status == 1:
-                    status_cube = 1
-
-                cube_container.append(result)
-                del result
+            cube_container.append(result)
+            del result
             del thiscube
 
         # irrelevant WCS keywords we will remove from final product
@@ -498,8 +426,7 @@ class CubeBuildStep(Step):
         if self.channel == "all":
             self.pars_input["channel"].append("all")
         else:  # user has set value
-            if not self.single:
-                self.pars_input["output_type"] = "user"
+            self.pars_input["output_type"] = "user"
             channellist = self.channel.split(",")
             user_clen = len(channellist)
             for j in range(user_clen):
@@ -523,8 +450,7 @@ class CubeBuildStep(Step):
         if self.subchannel == "all":
             self.pars_input["subchannel"].append("all")
         else:  # user has set value
-            if not self.single:
-                self.pars_input["output_type"] = "user"
+            self.pars_input["output_type"] = "user"
             subchannellist = self.subchannel.split(",")
             user_blen = len(subchannellist)
             for j in range(user_blen):
@@ -547,8 +473,7 @@ class CubeBuildStep(Step):
         if self.filter == "all":
             self.pars_input["filter"].append("all")
         else:  # User has set value
-            if not self.single:
-                self.pars_input["output_type"] = "user"
+            self.pars_input["output_type"] = "user"
             filterlist = self.filter.split(",")
             user_flen = len(filterlist)
             for j in range(user_flen):
@@ -570,8 +495,7 @@ class CubeBuildStep(Step):
         if self.grating == "all":
             self.pars_input["grating"].append("all")
         else:  # user has set value
-            if not self.single:
-                self.pars_input["output_type"] = "user"
+            self.pars_input["output_type"] = "user"
             gratinglist = self.grating.split(",")
             user_glen = len(gratinglist)
             for j in range(user_glen):
