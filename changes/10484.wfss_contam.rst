@@ -1,0 +1,1 @@
+Fix off-by-one bug in extraction region of simulated slits as compared with observed slits
