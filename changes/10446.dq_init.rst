@@ -1,1 +1,1 @@
-Update superstripe handling to expect a ``SuperstripeRampModel`` with a 3D pixeldq array.
+Update handling for superstripe exposures to work with a new specialized ramp datamodel (``SuperstripeRampModel``).

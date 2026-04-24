@@ -416,8 +416,57 @@ def test_superstripe():
     np.testing.assert_equal(reassembled.pixeldq[:, -4:], dqflags.pixel["REFERENCE_PIXEL"])
 
 
+def test_check_dimensions_good_input(caplog):
+    """
+    Test check_dimensions behavior with good input values.
+
+    The function should have no effect if DQ arrays are present and correctly shaped.
+    """
+    shape = (6, 3, 4, 5)
+    nint, ngroup, ny, nx = shape
+    nstripe = 3
+
+    model = datamodels.RampModel()
+    model.data = np.zeros(shape)
+    model.pixeldq = np.full((ny, nx), 1)
+    model.groupdq = np.full(shape, 1)
+    check_dimensions(model)
+    assert caplog.text == ""
+    assert model.pixeldq.shape == (ny, nx)
+    assert model.groupdq.shape == shape
+    np.testing.assert_equal(model.pixeldq, 1)
+    np.testing.assert_equal(model.groupdq, 1)
+
+    model = datamodels.SuperstripeRampModel()
+    model.meta.subarray.num_superstripe = nstripe
+    model.data = np.zeros(shape)
+    model.pixeldq = np.full((nstripe, ny, nx), 1)
+    model.groupdq = np.full(shape, 1)
+    check_dimensions(model)
+    assert caplog.text == ""
+    assert model.pixeldq.shape == (nstripe, ny, nx)
+    assert model.groupdq.shape == shape
+    np.testing.assert_equal(model.pixeldq, 1)
+    np.testing.assert_equal(model.groupdq, 1)
+
+    model = datamodels.GuiderRawModel()
+    model.data = np.zeros(shape)
+    model.dq = np.full((ny, nx), 1)
+    check_dimensions(model)
+    assert caplog.text == ""
+    assert model.dq.shape == (ny, nx)
+    np.testing.assert_equal(model.dq, 1)
+
+
 @pytest.mark.parametrize("bad_value", [None, 0, 1])
-def test_check_dimensions(caplog, bad_value):
+def test_check_dimensions_bad_input(caplog, bad_value):
+    """
+    Test check_dimensions behavior with bad input values.
+
+    The function should set DQ arrays to default values if no DQ arrays
+    are present in the input model, or if they are present but have
+    incorrect shapes.
+    """
     shape = (6, 3, 4, 5)
     nint, ngroup, ny, nx = shape
     nstripe = 3
@@ -434,6 +483,7 @@ def test_check_dimensions(caplog, bad_value):
     assert model.groupdq.shape == shape
     np.testing.assert_equal(model.pixeldq, 0)
     np.testing.assert_equal(model.groupdq, 0)
+    caplog.clear()
 
     model = datamodels.SuperstripeRampModel()
     model.meta.subarray.num_superstripe = nstripe
@@ -448,6 +498,7 @@ def test_check_dimensions(caplog, bad_value):
     assert model.groupdq.shape == shape
     np.testing.assert_equal(model.pixeldq, 0)
     np.testing.assert_equal(model.groupdq, 0)
+    caplog.clear()
 
     model = datamodels.GuiderRawModel()
     model.data = np.zeros(shape)

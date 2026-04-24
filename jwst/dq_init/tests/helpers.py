@@ -26,7 +26,7 @@ def make_rawramp(
     Parameters
     ----------
     instrument : str
-        Instrument name.
+        Instrument name. If "FGS", a ``GuiderRawModel`` is returned.
     nints : int
         Number of integrations.
     ngroups : int
@@ -40,9 +40,9 @@ def make_rawramp(
     xstart : int
         X-start value for the subarray.
     exp_type : str, optional
-        Exposure type.  If "FGS", a ``GuiderRawModel`` is returned.
+        Exposure type.
     num_superstripe : int, optional
-        Number of superstripes. If greater than 0, a ``SuperstripeRampModel``
+        Number of superstripes. If not None, a ``SuperstripeRampModel``
         is returned.
 
     Returns

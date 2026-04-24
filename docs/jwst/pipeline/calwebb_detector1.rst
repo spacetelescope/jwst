@@ -152,7 +152,7 @@ for Data Quality (DQ) flags created and initialized to zero.
 Note, however, that some specialized data may be loaded in an alternate
 ramp-style datamodel for the initial steps of the pipeline. Exposures taken with
 superstripe array readouts are loaded as
-`~stdatamodels.jwst.datamodels.SuperstripeRampModel`, which has a 3D pixel DQ array,
+`~stdatamodels.jwst.datamodels.SuperstripeRampModel`. This model has a 3D pixel DQ array,
 where each image plane in the first dimension corresponds to a different detector
 region (stripe).  For more information on DQ handling, see the :ref:`dq_init step <dq_init_step>`.
 

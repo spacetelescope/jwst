@@ -300,9 +300,10 @@ def test_prepare_output_open_as_ramp_from_model(tmp_path, expected_type, from_st
         assert result is not input_data
         assert result.data is not input_data.data
         assert type(input_data) is datamodels.RampModel
+        # The cal_step status is not updated in the input
         assert not input_data.meta.cal_step.hasattr("prepare_output")
 
-    # Output has the specified type
+    # Output has the specified type and cal_step status is updated
     assert type(result) is expected_type
     assert result.meta.cal_step.prepare_output == "COMPLETE"
 
