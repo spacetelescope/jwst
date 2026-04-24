@@ -1559,15 +1559,17 @@ class STTableDataDiff(TableDataDiff):
             for tline in tlines:
                 self._writeln(tline)
 
+        if self.non_numeric_diff_columns:
+            self._writeln("\nNon-numeric columns with differences:")
+            for colname, ndiffs in self.non_numeric_diff_columns:
+                self._writeln(f" Column {colname} has {ndiffs} different element(s).")
+
         if self.identical_columns:
-            if len(self.identical_columns) == 1:
-                self._writeln(
-                    f"\nColumn {self.identical_columns} is identical (or within tolerances)"
-                )
+            n_identical = len(self.identical_columns)
+            if n_identical == 1:
+                self._writeln("\nThe other column is identical.")
             else:
-                self._writeln(
-                    f"\nColumns {self.identical_columns} are identical (or within tolerances)"
-                )
+                self._writeln(f"\nThe other {n_identical} columns are identical.")
 
         # Report of column differences from astropy
         if self.report_pixel_loc_diffs:
