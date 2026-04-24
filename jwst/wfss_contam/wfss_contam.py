@@ -396,7 +396,7 @@ def _match_simulated_slits(output_model, obs):
     return matched_flat_simuls, good_idxs
 
 
-def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree):
+def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree, l2_alpha=0.0):
     """
     Fit a polynomial spectral shape to one slit and apply the result in-place.
 
@@ -418,6 +418,8 @@ def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree
         reflects the fitted spectral shape.
     polyfit_degree : int or None
         Degree of the polynomial spectral model.  ``None`` means no fitting.
+    l2_alpha : float, optional
+        L2 regularisation strength passed to `fit_slit_by_basis_images`.
     """
     if polyfit_degree is None or getattr(simul_slit, "fluxmodel_1", None) is None:
         return
@@ -428,7 +430,7 @@ def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree
         f"order {observed_slit.meta.wcsinfo.spectral_order}"
     )
     try:
-        coeffs = fit_slit_by_basis_images(observed_slit, simul_slit)
+        coeffs = fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=l2_alpha)
         simul_slit.data = apply_basis_coeffs(simul_slit, coeffs)
         full_res_slit.data = apply_basis_coeffs(full_res_slit, coeffs)
     except SlitFitError as e:
@@ -450,6 +452,7 @@ def contam_corr(
     oversample_factor=2,
     polyfit_degree=None,
     n_iterations=1,
+    l2_alpha=0.0,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -494,6 +497,9 @@ def contam_corr(
         true spectral shape (and therefore a better contamination estimate for its
         neighbours). Requires ``polyfit_degree`` to be set; if ``polyfit_degree`` is
         None this parameter is ignored and a single iteration is performed.
+    l2_alpha : float, optional
+        L2 regularisation strength for the polynomial spectral fit.  Passed directly
+        to `fit_slit_by_basis_images`.  Default is ``0.0`` (ordinary least squares).
 
     Returns
     -------
@@ -686,7 +692,11 @@ def contam_corr(
             # slit.data holds the contamination-corrected data from the previous iteration
             # (or the original input on the first pass).
             _fit_spectral_shape(
-                slit, matched_flat, obs.simulated_slits.slits[good_idxs[i]], polyfit_degree
+                slit,
+                matched_flat,
+                obs.simulated_slits.slits[good_idxs[i]],
+                polyfit_degree,
+                l2_alpha=l2_alpha,
             )
             per_slit_simuls.append(matched_flat)
 
