@@ -1,0 +1,1 @@
+Consolidate utilities for multistripe handling into ``jwst.lib.stripe_utils``.

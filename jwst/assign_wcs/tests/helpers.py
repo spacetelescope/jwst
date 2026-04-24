@@ -1,10 +1,10 @@
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 
-from jwst.lib.pipe_utils import generate_substripe_ranges
+from jwst.lib.stripe_utils import generate_substripe_ranges
 
 # Ordered from lowest to highest subarray row (= order in which stripes are
-# packed into the packed subarray by generate_stripe_array).  The regions
+# packed into the packed subarray by generate_stripe_reference).  The regions
 # reference file is built with the same ordering, so the two stay in sync.
 NRCA1_DHS_STRIPE_IDS = [10, 9, 8, 7]
 
@@ -101,7 +101,7 @@ def make_mock_dhs_nrca1_rate():
 
     # Fill each packed stripe row range with the stripe's ID value so tests
     # can verify that the correct detector region ends up in each output slit.
-    _, sub_ranges = generate_substripe_ranges(model, subarray_ranges=True)
+    sub_ranges = generate_substripe_ranges(model, science_frame=True)["subarray"]
     for i, stripe_id in enumerate(NRCA1_DHS_STRIPE_IDS):
         y0, y1 = sub_ranges[i]
         model.data[:, y0:y1, :] = stripe_id
@@ -178,7 +178,7 @@ def make_mock_dhs_nrcalong_rate():
 
     # Fill each packed stripe row range with the same pattern
     # since for NRCALONG all readouts should be from the same physical detector region
-    _, sub_ranges = generate_substripe_ranges(model, subarray_ranges=True)
+    sub_ranges = generate_substripe_ranges(model, science_frame=True)["subarray"]
     for sub_range in sub_ranges.values():
         y0, y1 = sub_range
         model.data[:, y0 + 5 : y1 - 5, :] = 1.0
