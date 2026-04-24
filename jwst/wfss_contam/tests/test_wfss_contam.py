@@ -204,14 +204,14 @@ def test_build_simulated_image_from_slits():
     simulated_slits = MultiSlitModel()
 
     slit_a = SlitModel(data=np.ones((3, 4)) * 2.0)
-    slit_a.xstart = 1
-    slit_a.ystart = 1
+    slit_a.xstart = 2
+    slit_a.ystart = 2
     slit_a.xsize = 4
     slit_a.ysize = 3
 
     slit_b = SlitModel(data=np.ones((3, 4)) * 5.0)
-    slit_b.xstart = 3
-    slit_b.ystart = 2
+    slit_b.xstart = 4
+    slit_b.ystart = 3
     slit_b.xsize = 4
     slit_b.ysize = 3
 
@@ -236,8 +236,8 @@ def test_build_simulated_image_from_slits_overflow():
     simulated_slits = MultiSlitModel()
 
     slit = SlitModel(data=np.ones((4, 4)) * 3.0)
-    slit.xstart = 3
-    slit.ystart = 3
+    slit.xstart = 4
+    slit.ystart = 4
     slit.xsize = 4
     slit.ysize = 4
 
@@ -255,8 +255,8 @@ def test_build_simulated_image_from_slits_overflow():
 _ITER_NROWS, _ITER_NCOLS = 40, 80
 _ITER_FRAME_SHAPE = (80, 90)
 _ITER_OVERLAP = 5
-_ITER_XA, _ITER_YA = 0, 0
-_ITER_XB, _ITER_YB = 0, 35
+_ITER_XA, _ITER_YA = 1, 1
+_ITER_XB, _ITER_YB = 1, 36
 
 
 def _iter_geometry():

@@ -88,8 +88,8 @@ def _cut_frame_to_match_slit(contam, slit):
     cutout : 2D array
         Contamination image cutout that matches the extent of the source slit
     """
-    x1 = slit.xstart
-    y1 = slit.ystart
+    x1 = slit.xstart - 1  # convert FITS 1-indexed to 0-indexed for array access
+    y1 = slit.ystart - 1  # convert FITS 1-indexed to 0-indexed for array access
     xf = x1 + slit.xsize
     yf = y1 + slit.ysize
 
@@ -296,8 +296,8 @@ def _build_simulated_image_from_slits(simulated_slits, shape):
     full_image = np.zeros(shape, dtype=float)
     nrows, ncols = shape
     for slit in simulated_slits.slits:
-        x0 = slit.xstart
-        y0 = slit.ystart
+        x0 = slit.xstart - 1  # convert FITS 1-indexed to 0-indexed for array access
+        y0 = slit.ystart - 1  # convert FITS 1-indexed to 0-indexed for array access
         # Clip to frame boundaries in case a slit overflows
         x1 = min(x0 + slit.xsize, ncols)
         y1 = min(y0 + slit.ysize, nrows)
