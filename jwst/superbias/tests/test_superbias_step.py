@@ -1,9 +1,10 @@
 import numpy as np
 
 from jwst.superbias.superbias_step import SuperBiasStep
+from jwst.superbias.tests.helpers import setup_full_cube
 
 
-def test_full_step(setup_full_cube):
+def test_full_step():
     """Test full run of the SuperBiasStep."""
 
     # Create inputs, data, and superbiases
@@ -31,7 +32,7 @@ def test_full_step(setup_full_cube):
     assert data.meta.cal_step.superbias is None
 
 
-def test_missing_reffile(setup_full_cube):
+def test_missing_reffile():
     """Test that SuperBiasStep is skipped for missing reference file."""
 
     # Create inputs, data, and superbiases
