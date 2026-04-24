@@ -129,18 +129,40 @@ def test_aggregate_by_source():
     """Chunks for same source covering different spatial regions are combined correctly."""
     # chunk A: x=[0,1], y=[0,1] is put into results
     img_a = np.full((2, 2), 1.0)
+    lam_a = np.full((2, 2), 1.8)
     bounds_a = [0, 1, 0, 1]
-    results = {1: {"bounds": bounds_a, "image": img_a}}
+    results = {
+        1: {
+            "bounds": bounds_a,
+            "image": img_a,
+            "wavelengths": lam_a,
+            "wavelength_weights": np.ones_like(lam_a),
+        }
+    }
 
     # chunk B: x=[2,3], y=[0,1]  (adjacent in x, same y range) is put into source_results
     img_b = np.full((2, 2), 2.0)
+    lam_b = np.full((2, 2), 2.0)
     bounds_b = [2, 3, 0, 1]
-    source_results = {1: {"bounds": bounds_b, "image": img_b}}
+    source_results = {
+        1: {
+            "bounds": bounds_b,
+            "image": img_b,
+            "wavelengths": lam_b,
+            "weight_sum": np.ones_like(lam_b),
+        }
+    }
 
     # add another source to results
     img = np.ones((3, 3))
+    lam = np.full((3, 3), 1.9)
     bounds = [5, 7, 5, 7]
-    results[0] = {"bounds": bounds, "image": img}
+    results[0] = {
+        "bounds": bounds,
+        "image": img,
+        "wavelengths": lam,
+        "wavelength_weights": np.ones_like(lam),
+    }
 
     # aggregate both sources
     for sid in [0, 1]:
@@ -158,3 +180,59 @@ def test_aggregate_by_source():
     assert combined.shape == (2, 4)
     assert_allclose(combined[:, :2], 1.0)
     assert_allclose(combined[:, 2:], 2.0)
+
+
+def test_aggregate_by_source_wavelength_weighted_mean():
+    """
+    Test aggregation of multiple chunks for the same source with varying spatial overlap.
+
+    Three chunks contribute to a shared 1x2 output region.  Pixel 0 is covered by
+    chunks A and B; pixel 1 is covered by all three chunks.
+    Wavelengths are combined as an area-weighted mean at each pixel independently;
+    fluxes are summed.
+
+    Chunk area weights:
+      chunk A: pixel 0 weight=3.0, pixel 1 weight=1.0
+      chunk B: pixel 0 weight=1.0, pixel 1 weight=2.0
+      chunk C: pixel 1 only,       pixel 1 weight=4.0
+
+    Expected results:
+      pixel 0: flux = 1+3 = 4
+               wavelength = (3.0*1.0 + 1.0*2.0) / (3.0+1.0) = 5/4 = 1.25
+      pixel 1: flux = 2+4+6 = 12
+               wavelength = (1.0*1.0 + 2.0*2.0 + 4.0*5.0) / (1.0+2.0+4.0) = 25/7
+    """
+    bounds_ab = [0, 1, 0, 0]  # x=[0,1], y=[0,0]  → shape (1, 2)
+    bounds_c = [1, 1, 0, 0]  # x=[1,1], y=[0,0]  → shape (1, 1), pixel 1 only
+
+    results_a = {
+        1: {
+            "bounds": bounds_ab,
+            "image": np.array([[1.0, 2.0]]),
+            "wavelengths": np.array([[1.0, 1.0]]),
+            "wavelength_weights": np.array([[3.0, 1.0]]),
+        }
+    }
+    results_b = {
+        1: {
+            "bounds": bounds_ab,
+            "image": np.array([[3.0, 4.0]]),
+            "wavelengths": np.array([[2.0, 2.0]]),
+            "wavelength_weights": np.array([[1.0, 2.0]]),
+        }
+    }
+    results_c = {
+        1: {
+            "bounds": bounds_c,
+            "image": np.array([[6.0]]),
+            "wavelengths": np.array([[5.0]]),
+            "wavelength_weights": np.array([[4.0]]),
+        }
+    }
+
+    source_results = {}
+    _aggregate_by_source(results_a, 1, source_results)
+    _aggregate_by_source(results_b, 1, source_results)
+    _aggregate_by_source(results_c, 1, source_results)
+
+    assert_allclose(source_results[1]["image"], [[4.0, 12.0]])

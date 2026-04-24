@@ -47,3 +47,15 @@ The ``wfss_contam`` step uses the following optional arguments.
   Sets the maximum number of direct image pixels to run through the grism transforms at once.
   Decreasing this value will typically reduce the memory usage of the step. The effect on runtime
   depends on the machine hardware and whether multi-processing is enabled. Defaults to 5,000.
+
+``--polyfit_degree``
+  An integer specifying the degree of the polynomial used to fit the spectral shape of each
+  source before computing the contamination estimate. If ``None`` (the default), no polynomial
+  fitting is applied and the direct image flux values are used as-is (i.e., a "flat" spectrum).
+
+``--n_iterations``
+  An integer specifying the number of contamination-correction iterations to perform. On each
+  iteration the contamination estimate is recomputed using the flux-modeled spectra from the
+  previous iteration. Defaults to 1 (a single, non-iterative correction). Has no effect if
+  ``polyfit_degree`` is ``None``.
+

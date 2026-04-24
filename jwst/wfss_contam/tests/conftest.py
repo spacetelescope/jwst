@@ -1,3 +1,5 @@
+import types
+
 import numpy as np
 import photutils
 import pytest
@@ -221,3 +223,20 @@ def photom_ref_model(request):
     """
     fixture_name = getattr(request, "param", "photom_ref_model_niriss")
     return request.getfixturevalue(fixture_name)
+
+
+@pytest.fixture(scope="module")
+def wavelengthrange_ref_model():
+    """
+    Mock WAVELENGTHRANGE reference file object simulating NIRISS order 1.
+
+    Returns
+    -------
+    types.SimpleNamespace
+        Duck-typed wavelength-range reference with `order` and
+        `get_wfss_wavelength_range` attributes.
+    """
+    wr = types.SimpleNamespace()
+    wr.order = np.array([1])
+    wr.get_wfss_wavelength_range = lambda _filter_name, orders: {orders[0]: (1.0, 3.0)}
+    return wr

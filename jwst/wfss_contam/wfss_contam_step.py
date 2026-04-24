@@ -24,6 +24,9 @@ class WfssContamStep(Step):
         magnitude_limit = float(default=None) # Isophotal AB magnitude limit for sources to be included in the contamination correction
         wl_oversample = integer(default=2) # oversampling factor for wavelength grid
         max_pixels_per_chunk = integer(default=5000) # max number of pixels to disperse at once
+        polyfit_degree = integer(default=None)  # Degree of polynomial fit to spectral shape
+        n_iterations = integer(default=1)  # Number of contamination-correction iterations
+        l2_alpha = float(default=0.1)  # L2 regularization strength for polynomial spectral fit
     """  # noqa: E501
 
     reference_file_types = ["photom", "wavelengthrange"]
@@ -69,6 +72,9 @@ class WfssContamStep(Step):
                 magnitude_limit=self.magnitude_limit,
                 oversample_factor=self.wl_oversample,
                 max_pixels_per_chunk=self.max_pixels_per_chunk,
+                polyfit_degree=self.polyfit_degree,
+                n_iterations=self.n_iterations,
+                l2_alpha=self.l2_alpha,
             )
         if simul is None:
             # Input model is returned as result, no intermediate models created
