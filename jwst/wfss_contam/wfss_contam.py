@@ -431,7 +431,7 @@ def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree
     polyfit_degree : int or None
         Degree of the polynomial spectral model.  ``None`` means no fitting.
     l2_alpha : float, optional
-        L2 regularisation strength passed to `fit_slit_by_basis_images`.
+        L2 regularisation strength passed to `~jwst.wfss_contam.wavefit.fit_slit_by_basis_images`.
 
     Returns
     -------
@@ -522,7 +522,8 @@ def contam_corr(
         None this parameter is ignored and a single iteration is performed.
     l2_alpha : float, optional
         L2 regularisation strength for the polynomial spectral fit.  Passed directly
-        to `fit_slit_by_basis_images`.  Default is ``0.0`` (ordinary least squares).
+        to `~jwst.wfss_contam.wavefit.fit_slit_by_basis_images`.
+        Default is ``0.0`` (ordinary least squares).
 
     Returns
     -------
