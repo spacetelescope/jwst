@@ -130,7 +130,12 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0):
 
     # log some fit diagnostics for the source
     n_total = obs_data.size
-    log.info(
+    if np.abs(coeffs[0] - 1) > 0.1:
+        log.debug(  # TODO
+            f"Fitted constant term c_0={coeffs[0]:.3g} is far from 1; rejecting fit."
+        )
+        return None
+    log.debug(  # TODO
         f"source_id={observed_slit.source_id} "
         f"order={observed_slit.meta.wcsinfo.spectral_order} "
         f"valid_pixels/total={n_valid}/{n_total} "

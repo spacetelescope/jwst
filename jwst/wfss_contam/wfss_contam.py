@@ -432,9 +432,15 @@ def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree
         Degree of the polynomial spectral model.  ``None`` means no fitting.
     l2_alpha : float, optional
         L2 regularisation strength passed to `fit_slit_by_basis_images`.
+
+    Returns
+    -------
+    status : bool
+        ``True`` if the fit was successful, ``False`` if the fit failed and the
+        original flat-spectrum simulation is used.
     """
     if polyfit_degree is None or getattr(simul_slit, "fluxmodel_1", None) is None:
-        return
+        return False
 
     log.debug(
         f"Fitting polynomial of degree {polyfit_degree} to the simulated slit "
@@ -443,14 +449,19 @@ def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree
     )
     try:
         coeffs = fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=l2_alpha)
+        if coeffs is None:
+            return False
         simul_slit.data = apply_basis_coeffs(simul_slit, coeffs)
         full_res_slit.data = apply_basis_coeffs(full_res_slit, coeffs)
     except SlitFitError as e:
-        log.warning(
+        log.debug(
             f"Polynomial fitting failed for slit with source ID {observed_slit.source_id}, "
             f"order {observed_slit.meta.wcsinfo.spectral_order}: {e}. "
             "Using the original simulated slit without fitting."
         )
+        return False
+    else:
+        return True
 
 
 def contam_corr(
@@ -699,6 +710,7 @@ def contam_corr(
             s.data = d.copy()
 
         per_slit_simuls = []
+        success = 0
         for i, slit in enumerate(output_model.slits):
             matched_flat = matched_flat_simuls[i]
             if matched_flat is None:
@@ -710,7 +722,7 @@ def contam_corr(
             matched_flat.data = flat_matched_data[i].copy()
             # slit.data holds the contamination-corrected data from the previous iteration
             # (or the original input on the first pass).
-            _fit_spectral_shape(
+            success += _fit_spectral_shape(
                 slit,
                 matched_flat,
                 obs.simulated_slits.slits[good_idxs[i]],
@@ -718,6 +730,11 @@ def contam_corr(
                 l2_alpha=l2_alpha,
             )
             per_slit_simuls.append(matched_flat)
+
+        log.info(
+            f"Spectral fitting successful for {success} out of {len(output_model.slits)} slits "
+            f"in iteration {iteration + 1}. Turn on debug logging for details of failures."
+        )
 
         # Rebuild full-frame simulation from the (possibly fitted) simulated slits.
         simul_data = _build_simulated_image_from_slits(
