@@ -41,7 +41,7 @@ the input model unchanged.
 Inputs
 ------
 The primary driver of the master background step is usually a ``spec3`` type Association (ASN) file
-or a ``~jwst.datamodels.container.ModelContainer` data model populated from a ``spec3`` ASN file. This is the same ASN file used
+or a `~jwst.datamodels.container.ModelContainer` data model populated from a ``spec3`` ASN file. This is the same ASN file used
 as input to the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, which defines a stage 3 combined product
 and its input members. The list of input members includes both "science" and "background"
 exposure types. The master background subtraction step uses the input members designated
@@ -256,7 +256,7 @@ This is due to two primary effects of NIRSpec calibration:
 #. Point sources in MOS and Fixed-Slit mode receive wavelength offset
    corrections if the source is not centered (along the dispersion direction) within the slit.
    Hence, the wavelength grid assigned to each 2-D slit cutout can be shifted slightly relative
-   to the wavelengths of the background signal contained in the same cutout; And because the
+   to the wavelengths of the background signal contained in the same cutout. Because the
    flat-field, pathloss, and photom corrections/calibrations are wavelength-dependent, the
    pixel-level calibrations for the source signal are slightly different than the background.
 
