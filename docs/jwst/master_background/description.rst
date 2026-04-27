@@ -57,7 +57,8 @@ There are two main observing scenarios that are supported by this step:
 :ref:`nodded exposures of point sources <mstrbkg_nodded>` and
 :ref:`off-source background exposures of extended targets <mstrbkg_extended_src>`.
 A third type of operation is performed for
-:ref:`NIRSpec MOS observations that include background slits <mstrbkg_nirspec_mos>`.
+:ref:`NIRSpec MOS observations that include background slits <mstrbkg_nirspec_mos>`,
+which follows a different process.
 The details for each mode are explained below.
 
 .. _mstrbkg_nodded:
