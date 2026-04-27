@@ -8,7 +8,7 @@ The Data Quality (DQ) initialization step in the calibration pipeline
 populates the DQ mask for the input dataset. Flag values from the
 appropriate :ref:`static mask ("MASK") reference file <mask_reffile>`
 in CRDS are copied into the
-"PIXELDQ" array of the input dataset, because it is assumed that flags in the
+PIXELDQ array of the input dataset, because it is assumed that flags in the
 :ref:`mask_reffile` pertain to problem conditions that affect all groups and
 integrations for a given pixel.
 
@@ -17,15 +17,23 @@ The actual process consists of the following steps:
 #. Determine what :ref:`mask_reffile` to use via the interface to the ``bestref``
    utility in CRDS.
 
-#. If the "PIXELDQ" or "GROUPDQ" arrays of the input dataset do not already exist,
+#. If the PIXELDQ or GROUPDQ arrays of the input dataset do not already exist,
    which is sometimes the case for raw input products, create these arrays in
-   the input data model and initialize them to zero. The "PIXELDQ" array will be
-   2D, with the same number of rows and columns as the input science data.
-   The "GROUPDQ" array will be 4D with the same dimensions
+   the input data model and initialize them to zero. The PIXELDQ array for most exposures
+   will be 2D, with the same number of rows and columns as the input science data.
+   The GROUPDQ array will be 4D with the same dimensions
    ``(nints, ngroups, nrows, ncols)`` as the input science data array.
+
+   For superstripe data, the PIXELDQ array is 3D, where the each image in the first
+   dimension corresponds to a different region on the detector (stripe). The other
+   two dimensions are ``(nrows, ncols)``, matching the image dimensions of the input
+   data.
 
 #. Check to see if the input science data is in subarray mode. If so, extract a
    matching subarray from the full-frame :ref:`mask_reffile`.
+
+   Likewise, if the input data was taken with the superstripe readout mode, extract
+   regions from the full-frame mask matching each stripe.
 
 #. Propagate the DQ flags from the reference file DQ array to the science data "PIXELDQ"
    array using a bitwise-or operation.
