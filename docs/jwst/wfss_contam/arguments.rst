@@ -48,6 +48,9 @@ The ``wfss_contam`` step uses the following optional arguments.
   Decreasing this value will typically reduce the memory usage of the step. The effect on runtime
   depends on the machine hardware and whether multi-processing is enabled. Defaults to 5,000.
 
+Polynomial fitting parameters
+-----------------------------
+
 ``--polyfit_degree``
   An integer specifying the degree of the polynomial used to fit the spectral shape of each
   source before computing the contamination estimate. If ``None`` (the default), no polynomial
@@ -59,3 +62,8 @@ The ``wfss_contam`` step uses the following optional arguments.
   previous iteration. Defaults to 1 (a single, non-iterative correction). Has no effect if
   ``polyfit_degree`` is ``None``.
 
+``--l2_alpha``
+  A float specifying the alpha parameter for L2 regularization in the polynomial fitting.
+  This is used to prevent the fitted coefficients from blowing up in cases of severe contamination.
+  Default is 0.1.
+  TODO: should this be exposed as a top level argument or is it too technical?

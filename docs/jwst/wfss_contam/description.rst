@@ -106,9 +106,12 @@ When the step argument ``--polyfit_degree`` is set to an integer *N*, the step
 fits a more flexible spectral model to each source. The procedure is:
 
 1. In addition to the standard flat-spectrum simulation (the constant, degree-0 term),
-   *N* additional grism-frame images are simulated for each source, one for each
-   polynomial basis function :math:`\lambda^k` (:math:`k = 1, 2, \ldots, N`), where
-   :math:`\lambda` is the wavelength. Recall that each dispersed-image pixel represents
+   *N* additional grism-frame images are simulated for each source, where for the ith
+   simulation from ``i=1`` to ``i=N``, the spectral flux distribution is assumed to follow
+   the ith order Legendre polynomial. Legendre polynomials were chosen because
+   they form an orthogonal basis set, which makes the fitter prefer smaller coefficients
+   instead of oscillating large positive and negative coefficients.
+   Recall that each dispersed-image pixel represents
    a linear combination of the contribution of several direct-image pixels at different
    wavelengths. These basis functions therefore must be computed before the dispersed image
    is discretized onto a pixel grid, i.e., just after the dispersion calculation.
@@ -121,16 +124,31 @@ fits a more flexible spectral model to each source. The procedure is:
       \text{observed} \approx c_0 \cdot B_0 + c_1 \cdot B_1 + \cdots + c_N \cdot B_N
 
    where :math:`B_0` is the flat-spectrum simulation and :math:`B_k` is the simulation
-   driven by the :math:`\lambda^k` flux model.  The coefficients :math:`c_k` are
-   determined by linear least-squares over all valid (finite, non-flagged) pixels.
-3. The best-fit linear combination replaces the original simulation for that source, and
-   this spectrally corrected simulation is used as the contamination model.
+   driven by the :math:`\lambda^k`-order flux model.  The coefficients :math:`c_k` are
+   determined using a linear least-squares fit with L2 regularization, the strength of 
+   which is set by the step argument ``--l2_alpha``. The regularization helps to
+   keep the coefficients small, guarding against physically implausible flux distributions.
 
+3. If a good solution was found, the best-fit linear combination replaces the original
+   simulation for that source, and this spectrally corrected simulation is used in the
+   contamination model to be applied before the subsequent iteration.
+   If no good solution was found, the original flat-spectrum simulation is not modified.
+
+4. The simulated contamination from all other sources is subtracted from each observed slit,
+   and the resulting contamination-corrected slit is used as the "observed data"
+   for the next iteration of the fit. Note that each iteration starts the fitting over from
+   the original basis images; the fitted coefficients from the previous iteration are not
+   used as a starting point.
+   
 The ``--n_iterations`` argument controls how many times the polynomial fit is repeated.
 On the first iteration the observed spectrum still contains contamination from neighboring
 sources; on subsequent iterations it is replaced by the contamination-corrected spectrum
 from the previous pass, so the polynomial flux fit is less biased by contamination
-from other sources. Iteration has no effect when ``--polyfit_degree`` is not set.
+from other sources. In practice, the polynomial fit typically converges for only relatively
+isolated sources on the first iteration, but the second iteration allows almost all sources
+to be fit even for test data in crowded fields.  ``n_iterations > 3`` typically does not
+provide much additional improvement.
+Iteration has no effect when ``--polyfit_degree`` is not set.
 
 Multiprocessing
 ---------------
