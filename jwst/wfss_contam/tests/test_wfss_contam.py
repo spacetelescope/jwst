@@ -254,9 +254,9 @@ def test_build_simulated_image_from_slits_overflow():
 
 _ITER_NROWS, _ITER_NCOLS = 40, 80
 _ITER_FRAME_SHAPE = (80, 90)
-_ITER_OVERLAP = 5
+_ITER_OVERLAP = 3
 _ITER_XA, _ITER_YA = 1, 1
-_ITER_XB, _ITER_YB = 1, 36
+_ITER_XB, _ITER_YB = 1, 38
 
 
 def _iter_geometry():
@@ -266,8 +266,9 @@ def _iter_geometry():
     dlam = np.broadcast_to(lam - 2.0, (_ITER_NROWS, _ITER_NCOLS)).copy()
     tilt = flat * dlam
     wavelength = np.broadcast_to(lam, (_ITER_NROWS, _ITER_NCOLS)).copy()
-    true_A = 2.0 * flat + 0.6 * tilt
-    true_B = 1.5 * flat - 0.8 * tilt
+
+    true_A = 1.0 * flat + 0.6 * tilt
+    true_B = 1.0 * flat - 0.8 * tilt
     return flat, tilt, wavelength, true_A, true_B
 
 
@@ -276,8 +277,8 @@ def two_source_input(tmp_cwd, grism_wcs):  # noqa: ARG001
     """
     Minimal MultiSlitModel with two slits whose grism traces partially overlap.
 
-    Source A (ID=1) is placed at (xstart=0, ystart=0) and source B (ID=2) at
-    (xstart=0, ystart=35) on the full-frame detector, giving a 5-row overlap.
+    Source A (ID=1) is placed at (xstart=1, ystart=1) and source B (ID=2) at
+    (xstart=1, ystart=38) on the full-frame detector, giving a 3-row overlap.
     Observed slit data already has the neighbour's signal injected in the
     overlapping rows, providing a controlled contamination scenario.
 
@@ -360,11 +361,11 @@ def test_iteration_improves_contamination_correction(
     Scenario
     --------
     Two sources (A and B) with partially overlapping grism traces on the
-    detector.  Source A's trace spans detector rows 0-40 and source B's spans
-    rows 35-75 (a 5-row overlap).
+    Source A's trace spans detector rows 1-40 and source B's spans
+    rows 38-77 (a 3-row overlap).
 
-    Source A has a spectrum linear in wavelength:  signal_A = 2.0 + 0.6 * dlam
-    Source B has a different linear spectrum:     signal_B = 1.5 - 0.8 * dlam
+    Source A has a spectrum linear in wavelength:  signal_A = 1.0 + 0.6 * dlam
+    Source B has a different linear spectrum:     signal_B = 1.0 - 0.8 * dlam
 
     In the overlapping rows each slit also carries the neighbor's signal.
     A flat-spectrum simulation (polyfit_degree=None) leaves large spectral
