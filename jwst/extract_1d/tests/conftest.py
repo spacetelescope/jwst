@@ -219,6 +219,21 @@ def mock_niriss_soss_256():
 
 
 @pytest.fixture()
+def mock_niriss_soss_superstripe():
+    """
+    Make mock_niriss_soss_superstripe_func available as a fixture.
+
+    Yields
+    ------
+    CubeModel
+        The mock model.
+    """
+    model = helpers.mock_niriss_soss_superstripe_func()
+    yield model
+    model.close()
+
+
+@pytest.fixture()
 def mock_niriss_soss_96():
     """
     Make mock_niriss_soss_96_func available as a fixture.

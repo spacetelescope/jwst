@@ -1,0 +1,1 @@
+For superstripe exposures, propagate the ``int_times_stripe`` table to extracted spectra if present.

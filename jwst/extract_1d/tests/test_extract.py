@@ -1708,7 +1708,8 @@ def test_run_extract1d_tso(mock_nirspec_bots):
     # time and integration keywords are populated
     for i, spec in enumerate(output_model.spec[0].spec_table):
         assert spec["int_num"] == i + 1
-        assert_allclose(spec["MJD-BEG"], 59729.04367729)
+        start_time = mock_nirspec_bots.int_times["int_start_MJD_UTC"][i]
+        assert_allclose(spec["MJD-BEG"], start_time)
 
     output_model.close()
 
@@ -1726,8 +1727,10 @@ def test_run_extract1d_tso_one_int(mock_nirspec_bots):
 
     # time and integration keywords are populated
     assert output_model.spec[0].spec_table["int_num"] == 1
-    assert output_model.spec[0].spec_table["MJD-BEG"] == 59729.04367729
-    assert output_model.spec[0].spec_table["MJD-AVG"] == 59729.04378181
+    start_time = mock_nirspec_bots.int_times["int_start_MJD_UTC"][0]
+    avg_time = mock_nirspec_bots.int_times["int_mid_MJD_UTC"][0]
+    assert output_model.spec[0].spec_table["MJD-BEG"] == start_time
+    assert output_model.spec[0].spec_table["MJD-AVG"] == avg_time
 
     output_model.close()
 
@@ -1894,3 +1897,13 @@ def test_run_extract1d_continue_error_multislit(monkeypatch, mock_nirspec_mos):
     # no spectra extracted
     assert len(output_model.spec) == 0
     output_model.close()
+
+
+def test_copy_int_times_stripe(mock_niriss_soss_superstripe):
+    # Test that both int_times and int_times_stripe are copied
+    # to an output model if present
+    model = mock_niriss_soss_superstripe
+    output_model = ex._make_output_model(model, model)
+    assert isinstance(output_model, dm.TSOMultiSpecModel)
+    assert len(model.int_times) == len(output_model.int_times)
+    assert len(model.int_times_stripe) == len(output_model.int_times_stripe)
