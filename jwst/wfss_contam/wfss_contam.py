@@ -169,11 +169,7 @@ def match_backplane_prefer_first(slit0, slit1):
         mc_bp[i0:i1, j0:j1] = np.asarray(mc)[di : di + (i1 - i0), dj : dj + (j1 - j0)]
         setattr(slit1, attr, mc_bp)
         k += 1
-    # Anticipate slits carrying around wavelength arrays for future changes
-    if getattr(slit1, "wavelength", None) is not None and slit1.wavelength.shape == data1.shape:
-        wl_backplane = np.zeros_like(data0)
-        wl_backplane[i0:i1, j0:j1] = slit1.wavelength[di : di + (i1 - i0), dj : dj + (j1 - j0)]
-        slit1.wavelength = wl_backplane
+
     slit1.xstart = slit0.xstart
     slit1.ystart = slit0.ystart
     slit1.xsize = slit0.xsize

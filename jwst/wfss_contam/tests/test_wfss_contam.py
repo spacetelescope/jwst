@@ -3,7 +3,6 @@ import types
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
-from stdatamodels.jwst.datamodels import MultiSlitModel, SlitModel
 
 from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs
 from jwst.wfss_contam.wfss_contam import (
@@ -28,7 +27,7 @@ def contam():
 
 @pytest.fixture(scope="module")
 def slit0():
-    slit = SlitModel(data=np.ones((5, 3)))
+    slit = dm.SlitModel(data=np.ones((5, 3)))
     slit.xstart = 2
     slit.ystart = 3
     slit.xsize = 3
@@ -40,7 +39,7 @@ def slit0():
 
 @pytest.fixture(scope="module")
 def slit1():
-    slit = SlitModel(data=np.ones((4, 4)) * 0.5)
+    slit = dm.SlitModel(data=np.ones((4, 4)) * 0.5)
     slit.xstart = 3
     slit.ystart = 2
     slit.xsize = 4
@@ -50,7 +49,7 @@ def slit1():
 
 @pytest.fixture(scope="module")
 def slit2():
-    slit = SlitModel(data=np.ones((3, 5)) * 0.1)
+    slit = dm.SlitModel(data=np.ones((3, 5)) * 0.1)
     slit.xstart = 300
     slit.ystart = 200
     slit.xsize = 5
@@ -96,15 +95,14 @@ def test_match_backplane_prefer_first_yoffset():
     When slit1 starts below slit0 (y1 > 0), the old code dropped the first y1 rows
     of data1 and placed the wrong rows in the output.
     """
-    slit0 = SlitModel(data=np.zeros((4, 4)))
+    slit0 = dm.SlitModel(data=np.zeros((4, 4)))
     slit0.xstart, slit0.ystart = 0, 0  # origin at (0, 0)
     slit0.xsize, slit0.ysize = 4, 4
 
     # Give each row a distinct value so we can tell which rows end up where.
     data1 = np.array([[1.0] * 4, [2.0] * 4, [3.0] * 4, [4.0] * 4])
     wl1 = np.array([[0.1] * 4, [0.2] * 4, [0.3] * 4, [0.4] * 4])
-    slit1 = SlitModel(data=data1.copy())
-    slit1.wavelength = wl1.copy()
+    slit1 = dm.SlitModel(data=data1.copy())
     slit1.xstart, slit1.ystart = 0, 2  # starts 2 rows below slit0
     slit1.xsize, slit1.ysize = 4, 4
 
@@ -116,12 +114,6 @@ def test_match_backplane_prefer_first_yoffset():
     assert np.all(slit1_out.data[0:2, :] == 0.0)
     assert np.all(slit1_out.data[2, :] == 1.0)
     assert np.all(slit1_out.data[3, :] == 2.0)
-
-    # Wavelength array should be reprojected with the same offsets.
-    assert slit1_out.wavelength.shape == (4, 4)
-    assert np.all(slit1_out.wavelength[0:2, :] == 0.0)
-    assert np.all(slit1_out.wavelength[2, :] == pytest.approx(0.1))
-    assert np.all(slit1_out.wavelength[3, :] == pytest.approx(0.2))
 
 
 def test_common_slit_prefer_expected_raise(slit0, slit2):
@@ -201,15 +193,15 @@ def test_constrain_orders_warn_subset(log_watcher):
 
 def test_build_simulated_image_from_slits():
     shape = (10, 10)
-    simulated_slits = MultiSlitModel()
+    simulated_slits = dm.MultiSlitModel()
 
-    slit_a = SlitModel(data=np.ones((3, 4)) * 2.0)
+    slit_a = dm.SlitModel(data=np.ones((3, 4)) * 2.0)
     slit_a.xstart = 2
     slit_a.ystart = 2
     slit_a.xsize = 4
     slit_a.ysize = 3
 
-    slit_b = SlitModel(data=np.ones((3, 4)) * 5.0)
+    slit_b = dm.SlitModel(data=np.ones((3, 4)) * 5.0)
     slit_b.xstart = 4
     slit_b.ystart = 3
     slit_b.xsize = 4
@@ -233,9 +225,9 @@ def test_build_simulated_image_from_slits():
 def test_build_simulated_image_from_slits_overflow():
     """Slit data extending beyond the frame boundary should be clipped without error."""
     shape = (5, 5)
-    simulated_slits = MultiSlitModel()
+    simulated_slits = dm.MultiSlitModel()
 
-    slit = SlitModel(data=np.ones((4, 4)) * 3.0)
+    slit = dm.SlitModel(data=np.ones((4, 4)) * 3.0)
     slit.xstart = 4
     slit.ystart = 4
     slit.xsize = 4
@@ -265,30 +257,26 @@ def _iter_geometry():
     flat = np.ones((_ITER_NROWS, _ITER_NCOLS))
     dlam = np.broadcast_to(lam - 2.0, (_ITER_NROWS, _ITER_NCOLS)).copy()
     tilt = flat * dlam
-    wavelength = np.broadcast_to(lam, (_ITER_NROWS, _ITER_NCOLS)).copy()
 
     true_A = 1.0 * flat + 0.6 * tilt
     true_B = 1.0 * flat - 0.8 * tilt
-    return flat, tilt, wavelength, true_A, true_B
+    return flat, tilt, true_A, true_B
 
 
 @pytest.fixture
-def two_source_input(tmp_cwd, grism_wcs):  # noqa: ARG001
+def two_source_input(tmp_cwd, grism_wcs):
     """
-    Minimal MultiSlitModel with two slits whose grism traces partially overlap.
+    MultiSlitModel with two slits whose grism traces partially overlap.
 
     Source A (ID=1) is placed at (xstart=1, ystart=1) and source B (ID=2) at
     (xstart=1, ystart=38) on the full-frame detector, giving a 3-row overlap.
-    Observed slit data already has the neighbour's signal injected in the
-    overlapping rows, providing a controlled contamination scenario.
+    Observed slit data in each slit is contaminated by its neighbor.
 
-    Dummy direct-image and segmentation-map FITS files are written to the
-    current working directory (provided by ``tmp_cwd``) so that
-    ``contam_corr`` can open them via ``datamodels.open``.  Their pixel
-    content is irrelevant because ``Observation`` is monkeypatched in the
-    test that uses this fixture.
+    Direct image and segmentation map files corresponding to the same scenario
+    are written to the ``tmp_cwd``. They must exist with proper file name and type
+    but are trivial because the test monkeypatches ``Observation``.
     """
-    flat, tilt, wavelength, true_A, true_B = _iter_geometry()
+    _flat, _tilt, true_A, true_B = _iter_geometry()
 
     obs_A_data = true_A.copy()
     obs_A_data[_ITER_NROWS - _ITER_OVERLAP :, :] += true_B[:_ITER_OVERLAP, :]
@@ -314,15 +302,15 @@ def two_source_input(tmp_cwd, grism_wcs):  # noqa: ARG001
         slit.dq = np.zeros(data.shape, dtype=np.uint32)
         slit.xsize = data.shape[1]
         slit.ysize = data.shape[0]
-        slit.wavelength = wavelength.astype(np.float32)
         model.slits.append(slit)
 
-    # placeholder segmentation map and direct image (Observation is monkeypatched).
     direct = dm.ImageModel(data=np.ones(_ITER_FRAME_SHAPE))
     direct.meta.wcs = create_imaging_wcs("F200W")
     direct.save("direct_image.fits")
     seg = dm.SegmentationMapModel(data=np.zeros(_ITER_FRAME_SHAPE, dtype=np.uint32))
     seg.save("seg_map.fits")
+    direct.close()
+    seg.close()
 
     model.meta.direct_image = "direct_image.fits"
     model.meta.segmentation_map = "seg_map.fits"
@@ -332,9 +320,8 @@ def two_source_input(tmp_cwd, grism_wcs):  # noqa: ARG001
     model.close()
 
 
-def _make_slit(source_id, order, xstart, ystart, data, wavelength=None, **fluxmodels):
-    """Helper: build a minimal SlitModel."""
-    slit = SlitModel()
+def _make_slit(source_id, order, xstart, ystart, data, **fluxmodels):
+    slit = dm.SlitModel()
     slit.source_id = source_id
     slit.meta.wcsinfo.spectral_order = order
     slit.xstart = xstart
@@ -343,8 +330,6 @@ def _make_slit(source_id, order, xstart, ystart, data, wavelength=None, **fluxmo
     slit.dq = np.zeros(data.shape, dtype=np.uint32)
     slit.xsize = data.shape[1]
     slit.ysize = data.shape[0]
-    if wavelength is not None:
-        slit.wavelength = wavelength.astype(np.float32)
     for k, v in fluxmodels.items():
         setattr(slit, k, v.astype(np.float32))
     return slit
@@ -354,52 +339,46 @@ def test_iteration_improves_contamination_correction(
     two_source_input, wavelengthrange_ref_model, photom_ref_model_niriss, monkeypatch
 ):
     """
-    Verify the iterative contamination correction by calling ``contam_corr``
-    directly, with ``Observation`` monkeypatched to inject pre-built simulated
-    slits whose spectral shape is known exactly.
+    Test that iterative contamination correction is working.
 
-    Scenario
-    --------
-    Two sources (A and B) with partially overlapping grism traces on the
-    Source A's trace spans detector rows 1-40 and source B's spans
-    rows 38-77 (a 3-row overlap).
+    Two sources (A and B) with partially overlapping grism traces.
+    Source A has trace spanning detector rows 1-40.
+    Source B has trace spanning rows 38-77 (a 3-row overlap).
 
-    Source A has a spectrum linear in wavelength:  signal_A = 1.0 + 0.6 * dlam
-    Source B has a different linear spectrum:     signal_B = 1.0 - 0.8 * dlam
+    Source A has a linear spectrum: f_A = 1.0 + 0.6 * dlam
+    Source B has a different linear spectrum: f_B = 1.0 - 0.8 * dlam
 
-    In the overlapping rows each slit also carries the neighbor's signal.
+    In the overlapping rows each slit is contaminated by the other.
     A flat-spectrum simulation (polyfit_degree=None) leaves large spectral
     residuals in those rows.  With polyfit_degree=1 the fitted shapes
     reduce the residual, and with iteration over contamination we converge to near
     exact recovery.
     """
-    flat, tilt, wavelength, true_A, true_B = _iter_geometry()
+    flat, tilt, true_A, true_B = _iter_geometry()
 
-    def make_obs_fake():
-        """Return a fresh SimpleNamespace with pre-built simulated slits."""
+    def MockObservation():
+        """Use SimpleNamespace to make a mock Observation object with pre-built simulated slits."""
         obs = types.SimpleNamespace()
-        simul_A = _make_slit(
-            1, 1, _ITER_XA, _ITER_YA, flat.copy(), wavelength, fluxmodel_1=tilt.copy()
-        )
-        simul_B = _make_slit(
-            2, 1, _ITER_XB, _ITER_YB, flat.copy(), wavelength, fluxmodel_1=tilt.copy()
-        )
-        obs.simulated_slits = MultiSlitModel()
+        simul_A = _make_slit(1, 1, _ITER_XA, _ITER_YA, flat.copy(), fluxmodel_1=tilt.copy())
+        simul_B = _make_slit(2, 1, _ITER_XB, _ITER_YB, flat.copy(), fluxmodel_1=tilt.copy())
+        obs.simulated_slits = dm.MultiSlitModel()
         obs.simulated_slits.slits.extend([simul_A, simul_B])
         obs.simulated_image = np.zeros(_ITER_FRAME_SHAPE)
         obs.source_ids = {1, 2}
+        # disperse becomes a function that does nothing.
+        # Normally it would set the attributes we pre-set above.
         obs.disperse_order = lambda *args, **kwargs: None
         return obs
 
     # Inject our fake Observation so no real dispersion is performed.
     monkeypatch.setattr(
         "jwst.wfss_contam.wfss_contam.Observation",
-        lambda *args, **kwargs: make_obs_fake(),
+        lambda *args, **kwargs: MockObservation(),
     )
-    # Bypass the grism-WCS order-validity check (WCS is a fixture mock).
+    # Bypass the grism-WCS order-validity check (WCS is a mock).
     monkeypatch.setattr(
         "jwst.wfss_contam.wfss_contam._validate_orders_against_transform",
-        lambda wcs, orders: orders,
+        lambda _wcs, orders: orders,
     )
 
     def _run(n_iter, polyfit_degree):
@@ -429,10 +408,5 @@ def test_iteration_improves_contamination_correction(
     rms_1iter = _total_rms(corrected_1iter)
     rms_3iter = _total_rms(corrected_3iter)
 
-    assert rms_1iter < rms_flat, (
-        f"Single fitted iteration (RMS={rms_1iter:.4f}) should beat "
-        f"flat-spectrum correction (RMS={rms_flat:.4f})"
-    )
-    assert rms_3iter < rms_1iter, (
-        f"3 iterations (RMS={rms_3iter:.4f}) should beat 1 iteration (RMS={rms_1iter:.4f})"
-    )
+    assert rms_1iter < rms_flat
+    assert rms_3iter < rms_1iter

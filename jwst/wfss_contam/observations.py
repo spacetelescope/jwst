@@ -392,14 +392,14 @@ def _aggregate_by_source(results, sid, source_results):
     results : dict
         Dictionary containing the results for each source ID in the current chunk, in the format:
         {source_id: {"bounds": [xmin, xmax, ymin, ymax], "image": 2D array,
-        "wavelengths": 2D array}}
+        "model_counts": list of 2D arrays}}
     sid : int
         Source ID
     source_results : dict
-        Dictionary to store simulated image, wavelengths, and bounds for each source ID,
+        Dictionary to store simulated image and bounds for each source ID,
         in the format:
         {source_id: {"bounds": [xmin, xmax, ymin, ymax], "image": 2D array,
-        "wavelengths": 2D array, "weight_sum": 2D array}}
+        "model_counts": list of 2D arrays}}
         Updated in place.
     """
     if sid not in source_results:

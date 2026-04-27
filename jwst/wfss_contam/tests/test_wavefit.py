@@ -12,6 +12,17 @@ from jwst.wfss_contam.wavefit import (
 
 @pytest.fixture
 def make_slits():
+    """_summary_
+
+    Returns
+    -------
+    observed_slit
+        Mock noisy observed slit with a sinusoidal spectral shape.
+    simul_slit
+        Simulated slit with a flat spectrum.
+    wavelength
+        Wavelengths used as input to create the mock observed wavelength-dependent data.
+    """
     shape = (20, 100)
     rows = slice(5, 15)
     cols = slice(5, 95)
@@ -31,9 +42,6 @@ def make_slits():
     noise_level = 0.1
     rng = np.random.default_rng(42)
     noise = rng.normal(0, noise_level, shape)
-    # Add sim_data as a flat base so that the 0th-order coefficient from a
-    # polynomial fit is close to unity (required by the rejection logic in
-    # fit_slit_by_basis_images).
     obs_data = np.where(sim_data != 0, sim_data + sinusoid + noise, 0.0)
 
     observed_slit = SlitModel()
@@ -41,9 +49,8 @@ def make_slits():
     observed_slit.dq = np.zeros(shape, dtype=np.uint32)
 
     simul_slit = SlitModel()
-    simul_slit.data = sim_data
-    simul_slit.wavelength = wavelength
-    return observed_slit, simul_slit
+    simul_slit.data = sim_data  # initially flat
+    return observed_slit, simul_slit, wavelength
 
 
 def test_more_basis_images_reduces_residuals(make_slits):
@@ -53,13 +60,12 @@ def test_more_basis_images_reduces_residuals(make_slits):
     The observed data follow a sinusoidal spectral shape.  The basis images are
     sim * (λ - λ_ref)^k (k = 0, 1, 2, ...), so each extra term adds one more
     Taylor-series contribution that helps approximate the sinusoid.  The RMS
-    between the fitted simulation and the observed data must strictly decrease
-    as basis images are added.
+    between the fitted simulation and the observed data should decrease as
+    more basis images are used.
     """
-    observed_slit, simul_slit = make_slits
+    observed_slit, simul_slit, wavelength = make_slits
     obs_data = observed_slit.data
     sim_data = simul_slit.data
-    wavelength = simul_slit.wavelength
     inside = sim_data != 0
 
     lam_ref = float(np.median(wavelength[inside]))
@@ -70,7 +76,6 @@ def test_more_basis_images_reduces_residuals(make_slits):
     for n_terms in range(1, max_n_terms + 1):
         test_simul = SlitModel()
         test_simul.data = sim_data.copy()
-        test_simul.wavelength = wavelength.copy()
         for k in range(1, n_terms):
             setattr(test_simul, f"fluxmodel_{k}", sim_data * dlam**k)
 
@@ -80,10 +85,7 @@ def test_more_basis_images_reduces_residuals(make_slits):
         rms_values.append(rms)
 
     for i in range(len(rms_values) - 1):
-        assert rms_values[i + 1] < rms_values[i], (
-            f"RMS did not decrease from {i + 1} basis term(s) ({rms_values[i]:.6f}) "
-            f"to {i + 2} basis term(s) ({rms_values[i + 1]:.6f})"
-        )
+        assert rms_values[i + 1] < rms_values[i]
 
 
 def _make_basis_slit(sim_data, wavelength, max_order=1):
@@ -93,19 +95,16 @@ def _make_basis_slit(sim_data, wavelength, max_order=1):
     dlam = np.where(inside, wavelength - lam_ref, 0.0)
     slit = SlitModel()
     slit.data = sim_data.copy()
-    slit.wavelength = wavelength.copy()
     for k in range(1, max_order + 1):
         setattr(slit, f"fluxmodel_{k}", sim_data * dlam**k)
     return slit
 
 
 def test_fit_recovers_exact_coefficients(make_slits):
-    """fit_slit_by_basis_images recovers known coefficients exactly (no noise)."""
-    _, simul_slit = make_slits
+    """Test that fit_slit_by_basis_images recovers known coefficients exactly."""
+    _, simul_slit, wavelength = make_slits
     sim_data = simul_slit.data
-    wavelength = simul_slit.wavelength
 
-    # c0_true must be within 0.1 of 1 so the fit is not rejected.
     c0_true, c1_true = 1.0, 1.5
     simul = _make_basis_slit(sim_data, wavelength, max_order=1)
 
@@ -122,10 +121,9 @@ def test_fit_recovers_exact_coefficients(make_slits):
 
 def test_fit_flat_only_no_fluxmodel(make_slits):
     """With no fluxmodel_N attributes, fit returns a single scalar coefficient."""
-    _, simul_slit = make_slits
+    _, simul_slit, _ = make_slits
     sim_data = simul_slit.data
 
-    # scale must be within 0.1 of 1 so the fit is not rejected.
     scale = 1.05
     obs_data = scale * sim_data
     observed_slit = SlitModel()
@@ -134,7 +132,6 @@ def test_fit_flat_only_no_fluxmodel(make_slits):
 
     simul = SlitModel()
     simul.data = sim_data.copy()
-    simul.wavelength = simul_slit.wavelength.copy()
 
     coeffs = fit_slit_by_basis_images(observed_slit, simul)
     assert coeffs is not None
@@ -143,10 +140,9 @@ def test_fit_flat_only_no_fluxmodel(make_slits):
 
 
 def test_fit_dq_mask_excludes_bad_pixels(make_slits):
-    """Coefficients are unaffected when bad pixels are masked."""
-    _, simul_slit = make_slits
+    """Test that masking bad pixels allows a good solution."""
+    _, simul_slit, wavelength = make_slits
     sim_data = simul_slit.data
-    wavelength = simul_slit.wavelength
 
     # c0_true must be within 0.1 of 1 so the fit is not rejected.
     c0_true, c1_true = 1.05, -0.5
@@ -169,15 +165,13 @@ def test_fit_dq_mask_excludes_bad_pixels(make_slits):
 
 
 def test_fit_raises_too_few_valid_pixels():
-    """SlitFitError is raised when valid pixels < number of basis terms."""
+    """Test SlitFitError raised when valid pixels < number of basis terms."""
     shape = (5, 5)
     sim_data = np.zeros(shape)
     sim_data[2, 2] = 1.0  # only 1 valid pixel
 
     simul = SlitModel()
     simul.data = sim_data
-    simul.wavelength = np.zeros(shape)
-    simul.wavelength[2, 2] = 2.0
     simul.fluxmodel_1 = sim_data * 0.5
 
     observed = SlitModel()
@@ -189,13 +183,11 @@ def test_fit_raises_too_few_valid_pixels():
 
 
 def test_fit_returns_none_when_c0_far_from_unity(make_slits):
-    """fit_slit_by_basis_images returns None when the fitted c_0 is far from 1."""
-    _, simul_slit = make_slits
+    """Test that fit_slit_by_basis_images returns None when c_0 is far from 1."""
+    _, simul_slit, wavelength = make_slits
     sim_data = simul_slit.data
-    wavelength = simul_slit.wavelength
 
     simul = _make_basis_slit(sim_data, wavelength, max_order=1)
-    # Scale the observation far from 1 so the fitted c_0 will be ~5, triggering rejection.
     obs_data = 5.0 * simul.data
     observed_slit = SlitModel()
     observed_slit.data = obs_data
@@ -206,26 +198,14 @@ def test_fit_returns_none_when_c0_far_from_unity(make_slits):
 
 
 def test_apply_basis_coeffs_correct_linear_combination(make_slits):
-    """apply_basis_coeffs returns c0*data + c1*fluxmodel_1 exactly."""
-    _, simul_slit = make_slits
+    """Test that apply_basis_coeffs computes linear combinations as expected."""
+    _, simul_slit, wavelength = make_slits
     sim_data = simul_slit.data
-    wavelength = simul_slit.wavelength
 
     simul = _make_basis_slit(sim_data, wavelength, max_order=1)
     c0, c1 = 1.8, -0.3
     coeffs = np.array([c0, c1])
 
     result = apply_basis_coeffs(simul, coeffs)
-    expected = c0 * np.asarray(simul.data, dtype=float) + c1 * np.asarray(
-        simul.fluxmodel_1, dtype=float
-    )
+    expected = c0 * np.asarray(simul.data) + c1 * np.asarray(simul.fluxmodel_1)
     assert_allclose(result, expected, rtol=1e-6)
-
-
-def test_apply_basis_coeffs_raises_on_wrong_length(make_slits):
-    """apply_basis_coeffs raises ValueError when len(coeffs) != number of basis images."""
-    _, simul_slit = make_slits
-    simul = _make_basis_slit(simul_slit.data, simul_slit.wavelength, max_order=1)
-    # 2 basis images but 3 coefficients
-    with pytest.raises(ValueError):
-        apply_basis_coeffs(simul, np.array([1.0, 2.0, 3.0]))

@@ -233,8 +233,7 @@ def wavelengthrange_ref_model():
     Returns
     -------
     types.SimpleNamespace
-        Duck-typed wavelength-range reference with `order` and
-        `get_wfss_wavelength_range` attributes.
+        Mock class with `order` and `get_wfss_wavelength_range` attributes.
     """
     wr = types.SimpleNamespace()
     wr.order = np.array([1])

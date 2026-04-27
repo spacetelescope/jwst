@@ -90,13 +90,20 @@ def test_flux_models_scalar_scaling(grism_wcs, direct_image_with_gradient):
 
 
 def test_flux_models_superposition(grism_wcs, direct_image_with_gradient):
-    """The sum of two separate model images should equal the image from their combined model."""
+    """
+    The sum of two separate model images should equal the image from their combined model.
+
+    This somewhat explains why using basis functions this way is mathematically valid
+    if the basis models are being linearly combined, it doesn't matter if they are combined
+    before or after discretizing the dispersed image onto a pixel grid.
+    """
     wcs = direct_image_with_gradient.meta.wcs
     f1 = lambda x: x
     f2 = lambda x: x**2
+    fsum = lambda x: f1(x) + f2(x)
 
     src_sep = _disperse_one_pixel(grism_wcs, wcs, basis_models=[f1, f2])
-    src_sum = _disperse_one_pixel(grism_wcs, wcs, basis_models=[lambda x: f1(x) + f2(x)])
+    src_sum = _disperse_one_pixel(grism_wcs, wcs, basis_models=[fsum])
 
     combined = src_sep[_SOURCE_ID]["model_counts"][0] + src_sep[_SOURCE_ID]["model_counts"][1]
     assert_allclose(combined, src_sum[_SOURCE_ID]["model_counts"][0], rtol=1e-10)
