@@ -7,6 +7,7 @@ from jwst.lib.reffile_utils import (
     find_row,
     generate_stripe_array,
     get_subarray_model,
+    ref_matches_sci,
     science_detector_frame_transform,
 )
 
@@ -343,3 +344,42 @@ def test_roundtrip(fastaxis, slowaxis):
     forward = science_detector_frame_transform(test_array.copy(), fastaxis, slowaxis)
     reverse = detector_science_frame_transform(forward.copy(), fastaxis, slowaxis)
     assert np.allclose(reverse, test_array)
+
+
+def test_ref_matches_sci_nircam_subarray():
+    # Mock subarray ramp
+    sub_meta = {
+        "name": "SUBGRISM256",
+        "fastaxis": -1,
+        "slowaxis": 2,
+        "xsize": 2048,
+        "xstart": 1,
+        "ysize": 256,
+        "ystart": 1,
+    }
+    mock_sci = RampModel(data=np.ones((5, 5, 256, 2048)))
+    mock_sci.meta.subarray = sub_meta
+
+    # Mock full size readnoise
+    mock_rn = ReadnoiseModel(data=np.ones((2048, 2048), dtype=int))
+    mock_rn.meta.instrument.name = "NIRCAM"
+    generate_test_refmodel_metadata(mock_rn)
+
+    # Does not match science
+    assert not ref_matches_sci(mock_sci, mock_rn)
+
+    # Mock subarray RN
+    mock_sub_rn = ReadnoiseModel(data=np.ones((256, 2048), dtype=int))
+    mock_sub_rn.meta.instrument.name = "NIRCAM"
+    generate_test_refmodel_metadata(mock_sub_rn)
+    mock_sub_rn.meta.subarray = sub_meta
+
+    # Does match science
+    assert ref_matches_sci(mock_sci, mock_sub_rn)
+
+    # Mock superstripe model without any other changes
+    # This is unrealistic, but sufficient to check the handling in this function.
+    mock_sci.meta.subarray.num_superstripe = 3
+
+    # Does not match science: superstripes always need special handling
+    assert not ref_matches_sci(mock_sci, mock_rn)
