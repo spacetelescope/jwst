@@ -419,9 +419,9 @@ def _fit_spectral_shape(
         Its ``.data`` attribute is updated in-place with the spectrally fitted result.
     simul_slit_backplane_unmatched : `~stdatamodels.jwst.datamodels.SlitModel`
         The simulation in ``obs.simulated_slits`` without backplane matching applied.
-        This is tracked independently from ``simul_slit`` because sometimes the extraction
-        of the observed slit from extract_2d doesn't match the extraction of the simulated
-        slit based on the direct image cutout.
+        This is tracked independently from ``simul_slit`` because the extraction
+        of the observed slit from extract_2d often misses flux from the extended PSF wings,
+        whereas the simulation in this step disperses the whole segment, including those wings.
         Its ``.data`` is updated in-place so the full-frame reconstruction
         reflects the fitted spectral shape.
     polyfit_degree : int or None
@@ -473,7 +473,7 @@ def contam_corr(
     oversample_factor=2,
     polyfit_degree=None,
     n_iterations=1,
-    l2_alpha=0.0,
+    l2_alpha=0.1,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -516,12 +516,10 @@ def contam_corr(
         polynomial fit is re-run using the contamination-corrected spectrum from the
         previous iteration, yielding a progressively better estimate of each source's
         true spectral shape (and therefore a better contamination estimate for its
-        neighbours). Requires ``polyfit_degree`` to be set; if ``polyfit_degree`` is
+        neighbors). Requires ``polyfit_degree`` to be set; if ``polyfit_degree`` is
         None this parameter is ignored and a single iteration is performed.
     l2_alpha : float, optional
-        L2 regularisation strength for the polynomial spectral fit.  Passed directly
-        to `~jwst.wfss_contam.wavefit.fit_slit_by_basis_images`.
-        Default is ``0.0`` (ordinary least squares).
+        L2 regularization strength for the polynomial spectral fit.
 
     Returns
     -------
@@ -611,7 +609,6 @@ def contam_corr(
         # Build Legendre basis flux models for disperse() if polynomial fitting is requested.
         # wmin/wmax are order-specific, so construction must happen inside the order loop.
         # The constant term (k=0, i.e. slit.data) is always included; start at degree 1.
-        # Can't use lambdas here because they are not picklable for multiprocessing.
         basis_models = None
         if polyfit_degree is not None:
             basis_models = [_LegendreFluxModel(k, wmin, wmax) for k in range(1, polyfit_degree + 1)]
@@ -735,7 +732,11 @@ def contam_corr(
             f"in iteration {iteration + 1}. Turn on debug logging for details of failures."
         )
 
-        # Rebuild full-frame simulation from the (possibly fitted) simulated slits.
+        # Rebuild full-frame simulation from the simulated slits.
+        # This accounts for the fitted flux if a matched observation was found and the fit
+        # was successful.  Otherwise this is just the flat simulation.
+        # It always includes all simulated sources even if unmatched to observed slits, e.g.
+        # because extract_2d was run with a small value of wfss_nbright.
         simul_data = _build_simulated_image_from_slits(
             obs.simulated_slits, obs.simulated_image.shape
         )
