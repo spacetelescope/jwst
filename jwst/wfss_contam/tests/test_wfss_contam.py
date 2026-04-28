@@ -341,7 +341,7 @@ def test_iteration_improves_contamination_correction(
     """
     Test that iterative contamination correction is working.
 
-    Two sources (A and B) with partially overlapping grism traces.
+    The fixture makes two sources (A and B) with partially overlapping grism traces.
     Source A has trace spanning detector rows 1-40.
     Source B has trace spanning rows 38-77 (a 3-row overlap).
 
@@ -349,9 +349,9 @@ def test_iteration_improves_contamination_correction(
     Source B has a different linear spectrum: f_B = 1.0 - 0.8 * dlam
 
     In the overlapping rows each slit is contaminated by the other.
-    A flat-spectrum simulation (polyfit_degree=None) leaves large spectral
-    residuals in those rows.  With polyfit_degree=1 the fitted shapes
-    reduce the residual, and with iteration over contamination we converge to near
+    A flat-spectrum simulation (``polyfit_degree=None``) leaves large spectral
+    residuals in those rows.  With ``polyfit_degree=1`` the fitted shapes
+    reduce the residual, and with ``n_iterations=3`` we converge to near
     exact recovery.
     """
     flat, tilt, true_A, true_B = _iter_geometry()
@@ -365,17 +365,17 @@ def test_iteration_improves_contamination_correction(
         obs.simulated_slits.slits.extend([simul_A, simul_B])
         obs.simulated_image = np.zeros(_ITER_FRAME_SHAPE)
         obs.source_ids = {1, 2}
-        # disperse becomes a function that does nothing.
+        # disperse() becomes a function that does nothing.
         # Normally it would set the attributes we pre-set above.
         obs.disperse_order = lambda *args, **kwargs: None
         return obs
 
-    # Inject our fake Observation so no real dispersion is performed.
+    # Inject our fake Observation so no real dispersion is performed
     monkeypatch.setattr(
         "jwst.wfss_contam.wfss_contam.Observation",
         lambda *args, **kwargs: MockObservation(),
     )
-    # Bypass the grism-WCS order-validity check (WCS is a mock).
+    # Bypass the grism-WCS order-validity check
     monkeypatch.setattr(
         "jwst.wfss_contam.wfss_contam._validate_orders_against_transform",
         lambda _wcs, orders: orders,

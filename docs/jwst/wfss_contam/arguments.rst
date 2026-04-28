@@ -52,7 +52,7 @@ Polynomial fitting parameters
 -----------------------------
 
 ``--polyfit_degree``
-  An integer specifying the degree of the polynomial used to fit the spectral shape of each
+  An integer specifying the maximum degree of the polynomial used to fit the spectral shape of each
   source before computing the contamination estimate. If ``None`` (the default), no polynomial
   fitting is applied and the direct image flux values are used as-is (i.e., a "flat" spectrum).
 

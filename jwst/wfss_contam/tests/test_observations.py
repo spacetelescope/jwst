@@ -130,30 +130,17 @@ def test_aggregate_by_source():
     # chunk A: x=[0,1], y=[0,1] is put into results
     img_a = np.full((2, 2), 1.0)
     bounds_a = [0, 1, 0, 1]
-    results = {
-        1: {
-            "bounds": bounds_a,
-            "image": img_a,
-        }
-    }
+    results = {1: {"bounds": bounds_a, "image": img_a}}
 
     # chunk B: x=[2,3], y=[0,1]  (adjacent in x, same y range) is put into source_results
     img_b = np.full((2, 2), 2.0)
     bounds_b = [2, 3, 0, 1]
-    source_results = {
-        1: {
-            "bounds": bounds_b,
-            "image": img_b,
-        }
-    }
+    source_results = {1: {"bounds": bounds_b, "image": img_b}}
 
     # add another source to results
     img = np.ones((3, 3))
     bounds = [5, 7, 5, 7]
-    results[0] = {
-        "bounds": bounds,
-        "image": img,
-    }
+    results[0] = {"bounds": bounds, "image": img}
 
     # aggregate both sources
     for sid in [0, 1]:

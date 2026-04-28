@@ -79,7 +79,9 @@ Here we describe the steps used to perform the contamination correction:
    from the simulated cutout, leaving only the simulated spectra of any nearby
    contaminating sources.
 4. The simulated contamination cutout is subtracted from the observed source cutout,
-   thereby removing the signal from contaminating spectra.
+   thereby removing the signal from contaminating spectra. If polynomial fitting is 
+   enabled, see the section on :ref:`Polynomial Flux Modeling` below for details
+   on how this modifies steps 3 & 4.
 
 Outputs
 -------
@@ -102,13 +104,13 @@ Polynomial Flux Modeling
 
 By default, each source is simulated with a spectrally flat flux model - that is, the
 flux at every wavelength is taken directly from the direct image pixel values. 
-When the step argument ``--polyfit_degree`` is set to an integer *N*, the step
-fits a more flexible spectral model to each source. The procedure is:
+When the step argument ``--polyfit_degree`` is set to an integer ``N``, the step
+fits a spectral model to each source. The procedure is:
 
 1. In addition to the standard flat-spectrum simulation (the constant, degree-0 term),
-   *N* additional grism-frame images are simulated for each source, where for the ith
-   simulation from ``i=1`` to ``i=N``, the spectral flux distribution is assumed to follow
-   the ith order Legendre polynomial. Legendre polynomials were chosen because
+   *N* additional grism-frame images are simulated for each source, where for the *i*th
+   simulation from *i* = 1 to *i* = *N*, the spectral flux distribution is assumed to follow
+   the *i*th order Legendre polynomial. Legendre polynomials were chosen because
    they form an orthogonal basis set, which makes the fitter prefer smaller coefficients
    instead of oscillating large positive and negative coefficients.
    Recall that each dispersed-image pixel represents
@@ -121,10 +123,10 @@ fits a more flexible spectral model to each source. The procedure is:
 
    .. math::
 
-      \text{observed} \approx c_0 \cdot B_0 + c_1 \cdot B_1 + \cdots + c_N \cdot B_N
+      \text{observed} \approx c_0 \cdot B_0 + c_1 \cdot P_1(\lambda) + \cdots + c_N \cdot P_N(\lambda)
 
-   where :math:`B_0` is the flat-spectrum simulation and :math:`B_k` is the simulation
-   driven by the :math:`\lambda^k`-order flux model.  The coefficients :math:`c_k` are
+   where :math:`B_0` is the flat-spectrum simulation and :math:`P_k(\lambda)` is the simulation
+   driven by the :math:`k`-th order Legendre polynomial flux model.  The coefficients :math:`c_k` are
    determined using a linear least-squares fit with L2 regularization, the strength of 
    which is set by the step argument ``--l2_alpha``. The regularization helps to
    keep the coefficients small, guarding against physically implausible flux distributions.

@@ -12,12 +12,15 @@ from jwst.wfss_contam.wavefit import (
 
 @pytest.fixture
 def make_slits():
-    """_summary_
+    """
+    Make a pair of simulated and observed SlitModel objects.
+
+    Observed data has a sinusoidal spectral shape plus noise; simulated data is initially flat.
 
     Returns
     -------
     observed_slit
-        Mock noisy observed slit with a sinusoidal spectral shape.
+        Mock observed slit with a sinusoidal spectral shape.
     simul_slit
         Simulated slit with a flat spectrum.
     wavelength
@@ -36,8 +39,9 @@ def make_slits():
     sim_data[rows, cols] = 1.0
 
     # Sinusoidal spectrum with a phase offset so the function is neither purely
-    # odd nor purely even about lam_ref, ensuring every polynomial degree contributes.
-    period = wl_max - wl_min  # one full cycle across the wavelength range
+    # odd nor purely even about lam_ref.
+    # Otherwise some basis functions might not contribute to the fit.
+    period = wl_max - wl_min
     sinusoid = np.sin(np.pi * wavelength / period)
     noise_level = 0.1
     rng = np.random.default_rng(42)
@@ -49,13 +53,13 @@ def make_slits():
     observed_slit.dq = np.zeros(shape, dtype=np.uint32)
 
     simul_slit = SlitModel()
-    simul_slit.data = sim_data  # initially flat
+    simul_slit.data = sim_data
     return observed_slit, simul_slit, wavelength
 
 
 def test_more_basis_images_reduces_residuals(make_slits):
     """
-    Adding more fluxmodel_N basis images progressively reduces fit residuals.
+    Adding more ``fluxmodel_N`` basis images progressively reduces fit residuals.
 
     The observed data follow a sinusoidal spectral shape.  The basis images are
     sim * (λ - λ_ref)^k (k = 0, 1, 2, ...), so each extra term adds one more
@@ -101,7 +105,7 @@ def _make_basis_slit(sim_data, wavelength, max_order=1):
 
 
 def test_fit_recovers_exact_coefficients(make_slits):
-    """Test that fit_slit_by_basis_images recovers known coefficients exactly."""
+    """Test that fit_slit_by_basis_images recovers known coefficients exactly for noise-free case."""
     _, simul_slit, wavelength = make_slits
     sim_data = simul_slit.data
 
@@ -140,11 +144,10 @@ def test_fit_flat_only_no_fluxmodel(make_slits):
 
 
 def test_fit_dq_mask_excludes_bad_pixels(make_slits):
-    """Test that masking bad pixels allows a good solution."""
+    """Test that masking of bad pixels is happening."""
     _, simul_slit, wavelength = make_slits
     sim_data = simul_slit.data
 
-    # c0_true must be within 0.1 of 1 so the fit is not rejected.
     c0_true, c1_true = 1.05, -0.5
     simul = _make_basis_slit(sim_data, wavelength, max_order=1)
     clean_obs = c0_true * simul.data + c1_true * simul.fluxmodel_1
@@ -183,7 +186,11 @@ def test_fit_raises_too_few_valid_pixels():
 
 
 def test_fit_returns_none_when_c0_far_from_unity(make_slits):
-    """Test that fit_slit_by_basis_images returns None when c_0 is far from 1."""
+    """
+    Test that fit_slit_by_basis_images returns None when c_0 is far from 1.
+
+    For now this is a hard-coded 'bad fit' criterion.
+    """
     _, simul_slit, wavelength = make_slits
     sim_data = simul_slit.data
 
