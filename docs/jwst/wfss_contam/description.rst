@@ -80,7 +80,7 @@ Here we describe the steps used to perform the contamination correction:
    contaminating sources.
 4. The simulated contamination cutout is subtracted from the observed source cutout,
    thereby removing the signal from contaminating spectra. If polynomial fitting is 
-   enabled, see the section on :ref:`Polynomial Flux Modeling` below for details
+   enabled, see the section on :ref:`polynomial_flux_modeling` below for details
    on how this modifies steps 3 & 4.
 
 Outputs
@@ -99,6 +99,8 @@ There is one primary output and two optional outputs from the step:
    contamination cutouts (the result of step 3 above) are saved to a file.
    See :ref:`wfss_contam_step_args`.
 
+.. _polynomial_flux_modeling:
+
 Polynomial Flux Modeling
 ------------------------
 
@@ -108,9 +110,9 @@ When the step argument ``--polyfit_degree`` is set to an integer ``N``, the step
 fits a spectral model to each source. The procedure is:
 
 1. In addition to the standard flat-spectrum simulation (the constant, degree-0 term),
-   *N* additional grism-frame images are simulated for each source, where for the *i*th
+   *N* additional grism-frame images are simulated for each source, where for the *i*\ th
    simulation from *i* = 1 to *i* = *N*, the spectral flux distribution is assumed to follow
-   the *i*th order Legendre polynomial. Legendre polynomials were chosen because
+   the *i*\ th order Legendre polynomial. Legendre polynomials were chosen because
    they form an orthogonal basis set, which makes the fitter prefer smaller coefficients
    instead of oscillating large positive and negative coefficients.
    Recall that each dispersed-image pixel represents
