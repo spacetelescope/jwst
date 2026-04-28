@@ -32,13 +32,9 @@ class _LegendreFluxModel:
     """
     Picklable callable that evaluates the k-th Legendre polynomial.
 
-    The wavelength argument is mapped from ``[wmin, wmax]`` to ``[-1, 1]`` before
-    evaluation.  Using an orthogonal Legendre basis rather than standard monomials
-    (``x**k``) keeps the design matrix well-conditioned, avoiding the large
-    sign-alternating coefficients that arise when monomial basis images are nearly
-    collinear over a bounded wavelength interval.
-
     Callables need to be picklable so that they can be used in multiprocessing contexts.
+    The wavelength argument is mapped from ``[wmin, wmax]`` to ``[-1, 1]`` before
+    evaluation.
     """
 
     def __init__(self, k, wmin, wmax):
@@ -135,7 +131,7 @@ def match_backplane_prefer_first(slit0, slit1):
     Returns
     -------
     slit1 : `~stdatamodels.jwst.datamodels.SlitModel`
-        Reshaped slit model slit1.
+        Reshaped slit model.
     """
     data0 = slit0.data
     data1 = slit1.data
@@ -157,8 +153,9 @@ def match_backplane_prefer_first(slit0, slit1):
     di = i0 - y1  # offset into data1's own row axis
     dj = j0 - x1  # offset into data1's own col axis
     backplane1[i0:i1, j0:j1] = data1[di : di + (i1 - i0), dj : dj + (j1 - j0)]
-
     slit1.data = backplane1
+
+    # also update fluxmodel attributes if present
     k = 1
     while True:
         attr = f"fluxmodel_{k}"
@@ -285,9 +282,9 @@ def _build_simulated_image_from_slits(simulated_slits, shape):
     """
     Reconstruct the full-frame simulated image from the simulated slits.
 
-    This replaces just using ``obs.simulated_image`` because the simulated slits
-    get modified by spectral fitting, while ``obs.simulated_image`` is still
-    the original flat-spectrum simulation.
+    This is needed instead of just using ``obs.simulated_image`` because when
+    spectral fitting is requested, the simulated slits get modified, and the
+    modifications need to end up in the simul file.
 
     Parameters
     ----------
@@ -362,11 +359,12 @@ def _apply_magnitude_limit(
 
 def _match_simulated_slits(output_model, obs):
     """
-    Match each observed slit to its flat-spectrum simulated counterpart.
+    Match each observed slit to its simulated counterpart.
 
     Reprojects the simulated slit onto the same backplane as the observed slit.
-    Slits that have no matching simulation (wrong source ID or no spatial overlap)
-    are represented as ``None`` in the returned lists.
+    If the slit ID is not found in the simulated slits, or if there is no spatial overlap between
+    the observed slit and the simulated slit, the slit is skipped and represented as ``None``
+    in the returned list.
 
     Parameters
     ----------
@@ -377,8 +375,8 @@ def _match_simulated_slits(output_model, obs):
 
     Returns
     -------
-    matched_flat_simuls : list of `~stdatamodels.jwst.datamodels.SlitModel` or None
-        Flat-spectrum simulated slit reprojected onto each observed slit's backplane,
+    matched_flat_simuls : list of `~stdatamodels.jwst.datamodels.SlitModel`
+        Simulated slit reprojected onto each observed slit's backplane,
         or ``None`` where no match was found.
     good_idxs : list of int or None
         Index into ``obs.simulated_slits.slits`` for each observed slit,
@@ -404,24 +402,26 @@ def _match_simulated_slits(output_model, obs):
     return matched_flat_simuls, good_idxs
 
 
-def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree, l2_alpha=0.0):
+def _fit_spectral_shape(
+    observed_slit, simul_slit, simul_slit_backplane_unmatched, polyfit_degree, l2_alpha=0.0
+):
     """
     Fit a polynomial spectral shape to one slit and apply the result in-place.
-
-    If ``polyfit_degree`` is ``None``, or if the simulated slit carries no
-    ``fluxmodel_1`` basis image, the slit is left unchanged.
 
     Parameters
     ----------
     observed_slit : `~stdatamodels.jwst.datamodels.SlitModel`
         Observed slit whose ``.data`` is used as the target for the fit.
-        Typically this holds the contamination-corrected data from the previous
-        iteration.
+        If ``n_iterations > 1``, this holds the contamination-corrected data
+        from the previous iteration.
     simul_slit : `~stdatamodels.jwst.datamodels.SlitModel`
-        Simulated slit (matched to ``observed_slit``'s backplane).
-        Its ``.data`` is updated in-place with the spectrally fitted result.
-    full_res_slit : `~stdatamodels.jwst.datamodels.SlitModel`
-        The corresponding full-resolution entry in ``obs.simulated_slits``.
+        Simulated slit, already backplane-matched to ``observed_slit``.
+        Its ``.data`` attribute is updated in-place with the spectrally fitted result.
+    simul_slit_backplane_unmatched : `~stdatamodels.jwst.datamodels.SlitModel`
+        The simulation in ``obs.simulated_slits`` without backplane matching applied.
+        This is tracked independently from ``simul_slit`` because sometimes the extraction
+        of the observed slit from extract_2d doesn't match the extraction of the simulated
+        slit based on the direct image cutout.
         Its ``.data`` is updated in-place so the full-frame reconstruction
         reflects the fitted spectral shape.
     polyfit_degree : int or None
@@ -448,7 +448,9 @@ def _fit_spectral_shape(observed_slit, simul_slit, full_res_slit, polyfit_degree
         if coeffs is None:
             return False
         simul_slit.data = apply_basis_coeffs(simul_slit, coeffs)
-        full_res_slit.data = apply_basis_coeffs(full_res_slit, coeffs)
+        simul_slit_backplane_unmatched.data = apply_basis_coeffs(
+            simul_slit_backplane_unmatched, coeffs
+        )
     except SlitFitError as e:
         log.debug(
             f"Polynomial fitting failed for slit with source ID {observed_slit.source_id}, "

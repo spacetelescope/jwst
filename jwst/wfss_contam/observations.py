@@ -222,9 +222,10 @@ class Observation:
         max_pixels : int, optional
             Maximum number of pixels per chunk.
         basis_models : list of callables, optional
-            Flux distributions to evaluate at each wavelength. Typically these will be single
-            polynomial orders, e.g. [lambda x: x, lambda x: x^2], ...] the coefficients of which
-            are linearly fit later. If None, no models are included in the output.
+            Flux distributions to evaluate at each wavelength. Typically these will be
+            Legendre polynomials from 1st order up to a given max order, e.g.
+            [P1(x), P2(x), ...], the coefficients of which are linearly fit later.
+            If None, no models are included in the output.
 
         Returns
         -------
@@ -381,12 +382,6 @@ def _aggregate_by_source(results, sid, source_results):
     """
     Combine results from different chunks into a single image and bounds for each source ID.
 
-    The flux ``image`` is combined by summing. The ``wavelengths`` array is combined using
-    a mean weighted by pixel occupancy count (1 per contributing chunk), so all chunks
-    contribute equally regardless of flux sign or area magnitude.
-    An internal ``weight_sum`` array (equal to the accumulated area-sum image) is stored in
-    ``source_results`` to support incremental weighted-mean updates across chunks.
-
     Parameters
     ----------
     results : dict
@@ -397,9 +392,7 @@ def _aggregate_by_source(results, sid, source_results):
         Source ID
     source_results : dict
         Dictionary to store simulated image and bounds for each source ID,
-        in the format:
-        {source_id: {"bounds": [xmin, xmax, ymin, ymax], "image": 2D array,
-        "model_counts": list of 2D arrays}}
+        in the same format as results but with images and bounds aggregated.
         Updated in place.
     """
     if sid not in source_results:

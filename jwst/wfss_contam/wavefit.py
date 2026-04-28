@@ -1,4 +1,4 @@
-"""Fit a spectral shape to a WFSS slit."""
+"""Fit a spectral shape to a WFSS dispersed source."""
 
 import logging
 
@@ -25,7 +25,7 @@ def _get_basis_images(simul_slit):
     Parameters
     ----------
     simul_slit : `~stdatamodels.jwst.datamodels.SlitModel`
-        Simulated slit carrying ``data`` (the constant/flat term) and optional
+        Simulated slit with attributes ``data`` (the constant/flat term) and optional
         ``fluxmodel_1``, ``fluxmodel_2``, ... attributes for higher-degree terms.
 
     Returns
@@ -48,32 +48,30 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0):
     """
     Fit a linear combination of dispersed basis images to the observed slit.
 
-    The constant (degree-0) term is ``simul_slit.data`` (the flat-spectrum simulation);
-    higher-degree terms are taken from the ``fluxmodel_1``, ``fluxmodel_2``, ...
-    attributes on ``simul_slit``.  These are the grism-frame images produced by
-    passing polynomial flux models (``λ``, ``λ²``, ...) through ``disperse()``.
+    The constant (degree-0) term is ``simul_slit.data`` (the flat-spectrum simulation).
+    Higher-degree terms are taken from the ``fluxmodel_1``, ``fluxmodel_2``, ...
+    attributes of ``simul_slit``.  These are the grism-frame images produced by
+    passing polynomial flux models through ``disperse()``.
 
     The fit solves::
 
         observed ≈ c_0 * data + c_1 * fluxmodel_1 + c_2 * fluxmodel_2 + ...
 
-    via inverse-variance-weighted least squares (WLS) on valid pixels, using the
-    ``err`` array of ``observed_slit`` as pixel uncertainties.  When ``err`` is
-    unavailable, falls back to unweighted least squares.  When ``l2_alpha > 0``,
-    L2 regularisation is applied to the weighted normal equations.
+    via inverse-variance-weighted least squares on valid pixels, using the
+    ``err`` array of the observed slit as pixel uncertainties.
+    When ``l2_alpha > 0``, L2 regularisation is applied to the weighted normal equations.
 
     Parameters
     ----------
     observed_slit : `~stdatamodels.jwst.datamodels.SlitModel`
-        Calibrated observed 2-D spectral cutout.  The ``err`` array, if present
-        and finite, is used as per-pixel 1-sigma uncertainties for weighting.
+        Observed 2-D spectral cutout.
     simul_slit : `~stdatamodels.jwst.datamodels.SlitModel`
         Simulated slit with ``data`` and optional ``fluxmodel_N`` attributes.
     l2_alpha : float, optional
         L2 regularisation strength.  Added to the diagonal of the weighted
-        normal-equation matrix as ``alpha * I`` before solving, which penalises
-        large coefficients.  A value of ``0`` (the default) gives WLS without
-        regularisation.  Typical useful values are in the range ``1e-3`` - ``1e1``.
+        normal-equation matrix as ``alpha * I`` before solving, which penalizes
+        large coefficients.  A value of ``0`` (the default) turns off regularization.
+        Typical useful values are in the range ``1e-3`` - ``1e1``.
 
     Returns
     -------
@@ -116,7 +114,6 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0):
         weights = np.ones(n_valid)
 
     design_matrix = np.column_stack([b[mask] for b in basis])
-    # cond = np.linalg.cond(design_matrix * weights[:, np.newaxis])
     # Weighted normal equations: (A^T W A) c = A^T W b
     w_sqrt = np.sqrt(weights)
     aw = design_matrix * w_sqrt[:, np.newaxis]
@@ -131,11 +128,9 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0):
     # log some fit diagnostics for the source
     n_total = obs_data.size
     if np.abs(coeffs[0] - 1) > 0.1:
-        log.debug(  # TODO
-            f"Fitted constant term c_0={coeffs[0]:.3g} is far from 1; rejecting fit."
-        )
+        log.debug(f"Fitted constant term c_0={coeffs[0]:.3g} is far from 1; rejecting fit.")
         return None
-    log.debug(  # TODO
+    log.debug(
         f"source_id={observed_slit.source_id} "
         f"order={observed_slit.meta.wcsinfo.spectral_order} "
         f"valid_pixels/total={n_valid}/{n_total} "

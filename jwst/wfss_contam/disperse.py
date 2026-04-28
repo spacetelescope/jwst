@@ -132,7 +132,7 @@ def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel, model_count
     source_ids_per_pixel : int array
         Source IDs of the dispersed pixels
     model_counts : list of ndarray, optional
-        List of count rate arrays corresponding to each flux model
+        List of count rate arrays corresponding to input ``basis_models``
 
     Returns
     -------
@@ -329,14 +329,15 @@ def disperse(
     del x0s, y0s
 
     # Only lambdas varies along the wavelength axis
-    # fluxes and source_ids are wavelength-independent: index % n_pix recovers the correct
-    # source pixel column without needing np.take.
+    # fluxes and source_ids are wavelength-independent, so index % n_pix
+    # recovers the correct source pixel column without needing np.take
+    # and is a bit faster.
     lambdas = np.take(lambdas, index)
     fluxes = fluxes[index % n_pix]
     source_ids_per_pixel = source_ids_per_pixel[index % n_pix]
 
-    # Evaluate basis models on the 1-D lambda array; flam is element-wise so this is
-    # still full resolution
+    # Evaluate basis models on the 1-D lambda array.
+    # even after np.take this is element-wise so this is still full resolution
     model_f = []
     if basis_models is not None:
         for flam in basis_models:
