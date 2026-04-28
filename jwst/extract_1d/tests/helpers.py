@@ -187,8 +187,9 @@ def int_times_table(n_entry, int1_times=None, num_superstripe=0):
         # add new integrations with regular spacing, plus a little noise for non-trivial tests
         new_times = [t + 3.2e-5 * i + 1e-7 * rng.random() for t in int1_times]
         if num_superstripe > 0:
-            stripe = i // num_superstripe + 1
-            new_int = tuple([i + 1, stripe] + new_times)
+            int_num = i // num_superstripe + 1
+            stripe = i % num_superstripe + 1
+            new_int = tuple([int_num, stripe] + new_times)
         else:
             new_int = tuple([i + 1] + new_times)
         integrations.append(new_int)
