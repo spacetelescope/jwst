@@ -5,7 +5,7 @@ from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.saturation.tests.helpers import setup_nis_superstripe_cube
 from jwst.superbias.bias_sub import do_correction
-from jwst.superbias.tests.helpers import setup_full_cube, setup_subarray_cube
+from jwst.superbias.tests.helpers import nrc_full_ramp, nrc_subarray_ramp, superbias_model
 
 
 def test_basic_superbias_subtraction():
@@ -17,7 +17,8 @@ def test_basic_superbias_subtraction():
     ncols = 2048
     blevel = 2000.0
 
-    data, bias = setup_full_cube(ngroups, nrows, ncols)
+    data = nrc_full_ramp(ngroups, nrows, ncols)
+    bias = superbias_model()
 
     # Add signal values and bias values
     data.data[:] = blevel
@@ -43,7 +44,8 @@ def test_subarray_correction():
     xstart = 486
     ystart = 1508
 
-    data, bias = setup_subarray_cube(xstart, ystart, ngroups, nrows, ncols)
+    data = nrc_subarray_ramp(xstart, ystart, ngroups, nrows, ncols)
+    bias = superbias_model()
     manualbias = bias.data[ystart - 1 : ystart - 1 + nrows, xstart - 1 : xstart - 1 + ncols]
 
     # Add signal values and bias values
@@ -70,7 +72,8 @@ def test_dq_propagation():
     dqval1 = 5
     dqval2 = 10
 
-    data, bias = setup_full_cube(ngroups, nrows, ncols)
+    data = nrc_full_ramp(ngroups, nrows, ncols)
+    bias = superbias_model()
 
     # Add DQ values to the data and reference file
     data.pixeldq[5, 5] = dqval1
@@ -93,7 +96,8 @@ def test_nans_in_superbias():
     ncols = 2048
     blevel = 2000.0
 
-    data, bias = setup_full_cube(ngroups, nrows, ncols)
+    data = nrc_full_ramp(ngroups, nrows, ncols)
+    bias = superbias_model()
 
     # Add signal values and bias values
     data.data[:] = blevel
@@ -119,7 +123,8 @@ def test_zeroframe():
     zarr = [0.0, 10500.0, 10579.0]
 
     ngroups, nrows, ncols = len(darr1), 1, len(zarr)
-    ramp, bias = setup_full_cube(ngroups, nrows, ncols)
+    ramp = nrc_full_ramp(ngroups, nrows, ncols)
+    bias = superbias_model()
 
     cdq = np.array([dqflags.group["SATURATED"]] * ngroups)
 

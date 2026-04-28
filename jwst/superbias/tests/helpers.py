@@ -2,10 +2,29 @@ from stdatamodels.jwst.datamodels import RampModel, SuperBiasModel
 
 from jwst.saturation.tests.helpers import add_test_refmodel_metadata
 
-__all__ = ["setup_full_cube", "setup_subarray_cube"]
+__all__ = ["superbias_model", "nrc_full_ramp", "nrc_subarray_ramp"]
 
 
-def setup_full_cube(ngroups, nrows, ncols):
+def superbias_model():
+    """
+    Create a NIRCam superbias model.
+
+    Returns
+    -------
+    bias_model : `~stdatamodels.jwst.datamodels.SuperbiasModel`
+        The superbias datamodel.
+    """
+    bias_model = SuperBiasModel((2048, 2048))
+    bias_model.meta.subarray.xstart = 1
+    bias_model.meta.subarray.ystart = 1
+    bias_model.meta.subarray.xsize = 2048
+    bias_model.meta.subarray.ysize = 2048
+    bias_model.meta.instrument.name = "NIRCAM"
+    add_test_refmodel_metadata(bias_model)
+    return bias_model
+
+
+def nrc_full_ramp(ngroups, nrows, ncols):
     """
     Set up mock NIRCam FULL data to test.
 
@@ -13,8 +32,6 @@ def setup_full_cube(ngroups, nrows, ncols):
     -------
     data_model : `~stdatamodels.jwst.datamodels.RampModel`
         The NIRCam ramp model.
-    bias_model : `~stdatamodels.jwst.datamodels.SuperbiasModel`
-        A corresponding superbias model.
     """
     nints = 1
 
@@ -30,19 +47,10 @@ def setup_full_cube(ngroups, nrows, ncols):
     data_model.meta.observation.date = "2017-10-01"
     data_model.meta.observation.time = "00:00:00"
 
-    # create a superbias model for the superbias step
-    bias_model = SuperBiasModel((2048, 2048))
-    bias_model.meta.subarray.xstart = 1
-    bias_model.meta.subarray.ystart = 1
-    bias_model.meta.subarray.xsize = 2048
-    bias_model.meta.subarray.ysize = 2048
-    bias_model.meta.instrument.name = "NIRCAM"
-    add_test_refmodel_metadata(bias_model)
-
-    return data_model, bias_model
+    return data_model
 
 
-def setup_subarray_cube(xstart, ystart, ngroups, nrows, ncols):
+def nrc_subarray_ramp(xstart, ystart, ngroups, nrows, ncols):
     """
     Set up mock NIRCam subarray data to test.
 
@@ -50,8 +58,6 @@ def setup_subarray_cube(xstart, ystart, ngroups, nrows, ncols):
     -------
     data_model : `~stdatamodels.jwst.datamodels.RampModel`
         The NIRCam ramp model.
-    bias_model : `~stdatamodels.jwst.datamodels.SuperbiasModel`
-        A corresponding superbias model.
     """
     nints = 1
 
@@ -68,13 +74,4 @@ def setup_subarray_cube(xstart, ystart, ngroups, nrows, ncols):
     data_model.meta.observation.date = "2019-10-14"
     data_model.meta.observation.time = "16:44:12.000"
 
-    # create a superbias model for the superbias step
-    bias_model = SuperBiasModel((2048, 2048))
-    bias_model.meta.subarray.xstart = 1
-    bias_model.meta.subarray.ystart = 1
-    bias_model.meta.subarray.xsize = 2048
-    bias_model.meta.subarray.ysize = 2048
-    bias_model.meta.instrument.name = "NIRCAM"
-    add_test_refmodel_metadata(bias_model)
-
-    return data_model, bias_model
+    return data_model
