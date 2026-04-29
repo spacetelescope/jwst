@@ -642,6 +642,12 @@ cleanup:
     if (free_flux) {
         Py_XDECREF(flux);
     }
+    if (free_x_det) {
+        Py_XDECREF(x_det);
+    }
+    if (free_y_det) {
+        Py_XDECREF(y_det);
+    }
     if (free_err) {
         Py_XDECREF(err);
     }

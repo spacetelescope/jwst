@@ -797,6 +797,11 @@ def extract_grism_objects(
                 new_slit.bunit_err = input_model.meta.bunit_err
                 slits.append(new_slit)
     output_model.slits.extend(slits)
+
+    # update s_region of 0th slit to match input model
+    if output_model.slits:
+        output_model.slits[0].meta.wcsinfo.s_region = input_model.meta.wcsinfo.s_region
+
     # In the case that there are no spectra to extract deleting the variables
     # will fail so add the try block.
     try:

@@ -91,8 +91,8 @@ def test_index_with_background():
     with result:
         bkg_exposure = result.borrow(0)
         sci_exposure_1 = result.borrow(1)
-        assert not bkg_exposure.meta.wcsinfo.hasattr("mt_avra")
-        assert sci_exposure_1.meta.wcsinfo.hasattr("mt_avra")
+        assert not bkg_exposure.slits[0].meta.wcsinfo.hasattr("mt_avra")
+        assert sci_exposure_1.slits[0].meta.wcsinfo.hasattr("mt_avra")
         result.shelve(bkg_exposure, 0, modify=False)
         result.shelve(sci_exposure_1, 1, modify=False)
 

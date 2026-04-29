@@ -437,7 +437,7 @@ class Spec3Pipeline(Pipeline):
         # introduced for a specific slit won't matter
         wcs = cal_model_list[0].slits[0].meta.wcs
         try:
-            input_sregions = [w.meta.wcsinfo.s_region for w in cal_model_list]
+            input_sregions = [w.slits[0].meta.wcsinfo.s_region for w in cal_model_list]
         except AttributeError:
             log.warning(
                 "One or more input model(s) are missing an `s_region` attribute; "
