@@ -395,13 +395,13 @@ def _trace_image(shape, spline_models, region_map, alpha, slope_limit=0.1, pad=3
     alpha_slice = np.full(shape, np.nan, dtype=np.float32)
     trace_slice = np.full(shape, np.nan, dtype=np.float32)
     spline_bkpt = None
-    for slnum in spline_models:
-        splines = spline_models[slnum]
+    for reg_num in spline_models:
+        splines = spline_models[reg_num]
 
         alpha_slice[:] = np.nan
         trace_slice[:] = np.nan
 
-        indx = region_map == slnum
+        indx = region_map == reg_num
         alpha_slice[indx] = alpha[indx]
 
         # Define a list that will hold all alpha values for this
@@ -458,7 +458,8 @@ def _trace_image(shape, spline_models, region_map, alpha, slope_limit=0.1, pad=3
 
             total_used = np.sum(compact_locations)
             log.debug(
-                f"Using {total_used}/{np.sum(indx)} pixels from the spline model for slice {slnum}"
+                f"Using {total_used}/{np.sum(indx)} pixels from "
+                f"the spline model for region {reg_num}"
             )
 
     return trace_used, full_trace
@@ -544,13 +545,13 @@ def linear_oversample(
 
     data_slice = np.full_like(data, np.nan)
     y_slice = np.full_like(data, np.nan)
-    slice_numbers = np.unique(region_map[region_map > 0])
-    for slnum in slice_numbers:
+    region_numbers = np.unique(region_map[region_map > 0])
+    for reg_num in region_numbers:
         data_slice[:] = np.nan
         y_slice[:] = np.nan
 
         # Copy the relevant data for this slice into the holding arrays
-        indx = region_map == slnum
+        indx = region_map == reg_num
         data_slice[indx] = data[indx]
         y_slice[indx] = basey[indx]
 
@@ -673,21 +674,21 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="no
         could not be fit, the column index number is not present.
     """
     spline_models = {}
-    slice_numbers = np.unique(region_map[region_map > 0])
+    region_numbers = np.unique(region_map[region_map > 0])
 
     # Determine number of slices to use for multi-processor computations
     num_available_cores = cpu_count()
-    number_slices = compute_num_cores(maximum_cores, len(slice_numbers), num_available_cores)
+    number_slices = compute_num_cores(maximum_cores, len(region_numbers), num_available_cores)
 
     # Call adaptive trace model for the single processor (1 data slice) case
     if number_slices == 1:
         # Single threaded computation
         log.info("Running single-process calculation")
-        for slnum in slice_numbers:
-            if len(slice_numbers) > 1:
-                log.info("Fitting slice %s", slnum)
-            spline_models[slnum] = _fit_one_region(
-                flux, alpha, region_map, signal_threshold, slnum, **fit_kwargs
+        for reg_num in region_numbers:
+            if len(region_numbers) > 1:
+                log.info("Fitting slice %s", reg_num)
+            spline_models[reg_num] = _fit_one_region(
+                flux, alpha, region_map, signal_threshold, reg_num, **fit_kwargs
             )
     else:
         # Parallelized computation
@@ -703,12 +704,12 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="no
         ctx = multiprocessing.get_context("spawn")
         pool = ctx.Pool(processes=number_slices)
         try:
-            pool_results = pool.starmap(fit_one_region_with_args, [(n,) for n in slice_numbers])
+            pool_results = pool.starmap(fit_one_region_with_args, [(n,) for n in region_numbers])
         finally:
             pool.close()
             pool.join()
-        for slnum, result in zip(slice_numbers, pool_results, strict=True):
-            spline_models[slnum] = result
+        for reg_num, result in zip(region_numbers, pool_results, strict=True):
+            spline_models[reg_num] = result
 
     return spline_models
 
@@ -819,15 +820,15 @@ def oversample_flux(
 
     # Edge limit for trimming ends
     edge_limit = int(oversample_factor)
-    slice_numbers = np.unique(region_map[region_map > 0])
+    region_numbers = np.unique(region_map[region_map > 0])
     spline_bkpt = None
-    for slnum in slice_numbers:
+    for reg_num in region_numbers:
         # Reset holding arrays to NaN
         for reset_array in reset_arrays:
             reset_array[:] = np.nan
 
         # Copy the relevant data for this slice into the holding arrays
-        indx = region_map == slnum
+        indx = region_map == reg_num
         data_slice[indx] = flux[indx]
         alpha_slice[indx] = alpha[indx]
         basey_slice[indx] = basey[indx]
@@ -859,12 +860,12 @@ def oversample_flux(
             flux_os_linear[newy, ii] = _linear_interp(col_y, col_flux, oldy, edge_limit=edge_limit)
 
             # Check for a spline fit for this column
-            if slnum not in spline_models or ii not in spline_models[slnum]:
+            if reg_num not in spline_models or ii not in spline_models[reg_num]:
                 continue
-            spline_model = spline_models[slnum][ii]["model"]
-            spline_scale = spline_models[slnum][ii]["scale"]
-            spline_lobound = spline_models[slnum][ii]["bounds"][0]
-            spline_hibound = spline_models[slnum][ii]["bounds"][1]
+            spline_model = spline_models[reg_num][ii]["model"]
+            spline_scale = spline_models[reg_num][ii]["scale"]
+            spline_lobound = spline_models[reg_num][ii]["bounds"][0]
+            spline_hibound = spline_models[reg_num][ii]["bounds"][1]
 
             # Get the number of spline breakpoints used from the first real model
             if spline_bkpt is None:
@@ -933,7 +934,8 @@ def oversample_flux(
 
             total_used = np.sum(compact_locations)
             log.debug(
-                f"Using {total_used}/{np.sum(indx)} pixels from the spline model for slice {slnum}"
+                f"Using {total_used}/{np.sum(indx)} pixels "
+                f"from the spline model for slice {reg_num}"
             )
 
     # Insert the bspline interpolated values into the final combined oversampled array,
@@ -1523,6 +1525,12 @@ def fit_and_oversample(
     else:
         raise ValueError("Unknown detector")
 
+    # For single slit images, fit_threshold is not useful: disable it
+    region_numbers = np.unique(region_map[region_map > 0])
+    if len(region_numbers) < 2 and fit_threshold > 0:
+        log.info("Ignoring fit threshold for single slit image")
+        fit_threshold = 0
+
     # For multiple integrations, fit the profile to the median image
     if nint > 1:
         # Also check for an input oversample factor:
@@ -1559,16 +1567,15 @@ def fit_and_oversample(
         overall_mean = 0
 
     # Define a per-slice analysis threshold (must be brighter than some level above background)
-    slice_numbers = np.unique(region_map[region_map > 0])
     if fit_threshold <= 0:
         # In this case, all slices should be fit, so make the threshold
         # lower than any real signal
-        signal_threshold = dict.fromkeys(slice_numbers, -np.inf)
+        signal_threshold = dict.fromkeys(region_numbers, -np.inf)
     else:
         if mode == "MIR_MRS":
             # For MIRI MRS we need each channel to have its own threshold, particularly
             # for Ch3/Ch4 since the sky is so much brighter in Ch4
-            signal_threshold = dict.fromkeys(slice_numbers, np.nan)
+            signal_threshold = dict.fromkeys(region_numbers, np.nan)
             for channel in [100, 200, 300, 400]:
                 ch_data = (region_map >= channel) & (region_map < channel + 100)
                 if not np.any(ch_data):
@@ -1576,13 +1583,13 @@ def fit_and_oversample(
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=AstropyUserWarning)
                     ch_mean, _, ch_rms = scs(flux_orig[ch_data])
-                for slnum in slice_numbers:
-                    if channel <= slnum < channel + 100:
-                        signal_threshold[slnum] = ch_mean + fit_threshold * ch_rms
+                for reg_num in region_numbers:
+                    if channel <= reg_num < channel + 100:
+                        signal_threshold[reg_num] = ch_mean + fit_threshold * ch_rms
         else:
-            # For NIRSpec IFU or slit data, all regions have the same threshold
+            # For NIRSpec IFU data, all regions have the same threshold
             threshold = overall_mean + fit_threshold * overall_rms
-            signal_threshold = dict.fromkeys(slice_numbers, threshold)
+            signal_threshold = dict.fromkeys(region_numbers, threshold)
 
     # Fit spline models to all regions
     fit_kwargs = _set_fit_kwargs(mode, detector, xsize)

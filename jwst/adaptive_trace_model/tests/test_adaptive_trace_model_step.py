@@ -343,12 +343,20 @@ def test_adaptive_trace_model_step_save_intermediate(tmp_path, request, dataset,
         "test_input_spline_full.fits",
         "test_input_spline_used.fits",
     ]
-    # For a model with no source, the spline models are expected to be empty
-    expect_empty = [False, True, True]
+    if "slit" in dataset:
+        # For slit data with no source, the spline models are always attempted,
+        # but won't be used
+        expect_empty = [False, False, True]
+    else:
+        # For IFU with no source, the spline models are expected to be empty
+        expect_empty = [False, True, True]
     if oversample > 1:
         # Extra files expected if oversampling is done
         expected.extend(["test_input_linear_interp.fits", "test_input_spline_residual.fits"])
-        expect_empty.extend([False, True])
+        if "slit" in dataset:
+            expect_empty.extend([False, False])
+        else:
+            expect_empty.extend([False, True])
     for filename, is_empty in zip(expected, expect_empty):
         assert (tmp_path / filename).exists()
         with datamodels.open(str(tmp_path / filename)) as new_model:
