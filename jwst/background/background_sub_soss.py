@@ -154,12 +154,15 @@ def subtract_soss_bkg(
         )
         return None
 
-    # Generate exclusion mask from data array flux threshold, then OR in the DNU dq plane.
-    finite_data = np.isfinite(input_model.data)  # Ensure only finite values are considered
-    threshold = np.nanpercentile(input_model.data[finite_data], soss_source_percentile)
+    # Generate mask from DQ flags indicating pixels not to be considered.
+    flags = datamodels.dqflags.pixel["DO_NOT_USE"] | datamodels.dqflags.pixel["REFERENCE_PIXEL"]
+    flag_mask = (input_model.dq & flags) > 0
 
-    data_mask = finite_data & (input_model.data >= threshold)
-    data_mask |= (input_model.dq & 1) > 0
+    # Gather all finite science pixels
+    finite_data = np.isfinite(input_model.data) & ~flag_mask
+    # Use finite science pixels to generate mask excluding those above a threshold
+    threshold = np.nanpercentile(input_model.data[finite_data], soss_source_percentile)
+    data_mask = finite_data & (input_model.data >= threshold) | flag_mask
 
     # Most SOSS data will be multi-integration - but if input data array is 2-D, cast into
     # 3-D array for ease of computation
