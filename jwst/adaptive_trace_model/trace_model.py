@@ -85,6 +85,8 @@ def fit_2d_spline_trace(
     require_ngood=10,
     spline_bkpt=50,
     space_ratio=1.2,
+    sigma_low=2.5,
+    sigma_high=2.5,
 ):
     """
     Create a trace model from spline fits to a single slit/slice image.
@@ -116,6 +118,10 @@ def fit_2d_spline_trace(
         the tenth-largest spacing in the input ``xvec`` is larger
         than the knot spacing by this ratio, then return None instead
         of attempting to fit the data.
+    sigma_low : float, optional
+        Low sigma threshold for iterative spline fit.
+    sigma_high : float, optional
+        High sigma threshold for iterative spline fit.
 
     Returns
     -------
@@ -178,8 +184,8 @@ def fit_2d_spline_trace(
                 local_alpha,
                 local_data,
                 nbkpts=spline_bkpt,
-                wrapsig_low=2.5,
-                wrapsig_high=2.5,
+                wrapsig_low=sigma_low,
+                wrapsig_high=sigma_high,
                 wrapiter=3,
                 space_ratio=space_ratio,
                 verbose=False,
@@ -193,8 +199,8 @@ def fit_2d_spline_trace(
                     local_alpha,
                     local_data,
                     nbkpts=spline_bkpt - 3,
-                    wrapsig_low=2.5,
-                    wrapsig_high=2.5,
+                    wrapsig_low=sigma_low,
+                    wrapsig_high=sigma_high,
                     wrapiter=3,
                     space_ratio=space_ratio,
                     verbose=False,
@@ -985,6 +991,8 @@ def _set_fit_kwargs(mode, detector, xsize):
         If the input detector is not supported.
     """
     # Empirical parameters for this mode
+    sigma_low = 2.5
+    sigma_high = 2.5
     if detector.startswith("NRS"):
         if mode == "NRS_IFU":
             require_ngood = 15
@@ -1011,6 +1019,7 @@ def _set_fit_kwargs(mode, detector, xsize):
     elif detector.startswith("MIR"):
         if mode == "MIR_MRS":
             lrange = 50
+            spline_bkpt = 36
 
             # For MRS fitting order, we need to start on the left and run to the middle,
             # and then on the right to the middle in order to have the middle
@@ -1019,13 +1028,15 @@ def _set_fit_kwargs(mode, detector, xsize):
                 [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
             )
         else:
-            lrange = 20
+            lrange = 5
+            spline_bkpt = 40
+            sigma_low = 3.0
+            sigma_high = 3.0
 
             # For LRS, start on the right and move to the left
             col_index = range(xsize - 1, -1, -1)
 
         require_ngood = 8
-        spline_bkpt = 36
         space_ratio = 1.2
 
     else:
@@ -1037,6 +1048,8 @@ def _set_fit_kwargs(mode, detector, xsize):
         "require_ngood": require_ngood,
         "spline_bkpt": spline_bkpt,
         "space_ratio": space_ratio,
+        "sigma_low": sigma_low,
+        "sigma_high": sigma_high,
     }
     return fit_kwargs
 
