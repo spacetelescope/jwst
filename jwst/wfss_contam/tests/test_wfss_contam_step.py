@@ -116,7 +116,7 @@ def test_wfss_contam_step_cube_direct_image(multislitmodel, direct_image_cube_wi
     Smoke test that the step completes when the direct image is an IFUCubeModel.
 
     Reuses the multislitmodel fixture (slits, WCS, segmentation map, source catalog)
-    and swaps in the cube as the direct image.
+    but just swaps in the cube as the direct image.
     """
     with dm.open(multislitmodel) as model:
         model.meta.direct_image = "direct_image_cube.fits"

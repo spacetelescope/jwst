@@ -43,7 +43,7 @@ def test_disperse_oversample_same_result(grism_wcs, direct_image_with_gradient):
     assert_allclose(output_images[0][2:-2, :], output_images[1][2:-2], rtol=1e-5)
 
 
-def _disperse_one_pixel(fluxes, band_wavelengths, grism_wcs, direct_image_wcs):
+def _disperse_one_pixel(fluxes, band_wavelengths, grism_wcs, direct_image_wcs, sens_resp=None):
     """Run disperse() for a single pixel with unit sensitivity, returning the output image."""
     x0 = np.array([200.5])
     y0 = np.array([200.5])
@@ -51,7 +51,8 @@ def _disperse_one_pixel(fluxes, band_wavelengths, grism_wcs, direct_image_wcs):
     naxis = (300, 500)
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = float(sens_waves[0]), float(sens_waves[-1])
-    sens_resp = np.ones(100)
+    if sens_resp is None:
+        sens_resp = np.ones(100)
     src = disperse(
         x0,
         y0,
@@ -71,12 +72,7 @@ def _disperse_one_pixel(fluxes, band_wavelengths, grism_wcs, direct_image_wcs):
 
 
 def test_disperse_n1_matches_n2_constant(grism_wcs, direct_image_with_gradient):
-    """
-    N=1 and N=2 with the same constant flux value should produce identical output.
-
-    This tests that the single-band fallback path and the interp1d path
-    agree when the SED is flat.
-    """
+    """Test that the single-band case and the interp1d path agree when the SED is flat."""
     direct_image_wcs = direct_image_with_gradient.meta.wcs
     img_n1 = _disperse_one_pixel(
         fluxes=np.array([[1.0]]),
@@ -94,7 +90,7 @@ def test_disperse_n1_matches_n2_constant(grism_wcs, direct_image_with_gradient):
 
 
 def test_disperse_flux_extrapolation(grism_wcs, direct_image_with_gradient):
-    """Test that extrapolation holds the edge flux value outside the band coverage."""
+    """Test that extrapolation is flat outside the band coverage."""
     direct_image_wcs = direct_image_with_gradient.meta.wcs
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = float(sens_waves[0]), float(sens_waves[-1])
@@ -119,7 +115,7 @@ def test_disperse_flux_extrapolation(grism_wcs, direct_image_with_gradient):
 
 def test_disperse_flux_distribution(grism_wcs, direct_image_with_gradient):
     """
-    Test that multi-band input is being nontrivially accounted for.
+    Test that multi-band input is being accounted for.
 
     Use a sensitivity curve that passes only the lower half of the wavelength range,
     so only the short wavelengths contribute to the output. Then test two SEDs
@@ -134,26 +130,20 @@ def test_disperse_flux_distribution(grism_wcs, direct_image_with_gradient):
     sens_resp = np.zeros(100)
     sens_resp[:50] = 1.0
 
-    def run(fluxes, bw):
-        src = disperse(
-            np.array([200.5]),
-            np.array([200.5]),
-            fluxes,
-            bw,
-            np.array([50]),
-            order=1,
-            wmin=wmin,
-            wmax=wmax,
-            sens_waves=sens_waves,
-            sens_resp=sens_resp,
-            direct_image_wcs=direct_image_wcs,
-            grism_wcs=grism_wcs,
-            naxis=(300, 500),
-        )
-        return src[50]["image"].sum()
-
     bw = np.array([wmin, wmax])
-    sum_falling = run(np.array([[2.0], [0.0]]), bw)
-    sum_rising = run(np.array([[0.0], [2.0]]), bw)
+    sum_falling = _disperse_one_pixel(
+        np.array([[2.0], [0.0]]),
+        bw,
+        grism_wcs=grism_wcs,
+        direct_image_wcs=direct_image_wcs,
+        sens_resp=sens_resp,
+    ).sum()
+    sum_rising = _disperse_one_pixel(
+        np.array([[0.0], [2.0]]),
+        bw,
+        grism_wcs=grism_wcs,
+        direct_image_wcs=direct_image_wcs,
+        sens_resp=sens_resp,
+    ).sum()
 
     assert sum_falling / sum_rising > 2.0

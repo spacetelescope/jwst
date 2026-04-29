@@ -356,16 +356,14 @@ def contam_corr(
     direct_file = input_model.meta.direct_image
     log.debug(f"Direct image ={direct_file}")
     with datamodels.open(direct_file) as direct_model:
+        band_wavelengths = None
         if isinstance(direct_model, datamodels.IFUCubeModel):
             # Multi-band direct image: each wavelength plane holds the flux in that band.
-            # Wavelengths are stored in the wavetable as a structured array.
             band_wavelengths = direct_model.wavetable["wavelength"].flatten().astype(float)
             log.info(
                 f"Direct image is an IFUCubeModel with {len(band_wavelengths)} wavelength planes "
-                f"covering {band_wavelengths[0]:.4f}–{band_wavelengths[-1]:.4f} micron"
+                f"covering {band_wavelengths[0]:.4f} to {band_wavelengths[-1]:.4f} microns"
             )
-        else:
-            band_wavelengths = None
         direct_image = direct_model.data
         direct_image_wcs = direct_model.meta.wcs
 

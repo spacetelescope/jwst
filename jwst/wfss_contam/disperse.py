@@ -229,8 +229,9 @@ def disperse(
     band_wavelengths : ndarray
         Central wavelengths (in microns) of each photometric band in
         ``fluxes`` (shape (N,)).  Fluxes are linearly interpolated onto the internal
-        wavelength grid; fluxes are held constant (flat extrapolation)
-        outside the covered wavelength range. For a flat SED this can be any length-1 array.
+        wavelength grid. Fluxes are held constant (flat extrapolation)
+        outside the covered wavelength range. For a flat SED this can be any length-1 array,
+        as it is not used with N=1.
     source_ids_per_pixel : int array
         Source IDs of the input pixels in the segmentation map
     order : int
@@ -298,7 +299,7 @@ def disperse(
     nlam = len(lambdas)
     dlam = lambdas[1] - lambdas[0]
 
-    # Interpolate the input fluxes onto the wavelength grid of the dispersed image.
+    # Interpolate the input fluxes onto the wavelength grid of the dispersed image
     if len(band_wavelengths) >= 2:
         interp_fn = interp1d(
             band_wavelengths,
@@ -310,7 +311,7 @@ def disperse(
         )
         fluxes = interp_fn(lambdas)  # (nlam, n_pixels)
     else:
-        # N=1: constant flux across all wavelengths
+        # constant flux across all wavelengths
         fluxes = np.repeat(fluxes[0][np.newaxis, :], nlam, axis=0)
     source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], nlam, axis=0)
 
