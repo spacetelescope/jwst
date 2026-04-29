@@ -130,7 +130,7 @@ class Tso3Pipeline(Pipeline):
 
             nstripe = 0
             stripe_times = getattr(input_models[0], "int_times_stripe", None)
-            if stripe_times is not None:
+            if stripe_times is not None and len(stripe_times) > 0:
                 nstripe = np.max(stripe_times["stripe_number"])
                 x1d_result.int_times_stripe = FITS_rec.from_columns(
                     input_models[0].int_times_stripe.columns, nrows=nint * nstripe
