@@ -1878,6 +1878,8 @@ def run_extract1d(
         log.info("Populating INT_TIMES keywords from input table.")
         populate_time_keywords(input_model, output_model)
         output_model.int_times = input_model.int_times.copy()
+        if getattr(input_model, "int_times_stripe", None) is not None:
+            output_model.int_times_stripe = input_model.int_times_stripe.copy()
 
     if soss_kwargs["wave_grid_out"] is not None:
         # Ensure wave grid is saved with float64 precision to avoid rounding errors

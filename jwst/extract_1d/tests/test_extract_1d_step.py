@@ -217,6 +217,22 @@ def test_extract_niriss_soss_96(tmp_path, mock_niriss_soss_96):
     assert os.path.isfile(tmp_path / "soss_model_AtocaSpectra.fits")
 
 
+def test_extract_niriss_soss_superstripe(mock_niriss_soss_superstripe):
+    result = Extract1dStep.call(mock_niriss_soss_superstripe)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
+
+    # output flux and errors are non-zero, exact values will depend
+    # on extraction parameters
+    assert np.all(result.spec[0].spec_table["FLUX"] > 0)
+    assert np.all(result.spec[0].spec_table["FLUX_ERROR"] > 0)
+
+    # int_times and int_times_stripe are both present, copied from the input
+    assert len(result.int_times) == len(mock_niriss_soss_superstripe.int_times)
+    assert len(result.int_times_stripe) == len(mock_niriss_soss_superstripe.int_times_stripe)
+
+    result.close()
+
+
 def test_extract_niriss_soss_fail(tmp_path, monkeypatch, mock_niriss_soss_96):
     # Mock an error condition in the soss extraction
     def mock(*args, **kwargs):

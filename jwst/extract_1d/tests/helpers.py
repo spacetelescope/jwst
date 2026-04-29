@@ -150,6 +150,66 @@ def simple_wcs_ifu_func():
     return wcs
 
 
+def int_times_table(n_entry, int1_times=None, num_superstripe=0):
+    """
+    Make an integration times table, to store as ``model.int_times`` or ``model.int_times_stripe``.
+
+    Parameters
+    ----------
+    n_entry : int
+        Length of the integration table to create
+    int1_times : list
+        List of 6 time entries corresponding to the values for the first
+        integration for MJD UTC start, mid and end; BJD TDB start, mid, and end.
+    num_superstripe : int, optional
+        If greater than 0, the output table contains the stripe number as well
+        as the integration number, matching the format for ``int_times_stripe``
+        instead of ``int_times``.
+
+    Returns
+    -------
+    int_times : ndarray
+        Record array with expected time fields. Integrations are regularly
+        spaced, with a little noise in the recorded time.
+    """
+    if int1_times is None:
+        int1_times = [
+            59729.04367729,
+            59729.04378181,
+            59729.04388632,
+            59729.04731706,
+            59729.04742158,
+            59729.04752609,
+        ]
+    integrations = []
+    rng = np.random.default_rng(seed=42)
+    for i in range(n_entry):
+        # add new integrations with regular spacing, plus a little noise for non-trivial tests
+        new_times = [t + 3.2e-5 * i + 1e-7 * rng.random() for t in int1_times]
+        if num_superstripe > 0:
+            int_num = i // num_superstripe + 1
+            stripe = i % num_superstripe + 1
+            new_int = tuple([int_num, stripe] + new_times)
+        else:
+            new_int = tuple([i + 1] + new_times)
+        integrations.append(new_int)
+
+    dtype = [
+        ("integration_number", "i4"),
+        ("int_start_MJD_UTC", "f8"),
+        ("int_mid_MJD_UTC", "f8"),
+        ("int_end_MJD_UTC", "f8"),
+        ("int_start_BJD_TDB", "f8"),
+        ("int_mid_BJD_TDB", "f8"),
+        ("int_end_BJD_TDB", "f8"),
+    ]
+    if num_superstripe > 0:
+        dtype.insert(1, ("stripe_number", "i4"))
+
+    integration_table = np.array(integrations, dtype=dtype)
+    return integration_table
+
+
 def mock_nirspec_fs_one_slit_func():
     """
     Mock one slit in NIRSpec FS mode.
@@ -245,112 +305,7 @@ def mock_nirspec_bots_func():
     model.var_flat = model.data * 0.05
 
     # Add an int_times table
-    integrations = [
-        (
-            1,
-            59729.04367729,
-            59729.04378181,
-            59729.04388632,
-            59729.04731706,
-            59729.04742158,
-            59729.04752609,
-        ),
-        (
-            2,
-            59729.04389677,
-            59729.04400128,
-            59729.04410579,
-            59729.04753654,
-            59729.04764105,
-            59729.04774557,
-        ),
-        (
-            3,
-            59729.04411625,
-            59729.04422076,
-            59729.04432527,
-            59729.04775602,
-            59729.04786053,
-            59729.04796504,
-        ),
-        (
-            4,
-            59729.04433572,
-            59729.04444023,
-            59729.04454475,
-            59729.04797549,
-            59729.04808001,
-            59729.04818452,
-        ),
-        (
-            5,
-            59729.0445552,
-            59729.04465971,
-            59729.04476422,
-            59729.04819497,
-            59729.04829948,
-            59729.048404,
-        ),
-        (
-            6,
-            59729.04477467,
-            59729.04487918,
-            59729.0449837,
-            59729.04841445,
-            59729.04851896,
-            59729.04862347,
-        ),
-        (
-            7,
-            59729.04499415,
-            59729.04509866,
-            59729.04520317,
-            59729.04863392,
-            59729.04873844,
-            59729.04884295,
-        ),
-        (
-            8,
-            59729.04521362,
-            59729.04531813,
-            59729.04542265,
-            59729.0488534,
-            59729.04895791,
-            59729.04906242,
-        ),
-        (
-            9,
-            59729.0454331,
-            59729.04553761,
-            59729.04564212,
-            59729.04907288,
-            59729.04917739,
-            59729.0492819,
-        ),
-        (
-            10,
-            59729.04565257,
-            59729.04575709,
-            59729.0458616,
-            59729.04929235,
-            59729.04939686,
-            59729.04950138,
-        ),
-    ]
-
-    integration_table = np.array(
-        integrations,
-        dtype=[
-            ("integration_number", "i4"),
-            ("int_start_MJD_UTC", "f8"),
-            ("int_mid_MJD_UTC", "f8"),
-            ("int_end_MJD_UTC", "f8"),
-            ("int_start_BJD_TDB", "f8"),
-            ("int_mid_BJD_TDB", "f8"),
-            ("int_end_BJD_TDB", "f8"),
-        ],
-    )
-    model.int_times = integration_table
+    model.int_times = int_times_table(10)
 
     return model
 
@@ -480,50 +435,7 @@ def mock_nircam_dhs():
     model.meta.exposure.integration_start = 1
     model.meta.exposure.integration_end = intend
     model.meta.exposure.nints = intend
-    integrations = [
-        (
-            1,
-            59729.04367729,
-            59729.04378181,
-            59729.04388632,
-            59729.04731706,
-            59729.04742158,
-            59729.04752609,
-        ),
-        (
-            2,
-            59729.04389677,
-            59729.04400128,
-            59729.04410579,
-            59729.04753654,
-            59729.04764105,
-            59729.04774557,
-        ),
-        (
-            3,
-            59729.04411625,
-            59729.04422076,
-            59729.04432527,
-            59729.04775602,
-            59729.04786053,
-            59729.04796504,
-        ),
-    ]
-
-    integration_table = np.array(
-        integrations,
-        dtype=[
-            ("integration_number", "i4"),
-            ("int_start_MJD_UTC", "f8"),
-            ("int_mid_MJD_UTC", "f8"),
-            ("int_end_MJD_UTC", "f8"),
-            ("int_start_BJD_TDB", "f8"),
-            ("int_mid_BJD_TDB", "f8"),
-            ("int_end_BJD_TDB", "f8"),
-        ],
-    )
-    model.int_times = integration_table
-
+    model.int_times = int_times_table(3)
     for _ in range(2):
         submodel = dm.SlitModel()
         submodel.meta.wcsinfo.dispersion_direction = 1
@@ -535,7 +447,6 @@ def mock_nircam_dhs():
         submodel.var_rnoise = submodel.data * 0.02
         submodel.var_flat = submodel.data * 0.05
         submodel.update(model)
-        submodel.int_times = integration_table
         model.slits.append(submodel)
     return model
 
@@ -678,6 +589,24 @@ def mock_niriss_soss_96_func():
     model.var_poisson = model.data * 0.001
     model.var_rnoise = model.data * 0.001
     model.var_flat = model.data * 0.001
+
+    return model
+
+
+def mock_niriss_soss_superstripe_func():
+    """
+    Mock 3 integrations in NIRISS SOSS mode with superstriping.
+
+    Returns
+    -------
+    CubeModel
+        The mock model.
+    """
+    model = mock_niriss_soss_256_func()
+    model.meta.subarray.name = "SUB204STRIPE_SOSS"
+    model.meta.visit.tsovisit = True
+    model.int_times = int_times_table(3)
+    model.int_times_stripe = int_times_table(30, num_superstripe=10)
 
     return model
 

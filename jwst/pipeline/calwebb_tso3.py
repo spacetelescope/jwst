@@ -123,9 +123,18 @@ class Tso3Pipeline(Pipeline):
 
             x1d_result = datamodels.TSOMultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
+            nint = input_models[0].meta.exposure.nints
             x1d_result.int_times = FITS_rec.from_columns(
-                input_models[0].int_times.columns, nrows=input_models[0].meta.exposure.nints
+                input_models[0].int_times.columns, nrows=nint
             )
+
+            nstripe = 0
+            stripe_times = getattr(input_models[0], "int_times_stripe", None)
+            if stripe_times is not None and len(stripe_times) > 0:
+                nstripe = np.max(stripe_times["stripe_number"])
+                x1d_result.int_times_stripe = FITS_rec.from_columns(
+                    input_models[0].int_times_stripe.columns, nrows=nint * nstripe
+                )
 
             # Remove source_type from the output model, if it exists, to prevent
             # the creation of an empty SCI extension just for that keyword.
@@ -144,6 +153,12 @@ class Tso3Pipeline(Pipeline):
                 for row in cube.int_times:
                     # Subtract one to assign 1-indexed int_nums to int_times array locations
                     x1d_result.int_times[row[0] - 1] = row
+
+                cube_stripe_times = getattr(cube, "int_times_stripe", None)
+                if nstripe > 0 and cube_stripe_times is not None:
+                    for row in cube_stripe_times:
+                        idx = (row[0] - 1) * nstripe + row[1] - 1
+                        x1d_result.int_times_stripe[idx] = row
 
                 # SOSS F277W may return None - don't bother with that
                 if (result is None) or (result.meta.cal_step.extract_1d == "SKIPPED"):

@@ -337,11 +337,12 @@ def generate_stripe_int_times(input_model):
 
     nstr = input_model.meta.subarray.num_superstripe
     nints_sci = len(input_model.int_times) // nstr
+    int_start = int(np.ceil(input_model.meta.exposure.integration_start / nstr))
 
     otab = np.array(
         list(
             zip(
-                np.repeat(np.arange(len(input_model.int_times) // nstr) + 1, nstr),
+                np.repeat(np.arange(len(input_model.int_times) // nstr) + int_start, nstr),
                 np.arange(len(input_model.int_times)) % nstr + 1,
                 [integ["int_start_MJD_UTC"] for integ in input_model.int_times],
                 [integ["int_mid_MJD_UTC"] for integ in input_model.int_times],
@@ -377,7 +378,7 @@ def generate_stripe_int_times(input_model):
     otab2 = np.array(
         list(
             zip(
-                np.arange(len(input_model.int_times) // nstr) + 1,
+                np.arange(len(input_model.int_times) // nstr) + int_start,
                 cds_mjd_beg,
                 cds_mjd_mid,
                 cds_mjd_end,
