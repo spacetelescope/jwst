@@ -39,7 +39,6 @@ def do_dqinit(output_model, mask_model, user_dq=None):
     check_dimensions(output_model)
 
     # Extract subarray from reference data, if necessary
-    # TODO: is it possible for stripe mask to match the input model? If so, this will fail.
     if reffile_utils.ref_matches_sci(output_model, mask_model):
         mask_array = mask_model.dq
     else:
