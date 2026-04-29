@@ -149,7 +149,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
             "MIRIMAGE",
             {
                 "lrange": 20,
-                "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
+                "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
                 "require_ngood": 8,
                 "spline_bkpt": 36,
                 "space_ratio": 1.2,

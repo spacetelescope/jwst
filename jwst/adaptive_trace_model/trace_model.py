@@ -1011,18 +1011,23 @@ def _set_fit_kwargs(mode, detector, xsize):
     elif detector.startswith("MIR"):
         if mode == "MIR_MRS":
             lrange = 50
+
+            # For MRS fitting order, we need to start on the left and run to the middle,
+            # and then on the right to the middle in order to have the middle
+            # section not go too far beyond last good fit
+            col_index = np.concatenate(
+                [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
+            )
         else:
             lrange = 20
+
+            # For LRS, start on the right and move to the left
+            col_index = range(xsize - 1, -1, -1)
+
         require_ngood = 8
         spline_bkpt = 36
         space_ratio = 1.2
 
-        # For MIRI fitting order,  we need to start on the left and run to the middle,
-        # and then on the right to the middle in order to have the middle
-        # section not go too far beyond last good fit
-        col_index = np.concatenate(
-            [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
-        )
     else:
         raise ValueError("Unknown detector")
 
