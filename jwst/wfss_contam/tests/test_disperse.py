@@ -103,7 +103,7 @@ def test_disperse_flux_extrapolation(grism_wcs, direct_image_with_gradient):
         grism_wcs=grism_wcs,
         direct_image_wcs=direct_image_wcs,
     )
-    # manually padded 4-point SED that encodes the same flat extrapolation
+    # manual 4-plane SED that encodes the same flat extrapolation
     img_explicit = _disperse_one_pixel(
         fluxes=np.array([[0.0], [0.0], [2.0], [2.0]]),
         band_wavelengths=np.array([wmin, wmid1, wmid2, wmax]),
