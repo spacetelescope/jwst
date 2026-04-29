@@ -81,6 +81,7 @@ class MasterBackgroundMosStep(Pipeline):
                     The 1D version of the master background.
                 - "masterbkg_2d": `~stdatamodels.jwst.datamodels.MultiSlitModel`
                     The 2D slit-based version of the master background.
+
             use_correction_pars : bool
                 Use the corrections stored in ``correction_pars``.
 
