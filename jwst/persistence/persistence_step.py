@@ -111,7 +111,7 @@ class PersistenceStep(Step):
         """
         # Setup persistence array filename with time suffix to avoid overwriting existing files
         now = datetime.datetime.now()
-        time_fmt = "%Y%m%d%H%M%S%f"
+        time_fmt = "%y%m%d%H%M%S"
         time_str = now.strftime(time_fmt)
         pers_suffix = f"pers{time_str}"
 
@@ -121,9 +121,37 @@ class PersistenceStep(Step):
         else:
             filename = self.persistence_array_file
 
-        filename = self.make_output_path(basepath=filename, suffix=pers_suffix, ext="asdf")
+        filename = self.make_pers_output_name(filename, pers_suffix)
 
         # Write persistence array to ASDF file
         tree = {"persistence_data": self.persistence_array}
         with asdf.AsdfFile(tree) as af:
             af.write_to(filename)
+
+    def make_pers_output_name(self, filename, pers_suffix):
+        """
+        Create the output persistence array file name.
+
+        Parameters
+        ----------
+        filename : str
+            Path to modify for output file name.
+
+        pers_suffix : str
+            The suffix to use for the output persistence array file name.
+
+
+        Returns
+        -------
+        outfile : str
+            The fine name for the output persistence array file name.
+        """
+        dname, f_name = os.path.split(filename)
+        if len(dname) < 1:
+            dname = self.output_dir
+
+        basename, suff = f_name.rsplit("_", 1)
+        fname = f"{basename}_{pers_suffix}.asdf"
+        outfile = os.path.join(dname, fname)
+
+        return outfile
