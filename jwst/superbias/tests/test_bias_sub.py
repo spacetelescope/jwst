@@ -3,10 +3,12 @@
 import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
+from jwst.saturation.tests.helpers import setup_nis_superstripe_cube
 from jwst.superbias.bias_sub import do_correction
+from jwst.superbias.tests.helpers import nrc_full_ramp, nrc_subarray_ramp, superbias_model
 
 
-def test_basic_superbias_subtraction(setup_full_cube):
+def test_basic_superbias_subtraction():
     """Check basic superbias subtraction."""
 
     # Create inputs, data, and superbiases
@@ -15,7 +17,8 @@ def test_basic_superbias_subtraction(setup_full_cube):
     ncols = 2048
     blevel = 2000.0
 
-    data, bias = setup_full_cube(ngroups, nrows, ncols)
+    data = nrc_full_ramp(ngroups, nrows, ncols)
+    bias = superbias_model()
 
     # Add signal values and bias values
     data.data[:] = blevel
@@ -29,7 +32,7 @@ def test_basic_superbias_subtraction(setup_full_cube):
     assert np.array_equal(output.data, manual)
 
 
-def test_subarray_correction(setup_subarray_cube):
+def test_subarray_correction():
     """Check that the proper subarray is extracted from the full frame
     reference file during subtraction."""
 
@@ -41,7 +44,8 @@ def test_subarray_correction(setup_subarray_cube):
     xstart = 486
     ystart = 1508
 
-    data, bias = setup_subarray_cube(xstart, ystart, ngroups, nrows, ncols)
+    data = nrc_subarray_ramp(xstart, ystart, ngroups, nrows, ncols)
+    bias = superbias_model()
     manualbias = bias.data[ystart - 1 : ystart - 1 + nrows, xstart - 1 : xstart - 1 + ncols]
 
     # Add signal values and bias values
@@ -57,7 +61,7 @@ def test_subarray_correction(setup_subarray_cube):
     assert np.array_equal(output.data, manualout)
 
 
-def test_dq_propagation(setup_full_cube):
+def test_dq_propagation():
     """Check that the PIXELDQ array of the science exposure is correctly
     combined with the reference file DQ array."""
 
@@ -68,7 +72,8 @@ def test_dq_propagation(setup_full_cube):
     dqval1 = 5
     dqval2 = 10
 
-    data, bias = setup_full_cube(ngroups, nrows, ncols)
+    data = nrc_full_ramp(ngroups, nrows, ncols)
+    bias = superbias_model()
 
     # Add DQ values to the data and reference file
     data.pixeldq[5, 5] = dqval1
@@ -81,7 +86,7 @@ def test_dq_propagation(setup_full_cube):
     assert output.pixeldq[5, 5] == dqval1 + dqval2
 
 
-def test_nans_in_superbias(setup_full_cube):
+def test_nans_in_superbias():
     """Check that no superbias subtraction is done for pixels that have a
     value of NaN in the reference file."""
 
@@ -91,7 +96,8 @@ def test_nans_in_superbias(setup_full_cube):
     ncols = 2048
     blevel = 2000.0
 
-    data, bias = setup_full_cube(ngroups, nrows, ncols)
+    data = nrc_full_ramp(ngroups, nrows, ncols)
+    bias = superbias_model()
 
     # Add signal values and bias values
     data.data[:] = blevel
@@ -109,7 +115,7 @@ def test_nans_in_superbias(setup_full_cube):
     assert np.array_equal(output.data[0, :, 50, 50], data.data[0, :, 50, 50] - blevel)
 
 
-def test_zeroframe(setup_full_cube):
+def test_zeroframe():
     """ """
     darr1 = [11800.0, 11793.0, 11823.0, 11789.0, 11857.0]
     darr2 = [11800.0, 11793.0, 11823.0, 11789.0, 11857.0]
@@ -117,7 +123,8 @@ def test_zeroframe(setup_full_cube):
     zarr = [0.0, 10500.0, 10579.0]
 
     ngroups, nrows, ncols = len(darr1), 1, len(zarr)
-    ramp, bias = setup_full_cube(ngroups, nrows, ncols)
+    ramp = nrc_full_ramp(ngroups, nrows, ncols)
+    bias = superbias_model()
 
     cdq = np.array([dqflags.group["SATURATED"]] * ngroups)
 
@@ -144,11 +151,11 @@ def test_zeroframe(setup_full_cube):
     np.testing.assert_equal(check, output.zeroframe[0, 0, :])
 
 
-def test_superstripe_correction(setup_nis_superstripe_cube):
+def test_superstripe_correction():
     """Smoke test for superstripe handling."""
 
     # Create superstripe model and full frame bias model
-    data, bias = setup_nis_superstripe_cube()
+    data, _, bias = setup_nis_superstripe_cube()
 
     # The bias model has a single flat value
     blevel = bias.data[0, 0]

@@ -79,6 +79,13 @@ def ref_matches_sci(sci_model, ref_model):
         `True` if the science model has the same subarray parameters
         as the reference model, `False` otherwise.
     """
+    # Check first for superstripe data: it should never match the ref model.
+    # Reference files for superstripe ramps are handled directly by
+    # get_multistripe_subarray_model.
+    nstripe = getattr(sci_model.meta.subarray, "num_superstripe", None)
+    if nstripe is not None and nstripe > 0:
+        return False
+
     # Get the reference file subarray parameters
     xstart_ref = ref_model.meta.subarray.xstart
     xsize_ref = ref_model.meta.subarray.xsize
