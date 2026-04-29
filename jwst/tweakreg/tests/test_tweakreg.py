@@ -208,10 +208,10 @@ def test_src_confusion_pars(example_input, alignment_type):
     step = tweakreg_step.TweakRegStep(**pars)
     result = step.run(example_input)
 
-    # check that step was skipped
+    # check that step was failed
     with result:
         for model, input_model in zip(result, example_input, strict=True):
-            assert model.meta.cal_step.tweakreg == "SKIPPED"
+            assert model.meta.cal_step.tweakreg == "FAILED"
 
             # Input model is not modified
             assert model is not input_model
@@ -228,10 +228,10 @@ def test_ngroup_1(caplog, example_input):
     result = tweakreg_step.TweakRegStep.call(example_input)
     assert "At least two exposures are required" in caplog.text
 
-    # check that step was skipped
+    # check that step was failed
     with result:
         for model, input_model in zip(result, example_input, strict=True):
-            assert model.meta.cal_step.tweakreg == "SKIPPED"
+            assert model.meta.cal_step.tweakreg == "FAILED"
 
             # Input model is not modified
             assert model is not input_model

@@ -53,7 +53,7 @@ class MasterBackgroundStep(Step):
 
         # First check if we should even do the subtraction.  If not, bail.
         if not self._do_sub(output_model):
-            record_step_status(output_model, "master_background", success=False)
+            record_step_status(output_model, "master_background", status="SKIPPED")
             return output_model
 
         # Check that data is a supported datamodel. If not, bail.
@@ -70,7 +70,7 @@ class MasterBackgroundStep(Step):
             log.warning(
                 f"Input {input_data} of type {type(output_model)} cannot be handled.  Step skipped."
             )
-            record_step_status(output_model, "master_background", success=False)
+            record_step_status(output_model, "master_background", status="SKIPPED")
             return output_model
 
         # If user-supplied master background, subtract it
@@ -114,7 +114,7 @@ class MasterBackgroundStep(Step):
                     f"Input {input_data} of type {type(output_model)} cannot be "
                     "handled without user-supplied background.  Step skipped."
                 )
-                record_step_status(output_model, "master_background", success=False)
+                record_step_status(output_model, "master_background", status="SKIPPED")
                 return output_model
 
             result, background_data = split_container(output_model)
@@ -124,7 +124,7 @@ class MasterBackgroundStep(Step):
                     "and no user-supplied background provided.  Skipping step."
                 )
                 log.warning(msg)
-                record_step_status(output_model, "master_background", success=False)
+                record_step_status(output_model, "master_background", status="SKIPPED")
                 return output_model
             asn_id = result.asn_table["asn_id"]
 
@@ -189,7 +189,7 @@ class MasterBackgroundStep(Step):
                     background_2d_collection, suffix="masterbg2d", force=True, asn_id=asn_id
                 )
 
-        record_step_status(result, "master_background", success=True)
+        record_step_status(result, "master_background", status="COMPLETE")
 
         # Clean up intermediate background models
         background_2d_collection.close()

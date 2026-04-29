@@ -106,7 +106,7 @@ class MasterBackgroundMosStep(Pipeline):
             output_model.meta.cal_step.master_background,
         ]:
             log.info("Background subtraction has already occurred. Skipping.")
-            record_step_status(output_model, "master_background", success=False)
+            record_step_status(output_model, "master_background", status="SKIPPED")
             return output_model
 
         if self.user_background:
@@ -124,11 +124,11 @@ class MasterBackgroundMosStep(Pipeline):
                 log.warning(
                     "No background slits available for creating master background. Skipping"
                 )
-                record_step_status(output_model, "master_background", False)
+                record_step_status(output_model, "master_background", status="SKIPPED")
                 return output_model
             elif num_src == 0:
                 log.warning("No source slits for applying master background. Skipping")
-                record_step_status(output_model, "master_background", False)
+                record_step_status(output_model, "master_background", status="SKIPPED")
                 return output_model
 
             log.info("Calculating master background")
@@ -139,7 +139,7 @@ class MasterBackgroundMosStep(Pipeline):
         # Check that a master background was actually determined.
         if master_background is None:
             log.info("No master background could be calculated. Skipping.")
-            record_step_status(output_model, "master_background", False)
+            record_step_status(output_model, "master_background", status="FAILED")
             return output_model
 
         # Now apply the de-calibrated background to the original science
@@ -148,7 +148,7 @@ class MasterBackgroundMosStep(Pipeline):
         )
 
         # Mark as completed and setup return data
-        record_step_status(result, "master_background", True)
+        record_step_status(result, "master_background", status="COMPLETE")
         if self.save_background:
             self.save_model(master_background, suffix="masterbg1d", force=True)
             self.save_model(mb_multislit, suffix="masterbg2d", force=True)

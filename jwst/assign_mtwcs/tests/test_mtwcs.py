@@ -107,7 +107,7 @@ def test_output_is_not_input(monkeypatch, success):
     that performance is the most important thing and extra copies are
     not desired.
     """
-    # Mock a failure in the ModelLibrary init, to exercise the "skipped" condition
+    # Mock a failure in the ModelLibrary init, to exercise the "failed" condition
     if not success:
 
         def raise_error(*args, **kwargs):
@@ -127,7 +127,7 @@ def test_output_is_not_input(monkeypatch, success):
                 if success:
                     assert im.meta.cal_step.assign_mtwcs == "COMPLETE"
                 else:
-                    assert im.meta.cal_step.assign_mtwcs == "SKIPPED"
+                    assert im.meta.cal_step.assign_mtwcs == "FAILED"
                 assert im is not input_im
                 assert input_im.meta.cal_step.assign_mtwcs is None
 

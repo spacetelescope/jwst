@@ -265,9 +265,9 @@ def test_skip_no_master_bg(monkeypatch, nirspec_msa_extracted2d):
     # mock a failure in master bg creation
     monkeypatch.setattr(step, "_extend_bg_slits", lambda *args, **kwargs: None)
 
-    # Step is skipped
+    # Step is marked FAILED
     result = step.run(model)
-    assert result.meta.cal_step.master_background == "SKIPPED"
+    assert result.meta.cal_step.master_background == "FAILED"
 
     # Input is not modified
     assert result is not model
