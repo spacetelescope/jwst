@@ -121,37 +121,10 @@ class PersistenceStep(Step):
         else:
             filename = self.persistence_array_file
 
-        filename = self.make_pers_output_name(filename, pers_suffix)
+        basename, suff = filename.rsplit("_", 1)
+        filename = f"{basename}_{pers_suffix}.asdf"
 
         # Write persistence array to ASDF file
         tree = {"persistence_data": self.persistence_array}
         with asdf.AsdfFile(tree) as af:
             af.write_to(filename)
-
-    def make_pers_output_name(self, filename, pers_suffix):
-        """
-        Create the output persistence array file name.
-
-        Parameters
-        ----------
-        filename : str
-            Path to modify for output file name.
-
-        pers_suffix : str
-            The suffix to use for the output persistence array file name.
-
-
-        Returns
-        -------
-        outfile : str
-            The fine name for the output persistence array file name.
-        """
-        dname, f_name = os.path.split(filename)
-        if len(dname) < 1:
-            dname = self.output_dir
-
-        basename, suff = f_name.rsplit("_", 1)
-        fname = f"{basename}_{pers_suffix}.asdf"
-        outfile = os.path.join(dname, fname)
-
-        return outfile
