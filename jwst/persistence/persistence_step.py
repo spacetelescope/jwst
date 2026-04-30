@@ -121,8 +121,12 @@ class PersistenceStep(Step):
         else:
             filename = self.persistence_array_file
 
+        path, filename = os.path.split(filename)
         basename, suff = filename.rsplit("_", 1)
         filename = f"{basename}_{pers_suffix}.asdf"
+
+        if self.output_dir is not None and len(self.output_dir) > 1:
+            filename = os.path.join(self.output_dir, filename)
 
         # Write persistence array to ASDF file
         tree = {"persistence_data": self.persistence_array}
