@@ -1,0 +1,1 @@
+Fix a bug that included reference pixel values in the SOSS background threshold mask generation.
