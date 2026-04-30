@@ -233,7 +233,45 @@ def nirspec_slit_model_with_source():
     return model
 
 
-def profile_1d(xvec, amplitude=0.1, baseline=1.0):
+def nirspec_slit_model_with_source_and_nod():
+    """
+    Create a mock NIRSpec FS model with a source and a negative nod in the data array.
+
+    Calls assign_wcs and extract_2d.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        The FS datamodel.
+    """
+    model = nirspec_slit_model()
+    for slit in model.slits:
+        region_map = (~np.isnan(slit.wavelength)).astype(int)
+        slit.data *= 0
+        slit.err[:] = 1e-5
+        _add_source(
+            slit,
+            region_map,
+            center_offset=0.25,
+            amplitude=10,
+            bright_factor=1.0,
+            width=1.0,
+            overwrite_data=False,
+        )
+        _add_source(
+            slit,
+            region_map,
+            center_offset=-0.25,
+            amplitude=-10,
+            bright_factor=1.0,
+            width=1.0,
+            overwrite_data=False,
+        )
+
+    return model
+
+
+def profile_1d(xvec, center_offset=0.0, amplitude=0.1, baseline=1.0, width=2.0):
     """
     Make a smooth 1D Gaussian profile.
 
@@ -241,31 +279,62 @@ def profile_1d(xvec, amplitude=0.1, baseline=1.0):
     ----------
     xvec : ndarray
         X-values for the profile.
+    center_offset : float, optional
+        Offset for centering the Gaussian, given as a fraction of the mean ``xvec`` value.
     amplitude : float, optional
         Amplitude for the Gaussian.
     baseline : float, optional
         Background level to add.
+    width : float, optional
+        Gaussian width in pixels.
 
     Returns
     -------
     yvec : ndarray
         Gaussian y-values for the profile, centered on the middle of the ``xvec`` array.
     """
-    xpos = np.mean(xvec)
-    peak = amplitude * np.exp(-0.5 * ((xvec - xpos) / 2) ** 2)
+    center = np.mean(xvec)
+    center += center_offset * center
+    peak = amplitude * np.exp(-0.5 * ((xvec - center) / width) ** 2)
     return peak + baseline
 
 
-def _add_source(model, region_map, along_x=True, bright_factor=10.0):
+def _add_source(
+    model,
+    region_map,
+    along_x=True,
+    bright_factor=10.0,
+    overwrite_data=True,
+    center_offset=0.0,
+    amplitude=1.0,
+    baseline=0.0,
+    width=2.0,
+):
     ysize, xsize = model.data.shape[-2:]
     x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
     slice_numbers = np.unique(region_map[region_map > 0])
     for slice_num in slice_numbers:
         indx = region_map == slice_num
         if along_x:
-            model.data[..., indx] = profile_1d(y[indx], amplitude=1.0, baseline=0.0)
+            source = profile_1d(
+                y[indx],
+                center_offset=center_offset,
+                amplitude=amplitude,
+                baseline=baseline,
+                width=width,
+            )
         else:
-            model.data[..., indx] = profile_1d(x[indx], amplitude=1.0, baseline=0.0)
+            source = profile_1d(
+                x[indx],
+                center_offset=center_offset,
+                amplitude=amplitude,
+                baseline=baseline,
+                width=width,
+            )
+        if overwrite_data:
+            model.data[..., indx] = source
+        else:
+            model.data[..., indx] += source
 
         # Make one slice brighter, for threshold tests
         if slice_num == slice_numbers[len(slice_numbers) // 2]:

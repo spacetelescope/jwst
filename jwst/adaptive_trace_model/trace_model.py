@@ -582,7 +582,46 @@ def linear_oversample(
     return os_data
 
 
-def _fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **fit_kwargs):
+def has_negative_nods(flux, error, threshold=-5.0):
+    """
+    Check for the presence of significant negative flux.
+
+    If the median signal-to-noise value in regions of negative
+    flux is less than the threshold value, then the negative
+    flux is considered significant.
+
+    If errors are all zero or non-finite, then the significance
+    can't be determined, and this function returns False.
+
+    Parameters
+    ----------
+    flux : ndarray
+        Flux array to test.
+    error : ndarray
+        Associated error array.
+    threshold : float, optional
+        Threshold signal-to-noise value to consider significantly negative.
+
+    Returns
+    -------
+    bool
+        True if significant negative flux is present; False otherwise.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        snr = flux / error
+    negative = np.isfinite(snr) & (snr < 0)
+    if not np.any(negative):
+        return False
+
+    median_snr = np.nanmedian(snr[negative])
+    if median_snr < threshold:
+        return True
+    else:
+        return False
+
+
+def _fit_one_region(flux, error, alpha, region_map, signal_threshold, region_number, **fit_kwargs):
     """
     Fit a trace model to a single region in the flux image.
 
@@ -592,6 +631,8 @@ def _fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **
     ----------
     flux : ndarray
         The flux image to fit.
+    error : ndarray
+        The error image associated with the flux.
     alpha : ndarray
         Alpha coordinates for all flux values.
     region_map : ndarray of int
@@ -614,15 +655,23 @@ def _fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **
     """
     # Arrays to reset with NaNs for each slice
     data_slice = np.full_like(flux, np.nan)
+    err_slice = np.full_like(flux, np.nan)
     alpha_slice = np.full_like(flux, np.nan)
 
     # Copy the relevant data for this slice into the holding arrays
     indx = region_map == region_number
     data_slice[indx] = flux[indx]
+    err_slice[indx] = error[indx]
     alpha_slice[indx] = alpha[indx]
 
     # A running sum in a given detector column (used for normalization)
-    runsum = np.nansum(data_slice, axis=0)
+    if has_negative_nods(data_slice, err_slice):
+        # If significant negative nods present, just sum positive data
+        log.info("Found significant negative data; summing positive only for normalization.")
+        runsum = np.nansum(data_slice, where=(data_slice > 0), axis=0)
+    else:
+        # Otherwise, sum all the data in the slice
+        runsum = np.nansum(data_slice, axis=0)
 
     # Collapse the slice along Y to get max in each column
     with warnings.catch_warnings():
@@ -647,7 +696,9 @@ def _fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **
     return splines
 
 
-def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="none", **fit_kwargs):
+def fit_all_regions(
+    flux, error, alpha, region_map, signal_threshold, maximum_cores="none", **fit_kwargs
+):
     """
     Fit a trace model to all regions in the flux image.
 
@@ -655,6 +706,8 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="no
     ----------
     flux : ndarray
         The flux image to fit.
+    error : ndarray
+        The error image associated with the flux.
     alpha : ndarray
         Alpha coordinates for all flux values.
     region_map : ndarray of int
@@ -694,7 +747,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="no
             if len(region_numbers) > 1:
                 log.info("Fitting slice %s", reg_num)
             spline_models[reg_num] = _fit_one_region(
-                flux, alpha, region_map, signal_threshold, reg_num, **fit_kwargs
+                flux, error, alpha, region_map, signal_threshold, reg_num, **fit_kwargs
             )
     else:
         # Parallelized computation
@@ -703,7 +756,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="no
         # Use functools.partial to supply all other inputs to _fit_one_region except slice number
         # This is needed since pool.starmap doesn't support passing **fit_kwargs
         fit_one_region_with_args = functools.partial(
-            _fit_one_region, flux, alpha, region_map, signal_threshold, **fit_kwargs
+            _fit_one_region, flux, error, alpha, region_map, signal_threshold, **fit_kwargs
         )
 
         # Run the parallelized calc and collect results
@@ -1559,13 +1612,18 @@ def fit_and_oversample(
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
             flux_orig = np.nanmedian(model.data, axis=0)
+            err_orig = np.nanmedian(model.err, axis=0)
+
     else:
+        # Otherwise, just get the data and error arrays from the model
         flux_orig = model.data
+        err_orig = model.err
 
     # Rotate input data if needed
     if rotate:
         xsize, ysize = ysize, xsize
         flux_orig = np.rot90(flux_orig)
+        err_orig = np.rot90(err_orig)
         alpha_orig = np.rot90(alpha_orig)
         region_map = np.rot90(region_map)
 
@@ -1613,6 +1671,7 @@ def fit_and_oversample(
     fit_kwargs = _set_fit_kwargs(mode, detector, xsize)
     spline_models = fit_all_regions(
         flux_orig,
+        err_orig,
         alpha_orig,
         region_map,
         signal_threshold,

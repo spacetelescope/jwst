@@ -228,3 +228,22 @@ def test_fit_and_oversample_unsupported_mode():
     model.meta.instrument.detector = "NIS"
     with pytest.raises(ValueError, match="Unknown detector"):
         tm.fit_and_oversample(model)
+
+
+def test_has_negative_nods():
+    flux = np.linspace(-10, 10, 21)
+
+    # SNR -6, less than default threshold, return True
+    err = np.abs(flux) / 6
+    assert tm.has_negative_nods(flux, err)
+
+    # Equal to threshold, return False
+    assert not tm.has_negative_nods(flux, err, threshold=-6)
+
+    # Greater than threshold, return False
+    assert not tm.has_negative_nods(flux, err, threshold=-7)
+
+    # Errors all zero or non-finite: significance can't be determined, return False
+    assert not tm.has_negative_nods(flux, np.full_like(flux, 0))
+    assert not tm.has_negative_nods(flux, np.full_like(flux, np.inf))
+    assert not tm.has_negative_nods(flux, np.full_like(flux, np.nan))

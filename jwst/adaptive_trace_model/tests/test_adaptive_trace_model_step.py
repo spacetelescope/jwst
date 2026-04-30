@@ -51,6 +51,13 @@ def nirspec_slit_model_with_source():
     model.close()
 
 
+@pytest.fixture(scope="module")
+def nirspec_slit_model_with_source_and_nod():
+    model = helpers.nirspec_slit_model_with_source_and_nod()
+    yield model
+    model.close()
+
+
 @pytest.fixture()
 def asn_input(tmp_path, miri_mrs_model):
     """
@@ -199,8 +206,7 @@ def test_adaptive_trace_model_step_oversample(miri_mrs_model):
     "dataset",
     ["miri_mrs_model_with_source", "nirspec_ifu_model_with_source", "nirspec_ifu_slice_wcs"],
 )
-@pytest.mark.parametrize("cores", ["none", "2"])
-def test_adaptive_trace_model_step_oversample_with_source(request, dataset, cores):
+def test_adaptive_trace_model_step_oversample_with_source(request, dataset):
     model = request.getfixturevalue(dataset)
 
     fit_threshold = 10.0
@@ -210,7 +216,6 @@ def test_adaptive_trace_model_step_oversample_with_source(request, dataset, core
         oversample=2,
         slope_limit=slope_limit,
         fit_threshold=fit_threshold,
-        maximum_cores=cores,
     )
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
@@ -398,9 +403,12 @@ def test_adaptive_trace_model_step_tso_oversample(miri_lrs_slitless_model_with_s
         AdaptiveTraceModelStep.call(model, oversample=2)
 
 
-def test_adaptive_trace_model_step_oversample_slit(nirspec_slit_model_with_source):
-    model = nirspec_slit_model_with_source
-    result = AdaptiveTraceModelStep.call(model, oversample=2, slope_limit=0.05, fit_threshold=0.0)
+@pytest.mark.parametrize(
+    "dataset", ["nirspec_slit_model_with_source", "nirspec_slit_model_with_source_and_nod"]
+)
+def test_adaptive_trace_model_step_oversample_slit(dataset, request):
+    model = request.getfixturevalue(dataset)
+    result = AdaptiveTraceModelStep.call(model, oversample=2, slope_limit=0.0, fit_threshold=0.0)
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
     assert isinstance(result, datamodels.MultiSlitModel)
 
@@ -438,6 +446,7 @@ def test_adaptive_trace_model_step_oversample_slit(nirspec_slit_model_with_sourc
             factor = 2.0
         else:
             factor = 1.0
+
         np.testing.assert_allclose(
             output_model.data[valid] * factor, output_model.trace_model[valid], atol=atol
         )
