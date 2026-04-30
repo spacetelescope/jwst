@@ -1849,6 +1849,7 @@ def fit_and_oversample(
     # we also need to correct for flux conservation
     if is_flux_density(model.meta.bunit_data):
         model.data /= oversample_factor
+        model.trace_model /= oversample_factor
         for extname in error_extensions:
             if model.hasattr(extname):
                 ext = getattr(model, extname)

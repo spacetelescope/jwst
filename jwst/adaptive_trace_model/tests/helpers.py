@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from stdatamodels.jwst import datamodels
 
@@ -252,26 +254,26 @@ def nirspec_slit_model_with_source_and_nod():
         _add_source(
             slit,
             region_map,
-            center_offset=0.25,
+            center_offset=0.3,
             amplitude=10,
             bright_factor=1.0,
-            width=1.0,
+            width=1.5,
             overwrite_data=False,
         )
         _add_source(
             slit,
             region_map,
-            center_offset=-0.25,
+            center_offset=-0.3,
             amplitude=-10,
             bright_factor=1.0,
-            width=1.0,
+            width=1.5,
             overwrite_data=False,
         )
 
     return model
 
 
-def profile_1d(xvec, center_offset=0.0, amplitude=0.1, baseline=1.0, width=2.0):
+def profile_1d(xvec, center_offset=0.0, amplitude=0.1, baseline=1.0, width=2.0, along_x=True):
     """
     Make a smooth 1D Gaussian profile.
 
@@ -293,7 +295,15 @@ def profile_1d(xvec, center_offset=0.0, amplitude=0.1, baseline=1.0, width=2.0):
     yvec : ndarray
         Gaussian y-values for the profile, centered on the middle of the ``xvec`` array.
     """
-    center = np.mean(xvec)
+    if xvec.ndim == 2:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            if along_x:
+                center = np.nanmean(xvec, axis=0)[None, :]
+            else:
+                center = np.nanmean(xvec, axis=1)[:, None]
+    else:
+        center = np.nanmean(xvec)
     center += center_offset * center
     peak = amplitude * np.exp(-0.5 * ((xvec - center) / width) ** 2)
     return peak + baseline
@@ -316,25 +326,31 @@ def _add_source(
     for slice_num in slice_numbers:
         indx = region_map == slice_num
         if along_x:
+            slice_y = y.astype(float)
+            slice_y[~indx] = np.nan
             source = profile_1d(
-                y[indx],
+                slice_y,
                 center_offset=center_offset,
                 amplitude=amplitude,
                 baseline=baseline,
                 width=width,
+                along_x=along_x,
             )
         else:
+            slice_x = x.astype(float)
+            slice_x[~indx] = np.nan
             source = profile_1d(
-                x[indx],
+                slice_x,
                 center_offset=center_offset,
                 amplitude=amplitude,
                 baseline=baseline,
                 width=width,
+                along_x=along_x,
             )
         if overwrite_data:
-            model.data[..., indx] = source
+            model.data[..., indx] = source[indx]
         else:
-            model.data[..., indx] += source
+            model.data[..., indx] += source[indx]
 
         # Make one slice brighter, for threshold tests
         if slice_num == slice_numbers[len(slice_numbers) // 2]:

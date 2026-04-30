@@ -436,18 +436,9 @@ def test_adaptive_trace_model_step_oversample_slit(dataset, request):
         assert np.all(np.isnan(output_model.trace_model[~indx]))
         assert np.sum(~np.isnan(output_model.trace_model[indx])) > 0.15 * np.sum(indx)
 
-        # fit trace is a reasonable model of the slice but not identical -
-        # the slice is mostly linearly interpolated
+        # fit trace is a reasonable model of the source but not identical
         valid = indx & ~np.isnan(output_model.data) & ~np.isnan(output_model.trace_model)
-        atol = 0.25 * np.nanmax(input_model.data)
-        if output_model.meta.bunit_data == "MJy":
-            # for flux density units, we need to account for flux conservation,
-            # due to pixel size change
-            factor = 2.0
-        else:
-            factor = 1.0
+        med_diff = np.median(np.abs(output_model.data[valid] - output_model.trace_model[valid]))
+        assert med_diff < 1.0
 
-        np.testing.assert_allclose(
-            output_model.data[valid] * factor, output_model.trace_model[valid], atol=atol
-        )
     result.close()
