@@ -100,6 +100,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
+                "fit_iter": 3,
             },
         ),
         (
@@ -113,6 +114,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
+                "fit_iter": 3,
             },
         ),
         (
@@ -121,11 +123,26 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
             {
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                "require_ngood": 8,
-                "spline_bkpt": 62,
-                "space_ratio": 3.0,
+                "require_ngood": 15,
+                "spline_bkpt": 68,
+                "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
+                "fit_iter": 3,
+            },
+        ),
+        (
+            "NRS_MOS",
+            "NRS1",
+            {
+                "lrange": 50,
+                "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "require_ngood": 8,
+                "spline_bkpt": 68,
+                "space_ratio": 1.6,
+                "sigma_low": 2.5,
+                "sigma_high": 2.5,
+                "fit_iter": 3,
             },
         ),
         (
@@ -139,6 +156,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
                 "space_ratio": 1.2,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
+                "fit_iter": 3,
             },
         ),
         (
@@ -152,10 +170,11 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
                 "space_ratio": 1.2,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
+                "fit_iter": 3,
             },
         ),
         (
-            "MIR_LRS",
+            "MIR_LRS_SLIT",
             "MIRIMAGE",
             {
                 "lrange": 5,
@@ -165,6 +184,21 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
                 "space_ratio": 1.2,
                 "sigma_low": 3.0,
                 "sigma_high": 3.0,
+                "fit_iter": 3,
+            },
+        ),
+        (
+            "MIR_LRS_SLITLESS",
+            "MIRIMAGE",
+            {
+                "lrange": 5,
+                "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+                "require_ngood": 8,
+                "spline_bkpt": 60,
+                "space_ratio": 1.2,
+                "sigma_low": 3.0,
+                "sigma_high": 3.0,
+                "fit_iter": 2,
             },
         ),
     ],

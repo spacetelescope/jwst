@@ -23,6 +23,7 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 __all__ = [
     "fit_2d_spline_trace",
     "linear_oversample",
+    "has_negative_nods",
     "fit_all_regions",
     "oversample_flux",
     "fit_and_oversample",
@@ -87,6 +88,7 @@ def fit_2d_spline_trace(
     space_ratio=1.2,
     sigma_low=2.5,
     sigma_high=2.5,
+    fit_iter=3,
 ):
     """
     Create a trace model from spline fits to a single slit/slice image.
@@ -122,6 +124,8 @@ def fit_2d_spline_trace(
         Low sigma threshold for iterative spline fit.
     sigma_high : float, optional
         High sigma threshold for iterative spline fit.
+    fit_iter : int, optional
+        Maximum number of iterations for spline fit.
 
     Returns
     -------
@@ -186,7 +190,7 @@ def fit_2d_spline_trace(
                 nbkpts=spline_bkpt,
                 wrapsig_low=sigma_low,
                 wrapsig_high=sigma_high,
-                wrapiter=3,
+                wrapiter=fit_iter,
                 space_ratio=space_ratio,
                 verbose=False,
             )
@@ -201,7 +205,7 @@ def fit_2d_spline_trace(
                     nbkpts=spline_bkpt - 3,
                     wrapsig_low=sigma_low,
                     wrapsig_high=sigma_high,
-                    wrapiter=3,
+                    wrapiter=fit_iter,
                     space_ratio=space_ratio,
                     verbose=False,
                 )
@@ -336,13 +340,15 @@ def _is_compact_source(
 
     # Bin the alpha coordinates for the high slope locations
     avec = np.arange(spline_bkpt) * native_dalpha / 2 - (native_dalpha * spline_bkpt / 4)
-    hist, edges = np.histogram(
-        alpha_ptsource,
-        bins=spline_bkpt,
-        range=(-native_dalpha * spline_bkpt / 4, native_dalpha * spline_bkpt / 4),
-        density=True,
-    )
-    hist = hist / np.nanmax(hist)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        hist, edges = np.histogram(
+            alpha_ptsource,
+            bins=spline_bkpt,
+            range=(-native_dalpha * spline_bkpt / 4, native_dalpha * spline_bkpt / 4),
+            density=True,
+        )
+        hist = hist / np.nanmax(hist)
 
     # Require peaks above some threshold
     peak_indices, _ = find_peaks(hist, height=0.2)
@@ -614,7 +620,7 @@ def has_negative_nods(flux, error, threshold=-5.0):
     if not np.any(negative):
         return False
 
-    median_snr = np.nanmedian(snr[negative])
+    median_snr = np.median(snr[negative])
     if median_snr < threshold:
         return True
     else:
@@ -1025,7 +1031,8 @@ def _set_fit_kwargs(mode, detector, xsize):
     Parameters
     ----------
     mode : str
-        Fitting mode (e.g. "NRS_IFU", "NRS_SLIT", "MIR_MRS", "MIR_LRS").
+        Fitting mode ("NRS_IFU", "NRS_SLIT", "NRS_MOS", "MIR_MRS",
+        "MIR_LRS_SLIT", or "MIR_LRS_SLITLESS").
     detector : str
         Detector name.
     xsize : int
@@ -1046,20 +1053,19 @@ def _set_fit_kwargs(mode, detector, xsize):
     # Empirical parameters for this mode
     sigma_low = 2.5
     sigma_high = 2.5
+    fit_iter = 3
     if detector.startswith("NRS"):
-        if mode == "NRS_IFU":
-            require_ngood = 15
-            spline_bkpt = 68
+        spline_bkpt = 68
+        lrange = 50
+        require_ngood = 15
 
-            # This factor of 1.6 was dialed based on inspection of the results
-            # as sampling gets progressively worse for NIRSpec detectors
-            space_ratio = 1.6
-            lrange = 50
-        else:
+        # This factor of 1.6 was dialed based on inspection of the results
+        # as sampling gets progressively worse for NIRSpec detectors
+        space_ratio = 1.6
+
+        # MOS may need different parameters than fixed slit; this is a placeholder so far.
+        if mode == "NRS_MOS":
             require_ngood = 8
-            spline_bkpt = 62
-            space_ratio = 3.0
-            lrange = 50
 
         # Set up the column fitting order by detector
         if detector == "NRS1":
@@ -1070,6 +1076,8 @@ def _set_fit_kwargs(mode, detector, xsize):
             col_index = range(xsize - 1, -1, -1)
 
     elif detector.startswith("MIR"):
+        require_ngood = 8
+        space_ratio = 1.2
         if mode == "MIR_MRS":
             lrange = 50
             spline_bkpt = 36
@@ -1082,16 +1090,16 @@ def _set_fit_kwargs(mode, detector, xsize):
             )
         else:
             lrange = 5
-            spline_bkpt = 40
             sigma_low = 3.0
             sigma_high = 3.0
+            if mode == "MIR_LRS_SLITLESS":
+                fit_iter = 2
+                spline_bkpt = 60
+            else:
+                spline_bkpt = 40
 
             # For LRS, start on the right and move to the left
             col_index = range(xsize - 1, -1, -1)
-
-        require_ngood = 8
-        space_ratio = 1.2
-
     else:
         raise ValueError("Unknown detector")
 
@@ -1103,6 +1111,7 @@ def _set_fit_kwargs(mode, detector, xsize):
         "space_ratio": space_ratio,
         "sigma_low": sigma_low,
         "sigma_high": sigma_high,
+        "fit_iter": fit_iter,
     }
     return fit_kwargs
 
@@ -1551,6 +1560,7 @@ def fit_and_oversample(
 
     # Get input data coordinates
     detector = model.meta.instrument.detector
+    exp_type = model.meta.exposure.type
     if model.data.ndim == 3:
         nint, ysize, xsize = model.data.shape
     else:
@@ -1566,7 +1576,10 @@ def fit_and_oversample(
             # the region map is already stored in the datamodel
             region_map = model.regions
         else:
-            mode = "NRS_SLIT"
+            if exp_type == "NRS_MSASPEC":
+                mode = "NRS_MOS"
+            else:
+                mode = "NRS_SLIT"
             wcs = model.meta.wcs
             alpha_orig = _get_alpha_nrs_slit(wcs, xsize, ysize)
 
@@ -1585,7 +1598,10 @@ def fit_and_oversample(
             det2ab_transform = wcs.get_transform("detector", "alpha_beta")
             region_map = det2ab_transform.label_mapper.mapper.copy()
         else:
-            mode = "MIR_LRS"
+            if exp_type == "MIR_LRS-SLITLESS":
+                mode = "MIR_LRS_SLITLESS"
+            else:
+                mode = "MIR_LRS_SLIT"
             wcs = model.meta.wcs
             alpha_orig = _get_alpha_mir_lrs(wcs, xsize, ysize)
 
@@ -1717,7 +1733,7 @@ def fit_and_oversample(
     x_os[:, :] = basex[oldy.astype(int), :]
     if mode == "NRS_IFU":
         alpha_os, wave_os = _get_oversampled_coords_nrs_ifu(wcs, x_os, y_os)
-    elif mode == "NRS_SLIT":
+    elif mode.startswith("NRS"):
         _, alpha_os, wave_os = model.meta.wcs.transform("detector", "slit_frame", x_os, y_os)
         alpha_os *= -1
         wave_os *= 1e6
@@ -1792,7 +1808,7 @@ def fit_and_oversample(
     if mode == "NRS_IFU":
         map_pixels = Identity(1) & scale_and_shift
         model.meta.wcs = _update_wcs_nrs_ifu(model.meta.wcs, map_pixels)
-    elif mode == "NRS_SLIT":
+    elif mode.startswith("NRS"):
         map_pixels = Identity(1) & scale_and_shift
         model.meta.wcs = _update_wcs(model.meta.wcs, map_pixels)
     else:
