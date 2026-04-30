@@ -87,13 +87,16 @@ def test_persistence_time_nonneg_sec(create_sci_model):
     np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
 
 
-def test_persistence_time_save_persistence(create_sci_model):
+def test_persistence_time_save_persistence(create_sci_model, tmp_path):
     """Test persitence flag file gets created."""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
 
+
     step = PersistenceStep(persistence_time=70, save_persistence=True)
+    step.output_dir = str(tmp_path)
+
     res = step.run(model)
 
     # With a persistence window of 70 seconds and group time of 21.47354 seconds, the 5th
@@ -109,16 +112,19 @@ def test_persistence_time_save_persistence(create_sci_model):
     np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
 
     found = False
-    for el in os.listdir(os.getcwd()):
+    for el in os.listdir(step.output_dir):
         if found:
             break
         if el.startswith("dummy_pers"):
             found = True
             import asdf
-            with asdf.open(el, memmap=True, lazy_load=False) as pers:
+            fel = os.path.join(step.output_dir, el)
+            with asdf.open(fel, memmap=True, lazy_load=False) as pers:
                 pers_data = pers["persistence_data"]
     
     assert found is True
+
+    del step
             
 
 def test_persistence_time_0_sec(create_sci_model):
