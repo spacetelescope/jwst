@@ -149,7 +149,52 @@ def make_dq_arrays(ysize, xsize):
     return dq, dq_def
 
 
-def make_superstripe_model():
+def int_times_table(n_entry):
+    """
+    Make an integration times table, suitable for storing as ``model.int_times``.
+
+    Parameters
+    ----------
+    n_entry : int
+        Length of the integration table to create
+
+    Returns
+    -------
+    int_times : ndarray
+        Record array with expected time fields. Integrations are regularly
+        spaced, with a little noise in the recorded time.
+    """
+    int1_times = [
+        60897.76391539,
+        60897.76393129,
+        60897.76394719,
+        60897.76855646,
+        60897.76857236,
+        60897.76858826,
+    ]
+    integrations = []
+    rng = np.random.default_rng(seed=42)
+    for i in range(n_entry):
+        # add new integrations with regular spacing, plus a little noise for non-trivial tests
+        new_int = tuple([i + 1] + [t + 3.2e-5 * i + 1e-7 * rng.random() for t in int1_times])
+        integrations.append(new_int)
+
+    integration_table = np.array(
+        integrations,
+        dtype=[
+            ("integration_number", "i4"),
+            ("int_start_MJD_UTC", "f8"),
+            ("int_mid_MJD_UTC", "f8"),
+            ("int_end_MJD_UTC", "f8"),
+            ("int_start_BJD_TDB", "f8"),
+            ("int_mid_BJD_TDB", "f8"),
+            ("int_end_BJD_TDB", "f8"),
+        ],
+    )
+    return integration_table
+
+
+def make_superstripe_model(add_inttimes=False):
     """
     Make a NIRISS SOSS superstripe raw ramp model.
 
@@ -187,6 +232,9 @@ def make_superstripe_model():
     model.meta.subarray.repeat_stripe = 1
     model.meta.subarray.interleave_reads1 = 1
     model.meta.subarray.superstripe_step = 204
+
+    if add_inttimes:
+        model.int_times = int_times_table(nints * nstripe)
 
     return model
 
