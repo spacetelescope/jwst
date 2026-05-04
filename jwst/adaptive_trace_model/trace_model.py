@@ -23,7 +23,6 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 __all__ = [
     "fit_2d_spline_trace",
     "linear_oversample",
-    "has_negative_nods",
     "fit_all_regions",
     "oversample_flux",
     "fit_and_oversample",
@@ -588,43 +587,54 @@ def linear_oversample(
     return os_data
 
 
-def has_negative_nods(flux, error, threshold=-5.0):
-    """
-    Check for the presence of significant negative flux.
+def _significance_test(data_slice, err_slice, alpha_slice):
+    useful_data = (
+        np.isfinite(data_slice)
+        & np.isfinite(err_slice)
+        & np.isfinite(alpha_slice)
+        & (err_slice > 0)
+    )
+    if not np.any(useful_data):
+        return None, None, None
 
-    If the median signal-to-noise value in regions of negative
-    flux is less than the threshold value, then the negative
-    flux is considered significant.
+    # Compute some SNR and noise statistics collapsed along wavelength
+    snr_slice = data_slice / err_slice
+    native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
+    step = native_dalpha / 2.0
 
-    If errors are all zero or non-finite, then the significance
-    can't be determined, and this function returns False.
+    # Bin errors and SNR by alpha values
+    alpha_test = np.arange(np.nanmin(alpha_slice), np.nanmax(alpha_slice), step)
+    err_test = np.zeros_like(alpha_test)
+    snr_test = np.zeros_like(alpha_test)
+    for kk in range(0, len(alpha_test)):
+        indx = (alpha_slice >= alpha_test[kk] - step / 2.0) & (
+            alpha_slice < alpha_test[kk] + step / 2.0
+        )
+        err_test[kk] = np.nanmedian(err_slice[indx])
+        snr_test[kk] = np.nanmedian(snr_slice[indx])
 
-    Parameters
-    ----------
-    flux : ndarray
-        Flux array to test.
-    error : ndarray
-        Associated error array.
-    threshold : float, optional
-        Threshold signal-to-noise value to consider significantly negative.
+    return alpha_test, err_test, snr_test
 
-    Returns
-    -------
-    bool
-        True if significant negative flux is present; False otherwise.
-    """
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        snr = flux / error
-    negative = np.isfinite(snr) & (snr < 0)
-    if not np.any(negative):
-        return False
 
-    median_snr = np.median(snr[negative])
-    if median_snr < threshold:
-        return True
-    else:
-        return False
+def _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test):
+    # Bad edges are where SNR is low but ERR is high: set them to NaN
+    err_mean, _, err_rms = scs(err_test)
+    bad = (snr_test < 5) & (err_test > err_mean + 5 * err_rms)
+    if not np.any(bad):
+        return
+
+    # Drop data below the largest negative bad alpha
+    bad_alpha = alpha_test[bad]
+    test_bad = bad_alpha < 0
+    if np.any(test_bad):
+        indx = alpha_slice < np.max(bad_alpha[test_bad])
+        data_slice[indx] = np.nan
+
+    # Drop data above the smallest positive bad alpha
+    test_bad = bad_alpha > 0
+    if np.any(test_bad):
+        indx = alpha_slice > np.min(bad_alpha[test_bad])
+        data_slice[indx] = np.nan
 
 
 def _fit_one_region(flux, error, alpha, region_map, signal_threshold, region_number, **fit_kwargs):
@@ -659,6 +669,9 @@ def _fit_one_region(flux, error, alpha, region_map, signal_threshold, region_num
         Dict containing a spline model, scale, and bounds for each column index in the region.
         If a spline model could not be fit, the column index number is not present.
     """
+    # Splines to return
+    splines = {}
+
     # Arrays to reset with NaNs for each slice
     data_slice = np.full_like(flux, np.nan)
     err_slice = np.full_like(flux, np.nan)
@@ -670,13 +683,20 @@ def _fit_one_region(flux, error, alpha, region_map, signal_threshold, region_num
     err_slice[indx] = error[indx]
     alpha_slice[indx] = alpha[indx]
 
-    # A running sum in a given detector column (used for normalization)
-    if has_negative_nods(data_slice, err_slice):
+    # Estimate SNR for the slit or slice, collapsed along wavelength
+    alpha_test, err_test, snr_test = _significance_test(data_slice, err_slice, alpha_slice)
+
+    # Use SNR estimates to trim slit or slice edges
+    if snr_test is not None:
+        _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test)
+
+    # Get a running sum in a given detector column (used for normalization)
+    negative_nod_threshold = -5.0
+    if snr_test is not None and np.nanmin(snr_test) < negative_nod_threshold:
         # If significant negative nods present, just sum positive data
         log.info("Found significant negative data; summing positive only for normalization.")
-        runsum = np.nansum(data_slice, where=(data_slice > 0), axis=0)
+        runsum = np.sum(data_slice, where=(data_slice > 0), axis=0)
     else:
-        # Otherwise, sum all the data in the slice
         runsum = np.nansum(data_slice, axis=0)
 
     # Collapse the slice along Y to get max in each column
@@ -690,14 +710,8 @@ def _fit_one_region(flux, error, alpha, region_map, signal_threshold, region_num
         medcmax = np.nanmedian(collapse)
 
     # Is medcmax over threshold?  If so, do bspline for this slice.
-    dospline = False
     if medcmax > signal_threshold[region_number]:
-        dospline = True
-
-    if dospline:
         splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
-    else:
-        splines = {}
 
     return splines
 
@@ -1675,7 +1689,9 @@ def fit_and_oversample(
 
     # Need to ensure that the median pixel value isn't negative, because that causes chaos
     # Subtract off that constant
+    restore_mean = None
     if overall_mean < 0:
+        restore_mean = overall_mean
         flux_orig = flux_orig - overall_mean
         overall_mean = 0
 
@@ -1734,6 +1750,12 @@ def fit_and_oversample(
         if rotate:
             trace_used = np.rot90(trace_used, k=-1)
             full_trace = np.rot90(full_trace, k=-1)
+
+        # Restore the overall mean level to the trace if needed
+        if restore_mean is not None:
+            trace_used += restore_mean
+            full_trace += restore_mean
+
         model.trace_model = trace_used
         if return_intermediate_models:
             new_models = _intermediate_models(model, [full_trace, trace_used, None, None])
@@ -1850,6 +1872,25 @@ def fit_and_oversample(
         for extname, error_array in errors_os.items():
             errors_os[extname] = np.rot90(error_array, k=-1)
 
+    # Restore the overall mean level if needed
+    if restore_mean is not None:
+        flux_os += restore_mean
+        trace_used += restore_mean
+        full_trace += restore_mean
+
+    # If the data is in flux density units rather than surface brightness,
+    # we also need to correct for flux conservation
+    if is_flux_density(model.meta.bunit_data):
+        flux_os /= oversample_factor
+        trace_used /= oversample_factor
+        linear /= oversample_factor
+        residual /= oversample_factor
+        for extname, error_array in errors_os.items():
+            if extname == "err":
+                error_array /= oversample_factor
+            else:
+                error_array /= oversample_factor**2
+
     # Update the model with the oversampled arrays
     model.data = flux_os
     model.dq = dq_os
@@ -1865,19 +1906,6 @@ def fit_and_oversample(
         model.meta.photometry.pixelarea_steradians *= oversample_factor
     if model.meta.photometry.pixelarea_arcsecsq is not None:
         model.meta.photometry.pixelarea_arcsecsq *= oversample_factor
-
-    # If the data is in flux density units rather than surface brightness,
-    # we also need to correct for flux conservation
-    if is_flux_density(model.meta.bunit_data):
-        model.data /= oversample_factor
-        model.trace_model /= oversample_factor
-        for extname in error_extensions:
-            if model.hasattr(extname):
-                ext = getattr(model, extname)
-                if extname == "err":
-                    ext /= oversample_factor
-                else:
-                    ext /= oversample_factor**2
 
     # Remove some extra arrays if present: no longer needed
     extras = [

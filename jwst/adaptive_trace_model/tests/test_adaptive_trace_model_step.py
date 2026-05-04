@@ -161,10 +161,13 @@ def test_adaptive_trace_model_step_negative_mean(miri_mrs_model_with_source):
     assert np.all(np.isnan(result.trace_model[~indx]))
     assert np.sum(~np.isnan(result.trace_model[indx])) > 0.85 * np.sum(indx)
 
-    # fit trace is a reasonable model of the slice, minus the negative mean
+    # fit trace is a reasonable model of the slice, including the negative mean,
+    # which is subtracted and then restored to the data and the trace
     valid = indx & ~np.isnan(result.data) & ~np.isnan(result.trace_model)
     atol = 0.25 * original_max
-    np.testing.assert_allclose(result.data[valid] + 100, result.trace_model[valid], atol=atol)
+    np.testing.assert_allclose(result.data[valid], result.trace_model[valid], atol=atol)
+    assert np.nanmean(result.data) < 0
+    assert np.nanmean(result.trace_model) < 0
 
     model.close()
     result.close()
