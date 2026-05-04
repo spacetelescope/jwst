@@ -588,17 +588,20 @@ def linear_oversample(
 
 
 def _significance_test(data_slice, err_slice, alpha_slice):
-    useful_data = (
+    valid = (
         np.isfinite(data_slice)
         & np.isfinite(err_slice)
         & np.isfinite(alpha_slice)
         & (err_slice > 0)
     )
-    if not np.any(useful_data):
+    if not np.any(valid):
         return None, None, None
 
     # Compute some SNR and noise statistics collapsed along wavelength
-    snr_slice = data_slice / err_slice
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        snr_slice = data_slice / err_slice
+    snr_slice[~valid] = np.nan
     native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
     step = native_dalpha / 2.0
 
@@ -620,7 +623,7 @@ def _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test):
     # Bad edges are where SNR is low but ERR is high: set them to NaN
     err_mean, _, err_rms = scs(err_test)
     bad = (snr_test < 5) & (err_test > err_mean + 5 * err_rms)
-    if not np.any(bad):
+    if not np.any(bad) or np.all(bad):
         return
 
     # Drop data below the largest negative bad alpha
