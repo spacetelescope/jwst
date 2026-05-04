@@ -1,1 +1,1 @@
-Cleanup cube build interface removing the parameters pipeline and single 
+Clean up cube build interface, removing the parameters ``pipeline`` and ``single``, which were intended for internal use only. 

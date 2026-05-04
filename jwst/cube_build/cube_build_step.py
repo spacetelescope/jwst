@@ -282,8 +282,7 @@ class CubeBuildStep(Step):
             match_nans_and_flags(model)
 
         # We need to know what type of cubes we are building for cube_build.py to correctly
-        # group the data. This information is controlled by the self.output_type parameter, which
-        # is also dependent on the self.pipeline parameter.
+        # group the data. This information is controlled by the self.output_type parameter.
 
         cubeinfo = cube_build.CubeData(input_models, par_filename, **pars)
         # ________________________________________________________________________________

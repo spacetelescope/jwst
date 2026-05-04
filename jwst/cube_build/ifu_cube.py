@@ -217,34 +217,21 @@ class IFUCubeData:
                 )
 
     # ________________________________________________________________________________
-    def define_cubename(self):
+    def define_cubename_suffix(self):
         """
-        Determine the suffix name consisting of channels/sub channels or gratings/filters.
+        Determine the filename suffix name consisting of channels/sub channels or gratings/filters.
 
         The base name is defined by the pipeline.
         Cube_build determines which channels, bands, gratings, or filters are used to make
-        the IFU cube.
+        the IFU cube, so it appends the appropriate suffix to the base name.
 
         Returns
         -------
         suffix : str
-            Output suffix of the IFU cube.
+            Output suffix for the IFU cube.
         """
         cb_suffix = ""
         if self.instrument == "MIRI":
-            # Check to see if the output base name already contains the
-            # field "clear", which sometimes shows up in IFU product
-            # names created by the ASN rules. If so, strip it off, so
-            # that the remaining suffixes created below form the entire
-            # list of optical elements in the final output name.
-
-            # JEM 4/7/2026 - NOT SURE IF THIS IS TRUE - DON'T THINK
-            # we need it anymore  Commenting out for now.
-            # basename = self.output_name_base
-            # suffix = basename[basename.rfind("_") + 1 :]
-            # if suffix in ["clear"]:
-            #    self.output_name_base = basename[: basename.rfind("_")]
-
             # Now compose the appropriate list of optical element suffix names
             # based on MRS channel and sub-channel
             channels = []
@@ -658,7 +645,7 @@ class IFUCubeData:
         result : `~stdatamodels.jwst.datamodels.IFUCubeModel`
             An IFU cube of combined IFU image data.
         """
-        cb_suffix = self.define_cubename()
+        cb_suffix = self.define_cubename_suffix()
         self.output_name = self.output_name_base + cb_suffix
 
         total_num = self.naxis1 * self.naxis2 * self.naxis3
