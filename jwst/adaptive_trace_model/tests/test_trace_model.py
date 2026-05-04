@@ -87,11 +87,12 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
 
 
 @pytest.mark.parametrize(
-    "mode, detector,expected",
+    "mode, detector, slit, expected",
     [
         (
             "NRS_IFU",
             "NRS1",
+            None,
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -106,6 +107,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
         (
             "NRS_IFU",
             "NRS2",
+            None,
             {
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
@@ -120,6 +122,22 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
         (
             "NRS_SLIT",
             "NRS2",
+            None,
+            {
+                "lrange": 50,
+                "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+                "require_ngood": 15,
+                "spline_bkpt": 68,
+                "space_ratio": 1.6,
+                "sigma_low": 2.5,
+                "sigma_high": 2.5,
+                "fit_iter": 3,
+            },
+        ),
+        (
+            "NRS_SLIT",
+            "NRS2",
+            None,
             {
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
@@ -134,11 +152,12 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
         (
             "NRS_MOS",
             "NRS1",
+            None,
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                 "require_ngood": 8,
-                "spline_bkpt": 68,
+                "spline_bkpt": 30,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
@@ -148,6 +167,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
         (
             "MIR_MRS",
             "MIRIFUSHORT",
+            None,
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
@@ -162,6 +182,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
         (
             "MIR_MRS",
             "MIRIFULONG",
+            None,
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
@@ -176,6 +197,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
         (
             "MIR_LRS_SLIT",
             "MIRIMAGE",
+            None,
             {
                 "lrange": 5,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
@@ -190,6 +212,7 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
         (
             "MIR_LRS_SLITLESS",
             "MIRIMAGE",
+            None,
             {
                 "lrange": 5,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
@@ -203,8 +226,8 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
         ),
     ],
 )
-def test_set_fit_kwargs(mode, detector, expected):
-    fit_kwargs = tm._set_fit_kwargs(mode, detector, 10)
+def test_set_fit_kwargs(mode, detector, slit, expected):
+    fit_kwargs = tm._set_fit_kwargs(mode, detector, slit, 10)
     assert list(fit_kwargs.keys()) == list(expected.keys())
     for key in expected:
         if key == "col_index":
@@ -215,7 +238,7 @@ def test_set_fit_kwargs(mode, detector, expected):
 
 def test_set_fit_kwargs_error():
     with pytest.raises(ValueError, match="Unknown detector"):
-        tm._set_fit_kwargs("NRS_SLIT", "NIS", 10)
+        tm._set_fit_kwargs("NRS_SLIT", "NIS", None, 10)
 
 
 @pytest.mark.parametrize(

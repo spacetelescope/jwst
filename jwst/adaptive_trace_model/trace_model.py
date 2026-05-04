@@ -1024,7 +1024,7 @@ def oversample_flux(
     return flux_os, flux_os_bspline_use, flux_os_bspline_full, flux_os_linear, flux_os_residual
 
 
-def _set_fit_kwargs(mode, detector, xsize):
+def _set_fit_kwargs(mode, detector, slit, xsize):
     """
     Set optional parameters for spline fits by detector.
 
@@ -1035,6 +1035,8 @@ def _set_fit_kwargs(mode, detector, xsize):
         "MIR_LRS_SLIT", or "MIR_LRS_SLITLESS").
     detector : str
         Detector name.
+    slit : str or None
+        Slit name.
     xsize : int
         Input size for the data, along the dispersion axis. Used
         to determine the column index order for spline fits.
@@ -1055,6 +1057,7 @@ def _set_fit_kwargs(mode, detector, xsize):
     sigma_high = 2.5
     fit_iter = 3
     if detector.startswith("NRS"):
+        # Start with some defaults for all modes
         spline_bkpt = 68
         lrange = 50
         require_ngood = 15
@@ -1063,8 +1066,13 @@ def _set_fit_kwargs(mode, detector, xsize):
         # as sampling gets progressively worse for NIRSpec detectors
         space_ratio = 1.6
 
-        # MOS may need different parameters than fixed slit; this is a placeholder so far.
-        if mode == "NRS_MOS":
+        # Update some parameters for specific conditions
+        if mode == "NRS_SLIT" and slit == "S1600A1":
+            spline_bkpt = 30
+            require_ngood = 8
+        elif mode == "NRS_MOS":
+            # This is a placeholder so far
+            spline_bkpt = 30
             require_ngood = 8
 
         # Set up the column fitting order by detector
@@ -1113,6 +1121,17 @@ def _set_fit_kwargs(mode, detector, xsize):
         "sigma_high": sigma_high,
         "fit_iter": fit_iter,
     }
+
+    # Log the determined parameters
+    msg = f"Spline fit parameters for {mode}, detector={detector} xsize={xsize}"
+    if slit is not None:
+        msg += f" slit={slit}:"
+    else:
+        msg += ":"
+    log.debug(msg)
+    for key, val in fit_kwargs.items():
+        log.debug(f"  {key}: {val}")
+
     return fit_kwargs
 
 
@@ -1561,6 +1580,7 @@ def fit_and_oversample(
     # Get input data coordinates
     detector = model.meta.instrument.detector
     exp_type = model.meta.exposure.type
+    slit = None
     if model.data.ndim == 3:
         nint, ysize, xsize = model.data.shape
     else:
@@ -1580,6 +1600,7 @@ def fit_and_oversample(
                 mode = "NRS_MOS"
             else:
                 mode = "NRS_SLIT"
+                slit = getattr(model, "name", None)
             wcs = model.meta.wcs
             alpha_orig = _get_alpha_nrs_slit(wcs, xsize, ysize)
 
@@ -1684,7 +1705,7 @@ def fit_and_oversample(
             signal_threshold = dict.fromkeys(region_numbers, threshold)
 
     # Fit spline models to all regions
-    fit_kwargs = _set_fit_kwargs(mode, detector, xsize)
+    fit_kwargs = _set_fit_kwargs(mode, detector, slit, xsize)
     spline_models = fit_all_regions(
         flux_orig,
         err_orig,
