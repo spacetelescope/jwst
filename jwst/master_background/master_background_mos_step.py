@@ -124,11 +124,11 @@ class MasterBackgroundMosStep(Pipeline):
                 log.warning(
                     "No background slits available for creating master background. Skipping"
                 )
-                record_step_status(output_model, "master_background", status="SKIPPED")
+                record_step_status(output_model, "master_background", status="FAILED")
                 return output_model
             elif num_src == 0:
                 log.warning("No source slits for applying master background. Skipping")
-                record_step_status(output_model, "master_background", status="SKIPPED")
+                record_step_status(output_model, "master_background", status="FAILED")
                 return output_model
 
             log.info("Calculating master background")

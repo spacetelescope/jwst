@@ -70,7 +70,7 @@ class MasterBackgroundStep(Step):
             log.warning(
                 f"Input {input_data} of type {type(output_model)} cannot be handled.  Step skipped."
             )
-            record_step_status(output_model, "master_background", status="SKIPPED")
+            record_step_status(output_model, "master_background", status="FAILED")
             return output_model
 
         # If user-supplied master background, subtract it
@@ -114,7 +114,7 @@ class MasterBackgroundStep(Step):
                     f"Input {input_data} of type {type(output_model)} cannot be "
                     "handled without user-supplied background.  Step skipped."
                 )
-                record_step_status(output_model, "master_background", status="SKIPPED")
+                record_step_status(output_model, "master_background", status="FAILED")
                 return output_model
 
             result, background_data = split_container(output_model)
@@ -124,7 +124,7 @@ class MasterBackgroundStep(Step):
                     "and no user-supplied background provided.  Skipping step."
                 )
                 log.warning(msg)
-                record_step_status(output_model, "master_background", status="SKIPPED")
+                record_step_status(output_model, "master_background", status="FAILED")
                 return output_model
             asn_id = result.asn_table["asn_id"]
 
