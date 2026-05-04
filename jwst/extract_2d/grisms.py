@@ -133,8 +133,8 @@ def build_grism_submodel(
     if source_ypos is not None:
         sub_model.source_ypos = source_ypos
     sub_model.source_id = 1
-    sub_model.bunit_data = input_model.meta.bunit_data
-    sub_model.bunit_err = input_model.meta.bunit_err
+    sub_model.meta.bunit_data = input_model.meta.bunit_data
+    sub_model.meta.bunit_err = input_model.meta.bunit_err
     if getattr(input_model, "int_times", None) is not None:
         sub_model.int_times = input_model.int_times.copy()
 
@@ -793,8 +793,8 @@ def extract_grism_objects(
                 new_slit.source_id = obj.sid
                 new_slit.source_dec = obj.sky_centroid.dec.value
                 new_slit.source_ra = obj.sky_centroid.ra.value
-                new_slit.bunit_data = input_model.meta.bunit_data
-                new_slit.bunit_err = input_model.meta.bunit_err
+                new_slit.meta.bunit_data = input_model.meta.bunit_data
+                new_slit.meta.bunit_err = input_model.meta.bunit_err
                 slits.append(new_slit)
     output_model.slits.extend(slits)
 
