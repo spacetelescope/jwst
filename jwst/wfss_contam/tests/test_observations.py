@@ -115,7 +115,7 @@ def test_disperse_order(observation, segmentation_map, chunk_size):
     assert len(obs.simulated_slits.slits) == 8
     slit = obs.simulated_slits.slits[1]
     # check metadata
-    assert slit.name == "source_51"
+    assert slit.name == "51"
     assert slit.data.shape == (slit.ysize, slit.xsize)
 
     # Result should be close to the same for all chunk sizes
