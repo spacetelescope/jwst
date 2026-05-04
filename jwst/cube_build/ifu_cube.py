@@ -224,6 +224,8 @@ class IFUCubeData:
         The base name is defined by the pipeline.
         Cube_build determines which channels, bands, gratings, or filters are used to make
         the IFU cube, so it appends the appropriate suffix to the base name.
+        This function not used to determine the suffix when cube_build is called from calwebb_spec2.
+        In that case, the pipeline attaches 's3d' onto the filename.
 
         Returns
         -------
