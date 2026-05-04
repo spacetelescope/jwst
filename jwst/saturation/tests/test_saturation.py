@@ -501,6 +501,7 @@ def test_superstripe(use_bias):
     data.data[:, 2, pix, pix] = satvalue  # Signal reaches saturation limit
     data.data[:, 3, pix, pix] = satvalue
     data.data[:, 4, pix, pix] = satvalue
+    data.zeroframe[:, pix, pix] = satvalue
 
     # Set saturation value in the saturation model at the
     # expected location for each stripe
@@ -522,12 +523,15 @@ def test_superstripe(use_bias):
     )
 
     # Make sure that groups with signal > saturation limit get flagged
-    satindex = np.argmax(output.data[:, :, pix - 1 : pix + 1, pix - 1 : pix + 1] == satvalue)
+    satindex = np.argmax(output.data[:, :, pix - 1 : pix + 2, pix - 1 : pix + 2] == satvalue)
     assert np.all(
-        output.groupdq[0, satindex:, pix - 1 : pix + 1, pix - 1 : pix + 1]
+        output.groupdq[0, satindex:, pix - 1 : pix + 2, pix - 1 : pix + 2]
         == dqflags.group["SATURATED"]
     )
 
     # Make sure the pixeldq is reset properly. No new flags are expected.
     assert output.pixeldq.shape == (nstripe, *data.data.shape[-2:])
     assert np.all(output.pixeldq == 0)
+
+    # Zero frame data should be set to zero at saturated locations
+    assert np.all(output.zeroframe[:, pix - 1 : pix + 2, pix - 1 : pix + 2] == 0)

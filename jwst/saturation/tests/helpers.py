@@ -265,7 +265,7 @@ def setup_nis_superstripe_cube():
     bias_model : `~stdatamodels.jwst.datamodels.SuperbiasModel`
         A corresponding superbias model.
     """
-    data_model = make_superstripe_model()
+    data_model = make_superstripe_model(add_zeroframe=True)
     num_stripes = data_model.meta.subarray.num_superstripe
     data_model.pixeldq = np.zeros((num_stripes, *data_model.data.shape[-2:]), dtype=np.uint32)
 

@@ -1,0 +1,1 @@
+Fix array indexing for zeroframe arrays with superstripe modes.

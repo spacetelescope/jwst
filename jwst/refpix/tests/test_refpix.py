@@ -1266,7 +1266,7 @@ def test_refpix_bad_reference_pixels(monkeypatch, caplog):
 def test_refpix_superstripe(use_refpix, odd_even_columns):
     """Test superstripe handling."""
     # make ramp model
-    model = make_superstripe_model()
+    model = make_superstripe_model(add_inttimes=True, add_zeroframe=True)
     nstripe = model.meta.subarray.num_superstripe
     stripe_size = model.meta.subarray.multistripe_reads1 + model.meta.subarray.multistripe_reads2
     model.pixeldq = np.zeros((nstripe, *model.data.shape[-2:]), dtype=np.uint32)
@@ -1309,6 +1309,7 @@ def test_refpix_superstripe(use_refpix, odd_even_columns):
     assert result.data.shape == (nint, ngroup, ny, nx)
     assert result.pixeldq.shape == (ny, nx)
     assert result.groupdq.shape == (nint, ngroup, ny, nx)
+    assert result.zeroframe.shape == (nint, ny, nx)
 
     # metadata is reset to regular subarray values
     assert model.meta.exposure.nints == nint * nstripe
@@ -1316,3 +1317,25 @@ def test_refpix_superstripe(use_refpix, odd_even_columns):
     assert result.meta.exposure.integration_start == 1
     assert result.meta.exposure.integration_end == nint
     assert result.meta.subarray.num_superstripe is None
+
+    # int_times_stripe is copied from the old int_times,
+    assert len(result.int_times_stripe) == nint * nstripe
+    assert np.allclose(
+        result.int_times_stripe["int_start_MJD_UTC"], model.int_times["int_start_MJD_UTC"]
+    )
+
+    # new int_times matches new integration size
+    assert len(result.int_times) == nint
+
+    for time_key in ["MJD_UTC", "BJD_TDB"]:
+        # start times are from the first stripe in the integration
+        start_time = result.int_times[f"int_start_{time_key}"][0]
+        assert np.allclose(start_time, model.int_times[f"int_start_{time_key}"][0])
+
+        # end times are from the last stripe in the integration
+        end_time = result.int_times[f"int_end_{time_key}"][0]
+        assert np.allclose(end_time, model.int_times[f"int_end_{time_key}"][10])
+
+        # mid times are averaged
+        mid_time = (start_time + end_time) / 2
+        assert np.allclose(mid_time, model.int_times[f"int_end_{time_key}"][10])

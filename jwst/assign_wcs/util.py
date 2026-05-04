@@ -23,7 +23,7 @@ from stdatamodels.jwst.transforms.models import GrismObject
 from stpipe.exceptions import StpipeExitException
 
 from jwst.lib.catalog_utils import SkyObject, read_source_catalog
-from jwst.lib.reffile_utils import stripe_read
+from jwst.lib.stripe_utils import stripe_read
 
 log = logging.getLogger(__name__)
 
