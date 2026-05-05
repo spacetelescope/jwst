@@ -27,12 +27,12 @@ def cube_instance():
     )
 
 
-def test_define_cubename_suffix_miri_1band(monkeypatch, cube_instance):
-    """Test MIRI suffix logic by monkeypatching instance attributes."""
+def test_define_cubename_suffix_miri_1band(cube_instance):
+    """Test MIRI suffix logic by cube_instance attributes."""
     # 1. Set the state for a MIRI Ch1 Long cube
-    monkeypatch.setattr(cube_instance, "instrument", "MIRI")
-    monkeypatch.setattr(cube_instance, "list_par1", ["1"])
-    monkeypatch.setattr(cube_instance, "list_par2", ["LONG"])
+    cube_instance.instrument = "MIRI"
+    cube_instance.list_par1 = ["1"]
+    cube_instance.list_par2 = ["LONG"]
 
     # 2. Run the function
     suffix = cube_instance.define_cubename_suffix()
@@ -41,42 +41,40 @@ def test_define_cubename_suffix_miri_1band(monkeypatch, cube_instance):
     assert "_ch1-long" in suffix
 
 
-def test_define_cubename_suffix_miri(monkeypatch, cube_instance):
-    """Test MIRI suffix logic by monkeypatching instance attributes."""
-    # 1. Set the state for a MIRI Ch1 Short & medium, Long Ch 2
-    monkeypatch.setattr(cube_instance, "instrument", "MIRI")
-    monkeypatch.setattr(cube_instance, "list_par1", ["1", "2", "1"])
-    monkeypatch.setattr(cube_instance, "list_par2", ["SHORT", "LONG", "MEDIUM"])
+def test_define_cubename_suffix_miri(cube_instance):
+    """Test MIRI suffix logic for multiple bands and channels"""
 
-    # 2. Run the function
+    cube_instance.instrument = "MIRI"
+    cube_instance.list_par1 = ["1", "2", "1"]
+    cube_instance.list_par2 = ["SHORT", "LONG", "MEDIUM"]
+
     suffix = cube_instance.define_cubename_suffix()
 
-    # 3. Assert (MIRI logic sorts subchannels according to increasing wavelength)
+    # Assert (MIRI logic sorts subchannels according to increasing wavelength)
     assert "_ch1-2-shortmediumlong" in suffix
 
 
-def test_define_cubename_suffix_nirspec(monkeypatch, cube_instance):
-    """Test NIRSpec logic and the base name stripping feature."""
-    # 1. Setup NIRSpec state for G140M and F100LP
-    monkeypatch.setattr(cube_instance, "instrument", "NIRSPEC")
-    monkeypatch.setattr(cube_instance, "list_par1", ["G140M"])
-    monkeypatch.setattr(cube_instance, "list_par2", ["F100LP"])
-    monkeypatch.setattr(cube_instance, "num_bands", 1)
+def test_define_cubename_suffix_nirspec(cube_instance):
+    """Test NIRSpec logic fir 1 grating and 1 band ."""
 
-    # 2. Run the function
+    cube_instance.instrument = "NIRSPEC"
+    cube_instance.list_par1 = ["G140M"]
+    cube_instance.list_par2 = ["F100LP"]
+
     suffix = cube_instance.define_cubename_suffix()
 
-    # 3. Assertions: grating first then filter
+    # Assert grating first then filter
     assert suffix == "_g140m-f100lp"
 
 
-def test_define_cubename_suffix_internal(monkeypatch, cube_instance):
+def test_define_cubename_suffix_internal(cube_instance):
     """Test the internal_cal coordinate system suffix."""
-    monkeypatch.setattr(cube_instance, "instrument", "MIRI")
-    monkeypatch.setattr(cube_instance, "list_par1", ["1"])
-    monkeypatch.setattr(cube_instance, "list_par2", ["LONG"])
-    monkeypatch.setattr(cube_instance, "coord_system", "internal_cal")
+
+    cube_instance.instrument = "MIRI"
+    cube_instance.list_par1 = ["4"]
+    cube_instance.list_par2 = ["LONG"]
+    cube_instance.coord_system = "internal_cal"
 
     suffix = cube_instance.define_cubename_suffix()
 
-    assert suffix == "_ch1-long_internal"
+    assert suffix == "_ch4-long_internal"
