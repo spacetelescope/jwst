@@ -1,7 +1,7 @@
 .. _blender_rules:
 
 Model Blender Rules
-====================
+===================
 
 Blending models relies on rules to define how to evaluate all the input values
 for a model attribute in order to determine the final output value. These rules
@@ -13,7 +13,3 @@ time will be the sum of all exposure times).
 
 Supported rule names and corresponding functions are listed in
 `jwst.model_blender.rules.RULE_FUNCTIONS`.
-
-.. automodapi:: jwst.model_blender.rules
-  :no-inheritance-diagram:
-  :include-all-objects:

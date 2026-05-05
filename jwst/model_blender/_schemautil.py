@@ -17,12 +17,12 @@ def parse_schema(schema):
     attr_to_column : dict
         One-to-one mapping of metadata attributes
         (full dotted-paths) to table columns. For example
-        {'meta.observation.time': 'TIME-OBS'} for storing
+        ``{'meta.observation.time': 'TIME-OBS'}`` for storing
         the 'meta.observation.time' attributes in a 'TIME-OBS'
         column.
     attr_to_rule : dict
         Mapping of metadata attribute to blend rule
-        type. For example {'meta.observation.time': 'mintime'}
+        type. For example ``{'meta.observation.time': 'mintime'}``
         will combine all 'meta.observation.time' attributes
         using the 'mintime' rule.
     schema_ignores : list
