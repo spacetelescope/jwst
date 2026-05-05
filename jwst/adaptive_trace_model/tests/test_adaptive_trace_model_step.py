@@ -10,6 +10,34 @@ from jwst.datamodels import ModelContainer
 
 
 @pytest.fixture(scope="module")
+def miri_lrs_slit_model_with_source():
+    model = helpers.miri_lrs_slit_model_with_source()
+    yield model
+    model.close()
+
+
+@pytest.fixture(scope="module")
+def miri_lrs_slit_model_with_source_and_bad_edge(miri_lrs_slit_model_with_source):
+    model = miri_lrs_slit_model_with_source.copy()
+
+    # add noisy edges: high flux but higher error
+    model.data[9:396, 303:305] = 15
+    model.err[9:396, 303:305] = 30
+    model.data[9:396, 345:347] = -15
+    model.err[9:396, 345:347] = 30
+
+    yield model
+    model.close()
+
+
+@pytest.fixture(scope="module")
+def miri_lrs_slitless_model_with_source():
+    model = helpers.miri_lrs_slitless_model_with_source()
+    yield model
+    model.close()
+
+
+@pytest.fixture(scope="module")
 def miri_mrs_model():
     model = helpers.miri_mrs_model()
     yield model
@@ -17,15 +45,15 @@ def miri_mrs_model():
 
 
 @pytest.fixture(scope="module")
-def nirspec_ifu_model_with_source():
-    model = helpers.nirspec_ifu_model_with_source()
+def miri_mrs_model_with_source():
+    model = helpers.miri_mrs_model_with_source()
     yield model
     model.close()
 
 
 @pytest.fixture(scope="module")
-def miri_mrs_model_with_source():
-    model = helpers.miri_mrs_model_with_source()
+def nirspec_ifu_model_with_source():
+    model = helpers.nirspec_ifu_model_with_source()
     yield model
     model.close()
 
@@ -93,13 +121,6 @@ def asn_input(tmp_path, miri_mrs_model):
     }
 
     return asn
-
-
-@pytest.fixture(scope="module")
-def miri_lrs_slitless_model_with_source():
-    model = helpers.miri_lrs_slitless_model_with_source()
-    yield model
-    model.close()
 
 
 @pytest.mark.parametrize("dataset", ["miri_mrs_model", "nirspec_ifu_model_with_source"])
@@ -409,13 +430,13 @@ def test_adaptive_trace_model_step_tso_oversample(miri_lrs_slitless_model_with_s
 @pytest.mark.parametrize(
     "dataset", ["nirspec_slit_model_with_source", "nirspec_slit_model_with_source_and_nod"]
 )
-def test_adaptive_trace_model_step_oversample_slit(dataset, request):
+def test_adaptive_trace_model_step_oversample_nrs_slit(dataset, request):
     model = request.getfixturevalue(dataset)
     result = AdaptiveTraceModelStep.call(model, oversample=2, slope_limit=0.0, fit_threshold=0.0)
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
     assert isinstance(result, datamodels.MultiSlitModel)
 
-    # data is twice the size of the input along the x axis
+    # data is twice the size of the input along the y axis
     extnames = ["data", "dq", "err", "var_poisson", "var_rnoise", "var_flat"]
     input_models = model.slits
     output_models = result.slits
@@ -445,3 +466,41 @@ def test_adaptive_trace_model_step_oversample_slit(dataset, request):
         assert med_diff < 1.0
 
     result.close()
+
+
+@pytest.mark.parametrize(
+    "dataset", ["miri_lrs_slit_model_with_source", "miri_lrs_slit_model_with_source_and_bad_edge"]
+)
+def test_adaptive_trace_model_step_oversample_lrs_slit(dataset, request):
+    input_model = request.getfixturevalue(dataset)
+    output_model = AdaptiveTraceModelStep.call(input_model, oversample=2, slope_limit=0)
+    assert output_model.meta.cal_step.adaptive_trace_model == "COMPLETE"
+    assert isinstance(output_model, datamodels.SlitModel)
+
+    # data is twice the size of the input along the x axis
+    extnames = ["data", "dq", "err", "var_poisson", "var_rnoise", "var_flat"]
+    for extname in extnames:
+        # check for extension presence
+        if not input_model.hasattr(extname):
+            assert not output_model.hasattr(extname)
+            continue
+
+        # check that shape is expected
+        input_ext = getattr(input_model, extname)
+        output_ext = getattr(output_model, extname)
+        assert output_ext.shape == (input_ext.shape[0], input_ext.shape[1] * 2)
+
+        # trace_model is attached, contains non-NaN trace for the one bright slit only,
+        # and only over the core of the source trace
+        assert output_model.trace_model.shape == output_model.data.shape
+
+        indx = ~np.isnan(output_model.wavelength)
+        assert np.all(np.isnan(output_model.trace_model[~indx]))
+        assert np.sum(~np.isnan(output_model.trace_model[indx])) > 0.15 * np.sum(indx)
+
+        # fit trace is a reasonable model of the source but not identical
+        valid = indx & ~np.isnan(output_model.data) & ~np.isnan(output_model.trace_model)
+        med_diff = np.median(np.abs(output_model.data[valid] - output_model.trace_model[valid]))
+        assert med_diff < 1.0
+
+    output_model.close()

@@ -680,13 +680,13 @@ def _trim_edges(data_slice, alpha_slice, alpha_xdisp, err_xdisp, snr_xdisp):
     bad_alpha = alpha_xdisp[bad]
     test_bad = bad_alpha < 0
     if np.any(test_bad):
-        indx = alpha_slice < np.max(bad_alpha[test_bad])
+        indx = alpha_slice <= np.max(bad_alpha[test_bad])
         data_slice[indx] = np.nan
 
     # Drop data above the smallest positive bad alpha
     test_bad = bad_alpha > 0
     if np.any(test_bad):
-        indx = alpha_slice > np.min(bad_alpha[test_bad])
+        indx = alpha_slice >= np.min(bad_alpha[test_bad])
         data_slice[indx] = np.nan
 
 
@@ -800,12 +800,13 @@ def _fit_one_region(
         return {}
 
     # Use the collapsed SNR and error estimates to trim slit or slice edges
-    _trim_edges(data_slice, alpha_slice, alpha_xdisp, err_xdisp, snr_xdisp)
+    if alpha_xdisp is not None:
+        _trim_edges(data_slice, alpha_slice, alpha_xdisp, err_xdisp, snr_xdisp)
 
-    # Redo the collapsed profile after trimming
-    alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp = _crossdisp_profile(
-        data_slice, err_slice, alpha_slice
-    )
+        # Redo the collapsed profile after trimming
+        alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp = _crossdisp_profile(
+            data_slice, err_slice, alpha_slice
+        )
 
     # Check again for signal over threshold
     if not _threshold_test(flux_xdisp, snr_xdisp, region_number, peak_threshold, snr_threshold):
@@ -814,7 +815,7 @@ def _fit_one_region(
 
     # Get a running sum in a given detector column (used for normalization)
     negative_nod_threshold = -5.0
-    if np.nanmin(snr_xdisp) < negative_nod_threshold:
+    if snr_xdisp is not None and np.nanmin(snr_xdisp) < negative_nod_threshold:
         # If significant negative nods present, just sum positive data
         log.debug("Found significant negative data; summing positive only for normalization.")
         runsum = np.sum(data_slice, where=(data_slice > 0), axis=0)
@@ -1887,9 +1888,13 @@ def fit_and_oversample(
         wave_os *= 1e6
     else:
         # Because MIRI was rotated the indexing in the non-rotated frame,
-        # the input coordinates need to be adjusted slightly
+        # the input spatial coordinates need to be adjusted slightly
         det2ab = model.meta.wcs.get_transform("detector", "alpha_beta")
-        alpha_os, _, wave_os = det2ab(ysize - y_os - 1, x_os)
+        alpha_os, _, _ = det2ab(ysize - y_os - 1, x_os)
+
+        # Get wavelengths from the full WCS pipeline for the same coordinates
+        # Necessary for MIRI LRS to get appropriate NaN values outside the slit region.
+        _, _, wave_os = model.meta.wcs(ysize - y_os - 1, x_os)
 
     log.info("Oversampling the flux array from the fit trace model")
     flux_os, trace_used, full_trace, linear, residual = oversample_flux(

@@ -13,6 +13,7 @@ from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_ni
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 
 __all__ = [
+    "miri_lrs_slit_model_with_source",
     "miri_lrs_slitless_model_with_source",
     "miri_mrs_model",
     "miri_mrs_model_with_source",
@@ -21,6 +22,48 @@ __all__ = [
     "nirspec_slit_model_with_source",
     "profile_1d",
 ]
+
+
+def miri_lrs_slit_model_with_source():
+    """
+    Create a mock MIRI LRS FS model with a simple spectral source in the data array.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.SlitModel`
+        The LRS slit datamodel.
+    """
+    hdul = create_hdul("MIRIMAGE", "ANY", "ANY")
+    model = datamodels.ImageModel(hdul)
+    hdul.close()
+
+    shape = (1024, 1032)
+    model.data = np.full(shape, np.nan)
+    model.err = np.zeros(shape)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
+
+    # Add metadata needed for LRS FS
+    model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+    model.meta.wcsinfo.v3yangle = 0.0
+    model.meta.wcsinfo.vparity = -1
+    model.meta.dither.x_offset = 0.0
+    model.meta.dither.y_offset = 0.0
+
+    # Assign WCS
+    model = AssignWcsStep.call(model)
+    model = datamodels.SlitModel(model)
+
+    ysize, xsize = shape[-2:]
+    x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
+    _, _, lam = model.meta.wcs(x, y)
+
+    region_map = (~np.isnan(lam)).astype(int)
+    _add_source(model, region_map, along_x=False)
+    model.err[:] = 0.01
+
+    return model
 
 
 def miri_lrs_slitless_model_with_source():
