@@ -587,7 +587,30 @@ def linear_oversample(
     return os_data
 
 
-def _significance_test(data_slice, err_slice, alpha_slice):
+def _crossdisp_profile(data_slice, err_slice, alpha_slice):
+    """
+    Collapse a spectral region along wavelengths to make a cross-dispersion profile.
+
+    Parameters
+    ----------
+    data_slice : ndarray
+        2D flux array for the full spectral region.
+    err_slice : ndarray
+        2D error array for the full spectral region.
+    alpha_slice : ndarray
+        2D spatial coordinate array for the full spectral region.
+
+    Returns
+    -------
+    alpha_xdisp : ndarray
+        1D spatial coordinates.
+    flux_xdisp : ndarray
+        1D flux values, median-combined across wavelengths.
+    err_xdisp : ndarray
+        1D error values, median-combined across wavelengths.
+    snr_xdisp : ndarray
+        1D signal-to-noise ratio values, median-combined across wavelengths.
+    """
     valid = (
         np.isfinite(data_slice)
         & np.isfinite(err_slice)
@@ -604,37 +627,57 @@ def _significance_test(data_slice, err_slice, alpha_slice):
     step = native_dalpha / 2.0
 
     # Bin errors and SNR by alpha values
-    alpha_test = np.arange(np.nanmin(alpha_slice), np.nanmax(alpha_slice), step)
-    flux_test = np.full_like(alpha_test, np.nan)
-    err_test = np.full_like(alpha_test, np.nan)
-    snr_test = np.full_like(alpha_test, np.nan)
-    for kk in range(len(alpha_test)):
+    alpha_xdisp = np.arange(np.nanmin(alpha_slice), np.nanmax(alpha_slice), step)
+    flux_xdisp = np.full_like(alpha_xdisp, np.nan)
+    err_xdisp = np.full_like(alpha_xdisp, np.nan)
+    snr_xdisp = np.full_like(alpha_xdisp, np.nan)
+    for kk in range(len(alpha_xdisp)):
         indx = (
-            (alpha_slice >= alpha_test[kk] - step / 2.0)
-            & (alpha_slice < alpha_test[kk] + step / 2.0)
+            (alpha_slice >= alpha_xdisp[kk] - step / 2.0)
+            & (alpha_slice < alpha_xdisp[kk] + step / 2.0)
             & np.isfinite(snr_slice)
         )
         if not np.any(indx):
             continue
-        flux_test[kk] = np.nanmedian(data_slice[indx])
-        err_test[kk] = np.nanmedian(err_slice[indx])
-        snr_test[kk] = np.nanmedian(snr_slice[indx])
+        flux_xdisp[kk] = np.nanmedian(data_slice[indx])
+        err_xdisp[kk] = np.nanmedian(err_slice[indx])
+        snr_xdisp[kk] = np.nanmedian(snr_slice[indx])
 
-    return alpha_test, flux_test, err_test, snr_test
+    return alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp
 
 
-def _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test):
+def _trim_edges(data_slice, alpha_slice, alpha_xdisp, err_xdisp, snr_xdisp):
+    """
+    Set bad edge values to NaN.
+
+    Bad pixel values are identified by spatial coordinates (alpha),
+    for which the collapsed signal-to-noise ratio (SNR) is low
+    and the collapsed error value is high.
+
+    Parameters
+    ----------
+    data_slice : ndarray
+        2D flux array for the full spectral region; updated in place.
+    alpha_slice : ndarray
+        2D spatial coordinate array for the full spectral region.
+    alpha_xdisp : ndarray
+        1D spatial coordinates, collapsed across wavelengths.
+    err_xdisp : ndarray
+        1D error values, median-combined across wavelengths.
+    snr_xdisp : ndarray
+        1D SNR values, median-combined across wavelengths.
+    """
     # Bad edges are where SNR is low but ERR is high: set them to NaN
-    valid = np.isfinite(snr_test)
+    valid = np.isfinite(snr_xdisp)
     if not np.any(valid):
         return
-    err_mean, _, err_rms = scs(err_test[valid])
-    bad = (np.abs(snr_test) < 5) & (err_test > err_mean + 5 * err_rms)
+    err_mean, _, err_rms = scs(err_xdisp[valid])
+    bad = (np.abs(snr_xdisp) < 5) & (err_xdisp > err_mean + 5 * err_rms)
     if not np.any(bad) or np.all(bad):
         return
 
     # Drop data below the largest negative bad alpha
-    bad_alpha = alpha_test[bad]
+    bad_alpha = alpha_xdisp[bad]
     test_bad = bad_alpha < 0
     if np.any(test_bad):
         indx = alpha_slice < np.max(bad_alpha[test_bad])
@@ -647,16 +690,44 @@ def _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test):
         data_slice[indx] = np.nan
 
 
-def _threshold_test(flux_test, snr_test, region_number, peak_threshold, snr_threshold):
+def _threshold_test(flux_xdisp, snr_xdisp, region_number, peak_threshold, snr_threshold):
+    """
+    Determine if the peak flux or SNR is higher than a given threshold.
+
+    If both ``peak_threshold`` and ``snr_threshold`` are None, the
+    return value is always True.  Otherwise, the maximum ``flux_xdisp``
+    is compared to the ``peak_threshold`` if provided and the
+    the maximum ``snr_xdisp`` is compared to the ``snr_threshold`` if provided.
+    True is returned if either condition is met.
+
+    Parameters
+    ----------
+    flux_xdisp : ndarray
+        1D flux values, median-combined across wavelengths.
+    snr_xdisp : ndarray
+        1D signal-to-noise ratio values, median-combined across wavelengths.
+    region_number : int
+        Region number, used to select the correct peak threshold value.
+    peak_threshold : dict or None
+        Dictionary of peak flux threshold values, by region number.
+    snr_threshold : float or None
+        SNR threshold value.
+
+    Returns
+    -------
+    bool
+        True if either peak flux or SNR are greater than the provided
+        threshold.
+    """
     if peak_threshold is None and snr_threshold is None:
         return True
     peak_over_threshold = (
         peak_threshold is not None
-        and flux_test is not None
-        and np.nanmax(flux_test) > peak_threshold[region_number]
+        and flux_xdisp is not None
+        and np.nanmax(flux_xdisp) > peak_threshold[region_number]
     )
     snr_over_threshold = (
-        snr_threshold is not None and snr_test is not None and np.nanmax(snr_test) > snr_threshold
+        snr_threshold is not None and snr_xdisp is not None and np.nanmax(snr_xdisp) > snr_threshold
     )
     return peak_over_threshold or snr_over_threshold
 
@@ -717,31 +788,33 @@ def _fit_one_region(
     err_slice[indx] = error[indx]
     alpha_slice[indx] = alpha[indx]
 
-    # Estimate SNR for the slit or slice, collapsed along wavelength
-    alpha_test, flux_test, err_test, snr_test = _significance_test(
+    # Collapse the slit or slice along wavelength, to estimate peak flux and SNR
+    alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp = _crossdisp_profile(
         data_slice, err_slice, alpha_slice
     )
 
     # Is either peak flux or SNR over threshold?  If not, stop processing
     no_data_msg = "No data over threshold; not fitting splines."
-    if not _threshold_test(flux_test, snr_test, region_number, peak_threshold, snr_threshold):
+    if not _threshold_test(flux_xdisp, snr_xdisp, region_number, peak_threshold, snr_threshold):
         log.debug(no_data_msg)
         return {}
 
-    # Use SNR estimates to trim slit or slice edges
-    _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test)
+    # Use the collapsed SNR and error estimates to trim slit or slice edges
+    _trim_edges(data_slice, alpha_slice, alpha_xdisp, err_xdisp, snr_xdisp)
 
-    # Redo SNR estimate after trimming
-    _, flux_test, _, snr_test = _significance_test(data_slice, err_slice, alpha_slice)
+    # Redo the collapsed profile after trimming
+    alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp = _crossdisp_profile(
+        data_slice, err_slice, alpha_slice
+    )
 
-    # Check again for flux over threshold
-    if not _threshold_test(flux_test, snr_test, region_number, peak_threshold, snr_threshold):
+    # Check again for signal over threshold
+    if not _threshold_test(flux_xdisp, snr_xdisp, region_number, peak_threshold, snr_threshold):
         log.debug(no_data_msg)
         return {}
 
     # Get a running sum in a given detector column (used for normalization)
     negative_nod_threshold = -5.0
-    if np.nanmin(snr_test) < negative_nod_threshold:
+    if np.nanmin(snr_xdisp) < negative_nod_threshold:
         # If significant negative nods present, just sum positive data
         log.debug("Found significant negative data; summing positive only for normalization.")
         runsum = np.sum(data_slice, where=(data_slice > 0), axis=0)
