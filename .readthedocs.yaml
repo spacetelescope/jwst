@@ -31,6 +31,8 @@ build:
     post_install:
       - pip install towncrier
       - git describe --exact-match || towncrier build --keep
+    pre_build:
+      - python -m sphinx -b linkcheck -D linkcheck_timeout=1 docs/ $READTHEDOCS_OUTPUT/linkcheck
 
 python:
   install:
