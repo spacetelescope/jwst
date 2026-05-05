@@ -83,24 +83,8 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.slow
 @pytest.mark.bigdata
-def test_pathloss_corrpars(rtdata):
-    """Test PathLossStep using correction_pars"""
-    with dm.open(
-        rtdata.get_data("nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits")
-    ) as data:
-        pls = PathLossStep()
-        corrected = pls.run(data)
-
-        pls.use_correction_pars = True
-        corrected_corrpars = pls.run(data)
-
-    assert np.allclose(corrected.data, corrected_corrpars.data, equal_nan=True)
-
-
-@pytest.mark.slow
-@pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
-    """Test PathLossStep using correction_pars"""
+    """Test PathLossStep inversion"""
     with dm.open(
         rtdata.get_data("nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits")
     ) as data:
@@ -112,19 +96,3 @@ def test_pathloss_inverse(rtdata):
         non_nan = ~np.isnan(corrected_inverse.data)
 
     assert np.allclose(corrected.data[non_nan], corrected_inverse.data[non_nan])
-
-
-@pytest.mark.slow
-@pytest.mark.bigdata
-def test_pathloss_source_type(rtdata):
-    """Test PathLossStep forcing source type"""
-    with dm.open(
-        rtdata.get_data("nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits")
-    ) as data:
-        pls = PathLossStep()
-        pls.source_type = "extended"
-        pls.run(data)
-
-    assert np.allclose(
-        pls.correction_pars.data, pls.correction_pars.pathloss_uniform, equal_nan=True
-    )

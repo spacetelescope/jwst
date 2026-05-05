@@ -84,7 +84,7 @@ def test_photom_fail(caplog):
     cube.close()
 
 
-def test_photom_correction_pars(input_model):
+def test_photom_inverse(input_model):
     step = PhotomStep()
     result = step.run(input_model)
 
@@ -92,10 +92,8 @@ def test_photom_correction_pars(input_model):
     nnan = ~np.isnan(input_model.slits[0].data) & ~np.isnan(result.slits[0].data)
     assert not np.allclose(result.slits[0].data[nnan], input_model.slits[0].data[nnan])
 
-    # use the computed correction and invert
+    # run again but invert
     new_step = PhotomStep()
-    new_step.use_correction_pars = True
-    new_step.correction_pars = step.correction_pars
     new_step.inverse = True
     inverse_result = new_step.run(result)
 

@@ -201,24 +201,6 @@ def test_nirspec_fs_spec2_pixel_replace(
     assert diff.identical, diff.report()
 
 
-def test_pathloss_corrpars(rtdata):
-    """Test PathLossStep using correction_pars"""
-    basename = "jw02072002001_05101_00001_nrs1_flatfieldstep"
-    with dm.open(rtdata.get_data(f"nirspec/fs/{basename}.fits")) as data:
-        pls = PathLossStep()
-        corrected = pls.run(data)
-
-        pls.use_correction_pars = True
-        corrected_corrpars = pls.run(data)
-
-    bad_slits = []
-    for idx, slits in enumerate(zip(corrected.slits, corrected_corrpars.slits)):
-        corrected_slit, corrected_corrpars_slit = slits
-        if not np.allclose(corrected_slit.data, corrected_corrpars_slit.data, equal_nan=True):
-            bad_slits.append(idx)
-    assert not bad_slits, f"correction_pars failed for slits {bad_slits}"
-
-
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using inversion"""
     basename = "jw02072002001_05101_00001_nrs1_flatfieldstep"
@@ -237,22 +219,6 @@ def test_pathloss_inverse(rtdata):
                 bad_slits.append(idx)
 
     assert not bad_slits, f"Inversion failed for slits {bad_slits}"
-
-
-def test_pathloss_source_type(rtdata):
-    """Test PathLossStep forcing source type"""
-    basename = "jw02072002001_05101_00001_nrs1_flatfieldstep"
-    with dm.open(rtdata.get_data(f"nirspec/fs/{basename}.fits")) as data:
-        pls = PathLossStep()
-        pls.source_type = "extended"
-        pls.run(data)
-
-    bad_slits = []
-    for idx, slit in enumerate(pls.correction_pars.slits):
-        if slit:
-            if not np.allclose(slit.data, slit.pathloss_uniform, equal_nan=True):
-                bad_slits.append(idx)
-    assert not bad_slits, f"Force to uniform failed for slits {bad_slits}"
 
 
 def test_nirspec_fs_rateints_spec2(rtdata_module):

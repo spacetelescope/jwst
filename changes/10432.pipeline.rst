@@ -1,0 +1,1 @@
+Remove ``correction_pars`` handling from all steps in ``calwebb_spec2`` to avoid storing correction arrays longer than they are needed.

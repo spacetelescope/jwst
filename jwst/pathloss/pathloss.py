@@ -389,8 +389,8 @@ def do_correction(
     pathloss_model=None,
     inverse=False,
     source_type=None,
-    correction_pars=None,
     user_slit_loc=None,
+    return_corrections=True,
 ):
     """
     Execute all tasks for Path Loss Correction.
@@ -406,39 +406,32 @@ def do_correction(
         Invert the math operations used to apply the pathloss correction.
     source_type : str or None, optional
         Force processing using the specified source type.
-    correction_pars : dict or None, optional
-        Correction parameters to use instead of recalculation.
     user_slit_loc : float, optional
         User-provided slit location in units of arcsec, where (0,0)
         is the center and the edges are +/-0.255 arcsec.
+    return_corrections : bool, optional
+        If True, a model containing the applied corrections is returned.
 
     Returns
     -------
-    input_model, corrections : tuple of `~stdatamodels.jwst.datamodels.JwstDataModel`
-        2-tuple of the corrected science data with pathloss extensions added, and a
-        model of the correction arrays.
+    input_model: `~stdatamodels.jwst.datamodels.JwstDataModel`
+        The corrected science data with pathloss extensions added.
+    corrections: `~stdatamodels.jwst.datamodels.JwstDataModel`, optional
+        A model of the correction arrays, returned if ``return_corrections``
+        is True.
     """
-    if not pathloss_model and not correction_pars:
-        raise RuntimeError(
-            "Neither a PathLossModel nor PathLossStep correction parameters given."
-            " One needs to be specified."
-        )
+    if not pathloss_model:
+        raise RuntimeError("A PathlossModel must be specified.")
     exp_type = input_model.meta.exposure.type
     log.info(f"Input exposure type is {exp_type}")
 
     corrections = None
     if exp_type == "NRS_MSASPEC":
-        corrections = do_correction_mos(
-            input_model, pathloss_model, inverse, source_type, correction_pars
-        )
+        corrections = do_correction_mos(input_model, pathloss_model, inverse, source_type)
     elif exp_type in ["NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
-        corrections = do_correction_fixedslit(
-            input_model, pathloss_model, inverse, source_type, correction_pars
-        )
+        corrections = do_correction_fixedslit(input_model, pathloss_model, inverse, source_type)
     elif exp_type == "NRS_IFU":
-        corrections = do_correction_ifu(
-            input_model, pathloss_model, inverse, source_type, correction_pars
-        )
+        corrections = do_correction_ifu(input_model, pathloss_model, inverse, source_type)
     elif exp_type in ["MIR_LRS-FIXEDSLIT", "MIR_WFSS"]:
         # only apply correction to LRS fixed-slit if target is point source
         if is_pointsource(input_model.meta.target.source_type):
@@ -447,10 +440,7 @@ def do_correction(
             log.warning("Not a point source; skipping correction for LRS.")
             input_model.meta.cal_step.pathloss = "SKIPPED"
     elif exp_type == "NIS_SOSS":
-        if correction_pars:
-            log.warning("Use of correction_pars with NIS_SOSS is not implemented. Skipping")
-            input_model.meta.cal_step.pathloss = "SKIPPED"
-        elif inverse:
+        if inverse:
             log.warning("Use of inversion with NIS_SOSS is not implemented. Skipping")
             input_model.meta.cal_step.pathloss = "SKIPPED"
         elif source_type is not None:
@@ -459,7 +449,10 @@ def do_correction(
         else:
             do_correction_soss(input_model, pathloss_model)
 
-    return input_model, corrections
+    if return_corrections:
+        return input_model, corrections
+    else:
+        return input_model
 
 
 def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
@@ -554,7 +547,7 @@ def is_pointsource(srctype):
         return False
 
 
-def do_correction_mos(data, pathloss, inverse=False, source_type=None, correction_pars=None):
+def do_correction_mos(data, pathloss, inverse=False, source_type=None):
     """
     Path loss correction for NIRSpec MOS.
 
@@ -574,9 +567,6 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
     source_type : str or None
         Force processing using the specified source type.
 
-    correction_pars : jwst.datamodels.MultiSlitModel or None
-        The precomputed pathloss to apply instead of recalculation.
-
     Returns
     -------
     corrections : jwst.datamodels.MultiSlitModel
@@ -590,10 +580,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
     for slit_number, slit in enumerate(data.slits):
         log.info(f"Working on slit {slit_number}")
 
-        if correction_pars:
-            correction = correction_pars.slits[slit_number]
-        else:
-            correction = _corrections_for_mos(slit, pathloss, exp_type, source_type)
+        correction = _corrections_for_mos(slit, pathloss, exp_type, source_type)
         corrections.slits.append(correction)
 
         # Apply the correction
@@ -632,7 +619,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
     return corrections
 
 
-def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, correction_pars=None):
+def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None):
     """
     Path loss correction for NIRSpec fixed-slit modes.
 
@@ -652,9 +639,6 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
     source_type : str or None
         Force processing using the specified source type.
 
-    correction_pars : jwst.datamodels.MultiSlitModel or None
-        The precomputed pathloss to apply instead of recalculation.
-
     Returns
     -------
     corrections : jwst.datamodels.MultiSlitModel
@@ -668,10 +652,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
     for slit_number, slit in enumerate(data.slits):
         log.info(f"Working on slit {slit.name}")
 
-        if correction_pars:
-            correction = correction_pars.slits[slit_number]
-        else:
-            correction = _corrections_for_fixedslit(slit, pathloss, exp_type, source_type)
+        correction = _corrections_for_fixedslit(slit, pathloss, exp_type, source_type)
         corrections.slits.append(correction)
 
         # Apply the correction
@@ -715,7 +696,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
     return corrections
 
 
-def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correction_pars=None):
+def do_correction_ifu(data, pathloss, inverse=False, source_type=None):
     """
     Path loss correction for NIRSpec IFU.
 
@@ -735,18 +716,12 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
     source_type : str or None
         Force processing using the specified source type.
 
-    correction_pars : jwst.datamodels.JwstDataModel or None
-        The precomputed pathloss to apply instead of recalculation.
-
     Returns
     -------
     corrections : jwst.datamodels.JwstDataModel
         The pathloss corrections applied.
     """
-    if correction_pars:
-        correction = correction_pars
-    else:
-        correction = _corrections_for_ifu(data, pathloss, source_type)
+    correction = _corrections_for_ifu(data, pathloss, source_type)
 
     # For IFU, the pathloss correction type is not stored in the model.
     # Just log it here.
