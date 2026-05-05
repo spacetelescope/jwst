@@ -340,7 +340,7 @@ def _is_compact_source(
     # Bin the alpha coordinates for the high slope locations
     avec = np.arange(spline_bkpt) * native_dalpha / 2 - (native_dalpha * spline_bkpt / 4)
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         hist, edges = np.histogram(
             alpha_ptsource,
             bins=spline_bkpt,
@@ -595,34 +595,41 @@ def _significance_test(data_slice, err_slice, alpha_slice):
         & (err_slice > 0)
     )
     if not np.any(valid):
-        return None, None, None
+        return None, None, None, None
 
     # Compute some SNR and noise statistics collapsed along wavelength
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        snr_slice = data_slice / err_slice
-    snr_slice[~valid] = np.nan
+    snr_slice = np.full_like(data_slice, np.nan)
+    snr_slice[valid] = data_slice[valid] / err_slice[valid]
     native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
     step = native_dalpha / 2.0
 
     # Bin errors and SNR by alpha values
     alpha_test = np.arange(np.nanmin(alpha_slice), np.nanmax(alpha_slice), step)
-    err_test = np.zeros_like(alpha_test)
-    snr_test = np.zeros_like(alpha_test)
-    for kk in range(0, len(alpha_test)):
-        indx = (alpha_slice >= alpha_test[kk] - step / 2.0) & (
-            alpha_slice < alpha_test[kk] + step / 2.0
+    flux_test = np.full_like(alpha_test, np.nan)
+    err_test = np.full_like(alpha_test, np.nan)
+    snr_test = np.full_like(alpha_test, np.nan)
+    for kk in range(len(alpha_test)):
+        indx = (
+            (alpha_slice >= alpha_test[kk] - step / 2.0)
+            & (alpha_slice < alpha_test[kk] + step / 2.0)
+            & np.isfinite(snr_slice)
         )
+        if not np.any(indx):
+            continue
+        flux_test[kk] = np.nanmedian(data_slice[indx])
         err_test[kk] = np.nanmedian(err_slice[indx])
         snr_test[kk] = np.nanmedian(snr_slice[indx])
 
-    return alpha_test, err_test, snr_test
+    return alpha_test, flux_test, err_test, snr_test
 
 
 def _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test):
     # Bad edges are where SNR is low but ERR is high: set them to NaN
-    err_mean, _, err_rms = scs(err_test)
-    bad = (snr_test < 5) & (err_test > err_mean + 5 * err_rms)
+    valid = np.isfinite(snr_test)
+    if not np.any(valid):
+        return
+    err_mean, _, err_rms = scs(err_test[valid])
+    bad = (np.abs(snr_test) < 5) & (err_test > err_mean + 5 * err_rms)
     if not np.any(bad) or np.all(bad):
         return
 
@@ -640,7 +647,30 @@ def _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test):
         data_slice[indx] = np.nan
 
 
-def _fit_one_region(flux, error, alpha, region_map, signal_threshold, region_number, **fit_kwargs):
+def _threshold_test(flux_test, snr_test, region_number, peak_threshold, snr_threshold):
+    if peak_threshold is None and snr_threshold is None:
+        return True
+    peak_over_threshold = (
+        peak_threshold is not None
+        and flux_test is not None
+        and np.nanmax(flux_test) > peak_threshold[region_number]
+    )
+    snr_over_threshold = (
+        snr_threshold is not None and snr_test is not None and np.nanmax(snr_test) > snr_threshold
+    )
+    return peak_over_threshold or snr_over_threshold
+
+
+def _fit_one_region(
+    flux,
+    error,
+    alpha,
+    region_map,
+    region_number,
+    peak_threshold=None,
+    snr_threshold=None,
+    **fit_kwargs,
+):
     """
     Fit a trace model to a single region in the flux image.
 
@@ -657,12 +687,16 @@ def _fit_one_region(flux, error, alpha, region_map, signal_threshold, region_num
     region_map : ndarray of int
         Map containing the slice or slit number for valid regions.
         Values are >0 for pixels in valid regions, 0 otherwise.
-    signal_threshold : dict
-        Threshold values for each valid region in the region map. If
-        the median peak value across columns in the region is below this
-        threshold, a fit will not be attempted for that region.
     region_number : int
         Index number for the single region to be fit in this invocation.
+    peak_threshold : dict
+        Flux threshold values for each valid region in the region map. If
+        the median peak value across columns in the region is below this
+        threshold, a fit will not be attempted for that region.
+    snr_threshold : float
+        Signal-to-noise ratio (SNR) threshold value. If the median SNR value
+        across columns in the region is below this threshold, a fit will not
+        be attempted for that region.
     **fit_kwargs
         Keyword arguments to pass to the fitting routine (see `fit_2d_spline_trace`).
 
@@ -672,9 +706,6 @@ def _fit_one_region(flux, error, alpha, region_map, signal_threshold, region_num
         Dict containing a spline model, scale, and bounds for each column index in the region.
         If a spline model could not be fit, the column index number is not present.
     """
-    # Splines to return
-    splines = {}
-
     # Arrays to reset with NaNs for each slice
     data_slice = np.full_like(flux, np.nan)
     err_slice = np.full_like(flux, np.nan)
@@ -687,41 +718,43 @@ def _fit_one_region(flux, error, alpha, region_map, signal_threshold, region_num
     alpha_slice[indx] = alpha[indx]
 
     # Estimate SNR for the slit or slice, collapsed along wavelength
-    alpha_test, err_test, snr_test = _significance_test(data_slice, err_slice, alpha_slice)
+    alpha_test, flux_test, err_test, snr_test = _significance_test(
+        data_slice, err_slice, alpha_slice
+    )
+
+    # Is either peak flux or SNR over threshold?  If not, stop processing
+    no_data_msg = "No data over threshold; not fitting splines."
+    if not _threshold_test(flux_test, snr_test, region_number, peak_threshold, snr_threshold):
+        log.debug(no_data_msg)
+        return {}
 
     # Use SNR estimates to trim slit or slice edges
-    if snr_test is not None:
-        _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test)
+    _trim_edges(data_slice, alpha_slice, alpha_test, err_test, snr_test)
+
+    # Redo SNR estimate after trimming
+    _, flux_test, _, snr_test = _significance_test(data_slice, err_slice, alpha_slice)
+
+    # Check again for flux over threshold
+    if not _threshold_test(flux_test, snr_test, region_number, peak_threshold, snr_threshold):
+        log.debug(no_data_msg)
+        return {}
 
     # Get a running sum in a given detector column (used for normalization)
     negative_nod_threshold = -5.0
-    if snr_test is not None and np.nanmin(snr_test) < negative_nod_threshold:
+    if np.nanmin(snr_test) < negative_nod_threshold:
         # If significant negative nods present, just sum positive data
-        log.info("Found significant negative data; summing positive only for normalization.")
+        log.debug("Found significant negative data; summing positive only for normalization.")
         runsum = np.sum(data_slice, where=(data_slice > 0), axis=0)
     else:
         runsum = np.nansum(data_slice, axis=0)
 
-    # Collapse the slice along Y to get max in each column
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        collapse = np.nanmax(data_slice, axis=0)
-
-    # Median column max across all columns
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        medcmax = np.nanmedian(collapse)
-
-    # Is medcmax over threshold?  If so, do bspline for this slice.
-    if medcmax > signal_threshold[region_number]:
-        splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
+    # Fit the splines
+    splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
 
     return splines
 
 
-def fit_all_regions(
-    flux, error, alpha, region_map, signal_threshold, maximum_cores="none", **fit_kwargs
-):
+def fit_all_regions(flux, error, alpha, region_map, maximum_cores="none", **fit_kwargs):
     """
     Fit a trace model to all regions in the flux image.
 
@@ -736,10 +769,6 @@ def fit_all_regions(
     region_map : ndarray of int
         Map containing the slice or slit number for valid regions.
         Values are >0 for pixels in valid regions, 0 otherwise.
-    signal_threshold : dict
-        Threshold values for each valid region in the region map. If
-        the median peak value across columns in the region is below this
-        threshold, a fit will not be attempted for that region.
     maximum_cores : str
         Number of cores to use for multiprocessing. If set to 'none' (the default),
         then no multiprocessing will be done. The other allowable values are 'quarter',
@@ -765,21 +794,21 @@ def fit_all_regions(
     # Call adaptive trace model for the single processor (1 data slice) case
     if number_slices == 1:
         # Single threaded computation
-        log.info("Running single-process calculation")
+        log.debug("Running single-process calculation")
         for reg_num in region_numbers:
             if len(region_numbers) > 1:
                 log.info("Fitting slice %s", reg_num)
             spline_models[reg_num] = _fit_one_region(
-                flux, error, alpha, region_map, signal_threshold, reg_num, **fit_kwargs
+                flux, error, alpha, region_map, reg_num, **fit_kwargs
             )
     else:
         # Parallelized computation
-        log.info(f"Fitting slices, multiprocessing on {number_slices} cores")
+        log.info(f"Multiprocessing on {number_slices} cores")
 
         # Use functools.partial to supply all other inputs to _fit_one_region except slice number
         # This is needed since pool.starmap doesn't support passing **fit_kwargs
         fit_one_region_with_args = functools.partial(
-            _fit_one_region, flux, error, alpha, region_map, signal_threshold, **fit_kwargs
+            _fit_one_region, flux, error, alpha, region_map, **fit_kwargs
         )
 
         # Run the parallelized calc and collect results
@@ -1650,12 +1679,6 @@ def fit_and_oversample(
     else:
         raise ValueError("Unknown detector")
 
-    # For single slit images, fit_threshold is not useful: disable it
-    region_numbers = np.unique(region_map[region_map > 0])
-    if len(region_numbers) < 2 and fit_threshold > 0:
-        log.info("Ignoring fit threshold for single slit image")
-        fit_threshold = 0
-
     # For multiple integrations, fit the profile to the median image
     if nint > 1:
         # Also check for an input oversample factor:
@@ -1698,16 +1721,19 @@ def fit_and_oversample(
         flux_orig = flux_orig - overall_mean
         overall_mean = 0
 
-    # Define a per-slice analysis threshold (must be brighter than some level above background)
+    # Define a per-slice analysis threshold for IFU
+    # (must be brighter than some level above background)
+    peak_threshold = None
+    region_numbers = np.unique(region_map[region_map > 0])
     if fit_threshold <= 0:
-        # In this case, all slices should be fit, so make the threshold
-        # lower than any real signal
-        signal_threshold = dict.fromkeys(region_numbers, -np.inf)
+        # In this case for any mode, all slices should be fit,
+        # so set both thresholds to None
+        fit_threshold = None
     else:
         if mode == "MIR_MRS":
             # For MIRI MRS we need each channel to have its own threshold, particularly
             # for Ch3/Ch4 since the sky is so much brighter in Ch4
-            signal_threshold = dict.fromkeys(region_numbers, np.nan)
+            peak_threshold = dict.fromkeys(region_numbers, np.nan)
             for channel in [100, 200, 300, 400]:
                 ch_data = (region_map >= channel) & (region_map < channel + 100)
                 if not np.any(ch_data):
@@ -1717,20 +1743,23 @@ def fit_and_oversample(
                     ch_mean, _, ch_rms = scs(flux_orig[ch_data])
                 for reg_num in region_numbers:
                     if channel <= reg_num < channel + 100:
-                        signal_threshold[reg_num] = ch_mean + fit_threshold * ch_rms
-        else:
+                        peak_threshold[reg_num] = ch_mean + fit_threshold * ch_rms
+        elif mode == "NRS_IFU":
             # For NIRSpec IFU data, all regions have the same threshold
             threshold = overall_mean + fit_threshold * overall_rms
-            signal_threshold = dict.fromkeys(region_numbers, threshold)
+            peak_threshold = dict.fromkeys(region_numbers, threshold)
 
     # Fit spline models to all regions
     fit_kwargs = _set_fit_kwargs(mode, detector, slit, xsize)
+    if peak_threshold is not None:
+        fit_kwargs["peak_threshold"] = peak_threshold
+    else:
+        fit_kwargs["snr_threshold"] = fit_threshold
     spline_models = fit_all_regions(
         flux_orig,
         err_orig,
         alpha_orig,
         region_map,
-        signal_threshold,
         maximum_cores=maximum_cores,
         **fit_kwargs,
     )
