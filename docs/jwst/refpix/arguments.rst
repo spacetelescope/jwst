@@ -38,6 +38,14 @@ If the ``odd_even_rows`` argument is selected, the reference signal is
 calculated and applied separately for even- and odd-numbered rows.  The
 default value is True, and this argument applies to MIR data only.
 
+*  ``--siglimit``
+
+The ``siglimit`` argument is the number of standard deviations to use in
+the iterative sigma clipping algorithm that calculates the mean of the
+reference pixels.  The siglimit value is used as both
+the lower and upper bound in the sigma clipping algorithm.  The value is a
+float with a default value of 3.0.
+
 *  ``--ovr_corr_mitigation_ftr``
 
 This is a factor to avoid overcorrection of intermittently bad reference
