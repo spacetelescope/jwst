@@ -5,7 +5,7 @@ Role of Model Blender
 
 Model Blender performs 2 operations:
 
-- Accumulate, blend and set metadata when combining several models (
+- Accumulate, blend, and set metadata when combining several models (
   as is done during resampling) using combination rules defined in the datamodel
   schemas.
 - Record the metadata of input models in a table added to the
@@ -39,8 +39,8 @@ Using model_blender
 Using blendmodels
 -----------------
 
-The simplest way to run model blender only requires calling a single interface
-that is :func:`~jwst.model_blender.blendmeta.blendmodels`:
+The simplest way to run model blender only requires calling a single interface,
+:func:`~jwst.model_blender.blendmeta.blendmodels`:
 
 .. code-block:: python
 
@@ -71,7 +71,7 @@ output model.
        blender.accumulate(model)
    blender.finalize_model(product)
 
-This produces a ``product`` identical to a call to ``blendmodels`` described above.
+This produces a ``product`` identical to a call to :func:`~jwst.model_blender.blendmeta.blendmodels` described above.
 
 
 Customizing the behavior
