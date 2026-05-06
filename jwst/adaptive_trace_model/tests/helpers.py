@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
@@ -9,7 +10,11 @@ from jwst.assign_wcs.tests.test_miri import (
     create_hdul,
     create_hdul_lrs_slitless,
 )
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_nirspec_ifu_file
+from jwst.assign_wcs.tests.test_nirspec import (
+    create_nirspec_fs_file,
+    create_nirspec_ifu_file,
+    create_nirspec_mos_file,
+)
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 
 __all__ = [
@@ -19,7 +24,10 @@ __all__ = [
     "miri_mrs_model_with_source",
     "nirspec_ifu_model",
     "nirspec_ifu_model_with_source",
+    "nirspec_mos_model_with_source",
+    "nirspec_slit_model",
     "nirspec_slit_model_with_source",
+    "nirspec_slit_model_with_source_and_nod",
     "profile_1d",
 ]
 
@@ -224,6 +232,45 @@ def nirspec_ifu_model_with_source(wcs_style="coordinates"):
     return model
 
 
+def nirspec_mos_model_with_source():
+    """
+    Create a mock NIRSpec MOS model with a simple spectral source in the data array.
+
+    Calls assign_wcs and extract_2d.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        The MOS datamodel.
+    """
+    hdul = create_nirspec_mos_file()
+    model = datamodels.ImageModel(hdul)
+    hdul.close()
+
+    msaconfl = get_pkg_data_filename("data/msa_configuration.fits", package="jwst.assign_wcs.tests")
+    model.meta.instrument.msa_metadata_file = msaconfl
+    model.meta.instrument.msa_metadata_id = 12
+
+    shape = (2048, 2048)
+    model.data = np.zeros(shape)
+    model.err = np.full(shape, 0.01)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
+    model = AssignWcsStep.call(model)
+    model = Extract2dStep.call(model)
+
+    for slit in model.slits:
+        slit.meta.photometry.pixelarea_steradians = 1.0
+        slit.meta.photometry.pixelarea_arcsecsq = 1.0
+        slit.meta.bunit_data = "MJy"
+
+        region_map = (~np.isnan(slit.wavelength)).astype(int)
+        _add_source(slit, region_map)
+
+    return model
+
+
 def nirspec_slit_model():
     """
     Create a mock NIRSpec FS model with no source in the data array.
@@ -273,6 +320,7 @@ def nirspec_slit_model_with_source():
     model = nirspec_slit_model()
     for slit in model.slits:
         region_map = (~np.isnan(slit.wavelength)).astype(int)
+        slit.data *= 0
         _add_source(slit, region_map)
 
     return model

@@ -760,11 +760,11 @@ def _fit_one_region(
         Values are >0 for pixels in valid regions, 0 otherwise.
     region_number : int
         Index number for the single region to be fit in this invocation.
-    peak_threshold : dict
+    peak_threshold : dict or None, optional
         Flux threshold values for each valid region in the region map. If
         the median peak value across columns in the region is below this
         threshold, a fit will not be attempted for that region.
-    snr_threshold : float
+    snr_threshold : float or None, optional
         Signal-to-noise ratio (SNR) threshold value. If the median SNR value
         across columns in the region is below this threshold, a fit will not
         be attempted for that region.

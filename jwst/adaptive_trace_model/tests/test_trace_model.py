@@ -14,6 +14,26 @@ def nrs_slit_model():
 
 
 @pytest.fixture(scope="module")
+def fit_region_input_no_source_noisy_edge():
+    with helpers.nirspec_slit_model() as model:
+        flux = model.slits[0].data
+        wcs = model.slits[0].meta.wcs
+        region_map = (~np.isnan(model.slits[0].wavelength)).astype(int)
+
+    x, y = np.meshgrid(np.arange(flux.shape[1]), np.arange(flux.shape[0]))
+    _, alpha, _ = wcs.transform("detector", "slit_frame", x, y)
+    err = flux / 2  # for SNR=2 everywhere
+
+    # Add noisy edges
+    flux[alpha < -0.5] = 15
+    flux[alpha > 0.5] = -15
+    err[alpha < -0.5] = 30
+    err[alpha > 0.5] = 30
+
+    return flux, err, alpha, region_map
+
+
+@pytest.fixture(scope="module")
 def fit_2d_spline_input(nrs_slit_model):
     slit = nrs_slit_model.slits[0]
     flux = slit.data
@@ -84,6 +104,103 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
 
     # The fit is re-attempted once at every column
     assert mock_fit.call_count == 2 * flux.shape[1]
+
+
+def test_crossdisp_profile(fit_2d_spline_input):
+    slit, flux, alpha = fit_2d_spline_input
+    err = flux * 0.01
+
+    alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp = tm._crossdisp_profile(flux, err, alpha)
+    np.testing.assert_allclose(alpha_xdisp.min(), np.nanmin(alpha))
+    np.testing.assert_allclose(alpha_xdisp.max(), np.nanmax(alpha), atol=0.016)
+    for xdisp in [flux_xdisp, err_xdisp, snr_xdisp]:
+        assert xdisp.shape == alpha_xdisp.shape
+    np.testing.assert_allclose(snr_xdisp, 100)
+
+
+def test_crossdisp_profile_no_error(fit_2d_spline_input):
+    slit, flux, alpha = fit_2d_spline_input
+    err = np.zeros_like(flux)
+
+    profile = tm._crossdisp_profile(flux, err, alpha)
+
+    # Profile is all None if no errors provided
+    for xdisp in profile:
+        assert xdisp is None
+
+
+def test_trim_edges(fit_2d_spline_input):
+    slit, flux, alpha = fit_2d_spline_input
+    err = flux * 0.01
+    alpha_xdisp, _, err_xdisp, snr_xdisp = tm._crossdisp_profile(flux, err, alpha)
+
+    flux_copy = flux.copy()
+    tm._trim_edges(flux_copy, alpha, alpha_xdisp, err_xdisp, snr_xdisp)
+
+    # no change for clean edges
+    np.testing.assert_allclose(flux_copy, flux)
+
+    # mark edges bad: SNR low, error high
+    err_xdisp[:4] = 1000
+    err_xdisp[-4:] = 1000
+    snr_xdisp[:4] = 4
+    snr_xdisp[-4:] = 4
+    tm._trim_edges(flux_copy, alpha, alpha_xdisp, err_xdisp, snr_xdisp)
+
+    # each column now has a few NaNs at top and bottom edge of slit
+    assert np.sum(np.isnan(flux)) == 0
+    assert np.allclose(np.sum(np.isnan(flux_copy), axis=0), 3, atol=1)
+
+
+def test_trim_edges_all_invalid(fit_2d_spline_input):
+    slit, flux, alpha = fit_2d_spline_input
+    err = flux * 0.01
+    alpha_xdisp, _, err_xdisp, snr_xdisp = tm._crossdisp_profile(flux, err, alpha)
+
+    # all invalid snr
+    snr_xdisp[:] = np.nan
+    flux_copy = flux.copy()
+    tm._trim_edges(flux_copy, alpha, alpha_xdisp, err_xdisp, snr_xdisp)
+
+    # no change
+    np.testing.assert_allclose(flux_copy, flux)
+
+
+def test_threshold_test():
+    flux_xdisp = [1, 2, 3, np.nan]
+    snr_xdisp = [4, 5, 6, np.nan]
+    regnum = 1
+    peak_threshold = {1: 2}
+    snr_thresold = 5
+    assert tm._threshold_test(flux_xdisp, snr_xdisp, regnum, None, None)
+    assert tm._threshold_test(flux_xdisp, snr_xdisp, regnum, peak_threshold, None)
+    assert tm._threshold_test(flux_xdisp, snr_xdisp, regnum, None, snr_thresold)
+    assert tm._threshold_test(flux_xdisp, snr_xdisp, regnum, peak_threshold, snr_thresold)
+    assert not tm._threshold_test(flux_xdisp, snr_xdisp, regnum, None, 6)
+    assert not tm._threshold_test(flux_xdisp, snr_xdisp, regnum, {1: 3}, None)
+    assert not tm._threshold_test(flux_xdisp, snr_xdisp, regnum, {1: 3}, 6)
+
+
+def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy_edge):
+    flux, err, alpha, region_map = fit_region_input_no_source_noisy_edge
+    regnum = 1
+    peak_threshold = None
+
+    # SNR threshold below all signal: expect no splines fit
+    snr_threshold = 3
+    splines = tm._fit_one_region(
+        flux, err, alpha, region_map, regnum, peak_threshold, snr_threshold
+    )
+    assert len(splines) == 0
+
+    # Peak threshold above edge noise but below real signal: expect no splines fit,
+    # since the edges are trimmed
+    peak_threshold = {1: 10}
+    snr_threshold = None
+    splines = tm._fit_one_region(
+        flux, err, alpha, region_map, regnum, peak_threshold, snr_threshold
+    )
+    assert len(splines) == 0
 
 
 @pytest.mark.parametrize(

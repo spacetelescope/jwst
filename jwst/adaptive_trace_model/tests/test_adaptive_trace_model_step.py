@@ -66,6 +66,13 @@ def nirspec_ifu_slice_wcs():
 
 
 @pytest.fixture(scope="module")
+def nirspec_mos_model_with_source():
+    model = helpers.nirspec_mos_model_with_source()
+    yield model
+    model.close()
+
+
+@pytest.fixture(scope="module")
 def nirspec_slit_model():
     model = helpers.nirspec_slit_model()
     yield model
@@ -428,7 +435,12 @@ def test_adaptive_trace_model_step_tso_oversample(miri_lrs_slitless_model_with_s
 
 
 @pytest.mark.parametrize(
-    "dataset", ["nirspec_slit_model_with_source", "nirspec_slit_model_with_source_and_nod"]
+    "dataset",
+    [
+        "nirspec_slit_model_with_source",
+        "nirspec_slit_model_with_source_and_nod",
+        "nirspec_mos_model_with_source",
+    ],
 )
 def test_adaptive_trace_model_step_oversample_nrs_slit(dataset, request):
     model = request.getfixturevalue(dataset)
