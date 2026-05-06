@@ -6,5 +6,4 @@ Model Blender
    :maxdepth: 2
 
    main.rst
-   blender_rules.rst
    blender_api.rst
