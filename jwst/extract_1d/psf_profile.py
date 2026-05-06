@@ -18,7 +18,7 @@ VERTICAL = 2
 NOD_PAIR_PATTERN = ["ALONG-SLIT-NOD", "2-POINT-NOD"]
 
 
-def open_psf(psf_refname, exp_type):
+def open_psf(psf_refname, slit_name):
     """
     Open the PSF reference file.
 
@@ -26,32 +26,35 @@ def open_psf(psf_refname, exp_type):
     ----------
     psf_refname : str
         The name of the psf reference file.
-    exp_type : str
-        The exposure type of the data.
+    slit_name : str or None
+        The slit name for the data.
 
     Returns
     -------
     psf_model : SpecPsfModel
         Returns the EPSF model.
     """
-    if exp_type == "MIR_LRS-FIXEDSLIT":
-        # The information we read in from PSF file is:
-        # center_col: psf_model.meta.psf.center_col
-        # super sample factor: psf_model.meta.psf.subpix)
-        # psf : psf_model.data (2d)
-        # wavelength of PSF planes: psf_model.wave
+    try:
         psf_model = SpecPsfModel(psf_refname)
+    except (ValueError, AttributeError):
+        raise NotImplementedError(
+            f"PSF file {psf_refname} could not be read as SpecPsfModel."
+        ) from None
 
-    else:
-        # So far, only MIRI LRS has a PSF datamodel defined. For any other
-        # exposure type, try to use the model MIRI LRS uses to open the input model
-        try:
-            psf_model = SpecPsfModel(psf_refname)
-        except (ValueError, AttributeError):
-            raise NotImplementedError(
-                f"PSF file for EXP_TYPE {exp_type} could not be read as SpecPsfModel."
-            ) from None
-    return psf_model
+    # Get the right PSF aperture
+    slit_name = str(slit_name).upper()
+    psf_aperture = None
+    for aperture in psf_model.apertures:
+        aper_name = str(aperture.name).upper()
+        if aper_name in ["NONE", "ANY"] or aper_name == slit_name:
+            psf_aperture = aperture
+            break
+    psf_model.close()
+
+    if psf_aperture is None:
+        raise ValueError(f"No matching aperture found in SpecPsfModel for slit={slit_name}")
+
+    return psf_aperture
 
 
 def _normalize_profile(profile, dispaxis):
@@ -253,9 +256,10 @@ def psf_profile(
         For PSF profiles, this is always set to the upper edge of the bounding box,
         since the full array may have non-zero weight.
     """
-    # Read in reference files
+    # Read in reference file
     exp_type = input_model.meta.exposure.type
-    psf_model = open_psf(psf_ref_name, exp_type)
+    slit_name = getattr(input_model, "name", None)
+    psf_model = open_psf(psf_ref_name, slit_name)
 
     # Get the data cutout
     data_shape = input_model.data.shape[-2:]
@@ -343,14 +347,14 @@ def psf_profile(
 
     # Scale the trace location to the subsampled psf and
     # add the wavelength and spatial shifts to the coordinates to map to
-    psf_subpix = psf_model.meta.psf.subpix
+    psf_subpix = psf_model.subpix
     psf_location = trace - bbox[0][0]
     if dispaxis == HORIZONTAL:
-        psf_shift = psf_model.meta.psf.center_row - (psf_location * psf_subpix)
+        psf_shift = psf_model.center_row - (psf_location * psf_subpix)
         xidx = wave_idx
         yidx = _y * psf_subpix + psf_shift
     else:
-        psf_shift = psf_model.meta.psf.center_col - (psf_location * psf_subpix)
+        psf_shift = psf_model.center_col - (psf_location * psf_subpix)
         xidx = _x * psf_subpix + psf_shift[:, None]
         yidx = wave_idx
 

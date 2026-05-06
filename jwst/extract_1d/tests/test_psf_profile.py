@@ -5,18 +5,26 @@ from stdatamodels.jwst.datamodels import SpecPsfModel
 from jwst.extract_1d import psf_profile as pp
 
 
-@pytest.mark.parametrize("exp_type", ["MIR_LRS-FIXEDSLIT", "NRS_FIXEDSLIT", "UNKNOWN"])
-def test_open_psf(psf_reference_file, exp_type):
-    # for any exptype, a model that can be read
-    # as SpecPsfModel will be, since it's the only
-    # one implemented so far
-    with pp.open_psf(psf_reference_file, exp_type=exp_type) as model:
-        assert isinstance(model, SpecPsfModel)
+@pytest.mark.parametrize("slit_name", [None, "ANY", "UNKNOWN"])
+def test_open_psf(psf_reference_file, slit_name):
+    # for any slit name passed in, the first aperture will be matched,
+    # since there's only one available and it has no specific slit name
+    aperture = pp.open_psf(psf_reference_file, slit_name)
+    assert aperture.data.size != 0
+    assert aperture.wave.size != 0
 
 
 def test_open_psf_fail():
     with pytest.raises(NotImplementedError, match="could not be read"):
         pp.open_psf("bad_file", "UNKNOWN")
+
+
+def test_open_psf_no_aperture_found(psf_reference_file):
+    # If no PSF aperture matches the slit, an error is raised
+    with SpecPsfModel(psf_reference_file) as psf_model:
+        psf_model.apertures[0].name = "GOOD_SLIT"
+        with pytest.raises(ValueError, match="No matching aperture"):
+            pp.open_psf(psf_model, "BAD_SLIT")
 
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
@@ -42,11 +50,12 @@ def test_normalize_profile_with_nans(nod_profile, dispaxis):
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
 def test_make_cutout_profile_default(psf_reference, dispaxis):
-    data_shape = psf_reference.data.shape
+    psf_aper = psf_reference.apertures[0]
+    data_shape = psf_aper.data.shape
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
 
-    psf_subpix = psf_reference.meta.psf.subpix
-    profiles = pp._make_cutout_profile(xidx, yidx, psf_subpix, psf_reference.data, dispaxis)
+    psf_subpix = psf_aper.subpix
+    profiles = pp._make_cutout_profile(xidx, yidx, psf_subpix, psf_aper.data, dispaxis)
     assert len(profiles) == 1
     assert profiles[0].shape == data_shape
 
@@ -60,12 +69,13 @@ def test_make_cutout_profile_default(psf_reference, dispaxis):
 @pytest.mark.parametrize("dispaxis", [1, 2])
 @pytest.mark.parametrize("extra_shift", [1, 2])
 def test_make_cutout_profile_shift_down(psf_reference, dispaxis, extra_shift):
-    data_shape = psf_reference.data.shape
+    psf_aper = psf_reference.apertures[0]
+    data_shape = psf_aper.data.shape
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     profiles = pp._make_cutout_profile(
-        xidx, yidx, psf_subpix, psf_reference.data, dispaxis, extra_shift=extra_shift
+        xidx, yidx, psf_subpix, psf_aper.data, dispaxis, extra_shift=extra_shift
     )
     assert len(profiles) == 1
     assert profiles[0].shape == data_shape
@@ -84,12 +94,13 @@ def test_make_cutout_profile_shift_down(psf_reference, dispaxis, extra_shift):
 @pytest.mark.parametrize("dispaxis", [1, 2])
 @pytest.mark.parametrize("extra_shift", [-1, -2])
 def test_make_cutout_profile_shift_up(psf_reference, dispaxis, extra_shift):
-    data_shape = psf_reference.data.shape
+    psf_aper = psf_reference.apertures[0]
+    data_shape = psf_aper.data.shape
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     profiles = pp._make_cutout_profile(
-        xidx, yidx, psf_subpix, psf_reference.data, dispaxis, extra_shift=extra_shift
+        xidx, yidx, psf_subpix, psf_aper.data, dispaxis, extra_shift=extra_shift
     )
     assert len(profiles) == 1
     assert profiles[0].shape == data_shape
@@ -107,13 +118,14 @@ def test_make_cutout_profile_shift_up(psf_reference, dispaxis, extra_shift):
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
 def test_make_cutout_profile_with_nod(psf_reference, dispaxis):
-    data_shape = psf_reference.data.shape
+    psf_aper = psf_reference.apertures[0]
+    data_shape = psf_aper.data.shape
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     offset = 2
     profiles = pp._make_cutout_profile(
-        xidx, yidx, psf_subpix, psf_reference.data, dispaxis, nod_offset=offset
+        xidx, yidx, psf_subpix, psf_aper.data, dispaxis, nod_offset=offset
     )
     assert len(profiles) == 2
     source, nod = profiles
@@ -138,9 +150,10 @@ def test_make_cutout_profile_with_nod(psf_reference, dispaxis):
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
 def test_profile_residual(psf_reference, dispaxis):
+    psf_aper = psf_reference.apertures[0]
     data_shape = (50, 50)
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     # Set data to all ones, so residual should be zero
     # when background is not fit
@@ -149,16 +162,17 @@ def test_profile_residual(psf_reference, dispaxis):
 
     param = [0, None]
     residual = pp._profile_residual(
-        param, data, var, xidx, yidx, psf_subpix, psf_reference.data, dispaxis, fit_bkg=False
+        param, data, var, xidx, yidx, psf_subpix, psf_aper.data, dispaxis, fit_bkg=False
     )
     assert np.isclose(residual, 0.0)
 
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
 def test_profile_residual_with_bkg(psf_reference, dispaxis):
+    psf_aper = psf_reference.apertures[0]
     data_shape = (50, 50)
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     # Set data to all ones, so it is all background - residual
     # should be all of the data
@@ -167,7 +181,7 @@ def test_profile_residual_with_bkg(psf_reference, dispaxis):
 
     param = [0, None]
     residual = pp._profile_residual(
-        param, data, var, xidx, yidx, psf_subpix, psf_reference.data, dispaxis, fit_bkg=True
+        param, data, var, xidx, yidx, psf_subpix, psf_aper.data, dispaxis, fit_bkg=True
     )
     assert np.isclose(residual, np.sum(data**2 / var))
 
