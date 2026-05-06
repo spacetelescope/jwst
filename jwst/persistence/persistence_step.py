@@ -21,7 +21,7 @@ class PersistenceStep(Step):
     class_alias = "persistence"
 
     spec = """
-        save_persistence = boolean(default=False) # Save subtracted persistence to an output file with suffix '_output_pers'
+        save_persistence = string(default=None) # Name of ASDF output file for the persistence array
         persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
         persistence_array_file = string(default=None) # A path to an ASDF file containing a 2-D array of persistence times per pixel
         persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
@@ -65,8 +65,8 @@ class PersistenceStep(Step):
         else:
             result.meta.cal_step.persistence = "COMPLETE"
 
-        if pers_a.save_persistence:
-            self.write_persistence_array(result)
+        if pers_a.save_persistence is not None:
+            self.write_persistence_array(result, pers_a.save_persistence)
 
         return result
 
@@ -100,7 +100,7 @@ class PersistenceStep(Step):
             self.persistence_array_create = True
             self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
 
-    def write_persistence_array(self, result):
+    def write_persistence_array(self, result, filename):
         """
         Write the persistence array to an ASDF file.
 
@@ -109,24 +109,9 @@ class PersistenceStep(Step):
         result : RampModel
             The RampModel on which to process the persistence flag.
         """
-        # Setup persistence array filename with time suffix to avoid overwriting existing files
-        now = datetime.datetime.now()
-        time_fmt = "%y%m%d%H%M%S"
-        time_str = now.strftime(time_fmt)
-        pers_suffix = f"pers{time_str}"
-
-        # persistence_array_file always gets set if the persistence options are processed.
-        if self.persistence_array_file is None:
-            filename = result.meta.filename
-        else:
-            filename = self.persistence_array_file
-
-        path, filename = os.path.split(filename)
-        basename, suff = filename.rsplit("_", 1)
-        filename = f"{basename}_{pers_suffix}.asdf"
-
-        if self.output_dir is not None and len(self.output_dir) > 1:
-            filename = os.path.join(self.output_dir, filename)
+        root, ext = os.path.splitext(filename)
+        if ext != ".asdf":
+            filename = f"{root}.asdf"
 
         # Write persistence array to ASDF file
         tree = {"persistence_data": self.persistence_array}

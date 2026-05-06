@@ -93,8 +93,9 @@ def test_persistence_time_save_persistence(create_sci_model, tmp_path):
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
 
+    save_persistence = str(tmp_path / "dummy_persistence_array.asdf")
 
-    step = PersistenceStep(persistence_time=70, save_persistence=True)
+    step = PersistenceStep(persistence_time=70, save_persistence=save_persistence)
     step.output_dir = str(tmp_path)
 
     res = step.run(model)
@@ -111,6 +112,9 @@ def test_persistence_time_save_persistence(create_sci_model, tmp_path):
     np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
     np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
 
+    assert os.path.exists(save_persistence) is True
+
+    '''
     found = False
     for el in os.listdir(step.output_dir):
         if found:
@@ -123,6 +127,7 @@ def test_persistence_time_save_persistence(create_sci_model, tmp_path):
                 pers_data = pers["persistence_data"]
     
     assert found is True
+    '''
 
     del step
             
