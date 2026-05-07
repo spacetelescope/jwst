@@ -1,5 +1,4 @@
-#
-#  Module for correcting for persistence
+"""Utility functions for correcting for persistence."""
 
 import logging
 import math
@@ -29,24 +28,25 @@ def no_nan(
 
     Parameters
     ----------
-    input_model : JWST data model
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input will typically be a reference file model.
 
     fill_value : float
         Use this value to replace NaNs and/or zeros.
 
     zap_nan : bool
-        If True, replace NaNs in a copy of `input_model.data`.
-        The default is False.
+        If `True`, replace NaNs in a copy of ``input_model.data``.
+        The default is `False`.
+
     zap_zero : bool
-        If True, replace zeros in a copy of `input_model.data`.
-        The default is False.
+        If `True`, replace zeros in a copy of ``input_model.data``.
+        The default is `False`.
 
     Returns
     -------
-    JWST data model
-        A copy of `input_model` with NaNs and/or zeros in the `data`
-        attribute replaced with `fill_value`.
+    `~stdatamodels.jwst.datamodels.JwstDataModel`
+        A copy of ``input_model`` with NaNs and/or zeros in the ``data``
+        attribute replaced with ``fill_value``.
     """
     mask = None
 
@@ -71,35 +71,65 @@ class DataSet:
     """
     Input dataset to which persistence will be applied.
 
+    Parameters
+    ----------
+    output_obj : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Copy of input data model object
+
+    input_traps_filled : `~stdatamodels.jwst.datamodels.CubeModel` or None
+        Image of trap state.  There will be one or more image planes,
+        each of which corresponds to a trap "family," i.e., a set of
+        traps with similar capture and decay properties.
+        If this is None, the state will be initialized to an array
+        of zeros, indicating that there are no filled traps.
+
+    flag_pers_cutoff : float or None
+        If not None, pixels will be flagged if the
+        value of persistence that was subtracted is larger than
+        ``flag_pers_cutoff``.
+
+    save_persistence : bool
+        If `True`, the persistence that was subtracted will be written
+        to an output file.
+
+    trap_density_model : `~stdatamodels.jwst.datamodels.TrapDensityModel`
+        Image (reference file) of the total number of traps per pixel.
+
+    trappars_model : `~stdatamodels.jwst.datamodels.TrapParsModel`
+        Table (reference file) giving parameters for traps.
+
+    persat_model : `~stdatamodels.jwst.datamodels.PersistenceSatModel`
+        Persistence saturation limit (full-well) reference file.
+
     Attributes
     ----------
-    output_obj : JWST data model
+    output_obj : `~stdatamodels.jwst.datamodels.JwstDataModel`
         A copy of the input model.  This will be modified in-place.
 
-    traps_filled : JWST data model, `TrapsFilledModel`
+    traps_filled : `~stdatamodels.jwst.datamodels.TrapsFilledModel`
         The trap state at some time prior to the current exposure
 
     flag_pers_cutoff : float or None
         If not None, pixels will be flagged if the value of persistence
-        that was subtracted is larger than `flag_pers_cutoff`.
+        that was subtracted is larger than ``flag_pers_cutoff``.
 
     save_persistence : bool
-        If True, the persistence that was subtracted will be written to an
+        If `True`, the persistence that was subtracted will be written to an
         output file.
 
-    output_pers : JWST data model or None
-        If `save_persistence` is True, the amount of persistence that was
-        subtracted will be copied to the `data` attribute of a data model
+    output_pers : `~stdatamodels.jwst.datamodels.JwstDataModel` or None
+        If ``save_persistence`` is `True`, the amount of persistence that was
+        subtracted will be copied to the ``data`` attribute of a data model
         and written to a file.
 
-    trap_density : JWST data model, `TrapDensityModel`
+    trap_density : `~stdatamodels.jwst.datamodels.TrapDensityModel`
         Reference file, giving the total number of traps per pixel.
 
-    trappars_model : JWST data model, `TrapParsModel`
+    trappars_model : `~stdatamodels.jwst.datamodels.TrapParsModel`
         Reference file (table), giving parameters for traps.
 
-    persistencesat : JWST data model, `PersistenceSatModel`
-        Persistence saturation limit (full well) reference file.
+    persistencesat : `~stdatamodels.jwst.datamodels.PersistenceSatModel`
+        Persistence saturation limit (full-well) reference file.
 
     tframe : float
         The frame time, in seconds.
@@ -130,39 +160,6 @@ class DataSet:
         trappars_model,
         persat_model,
     ):
-        """
-        Assign values to attributes.
-
-        Parameters
-        ----------
-        output_obj : JWST data model
-            Copy of input data model object
-
-        input_traps_filled : cube model or None
-            Image of trap state.  There will be one or more image planes,
-            each of which corresponds to a trap "family," i.e. a set of
-            traps with similar capture and decay properties.
-            If this is None, the state will be initialized to an array
-            of zeros, indicating that there are no filled traps.
-
-        flag_pers_cutoff : float or None
-            If not None, pixels will be flagged (with what? xxx) if the
-            value of persistence that was subtracted is larger than
-            `flag_pers_cutoff`.
-
-        save_persistence : bool
-            If True, the persistence that was subtracted will be written
-            to an output file.
-
-        trap_density_model : image model
-            Image (reference file) of the total number of traps per pixel.
-
-        trappars_model : traps model
-            Table (reference file) giving parameters for traps.
-
-        persat_model : persistence saturation model
-            Persistence saturation limit (full well) reference file.
-        """
         log.debug("input_traps_filled = %s", str(input_traps_filled))
         log.debug("flag_pers_cutoff = %g", flag_pers_cutoff)
         log.debug("save_persistence = %s", str(save_persistence))
@@ -191,21 +188,21 @@ class DataSet:
 
         Returns
         -------
-        output_obj : data model
-            The persistence-corrected science data, a RampModel object.
+        output_obj : `~stdatamodels.jwst.datamodels.RampModel`
+            The persistence-corrected science data.
 
-        traps_filled : data model or None
-            A TrapsFilledModel object, giving the number of traps that
+        traps_filled : `~stdatamodels.jwst.datamodels.TrapsFilledModel` or None
+            A model giving the number of traps that
             are filled in each pixel at the end of the exposure; there
             will be one plane for each trap family.
 
-        output_pers :  data model or None
-            A RampModel object, giving the value of persistence that
+        output_pers : `~stdatamodels.jwst.datamodels.RampModel`
+            A model giving the value of persistence that
             was subtracted from each pixel of each group of each
             integration.
 
         skipped : bool
-            This will be True if the step has been skipped.
+            This will be `True` if the step has been skipped.
         """
         # Initial value, indicates that processing was done successfully.
         skipped = False
@@ -275,23 +272,22 @@ class DataSet:
                 self.traps_filled.data[k, :, :] -= decay
                 del decay
 
-        """
-        These will be full-frame:
-            self.traps_filled           (nfamilies, det_ny, det_nx)
-            self.trap_density (before extracting subarray)
-            self.persistencesat (before extracting subarray)
-            decayed                     (nfamilies, det_ny, det_nx)
-            decayed_in_group            (det_ny, det_nx)
+        # These will be full-frame:
+        #    self.traps_filled           (nfamilies, det_ny, det_nx)
+        #    self.trap_density (before extracting subarray)
+        #    self.persistencesat (before extracting subarray)
+        #    decayed                     (nfamilies, det_ny, det_nx)
+        #    decayed_in_group            (det_ny, det_nx)
+        #
+        # These will be subarrays if the input object is a subarray:
+        #    self.output_obj             (nints, ngroups, ny, nx)
+        #    self.trap_density (after extracting subarray)
+        #    self.persistencesat (after extracting subarray)
+        #    persistence
+        #    self.output_pers
+        #    filled
+        #    cr_filled
 
-        These will be subarrays if the input object is a subarray:
-            self.output_obj             (nints, ngroups, ny, nx)
-            self.trap_density (after extracting subarray)
-            self.persistencesat (after extracting subarray)
-            persistence
-            self.output_pers
-            filled
-            cr_filled
-        """
         # If the science image is a subarray, extract matching sections of
         # reference images unless they match the science image.
 
@@ -412,15 +408,15 @@ class DataSet:
 
         Parameters
         ----------
-        ref : data model
+        ref : `~stdatamodels.jwst.datamodels.JwstDataModel`
             A reference image.
 
-        sci : data model
+        sci : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The science data.
 
         Returns
         -------
-        tuple of two slice objects
+        (slice, slice)
             The elements are the Y and X slices that are intended to be
             used to extract a subarray from the reference file.
         """
@@ -458,18 +454,18 @@ class DataSet:
 
         Parameters
         ----------
-        ref : data model
+        ref : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Reference data.
 
-        slc : tuple of two slice objects
+        slc : (slice, slice)
             The Y and X slices that can be used to extract a subarray from
-            the reference file.  This was returned by function `get_slice`.
+            the reference file.  This was returned by method :meth:`get_slice`.
 
         Returns
         -------
         bool
-            True if both are full-frame or if they are the same subarray;
-            False otherwise.
+            `True` if both are full-frame or if they are the same subarray;
+            `False` otherwise.
         """
         slc_test_y = slice(0, ref.shape[-2])
         slc_test_x = slice(0, ref.shape[-1])
@@ -485,17 +481,17 @@ class DataSet:
 
         Parameters
         ----------
-        ref : JWST data model
+        ref : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Reference data.
 
-        slc : tuple of two slice objects
+        slc : (slice, slice)
             The Y and X slices that can be used to extract a subarray from
-            the reference file.  This was returned by function `get_slice`.
+            the reference file.  This was returned by method :meth:`get_slice`.
 
         Returns
         -------
-        refsub : data model
-            `refsub` is a copy of `ref`, but the data attribute in `refsub`
+        refsub : `~stdatamodels.jwst.datamodels.JwstDataModel`
+            This is a copy of ``ref``, but the data attribute
             includes only the relevant slice.
         """
         refsub = ref.copy()
@@ -563,11 +559,11 @@ class DataSet:
 
         Returns
         -------
-        grp_slope : ndarray, 2-D
-            The ramp slope in units of counts (DN) per group.
+        grp_slope : ndarray
+            The 2-D ramp slope in units of counts (DN) per group.
 
-        slope : ndarray, 2-D
-            The ramp slope in units of fraction of the persistence
+        slope : ndarray
+            The 2-D ramp slope in units of fraction of the persistence
             saturation limit per second.
         """
         (_, ngroups, ny, nx) = self.output_obj.shape
@@ -666,7 +662,7 @@ class DataSet:
             row of the table is for a different trap family.
 
         k : int
-            Index of the current trap family
+            Index of the current trap family.
 
         Returns
         -------
@@ -689,7 +685,7 @@ class DataSet:
             row of the table is for a different trap family.
 
         k : int
-            Index of the current trap family
+            Index of the current trap family.
 
         Returns
         -------
@@ -705,12 +701,13 @@ class DataSet:
         Get some metadata.
 
         This method populates these attributes:
-            self.tframe
-            self.tgroup
-            self.ngroups
-            self.nframes
-            self.groupgap
-            self.nresets
+
+        * ``tframe``
+        * ``tgroup``
+        * ``ngroups``
+        * ``nframes``
+        * ``groupgap``
+        * ``nresets``
 
         Parameters
         ----------
@@ -752,31 +749,31 @@ class DataSet:
         capture_param_k : tuple of three floats
             Three values read from a reference table.  These will be from
             three separate columns but just one row; the row corresponds
-            to the current trap family.  (The _k in the variable name
+            to the current trap family.  (The ``_k`` in the variable name
             indicates that the values are for one trap family.)
 
-        trap_density : ndarray, 2-D
-            Image of the total number of traps per pixel.
+        trap_density : ndarray
+            Image (2-D) of the total number of traps per pixel.
 
         integ : int
             Integration number.
 
-        grp_slope : ndarray, 2-D
-            The slope of the ramp at each pixel, in units of counts (DN)
-            per group.  See also `slope`.
+        grp_slope : ndarray
+            The 2-D slope of the ramp at each pixel, in units of counts (DN)
+            per group.  See also ``slope``.
             The slope was computed from the pixel values that were not
             saturated and were not affected by jumps, based on flags in
             the groupdq extension.
 
-        slope : ndarray, 2-D
-            The slope of the ramp at each pixel, in units of
+        slope : ndarray
+            The 2-D slope of the ramp at each pixel, in units of
             fraction of the persistence saturation limit per second.
-            This is the same as `grp_slope` except for units.
+            This is the same as ``grp_slope`` except for units.
 
         Returns
         -------
-        ndarray, 2-D
-            The computed traps_filled at the end of the integration.
+        ndarray
+            The 2-D computed ``traps_filled`` at the end of the integration.
         """
         data = self.output_obj.data[integ, :, :, :]
 
@@ -843,27 +840,27 @@ class DataSet:
         capture_param_k : tuple
             Three values read from a reference table.  These will be from
             three separate columns but just one row; the row corresponds
-            to the current trap family.  (The _k in the variable name
+            to the current trap family.  (The ``_k`` in the variable name
             indicates that the values are for one trap family.)
 
-        trap_density : ndarray, 2-D
-            Image of the total number of traps per pixel.
+        trap_density : ndarray
+            Image (2-D) of the total number of traps per pixel.
 
-        slope : ndarray, 2-D
-            Array of the slope of the ramp at each pixel.  The slope was
+        slope : ndarray
+            Array of the 2-D slope of the ramp at each pixel.  The slope was
             computed from the pixel values that were not saturated and were
             not affected by jumps, based on flags in the groupdq extension.
             The unit is fraction of the persistence saturation limit
             per second.
 
         dt : float
-            The time interval (unit = second) over which the charge capture
+            The time interval, in seconds, over which the charge capture
             is to be computed.  This does not include saturated groups.
 
         Returns
         -------
-        ndarray, 2-D
-            The computed traps_filled at the end of the integration.
+        ndarray
+            The computed 2-D ``traps_filled`` at the end of the integration.
         """
         (par0, par1, par2) = capture_param_k
         if par1 == 0:
@@ -895,20 +892,20 @@ class DataSet:
 
         This should not be called for ramps that do not have any groups
         that exceed the persistence saturation limit.  One reason is that
-        `incoming_filled_traps` can be so small that `exp_filled_traps`
+        ``incoming_filled_traps`` can be so small that ``exp_filled_traps``
         would be negative.
 
-        `trap_density`, `incoming_filled_traps`, `sattime`, and `sat_count`
-        were all 2-D arrays in the calling function `predict_capture`, but
+        ``trap_density``, ``incoming_filled_traps``, ``sattime``, and ``sat_count``
+        are all 2-D arrays in the method :meth:`predict_capture`, but
         these arrays have been masked to select only ramps with at least
-        one saturated group, so in this function these arrays are 1-D.
+        one saturated group, so in this method, these arrays are 1-D.
 
         Parameters
         ----------
         capture_param_k : tuple
             Three values read from a reference table.  These will be from
             three separate columns but just one row; the row corresponds
-            to the current trap family.  (The _k in the variable name
+            to the current trap family.  (The ``_k`` in the variable name
             indicates that the values are for one trap family.)
 
         trap_density : ndarray
@@ -921,17 +918,17 @@ class DataSet:
         sattime : ndarray
             Time (seconds) during which each pixel was saturated.
 
-        sat_count : array, int
+        sat_count : ndarray
             For each pixel, the number of groups with value exceeding the
             persistence saturation limit.
 
         ngroups : int
-            The number of groups in the ramp
+            The number of groups in the ramp.
 
         Returns
         -------
-        ndarray, 2-D
-            The computed traps_filled at the end of the integration.
+        ndarray
+            The computed 2-D ``traps_filled`` at the end of the integration.
         """
         (par0, par1, par2) = capture_param_k
         par1 = abs(par1)  # the minus sign will be specified explicitly
@@ -960,31 +957,34 @@ class DataSet:
         """
         Compute number of traps filled due to cosmic-ray jumps.
 
-        If a cosmic-ray hit was in group number g (meaning that
-        `data[integ, g, y, x]` was higher than expected), then
-        delta_t = (ngroups - g - 0.5) * t_group
+        If a cosmic-ray hit was in group number ``g`` (meaning that
+        ``data[integ, g, y, x]`` was higher than expected), then::
+
+            delta_t = (ngroups - g - 0.5) * t_group
+
         is the time from the CR-affected group to the end of the
-        integration, assuming that the CR hit in the middle (timewise)
-        of the group.
-        cr_filled = trap_density * jump
-                    * (par0 * (1 - exp(-delta_t / tau)) + par2)
+        integration, assuming that the CR hit in the middle (time-wise)
+        of the group::
+
+            cr_filled = trap_density * jump
+                        * (par0 * (1 - exp(-delta_t / tau)) + par2)
 
         Parameters
         ----------
         capture_param_k : tuple
             Three values read from a reference table.  These will be from
             three separate columns but just one row; the row corresponds
-            to the current trap family.  (The _k in the variable name
+            to the current trap family.  (The ``_k`` in the variable name
             indicates that the values are for one trap family.)
 
-        trap_density : ndarray, 2-D
-            Image of the total number of traps per pixel.
+        trap_density : ndarray
+            Image (2-D) of the total number of traps per pixel.
 
         integ : int
             Integration number.
 
-        grp_slope : ndarray, 2-D
-            Array of the slope of the ramp at each pixel.  The slope was
+        grp_slope : ndarray
+            Array of the 2-D slope of the ramp at each pixel.  The slope was
             computed from the pixel values that were not saturated and were
             not affected by jumps, based on flags in the groupdq extension.
             The unit is counts (DN) per group.
@@ -998,8 +998,8 @@ class DataSet:
 
         Returns
         -------
-        ndarray, 2-D
-            The computed cr_filled at the end of the integration.
+        ndarray
+            The computed 2-D ``cr_filled`` at the end of the integration.
         """
         (par0, par1, par2) = capture_param_k
         # cr_filled will be incremented group-by-group, depending on
@@ -1042,8 +1042,8 @@ class DataSet:
 
         Parameters
         ----------
-        traps_filled : ndarray, 2-D
-            This is an image of the number of filled traps in each pixel
+        traps_filled : ndarray
+            This is a 2-D image of the number of filled traps in each pixel
             for the current trap family.
 
         decay_param : float
@@ -1052,13 +1052,13 @@ class DataSet:
             current trap family.
 
         delta_t : float
-            The time interval (unit = second) over which the trap decay
+            The time interval, in seconds, over which the trap decay
             is to be computed.
 
         Returns
         -------
-        decayed : ndarray, 2-D
-            Image of the computed number of trap decays for each pixel,
+        decayed : ndarray
+            Image of the 2-D computed number of trap decays for each pixel,
             for the current trap family.
         """
         if decay_param == 0.0:

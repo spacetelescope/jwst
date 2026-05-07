@@ -1,3 +1,5 @@
+"""Remove persistence signal from ramp data."""
+
 import logging
 
 from stdatamodels.jwst import datamodels

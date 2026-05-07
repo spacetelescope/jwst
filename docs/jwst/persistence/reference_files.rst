@@ -1,10 +1,11 @@
 Reference Files
 ===============
 
-The ``persistence`` step uses
-:ref:`TRAPDENSITY <trapdensity_reffile>`,
-:ref:`PERSAT <persat_reffile>`, and
-:ref:`TRAPPARS <trappars_reffile>` reference files.
+The ``persistence`` step uses the following reference files:
+
+* :ref:`TRAPDENSITY <trapdensity_reffile>`
+* :ref:`PERSAT <persat_reffile>`
+* :ref:`TRAPPARS <trappars_reffile>`
 
 .. include:: ../references_general/trapdensity_reffile.inc
 

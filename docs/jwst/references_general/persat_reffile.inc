@@ -7,7 +7,7 @@ PERSAT Reference File
 :Data model: `~stdatamodels.jwst.datamodels.PersistenceSatModel`
 
 The PERSAT reference file contains a pixel-by-pixel map of the
-persistence saturation (full well) threshold.
+persistence saturation (full-well) threshold.
 
 .. include:: ../references_general/persat_selection.inc
 

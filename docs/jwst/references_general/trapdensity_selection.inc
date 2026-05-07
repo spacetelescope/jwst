@@ -7,10 +7,9 @@ TRAPDENSITY is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
 ========== ======================================
-Instrument Keywords                               
+Instrument Keywords
 ========== ======================================
-FGS        INSTRUME, DETECTOR, DATE-OBS, TIME-OBS 
-NIRCam     INSTRUME, DETECTOR, DATE-OBS, TIME-OBS 
-NIRISS     INSTRUME, DETECTOR, DATE-OBS, TIME-OBS 
+FGS        INSTRUME, DETECTOR, DATE-OBS, TIME-OBS
+NIRCam     INSTRUME, DETECTOR, DATE-OBS, TIME-OBS
+NIRISS     INSTRUME, DETECTOR, DATE-OBS, TIME-OBS
 ========== ======================================
-
