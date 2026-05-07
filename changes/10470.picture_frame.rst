@@ -1,1 +1,0 @@
-Fix array broadcasting error for input ramp exposures with more than one integration.

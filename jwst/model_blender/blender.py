@@ -14,33 +14,34 @@ class ModelBlender:
 
     The output "blended" model will contain:
 
-        - metadata for a combined model
-        - a table with metadata of each datamodel
+    - metadata for a combined model
+    - a table with metadata of each datamodel
 
-    Input models can be added to the blender using `ModelBlender.accumulate`
-    and the output/combined model updated using `ModelBlender.finalize_model`.
+    Input models can be added to the blender using :meth:`~ModelBlender.accumulate`
+    and the output/combined model updated using :meth:`~ModelBlender.finalize_model`.
 
     All input/accumulated models must be of the same type.
 
-    >>> blender = ModelBlender()
-    >>> blender.accumulate(input_model_a)  # doctest: +SKIP
-    >>> blender.accumulate(input_model_b)  # doctest: +SKIP
-    >>> blender.finalize_model(combined_model)  # doctest: +SKIP
+    Parameters
+    ----------
+    blend_ignore_attrs : list or None
+        A list of metadata attributes to ignore during blending.
+        These attributes will not be set on the output/combined.
+        These attributes must be strings containing the dotted
+        path of each attribute (for example "meta.filename").
+        (Note that "meta.wcs" will always be ignored).
+
+    Examples
+    --------
+    ::
+
+        blender = ModelBlender()
+        blender.accumulate(input_model_a)
+        blender.accumulate(input_model_b)
+        blender.finalize_model(combined_model)
     """
 
     def __init__(self, blend_ignore_attrs=None):
-        """
-        Create a new `ModelBlender`.
-
-        Parameters
-        ----------
-        blend_ignore_attrs : list or None
-            A list of metadata attributes to ignore during blending.
-            These attributes will not be set on the output/combined.
-            These attributes must be strings containing the dotted
-            path of each attribute (for example "meta.filename").
-            (Note that "meta.wcs" will always be ignored).
-        """
         self._model_type = None
         self._first_header_meta = None
         self._blenders = None
@@ -125,9 +126,9 @@ class ModelBlender:
         Add blended metadata and the accumulated metadata table to
         the provided datamodel. The update process involves:
 
-            - setting the model metadata to the blended metadata values
-            - adding an "hdrtab" attribute (containing the metadata table)
-            - updating the model schema to save "hdrtab"
+        - setting the model metadata to the blended metadata values
+        - adding an "hdrtab" attribute (containing the metadata table)
+        - updating the model schema to save "hdrtab"
 
         The provided model will be updated in-place.
 

@@ -29,6 +29,7 @@ class RefPixStep(Step):
         sigreject = float(default=4.0) # Number of sigmas to reject as outliers
         gaussmooth = float(default=1.0) # Width of Gaussian smoothing kernel to use as a low-pass filter
         halfwidth = integer(default=30) # Half-width of convolution kernel to build
+        siglimit = float(default=3.0) # Sigma clipping limit for outlier rejection
     """  # noqa: E501
 
     reference_file_types = ["refpix", "sirskernel"]
@@ -78,6 +79,7 @@ class RefPixStep(Step):
                     self.side_gain,
                     self.odd_even_rows,
                     conv_kernel_params,
+                    self.siglimit,
                 )
 
             # Now that values are updated, replace bad reference pixels
@@ -142,6 +144,7 @@ class RefPixStep(Step):
                 self.side_gain,
                 self.odd_even_rows,
                 conv_kernel_params,
+                self.siglimit,
             )
 
             if status == reference_pixels.REFPIX_OK:

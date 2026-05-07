@@ -10,5 +10,4 @@ Pathloss Correction
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.pathloss
+   api_ref.rst

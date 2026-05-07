@@ -15,9 +15,6 @@ def make_mrs_multispec(base_model="MRSMultiSpecModel"):
         multispec = datamodels.MultiSpecModel()
         one_spec = datamodels.SpecModel((10,))
 
-    # Assign the spec_table to convert it to a FITS record
-    one_spec.spec_table = one_spec.spec_table
-
     # Add some placeholder values
     one_spec.spec_table["WAVELENGTH"] = np.linspace(5, 28, 10)
     one_spec.spec_table["FLUX"] = 0.1
