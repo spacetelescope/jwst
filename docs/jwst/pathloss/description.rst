@@ -103,7 +103,7 @@ correction depends only on the number of shutters in the slit:
 * If there are 2 shutters, the correction used is the average of the 1x1
   and 1x3 entries.
 
-For the point source case, the 1-D arrays of pathloss correction and wavelength
+As for the point source case, the 1-D arrays of pathloss correction and wavelength
 are used to interpolate the correction for each pixel in the science data, using the
 wavelength of each pixel to interpolate into the pathloss correction array.
 
