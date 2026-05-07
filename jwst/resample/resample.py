@@ -778,6 +778,9 @@ class ResampleImage(Resample):
             meta = self.input_models.read_metadata(i)
             sregion_list.append(meta["meta.wcsinfo.s_region"])
 
+        fix_list = sregion_list[0].split("POLYGON ICRS")
+        sregion_list = [f"POLYGON ICRS{fix}" for fix in fix_list if fix]
+
         if "moving_target" in self.output_wcs.available_frames:
             det2world = self.output_wcs.get_transform("detector", "moving_target")
         else:
