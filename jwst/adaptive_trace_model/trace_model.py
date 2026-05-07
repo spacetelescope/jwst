@@ -362,6 +362,24 @@ def _is_compact_source(
     return is_compact
 
 
+def _native_dalpha(alpha):
+    """
+    Compute the native spatial pixel spacing for a spectral region.
+
+    Parameters
+    ----------
+    alpha : ndarray
+        2D array containing spatial coordinates. Horizontal dispersion
+        is assumed.
+
+    Returns
+    -------
+    float
+        The median pixel spacing.
+    """
+    return np.abs(np.nanmedian(np.diff(alpha, axis=0)))
+
+
 def _trace_image(shape, spline_models, region_map, alpha, slope_limit=0.1, pad=3):
     """
     Evaluate spline models at all pixels to generate a trace image.
@@ -461,9 +479,8 @@ def _trace_image(shape, spline_models, region_map, alpha, slope_limit=0.1, pad=3
             if len(alpha_ptsource) > 0:
                 alpha_ptsource = np.concatenate(alpha_ptsource)
 
-            native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
             compact_locations = _is_compact_source(
-                alpha_slice, alpha_ptsource, native_dalpha, spline_bkpt, pad
+                alpha_slice, alpha_ptsource, _native_dalpha(alpha_slice), spline_bkpt, pad
             )
             trace_used[compact_locations] = trace_slice[compact_locations]
 
@@ -623,8 +640,7 @@ def _crossdisp_profile(data_slice, err_slice, alpha_slice):
     # Compute some SNR and noise statistics collapsed along wavelength
     snr_slice = np.full_like(data_slice, np.nan)
     snr_slice[valid] = data_slice[valid] / err_slice[valid]
-    native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
-    step = native_dalpha / 2.0
+    step = _native_dalpha(alpha_slice) / 2.0
 
     # Bin errors and SNR by alpha values
     alpha_xdisp = np.arange(np.nanmin(alpha_slice), np.nanmax(alpha_slice), step)
@@ -821,6 +837,16 @@ def _fit_one_region(
         runsum = np.sum(data_slice, where=(data_slice > 0), axis=0)
     else:
         runsum = np.nansum(data_slice, axis=0)
+
+    # Set reasonable spline breakpoints and ngood if not provided
+    if alpha_xdisp is not None:
+        n_alpha = len(alpha_xdisp)
+        fit_kwargs["spline_bkpt"] = min(n_alpha, fit_kwargs.get("spline_bkpt", np.inf))
+        fit_kwargs["require_ngood"] = min(n_alpha // 4, fit_kwargs.get("require_ngood", np.inf))
+        log.debug(
+            f"Set spline_bkpt to {fit_kwargs['spline_bkpt']}, "
+            f"require_ngood to {fit_kwargs['require_ngood']}"
+        )
 
     # Fit the splines
     splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
@@ -1111,9 +1137,8 @@ def oversample_flux(
         else:
             if len(alpha_ptsource) > 0:
                 alpha_ptsource = np.concatenate(alpha_ptsource)
-            native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
             compact_locations = _is_compact_source(
-                alpha_os_slice, alpha_ptsource, native_dalpha, spline_bkpt, pad
+                alpha_os_slice, alpha_ptsource, _native_dalpha(alpha_slice), spline_bkpt, pad
             )
             flux_os_bspline_use[compact_locations] = flux_os_bspline_full[compact_locations]
 
@@ -1176,24 +1201,26 @@ def _set_fit_kwargs(mode, detector, slit, xsize):
     sigma_low = 2.5
     sigma_high = 2.5
     fit_iter = 3
+    spline_bkpt = None
+    require_ngood = None
     if detector.startswith("NRS"):
         # Start with some defaults for all modes
-        spline_bkpt = 68
+        # spline_bkpt = 68
         lrange = 50
-        require_ngood = 15
+        # require_ngood = 15
 
         # This factor of 1.6 was dialed based on inspection of the results
         # as sampling gets progressively worse for NIRSpec detectors
         space_ratio = 1.6
 
         # Update some parameters for specific conditions
-        if mode == "NRS_SLIT" and slit == "S1600A1":
-            spline_bkpt = 30
-            require_ngood = 8
-        elif mode == "NRS_MOS":
-            # This is a placeholder so far
-            spline_bkpt = 30
-            require_ngood = 8
+        # if mode == "NRS_SLIT" and slit == "S1600A1":
+        # spline_bkpt = 30
+        # require_ngood = 8
+        # elif mode == "NRS_MOS":
+        # This is a placeholder so far
+        # spline_bkpt = 30
+        # require_ngood = 8
 
         # Set up the column fitting order by detector
         if detector == "NRS1":
@@ -1208,7 +1235,7 @@ def _set_fit_kwargs(mode, detector, slit, xsize):
         space_ratio = 1.2
         if mode == "MIR_MRS":
             lrange = 50
-            spline_bkpt = 36
+            # spline_bkpt = 36
 
             # For MRS fitting order, we need to start on the left and run to the middle,
             # and then on the right to the middle in order to have the middle
@@ -1234,13 +1261,15 @@ def _set_fit_kwargs(mode, detector, slit, xsize):
     fit_kwargs = {
         "lrange": lrange,
         "col_index": col_index,
-        "require_ngood": require_ngood,
-        "spline_bkpt": spline_bkpt,
         "space_ratio": space_ratio,
         "sigma_low": sigma_low,
         "sigma_high": sigma_high,
         "fit_iter": fit_iter,
     }
+    if spline_bkpt is not None:
+        fit_kwargs["spline_bkpt"] = spline_bkpt
+    if require_ngood is not None:
+        fit_kwargs["require_ngood"] = require_ngood
 
     # Log the determined parameters
     msg = f"Spline fit parameters for {mode}, detector={detector} xsize={xsize}"
@@ -1277,6 +1306,7 @@ def _set_oversample_kwargs(mode, detector):
     ValueError
         If the input detector is not supported.
     """
+    require_ngood = 8
     if detector.startswith("NRS"):
         # Padding to add near point sources
         if mode == "NRS_IFU":
@@ -1293,7 +1323,7 @@ def _set_oversample_kwargs(mode, detector):
     else:
         raise ValueError("Unknown detector")
 
-    oversample_kwargs = {"pad": pad, "trim_ends": trim_ends}
+    oversample_kwargs = {"pad": pad, "trim_ends": trim_ends, "require_ngood": require_ngood}
     return oversample_kwargs
 
 
@@ -1906,7 +1936,6 @@ def fit_and_oversample(
         alpha_os,
         slope_limit=slope_limit,
         psf_optimal=psf_optimal,
-        require_ngood=fit_kwargs["require_ngood"],
         **oversample_kwargs,
     )
 
@@ -1940,7 +1969,7 @@ def fit_and_oversample(
             error_array,
             region_map,
             oversample_factor,
-            fit_kwargs["require_ngood"],
+            oversample_kwargs["require_ngood"],
             edge_limit=0,
             preserve_nan=False,
         )

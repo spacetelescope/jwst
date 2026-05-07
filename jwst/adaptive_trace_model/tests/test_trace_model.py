@@ -213,8 +213,8 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                "require_ngood": 15,
-                "spline_bkpt": 68,
+                # "require_ngood": 15,
+                # "spline_bkpt": 68,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
@@ -228,8 +228,8 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                "require_ngood": 15,
-                "spline_bkpt": 68,
+                # "require_ngood": 15,
+                # "spline_bkpt": 68,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
@@ -243,8 +243,8 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                "require_ngood": 15,
-                "spline_bkpt": 68,
+                # "require_ngood": 15,
+                # "spline_bkpt": 68,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
@@ -258,8 +258,8 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                "require_ngood": 15,
-                "spline_bkpt": 68,
+                # "require_ngood": 15,
+                # "spline_bkpt": 68,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
@@ -273,8 +273,8 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                "require_ngood": 8,
-                "spline_bkpt": 30,
+                # "require_ngood": 8,
+                # "spline_bkpt": 30,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
@@ -288,12 +288,12 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
-                "require_ngood": 8,
-                "spline_bkpt": 36,
                 "space_ratio": 1.2,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
                 "fit_iter": 3,
+                # "spline_bkpt": 36,
+                "require_ngood": 8,
             },
         ),
         (
@@ -303,12 +303,12 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
-                "require_ngood": 8,
-                "spline_bkpt": 36,
                 "space_ratio": 1.2,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
                 "fit_iter": 3,
+                # "spline_bkpt": 36,
+                "require_ngood": 8,
             },
         ),
         (
@@ -318,12 +318,12 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 5,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                "require_ngood": 8,
-                "spline_bkpt": 40,
                 "space_ratio": 1.2,
                 "sigma_low": 3.0,
                 "sigma_high": 3.0,
                 "fit_iter": 3,
+                "spline_bkpt": 40,
+                "require_ngood": 8,
             },
         ),
         (
@@ -333,12 +333,12 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 5,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                "require_ngood": 8,
-                "spline_bkpt": 60,
                 "space_ratio": 1.2,
                 "sigma_low": 3.0,
                 "sigma_high": 3.0,
                 "fit_iter": 2,
+                "spline_bkpt": 60,
+                "require_ngood": 8,
             },
         ),
     ],
@@ -364,26 +364,17 @@ def test_set_fit_kwargs_error():
         (
             "NRS_IFU",
             "NRS1",
-            {
-                "pad": 2,
-                "trim_ends": True,
-            },
+            {"pad": 2, "trim_ends": True, "require_ngood": 8},
         ),
         (
             "NRS_SLIT",
             "NRS1",
-            {
-                "pad": 1,
-                "trim_ends": True,
-            },
+            {"pad": 1, "trim_ends": True, "require_ngood": 8},
         ),
         (
             "MIR_MRS",
             "MIRIFUSHORT",
-            {
-                "pad": 3,
-                "trim_ends": False,
-            },
+            {"pad": 3, "trim_ends": False, "require_ngood": 8},
         ),
     ],
 )
