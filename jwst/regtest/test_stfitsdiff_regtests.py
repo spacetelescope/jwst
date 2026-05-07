@@ -50,12 +50,20 @@ def test_nirspec_ifu(rtdata_module, suffix, fitsdiff_default_kwargs):
 
     output = "jw01251004001_03107_00001_nrs1_" + suffix + ".fits"
     rtdata.output = output
-    rtdata.get_truth("truth/test_nirspec_ifu/" + output)
-    apresult, apreport = astropy_fitsdiff(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
-    result, report = get_stfitsdiff_reports(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
+    rtdata.get_truth("truth/test_nirspec_ifu/jw01251004001_03107_00002_nrs1_nsc_s3d.fits")
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
 
-    assert result == apresult
-    assert report == apreport
+
+def test_nirspec_ifu_lol_arr_err():
+    from numpy.testing import assert_array_equal
+
+    assert_array_equal([1, 2, 3], [1, 2, 4])
+
+
+def test_nirspec_ifu_lol_plain_exc():
+    raise ValueError("Do not panic! Grab your towel.")
 
 
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d"])
