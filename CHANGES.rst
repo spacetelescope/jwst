@@ -1,3 +1,23 @@
+2.0.1 (2026-05-06)
+==================
+
+assign_wcs (image2, spec2)
+--------------------------
+
+- Fix a bug where attempting to generate transforms for stripes present in the
+  specwcs file but not the regions file caused crashes for NIRCam DHS stripe1
+  and stripe2 subarray data. (`#10453
+  <https://github.com/spacetelescope/jwst/issues/10453>`_)
+
+
+picture_frame (detector1)
+-------------------------
+
+- Fix array broadcasting error for input ramp exposures with more than one
+  integration. (`#10470
+  <https://github.com/spacetelescope/jwst/issues/10470>`_)
+
+
 2.0.0 (2026-04-13)
 ==================
 
