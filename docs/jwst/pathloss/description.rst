@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.pathloss.PathLossStep`
+:Class: `jwst.pathloss.pathloss_step.PathLossStep`
 :Alias: pathloss
 
 Overview
@@ -57,33 +57,33 @@ The MSA reference file contains 2 entries: one for a 1x1 slit and one for a 1x3 
 Each entry contains the pathloss correction for point source and uniform sources.
 The former depends on the position of the target in the fiducial shutter and
 wavelength, whereas the latter depends on wavelength only.  The point source
-entry consists of a 3-d array, where 2 of the dimensions map to the location
+entry consists of a 3-D array, where 2 of the dimensions map to the location
 of the source (ranging from -0.5 to 0.5 in both X and Y), while the third dimension
 carries the wavelength dependence.  The 1x3 shutter is 3 times as large in Y as in X.
 
-The entry to use for a point source target is determined by looking at the shutter_state
+The entry to use for a point source target is determined by looking at the ``shutter_state``
 attribute of the slit used.  This is a string with a length equal to the number
 of shutters that make up the slit, with 1 denoting an open shutter, 0 a closed
 shutter and x the fiducial (target) shutter.  The reference entry is determined
 by how many shutters next to the fiducial shutter are open:
 
 If both adjacent shutters are closed, the 1x1 entry is used.  A matching
-shutter_state might be 'x' or '10x01'
+``shutter_state`` might be ``'x'`` or ``'10x01'``.
 
 If both adjacent shutters are open, the center region of the 1x3 entry is used.
-This would be the case for a slit with shutter state '1x1' or '1011x1'.
+This would be the case for a slit with shutter state ``'1x1'`` or ``'1011x1'``.
 
 If one adjacent shutter is open and one closed, the 1x3 entry is used.  If the
 shutter below the fiducial is open and the shutter above closed, then the upper
 region of the 1x3 pathloss array is used.  This is implemented by adding 1 to the
 Y coordinate of the target position (bringing it into the range +0.5 to +1.5),
 moving it to the upper third of the pathloss array.  A matching shutter state
-might be '1x' or '11x011'
+might be ``'1x'`` or ``'11x011'``.
 
 Similarly, if the shutter below the fiducial is closed and that above is open, the
 lower third of the pathloss array is used by subtracting 1 from the Y coordinate of
 the target position (bringing it into the range -1.5 to -0.5).  A matching shutter
-state could be 'x111' or '110x1'.
+state could be ``'x111'`` or ``'110x1'``.
 
 Once the X and Y coordinates of the source are mapped into a pixel location in the
 spatial dimensions of the pathloss array using the WCS of the transformation of position
@@ -95,17 +95,15 @@ array, since each pixel has a different wavelength, and the correction is applie
 to the science pixel array.
 
 For uniform sources, there is no dependence of the pathloss correction on position,
-so the correction arrays are just 1-d arrays of correction and wavelength.  The
+so the correction arrays are just 1-D arrays of correction and wavelength.  The
 correction depends only on the number of shutters in the slit:
 
-If there is 1 shutter, the 1x1 entry is used
+* If there is 1 shutter, the 1x1 entry is used.
+* If there are 3 or more shutters, the 1x3 entry is used.
+* If there are 2 shutters, the correction used is the average of the 1x1
+  and 1x3 entries.
 
-If there are 3 or more shutters, the 1x3 entry is used
-
-If there are 2 shutters, the correction used is the average of the 1x1
-and 1x3 entries.
-
-Like for the point source case, the 1-d arrays of pathloss correction and wavelength
+As for the point source case, the 1-D arrays of pathloss correction and wavelength
 are used to interpolate the correction for each pixel in the science data, using the
 wavelength of each pixel to interpolate into the pathloss correction array.
 
@@ -141,7 +139,7 @@ position (keyword PWCPOS).  It is provided in the reference file as a FITS image
 3 dimensions (to be compatible with the NIRSpec reference file format).  The first
 dimension is a dummy, while the second gives the dependence with row number, and the
 third with Pupil Wheel position.  For the SUBSTEP96 subarray, the reference file
-data has shape (1, 2040, 17).
+data has shape ``(1, 2040, 17)``.
 
 The algorithm calculates the correction for each column by simply interpolating
 along the Pupil Wheel position dimension of the reference file using linear

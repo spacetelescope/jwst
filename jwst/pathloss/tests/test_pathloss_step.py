@@ -433,15 +433,13 @@ def test_pathloss_step_niriss_soss_pupil_out_of_range(niriss_soss_model):
 @pytest.mark.parametrize(
     "dataset", ["nirspec_fs_model_point", "nirspec_mos_model_point", "nirspec_ifu_model_point"]
 )
-def test_pathloss_correction_pars(request, dataset):
+def test_pathloss_inverse(request, dataset):
     model = request.getfixturevalue(dataset).copy()
     step = PathLossStep()
     result = step.run(model)
 
-    # use the computed correction and invert
+    # run again but invert
     new_step = PathLossStep()
-    new_step.use_correction_pars = True
-    new_step.correction_pars = step.correction_pars
     new_step.inverse = True
     inverse_result = new_step.run(result)
 

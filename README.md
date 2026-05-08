@@ -177,6 +177,7 @@ Each `jwst` tag was released on PyPI on the date given in `Released`, and then s
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
+| 2.0.1               | B12.3.1   | 2026.1.0 | 1533         | 2026-05-06 |             | First release candidate for B12.3.1           |
 | 2.0.0               | B12.3     | 2026.1.0 | 1533         | 2026-04-13 |             | First release candidate for B12.3             |
 | 1.20.2              | B12.1.1   | 2025.4.1 | 1464         | 2025-10-31 |             | Patch release for B12.1.1                     |
 | 1.20.1              | B12.1     | 2025.4.0 | 1464         | 2025-10-20 |             | Patch release for B12.1                       |

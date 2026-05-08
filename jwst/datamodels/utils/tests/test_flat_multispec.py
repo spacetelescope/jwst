@@ -253,7 +253,6 @@ def test_copy_column_units(input_spec, output_spec):
 
 def test_set_schema_units():
     model = dm.WFSSSpecModel((10,))
-    model.spec_table = model.spec_table.copy()
     set_schema_units(model)
 
     # get expected units from the schema

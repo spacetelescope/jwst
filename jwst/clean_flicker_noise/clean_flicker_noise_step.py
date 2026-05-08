@@ -144,7 +144,7 @@ class CleanFlickerNoiseStep(Step):
                     "Skipping: median_image processing is not available "
                     f"for SOSS subarray {subarray}."
                 )
-                output_model.meta.cal_step.clean_flicker_noise = "SKIPPED"
+                output_model.meta.cal_step.clean_flicker_noise = "FAILED"
                 return output_model
 
             pastasoss = self.get_reference_file(output_model, "pastasoss")
@@ -156,7 +156,7 @@ class CleanFlickerNoiseStep(Step):
                         "Skipping: median_image processing is not available "
                         "for SOSS without a pastasoss file."
                     )
-                    output_model.meta.cal_step.clean_flicker_noise = "SKIPPED"
+                    output_model.meta.cal_step.clean_flicker_noise = "FAILED"
                     return output_model
 
             else:

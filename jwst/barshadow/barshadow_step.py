@@ -54,37 +54,27 @@ class BarShadowStep(Step):
             output_model.meta.cal_step.barshadow = "SKIPPED"
             return output_model
 
-        if self.use_correction_pars:
-            correction_pars = self.correction_pars
-            barshadow_model = None
-        else:
-            correction_pars = None
+        # Get the name of the bar shadow reference file to use
+        barshadow_name = self.get_reference_file(output_model, "barshadow")
+        log.info(f"Using BARSHADOW reference file {barshadow_name}")
 
-            # Get the name of the bar shadow reference file to use
-            barshadow_name = self.get_reference_file(output_model, "barshadow")
-            log.info(f"Using BARSHADOW reference file {barshadow_name}")
-
-            # Check for a valid reference file
-            if barshadow_name == "N/A":
-                log.warning("No BARSHADOW reference file found")
-                log.warning("Bar shadow step will be skipped")
-                output_model.meta.cal_step.barshadow = "SKIPPED"
-                return output_model
-
-            # Open the barshadow ref file data model
-            barshadow_model = datamodels.BarshadowModel(barshadow_name)
+        # Check for a valid reference file
+        if barshadow_name == "N/A":
+            log.warning("No BARSHADOW reference file found")
+            log.warning("Bar shadow step will be skipped")
+            output_model.meta.cal_step.barshadow = "SKIPPED"
+            return output_model
 
         # Do the bar shadow correction
-        output_model, self.correction_pars = bar_shadow.do_correction(
-            output_model,
-            barshadow_model,
-            inverse=self.inverse,
-            source_type=self.source_type,
-            correction_pars=correction_pars,
-        )
+        with datamodels.BarshadowModel(barshadow_name) as barshadow_model:
+            output_model = bar_shadow.do_correction(
+                output_model,
+                barshadow_model,
+                inverse=self.inverse,
+                source_type=self.source_type,
+                return_corrections=False,
+            )
 
-        if barshadow_model:
-            barshadow_model.close()
         output_model.meta.cal_step.barshadow = "COMPLETE"
 
         return output_model

@@ -101,7 +101,6 @@ class DataSet:
         inverse=False,
         source_type=None,
         apply_time_correction=True,
-        correction_pars=None,
     ):
         """
         Instantiate a DataSet object.
@@ -116,41 +115,33 @@ class DataSet:
             Force processing using the specified source type.
         apply_time_correction : bool
             Switch to apply/not apply a time correction, if available.
-        correction_pars : dict
-            Correction meta-data from a previous run.
         """
         # Set up attributes necessary for calculation.
-        if correction_pars:
-            self.update(correction_pars["dataset"])
-        else:
-            self.band = None
-            if model.meta.instrument.band is not None:
-                self.band = model.meta.instrument.band.upper()
-            self.instrument = model.meta.instrument.name.upper()
-            self.detector = model.meta.instrument.detector.upper()
-            self.exptype = model.meta.exposure.type.upper()
-            self.filter = None
-            if model.meta.instrument.filter is not None:
-                self.filter = model.meta.instrument.filter.upper()
-            self.grating = None
-            if model.meta.instrument.grating is not None:
-                self.grating = model.meta.instrument.grating.upper()
-            self.order = None
-            if (
-                model.meta.hasattr("wcsinfo")
-                and model.meta.wcsinfo.hasattr("spectral_order")
-                and model.meta.wcsinfo.spectral_order is not None
-            ):
-                self.order = model.meta.wcsinfo.spectral_order
-            self.pupil = None
-            if model.meta.instrument.pupil is not None:
-                self.pupil = model.meta.instrument.pupil.upper()
-            self.subarray = None
-            if model.meta.subarray.name is not None:
-                self.subarray = model.meta.subarray.name.upper()
-            correction_pars = {}
-        correction_pars["dataset"] = self.attributes
-        self.correction_pars = correction_pars
+        self.band = None
+        if model.meta.instrument.band is not None:
+            self.band = model.meta.instrument.band.upper()
+        self.instrument = model.meta.instrument.name.upper()
+        self.detector = model.meta.instrument.detector.upper()
+        self.exptype = model.meta.exposure.type.upper()
+        self.filter = None
+        if model.meta.instrument.filter is not None:
+            self.filter = model.meta.instrument.filter.upper()
+        self.grating = None
+        if model.meta.instrument.grating is not None:
+            self.grating = model.meta.instrument.grating.upper()
+        self.order = None
+        if (
+            model.meta.hasattr("wcsinfo")
+            and model.meta.wcsinfo.hasattr("spectral_order")
+            and model.meta.wcsinfo.spectral_order is not None
+        ):
+            self.order = model.meta.wcsinfo.spectral_order
+        self.pupil = None
+        if model.meta.instrument.pupil is not None:
+            self.pupil = model.meta.instrument.pupil.upper()
+        self.subarray = None
+        if model.meta.subarray.name is not None:
+            self.subarray = model.meta.subarray.name.upper()
 
         # Initialize other non-correction pars attributes.
         self.slitnum = -1
@@ -194,37 +185,6 @@ class DataSet:
             log.info(" grating: %s", self.grating)
         if self.band is not None:
             log.info(" band: %s", self.band)
-
-    @property
-    def attributes(self):
-        """
-        Retrieve DataSet attributes.
-
-        Returns
-        -------
-        attributes : dict
-            A dict of `DataSet` attributes.
-        """
-        attributes = vars(self)
-
-        # Remove some attributes
-        for attribute in ["correction_pars", "input", "inverse", "slitnum", "source_type"]:
-            if attribute in attributes:
-                del attributes[attribute]
-
-        return attributes
-
-    def update(self, attributes):
-        """
-        Set DataSet attributes.
-
-        Parameters
-        ----------
-        attributes : dict
-            The attributes to be set on DataSet.
-        """
-        for key, value in attributes.items():
-            setattr(self, key, value)
 
     def calc_nirspec(self, ftab, area_fname):
         """

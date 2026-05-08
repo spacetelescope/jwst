@@ -62,15 +62,18 @@ def subtract_bias(output, bias):
     output : stdatamodels.jwst.datamodels.ramp.RampModel
         Bias-subtracted science data
     """
-    # combine the science and superbias DQ arrays
+    # Combine the science and superbias DQ arrays
     output.pixeldq |= bias.dq
 
+    # Expand bias data to match science data if needed
     num_superstripe = getattr(output.meta.subarray, "num_superstripe", None)
     if num_superstripe is not None and num_superstripe > 0:
+        # Bias data is 3D, (nstripe, ny, nx)
         nints, ngroups, _, _ = output.data.shape
         bias_data = bias.data[:, np.newaxis, :, :].repeat(ngroups, axis=1)
         bias_data = np.tile(bias_data, reps=(nints // num_superstripe, 1, 1, 1))
     else:
+        # Bias data is 2D, (ny, nx)
         bias_data = bias.data
 
     # Subtract the superbias image from all groups and integrations
@@ -79,10 +82,13 @@ def subtract_bias(output, bias):
 
     # If ZEROFRAME is present, subtract the super bias.  Zero values
     # indicate bad data, so should be kept zero.
-    # TODO: this may need different handling for superstripe data.
     if output.meta.exposure.zero_frame:
         wh_zero = np.where(output.zeroframe == 0.0)
-        output.zeroframe -= bias.data
+        if bias_data.ndim == 4:
+            # use the first group from the bias data for superstripe
+            output.zeroframe -= bias_data[:, 0, :, :]
+        else:
+            output.zeroframe -= bias_data
         output.zeroframe[wh_zero] = 0.0  # Zero values indicate unusable data
 
     return output

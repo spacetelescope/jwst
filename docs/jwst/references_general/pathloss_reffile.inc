@@ -20,11 +20,11 @@ the following keywords are *required* in PATHLOSS reference files,
 because they are used as CRDS selectors
 (see :ref:`pathloss_selectors`):
 
-=========  ==============================
+=========  ========================
 Keyword    Data Model Name
-=========  ==============================
+=========  ========================
 EXP_TYPE   model.meta.exposure.type
-=========  ==============================
+=========  ========================
 
 Reference File Format
 +++++++++++++++++++++
@@ -66,7 +66,7 @@ point sources and one pair for uniform sources.  In each pair, there are
 either 3-D arrays for point sources, because the pathloss correction depends
 on the position of the source in the aperture, or 1-D arrays for uniform
 sources.  The pair of arrays are the pathloss correction itself as a function
-of decenter in the aperture (pointsource only) and wavelength, and the variance
+of decenter in the aperture (point source only) and wavelength, and the variance
 on this measurement (currently estimated). The data apply equally to all IFU
 slices. The structure of the FITS file is as follows:
 
@@ -140,7 +140,7 @@ HDU  EXTNAME XTENSION    Dimensions    Data type
 ==== ======= ========== =============  ==========
 
 The PS extension contains a 3-D array of correction values.
-The third dimension (length = 1) is a dummy to
+The third dimension (``length=1``) is a dummy to
 force the array dimensionality to be the same as the NIRSpec reference file
 arrays.  The other 2 dimensions refer to the number of columns in the correction
 (the same as the number of columns in the science data) and the range of

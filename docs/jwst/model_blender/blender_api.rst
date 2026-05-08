@@ -1,11 +1,23 @@
+===
+API
+===
+
 .. _blender_api:
 
-Model Blender
-==============
-These functions serve as the primary interface for blending models.  
+Public Model Blender API
+========================
 
-.. toctree::
-   :maxdepth: 2
+Merge metadata from multiple models.
 
 .. automodapi:: jwst.model_blender.blendmeta
+  :no-inheritance-diagram:
+
 .. automodapi:: jwst.model_blender.blender
+  :no-inheritance-diagram:
+
+Complete Developer API
+======================
+
+.. automodapi:: jwst.model_blender.rules
+  :no-inheritance-diagram:
+  :include-all-objects:

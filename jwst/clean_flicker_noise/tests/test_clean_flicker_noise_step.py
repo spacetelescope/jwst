@@ -26,8 +26,9 @@ def test_output_type(skip):
     # Run call with skip option
     cleaned = CleanFlickerNoiseStep.call(input_model, skip=skip)
 
-    # output is a ramp model either way
+    # output is a ramp model either way: the process always runs, called standalone
     assert isinstance(cleaned, datamodels.RampModel)
+    assert cleaned.meta.cal_step.clean_flicker_noise == "COMPLETE"
 
     input_model.close()
     cleaned.close()
@@ -257,7 +258,7 @@ def test_missing_pastasoss(caplog):
     assert "No PASTASOSS reference file" in caplog.text
     assert "median_image processing is not available" in caplog.text
     assert cleaned.meta.ref_file.pastasoss.name == "N/A"
-    assert cleaned.meta.cal_step.clean_flicker_noise == "SKIPPED"
+    assert cleaned.meta.cal_step.clean_flicker_noise == "FAILED"
     input_model.close()
     cleaned.close()
 
@@ -267,6 +268,6 @@ def test_soss_full_frame(caplog):
     input_model.meta.subarray.name = "FULL"
     cleaned = CleanFlickerNoiseStep.call(input_model, background_method="median_image")
     assert "median_image processing is not available for SOSS subarray FULL" in caplog.text
-    assert cleaned.meta.cal_step.clean_flicker_noise == "SKIPPED"
+    assert cleaned.meta.cal_step.clean_flicker_noise == "FAILED"
     input_model.close()
     cleaned.close()

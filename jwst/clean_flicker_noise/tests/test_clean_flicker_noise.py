@@ -4,6 +4,7 @@ import pytest
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs.util import MSAFileError, NoDataOnDetectorError
 from jwst.clean_flicker_noise import clean_flicker_noise as cfn
 from jwst.clean_flicker_noise.tests import helpers
 
@@ -438,8 +439,36 @@ def test_do_correction_unsupported(log_watcher):
     watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="not supported")
     cleaned, _, _, _, status = cfn.do_correction(ramp_model)
     assert cleaned is ramp_model
-    assert status == "SKIPPED"
+    assert status == "FAILED"
     watcher.assert_seen()
+
+    ramp_model.close()
+
+
+@pytest.mark.parametrize("error_type", [NoDataOnDetectorError, MSAFileError, ValueError])
+def test_do_correction_wcs_failure(
+    caplog,
+    monkeypatch,
+    error_type,
+):
+    ramp_model = helpers.make_small_ramp_model()
+
+    # mock an error in the _make_processed_rate_image function
+    def mock_wcs_error(*args, **kwargs):
+        raise error_type("test error")
+
+    monkeypatch.setattr(cfn, "_make_processed_rate_image", mock_wcs_error)
+
+    if error_type in [NoDataOnDetectorError, MSAFileError]:
+        # specific errors are caught and handled gracefully
+        cleaned, _, _, _, status = cfn.do_correction(ramp_model)
+        assert cleaned is ramp_model
+        assert status == "FAILED"
+        assert "Cannot assign a WCS" in caplog.text
+    else:
+        # other errors are just raised
+        with pytest.raises(error_type, match="test error"):
+            cfn.do_correction(ramp_model)
 
     ramp_model.close()
 
@@ -473,7 +502,7 @@ def test_do_correction_fft_not_allowed(log_watcher, exptype):
     )
     cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_method="fft")
     assert cleaned is ramp_model
-    assert status == "SKIPPED"
+    assert status == "FAILED"
     watcher.assert_seen()
 
     ramp_model.close()
@@ -543,7 +572,7 @@ def test_do_correction_user_mask_mismatch(tmp_path, input_type, log_watcher):
     )
 
     watcher.assert_seen()
-    assert status == "SKIPPED"
+    assert status == "FAILED"
     assert output_mask is None
 
     model.close()
@@ -568,7 +597,7 @@ def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
     )
 
     watcher.assert_seen()
-    assert status == "SKIPPED"
+    assert status == "FAILED"
     assert output_mask is None
 
     model.close()
@@ -648,10 +677,10 @@ def test_do_correction_clean_fails(monkeypatch, log_watcher):
     watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="Cleaning failed")
     cleaned, _, _, _, status = cfn.do_correction(output_model, fit_method="fft")
 
-    # Error message issued, status is skipped,
+    # Error message issued, status is failed,
     # output data is the same as input
     watcher.assert_seen()
-    assert status == "SKIPPED"
+    assert status == "FAILED"
     assert np.allclose(cleaned.data, ramp_model.data)
 
     ramp_model.close()
@@ -805,7 +834,7 @@ def test_do_correction_median_image_one_int(caplog):
     data_copy = model.data.copy()
 
     cleaned, _, _, _, status = cfn.do_correction(model, background_method="median_image")
-    assert status == "SKIPPED"
+    assert status == "FAILED"
     assert "cannot be used with nints=1" in caplog.text
 
     # output data is unchanged
@@ -826,7 +855,7 @@ def test_do_correction_median_image_failure(caplog, monkeypatch):
     monkeypatch.setattr(cfn, "make_median_image", mock_make_median)
 
     cleaned, _, _, _, status = cfn.do_correction(model, background_method="median_image")
-    assert status == "SKIPPED"
+    assert status == "FAILED"
     assert "could not be created" in caplog.text
 
     # output data is unchanged

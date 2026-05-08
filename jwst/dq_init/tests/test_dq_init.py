@@ -7,7 +7,7 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst.dq_init import DQInitStep
 from jwst.dq_init.dq_initialization import check_dimensions, do_dqinit
 from jwst.dq_init.tests import helpers
-from jwst.refpix.refpix_step import collate_superstripes
+from jwst.lib.stripe_utils import collate_superstripes
 
 # Set parameters for multiple runs of data
 args = "xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type"

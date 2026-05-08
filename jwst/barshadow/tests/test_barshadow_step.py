@@ -161,7 +161,7 @@ def test_barshadow_wrong_exptype():
     result.close()
 
 
-def test_barshadow_correction_pars(nirspec_mos_model):
+def test_barshadow_inverse(nirspec_mos_model):
     model = nirspec_mos_model.copy()
     step = BarShadowStep()
     result = step.run(model)
@@ -170,10 +170,8 @@ def test_barshadow_correction_pars(nirspec_mos_model):
     nnan = ~np.isnan(model.slits[0].data) & ~np.isnan(result.slits[0].data)
     assert not np.allclose(result.slits[0].data[nnan], model.slits[0].data[nnan])
 
-    # use the computed correction and invert
+    # run again but invert
     new_step = BarShadowStep()
-    new_step.use_correction_pars = True
-    new_step.correction_pars = step.correction_pars
     new_step.inverse = True
     inverse_result = new_step.run(result)
 

@@ -7,6 +7,7 @@ from stdatamodels.jwst.datamodels import dqflags
 
 from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep, nirspec
+from jwst.assign_wcs.util import MSAFileError, NoDataOnDetectorError
 from jwst.clean_flicker_noise.background_level import background_level, clip_to_background
 from jwst.clean_flicker_noise.nsclean import NSClean, NSCleanSubarray
 from jwst.clean_flicker_noise.tso_median_image import make_median_image
@@ -1341,13 +1342,13 @@ def do_correction(
         Background model to be saved or None.
     noise_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Background model to be saved or None.
-    status : {'COMPLETE', 'SKIPPED'}
-        Completion status.  If errors were encountered, status is set to 'SKIPPED'
+    status : {'COMPLETE', 'FAILED'}
+        Completion status.  If errors were encountered, status is set to 'FAILED'
         and the output data matches the input data.  Otherwise,
         status is set to 'COMPLETE'.
     """
     # Track the completion status, for various failure conditions
-    status = "SKIPPED"
+    status = "FAILED"
 
     detector = input_model.meta.instrument.detector.upper()
     subarray = input_model.meta.subarray.name.upper()
@@ -1376,15 +1377,20 @@ def do_correction(
 
     # Make a rate file if needed
     if user_mask is None or background_method == "median_image":
-        image_model = _make_processed_rate_image(
-            input_model,
-            single_mask,
-            input_dir,
-            exp_type,
-            mask_science_regions,
-            flat,
-            background_method,
-        )
+        try:
+            image_model = _make_processed_rate_image(
+                input_model,
+                single_mask,
+                input_dir,
+                exp_type,
+                mask_science_regions,
+                flat,
+                background_method,
+            )
+        except (MSAFileError, NoDataOnDetectorError):
+            # Catch some specific errors for WCS failures and FAIL the step
+            log.error("Cannot assign a WCS. Skipping corrections for this file.")
+            return input_model, None, None, None, status
     else:
         image_model = input_model
 

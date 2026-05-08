@@ -7,10 +7,9 @@ PATHLOSS is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
 ========== ======================================
-Instrument Keywords                               
+Instrument Keywords
 ========== ======================================
-MIRI       INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS 
-NIRISS     INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS 
-NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS 
+MIRI       INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
+NIRISS     INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
+NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ======================================
-

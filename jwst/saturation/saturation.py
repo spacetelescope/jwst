@@ -82,7 +82,6 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, bias_
         # Obtain the bias data, used for group 2 saturation flagging in frame-averaged groups
         bias = bias_model.data
 
-    # TODO: zero frame may need handling here too, for NIRCam superstripe data.
     num_superstripe = getattr(output_model.meta.subarray, "num_superstripe", None)
     if num_superstripe is not None and num_superstripe > 0:
         # Expand ref arrays to 4-D for ease of slicing

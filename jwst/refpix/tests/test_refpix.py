@@ -468,6 +468,35 @@ def test_above_sigma():
     assert out.data[0, 3, 50, 7] == 28.5
 
 
+def test_change_sig_limits(setup_subarray_cube):
+    ngroups = 5
+    xstart = 1
+    ystart = 1
+    nrows = 256
+    ncols = 2048
+    input_model = setup_subarray_cube("SUBGRISM256", "NRCA3", xstart, ystart, ngroups, nrows, ncols)
+    input_model.data[:, :, :, :] = 100.0
+    # set reference pixel values odd and even rows.
+    # Making every 16th pixel different will mean siglimit of 3 will do no rejection,
+    # while siglimit of 2 will reject the different pixels.
+    input_model.data[:, :, :4, ::16] = 100.1
+    input_model.data[:, :, :4, 1::16] = 100.2
+
+    # set reference pixels to "REFERENCE_PIXEL"
+    input_model.pixeldq[:4] = dqflags.pixel["REFERENCE_PIXEL"]
+    input_model.meta.subarray.fastaxis, input_model.meta.subarray.slowaxis = AXES["NRCA3"]
+    input_model.meta.exposure.noutputs = 1
+
+    # This calls the step with the default values of siglimit (3.0)
+    out = RefPixStep.call(input_model)
+    assert out.data[0, 0, 10, 100] != 0.0
+    assert out.data[0, 0, 10, 101] != 0.0
+
+    out = RefPixStep.call(input_model, siglimit=2.0)
+    assert out.data[0, 0, 10, 100] == 0.0
+    assert out.data[0, 0, 10, 101] == 0.0
+
+
 def test_nan_refpix():
     """
     Verify that the reference pixels flagged DO_NOT_USE are not used in the calculation.
@@ -517,6 +546,7 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglimit = 3.0
 
     left_rpix = 5
     bottom_rpix = 7
@@ -540,6 +570,7 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglimit,
     )
 
     init_dataset.do_corrections()
@@ -569,6 +600,7 @@ def test_do_corrections_subarray(setup_subarray_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglimit = 3.0
 
     left_rpix = 5
     bottom_rpix = 7
@@ -592,6 +624,7 @@ def test_do_corrections_subarray(setup_subarray_cube):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglimit,
     )
 
     init_dataset.do_corrections()
@@ -621,6 +654,7 @@ def test_do_corrections_subarray_4amp(setup_subarray_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglimit = 3.0
 
     left_rpix = 0
     right_rpix = 1
@@ -672,6 +706,7 @@ def test_do_corrections_subarray_4amp(setup_subarray_cube):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglimit,
     )
 
     init_dataset.do_corrections()
@@ -694,6 +729,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglimit = 3.0
 
     input_model = setup_subarray_cube(
         "SUB320A335R", "NRCALONG", xstart, ystart, ngroups, nrows, ncols
@@ -708,6 +744,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
         side_gain,
         conv_kernel_params,
         odd_even_rows,
+        siglimit,
     )
 
     # Make sure get_group properly copied the subarray
@@ -736,6 +773,7 @@ def test_do_top_bottom_correction(setup_cube):
     use_side_ref_pixels = True
     side_smoothing_length = 11
     side_gain = 1.0
+    siglimit = 3.0
 
     input_model = setup_cube("NIRCAM", "NRCALONG", ngroups, nrows, ncols)
     input_model.meta.subarray.name = "FULL"
@@ -746,6 +784,7 @@ def test_do_top_bottom_correction(setup_cube):
         side_smoothing_length,
         side_gain,
         conv_kernel_params,
+        siglimit,
     )
 
     abounds = [0, 512, 1024, 1536, 2048]
@@ -816,6 +855,7 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
     use_side_ref_pixels = True
     side_smoothing_length = 11
     side_gain = 1.0
+    siglimit = 3.0
 
     input_model = setup_cube("NIRCAM", "NRCALONG", ngroups, nrows, ncols)
     input_model.meta.subarray.name = "FULL"
@@ -826,6 +866,7 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
         side_smoothing_length,
         side_gain,
         conv_kernel_params,
+        siglimit,
     )
 
     abounds = [0, 512, 1024, 1536, 2048]
@@ -1033,6 +1074,7 @@ def test_correct_model(setup_cube, instr, det):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglimit = 3.0
 
     rpix = 7
     dataval = 150
@@ -1049,6 +1091,7 @@ def test_correct_model(setup_cube, instr, det):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglimit,
     )
 
     np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, :4, 4:-4]), 0, decimal=0)
@@ -1071,6 +1114,7 @@ def test_zero_frame(setup_cube):
     side_smoothing_length = 11
     side_gain = 1.0
     odd_even_rows = False
+    siglimit = 3.0
 
     rpix = 7
     dataval = 150
@@ -1098,6 +1142,7 @@ def test_zero_frame(setup_cube):
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglimit,
     )
 
     # Make sure the SCI data is as expected.
@@ -1266,7 +1311,7 @@ def test_refpix_bad_reference_pixels(monkeypatch, caplog):
 def test_refpix_superstripe(use_refpix, odd_even_columns):
     """Test superstripe handling."""
     # make ramp model
-    model = make_superstripe_model()
+    model = make_superstripe_model(add_inttimes=True, add_zeroframe=True)
     nstripe = model.meta.subarray.num_superstripe
     stripe_size = model.meta.subarray.multistripe_reads1 + model.meta.subarray.multistripe_reads2
     model.pixeldq = np.zeros((nstripe, *model.data.shape[-2:]), dtype=np.uint32)
@@ -1309,6 +1354,7 @@ def test_refpix_superstripe(use_refpix, odd_even_columns):
     assert result.data.shape == (nint, ngroup, ny, nx)
     assert result.pixeldq.shape == (ny, nx)
     assert result.groupdq.shape == (nint, ngroup, ny, nx)
+    assert result.zeroframe.shape == (nint, ny, nx)
 
     # metadata is reset to regular subarray values
     assert model.meta.exposure.nints == nint * nstripe
@@ -1316,3 +1362,25 @@ def test_refpix_superstripe(use_refpix, odd_even_columns):
     assert result.meta.exposure.integration_start == 1
     assert result.meta.exposure.integration_end == nint
     assert result.meta.subarray.num_superstripe is None
+
+    # int_times_stripe is copied from the old int_times,
+    assert len(result.int_times_stripe) == nint * nstripe
+    assert np.allclose(
+        result.int_times_stripe["int_start_MJD_UTC"], model.int_times["int_start_MJD_UTC"]
+    )
+
+    # new int_times matches new integration size
+    assert len(result.int_times) == nint
+
+    for time_key in ["MJD_UTC", "BJD_TDB"]:
+        # start times are from the first stripe in the integration
+        start_time = result.int_times[f"int_start_{time_key}"][0]
+        assert np.allclose(start_time, model.int_times[f"int_start_{time_key}"][0])
+
+        # end times are from the last stripe in the integration
+        end_time = result.int_times[f"int_end_{time_key}"][0]
+        assert np.allclose(end_time, model.int_times[f"int_end_{time_key}"][10])
+
+        # mid times are averaged
+        mid_time = (start_time + end_time) / 2
+        assert np.allclose(mid_time, model.int_times[f"int_end_{time_key}"][10])

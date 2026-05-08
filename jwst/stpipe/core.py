@@ -98,7 +98,7 @@ class JwstStep(_Step):
         # Specify the log names for any dependencies whose
         # loggers we want to configure and for the special "py.warnings"
         # logger which is the source of warning log messages for python warnings
-        return ("jwst", "stcal", "stdatamodels", "stpipe", "tweakwcs", "py.warnings")
+        return ("jwst", "stcal", "stdatamodels", "stpipe", "tweakwcs", "CRDS", "py.warnings")
 
     def load_as_level2_asn(self, obj):
         """
