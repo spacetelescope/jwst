@@ -154,9 +154,10 @@ def test_adaptive_trace_model_step_success(request, dataset):
     result.close()
 
 
-def test_adaptive_trace_model_step_with_source(miri_mrs_model_with_source):
+@pytest.mark.parametrize("cores", ["none", "2"])
+def test_adaptive_trace_model_step_with_source(miri_mrs_model_with_source, cores):
     model = miri_mrs_model_with_source
-    result = AdaptiveTraceModelStep.call(model, oversample=1, slope_limit=0)
+    result = AdaptiveTraceModelStep.call(model, oversample=1, slope_limit=0, maximum_cores=cores)
     assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
 
     # data is unchanged with oversample=1
