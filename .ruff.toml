@@ -136,6 +136,9 @@ ban-relative-imports = "all"  # Disallow all relative imports.
     "A002", # builtin variable shadowing
     "S101", # use of assert
 ]
+"jwst/regtest/st_fitsdiff.py" = [
+    "PTH118", # `os.path.join()` should be replaced by `Path.joinpath()`
+]
 "jwst/associations/lib/*" = [
     "N801", # Use CapWords class naming convention
 ]

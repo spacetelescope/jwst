@@ -3,7 +3,7 @@
 
 import fnmatch
 import operator
-import textwrap
+import os
 import warnings
 from itertools import islice
 
@@ -284,37 +284,13 @@ class STFITSDiff(FITSDiff):
     def _report(self):
         # The following lines are identical to the original FITSDiff code
 
-        wrapper = textwrap.TextWrapper(initial_indent="  ", subsequent_indent="  ")
-
         self._fileobj.write("\n")
         self._writeln("\n* STScI Custom FITSDiff")
         self._writeln(f" fitsdiff: {astropy_version}")
-        self._writeln(f" a: {self.filenamea}\n b: {self.filenameb}")
 
-        if self.ignore_hdus:
-            ignore_hdus = " ".join(sorted(self.ignore_hdus))
-            self._writeln(" HDU(s) not to be compared:\n" + wrapper.fill(ignore_hdus))
-
-        if self.ignore_hdu_patterns:
-            ignore_hdu_patterns = " ".join(sorted(self.ignore_hdu_patterns))
-            self._writeln(" HDU(s) not to be compared:\n" + wrapper.fill(ignore_hdu_patterns))
-
-        if self.ignore_keywords:
-            ignore_keywords = " ".join(sorted(self.ignore_keywords))
-            self._writeln(" Keyword(s) not to be compared:\n" + wrapper.fill(ignore_keywords))
-
-        if self.ignore_comments:
-            ignore_comments = " ".join(sorted(self.ignore_comments))
-            self._writeln(
-                " Keyword(s) whose comments are not to be compared:\n"
-                + wrapper.fill(ignore_comments)
-            )
-
-        if self.ignore_fields:
-            ignore_fields = " ".join(sorted(self.ignore_fields))
-            self._writeln(" Table column(s) not to be compared:\n" + wrapper.fill(ignore_fields))
-
-        self._writeln(f" Maximum number of different data values to be reported: {self.numdiffs}")
+        xx_a = os.path.join(*self.filenamea.split("/")[-2:])
+        xx_b = os.path.join(*self.filenameb.split("/")[-2:])
+        self._writeln(f" a: {xx_a}\n b: {xx_b}")
 
         # The following lines are STScI's additions:
         # 1. Report the tolerances used per extension
