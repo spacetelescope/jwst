@@ -1,13 +1,14 @@
 Description
-============
+===========
 
-:Class: `jwst.photom.PhotomStep`
+:Class: `jwst.photom.photom_step.PhotomStep`
 :Alias: photom
 
 The ``photom`` step applies flux (photometric) calibrations to a data product
 to convert the data from units of countrate to surface brightness (or, in
 some cases described below, to units of flux density).
-The calibration information is read from a photometric reference file.
+The calibration information is read from a
+:ref:`photometric reference file <photom_reffile>`.
 The exact nature of the calibration information loaded from the reference file
 and applied to the science data depends on the instrument mode, as
 described below.
@@ -33,30 +34,30 @@ Imaging and non-IFU Spectroscopy
 
 Photom Data
 ^^^^^^^^^^^
-For these instrument modes the PHOTOM reference file contains a table of
+For these instrument modes the :ref:`photom_reffile` contains a table of
 exposure parameters that define various instrument configurations and the flux
 conversion data for each of those configurations. The table contains one row
 for each allowed combination of exposure parameters,
-such as detector, filter, pupil, and grating. The photom step searches the
+such as detector, filter, pupil, and grating. The ``photom`` step searches the
 table for the row that matches the parameters of the science exposure and
 then loads the calibration information from that row of the table.
 Note that for NIRSpec fixed-slit mode, the step will search the table
 for each slit in use in the exposure, using the table row that corresponds to
 each slit.
 
-For these table-based PHOTOM reference files, the calibration information in each
+For these table-based :ref:`PHOTOM reference files <photom_reffile>`, the calibration information in each
 row includes a scalar flux conversion constant, as well as optional arrays of
 wavelength and relative response (as a function of wavelength).
-For spectroscopic data, if the photom step finds that the wavelength and relative
+For spectroscopic data, if the ``photom`` step finds that the wavelength and relative
 response arrays in the reference table row are populated, it loads those 1-D arrays
 and interpolates the response values into the 2-D space of the science image based
 on the wavelength at each pixel.
 
 For NIRSpec spectroscopic and NIRISS SOSS data, the conversion factors in
-the PHOTOM reference file give results in flux density (MJy).  For point
-sources, the output of the photom step will be in these units.  For extended
+the :ref:`photom_reffile` give results in flux density (MJy).  For point
+sources, the output of the ``photom`` step will be in these units.  For extended
 sources, however, the values will be divided by the average solid angle of a
-pixel to give results in surface brightness (MJy/sr).  The photom step
+pixel to give results in surface brightness (MJy/sr).  The ``photom`` step
 determines whether the target is a point or extended source from the
 SRCTYPE keyword value, which is set by the :ref:`srctype <srctype_step>` step.
 If the SRCTYPE keyword is not present or is set to "UNKNOWN", the default behavior
@@ -69,11 +70,11 @@ The correction values are multiplied into the SCI and ERR arrays, and the square
 of the correction values are multiplied into the variance arrays.
 
 The scalar conversion constant is copied to the header keyword PHOTMJSR, which
-gives the conversion from DN/s to megaJy/steradian (or to megajanskys, for
+gives the conversion from DN/s to MJy/sr (or to MJy, for
 NIRSpec and NIRISS SOSS point sources, as described above) that was applied
 to the data.
 The step also computes the equivalent conversion factor to units of
-microJy/square-arcsecond (or microjanskys) and stores it in the header
+:math:`\mu\text{Jy} / \text{arcsec}^2` (or :math:`\mu\text{Jy}`) and stores it in the header
 keyword PHOTUJA2.
 
 NIRSpec Fixed Slit Primary Slit
@@ -116,7 +117,7 @@ FS observations.
 Pixel Area Data
 ^^^^^^^^^^^^^^^
 For all instrument modes other than NIRSpec the photom step loads a 2-D pixel
-area map when an AREA reference file is available and appends it to the science
+area map when an :ref:`area_reffile` is available and appends it to the science
 data product. The pixel area map is copied into an image extension called "AREA"
 in the science data product.
 
@@ -124,19 +125,19 @@ The step also populates the keywords PIXAR_SR and PIXAR_A2 in the
 science data product, which give the average pixel area in units of
 steradians and square arcseconds, respectively.
 For most instrument modes, the average pixel area values are copied from the
-primary header of the AREA reference file, when this file is available. Otherwise
+primary header of the :ref:`area_reffile`, when this file is available. Otherwise
 the pixel area values are copied from the primary header of the PHOTOM reference
 file. For NIRSpec, however, the pixel area values are copied from a binary table
 extension in the AREA reference file.
 
 NIRSpec IFU
 -----------
-The photom step uses the same type of tabular PHOTOM reference file for NIRSpec IFU
+The photom step uses the same type of tabular :ref:`photom_reffile` for NIRSpec IFU
 exposures as discussed above for other modes, where there is a single table
 row that corresponds to a given exposure's filter and grating settings. It
 retrieves the scalar conversion constant, as well as the 1-D wavelength and
 relative response arrays, from that row. It also loads the IFU pixel area
-data from the AREA reference file.
+data from the :ref:`area_reffile`.
 
 It then uses the scalar conversion constant, the 1-D wavelength and relative
 response, and pixel area data to compute a 2-D sensitivity map (pixel-by-pixel)
@@ -145,9 +146,11 @@ exposure are multiplied by the 2D sensitivity map, which converts the science
 pixels from countrate to surface brightness.
 Variance arrays are multiplied by the square of the conversion factors.
 
+.. _photom_miri_mrs_mode:
+
 MIRI MRS
 --------
-For the MIRI MRS mode, the PHOTOM reference file contains 2-D arrays of sensitivity
+For the MIRI MRS mode, the :ref:`photom_reffile` contains 2-D arrays of sensitivity
 factors and pixel sizes that are loaded into the step. As with NIRSpec IFU, the
 sensitivity and pixel size data are used to compute a 2-D sensitivity map
 (pixel-by-pixel) for the entire science image. This is multiplied into both
@@ -160,57 +163,58 @@ long wavelengths. A correction has been derived from regular observations of int
 calibration lamps augmented by repeated observations of spectrophotometric standard stars.
 The correction uses a power law function of time with coefficients optimized for each
 of the twelve spectral bands. A plot of the count rate loss in each MRS
-band, as a function of time, is shown in Figure 1.
+band, as a function of time, is shown in :ref:`Figure 1 <photom_miri_mrs_fig_1>`.
+
+.. _photom_miri_mrs_fig_1:
 
 .. figure:: Model_summary.png
    :scale: 50%
-   :align: center
+   :align: left
 
-Figure 1:
-Time-dependent decrease in the observed MRS count rate as measured from internal
-calibration lamp exposures. Points illustrate measurements at the central wavelength
-of each of the 12 MRS bands; curves represent the best fit models used for correction
-in the pipeline. See
-`JDox <https://jwst-docs.stsci.edu/jwst-calibration-status/miri-calibration-status/miri-mrs-calibration-status>`__
-for an updated version of this figure.
+   Time-dependent decrease in the observed MRS count rate as measured from internal
+   calibration lamp exposures. Points illustrate measurements at the central wavelength
+   of each of the 12 MRS bands; curves represent the best fit models used for correction
+   in the pipeline. See
+   `JDox <https://jwst-docs.stsci.edu/jwst-calibration-status/miri-calibration-status/miri-mrs-calibration-status>`__
+   for an updated version of this figure.
 
-The MRS photom reference file contains a table of correction coefficients
+The MRS :ref:`photom_reffile` contains a table of correction coefficients
 for each band in which a correction has been determined. If the time-dependent
-coefficients are present in the reference file for a given band, the photom step will
+coefficients are present in the reference file for a given band, the ``photom`` step will
 apply the correction to the exposure being processed.
 
 Time-Dependent Corrections
 --------------------------
 
-For any mode other than MIRI MRS (described above), the reference file can
+For any mode other than :ref:`photom_miri_mrs_mode`, the reference file can
 optionally contain tables of coefficients that are used to apply time-dependent
 corrections to the scalar conversion factor, based on the observation date of
 the exposure being processed. Each table present describes a different functional
 form for the time-dependent sensitivity loss: exponential, linear, or
-power law.  If multiple tables are present, the corrections are multiplied together
+power-law.  If multiple tables are present, the corrections are multiplied together
 before being applied.  If no tables are present, no time correction is applied.
 These coefficient tables also contain the descriptive exposure parameters present in
-the photometric data table (e.g. filter, pupil, grating), and the rows present
+the photometric data table (e.g., filter, pupil, grating), and the rows present
 must match the length and order of the photometric table.
 
 The correction factor described in all cases is defined as the fractional amount
-of light recorded now divided by the light recorded on the zero-day MJD (t0).
+of light recorded now divided by the light recorded on the zero-day MJD (*t0*).
 The scalar conversion factor is divided by the correction factor to account for
 the sensitivity loss.
 
 For a linear correction, the correction factor (*corr*) is defined as:
 
 .. math::
-   corr = 1 - lossperyear * (t-t0) / 365
+   corr = 1 - lossperyear * (t - t0) / 365
 
 where *lossperyear* (fractional loss of throughput per year, e.g., 0.1 is 10% in 1 year)
 and *t0* (reference day in MJD) are stored as coefficients in the TIMECOEFF_LINEAR
-extension of the PHOTOM reference file.
+extension of the :ref:`photom_reffile`.
 
 For an exponential correction:
 
 .. math::
-   corr = amplitude * exp(-(t-t0)/tau) + const
+   corr = amplitude * exp(-(t - t0) / tau) + const
 
 where *amplitude*, *t0* (reference day in MJD), *tau* (e-folding time constant), and
 *const* (long-term asymptote) are stored as coefficients in the TIMECOEFF_EXPONENTIAL
