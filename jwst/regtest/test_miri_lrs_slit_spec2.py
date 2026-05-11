@@ -113,6 +113,6 @@ def test_miri_lrs_slit_wcs(run_pipeline, rtdata_module, fitsdiff_default_kwargs)
         # floats rather than a string. Test footprint
         sregion = im.meta.wcsinfo.s_region
         sregion_test = im_truth.meta.wcsinfo.s_region
-        footprint = util.sregion_to_footprint(sregion)
-        footprint_test = util.sregion_to_footprint(sregion_test)
+        footprint = util.sregion_to_footprint(sregion)[0]
+        footprint_test = util.sregion_to_footprint(sregion_test)[0]
         assert_allclose(footprint, footprint_test)

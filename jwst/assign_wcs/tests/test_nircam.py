@@ -291,5 +291,5 @@ def test_update_s_region_imaging():
 
     s_region = model.meta.wcsinfo.s_region
     footprint = model.meta.wcs.footprint().flatten()
-    footprint_sregion = sregion_to_footprint(s_region).flatten()
+    footprint_sregion = sregion_to_footprint(s_region)[0].flatten()
     assert np.allclose(footprint, footprint_sregion, rtol=1e-9)
