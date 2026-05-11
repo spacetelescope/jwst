@@ -4,8 +4,8 @@ Step Arguments
 The ``pixel_replace`` step has the following step-specific arguments:
 
 ``--algorithm`` (str, default='fit_profile')
-  This sets the method used to estimate flux values for bad pixels. The default 'fit_profile' uses a profile
-  fit to adjacent column values.  The minimum gradient ('mingrad') method, developed for MIRI MRS data, may
+  This sets the method used to estimate flux values for bad pixels. The default ``'fit_profile'`` uses a profile
+  fit to adjacent column values.  The minimum gradient (``'mingrad'``) method, developed for MIRI MRS data, may
   also be used for all instruments and modes.
 
 ``--n_adjacent_cols`` (int, default=3)
