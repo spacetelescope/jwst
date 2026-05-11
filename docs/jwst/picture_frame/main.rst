@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.picture_frame.PictureFrameStep`
+:Class: `jwst.picture_frame.picture_frame_step.PictureFrameStep`
 :Alias: picture_frame
 
 Overview
@@ -11,7 +11,6 @@ effect <https://jwst-docs.stsci.edu/known-issues/nirspec-known-issues#NIRSpecKno
 from calibrated ramp images, after the :ref:`jump <jump_step>` step
 and prior to performing the :ref:`clean_flicker_noise <clean_flicker_noise_step>`
 or the :ref:`ramp_fitting <ramp_fitting_step>` step.
-
 
 The picture frame artifacts are corrected by scaling and subtracting a reference rate
 image, containing only the thermal background, stored in a PICTUREFRAME reference file.
@@ -59,7 +58,7 @@ group image in each integration, the cleaning process is:
 
 
 References
-==========
+----------
 
 The picture frame correction algorithm is based on work by M. Regan and
-E. Bergeron (in prep).
+E. Bergeron.

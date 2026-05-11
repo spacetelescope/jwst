@@ -8,7 +8,6 @@ Picture Frame Correction
    :maxdepth: 2
 
    main.rst
-   reference_files.rst
    arguments.rst
-   
-.. automodapi:: jwst.picture_frame
+   reference_files.rst
+   api_ref.rst
