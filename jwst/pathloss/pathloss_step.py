@@ -1,3 +1,5 @@
+"""Account for signal loss in the optical path of spectroscopic modes."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -40,7 +42,7 @@ class PathLossStep(Step):
         Returns
         -------
         output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
-            The updated datamodel..
+            The updated datamodel.
         """
         # Open the input data model
         output_model = self.prepare_output(input_data)

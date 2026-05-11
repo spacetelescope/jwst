@@ -1,0 +1,1 @@
+Add "CRDS" to the loggers configured by stpipe.

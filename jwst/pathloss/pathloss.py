@@ -39,7 +39,7 @@ def get_center(exp_type, input_model, offsets=False):
     """
     Get the center of the target in the aperture.
 
-    (0.0, 0.0) is the aperture center.  Coordinates go
+    ``(0.0, 0.0)`` is the aperture center.  Coordinates go
     from -0.5 to 0.5.
 
     Parameters
@@ -47,12 +47,12 @@ def get_center(exp_type, input_model, offsets=False):
     exp_type : str
         Keyword value
 
-    input_model : data model object
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data to be corrected
 
     offsets : bool
-        Only applies for MIRI LRS fixed-slit, if True the offsets
-        will be returned as well (imx, imy)
+        Only applies for MIRI LRS fixed-slit; if `True`, the offsets
+        will be returned as well in the form of ``(imx, imy)``
 
     Returns
     -------
@@ -132,7 +132,7 @@ def get_center(exp_type, input_model, offsets=False):
 
 def shutter_above_is_closed(shutter_state):
     """
-    Return True if the shutter above the target shutter is closed.
+    Check if the shutter above the target shutter is closed.
 
     Parameters
     ----------
@@ -142,7 +142,7 @@ def shutter_above_is_closed(shutter_state):
     Returns
     -------
     result : bool
-        True if the shutter above the target shutter is closed.
+        `True` if the shutter above the target shutter is closed.
     """
     ref_loc = shutter_state.find("x")
     nshutters = len(shutter_state)
@@ -154,7 +154,7 @@ def shutter_above_is_closed(shutter_state):
 
 def shutter_below_is_closed(shutter_state):
     """
-    Return True if the shutter below the target shutter is closed.
+    Check if the shutter below the target shutter is closed.
 
     Parameters
     ----------
@@ -164,7 +164,7 @@ def shutter_below_is_closed(shutter_state):
     Returns
     -------
     result : bool
-        True if the shutter below the target shutter is closed.
+        `True` if the shutter below the target shutter is closed.
     """
     ref_loc = shutter_state.find("x")
     if ref_loc == 0 or shutter_state[ref_loc - 1] == "0":
@@ -177,12 +177,14 @@ def get_aperture_from_model(input_model, match):
     """
     Determine the correct aperture in the model to use.
 
-    Based on the value of the 'match' parameter.  For MSA, match is
-    the shutter state string, for fixed slit, match is the name of the slit.
+    Based on the value of the 'match' parameter:
+
+    * For MSA, match is the shutter state string.
+    * For fixed slit, match is the name of the slit.
 
     Parameters
     ----------
-    input_model : data model object
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data to be corrected
 
     match : str
@@ -225,11 +227,11 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter, 
 
     Parameters
     ----------
-    pathloss_refdata : numpy ndarray
+    pathloss_refdata : ndarray
         The input pathloss data array
 
-    pathloss_wcs : wcs
-        The pathloss datamodel's wcs attribute
+    pathloss_wcs : `~gwcs.wcs.WCS`
+        The pathloss datamodel's WCS attribute
 
     xcenter : float
         The x-center of the target (-0.5 to 0.5)
@@ -238,19 +240,19 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter, 
         The y-center of the target (-0.5 to 0.5)
 
     calc_wave : bool
-        Calculate a wavelength vector from the ref file
+        Calculate a wavelength vector from the reference file
 
     Returns
     -------
-    wavelength : numpy ndarray
-        The 1-d wavelength array
+    wavelength : ndarray
+        The 1-D wavelength array
 
-    pathloss : numpy ndarray
-        The corresponding 1-d pathloss array
+    pathloss : ndarray
+        The corresponding 1-D pathloss array
 
     is_inside_slitlet : bool
-        Returns True if the object source position is inside the slitlet,
-        otherwise returns False
+        `True` if the object source position is inside the slitlet,
+        otherwise `False`
     """
     is_inside_slitlet = True
     if len(pathloss_refdata.shape) == 3:
@@ -326,20 +328,20 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter, 
 
 def calculate_two_shutter_uniform_pathloss(pathloss_model):
     """
-    Calculate pathloss for uniform source, two shutter slit.
+    Calculate pathloss for uniform source, two-shutter slit.
 
-    The two shutter MOS case for uniform source calculation requires a custom
+    The two-shutter MOS case for uniform source calculation requires a custom
     routine since it uses both the 1X1 and 1X3 extensions of the pathloss reference file.
 
     Parameters
     ----------
-    pathloss_model : pathloss datamodel
+    pathloss_model : `~stdatamodels.jwst.datamodels.PathlossModel`
         The pathloss datamodel
 
     Returns
     -------
-    (wavelength, pathloss_vector) : tuple of 2 1-d numpy arrays
-        The wavelength and pathloss 1-d arrays
+    wavelength, pathloss_vector : ndarray
+        The wavelength and pathloss 1-D arrays, respectively
     """
     # This routine will run if the slit has exactly 2 shutters
     n_apertures = len(pathloss_model.apertures)
@@ -400,25 +402,25 @@ def do_correction(
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data to be corrected. Updated in place.
     pathloss_model : `~stdatamodels.jwst.datamodels.MirLrsPathlossModel`, \
-                     `~stdatamodels.jwst.datamodels.PathlossModel` or None, optional
+                     `~stdatamodels.jwst.datamodels.PathlossModel`, or None, optional
         Pathloss correction data
     inverse : bool, optional
         Invert the math operations used to apply the pathloss correction.
     source_type : str or None, optional
         Force processing using the specified source type.
     user_slit_loc : float, optional
-        User-provided slit location in units of arcsec, where (0,0)
+        User-provided slit location in units of arcsec, where ``(0, 0)``
         is the center and the edges are +/-0.255 arcsec.
     return_corrections : bool, optional
-        If True, a model containing the applied corrections is returned.
+        If `True`, a model containing the applied corrections is returned.
 
     Returns
     -------
-    input_model: `~stdatamodels.jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The corrected science data with pathloss extensions added.
-    corrections: `~stdatamodels.jwst.datamodels.JwstDataModel`, optional
+    corrections : `~stdatamodels.jwst.datamodels.JwstDataModel`, optional
         A model of the correction arrays, returned if ``return_corrections``
-        is True.
+        is `True`.
     """
     if not pathloss_model:
         raise RuntimeError("A PathlossModel must be specified.")
@@ -460,25 +462,25 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
     Interpolate pathloss value onto grid.
 
     Get the value of pathloss by interpolating each non-NaN element of
-    wavelength_grid into pathloss_vector using the index lookup of
-    wavelength_vector.  Pixels with wavelengths outside the range of the
+    ``wavelength_grid`` into ``pathloss_vector`` using the index lookup of
+    ``wavelength_vector``.  Pixels with wavelengths outside the range of the
     reference file should have a correction of NaN.
 
     Parameters
     ----------
-    wavelength_grid : numpy ndarray (2-d)
-        The grid of wavelengths for each science data pixel
+    wavelength_grid : ndarray
+        The 2-D grid of wavelengths for each science data pixel
 
-    wavelength_vector : numpy ndarray (1-d)
-        Vector of wavelengths
+    wavelength_vector : ndarray
+        The 1-D vector of wavelengths
 
-    pathloss_vector :  numpy ndarray (1-d)
-        Corresponding vector of pathloss values
+    pathloss_vector : ndarray
+        Corresponding 1-D vector of pathloss values
 
     Returns
     -------
-    pathloss_grid : numpy array
-        Grid of pathloss corrections for each non-Nan pixel
+    pathloss_grid : ndarray
+        Grid of pathloss corrections for each non-NaN pixel
     """
     # Need to set the pathloss correction of pixels whose wavelength is outside
     # the wavelength range of the reference file to NaN.  This trick will accomplish
@@ -527,7 +529,7 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
 
 def is_pointsource(srctype):
     """
-    Check whether srctype is a point source.
+    Check whether input is a point source.
 
     Parameters
     ----------
@@ -537,7 +539,7 @@ def is_pointsource(srctype):
     Returns
     -------
     result : bool
-        Returns True if srctype is "POINT"
+        `True` if ``srctype`` is "POINT"
     """
     if srctype is None:
         return False
@@ -555,10 +557,10 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None):
 
     Parameters
     ----------
-    data : jwst.datamodels.JwstDataModel
+    data : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The NIRSpec MOS data to be corrected.
 
-    pathloss : jwst.datamodels.PathlossModel or None
+    pathloss : `~stdatamodels.jwst.datamodels.PathlossModel` or None
         The pathloss reference data.
 
     inverse : bool
@@ -569,7 +571,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None):
 
     Returns
     -------
-    corrections : jwst.datamodels.MultiSlitModel
+    corrections : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The pathloss corrections applied.
     """
     exp_type = data.meta.exposure.type
@@ -627,10 +629,10 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None):
 
     Parameters
     ----------
-    data : jwst.datamodels.JwstDataModel
+    data : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The NIRSpec fixed-slit data to be corrected.
 
-    pathloss : jwst.datamodels.JwstDataModel
+    pathloss : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The pathloss reference data.
 
     inverse : bool
@@ -641,7 +643,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None):
 
     Returns
     -------
-    corrections : jwst.datamodels.MultiSlitModel
+    corrections : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The pathloss corrections applied.
     """
     exp_type = data.meta.exposure.type
@@ -704,10 +706,10 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None):
 
     Parameters
     ----------
-    data : jwst.datamodels.JwstDataModel
+    data : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The NIRSpec IFU data to be corrected.
 
-    pathloss : jwst.datamodels.JwstDataModel
+    pathloss : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The pathloss reference data.
 
     inverse : bool
@@ -718,7 +720,7 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None):
 
     Returns
     -------
-    corrections : jwst.datamodels.JwstDataModel
+    corrections : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The pathloss corrections applied.
     """
     correction = _corrections_for_ifu(data, pathloss, source_type)
@@ -764,14 +766,14 @@ def do_correction_lrs(data, pathloss, user_slit_loc):
 
     Parameters
     ----------
-    data : jwst.datamodels.JwstDataModel
+    data : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The MIRI LRS fixed-slit data to be corrected.
 
-    pathloss : jwst.datamodels.JwstDataModel
+    pathloss : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The pathloss reference data.
 
     user_slit_loc : float
-        User-provided slit location in units of arcsec, where (0,0)
+        User-provided slit location in units of arcsec, where ``(0, 0)``
         is the center and the edges are +/-0.255 arcsec.
     """
     correction = _corrections_for_lrs(data, pathloss, user_slit_loc)
@@ -806,16 +808,16 @@ def do_correction_soss(data, pathloss):
     subarray aperture.  The correction depends on the pupil wheel position
     and column number (or wavelength).  The simple option is to do the
     correction by column number, then the only interpolation needed is a
-    1-d interpolation into the pupil wheel position dimension.
+    1-D interpolation into the pupil wheel position dimension.
 
     Data are modified in-place.
 
     Parameters
     ----------
-    data : jwst.datamodels.JwstDataModel
+    data : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The NIRISS SOSS data to be corrected.
 
-    pathloss : jwst.datamodels.JwstDataModel
+    pathloss : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The pathloss reference data.
     """
     # Omit correction if this is a TSO observation
@@ -898,10 +900,10 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
 
     Parameters
     ----------
-    slit : jwst.datamodels.SlitModel
+    slit : `~stdatamodels.jwst.datamodels.SlitModel`
         The slit being operated on.
 
-    pathloss : jwst.datamodels.JwstDataModel
+    pathloss : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The pathloss reference data
 
     exp_type : str
@@ -912,7 +914,7 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
 
     Returns
     -------
-    correction : jwst.datamodels.SlitModel
+    correction : `~stdatamodels.jwst.datamodels.SlitModel`
         The correction arrays
     """
     correction = None
@@ -1011,14 +1013,14 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
 
 def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
     """
-    Calculate the correction arrays for Fixed-slit.
+    Calculate the correction arrays for fixed-slit.
 
     Parameters
     ----------
-    slit : jwst.datamodels.SlitModel
+    slit : `~stdatamodels.jwst.datamodels.SlitModel`
         The slit being operated on.
 
-    pathloss : jwst.datamodels.JwstDataModel
+    pathloss : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The pathloss reference data
 
     exp_type : str
@@ -1029,7 +1031,7 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
 
     Returns
     -------
-    correction : jwst.datamodels.SlitModel
+    correction : `~stdatamodels.jwst.datamodels.SlitModel`
         The correction arrays
     """
     correction = None
@@ -1116,10 +1118,10 @@ def _corrections_for_ifu(data, pathloss, source_type):
 
     Parameters
     ----------
-    data : jwst.datamodels.SlitModel
+    data : `~stdatamodels.jwst.datamodels.SlitModel`
         The data being operated on.
 
-    pathloss : jwst.datamodels.JwstDataModel
+    pathloss : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The pathloss reference data
 
     source_type : str or None
@@ -1127,7 +1129,7 @@ def _corrections_for_ifu(data, pathloss, source_type):
 
     Returns
     -------
-    correction : jwst.datamodels.SlitModel
+    correction : `~stdatamodels.jwst.datamodels.SlitModel`
         The correction arrays
     """
     # IFU targets are always inside slit
@@ -1195,19 +1197,19 @@ def _corrections_for_lrs(data, pathloss, user_slit_loc):
 
     Parameters
     ----------
-    data : jwst.datamodels.JwstDataModel
+    data : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The LRS data being operated on.
 
-    pathloss : jwst.datamodels.MirLrsPathlossModel
+    pathloss : `~stdatamodels.jwst.datamodels.MirLrsPathlossModel`
         The pathloss reference data
 
     user_slit_loc : float
-        User-provided slit location in units of arcsec, where (0,0)
+        User-provided slit location in units of arcsec, where ``(0, 0)``
         is the center and the edges are +/-0.255 arcsec.
 
     Returns
     -------
-    correction : jwst.datamodels.JwstDataModel
+    correction : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The correction arrays
     """
     # Get location of target
