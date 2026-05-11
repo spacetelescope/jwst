@@ -213,12 +213,14 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                # "require_ngood": 15,
-                # "spline_bkpt": 68,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
                 "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 2.0,
+                "auto_ngood_factor": 0.5,
             },
         ),
         (
@@ -228,12 +230,14 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                # "require_ngood": 15,
-                # "spline_bkpt": 68,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
                 "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 2.0,
+                "auto_ngood_factor": 0.5,
             },
         ),
         (
@@ -243,27 +247,31 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                # "require_ngood": 15,
-                # "spline_bkpt": 68,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
                 "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 2.0,
+                "auto_ngood_factor": 0.5,
             },
         ),
         (
             "NRS_SLIT",
-            "NRS2",
-            None,
+            "NRS1",
+            "PRISM",
             {
-                "lrange": 50,
-                "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                # "require_ngood": 15,
-                # "spline_bkpt": 68,
+                "lrange": 10,
+                "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
                 "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 1.0,
+                "auto_ngood_factor": 0.25,
             },
         ),
         (
@@ -273,12 +281,14 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                # "require_ngood": 8,
-                # "spline_bkpt": 30,
                 "space_ratio": 1.6,
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
                 "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 2.0,
+                "auto_ngood_factor": 0.5,
             },
         ),
         (
@@ -292,8 +302,10 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
                 "fit_iter": 3,
-                # "spline_bkpt": 36,
+                "spline_bkpt": 36,
                 "require_ngood": 8,
+                "auto_bkpt_factor": None,
+                "auto_ngood_factor": None,
             },
         ),
         (
@@ -307,8 +319,10 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
                 "sigma_low": 2.5,
                 "sigma_high": 2.5,
                 "fit_iter": 3,
-                # "spline_bkpt": 36,
+                "spline_bkpt": 36,
                 "require_ngood": 8,
+                "auto_bkpt_factor": None,
+                "auto_ngood_factor": None,
             },
         ),
         (
@@ -324,6 +338,8 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
                 "fit_iter": 3,
                 "spline_bkpt": 40,
                 "require_ngood": 8,
+                "auto_bkpt_factor": None,
+                "auto_ngood_factor": None,
             },
         ),
         (
@@ -339,6 +355,8 @@ def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy
                 "fit_iter": 2,
                 "spline_bkpt": 60,
                 "require_ngood": 8,
+                "auto_bkpt_factor": None,
+                "auto_ngood_factor": None,
             },
         ),
     ],
@@ -388,8 +406,16 @@ def test_set_oversample_kwargs_error():
         tm._set_oversample_kwargs("NRS_SLIT", "NIS")
 
 
-def test_fit_and_oversample_unsupported_mode():
+def test_fit_and_oversample_unknown_detector():
     model = ImageModel((10, 10))
     model.meta.instrument.detector = "NIS"
     with pytest.raises(ValueError, match="Unknown detector"):
+        tm.fit_and_oversample(model)
+
+
+def test_fit_and_oversample_unsupported_exptype():
+    model = ImageModel((10, 10))
+    model.meta.exposure.type = "MIR_WFSS"
+    model.meta.instrument.detector = "MIRIMAGE"
+    with pytest.raises(ValueError, match="MIRI WFSS is not supported"):
         tm.fit_and_oversample(model)

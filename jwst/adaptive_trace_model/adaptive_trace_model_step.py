@@ -105,7 +105,6 @@ class AdaptiveTraceModelStep(Step):
                 for slit in model.slits:
                     log.info(f"Working on slit {slit.name}")
                     log.debug(f"Slit is of type {type(slit)}")
-
                     slit_results = fit_and_oversample(
                         slit,
                         fit_threshold=self.fit_threshold,
@@ -113,6 +112,7 @@ class AdaptiveTraceModelStep(Step):
                         oversample_factor=self.oversample,
                         psf_optimal=self.psf_optimal,
                         return_intermediate_models=self.save_intermediate_results,
+                        metadata_model=model,
                     )
                     if self.save_intermediate_results:
                         for i, intermediate_model in enumerate(slit_results[1:]):

@@ -82,12 +82,14 @@ def fit_2d_spline_trace(
     fit_scale=None,
     lrange=50,
     col_index=None,
-    require_ngood=10,
-    spline_bkpt=50,
     space_ratio=1.2,
     sigma_low=2.5,
     sigma_high=2.5,
     fit_iter=3,
+    require_ngood=None,
+    spline_bkpt=None,
+    auto_ngood_factor=0.5,
+    auto_bkpt_factor=2.0,
 ):
     """
     Create a trace model from spline fits to a single slit/slice image.
@@ -110,10 +112,6 @@ def fit_2d_spline_trace(
         Iterable or generator that produces column index values to fit.
         If provided, columns will be fit in the order specified.
         If not provided, columns will be fit left to right.
-    require_ngood : int, optional
-        Minimum number of data points required to attempt a fit in a column.
-    spline_bkpt : int, optional
-        Number of spline breakpoints (knots).
     space_ratio : float, optional
         Maximum spacing ratio to allow fitting to continue. If
         the tenth-largest spacing in the input ``xvec`` is larger
@@ -125,6 +123,16 @@ def fit_2d_spline_trace(
         High sigma threshold for iterative spline fit.
     fit_iter : int, optional
         Maximum number of iterations for spline fit.
+    require_ngood : int or None, optional
+        Minimum number of data points required to attempt a fit in a column.
+    spline_bkpt : int or None, optional
+        Number of spline breakpoints (knots).
+    auto_ngood_factor : float, optional
+        If ``require_ngood`` is not provided, set it to this factor times
+        the native spacing range in the input slit/slice.
+    auto_bkpt_factor : float, optional
+        If ``spline_bkpt`` is not provided, set it to this factor times
+        the native spacing range in the input slit/slice.
 
     Returns
     -------
@@ -136,6 +144,16 @@ def fit_2d_spline_trace(
         alpha coordinates used in the fit. If a spline model could not be fit,
         the column index number is not present.
     """
+    # Set reasonable spline breakpoints and ngood if not provided
+    if spline_bkpt is None or require_ngood is None:
+        native_n_alpha = (np.nanmax(alpha) - np.nanmin(alpha)) / _native_dalpha(alpha)
+        if spline_bkpt is None:
+            spline_bkpt = int(auto_bkpt_factor * native_n_alpha)
+            log.debug(f"Set spline_bkpt to {spline_bkpt}")
+        if require_ngood is None:
+            require_ngood = int(auto_ngood_factor * native_n_alpha)
+            log.debug(f"Set require_ngood to {require_ngood}")
+
     # Define a fallback spline model, initialize to None
     spline_model_save = None
 
@@ -838,16 +856,6 @@ def _fit_one_region(
     else:
         runsum = np.nansum(data_slice, axis=0)
 
-    # Set reasonable spline breakpoints and ngood if not provided
-    if alpha_xdisp is not None:
-        n_alpha = len(alpha_xdisp)
-        fit_kwargs["spline_bkpt"] = min(n_alpha, fit_kwargs.get("spline_bkpt", np.inf))
-        fit_kwargs["require_ngood"] = min(n_alpha // 4, fit_kwargs.get("require_ngood", np.inf))
-        log.debug(
-            f"Set spline_bkpt to {fit_kwargs['spline_bkpt']}, "
-            f"require_ngood to {fit_kwargs['require_ngood']}"
-        )
-
     # Fit the splines
     splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
 
@@ -1169,7 +1177,7 @@ def oversample_flux(
     return flux_os, flux_os_bspline_use, flux_os_bspline_full, flux_os_linear, flux_os_residual
 
 
-def _set_fit_kwargs(mode, detector, slit, xsize):
+def _set_fit_kwargs(mode, detector, grating, xsize):
     """
     Set optional parameters for spline fits by detector.
 
@@ -1180,8 +1188,8 @@ def _set_fit_kwargs(mode, detector, slit, xsize):
         "MIR_LRS_SLIT", or "MIR_LRS_SLITLESS").
     detector : str
         Detector name.
-    slit : str or None
-        Slit name.
+    grating : str or None
+        Grating name.
     xsize : int
         Input size for the data, along the dispersion axis. Used
         to determine the column index order for spline fits.
@@ -1203,24 +1211,27 @@ def _set_fit_kwargs(mode, detector, slit, xsize):
     fit_iter = 3
     spline_bkpt = None
     require_ngood = None
+    auto_bkpt_factor = None
+    auto_ngood_factor = None
     if detector.startswith("NRS"):
         # Start with some defaults for all modes
-        # spline_bkpt = 68
         lrange = 50
-        # require_ngood = 15
 
         # This factor of 1.6 was dialed based on inspection of the results
         # as sampling gets progressively worse for NIRSpec detectors
         space_ratio = 1.6
 
-        # Update some parameters for specific conditions
-        # if mode == "NRS_SLIT" and slit == "S1600A1":
-        # spline_bkpt = 30
-        # require_ngood = 8
-        # elif mode == "NRS_MOS":
-        # This is a placeholder so far
-        # spline_bkpt = 30
-        # require_ngood = 8
+        # Set the spline breakpoints and minimum good pixels automatically
+        # from the native pixel spacing
+        auto_bkpt_factor = 2.0
+        auto_ngood_factor = 0.5
+
+        # Set some overrides for PRISM, which changes fast with wavelength
+        # and has a lot of PSF structure
+        if str(grating).upper() == "PRISM":
+            lrange = 10
+            auto_bkpt_factor = 1.0
+            auto_ngood_factor = 0.25
 
         # Set up the column fitting order by detector
         if detector == "NRS1":
@@ -1235,7 +1246,7 @@ def _set_fit_kwargs(mode, detector, slit, xsize):
         space_ratio = 1.2
         if mode == "MIR_MRS":
             lrange = 50
-            # spline_bkpt = 36
+            spline_bkpt = 36
 
             # For MRS fitting order, we need to start on the left and run to the middle,
             # and then on the right to the middle in order to have the middle
@@ -1265,18 +1276,14 @@ def _set_fit_kwargs(mode, detector, slit, xsize):
         "sigma_low": sigma_low,
         "sigma_high": sigma_high,
         "fit_iter": fit_iter,
+        "spline_bkpt": spline_bkpt,
+        "require_ngood": require_ngood,
+        "auto_bkpt_factor": auto_bkpt_factor,
+        "auto_ngood_factor": auto_ngood_factor,
     }
-    if spline_bkpt is not None:
-        fit_kwargs["spline_bkpt"] = spline_bkpt
-    if require_ngood is not None:
-        fit_kwargs["require_ngood"] = require_ngood
 
     # Log the determined parameters
-    msg = f"Spline fit parameters for {mode}, detector={detector} xsize={xsize}"
-    if slit is not None:
-        msg += f" slit={slit}:"
-    else:
-        msg += ":"
+    msg = f"Spline fit parameters for {mode}, detector={detector} xsize={xsize} grating={grating}:"
     log.debug(msg)
     for key, val in fit_kwargs.items():
         log.debug(f"  {key}: {val}")
@@ -1662,6 +1669,7 @@ def fit_and_oversample(
     oversample_factor=1.0,
     return_intermediate_models=False,
     maximum_cores="none",
+    metadata_model=None,
 ):
     """
     Fit a trace model and optionally oversample a spectral datamodel.
@@ -1690,11 +1698,15 @@ def fit_and_oversample(
         If True, additional image models will be returned, containing the full
         spline model, the spline model as used for compact sources, the residual
         model, and the linearly interpolated data.
-    maximum_cores : str
+    maximum_cores : str, optional
         Number of cores to use for multiprocessing. If set to 'none' (the default),
         then no multiprocessing will be done. The other allowable values are 'quarter',
         'half', 'all', and string integers. This is the fraction of available or
         the explicit number of cores to use for multiprocessing.
+    metadata_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`, optional
+        If the input is one slit from a multi-slit model, the containing model
+        may be passed to retrieve appropriate top-level metadata (e.g. detector,
+        exposure type, grating).
 
     Returns
     -------
@@ -1727,10 +1739,15 @@ def fit_and_oversample(
         fit_threshold = 0
         slope_limit = 0
 
+    if metadata_model is not None:
+        model_meta = metadata_model.meta
+    else:
+        model_meta = model.meta
+
     # Get input data coordinates
-    detector = model.meta.instrument.detector
-    exp_type = model.meta.exposure.type
-    slit = None
+    detector = str(model_meta.instrument.detector).upper()
+    exp_type = str(model_meta.exposure.type).upper()
+    grating = str(getattr(model_meta.instrument, "grating", "NONE")).upper()
     if model.data.ndim == 3:
         nint, ysize, xsize = model.data.shape
     else:
@@ -1750,7 +1767,6 @@ def fit_and_oversample(
                 mode = "NRS_MOS"
             else:
                 mode = "NRS_SLIT"
-                slit = getattr(model, "name", None)
             wcs = model.meta.wcs
             alpha_orig = _get_alpha_nrs_slit(wcs, xsize, ysize)
 
@@ -1771,6 +1787,8 @@ def fit_and_oversample(
         else:
             if exp_type == "MIR_LRS-SLITLESS":
                 mode = "MIR_LRS_SLITLESS"
+            elif exp_type == "MIR_WFSS":
+                raise ValueError("MIRI WFSS is not supported.")
             else:
                 mode = "MIR_LRS_SLIT"
             wcs = model.meta.wcs
@@ -1854,7 +1872,7 @@ def fit_and_oversample(
             peak_threshold = dict.fromkeys(region_numbers, threshold)
 
     # Fit spline models to all regions
-    fit_kwargs = _set_fit_kwargs(mode, detector, slit, xsize)
+    fit_kwargs = _set_fit_kwargs(mode, detector, grating, xsize)
     if peak_threshold is not None:
         fit_kwargs["peak_threshold"] = peak_threshold
     else:
