@@ -382,17 +382,17 @@ def test_set_fit_kwargs_error():
         (
             "NRS_IFU",
             "NRS1",
-            {"pad": 2, "trim_ends": True, "require_ngood": 8},
+            {"pad": 2, "trim_ends": True, "require_ngood": 3},
         ),
         (
             "NRS_SLIT",
             "NRS1",
-            {"pad": 1, "trim_ends": True, "require_ngood": 8},
+            {"pad": 1, "trim_ends": True, "require_ngood": 3},
         ),
         (
             "MIR_MRS",
             "MIRIFUSHORT",
-            {"pad": 3, "trim_ends": False, "require_ngood": 8},
+            {"pad": 3, "trim_ends": False, "require_ngood": 3},
         ),
     ],
 )

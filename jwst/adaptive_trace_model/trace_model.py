@@ -1313,7 +1313,7 @@ def _set_oversample_kwargs(mode, detector):
     ValueError
         If the input detector is not supported.
     """
-    require_ngood = 8
+    require_ngood = 3
     if detector.startswith("NRS"):
         # Padding to add near point sources
         if mode == "NRS_IFU":
