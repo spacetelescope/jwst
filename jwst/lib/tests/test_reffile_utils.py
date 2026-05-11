@@ -34,7 +34,7 @@ def test_find_row():
     assert result is None
 
 
-def test_multistripe_subarray_model():
+def test_multistripe_subarray_model_substripe():
     mock_rn = ReadnoiseModel(data=(np.ones((2048, 2048), dtype=int) * np.arange(2048)).T)
     mock_rn.meta.instrument.name = "NIRCAM"
     generate_test_refmodel_metadata(mock_rn)
@@ -46,7 +46,7 @@ def test_multistripe_subarray_model():
         "xsize": 2048,
         "xstart": 1,
         "ysize": 164,
-        "ystart": 1885,
+        "ystart": 1,
         "multistripe_reads1": 1,
         "multistripe_skips1": 1549,
         "multistripe_reads2": 40,
@@ -58,6 +58,35 @@ def test_multistripe_subarray_model():
     }
     mock_rn_cutout = get_subarray_model(mock_sci, mock_rn)
     assert mock_rn_cutout.data.shape == mock_sci.shape[-2:]
+
+
+def test_multistripe_subarray_model_superstripe_only():
+    mock_rn = ReadnoiseModel(data=(np.ones((2048, 2048), dtype=int) * np.arange(2048)[:, None]))
+    mock_rn.meta.instrument.name = "NIRCAM"
+    mock_rn.meta.subarray.xstart = 1
+    generate_test_refmodel_metadata(mock_rn)
+    mock_sci = RampModel(data=np.ones((24, 5, 8, 64)))
+    mock_sci.meta.subarray = {
+        "fastaxis": 1,
+        "name": "SUB64SUP08",
+        "slowaxis": -2,
+        "xsize": 64,
+        "xstart": 1851,
+        "ysize": 8,
+        "ystart": 1817,
+        "multistripe_reads1": 0,
+        "multistripe_skips1": 0,
+        "multistripe_reads2": 0,
+        "multistripe_skips2": 0,
+        "repeat_stripe": 0,
+        "interleave_reads1": 0,
+        "superstripe_step": 8,
+        "num_superstripe": 8,
+    }
+    mock_rn_cutout = get_subarray_model(mock_sci, mock_rn)
+    assert mock_rn_cutout.data.shape == (8, 8, 64)
+    assert np.all(mock_rn_cutout.data[0] == np.arange(224, 232)[:, None])
+    assert np.all(mock_rn_cutout.data[-1] == np.arange(168, 176)[:, None])
 
 
 @pytest.fixture

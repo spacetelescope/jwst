@@ -124,12 +124,40 @@ def test_generate_superstripe_ranges_science_frame(superstripe_model):
     assert all_ranges["reference_subarray"] == expected_ref_sub
 
 
-def test_generate_superstripe_ranges_invalid_input(superstripe_model):
+def test_generate_superstripe_ranges_pure_superstripe(superstripe_model):
+    # Set up a model with pure super stripes: start just after the refpix,
+    # set all reads and skips to 0
     model = superstripe_model.copy()
+    model.meta.subarray.multistripe_reads1 = 0
+    model.meta.subarray.multistripe_skips1 = 0
     model.meta.subarray.multistripe_reads2 = 0
+    model.meta.subarray.multistripe_skips2 = 0
+    model.meta.subarray.superstripe_step = 204
+    model.meta.subarray.xsize = 204
+    model.meta.subarray.xstart = 5
+    model.data = model.data[:, :, :, 4:]
 
-    with pytest.raises(ValueError, match="Invalid value for multistripe_reads2"):
-        stripe_utils.generate_superstripe_ranges(model)
+    all_ranges = stripe_utils.generate_superstripe_ranges(model)
+
+    expected_full = {
+        0: [(4, 208)],
+        1: [(208, 412)],
+        2: [(412, 616)],
+        3: [(616, 820)],
+        4: [(820, 1024)],
+        5: [(1024, 1228)],
+        6: [(1228, 1432)],
+        7: [(1432, 1636)],
+        8: [(1636, 1840)],
+        9: [(1840, 2044)],
+    }
+    expected_sub = dict.fromkeys(range(10), [(0, 204)])
+    expected_ref_full = dict.fromkeys(range(10), [])
+    expected_ref_sub = dict.fromkeys(range(10), [])
+    assert all_ranges["full"] == expected_full
+    assert all_ranges["subarray"] == expected_sub
+    assert all_ranges["reference_full"] == expected_ref_full
+    assert all_ranges["reference_subarray"] == expected_ref_sub
 
 
 def test_generate_superstripe_ranges_wrong_size(superstripe_model):
@@ -147,6 +175,9 @@ def _assign_metadata(metanode, keys, vals):
     Stripe params: xsize_sci, ysize_sci, nreads1, nreads2, nskips1,
                    nskips2, repeat_stripe, interleave_reads1, fastaxis, slowaxis
     """
+    # always set xstart/ystart to 1
+    metanode.subarray.xstart = 1
+    metanode.subarray.ystart = 1
     for key, val in zip(keys, vals):
         setattr(metanode.subarray, key, val)
 
@@ -551,6 +582,8 @@ def test_collate_superstripes(
         model.meta.subarray.slowaxis = 2
         model.meta.subarray.xsize = superstripe_model.meta.subarray.ysize
         model.meta.subarray.ysize = superstripe_model.meta.subarray.xsize
+        model.meta.subarray.xstart = superstripe_model.meta.subarray.ystart
+        model.meta.subarray.ystart = superstripe_model.meta.subarray.xstart
         model.data = np.swapaxes(model.data, -2, -1)
 
     # expected data shapes
