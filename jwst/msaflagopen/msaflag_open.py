@@ -44,11 +44,11 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
     Parameters
     ----------
     input_model : `~stdatamodels.jwst.datamodels.ImageModel`
-        Science data to be corrected. Updated in place.
+        Science data to be corrected. Updated in-place.
     shutter_refname : str
         Name of MSAOPER reference file.
     wcs_refnames : dict
-        Dictionary of wcs reference file names.
+        Dictionary of WCS reference file names.
 
     Returns
     -------
@@ -78,13 +78,13 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     that for the MSA_FAILED_OPEN standard flag.  All other science data
     arrays are unchanged.
 
-    The input datamodel is modified in place.
+    The input datamodel is modified in-place.
 
     Parameters
     ----------
-    input_datamodel : DataModel
-        Input science data. Updated in place.
-    failed_slitlets : list of Slit
+    input_datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Input science data. Updated in-place.
+    failed_slitlets : list of `~stdatamodels.jwst.transforms.Slit`
         Failed open slitlets.
     wcs_refnames : dict
         Reference file names used to calculate the WCS. Keys are reference
@@ -92,7 +92,7 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
 
     Returns
     -------
-    input_datamodel : DataModel
+    input_datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data with DQ flags modified.
     """
     # Use the machinery in assign_wcs to create a WCS object for the bad shutters
@@ -142,7 +142,7 @@ def boundingbox_to_indices(data_shape, bounding_box):
     """
     Translate a bounding box to image indices.
 
-    Takes a bounding_box (tuple of tuples: ((x1, x2), (y1, y2)) and
+    Takes a ``bounding_box`` (tuple of tuples: ``((x1, x2), (y1, y2))``) and
     a datamodel and calculates the range of indices in the X and Y dimensions
     of the overlap between the bounding box and the datamodel's data array.
 
@@ -151,7 +151,7 @@ def boundingbox_to_indices(data_shape, bounding_box):
     data_shape : tuple
         The data shape for the input science datamodel.
     bounding_box : tuple of tuple
-        Bounding box returned from wcs object.
+        Bounding box returned from WCS object.
 
     Returns
     -------
@@ -176,7 +176,7 @@ def wcs_to_dq(wcs_array, flag):
     """
     Create a DQ subarray corresponding to a failed open slitlet.
 
-    The created array has the value `flag` wherever the WCS coordinates
+    The created array has the value ``flag`` wherever the WCS coordinates
     are valid (non-NaN) and 0 otherwise.
 
     Parameters
@@ -239,7 +239,7 @@ def create_slitlets(shutter_refname):
 
     Returns
     -------
-    slitlets : list of Slit
+    slitlets : list of `~stdatamodels.jwst.transforms.Slit`
         A list of slitlets. Each slitlet is a named tuple with elements
         ("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name", "source_alias",

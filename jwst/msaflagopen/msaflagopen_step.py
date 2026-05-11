@@ -1,3 +1,5 @@
+"""Flag pixels affected by open MSA shutters in NIRSpec exposures."""
+
 import logging
 
 from stpipe.crds_client import reference_uri_to_cache_path
@@ -68,7 +70,7 @@ def create_reference_filename_dictionary(input_model):
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input data with WCS assigned.
 
     Returns
