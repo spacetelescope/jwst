@@ -24,32 +24,28 @@ class PixelReplaceArrays:
     which was slowing runtime for TSO data with thousands of integrations,
     and provides a consistent interface for :meth:`PixelReplacement.mingrad`
     and :meth:`PixelReplacement.fit_profile`.
-
-    Attributes
-    ----------
-    data : ndarray
-        Science array.
-    dq : ndarray
-        Data quality array.
-    err : ndarray
-        Total error array.
-    var_poisson : ndarray or None
-        Poisson variance array.
-    var_rnoise : ndarray or None
-        Read-noise variance array.
-    var_flat : ndarray or None
-        Flat-field variance array.
-    dispersion_direction : int
-        Dispersion direction.
     """
 
     data: np.ndarray
+    """Science array."""
+
     dq: np.ndarray
+    """Data quality array."""
+
     err: np.ndarray
+    """Total error array."""
+
     var_poisson: np.ndarray | None
+    """Poisson variance array."""
+
     var_rnoise: np.ndarray | None
+    """Read-noise variance array."""
+
     var_flat: np.ndarray | None
+    """Flat-field variance array."""
+
     dispersion_direction: int
+    """Dispersion direction."""
 
 
 class PixelReplacement:
