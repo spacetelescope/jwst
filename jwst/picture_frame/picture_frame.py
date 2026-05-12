@@ -22,10 +22,7 @@ def _region_masks(background_mask):
     Parameters
     ----------
     background_mask : ndarray
-        Background mask image:
-
-        * 1 = valid background pixel
-        * 0 = otherwise
+        Background mask image (1 for valid background pixel, 0 otherwise).
 
     Returns
     -------
@@ -110,11 +107,9 @@ def correct_picture_frame(
                        `~stdatamodels.jwst.datamodels.CubeModel`
         Correction model to be saved or None.
     status : {'COMPLETE', 'SKIPPED'}
-        Completion status:
-
-        * ``'SKIPPED'`` if errors were encountered and
-          the output data is unchanged from the input data.
-        * ``'COMPLETE'`` otherwise.
+        Completion status: ``'SKIPPED'`` if errors were encountered and
+        the output data is unchanged from the input data;
+        ``'COMPLETE'`` otherwise.
     """
     # Set some default return values, to be updated later
     correction_model = None
