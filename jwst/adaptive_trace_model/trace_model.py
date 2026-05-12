@@ -14,7 +14,6 @@ from stcal.multiprocessing import compute_num_cores
 from stcal.resample.utils import is_flux_density
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
-from stdatamodels.properties import ObjectNode
 
 from jwst.adaptive_trace_model.bspline import bspline_fit
 from jwst.assign_wcs.nirspec import nrs_ifu_wcs
@@ -1649,18 +1648,10 @@ def _intermediate_models(model, data_arrays):
         A list of datamodels containing the input data arrays.
         Datamodel type will match the input model.
     """
-    model_for_update = model
     if isinstance(model, datamodels.IFUImageModel):
         model_type = datamodels.IFUImageModel
     else:
         model_type = datamodels.SlitModel
-
-        # If the input is an object node (e.g. it was a slit from a
-        # MultiSlitModel list), it's not a proper model, and we need to
-        # make a SlitModel from its instance dictionary to use it for
-        # metadata updates.
-        if isinstance(model, ObjectNode):
-            model_for_update = datamodels.SlitModel(model.instance)
 
     new_models = []
     for data in data_arrays:
@@ -1668,16 +1659,13 @@ def _intermediate_models(model, data_arrays):
             new_model = None
         else:
             new_model = model_type(data=data)
-            new_model.update(model_for_update)
+            new_model.update(model)
 
             # prevent empty error arrays
             new_model.err = None
             new_model.meta.bunit_err = None
 
         new_models.append(new_model)
-
-    if model_for_update is not model:
-        model_for_update.close()
 
     return new_models
 
