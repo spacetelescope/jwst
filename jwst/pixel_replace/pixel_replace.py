@@ -66,7 +66,7 @@ class PixelReplacement:
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Datamodel with bad pixels to replace. Updated in-place.
 
-    **pars : dict, optional
+    **pars
         Optional parameters to modify how pixel replacement
         will execute.
     """
