@@ -436,6 +436,31 @@ def generate_stripe_reference(ref_array, sci_model):
     return stripe_out
 
 
+def _collated_superstripe_slow_size(n_stripe, n_step):
+    """
+    Get the expected output size for a striped subarray along the slow axis.
+
+    The output subarray size is taken to be the  nearest power of 2 above
+    ``n_stripe * n_step``.
+
+    Parameters
+    ----------
+    n_stripe : int
+        The number of stripes.
+    n_step : int
+        The size of the stripe step.
+
+    Returns
+    -------
+    int
+        The expected subarray size.
+    """
+    minimum_size = n_stripe * n_step
+    if minimum_size == 0:
+        return 1
+    return 1 << (minimum_size - 1).bit_length()
+
+
 def collate_superstripes(input_model):
     """
     Collate superstripes into arrays resembling the full detector/subarray shape.
@@ -454,7 +479,6 @@ def collate_superstripes(input_model):
     # First define the parent array shape
     fastaxis = input_model.meta.subarray.fastaxis
     slowaxis = input_model.meta.subarray.slowaxis
-    slow_size = 2048
     if np.abs(fastaxis) == 1:
         fast_size = input_model.meta.subarray.xsize
     else:
@@ -462,8 +486,12 @@ def collate_superstripes(input_model):
 
     # Determine integration/stripe numbers
     nints, ngroups, ny, nx = input_model.data.shape
-    n_sstr = input_model.meta.subarray.num_superstripe
-    nints_sci = nints // n_sstr
+    n_stripe = input_model.meta.subarray.num_superstripe
+    n_step = input_model.meta.subarray.superstripe_step
+    nints_sci = nints // n_stripe
+
+    # Get the expected output size for the mode
+    slow_size = _collated_superstripe_slow_size(n_stripe, n_step)
 
     # Generate slowaxis ranges to place science regions from stripes into parent frame
     all_ranges = generate_superstripe_ranges(input_model)
@@ -487,7 +515,7 @@ def collate_superstripes(input_model):
         oldgdq = None
     else:
         oldgdq = science_detector_frame_transform(input_model.groupdq, fastaxis, slowaxis)
-    if input_model.pixeldq is None or input_model.pixeldq.shape != (n_sstr, ny, nx):
+    if input_model.pixeldq is None or input_model.pixeldq.shape != (n_stripe, ny, nx):
         oldpdq = None
     else:
         oldpdq = science_detector_frame_transform(input_model.pixeldq, fastaxis, slowaxis)
@@ -506,8 +534,8 @@ def collate_superstripes(input_model):
     # plane, and overlaps could be reduced using a function of choice,
     # e.g. np.median.
     for integ in range(nints_sci):
-        for stripe in range(n_sstr):
-            stripe_idx = integ * n_sstr + stripe
+        for stripe in range(n_stripe):
+            stripe_idx = integ * n_stripe + stripe
             for s_reg, f_reg in zip(sub_range[stripe], full_range[stripe], strict=True):
                 # Propagate the science data
                 newdata[integ, :, f_reg[0] : f_reg[1], :] = olddata[
