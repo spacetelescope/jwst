@@ -1,47 +1,57 @@
-Arguments
-=========
-The ramp fitting step has the following optional arguments that can be set by the user:
+Step Arguments
+==============
+The ramp fitting step has the following optional arguments that can be set by the user.
 
-* ``--algorithm``: A string to select the desired algorithm.  The available
+``--algorithm``
+  A string to select the desired algorithm.  The available
   values are "OLS_C" to select the C implementation of the Ordinary Least
   Squares algorithm and "LIKELY" to select a prototype maximum-likelihood based
   approach.  The algorithm defaults to "OLS_C".
 
-* ``--save_opt``: A True/False value that specifies whether to write
+``--save_opt``
+  A boolean value that specifies whether to write
   the optional output product. When using the "OLS_C" algorithm, the
   optional results product is a set of intermediate calculations captured
-  in the RampFitOutputModel data model. The output file will have the suffix
-  "fitopt". For the "LIKELY" algorithm, the file saved is an ImageModel
+  in the `~stdatamodels.jwst.datamodels.RampFitOutputModel` data model.
+  The output file will have the suffix
+  "fitopt". For the "LIKELY" algorithm, the file saved is an
+  `~stdatamodels.jwst.datamodels.ImageModel`
   containing the ``chisq`` array computed and stored in the ``data`` element
-  of the ImageModel. The output file will have the suffix "likely_chisq".
-  Default is False.
+  of the `~stdatamodels.jwst.datamodels.ImageModel`.
+  The output file will have the suffix "likely_chisq".
+  Default is `False`.
 
-* ``--opt_name``: A string that can be used to override the default name
+``--opt_name``
+  A string that can be used to override the default name
   for the optional output product. If no optional name is provided, but
-  saving the optional product is true, then this step will use the input
+  saving the optional product is `True`, then this step will use the input
   file name as the base name.
 
-* ``--int_name``: A string that can be used to override the default name
+``--int_name``
+  A string that can be used to override the default name
   for the per-integration product.
 
-* ``--firstgroup``, ``--lastgroup``: A pair of integers that can be used to set the first and last groups
-  to be used in the ramp fitting procedure.  These values are zero-indexed.  If the first group is set to <0,
-  or None, or the last group is set to > (#groups - 1) or None, or the first group is set to > last group,
+``--firstgroup``, ``--lastgroup``
+  A pair of integers that can be used to set the first and last groups
+  to be used in the ramp fitting procedure.  These values are zero-indexed.  If the first group is set to ``<0``,
+  or None, or the last group is set to ``> (num_groups - 1)`` or None, or the first group is set to ``> last_group``,
   the settings are ignored and the full ramp is fit.  Default values for both parameters are None.
 
-* ``--suppress_one_group``: A boolean to suppress computations for saturated ramps
-  with only one good (unsaturated) sample.  The default is set to True to suppress these computations,
+``--suppress_one_group``
+  A boolean to suppress computations for saturated ramps
+  with only one good (unsaturated) sample.  The default is set to `True` to suppress these computations,
   which will compute all values for the ramp the same as if the entire ramp were
   saturated.
 
-* ``--maximum_cores``: The number of available cores that will be
-  used for multi-processing in this step. The default value is '1', which results in no
-  multi-processing. Other options are either an integer, 'quarter', 'half', and 'all'.
+``--maximum_cores``
+  The number of available cores that will be
+  used for multi-processing in this step. The default value is ``'1'``, which results in no
+  multi-processing. Other options are either an integer, ``'quarter'``, ``'half'``, and ``'all'``.
   Note that these fractions refer to the total available cores and on most CPUs these include
   physical and virtual cores. The clock time for the step is reduced almost linearly by the
   number of physical cores used on all machines. For example, on an Intel CPU with
-  six real cores and six virtual cores, setting maximum_cores to 'half' results in a
+  six real cores and six virtual cores, setting ``maximum_cores`` to ``'half'`` results in a
   decrease of a factor of six in the clock time for the step to run. Depending on the system,
-  the clock time can also decrease even more with maximum_cores set to 'all'.
+  the clock time can also decrease even more with ``maximum_cores`` set to ``'all'``.
   Setting the number of cores to an integer can be useful when running on machines with a
   large number of cores where the user is limited in how many cores they can use.
