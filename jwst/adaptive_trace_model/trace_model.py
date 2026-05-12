@@ -1516,7 +1516,9 @@ def _inflate_error(error_array, extname, oversample_factor):
     """
     inflation_factor = 0.23 * oversample_factor + 0.77
     if str(extname).lower().startswith("var"):
-        error_array *= inflation_factor**2
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "overflow encountered", category=RuntimeWarning)
+            error_array *= inflation_factor**2
     else:
         error_array *= inflation_factor
 
@@ -2078,7 +2080,7 @@ def fit_and_oversample(
     ]
     for name in extras:
         if model.hasattr(name):
-            delattr(model, name)
+            setattr(model, name, None)
 
     # Make sure NaNs and DO_NOT_USE flags match in all extensions
     match_nans_and_flags(model)
