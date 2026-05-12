@@ -861,10 +861,10 @@ def _fit_one_region(
             data_slice, err_slice, alpha_slice
         )
 
-    # Check again for signal over threshold
-    if not _threshold_test(flux_xdisp, snr_xdisp, region_number, peak_threshold, snr_threshold):
-        log.debug(no_data_msg)
-        return {}
+        # Check again for signal over threshold after trimming
+        if not _threshold_test(flux_xdisp, snr_xdisp, region_number, peak_threshold, snr_threshold):
+            log.debug(no_data_msg)
+            return {}
 
     # Get a running sum in a given detector column (used for normalization)
     negative_nod_threshold = -5.0
@@ -1172,7 +1172,7 @@ def oversample_flux(
             total_used = np.sum(compact_locations)
             log.debug(
                 f"Using {total_used}/{np.sum(indx)} pixels "
-                f"from the spline model for slice {reg_num}"
+                f"from the spline model for region {reg_num}"
             )
 
     # Insert the bspline interpolated values into the final combined oversampled array,
@@ -1604,7 +1604,7 @@ def _update_wcs(wcs, map_pixels):
     Parameters
     ----------
     wcs : `~gwcs.WCS`
-        The WCS object, including transforms for all slices.
+        The WCS object, including transforms for all slits or slices.
     map_pixels : `~astropy.modeling.models.Model`
         Model that transforms from oversampled pixels to original detector
         pixels, to be prepended to the WCS pipeline.
@@ -1701,9 +1701,9 @@ def fit_and_oversample(
             `~stdatamodels.jwst.datamodels.SlitModel`
         The input datamodel, updated in place.
     fit_threshold : float, optional
-        The signal threshold sigma for attempting spline fits within a slice region.
-        Lower values will create spline traces for more slices.  If less than or
-        equal to 0, all slices will be fit.
+        The signal threshold sigma for attempting spline fits within a spectral region.
+        Lower values will create spline traces for more regions.  If less than or
+        equal to 0, all regions will be fit.
     slope_limit : float, optional
         The normalized slope threshold for using the spline model in oversampled
         data.  Lower values will use the spline model for fainter sources. If less
@@ -1869,7 +1869,7 @@ def fit_and_oversample(
     peak_threshold = None
     region_numbers = np.unique(region_map[region_map > 0])
     if fit_threshold <= 0:
-        # In this case for any mode, all slices should be fit,
+        # In this case for any mode, all regions should be fit,
         # so set both thresholds to None
         fit_threshold = None
     else:
