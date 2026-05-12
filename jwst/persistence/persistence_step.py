@@ -21,7 +21,7 @@ class PersistenceStep(Step):
     class_alias = "persistence"
 
     spec = """
-        save_persistence = string(default=None) # Name of ASDF output file for the persistence array
+        save_persistence = string(default=None) # Name of ASDF output file to save the persistence array
         persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
         persistence_array_file = string(default=None) # A path to an ASDF file containing a 2-D array of persistence times per pixel
         persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
