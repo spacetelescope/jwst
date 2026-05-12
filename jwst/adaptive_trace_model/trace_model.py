@@ -212,6 +212,25 @@ def fit_2d_spline_trace(
                 verbose=False,
             )
 
+            """
+            # Make a useful plot every 100 columns.
+            # Code is retained here for debugging purposes, commented out since
+            # matplotlib is not a dependency of this package.
+            if (i > 0) and (i % 100 == 0):
+                from matplotlib import pyplot as plt
+
+                temp_dalpha = np.abs(np.nanmedian(np.diff(alpha, axis=0)))
+                temp_alpha = np.arange(
+                    np.nanmin(local_alpha), np.nanmax(local_alpha), temp_dalpha / 50
+                )
+                plt.plot(local_alpha, local_data, "x", label="Nearby Cols")
+                plt.plot(alpha[:, i], scaled_flux[:, i], "s", zorder=50, label=f"Column {i}")
+                plt.plot(temp_alpha, bspline(temp_alpha), label="Spline Fit")
+                plt.legend()
+                plt.ylim(np.nanmin(bspline(temp_alpha)) - 0.1, np.nanmax(bspline(temp_alpha)) + 0.1)
+                plt.show()
+            """
+
             # If the fit failed (returned None) and no saved fit is available,
             # try the fitting routine again with slightly fewer
             # breakpoints to resolve occasional numerical issues.
