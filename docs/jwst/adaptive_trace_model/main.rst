@@ -25,7 +25,7 @@ resampling artifacts due to undersampling that can be mitigated by oversampling 
 to creating the rectified 2D spectral image in the :ref:`resample_spec <resample_spec_step>`
 step.
 
-This step is currently available for all NIRSpec and MIRI spectral modes.
+This step is currently available for all NIRSpec and MIRI LRS spectral modes.
 Trace models may be generated for time-series spectra, but oversampling is disabled
 for this mode. The step is incorporated into the :ref:`calwebb_spec2 <calwebb_spec2>` and
 :ref:`calwebb_spec3 <calwebb_spec3>` pipelines, prior to the
