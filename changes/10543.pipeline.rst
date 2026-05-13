@@ -1,0 +1,1 @@
+Streamlined stage3 spectral processing inputs for WFSS mode.
