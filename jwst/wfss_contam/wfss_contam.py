@@ -695,6 +695,14 @@ def contam_corr(
             f"Using polyfit_degree={polyfit_degree} "
             f"for spectral fitting over {n_iterations} iterations"
         )
+        # check that background subtraction did not fail
+        if output_model.meta.cal_step.bkg_subtract != "COMPLETE":
+            log.warning(
+                f"Background subtraction step status is {output_model.meta.cal_step.bkg_subtract}. "
+                "A good background subtraction is necessary for models to match observed data "
+                "well enough for spectral fitting to succeed. Fitting will be attempted, "
+                "but failures may be expected."
+            )
     per_slit_simuls = []
     contam_cuts = []
     for iteration in range(n_iterations):
@@ -755,6 +763,14 @@ def contam_corr(
             # so errors do not accumulate across iterations.
             slit.data = original_data[i] - contam_cut
             contam_cuts.append(contam_cut)
+
+        if success == 0:
+            log.warning(
+                f"No successful spectral fits in iteration {iteration + 1}. "
+                "Will not continue iterating. Ensure that the background is well subtracted, and "
+                "consider reducing polyfit_degree or increasing l2_alpha to improve fit stability."
+            )
+            break
 
     # Build output contam_model and simul_slits from the final iteration's results.
     log.info("Creating contamination image for each individual source")
