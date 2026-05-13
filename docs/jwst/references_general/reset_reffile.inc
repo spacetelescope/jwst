@@ -24,10 +24,11 @@ DQ       2      ncols x nrows                  integer
 
 .. include:: ../includes/dq_def.inc
 
-The SCI and ERR data arrays are 4-D, with dimensions of ncols x nrows x
-ngroups X nints, where ncols x nrows matches the dimensions of the raw detector
+The SCI and ERR data arrays are 4-D, with dimensions of
+``ncols x nrows x ngroups x nints``, where ``ncols x nrows``
+matches the dimensions of the raw detector
 readout mode for which the reset applies. The reference file contains the
-number of NGroups planes required for the correction to be zero on
-the last plane Ngroups plane.  The correction for the first few
+number of ``ngroups`` planes required for the correction to be zero on
+the last plane ``ngroups`` plane.  The correction for the first few
 integrations varies and eventually settles down to a constant correction
 independent of integration number.
