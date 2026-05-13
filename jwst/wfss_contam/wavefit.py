@@ -99,23 +99,25 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0):
         )
 
     # Build inverse-variance weights from the error array.
-    # Pixels with non-positive or non-finite errors fall back to weight=1.
     err_arr = getattr(observed_slit, "err", None)
     if err_arr is not None:
-        err_arr = np.asarray(err_arr)
+        is_finite_err = np.isfinite(err_arr) & (err_arr > 0)
+        if not np.any(is_finite_err & mask):
+            raise SlitFitError(
+                "No valid pixels have finite positive error values; cannot compute fit weights."
+            )
         with np.errstate(divide="ignore", invalid="ignore"):
             inv_var = np.where(
-                np.isfinite(err_arr) & (err_arr > 0),
+                is_finite_err,
                 1.0 / err_arr**2,
-                1.0,
+                0.0,
             )
-        weights = inv_var[mask]
+        w_sqrt = np.sqrt(inv_var)[mask]
     else:
-        weights = np.ones(n_valid)
+        w_sqrt = np.ones(n_valid)
 
     design_matrix = np.column_stack([b[mask] for b in basis])
     # Weighted normal equations: (A^T W A) c = A^T W b
-    w_sqrt = np.sqrt(weights)
     aw = design_matrix * w_sqrt[:, np.newaxis]
     bw = obs_data[mask] * w_sqrt
     if l2_alpha == 0.0:

@@ -167,6 +167,48 @@ def test_fit_dq_mask_excludes_bad_pixels(make_slits):
     assert_allclose(coeffs, [c0_true, c1_true], rtol=1e-6)
 
 
+def test_large_errors_downweight_bad_pixels(make_slits):
+    """Test that large error values on bad pixels downweight them and we can recover coefficients."""
+    _, simul_slit, wavelength = make_slits
+    sim_data = simul_slit.data
+
+    c0_true, c1_true = 1.05, -0.5
+    simul = _make_basis_slit(sim_data, wavelength, max_order=1)
+    clean_obs = c0_true * simul.data + c1_true * simul.fluxmodel_1
+
+    # Corrupt a patch, leave unmasked, set errors to be very large
+    corrupted = clean_obs.copy()
+    corrupted[5:8, 10:40] = 999.0
+    err = np.ones(corrupted.shape)
+    err[5:8, 10:40] = 1e10
+
+    observed = SlitModel()
+    observed.data = corrupted
+    observed.dq = observed.get_default("dq")
+    observed.err = err
+
+    coeffs = fit_slit_by_basis_images(observed, simul)
+    assert coeffs is not None
+    assert_allclose(coeffs, [c0_true, c1_true], rtol=1e-6)
+
+
+def test_fit_raises_when_all_errors_nonfinite(make_slits):
+    """Test SlitFitError raised when the err array contains no finite positive values."""
+    _, simul_slit, wavelength = make_slits
+    sim_data = simul_slit.data
+
+    simul = _make_basis_slit(sim_data, wavelength, max_order=1)
+    obs_data = 1.0 * simul.data + 0.5 * simul.fluxmodel_1
+
+    observed = SlitModel()
+    observed.data = obs_data
+    observed.dq = np.zeros(obs_data.shape, dtype=np.uint32)
+    observed.err = np.full(obs_data.shape, np.nan)
+
+    with pytest.raises(SlitFitError, match="finite positive error"):
+        fit_slit_by_basis_images(observed, simul)
+
+
 def test_fit_raises_too_few_valid_pixels():
     """Test SlitFitError raised when valid pixels < number of basis terms."""
     shape = (5, 5)
