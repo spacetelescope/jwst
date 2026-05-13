@@ -5,7 +5,11 @@ from stdatamodels.jwst import datamodels
 from jwst.assign_wcs.tests.helpers import make_mock_dhs_nrca1_rate
 from jwst.lib import stripe_utils
 from jwst.lib.reffile_utils import science_detector_frame_transform
-from jwst.lib.tests.helpers import make_superstripe_mask_model, make_superstripe_model
+from jwst.lib.tests.helpers import (
+    make_sub64p_multistripe_model,
+    make_superstripe_mask_model,
+    make_superstripe_model,
+)
 
 
 @pytest.fixture(scope="module")
@@ -16,6 +20,11 @@ def substripe_model():
 @pytest.fixture(scope="module")
 def superstripe_model():
     return make_superstripe_model(add_inttimes=True, add_zeroframe=True)
+
+
+@pytest.fixture(scope="module")
+def multistripe_subarray_model():
+    return make_sub64p_multistripe_model(add_inttimes=True, add_zeroframe=True)
 
 
 @pytest.mark.parametrize("science_frame", [True, False])
@@ -668,3 +677,44 @@ def test_collate_superstripes(
         assert collated.zeroframe.shape == (nint_after, ny_after, nx_after)
     else:
         assert collated.zeroframe is None
+
+
+def test_collate_superstripes_with_slowsize_subarray(multistripe_subarray_model):
+    model = multistripe_subarray_model
+
+    # expected data shapes
+    nint_before, ngroup, ny_before, nx_before = model.data.shape
+    nstripe = model.meta.subarray.num_superstripe
+    nint_after = nint_before // nstripe
+    nx_after = nx_before
+    ny_after = (ny_before - 1) * nstripe
+
+    # set the data value to the stripe number
+    for integ in range(nint_before):
+        model.data[integ] = integ % nstripe
+
+    model.pixeldq = np.zeros((nstripe, ny_before, nx_before))
+    model.groupdq = np.zeros((nint_before, ngroup, ny_before, nx_before))
+    collated = stripe_utils.collate_superstripes(model)
+
+    assert collated.data.shape == (nint_after, ngroup, ny_after, nx_after)
+    assert collated.groupdq.shape == (nint_after, ngroup, ny_after, nx_after)
+    assert collated.pixeldq.shape == (ny_after, nx_after)
+
+    # groupdq all zeros
+    np.testing.assert_equal(collated.groupdq, 0)
+
+    # pixeldq all zeros (no refpix in output)
+    np.testing.assert_equal(collated.pixeldq, 0)
+
+    # data for each integration is composed from all stripes
+    # added in reverse order from left to right for original data
+    expected = np.arange(nstripe - 1, -1, -1)
+
+    # rows match expected
+    assert np.allclose(collated.data, expected[None, None, :, None], equal_nan=True)
+
+    # old int_times copied to int_times_stripe
+    assert len(collated.int_times_stripe) == nint_before
+    # new int_times matches new integration size
+    assert len(collated.int_times) == nint_after

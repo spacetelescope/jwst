@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from stdatamodels.jwst import datamodels
 
@@ -5,6 +7,8 @@ from jwst.lib.reffile_utils import (
     detector_science_frame_transform,
     science_detector_frame_transform,
 )
+
+log = logging.getLogger(__name__)
 
 __all__ = [
     "STRIPE_TO_STANDARD_SUBARRAY",
@@ -19,9 +23,9 @@ __all__ = [
 
 STRIPE_TO_STANDARD_SUBARRAY = {
     # NIRCam subarray superstripe modes
-    "SUB64MSP02": {"name": "SUB64P", "slow_size": 64},
-    "SUB64SUP08": {"name": "SUB64P", "slow_size": 64},
-    "SUB64SUP32": {"name": "SUB64P", "slow_size": 64},
+    "SUB64MS02P": {"name": "SUB64P", "slow_size": 64},
+    "SUB64SP08P": {"name": "SUB64P", "slow_size": 64},
+    "SUB64SP32P": {"name": "SUB64P", "slow_size": 64},
 }
 """
 Map superstripe subarrays to standard subarray names and sizes.
@@ -192,6 +196,7 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
         in slowaxis corresponding to stripe shapes in the full array, striped
         subarray for the science and reference regions respectively.
     """
+    subarray_name = sci_model.meta.subarray.name
     nreads1 = sci_model.meta.subarray.multistripe_reads1
     nskips1 = sci_model.meta.subarray.multistripe_skips1
     nreads2 = sci_model.meta.subarray.multistripe_reads2
@@ -204,10 +209,10 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
     slowaxis = sci_model.meta.subarray.slowaxis
     if np.abs(fastaxis) == 1:
         slow_size = sci_model.meta.subarray.ysize
-        slow_start = sci_model.meta.subarray.ystart
+        slow_start = sci_model.meta.subarray.ystart - 1
     else:
         slow_size = sci_model.meta.subarray.xsize
-        slow_start = sci_model.meta.subarray.xstart
+        slow_start = sci_model.meta.subarray.xstart - 1
 
     # Check for the number of pixels to read per stripe
     if nreads2 <= 0:
@@ -217,13 +222,18 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
 
     sub_ranges = {}
     full_ranges = {}
+    std_sub_ranges = {}
     reference_sub_ranges = {}
     reference_full_ranges = {}
+
+    # TODO: standard_sub_ranges is a hack for NRC multistripe SUB64MS02P
+    #  which does not expect refpix in output, not sure how it will generalize
+    std_sub_lines = 0
     for stripe in range(num_superstripe):
         # Track the read position in the full frame with linecount, and number of lines
         # read into subarray with sub_lines
         # Start at the subarray start.
-        linecount = slow_start - 1
+        linecount = slow_start
         sub_lines = 0
 
         # Make nreads1 row reads
@@ -243,8 +253,10 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
         # Read Nreads2 for the stripe
         full_ranges[stripe] = [(linecount, linecount + nreads2)]
         sub_ranges[stripe] = [(sub_lines, sub_lines + nreads2)]
+        std_sub_ranges[stripe] = [(std_sub_lines, std_sub_lines + nreads2)]
         linecount += nreads2
         sub_lines += nreads2
+        std_sub_lines += nreads2
 
         # Now, while the output size is less than the science array size:
         # 1a. If repeat_stripe, reset linecount (HEAD) to initial position
@@ -260,7 +272,7 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
         while sub_lines < slow_size:
             # If repeat_stripe, add interleaved rows to output and increment sub_lines
             if repeat_stripe > 0:
-                linecount = slow_start - 1
+                linecount = slow_start
 
                 if nreads1 > 0:
                     reference_full_ranges[stripe].append((linecount, linecount + nreads1))
@@ -277,8 +289,10 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
                 linecount += nskips2
             full_ranges[stripe].append((linecount, linecount + nreads2))
             sub_ranges[stripe].append((sub_lines, sub_lines + nreads2))
+            std_sub_ranges[stripe] = [(std_sub_lines, std_sub_lines + nreads2)]
             linecount += nreads2
             sub_lines += nreads2
+            std_sub_lines += nreads2
 
         if sub_lines != slow_size:
             raise ValueError("Stripe readout does not match science array shape.")
@@ -286,18 +300,22 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
     all_ranges = {
         "full": full_ranges,
         "subarray": sub_ranges,
+        "standard_subarray": std_sub_ranges,
         "reference_full": reference_full_ranges,
         "reference_subarray": reference_sub_ranges,
     }
 
     # Swap slow axis indices to science frame if needed
     full_size = 2048
+    std_sub_size = STRIPE_TO_STANDARD_SUBARRAY.get(subarray_name, {}).get("slow_size", 2048)
     if science_frame and slowaxis < 0:
         for range_set in all_ranges:
             for key, range_list in all_ranges[range_set].items():
                 for i, rge in enumerate(range_list):
                     if "full" in range_set:
                         all_ranges[range_set][key][i] = tuple([full_size - x for x in rge[::-1]])
+                    elif "standard" in range_set:
+                        all_ranges[range_set][key][i] = tuple([std_sub_size - x for x in rge[::-1]])
                     else:
                         all_ranges[range_set][key][i] = tuple([slow_size - x for x in rge[::-1]])
     return all_ranges
@@ -485,7 +503,10 @@ def collate_superstripes(input_model):
 
     # Generate slowaxis ranges to place science regions from stripes into parent frame
     all_ranges = generate_superstripe_ranges(input_model)
-    full_range = all_ranges["full"]
+    if slow_size == 2048:
+        full_range = all_ranges["full"]
+    else:
+        full_range = all_ranges["standard_subarray"]
     sub_range = all_ranges["subarray"]
 
     # Initialize new array shapes in detector space

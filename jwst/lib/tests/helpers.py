@@ -245,3 +245,59 @@ def make_superstripe_mask_model():
     ref_data.meta.useafter = "2024-01-01"
 
     return ref_data
+
+
+def make_sub64p_multistripe_model(add_inttimes=False, add_zeroframe=False):
+    """
+    Make a NIRCam imaging superstripe raw ramp model with SUB64P subarray.
+
+    Parameters
+    ----------
+    add_inttimes : bool, optional
+        If True, an `int_times` table will be attached to the output datamodel.
+    add_zeroframe : bool, optional
+        If True, a `zeroframe` array will be attached to the output datamodel.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.RampModel`
+        The ramp model.
+    """
+    nints = 3
+    nstripe = 64
+    ngroups = 5
+    ysize = 2
+    xsize = 64
+    xstart = 1851
+    ystart = 1817
+    model = make_rawramp(
+        "NIRCAM", nints * nstripe, ngroups, ysize, xsize, ystart, xstart, num_superstripe=nstripe
+    )
+
+    # Add some more basic metadata
+    model.meta.instrument.detector = "NRCB1"
+    model.meta.subarray.name = "SUB64MS02P"
+    model.meta.subarray.fastaxis = 1
+    model.meta.subarray.slowaxis = -2
+    model.meta.exposure.integration_start = 1
+    model.meta.exposure.integration_end = nints * nstripe
+    model.meta.exposure.nints = nints * nstripe
+
+    # Add the multistripe metadata
+    model.meta.subarray.multistripe_reads1 = 1
+    model.meta.subarray.multistripe_skips1 = 165
+    model.meta.subarray.multistripe_reads2 = 1
+    model.meta.subarray.multistripe_skips2 = 0
+    model.meta.subarray.repeat_stripe = 1
+    model.meta.subarray.interleave_reads1 = 0
+    model.meta.subarray.superstripe_step = 1
+    model.meta.subarray.num_superstripe = nstripe
+
+    if add_inttimes:
+        model.int_times = int_times_table(nints * nstripe)
+
+    if add_zeroframe:
+        model.meta.exposure.zero_frame = True
+        model.zeroframe = model.data[:, 0, :, :].copy()
+
+    return model

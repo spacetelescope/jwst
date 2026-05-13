@@ -68,7 +68,7 @@ def test_multistripe_subarray_model_superstripe_only():
     mock_sci = RampModel(data=np.ones((24, 5, 8, 64)))
     mock_sci.meta.subarray = {
         "fastaxis": 1,
-        "name": "SUB64SUP08",
+        "name": "SUB64SP08P",
         "slowaxis": -2,
         "xsize": 64,
         "xstart": 1851,
