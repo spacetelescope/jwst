@@ -12,7 +12,7 @@ _MISSING_VALUE = _MissingValueType()
 
 def _convert_dtype(value):
     """
-    Convert numarray column dtype into YAML-compatible format description.
+    Convert numpy array column dtype into YAML-compatible format description.
 
     Parameters
     ----------
@@ -53,7 +53,8 @@ def table_to_schema(table):
     Returns
     -------
     subschema : dict
-        Stdatamodels for the "table" datatype.
+        Multiple `~stdatamodels.jwst.datamodels.JwstDataModel`
+        for the "table" datatype.
     """
     return {
         "title": "Combined header table",
@@ -73,26 +74,23 @@ class TableBuilder:
     Class to build a metadata table.
 
     Used to incrementally build a metadata "table" (a numpy
-    structured array) containing metadata from several models.
+    structured array) containing metadata from several models:
 
     >>> tb = TableBuilder({"meta.filename": "FN"})
     >>> tb.header_to_row({"meta.filename": "foo.fits"})
     >>> tb.build_table()
     rec.array([('foo.fits',)],
          dtype=[('FN', '<U8')])
+
+    Parameters
+    ----------
+    attr_to_column : dict
+        A one-to-one mapping of attribute names (as
+        dotted paths like "meta.filename") to column
+        names (strings).
     """
 
     def __init__(self, attr_to_column):
-        """
-        Create a new `TableBuilder`.
-
-        Parameters
-        ----------
-        attr_to_column : dict
-            A one-to-one mapping of attribute names (as
-            dotted paths like "meta.filename") to column
-            names (strings).
-        """
         self.attr_to_column = attr_to_column
         self.columns = {col: [] for col in self.attr_to_column.values()}
         if len(attr_to_column) != len(self.columns):
@@ -105,13 +103,14 @@ class TableBuilder:
         This function will add a complete row for each
         header. If header is missing a required attribute
         (as defined in the mapping provided to
-        `TableBuilder.__init__`) the column with this
+        `TableBuilder` constructor) the column with this
         missing value for this row will contain a ``nan``.
 
         Parameters
         ----------
         header : dict
-            Often produced from ``Datamodel.to_flat_dict``.
+            Often produced from
+            :meth:`stdatamodels.jwst.datamodels.JwstDataModel.to_flat_dict`
         """
         row = {}
         for attr in self.attr_to_column:
@@ -129,7 +128,7 @@ class TableBuilder:
 
         Returns
         -------
-        table : numpy.ndarray
+        table : ndarray
             Structured array containing fields with datatypes
         """
         arrays = []

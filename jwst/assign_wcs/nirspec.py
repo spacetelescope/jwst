@@ -244,7 +244,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     * "detector": the science frame
     * "sca": frame associated with the SCA
     * "gwa": just before the GWA going from detector to sky
-    * "slit_frame": frame associated with the virtual slit
+    * "slit_frame": relative position within each slice in dimensionless units
     * "slicer": frame associated with the slicer
     * "msa_frame": at the MSA
     * "oteip": after the FWA
@@ -403,7 +403,7 @@ def slits_wcs(input_model, reference_files, slit_y_range):
     * "detector": the science frame
     * "sca": frame associated with the SCA
     * "gwa": just before the GWA going from detector to sky
-    * "slit_frame": frame associated with the virtual slit
+    * "slit_frame": relative position within each slit in dimensionless units
     * "msa_frame": at the MSA
     * "oteip": after the FWA
     * "v2v3": at V2V3
@@ -2162,6 +2162,11 @@ def create_frames():
     msa_spatial = cf.Frame2D(
         name="msa_spatial", axes_order=(0, 1), unit=(u.m, u.m), axes_names=("x_msa", "y_msa")
     )
+    # Frame providing relative positions within each slit, slitlet, or slice in
+    # dimensionless units.  The center of the slit, slice, or primary shutter
+    # is defined at (0, 0) and edges at +/- 0.5.  MSA slitlet coordinates are
+    # defined relative to the open shutter area, not the full shutter pitch
+    # that includes the MSA bars.
     slit_spatial = cf.Frame2D(
         name="slit_spatial", axes_order=(0, 1), unit=("", ""), axes_names=("x_slit", "y_slit")
     )

@@ -18,7 +18,7 @@ from stdatamodels.jwst.transforms.models import IdealToV2V3
 
 from jwst.assign_wcs import util
 from jwst.lib.catalog_utils import read_source_catalog
-from jwst.lib.pipe_utils import generate_substripe_ranges
+from jwst.lib.stripe_utils import generate_substripe_ranges
 
 log = logging.getLogger(__name__)
 
@@ -133,8 +133,8 @@ def build_grism_submodel(
     if source_ypos is not None:
         sub_model.source_ypos = source_ypos
     sub_model.source_id = 1
-    sub_model.bunit_data = input_model.meta.bunit_data
-    sub_model.bunit_err = input_model.meta.bunit_err
+    sub_model.meta.bunit_data = input_model.meta.bunit_data
+    sub_model.meta.bunit_err = input_model.meta.bunit_err
     if getattr(input_model, "int_times", None) is not None:
         sub_model.int_times = input_model.int_times.copy()
 
@@ -426,7 +426,7 @@ def _extract_tso_dhs_object(
         # name rather than unique regions values.
         subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
         stripe_set = np.array(range(subarray_stripenum)) + 1
-        _, sub_ranges = generate_substripe_ranges(input_model, subarray_ranges=True)
+        sub_ranges = generate_substripe_ranges(input_model, science_frame=True)["subarray"]
     else:
         # For short wavelength detectors, use region values directly
         stripe_set = np.unique(all_stripes[~np.isnan(all_stripes)].astype(int))
@@ -793,8 +793,8 @@ def extract_grism_objects(
                 new_slit.source_id = obj.sid
                 new_slit.source_dec = obj.sky_centroid.dec.value
                 new_slit.source_ra = obj.sky_centroid.ra.value
-                new_slit.bunit_data = input_model.meta.bunit_data
-                new_slit.bunit_err = input_model.meta.bunit_err
+                new_slit.meta.bunit_data = input_model.meta.bunit_data
+                new_slit.meta.bunit_err = input_model.meta.bunit_err
                 slits.append(new_slit)
     output_model.slits.extend(slits)
 

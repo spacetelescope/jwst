@@ -15,4 +15,3 @@ NIRCam     INSTRUME, DETECTOR, DATE-OBS, TIME-OBS
 NIRISS     INSTRUME, DETECTOR, DATE-OBS, TIME-OBS
 NIRSpec    INSTRUME, DETECTOR, DATE-OBS, TIME-OBS
 ========== ======================================
-

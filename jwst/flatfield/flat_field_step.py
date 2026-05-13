@@ -66,15 +66,6 @@ class FlatFieldStep(Step):
         """
         Perform the flat field step.
 
-        For repeating or undoing the correction, this step makes use of
-        two special attributes:
-
-            correction_pars : dict
-                After the step has successfully run, the flat field applied is
-                stored, as ``{'flat': DataModel}``.
-            use_correction_pars : bool
-                Use the flat stored in ``correction_pars``.
-
         Parameters
         ----------
         input_data : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
@@ -128,17 +119,6 @@ class FlatFieldStep(Step):
             flat_ref_file = reference_file_models["user_supplied_flat"].meta.filename
             self._reference_files_used.append(("flat", flat_ref_file))
             log.info("Using flat field reference file: %s", flat_ref_file)
-        elif self.use_correction_pars:
-            log.info(f"Using flat field from correction pars {self.correction_pars['flat']}")
-            reference_file_models = {
-                "user_supplied_flat": datamodels.open(self.correction_pars["flat"])
-            }
-
-            # Record the flat as the FLAT reference type for recording
-            # in the result header.
-            self._reference_files_used.append(
-                ("flat", reference_file_models["user_supplied_flat"].meta.filename)
-            )
         else:
             reference_file_models = self._get_references(output_model, exposure_type)
 
@@ -157,10 +137,6 @@ class FlatFieldStep(Step):
         if self.save_interpolated_flat and flat_applied is not None:
             ff_path = self.save_model(flat_applied, suffix=self.flat_suffix, force=True)
             log.info(f'Interpolated flat written to "{ff_path}".')
-
-        if not self.correction_pars:
-            self.correction_pars = {}
-        self.correction_pars["flat"] = flat_applied
 
         return output_model
 

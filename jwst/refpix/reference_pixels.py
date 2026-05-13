@@ -217,6 +217,7 @@ class Dataset:
         side_smoothing_length,
         side_gain,
         conv_kernel_params,
+        siglimit,
         odd_even_rows,
     ):
         """
@@ -241,6 +242,8 @@ class Dataset:
         conv_kernel_params : dict
             Dictionary containing the parameters needed for the optimized convolution kernel
             for Simple Improved Reference Subtraction (SIRS)
+        siglimit : float
+            Sigma clipping limit to use in calculating the mean of reference pixels.
         odd_even_rows : bool
             Flag that controls whether odd and even-numbered rows are handled
             separately (MIR only)
@@ -306,8 +309,9 @@ class Dataset:
         # Define temp array for processing every group
         self.pixeldq = self.get_pixeldq()
         self.group = None
+        self.siglimit = siglimit
 
-    def sigma_clip(self, data, dq, low=3.0, high=3.0):
+    def sigma_clip(self, data, dq, low=None, high=None):
         """
         Wrap scipy.stats.sigmaclip so that data with zero variance is handled cleanly.
 
@@ -318,15 +322,20 @@ class Dataset:
         dq : NDArray
             DQ array for data
         low : float, optional
-            Lower clipping boundary, in standard deviations from the mean (default=3.0)
+            Lower clipping boundary, in standard deviations from the mean (default=None)
         high : float, optional
-            Upper clipping boundary, in standard deviations from the mean (default=3.0)
+            Upper clipping boundary, in standard deviations from the mean (default=None)
 
         Returns
         -------
         mean : float
             Clipped mean of data array
         """
+        if low is None:
+            low = self.siglimit
+        if high is None:
+            high = self.siglimit
+
         #
         # Only calculate the clipped mean for pixels that don't have the DO_NOT_USE
         # DQ bit set
@@ -574,6 +583,7 @@ class NIRDataset(Dataset):
         side_smoothing_length,
         side_gain,
         conv_kernel_params,
+        siglimit,
     ):
         """
         Construct the NIRDataset base class.
@@ -600,6 +610,10 @@ class NIRDataset(Dataset):
 
         conv_kernel_params : dict
             Dictionary containing the parameters needed for the optimized convolution kernel
+
+        siglimit : float
+            Sigma clipping limit, in standard deviations from the mean, to use in
+            sigma clipping for calculating the mean of reference pixels.
         """
         super(NIRDataset, self).__init__(
             input_model,
@@ -608,6 +622,7 @@ class NIRDataset(Dataset):
             side_smoothing_length,
             side_gain,
             conv_kernel_params,
+            siglimit,
             odd_even_rows=False,
         )
 
@@ -949,6 +964,9 @@ class NIRDataset(Dataset):
                 # For now, just average the top and bottom corrections
                 oddrefsignal = self.average_with_none(oddreftop, oddrefbottom)
                 evenrefsignal = self.average_with_none(evenreftop, evenrefbottom)
+                log.debug(
+                    f"Amplifier: {amplifier}, Odd ref: {oddrefsignal}, Even ref: {evenrefsignal}"
+                )
                 if oddrefsignal is not None and evenrefsignal is not None:
                     if not self.is_irs2:
                         oddslice = (
@@ -1268,6 +1286,7 @@ class NIRDataset(Dataset):
                 self.dms_to_detector(integration, group)
                 thisgroup = self.group
                 refvalues = self.get_refvalues(thisgroup)
+                log.debug(f"Integration: {integration}, Group: {group}")
                 self.do_top_bottom_correction(thisgroup, refvalues)
                 if self.use_side_ref_pixels:
                     corrected_group = self.do_side_correction(thisgroup)
@@ -1536,7 +1555,7 @@ class NIRDataset(Dataset):
 class MIRIDataset(Dataset):
     """Dataset for MIRI data."""
 
-    def __init__(self, input_model, odd_even_rows, conv_kernel_params):
+    def __init__(self, input_model, odd_even_rows, conv_kernel_params, siglimit):
         """
         Create a MIRI dataset.
 
@@ -1549,6 +1568,8 @@ class MIRIDataset(Dataset):
             handled separately
         conv_kernel_params : dict
             Dictionary containing the parameters needed for the optimized convolution kernel
+        siglimit : float
+            Sigma clipping limit for outlier rejection
         """
         super(MIRIDataset, self).__init__(
             input_model,
@@ -1558,6 +1579,7 @@ class MIRIDataset(Dataset):
             side_gain=False,
             conv_kernel_params=conv_kernel_params,
             odd_even_rows=odd_even_rows,
+            siglimit=siglimit,
         )
 
         self.reference_sections = MIR_reference_sections
@@ -1864,6 +1886,7 @@ def create_dataset(
     side_gain,
     odd_even_rows,
     conv_kernel_params,
+    siglimit,
 ):
     """
     Create a dataset object from an input model.
@@ -1889,6 +1912,8 @@ def create_dataset(
         separately (MIR only)
     conv_kernel_params : dict
         Dictionary containing the parameters needed for the optimized convolution kernel
+    siglimit : float
+        Sigma clipping limit for outlier rejection
 
     Returns
     -------
@@ -1906,7 +1931,7 @@ def create_dataset(
             return None
 
     if detector[:3] == "MIR":
-        return MIRIDataset(input_model, odd_even_rows, conv_kernel_params)
+        return MIRIDataset(input_model, odd_even_rows, conv_kernel_params, siglimit)
     elif detector in NIR_DETECTORS:
         return NIRDataset(
             input_model,
@@ -1915,6 +1940,7 @@ def create_dataset(
             side_smoothing_length,
             side_gain,
             conv_kernel_params,
+            siglimit,
         )
     else:
         log.error("Unrecognized detector")
@@ -1925,6 +1951,7 @@ def create_dataset(
             side_smoothing_length,
             side_gain,
             conv_kernel_params,
+            siglimit,
         )
 
 
@@ -1936,6 +1963,7 @@ def correct_model(
     side_gain,
     odd_even_rows,
     conv_kernel_params,
+    siglimit,
 ):
     """
     Perform Reference Pixel Correction on a JWST Model.
@@ -1961,6 +1989,8 @@ def correct_model(
         separately (MIR only)
     conv_kernel_params : dict
         Dictionary containing the parameters needed for the optimized convolution kernel
+    siglimit : float
+        Sigma clipping limit for outlier rejection
 
     Returns
     -------
@@ -1980,6 +2010,7 @@ def correct_model(
         side_gain,
         odd_even_rows,
         conv_kernel_params,
+        siglimit,
     )
 
     if input_dataset is None:

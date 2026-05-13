@@ -1,0 +1,1 @@
+Catch NIRSpec-specific WCS errors and exit the step gracefully. Set the cal_step status to FAILED in this case and others for which processing was attempted but did not complete.

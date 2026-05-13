@@ -392,6 +392,7 @@ def _match_simulated_slits(output_model, obs):
             good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
             matched_flat = copy.deepcopy(obs.simulated_slits.slits[good_idx])
             matched_flat = match_backplane_prefer_first(slit, matched_flat)
+            matched_flat.update(slit)
             matched_flat_simuls.append(matched_flat)
             good_idxs.append(good_idx)
         except (UnmatchedSlitIDError, SlitOverlapError) as e:
@@ -763,6 +764,7 @@ def contam_corr(
             simul_slits.slits.append(this_simul)
 
         contam_slit = datamodels.SlitModel()
+        contam_slit.update(slit)
         contam_slit.data = contam_cut
         contam_model.slits.append(contam_slit)
 

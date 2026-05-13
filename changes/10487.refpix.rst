@@ -1,0 +1,2 @@
+Added the capability to specify siglimit for the sigma clipping algorithm
+

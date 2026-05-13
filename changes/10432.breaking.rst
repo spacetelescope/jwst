@@ -1,0 +1,4 @@
+Remove the "use_correction_pars" step parameter and the ``correction_pars`` attribute from the
+``barshadow``, ``flat_field``, ``master_background_mos``, ``pathloss``, and ``photom`` steps.
+These were intended for internal support for the ``master_background_mos`` step in the ``calwebb_spec2``
+pipeline but are no longer needed.

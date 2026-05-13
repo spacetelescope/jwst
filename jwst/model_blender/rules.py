@@ -69,32 +69,31 @@ RULE_FUNCTIONS = {
 """
 Mapping of rule names to functions.
 
-Used for `make_blender`.
+Used for :func:`make_blender`.
 
 The following rules are considered deprecated
-and should not be used for new schemas.
+and should not be used for new schemas:
 
-  - mintime
-  - maxtime
-  - mindate
-  - maxdate
-  - mindatetime
-  - maxdatetime
+- mintime
+- maxtime
+- mindate
+- maxdate
+- mindatetime
+- maxdatetime
 """
 
 
 class AttributeBlender:
-    """Single attribute metadata blender."""
+    """
+    Single attribute metadata blender.
+
+    Parameters
+    ----------
+    blend_function : callable
+        Function to blend accumulated metadata values
+    """
 
     def __init__(self, blend_function):
-        """
-        Create a new metadata attribute blender.
-
-        Parameters
-        ----------
-        blend_function : callable
-            Function to blend accumulated metadata values
-        """
         self.blend_function = blend_function
         self.values = []
 
@@ -115,7 +114,7 @@ class AttributeBlender:
 
         Returns
         -------
-        value :
+        value
             The blended result.
         """
         if not self.values:

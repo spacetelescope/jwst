@@ -8,6 +8,7 @@ from stpipe.step import preserve_step_pars
 from jwst.barshadow import barshadow_step
 from jwst.extract_1d import extract_1d_step
 from jwst.flatfield import flat_field_step
+from jwst.lib.basic_utils import disable_logging
 from jwst.master_background import nirspec_utils
 from jwst.pathloss import pathloss_step
 from jwst.photom import photom_step
@@ -70,21 +71,6 @@ class MasterBackgroundMosStep(Pipeline):
         twice. Once, to calibrate background slits and create a master background.
         Then, a second time to calibrate science using the master background.
 
-        For repeating or undoing the correction, this step makes use of
-        two special attributes:
-
-            correction_pars : dict
-                The master background information from a previous invocation of the step.
-                Keys are:
-
-                - "masterbkg_1d": `~stdatamodels.jwst.datamodels.CombinedSpecModel`
-                    The 1D version of the master background.
-                - "masterbkg_2d": `~stdatamodels.jwst.datamodels.MultiSlitModel`
-                    The 2D slit-based version of the master background.
-
-            use_correction_pars : bool
-                Use the corrections stored in ``correction_pars``.
-
         Parameters
         ----------
         data : `~stdatamodels.jwst.datamodels.MultiSlitModel`
@@ -123,7 +109,6 @@ class MasterBackgroundMosStep(Pipeline):
             record_step_status(output_model, "master_background", success=False)
             return output_model
 
-        bkg_x1d_spectra = None
         if self.user_background:
             log.info(
                 "Calculating master background from "
@@ -133,10 +118,6 @@ class MasterBackgroundMosStep(Pipeline):
                 master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
                     output_model, user_background
                 )
-        elif self.use_correction_pars:
-            log.info("Using pre-calculated correction parameters.")
-            master_background = self.correction_pars["masterbkg_1d"]
-            mb_multislit = self.correction_pars["masterbkg_2d"]
         else:
             num_bkg, num_src = self._classify_slits(output_model)
             if num_bkg == 0:
@@ -168,14 +149,15 @@ class MasterBackgroundMosStep(Pipeline):
 
         # Mark as completed and setup return data
         record_step_status(result, "master_background", True)
-        self.correction_pars = {"masterbkg_1d": master_background, "masterbkg_2d": mb_multislit}
         if self.save_background:
             self.save_model(master_background, suffix="masterbg1d", force=True)
             self.save_model(mb_multislit, suffix="masterbg2d", force=True)
             if bkg_x1d_spectra is not None:
                 self.save_model(bkg_x1d_spectra, suffix="bkgx1d", force=True)
 
-        # Close intermediate models that are not held in correction_pars
+        # Close intermediate models
+        master_background.close()
+        mb_multislit.close()
         if bkg_x1d_spectra is not None:
             bkg_x1d_spectra.close()
 
@@ -290,6 +272,10 @@ class MasterBackgroundMosStep(Pipeline):
             self.barshadow.source_type = "EXTENDED"
             self.photom.source_type = "EXTENDED"
 
+            log.info(
+                "Applying flat_field, pathloss, barshadow, and photom "
+                "corrections for background data "
+            )
             pre_calibrated = self.flat_field.run(pre_calibrated)
             pre_calibrated = self.pathloss.run(pre_calibrated)
             pre_calibrated = self.barshadow.run(pre_calibrated)
@@ -323,20 +309,21 @@ class MasterBackgroundMosStep(Pipeline):
             mb_multislit = nirspec_utils.map_to_science_slits(pre_calibrated, master_background)
 
             # Now that the master background is pretending to be science,
-            # walk backwards through the steps to uncalibrate, using the
-            # calibration factors carried from `pre_calibrated`.
-            self.photom.use_correction_pars = True
+            # walk backwards through the steps to uncalibrate
             self.photom.inverse = True
-            self.barshadow.use_correction_pars = True
             self.barshadow.inverse = True
-            self.pathloss.use_correction_pars = True
             self.pathloss.inverse = True
-            self.flat_field.use_correction_pars = True
             self.flat_field.inverse = True
 
-            mb_multislit = self.photom.run(mb_multislit)
-            mb_multislit = self.barshadow.run(mb_multislit)
-            mb_multislit = self.pathloss.run(mb_multislit)
-            mb_multislit = self.flat_field.run(mb_multislit)
+            # Disable logs for the second time through
+            log.info(
+                "Inverting photom, barshadow, pathloss, and flat_field "
+                "corrections for background data "
+            )
+            with disable_logging(level=logging.WARNING):
+                mb_multislit = self.photom.run(mb_multislit)
+                mb_multislit = self.barshadow.run(mb_multislit)
+                mb_multislit = self.pathloss.run(mb_multislit)
+                mb_multislit = self.flat_field.run(mb_multislit)
 
         return master_background, mb_multislit, bkg_x1d_spectra
