@@ -696,9 +696,9 @@ def contam_corr(
             f"for spectral fitting over {n_iterations} iterations"
         )
         # check that background subtraction did not fail
-        if output_model.meta.cal_step.bkg_subtract != "COMPLETE":
+        if input_model.meta.cal_step.bkg_subtract != "COMPLETE":
             log.warning(
-                f"Background subtraction step status is {output_model.meta.cal_step.bkg_subtract}. "
+                f"Background subtraction step status is {input_model.meta.cal_step.bkg_subtract}. "
                 "A good background subtraction is necessary for models to match observed data "
                 "well enough for spectral fitting to succeed. Fitting will be attempted, "
                 "but failures may be expected."
