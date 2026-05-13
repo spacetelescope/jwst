@@ -15,7 +15,7 @@ def test_open_psf(psf_reference_file, slit_name):
 
 
 def test_open_psf_fail():
-    with pytest.raises(NotImplementedError, match="could not be read"):
+    with pytest.raises(TypeError, match="could not be read"):
         pp.open_psf("bad_file", "UNKNOWN")
 
 

@@ -37,9 +37,7 @@ def open_psf(psf_refname, slit_name):
     try:
         psf_model = SpecPsfModel(psf_refname)
     except (ValueError, AttributeError):
-        raise NotImplementedError(
-            f"PSF file {psf_refname} could not be read as SpecPsfModel."
-        ) from None
+        raise TypeError(f"PSF file {psf_refname} could not be read as SpecPsfModel.") from None
 
     # Get the right PSF aperture
     slit_name = str(slit_name).upper()
