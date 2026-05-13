@@ -7,6 +7,7 @@ from jwst.lib.reffile_utils import (
 )
 
 __all__ = [
+    "STRIPE_TO_STANDARD_SUBARRAY",
     "generate_substripe_ranges",
     "generate_superstripe_ranges",
     "stripe_read",
@@ -15,6 +16,19 @@ __all__ = [
     "clean_superstripe_metadata",
     "generate_stripe_int_times",
 ]
+
+STRIPE_TO_STANDARD_SUBARRAY = {
+    # NIRCam subarray superstripe modes
+    "SUB64MSP02": {"name": "SUB64P", "slow_size": 64},
+    "SUB64SUP08": {"name": "SUB64P", "slow_size": 64},
+    "SUB64SUP32": {"name": "SUB64P", "slow_size": 64},
+}
+"""
+Map superstripe subarrays to standard subarray names and sizes.
+
+Superstripe subarrays must be included here if the size along the slow axis
+is not full size (2048).
+"""
 
 
 def generate_substripe_ranges(sci_model, science_frame=False):
@@ -436,31 +450,6 @@ def generate_stripe_reference(ref_array, sci_model):
     return stripe_out
 
 
-def _collated_superstripe_slow_size(n_stripe, n_step):
-    """
-    Get the expected output size for a striped subarray along the slow axis.
-
-    The output subarray size is taken to be the  nearest power of 2 above
-    ``n_stripe * n_step``.
-
-    Parameters
-    ----------
-    n_stripe : int
-        The number of stripes.
-    n_step : int
-        The size of the stripe step.
-
-    Returns
-    -------
-    int
-        The expected subarray size.
-    """
-    minimum_size = n_stripe * n_step
-    if minimum_size == 0:
-        return 1
-    return 1 << (minimum_size - 1).bit_length()
-
-
 def collate_superstripes(input_model):
     """
     Collate superstripes into arrays resembling the full detector/subarray shape.
@@ -487,11 +476,12 @@ def collate_superstripes(input_model):
     # Determine integration/stripe numbers
     nints, ngroups, ny, nx = input_model.data.shape
     n_stripe = input_model.meta.subarray.num_superstripe
-    n_step = input_model.meta.subarray.superstripe_step
     nints_sci = nints // n_stripe
 
-    # Get the expected output size for the mode
-    slow_size = _collated_superstripe_slow_size(n_stripe, n_step)
+    # Get the expected output size for the mode, defaulting to full size (2048)
+    subarray_name = input_model.meta.subarray.name
+    standard_subarray = STRIPE_TO_STANDARD_SUBARRAY.get(subarray_name, {})
+    slow_size = standard_subarray.get("slow_size", 2048)
 
     # Generate slowaxis ranges to place science regions from stripes into parent frame
     all_ranges = generate_superstripe_ranges(input_model)

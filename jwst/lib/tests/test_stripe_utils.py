@@ -3,9 +3,9 @@ import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.tests.helpers import make_mock_dhs_nrca1_rate
-from jwst.dq_init.tests.helpers import make_superstripe_mask_model, make_superstripe_model
 from jwst.lib import stripe_utils
 from jwst.lib.reffile_utils import science_detector_frame_transform
+from jwst.lib.tests.helpers import make_superstripe_mask_model, make_superstripe_model
 
 
 @pytest.fixture(scope="module")
