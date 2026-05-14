@@ -460,8 +460,10 @@ class ResampleImage(Resample):
         model.meta.exposure.measurement_time = info_dict["measurement_time"]
         model.meta.exposure.effective_exposure_time = info_dict["exposure_time"]
         model.meta.exposure.elapsed_exposure_time = info_dict["elapsed_exposure_time"]
-        model.meta.background.level = info_dict.get("level", None)
-        model.meta.background.subtracted = info_dict.get("subtracted", False)
+        background = model.meta.background
+        level = info_dict.get("level")
+        background.level = level
+        background.subtracted = None if level is None else info_dict.get("subtracted", False)
 
     def add_model(self, model):
         """
