@@ -4,8 +4,6 @@ from collections import defaultdict
 from pathlib import Path
 
 import stdatamodels.jwst.datamodels as dm
-from astropy.modeling.models import Mapping
-from stcal.alignment import combine_sregions
 
 # step imports
 from jwst.adaptive_trace_model import adaptive_trace_model_step
@@ -14,7 +12,7 @@ from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
 from jwst.datamodels import SourceModelContainer
-from jwst.datamodels.utils.wfss_multispec import make_wfss_multicombined, make_wfss_multiexposure
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multicombined
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
 from jwst.lib.exposure_types import is_moving_target
@@ -180,7 +178,6 @@ class Spec3Pipeline(Pipeline):
             sources = list(multislit_to_container(source_models).items())
 
         # Process each source
-        wfss_x1d = []
         wfss_comb = []
         for source in sources:
             # If each source is a SourceModelContainer,
@@ -282,16 +279,7 @@ class Spec3Pipeline(Pipeline):
                     # for WFSS modes, do not save the results with one file per source
                     # instead compile the results over the for loop to be put into a single file
                     # at the end.
-                    self.extract_1d.save_results = False
                     self.combine_1d.save_results = False
-                    result = self.extract_1d.run(result)
-                    wfss_x1d.append(result)
-                    # Check whether extraction was completed
-                    extraction_complete = (
-                        result is not None and result.meta.cal_step.extract_1d == "COMPLETE"
-                    )
-                    if not extraction_complete:
-                        continue
                     # Combine the results for all sources
                     comb = self.combine_1d.run(result)
                     comb_complete = comb is not None and comb.meta.cal_step.combine_1d == "COMPLETE"
@@ -327,12 +315,6 @@ class Spec3Pipeline(Pipeline):
 
         # Save the final output products for WFSS modes
         if exptype in WFSS_TYPES:
-            if self.save_results:
-                x1d_output = make_wfss_multiexposure(wfss_x1d)
-                self._populate_wfss_sregion(x1d_output, input_models)
-                x1d_filename = output_file + "_x1d.fits"
-                log.info(f"Saving the final x1d product as {x1d_filename}.")
-                x1d_output.save(x1d_filename)
             if self.save_results:
                 c1d_output = make_wfss_multicombined(wfss_comb)
                 c1d_filename = output_file + "_c1d.fits"
@@ -411,55 +393,3 @@ class Spec3Pipeline(Pipeline):
             srcid = f"s{str(source_id):>09s}"
 
         return srcid
-
-    def _populate_wfss_sregion(self, wfss_model, cal_model_list):
-        """
-        Generate cumulative S_REGION footprint from input grism images.
-
-        Take the input S_REGION values from all input models, and combine
-        them using a polygon union to create a cumulative footprint for the output WFSS product.
-        The union is performed in pixel coordinates to avoid distortion,
-        so the WCS of the first slit
-        of the first input model is used to convert to and from sky coordinates.
-
-        Parameters
-        ----------
-        wfss_model : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
-            The newly generated WfssMultiExposureModel made as part of
-            the save operation for spec3 processing of WFSS data.
-
-        cal_model_list : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
-            The list of input_models provided to Spec3Pipeline by the
-            input association.
-        """
-        # WCS of any slit should be ok - internally this does a round-trip, so any offsets
-        # introduced for a specific slit won't matter
-        wcs = cal_model_list[0].slits[0].meta.wcs
-        try:
-            input_sregions = [w.slits[0].meta.wcsinfo.s_region for w in cal_model_list]
-        except AttributeError:
-            log.warning(
-                "One or more input model(s) are missing an `s_region` attribute; "
-                "output S_REGION will not be set."
-            )
-            return
-
-        # Modify the det2world transform to ignore extra inputs/outputs (wavelength and order)
-        if "moving_target" in wcs.available_frames:
-            # This should never be hit for WFSS data but is here just in case
-            det2world = wcs.get_transform("detector", "moving_target")
-        else:
-            det2world = wcs.get_transform("detector", "world")
-        mapping1 = Mapping((0, 1, 0, 1))  # last two are placeholders and don't do anything
-        mapping1.inverse = Mapping((0, 1), n_inputs=4)
-        mapping2 = Mapping((0, 1), n_inputs=4)
-        mapping2.inverse = Mapping((0, 1, 0, 1))
-        det2world = mapping1 | det2world | mapping2
-
-        try:
-            sregion = combine_sregions(input_sregions, det2world)
-        except ValueError as e:
-            log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
-            return
-        log.info(f"Setting S_REGION for combined footprint to: {sregion}")
-        wfss_model.spec[0].s_region = sregion
