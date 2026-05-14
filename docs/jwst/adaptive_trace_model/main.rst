@@ -12,13 +12,12 @@ with a set of univariate basis spline fits to the spatial profile, along the dis
 Optionally, the step may also use the trace model to oversample the input data by a
 specified factor.
 
-This step is intended in part to address spatial undersampling effects in
-`NIRSpec IFU <https://jwst-docs.stsci.edu/known-issues-with-jwst-data/nirspec-known-issues/nirspec-ifu-known-issues#NIRSpecIFUKnownIssues-Cubebuildingartifacts>`__
-and `MIRI MRS <https://jwst-docs.stsci.edu/known-issues-with-jwst-data/miri-known-issues/miri-mrs-known-issues#MIRIMRSKnownIssues-resamplingResamplingnoise>`__
-spectra extracted from rectified cubes.  This "resampling noise" manifests as low-frequency
-oscillations in spectra extracted from apertures smaller than the observational point-spread-function
-(PSF). Interpolating the data onto a higher resolution grid prior to building a rectified spectral
-cube can mitigate these spectral artifacts.
+This step is intended in part to address
+`spatial undersampling effects <https://jwst-docs.stsci.edu/known-issues/resampling-artifacts>`__
+in NIRSpec IFU and MIRI MRS spectra extracted from rectified cubes.  This "resampling noise"
+manifests as low-frequency oscillations in spectra extracted from apertures smaller than
+the observational point-spread-function (PSF). Interpolating the data onto a higher resolution
+grid prior to building a rectified spectral cube can mitigate these spectral artifacts.
 
 This step is currently available for NIRSpec IFU and MIRI MRS exposures only.
 It is incorporated into the :ref:`calwebb_spec2 <calwebb_spec2>` and

@@ -1,3 +1,5 @@
+"""Estimate missing pixel values in spectral data."""
+
 import logging
 
 from jwst import datamodels

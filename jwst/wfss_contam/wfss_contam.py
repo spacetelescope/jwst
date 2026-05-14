@@ -478,10 +478,11 @@ def contam_corr(
     for slit in output_model.slits:
         try:
             good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
-            this_simul = obs.simulated_slits.slits[good_idx]
+            this_simul = datamodels.SlitModel(obs.simulated_slits.slits[good_idx].instance)
             slit, this_simul = match_backplane_prefer_first(slit, this_simul)
             simul_all_cut = _cut_frame_to_match_slit(obs.simulated_image, slit)
             contam_cut = simul_all_cut - this_simul.data
+            this_simul.update(slit)
             simul_slits.slits.append(this_simul)
 
         except (UnmatchedSlitIDError, SlitOverlapError) as e:
@@ -489,6 +490,7 @@ def contam_corr(
             contam_cut = np.zeros_like(slit.data)
 
         contam_slit = datamodels.SlitModel()
+        contam_slit.update(slit)
         contam_slit.data = contam_cut
         contam_model.slits.append(contam_slit)
 

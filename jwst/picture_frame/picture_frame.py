@@ -22,15 +22,15 @@ def _region_masks(background_mask):
     Parameters
     ----------
     background_mask : ndarray
-        Background mask image (1 = valid background pixel, 0 otherwise).
+        Background mask image (1 for valid background pixel, 0 otherwise).
 
     Returns
     -------
     center_data : ndarray of bool
-        Array matching background mask shape; True for background pixels
+        Array matching background mask shape; `True` for background pixels
         in the center region.
     edge_data : ndarray of bool
-        Array matching background mask shape; True for background pixels
+        Array matching background mask shape; `True` for background pixels
         in the edge region.
     """
     y, x = np.mgrid[: background_mask.shape[0], : background_mask.shape[1]]
@@ -74,10 +74,10 @@ def correct_picture_frame(
 
     Parameters
     ----------
-    input_model : `~stdatamodels.jwst.datamodels.RampModel` \
-                  or `~stdatamodels.jwst.datamodels.ImageModel` \
-                  or `~stdatamodels.jwst.datamodels.CubeModel`
-        Science model to be corrected. Updated in place.
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`, \
+                  `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
+        Science model to be corrected. Updated in-place.
     pictureframe_model : `~stdatamodels.jwst.datamodels.PictureFrameModel`
         Picture frame reference model.
     mask_science_regions : bool, optional
@@ -87,7 +87,7 @@ def correct_picture_frame(
     n_sigma : float, optional
         N-sigma rejection level for finding outliers.
     input_dir : str, optional
-        Path to the input directory.  Used by sub-steps (e.g. assign_wcs
+        Path to the input directory.  Used by sub-steps (e.g., ``assign_wcs``
         for NIRSpec MOS data) to find auxiliary data.
     save_mask : bool, optional
         Switch to indicate whether the scene mask should be saved.
@@ -96,20 +96,20 @@ def correct_picture_frame(
 
     Returns
     -------
-    output_model : `~stdatamodels.jwst.datamodels.RampModel` \
-                  or `~stdatamodels.jwst.datamodels.ImageModel` \
-                  or `~stdatamodels.jwst.datamodels.CubeModel`
-        Corrected data, updated in place.
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`, \
+                   `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                   `~stdatamodels.jwst.datamodels.CubeModel`
+        Corrected data, updated in-place.
     mask_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Pixel mask to be saved or None.
-    correction_model : `~stdatamodels.jwst.datamodels.RampModel` \
-                       or `~stdatamodels.jwst.datamodels.ImageModel` \
-                       or `~stdatamodels.jwst.datamodels.CubeModel`
+    correction_model : `~stdatamodels.jwst.datamodels.RampModel`, \
+                       `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                       `~stdatamodels.jwst.datamodels.CubeModel`
         Correction model to be saved or None.
     status : {'COMPLETE', 'SKIPPED'}
-        Completion status.  If errors were encountered, status = 'SKIPPED'
-        and the output data is unchanged from the input data.  Otherwise,
-        status = 'COMPLETE'.
+        Completion status: ``'SKIPPED'`` if errors were encountered and
+        the output data is unchanged from the input data;
+        ``'COMPLETE'`` otherwise.
     """
     # Set some default return values, to be updated later
     correction_model = None

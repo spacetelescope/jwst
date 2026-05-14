@@ -438,7 +438,7 @@ def _construct_slitmodel(
     [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy] = bounds
     slit = datamodels.SlitModel()
     slit.source_id = sid
-    slit.name = f"source_{sid}"
+    slit.name = f"{sid}"
     slit.xstart = thisobj_minx + 1  # FITS pixels are 1-indexed, matching extract_2d convention
     slit.xsize = thisobj_maxx - thisobj_minx + 1
     slit.ystart = thisobj_miny + 1  # FITS pixels are 1-indexed, matching extract_2d convention
