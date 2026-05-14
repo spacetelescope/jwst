@@ -1,6 +1,4 @@
-"""
-Unit test for Cube Build testing testing determining the correct suffix for the filename.
-"""
+"""Test output filename suffixes for the cube_build step."""
 
 import pytest
 
@@ -28,7 +26,7 @@ def cube_instance():
 
 
 def test_define_cubename_suffix_miri_1band(cube_instance):
-    """Test MIRI suffix logic by cube_instance attributes."""
+    """Test MIRI suffix logic for one band and channel."""
     # 1. Set the state for a MIRI Ch1 Long cube
     cube_instance.instrument = "MIRI"
     cube_instance.list_par1 = ["1"]
@@ -42,7 +40,7 @@ def test_define_cubename_suffix_miri_1band(cube_instance):
 
 
 def test_define_cubename_suffix_miri(cube_instance):
-    """Test MIRI suffix logic for multiple bands and channels"""
+    """Test MIRI suffix logic for multiple bands and channels."""
 
     cube_instance.instrument = "MIRI"
     cube_instance.list_par1 = ["1", "2", "1"]
@@ -50,12 +48,25 @@ def test_define_cubename_suffix_miri(cube_instance):
 
     suffix = cube_instance.define_cubename_suffix()
 
-    # Assert (MIRI logic sorts subchannels according to increasing wavelength)
+    # MIRI logic sorts subchannels according to increasing wavelength
     assert "_ch1-2-shortmediumlong" in suffix
 
 
+def test_define_cubename_suffix_nispecy(cube_instance):
+    """Test NIRSpec suffix logic for multiple grating and filter"""
+
+    cube_instance.instrument = "NIRSPEC"
+    cube_instance.list_par1 = ["G140M", "G140M"]
+    cube_instance.list_par2 = ["F070LP", "F100LP"]
+
+    suffix = cube_instance.define_cubename_suffix()
+
+    #
+    assert suffix == "_g140m-f070lp_f100lp"
+
+
 def test_define_cubename_suffix_nirspec(cube_instance):
-    """Test NIRSpec logic fir 1 grating and 1 band ."""
+    """Test NIRSpec logic for 1 grating and 1 band ."""
 
     cube_instance.instrument = "NIRSPEC"
     cube_instance.list_par1 = ["G140M"]
@@ -78,3 +89,12 @@ def test_define_cubename_suffix_internal(cube_instance):
     suffix = cube_instance.define_cubename_suffix()
 
     assert suffix == "_ch4-long_internal"
+
+    cube_instance.instrument = "NIRSPEC"
+    cube_instance.list_par1 = ["G140M"]
+    cube_instance.list_par2 = ["F100LP"]
+    cube_instance.coord_system = "internal_cal"
+
+    suffix = cube_instance.define_cubename_suffix()
+
+    assert suffix == "_g140m-f100lp_internal"

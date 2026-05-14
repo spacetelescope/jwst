@@ -9,13 +9,6 @@ The step arguments can be used to control the properties of the output IFU cube 
 created. For example, if the input data span several bands, but ``output_type=band``  then a cube for
 each band will be created.
 
-``pipeline [integer]``
-  ``cube_build`` can be called from :ref:`calwebb_spec2 <calwebb_spec2>`, :ref:`calwebb_spec3 <calwebb_spec3>`, or stand-alone. The output IFU cubes
-  have a different name depending which pipeline calls it. This parameter defaults to 3 which follows the rules
-  for creating cubes based on the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline and is also the behavior when running
-  ``cube_build`` stand-alone. When the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline calls
-  ``cube_build``, it sets ``pipeline=2``. When running stand-alone or in
-  :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, the parameter ``pipeline=3`` is set for ``cube_build``.
 
 ``channel [string]``
   This is a MIRI only option and the valid values are 1, 2, 3, 4, and ALL.

@@ -219,7 +219,7 @@ class IFUCubeData:
     # ________________________________________________________________________________
     def define_cubename_suffix(self):
         """
-        Determine the filename suffix name consisting of channels/sub channels or gratings/filters.
+        Determine the filename suffix consisting of channels/sub channels or gratings/filters.
 
         The base name is defined by the pipeline.
         Cube_build determines which channels, bands, gratings, or filters are used to make
