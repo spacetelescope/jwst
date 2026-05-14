@@ -23,7 +23,7 @@ def test_nirspec_image2(rtdata, fitsdiff_default_kwargs):
 
 
 @pytest.mark.bigdata
-def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
+def test_flat_field_step_user_supplied_flat_nrs_image(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
     basename = "jw03290001001_03101_00001_nrs2"
     output_file = f"{basename}_flat_from_user_file.fits"
