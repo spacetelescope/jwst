@@ -203,6 +203,7 @@ def test_nircam_dhs_sw_spec2(run_sw_spec2pipeline, rtdata_module, fitsdiff_defau
     assert diff.identical, diff.report()
 
 
+@pytest.mark.xfail(reason="Input data has incorrect slow start value")
 @pytest.mark.parametrize(
     "suffix",
     [

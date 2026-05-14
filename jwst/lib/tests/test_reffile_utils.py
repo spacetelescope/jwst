@@ -73,7 +73,7 @@ def test_multistripe_subarray_model_superstripe_only():
         "xsize": 64,
         "xstart": 1851,
         "ysize": 8,
-        "ystart": 1817,
+        "ystart": 1880,
         "multistripe_reads1": 0,
         "multistripe_skips1": 0,
         "multistripe_reads2": 0,
@@ -85,8 +85,8 @@ def test_multistripe_subarray_model_superstripe_only():
     }
     mock_rn_cutout = get_subarray_model(mock_sci, mock_rn)
     assert mock_rn_cutout.data.shape == (8, 8, 64)
-    assert np.all(mock_rn_cutout.data[0] == np.arange(224, 232)[:, None])
-    assert np.all(mock_rn_cutout.data[-1] == np.arange(168, 176)[:, None])
+    assert np.all(mock_rn_cutout.data[0] == np.arange(1872, 1880)[:, None])
+    assert np.all(mock_rn_cutout.data[-1] == np.arange(1816, 1824)[:, None])
 
 
 @pytest.fixture

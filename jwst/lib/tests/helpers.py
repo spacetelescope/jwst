@@ -143,7 +143,7 @@ def make_superstripe_model(add_inttimes=False, add_zeroframe=False):
     ngroups = 5
     ysize = 256
     xsize = 208
-    xstart = 1
+    xstart = 2048
     ystart = 1793
     model = make_rawramp(
         "NIRISS", nints * nstripe, ngroups, ysize, xsize, ystart, xstart, num_superstripe=nstripe
@@ -269,7 +269,7 @@ def make_sub64p_multistripe_model(add_inttimes=False, add_zeroframe=False):
     ysize = 2
     xsize = 64
     xstart = 1851
-    ystart = 1817
+    ystart = 2046
     model = make_rawramp(
         "NIRCAM", nints * nstripe, ngroups, ysize, xsize, ystart, xstart, num_superstripe=nstripe
     )

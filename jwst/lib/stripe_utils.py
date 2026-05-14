@@ -21,6 +21,8 @@ __all__ = [
     "generate_stripe_int_times",
 ]
 
+DETECTOR_FULL_SIZE = 2048
+
 STRIPE_TO_STANDARD_SUBARRAY = {
     # NIRCam subarray superstripe modes
     "SUB64MS02P": {"name": "SUB64P", "slow_size": 64},
@@ -33,6 +35,27 @@ Map superstripe subarrays to standard subarray names and sizes.
 Superstripe subarrays must be included here if the size along the slow axis
 is not full size (2048).
 """
+
+
+def _detector_coord_slow_start(slow_axis, slow_start):
+    if slow_axis < 0:
+        # Handle some early products that might have the wrong value
+        # for the slow start (i.e. start=1 when it should have been 2048).
+        # Other incorrect cases are harder to detect and not handled here.
+        if slow_start == 1:
+            log.warning(
+                f"Slow start is set to 1 for slowaxis={slow_axis}. "
+                f"Setting detector start index to 0."
+            )
+            return 0
+
+        # e.g. start = 2046 is pixel index 2
+        slow_start_idx = DETECTOR_FULL_SIZE - slow_start
+    else:
+        # e.g. start = 3 is pixel index 2
+        slow_start_idx = slow_start - 1
+
+    return slow_start_idx
 
 
 def generate_substripe_ranges(sci_model, science_frame=False):
@@ -65,12 +88,17 @@ def generate_substripe_ranges(sci_model, science_frame=False):
     repeat_stripe = sci_model.meta.subarray.repeat_stripe
     interleave_reads1 = sci_model.meta.subarray.interleave_reads1
     slowaxis = sci_model.meta.subarray.slowaxis
+
+    # Get the slow axis size and start position
     if np.abs(slowaxis) > 1:
         slow_size = sci_model.meta.subarray.ysize
         slow_start = sci_model.meta.subarray.ystart
     else:
         slow_size = sci_model.meta.subarray.xsize
         slow_start = sci_model.meta.subarray.xstart
+
+    # Start values are in science coord, 1-indexed: convert to detector start index
+    slow_start = _detector_coord_slow_start(slowaxis, slow_start)
 
     # Check for valid input
     if nreads2 <= 0:
@@ -88,7 +116,7 @@ def generate_substripe_ranges(sci_model, science_frame=False):
     # Track the read position in the full frame with linecount, and number of lines
     # read into subarray with sub_lines
     # Start at the subarray start
-    linecount = slow_start - 1
+    linecount = slow_start
     sub_lines = 0
 
     # Make nreads1 row reads
@@ -123,7 +151,7 @@ def generate_substripe_ranges(sci_model, science_frame=False):
     while sub_lines < slow_size:
         # If repeat_stripe, add interleaved rows to output and increment sub_lines
         if repeat_stripe > 0:
-            linecount = slow_start - 1
+            linecount = slow_start
 
             if nreads1 > 0:
                 reference_full_ranges[reference_range_counter] = [linecount, linecount + nreads1]
@@ -156,12 +184,11 @@ def generate_substripe_ranges(sci_model, science_frame=False):
     }
 
     # Swap slow axis indices to science frame if needed
-    full_size = 2048
     if science_frame and slowaxis < 0:
         for range_set in all_ranges:
             for key, rge in all_ranges[range_set].items():
                 if "full" in range_set:
-                    all_ranges[range_set][key] = [full_size - x for x in rge[::-1]]
+                    all_ranges[range_set][key] = [DETECTOR_FULL_SIZE - x for x in rge[::-1]]
                 else:
                     all_ranges[range_set][key] = [slow_size - x for x in rge[::-1]]
 
@@ -207,12 +234,17 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
     num_superstripe = sci_model.meta.subarray.num_superstripe
     fastaxis = sci_model.meta.subarray.fastaxis
     slowaxis = sci_model.meta.subarray.slowaxis
+
+    # Get slow axis size and start position
     if np.abs(fastaxis) == 1:
         slow_size = sci_model.meta.subarray.ysize
-        slow_start = sci_model.meta.subarray.ystart - 1
+        slow_start = sci_model.meta.subarray.ystart
     else:
         slow_size = sci_model.meta.subarray.xsize
-        slow_start = sci_model.meta.subarray.xstart - 1
+        slow_start = sci_model.meta.subarray.xstart
+
+    # Start values are in science coord, 1-indexed: convert to detector start index
+    slow_start = _detector_coord_slow_start(slowaxis, slow_start)
 
     # Check for the number of pixels to read per stripe
     if nreads2 <= 0:
@@ -306,14 +338,17 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
     }
 
     # Swap slow axis indices to science frame if needed
-    full_size = 2048
-    std_sub_size = STRIPE_TO_STANDARD_SUBARRAY.get(subarray_name, {}).get("slow_size", 2048)
+    std_sub_size = STRIPE_TO_STANDARD_SUBARRAY.get(subarray_name, {}).get(
+        "slow_size", DETECTOR_FULL_SIZE
+    )
     if science_frame and slowaxis < 0:
         for range_set in all_ranges:
             for key, range_list in all_ranges[range_set].items():
                 for i, rge in enumerate(range_list):
                     if "full" in range_set:
-                        all_ranges[range_set][key][i] = tuple([full_size - x for x in rge[::-1]])
+                        all_ranges[range_set][key][i] = tuple(
+                            [DETECTOR_FULL_SIZE - x for x in rge[::-1]]
+                        )
                     elif "standard" in range_set:
                         all_ranges[range_set][key][i] = tuple([std_sub_size - x for x in rge[::-1]])
                     else:
@@ -499,11 +534,11 @@ def collate_superstripes(input_model):
     # Get the expected output size for the mode, defaulting to full size (2048)
     subarray_name = input_model.meta.subarray.name
     standard_subarray = STRIPE_TO_STANDARD_SUBARRAY.get(subarray_name, {})
-    slow_size = standard_subarray.get("slow_size", 2048)
+    slow_size = standard_subarray.get("slow_size", DETECTOR_FULL_SIZE)
 
     # Generate slowaxis ranges to place science regions from stripes into parent frame
     all_ranges = generate_superstripe_ranges(input_model)
-    if slow_size == 2048:
+    if slow_size == DETECTOR_FULL_SIZE:
         full_range = all_ranges["full"]
     else:
         full_range = all_ranges["standard_subarray"]

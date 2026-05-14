@@ -43,7 +43,7 @@ def test_generate_substripe_ranges(substripe_model, science_frame):
     assert all_ranges == expected
 
 
-def test_generate_substripe_ranges_swap_slow(substripe_model):
+def test_generate_substripe_ranges_swap_slow(caplog, substripe_model):
     model = substripe_model.copy()
     model.meta.subarray.slowaxis *= -1
 
@@ -66,6 +66,11 @@ def test_generate_substripe_ranges_swap_slow(substripe_model):
         "reference_subarray": {0: [163, 164], 1: [122, 123], 2: [81, 82], 3: [40, 41]},
     }
     assert all_ranges == expected
+
+    # ystart was set to 1, which is incorrect for a negative slow axis.
+    # The utility can handle this case: it will warn and assume ystart=2048
+    # was intended
+    assert "Slow start is set to 1 for slowaxis=-2" in caplog.text
 
 
 def test_generate_substripe_ranges_invalid_input(substripe_model):
@@ -143,7 +148,7 @@ def test_generate_superstripe_ranges_pure_superstripe(superstripe_model):
     model.meta.subarray.multistripe_skips2 = 0
     model.meta.subarray.superstripe_step = 204
     model.meta.subarray.xsize = 204
-    model.meta.subarray.xstart = 5
+    model.meta.subarray.xstart = 2044
     model.data = model.data[:, :, :, 4:]
 
     all_ranges = stripe_utils.generate_superstripe_ranges(model)
@@ -592,7 +597,7 @@ def test_collate_superstripes(
         model.meta.subarray.xsize = superstripe_model.meta.subarray.ysize
         model.meta.subarray.ysize = superstripe_model.meta.subarray.xsize
         model.meta.subarray.xstart = superstripe_model.meta.subarray.ystart
-        model.meta.subarray.ystart = superstripe_model.meta.subarray.xstart
+        model.meta.subarray.ystart = 1
         model.data = np.swapaxes(model.data, -2, -1)
 
     # expected data shapes
