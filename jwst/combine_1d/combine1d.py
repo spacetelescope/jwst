@@ -861,7 +861,7 @@ def check_monotonic(wavelength):
     if len(wavelength) < 2:
         return True
 
-    is_increasing = all(np.diff(wavelength) > 0)
-    is_decreasing = all(np.diff(wavelength) < 0)
+    is_increasing = bool((np.diff(wavelength) > 0).all())
+    is_decreasing = bool((np.diff(wavelength) < 0).all())
 
     return is_increasing or is_decreasing
