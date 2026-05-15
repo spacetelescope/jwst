@@ -64,7 +64,7 @@ def _offset_sregion(s_region, dx, dy):
     str
         The offset S_REGION string.
     """
-    footprint = sregion_to_footprint(s_region)[0]
+    footprint = sregion_to_footprint(s_region)
     footprint[:, 0] += dx
     footprint[:, 1] += dy
     return compute_s_region_keyword(footprint)
