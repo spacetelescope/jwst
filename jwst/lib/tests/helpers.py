@@ -266,7 +266,7 @@ def make_sub64p_multistripe_model(add_inttimes=False, add_zeroframe=False):
     nints = 3
     nstripe = 64
     ngroups = 5
-    ysize = 2
+    ysize = 8
     xsize = 64
     xstart = 1851
     ystart = 2046

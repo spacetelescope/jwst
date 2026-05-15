@@ -684,26 +684,28 @@ def test_collate_superstripes(
         assert collated.zeroframe is None
 
 
-def test_collate_superstripes_with_slowsize_subarray(multistripe_subarray_model):
+def test_collate_superstripes_with_slowsize_subarray_and_repeat(multistripe_subarray_model):
     model = multistripe_subarray_model
 
     # expected data shapes
-    nint_before, ngroup, ny_before, nx_before = model.data.shape
+    nint_before, ngroup_before, ny_before, nx_before = model.data.shape
     nstripe = model.meta.subarray.num_superstripe
+    nstep = model.meta.subarray.superstripe_step
     nint_after = nint_before // nstripe
+    ngroup_after = ngroup_before * 4  # expecting 4 in-frame repeats for this mode
     nx_after = nx_before
-    ny_after = (ny_before - 1) * nstripe
+    ny_after = nstripe * nstep
 
     # set the data value to the stripe number
     for integ in range(nint_before):
         model.data[integ] = integ % nstripe
 
     model.pixeldq = np.zeros((nstripe, ny_before, nx_before))
-    model.groupdq = np.zeros((nint_before, ngroup, ny_before, nx_before))
+    model.groupdq = np.zeros((nint_before, ngroup_before, ny_before, nx_before))
     collated = stripe_utils.collate_superstripes(model)
 
-    assert collated.data.shape == (nint_after, ngroup, ny_after, nx_after)
-    assert collated.groupdq.shape == (nint_after, ngroup, ny_after, nx_after)
+    assert collated.data.shape == (nint_after, ngroup_after, ny_after, nx_after)
+    assert collated.groupdq.shape == (nint_after, ngroup_after, ny_after, nx_after)
     assert collated.pixeldq.shape == (ny_after, nx_after)
 
     # groupdq all zeros

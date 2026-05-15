@@ -316,15 +316,13 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
                     interleave_skips += nskips2 + nreads2
                     linecount += interleave_skips
                 else:
-                    linecount += nskips1
+                    linecount += nskips1 + superstripe_step * stripe
             else:
                 linecount += nskips2
             full_ranges[stripe].append((linecount, linecount + nreads2))
             sub_ranges[stripe].append((sub_lines, sub_lines + nreads2))
-            std_sub_ranges[stripe] = [(std_sub_lines, std_sub_lines + nreads2)]
             linecount += nreads2
             sub_lines += nreads2
-            std_sub_lines += nreads2
 
         if sub_lines != slow_size:
             raise ValueError("Stripe readout does not match science array shape.")
@@ -503,6 +501,14 @@ def generate_stripe_reference(ref_array, sci_model):
     return stripe_out
 
 
+def _slow_start_from_full_range(slowaxis, full_range):
+    all_stripe_ranges = np.array(list(full_range.values()))
+    if slowaxis < 0:
+        # negative axis, convert to science coord
+        all_stripe_ranges = DETECTOR_FULL_SIZE - all_stripe_ranges
+    return np.min(all_stripe_ranges) + 1
+
+
 def collate_superstripes(input_model):
     """
     Collate superstripes into arrays resembling the full detector/subarray shape.
@@ -538,15 +544,20 @@ def collate_superstripes(input_model):
 
     # Generate slowaxis ranges to place science regions from stripes into parent frame
     all_ranges = generate_superstripe_ranges(input_model)
-    if slow_size == DETECTOR_FULL_SIZE:
-        full_range = all_ranges["full"]
-    else:
-        full_range = all_ranges["standard_subarray"]
+    full_range = all_ranges["full"]
     sub_range = all_ranges["subarray"]
+    if slow_size == DETECTOR_FULL_SIZE:
+        std_range = None
+        slow_start = 1
+    else:
+        std_range = all_ranges["standard_subarray"]
+        slow_start = _slow_start_from_full_range(slowaxis, full_range)
+    n_repeat = max(len(r) for r in sub_range.values())
+    ngroups_sci = ngroups * n_repeat
 
     # Initialize new array shapes in detector space
-    newdata = np.full((nints_sci, ngroups, slow_size, fast_size), np.nan, dtype="float32")
-    newgdq = np.full((nints_sci, ngroups, slow_size, fast_size), 0, dtype="uint8")
+    newdata = np.full((nints_sci, ngroups_sci, slow_size, fast_size), np.nan, dtype="float32")
+    newgdq = np.full((nints_sci, ngroups_sci, slow_size, fast_size), 0, dtype="uint8")
     newpdq = np.full(
         (slow_size, fast_size), datamodels.dqflags.pixel["REFERENCE_PIXEL"], dtype="uint32"
     )
@@ -580,18 +591,28 @@ def collate_superstripes(input_model):
     # plane, and overlaps could be reduced using a function of choice,
     # e.g. np.median.
     for integ in range(nints_sci):
-        for stripe in range(n_stripe):
-            stripe_idx = integ * n_stripe + stripe
-            for s_reg, f_reg in zip(sub_range[stripe], full_range[stripe], strict=True):
+        for group in range(ngroups_sci):
+            repeat = group % n_repeat
+            old_group_idx = group // n_repeat
+            for stripe in range(n_stripe):
+                stripe_idx = integ * n_stripe + stripe
+                s_reg = sub_range[stripe][repeat]
+                if std_range is not None:
+                    f_reg = std_range[stripe][0]
+                else:
+                    f_reg = full_range[stripe][repeat]
+
+                # todo: scale the science data by the timing offset?
+
                 # Propagate the science data
-                newdata[integ, :, f_reg[0] : f_reg[1], :] = olddata[
-                    stripe_idx, :, s_reg[0] : s_reg[1], :
+                newdata[integ, group, f_reg[0] : f_reg[1], :] = olddata[
+                    stripe_idx, old_group_idx, s_reg[0] : s_reg[1], :
                 ]
 
                 # Propagate input groupdq only if appropriate
                 if oldgdq is not None:
-                    newgdq[integ, :, f_reg[0] : f_reg[1], :] = oldgdq[
-                        stripe_idx, :, s_reg[0] : s_reg[1], :
+                    newgdq[integ, group, f_reg[0] : f_reg[1], :] = oldgdq[
+                        stripe_idx, old_group_idx, s_reg[0] : s_reg[1], :
                     ]
 
                 # Propagate pixeldq only for the first integration if appropriate
@@ -623,12 +644,12 @@ def collate_superstripes(input_model):
     new_model.update(input_model)
 
     new_model = generate_stripe_int_times(new_model)
-    new_model = clean_superstripe_metadata(new_model)
+    new_model = clean_superstripe_metadata(new_model, slow_start=slow_start)
 
     return new_model
 
 
-def clean_superstripe_metadata(input_model):
+def clean_superstripe_metadata(input_model, slow_start=1):
     """
     Update model metadata to match changes to arrays.
 
@@ -664,7 +685,7 @@ def clean_superstripe_metadata(input_model):
     input_model.meta.exposure.nints = np.ceil(
         input_model.meta.exposure.nints / input_model.meta.subarray.num_superstripe
     ).astype(int)
-
+    input_model.meta.exposure.ngroups = input_model.data.shape[1]
     input_model.meta.subarray.multistripe_reads1 = None
     input_model.meta.subarray.multistripe_reads2 = None
     input_model.meta.subarray.multistripe_skips1 = None
@@ -674,6 +695,11 @@ def clean_superstripe_metadata(input_model):
     input_model.meta.subarray.num_superstripe = None
     input_model.meta.subarray.superstripe_step = None
     input_model.meta.subarray.ysize, input_model.meta.subarray.xsize = input_model.data.shape[-2:]
+
+    if np.abs(input_model.meta.subarray.slowaxis) == 1:
+        input_model.meta.subarray.xstart = slow_start
+    else:
+        input_model.meta.subarray.ystart = slow_start
 
     return input_model
 
