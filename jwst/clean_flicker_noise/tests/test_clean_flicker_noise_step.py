@@ -192,7 +192,7 @@ def test_autoparam_failed(caplog, monkeypatch):
     monkeypatch.setattr(autoparam, "niriss_image_parameters", lambda *args: None)
 
     input_model = make_niriss_rate_model()
-    CleanFlickerNoiseStep.call(input_model, autoparam=True, override_flat="N/A")
+    CleanFlickerNoiseStep.call(input_model, autoparam=True, apply_flat_field=False)
     assert "Auto parameter setting failed" in caplog.text
     assert "Using input parameters as provided" in caplog.text
     assert "apply_flat_field: True" not in caplog.text
