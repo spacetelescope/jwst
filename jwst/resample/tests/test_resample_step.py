@@ -1865,11 +1865,14 @@ def test_resample_imaging_pixmap_interpolation(nircam_rate):
 def test_combine_input_sregions(nircam_rate):
     """Ensure input S_REGION values that contain multiple polygons are handled."""
     model = AssignWcsStep.call(nircam_rate, sip_approx=False)
-    model.meta.wcsinfo.s_region = "POLYGON ICRS 0 0 0 2 2 2 2 0 POLYGON ICRS 1 1 1 2 2 2 2 1"
+    input_sregion = model.meta.wcsinfo.s_region
+    # duplicate the S_REGION to put multiple polygons in the input
+    model.meta.wcsinfo.s_region = input_sregion + " " + input_sregion
 
     resample_obj = ResampleImage(ModelLibrary([model]))
     output_sregion = resample_obj.combine_input_sregions()
-    expected_sregion = "POLYGON ICRS  0.000000000 0.010138235 0.000015259 0.000000000 2.000000000 0.000000000 2.000000000 2.000000000 0.009986408 2.000006049 360.000000000 1.999988018"
+
     # note you get out something slightly different than what you put in because
     # combine_input_sregions accounts for any distortion in the wcs transform
+    expected_sregion = "POLYGON ICRS  22.038318261 11.984418704 22.038318266 11.984414552 22.038377332 11.980791478 22.042066180 11.980835622 22.041995719 11.984457680 22.041534603 11.984457141"
     assert output_sregion == expected_sregion
