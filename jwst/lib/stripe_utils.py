@@ -223,7 +223,6 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
         in slowaxis corresponding to stripe shapes in the full array, striped
         subarray for the science and reference regions respectively.
     """
-    subarray_name = sci_model.meta.subarray.name
     nreads1 = sci_model.meta.subarray.multistripe_reads1
     nskips1 = sci_model.meta.subarray.multistripe_skips1
     nreads2 = sci_model.meta.subarray.multistripe_reads2
@@ -254,13 +253,9 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
 
     sub_ranges = {}
     full_ranges = {}
-    std_sub_ranges = {}
     reference_sub_ranges = {}
     reference_full_ranges = {}
 
-    # TODO: standard_sub_ranges is a hack for NRC multistripe SUB64MS02P
-    #  which does not expect refpix in output, not sure how it will generalize
-    std_sub_lines = 0
     for stripe in range(num_superstripe):
         # Track the read position in the full frame with linecount, and number of lines
         # read into subarray with sub_lines
@@ -285,10 +280,8 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
         # Read Nreads2 for the stripe
         full_ranges[stripe] = [(linecount, linecount + nreads2)]
         sub_ranges[stripe] = [(sub_lines, sub_lines + nreads2)]
-        std_sub_ranges[stripe] = [(std_sub_lines, std_sub_lines + nreads2)]
         linecount += nreads2
         sub_lines += nreads2
-        std_sub_lines += nreads2
 
         # Now, while the output size is less than the science array size:
         # 1a. If repeat_stripe, reset linecount (HEAD) to initial position
@@ -330,15 +323,11 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
     all_ranges = {
         "full": full_ranges,
         "subarray": sub_ranges,
-        "standard_subarray": std_sub_ranges,
         "reference_full": reference_full_ranges,
         "reference_subarray": reference_sub_ranges,
     }
 
     # Swap slow axis indices to science frame if needed
-    std_sub_size = STRIPE_TO_STANDARD_SUBARRAY.get(subarray_name, {}).get(
-        "slow_size", DETECTOR_FULL_SIZE
-    )
     if science_frame and slowaxis < 0:
         for range_set in all_ranges:
             for key, range_list in all_ranges[range_set].items():
@@ -347,8 +336,6 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
                         all_ranges[range_set][key][i] = tuple(
                             [DETECTOR_FULL_SIZE - x for x in rge[::-1]]
                         )
-                    elif "standard" in range_set:
-                        all_ranges[range_set][key][i] = tuple([std_sub_size - x for x in rge[::-1]])
                     else:
                         all_ranges[range_set][key][i] = tuple([slow_size - x for x in rge[::-1]])
     return all_ranges
@@ -502,11 +489,32 @@ def generate_stripe_reference(ref_array, sci_model):
 
 
 def _slow_start_from_full_range(slowaxis, full_range):
+    """
+    Get the subarray start value along the slow axis from the derived ranges in the full frame.
+
+    Parameters
+    ----------
+    slowaxis : int
+        The slow axis.
+    full_range : dict
+        Keys are stripe numbers, values are lists of range tuples.
+
+    Returns
+    -------
+    sci_slow_start : int
+        The start value in science coordinates, 1-indexed, for recording
+        in the output metadata.
+    det_slow_start : int
+        The start value in detector coordinates, 0-indexed, for determining
+        output subarray indices.
+    """
     all_stripe_ranges = np.array(list(full_range.values()))
     if slowaxis < 0:
         # negative axis, convert to science coord
-        all_stripe_ranges = DETECTOR_FULL_SIZE - all_stripe_ranges
-    return np.min(all_stripe_ranges) + 1
+        sci_stripe_ranges = DETECTOR_FULL_SIZE - all_stripe_ranges
+    else:
+        sci_stripe_ranges = all_stripe_ranges
+    return np.min(sci_stripe_ranges) + 1, np.min(all_stripe_ranges)
 
 
 def collate_superstripes(input_model):
@@ -547,11 +555,13 @@ def collate_superstripes(input_model):
     full_range = all_ranges["full"]
     sub_range = all_ranges["subarray"]
     if slow_size == DETECTOR_FULL_SIZE:
-        std_range = None
-        slow_start = 1
+        sci_slow_start = 1
+        det_slow_start = 0
     else:
-        std_range = all_ranges["standard_subarray"]
-        slow_start = _slow_start_from_full_range(slowaxis, full_range)
+        # TODO: this assumes the lowest corner of the subarray is included in the
+        #   science pixels in the full_range. This may not match standard subarray
+        #   definition, but should hopefully be self-consistent.
+        sci_slow_start, det_slow_start = _slow_start_from_full_range(slowaxis, full_range)
     n_repeat = max(len(r) for r in sub_range.values())
     ngroups_sci = ngroups * n_repeat
 
@@ -597,12 +607,9 @@ def collate_superstripes(input_model):
             for stripe in range(n_stripe):
                 stripe_idx = integ * n_stripe + stripe
                 s_reg = sub_range[stripe][repeat]
-                if std_range is not None:
-                    f_reg = std_range[stripe][0]
-                else:
-                    f_reg = full_range[stripe][repeat]
+                f_reg = [int(r - det_slow_start) for r in full_range[stripe][repeat]]
 
-                # todo: scale the science data by the timing offset?
+                # TODO: scale the science data by the timing offset?
 
                 # Propagate the science data
                 newdata[integ, group, f_reg[0] : f_reg[1], :] = olddata[
@@ -644,7 +651,7 @@ def collate_superstripes(input_model):
     new_model.update(input_model)
 
     new_model = generate_stripe_int_times(new_model)
-    new_model = clean_superstripe_metadata(new_model, slow_start=slow_start)
+    new_model = clean_superstripe_metadata(new_model, slow_start=sci_slow_start)
 
     return new_model
 
@@ -659,6 +666,8 @@ def clean_superstripe_metadata(input_model, slow_start=1):
         The model with updated data array shapes matching a parent
         frame, e.g. full frame or a subarray, which consist of
         multiple superstripe integrations.
+    slow_start : int
+        The slowaxis subarray start position, 1-indexed to record.
 
     Returns
     -------
