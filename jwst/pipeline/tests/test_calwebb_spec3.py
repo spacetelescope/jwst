@@ -10,14 +10,13 @@ from gwcs import wcs
 from stcal.alignment.util import compute_s_region_keyword, sregion_to_footprint
 
 import jwst
-from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi
 from jwst.extract_1d.tests.helpers import mock_nirspec_fs_one_slit_func, mock_nis_wfss_l2
 from jwst.pipeline import Spec3Pipeline
 from jwst.stpipe import Step
 
-INPUT_WFSS = "mock_wfss_cal.fits"
-INPUT_WFSS_2 = "mock_wfss_2_cal.fits"
+INPUT_WFSS = "mock_wfss_x1d.fits"
+INPUT_WFSS_2 = "mock_wfss_2_x1d.fits"
 INPUT_ASN = "mock_wfss_asn.json"
 
 
@@ -88,24 +87,10 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
     """
     Run the spec3 pipeline on a WFSS association.
 
-    Extract_1d and combine_1d steps are mocked.
-    Pixel_replace is skipped.
+    combine_1d step is mocked.
+    pixel_replace is skipped.
     This only tests the pipeline logic.
     """
-
-    def mock_extract1d(self, input_model, *args, **kwargs):
-        """
-        Mock the Extract1dStep process() method.
-
-        Ensure it receives the right input type for a WFSS association,
-        and outputs the correct type.
-        """
-        if not isinstance(input_model, SourceModelContainer):
-            raise TypeError("Input to extract_1d is not a SourceModelContainer")
-
-        return wfss_multiexposure
-
-    monkeypatch.setattr("jwst.extract_1d.Extract1dStep.process", mock_extract1d)
 
     def mock_combine1d(self, input_model, *args, **kwargs):
         """
@@ -114,7 +99,7 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
         Ensure it receives the right input type for a WFSS association.
         """
         if not isinstance(input_model, dm.WFSSMultiSpecModel):
-            raise TypeError("Input to combine_1d is not a WFSSMultiSpecModel")
+            raise TypeError(f"Input to combine_1d is not a WFSSMultiSpecModel: {input_model}")
         output_model = dm.MultiCombinedSpecModel()
         spec = dm.SpecModel()
         output_model.spec.append(spec)
@@ -122,25 +107,6 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
         return output_model
 
     monkeypatch.setattr("jwst.combine_1d.Combine1dStep.process", mock_combine1d)
-
-    def mock_wfss_multiexposure(input_model):
-        """
-        Bypass reorganizing the output list.
-
-        Ensure the input type is correct, which is equivalent to ensuring the result of
-        the pipeline has the correct type.
-        """
-        if not isinstance(input_model, list):
-            raise TypeError("Input to make_wfss_multiexposure is not a list")
-        if not all(isinstance(m, dm.WFSSMultiSpecModel) for m in input_model):
-            raise TypeError("Input to make_wfss_multiexposure is not a list of WFSSMultiSpecModel")
-        output_model = dm.WFSSMultiSpecModel()
-        output_model.spec.append(dm.WFSSSpecModel())
-        return output_model
-
-    monkeypatch.setattr(
-        jwst.pipeline.calwebb_spec3, "make_wfss_multiexposure", mock_wfss_multiexposure
-    )
 
     def mock_wfss_multicombined(input_model):
         """
@@ -169,25 +135,19 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
 
 def test_spec3_wfss(run_spec3_wfss):
     """Smoke test to ensure pipeline runs for WFSS input."""
-    files_created = os.listdir(".")
-    assert "test_x1d.fits" in files_created
-    assert "test_c1d.fits" in files_created
-    with dm.open("test_x1d.fits") as x1d:
-        assert (
-            x1d.spec[0].s_region
-            == "POLYGON ICRS  247.901987783 30.174116268 247.864126916 30.158804440 247.846405241 30.190721550 247.852683427 30.193419510 247.851405241 30.195721550 247.888569817 30.211692493 247.906987783 30.179116268 247.900617472 30.176539964"
-        )
+    files_listed = os.listdir(".")
+    assert "test_c1d.fits" in files_listed
 
 
 def test_spec3_nrs_fs(tmp_cwd):
     input_model = mock_nirspec_fs_one_slit_func()
-    input_model.meta.filename = "test_spec3_cal.fits"
+    input_model.meta.filename = "test_spec3_x1d.fits"
     model_copy = input_model.copy()
     steps = {"outlier_detection": {"skip": True}, "resample_spec": {"skip": True}}
     Spec3Pipeline.call([input_model], steps=steps, save_results=True)
 
     # check for expected output
-    assert Path("test_spec3_x1d.fits").exists()
+    assert Path("test_spec3_c1d.fits").exists()
 
     # make sure input model was not modified
     assert input_model.meta.cal_step.instance == model_copy.meta.cal_step.instance

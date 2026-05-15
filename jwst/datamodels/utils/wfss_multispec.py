@@ -13,7 +13,12 @@ from jwst.datamodels.utils.flat_multispec import (
     set_schema_units,
 )
 
-__all__ = ["make_wfss_multiexposure", "wfss_multiexposure_to_multispec", "make_wfss_multicombined"]
+__all__ = [
+    "make_wfss_multiexposure",
+    "wfss_multiexposure_to_multispec",
+    "wfss_container_to_multispec",
+    "make_wfss_multicombined",
+]
 
 
 def make_wfss_multiexposure(input_list):
@@ -202,6 +207,66 @@ def wfss_multiexposure_to_multispec(input_model):
         # This is also a problem on main
         multispec.meta.exposure.exposure_time = exposure_times[0]
         multispec.meta.exposure.integration_time = integration_times[0]
+        spec_this_id = spec_list[source_ids == source_id]
+        multispec.spec.extend(spec_this_id)
+        multispec.update(input_model, only="PRIMARY")
+        output_list.append(multispec)
+
+    return output_list
+
+
+def wfss_container_to_multispec(input_models):
+    """
+    Transform a container into list by source ID.
+
+    Parameters
+    ----------
+    input_models : `~jwst.datamodels.container.ModelContainer`
+        Input models to be reorganized.
+
+    Returns
+    -------
+    output_list : list[WFSSMultiSpecModel]
+        List of `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel` objects,
+        one for each exposure in the input model.
+    """
+    # first extract all spectra as SpecModels in a flat list
+    spec_list = []
+    source_ids = []
+    exposure_times = []
+    integration_times = []
+    for input_model in input_models._models:  # noqa: SLF001
+        if hasattr(input_model, "spec"):
+            is_spec = True
+            do_iter = input_model.spec
+        else:
+            is_spec = False
+            do_iter = input_model.slits
+
+        for exp in do_iter:
+            if is_spec:
+                this_exp_list = expand_table(exp)
+                source_ids.extend([spec.source_id for spec in this_exp_list])
+                exposure_times.extend([exp.exposure_time for _ in this_exp_list])
+                integration_times.extend([exp.integration_time for _ in this_exp_list])
+                spec_list.extend(this_exp_list)
+            else:
+                source_ids.append(exp.source_id)
+                spec_list.append(exp)
+
+    # organize by unique source id such that there is one MultiSpecModel per source
+    # with all exposures for that source in that model's model.spec
+    unique_source_ids = set(source_ids)
+    source_ids = np.array(source_ids)
+    spec_list = np.array(spec_list)
+    output_list = []
+    for source_id in unique_source_ids:
+        multispec = dm.WFSSMultiSpecModel()
+        # BUG: currently there is no infrastructure for handling per-exposure weights
+        # This is also a problem on main
+        if is_spec:
+            multispec.meta.exposure.exposure_time = exposure_times[0]
+            multispec.meta.exposure.integration_time = integration_times[0]
         spec_this_id = spec_list[source_ids == source_id]
         multispec.spec.extend(spec_this_id)
         multispec.update(input_model, only="PRIMARY")

@@ -133,11 +133,7 @@ calibrated exposure files. An example source-based file name is
 "jw00042-o001_s00000002_niriss_gr150r_f150w_cal.fits", where "s00000002" is the source id.
 
 NIRCam, MIRI, and NIRISS WFSS observations also have a defined set of sources, and those data
-still go through ``exp_to_source``, but the reorganized data products are not saved
-as intermediate files because there may be hundreds or thousands of sources
-in a single exposure.
-
-The reorganized sets of data are sent to subsequent steps to process and combine
+are reorganized for subsequent steps to process and combine
 all the data for one source at a time.
 
 CR-flagged exposures

@@ -12,7 +12,10 @@ from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
 from jwst.datamodels import SourceModelContainer
-from jwst.datamodels.utils.wfss_multispec import make_wfss_multicombined
+from jwst.datamodels.utils.wfss_multispec import (
+    make_wfss_multicombined,
+    wfss_container_to_multispec,
+)
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
 from jwst.lib.exposure_types import is_moving_target
@@ -172,10 +175,13 @@ class Spec3Pipeline(Pipeline):
         # source into its own ModelContainer. This produces a list of
         # sources, each represented by a MultiExposureModel instead of
         # a single ModelContainer.
-        sources = [source_models]
-        if isinstance(input_models[0], dm.MultiSlitModel):
+        if exptype in WFSS_TYPES:
+            sources = wfss_container_to_multispec(source_models)
+        elif isinstance(input_models[0], dm.MultiSlitModel):
             log.info("Convert from exposure-based to source-based data.")
             sources = list(multislit_to_container(source_models).items())
+        else:
+            sources = [source_models]
 
         # Process each source
         wfss_comb = []
@@ -248,7 +254,6 @@ class Spec3Pipeline(Pipeline):
                     except AttributeError:
                         pass
 
-            # Do 1-D spectral extraction
             if exptype in SLITLESS_TYPES:
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE
@@ -260,6 +265,7 @@ class Spec3Pipeline(Pipeline):
                     # instead run photom on the extract_1d results and save
                     # those instead.
 
+                    # Do 1-D spectral extraction
                     self.extract_1d.save_results = False
                     result = self.extract_1d.run(result)
 
@@ -285,9 +291,6 @@ class Spec3Pipeline(Pipeline):
                     comb_complete = comb is not None and comb.meta.cal_step.combine_1d == "COMPLETE"
                     if not comb_complete:
                         continue
-                    # add metadata that only WFSS wants
-                    comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
-                    comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
                     wfss_comb.append(comb)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
