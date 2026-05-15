@@ -776,7 +776,10 @@ class ResampleImage(Resample):
         sregion_list = []
         for i in range(len(self.input_models)):
             meta = self.input_models.read_metadata(i)
-            sregion_list.append(meta["meta.wcsinfo.s_region"])
+            sreg_string = meta["meta.wcsinfo.s_region"]
+            # In some cases S_REGION contains multiple polygons.
+            # The helper function handles this
+            sregion_list.extend(_multi_sregion_to_list(sreg_string))
 
         if "moving_target" in self.output_wcs.available_frames:
             det2world = self.output_wcs.get_transform("detector", "moving_target")
@@ -937,3 +940,21 @@ def copy_asn_info_from_library(library, output_model):
         output_model.meta.asn.pool_name = asn_pool
     if (asn_table_name := library.asn.get("table_name", None)) is not None:
         output_model.meta.asn.table_name = asn_table_name
+
+
+def _multi_sregion_to_list(sregion):
+    """
+    Convert a multi S_REGION string to a list of individual S_REGION strings.
+
+    Parameters
+    ----------
+    sregion : str
+        A multi S_REGION string.
+
+    Returns
+    -------
+    list of str
+        A list of individual S_REGION strings.
+    """
+    slist = sregion.split("POLYGON ICRS")
+    return ["POLYGON ICRS" + s.strip() for s in slist if s.strip()]

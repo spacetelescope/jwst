@@ -20,7 +20,7 @@ from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
-from jwst.resample.resample import input_jwst_model_to_dict
+from jwst.resample.resample import ResampleImage, input_jwst_model_to_dict
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
 from jwst.resample.resample_step import GOOD_BITS
 from jwst.resample.resample_utils import load_custom_wcs
@@ -1860,3 +1860,16 @@ def test_resample_imaging_pixmap_interpolation(nircam_rate):
     # ensure results are not identical (i.e. pixmap settings actually did something)
     with pytest.raises(AssertionError):
         assert_allclose(res.data, ref.data)
+
+
+def test_combine_input_sregions(nircam_rate):
+    """Ensure input S_REGION values that contain multiple polygons are handled."""
+    model = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    model.meta.wcsinfo.s_region = "POLYGON ICRS 0 0 0 2 2 2 2 0 POLYGON ICRS 1 1 1 2 2 2 2 1"
+
+    resample_obj = ResampleImage(ModelLibrary([model]))
+    output_sregion = resample_obj.combine_input_sregions()
+    expected_sregion = "POLYGON ICRS  0.000000000 0.010138235 0.000015259 0.000000000 2.000000000 0.000000000 2.000000000 2.000000000 0.009986408 2.000006049 360.000000000 1.999988018"
+    # note you get out something slightly different than what you put in because
+    # combine_input_sregions accounts for any distortion in the wcs transform
+    assert output_sregion == expected_sregion
