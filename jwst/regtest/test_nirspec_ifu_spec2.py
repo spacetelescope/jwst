@@ -23,11 +23,16 @@ def run_spec2(rtdata_module, resource_tracker):
     asn_path = INPUT_PATH + "/" + asn_name
 
     # Run the pipeline
+    chromcorr_name = "jwst_nirspec_chromcorr_20260504T1900_chayes_chromcorr_f290lp.asdf"
+    chromcorr_path = INPUT_PATH + "/" + chromcorr_name
+    rtdata.get_data(chromcorr_path)
+    chromcorr = rtdata.input
     step_params = {
         "input_path": asn_path,
         "step": "calwebb_spec2",
         "args": [
             "--steps.assign_wcs.save_results=true",
+            f"--steps.assign_wcs.override_chromcorr={chromcorr}",
             "--steps.msa_flagging.save_results=true",
             "--steps.srctype.save_results=true",
             "--steps.flat_field.save_results=true",
