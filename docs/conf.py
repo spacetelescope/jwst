@@ -75,7 +75,7 @@ with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_fil
 # Configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'asdf': ('https://asdf.readthedocs.io/en/stable/', None),
-    'astropy': ('https://docs.astropy.org/en/stable/', None),
+    'astropy': ('https://docs.astropy.org/en/v8.0.x/', None),
     'drizzle': ('https://spacetelescope-drizzle.readthedocs.io/en/latest/', None),
     'gwcs': ('https://gwcs.readthedocs.io/en/latest/', None),
     'matplotlib': ('https://matplotlib.org/', None),
