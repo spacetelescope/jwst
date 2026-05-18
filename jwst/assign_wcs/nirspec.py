@@ -2171,6 +2171,7 @@ def oteip_to_chromcorr(reference_files):
             "be applied; an identity placeholder transform will be used instead."
         )
         chrom_corr = Identity(3)
+        chrom_corr.inverse = Identity(3)
     else:
         with ChromCorrModel(reference_files["chromcorr"]) as f:
             chrom_corr = f.model

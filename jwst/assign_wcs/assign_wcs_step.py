@@ -216,5 +216,5 @@ class AssignWcsStep(Step):
             try:
                 return super().get_reference_file(input_file, "chromcorr")
             except CrdsLookupError:
-                return None
+                return "N/A"
         return super().get_reference_file(input_file, reference_file_type)
