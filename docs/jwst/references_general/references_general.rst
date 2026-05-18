@@ -52,6 +52,8 @@ documentation on each reference file.
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`assign_wcs <assign_wcs_step>`                   | :ref:`CAMERA <camera_reffile>`                   |
 +                                                       +--------------------------------------------------+
+|                                                       | :ref:`CHROMCORR <chromcorr_reffile>`             |
++                                                       +--------------------------------------------------+
 |                                                       | :ref:`COLLIMATOR <collimator_reffile>`           |
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`DISPERSER <disperser_reffile>`             |
@@ -205,6 +207,8 @@ documentation on each reference file.
 | :ref:`BARSHADOW <barshadow_reffile>`             | :ref:`barshadow <barshadow_step>`                     |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`CAMERA <camera_reffile>`                   | :ref:`assign_wcs <assign_wcs_step>`                   |
++--------------------------------------------------+-------------------------------------------------------+
+| :ref:`CHROMCORR <chromcorr_reffile>`             | :ref:`assign_wcs <assign_wcs_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`COLLIMATOR <collimator_reffile>`           | :ref:`assign_wcs <assign_wcs_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+

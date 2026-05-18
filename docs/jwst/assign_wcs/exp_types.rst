@@ -71,7 +71,7 @@ WCS reference file information per EXP_TYPE
 **NRS_IFU:**
 
  | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*,
- | *ifufore*, *ifuslicer*, *ifupost*
+ | *ifufore*, *ifuslicer*, *ifupost*, *chromcorr*
  | WCS pipeline coordinate frames: detector, sca, gwa, slit_frame, slicer, msa_frame, oteip, v2v3, v2v3vacorr, world
  | Implements: reference files provided by NIRSpec team
 
