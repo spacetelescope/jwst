@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import logging
 
+from crds.core.exceptions import CrdsLookupError
 from stcal.alignment.util import wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
 
@@ -107,7 +108,17 @@ class AssignWcsStep(Step):
             return output_model
 
         for reftype in self.reference_file_types:
-            reffile = self.get_reference_file(output_model, reftype)
+            if reftype == "chromcorr":
+                try:
+                    # Handle chromcorr file unavailable.
+                    # This code should be removed in build 13.2 once the chromcorr file
+                    # is always found in CRDS
+                    reffile = self.get_reference_file(output_model, "chromcorr")
+                except CrdsLookupError:
+                    log.info("No chromaticity correction reference file found.")
+                    reffile = None
+            else:
+                reffile = self.get_reference_file(output_model, reftype)
             reference_file_names[reftype] = reffile if reffile else ""
         log.debug(f"reference files used in assign_wcs: {reference_file_names}")
 

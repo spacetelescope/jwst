@@ -359,19 +359,19 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     msa2oteip.inputs = ("x_msa", "y_msa", "lam", "name")
     msa2oteip.outputs = ("x_ote", "y_ote", "lam", "name")
 
-    # OTEIP to V2,V3 transform
-    # This includes a wavelength unit conversion from meters to microns.
-    oteip2v23 = oteip_to_v23(reference_files) & Identity(1)
-    oteip2v23.name = "oteip2v23"
-    oteip2v23.inputs = ("x_ote", "y_ote", "lam", "name")
-    oteip2v23.outputs = ("v2", "v3", "lam", "name")
-
     # Transform to correct OTEIP for wavelength dependent spatial shifts
     # due to chromaticity of NIRSpec fore-optics
     chrom_corr = oteip_to_chromcorr(reference_files) & Identity(1)
     chrom_corr.name = "chrom_corr"
     chrom_corr.inputs = ("x_ote", "y_ote", "lam", "name")
     chrom_corr.outputs = ("x_ote", "y_ote", "lam", "name")
+
+    # OTEIP to V2,V3 transform
+    # This includes a wavelength unit conversion from meters to microns.
+    oteip2v23 = oteip_to_v23(reference_files) & Identity(1)
+    oteip2v23.name = "oteip2v23"
+    oteip2v23.inputs = ("x_ote", "y_ote", "lam", "name")
+    oteip2v23.outputs = ("v2", "v3", "lam", "name")
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
@@ -2165,6 +2165,7 @@ def oteip_to_chromcorr(reference_files):
     """
     with ChromCorrModel(reference_files["chromcorr"]) as f:
         chrom_corr = f.model
+    chrom_corr.inverse = chrom_corr.inverse & Identity(1)
     return chrom_corr
 
 
