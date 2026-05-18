@@ -2163,7 +2163,7 @@ def oteip_to_chromcorr(reference_files):
     model : `~astropy.modeling.Model`
         Transform to correct ``oteip`` frame for fore-optics chromaticity effects.
     """
-    if reference_files["chromcorr"] is None:
+    if reference_files["chromcorr"] is None or reference_files["chromcorr"] == "N/A":
         # Handle missing chromcorr file
         # Can be removed after build 13.2, when CRDS should always find this file type
         log.warning(
@@ -2171,7 +2171,6 @@ def oteip_to_chromcorr(reference_files):
             "be applied; an identity placeholder transform will be used instead."
         )
         chrom_corr = Identity(3)
-        chrom_corr.inverse = Identity(3)
     else:
         with ChromCorrModel(reference_files["chromcorr"]) as f:
             chrom_corr = f.model
