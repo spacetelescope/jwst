@@ -108,18 +108,6 @@ class AssignWcsStep(Step):
             return output_model
 
         for reftype in self.reference_file_types:
-            # if reftype == "chromcorr":
-            #     try:
-            #         # Handle chromcorr file unavailable.
-            #         # This code should be removed in build 13.2 once the chromcorr file
-            #         # is always found in CRDS
-            #         reffile = self.get_reference_file(output_model, "chromcorr")
-            #     except CrdsLookupError:
-            #         if output_model.meta.exposure.type.lower() == "nirspec_ifu":
-            #             log.warning(
-            #                 "No chromaticity correction reference file found.")
-            #         reffile = None
-            # else:
             reffile = self.get_reference_file(output_model, reftype)
             reference_file_names[reftype] = reffile if reffile else ""
         log.debug(f"reference files used in assign_wcs: {reference_file_names}")
@@ -209,9 +197,8 @@ class AssignWcsStep(Step):
         """
         Override reference file lookup to handle missing chromcorr reference file.
 
-        This override should be removed in build 13.2 once the chromcorr file is always found
-        in CRDS. For NIRSpec IFU exposures, a warning will be logged elsewhere in the pipeline
-        if the file is not found; for other exposures the file is not needed.
+        This override should be removed in build 13.2 once the chromcorr file
+        is always found in CRDS.
 
         Parameters
         ----------
