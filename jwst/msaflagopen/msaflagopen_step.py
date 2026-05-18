@@ -2,9 +2,7 @@
 
 import logging
 
-from stpipe.crds_client import reference_uri_to_cache_path
-
-from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.util import get_wcs_reference_files
 from jwst.msaflagopen import msaflag_open
 from jwst.stpipe import Step
 
@@ -51,7 +49,7 @@ class MSAFlagOpenStep(Step):
             return output_model
 
         # Get the reference file names for constructing the WCS pipeline
-        wcs_reffile_names = create_reference_filename_dictionary(output_model)
+        wcs_reffile_names = get_wcs_reference_files(output_model)
 
         # Do the DQ flagging
         output_model = msaflag_open.do_correction(
@@ -62,32 +60,3 @@ class MSAFlagOpenStep(Step):
         output_model.meta.cal_step.msa_flagging = "COMPLETE"
 
         return output_model
-
-
-def create_reference_filename_dictionary(input_model):
-    """
-    Get all relevant WCS reference files.
-
-    Parameters
-    ----------
-    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
-        Input data with WCS assigned.
-
-    Returns
-    -------
-    ref_files : dict
-        Dictionary of reference files.  Keys are CRDS reference types; values
-        are file paths or 'N/A'.
-    """
-    ref_files = {}
-    for ref_type in AssignWcsStep.reference_file_types:
-        ref_file = getattr(input_model.meta.ref_file, ref_type)
-        ref_files[ref_type] = ref_file.name
-
-    # Convert from crds protocol to absolute filenames
-    for key in ref_files.keys():
-        if ref_files[key].startswith("crds://"):
-            ref_files[key] = reference_uri_to_cache_path(
-                ref_files[key], input_model.crds_observatory
-            )
-    return ref_files
