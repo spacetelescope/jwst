@@ -224,7 +224,9 @@ addopts = [
 ]
 xfail_strict = true
 filterwarnings = [
-    "error"
+    "error",
+    # https://github.com/spacetelescope/gwcs/issues/738
+    "ignore:Calling .*lu_.* with arguments of dtype=float:DeprecationWarning",
 ]
 
 [tool.coverage.run]
