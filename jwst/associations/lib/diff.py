@@ -344,7 +344,7 @@ def compare_membership(left, right):
             if components(right_product["name"]) != left_product_name:
                 continue
             try:
-                compare_product_membership(left_product, right_product, strict_expname=False)
+                compare_product_membership(left_product, right_product, strict_expname=True)
             except MultiDiffError as compare_diffs:
                 diffs.extend(compare_diffs)
             products_right.remove(right_product)
