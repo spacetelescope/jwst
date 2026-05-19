@@ -57,12 +57,12 @@ def test_define_cubename_suffix_nispec(cube_instance):
 
     cube_instance.instrument = "NIRSPEC"
     cube_instance.num_bands = 2
-    cube_instance.list_par1 = ["G140M", "G140M"]
+    cube_instance.list_par1 = ["G140M", "G140H"]
     cube_instance.list_par2 = ["F070LP", "F100LP"]
 
     suffix = cube_instance.define_cubename_suffix()
 
-    assert suffix == "_g140m-f070lp-g140m-f100lp"
+    assert suffix == "_g140m-f070lp-g140h-f100lp"
 
 
 def test_cubename_name_nispec(cube_instance):
