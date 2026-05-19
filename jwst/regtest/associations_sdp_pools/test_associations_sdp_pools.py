@@ -49,7 +49,6 @@ pytestmark = [pytest.mark.bigdata]
         pytest.param(("jw03823_20250316t070626_pool", []), id="pool_029_mir_lrsfs_nonod"),
         pytest.param(("jw03969_20250316t131526_pool", []), id="pool_021_tso_NIRSPEC_BRIGHTOBJ"),
         pytest.param(("jw04090_20250316t054542_pool", []), id="pool_013_coron_nircam"),
-        pytest.param(("jw04368_20250318t032038_pool", []), id="pool_019_niriss_wfss"),
         pytest.param(("jw04557_20250318t100949_pool", []), id="pool_006_spec_nirspec_MOS"),
         pytest.param(("jw04611_20250308t142406_pool", []), id="pool_014_ami_niriss"),
         pytest.param(
@@ -59,8 +58,18 @@ pytestmark = [pytest.mark.bigdata]
         pytest.param(("jw05204_20250308t202944_pool", []), id="pool_002_image_miri"),
     ],
 )
-def test_std(_jail, rtdata, resource_tracker, request, pool_args):
+def test_std_relaxed(_jail, rtdata, resource_tracker, request, pool_args):
     assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
+
+
+@pytest.mark.parametrize(
+    "pool_args",
+    [
+        pytest.param(("jw04368_20250318t032038_pool", []), id="pool_019_niriss_wfss"),
+    ],
+)
+def test_std_strict(_jail, rtdata, resource_tracker, request, pool_args):
+    assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args, strict_expname=True)
 
 
 @pytest.mark.parametrize(

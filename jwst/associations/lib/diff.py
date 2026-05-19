@@ -121,7 +121,7 @@ class MultiDiffError(UserList, DiffError):
         return "".join(message)
 
 
-def compare_asn_files(left_paths, right_paths):
+def compare_asn_files(left_paths, right_paths, strict_expname=False):
     """
     Compare association files.
 
@@ -131,6 +131,8 @@ def compare_asn_files(left_paths, right_paths):
         Set of association files.
     right_paths : [Path or str[, ...]]
         Set of association files to compare against.
+    strict_expname : bool
+        Option for :func:`compare_membership`.
 
     Raises
     ------
@@ -159,10 +161,10 @@ def compare_asn_files(left_paths, right_paths):
         right_asns += single_product_asns
 
     # Compare the associations.
-    compare_asn_lists(left_asns, right_asns)
+    compare_asn_lists(left_asns, right_asns, strict_expname=strict_expname)
 
 
-def compare_asn_lists(left_asns, right_asns):
+def compare_asn_lists(left_asns, right_asns, strict_expname=False):
     """
     Compare to lists of associations.
 
@@ -176,6 +178,8 @@ def compare_asn_lists(left_asns, right_asns):
         Group of associations.
     right_asns : [`Association`[, ...]]
         Group of associations to compare.
+    strict_expname : bool
+        Option for :func:`compare_membership`.
 
     Raises
     ------
@@ -234,6 +238,7 @@ def compare_asn_lists(left_asns, right_asns):
                 left_asns_by_product[product_name],
                 right_asns_by_product[product_name],
                 skip_top_level_checks=skip_top_level_checks,
+                strict_expname=strict_expname,
             )
         except MultiDiffError as compare_diffs:
             diffs.extend(compare_diffs)
@@ -243,7 +248,7 @@ def compare_asn_lists(left_asns, right_asns):
         raise diffs from None
 
 
-def compare_asns(left, right, skip_top_level_checks=False):
+def compare_asns(left, right, skip_top_level_checks=False, strict_expname=False):
     """
     Compare two associations.
 
@@ -259,6 +264,9 @@ def compare_asns(left, right, skip_top_level_checks=False):
         Skip checks for ``asn_type`` and ``asn_id``.
         Set to `True` when this is called in a loop for subsequent products
         to avoid duplicate exceptions.
+
+    strict_expname : bool
+        Option for :func:`compare_membership`.
 
     Raises
     ------
@@ -283,7 +291,7 @@ def compare_asns(left, right, skip_top_level_checks=False):
 
         - Length of the list
         - key ``expname`` for each member
-        - key `'exptype`` for each member
+        - key ``exptype`` for each member
     """
     diffs = MultiDiffError()
 
@@ -304,7 +312,7 @@ def compare_asns(left, right, skip_top_level_checks=False):
 
     # Membership
     try:
-        compare_membership(left, right)
+        compare_membership(left, right, strict_expname=strict_expname)
     except MultiDiffError as compare_diffs:
         diffs.extend(compare_diffs)
 
@@ -312,7 +320,7 @@ def compare_asns(left, right, skip_top_level_checks=False):
         raise diffs from None
 
 
-def compare_membership(left, right):
+def compare_membership(left, right, strict_expname=False):
     """
     Compare two associations' membership.
 
@@ -320,6 +328,9 @@ def compare_membership(left, right):
     ----------
     left, right : dict
         Two, individual, associations to compare.
+
+    strict_expname : bool
+        Enforce suffix check also for EXPNAME.
 
     Raises
     ------
@@ -344,7 +355,9 @@ def compare_membership(left, right):
             if components(right_product["name"]) != left_product_name:
                 continue
             try:
-                compare_product_membership(left_product, right_product, strict_expname=True)
+                compare_product_membership(
+                    left_product, right_product, strict_expname=strict_expname
+                )
             except MultiDiffError as compare_diffs:
                 diffs.extend(compare_diffs)
             products_right.remove(right_product)
