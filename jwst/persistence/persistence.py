@@ -162,6 +162,15 @@ class DataSet:
         else:
             flag = dqflags.group["PERSISTENCE"]
 
+        # XXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # XXX !!!! What to do in this situation? !!!!
+        # XXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # This prevents 'backwards flagging'.
+        start_plane = self.persistence_array - self.persistence_time
+        # XXX Needs to be more fully tested.
+        if np.any(start_plane > current_time):
+            raise ValueError("Invalid persistence array, due to backwards flagging.")
+
         gdq_plane[self.persistence_array > 0.0] |= flag
         self.output_obj.groupdq[integ, group, :, :] = gdq_plane
 
