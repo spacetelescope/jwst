@@ -67,3 +67,11 @@ Polynomial fitting parameters
   This is used to prevent the fitted coefficients from blowing up in cases of severe contamination.
   Default is 0.1.
   TODO: should this be exposed as a top level argument or is it too technical?
+
+``--rejection_threshold``
+  A float specifying a threshold for rejecting polynomial fits based on the fitted constant term coefficient.
+  If the absolute value of that coefficient deviates from unity by more than this threshold, the fit is
+  rejected and the contamination estimate for that source is not updated on that iteration.
+  This is used to avoid fits "blowing up" in cases where the polynomial fit has returned
+  an unphysical total flux level, which typically occurs if background subtraction was imperfect 
+  or if the source sits in a highly contaminated region.

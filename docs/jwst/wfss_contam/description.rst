@@ -133,12 +133,20 @@ fits a spectral model to each source. The procedure is:
    which is set by the step argument ``--l2_alpha``. The regularization helps to
    keep the coefficients small, guarding against physically implausible flux distributions.
 
-3. If a good solution was found, the best-fit linear combination replaces the original
+3. The fitted coefficients are checked to see if the fitted constant term coefficient,
+   :math:`c_0`, deviates from unity by more than a threshold set by the step argument
+   ``--rejection_threshold``. If it does, the fit is rejected and the contamination estimate
+   for that source is not updated on that iteration. This is used to avoid fits "blowing up"
+   in cases where the polynomial fit has returned an unphysical total flux level,
+   which typically occurs if background subtraction was imperfect or if the source sits
+   in a highly contaminated region.
+
+4. If a good solution was found, the best-fit linear combination replaces the original
    simulation for that source, and this spectrally corrected simulation is used in the
    contamination model to be applied before the subsequent iteration.
    If no good solution was found, the original flat-spectrum simulation is not modified.
 
-4. The simulated contamination from all other sources is subtracted from each observed slit,
+5. The simulated contamination from all other sources is subtracted from each observed slit,
    and the resulting contamination-corrected slit is used as the "observed data"
    for the next iteration of the fit. Note that each iteration starts the fitting over from
    the original basis images; the fitted coefficients from the previous iteration are not

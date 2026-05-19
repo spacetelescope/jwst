@@ -44,7 +44,7 @@ def _get_basis_images(simul_slit):
     return basis
 
 
-def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0):
+def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0, rejection_threshold=0.1):
     """
     Fit a linear combination of dispersed basis images to the observed slit.
 
@@ -72,6 +72,11 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0):
         normal-equation matrix as ``alpha * I`` before solving, which penalizes
         large coefficients.  A value of ``0`` (the default) turns off regularization.
         Typical useful values are in the range ``1e-3`` - ``1e1``.
+    rejection_threshold : float, optional
+        If the fitted constant term coefficient ``c_0`` deviates from 1 by more than this amount,
+        the fit is rejected and `None` is returned.  This fit rejection is necessary to
+        avoid fits "blowing up" when a source is located in nonzero (pseudo-)background,
+        either from a nearby bright source or because the background subtraction was imperfect.
 
     Returns
     -------
@@ -129,7 +134,7 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0):
 
     # log some fit diagnostics for the source
     n_total = obs_data.size
-    if np.abs(coeffs[0] - 1) > 0.1:
+    if np.abs(coeffs[0] - 1) > rejection_threshold:
         log.debug(f"Fitted constant term c_0={coeffs[0]:.3g} is far from 1; rejecting fit.")
         return None
     log.debug(

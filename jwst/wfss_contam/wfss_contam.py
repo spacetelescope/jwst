@@ -403,7 +403,12 @@ def _match_simulated_slits(output_model, obs):
 
 
 def _fit_spectral_shape(
-    observed_slit, simul_slit, simul_slit_backplane_unmatched, polyfit_degree, l2_alpha=0.0
+    observed_slit,
+    simul_slit,
+    simul_slit_backplane_unmatched,
+    polyfit_degree,
+    l2_alpha=0.0,
+    rejection_threshold=0.1,
 ):
     """
     Fit a polynomial spectral shape to one slit and apply the result in-place.
@@ -428,6 +433,9 @@ def _fit_spectral_shape(
         Degree of the polynomial spectral model.  ``None`` means no fitting.
     l2_alpha : float, optional
         L2 regularisation strength passed to `~jwst.wfss_contam.wavefit.fit_slit_by_basis_images`.
+    rejection_threshold : float, optional
+        Threshold for rejecting fits based on the fitted constant term coefficient, passed to
+        `~jwst.wfss_contam.wavefit.fit_slit_by_basis_images`.
 
     Returns
     -------
@@ -444,7 +452,9 @@ def _fit_spectral_shape(
         f"order {observed_slit.meta.wcsinfo.spectral_order}"
     )
     try:
-        coeffs = fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=l2_alpha)
+        coeffs = fit_slit_by_basis_images(
+            observed_slit, simul_slit, l2_alpha=l2_alpha, rejection_threshold=rejection_threshold
+        )
         if coeffs is None:
             return False
         simul_slit.data = apply_basis_coeffs(simul_slit, coeffs)
@@ -474,6 +484,7 @@ def contam_corr(
     polyfit_degree=None,
     n_iterations=1,
     l2_alpha=0.1,
+    rejection_threshold=0.1,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -519,7 +530,11 @@ def contam_corr(
         neighbors). Requires ``polyfit_degree`` to be set; if ``polyfit_degree`` is
         None this parameter is ignored and a single iteration is performed.
     l2_alpha : float, optional
-        L2 regularization strength for the polynomial spectral fit.
+        L2 regularization strength for the polynomial spectral fit, passed to
+        `~jwst.wfss_contam.wavefit.fit_slit_by_basis_images`.
+    rejection_threshold : float, optional
+        Threshold for rejecting fits based on the fitted constant term coefficient, passed to
+        `~jwst.wfss_contam.wavefit.fit_slit_by_basis_images`.
 
     Returns
     -------
@@ -732,6 +747,7 @@ def contam_corr(
                 obs.simulated_slits.slits[good_idxs[i]],
                 polyfit_degree,
                 l2_alpha=l2_alpha,
+                rejection_threshold=rejection_threshold,
             )
             per_slit_simuls.append(matched_flat)
 

@@ -27,6 +27,7 @@ class WfssContamStep(Step):
         polyfit_degree = integer(default=None)  # Degree of polynomial fit to spectral shape
         n_iterations = integer(default=1)  # Number of contamination-correction iterations
         l2_alpha = float(default=0.1)  # L2 regularization strength for polynomial spectral fit
+        rejection_threshold = float(default=0.1)  # Threshold for rejecting polynomial fits based on fitted constant term coefficient
     """  # noqa: E501
 
     reference_file_types = ["photom", "wavelengthrange"]
@@ -75,6 +76,7 @@ class WfssContamStep(Step):
                 polyfit_degree=self.polyfit_degree,
                 n_iterations=self.n_iterations,
                 l2_alpha=self.l2_alpha,
+                rejection_threshold=self.rejection_threshold,
             )
         if simul is None:
             # Input model is returned as result, no intermediate models created
