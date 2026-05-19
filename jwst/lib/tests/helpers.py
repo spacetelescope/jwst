@@ -71,6 +71,8 @@ def make_rawramp(
     dm_ramp.meta.exposure.nints = nints
     dm_ramp.meta.exposure.ngroups = ngroups
     dm_ramp.meta.exposure.nframes = 1
+    dm_ramp.meta.exposure.groupgap = 0
+    dm_ramp.meta.exposure.noutputs = 1
 
     return dm_ramp
 
@@ -157,6 +159,7 @@ def make_superstripe_model(add_inttimes=False, add_zeroframe=False):
     model.meta.exposure.integration_start = 1
     model.meta.exposure.integration_end = nints * nstripe
     model.meta.exposure.nints = nints * nstripe
+    model.meta.exposure.frame_time = 0.5628
 
     # Add the superstripe metadata
     model.meta.subarray.multistripe_reads1 = 4

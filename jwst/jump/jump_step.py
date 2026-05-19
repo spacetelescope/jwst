@@ -225,4 +225,9 @@ class JumpStep(Step):
         jump_data.persist_grps_flagged = int(self.snowball_time_masked_next_int // gtime)
         jump_data.max_shower_amplitude = jump_data.max_shower_amplitude * gtime
 
+        # Set the read pattern from input read times if available
+        read_times = getattr(result.meta.exposure, "read_times", None)
+        if read_times is not None and len(read_times) > 0:
+            jump_data.read_pattern = list(read_times)
+
         return jump_data

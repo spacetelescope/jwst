@@ -164,6 +164,7 @@ class RefPixStep(Step):
                 result.meta.subarray.num_superstripe is not None
                 and result.meta.subarray.num_superstripe > 0
             ):
+                log.info("Reassembling superstripe data to standard ramp format")
                 result = stripe_utils.collate_superstripes(result)
 
             return result

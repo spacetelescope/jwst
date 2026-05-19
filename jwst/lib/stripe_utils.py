@@ -19,6 +19,7 @@ __all__ = [
     "collate_superstripes",
     "clean_superstripe_metadata",
     "generate_stripe_int_times",
+    "stripe_read_times",
 ]
 
 DETECTOR_FULL_SIZE = 2048
@@ -651,8 +652,10 @@ def collate_superstripes(input_model):
     new_model = generate_stripe_int_times(new_model)
     new_model = clean_superstripe_metadata(new_model, slow_start=sci_slow_start)
 
-    # TODO: add a read_pattern to describe the readtimes for the new groups
-
+    # Add a list of readout times for the new groups if there were repeats
+    # If not, the data is evenly sampled and explicit read times are not needed.
+    if n_repeat > 1:
+        new_model.meta.exposure.read_times = stripe_read_times(input_model)
     return new_model
 
 
@@ -803,3 +806,95 @@ def generate_stripe_int_times(input_model):
     input_model.int_times = otab2
 
     return input_model
+
+
+def stripe_read_times(stripe_ramp, recalculate_frametime=False):
+    """
+    Calculate read times for each readout, including subframe samples.
+
+    Parameters
+    ----------
+    stripe_ramp : `~stdatamodels.jwst.datamodels.SuperStripeRampModel` or \
+                  `~stdatamodels.jwst.datamodels.RampModel`
+        The input ramp model containing multistripe data.
+    recalculate_frametime : bool, optional
+        If True, the frametime is recalculated instead of directly using
+        `stripe_ramp.meta.exposure.frame_time`.
+
+    Returns
+    -------
+    read_times : ndarray
+        Array of read times with length ``ngroup * nrepeat``, where ``ngroup``
+        is the number of groups taken per integration, and ``nrepeat`` is
+        the number of stripe repeats contained within a ramp image.  Each element
+        contains a list with the read time for each frame averaged into the group
+        readout (usually 1 for striped modes).
+    """
+    frametime = stripe_ramp.meta.exposure.frame_time
+    nframes = stripe_ramp.meta.exposure.nframes
+    groupgap = stripe_ramp.meta.exposure.groupgap
+    ngroups = stripe_ramp.meta.exposure.ngroups
+    noutputs = stripe_ramp.meta.exposure.noutputs
+    nreads1 = stripe_ramp.meta.subarray.multistripe_reads1
+    nreads2 = stripe_ramp.meta.subarray.multistripe_reads2
+    if np.abs(stripe_ramp.meta.subarray.slowaxis) == 1:
+        nrows = stripe_ramp.meta.subarray.xsize
+        ncols = stripe_ramp.meta.subarray.ysize
+    else:
+        nrows = stripe_ramp.meta.subarray.ysize
+        ncols = stripe_ramp.meta.subarray.xsize
+
+    tot_frames = nframes + groupgap
+    tot_nreads = range(1, nframes + 1)
+    end_of_row_pad = 12
+
+    # For general frametime, calculation is the same as the "subframetime"
+    # below, except that extra rows and clocks depends on noutputs
+    # and ncols. There are no extra clocks or extra rows in the subframes.
+    # NOTE: the frametime from the header should be accurate for real data products,
+    # but the calculation is included here for completeness and convenience for
+    # working with synthetic data.
+    if recalculate_frametime:
+        log.info(f"Frametime from metadata is {frametime}")
+        extra_clocks = 0
+        if noutputs == 1 and ncols >= 9:
+            extra_rows = 2
+        else:
+            extra_rows = 3
+        if noutputs == 4:
+            # for full-frame and stripe mode
+            extra_rows = 1
+            extra_clocks = 1
+        frametime = (
+            ((ncols / noutputs) + end_of_row_pad) * (nrows + extra_rows) + extra_clocks
+        ) * 10.0e-6  # in seconds
+
+        log.info(f"Recalculated frametime is {frametime}")
+        log.info("Using recalculated frametime.")
+
+    # "subframe" time: the time between successive repeats of reads1+reads2 after
+    # each fsync. This is the time between UTR samples within the frame.
+    extra_clocks = 0
+    extra_rows = 0
+
+    # each "subframe" has reads1+reads2 rows in it
+    subframe_nrows = nreads1 + nreads2
+    n_repeat = 1
+    subframetime = 0
+    if subframe_nrows > 0:
+        n_repeat = nrows // subframe_nrows
+        subframetime = (
+            ((ncols / noutputs) + end_of_row_pad) * (subframe_nrows + extra_rows) + extra_clocks
+        ) * 10.0e-6  # in seconds
+
+    # Assemble the list of read times for all frames
+    read_times = []
+    for group in range(ngroups):
+        # Without repeats, we assume a linear sampling, with
+        # group_time = (nframes + groupgap) * frame_time
+        group_time = [[frametime * (r + group * tot_frames) for r in tot_nreads]]
+        for repeat in range(1, n_repeat):
+            group_time.append([r + subframetime * repeat for r in group_time[0]])
+        read_times.extend(group_time)
+
+    return read_times
