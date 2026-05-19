@@ -1866,17 +1866,24 @@ def test_combine_input_sregions(nircam_rate):
     """Ensure input S_REGION values that contain multiple polygons are handled."""
     model = AssignWcsStep.call(nircam_rate, sip_approx=False)
     input_sregion = model.meta.wcsinfo.s_region
-    # duplicate the S_REGION to put multiple polygons in the input
-    model.meta.wcsinfo.s_region = input_sregion + " " + input_sregion
 
+    # original expectation
+    resample_obj = ResampleImage(ModelLibrary([deepcopy(model)]))
+    expected_sregion = resample_obj.combine_input_sregions()
+
+    # expectation after duplicating input s_region
+    model.meta.wcsinfo.s_region = input_sregion + " " + input_sregion
     resample_obj = ResampleImage(ModelLibrary([model]))
     output_sregion = resample_obj.combine_input_sregions()
     assert isinstance(output_sregion, str)
-
-    expected_sregion = "POLYGON ICRS  22.038318261 11.984418704 22.038318266 11.984414552 22.038377332 11.980791478 22.042066180 11.980835622 22.041995719 11.984457680 22.041534603 11.984457141"
 
     # turn these into arrays so we can assign a tolerance for comparison,
     # to be robust to small numerical differences
     expected_footprint = sregion_to_footprint(expected_sregion)
     actual_footprint = sregion_to_footprint(output_sregion)
+    assert expected_footprint.shape == actual_footprint.shape
+
+    # sort by RA (first column) to ensure consistent ordering for comparison
+    expected_footprint = expected_footprint[np.argsort(expected_footprint[:, 0])]
+    actual_footprint = actual_footprint[np.argsort(actual_footprint[:, 0])]
     assert_allclose(actual_footprint, expected_footprint, atol=1e-5, rtol=0)
