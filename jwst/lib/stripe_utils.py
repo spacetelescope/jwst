@@ -25,9 +25,9 @@ DETECTOR_FULL_SIZE = 2048
 
 STRIPE_TO_STANDARD_SUBARRAY = {
     # NIRCam subarray superstripe modes
-    "SUB64MS02P": {"name": "SUB64P", "slow_size": 64},
-    "SUB64SP08P": {"name": "SUB64P", "slow_size": 64},
-    "SUB64SP32P": {"name": "SUB64P", "slow_size": 64},
+    "SUB64P_SUPSTP002": {"name": "SUB64P", "slow_size": 64},
+    "SUB64P_SUPSTP008": {"name": "SUB64P", "slow_size": 64},
+    "SUB64P_SUPSTP032": {"name": "SUB64P", "slow_size": 64},
 }
 """
 Map superstripe subarrays to standard subarray names and sizes.

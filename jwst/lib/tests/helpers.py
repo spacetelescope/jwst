@@ -276,7 +276,7 @@ def make_sub64p_multistripe_model(add_inttimes=False, add_zeroframe=False):
 
     # Add some more basic metadata
     model.meta.instrument.detector = "NRCB1"
-    model.meta.subarray.name = "SUB64MS02P"
+    model.meta.subarray.name = "SUB64P_SUPSTP002"
     model.meta.subarray.fastaxis = 1
     model.meta.subarray.slowaxis = -2
     model.meta.exposure.integration_start = 1
