@@ -52,17 +52,30 @@ def test_define_cubename_suffix_miri(cube_instance):
     assert "_ch1-2-shortmediumlong" in suffix
 
 
-def test_define_cubename_suffix_nispecy(cube_instance):
+def test_define_cubename_suffix_nispec(cube_instance):
     """Test NIRSpec suffix logic for multiple grating and filter"""
 
     cube_instance.instrument = "NIRSPEC"
+    cube_instance.num_bands = 2
     cube_instance.list_par1 = ["G140M", "G140M"]
     cube_instance.list_par2 = ["F070LP", "F100LP"]
 
     suffix = cube_instance.define_cubename_suffix()
 
-    #
-    assert suffix == "_g140m-f070lp_f100lp"
+    assert suffix == "_g140m-f070lp-g140m-f100lp"
+
+
+def test_cubename_name_nispec(cube_instance):
+    """Test NIRSpec logic on stripping grating from the output_name_base"""
+
+    cube_instance.instrument = "NIRSPEC"
+    cube_instance.num_bands = 2
+    cube_instance.list_par1 = ["G140M", "G140M"]
+    cube_instance.list_par2 = ["F070LP", "F100LP"]
+    cube_instance.output_name_base = "JP111_g140m"
+    suffix = cube_instance.define_cubename_suffix()
+
+    assert cube_instance.output_name_base == "JP111"
 
 
 def test_define_cubename_suffix_nirspec(cube_instance):

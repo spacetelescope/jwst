@@ -13,9 +13,7 @@ each band will be created.
 ``channel [string]``
   This is a MIRI only option and the valid values are 1, 2, 3, 4, and ALL.
   If the ``channel`` argument is given, then only data corresponding to that channel will be used in
-  constructing the cube. A comma-separated list can be used to designate multiple channels.
-  For example, to create a cube with data from channels 1 and 2, specify the
-  list as ``--channel='1,2'``.  All the sub-channels (bands) for the chosen channel(s) will
+  constructing the cube.   All the sub-channels (bands) for the chosen channel will
   be used to create the IFU cube, unless the ``band`` argument is used to select specific bands.  This parameter can be combined
   with the ``output_type`` parameter to fully control the type of IFU cubes to make.
 
@@ -32,15 +30,11 @@ each band will be created.
 ``grating [string]``
   This is a NIRSpec only option with valid values PRISM, G140M, G140H, G235M, G235H, G395M, G395H, and ALL.
   If the option "ALL" is used, then all the gratings in the association are used.
-  Because association tables only contain exposures of the same resolution, the use of "ALL" will at most combine
-  data from gratings G140M, G235M, and G395M, or G140H, G235H, and G395H. The user can supply a comma-separated string
-  containing the names of multiple gratings to use.
 
 ``filter [string]``
   This is a NIRSpec only option with values of Clear, F100LP, F070LP, F170LP, F290LP, and ALL.
   To cover the full wavelength range of NIRSpec, the option "ALL" can be used (provided the exposures in the
-  association table contain all the filters). The user can supply a comma-separated string containing the names of
-  multiple filters to use.
+  association table contain all the filters). 
 
 ``output_type [string]``
   This parameter has four valid options of Band, Channel, Grating, and Multi. This parameter can be combined
@@ -55,7 +49,6 @@ each band will be created.
 
   - ``output_type=grating`` combines all the gratings in the NIRSpec data or set by the
     grating option into a single IFU cube. This option is currently not being used by the pipeline.
-    For NIRSpec data ``output_type=band`` or ``output_type=multi`` only.
 
   - ``output_type=multi`` combines data into a single "uber" cube.
     In addition, if channel, band, grating, or filter are also set, then only the data set by those
