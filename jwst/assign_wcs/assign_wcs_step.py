@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 import logging
 
-from crds.core.exceptions import CrdsLookupError
 from stcal.alignment.util import wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
 
@@ -192,29 +191,3 @@ class AssignWcsStep(Step):
                 log.warning(f'"{e.args[0]}"')
 
         return result
-
-    def get_reference_file(self, input_file, reference_file_type):
-        """
-        Override reference file lookup to handle missing chromcorr reference file.
-
-        This override should be removed in build 13.2 once the chromcorr file
-        is always found in CRDS.
-
-        Parameters
-        ----------
-        input_file : `~stdatamodels.jwst.datamodels.JwstDataModel`
-            The input data model, used to determine the appropriate reference file.
-        reference_file_type : str
-            The type of reference file to retrieve.
-
-        Returns
-        -------
-        str
-            The path to the reference file, or "N/A" if the file is not found.
-        """
-        if reference_file_type == "chromcorr":
-            try:
-                return super().get_reference_file(input_file, "chromcorr")
-            except CrdsLookupError:
-                return "N/A"
-        return super().get_reference_file(input_file, reference_file_type)

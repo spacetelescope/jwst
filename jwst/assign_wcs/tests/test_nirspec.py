@@ -1448,7 +1448,7 @@ def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
 
 @pytest.mark.parametrize("mode", ["IFU", "MOS", "FS"])
 @pytest.mark.parametrize("velocity_corr", [True, False])
-def test_nrs_wcs_by_slit(mode, velocity_corr, log_watcher):
+def test_nrs_wcs_by_slit(mode, velocity_corr):
     pixel_tol = 0.02
     if mode == "IFU":
         hdul = create_nirspec_ifu_file("F290LP", "G140M")
@@ -1473,17 +1473,7 @@ def test_nrs_wcs_by_slit(mode, velocity_corr, log_watcher):
     if velocity_corr:
         im.meta.wcsinfo.velosys = 20000.0
 
-    msg = "No chromcorr reference file found."
-    watcher = log_watcher(
-        "jwst.assign_wcs.nirspec",
-        message=msg,
-        level="warning",
-    )
     datamodel = assign_wcs_step.AssignWcsStep.call(im, nrs_ifu_slice_wcs=True)
-    if mode == "IFU":
-        watcher.assert_seen()
-    else:
-        watcher.assert_not_seen()
     slit_ids = datamodel.meta.wcs.get_transform("gwa", "slit_frame").slit_ids
     for slit_id in slit_ids:
         x, y = wcstools.grid_from_bounding_box(datamodel.meta.wcs.bounding_box[slit_id])

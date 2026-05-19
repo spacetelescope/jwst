@@ -982,15 +982,3 @@ class Spec2Pipeline(Pipeline):
         resamp_fss.close()
 
         return x1d
-
-    def _precache_references(self, input_file):
-        from crds.exceptions import CrdsLookupError
-
-        try:
-            super()._precache_references(input_file)
-        except CrdsLookupError as e:
-            # This is probably bad because I think it disables precaching entirely
-            # if the chromcorr file isn't found.
-            missing_chromcorr = "Error determining best reference for 'chromcorr'"
-            if str(e).startswith(missing_chromcorr):
-                pass
