@@ -86,6 +86,9 @@ class PersistenceStep(Step):
 
         _, _, nrows, ncols = result.groupdq.shape
         if self.persistence_array_file is not None:
+            self.get_persistence_array_from_file(nrows, ncols)
+            '''
+            # XXX Use function to expand persistence table to persistence array.
             self.persistence_array_create = False 
 
             with asdf.open(self.persistence_array_file) as af:
@@ -95,6 +98,7 @@ class PersistenceStep(Step):
             dims = self.persistence_array.shape 
             if len(dims) != 2 or dims[0] != nrows or dims[1] != ncols:
                 raise ValueError("'persistence_array' needs to be a 2-D list with dimensions (nrows, ncols)")
+            '''
         else:
             self.persistence_array_create = True
             self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
@@ -112,7 +116,48 @@ class PersistenceStep(Step):
         if ext != ".asdf":
             filename = f"{root}.asdf"
 
+
+        # XXX Still need to update processing!!!
+
         # Write persistence array to ASDF file
+        rows, cols = np.nonzero(self.persistence_array)
+        vals = self.persistence_array[rows, cols]
+        tree = {
+            "filename" : result.meta.filename,
+            # "pers_table" : pers_table,
+            "rows" : rows,
+            "cols" : cols,
+            "vals" : vals,
+            "pers_time" : self.persistence_time,
+        }
+
+        '''
         tree = {"persistence_data": self.persistence_array}
+        '''
+
         with asdf.AsdfFile(tree) as af:
             af.write_to(filename)
+
+    def get_persistence_array_from_file(self, nrows, ncols):
+        """
+        Get the persistence array from an ASDF file.
+
+        Parameters
+        ----------
+        nrows : int
+            The number of rows in the RampModel data.
+
+        ncols : int
+            The number of columns in the RampModel data.
+        """
+        with asdf.open(self.persistence_array_file) as pers_file:
+            if pers_file["pers_time"] != self.persistence_time:
+                # XXX This needs to be looked at. Maybe something else.
+                raise ValueError("Invalid persistence file. Mismatch of persistence time.")
+
+            rows = pers_file["rows"]
+            cols = pers_file["cols"]
+            vals = pers_file["vals"]
+
+            self.persistence_array = np.zeros((nrows, ncols), dtype=vals.dtype)
+            self.persistence_array[rows, cols] = vals
