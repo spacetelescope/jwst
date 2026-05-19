@@ -11,7 +11,7 @@ from gwcs import coordinate_frames as cf
 from gwcs import wcs
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-from stcal.alignment.util import compute_scale
+from stcal.alignment.util import compute_scale, sregion_to_footprint
 from stcal.resample.utils import build_driz_weight, compute_mean_pixel_area
 from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, dqflags
 
@@ -1871,8 +1871,12 @@ def test_combine_input_sregions(nircam_rate):
 
     resample_obj = ResampleImage(ModelLibrary([model]))
     output_sregion = resample_obj.combine_input_sregions()
+    assert isinstance(output_sregion, str)
 
-    # note you get out something slightly different than what you put in because
-    # combine_input_sregions accounts for any distortion in the wcs transform
     expected_sregion = "POLYGON ICRS  22.038318261 11.984418704 22.038318266 11.984414552 22.038377332 11.980791478 22.042066180 11.980835622 22.041995719 11.984457680 22.041534603 11.984457141"
-    assert output_sregion == expected_sregion
+
+    # turn these into arrays so we can assign a tolerance for comparison,
+    # to be robust to small numerical differences
+    expected_footprint = sregion_to_footprint(expected_sregion)
+    actual_footprint = sregion_to_footprint(output_sregion)
+    assert_allclose(actual_footprint, expected_footprint, atol=1e-5)
