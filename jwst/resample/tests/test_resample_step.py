@@ -1879,4 +1879,4 @@ def test_combine_input_sregions(nircam_rate):
     # to be robust to small numerical differences
     expected_footprint = sregion_to_footprint(expected_sregion)
     actual_footprint = sregion_to_footprint(output_sregion)
-    assert_allclose(actual_footprint, expected_footprint, atol=1e-5)
+    assert_allclose(actual_footprint, expected_footprint, atol=1e-5, rtol=0)
