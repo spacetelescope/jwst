@@ -1876,6 +1876,8 @@ def test_combine_input_sregions(nircam_rate):
     resample_obj = ResampleImage(ModelLibrary([model]))
     output_sregion = resample_obj.combine_input_sregions()
     assert isinstance(output_sregion, str)
+    assert output_sregion.count("POLYGON") == 1
+    assert output_sregion.startswith("POLYGON ICRS ")
 
     # turn these into arrays so we can assign a tolerance for comparison,
     # to be robust to small numerical differences

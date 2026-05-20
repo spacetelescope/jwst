@@ -347,4 +347,4 @@ def multi_sregion_to_list(sregion):
         A list of individual S_REGION strings.
     """
     slist = sregion.split("POLYGON ICRS")
-    return ["POLYGON ICRS" + s.strip() for s in slist if s.strip()]
+    return ["POLYGON ICRS " + s for s in map(str.strip, slist) if s]
