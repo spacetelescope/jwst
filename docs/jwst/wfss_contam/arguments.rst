@@ -66,7 +66,6 @@ Polynomial fitting parameters
   A float specifying the alpha parameter for L2 regularization in the polynomial fitting.
   This is used to prevent the fitted coefficients from blowing up in cases of severe contamination.
   Default is 0.1.
-  TODO: should this be exposed as a top level argument or is it too technical?
 
 ``--rejection_threshold``
   A float specifying a threshold for rejecting polynomial fits based on the fitted constant term coefficient.
