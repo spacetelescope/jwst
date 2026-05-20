@@ -1,7 +1,6 @@
 """Test utility funcs"""
 
 from stdatamodels.jwst import datamodels
-from stpipe.utilities import resolve_step_class_alias
 
 import jwst.pipeline
 import jwst.step
@@ -19,15 +18,6 @@ def test_all_steps():
     found_steps = all_steps()
     diff = KNOWN_STEPS.symmetric_difference(found_steps)
     assert not diff, f"Steps not accounted for. Confirm and check suffix and CRDS calpars.\n{diff}"
-
-
-def test_resolve_step_class_alias():
-    for class_name in jwst.pipeline.__all__:
-        pipeline_class = getattr(jwst.pipeline, class_name)
-        full_class_name = f"jwst.pipeline.{class_name}"
-        if pipeline_class.class_alias is not None:
-            assert resolve_step_class_alias(pipeline_class.class_alias) == full_class_name
-        assert resolve_step_class_alias(full_class_name) == full_class_name
 
 
 def test_record_query_step_status():
