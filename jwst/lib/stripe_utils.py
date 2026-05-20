@@ -26,9 +26,11 @@ DETECTOR_FULL_SIZE = 2048
 
 STRIPE_TO_STANDARD_SUBARRAY = {
     # NIRCam subarray superstripe modes
-    "SUB64P_SUPSTP002": {"name": "SUB64P", "slow_size": 64},
-    "SUB64P_SUPSTP008": {"name": "SUB64P", "slow_size": 64},
-    "SUB64P_SUPSTP032": {"name": "SUB64P", "slow_size": 64},
+    "SUB64P_SUPSTP002": {"slow_size": 64},
+    "SUB64P_SUPSTP008": {"slow_size": 64},
+    "SUB64P_SUPSTP032": {"slow_size": 64},
+    # TODO: include DHS subarrays here if we want to reassemble the LW data
+    # "SUB260STRIPE4_DHS": {"slow_size": 64}
 }
 """
 Map superstripe subarrays to standard subarray names and sizes.
@@ -251,6 +253,10 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
         # For pure superstripe, nreads2 is 0 and the pixels to
         # read is equal to the step size
         nreads2 = superstripe_step
+
+    # Check for a pure substripe case: set nstripes to 1
+    if num_superstripe == 0:
+        num_superstripe = 1
 
     sub_ranges = {}
     full_ranges = {}
@@ -544,6 +550,8 @@ def collate_superstripes(input_model):
     # Determine integration/stripe numbers
     nints, ngroups, ny, nx = input_model.data.shape
     n_stripe = input_model.meta.subarray.num_superstripe
+    if n_stripe == 0:
+        n_stripe = 1
     nints_sci = nints // n_stripe
 
     # Get the expected output size for the mode, defaulting to full size (2048)
@@ -678,6 +686,9 @@ def clean_superstripe_metadata(input_model, slow_start=1):
         The model cleaned of metadata indicating the presence
         of superstripe data.
     """
+    nstripe = input_model.meta.subarray.num_superstripe
+    if nstripe == 0:
+        nstripe = 1
     intstart = (
         input_model.meta.exposure.integration_start
         if input_model.meta.exposure.integration_start is not None
@@ -740,9 +751,14 @@ def generate_stripe_int_times(input_model):
         corresponding to the new parent frames.
     """
     if input_model.int_times is None or len(input_model.int_times) == 0:
+        # No int_times, just return
         return input_model
 
     nstr = input_model.meta.subarray.num_superstripe
+    if nstr == 0:
+        # No superstripes, so int_times is okay as is
+        return input_model
+
     nints_sci = len(input_model.int_times) // nstr
     default_intstart = (
         input_model.meta.exposure.integration_start
