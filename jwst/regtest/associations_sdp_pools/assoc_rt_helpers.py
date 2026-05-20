@@ -30,7 +30,7 @@ def parfunc(x):
     return x[0]
 
 
-def assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
+def assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args, strict_expname=False):
     """Worker test function for associations regression tests."""
     pool, args = pool_args
     proposal, version_id = pool_regex.match(pool).group("proposal", "versionid")
@@ -51,4 +51,4 @@ def assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     )
     if truth_paths == []:  # truth dir does not exist
         rtdata.truth_remote = f"{rtdata._inputs_root}/{rtdata.env}/{truth_pool_path}"
-    compare_asn_files(out_paths, truth_paths)
+    compare_asn_files(out_paths, truth_paths, strict_expname=strict_expname)
