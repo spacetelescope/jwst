@@ -830,12 +830,12 @@ def stripe_read_times(stripe_ramp, recalculate_frametime=False):
 
     Parameters
     ----------
-    stripe_ramp : `~stdatamodels.jwst.datamodels.SuperStripeRampModel` or \
+    stripe_ramp : `~stdatamodels.jwst.datamodels.SuperstripeRampModel` or \
                   `~stdatamodels.jwst.datamodels.RampModel`
         The input ramp model containing multistripe data.
     recalculate_frametime : bool, optional
         If True, the frametime is recalculated instead of directly using
-        `stripe_ramp.meta.exposure.frame_time`.
+        ``stripe_ramp.meta.exposure.frame_time``.
 
     Returns
     -------
