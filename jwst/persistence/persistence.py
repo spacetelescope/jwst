@@ -144,6 +144,13 @@ class DataSet:
         group : int
             The current group being processed.
         """
+        # XXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # XXX Change to (nrows, ncols, 2)
+        #     The (row, col, 0) will be the start time of the window
+        #     The (row, col, 1) will be the end time of the window
+        # XXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
         # Any persistence_array time earlier than current time gets set to zero. The
         # persistence window has ended for that pixel.
         self.persistence_array[self.persistence_array < current_time] = 0.0
@@ -166,9 +173,13 @@ class DataSet:
         # XXX !!!! What to do in this situation? !!!!
         # XXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # This prevents 'backwards flagging'.
-        start_plane = self.persistence_array - self.persistence_time
+        start_plane = self.persistence_array - (self.persistence_time + current_time)
+        start_plane[self.persistence_array == 0.0] = 0.0
+
+        import ipdb; ipdb.set_trace()
+
         # XXX Needs to be more fully tested.
-        if np.any(start_plane > current_time):
+        if np.any(start_plane > 0.0):
             raise ValueError("Invalid persistence array, due to backwards flagging.")
 
         gdq_plane[self.persistence_array > 0.0] |= flag
