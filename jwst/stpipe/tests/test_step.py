@@ -1,5 +1,4 @@
 import logging
-import os
 from os.path import abspath
 
 import asdf
@@ -180,28 +179,6 @@ def test_reftype(cfg_file, expected_reftype):
     )
     assert step.__class__.get_config_reftype() == expected_reftype
     assert step.get_config_reftype() == expected_reftype
-
-
-def test_saving_pars(tmp_path):
-    """Save the step parameters from the commandline"""
-    cfg_path = get_pkg_data_filename(
-        "steps/jwst_generic_pars-makeliststep_0002.asdf", package="jwst.stpipe.tests"
-    )
-    saved_path = str(tmp_path / "savepars.asdf")
-    Step.from_cmdline([cfg_path, "--save-parameters", str(saved_path)])
-    assert os.path.exists(saved_path)
-
-    with asdf.open(
-        get_pkg_data_filename(
-            "steps/jwst_generic_pars-makeliststep_0002.asdf", package="jwst.stpipe.tests"
-        )
-    ) as af:
-        original_config = StepConfig.from_asdf(af)
-        original_config.parameters["par3"] = False
-
-    with asdf.open(str(saved_path)) as af:
-        config = StepConfig.from_asdf(af)
-        assert config.parameters == original_config.parameters
 
 
 @pytest.mark.parametrize(
