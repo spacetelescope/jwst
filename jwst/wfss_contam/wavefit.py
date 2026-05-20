@@ -77,6 +77,7 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0, rejection_
         the fit is rejected and `None` is returned.  This fit rejection is necessary to
         avoid fits "blowing up" when a source is located in nonzero (pseudo-)background,
         either from a nearby bright source or because the background subtraction was imperfect.
+        If None, no fits will be rejected.
 
     Returns
     -------
@@ -134,7 +135,7 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0, rejection_
 
     # log some fit diagnostics for the source
     n_total = obs_data.size
-    if np.abs(coeffs[0] - 1) > rejection_threshold:
+    if rejection_threshold is not None and np.abs(coeffs[0] - 1) > rejection_threshold:
         log.debug(f"Fitted constant term c_0={coeffs[0]:.3g} is far from 1; rejecting fit.")
         return None
     log.debug(

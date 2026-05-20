@@ -74,4 +74,5 @@ Polynomial fitting parameters
   rejected and the contamination estimate for that source is not updated on that iteration.
   This is used to avoid fits "blowing up" in cases where the polynomial fit has returned
   an unphysical total flux level, which typically occurs if background subtraction was imperfect 
-  or if the source sits in a highly contaminated region.
+  or if the source sits in a highly contaminated region. If set to None, no rejection will be performed.
+  Default is 0.1.
