@@ -5,7 +5,7 @@ The ramp fitting step has the following optional arguments that can be set by th
 ``--algorithm``
   A string to select the desired algorithm.  The available
   values are "OLS_C" to select the C implementation of the Ordinary Least
-  Squares algorithm and "LIKELY" to select a prototype maximum-likelihood based
+  Squares algorithm and "LIKELY" to select a maximum-likelihood based
   approach.  The algorithm defaults to "OLS_C".
 
 ``--save_opt``
