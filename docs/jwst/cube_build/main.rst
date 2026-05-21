@@ -266,6 +266,46 @@ The string defining the type of IFU is created according to the following rules:
   ``rootname_G140M-G235M_F070LP-F100LP_s3d.fits``.
 
 
+Calwebb_spec2 Pipeline
+~~~~~~~~~~~~~~~~~~~~~~
+
+File names for cubes generated within the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline follow standard pipeline formatting rules and
+append a simple, fixed suffix to the root name:
+
+* ``rootname_s3d.fits``
+
+Standalone or calwebb_spec3 Pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When running ``cube_build`` as a standalone step or within the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, the output filename dynamically
+includes details about the specific channels, bands, gratings, or filters used to construct the cube.
+
+* **Root Name Selection:** If the input data is a single exposure, the ``rootname`` is pulled directly from the input filename. If the input is
+an association table, the ``rootname`` is explicitly defined by the association.
+
+The instrument-specific naming rules are applied as follows:
+
+* MIRI Naming Rules
+  The output string suffix is determined by the channels and sub-channels (bands) utilized. The formatting follows the pattern ``_ch{#}-{band}``, resulting
+  in an output file named ``rootname_ch{#}-{band}_s3d.fits``.
+  
+  If the IFU cube combines multiple channels or bands, they are chained together. For example, a single cube constructed from Channel 1 and Channel 2,
+  covering both short and medium sub-channels, will produce:
+  
+  * ``rootname_ch1-2-shortmedium_s3d.fits``
+
+* NIRSpec Naming Rules
+  The output string suffix is determined by the specific grating and filter combinations utilized. For standard single grating/filter cubes,
+  the naming pattern is ``rootname_{grating}-{filter}_s3d.fits``.
+  
+  If the IFU cube is built from multiple bands, the elements are chained sequentially using hyphens to track each unique configuration pair.
+  For example, if an IFU cube combines data from the **G140M/F070LP** and **G235M/F100LP** combinations, the output filename will be:
+  
+  * ``rootname_g140m-f070lp-g235m-f100lp_s3d.fits``
+
+.. note::
+   All instrument hardware strings (such as ``g140m`` or ``f070lp``) are automatically normalized to lowercase characters when generating the final filename suffix.  
+
 .. _algorithm:
 
 Algorithm
