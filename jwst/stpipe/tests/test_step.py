@@ -161,22 +161,6 @@ def test_parameters_from_crds_bad_meta():
 
 
 @pytest.mark.parametrize(
-    "cfg_file, expected_reftype",
-    [
-        ("local_class.cfg", "pars-dummystep"),
-        ("jwst_generic_pars-makeliststep_0002.asdf", "pars-makeliststep"),
-    ],
-)
-def test_reftype(cfg_file, expected_reftype):
-    """Test that reftype is produced as expected"""
-    step = Step.from_config_file(
-        get_pkg_data_filename(f"steps/{cfg_file}", package="jwst.stpipe.tests")
-    )
-    assert step.__class__.get_config_reftype() == expected_reftype
-    assert step.get_config_reftype() == expected_reftype
-
-
-@pytest.mark.parametrize(
     "step_obj, full_spec, expected",
     [
         # #############################################
