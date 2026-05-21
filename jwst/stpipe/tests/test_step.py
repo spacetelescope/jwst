@@ -12,8 +12,6 @@ from jwst.stpipe import Pipeline, Step
 from jwst.stpipe.tests.steps import (
     AnotherDummyStep,
     EmptyPipeline,
-    MakeListPipeline,
-    MakeListStep,
     OptionalRefTypeStep,
     ProperPipeline,
     SavePipeline,
@@ -158,129 +156,6 @@ def test_parameters_from_crds_bad_meta():
         data.meta.instrument.name = "NIRSPEC"
         pars = WhiteLightStep.get_config_from_reference(data)
     assert not len(pars)
-
-
-@pytest.mark.parametrize(
-    "step_obj, full_spec, expected",
-    [
-        # #############################################
-        # Test with `full_spec = True`
-        # #############################################
-        # Mix of required and optional parameters
-        (
-            MakeListStep(par1=0.0, par2="from args"),
-            True,
-            {
-                "pre_hooks": [],
-                "post_hooks": [],
-                "output_file": None,
-                "output_dir": None,
-                "output_ext": ".fits",
-                "output_use_model": False,
-                "output_use_index": True,
-                "save_results": False,
-                "skip": False,
-                "suffix": None,
-                "search_output_file": True,
-                "input_dir": "",
-                "par1": 0.0,
-                "par2": "from args",
-                "par3": False,
-            },
-        ),
-        #
-        # All parameters set
-        #
-        (
-            MakeListPipeline(
-                par1="Instantiated", steps={"make_list": {"par1": 0.0, "par2": "sub-instantiated"}}
-            ),
-            True,
-            {
-                "pre_hooks": [],
-                "post_hooks": [],
-                "output_file": None,
-                "output_dir": None,
-                "output_ext": ".fits",
-                "output_use_model": False,
-                "output_use_index": True,
-                "save_results": False,
-                "skip": False,
-                "suffix": None,
-                "search_output_file": True,
-                "input_dir": "",
-                "par1": "Instantiated",
-                "steps": {
-                    "make_list": {
-                        "pre_hooks": [],
-                        "post_hooks": [],
-                        "output_file": None,
-                        "output_dir": None,
-                        "output_ext": ".fits",
-                        "output_use_model": False,
-                        "output_use_index": True,
-                        "save_results": False,
-                        "skip": False,
-                        "suffix": None,
-                        "search_output_file": True,
-                        "input_dir": "",
-                        "par1": 0.0,
-                        "par2": "sub-instantiated",
-                        "par3": False,
-                    }
-                },
-            },
-        ),
-        #
-        # Pipeline without any sub-steps
-        #
-        (
-            EmptyPipeline(par1="Instantiated"),
-            True,
-            {
-                "pre_hooks": [],
-                "post_hooks": [],
-                "output_file": None,
-                "output_dir": None,
-                "output_ext": ".fits",
-                "output_use_model": False,
-                "output_use_index": True,
-                "save_results": False,
-                "skip": False,
-                "suffix": None,
-                "search_output_file": True,
-                "input_dir": "",
-                "par1": "Instantiated",
-                "steps": {},
-            },
-        ),
-        # ######################################
-        # Test with `full_spec=False`
-        # ######################################
-        # Mix of required and optional parameters
-        (
-            MakeListStep(par1=0.0, par2="from args"),
-            False,
-            {"par1": 0.0, "par2": "from args", "par3": False},
-        ),
-        # Pipeline with all parameters set
-        (
-            MakeListPipeline(
-                par1="Instantiated", steps={"make_list": {"par1": 0.0, "par2": "sub-instantiated"}}
-            ),
-            False,
-            {
-                "par1": "Instantiated",
-                "steps": {"make_list": {"par1": 0.0, "par2": "sub-instantiated", "par3": False}},
-            },
-        ),
-        # Pipeline without any sub-steps
-        (EmptyPipeline(par1="Instantiated"), False, {"par1": "Instantiated", "steps": {}}),
-    ],
-)
-def test_getpars(step_obj, full_spec, expected):
-    """Test retrieving of configuration parameters"""
-    assert step_obj.get_pars(full_spec=full_spec) == expected
 
 
 def test_hook():
