@@ -12,15 +12,15 @@ def cube_instance():
     Use standard strings and lists
     """
     return IFUCubeData(
-        input_models=[],  # Empty list
+        input_models=[],
         output_name_base="test_base",
         output_type="band",
         linear_wave=True,
         instrument="MIRI",  # Default
-        list_par1=[],  # Empty list
-        list_par2=[],  # Empty list
-        instrument_info={},  # Empty dict
-        master_table={},  # Empty dict
+        list_par1=[],
+        list_par2=[],
+        instrument_info={},
+        master_table={},
         debug_spaxel="0 0 0",  # Must be 3 integers in a string
     )
 
@@ -79,7 +79,7 @@ def test_cubename_name_nispec(cube_instance):
 
 
 def test_define_cubename_suffix_nirspec(cube_instance):
-    """Test NIRSpec logic for 1 grating and 1 band ."""
+    """Test NIRSpec logic for 1 grating and 1 band."""
 
     cube_instance.instrument = "NIRSPEC"
     cube_instance.list_par1 = ["G140M"]

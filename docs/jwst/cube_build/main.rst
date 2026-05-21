@@ -134,15 +134,70 @@ project data from two channels onto a single detector, choices can or must be ma
 to use when constructing the output cube even in the simplest case of a single input image. The default behavior
 varies according to the context in which ``cube_build`` is being run.
 
-In the case of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, for example,
-where the input is a single MIRI or NIRSpec IFU exposure, the default output
-cube will be built from all the data in that single exposure. For MIRI this
-means using the data from both channels (e.g., 1A and 2A) that are recorded in a
-single exposure and the output IFU cube will have a non-linear wavelength
-dimension. For NIRSpec, the data is from the single grating and filter
-combination contained in the exposure and will have a linear wavelength
-dimension. The :ref:`calwebb_spec2 <calwebb_spec2>` pipeline calls ``cube_build`` with
-``output_type=multi``.
+
+The output 3-D spectral data consist of a rectangular cube with three orthogonal 
+axes: two spatial and one spectral. Depending on how ``cube_build`` is run, 
+the spectral axes can be either linear or non-linear.
+
+* **Linear Wavelength Cubes:** Generally constructed from a single band of data.
+* **Non-Linear Wavelength Cubes:** Usually created from more than one band of data.
+
+If the IFU cubes have a non-linear wavelength dimension, there will be an added 
+binary extension table to the output FITS file of the IFU cube. This extension 
+has the label ``WCS-TABLE`` and contains the wavelengths for each of the IFU 
+cube wavelength planes. This table follows the FITS standard described in 
+*Representations of spectral coordinates in FITS*, Greisen, et al., 2006, 
+**A & A**, 446, 747-771.
+
+
+Pipeline Input Handling and Default Behaviors
+=============================================
+
+The input data to ``cube_build`` can take a variety of forms, as listed above in 
+:ref:`cube_build_description`. Because the MIRI IFUs project data from two 
+channels onto a single detector, choices can or must be made as to which parts 
+of the input data to use when constructing the output cube, even in the simplest 
+case of a single input image. 
+
+By default, ``cube_build`` creates cubes from a single band. For MIRI that means data from a
+single channel and single sub-channel. For NIRSpec that mean data from a single grating and filter. 
+This can be overridden
+using the ``output_type=multi`` parameter. In the pipeline, this is controlled by
+the parameter reference files for the pipeline that is being run. 
+The ``pars_spec2pipeline`` parameter reference file for MIRI sets ``output_type=multi``.
+
+
+calwebb_spec2 Pipeline
+----------------------
+
+In the case of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, for example, 
+where the input is a single MIRI or NIRSpec IFU exposure, the default output 
+cube will be built from all the data in that single exposure. 
+
+* **MIRI:** Uses data from both channels (e.g., 1A and 2A) that are recorded 
+  simultaneously in a single exposure.  The output IFU cube will have a non-linear wavelength dimension.
+* **NIRSpec:** The data is from the single grating and filter combination 
+  contained in the exposure and will have a linear wavelength dimension.
+
+
+calwebb_spec3 Pipeline
+----------------------
+
+In the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, on the other hand, where 
+the input can be a collection of data from multiple exposures covering multiple 
+bands, the default behavior is to create a set of separate band cubes.
+
+* **NIRSpec:** By default this pipeline generates multiple distinct cubes—one for each 
+  grating and filter combination contained in the input collection. These types 
+  of IFU cubes will have a linear wavelength dimension. 
+* **Custom Overrides:** If the user wants to combine all the data together 
+  covering several bands, they can override this by using the option 
+  ``output_type=multi``. The resulting combined IFU cubes will have a 
+  non-linear wavelength dimension accompanied by the ``WCS-TABLE`` extension.
+  In addition, if the user has a single grating and filter they can produce a
+  non-linear wavelength dimension using the ``linear_wave=False`` option. This is
+  particularly  useful with Prism data. 
+>>>>>>> 67cdfe2c9 (fix docs)
 
 In the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, on the other hand, where
 the input can be a collection of data from multiple exposures covering multiple
