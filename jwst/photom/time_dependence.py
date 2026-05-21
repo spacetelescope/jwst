@@ -23,16 +23,16 @@ def linear_correction(midtime, t0, lossperyear, bounded=False):
     ----------
     midtime : float
         Mid-point MJD of observation.
-    t0 : ndarray of float
+    t0 : ndarray
         Reference day in MJD.
-    lossperyear : ndarray of float
+    lossperyear : ndarray
         Fractional loss of throughput per year (linear slope).
     bounded : bool, optional
-        If True, any correction value greater than 1 is set to 1.0.
+        If `True`, any correction value greater than 1 is set to 1.0.
 
     Returns
     -------
-    correction : ndarray of float
+    correction : ndarray
         Multiplicative correction values corresponding to the input parameters.
     """
     correction = 1.0 - lossperyear * (midtime - t0) / 365.0
@@ -49,20 +49,20 @@ def exponential_correction(midtime, t0, amplitude, tau, const, bounded=False):
     ----------
     midtime : float
         Mid-point MJD of observation.
-    t0 : ndarray of float
+    t0 : ndarray
         Reference day in MJD.
-    amplitude : ndarray of float
+    amplitude : ndarray
         Exponential amplitude.
-    tau : ndarray of float
+    tau : ndarray
         E-folding time constant.
-    const : ndarray of float
+    const : ndarray
         Long-term exponential asymptote.
     bounded : bool, optional
-        If True, any correction value greater than 1 is set to 1.0.
+        If `True`, any correction value greater than 1 is set to 1.0.
 
     Returns
     -------
-    correction : ndarray of float
+    correction : ndarray
         Multiplicative correction values corresponding to the input parameters.
     """
     correction = amplitude * np.exp(-(midtime - t0) / tau) + const
@@ -73,26 +73,26 @@ def exponential_correction(midtime, t0, amplitude, tau, const, bounded=False):
 
 def powerlaw_correction(midtime, t0, year1value, tsoft, alpha, bounded=False):
     """
-    Power law correction to photometry value.
+    Power-law correction to photometry value.
 
     Parameters
     ----------
     midtime : float
         Mid-point MJD of observation.
-    t0 : ndarray of float
+    t0 : ndarray
         Reference day in MJD.
-    year1value : ndarray of float
+    year1value : ndarray
         Relative throughput 1 year after t0.
-    tsoft : ndarray of float
+    tsoft : ndarray
         Softening parameter for power law decline.
-    alpha : ndarray of float
+    alpha : ndarray
         Power law loss coefficient.
     bounded : bool, optional
-        If True, any correction value greater than 1 is set to 1.0.
+        If `True`, any correction value greater than 1 is set to 1.0.
 
     Returns
     -------
-    correction : ndarray of float
+    correction : ndarray
         Multiplicative correction values corresponding to the input parameters.
     """
     norm = ((365.0 + tsoft) ** alpha) / year1value
@@ -107,7 +107,7 @@ def get_correction_table(photom_model, midtime, bounded=False):
     Get a time-dependence correction table from a PHOTOM reference file model.
 
     If a ``phot_table`` is present, the table returned matches the
-    shape of the phot_table.  If it is not present, ``None`` is returned.
+    shape of the ``phot_table``.  If it is not present, `None` is returned.
 
     Time correction parameters are expected to be present in
     ``timecoeff_linear``, ``timecoeff_exponential``, or ``timecoeff_powerlaw``
@@ -119,19 +119,19 @@ def get_correction_table(photom_model, midtime, bounded=False):
 
     Parameters
     ----------
-    photom_model : DataModel
-        May be any photom datamodel. Expected attributes are phot_table,
-        timecoeff_linear, timecoeff_exponential, and timecoeff_powerlaw.
+    photom_model : ~stdatamodels.jwst.datamodels.JwstDataModel`
+        May be any photom datamodel. Expected attributes are ``phot_table``,
+        ``timecoeff_linear``, ``timecoeff_exponential``, and ``timecoeff_powerlaw``.
     midtime : float
         Mid-point MJD of observation.
     bounded : bool, optional
-        If True, any correction value greater than 1 is set to 1.0.
+        If `True`, any correction value greater than 1 is set to 1.0.
 
     Returns
     -------
-    correction : ndarray of float or None
-        None is returned if the input model had no phot_table. Otherwise,
-        the correction array matches the length of the input phot_table.
+    correction : ndarray or None
+        None is returned if the input model has no ``phot_table``. Otherwise,
+        the correction array matches the length of the input ``phot_table``.
     """
     if not hasattr(photom_model, "phot_table"):
         return None
@@ -173,17 +173,17 @@ def _get_mrs_correction_function(side, timecoeff, mid_time):
         Either "left" or "right". The MRS contains 2 channels in every
         exposure. The time-wavelength dependent correction is different
         for every MRS band.
-    timecoeff : dictionary
+    timecoeff : dict
         A dictionary holding the correction factors for the time/wavelength
-        correction.  binwave, acoeff, bcoeff, ccoeff, x0 are the parameters
+        correction. ``binwave``, ``acoeff``, ``bcoeff``, ``ccoeff``, ``x0`` are the parameters
         for an MRS time-wavelength photom correction.
     mid_time : float
-        Modified Julian day
+        Modified Julian day.
 
     Returns
     -------
-    function
-        Time-wavelength dependent photom loss correction
+    func
+        Time-wavelength dependent photom loss correction.
     """
     binwave = timecoeff[side]["binwave"]
     alpha = timecoeff[side]["alpha"]
@@ -205,18 +205,18 @@ def miri_mrs_time_correction(input_model, detector, ftab, mid_time):
 
     Parameters
     ----------
-    input_model : JWST IFUImageModel
+    input_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         Input science data model to be corrected.
     detector : str
-        MRS detector working on
-    ftab : MirMrsPhotomModel
-        MRS Photom reference file
+        MRS detector working on.
+    ftab : `~stdatamodels.jwst.datamodels.MirMrsPhotomModel`
+        MRS Photom reference file.
     mid_time : float
-        Exposure mid time in MJD
+        Exposure mid time in MJD.
 
     Returns
     -------
-    result : numpy.ndarray
+    result : ndarray
         An array of corrections to apply to data.
     """
     # Read in the time-wavelength dependent coefficients
