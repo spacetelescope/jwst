@@ -20,4 +20,4 @@ def test_pool_034_wfss_parallel_NIRCAM_3ROW_2DIRECT(_jail, rtdata, resource_trac
         "jw05398_20250312t000159_3r2d_pool",
         ["-i", "o030", "o031", "o032", "o033", "o035", "c1012", "c1013", "c1014"],
     )
-    assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
+    assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args, strict_expname=True)
