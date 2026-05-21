@@ -59,7 +59,7 @@ region is separately modeled as follows:
    IFU, if the mean value for the slice is less than 10-sigma higher than the overall
    mean for the image, by default, then the slice is ignored and no modeling is performed.
    For slit-like modes, if the median signal-to-noise collapsed across wavelengths
-   is greater than 10 (by default), the slit is ignored and no modeling is attempted.
+   is less than 10 (by default), the slit is ignored and no modeling is attempted.
 
 #. Compute spatial (cross-dispersion) coordinates for every pixel in the region.
 
