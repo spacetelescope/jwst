@@ -902,6 +902,8 @@ def stripe_read_times(stripe_ramp, recalculate_frametime=False):
         subframetime = (
             ((ncols / noutputs) + end_of_row_pad) * (subframe_nrows + extra_rows) + extra_clocks
         ) * 10.0e-6  # in seconds
+    log.debug(f"Frame time is: {frametime} s")
+    log.debug(f"Subframe time is: {subframetime} s")
 
     # Assemble the list of read times for all frames
     read_times = []
