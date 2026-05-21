@@ -11,11 +11,8 @@ from jwst.assign_mtwcs import assign_mtwcs_step
 from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
-from jwst.datamodels import SourceModelContainer
-from jwst.datamodels.utils.wfss_multispec import (
-    make_wfss_multicombined,
-    wfss_container_to_multispec,
-)
+from jwst.datamodels import ModelContainer, SourceModelContainer
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multicombined
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
 from jwst.lib.exposure_types import is_moving_target
@@ -175,13 +172,10 @@ class Spec3Pipeline(Pipeline):
         # source into its own ModelContainer. This produces a list of
         # sources, each represented by a MultiExposureModel instead of
         # a single ModelContainer.
-        if exptype in WFSS_TYPES:
-            sources = wfss_container_to_multispec(source_models)
-        elif isinstance(input_models[0], dm.MultiSlitModel):
+        sources = [source_models]
+        if isinstance(input_models[0], dm.MultiSlitModel):
             log.info("Convert from exposure-based to source-based data.")
             sources = list(multislit_to_container(source_models).items())
-        else:
-            sources = [source_models]
 
         # Process each source
         wfss_comb = []
@@ -260,7 +254,7 @@ class Spec3Pipeline(Pipeline):
                 result = self.pixel_replace.run(result)
 
                 # For slitless data, extract 1D spectra and then combine them
-                if exptype in ["NIS_SOSS"]:
+                if exptype == "NIS_SOSS":
                     # For NIRISS SOSS, don't save the extract_1d results,
                     # instead run photom on the extract_1d results and save
                     # those instead.
@@ -288,7 +282,18 @@ class Spec3Pipeline(Pipeline):
                     self.combine_1d.save_results = False
                     # Combine the results for all sources
                     comb = self.combine_1d.run(result)
-                    comb_complete = comb is not None and comb.meta.cal_step.combine_1d == "COMPLETE"
+                    if comb is not None:
+                        comb_complete = True
+                    else:
+                        comb_complete = False
+                    if comb_complete:
+                        if isinstance(comb, ModelContainer):
+                            for model in comb:
+                                if model.meta.cal_step.combine_1d != "COMPLETE":
+                                    comb_complete = False
+                                    break
+                        elif comb.meta.cal_step.combine_1d != "COMPLETE":
+                            comb_complete = False
                     if not comb_complete:
                         continue
                     wfss_comb.append(comb)
@@ -317,8 +322,9 @@ class Spec3Pipeline(Pipeline):
                 log.warning("Resampling was not completed. Skipping extract_1d.")
 
         # Save the final output products for WFSS modes
+        # but wfss_comb could be an empty list if combine_1d failed.
         if exptype in WFSS_TYPES:
-            if self.save_results:
+            if self.save_results and wfss_comb:
                 c1d_output = make_wfss_multicombined(wfss_comb)
                 c1d_filename = output_file + "_c1d.fits"
                 log.info(f"Saving the final c1d product as {c1d_filename}.")
