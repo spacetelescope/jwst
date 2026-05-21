@@ -2069,9 +2069,9 @@ def fit_and_oversample(
 
     # Update additional metadata: pixel area has changed in one dimension
     if model.meta.photometry.pixelarea_steradians is not None:
-        model.meta.photometry.pixelarea_steradians *= oversample_factor
+        model.meta.photometry.pixelarea_steradians /= oversample_factor
     if model.meta.photometry.pixelarea_arcsecsq is not None:
-        model.meta.photometry.pixelarea_arcsecsq *= oversample_factor
+        model.meta.photometry.pixelarea_arcsecsq /= oversample_factor
 
     # Remove some extra arrays if present: no longer needed
     extras = [
