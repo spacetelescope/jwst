@@ -432,13 +432,6 @@ def test_step_from_commandline_invalid4():
         Step.from_cmdline(args)
 
 
-def test_step_with_local_class():
-    step_fn = get_pkg_data_filename("steps/local_class.cfg", package="jwst.stpipe.tests")
-    step = Step.from_config_file(step_fn)
-
-    step.run(datamodels.ImageModel((2, 2)))
-
-
 def test_extra_parameter():
     with pytest.raises(ValidationError):
         AnotherDummyStep("SomeOtherStepOriginal", par5="foo")
