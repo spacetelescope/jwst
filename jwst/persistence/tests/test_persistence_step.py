@@ -87,52 +87,6 @@ def test_persistence_time_nonneg_sec(create_sci_model):
     np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
 
 
-@pytest.mark.skip(reason="Needs to be updated")
-def test_persistence_time_save_persistence(create_sci_model, tmp_path):
-    """Test persitence flag file gets created."""
-    nints, ngroups, nrows, ncols = 2, 7, 1, 2
-    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
-    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
-
-    save_persistence = str(tmp_path / "dummy_persistence_array.asdf")
-
-    step = PersistenceStep(persistence_time=70, save_persistence=save_persistence)
-    step.output_dir = str(tmp_path)
-
-    res = step.run(model)
-
-    # With a persistence window of 70 seconds and group time of 21.47354 seconds, the 5th
-    # group of the first integration for pixel (0, 1) and the following three groups
-    # (crossing the integration) will be flagged as persistent.
-
-    check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
-    check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
-    check3 = np.array([0, 0, 0, 0, 0, 34, 34], dtype=np.uint8)
-    check4 = np.array([32, 32, 0, 0, 0, 0, 0], dtype=np.uint8)
-    np.testing.assert_equal(res.groupdq[0, :, 0, 0], check1)
-    np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
-    np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
-
-    assert os.path.exists(save_persistence) is True
-
-    '''
-    found = False
-    for el in os.listdir(step.output_dir):
-        if found:
-            break
-        if el.startswith("dummy_pers"):
-            found = True
-            import asdf
-            fel = os.path.join(step.output_dir, el)
-            with asdf.open(fel, memmap=True, lazy_load=False) as pers:
-                pers_data = pers["persistence_data"]
-    
-    assert found is True
-    '''
-
-    del step
-            
-
 def test_persistence_time_0_sec(create_sci_model):
     """Test persitence flag gets set inside of persistence window of 0 seconds"""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
@@ -178,22 +132,62 @@ def test_persistence_time_neg_sec(create_sci_model):
     np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
 
 
-@pytest.mark.skip(reason="Needs to be updated")
+def test_persistence_time_save_persistence(create_sci_model, tmp_path):
+    """Test persitence flag file gets created."""
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    save_persistence = str(tmp_path / "dummy_persistence_array.asdf")
+
+    step = PersistenceStep(persistence_time=70, save_persistence=save_persistence)
+    step.output_dir = str(tmp_path)
+
+    res = step.run(model)
+
+    # With a persistence window of 70 seconds and group time of 21.47354 seconds, the 5th
+    # group of the first integration for pixel (0, 1) and the following three groups
+    # (crossing the integration) will be flagged as persistent.
+
+    check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check3 = np.array([0, 0, 0, 0, 0, 34, 34], dtype=np.uint8)
+    check4 = np.array([32, 32, 0, 0, 0, 0, 0], dtype=np.uint8)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 0], check1)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
+
+    assert os.path.exists(save_persistence) is True
+
+    del step
+
+
 def test_persistence_time_with_array(create_sci_model, tmp_path):
     """Test persitence flag gets set using a persistence_array"""
-    print(" ")
+    # Setup model
     nints, ngroups, nrows, ncols = 2, 7, 1, 3
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.meta.exposure.start_time = 59672.64004629629
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
 
+    # Setup persistence array file
+    persistence_time = 70
     asdf_file = os.path.join(tmp_path,  "persistence_array.asdf")
     persistence_array = np.array([[0.0, 0.0, 1648999345.9470801]], dtype=np.float64)
-    tree = {"persistence_data": persistence_array}
+    rows, cols = np.nonzero(persistence_array)
+    vals = persistence_array[rows, cols]
+    tree = {
+        "filename" : "dummy.fits",
+        "rows" : rows,
+        "cols" : cols,
+        "vals" : vals,
+        "pers_time" : persistence_time,
+    }
     with asdf.AsdfFile(tree) as af:
         af.write_to(asdf_file)
 
-    step = PersistenceStep(persistence_array_file=asdf_file, persistence_time=70)
+    # Run persistence step
+    step = PersistenceStep(persistence_array_file=asdf_file, persistence_time=persistence_time)
     res = step.run(model)
 
     # With a non-zero persistence_array entry for pixel (0, 2), that pixel should have
@@ -208,6 +202,71 @@ def test_persistence_time_with_array(create_sci_model, tmp_path):
     np.testing.assert_equal(res.groupdq[0, :, 0, 2], check2)
     np.testing.assert_equal(res.groupdq[1, :, 0, 2], checkz)
 
+
+def test_persistence_mismatch_persistencetime_guard(create_sci_model, tmp_path):
+    """Develop a test that ensures exception is raised mismatched persistence time."""
+    # Setup model
+    nints, ngroups, nrows, ncols = 2, 7, 1, 3
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.meta.exposure.start_time = 59672.64004629629
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    # Setup persistence array file
+    persistence_time = 70
+    persistence_time2 = 80
+    asdf_file = os.path.join(tmp_path,  "persistence_array.asdf")
+    persistence_array = np.array([[0.0, 0.0, 1648999345.9470801]], dtype=np.float64)
+    rows, cols = np.nonzero(persistence_array)
+    vals = persistence_array[rows, cols]
+    tree = {
+        "filename" : "dummy.fits",
+        "rows" : rows,
+        "cols" : cols,
+        "vals" : vals,
+        "pers_time" : persistence_time,
+    }
+    with asdf.AsdfFile(tree) as af:
+        af.write_to(asdf_file)
+
+    step = PersistenceStep(persistence_array_file=asdf_file, persistence_time=persistence_time2)
+
+    # Run persistence step
+    with pytest.raises(ValueError):
+        res = step.run(model)
+
+
+def test_persistence_backwards_flagging_guard(create_sci_model, tmp_path):
+    """Develop a test that ensures exception is raised for backwards flagging."""
+    # Setup model
+    nints, ngroups, nrows, ncols = 2, 7, 1, 3
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.meta.exposure.start_time = 59672.64004629629
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    # Setup persistence array file
+    persistence_time = 70
+    asdf_file = os.path.join(tmp_path,  "persistence_array.asdf")
+    # Make entry for [0, 2] too far ahead in the future to guarantee
+    # backwards flagging for that pixel.
+    persistence_array = np.array([[0.0, 0.0, 1748994345.9470801]], dtype=np.float64)
+    rows, cols = np.nonzero(persistence_array)
+    vals = persistence_array[rows, cols]
+    tree = {
+        "filename" : "dummy.fits",
+        "rows" : rows,
+        "cols" : cols,
+        "vals" : vals,
+        "pers_time" : persistence_time,
+    }
+    with asdf.AsdfFile(tree) as af:
+        af.write_to(asdf_file)
+
+    step = PersistenceStep(persistence_array_file=asdf_file, persistence_time=persistence_time)
+
+    # Run persistence step
+    with pytest.raises(ValueError):
+        res = step.run(model)
+            
 
 def test_persistence_time_dnu(create_sci_model):
     """Test persitence flag gets set with DO_NOT_USE"""

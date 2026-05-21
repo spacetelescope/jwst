@@ -1,12 +1,10 @@
 import asdf
-import datetime
 import logging
 import numpy as np
 import os
 
 from stdatamodels.jwst import datamodels
 
-from jwst.lib.suffix import KNOW_SUFFIXES
 from jwst.persistence import persistence
 from jwst.stpipe import Step
 
@@ -41,7 +39,6 @@ class PersistenceStep(Step):
         result : `~stdatamodels.jwst.datamodels.RampModel`
             The persistence corrected datamodel
         """
-        import ipdb; ipdb.set_trace()
         result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
         if self.skip:
             log.info("Skipping persistence step as requested.")
@@ -66,7 +63,6 @@ class PersistenceStep(Step):
             result.meta.cal_step.persistence = "COMPLETE"
 
         if pers_a.save_persistence is not None:
-            # XXX Adjust this
             self.write_persistence_array(result, pers_a.save_persistence)
 
         return result
@@ -89,20 +85,8 @@ class PersistenceStep(Step):
         _, _, nrows, ncols = result.groupdq.shape
         if self.persistence_array_file is not None:
             self.get_persistence_array_from_file(nrows, ncols)
-            '''
-            # XXX Use function to expand persistence table to persistence array.
-            with asdf.open(self.persistence_array_file) as af:
-                self.persistence_array = af.tree["persistence_data"].copy()
-
-            # Make sure array has correct dimensions
-            dims = self.persistence_array.shape 
-            if len(dims) != 2 or dims[0] != nrows or dims[1] != ncols:
-                raise ValueError("'persistence_array' needs to be a 2-D list with dimensions (nrows, ncols)")
-            '''
         else:
-            # XXX change dimensions
             self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
-            # self.persistence_array = np.zeros(shape=(nrows, ncols, 2), dtype=np.float64)
 
     def write_persistence_array(self, result, filename):
         """
@@ -117,25 +101,16 @@ class PersistenceStep(Step):
         if ext != ".asdf":
             filename = f"{root}.asdf"
 
-
-        # XXX Still need to update processing!!!
-        #     Possibly make this a row x col x 2 array
-
         # Write persistence array to ASDF file
         rows, cols = np.nonzero(self.persistence_array)
         vals = self.persistence_array[rows, cols]
         tree = {
             "filename" : result.meta.filename,
-            # "pers_table" : pers_table,
             "rows" : rows,
             "cols" : cols,
             "vals" : vals,
             "pers_time" : self.persistence_time,
         }
-
-        '''
-        tree = {"persistence_data": self.persistence_array}
-        '''
 
         with asdf.AsdfFile(tree) as af:
             af.write_to(filename)
@@ -152,10 +127,8 @@ class PersistenceStep(Step):
         ncols : int
             The number of columns in the RampModel data.
         """
-        # XXX Possibly make this a row x col x 2 array
         with asdf.open(self.persistence_array_file) as pers_file:
             if pers_file["pers_time"] != self.persistence_time:
-                # XXX This needs to be looked at. Maybe something else.
                 raise ValueError("Invalid persistence file. Mismatch of persistence time.")
 
             rows = pers_file["rows"]

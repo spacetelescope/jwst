@@ -124,11 +124,16 @@ class DataSet:
             2. Non-zero entries indicate the end time of the persistence flagging window.
 
         Since a non-zero entry indicates a persistence flagging window has been found for
-        that pixel. The entry is the epoch time of the end of that window for a pixel. If
-        the current_time is less than an epoch time, then that group gets flagged with
-        persistence. Any non-zero entry that occurs before the current_time indicates
-        the persistence window for that pixel has ended, so the persistece_array entry
-        for that pixel will be set to zero.
+        that pixel. The entry is the epoch time of the end of that window for a pixel. To
+        check to see if any groups are within a persistence flagging window, it is first
+        decided if there is a non-zero entry in the persistence_array for that pixel. If
+        non-zero, make sure
+            persisrtence_array[row, col] > current_time > persistence_array[row, col] - persistence_time
+
+        Additionally, the current time may be the beginning of a persistence window if it
+        is determined to be the first group in a ramp to be saturated, in which case
+            persisrtence_array[row, col] = current_time + persistence_time
+        which indicates the end of the persistence time window.
 
         Parameters
         ----------
@@ -144,43 +149,35 @@ class DataSet:
         group : int
             The current group being processed.
         """
-        # XXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # XXX Change to (nrows, ncols, 2)
-        #     The (row, col, 0) will be the start time of the window
-        #     The (row, col, 1) will be the end time of the window
-        # XXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
         # Any persistence_array time earlier than current time gets set to zero. The
-        # persistence window has ended for that pixel.
+        # persistence window has ended for that pixel because the current time is
+        # after the end of the persistence window.
         self.persistence_array[self.persistence_array < current_time] = 0.0
 
-        # Calculate any first saturation points
+        # Calculate any first saturation points. Any group found to be the first
+        # saturated group in a ramp is the beginning of a persistence window.
         gdq_plane = self.output_obj.groupdq[integ, group, :, :]
         sat_loc = np.bitwise_and(gdq_plane, dqflags.group["SATURATED"])
         sat_array[sat_loc > 0] += 1
-
-        # Add first saturation points and the end window time to persistence_array
         self.persistence_array[sat_array==1] = current_time + self.persistence_time
+
+        # This prevents 'backwards flagging'.
+        # Subtracting the persistence_time gives the beginning of the window.
+        # If the current time occurs before this time, then the current group is
+        #     outside the window and subtracting it will be a positive number.
+        # Raise an exception if a backwards flagging situation arrives, as this is
+        #     an invalid state.
+        # XXX Needs to be more fully tested.
+        start_plane = self.persistence_array - (self.persistence_time + current_time)
+        start_plane[self.persistence_array == 0.0] = 0.0
+        if np.any(start_plane > 0.0):
+            raise ValueError("Invalid persistence array, due to backwards flagging.")
 
         # Set persistence flag for any group in persistence window
         if self.persistence_dnu:
             flag = dqflags.group["DO_NOT_USE"] | dqflags.group["PERSISTENCE"]
         else:
             flag = dqflags.group["PERSISTENCE"]
-
-        # XXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # XXX !!!! What to do in this situation? !!!!
-        # XXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # This prevents 'backwards flagging'.
-        start_plane = self.persistence_array - (self.persistence_time + current_time)
-        start_plane[self.persistence_array == 0.0] = 0.0
-
-        import ipdb; ipdb.set_trace()
-
-        # XXX Needs to be more fully tested.
-        if np.any(start_plane > 0.0):
-            raise ValueError("Invalid persistence array, due to backwards flagging.")
 
         gdq_plane[self.persistence_array > 0.0] |= flag
         self.output_obj.groupdq[integ, group, :, :] = gdq_plane
