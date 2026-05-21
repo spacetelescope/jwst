@@ -280,7 +280,7 @@ Standalone or calwebb_spec3 Pipeline
 When running ``cube_build`` as a standalone step or within the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, the output filename dynamically
 includes details about the specific channels, bands, gratings, or filters used to construct the cube.
 
-* **Root Name Selection:** If the input data is a single exposure, the ``rootname`` is pulled directly from the input filename. If the input is
+**Root Name Selection:** If the input data is a single exposure, the ``rootname`` is pulled directly from the input filename. If the input is
 an association table, the ``rootname`` is explicitly defined by the association.
 
 
