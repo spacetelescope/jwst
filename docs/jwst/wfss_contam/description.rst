@@ -79,7 +79,9 @@ Here we describe the steps used to perform the contamination correction:
    from the simulated cutout, leaving only the simulated spectra of any nearby
    contaminating sources.
 4. The simulated contamination cutout is subtracted from the observed source cutout,
-   thereby removing the signal from contaminating spectra.
+   thereby removing the signal from contaminating spectra. If polynomial fitting is 
+   enabled, see the section on :ref:`polynomial_flux_modeling` below for details
+   on how this modifies steps 3 & 4.
 
 Outputs
 -------
@@ -96,6 +98,69 @@ There is one primary output and two optional outputs from the step:
 3. If the step argument ``--save_contam_images`` is set to `True`, the simulated
    contamination cutouts (the result of step 3 above) are saved to a file.
    See :ref:`wfss_contam_step_args`.
+
+.. _polynomial_flux_modeling:
+
+Polynomial Flux Modeling
+------------------------
+
+By default, each source is simulated with a spectrally flat flux model - that is, the
+flux at every wavelength is taken directly from the direct image pixel values. 
+When the step argument ``--polyfit_degree`` is set to an integer ``N``, the step
+fits a spectral model to each source. The procedure is:
+
+1. In addition to the standard flat-spectrum simulation (the constant, degree-0 term),
+   *N* additional grism-frame images are simulated for each source, where for the *i*\ th
+   simulation from *i* = 1 to *i* = *N*, the spectral flux distribution is assumed to follow
+   the *i*\ th order Legendre polynomial. Legendre polynomials were chosen because
+   they form an orthogonal basis set, which makes the fitter prefer smaller coefficients
+   instead of oscillating large positive and negative coefficients.
+   Recall that each dispersed-image pixel represents
+   a linear combination of the contribution of several direct-image pixels at different
+   wavelengths. These basis functions therefore must be computed before the dispersed image
+   is discretized onto a pixel grid, i.e., just after the dispersion calculation.
+
+2. For each source, the observed 2D spectrum is fit as a linear combination of
+   these :math:`N+1` basis images, i.e.
+
+   .. math::
+
+      \text{observed} \approx c_0 \cdot B_0 + c_1 \cdot P_1(\lambda) + \cdots + c_N \cdot P_N(\lambda)
+
+   where :math:`B_0` is the flat-spectrum simulation and :math:`P_k(\lambda)` is the simulation
+   driven by the :math:`k`-th order Legendre polynomial flux model.  The coefficients :math:`c_k` are
+   determined using a linear least-squares fit with L2 regularization, the strength of 
+   which is set by the step argument ``--l2_alpha``. The regularization helps to
+   keep the coefficients small, guarding against physically implausible flux distributions.
+
+3. The fitted coefficients are checked to see if the fitted constant term coefficient,
+   :math:`c_0`, deviates from unity by more than a threshold set by the step argument
+   ``--rejection_threshold``. If it does, the fit is rejected and the contamination estimate
+   for that source is not updated on that iteration. This is used to avoid fits "blowing up"
+   in cases where the polynomial fit has returned an unphysical total flux level,
+   which typically occurs if background subtraction was imperfect or if the source sits
+   in a highly contaminated region.
+
+4. If a good solution was found, the best-fit linear combination replaces the original
+   simulation for that source, and this spectrally corrected simulation is used in the
+   contamination model to be applied before the subsequent iteration.
+   If no good solution was found, the original flat-spectrum simulation is not modified.
+
+5. The simulated contamination from all other sources is subtracted from each observed slit,
+   and the resulting contamination-corrected slit is used as the "observed data"
+   for the next iteration of the fit. Note that each iteration starts the fitting over from
+   the original basis images; the fitted coefficients from the previous iteration are not
+   used as a starting point.
+   
+The ``--n_iterations`` argument controls how many times the polynomial fit is repeated.
+On the first iteration the observed spectrum still contains contamination from neighboring
+sources; on subsequent iterations it is replaced by the contamination-corrected spectrum
+from the previous pass, so the polynomial flux fit is less biased by contamination
+from other sources. In practice, the polynomial fit typically converges for only relatively
+isolated sources on the first iteration, but the second iteration allows almost all sources
+to be fit even for test data in crowded fields.  ``n_iterations > 3`` typically does not
+provide much additional improvement.
+Iteration has no effect when ``--polyfit_degree`` is not set.
 
 Multiprocessing
 ---------------

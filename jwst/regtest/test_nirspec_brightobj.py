@@ -163,7 +163,7 @@ def test_tso3_whtlt(run_tso3_pipeline, diff_astropy_tables):
     assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
 
-def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
+def test_flat_field_step_user_supplied_flat_nrs_bots(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
     basename = "jw02420001001_04101_00001-first100_nrs1"
     output_file = f"{basename}_flat_from_user_file.fits"

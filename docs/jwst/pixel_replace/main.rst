@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Classes: `jwst.pixel_replace.PixelReplaceStep`
+:Classes: `jwst.pixel_replace.pixel_replace_step.PixelReplaceStep`
 :Alias: pixel_replace
 
 During 1-D spectral extraction (:ref:`extract_1d <extract_1d_step>` step),

@@ -16,4 +16,4 @@ pytestmark = [pytest.mark.bigdata, pytest.mark.slow]
 
 def test_pool_miri_wfss(_jail, rtdata, resource_tracker, request):
     pool_args = ("jw09505_20251216t202003_pool", [])
-    assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
+    assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args, strict_expname=True)

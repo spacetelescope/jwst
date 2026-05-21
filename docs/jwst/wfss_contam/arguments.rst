@@ -47,3 +47,31 @@ The ``wfss_contam`` step uses the following optional arguments.
   Sets the maximum number of direct image pixels to run through the grism transforms at once.
   Decreasing this value will typically reduce the memory usage of the step. The effect on runtime
   depends on the machine hardware and whether multi-processing is enabled. Defaults to 5,000.
+
+Polynomial fitting parameters
+-----------------------------
+
+``--polyfit_degree``
+  An integer specifying the maximum degree of the polynomial used to fit the spectral shape of each
+  source before computing the contamination estimate. If ``None`` (the default), no polynomial
+  fitting is applied and the direct image flux values are used as-is (i.e., a "flat" spectrum).
+
+``--n_iterations``
+  An integer specifying the number of contamination-correction iterations to perform. On each
+  iteration the contamination estimate is recomputed using the flux-modeled spectra from the
+  previous iteration. Defaults to 1 (a single, non-iterative correction). Has no effect if
+  ``polyfit_degree`` is ``None``.
+
+``--l2_alpha``
+  A float specifying the alpha parameter for L2 regularization in the polynomial fitting.
+  This is used to prevent the fitted coefficients from blowing up in cases of severe contamination.
+  Default is 0.1.
+
+``--rejection_threshold``
+  A float specifying a threshold for rejecting polynomial fits based on the fitted constant term coefficient.
+  If the absolute value of that coefficient deviates from unity by more than this threshold, the fit is
+  rejected and the contamination estimate for that source is not updated on that iteration.
+  This is used to avoid fits "blowing up" in cases where the polynomial fit has returned
+  an unphysical total flux level, which typically occurs if background subtraction was imperfect 
+  or if the source sits in a highly contaminated region. If set to None, no rejection will be performed.
+  Default is 0.1.

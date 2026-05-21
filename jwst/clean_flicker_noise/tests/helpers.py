@@ -39,7 +39,7 @@ def _add_metadata(model, shape):
     model.meta.instrument.name = "MIRI"
     model.meta.instrument.detector = "MIRIMAGE"
     model.meta.instrument.filter = "F480M"
-    model.meta.observation.date = "2015-10-13"
+    model.meta.observation.date = "2025-10-13"
     model.meta.observation.time = "00:00:00"
     model.meta.exposure.type = "MIR_IMAGE"
     model.meta.exposure.group_time = 1.0
