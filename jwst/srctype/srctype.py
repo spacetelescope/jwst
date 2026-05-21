@@ -15,19 +15,23 @@ def set_source_type(input_model, source_type=None):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.CubeModel`, `~jwst.datamodels.ImageModel`,
-                  `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`,
-                  or `~jwst.datamodels.SlitModel`
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel`, \
+                  `~stdatamodels.jwst.datamodels.ImageModel`, \
+                  `~stdatamodels.jwst.datamodels.IFUImageModel`, \
+                  `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+                  `~stdatamodels.jwst.datamodels.SlitModel`
         The data model to be processed.
 
-    source_type : str,  {POINT, EXTENDED}
-        User-requested value for source type.
+    source_type : str
+        User-requested value for source type (POINT or EXTENDED).
 
     Returns
     -------
-    input_model : `~jwst.datamodels.CubeModel`, `~jwst.datamodels.ImageModel`,
-                  `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`,
-                  or `~jwst.datamodels.SlitModel`
+    `~stdatamodels.jwst.datamodels.CubeModel`, \
+    `~stdatamodels.jwst.datamodels.ImageModel`, \
+    `~stdatamodels.jwst.datamodels.IFUImageModel`, \
+    `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+    `~stdatamodels.jwst.datamodels.SlitModel`
         The updated model.
     """
     # Get the exposure type of the input model
@@ -39,7 +43,7 @@ def set_source_type(input_model, source_type=None):
         log.info(f"Input EXP_TYPE is {exptype}")
     # For exposure types that have a single source specification, get the
     # user-supplied source type from the selection they provided in the APT
-    if exptype in [
+    if exptype in (
         "MIR_LRS-FIXEDSLIT",
         "MIR_LRS-SLITLESS",
         "MIR_MRS",
@@ -48,7 +52,7 @@ def set_source_type(input_model, source_type=None):
         "NRS_FIXEDSLIT",
         "NRS_BRIGHTOBJ",
         "NRS_IFU",
-    ]:
+    ):
         # Get info about the exposure, including whether it's a background
         # target and the dither pattern type
         bkg_target = input_model.meta.observation.bkgdtarg
@@ -100,7 +104,7 @@ def set_source_type(input_model, source_type=None):
             src_type = "POINT"
             log.info(f"Input is a TSO exposure; setting SRCTYPE = {src_type}")
 
-        elif user_type in ["POINT", "EXTENDED"]:
+        elif user_type in ("POINT", "EXTENDED"):
             # Use the value supplied by the user
             src_type = user_type
             log.info(f"Using input source type = {src_type}")
@@ -112,7 +116,7 @@ def set_source_type(input_model, source_type=None):
 
         else:
             # Set a default value based on the exposure type
-            if exptype in ["MIR_MRS", "NRS_IFU"]:
+            if exptype in ("MIR_MRS", "NRS_IFU"):
                 src_type = "EXTENDED"
             else:
                 src_type = "POINT"
@@ -199,5 +203,4 @@ def set_source_type(input_model, source_type=None):
         log.warning(f"Setting SRCTYPE = {src_type}")
         input_model.meta.target.source_type = src_type
 
-    # We're done
     return input_model
