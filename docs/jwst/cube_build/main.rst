@@ -267,7 +267,7 @@ The string defining the type of IFU is created according to the following rules:
 
 
 Calwebb_spec2 Pipeline
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 File names for cubes generated within the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline follow standard pipeline formatting rules and
 append a simple, fixed suffix to the root name:
@@ -275,13 +275,14 @@ append a simple, fixed suffix to the root name:
 * ``rootname_s3d.fits``
 
 Standalone or calwebb_spec3 Pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 When running ``cube_build`` as a standalone step or within the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, the output filename dynamically
 includes details about the specific channels, bands, gratings, or filters used to construct the cube.
 
 * **Root Name Selection:** If the input data is a single exposure, the ``rootname`` is pulled directly from the input filename. If the input is
 an association table, the ``rootname`` is explicitly defined by the association.
+
 
 The instrument-specific naming rules are applied as follows:
 
@@ -304,8 +305,7 @@ The instrument-specific naming rules are applied as follows:
   * ``rootname_g140m-f070lp-g235m-f100lp_s3d.fits``
 
 .. note::
-   All instrument hardware strings (such as ``g140m`` or ``f070lp``) are automatically normalized to lowercase characters when generating the final filename suffix.  
-
+   All instrument hardware strings (such as ``g140m`` or ``f070lp``) are automatically normalized to lowercase characters when generating the final filename suffix.
 .. _algorithm:
 
 Algorithm
