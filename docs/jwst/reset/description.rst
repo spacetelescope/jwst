@@ -6,7 +6,7 @@ Description
 
 The reset correction is a MIRI step that attempts to correct
 for the reset anomaly effect. This effect is caused by the non-ideal
-behavior of the FET upon resetting in the dark
+behavior of the field effect transistors (FETs) upon resetting in the dark
 causing the initial frames in an integration to be offset from their
 expected values. Another MIRI effect caused by
 resetting the detectors is the RSCD effect (see :ref:`rscd <rscd_step>`).
