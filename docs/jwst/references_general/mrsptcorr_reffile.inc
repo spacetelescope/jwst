@@ -50,4 +50,4 @@ The formats of the individual table extensions are listed below.
 
 This reference file contains the relative spectrophotometric response function for the MRS 12 micron
 spectral leak, along with tables of across-slice wavelength and throughput variations for point
-sources in each of the MRS bands. Currently, only the LEAKCOR table is use in the ``jwst`` pipeline.
+sources in each of the MRS bands. Currently, only the LEAKCOR table is used in the ``jwst`` pipeline.
