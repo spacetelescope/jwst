@@ -10,6 +10,7 @@ from gwcs import wcs
 from stcal.alignment.util import compute_s_region_keyword, sregion_to_footprint
 
 import jwst
+from jwst.datamodels.source_container import SourceModelContainer
 from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi
 from jwst.extract_1d.tests.helpers import mock_nirspec_fs_one_slit_func, mock_nis_wfss_l2
 from jwst.pipeline import Spec3Pipeline
@@ -98,8 +99,8 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
 
         Ensure it receives the right input type for a WFSS association.
         """
-        if not isinstance(input_model, dm.WFSSMultiSpecModel):
-            raise TypeError(f"Input to combine_1d is not a WFSSMultiSpecModel: {input_model}")
+        if not isinstance(input_model, SourceModelContainer):
+            raise TypeError(f"Input to combine_1d is not a SourceModelContainer: {input_model}")
         output_model = dm.MultiCombinedSpecModel()
         spec = dm.SpecModel()
         output_model.spec.append(spec)
