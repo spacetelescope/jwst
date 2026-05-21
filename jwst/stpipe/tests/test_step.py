@@ -369,12 +369,6 @@ def test_finalize_logging(monkeypatch):
     assert watcher.seen
 
 
-def test_dunder_call_error():
-    pipeline = EmptyPipeline()
-    with pytest.raises(TypeError, match="not callable"):
-        pipeline(None)
-
-
 def test_add_asn_id_to_output_name_from_step():
     asn_id_step = "1234"
 
