@@ -1,7 +1,7 @@
 Appendix
 ========
 
-The derivation of the segment-specific readnoise variance (:math:`{ var^R_{s}  }`)
+The derivation of the segment-specific readnoise variance (:math:`{ var^R_{s} }`)
 is shown here. This pertains to both the 'conventional' and 'weighted' readnoise
 variances - the only difference being the number of groups in the segment.
 This derivation follows the standard procedure for fitting data to a straight line,
@@ -49,4 +49,4 @@ The variance due to read noise
 = :math:`{ \dfrac{12 \cdot R^2}  {(n^3 - n) \cdot t^2}}`
 
 This is the equation used in the step code and listed in the segment-specific computations
-section of the step Description.
+section of the :ref:`step description <ramp_fit_description>`.
