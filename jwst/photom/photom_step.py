@@ -1,3 +1,5 @@
+"""Apply photometric calibration to science data."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -38,8 +40,8 @@ class PhotomStep(Step):
 
         Returns
         -------
-        result : DataModel
-            DataModel with the photom correction applied
+        result : `~stdatamodels.jwst.datamodels.JwstDataModel`
+            Data model with the photom correction applied.
         """
         output_model = self.prepare_output(input_data)
 

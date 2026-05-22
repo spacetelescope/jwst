@@ -9,5 +9,4 @@ Source Type (SRCTYPE) Determination
 
    description.rst
    arguments.rst
-
-.. automodapi:: jwst.srctype
+   api_ref.rst

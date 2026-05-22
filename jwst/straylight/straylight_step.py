@@ -1,3 +1,5 @@
+"""Correct MRS data for straylight caused by the cross-artifact effect or residual cosmic rays."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
