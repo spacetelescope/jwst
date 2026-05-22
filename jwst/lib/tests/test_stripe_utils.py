@@ -6,6 +6,7 @@ from jwst.assign_wcs.tests.helpers import make_mock_dhs_nrca1_rate
 from jwst.lib import stripe_utils
 from jwst.lib.reffile_utils import science_detector_frame_transform
 from jwst.lib.tests.helpers import (
+    int_times_table,
     make_sub64p_multistripe_model,
     make_superstripe_mask_model,
     make_superstripe_model,
@@ -745,6 +746,67 @@ def test_collate_superstripes_with_slowsize_subarray_and_repeat(multistripe_suba
     np.testing.assert_allclose(collated.meta.exposure.read_times, expected_read_times)
 
 
+def test_collate_repeat_stripe(substripe_model):
+    # Make a ramp model from the synthetic cube
+    model = datamodels.RampModel()
+    model.update(substripe_model)
+    data_shape = substripe_model.data.shape
+    model.data = substripe_model.data.reshape((data_shape[0], 1, data_shape[1], data_shape[2]))
+    model.int_times = int_times_table(data_shape[0])
+
+    # add more needed metadata for read times
+    model.meta.exposure.nints = 1
+    model.meta.exposure.ngroups = 1
+    model.meta.exposure.nframes = 1
+    model.meta.exposure.groupgap = 0
+    model.meta.exposure.noutputs = 4
+    model.meta.exposure.frame_time = 0.864610
+
+    # Input model interleaves different detector regions: instead
+    # repeat the stripe with the same detector region
+    model.meta.subarray.interleave_reads1 = 0
+    model.meta.subarray.superstripe_step = 0
+
+    # number of stripes is the repeats in frame
+    nreads1 = model.meta.subarray.multistripe_reads1
+    nreads2 = model.meta.subarray.multistripe_reads2
+    n_repeat = data_shape[-2] // (nreads1 + nreads2)
+
+    # expected data shapes
+    nint_before, ngroup_before, ny_before, nx_before = model.data.shape
+    nint_after = nint_before
+    ngroup_after = ngroup_before * n_repeat
+    nx_after = nx_before
+    ny_after = nreads2  # shape should match the subframe science readout
+
+    model.pixeldq = np.zeros((ny_before, nx_before))
+    model.groupdq = np.zeros((nint_before, ngroup_before, ny_before, nx_before))
+    collated = stripe_utils.collate_superstripes(model)
+
+    assert collated.data.shape == (nint_after, ngroup_after, ny_after, nx_after)
+    assert collated.groupdq.shape == (nint_after, ngroup_after, ny_after, nx_after)
+    assert collated.pixeldq.shape == (ny_after, nx_after)
+
+    # groupdq all zeros
+    np.testing.assert_equal(collated.groupdq, 0)
+
+    # pixeldq all zeros (no refpix in output)
+    np.testing.assert_equal(collated.pixeldq, 0)
+
+    # data for each group is composed from one each of the repeats
+    expected = np.arange(10, 6, -1)
+    assert np.allclose(collated.data, expected[None, :, None, None], equal_nan=True)
+
+    # old int_times stays unmodified, since integrations did not change
+    assert collated.int_times_stripe is None
+    assert len(collated.int_times) == nint_after
+
+    # 4 repeat stripes are present for this mode, so read_times is updated
+    expected_read_times = [[0.86461], [1.07945], [1.29429], [1.50913]]
+    np.testing.assert_allclose(collated.meta.exposure.read_times, expected_read_times)
+
+
+@pytest.mark.parametrize("slowaxis", [1, 2])
 @pytest.mark.parametrize(
     "stripe_params,expected",
     [
@@ -791,7 +853,7 @@ def test_collate_superstripes_with_slowsize_subarray_and_repeat(multistripe_suba
         ),
     ],
 )
-def test_stripe_read_times(stripe_params, expected):
+def test_stripe_read_times(slowaxis, stripe_params, expected):
     nframes, groupgap, noutputs, ncols, nrows, reads1, reads2 = stripe_params
     model = datamodels.SuperstripeRampModel()
     model.meta.exposure.ngroups = 2
@@ -799,12 +861,18 @@ def test_stripe_read_times(stripe_params, expected):
     model.meta.exposure.groupgap = groupgap
     model.meta.exposure.noutputs = noutputs
     model.meta.exposure.frametime = 1
-    model.meta.subarray.fastaxis = 1
-    model.meta.subarray.slowaxis = 2
-    model.meta.subarray.xsize = ncols
-    model.meta.subarray.ysize = nrows
     model.meta.subarray.multistripe_reads1 = reads1
     model.meta.subarray.multistripe_reads2 = reads2
+    if slowaxis == 1:
+        model.meta.subarray.fastaxis = 2
+        model.meta.subarray.slowaxis = 1
+        model.meta.subarray.xsize = nrows
+        model.meta.subarray.ysize = ncols
+    else:
+        model.meta.subarray.fastaxis = 1
+        model.meta.subarray.slowaxis = 2
+        model.meta.subarray.xsize = ncols
+        model.meta.subarray.ysize = nrows
 
     read_times = stripe_utils.stripe_read_times(model, recalculate_frametime=True)
     np.testing.assert_allclose(read_times, expected)

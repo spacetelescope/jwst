@@ -7,6 +7,7 @@ __all__ = [
     "make_superstripe_model",
     "one_stripe_mask",
     "make_superstripe_mask_model",
+    "make_sub64p_multistripe_model",
 ]
 
 
