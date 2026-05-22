@@ -282,20 +282,20 @@ class Spec3Pipeline(Pipeline):
                     self.combine_1d.save_results = False
                     # Combine the results for all sources
                     comb = self.combine_1d.run(result)
-                    if comb is not None:
-                        comb_complete = True
-                    else:
-                        comb_complete = False
-                    if comb_complete:
-                        if isinstance(comb, ModelContainer):
-                            for model in comb:
-                                if model.meta.cal_step.combine_1d != "COMPLETE":
-                                    comb_complete = False
-                                    break
-                        elif comb.meta.cal_step.combine_1d != "COMPLETE":
-                            comb_complete = False
+                    comb_complete = comb is not None and comb.meta.cal_step.combine_1d == "COMPLETE"
                     if not comb_complete:
                         continue
+                    # add metadata that only WFSS wants
+                    if isinstance(result, ModelContainer):
+                        comb.spec[0].source_ra = (
+                            result._models[0].spec[0].spec_table["SOURCE_RA"][0]  # noqa: SLF001
+                        )
+                        comb.spec[0].source_dec = (
+                            result._models[0].spec[0].spec_table["SOURCE_DEC"][0]  # noqa: SLF001
+                        )
+                    else:
+                        comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
+                        comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
                     wfss_comb.append(comb)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
