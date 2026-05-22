@@ -1,3 +1,5 @@
+"""Correct ramp data for reset correction."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -27,11 +29,11 @@ class ResetStep(Step):
         Parameters
         ----------
         step_input : `~stdatamodels.jwst.datamodels.RampModel`
-           Input datamodel to be corrected
+           Input datamodel to be corrected.
 
         Returns
         -------
-        reset: `~stdatamodels.jwst.datamodels.RampModel`
+        reset : `~stdatamodels.jwst.datamodels.RampModel`
            The reset corrected ramp model.
         """
         # Open the input data model
