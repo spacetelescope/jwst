@@ -268,9 +268,6 @@ def make_wfss_multicombined(results_list):
     order_data = {}
     for j, model in enumerate(results_list):
         for spec in model.spec:
-            if spec.spec_table["WAVELENGTH"].ndim != 1:
-                continue
-
             # ensure data goes to the correct order
             order = spec.spectral_order
             n_rows = order_rows[order]

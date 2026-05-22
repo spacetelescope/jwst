@@ -150,6 +150,7 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
     for col, _ in vector_columns:
         if col in ignore_columns:
             continue
+
         output_table[col][: input_table.shape[0]] = input_table[col]
 
     # Copy the metadata into the new table

@@ -737,20 +737,15 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
     else:
         spectra = input_model.spec
     for in_spec in spectra:
-        if hasattr(in_spec, "source_id"):
-            srcid = in_spec.source_id
-        else:
-            srcid = in_spec.spec_table["SOURCE_ID"]
-
         if not np.any(np.isfinite(in_spec.spec_table.field("flux"))):
             if in_spec.meta.hasattr("group_id"):
                 msg = (
-                    f"Input spectrum {srcid} order {in_spec.spectral_order} "
+                    f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
                     f"from group_id {in_spec.meta.group_id} has no valid flux values; skipping."
                 )
             else:
                 msg = (
-                    f"Input spectrum {srcid} order {in_spec.spectral_order} "
+                    f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
                     "has no valid flux values; skipping."
                 )
             log.warning(msg)
@@ -759,7 +754,7 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
         monotonic = check_monotonic(wavelength)
         if not monotonic:
             log.warning(
-                f"Input spectrum {srcid} order {in_spec.spectral_order} "
+                f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
                 "has does not have monotonic wavelengths; skipping."
             )
             continue
@@ -811,11 +806,7 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
 
     if len(input_spectra) == 0:
         log.error("No valid input spectra found for source. Skipping.")
-        if isinstance(input_model, ModelContainer):
-            for ms in input_model:
-                ms.meta.cal_step.combine_1d = "SKIPPED"
-        else:
-            input_model.meta.cal_step.combine_1d = "SKIPPED"
+        input_model.meta.cal_step.combine_1d = "SKIPPED"
         return input_model
 
     for order in input_spectra:
