@@ -29,6 +29,6 @@ The SCI and ERR data arrays are 4-D, with dimensions of
 matches the dimensions of the raw detector
 readout mode for which the reset applies. The reference file contains the
 number of ``ngroups`` planes required for the correction to be zero on
-the last plane ``ngroups`` plane.  The correction for the first few
+the last plane.  The correction for the first few
 integrations varies and eventually settles down to a constant correction
 independent of integration number.
