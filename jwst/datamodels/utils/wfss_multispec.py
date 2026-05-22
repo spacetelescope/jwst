@@ -3,6 +3,7 @@
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 
+from jwst.datamodels.container import ModelContainer
 from jwst.datamodels.utils.flat_multispec import (
     copy_column_units,
     copy_spec_metadata,
@@ -168,31 +169,41 @@ def make_wfss_multiexposure(input_list):
 
 def wfss_multiexposure_to_multispec(input_model):
     """
-    Transform a `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel` into
-    a list of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects.
+    Transform a WFSSMultiSpecModel or ModelContainer of them into
+    a list of MultiSpecModel objects.
 
     Parameters
     ----------
-    input_model : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
+    input_model : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel` or \
+                  `~jwst.datamodels.container.ModelContainer`
         Input model to be reorganized.
 
     Returns
     -------
-    output_list : list[MultiSpecModel]
+    output_list : list
         List of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects,
-        one for each exposure in the input model.
+        one for each source ID in the input model.
     """  # noqa: D205  # numpydoc ignore=SS06
+    if isinstance(input_model, ModelContainer):
+        first_iter = input_model._models  # noqa: SLF001
+        first_model = input_model._models[0]  # noqa: SLF001
+    else:
+        first_iter = [input_model]
+        first_model = input_model
+
     # first extract all spectra as SpecModels in a flat list
     spec_list = []
     source_ids = []
     exposure_times = []
     integration_times = []
-    for exp in input_model.spec:
-        this_exp_list = expand_table(exp)
-        source_ids.extend([spec.source_id for spec in this_exp_list])
-        exposure_times.extend([exp.exposure_time for _ in this_exp_list])
-        integration_times.extend([exp.integration_time for _ in this_exp_list])
-        spec_list.extend(this_exp_list)
+    for model in first_iter:
+        for exp in model.spec:
+            this_exp_list = expand_table(exp)
+            n_thislist = len(this_exp_list)
+            source_ids.extend([spec.source_id for spec in this_exp_list])
+            exposure_times.extend([exp.exposure_time] * n_thislist)
+            integration_times.extend([exp.integration_time] * n_thislist)
+            spec_list.extend(this_exp_list)
 
     # organize by unique source id such that there is one MultiSpecModel per source
     # with all exposures for that source in that model's model.spec
@@ -208,7 +219,7 @@ def wfss_multiexposure_to_multispec(input_model):
         multispec.meta.exposure.integration_time = integration_times[0]
         spec_this_id = spec_list[source_ids == source_id]
         multispec.spec.extend(spec_this_id)
-        multispec.update(input_model, only="PRIMARY")
+        multispec.update(first_model, only="PRIMARY")
         output_list.append(multispec)
 
     return output_list
@@ -257,6 +268,9 @@ def make_wfss_multicombined(results_list):
     order_data = {}
     for j, model in enumerate(results_list):
         for spec in model.spec:
+            if spec.spec_table["WAVELENGTH"].ndim != 1:
+                continue
+
             # ensure data goes to the correct order
             order = spec.spectral_order
             n_rows = order_rows[order]
