@@ -31,7 +31,7 @@ Tabular PHOTOM Reference File Format
 ++++++++++++++++++++++++++++++++++++
 PHOTOM reference files are FITS format.
 For all modes except MIRI MRS, the PHOTOM file contains tabular data
-in a BINTABLE extension with EXTNAME = 'PHOTOM'.
+in a BINTABLE extension with ``EXTNAME = 'PHOTOM'``.
 The FITS primary HDU does not contain a data array.
 The contents of the table extension vary a bit for different
 instrument modes, as shown in the tables below.
@@ -282,9 +282,10 @@ The row selection criteria for each instrument/mode are:
    - IFU and MOS: Filter and Grating
    - Fixed Slits: Filter, Grating, and Slit name
 
-Note: For spectroscopic data the Nelem column should be present. Its value must be
-greater than 0, and Nelem entries are read from each of the Wavelength and Relresponse
-arrays. Nelem is not used for imaging data because there are no columns containing arrays.
+.. note::
+    For spectroscopic data the "Nelem" column should be present. Its value must be
+    greater than 0, and "Nelem" entries are read from each of the "Wavelength" and "Relresponse"
+    arrays. "Nelem" is not used for imaging data because there are no columns containing arrays.
 
 The primary header of the tabular PHOTOM reference files contains the keywords PIXAR_SR
 and PIXAR_A2, which give the average pixel area in units of steradians and
@@ -325,7 +326,7 @@ uncertainties for the SCI values, in the same units. The DQ extension
 contains a 2D array of bit-encoded data quality flags for the SCI values.
 The DQ_DEF extension contains a table listing the definitions of the values
 used in the DQ array. The PIXSIZ extension contains a 2D array of pixel
-sizes (i.e. solid angles), in units of steradians.
+sizes (i.e., solid angles), in units of steradians.
 
 The SCI array values are divided into the science product
 SCI and ERR arrays, yielding surface brightness in units of MJy/steradian.
@@ -342,39 +343,39 @@ Constructing a PHOTOM Reference File
 ------------------------------------
 The most straight-forward way to construct a tabular PHOTOM reference file is to
 populate a data model within python and then save the data model to a
-FITS file. Each instrument mode has its own photom data model, as listed above,
+FITS file. Each instrument mode has its own ``photom`` data model, as listed above,
 which contains the columns of information unique to that instrument.
 
 A NIRCam WFSS photom reference file, for example, could be constructed as follows
-from within the python environment::
+from within the Python environment::
 
- >>> import numpy as np
- >>> from stdatamodels.jwst import datamodels
- >>> filter = np.array(['GR150C', 'GR150R'])
- >>> pupil = np.array(['F140M', 'F200W'])
- >>> order = np.array([1, 1], dtype=np.int16)
- >>> photf = np.array([1.e-15, 3.e-15], dtype=np.float32)
- >>> uncer = np.array([1.e-17, 3.e-17], dtype=np.float32)
- >>> nrows = len(filter)
- >>> nx = 437
- >>> nelem = np.zeros(nrows, dtype=np.int16) + nx
- >>> temp_wl = np.linspace(1.0, 5.0, nx, dtype=np.float32).reshape(1, nx)
- >>> wave = np.zeros((nrows, nx), np.float32)
- >>> wave[:] = temp_wl.copy()
- >>> resp = np.ones((nrows, nx), dtype=np.float32)
- >>> resp_unc = np.zeros((nrows, nx), dtype=np.float32)
- >>> data_list = [(filter[i], pupil[i], order[i], photf[i], uncer[i], nelem[i],
- ...               wave[i], resp[i], resp_unc[i]) for i in range(nrows)]
- >>> data = np.array(data_list,
- ...                 dtype=[('filter', 'S12'),
- ...                        ('pupil', 'S15'),
- ...                        ('order', '<i2'),
- ...                        ('photmjsr', '<f4'),
- ...                        ('uncertainty', '<f4'),
- ...                        ('nelem', '<i2'),
- ...                        ('wavelength', '<f4', (nx,)),
- ...                        ('relresponse', '<f4', (nx,)),
- ...                        ('reluncertainty', '<f4', (nx,))])
- >>> output = datamodels.NrcWfssPhotomModel(phot_table=data)
- >>> output.save('nircam_photom_0001.fits')
- 'nircam_photom_0001.fits'
+    >>> import numpy as np
+    >>> from stdatamodels.jwst import datamodels
+    >>> filter = np.array(['GR150C', 'GR150R'])
+    >>> pupil = np.array(['F140M', 'F200W'])
+    >>> order = np.array([1, 1], dtype=np.int16)
+    >>> photf = np.array([1.e-15, 3.e-15], dtype=np.float32)
+    >>> uncer = np.array([1.e-17, 3.e-17], dtype=np.float32)
+    >>> nrows = len(filter)
+    >>> nx = 437
+    >>> nelem = np.zeros(nrows, dtype=np.int16) + nx
+    >>> temp_wl = np.linspace(1.0, 5.0, nx, dtype=np.float32).reshape(1, nx)
+    >>> wave = np.zeros((nrows, nx), np.float32)
+    >>> wave[:] = temp_wl.copy()
+    >>> resp = np.ones((nrows, nx), dtype=np.float32)
+    >>> resp_unc = np.zeros((nrows, nx), dtype=np.float32)
+    >>> data_list = [(filter[i], pupil[i], order[i], photf[i], uncer[i], nelem[i],
+    ...               wave[i], resp[i], resp_unc[i]) for i in range(nrows)]
+    >>> data = np.array(data_list,
+    ...                 dtype=[('filter', 'S12'),
+    ...                        ('pupil', 'S15'),
+    ...                        ('order', '<i2'),
+    ...                        ('photmjsr', '<f4'),
+    ...                        ('uncertainty', '<f4'),
+    ...                        ('nelem', '<i2'),
+    ...                        ('wavelength', '<f4', (nx,)),
+    ...                        ('relresponse', '<f4', (nx,)),
+    ...                        ('reluncertainty', '<f4', (nx,))])
+    >>> output = datamodels.NrcWfssPhotomModel(phot_table=data)
+    >>> output.save('nircam_photom_0001.fits')  # doctest: +SKIP
+    'nircam_photom_0001.fits'
