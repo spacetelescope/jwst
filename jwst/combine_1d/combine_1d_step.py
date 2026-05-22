@@ -3,7 +3,6 @@ import logging
 from stdatamodels.jwst import datamodels
 
 from jwst.combine_1d import combine1d
-from jwst.datamodels.container import ModelContainer
 from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
     wfss_multiexposure_to_multispec,
@@ -47,7 +46,7 @@ class Combine1dStep(Step):
         """
         output_model = self.prepare_output(input_data)
 
-        if isinstance(output_model, (datamodels.WFSSMultiSpecModel, ModelContainer)):
+        if isinstance(output_model, datamodels.WFSSMultiSpecModel):
             input_list = wfss_multiexposure_to_multispec(output_model)
             if len(input_list) == 1:
                 # Single input: will be combined below
