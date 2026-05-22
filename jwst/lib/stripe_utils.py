@@ -25,18 +25,17 @@ __all__ = [
 DETECTOR_FULL_SIZE = 2048
 
 STRIPE_TO_STANDARD_SUBARRAY = {
-    # NIRCam subarray superstripe modes
-    "SUB64P_SUPSTP002": {"slow_size": 64},
-    "SUB64P_SUPSTP008": {"slow_size": 64},
-    "SUB64P_SUPSTP032": {"slow_size": 64},
-    # TODO: include DHS subarrays here if we want to reassemble the LW data
-    # "SUB260STRIPE4_DHS": {"slow_size": 64}
+    # NIRISS SOSS superstripes: reassemble to full size
+    "SUB17STRIPE_SOSS": {"slow_size": DETECTOR_FULL_SIZE, "slow_start": 1},
+    "SUB60STRIPE_SOSS": {"slow_size": DETECTOR_FULL_SIZE, "slow_start": 1},
+    "SUB204STRIPE_SOSS": {"slow_size": DETECTOR_FULL_SIZE, "slow_start": 1},
+    "SUB680STRIPE_SOSS": {"slow_size": DETECTOR_FULL_SIZE, "slow_start": 1},
 }
 """
-Map superstripe subarrays to standard subarray names and sizes.
+Map superstripe subarrays to standard subarray sizes.
 
 Superstripe subarrays must be included here if the size along the slow axis
-is not full size (2048).
+should be reassembled to include empty placeholder rows/columns.
 """
 
 
@@ -495,9 +494,9 @@ def generate_stripe_reference(ref_array, sci_model):
     return stripe_out
 
 
-def _slow_start_from_full_range(slowaxis, full_range):
+def _slow_sub_from_full_range(slowaxis, full_range):
     """
-    Get the subarray start value along the slow axis from the derived ranges in the full frame.
+    Get the subarray start and size along the slow axis from the derived ranges in the full frame.
 
     Parameters
     ----------
@@ -514,6 +513,8 @@ def _slow_start_from_full_range(slowaxis, full_range):
     det_slow_start : int
         The start value in detector coordinates, 0-indexed, for determining
         output subarray indices.
+    slow_size : int
+        The size of the output subarray, to include all science values.
     """
     all_stripe_ranges = np.array(list(full_range.values()))
     if slowaxis < 0:
@@ -521,7 +522,10 @@ def _slow_start_from_full_range(slowaxis, full_range):
         sci_stripe_ranges = DETECTOR_FULL_SIZE - all_stripe_ranges
     else:
         sci_stripe_ranges = all_stripe_ranges
-    return np.min(sci_stripe_ranges) + 1, np.min(all_stripe_ranges)
+    sci_slow_start = np.min(sci_stripe_ranges) + 1
+    det_slow_start = np.min(all_stripe_ranges)
+    slow_size = np.max(all_stripe_ranges) - det_slow_start
+    return sci_slow_start, det_slow_start, slow_size
 
 
 def collate_superstripes(input_model):
@@ -554,23 +558,24 @@ def collate_superstripes(input_model):
         n_stripe = 1
     nints_sci = nints // n_stripe
 
-    # Get the expected output size for the mode, defaulting to full size (2048)
-    subarray_name = input_model.meta.subarray.name
-    standard_subarray = STRIPE_TO_STANDARD_SUBARRAY.get(subarray_name, {})
-    slow_size = standard_subarray.get("slow_size", DETECTOR_FULL_SIZE)
-
     # Generate slowaxis ranges to place science regions from stripes into parent frame
     all_ranges = generate_superstripe_ranges(input_model)
     full_range = all_ranges["full"]
     sub_range = all_ranges["subarray"]
-    if slow_size == DETECTOR_FULL_SIZE:
-        sci_slow_start = 1
-        det_slow_start = 0
+
+    # Get the expected output size and start for the mode, if it needs to have row/column padding
+    subarray_name = input_model.meta.subarray.name
+    standard_subarray = STRIPE_TO_STANDARD_SUBARRAY.get(subarray_name)
+    if standard_subarray is not None:
+        slow_size = standard_subarray["slow_size"]
+        sci_slow_start = standard_subarray["slow_start"]
+        if slowaxis < 1:
+            det_slow_start = DETECTOR_FULL_SIZE - (sci_slow_start + slow_size - 1)
+        else:
+            det_slow_start = sci_slow_start - 1
     else:
-        # TODO: this assumes the lowest corner of the subarray is included in the
-        #   science pixels in the full_range. This may not match standard subarray
-        #   definition, but should hopefully be self-consistent.
-        sci_slow_start, det_slow_start = _slow_start_from_full_range(slowaxis, full_range)
+        # Otherwise, get the subarray start and extend from the derived ranges
+        sci_slow_start, det_slow_start, slow_size = _slow_sub_from_full_range(slowaxis, full_range)
     n_repeat = max(len(r) for r in sub_range.values())
     ngroups_sci = ngroups * n_repeat
 
