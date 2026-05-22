@@ -1295,12 +1295,12 @@ class Asn_Lv2WFSSParallel(
                         DMSAttrConstraint(
                             name="exp_type",
                             sources=["exp_type"],
-                            value="nis_wfss|nrc_wfss",
+                            value="nis_wfss|nrc_wfss|mir_wfss",
                         ),
                         DMSAttrConstraint(
                             name="image_exp_type",
                             sources=["exp_type"],
-                            value="nis_image|nrc_image",
+                            value="nis_image|nrc_image|mir_image",
                             force_reprocess=ListCategory.NONSCIENCE,
                             only_on_match=True,
                         ),
