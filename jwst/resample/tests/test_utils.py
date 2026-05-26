@@ -10,6 +10,7 @@ from gwcs.wcstools import wcs_from_fiducial
 from stdatamodels.jwst.datamodels import SlitModel, dqflags
 
 from jwst.resample.resample_spec import find_dispersion_axis
+from jwst.resample.resample_utils import multi_sregion_to_list
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 GOOD = dqflags.pixel["GOOD"]
@@ -90,3 +91,21 @@ def test_find_dispersion_axis():
 
     dm.meta.wcsinfo.dispersion_direction = 2  # vertical
     assert find_dispersion_axis(dm) == 1  # Y axis for wcs functions
+
+
+def test_multi_sregion_to_list_single():
+    s_region = "POLYGON ICRS 150.0 2.0 150.1 2.0 150.1 2.1 150.0 2.1"
+    s_region_list = multi_sregion_to_list(s_region)
+    assert isinstance(s_region_list, list)
+    assert len(s_region_list) == 1
+    assert s_region_list[0] == s_region
+
+
+def test_multi_sregion_to_list_multiple():
+    s_region_orig = "POLYGON ICRS 150.0 2.0 150.1 2.0 150.1 2.1 150.0 2.1"
+    s_region = s_region_orig + " " + s_region_orig
+    s_region_list = multi_sregion_to_list(s_region)
+    assert isinstance(s_region_list, list)
+    assert len(s_region_list) == 2
+    assert s_region_list[0] == s_region_orig
+    assert s_region_list[1] == s_region_orig

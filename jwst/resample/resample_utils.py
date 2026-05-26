@@ -17,7 +17,7 @@ from stcal.resample.utils import build_mask as _stcal_build_mask
 from stcal.resample.utils import compute_mean_pixel_area
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-__all__ = ["build_mask", "resampled_wcs_from_models"]
+__all__ = ["build_mask", "resampled_wcs_from_models", "multi_sregion_to_list"]
 
 log = logging.getLogger(__name__)
 
@@ -94,7 +94,10 @@ def resampled_wcs_from_models(
         # get s_regions from model meta without loading the whole models into memory
         for i in range(len(input_models)):
             meta = input_models.read_metadata(i)
-            sregion_list.append(meta["meta.wcsinfo.s_region"])
+            sreg_string = meta["meta.wcsinfo.s_region"]
+            # In some cases S_REGION contains multiple polygons.
+            # The helper function handles this
+            sregion_list.extend(multi_sregion_to_list(sreg_string))
 
     if not sregion_list:
         raise ValueError("No input models.")
@@ -327,3 +330,21 @@ def find_miri_lrs_sregion(sregion_model1, wcs):
     footprint = np.array(footprint)
     s_region = compute_s_region_keyword(footprint)
     return s_region
+
+
+def multi_sregion_to_list(sregion):
+    """
+    Convert a multi S_REGION string to a list of individual S_REGION strings.
+
+    Parameters
+    ----------
+    sregion : str
+        A multi S_REGION string.
+
+    Returns
+    -------
+    list of str
+        A list of individual S_REGION strings.
+    """
+    slist = sregion.split("POLYGON ICRS")
+    return ["POLYGON ICRS " + s for s in map(str.strip, slist) if s]
