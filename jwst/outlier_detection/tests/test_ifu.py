@@ -9,8 +9,8 @@ def test_ifu_one_exposure(miri_ifu_rate):
     input_model = miri_ifu_rate
     result = OutlierDetectionStep.call([input_model])
 
-    # Step is skipped
-    assert result[0].meta.cal_step.outlier_detection == "SKIPPED"
+    # Step is failed
+    assert result[0].meta.cal_step.outlier_detection == "FAILED"
 
     # Input is not modified
     assert result[0] is not input_model

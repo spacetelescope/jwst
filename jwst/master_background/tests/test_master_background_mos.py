@@ -233,9 +233,9 @@ def test_skip_no_bg_slits(nirspec_msa_extracted2d):
     for i, slit in enumerate(model.slits):
         slit.source_name = f"SRC{i}"
 
-    # Step is skipped
+    # Step is failed
     result = MasterBackgroundMosStep.call(model)
-    assert result.meta.cal_step.master_background == "SKIPPED"
+    assert result.meta.cal_step.master_background == "FAILED"
 
     # Input is not modified
     assert result is not model
@@ -249,9 +249,9 @@ def test_skip_no_src_slits(nirspec_msa_extracted2d):
     for i, slit in enumerate(model.slits):
         slit.source_name = f"BKG{i}"
 
-    # Step is skipped
+    # Step is failed
     result = MasterBackgroundMosStep.call(model)
-    assert result.meta.cal_step.master_background == "SKIPPED"
+    assert result.meta.cal_step.master_background == "FAILED"
 
     # Input is not modified
     assert result is not model
@@ -265,9 +265,9 @@ def test_skip_no_master_bg(monkeypatch, nirspec_msa_extracted2d):
     # mock a failure in master bg creation
     monkeypatch.setattr(step, "_extend_bg_slits", lambda *args, **kwargs: None)
 
-    # Step is skipped
+    # Step is marked FAILED
     result = step.run(model)
-    assert result.meta.cal_step.master_background == "SKIPPED"
+    assert result.meta.cal_step.master_background == "FAILED"
 
     # Input is not modified
     assert result is not model

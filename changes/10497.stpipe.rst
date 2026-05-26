@@ -1,0 +1,1 @@
+Allow the ``cal_step`` status keyword to be set to FAILED (instead of SKIPPED) for steps that were attempted but did not succeed.
