@@ -829,7 +829,38 @@ def generate_stripe_int_times(input_model):
     return input_model
 
 
-def stripe_read_times(stripe_ramp, recalculate_frametime=False):
+def _frametime(ncols, nrows, noutputs, end_of_row_pad, extra_rows, extra_clocks):
+    """
+    Calculate a frametime from the number of pixels read and other detector characteristics.
+
+    Parameters
+    ----------
+    ncols : int
+        Number of columns read.
+    nrows : int
+        Number of rows read.
+    noutputs : int
+        Number of outputs.
+    end_of_row_pad : int
+        Extra pad for the end of row.
+    extra_rows : int
+        Extra row pad for reset timing.
+    extra_clocks : int
+        Extra clock pad for reset timing.
+
+    Returns
+    -------
+    frametime : float
+        The total frametime in seconds.
+    """
+    frametime = (
+        ((ncols / noutputs) + end_of_row_pad) * (nrows + extra_rows) + extra_clocks
+    ) * 10.0e-6  # in seconds
+
+    return frametime
+
+
+def stripe_read_times(stripe_ramp):
     """
     Calculate read times for each readout, including subframe samples.
 
@@ -838,9 +869,6 @@ def stripe_read_times(stripe_ramp, recalculate_frametime=False):
     stripe_ramp : `~stdatamodels.jwst.datamodels.SuperstripeRampModel` or \
                   `~stdatamodels.jwst.datamodels.RampModel`
         The input ramp model containing multistripe data.
-    recalculate_frametime : bool, optional
-        If True, the frametime is recalculated instead of directly using
-        ``stripe_ramp.meta.exposure.frame_time``.
 
     Returns
     -------
@@ -851,7 +879,6 @@ def stripe_read_times(stripe_ramp, recalculate_frametime=False):
         contains a list with the read time for each frame averaged into the group
         readout (usually 1 for striped modes).
     """
-    frametime = stripe_ramp.meta.exposure.frame_time
     nframes = stripe_ramp.meta.exposure.nframes
     groupgap = stripe_ramp.meta.exposure.groupgap
     ngroups = stripe_ramp.meta.exposure.ngroups
@@ -865,59 +892,64 @@ def stripe_read_times(stripe_ramp, recalculate_frametime=False):
         nrows = stripe_ramp.meta.subarray.ysize
         ncols = stripe_ramp.meta.subarray.xsize
 
-    tot_frames = nframes + groupgap
-    tot_nreads = range(1, nframes + 1)
+    # Get extra padding values
     end_of_row_pad = 12
+    extra_clocks = 0
+    if noutputs == 1 and ncols >= 9:
+        extra_rows = 2
+    else:
+        extra_rows = 3
+    if noutputs == 4:
+        # for full-frame and stripe mode
+        extra_rows = 1
+        extra_clocks = 1
 
-    # For general frametime, calculation is the same as the "subframetime"
-    # below, except that extra rows and clocks depends on noutputs
-    # and ncols. There are no extra clocks or extra rows in the subframes.
-    # NOTE: the frametime from the header should be accurate for real data products,
-    # but the calculation is included here for completeness and convenience for
-    # working with synthetic data.
-    if recalculate_frametime:
-        log.info(f"Frametime from metadata is {frametime}")
-        extra_clocks = 0
-        if noutputs == 1 and ncols >= 9:
-            extra_rows = 2
-        else:
-            extra_rows = 3
-        if noutputs == 4:
-            # for full-frame and stripe mode
-            extra_rows = 1
-            extra_clocks = 1
-        frametime = (
-            ((ncols / noutputs) + end_of_row_pad) * (nrows + extra_rows) + extra_clocks
-        ) * 10.0e-6  # in seconds
+    frametime = _frametime(ncols, nrows, noutputs, end_of_row_pad, extra_rows, extra_clocks)
 
-        log.info(f"Recalculated frametime is {frametime}")
-        log.info("Using recalculated frametime.")
+    # Reset frame time: same as frametime, except only the subframe is reset.
+    # Each "subframe" has reads1+reads2 rows in it
+    subframe_nrows = nreads1 + nreads2
+    reset_frametime = _frametime(
+        ncols, subframe_nrows, noutputs, end_of_row_pad, extra_rows, extra_clocks
+    )
 
     # "subframe" time: the time between successive repeats of reads1+reads2 after
     # each fsync. This is the time between UTR samples within the frame.
+    # There are no extra clocks or extra rows in the subframes.
     extra_clocks = 0
     extra_rows = 0
+    subframetime = _frametime(
+        ncols, subframe_nrows, noutputs, end_of_row_pad, extra_rows, extra_clocks
+    )
 
-    # each "subframe" has reads1+reads2 rows in it
-    subframe_nrows = nreads1 + nreads2
-    n_repeat = 1
-    subframetime = 0
-    if subframe_nrows > 0:
-        n_repeat = nrows // subframe_nrows
-        subframetime = (
-            ((ncols / noutputs) + end_of_row_pad) * (subframe_nrows + extra_rows) + extra_clocks
-        ) * 10.0e-6  # in seconds
     log.debug(f"Frame time is: {frametime} s")
+    log.debug(f"Reset time is: {reset_frametime} s")
     log.debug(f"Subframe time is: {subframetime} s")
+
+    if subframe_nrows > 0:
+        # Get the repeats per frame
+        n_repeat = nrows // subframe_nrows
+
+        # Delta t for each group is: [reset_frametime, subframe_time, subframe_time, ...]
+        delta_t = [reset_frametime] + [subframetime] * (n_repeat - 1)
+    else:
+        # Without repeats, the delta t is just the frame time
+        delta_t = [frametime]
 
     # Assemble the list of read times for all frames
     read_times = []
-    for group in range(ngroups):
-        # Without repeats, we assume a linear sampling, with
-        # group_time = (nframes + groupgap) * frame_time
-        group_time = [[frametime * (r + group * tot_frames) for r in tot_nreads]]
-        for repeat in range(1, n_repeat):
-            group_time.append([r + subframetime * repeat for r in group_time[0]])
-        read_times.extend(group_time)
+    total_time = 0
+    for _ in range(ngroups):
+        # Loop over subframes
+        for dt in delta_t:
+            # One read at this dt for each frame averaged in the group
+            frame_reads = [total_time + dt + frame * frametime for frame in range(nframes)]
+            read_times.append(frame_reads)
+            # Track the total time elapsed
+            total_time += dt
+
+        # Add in the total times for any averaged frames within a group or
+        # any dropped frames between groups
+        total_time += frametime * (nframes - 1 + groupgap)
 
     return read_times

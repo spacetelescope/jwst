@@ -735,14 +735,13 @@ def test_collate_superstripes_with_slowsize_subarray_and_repeat(multistripe_suba
     # groupgap = 0, so each input group starts at frametime * (group + 1)
     # fmt: off
     expected_read_times = [
-        [0.0076], [0.00912], [0.01064], [0.01216],  # input group 0, 4 subframes
-        [0.0152], [0.01672], [0.01824], [0.01976],  # input group 1
-        [0.0228], [0.02432], [0.02584], [0.02736],  # input group 2
-        [0.0304], [0.03192], [0.03344], [0.03496],  # input group 3
-        [0.0380], [0.03952], [0.04104], [0.04256],  # input group 4
+        [0.00304], [0.00456], [0.00608], [0.00760],  # input group 0, 4 subframes
+        [0.01064], [0.01216], [0.01368], [0.01520],  # input group 1
+        [0.01824], [0.01976], [0.02128], [0.02280],  # input group 2
+        [0.02584], [0.02736], [0.02888], [0.03040],  # input group 3
+        [0.03344], [0.03496], [0.03648], [0.03800],  # input group 4
     ]
     # fmt: on
-
     np.testing.assert_allclose(collated.meta.exposure.read_times, expected_read_times)
 
 
@@ -802,7 +801,7 @@ def test_collate_repeat_stripe(substripe_model):
     assert len(collated.int_times) == nint_after
 
     # 4 repeat stripes are present for this mode, so read_times is updated
-    expected_read_times = [[0.86461], [1.07945], [1.29429], [1.50913]]
+    expected_read_times = [[0.22009], [0.43493], [0.64977], [0.86461]]
     np.testing.assert_allclose(collated.meta.exposure.read_times, expected_read_times)
 
 
@@ -812,40 +811,58 @@ def test_collate_repeat_stripe(substripe_model):
     [
         (  # SUB64P_SUPSTP002 nframes=1, groupgap=0
             (1, 0, 1, 64, 8, 1, 1),
-            [[0.0076], [0.00912], [0.01064], [0.01216], [0.0152], [0.01672], [0.01824], [0.01976]],
+            [
+                [0.00304],
+                [0.00456],
+                [0.00608],
+                [0.00760],
+                [0.01064],
+                [0.01216],
+                [0.01368],
+                [0.01520],
+            ],
         ),
         (  # SUB64P_SUPSTP002 nframes=1, groupgap=1
             (1, 1, 1, 64, 8, 1, 1),
-            [[0.0076], [0.00912], [0.01064], [0.01216], [0.0228], [0.02432], [0.02584], [0.02736]],
+            [
+                [0.00304],
+                [0.00456],
+                [0.00608],
+                [0.00760],
+                [0.01824],
+                [0.01976],
+                [0.02128],
+                [0.02280],
+            ],
         ),
         (  # SUB64P_SUPSTP002 nframes=2, groupgap=0
             (2, 0, 1, 64, 8, 1, 1),
             [
-                [0.0076, 0.0152],
-                [0.00912, 0.01672],
-                [0.01064, 0.01824],
-                [0.01216, 0.01976],
-                [0.0228, 0.0304],
-                [0.02432, 0.03192],
-                [0.02584, 0.03344],
-                [0.02736, 0.03496],
+                [0.00304, 0.01064],
+                [0.00456, 0.01216],
+                [0.00608, 0.01368],
+                [0.00760, 0.01520],
+                [0.01824, 0.02584],
+                [0.01976, 0.02736],
+                [0.02128, 0.02888],
+                [0.02280, 0.03040],
             ],
         ),
         (  # SUB260STRIPE4_DHS nframes=1, groupgap=0
             (1, 0, 4, 2048, 260, 1, 64),
-            [[1.36765], [1.70825], [2.04885], [2.38945], [2.7353], [3.0759], [3.4165], [3.7571]],
+            [[0.34585], [0.68645], [1.02705], [1.36765], [1.7135], [2.0541], [2.3947], [2.7353]],
         ),
         (  # SUB164STRIPE4_DHS nframes=1, groupgap=0
             (1, 0, 4, 2048, 164, 1, 40),
-            [[0.86461], [1.07945], [1.29429], [1.50913], [1.72922], [1.94406], [2.1589], [2.37374]],
+            [[0.22009], [0.43493], [0.64977], [0.86461], [1.0847], [1.29954], [1.51438], [1.72922]],
         ),
         (  # SUB82STRIPE4_DHS nframes=1, groupgap=0
             (1, 0, 4, 2048, 82, 1, 40),
-            [[0.43493], [0.64977], [0.86986], [1.0847]],
+            [[0.22009], [0.43493], [0.65502], [0.86986]],
         ),
         (  # SUB82STRIPE4_DHS nframes=2, groupgap=2
             (2, 2, 4, 2048, 82, 1, 40),
-            [[0.43493, 0.86986], [0.64977, 1.0847], [2.17465, 2.60958], [2.38949, 2.82442]],
+            [[0.22009, 0.65502], [0.43493, 0.86986], [1.95981, 2.39474], [2.17465, 2.60958]],
         ),
         (  # SUB41STRIPE4_DHS nframes=1, groupgap=0
             (1, 0, 4, 2048, 41, 1, 40),
@@ -874,5 +891,5 @@ def test_stripe_read_times(slowaxis, stripe_params, expected):
         model.meta.subarray.xsize = ncols
         model.meta.subarray.ysize = nrows
 
-    read_times = stripe_utils.stripe_read_times(model, recalculate_frametime=True)
+    read_times = stripe_utils.stripe_read_times(model)
     np.testing.assert_allclose(read_times, expected)
