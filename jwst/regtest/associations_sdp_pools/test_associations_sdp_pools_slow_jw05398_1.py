@@ -20,4 +20,4 @@ def test_pool_034_wfss_parallel_NIRCAM_DEFAULT(_jail, rtdata, resource_tracker, 
         "jw05398_20250312t000159_default_pool",
         ["-i", "o041", "o042", "o043", "c1016"],
     )
-    assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
+    assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args, strict_expname=True)

@@ -1,0 +1,1 @@
+Add optional polynomial fitting of simulated source SEDs

@@ -1,3 +1,5 @@
+"""Apply a spectral leak correction to the Channel 3A of MIRI MRS data."""
+
 import logging
 
 import numpy as np

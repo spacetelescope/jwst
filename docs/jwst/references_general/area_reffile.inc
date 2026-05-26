@@ -63,7 +63,7 @@ NIRSpec Fixed-Slit Mode
 
 :Data model: `~stdatamodels.jwst.datamodels.NirspecSlitAreaModel`
 
-The BINTABLE extension has EXTNAME='AREA' and has column characteristics
+The BINTABLE extension has ``EXTNAME='AREA'`` and has column characteristics
 shown below. There is one row for each of the 5 fixed slits, with ``slit_id``
 values of "S200A1", "S200A2", "S400A1", "S200B1", and "S1600A1". The pixel
 area values are in units of square arcseconds and represent the nominal
@@ -81,7 +81,7 @@ NIRSpec MOS Mode
 
 :Data model: `~stdatamodels.jwst.datamodels.NirspecMosAreaModel`
 
-The BINTABLE extension has EXTNAME='AREA' and has column characteristics
+The BINTABLE extension has ``EXTNAME='AREA'`` and has column characteristics
 shown below. There is one row for each shutter in each MSA quadrant. The
 quadrant and shutter values are 1-indexed. The pixel area values are in
 units of square arcseconds and represent the nominal area of any pixel
@@ -101,9 +101,9 @@ NIRSpec IFU Mode
 
 :Data model: `~stdatamodels.jwst.datamodels.NirspecIfuAreaModel`
 
-The BINTABLE extension has EXTNAME='AREA' and has column characteristics
+The BINTABLE extension has ``EXTNAME='AREA'`` and has column characteristics
 shown below. There is one row for each of the 30 IFU slices, with the
-``slice_id`` values being 0-indexed (i.e. range from 0 to 29). The pixel
+``slice_id`` values being 0-indexed (i.e., range from 0 to 29). The pixel
 area values are in units of square arcseconds and represent the nominal
 area of any pixel illuminated by a given IFU slice.
 

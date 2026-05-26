@@ -11,5 +11,4 @@ Ramp Fitting
    arguments.rst
    reference_files.rst
    appendix.rst
-
-.. automodapi:: jwst.ramp_fitting
+   api_ref.rst
