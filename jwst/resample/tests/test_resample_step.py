@@ -653,6 +653,10 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     assert result1.meta.resample.pixel_scale_ratio == 1.0
     assert result2.meta.resample.pixel_scale_ratio == ratio
 
+    # also check that background level is set to None for the resampled image:
+    assert result1.meta.background.level is None
+    assert result1.meta.background.subtracted is None
+
     im.close()
     result1.close()
     result2.close()
