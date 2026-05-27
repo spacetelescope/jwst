@@ -1,0 +1,2 @@
+Corrected the "level" and "subtracted" keys in the output resampled model to
+show correct values for the resampled image.

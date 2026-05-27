@@ -117,7 +117,7 @@ def test_guess_mode_assigned(caplog, mode):
     step.mode = mode
     result = step.run(input_model)
 
-    assert result.meta.cal_step.outlier_detection == "SKIPPED"
+    assert result.meta.cal_step.outlier_detection == "FAILED"
     assert isinstance(result, datamodels.ImageModel)
 
     # If mode was unrecognized, error message is issued
@@ -137,8 +137,8 @@ def test_skip_unknown_mode_file(tmp_path, caplog):
     input_model.save(input_file)
     result = OutlierDetectionStep.call(input_file)
 
-    # Step is skipped with an error message
-    assert result.meta.cal_step.outlier_detection == "SKIPPED"
+    # Step is failed with an error message
+    assert result.meta.cal_step.outlier_detection == "FAILED"
     assert isinstance(result, datamodels.ImageModel)
     assert "ERROR" in caplog.text
 
@@ -152,8 +152,8 @@ def test_skip_unknown_mode_image_model():
     input_model = datamodels.ImageModel()
     result = OutlierDetectionStep.call(input_model)
 
-    # Step is skipped
-    assert result.meta.cal_step.outlier_detection == "SKIPPED"
+    # Step is failed
+    assert result.meta.cal_step.outlier_detection == "FAILED"
 
     # Input is not modified
     assert result is not input_model
@@ -165,8 +165,8 @@ def test_skip_unknown_mode_container():
     container = ModelContainer([input_model])
     result = OutlierDetectionStep.call(container)
 
-    # Step is skipped
-    assert result[0].meta.cal_step.outlier_detection == "SKIPPED"
+    # Step is failed
+    assert result[0].meta.cal_step.outlier_detection == "FAILED"
 
     # Input is not modified
     assert result[0] is not input_model
