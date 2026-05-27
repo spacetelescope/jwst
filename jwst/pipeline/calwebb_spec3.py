@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import logging
 from collections import defaultdict
 from pathlib import Path
@@ -11,10 +10,10 @@ from jwst.assign_mtwcs import assign_mtwcs_step
 from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
-from jwst.datamodels import ModelContainer, SourceModelContainer
+from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
-    wfss_multiexposure_to_multispec,
+    multispec_to_source,
 )
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
@@ -175,10 +174,14 @@ class Spec3Pipeline(Pipeline):
         # source into its own ModelContainer. This produces a list of
         # sources, each represented by a MultiExposureModel instead of
         # a single ModelContainer.
-        sources = [source_models]
         if isinstance(input_models[0], dm.MultiSlitModel):
             log.info("Convert from exposure-based to source-based data.")
             sources = list(multislit_to_container(source_models).items())
+        elif isinstance(input_models[0], dm.WFSSMultiSpecModel):
+            log.info("Convert from exposure-based to source-based data.")
+            sources = multispec_to_source(source_models)
+        else:
+            sources = [source_models]
 
         # Process each source
         wfss_comb = []
@@ -207,7 +210,10 @@ class Spec3Pipeline(Pipeline):
 
                 else:
                     # All other types just use the source_id directly in the file name
-                    srcid = f"s{source_id:>09s}"
+                    if isinstance(source_id, str):
+                        srcid = f"s{source_id:>09s}"
+                    else:
+                        srcid = f"s{source_id:>09d}"
                     self.output_file = format_product(output_file, source_id=srcid)
             else:
                 result = source
@@ -284,14 +290,10 @@ class Spec3Pipeline(Pipeline):
                     # at the end.
                     self.combine_1d.save_results = False
                     # Combine the results for all sources
-                    comb = self.combine_1d.run(wfss_multiexposure_to_multispec(result))
+                    comb = self.combine_1d.run(result)
                     comb_complete = comb is not None and comb.meta.cal_step.combine_1d == "COMPLETE"
                     if not comb_complete:
                         continue
-                    # add metadata that only WFSS wants
-                    if not isinstance(result, ModelContainer):
-                        comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
-                        comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
                     wfss_comb.append(comb)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
@@ -299,7 +301,7 @@ class Spec3Pipeline(Pipeline):
 
                 if exptype in IFU_EXPTYPES:
                     self.extract_1d.search_output_file = False
-                    if exptype in ["MIR_MRS"]:
+                    if exptype == "MIR_MRS":
                         if not self.spectral_leak.skip:
                             self.extract_1d.save_results = False
                             self.spectral_leak.suffix = "x1d"
@@ -308,7 +310,7 @@ class Spec3Pipeline(Pipeline):
 
                 result = self.extract_1d.run(result)
 
-                if exptype in ["MIR_MRS"]:
+                if exptype == "MIR_MRS":
                     result = self.spectral_leak.run(result)
             elif exptype not in IFU_EXPTYPES:
                 # Extract spectra and combine results
