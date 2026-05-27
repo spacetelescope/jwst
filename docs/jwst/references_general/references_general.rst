@@ -481,8 +481,8 @@ As each pipeline step is applied to a science data product, it will record a sta
 header keyword of the science data product. The current list of step status keyword names is given
 in the following table. These status keywords may be included in the primary header of reference
 files, in order to maintain a history of the data that went into creating the reference file.
-Allowed values for the status keywords are 'COMPLETE' and 'SKIPPED'. Absence of a particular keyword
-is understood to mean that step was not even attempted.
+Allowed values for the status keywords are 'COMPLETE', 'SKIPPED', or 'FAILED'. Absence of a particular
+keyword is understood to mean that step was not even attempted.
 
 Table 1.  Keywords Documenting Which Pipeline Steps Have Been Performed.
 
@@ -540,6 +540,7 @@ S_STRAY     Straylight correction
 S_SUPERB    Superbias subtraction
 S_TACNTR    Source position from TA verification image
 S_TELEMI    Telescope emission correction
+S_TRCMOD    Adaptive trace modeling
 S_TSPHOT    TSO imaging photometry
 S_TWKREG    Tweakreg image alignment
 S_WAVCOR    Wavelength correction

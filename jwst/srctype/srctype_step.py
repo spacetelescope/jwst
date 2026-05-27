@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+"""Determine if a spectroscopic source should be considered to be a point or extended object."""
 
 from jwst.srctype.srctype import set_source_type
 from jwst.stpipe import Step

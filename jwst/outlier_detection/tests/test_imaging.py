@@ -274,7 +274,7 @@ def test_skip_one_exposure_imaging():
     result = step.run(input_models)
 
     # Step is skipped
-    assert query_step_status(result, "outlier_detection") == "SKIPPED"
+    assert query_step_status(result, "outlier_detection") == "FAILED"
 
     # Input is not modified
     assert result is not model
