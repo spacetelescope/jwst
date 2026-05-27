@@ -704,15 +704,9 @@ def clean_superstripe_metadata(input_model, slow_start=1):
         if input_model.meta.exposure.integration_end is not None
         else input_model.meta.exposure.nints
     )
-    input_model.meta.exposure.integration_start = np.ceil(
-        intstart / input_model.meta.subarray.num_superstripe
-    ).astype(int)
-    input_model.meta.exposure.integration_end = np.ceil(
-        intend / input_model.meta.subarray.num_superstripe
-    ).astype(int)
-    input_model.meta.exposure.nints = np.ceil(
-        input_model.meta.exposure.nints / input_model.meta.subarray.num_superstripe
-    ).astype(int)
+    input_model.meta.exposure.integration_start = np.ceil(intstart / nstripe).astype(int)
+    input_model.meta.exposure.integration_end = np.ceil(intend / nstripe).astype(int)
+    input_model.meta.exposure.nints = np.ceil(input_model.meta.exposure.nints / nstripe).astype(int)
     input_model.meta.exposure.ngroups = input_model.data.shape[1]
     input_model.meta.subarray.multistripe_reads1 = None
     input_model.meta.subarray.multistripe_reads2 = None
