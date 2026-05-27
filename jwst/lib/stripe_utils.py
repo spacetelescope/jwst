@@ -642,8 +642,8 @@ def collate_superstripes(input_model):
                     else:
                         newpdq[f_reg[0] : f_reg[1], :] = oldpdq[stripe, s_reg[0] : s_reg[1]]
 
-                # Propagate zeroframe if present
-                if oldzf is not None:
+                # Propagate zeroframe if present, but keep only the first repeat
+                if oldzf is not None and old_group_idx == 0:
                     newzf[integ, f_reg[0] : f_reg[1], :] = oldzf[stripe_idx, s_reg[0] : s_reg[1], :]
 
     # Swap back to science frame
