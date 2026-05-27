@@ -19,6 +19,7 @@ def run_miri_wfss_spec3(rtdata_module, resource_tracker):
         Step.from_cmdline(args)
 
 
+@pytest.mark.xfail(reason="Waiting for x1d to be processed by SDP with Build 12.3")
 def test_miri_wfss_spec3(run_miri_wfss_spec3, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of the calwebb_spec3 pipeline applied to MIRI WFSS data"""
     suffix = "c1d"
