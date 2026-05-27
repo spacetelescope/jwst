@@ -690,7 +690,7 @@ class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
                     sources=["exp_type"],
                     value=("mir_lrs-slitless"),
                 ),
-                DMSAttrConstraint(name="tso_obs", sources=["tso_visit"], value=("T")),
+                Constraint_TSO(),
             ],
             reduce=Constraint.notany,
         )
@@ -879,6 +879,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
         not_ifu = Constraint([Constraint_IFU()], reduce=Constraint.notany)
 
         # Exclude NIRCam TSO grism engineering modes: CLEAR pupil or module B long detector.
+        # Also excludes DHS exposures.
         not_nrc_tsgrism_invalid = Constraint(
             [
                 Constraint(
