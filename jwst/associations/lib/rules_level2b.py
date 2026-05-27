@@ -4,6 +4,7 @@ import logging
 
 from jwst.associations.lib.constraint import Constraint, SimpleConstraint
 from jwst.associations.lib.dms_base import (
+    Constraint_NotTSO,
     Constraint_TSO,
     Constraint_WFSC,
     nissoss_calibrated_filter,
@@ -149,9 +150,6 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Exclude TSO observations; those are handled by Asn_Lv2ImageTSO.
-        not_tso = Constraint([Constraint_TSO()], reduce=Constraint.notany)
-
         # Science or background exposures.
         exposures = Constraint(
             [
@@ -166,7 +164,7 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
                 Constraint_Base(),
                 Constraint_Mode(),
                 Constraint_Image_Science(),
-                not_tso,
+                Constraint_NotTSO(),
                 exposures,
             ]
         )
@@ -602,16 +600,10 @@ class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
         )
 
         # background exposures, only if not a TSO observation
-        not_tso = Constraint(
-            [
-                Constraint_TSO(),
-            ],
-            reduce=Constraint.notany,
-        )
         bkg = Constraint(
             [
                 Constraint_Background(),
-                not_tso,
+                Constraint_NotTSO(),
                 DMSAttrConstraint(
                     name="exp_type",
                     sources=["exp_type"],
