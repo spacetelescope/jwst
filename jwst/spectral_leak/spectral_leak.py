@@ -12,23 +12,24 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
     """
     Apply spectral leak correction to Channel 3A data using Channel 1B data.
 
-    Using the spectral leak reference correction and spectrum containing CH1 B
-    correct the CH 3 A spectrum.
+    Using the spectral leak reference correction and spectrum containing
+    Channel 1B to correct the Channel 3A spectrum.
 
     Parameters
     ----------
     sp_leak_ref : str
-        Name of the spectral leak reference file defined by datamodels.MirMrsPtCorrModel.
+        Name of the spectral leak reference file defined by
+        `~stdatamodels.jwst.datamodels.MirMrsPtCorrModel`.
 
-    ch1b : numpy array
-        Input channel 1 B spectrum
-    ch3a : numpy array
-        Input channel 3 A spectrum
+    ch1b : ndarray
+        Input Channel 1B spectrum.
+    ch3a : ndarray
+        Input Channel 3A spectrum.
 
     Returns
     -------
-    output_model : `~jwst.datamodels.RampModel`
-        Spectral leak corrected science data
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Spectral leak corrected science data.
     """
     wave1b = ch1b.spec[0].spec_table.WAVELENGTH
     spec1b = ch1b.spec[0].spec_table.FLUX

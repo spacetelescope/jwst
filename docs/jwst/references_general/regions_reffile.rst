@@ -33,6 +33,12 @@ are not mapped to the sky using the world coordinate solution.
 The nine planes each correspond to different throughput thresholds ranging from 10% - 90%; these differ slightly
 in the effective along-slice size.
 
-:channel: The MIRI channels in the observation, e.g. "12".
-:band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
-:regions: An array with the size of the MIRI MRS image where pixel values map to the MRS slice number. 0 indicates a pixel is not within any slice.
+``channel``
+    The MIRI channels in the observation, e.g. "12".
+
+``band``
+    The band for the observation (one of "LONG", "MEDIUM", "SHORT").
+
+``regions``
+    An array with the size of the MIRI MRS image where pixel values map to
+    the MRS slice number. 0 indicates a pixel is not within any slice.

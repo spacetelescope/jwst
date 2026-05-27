@@ -11,6 +11,7 @@ from astropy.stats import sigma_clipped_stats as scs
 from astropy.utils.exceptions import AstropyUserWarning
 from scipy.signal import find_peaks
 from stcal.multiprocessing import compute_num_cores
+from stcal.resample.utils import is_flux_density
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -80,9 +81,14 @@ def fit_2d_spline_trace(
     fit_scale=None,
     lrange=50,
     col_index=None,
-    require_ngood=10,
-    spline_bkpt=50,
     space_ratio=1.2,
+    sigma_low=2.5,
+    sigma_high=2.5,
+    fit_iter=3,
+    require_ngood=None,
+    spline_bkpt=None,
+    auto_ngood_factor=0.5,
+    auto_bkpt_factor=2.0,
 ):
     """
     Create a trace model from spline fits to a single slit/slice image.
@@ -105,15 +111,27 @@ def fit_2d_spline_trace(
         Iterable or generator that produces column index values to fit.
         If provided, columns will be fit in the order specified.
         If not provided, columns will be fit left to right.
-    require_ngood : int, optional
-        Minimum number of data points required to attempt a fit in a column.
-    spline_bkpt : int, optional
-        Number of spline breakpoints (knots).
     space_ratio : float, optional
         Maximum spacing ratio to allow fitting to continue. If
         the tenth-largest spacing in the input ``xvec`` is larger
         than the knot spacing by this ratio, then return None instead
         of attempting to fit the data.
+    sigma_low : float, optional
+        Low sigma threshold for iterative spline fit.
+    sigma_high : float, optional
+        High sigma threshold for iterative spline fit.
+    fit_iter : int, optional
+        Maximum number of iterations for spline fit.
+    require_ngood : int or None, optional
+        Minimum number of data points required to attempt a fit in a column.
+    spline_bkpt : int or None, optional
+        Number of spline breakpoints (knots).
+    auto_ngood_factor : float, optional
+        If ``require_ngood`` is not provided, set it to this factor times
+        the native spacing range in the input slit/slice.
+    auto_bkpt_factor : float, optional
+        If ``spline_bkpt`` is not provided, set it to this factor times
+        the native spacing range in the input slit/slice.
 
     Returns
     -------
@@ -125,6 +143,16 @@ def fit_2d_spline_trace(
         alpha coordinates used in the fit. If a spline model could not be fit,
         the column index number is not present.
     """
+    # Set reasonable spline breakpoints and ngood if not provided
+    if spline_bkpt is None or require_ngood is None:
+        native_n_alpha = (np.nanmax(alpha) - np.nanmin(alpha)) / _native_dalpha(alpha)
+        if spline_bkpt is None:
+            spline_bkpt = int(auto_bkpt_factor * native_n_alpha)
+            log.debug(f"Set spline_bkpt to {spline_bkpt}")
+        if require_ngood is None:
+            require_ngood = int(auto_ngood_factor * native_n_alpha)
+            log.debug(f"Set require_ngood to {require_ngood}")
+
     # Define a fallback spline model, initialize to None
     spline_model_save = None
 
@@ -139,7 +167,9 @@ def fit_2d_spline_trace(
 
     # Scale the flux for fitting
     if fit_scale is not None:
-        scaled_flux = flux / fit_scale
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            scaled_flux = flux / fit_scale
     else:
         scaled_flux = flux
 
@@ -174,12 +204,31 @@ def fit_2d_spline_trace(
                 local_alpha,
                 local_data,
                 nbkpts=spline_bkpt,
-                wrapsig_low=2.5,
-                wrapsig_high=2.5,
-                wrapiter=3,
+                wrapsig_low=sigma_low,
+                wrapsig_high=sigma_high,
+                wrapiter=fit_iter,
                 space_ratio=space_ratio,
                 verbose=False,
             )
+
+            """
+            # Make a useful plot every 100 columns.
+            # Code is retained here for debugging purposes, commented out since
+            # matplotlib is not a dependency of this package.
+            if (i > 0) and (i % 100 == 0):
+                from matplotlib import pyplot as plt
+
+                temp_dalpha = np.abs(np.nanmedian(np.diff(alpha, axis=0)))
+                temp_alpha = np.arange(
+                    np.nanmin(local_alpha), np.nanmax(local_alpha), temp_dalpha / 50
+                )
+                plt.plot(local_alpha, local_data, "x", label="Nearby Cols")
+                plt.plot(alpha[:, i], scaled_flux[:, i], "s", zorder=50, label=f"Column {i}")
+                plt.plot(temp_alpha, bspline(temp_alpha), label="Spline Fit")
+                plt.legend()
+                plt.ylim(np.nanmin(bspline(temp_alpha)) - 0.1, np.nanmax(bspline(temp_alpha)) + 0.1)
+                plt.show()
+            """
 
             # If the fit failed (returned None) and no saved fit is available,
             # try the fitting routine again with slightly fewer
@@ -189,9 +238,9 @@ def fit_2d_spline_trace(
                     local_alpha,
                     local_data,
                     nbkpts=spline_bkpt - 3,
-                    wrapsig_low=2.5,
-                    wrapsig_high=2.5,
-                    wrapiter=3,
+                    wrapsig_low=sigma_low,
+                    wrapsig_high=sigma_high,
+                    wrapiter=fit_iter,
                     space_ratio=space_ratio,
                     verbose=False,
                 )
@@ -326,13 +375,15 @@ def _is_compact_source(
 
     # Bin the alpha coordinates for the high slope locations
     avec = np.arange(spline_bkpt) * native_dalpha / 2 - (native_dalpha * spline_bkpt / 4)
-    hist, edges = np.histogram(
-        alpha_ptsource,
-        bins=spline_bkpt,
-        range=(-native_dalpha * spline_bkpt / 4, native_dalpha * spline_bkpt / 4),
-        density=True,
-    )
-    hist = hist / np.nanmax(hist)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        hist, edges = np.histogram(
+            alpha_ptsource,
+            bins=spline_bkpt,
+            range=(-native_dalpha * spline_bkpt / 4, native_dalpha * spline_bkpt / 4),
+            density=True,
+        )
+        hist = hist / np.nanmax(hist)
 
     # Require peaks above some threshold
     peak_indices, _ = find_peaks(hist, height=0.2)
@@ -345,6 +396,24 @@ def _is_compact_source(
         )
         is_compact[indx] = True
     return is_compact
+
+
+def _native_dalpha(alpha):
+    """
+    Compute the native spatial pixel spacing for a spectral region.
+
+    Parameters
+    ----------
+    alpha : ndarray
+        2D array containing spatial coordinates. Horizontal dispersion
+        is assumed.
+
+    Returns
+    -------
+    float
+        The median pixel spacing.
+    """
+    return np.abs(np.nanmedian(np.diff(alpha, axis=0)))
 
 
 def _trace_image(shape, spline_models, region_map, alpha, slope_limit=0.1, pad=3):
@@ -391,13 +460,13 @@ def _trace_image(shape, spline_models, region_map, alpha, slope_limit=0.1, pad=3
     alpha_slice = np.full(shape, np.nan, dtype=np.float32)
     trace_slice = np.full(shape, np.nan, dtype=np.float32)
     spline_bkpt = None
-    for slnum in spline_models:
-        splines = spline_models[slnum]
+    for reg_num in spline_models:
+        splines = spline_models[reg_num]
 
         alpha_slice[:] = np.nan
         trace_slice[:] = np.nan
 
-        indx = region_map == slnum
+        indx = region_map == reg_num
         alpha_slice[indx] = alpha[indx]
 
         # Define a list that will hold all alpha values for this
@@ -446,15 +515,15 @@ def _trace_image(shape, spline_models, region_map, alpha, slope_limit=0.1, pad=3
             if len(alpha_ptsource) > 0:
                 alpha_ptsource = np.concatenate(alpha_ptsource)
 
-            native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
             compact_locations = _is_compact_source(
-                alpha_slice, alpha_ptsource, native_dalpha, spline_bkpt, pad
+                alpha_slice, alpha_ptsource, _native_dalpha(alpha_slice), spline_bkpt, pad
             )
             trace_used[compact_locations] = trace_slice[compact_locations]
 
             total_used = np.sum(compact_locations)
             log.debug(
-                f"Using {total_used}/{np.sum(indx)} pixels from the spline model for slice {slnum}"
+                f"Using {total_used}/{np.sum(indx)} pixels from "
+                f"the spline model for region {reg_num}"
             )
 
     return trace_used, full_trace
@@ -540,13 +609,13 @@ def linear_oversample(
 
     data_slice = np.full_like(data, np.nan)
     y_slice = np.full_like(data, np.nan)
-    slice_numbers = np.unique(region_map[region_map > 0])
-    for slnum in slice_numbers:
+    region_numbers = np.unique(region_map[region_map > 0])
+    for reg_num in region_numbers:
         data_slice[:] = np.nan
         y_slice[:] = np.nan
 
         # Copy the relevant data for this slice into the holding arrays
-        indx = region_map == slnum
+        indx = region_map == reg_num
         data_slice[indx] = data[indx]
         y_slice[indx] = basey[indx]
 
@@ -571,7 +640,160 @@ def linear_oversample(
     return os_data
 
 
-def _fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **fit_kwargs):
+def _crossdisp_profile(data_slice, err_slice, alpha_slice):
+    """
+    Collapse a spectral region along wavelengths to make a cross-dispersion profile.
+
+    Parameters
+    ----------
+    data_slice : ndarray
+        2D flux array for the full spectral region.
+    err_slice : ndarray
+        2D error array for the full spectral region.
+    alpha_slice : ndarray
+        2D spatial coordinate array for the full spectral region.
+
+    Returns
+    -------
+    alpha_xdisp : ndarray
+        1D spatial coordinates.
+    flux_xdisp : ndarray
+        1D flux values, median-combined across wavelengths.
+    err_xdisp : ndarray
+        1D error values, median-combined across wavelengths.
+    snr_xdisp : ndarray
+        1D signal-to-noise ratio values, median-combined across wavelengths.
+    """
+    valid = (
+        np.isfinite(data_slice)
+        & np.isfinite(err_slice)
+        & np.isfinite(alpha_slice)
+        & (err_slice > 0)
+    )
+    if not np.any(valid):
+        return None, None, None, None
+
+    # Compute some SNR and noise statistics collapsed along wavelength
+    snr_slice = np.full_like(data_slice, np.nan)
+    snr_slice[valid] = data_slice[valid] / err_slice[valid]
+    step = _native_dalpha(alpha_slice) / 2.0
+
+    # Bin errors and SNR by alpha values
+    alpha_xdisp = np.arange(np.nanmin(alpha_slice), np.nanmax(alpha_slice), step)
+    flux_xdisp = np.full_like(alpha_xdisp, np.nan)
+    err_xdisp = np.full_like(alpha_xdisp, np.nan)
+    snr_xdisp = np.full_like(alpha_xdisp, np.nan)
+    for kk in range(len(alpha_xdisp)):
+        indx = (
+            (alpha_slice >= alpha_xdisp[kk] - step / 2.0)
+            & (alpha_slice < alpha_xdisp[kk] + step / 2.0)
+            & np.isfinite(snr_slice)
+        )
+        if not np.any(indx):
+            continue
+        flux_xdisp[kk] = np.nanmedian(data_slice[indx])
+        err_xdisp[kk] = np.nanmedian(err_slice[indx])
+        snr_xdisp[kk] = np.nanmedian(snr_slice[indx])
+
+    return alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp
+
+
+def _trim_edges(data_slice, alpha_slice, alpha_xdisp, err_xdisp, snr_xdisp):
+    """
+    Set bad edge values to NaN.
+
+    Bad pixel values are identified by spatial coordinates (alpha),
+    for which the collapsed signal-to-noise ratio (SNR) is low
+    and the collapsed error value is high.
+
+    Parameters
+    ----------
+    data_slice : ndarray
+        2D flux array for the full spectral region; updated in place.
+    alpha_slice : ndarray
+        2D spatial coordinate array for the full spectral region.
+    alpha_xdisp : ndarray
+        1D spatial coordinates, collapsed across wavelengths.
+    err_xdisp : ndarray
+        1D error values, median-combined across wavelengths.
+    snr_xdisp : ndarray
+        1D SNR values, median-combined across wavelengths.
+    """
+    # Bad edges are where SNR is low but ERR is high: set them to NaN
+    valid = np.isfinite(snr_xdisp)
+    if not np.any(valid):
+        return
+    err_mean, _, err_rms = scs(err_xdisp[valid])
+    bad = (np.abs(snr_xdisp) < 5) & (err_xdisp > err_mean + 5 * err_rms)
+    if not np.any(bad) or np.all(bad):
+        return
+
+    # Drop data below the largest negative bad alpha
+    bad_alpha = alpha_xdisp[bad]
+    test_bad = bad_alpha < 0
+    if np.any(test_bad):
+        indx = alpha_slice <= np.max(bad_alpha[test_bad])
+        data_slice[indx] = np.nan
+
+    # Drop data above the smallest positive bad alpha
+    test_bad = bad_alpha > 0
+    if np.any(test_bad):
+        indx = alpha_slice >= np.min(bad_alpha[test_bad])
+        data_slice[indx] = np.nan
+
+
+def _threshold_test(flux_xdisp, snr_xdisp, region_number, peak_threshold, snr_threshold):
+    """
+    Determine if the peak flux or SNR is higher than a given threshold.
+
+    If both ``peak_threshold`` and ``snr_threshold`` are None, the
+    return value is always True.  Otherwise, the maximum ``flux_xdisp``
+    is compared to the ``peak_threshold`` if provided and the
+    the maximum ``snr_xdisp`` is compared to the ``snr_threshold`` if provided.
+    True is returned if either condition is met.
+
+    Parameters
+    ----------
+    flux_xdisp : ndarray
+        1D flux values, median-combined across wavelengths.
+    snr_xdisp : ndarray
+        1D signal-to-noise ratio values, median-combined across wavelengths.
+    region_number : int
+        Region number, used to select the correct peak threshold value.
+    peak_threshold : dict or None
+        Dictionary of peak flux threshold values, by region number.
+    snr_threshold : float or None
+        SNR threshold value.
+
+    Returns
+    -------
+    bool
+        True if either peak flux or SNR are greater than the provided
+        threshold.
+    """
+    if peak_threshold is None and snr_threshold is None:
+        return True
+    peak_over_threshold = (
+        peak_threshold is not None
+        and flux_xdisp is not None
+        and np.nanmax(flux_xdisp) > peak_threshold[region_number]
+    )
+    snr_over_threshold = (
+        snr_threshold is not None and snr_xdisp is not None and np.nanmax(snr_xdisp) > snr_threshold
+    )
+    return peak_over_threshold or snr_over_threshold
+
+
+def _fit_one_region(
+    flux,
+    error,
+    alpha,
+    region_map,
+    region_number,
+    peak_threshold=None,
+    snr_threshold=None,
+    **fit_kwargs,
+):
     """
     Fit a trace model to a single region in the flux image.
 
@@ -581,17 +803,23 @@ def _fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **
     ----------
     flux : ndarray
         The flux image to fit.
+    error : ndarray
+        The error image associated with the flux.
     alpha : ndarray
         Alpha coordinates for all flux values.
     region_map : ndarray of int
         Map containing the slice or slit number for valid regions.
         Values are >0 for pixels in valid regions, 0 otherwise.
-    signal_threshold : dict
-        Threshold values for each valid region in the region map. If
-        the median peak value across columns in the region is below this
-        threshold, a fit will not be attempted for that region.
     region_number : int
         Index number for the single region to be fit in this invocation.
+    peak_threshold : dict or None, optional
+        Flux threshold values for each valid region in the region map. If
+        the median peak value across columns in the region is below this
+        threshold, a fit will not be attempted for that region.
+    snr_threshold : float or None, optional
+        Signal-to-noise ratio (SNR) threshold value. If the median SNR value
+        across columns in the region is below this threshold, a fit will not
+        be attempted for that region.
     **fit_kwargs
         Keyword arguments to pass to the fitting routine (see `fit_2d_spline_trace`).
 
@@ -603,38 +831,56 @@ def _fit_one_region(flux, alpha, region_map, signal_threshold, region_number, **
     """
     # Arrays to reset with NaNs for each slice
     data_slice = np.full_like(flux, np.nan)
+    err_slice = np.full_like(flux, np.nan)
     alpha_slice = np.full_like(flux, np.nan)
 
     # Copy the relevant data for this slice into the holding arrays
     indx = region_map == region_number
     data_slice[indx] = flux[indx]
+    err_slice[indx] = error[indx]
     alpha_slice[indx] = alpha[indx]
 
-    # A running sum in a given detector column (used for normalization)
-    runsum = np.nansum(data_slice, axis=0)
+    # Collapse the slit or slice along wavelength, to estimate peak flux and SNR
+    alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp = _crossdisp_profile(
+        data_slice, err_slice, alpha_slice
+    )
 
-    # Collapse the slice along Y to get max in each column
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        collapse = np.nanmax(data_slice, axis=0)
+    # Is either peak flux or SNR over threshold?  If not, stop processing
+    no_data_msg = "No data over threshold; not fitting splines."
+    if not _threshold_test(flux_xdisp, snr_xdisp, region_number, peak_threshold, snr_threshold):
+        log.debug(no_data_msg)
+        return {}
 
-    # Median column max across all columns
-    medcmax = np.nanmedian(collapse)
+    # Use the collapsed SNR and error estimates to trim slit or slice edges
+    if alpha_xdisp is not None:
+        _trim_edges(data_slice, alpha_slice, alpha_xdisp, err_xdisp, snr_xdisp)
 
-    # Is medcmax over threshold?  If so, do bspline for this slice.
-    dospline = False
-    if medcmax > signal_threshold[region_number]:
-        dospline = True
+        # Redo the collapsed profile after trimming
+        alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp = _crossdisp_profile(
+            data_slice, err_slice, alpha_slice
+        )
 
-    if dospline:
-        splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
+        # Check again for signal over threshold after trimming
+        if not _threshold_test(flux_xdisp, snr_xdisp, region_number, peak_threshold, snr_threshold):
+            log.debug(no_data_msg)
+            return {}
+
+    # Get a running sum in a given detector column (used for normalization)
+    negative_nod_threshold = -5.0
+    if snr_xdisp is not None and np.nanmin(snr_xdisp) < negative_nod_threshold:
+        # If significant negative nods present, just sum positive data
+        log.debug("Found significant negative data; summing positive only for normalization.")
+        runsum = np.sum(data_slice, where=(data_slice > 0), axis=0)
     else:
-        splines = {}
+        runsum = np.nansum(data_slice, axis=0)
+
+    # Fit the splines
+    splines = fit_2d_spline_trace(data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs)
 
     return splines
 
 
-def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="none", **fit_kwargs):
+def fit_all_regions(flux, error, alpha, region_map, maximum_cores="none", **fit_kwargs):
     """
     Fit a trace model to all regions in the flux image.
 
@@ -642,15 +888,13 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="no
     ----------
     flux : ndarray
         The flux image to fit.
+    error : ndarray
+        The error image associated with the flux.
     alpha : ndarray
         Alpha coordinates for all flux values.
     region_map : ndarray of int
         Map containing the slice or slit number for valid regions.
         Values are >0 for pixels in valid regions, 0 otherwise.
-    signal_threshold : dict
-        Threshold values for each valid region in the region map. If
-        the median peak value across columns in the region is below this
-        threshold, a fit will not be attempted for that region.
     maximum_cores : str
         Number of cores to use for multiprocessing. If set to 'none' (the default),
         then no multiprocessing will be done. The other allowable values are 'quarter',
@@ -667,42 +911,42 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, maximum_cores="no
         could not be fit, the column index number is not present.
     """
     spline_models = {}
-    slice_numbers = np.unique(region_map[region_map > 0])
+    region_numbers = np.unique(region_map[region_map > 0])
 
     # Determine number of slices to use for multi-processor computations
     num_available_cores = cpu_count()
-    number_slices = compute_num_cores(maximum_cores, len(slice_numbers), num_available_cores)
+    number_slices = compute_num_cores(maximum_cores, len(region_numbers), num_available_cores)
 
     # Call adaptive trace model for the single processor (1 data slice) case
     if number_slices == 1:
         # Single threaded computation
-        log.info("Running single-process calculation")
-
-        for slnum in slice_numbers:
-            log.info("Fitting slice %s", slnum)
-            spline_models[slnum] = _fit_one_region(
-                flux, alpha, region_map, signal_threshold, slnum, **fit_kwargs
+        log.debug("Running single-process calculation")
+        for reg_num in region_numbers:
+            if len(region_numbers) > 1:
+                log.info("Fitting slice %s", reg_num)
+            spline_models[reg_num] = _fit_one_region(
+                flux, error, alpha, region_map, reg_num, **fit_kwargs
             )
     else:
         # Parallelized computation
-        log.info(f"Fitting slices, multiprocessing on {number_slices} cores")
+        log.info(f"Multiprocessing on {number_slices} cores")
 
         # Use functools.partial to supply all other inputs to _fit_one_region except slice number
         # This is needed since pool.starmap doesn't support passing **fit_kwargs
         fit_one_region_with_args = functools.partial(
-            _fit_one_region, flux, alpha, region_map, signal_threshold, **fit_kwargs
+            _fit_one_region, flux, error, alpha, region_map, **fit_kwargs
         )
 
         # Run the parallelized calc and collect results
         ctx = multiprocessing.get_context("spawn")
         pool = ctx.Pool(processes=number_slices)
         try:
-            pool_results = pool.starmap(fit_one_region_with_args, [(n,) for n in slice_numbers])
+            pool_results = pool.starmap(fit_one_region_with_args, [(n,) for n in region_numbers])
         finally:
             pool.close()
             pool.join()
-        for slnum, result in zip(slice_numbers, pool_results, strict=True):
-            spline_models[slnum] = result
+        for reg_num, result in zip(region_numbers, pool_results, strict=True):
+            spline_models[reg_num] = result
 
     return spline_models
 
@@ -813,15 +1057,15 @@ def oversample_flux(
 
     # Edge limit for trimming ends
     edge_limit = int(oversample_factor)
-    slice_numbers = np.unique(region_map[region_map > 0])
+    region_numbers = np.unique(region_map[region_map > 0])
     spline_bkpt = None
-    for slnum in slice_numbers:
+    for reg_num in region_numbers:
         # Reset holding arrays to NaN
         for reset_array in reset_arrays:
             reset_array[:] = np.nan
 
         # Copy the relevant data for this slice into the holding arrays
-        indx = region_map == slnum
+        indx = region_map == reg_num
         data_slice[indx] = flux[indx]
         alpha_slice[indx] = alpha[indx]
         basey_slice[indx] = basey[indx]
@@ -853,12 +1097,12 @@ def oversample_flux(
             flux_os_linear[newy, ii] = _linear_interp(col_y, col_flux, oldy, edge_limit=edge_limit)
 
             # Check for a spline fit for this column
-            if slnum not in spline_models or ii not in spline_models[slnum]:
+            if reg_num not in spline_models or ii not in spline_models[reg_num]:
                 continue
-            spline_model = spline_models[slnum][ii]["model"]
-            spline_scale = spline_models[slnum][ii]["scale"]
-            spline_lobound = spline_models[slnum][ii]["bounds"][0]
-            spline_hibound = spline_models[slnum][ii]["bounds"][1]
+            spline_model = spline_models[reg_num][ii]["model"]
+            spline_scale = spline_models[reg_num][ii]["scale"]
+            spline_lobound = spline_models[reg_num][ii]["bounds"][0]
+            spline_hibound = spline_models[reg_num][ii]["bounds"][1]
 
             # Get the number of spline breakpoints used from the first real model
             if spline_bkpt is None:
@@ -919,15 +1163,15 @@ def oversample_flux(
         else:
             if len(alpha_ptsource) > 0:
                 alpha_ptsource = np.concatenate(alpha_ptsource)
-            native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
             compact_locations = _is_compact_source(
-                alpha_os_slice, alpha_ptsource, native_dalpha, spline_bkpt, pad
+                alpha_os_slice, alpha_ptsource, _native_dalpha(alpha_slice), spline_bkpt, pad
             )
             flux_os_bspline_use[compact_locations] = flux_os_bspline_full[compact_locations]
 
             total_used = np.sum(compact_locations)
             log.debug(
-                f"Using {total_used}/{np.sum(indx)} pixels from the spline model for slice {slnum}"
+                f"Using {total_used}/{np.sum(indx)} pixels "
+                f"from the spline model for region {reg_num}"
             )
 
     # Insert the bspline interpolated values into the final combined oversampled array,
@@ -951,14 +1195,19 @@ def oversample_flux(
     return flux_os, flux_os_bspline_use, flux_os_bspline_full, flux_os_linear, flux_os_residual
 
 
-def _set_fit_kwargs(detector, xsize):
+def _set_fit_kwargs(mode, detector, grating, xsize):
     """
     Set optional parameters for spline fits by detector.
 
     Parameters
     ----------
+    mode : str
+        Fitting mode ("NRS_IFU", "NRS_SLIT", "NRS_MOS", "MIR_MRS",
+        "MIR_LRS_SLIT", or "MIR_LRS_SLITLESS").
     detector : str
         Detector name.
+    grating : str or None
+        Grating name.
     xsize : int
         Input size for the data, along the dispersion axis. Used
         to determine the column index order for spline fits.
@@ -975,14 +1224,32 @@ def _set_fit_kwargs(detector, xsize):
         If the input detector is not supported.
     """
     # Empirical parameters for this mode
+    sigma_low = 2.5
+    sigma_high = 2.5
+    fit_iter = 3
+    spline_bkpt = None
+    require_ngood = None
+    auto_bkpt_factor = None
+    auto_ngood_factor = None
     if detector.startswith("NRS"):
-        require_ngood = 15
-        spline_bkpt = 68
+        # Start with some defaults for all modes
         lrange = 50
 
         # This factor of 1.6 was dialed based on inspection of the results
         # as sampling gets progressively worse for NIRSpec detectors
         space_ratio = 1.6
+
+        # Set the spline breakpoints and minimum good pixels automatically
+        # from the native pixel spacing
+        auto_bkpt_factor = 2.0
+        auto_ngood_factor = 0.5
+
+        # Set some overrides for PRISM, which changes fast with wavelength
+        # and has a lot of PSF structure
+        if str(grating).upper() == "PRISM":
+            lrange = 10
+            auto_bkpt_factor = 1.0
+            auto_ngood_factor = 0.25
 
         # Set up the column fitting order by detector
         if detector == "NRS1":
@@ -994,35 +1261,62 @@ def _set_fit_kwargs(detector, xsize):
 
     elif detector.startswith("MIR"):
         require_ngood = 8
-        spline_bkpt = 36
-        lrange = 50
         space_ratio = 1.2
+        if mode == "MIR_MRS":
+            lrange = 50
+            spline_bkpt = 36
 
-        # For MIRI fitting order,  we need to start on the left and run to the middle,
-        # and then on the right to the middle in order to have the middle
-        # section not go too far beyond last good fit
-        col_index = np.concatenate(
-            [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
-        )
+            # For MRS fitting order, we need to start on the left and run to the middle,
+            # and then on the right to the middle in order to have the middle
+            # section not go too far beyond last good fit
+            col_index = np.concatenate(
+                [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
+            )
+        else:
+            lrange = 5
+            sigma_low = 3.0
+            sigma_high = 3.0
+            if mode == "MIR_LRS_SLITLESS":
+                fit_iter = 2
+                spline_bkpt = 60
+            else:
+                spline_bkpt = 40
+
+            # For LRS, start on the right and move to the left
+            col_index = range(xsize - 1, -1, -1)
     else:
         raise ValueError("Unknown detector")
 
     fit_kwargs = {
         "lrange": lrange,
         "col_index": col_index,
-        "require_ngood": require_ngood,
-        "spline_bkpt": spline_bkpt,
         "space_ratio": space_ratio,
+        "sigma_low": sigma_low,
+        "sigma_high": sigma_high,
+        "fit_iter": fit_iter,
+        "spline_bkpt": spline_bkpt,
+        "require_ngood": require_ngood,
+        "auto_bkpt_factor": auto_bkpt_factor,
+        "auto_ngood_factor": auto_ngood_factor,
     }
+
+    # Log the determined parameters
+    msg = f"Spline fit parameters for {mode}, detector={detector} xsize={xsize} grating={grating}:"
+    log.debug(msg)
+    for key, val in fit_kwargs.items():
+        log.debug(f"  {key}: {val}")
+
     return fit_kwargs
 
 
-def _set_oversample_kwargs(detector):
+def _set_oversample_kwargs(mode, detector):
     """
     Set optional parameters for oversampling by detector.
 
     Parameters
     ----------
+    mode : str
+        Fitting mode (e.g. "NRS_IFU", "NRS_SLIT").
     detector : str
         Detector name.
 
@@ -1037,18 +1331,24 @@ def _set_oversample_kwargs(detector):
     ValueError
         If the input detector is not supported.
     """
+    require_ngood = 3
     if detector.startswith("NRS"):
+        # Padding to add near point sources
+        if mode == "NRS_IFU":
+            pad = 2
+        else:
+            pad = 1
         # Trimming ends of the interpolation can help with bad extrapolations
-        pad = 2
         trim_ends = True
     elif detector.startswith("MIR"):
-        # Trimming ends is bad for MIRI, where dithers place point sources near the ends
+        # Padding to add near point sources
         pad = 3
+        # Trimming ends is bad for MIRI, where dithers place point sources near the ends
         trim_ends = False
     else:
         raise ValueError("Unknown detector")
 
-    oversample_kwargs = {"pad": pad, "trim_ends": trim_ends}
+    oversample_kwargs = {"pad": pad, "trim_ends": trim_ends, "require_ngood": require_ngood}
     return oversample_kwargs
 
 
@@ -1081,6 +1381,35 @@ def _get_alpha_nrs_ifu(ifu_wcs, xsize, ysize):
     return alpha_orig
 
 
+def _get_alpha_nrs_slit(wcs, xsize, ysize):
+    """
+    Get alpha coordinates for NIRSpec slits corresponding to the original data array.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.WCS`
+        WCS object for the slit.
+    xsize : int
+        X-size for the data array.
+    ysize : int
+        Y-size for the data array.
+
+    Returns
+    -------
+    alpha_orig : ndarray
+        Alpha coordinates for the data array, with shape (ysize, xsize).
+    """
+    x, y = gwcs.wcstools.grid_from_bounding_box(wcs.bounding_box)
+    idx = y.astype(int), x.astype(int)
+    _, alpha, _ = wcs.transform("detector", "slit_frame", x, y)
+
+    # Flip alpha so in same direction as increasing Y
+    alpha_orig = np.full((ysize, xsize), np.nan)
+    alpha_orig[*idx] = -alpha
+
+    return alpha_orig
+
+
 def _get_alpha_mir_mrs(wcs, xsize, ysize):
     """
     Get alpha coordinates for MIRI MRS corresponding to the original data array.
@@ -1102,6 +1431,32 @@ def _get_alpha_mir_mrs(wcs, xsize, ysize):
     x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
     det2ab = wcs.get_transform("detector", "alpha_beta")
     alpha_orig, _, _ = det2ab(x, y)
+    return alpha_orig
+
+
+def _get_alpha_mir_lrs(wcs, xsize, ysize):
+    """
+    Get alpha coordinates for MIRI LRS corresponding to the original data array.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.WCS`
+        WCS object.
+    xsize : int
+        X-size for the data array.
+    ysize : int
+        Y-size for the data array.
+
+    Returns
+    -------
+    alpha_orig : ndarray
+        Alpha coordinates for the data array, with shape (ysize, xsize).
+    """
+    x, y = gwcs.wcstools.grid_from_bounding_box(wcs.bounding_box)
+    idx = y.astype(int), x.astype(int)
+    alpha, _, _ = wcs.transform("detector", "alpha_beta", x, y)
+    alpha_orig = np.full((ysize, xsize), np.nan)
+    alpha_orig[*idx] = alpha
     return alpha_orig
 
 
@@ -1179,7 +1534,9 @@ def _inflate_error(error_array, extname, oversample_factor):
     """
     inflation_factor = 0.23 * oversample_factor + 0.77
     if str(extname).lower().startswith("var"):
-        error_array *= inflation_factor**2
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "overflow encountered", category=RuntimeWarning)
+            error_array *= inflation_factor**2
     else:
         error_array *= inflation_factor
 
@@ -1246,7 +1603,7 @@ def _update_wcs(wcs, map_pixels):
     Parameters
     ----------
     wcs : `~gwcs.WCS`
-        The WCS object, including transforms for all slices.
+        The WCS object, including transforms for all slits or slices.
     map_pixels : `~astropy.modeling.models.Model`
         Model that transforms from oversampled pixels to original detector
         pixels, to be prepended to the WCS pipeline.
@@ -1262,6 +1619,13 @@ def _update_wcs(wcs, map_pixels):
     map_pixels.outputs = ("x", "y")
     frame = gwcs.coordinate_frames.Frame2D(name="coordinates", axes_order=(0, 1))
     new_wcs = gwcs.WCS([(frame, map_pixels), *wcs.pipeline])
+
+    # update bounding box limits if present
+    bbox = wcs.bounding_box
+    if wcs.bounding_box is not None:
+        bbox[0], bbox[1] = map_pixels.inverse(bbox[0], bbox[1])
+        new_wcs.bounding_box = (bbox[0], bbox[1])
+
     return new_wcs
 
 
@@ -1271,24 +1635,38 @@ def _intermediate_models(model, data_arrays):
 
     Parameters
     ----------
-    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+            `~stdatamodels.jwst.datamodels.SlitModel`
         The input datamodel. Metadata will be copied from it.
     data_arrays : list of ndarray or None
         Data arrays to save.  If None, the model returned is also None.
 
     Returns
     -------
-    new_models : list of `~stdatamodels.jwst.datamodels.IFUImageModel` or None
+    new_models : list of `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+                 `~stdatamodels.jwst.datamodels.SlitModel`, or None
         A list of datamodels containing the input data arrays.
+        Datamodel type will match the input model.
     """
+    if isinstance(model, datamodels.IFUImageModel):
+        model_type = datamodels.IFUImageModel
+    else:
+        model_type = datamodels.SlitModel
+
     new_models = []
     for data in data_arrays:
         if data is None:
             new_model = None
         else:
-            new_model = datamodels.IFUImageModel(data)
+            new_model = model_type(data=data)
             new_model.update(model)
+
+            # prevent empty error arrays
+            new_model.err = None
+            new_model.meta.bunit_err = None
+
         new_models.append(new_model)
+
     return new_models
 
 
@@ -1300,18 +1678,20 @@ def fit_and_oversample(
     oversample_factor=1.0,
     return_intermediate_models=False,
     maximum_cores="none",
+    metadata_model=None,
 ):
     """
-    Fit a trace model and optionally oversample an IFU datamodel.
+    Fit a trace model and optionally oversample a spectral datamodel.
 
     Parameters
     ----------
-    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+            `~stdatamodels.jwst.datamodels.SlitModel`
         The input datamodel, updated in place.
     fit_threshold : float, optional
-        The signal threshold sigma for attempting spline fits within a slice region.
-        Lower values will create spline traces for more slices.  If less than or
-        equal to 0, all slices will be fit.
+        The signal threshold sigma for attempting spline fits within a spectral region.
+        Lower values will create spline traces for more regions.  If less than or
+        equal to 0, all regions will be fit.
     slope_limit : float, optional
         The normalized slope threshold for using the spline model in oversampled
         data.  Lower values will use the spline model for fainter sources. If less
@@ -1327,28 +1707,37 @@ def fit_and_oversample(
         If True, additional image models will be returned, containing the full
         spline model, the spline model as used for compact sources, the residual
         model, and the linearly interpolated data.
-    maximum_cores : str
+    maximum_cores : str, optional
         Number of cores to use for multiprocessing. If set to 'none' (the default),
         then no multiprocessing will be done. The other allowable values are 'quarter',
         'half', 'all', and string integers. This is the fraction of available or
         the explicit number of cores to use for multiprocessing.
+    metadata_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`, optional
+        If the input is one slit from a multi-slit model, the containing model
+        may be passed to retrieve appropriate top-level metadata (e.g. detector,
+        exposure type, grating).
 
     Returns
     -------
-    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+            `~stdatamodels.jwst.datamodels.SlitModel`
         The datamodel, updated with a trace image and optionally oversampled
         arrays.
-    full_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`, optional
+    full_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+                        `~stdatamodels.jwst.datamodels.SlitModel`, optional
         The spline model evaluated at all pixels. Returned only if
         ``return_intermediate_models`` is True.
-    source_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel`, optional
+    source_spline_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+                          `~stdatamodels.jwst.datamodels.SlitModel`, optional
         The spline model evaluated at compact source locations only.
         Returned only if ``return_intermediate_models`` is True.
-    linear_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or None, optional
+    linear_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+                   `~stdatamodels.jwst.datamodels.SlitModel` or None, optional
         All data linearly interpolated onto the oversampled grid
         Returned only if ``return_intermediate_models`` is True.  Will be None if
         ``oversample_factor`` is 1.0.
-    residual_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or None, optional
+    residual_model : `~stdatamodels.jwst.datamodels.IFUImageModel` or \
+                     `~stdatamodels.jwst.datamodels.SlitModel` or None, optional
         Residuals from the spline fit, linearly interpolated onto the oversampled grid
         Returned only if ``return_intermediate_models`` is True.  Will be None if
         ``oversample_factor`` is 1.0.
@@ -1359,9 +1748,20 @@ def fit_and_oversample(
         fit_threshold = 0
         slope_limit = 0
 
+    if metadata_model is not None:
+        model_meta = metadata_model.meta
+    else:
+        model_meta = model.meta
+
     # Get input data coordinates
-    detector = model.meta.instrument.detector
-    ysize, xsize = model.data.shape
+    detector = str(model_meta.instrument.detector).upper()
+    exp_type = str(model_meta.exposure.type).upper()
+    grating = str(getattr(model_meta.instrument, "grating", "NONE")).upper()
+    if model.data.ndim == 3:
+        nint, ysize, xsize = model.data.shape
+    else:
+        nint = 1
+        ysize, xsize = model.data.shape
     if detector.startswith("NRS"):
         rotate = False
         if isinstance(model, datamodels.IFUImageModel):
@@ -1372,7 +1772,16 @@ def fit_and_oversample(
             # the region map is already stored in the datamodel
             region_map = model.regions
         else:
-            raise ValueError("Unsupported mode")
+            if exp_type == "NRS_MSASPEC":
+                mode = "NRS_MOS"
+            else:
+                mode = "NRS_SLIT"
+            wcs = model.meta.wcs
+            alpha_orig = _get_alpha_nrs_slit(wcs, xsize, ysize)
+
+            # Set the region map for the single slit from the valid coordinates
+            region_map = np.zeros((ysize, xsize), dtype=np.int32)
+            region_map[np.isfinite(alpha_orig)] = 1
 
     elif detector.startswith("MIR"):
         rotate = True
@@ -1385,15 +1794,44 @@ def fit_and_oversample(
             det2ab_transform = wcs.get_transform("detector", "alpha_beta")
             region_map = det2ab_transform.label_mapper.mapper.copy()
         else:
-            raise ValueError("Unsupported mode")
+            if exp_type == "MIR_LRS-SLITLESS":
+                mode = "MIR_LRS_SLITLESS"
+            elif exp_type == "MIR_WFSS":
+                raise ValueError("MIRI WFSS is not supported.")
+            else:
+                mode = "MIR_LRS_SLIT"
+            wcs = model.meta.wcs
+            alpha_orig = _get_alpha_mir_lrs(wcs, xsize, ysize)
+
+            # Set the region map for the single slit from the valid coordinates
+            region_map = np.zeros((ysize, xsize), dtype=np.int32)
+            region_map[np.isfinite(alpha_orig)] = 1
+
     else:
         raise ValueError("Unknown detector")
 
+    # For multiple integrations, fit the profile to the median image
+    if nint > 1:
+        # Also check for an input oversample factor:
+        # oversampling is not supported for multiple integrations
+        if oversample_factor != 1:
+            raise ValueError("Oversampling is not supported for TSO data.")
+        log.info("Fitting the spatial profile to the median image.")
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            flux_orig = np.nanmedian(model.data, axis=0)
+            err_orig = np.nanmedian(model.err, axis=0)
+
+    else:
+        # Otherwise, just get the data and error arrays from the model
+        flux_orig = model.data
+        err_orig = model.err
+
     # Rotate input data if needed
-    flux_orig = model.data
     if rotate:
         xsize, ysize = ysize, xsize
         flux_orig = np.rot90(flux_orig)
+        err_orig = np.rot90(err_orig)
         alpha_orig = np.rot90(alpha_orig)
         region_map = np.rot90(region_map)
 
@@ -1408,21 +1846,25 @@ def fit_and_oversample(
 
     # Need to ensure that the median pixel value isn't negative, because that causes chaos
     # Subtract off that constant
+    restore_mean = None
     if overall_mean < 0:
+        restore_mean = overall_mean
         flux_orig = flux_orig - overall_mean
         overall_mean = 0
 
-    # Define a per-slice analysis threshold (must be brighter than some level above background)
-    slice_numbers = np.unique(region_map[region_map > 0])
+    # Define a per-slice analysis threshold for IFU
+    # (must be brighter than some level above background)
+    peak_threshold = None
+    region_numbers = np.unique(region_map[region_map > 0])
     if fit_threshold <= 0:
-        # In this case, all slices should be fit, so make the threshold
-        # lower than any real signal
-        signal_threshold = dict.fromkeys(slice_numbers, -np.inf)
+        # In this case for any mode, all regions should be fit,
+        # so set both thresholds to None
+        fit_threshold = None
     else:
         if mode == "MIR_MRS":
             # For MIRI MRS we need each channel to have its own threshold, particularly
             # for Ch3/Ch4 since the sky is so much brighter in Ch4
-            signal_threshold = dict.fromkeys(slice_numbers, np.nan)
+            peak_threshold = dict.fromkeys(region_numbers, np.nan)
             for channel in [100, 200, 300, 400]:
                 ch_data = (region_map >= channel) & (region_map < channel + 100)
                 if not np.any(ch_data):
@@ -1430,21 +1872,25 @@ def fit_and_oversample(
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=AstropyUserWarning)
                     ch_mean, _, ch_rms = scs(flux_orig[ch_data])
-                for slnum in slice_numbers:
-                    if channel <= slnum < channel + 100:
-                        signal_threshold[slnum] = ch_mean + fit_threshold * ch_rms
-        else:
-            # For NIRSpec IFU, all regions have the same threshold
+                for reg_num in region_numbers:
+                    if channel <= reg_num < channel + 100:
+                        peak_threshold[reg_num] = ch_mean + fit_threshold * ch_rms
+        elif mode == "NRS_IFU":
+            # For NIRSpec IFU data, all regions have the same threshold
             threshold = overall_mean + fit_threshold * overall_rms
-            signal_threshold = dict.fromkeys(slice_numbers, threshold)
+            peak_threshold = dict.fromkeys(region_numbers, threshold)
 
     # Fit spline models to all regions
-    fit_kwargs = _set_fit_kwargs(detector, xsize)
+    fit_kwargs = _set_fit_kwargs(mode, detector, grating, xsize)
+    if peak_threshold is not None:
+        fit_kwargs["peak_threshold"] = peak_threshold
+    else:
+        fit_kwargs["snr_threshold"] = fit_threshold
     spline_models = fit_all_regions(
         flux_orig,
+        err_orig,
         alpha_orig,
         region_map,
-        signal_threshold,
         maximum_cores=maximum_cores,
         **fit_kwargs,
     )
@@ -1454,7 +1900,7 @@ def fit_and_oversample(
     # In the future, it might be useful to update the SCI extension here for the
     # psf_optimal=True case, even when oversample=1, but for now, we will leave
     # data unmodified.
-    oversample_kwargs = _set_oversample_kwargs(detector)
+    oversample_kwargs = _set_oversample_kwargs(mode, detector)
     if oversample_factor == 1:
         trace_used, full_trace = _trace_image(
             flux_orig.shape,
@@ -1467,6 +1913,12 @@ def fit_and_oversample(
         if rotate:
             trace_used = np.rot90(trace_used, k=-1)
             full_trace = np.rot90(full_trace, k=-1)
+
+        # Restore the overall mean level to the trace if needed
+        if restore_mean is not None:
+            trace_used += restore_mean
+            full_trace += restore_mean
+
         model.trace_model = trace_used
         if return_intermediate_models:
             new_models = _intermediate_models(model, [full_trace, trace_used, None, None])
@@ -1487,11 +1939,19 @@ def fit_and_oversample(
     x_os[:, :] = basex[oldy.astype(int), :]
     if mode == "NRS_IFU":
         alpha_os, wave_os = _get_oversampled_coords_nrs_ifu(wcs, x_os, y_os)
+    elif mode.startswith("NRS"):
+        _, alpha_os, wave_os = model.meta.wcs.transform("detector", "slit_frame", x_os, y_os)
+        alpha_os *= -1
+        wave_os *= 1e6
     else:
         # Because MIRI was rotated the indexing in the non-rotated frame,
-        # the input coordinates need to be adjusted slightly
+        # the input spatial coordinates need to be adjusted slightly
         det2ab = model.meta.wcs.get_transform("detector", "alpha_beta")
-        alpha_os, _, wave_os = det2ab(ysize - y_os - 1, x_os)
+        alpha_os, _, _ = det2ab(ysize - y_os - 1, x_os)
+
+        # Get wavelengths from the full WCS pipeline for the same coordinates
+        # Necessary for MIRI LRS to get appropriate NaN values outside the slit region.
+        _, _, wave_os = model.meta.wcs(ysize - y_os - 1, x_os)
 
     log.info("Oversampling the flux array from the fit trace model")
     flux_os, trace_used, full_trace, linear, residual = oversample_flux(
@@ -1503,7 +1963,6 @@ def fit_and_oversample(
         alpha_os,
         slope_limit=slope_limit,
         psf_optimal=psf_optimal,
-        require_ngood=fit_kwargs["require_ngood"],
         **oversample_kwargs,
     )
 
@@ -1537,7 +1996,7 @@ def fit_and_oversample(
             error_array,
             region_map,
             oversample_factor,
-            fit_kwargs["require_ngood"],
+            oversample_kwargs["require_ngood"],
             edge_limit=0,
             preserve_nan=False,
         )
@@ -1558,6 +2017,9 @@ def fit_and_oversample(
     if mode == "NRS_IFU":
         map_pixels = Identity(1) & scale_and_shift
         model.meta.wcs = _update_wcs_nrs_ifu(model.meta.wcs, map_pixels)
+    elif mode.startswith("NRS"):
+        map_pixels = Identity(1) & scale_and_shift
+        model.meta.wcs = _update_wcs(model.meta.wcs, map_pixels)
     else:
         # MIRI
         map_pixels = scale_and_shift & Identity(1)
@@ -1576,6 +2038,25 @@ def fit_and_oversample(
         for extname, error_array in errors_os.items():
             errors_os[extname] = np.rot90(error_array, k=-1)
 
+    # Restore the overall mean level if needed
+    if restore_mean is not None:
+        flux_os += restore_mean
+        trace_used += restore_mean
+        full_trace += restore_mean
+
+    # If the data is in flux density units rather than surface brightness,
+    # we also need to correct for flux conservation
+    if is_flux_density(model.meta.bunit_data):
+        flux_os /= oversample_factor
+        trace_used /= oversample_factor
+        linear /= oversample_factor
+        residual /= oversample_factor
+        for extname, error_array in errors_os.items():
+            if extname == "err":
+                error_array /= oversample_factor
+            else:
+                error_array /= oversample_factor**2
+
     # Update the model with the oversampled arrays
     model.data = flux_os
     model.dq = dq_os
@@ -1586,16 +2067,27 @@ def fit_and_oversample(
     if isinstance(model, datamodels.IFUImageModel):
         model.regions = regions_os
 
+    # Update additional metadata: pixel area has changed in one dimension
+    if model.meta.photometry.pixelarea_steradians is not None:
+        model.meta.photometry.pixelarea_steradians /= oversample_factor
+    if model.meta.photometry.pixelarea_arcsecsq is not None:
+        model.meta.photometry.pixelarea_arcsecsq /= oversample_factor
+
     # Remove some extra arrays if present: no longer needed
     extras = [
         "area",
+        "barshadow",
+        "flatfield_point",
+        "flatfield_uniform",
         "pathloss_point",
         "pathloss_uniform",
+        "photom_point",
+        "photom_uniform",
         "zeroframe",
     ]
     for name in extras:
         if model.hasattr(name):
-            delattr(model, name)
+            setattr(model, name, None)
 
     # Make sure NaNs and DO_NOT_USE flags match in all extensions
     match_nans_and_flags(model)

@@ -1,7 +1,9 @@
+.. _ramp_fit_description:
+
 Description
 ===========
 
-:Class: `jwst.ramp_fitting.RampFitStep`
+:Class: `jwst.ramp_fitting.ramp_fit_step.RampFitStep`
 :Alias: ramp_fit
 
 This step determines the mean count rate, in units of counts per second, for
@@ -14,7 +16,7 @@ The input to the step is assumed to be the fully-corrected and flagged 4-D
 data resulting from applying all previous steps of the
 :ref:`calwebb_detector1 <calwebb_detector1>` pipeline and will nominally be
 the output from the :ref:`jump detection <jump_step>` step. It is in fact
-vital that all anomalies such as saturation, non-linearity, and CR jumps
+vital that all anomalies such as saturation, non-linearity, and cosmic-ray (CR) jumps
 be corrected or appropriately flagged in order to obtain useful results
 from ramp fitting.
 
@@ -28,7 +30,7 @@ such intervals will be referred to as a ramp "segment." The fitting algorithm us
 Segments are determined using the 4-D GROUPDQ array of the input data set,
 under the assumption that the :ref:`saturation detection <saturation_step>`
 and :ref:`jump detection <jump_step>` steps have already been applied, in order
-to flag occurrences of both saturation and cosmic-ray (CR) hits.
+to flag occurrences of both saturation and CR hits.
 A ramp segment is a set of contiguous groups that have no non-zero DQ values
 assigned. The one exception to this rule is the occurrence of a "JUMP_DET"
 (jump detected) flag: a group with this flag will be used as the first group of
@@ -66,9 +68,7 @@ there is an additional ``chisq`` array that is returned from ramp fitting that
 can now be saved, if desired. When using the ``LIKELY`` algorithm, this can be
 saved by setting the step parameter ``save_opt`` to true. The ``chisq`` array
 contains the chi-squared fit quality measure for each pixel. This quantity is
-defined at the link below in "Detailed Algorithms" in the "Likelihood Algorithm
-Details" section.
-
+defined at :ref:`stcal:likelihood_algo`.
 
 Multiprocessing
 ---------------
@@ -76,7 +76,7 @@ This step has the option of running in multiprocessing mode. In that mode it wil
 split the input data into a number of slices based on the number of available
 cores on the host computer and the value of the ``maximum_cores`` step parameter. By
 default the step runs on a single processor. At the other extreme, if ``maximum_cores`` is
-set to 'all', it will use all available cores (real and virtual). Testing has shown
+set to ``'all'``, it will use all available cores (real and virtual). Testing has shown
 a reduction in the elapsed time for the step proportional to the number of real
 cores used. Using the virtual cores also reduces the elapsed time, but at a slightly
 lower rate than the real cores.
@@ -114,7 +114,7 @@ in that integration. This is analogous to the situation in which only the first 
 in an integration is unsaturated and used by itself to compute a slope.
 
 Note that the computation of slopes from either a single group or the single frame
-zero value is disabled when the step parameter ``suppress_one_group`` is set to ``True``.
+zero value is disabled when the step parameter ``suppress_one_group`` is set to `True`.
 In this case the slope value for such a pixel will be set to zero.
 
 :ref:`Detailed Algorithms <stcal:ramp_slopes_and_variances>`

@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.straylight.StraylightStep`
+:Class: `jwst.straylight.straylight_step.StraylightStep`
 :Alias: straylight
 
 Assumption
@@ -36,10 +36,10 @@ the data into three-dimensional cubes.
 This step also ensures that the median count rate (in DN/s) in regions of the detector that
 see no direct light from the sky is zero for consistency with the applied flux calibration vectors.  This
 correction is necessary because the MRS darks are strongly time-variable, and significant signal can remain
-after subtraction of the reference dark in the ``dark_current`` step.
+after subtraction of the reference dark in the :ref:`dark_current <dark_current_step>` step.
 
 Finally, this step optionally applies a correction for residual cosmic ray showers that can produce
-blotchy straylight features across the detector.  While the ``jump`` detection step masks the cores of the largest
+blotchy straylight features across the detector.  While the :ref:`jump detection <jump_step>` step masks the cores of the largest
 such artifacts, the extended halos of showers can cover hundreds of pixels and are best corrected as
 coherent extended stray light artifacts.
 
@@ -57,7 +57,7 @@ The low-amplitude Lorentzian describes the broad wings of the kernel, and typica
 has a FWHM of 100 pixels or more:
 
 .. math::
- f_{Lor} = \frac{A_{Lor} \gamma^2}{\gamma^2 + (x - x_0)^2}
+    f_{Lor} = \frac{A_{Lor} \gamma^2}{\gamma^2 + (x - x_0)^2}
 
 where :math:`\gamma = FWHM/2` and :math:`x_0` is the column coordinate of a given pixel.
 
@@ -70,22 +70,22 @@ are also tied, with the secondary Gaussian
 having double the width of the first.  The inner Gaussians are thus described by:
 
 .. math::
- f_{G1} = A_{G1} exp^{\frac{- (x-x_0-dx)^2}{2 \sigma^2}}
+    f_{G1} = A_{G1} e^{\frac{- (x-x_0-dx)^2}{2 \sigma^2}}
 
 .. math::
- f_{G3} = A_{G1} exp^{\frac{- (x-x_0+dx)^2}{2 \sigma^2}}
+    f_{G3} = A_{G1} e^{\frac{- (x-x_0+dx)^2}{2 \sigma^2}}
 
 while the outer Gaussians are described by:
 
 .. math::
- f_{G2} = A_{G2} exp^{\frac{- (x-x_0-2 dx)^2}{8 \sigma^2}}
+    f_{G2} = A_{G2} e^{\frac{- (x-x_0-2 dx)^2}{8 \sigma^2}}
 
 .. math::
- f_{G4} = A_{G2} exp^{\frac{- (x-x_0+2 dx)^2}{8 \sigma^2}}
+    f_{G4} = A_{G2} e^{\frac{- (x-x_0+2 dx)^2}{8 \sigma^2}}
 
 
 The best-fit parameters of these models derived from engineering data are recorded in the
-:ref:`MRSXARTCORR <mrsxartcorr_reffile>` reference file and applied in a pixelwise
+:ref:`MRSXARTCORR reference file <mrsxartcorr_reffile>` and applied in a pixelwise
 manner to the detector data.
 
 The kernel functions for Channels 2 and 3 rely upon engineering observations of bright extended sources,
@@ -101,7 +101,7 @@ have extremely large, blobby halos that extend across one or more IFU slices and
 them.  These inter-slice pixels receive little to no direct light from the sky, and can be used to construct
 a model of residual showers which are coherent in detector space.
 
-Algorithmically, this routine first uses the :ref:`REGIONS <regions_reffile>` reference file to locate and
+Algorithmically, this routine first uses the :ref:`REGIONS reference file <regions_reffile>` to locate and
 mask all pixels on the detector that receive direct light from the sky.  Pixels that are flagged as
 DO_NOT_USE or REFERENCE_PIXEL are similarly masked, as are some highest and lowest percentile of pixel values
 to help ensure robustness against unmasked bad pixels.

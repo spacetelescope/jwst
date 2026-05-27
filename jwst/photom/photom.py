@@ -52,18 +52,18 @@ def find_row(fits_table, match_fields):
     fits_table : `~astropy.io.fits.fitsrec.FITS_rec`
         FITS table
     match_fields : dict
-        {field_name: value} pair to use as a matching criteria.
+        ``{field_name: value}`` pair to use as a matching criteria.
 
     Returns
     -------
-    row : int, or None
+    row : int or None
         FITS table row index, None if no match.
 
     Raises
     ------
     Warning
         When a field name is not in the table.
-    MatchFitsTableRowError
+    jwst.photom.photom.MatchFitsTableRowError
         When more than one row matches.
     """
 
@@ -93,6 +93,17 @@ class DataSet:
 
     Store vital params, such as
     instrument, detector, filter, pupil, and exposure type.
+
+    Parameters
+    ----------
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Input data model object. Updated in-place.
+    inverse : bool
+        Invert the math operations used to apply the corrections.
+    source_type : str or None
+        Force processing using the specified source type.
+    apply_time_correction : bool
+        Switch to apply/not apply a time correction, if available.
     """
 
     def __init__(
@@ -102,20 +113,6 @@ class DataSet:
         source_type=None,
         apply_time_correction=True,
     ):
-        """
-        Instantiate a DataSet object.
-
-        Parameters
-        ----------
-        model : `~jwst.datamodels.JwstDataModel`
-            Input Data Model object. Updated in place.
-        inverse : bool
-            Invert the math operations used to apply the corrections.
-        source_type : str or None
-            Force processing using the specified source type.
-        apply_time_correction : bool
-            Switch to apply/not apply a time correction, if available.
-        """
         # Set up attributes necessary for calculation.
         self.band = None
         if model.meta.instrument.band is not None:
@@ -199,7 +196,8 @@ class DataSet:
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.NrsFsPhotomModel` or `~jwst.datamodels.NrsMosPhotomModel`
+        ftab : `~stdatamodels.jwst.datamodels.NrsFsPhotomModel` or \
+               `~stdatamodels.jwst.datamodels.NrsMosPhotomModel`
             NIRSpec photom reference file data model.
         area_fname : str
             Pixel area map reference file name.
@@ -352,7 +350,7 @@ class DataSet:
 
         For NIRISS matching is based on FILTER and PUPIL, as well as ORDER
         for spectroscopic modes.
-        There may be multiple entries for a given FILTER+PUPIL combination,
+        There may be multiple entries for a given ``FILTER + PUPIL`` combination,
         corresponding to different spectral orders. Data for all orders will
         be retrieved.
 
@@ -364,8 +362,9 @@ class DataSet:
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.NisSossPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel` or
-               `~jwst.datamodels.NisImgPhotomModel`
+        ftab : `~stdatamodels.jwst.datamodels.NisSossPhotomModel`, \
+               `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`, or \
+               `~stdatamodels.jwst.datamodels.NisImgPhotomModel`
             NIRISS photom reference file data model.
         """
         # Get a time-dependent correction from the reference file if available
@@ -415,7 +414,7 @@ class DataSet:
 
         For MIRI imaging and LRS modes, matching is based on FILTER and SUBARRAY.
         For MIRI WFSS the matching is based on FILTER and SUBARRAY.
-        MIRI MRS uses dedicated photom reference files per CHANNEL+BAND.
+        MIRI MRS uses dedicated photom reference files per ``CHANNEL + BAND``.
 
         For Imaging and LRS, the routine will find the corresponding row of
         information in the reference file, apply it, and store the scalar
@@ -425,8 +424,9 @@ class DataSet:
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.MirImgPhotomModel` or `~jwst.datamodels.MirMrsPhotomModel`
-               or `~jwst.datamodels.MirLrsPhotomModel`
+        ftab : `~stdatamodels.jwst.datamodels.MirImgPhotomModel`, \
+               `~stdatamodels.jwst.datamodels.MirMrsPhotomModel`, or \
+               `~stdatamodels.jwst.datamodels.MirLrsPhotomModel`
             MIRI photom reference file data model.
         """
         # Handle MultiSlit models and MIRI WFSS
@@ -545,7 +545,8 @@ class DataSet:
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.NrcImgPhotomModel` or `~jwst.datamodels.NrcWfssPhotomModel`
+        ftab : `~stdatamodels.jwst.datamodels.NrcImgPhotomModel` or \
+               `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`
             NIRCam photom reference file data model.
         """
         # Get a time-dependent correction from the reference file if available
@@ -586,7 +587,7 @@ class DataSet:
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.FgsImgPhotomModel`
+        ftab : `~stdatamodels.jwst.datamodels.FgsImgPhotomModel`
             FGS photom reference file data model.
         """
         # Get a time-dependent correction from the reference file if available
@@ -604,17 +605,17 @@ class DataSet:
 
         Parameters
         ----------
-        area_data : 1-D numpy.ndarray
-            Array of pixel area values for the IFU slices.
+        area_data : ndarray
+            Array of 1-D pixel area values for the IFU slices.
 
         Returns
         -------
-        wave2d : 2-D numpy.ndarray
-            Array of wavelengths per pixel.
-        area2d : 2-D numpy.ndarray
-            Array of pixel area values.
-        dqmap : 2-D numpy.ndarray
-            Array of DQ flags per pixel.
+        wave2d : ndarray
+            Array of 2-D wavelengths per pixel.
+        area2d : ndarray
+            Array of 2-D pixel area values.
+        dqmap : ndarray
+            Array of 2-D DQ flags per pixel.
         """
         import gwcs
 
@@ -675,13 +676,15 @@ class DataSet:
         """
         Apply photometric calibration to all slits in a WFSS exposure.
 
-        Iterates over each slit in the input ``MultiSlitModel``, looks up the
+        Iterates over each slit in the input
+        `~stdatamodels.jwst.datamodels.MultiSlitModel`, looks up the
         row in the photom reference table matched by the attributes specified
-        in ``match_fields``, and calls ``photom_io`` to apply the conversion.
+        in ``match_fields``, and calls :meth:`photom_io` to apply the conversion.
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
+        ftab : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel` or \
+               `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
             Photom reference file data model.
         correction_table : array-like
             Time-dependence correction values.
@@ -715,7 +718,7 @@ class DataSet:
 
         Parameters
         ----------
-        tabdata : FITS record
+        tabdata : `~astropy.io.fits.FITS_rec`
             Single row of data from reference table.
         order : int
             Spectral order number.
@@ -724,12 +727,12 @@ class DataSet:
             fractional amount of light recorded now divided by the light
             recorded on the zero-day MJD (t0).  The scalar conversion factor
             will be divided by the correction value if provided, and if
-            ``self.apply_time_correction`` is True.
+            ``self.apply_time_correction`` is `True`.
         phot_unit : str or None
             Unit string for the photometric conversion factor from the reference file
-            ``phot_unit`` attribute (e.g. ``"MJy Angstrom s / (DN sr)"``).
+            ``phot_unit`` attribute (e.g., ``"MJy Angstrom s / (DN sr)"``).
             When provided, it is used to compute a numeric conversion factor to the
-            expected unit for the relevant observing mode. If ``None``, no unit conversion
+            expected unit for the relevant observing mode. If `None`, no unit conversion
             is applied. Currently only implemented for WFSS data.
         """
         # First get the scalar conversion factor.
@@ -1064,16 +1067,16 @@ class DataSet:
 
         Parameters
         ----------
-        model : `~jwst.datamodels.JwstDataModel`
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input data model containing the necessary wavelength information.
         exptype : str
             Exposure type of the input.
         conversion : float
             Initial scalar photometric conversion value.
-        waves : float numpy.ndarray
+        waves : ndarray
             1D wavelength vector on which relative response values are
             sampled.
-        relresps : float numpy.ndarray
+        relresps : ndarray
             1D photometric response values, as a function of waves.
         order : int
             Spectral order number.
@@ -1082,13 +1085,13 @@ class DataSet:
             Typically only used for NIRSpec fixed-slit data.
         include_dispersion : bool or None
             Flag indicating whether the dispersion needs to be incorporated
-            into the 2-d conversion factors.
+            into the 2-D conversion factors.
 
         Returns
         -------
-        conversion : float numpy.ndarray
+        conversion : ndarray
             2D array of computed photometric conversion values.
-        no_cal : int numpy.ndarray
+        no_cal : ndarray
             2D mask indicating where no conversion is available.
         """
         # Get the 2D wavelength array corresponding to the input
@@ -1123,14 +1126,17 @@ class DataSet:
         Parameters
         ----------
         wavelength_array : float
-            2-d array of wavelength values, assumed to be in microns.
+            2-D array of wavelength values, assumed to be in microns.
         dispaxis : int
-            Direction along which light is dispersed: 1 = along rows, 2 = along columns.
+            Direction along which light is dispersed:
+
+            * 1 = along rows
+            * 2 = along columns
 
         Returns
         -------
         dispersion_array : float
-            2-d array of dispersion values, in microns/pixel.
+            2-D array of dispersion values, in microns/pixel.
         """
         nrows, ncols = wavelength_array.shape
         dispersion_array = np.zeros(wavelength_array.shape)
@@ -1153,23 +1159,23 @@ class DataSet:
 
         Parameters
         ----------
-        model : `~jwst.datamodels.JwstDataModel`
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input data model containing the necessary wavelength information.
         conversion : float
             Initial scalar photometric conversion value.
-        waves : float numpy.ndarray
+        waves : ndarray
             1D wavelength vector on which relative response values are
             sampled.
-        relresps : float numpy.ndarray
+        relresps : ndarray
             1D photometric response values, as a function of waves.
         integ_row : int
             Table row number for the spectrum for the current integration.
 
         Returns
         -------
-        conversion : float numpy.ndarray
+        conversion : ndarray
             1D array of computed photometric conversion values.
-        no_cal : int numpy.ndarray
+        no_cal : ndarray
             1D mask indicating where no conversion is available.
         """
         # Get the 2D wavelength array corresponding to the input
@@ -1214,15 +1220,15 @@ class DataSet:
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.JwstDataModel`
+        ftab : `~stdatamodels.jwst.datamodels.JwstDataModel`
             A photom reference file data model.
 
         Returns
         -------
         area_ster : float
-            Pixel area in steradians
+            Pixel area in steradians.
         area_a2 : float
-            Pixel area in arcsec^2
+            Pixel area in arcsec^2.
         """
         area_ster, area_a2 = None, None
         area_ster = ftab.meta.photometry.pixelarea_steradians
@@ -1251,7 +1257,7 @@ class DataSet:
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.JwstDataModel`
+        ftab : `~stdatamodels.jwst.datamodels.JwstDataModel`
             A photom reference file data model.
 
         area_fname : str
@@ -1334,7 +1340,7 @@ class DataSet:
 
         Parameters
         ----------
-        pix_area : `~jwst.datamodels.JwstDataModel`
+        pix_area : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Pixel area reference file data model.
         """
         exp_type = self.exptype
@@ -1441,7 +1447,7 @@ class DataSet:
 
         Returns
         -------
-        output_model : `~jwst.datamodels.JwstDataModel`
+        output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Output data model with the flux calibrations applied.
         """
         with datamodels.open(photom_fname, strict_validation=True) as ftab:

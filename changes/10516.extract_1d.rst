@@ -1,0 +1,1 @@
+Update optimal extraction handling for spectral PSF reference files, to match a new schema that allows multiple apertures in the same reference file.
