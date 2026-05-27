@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import astropy.units as u
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
@@ -63,7 +64,10 @@ def test_source_catalog(nircam_model, npixels, nsources):
         assert np.isclose(cat["isophotal_abmag"][1], 19.150, atol=0.001)
         assert np.isclose(cat["semimajor_sigma"][1].value, 18.844, atol=0.001)
         assert np.isclose(cat["semiminor_sigma"][1].value, 7.025, atol=0.001)
-        assert np.isclose(cat["ellipticity"][1].value, 0.627, atol=0.001)
+        ellipticity = cat["ellipticity"][1]
+        if isinstance(ellipticity, u.Quantity):
+            ellipticity = ellipticity.value
+        assert np.isclose(ellipticity, 0.627, atol=0.001)
         assert np.isclose(cat["orientation"][1].value, -72.783, atol=0.001) or np.isclose(
             cat["orientation"][1].value, 287.217, atol=0.001
         )

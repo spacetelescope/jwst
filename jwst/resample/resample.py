@@ -780,7 +780,10 @@ class ResampleImage(Resample):
         sregion_list = []
         for i in range(len(self.input_models)):
             meta = self.input_models.read_metadata(i)
-            sregion_list.append(meta["meta.wcsinfo.s_region"])
+            sreg_string = meta["meta.wcsinfo.s_region"]
+            # In some cases S_REGION contains multiple polygons.
+            # The helper function handles this
+            sregion_list.extend(resample_utils.multi_sregion_to_list(sreg_string))
 
         if "moving_target" in self.output_wcs.available_frames:
             det2world = self.output_wcs.get_transform("detector", "moving_target")

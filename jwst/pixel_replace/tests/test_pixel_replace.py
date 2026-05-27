@@ -360,8 +360,8 @@ def test_skip_unexpected_type():
     bad_model = datamodels.RampModel()
     result = PixelReplaceStep.call(bad_model)
 
-    # Step is skipped
-    assert result.meta.cal_step.pixel_replace == "SKIPPED"
+    # Step is failed
+    assert result.meta.cal_step.pixel_replace == "FAILED"
 
     # Input is not modified
     assert result is not bad_model
@@ -373,8 +373,8 @@ def test_skip_unexpected_type_in_container():
     container = ModelContainer([bad_model])
     result = PixelReplaceStep.call(container)
 
-    # Step is skipped
-    assert result[0].meta.cal_step.pixel_replace == "SKIPPED"
+    # Step is failed
+    assert result[0].meta.cal_step.pixel_replace == "FAILED"
 
     # Input is not modified
     assert result[0] is not bad_model

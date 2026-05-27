@@ -171,7 +171,7 @@ class OutlierDetectionStep(Step):
             log.error(f"Outlier detection failed for unknown/unsupported mode: {mode}")
             record_step_status(result_models, "outlier_detection", False)
 
-        if query_step_status(result_models, "outlier_detection") != "SKIPPED":
+        if query_step_status(result_models, "outlier_detection") not in ("SKIPPED", "FAILED"):
             record_step_status(result_models, "outlier_detection", True)
         return result_models
 

@@ -11,7 +11,7 @@ from gwcs import coordinate_frames as cf
 from gwcs import wcs
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-from stcal.alignment.util import compute_scale
+from stcal.alignment.util import compute_scale, sregion_to_footprint
 from stcal.resample.utils import build_driz_weight, compute_mean_pixel_area
 from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, dqflags
 
@@ -20,7 +20,7 @@ from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
-from jwst.resample.resample import input_jwst_model_to_dict
+from jwst.resample.resample import ResampleImage, input_jwst_model_to_dict
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
 from jwst.resample.resample_step import GOOD_BITS
 from jwst.resample.resample_utils import load_custom_wcs
@@ -1864,3 +1864,32 @@ def test_resample_imaging_pixmap_interpolation(nircam_rate):
     # ensure results are not identical (i.e. pixmap settings actually did something)
     with pytest.raises(AssertionError):
         assert_allclose(res.data, ref.data)
+
+
+def test_combine_input_sregions(nircam_rate):
+    """Ensure input S_REGION values that contain multiple polygons are handled."""
+    model = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    input_sregion = model.meta.wcsinfo.s_region
+
+    # original expectation
+    resample_obj = ResampleImage(ModelLibrary([deepcopy(model)]))
+    expected_sregion = resample_obj.combine_input_sregions()
+
+    # expectation after duplicating input s_region
+    model.meta.wcsinfo.s_region = input_sregion + " " + input_sregion
+    resample_obj = ResampleImage(ModelLibrary([model]))
+    output_sregion = resample_obj.combine_input_sregions()
+    assert isinstance(output_sregion, str)
+    assert output_sregion.count("POLYGON") == 1
+    assert output_sregion.startswith("POLYGON ICRS ")
+
+    # turn these into arrays so we can assign a tolerance for comparison,
+    # to be robust to small numerical differences
+    expected_footprint = sregion_to_footprint(expected_sregion)
+    actual_footprint = sregion_to_footprint(output_sregion)
+    assert expected_footprint.shape == actual_footprint.shape
+
+    # sort by RA (first column) to ensure consistent ordering for comparison
+    expected_footprint = expected_footprint[np.argsort(expected_footprint[:, 0])]
+    actual_footprint = actual_footprint[np.argsort(actual_footprint[:, 0])]
+    assert_allclose(actual_footprint, expected_footprint, atol=1e-5, rtol=0)

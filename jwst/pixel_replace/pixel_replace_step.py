@@ -59,7 +59,7 @@ class PixelReplaceStep(Step):
             log.error(f"Input is of type {str(output_model)} for which")
             log.error("pixel_replace does not have an algorithm.")
             log.error("Pixel replacement will be skipped.")
-            output_model.meta.cal_step.pixel_replace = "SKIPPED"
+            record_step_status(output_model, "pixel_replace", success=False)
             return output_model
 
         pars = {
