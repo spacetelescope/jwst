@@ -473,6 +473,15 @@ class Extract1dStep(Step):
         # For WFSS, reorder the x1d product to save it in the flat format
         if exp_type in extract.WFSS_EXPTYPES:
             result = make_wfss_multiexposure(result)
+            if "WFSS" in exp_type:  # Needed for calwebb_spec3
+                if isinstance(input_data, SourceModelContainer) and isinstance(
+                    input_data[0], datamodels.SlitModel
+                ):
+                    result.meta.wcs = input_data[0].meta.wcs
+                    result.spec[0].s_region = input_data[0].meta.wcsinfo.s_region
+                else:
+                    result.meta.wcs = input_data.slits[0].meta.wcs
+                    result.spec[0].s_region = input_data.slits[0].meta.wcsinfo.s_region
             result.meta.cal_step.extract_1d = "COMPLETE"
 
         # The result is a new model, so close the input model if it was opened here.

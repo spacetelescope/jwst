@@ -17,6 +17,7 @@ __all__ = [
     "copy_column_units",
     "copy_spec_metadata",
     "expand_table",
+    "expand_wfss_table",
     "expand_flat_spec",
 ]
 
@@ -143,6 +144,8 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
         ignore_columns = []
     input_table = input_spec.spec_table
 
+    columns = np.asarray(columns)
+    is_vector = np.asarray(is_vector)
     vector_columns = columns[is_vector]
     meta_columns = columns[~is_vector]
 
@@ -162,7 +165,12 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
 
         spec_meta = getattr(input_spec, col.lower(), None)
         if spec_meta is None:
-            problems.append(col.lower())
+            try:
+                spec_meta = input_spec.spec_table[col][0]
+            except Exception:
+                problems.append(col.lower())
+            else:
+                output_table[col] = spec_meta
         else:
             output_table[col] = spec_meta
 
@@ -292,6 +300,59 @@ def expand_table(spec):
         new_spec.meta.filename = getattr(spec, "filename", "")
         copy_spec_metadata(spec, new_spec)
         copy_column_units(spec, new_spec)
+
+        new_spec_list.append(new_spec)
+
+    return new_spec_list
+
+
+def expand_wfss_table(spec):
+    """
+    Expand a table of spectra into a list of WFSSSpecModel objects.
+
+    Parameters
+    ----------
+    spec : `~stdatamodels.jwst.datamodels.WFSSSpecModel`
+        WFSS model containing a spec_table to expand into multiple spectra
+
+    Returns
+    -------
+    list[WFSSSpecModel]
+        A list of `~stdatamodels.jwst.datamodels.WFSSSpecModel` objects,
+        one for each spectrum in the input spec_table.
+    """
+    new_spec_list = []
+    n_spectra = len(spec.spec_table)
+    for i in range(n_spectra):
+        # initialize a new SpecModel
+        spec_row = spec.spec_table[i]
+        n_elements = int(spec_row["N_ALONGDISP"])
+        new_spec = datamodels.WFSSSpecModel()
+        data_type = new_spec.schema["properties"]["spec_table"]["datatype"]
+        columns_to_copy = np.array([col["name"] for col in data_type])
+
+        # Copy over the vector columns from input spec_table to output spec_table
+        spec_table = np.empty(n_elements, dtype=new_spec.get_dtype("spec_table"))
+        for col_name in columns_to_copy:
+            if isinstance(spec_row[col_name], np.ndarray) and spec_row[col_name].ndim == 1:
+                spec_table[col_name] = spec_row[col_name][:n_elements]
+            else:
+                spec_table[col_name] = spec_row[col_name]
+        new_spec.spec_table = spec_table
+        new_spec.filename = spec.filename
+        new_spec.group_id = spec.group_id
+        new_spec.dispersion_direction = spec.dispersion_direction
+        new_spec.spectral_order = spec.spectral_order
+        new_spec.exposure_time = spec.exposure_time
+        new_spec.integration_time = spec.integration_time
+        new_spec.s_region = spec.s_region
+        copy_spec_metadata(spec, new_spec)
+        copy_column_units(spec, new_spec)
+
+        source_ids = set(spec_table["SOURCE_ID"])
+        if len(source_ids) != 1:
+            raise ValueError(f"SOURCE_ID not unique: {source_ids}")
+        new_spec.source_id = spec_table["SOURCE_ID"][0]
 
         new_spec_list.append(new_spec)
 

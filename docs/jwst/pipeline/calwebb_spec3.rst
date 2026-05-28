@@ -186,7 +186,7 @@ cutout images, resulting in multiple 1D spectra per source in a "_x1d" product.
 Those spectra are combined using the subsequent
 :ref:`combine_1d <combine_1d_step>` step (see :ref:`calwebb_spec3_soss_wfss_combine1d`).
 
-For NIRCam, MIRI, and NIRISS WFSS, the input ``_x1d`` product
+For NIRCam, MIRI, and NIRISS WFSS, the output ``_x1d`` product
 holds the spectra from all the sources in a single product. The data model is
 `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`, and has one extension per
 exposure per spectral order, with each extension containing a binary table of all the spectra

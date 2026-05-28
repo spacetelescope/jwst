@@ -1,5 +1,7 @@
 """Utilities for manipulating WFSS multi-spectral data."""
 
+from collections import defaultdict
+
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 
@@ -8,6 +10,7 @@ from jwst.datamodels.utils.flat_multispec import (
     copy_spec_metadata,
     determine_vector_and_meta_columns,
     expand_table,
+    expand_wfss_table,
     make_empty_recarray,
     populate_recarray,
     set_schema_units,
@@ -15,6 +18,7 @@ from jwst.datamodels.utils.flat_multispec import (
 
 __all__ = [
     "make_wfss_multiexposure",
+    "make_wfss_multiexposure_spec3",
     "wfss_multiexposure_to_multispec",
     "make_wfss_multicombined",
     "multispec_to_source",
@@ -59,7 +63,7 @@ def make_wfss_multiexposure(input_list):
     # first loop over source and exposure to figure out
     # final n_rows, n_exposures, n_sources
     exposure_counter = {}
-    all_source_ids = []
+    all_source_ids = set()
     # for calwebb_spec3 the outer loop is over sources and the inner loop is over exposures
     # for calwebb_spec2 it is the opposite, but outer loop (exposures) should have just one element
     for model in results_list:
@@ -69,8 +73,8 @@ def make_wfss_multiexposure(input_list):
 
             # if this is the first time this exposure has been encountered,
             # create a new dictionary entry for it
-            if exp_number not in exposure_counter.keys():
-                n_rows = spec.spec_table.shape[0]
+            n_rows = spec.spec_table.shape[0]
+            if exp_number not in exposure_counter:
                 exposure_counter[exp_number] = {
                     "n_rows": n_rows,
                     "filename": fname,
@@ -82,12 +86,12 @@ def make_wfss_multiexposure(input_list):
                 # if this exposure has already been encountered,
                 # check if number of rows is larger than the previous one
                 exposure_counter[exp_number]["n_rows"] = max(
-                    exposure_counter[exp_number]["n_rows"], spec.spec_table.shape[0]
+                    exposure_counter[exp_number]["n_rows"], n_rows
                 )
 
-            all_source_ids.append(spec.source_id)
+            all_source_ids.add(spec.source_id)
 
-    all_source_ids = np.sort(np.unique(all_source_ids))
+    all_source_ids = sorted(all_source_ids)
     n_sources = len(all_source_ids)
 
     exposure_numbers = list(exposure_counter.keys())
@@ -167,6 +171,129 @@ def make_wfss_multiexposure(input_list):
     return output_x1d
 
 
+def make_wfss_multiexposure_spec3(input_list):
+    """
+    Compile a list of extracted sources into a single binary table for calwebb_spec3.
+
+    The output model will contain one binary table per exposure,
+    with each table containing all sources extracted from that exposure
+    (one row per source). The number of elements in each table row
+    will be the same across all exposures, with NaNs used to pad
+    shorter rows to match the longest row in the exposure.
+
+    Parameters
+    ----------
+    input_list : list[MultiSpecModel]
+        List of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects to be combined.
+
+    Returns
+    -------
+    output_x1d : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
+        The extract_1d product for WFSS modes.
+    """
+    results_list = input_list
+
+    # First loop over source and exposure to figure out final parameters
+    specs_db = defaultdict()  # (group_id, source_id): spec
+    all_source_ids = set()
+    exposure_nrows = defaultdict(int)
+    # For calwebb_spec3 the outer loop is over sources and the inner loop is over exposures
+    for model in results_list:
+        for spec in model.spec:
+            all_source_ids.add(spec.source_id)
+            exposure_nrows[spec.group_id] = max(
+                exposure_nrows[spec.group_id], spec.spec_table.shape[0]
+            )
+            specs_db[(spec.group_id, spec.source_id)] = spec
+
+    all_source_ids = sorted(all_source_ids)
+    n_sources = len(all_source_ids)
+
+    all_columns = [
+        (x["name"], x["datatype"])
+        for x in dm.WFSSSpecModel().schema["properties"]["spec_table"]["datatype"]
+    ]
+    all_columns[20] = ("SOURCE_TYPE", "U20")  # schema incompatible with numpy
+    vec_cols = (
+        "WAVELENGTH",
+        "FLUX",
+        "FLUX_ERROR",
+        "FLUX_VAR_POISSON",
+        "FLUX_VAR_RNOISE",
+        "FLUX_VAR_FLAT",
+        "SURF_BRIGHT",
+        "SB_ERROR",
+        "SB_VAR_POISSON",
+        "SB_VAR_RNOISE",
+        "SB_VAR_FLAT",
+        "DQ",
+        "BACKGROUND",
+        "BKGD_ERROR",
+        "BKGD_VAR_POISSON",
+        "BKGD_VAR_RNOISE",
+        "BKGD_VAR_FLAT",
+        "NPIXELS",
+    )
+    is_vector = [True if col[0] in vec_cols else False for col in all_columns]
+    defaults = dm.WFSSSpecModel().schema["properties"]["spec_table"]["default"]
+
+    # Finally, create a new WFSSMultiSpecModel to hold the combined data
+    # with one WFSSMultiSpecModel table per exposure
+    output_x1d = dm.WFSSMultiSpecModel()
+    # WCS is needed to combine S_REGION in calwebb_spec3
+    if (not getattr(output_x1d.meta, "wcs", None)) and hasattr(input_list[0].meta, "wcs"):
+        output_x1d.meta.wcs = input_list[0].meta.wcs
+    for exposure_number in sorted(exposure_nrows.keys()):
+        n_rows = exposure_nrows[exposure_number]
+        spec_table = make_empty_recarray(
+            n_rows, n_sources, all_columns, is_vector, defaults=defaults
+        )
+        spec_table["SOURCE_ID"] = all_source_ids
+        first_loop = True
+
+        for src_id in all_source_ids:
+            key = (exposure_number, src_id)
+            if key not in specs_db:
+                continue
+            spec = specs_db[key]
+
+            # ensure data goes to the correct source
+            spec_idx = np.where(spec_table["SOURCE_ID"] == src_id)[0][0]
+
+            # populate the table with data from the input spectrum
+            populate_recarray(
+                spec_table[spec_idx],
+                spec,
+                all_columns,
+                is_vector,
+                ignore_columns=["SOURCE_ID", "N_ALONGDISP"],
+            )
+
+            # special handling for N_ALONGDISP because not defined in specmeta schema
+            spec_table[spec_idx]["N_ALONGDISP"] = spec.spec_table.shape[0]
+
+            if first_loop:
+                example_spec = spec
+
+        ext = dm.WFSSSpecModel(spec_table)
+        # Set default units from the model schema
+        set_schema_units(ext)
+        # copy units from the example specmodel, overriding the schema defaults where applicable
+        copy_column_units(example_spec, ext)
+        # copy metadata
+        ext.filename = example_spec.filename
+        ext.group_id = exposure_number
+        ext.dispersion_direction = example_spec.dispersion_direction
+        ext.spectral_order = example_spec.spectral_order
+        ext.exposure_time = example_spec.exposure_time
+        ext.integration_time = example_spec.integration_time
+        ext.s_region = example_spec.s_region
+        output_x1d.spec.append(ext)
+
+    output_x1d.update(input_list[0], only="PRIMARY")
+    return output_x1d
+
+
 def wfss_multiexposure_to_multispec(input_model):
     """
     Transform a `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel` into
@@ -186,14 +313,16 @@ def wfss_multiexposure_to_multispec(input_model):
     # first extract all spectra as SpecModels in a flat list
     spec_list = []
     source_ids = []
-    exposure_times = []
-    integration_times = []
+    first_loop = True
+    exposure_time = 0
+    integration_time = 0
     for exp in input_model.spec:
         this_exp_list = expand_table(exp)
-        n_exp = len(this_exp_list)
         source_ids.extend([spec.source_id for spec in this_exp_list])
-        exposure_times.extend([exp.exposure_time] * n_exp)
-        integration_times.extend([exp.integration_time] * n_exp)
+        if first_loop:
+            exposure_time = exp.exposure_time
+            integration_time = exp.integration_time
+            first_loop = False
         spec_list.extend(this_exp_list)
 
     # organize by unique source id such that there is one MultiSpecModel per source
@@ -206,8 +335,8 @@ def wfss_multiexposure_to_multispec(input_model):
         multispec = dm.MultiSpecModel()
         # BUG: currently there is no infrastructure for handling per-exposure weights
         # This is also a problem on main
-        multispec.meta.exposure.exposure_time = exposure_times[0]
-        multispec.meta.exposure.integration_time = integration_times[0]
+        multispec.meta.exposure.exposure_time = exposure_time
+        multispec.meta.exposure.integration_time = integration_time
         spec_this_id = spec_list[source_ids == source_id]
         multispec.spec.extend(spec_this_id)
         multispec.update(input_model, only="PRIMARY")
@@ -320,20 +449,24 @@ def multispec_to_source(inputs):
     # first extract all spectra as SpecModels in a flat list
     spec_list = []
     source_ids = []
-    exposure_times = []
-    integration_times = []
+    first_loop = True
+    exposure_time = 0
+    integration_time = 0
     for input_model in inputs:
         for exp in input_model.spec:
-            this_exp_list = expand_table(exp)
-            n_exp = len(this_exp_list)
-            source_ids.extend([spec.source_id for spec in this_exp_list])
-            exposure_times.extend([exp.exposure_time] * n_exp)
-            integration_times.extend([exp.integration_time] * n_exp)
-            spec_list.extend(this_exp_list)
+            this_exp_list = expand_wfss_table(exp)
+            for spec in this_exp_list:
+                if first_loop:
+                    exposure_time = spec.exposure_time
+                    integration_time = spec.integration_time
+                    first_loop = False
+                spec.source_type = spec.spec_table["SOURCE_TYPE"][0]
+                spec_list.append(spec)
+                source_ids.append(spec.source_id)
 
     # organize by unique source id such that there is one MultiSpecModel per source
     # with all exposures for that source in that model's model.spec
-    unique_source_ids = set(source_ids)
+    unique_source_ids = sorted(set(source_ids))
     source_ids = np.array(source_ids)
     spec_list = np.array(spec_list)
     output_list = []
@@ -341,8 +474,8 @@ def multispec_to_source(inputs):
         multispec = dm.MultiSpecModel()
         # BUG: currently there is no infrastructure for handling per-exposure weights
         # This is also a problem on main
-        multispec.meta.exposure.exposure_time = exposure_times[0]
-        multispec.meta.exposure.integration_time = integration_times[0]
+        multispec.meta.exposure.exposure_time = exposure_time
+        multispec.meta.exposure.integration_time = integration_time
         spec_this_id = spec_list[source_ids == source_id]
         multispec.spec.extend(spec_this_id)
         multispec.update(input_model, only="PRIMARY")
