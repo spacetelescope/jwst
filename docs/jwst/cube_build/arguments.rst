@@ -37,8 +37,8 @@ each band will be created.
   association table contain all the filters). 
 
 ``output_type [string]``
-  This parameter has four valid options of Band, Channel, Grating, and Multi. This parameter can be combined
-  with the options above [band, channel, grating, filter] to fully control the type of IFU
+  This parameter has four valid options of "band", "channel", "grating', and 'multi". This parameter can be combined
+  with the options above (``band``, ``channel``, ``grating``, ``filter``) to fully control the type of IFU
   cubes to make.
 
   - ``output_type=band`` creates IFU cubes containing only one band
