@@ -228,6 +228,7 @@ class JumpStep(Step):
         # Set the read pattern from input read times if available
         read_times = getattr(result.meta.exposure, "read_times", None)
         if read_times is not None and len(read_times) > 0:
+            log.debug("Using explicit read times")
             jump_data.read_pattern = list(read_times)
 
         return jump_data

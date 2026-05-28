@@ -287,6 +287,7 @@ def make_sub64p_multistripe_model(add_inttimes=False, add_zeroframe=False):
     model.meta.exposure.integration_end = nints * nstripe
     model.meta.exposure.nints = nints * nstripe
     model.meta.exposure.frame_time = 0.0076
+    model.meta.exposure.group_time = 0.0076
 
     # Add the multistripe metadata
     model.meta.subarray.multistripe_reads1 = 1
