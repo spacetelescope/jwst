@@ -1,0 +1,1 @@
+Replace use of ``stpipe.format_template.FormatTemplate`` with ``str.format``.
