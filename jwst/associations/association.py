@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import jsonschema
-from stpipe.format_template import FormatTemplate
 
 from jwst import __version__
 from jwst.associations.exceptions import AssociationNotValidError
@@ -618,7 +617,3 @@ def make_timestamp():
     """
     timestamp = datetime.now(UTC).strftime(_TIMESTAMP_TEMPLATE)
     return timestamp
-
-
-# Define default product name filling
-format_product = FormatTemplate()
