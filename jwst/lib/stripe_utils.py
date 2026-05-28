@@ -886,6 +886,9 @@ def stripe_read_times(stripe_ramp):
         nrows = stripe_ramp.meta.subarray.ysize
         ncols = stripe_ramp.meta.subarray.xsize
 
+    nreads1 = 0 if nreads1 is None else nreads1
+    nreads2 = 0 if nreads2 is None else nreads2
+
     # Get extra padding values
     end_of_row_pad = 12
     extra_clocks = 0
