@@ -848,6 +848,14 @@ def test_collate_repeat_stripe(substripe_model):
                 [0.02280, 0.03040],
             ],
         ),
+        (  # SUB64P_SUPSTP008 nframes=1, groupgap=0
+            (1, 0, 1, 64, 8, 0, 0),
+            [[0.00760], [0.0152]],
+        ),
+        (  # SUB64P_SUPSTP008 nframes=1, groupgap=0, reads None
+            (1, 0, 1, 64, 8, None, None),
+            [[0.00760], [0.0152]],
+        ),
         (  # SUB260STRIPE4_DHS nframes=1, groupgap=0
             (1, 0, 4, 2048, 260, 1, 64),
             [[0.34585], [0.68645], [1.02705], [1.36765], [1.7135], [2.0541], [2.3947], [2.7353]],
