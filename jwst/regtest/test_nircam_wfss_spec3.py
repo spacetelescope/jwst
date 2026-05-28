@@ -23,9 +23,9 @@ def test_log_tracked_resources(log_tracked_resources, run_nircam_wfss_spec3):
     log_tracked_resources()
 
 
-def test_nircam_wfss_spec3(run_nircam_wfss_spec3, rtdata_module, fitsdiff_default_kwargs):
+@pytest.mark.parametrize("suffix", ["x1d", "c1d"])
+def test_nircam_wfss_spec3(run_nircam_wfss_spec3, rtdata_module, suffix, fitsdiff_default_kwargs):
     """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data"""
-    suffix = "c1d"
     rtdata = rtdata_module
     rtdata.input = "jw02279-o001_spec3_00001_asn.json"
     output = "jw02279-o001_t001_nircam_grismr_" + suffix + ".fits"

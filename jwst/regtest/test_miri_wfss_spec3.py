@@ -20,9 +20,9 @@ def run_miri_wfss_spec3(rtdata_module, resource_tracker):
 
 
 @pytest.mark.xfail(reason="Waiting for x1d to be processed by SDP with Build 12.3")
-def test_miri_wfss_spec3(run_miri_wfss_spec3, rtdata_module, fitsdiff_default_kwargs):
+@pytest.mark.parametrize("suffix", ["x1d", "c1d"])
+def test_miri_wfss_spec3(run_miri_wfss_spec3, rtdata_module, suffix, fitsdiff_default_kwargs):
     """Regression test of the calwebb_spec3 pipeline applied to MIRI WFSS data"""
-    suffix = "c1d"
     rtdata = rtdata_module
     rtdata.input = "jw09505-o001_spec3_00001_asn.json"
     output = "jw09505-o001_t001_miri_p750l_" + suffix + ".fits"
