@@ -35,7 +35,6 @@ from jwst.associations.lib.rules_level3_base import (
     dms_product_name_nrsfs_sources,
     dms_product_name_sources,
     dms_product_name_wfss,
-    format_product,
 )
 from jwst.associations.registry import RegistryMarker
 
@@ -1065,15 +1064,15 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         str
             The product name in lowercase.
         """
-        product_name_format = "{existing}-{detector}_{suffix}-{expspcin}"
+        product_name_format = "{existing}-{detector}_{suffix}-{expspcin:0>2s}"
 
         existing = super().dms_product_name
 
-        product_name = format_product(
-            product_name_format,
+        product_name = product_name_format.format(
             existing=existing,
             detector=self.constraints["detector"].value,
             expspcin=self.constraints["act_id"].value,
+            suffix="{suffix}",
         )
 
         return product_name.lower()
