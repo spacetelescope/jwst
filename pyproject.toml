@@ -33,7 +33,6 @@ dependencies = [
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     # "stdatamodels>=4.1.0,<4.2.0",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
-    # "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     # "stcal>=1.18,<2",
     # "stpipe>=0.12,<2",
     "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
