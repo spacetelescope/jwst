@@ -10,7 +10,6 @@ from stcal.alignment import combine_sregions
 # step imports
 from jwst.adaptive_trace_model import adaptive_trace_model_step
 from jwst.assign_mtwcs import assign_mtwcs_step
-from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
 from jwst.datamodels import SourceModelContainer
@@ -194,22 +193,20 @@ class Spec3Pipeline(Pipeline):
                     # Output file name is constructed using the source_id and the slit name
                     slit_name = self._create_nrsfs_slit_name(result)
                     srcid = f"s{source_id:>09s}"
-                    self.output_file = format_product(
-                        output_file, source_id=srcid, slit_name=slit_name
-                    )
+                    self.output_file = output_file.format(source_id=srcid, slit_name=slit_name)
 
                 # NIRSpec MOS/MSA data
                 elif exptype == "NRS_MSASPEC":
                     # Construct the specially formatted source_id to use in the output file
                     # name that separates source, background, and virtual slits
                     srcid = self._create_nrsmos_source_id(result)
-                    self.output_file = format_product(output_file, source_id=srcid)
+                    self.output_file = output_file.format(source_id=srcid)
                     log.debug(f"output_file = {self.output_file}")
 
                 else:
                     # All other types just use the source_id directly in the file name
                     srcid = f"s{source_id:>09s}"
-                    self.output_file = format_product(output_file, source_id=srcid)
+                    self.output_file = output_file.format(source_id=srcid)
             else:
                 result = source
 
