@@ -6,8 +6,6 @@ from collections import defaultdict
 from os.path import split
 from pathlib import Path
 
-from stpipe.format_template import FormatTemplate
-
 from jwst.associations import Association, ListCategory, libpath
 from jwst.associations.exceptions import (
     AssociationNotValidError,
@@ -543,12 +541,6 @@ class Utility:
 # ---------
 # Utilities
 # ---------
-# Define default product name filling
-format_product = FormatTemplate(
-    key_formats={"source_id": ["{:s}"], "expspcin": ["{:0>2s}"], "slit_name": ["{:s}"]}
-)
-
-
 def dms_product_name_noopt(asn):
     """
     Define product name without any optical elements.
@@ -602,10 +594,10 @@ def dms_product_name_sources(asn):
     product_name_format = (
         "jw{program}-{acid}_{source_id}_{instrument}_{opt_elem}{slit_name}{subarray}"
     )
-    product_name = format_product(
-        product_name_format,
+    product_name = product_name_format.format(
         program=asn.data["program"],
         acid=asn.acid.id,
+        source_id="{source_id}",
         instrument=instrument,
         opt_elem=opt_elem,
         slit_name=slit_name,
@@ -649,8 +641,7 @@ def dms_product_name_wfss(asn):
         subarray = "-" + subarray
 
     product_name_format = "jw{program}-{acid}_{target}_{instrument}_{opt_elem}{slit_name}{subarray}"
-    product_name = format_product(
-        product_name_format,
+    product_name = product_name_format.format(
         program=asn.data["program"],
         acid=asn.acid.id,
         target=target,
@@ -694,13 +685,14 @@ def dms_product_name_nrsfs_sources(asn):
     product_name_format = (
         "jw{program}-{acid}_{target}-{source_id}_{instrument}_{opt_elem}-{slit_name}{subarray}"
     )
-    product_name = format_product(
-        product_name_format,
+    product_name = product_name_format.format(
         program=asn.data["program"],
         acid=asn.acid.id,
         target=target,
+        source_id="{source_id}",
         instrument=instrument,
         opt_elem=opt_elem,
+        slit_name="{slit_name}",
         subarray=subarray,
     )
 
