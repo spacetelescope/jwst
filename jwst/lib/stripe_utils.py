@@ -40,6 +40,30 @@ should be reassembled to include empty placeholder rows/columns.
 
 
 def _detector_coord_slow_start(slow_axis, slow_start):
+    """
+    Calculate the slow start value in detector coordinates for striped data.
+
+    For striped data, the start value must be equal to the actual
+    starting point for readouts: this is different from the usual definition,
+    for which the starting point may be the start (slowaxis > 0) or the end
+    (slowaxis < 0) of the readouts.
+
+    If slow_start is 1 and the slow axis is negative, a warning is issued
+    and 0 is returned, since it's assumed this is an error in the input
+    data.
+
+    Parameters
+    ----------
+    slow_axis : int
+        The slow axis.
+    slow_start : int
+        The subarray start value in science coordinates, 1-indexed.
+
+    Returns
+    -------
+    slow_start_idx : int
+        The subarray start value in detector coordinates, 0-indexed.
+    """
     if slow_axis < 0:
         # Handle some early products that might have the wrong value
         # for the slow start (i.e. start=1 when it should have been 2048).
