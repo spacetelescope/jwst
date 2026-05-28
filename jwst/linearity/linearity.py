@@ -44,15 +44,35 @@ def do_correction(output_model, lin_model):
     if reffile_utils.ref_matches_sci(output_model, lin_model):
         lin_coeffs = lin_model.coeffs
         lin_dq = lin_model.dq
+        inv_coeffs = lin_model.inv_coeffs
     else:
         sub_lin_model = reffile_utils.get_subarray_model(output_model, lin_model)
         lin_coeffs = sub_lin_model.coeffs.copy()
         lin_dq = sub_lin_model.dq.copy()
+        inv_coeffs = (
+            sub_lin_model.inv_coeffs.copy() if sub_lin_model.inv_coeffs is not None else None
+        )
         sub_lin_model.close()
+
+    read_pattern = None
+    if inv_coeffs is not None:
+        ngroups = output_model.meta.exposure.ngroups
+        nframes = output_model.meta.exposure.nframes
+        read_pattern = [
+            [x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)
+        ]
 
     # Call linearity correction function in stcal
     new_data, new_pdq, new_zframe = linearity_correction(
-        output_model.data, gdq, pdq, lin_coeffs, lin_dq, dqflags.pixel, zframe=zframe
+        output_model.data,
+        gdq,
+        pdq,
+        lin_coeffs,
+        lin_dq,
+        dqflags.pixel,
+        zframe=zframe,
+        ilin_coeffs=inv_coeffs,
+        read_pattern=read_pattern,
     )
 
     output_model.data = new_data
