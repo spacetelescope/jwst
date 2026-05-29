@@ -128,12 +128,6 @@ there will be an added binary extension table to the output FITS file of the IFU
 the label ``WCS-TABLE`` and contains the wavelengths for each of the IFU cube wavelength planes. This table follows the
 FITS standard described in *Representations of spectral coordinates in FITS*, Greisen, et al., 2006, **A & A**, 446, 747-771.
 
-The input data to ``cube_build`` can take a variety of forms, as listed above in
-:ref:`cube_build_description`. Because the MIRI IFUs
-project data from two channels onto a single detector, choices can or must be made as to which parts of the input data
-to use when constructing the output cube even in the simplest case of a single input image. The default behavior
-varies according to the context in which ``cube_build`` is being run.
-
 
 IFU Cube Geometry and Wavelength Sampling
 +++++++++++++++++++++++++++++++++++++++++
@@ -158,7 +152,7 @@ Pipeline Input Handling and Default Behaviors
 
 The input data to ``cube_build`` can take a variety of forms, as listed above in 
 :ref:`cube_build_description`. Because the MIRI IFUs project data from two 
-channels onto a single detector, choices can or must be made as to which parts 
+channels onto a single detector, choices  must be made as to which parts 
 of the input data to use when constructing the output cube, even in the simplest 
 case of a single input image. 
 
