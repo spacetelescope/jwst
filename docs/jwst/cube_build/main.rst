@@ -192,7 +192,7 @@ bands, the default behavior is to create a set of separate band cubes.
   In addition, if the user has a single grating and filter they can produce a
   non-linear wavelength dimension using the ``linear_wave=False`` option. This is
   particularly  useful with Prism data. 
->>>>>>> 67cdfe2c9 (fix docs)
+
 
 In the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, on the other hand, where
 the input can be a collection of data from multiple exposures covering multiple
