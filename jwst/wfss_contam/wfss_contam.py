@@ -703,9 +703,9 @@ def contam_corr(
     # (never modifies fluxmodel_N), so restoring just the data array is sufficient.
     flat_matched_data = [np.array(s.data) if s is not None else None for s in matched_flat_simuls]
 
-    # Iterate: each pass re-fits spectral shapes using the contamination-corrected
-    # data from the previous pass, giving progressively better contamination estimates.
     if polyfit_degree is not None:
+        # Iterate: each pass re-fits spectral shapes using the contamination-corrected
+        # data from the previous pass, giving progressively better contamination estimates.
         log.info(
             f"Using polyfit_degree={polyfit_degree} "
             f"for spectral fitting over {n_iterations} iterations"
@@ -718,10 +718,17 @@ def contam_corr(
                 "well enough for spectral fitting to succeed. Fitting will be attempted, "
                 "but failures may be expected."
             )
+
     per_slit_simuls = []
     contam_cuts = []
-    for iteration in range(n_iterations):
-        if n_iterations > 1:
+    for iteration in range(-1, n_iterations):
+        # "pre-pass" iteration -1 of the loop with no fitting runs regardless of whether
+        # polynomial fitting was requested. This pre-pass applies the contamination correction
+        # to the data based on the original flat-spectrum simulations and saves the contam model.
+        # in subsequent iterations, fitting occurs and updates both the contam-subtracted data
+        # and the contam model itself.
+        is_prepass = iteration < 0
+        if not is_prepass:
             log.info(f"Contamination correction iteration {iteration + 1} of {n_iterations}")
 
         # Reset obs.simulated_slits to flat-spectrum before applying new spectral fits.
@@ -739,22 +746,23 @@ def contam_corr(
             # Reset to flat-spectrum data; avoids a deepcopy each iteration because
             # _fit_spectral_shape only reassigns .data and never modifies fluxmodel_N.
             matched_flat.data = flat_matched_data[i].copy()
-            # slit.data holds the contamination-corrected data from the previous iteration
-            # (or the original input on the first pass).
-            success += _fit_spectral_shape(
-                slit,
-                matched_flat,
-                obs.simulated_slits.slits[good_idxs[i]],
-                polyfit_degree,
-                l2_alpha=l2_alpha,
-                rejection_threshold=rejection_threshold,
-            )
+            if not is_prepass:
+                # slit.data holds the contamination-corrected data from the previous iteration
+                success += _fit_spectral_shape(
+                    slit,
+                    matched_flat,
+                    obs.simulated_slits.slits[good_idxs[i]],
+                    polyfit_degree,
+                    l2_alpha=l2_alpha,
+                    rejection_threshold=rejection_threshold,
+                )
             per_slit_simuls.append(matched_flat)
 
-        log.info(
-            f"Spectral fitting successful for {success} out of {len(output_model.slits)} slits "
-            f"in iteration {iteration + 1}. Turn on debug logging for details of failures."
-        )
+        if not is_prepass:
+            log.info(
+                f"Spectral fitting successful for {success} out of {len(output_model.slits)} slits "
+                f"in iteration {iteration + 1}. Turn on debug logging for details of failures."
+            )
 
         # Rebuild full-frame simulation from the simulated slits.
         # This accounts for the fitted flux if a matched observation was found and the fit
@@ -780,7 +788,10 @@ def contam_corr(
             slit.data = original_data[i] - contam_cut
             contam_cuts.append(contam_cut)
 
-        if success == 0:
+        if polyfit_degree is None:
+            break
+
+        if not is_prepass and success == 0:
             log.warning(
                 f"No successful spectral fits in iteration {iteration + 1}. "
                 "Will not continue iterating. Ensure that the background is well subtracted, and "
