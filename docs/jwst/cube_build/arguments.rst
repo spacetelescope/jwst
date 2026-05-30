@@ -66,9 +66,7 @@ each band will be created.
 ``linear_wave [boolean]``
 Sets the wavelength sampling for the output cubes (default is True). If True, the output cubes have equally
 spaced (linear) wavelengths. If False, the cubes use a non-linear wavelength sampling as defined by the
-cube_pars reference file. Currently, this non-linear option is limited to NIRSpec data (e.g., prism observations).
-For MIRI cubes, the wavelength sampling (linear vs. non-linear) is automatically determined by the specific
-bands and channels included.
+cube_pars reference file.
 
 The following arguments control the size and sampling characteristics of the output IFU cube.
 

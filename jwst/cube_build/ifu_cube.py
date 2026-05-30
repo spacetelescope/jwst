@@ -1059,8 +1059,6 @@ class IFUCubeData:
             self.wavemax = np.float64(self.wavemax)
             self.wavemax_user = True
 
-        # now check spectral step - this will determine
-        # if the wavelength dimension is linear or not
         all_same_spectral = np.all(spectralsize == spectralsize[0])
 
         # check if scalew has been set - if yes then linear scale
@@ -1071,34 +1069,7 @@ class IFUCubeData:
             weight_power = np.amin(power)
             self.soft_rad = np.amin(softrad)
             self.scalerad = np.amin(scalerad)
-
-        # if we have NIRSPEC Prism then force wavelength to be non-linear
-        elif self.instrument == "NIRSPEC" and not self.linear_wave:
-            self.linear_wavelength = False
-
-            # determine if have Prism, Medium or High resolution
-            med = ["g140m", "g235m", "g395m"]
-            high = ["g140h", "g235h", "g395h"]
-            prism = ["prism"]
-
-            for i in range(number_bands):
-                par1 = self.list_par1[i]
-                if par1 in prism:
-                    table = self.instrument_info.get_prism_table()
-                if par1 in med:
-                    table = self.instrument_info.get_med_table()
-                if par1 in high:
-                    table = self.instrument_info.get_high_table()
-                (
-                    table_wavelength,
-                    table_sroi,
-                    table_wroi,
-                    table_power,
-                    table_softrad,
-                    table_scalerad,
-                ) = table
-
-        # if all bands have the same spectral size then linear_wavelength
+        # all bands have the same spectral size then linear_wavelength
         elif all_same_spectral:
             self.spectral_size = spectralsize[0]
             wave_roi = roiw[0]
@@ -1106,21 +1077,14 @@ class IFUCubeData:
             self.linear_wavelength = True  # added this 10/01/19
             self.soft_rad = softrad[0]
             self.scalerad = scalerad[0]
-        else:
-            self.linear_wavelength = False
-            if self.instrument == "MIRI":
-                table = self.instrument_info.get_multichannel_table()
-                (
-                    table_wavelength,
-                    table_sroi,
-                    table_wroi,
-                    table_power,
-                    table_softrad,
-                    table_scalerad,
-                ) = table
 
-            # getting NIRSPEC Table Values
-            elif self.instrument == "NIRSPEC":
+        self.linear_wavelength = self.linear_wave
+
+        # Non-linear wavelength case
+        # The wavelength dimension is non linear.
+        # We read the wavelength table from the reference file
+        if not self.linear_wavelength:
+            if self.instrument == "NIRSPEC":
                 # determine if have Prism, Medium or High resolution
                 med = ["g140m", "g235m", "g395m"]
                 high = ["g140h", "g235h", "g395h"]
@@ -1143,10 +1107,19 @@ class IFUCubeData:
                         table_scalerad,
                     ) = table
 
-        # non-linear wavelength range.
-        # Based on Min and Max wavelength - pull out the tables values that fall in this range.
-        # Find the closest table entries to the self.wavemin and self.wavemax limits
-        if not self.linear_wavelength:
+            elif self.instrument == "MIRI":
+                table = self.instrument_info.get_multichannel_table()
+                (
+                    table_wavelength,
+                    table_sroi,
+                    table_wroi,
+                    table_power,
+                    table_softrad,
+                    table_scalerad,
+                ) = table
+
+            # Based on Min and Max wavelength - pull out the tables values that fall in this range.
+            # Find the closest table entries to the self.wavemin and self.wavemax limits
             imin = (np.abs(table_wavelength - self.wavemin)).argmin()
             imax = (np.abs(table_wavelength - self.wavemax)).argmin()
 
@@ -1176,8 +1149,9 @@ class IFUCubeData:
             self.wavelength_table = np.zeros(num_table)
             self.wavelength_table[:] = table_wavelength[imin : imax + 1]
 
-        # check if using default values from the table  (not user set)
+        # DONE non-linear wavelegnth table configuration
 
+        # check if using default values from the table  (not user set)
         if self.rois == 0.0:
             self.rois = spatial_roi
             # not set by user but determined from tables

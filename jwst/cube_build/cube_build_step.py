@@ -147,9 +147,8 @@ class CubeBuildStep(Step):
         if self.coord_system == "internal_cal":
             self.interpolation = "area"
             self.weighting = "emsm"
-            if self.output_type is None:  # when running stand alone
-                self.output_type = "band"
-                self.linear_wave = True
+            self.output_type = "band"
+            self.linear_wave = True
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified Shepard method
         # 2. EMSM
@@ -205,15 +204,10 @@ class CubeBuildStep(Step):
         # output type is by default 'Channel' for MIRI and 'Band' for NIRSpec
         instrument = input_models[0].meta.instrument.name.upper()
 
-        # for NIRSPEC the type of cubes to make are based on self.linear_wave
-        if instrument == "NIRSPEC":
-            if self.output_type == "multi":  # keep this for now
-                self.linear_wave = False
-
-            if self.linear_wave:
-                self.output_type = "band"
-            else:
-                self.output_type = "multi"
+        # if output is multi - we are combining multiple bands the wavelength
+        # dimension is set to non-linear
+        if self.output_type == "multi":
+            self.linear_wave = False
 
         self.pars_input["output_type"] = self.output_type
         self.pars_input["linear_wave"] = self.linear_wave
