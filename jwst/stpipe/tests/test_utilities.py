@@ -1,7 +1,7 @@
 """Test utility funcs"""
 
+import pytest
 from stdatamodels.jwst import datamodels
-from stpipe.utilities import resolve_step_class_alias
 
 import jwst.pipeline
 import jwst.step
@@ -21,35 +21,28 @@ def test_all_steps():
     assert not diff, f"Steps not accounted for. Confirm and check suffix and CRDS calpars.\n{diff}"
 
 
-def test_resolve_step_class_alias():
-    for class_name in jwst.pipeline.__all__:
-        pipeline_class = getattr(jwst.pipeline, class_name)
-        full_class_name = f"jwst.pipeline.{class_name}"
-        if pipeline_class.class_alias is not None:
-            assert resolve_step_class_alias(pipeline_class.class_alias) == full_class_name
-        assert resolve_step_class_alias(full_class_name) == full_class_name
-
-
-def test_record_query_step_status():
+@pytest.mark.parametrize("fail_status", [None, "SKIPPED", "FAILED"])
+def test_record_query_step_status(fail_status):
     # single model case
     model = dm.MultiSpecModel()
     record_step_status(model, "test_step", success=True)
     assert query_step_status(model, "test_step") == "COMPLETE"
 
-    # modelcontainer case where all skipped
+    # modelcontainer case where all failed
     model2 = dm.ModelContainer()
     model2.append(dm.MultiSpecModel())
     model2.append(dm.MultiSpecModel())
-    record_step_status(model2, "test_step", success=False)
-    assert model2[0].meta.cal_step.instance["test_step"] == "SKIPPED"
-    assert model2[1].meta.cal_step.instance["test_step"] == "SKIPPED"
-    assert query_step_status(model2, "test_step") == "SKIPPED"
+    record_step_status(model2, "test_step", success=False, status=fail_status)
+    expected = fail_status if fail_status is not None else "FAILED"
+    assert model2[0].meta.cal_step.instance["test_step"] == expected
+    assert model2[1].meta.cal_step.instance["test_step"] == expected
+    assert query_step_status(model2, "test_step") == expected
 
     # modelcontainer case with at least one complete
-    # currently the zeroth is checked, so this should return SKIPPED
+    # currently the zeroth is checked, so this should return FAILED
     model2.append(dm.MultiSpecModel())
     model2[2].meta.cal_step.instance["test_step"] = "COMPLETE"
-    assert query_step_status(model2, "test_step") == "SKIPPED"
+    assert query_step_status(model2, "test_step") == expected
 
     # test query not set
     model3 = dm.MultiSpecModel()
@@ -59,9 +52,15 @@ def test_record_query_step_status():
     model4 = dm.ModelLibrary([model])
     assert query_step_status(model4, "test_step") == "COMPLETE"
     model5 = dm.ModelLibrary(model2)
-    assert query_step_status(model5, "test_step") == "SKIPPED"
+    assert query_step_status(model5, "test_step") == expected
     model6 = dm.ModelLibrary([model3])
     assert query_step_status(model6, "test_step") == NOT_SET
+
+
+def test_record_status_invalid_value():
+    model = dm.MultiSpecModel()
+    with pytest.raises(ValueError, match="BAD_VALUE not in allowed values"):
+        record_step_status(model, "test_step", status="BAD_VALUE")
 
 
 def change_name_func(model):

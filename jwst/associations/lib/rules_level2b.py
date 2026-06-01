@@ -4,6 +4,7 @@ import logging
 
 from jwst.associations.lib.constraint import Constraint, SimpleConstraint
 from jwst.associations.lib.dms_base import (
+    Constraint_NotTSO,
     Constraint_TSO,
     Constraint_WFSC,
     nissoss_calibrated_filter,
@@ -84,7 +85,15 @@ class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
+        # Science or background exposures.
+        exposures = Constraint(
+            [
+                Constraint_Background(),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ],
+            reduce=Constraint.any,
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
@@ -103,13 +112,7 @@ class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
                     value=True,
                     sources=nrccoron_valid_detector,
                 ),
-                Constraint(
-                    [
-                        Constraint_Background(),
-                        Constraint_Single_Science(self.has_science, self.get_exposure_type),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                exposures,
             ]
         )
 
@@ -147,25 +150,22 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
+        # Science or background exposures.
+        exposures = Constraint(
+            [
+                Constraint_Background(),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ],
+            reduce=Constraint.any,
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
                 Constraint_Mode(),
                 Constraint_Image_Science(),
-                Constraint(
-                    [
-                        Constraint_TSO(),
-                    ],
-                    reduce=Constraint.notany,
-                ),
-                Constraint(
-                    [
-                        Constraint_Background(),
-                        Constraint_Single_Science(self.has_science, self.get_exposure_type),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                Constraint_NotTSO(),
+                exposures,
             ]
         )
 
@@ -278,7 +278,9 @@ class Asn_Lv2FGS(AsnMixin_Lv2Image, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
+        # Exclude WFS&C observations; those are handled by Asn_Lv2WFSC.
+        not_wfsc = Constraint([Constraint_WFSC()], reduce=Constraint.notany)
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
@@ -288,7 +290,7 @@ class Asn_Lv2FGS(AsnMixin_Lv2Image, DMSLevel2bBase):
                     sources=["exp_type"],
                     value=("fgs_image|fgs_focus"),
                 ),
-                Constraint([Constraint_WFSC()], reduce=Constraint.notany),
+                not_wfsc,
             ]
         )
 
@@ -311,60 +313,63 @@ class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
+        # Science and imprint exposures must share the same mosaic tile number;
+        # background exposures are accepted regardless of tile number.
+        sci_or_imprint = Constraint(
+            [
+                Constraint_Imprint(),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ],
+            reduce=Constraint.any,
+        )
+        sci_or_imprint_same_tile = Constraint(
+            [sci_or_imprint, DMSAttrConstraint(name="mostilno", sources=["mostilno"])]
+        )
+        exposures = Constraint(
+            [Constraint_Background(), sci_or_imprint_same_tile],
+            reduce=Constraint.any,
+        )
+
+        # Exclude TSO and nod-pattern observations; those have dedicated rules.
+        not_tso_or_nod = Constraint(
+            [
+                Constraint_TSO(),
+                DMSAttrConstraint(
+                    name="patttype",
+                    sources=["patttype"],
+                    value="2-point-nod|4-point-nod|along-slit-nod",
+                ),
+            ],
+            reduce=Constraint.notany,
+        )
+
+        # Only include NIRSpec IFU exposures on a valid detector optical path.
+        valid_nrsifu_detector = SimpleConstraint(
+            value=True,
+            test=lambda _value, item: nrsifu_valid_detector(item),
+            force_unique=False,
+        )
+
+        # exclude certain exposure types
+        exptypes = Constraint_Spectral_Science(
+            exclude_exp_types=[
+                "nis_wfss",
+                "nrc_wfss",
+                "nrs_fixedslit",
+                "nrs_msaspec",
+                "mir_lrs-slitless",
+                "mir_lrs-fixedslit",
+            ]
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
                 Constraint_Mode(),
-                Constraint_Spectral_Science(
-                    exclude_exp_types=[
-                        "nis_wfss",
-                        "nrc_wfss",
-                        "nrs_fixedslit",
-                        "nrs_msaspec",
-                        "mir_lrs-slitless",
-                        "mir_lrs-fixedslit",
-                    ]
-                ),
-                Constraint(
-                    [
-                        #  Allow either any background, or ensure imprint and science members
-                        #  match on mosaic tile number
-                        Constraint_Background(),
-                        Constraint(
-                            [
-                                Constraint(
-                                    [
-                                        Constraint_Imprint(),
-                                        Constraint_Single_Science(
-                                            self.has_science, self.get_exposure_type
-                                        ),
-                                    ],
-                                    reduce=Constraint.any,
-                                ),
-                                DMSAttrConstraint(name="mostilno", sources=["mostilno"]),
-                            ],
-                            reduce=Constraint.all,
-                        ),
-                    ],
-                    reduce=Constraint.any,
-                ),
-                Constraint(
-                    [
-                        Constraint_TSO(),
-                        DMSAttrConstraint(
-                            name="patttype",
-                            sources=["patttype"],
-                            value="2-point-nod|4-point-nod|along-slit-nod",
-                        ),
-                    ],
-                    reduce=Constraint.notany,
-                ),
-                SimpleConstraint(
-                    value=True,
-                    test=lambda _value, item: nrsifu_valid_detector(item),
-                    force_unique=False,
-                ),
+                exptypes,
+                exposures,
+                not_tso_or_nod,
+                valid_nrsifu_detector,
             ]
         )
 
@@ -422,25 +427,30 @@ class Asn_Lv2SpecSpecial(
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
+        # Only include NIRSpec IFU exposures on a valid detector optical path.
+        valid_nrsifu_detector = SimpleConstraint(
+            value=True,
+            test=lambda _value, item: nrsifu_valid_detector(item),
+            force_unique=False,
+        )
+
+        # Imprint exposures (treated as special science) or regular single science exposures.
+        exposures = Constraint(
+            [
+                Constraint_Imprint_Special(self),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ],
+            reduce=Constraint.any,
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
                 Constraint_Mode(),
                 Constraint_Spectral_Science(),
                 Constraint_Special(),  # background and ref_psf exposures
-                SimpleConstraint(
-                    value=True,
-                    test=lambda _value, item: nrsifu_valid_detector(item),
-                    force_unique=False,
-                ),
-                Constraint(
-                    [
-                        Constraint_Imprint_Special(self),
-                        Constraint_Single_Science(self.has_science, self.get_exposure_type),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                valid_nrsifu_detector,
+                exposures,
             ]
         )
 
@@ -463,8 +473,9 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
-        self.constraints = Constraint(
+        # Core science constraints: single TSO spectral exposure.
+        # Exclude spectral types that have dedicated rules (MSA, fixed-slit, LRS modes).
+        sci = Constraint(
             [
                 Constraint_Base(),
                 Constraint_Mode(),
@@ -478,63 +489,78 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
                 ),
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
                 Constraint_TSO(),
+            ]
+        )
+
+        # Exclude NIRCam TSO grism with CLEAR pupil; that optical path is not valid here.
+        not_nrc_tsgrism_clear = Constraint(
+            [
                 Constraint(
                     [
-                        Constraint(
-                            [
-                                DMSAttrConstraint(
-                                    name="exp_type",
-                                    sources=["exp_type"],
-                                    value="nrc_tsgrism",
-                                ),
-                                DMSAttrConstraint(
-                                    name="pupil",
-                                    sources=["pupil"],
-                                    value="clear",
-                                ),
-                            ],
-                        )
-                    ],
-                    reduce=Constraint.notany,
-                ),
-                # Don't allow NIRSpec invalid optical paths in spec2
-                Constraint(
-                    [
-                        Constraint(
-                            [
-                                DMSAttrConstraint(
-                                    name="exp_type", sources=["exp_type"], value="nrs_brightobj"
-                                ),
-                                SimpleConstraint(
-                                    value=False,
-                                    test=lambda value, item: nrsfss_valid_detector(item) == value,
-                                    force_unique=False,
-                                ),
-                            ]
+                        DMSAttrConstraint(
+                            name="exp_type",
+                            sources=["exp_type"],
+                            value="nrc_tsgrism",
                         ),
-                    ],
-                    reduce=Constraint.notany,
-                ),
-                # Don't allow NIRISS SOSS with uncalibrated filters
+                        DMSAttrConstraint(
+                            name="pupil",
+                            sources=["pupil"],
+                            value="clear",
+                        ),
+                    ]
+                )
+            ],
+            reduce=Constraint.notany,
+        )
+
+        # Exclude NIRSpec brightobj exposures on an invalid detector optical path.
+        not_nrs_brightobj_invalid_detector = Constraint(
+            [
                 Constraint(
                     [
-                        Constraint(
-                            [
-                                DMSAttrConstraint(
-                                    name="exp_type", sources=["exp_type"], value="nis_soss"
-                                ),
-                                SimpleConstraint(
-                                    value=False,
-                                    test=lambda value, item: (
-                                        nissoss_calibrated_filter(item) == value
-                                    ),
-                                    force_unique=False,
-                                ),
-                            ]
+                        DMSAttrConstraint(
+                            name="exp_type",
+                            sources=["exp_type"],
+                            value="nrs_brightobj",
                         ),
-                    ],
-                    reduce=Constraint.notany,
-                ),
+                        SimpleConstraint(
+                            value=False,
+                            test=lambda value, item: nrsfss_valid_detector(item) == value,
+                            force_unique=False,
+                        ),
+                    ]
+                )
+            ],
+            reduce=Constraint.notany,
+        )
+
+        # Exclude NIRISS SOSS exposures taken with a filter that has no flux calibration.
+        not_nis_soss_uncalibrated_filter = Constraint(
+            [
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="exp_type",
+                            sources=["exp_type"],
+                            value="nis_soss",
+                        ),
+                        SimpleConstraint(
+                            value=False,
+                            test=lambda value, item: nissoss_calibrated_filter(item) == value,
+                            force_unique=False,
+                        ),
+                    ]
+                )
+            ],
+            reduce=Constraint.notany,
+        )
+
+        self.constraints = Constraint(
+            [
+                sci,
+                not_nrc_tsgrism_clear,
+                not_nrs_brightobj_invalid_detector,
+                not_nis_soss_uncalibrated_filter,
             ]
         )
 
@@ -574,16 +600,10 @@ class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
         )
 
         # background exposures, only if not a TSO observation
-        not_tso = Constraint(
-            [
-                Constraint_TSO(),
-            ],
-            reduce=Constraint.notany,
-        )
         bkg = Constraint(
             [
                 Constraint_Background(),
-                not_tso,
+                Constraint_NotTSO(),
                 DMSAttrConstraint(
                     name="exp_type",
                     sources=["exp_type"],
@@ -787,6 +807,36 @@ class Asn_Lv2NRSLAMPSpectral(AsnMixin_Lv2Special, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
+        # Only include exposures on a valid NIRSpec lamp detector optical path.
+        valid_detector = SimpleConstraint(
+            value=True,
+            test=lambda _value, item: nrslamp_valid_detector(item),
+            force_unique=False,
+        )
+
+        # Either non-MSA opmode, or MSA opmode with a valid MSA metafile.
+        not_msaspec = Constraint(
+            [DMSAttrConstraint(name="opmode", sources=["opmode"], value="msaspec")],
+            reduce=Constraint.notany,
+        )
+        msaspec_with_metafile = Constraint(
+            [
+                DMSAttrConstraint(sources=["opmode"], value="msaspec"),
+                DMSAttrConstraint(sources=["msametfl"]),
+            ]
+        )
+        valid_opmode = Constraint([not_msaspec, msaspec_with_metafile], reduce=Constraint.any)
+
+        # Exclude degenerate optical configurations: mirror grating, grating-only mode, or no lamp.
+        not_invalid_optical_path = Constraint(
+            [
+                DMSAttrConstraint(sources=["grating"], value="mirror", force_unique=False),
+                DMSAttrConstraint(sources=["opmode"], value="grating-only", force_unique=False),
+                DMSAttrConstraint(sources=["lamp"], value="nolamp", force_unique=False),
+            ],
+            reduce=Constraint.notany,
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
@@ -797,56 +847,10 @@ class Asn_Lv2NRSLAMPSpectral(AsnMixin_Lv2Special, DMSLevel2bBase):
                     value="nrs_autoflat|nrs_autowave|nrs_lamp",
                 ),
                 DMSAttrConstraint(name="opt_elem", sources=["filter"], value="opaque"),
-                SimpleConstraint(
-                    value=True,
-                    test=lambda _value, item: nrslamp_valid_detector(item),
-                    force_unique=False,
-                ),
-                Constraint(
-                    [
-                        Constraint(
-                            [
-                                DMSAttrConstraint(
-                                    name="opmode",
-                                    sources=["opmode"],
-                                    value="msaspec",
-                                )
-                            ],
-                            reduce=Constraint.notany,
-                        ),
-                        Constraint(
-                            [
-                                DMSAttrConstraint(sources=["opmode"], value="msaspec"),
-                                DMSAttrConstraint(sources=["msametfl"]),
-                            ]
-                        ),
-                    ],
-                    reduce=Constraint.any,
-                ),
-                DMSAttrConstraint(
-                    name="lamp",
-                    sources=["lamp"],
-                ),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            sources=["grating"],
-                            value="mirror",
-                            force_unique=False,
-                        ),
-                        DMSAttrConstraint(
-                            sources=["opmode"],
-                            value="grating-only",
-                            force_unique=False,
-                        ),
-                        DMSAttrConstraint(
-                            sources=["lamp"],
-                            value="nolamp",
-                            force_unique=False,
-                        ),
-                    ],
-                    reduce=Constraint.notany,
-                ),
+                valid_detector,
+                valid_opmode,
+                DMSAttrConstraint(name="lamp", sources=["lamp"]),
+                not_invalid_optical_path,
             ]
         )
 
@@ -876,27 +880,43 @@ class Asn_Lv2WFSSNIS(
     """
 
     def __init__(self, *args, **kwargs):
+        # WFSS grism or corresponding direct image exposures.
+        wfss_or_direct = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="nis_wfss",
+                ),
+                DMSAttrConstraint(
+                    name="image_exp_type",
+                    sources=["exp_type"],
+                    value="nis_image",
+                    force_reprocess=ListCategory.NONSCIENCE,
+                    only_on_match=True,
+                ),
+            ],
+            reduce=Constraint.any,
+        )
+
+        # Non-science (direct image) or single science (grism) exposures.
+        exposures = Constraint(
+            [
+                SimpleConstraint(
+                    value="science",
+                    test=lambda value, item: self.get_exposure_type(item) != value,
+                    force_unique=False,
+                ),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ],
+            reduce=Constraint.any,
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
                 Constraint_Target(),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            name="exp_type",
-                            sources=["exp_type"],
-                            value="nis_wfss",
-                        ),
-                        DMSAttrConstraint(
-                            name="image_exp_type",
-                            sources=["exp_type"],
-                            value="nis_image",
-                            force_reprocess=ListCategory.NONSCIENCE,
-                            only_on_match=True,
-                        ),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                wfss_or_direct,
                 DMSAttrConstraint(
                     name="instrument",
                     sources=["instrume"],
@@ -913,17 +933,7 @@ class Asn_Lv2WFSSNIS(
                     name="subarray",
                     sources=["subarray"],
                 ),
-                Constraint(
-                    [
-                        SimpleConstraint(
-                            value="science",
-                            test=lambda value, item: self.get_exposure_type(item) != value,
-                            force_unique=False,
-                        ),
-                        Constraint_Single_Science(self.has_science, self.get_exposure_type),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                exposures,
             ]
         )
 
@@ -948,27 +958,43 @@ class Asn_Lv2WFSSNRC(
     """
 
     def __init__(self, *args, **kwargs):
+        # WFSS grism or corresponding direct image exposures.
+        wfss_or_direct = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="nrc_wfss",
+                ),
+                DMSAttrConstraint(
+                    name="image_exp_type",
+                    sources=["exp_type"],
+                    value="nrc_image",
+                    force_reprocess=ListCategory.NONSCIENCE,
+                    only_on_match=True,
+                ),
+            ],
+            reduce=Constraint.any,
+        )
+
+        # Non-science (direct image) or single science (grism) exposures.
+        exposures = Constraint(
+            [
+                SimpleConstraint(
+                    value="science",
+                    test=lambda value, item: self.get_exposure_type(item) != value,
+                    force_unique=False,
+                ),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ],
+            reduce=Constraint.any,
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
                 Constraint_Target(),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            name="exp_type",
-                            sources=["exp_type"],
-                            value="nrc_wfss",
-                        ),
-                        DMSAttrConstraint(
-                            name="image_exp_type",
-                            sources=["exp_type"],
-                            value="nrc_image",
-                            force_reprocess=ListCategory.NONSCIENCE,
-                            only_on_match=True,
-                        ),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                wfss_or_direct,
                 DMSAttrConstraint(
                     name="instrument",
                     sources=["instrume"],
@@ -977,17 +1003,7 @@ class Asn_Lv2WFSSNRC(
                     name="detector",
                     sources=["detector"],
                 ),
-                Constraint(
-                    [
-                        SimpleConstraint(
-                            value="science",
-                            test=lambda value, item: self.get_exposure_type(item) != value,
-                            force_unique=False,
-                        ),
-                        Constraint_Single_Science(self.has_science, self.get_exposure_type),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                exposures,
             ]
         )
 
@@ -1012,27 +1028,43 @@ class Asn_Lv2WFSSMIR(
     """
 
     def __init__(self, *args, **kwargs):
+        # WFSS grism or corresponding direct image exposures.
+        wfss_or_direct = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_wfss",
+                ),
+                DMSAttrConstraint(
+                    name="image_exp_type",
+                    sources=["exp_type"],
+                    value="mir_image",
+                    force_reprocess=ListCategory.NONSCIENCE,
+                    only_on_match=True,
+                ),
+            ],
+            reduce=Constraint.any,
+        )
+
+        # Non-science (direct image) or single science (grism) exposures.
+        exposures = Constraint(
+            [
+                SimpleConstraint(
+                    value="science",
+                    test=lambda value, item: self.get_exposure_type(item) != value,
+                    force_unique=False,
+                ),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ],
+            reduce=Constraint.any,
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
                 Constraint_Target(),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            name="exp_type",
-                            sources=["exp_type"],
-                            value="mir_wfss",
-                        ),
-                        DMSAttrConstraint(
-                            name="image_exp_type",
-                            sources=["exp_type"],
-                            value="mir_image",
-                            force_reprocess=ListCategory.NONSCIENCE,
-                            only_on_match=True,
-                        ),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                wfss_or_direct,
                 DMSAttrConstraint(
                     name="instrument",
                     sources=["instrume"],
@@ -1041,17 +1073,7 @@ class Asn_Lv2WFSSMIR(
                     name="detector",
                     sources=["detector"],
                 ),
-                Constraint(
-                    [
-                        SimpleConstraint(
-                            value="science",
-                            test=lambda value, item: self.get_exposure_type(item) != value,
-                            force_unique=False,
-                        ),
-                        Constraint_Single_Science(self.has_science, self.get_exposure_type),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                exposures,
             ]
         )
 
@@ -1073,25 +1095,19 @@ class Asn_Lv2NRSMSA(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
-        self.constraints = Constraint(
+        # NIRSpec MSA science exposures: require exp_type, MSA metafile, and spectral index.
+        msa_sci = Constraint(
             [
-                Constraint_Base(),
-                Constraint_Mode(),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            name="exp_type", sources=["exp_type"], value="nrs_msaspec"
-                        ),
-                        DMSAttrConstraint(sources=["msametfl"]),
-                        DMSAttrConstraint(
-                            name="expspcin",
-                            sources=["expspcin"],
-                        ),
-                    ]
+                DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="nrs_msaspec"),
+                DMSAttrConstraint(sources=["msametfl"]),
+                DMSAttrConstraint(
+                    name="expspcin",
+                    sources=["expspcin"],
                 ),
             ]
         )
+
+        self.constraints = Constraint([Constraint_Base(), Constraint_Mode(), msa_sci])
 
         # Now check and continue initialization.
         super(Asn_Lv2NRSMSA, self).__init__(*args, **kwargs)
@@ -1118,48 +1134,58 @@ class Asn_Lv2NRSFSS(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
+        # Only include exposures on a valid NIRSpec FSS detector optical path.
+        valid_detector = SimpleConstraint(
+            value=True,
+            test=lambda _value, item: nrsfss_valid_detector(item),
+            force_unique=False,
+        )
+
+        # Science exposures are fixed by spectral index, nod count, and subpixel
+        # sampling to prevent other nod positions from being included as science.
+        nod_science = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="expspcin",
+                    sources=["expspcin"],
+                ),
+                DMSAttrConstraint(
+                    name="nods",
+                    sources=["numdthpt"],
+                ),
+                DMSAttrConstraint(
+                    name="subpxpts",
+                    sources=["subpxpns", "subpxpts"],
+                ),
+                SimpleConstraint(
+                    value="science",
+                    test=lambda value, item: self.get_exposure_type(item) == value,
+                    force_unique=False,
+                ),
+            ]
+        )
+
+        # Allow background (non-science nod) exposures freely; science exposures
+        # must match the nod_science constraints above.
+        exposures = Constraint(
+            [
+                SimpleConstraint(
+                    value="science",
+                    test=lambda value, item: self.get_exposure_type(item) != value,
+                    force_unique=False,
+                ),
+                nod_science,
+            ],
+            reduce=Constraint.any,
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
                 Constraint_Mode(),
                 DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="nrs_fixedslit"),
-                SimpleConstraint(
-                    value=True,
-                    test=lambda _value, item: nrsfss_valid_detector(item),
-                    force_unique=False,
-                ),
-                Constraint(
-                    [
-                        SimpleConstraint(
-                            value="science",
-                            test=lambda value, item: self.get_exposure_type(item) != value,
-                            force_unique=False,
-                        ),
-                        Constraint(
-                            [
-                                DMSAttrConstraint(
-                                    name="expspcin",
-                                    sources=["expspcin"],
-                                ),
-                                DMSAttrConstraint(
-                                    name="nods",
-                                    sources=["numdthpt"],
-                                ),
-                                DMSAttrConstraint(
-                                    name="subpxpts",
-                                    sources=["subpxpns", "subpxpts"],
-                                ),
-                                SimpleConstraint(
-                                    value="science",
-                                    test=lambda value, item: self.get_exposure_type(item) == value,
-                                    force_unique=False,
-                                ),
-                            ]
-                        ),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                valid_detector,
+                exposures,
             ]
         )
 
@@ -1225,24 +1251,26 @@ class Asn_Lv2WFSC(DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
+        # Exclude NIRCam LOS jitter observations; those are not valid WFS&C targets.
+        not_los_jitter_nrc = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="dms_note",
+                    sources=["dms_note"],
+                    value="wfsc_los_jitter",
+                ),
+                DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="nrc_image"),
+            ],
+            reduce=Constraint.notall,
+        )
+
         self.constraints = Constraint(
             [
                 Constraint_Base(),
                 Constraint_Image_Science(),
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
                 Constraint_WFSC(),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            name="dms_note",
-                            sources=["dms_note"],
-                            value="wfsc_los_jitter",
-                        ),
-                        DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="nrc_image"),
-                    ],
-                    reduce=Constraint.notall,
-                ),
+                not_los_jitter_nrc,
             ]
         )
 
@@ -1283,6 +1311,38 @@ class Asn_Lv2WFSSParallel(
     """
 
     def __init__(self, *args, **kwargs):
+        # WFSS grism or corresponding direct image exposures (NIRISS or NIRCam).
+        wfss_or_direct = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="nis_wfss|nrc_wfss|mir_wfss",
+                ),
+                DMSAttrConstraint(
+                    name="image_exp_type",
+                    sources=["exp_type"],
+                    value="nis_image|nrc_image|mir_image",
+                    force_reprocess=ListCategory.NONSCIENCE,
+                    only_on_match=True,
+                ),
+            ],
+            reduce=Constraint.any,
+        )
+
+        # Non-science (direct image) or single science (grism) exposures.
+        exposures = Constraint(
+            [
+                SimpleConstraint(
+                    value="science",
+                    test=lambda value, item: self.get_exposure_type(item) != value,
+                    force_unique=False,
+                ),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ],
+            reduce=Constraint.any,
+        )
+
         self.constraints = Constraint(
             [
                 DMSAttrConstraint(
@@ -1290,34 +1350,8 @@ class Asn_Lv2WFSSParallel(
                     sources=["asn_candidate"],
                     value=r"\[\('c\d{4}', 'direct_image'\)\]",
                 ),
-                Constraint(
-                    [
-                        DMSAttrConstraint(
-                            name="exp_type",
-                            sources=["exp_type"],
-                            value="nis_wfss|nrc_wfss|mir_wfss",
-                        ),
-                        DMSAttrConstraint(
-                            name="image_exp_type",
-                            sources=["exp_type"],
-                            value="nis_image|nrc_image|mir_image",
-                            force_reprocess=ListCategory.NONSCIENCE,
-                            only_on_match=True,
-                        ),
-                    ],
-                    reduce=Constraint.any,
-                ),
-                Constraint(
-                    [
-                        SimpleConstraint(
-                            value="science",
-                            test=lambda value, item: self.get_exposure_type(item) != value,
-                            force_unique=False,
-                        ),
-                        Constraint_Single_Science(self.has_science, self.get_exposure_type),
-                    ],
-                    reduce=Constraint.any,
-                ),
+                wfss_or_direct,
+                exposures,
                 Constraint_Target(),
                 DMSAttrConstraint(
                     name="instrument",

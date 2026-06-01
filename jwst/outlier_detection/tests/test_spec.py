@@ -122,8 +122,8 @@ def test_skip_one_exposure_spec():
     # it should skip and return a copy of the input with the status set
     result = step.run(input_models)
 
-    # Step is skipped
-    assert result[0].meta.cal_step.outlier_detection == "SKIPPED"
+    # Step is failed
+    assert result[0].meta.cal_step.outlier_detection == "FAILED"
 
     # Input is not modified
     assert result[0] is not model

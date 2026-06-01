@@ -322,7 +322,7 @@ def test_split_container(tmp_path):
 def test_skip_unsupported_type(caplog):
     model = datamodels.SlitModel()
     result = MasterBackgroundStep.call(model)
-    assert result.meta.cal_step.master_background == "SKIPPED"
+    assert result.meta.cal_step.master_background == "FAILED"
     assert "SlitModel'> cannot be handled" in caplog.text
 
     # Input is not modified
@@ -333,7 +333,7 @@ def test_skip_unsupported_type(caplog):
 def test_skip_unsupported_without_user_bg(caplog):
     model = datamodels.ImageModel()
     result = MasterBackgroundStep.call(model)
-    assert result.meta.cal_step.master_background == "SKIPPED"
+    assert result.meta.cal_step.master_background == "FAILED"
     assert "ImageModel'> cannot be handled without user-supplied" in caplog.text
 
     # Input is not modified

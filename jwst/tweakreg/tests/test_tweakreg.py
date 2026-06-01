@@ -3,10 +3,8 @@ import os
 
 import asdf
 import numpy as np
-import photutils
 import pytest
 from astropy.table import QTable, Table
-from astropy.utils import minversion
 from astropy.utils.data import get_pkg_data_filename
 from astropy.wcs import WCS
 from gwcs.wcstools import grid_from_bounding_box
@@ -22,17 +20,12 @@ BKG_LEVEL = 0.001
 N_EXAMPLE_SOURCES = 21
 N_CUSTOM_SOURCES = 15
 REFCAT = "GAIADR3"
-PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
 
 # The tweakreg catalog output always uses 'xcentroid'/'ycentroid',
 # but _rename_catalog_columns and user-supplied catalogs may use
 # either the old or new photutils column names.
-if PHOTUTILS_GE_3:
-    X_NAME = "x_centroid"
-    Y_NAME = "y_centroid"
-else:
-    X_NAME = "xcentroid"
-    Y_NAME = "ycentroid"
+X_NAME = "x_centroid"
+Y_NAME = "y_centroid"
 
 
 @pytest.fixture
@@ -208,10 +201,10 @@ def test_src_confusion_pars(example_input, alignment_type):
     step = tweakreg_step.TweakRegStep(**pars)
     result = step.run(example_input)
 
-    # check that step was skipped
+    # check that step was failed
     with result:
         for model, input_model in zip(result, example_input, strict=True):
-            assert model.meta.cal_step.tweakreg == "SKIPPED"
+            assert model.meta.cal_step.tweakreg == "FAILED"
 
             # Input model is not modified
             assert model is not input_model
@@ -228,10 +221,10 @@ def test_ngroup_1(caplog, example_input):
     result = tweakreg_step.TweakRegStep.call(example_input)
     assert "At least two exposures are required" in caplog.text
 
-    # check that step was skipped
+    # check that step was failed
     with result:
         for model, input_model in zip(result, example_input, strict=True):
-            assert model.meta.cal_step.tweakreg == "SKIPPED"
+            assert model.meta.cal_step.tweakreg == "FAILED"
 
             # Input model is not modified
             assert model is not input_model
@@ -284,8 +277,13 @@ def test_custom_catalog(
         - `use_custom_catalogs` (True/False)
         - a "valid" file passed as `catfile`
     """
+
     example_input[0].meta.group_id = "a"
     example_input[1].meta.group_id = "b"
+    name2group = {
+        example_input[0].meta.filename.split(".")[0]: "a",
+        example_input[1].meta.filename.split(".")[0]: "b",
+    }
 
     # this worked because if use_custom_catalogs was true but
     # catfile was blank tweakreg still uses custom catalogs
@@ -353,19 +351,30 @@ def test_custom_catalog(
 
     step = tweakreg_step.TweakRegStep(**kwargs)
 
-    # patch _construct_wcs_corrector to check the correct catalog was loaded
-    def patched_construct_wcs_corrector(wcs, wcsinfo, catalog, group_id, _seen=[]):
-        # we don't need to continue
-        if group_id == "a":
-            assert len(catalog) == n_custom_sources
-        elif group_id == "b":
-            assert len(catalog) == N_EXAMPLE_SOURCES
-        _seen.append(wcs)
+    def patched_xyxymatch_call(self, refcat, imcat, _seen=[], **kwargs):
+        # Check that the catalogs passed to xyxymatch are correct
+        catname = imcat.meta["name"]
+        grp_id = name2group[catname]
+        _seen.append(1)
+        if grp_id == "a":
+            assert len(imcat) == n_custom_sources
+        elif grp_id == "b":
+            assert len(imcat) == N_EXAMPLE_SOURCES
+
         if len(_seen) == 2:
             raise ValueError("done testing")
-        return None
 
-    monkeypatch.setattr(twk, "construct_wcs_corrector", patched_construct_wcs_corrector)
+        xyxymatch = twk.XYXYMatch(
+            use2dhist=step.use2dhist,
+            separation=step.separation,
+            tolerance=step.tolerance,
+            searchrad=step.searchrad,
+            xoffset=step.xoffset,
+            yoffset=step.yoffset,
+        )
+        return xyxymatch(refcat, imcat, **kwargs)
+
+    monkeypatch.setattr(twk.XYXYMatch, "__call__", patched_xyxymatch_call)
 
     with pytest.raises(ValueError, match="done testing"):
         step.run(str(asn_path))

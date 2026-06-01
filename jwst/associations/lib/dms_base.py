@@ -10,6 +10,9 @@ from jwst.associations.lib.diff import MultiDiffError, compare_asns
 from jwst.associations.lib.utilities import getattr_from_list
 
 __all__ = [
+    "Constraint_NotBkgd",
+    "Constraint_NotBkgdOrTSO",
+    "Constraint_NotTSO",
     "Constraint_TargetAcq",
     "Constraint_TSO",
     "Constraint_WFSC",
@@ -1008,6 +1011,39 @@ class Constraint_TSO(Constraint):
                 ),
             ],
             name="is_tso",
+        )
+
+
+class Constraint_NotBkgd(Constraint):
+    """Match on non-background-target observations."""
+
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
+        super(Constraint_NotBkgd, self).__init__(
+            [DMSAttrConstraint(name="bkgdtarg", sources=["bkgdtarg"], force_unique=False)],
+            reduce=Constraint.notany,
+        )
+
+
+class Constraint_NotBkgdOrTSO(Constraint):
+    """Match on non-background, non-TSO observations."""
+
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
+        super(Constraint_NotBkgdOrTSO, self).__init__(
+            [
+                DMSAttrConstraint(name="bkgdtarg", sources=["bkgdtarg"]),
+                Constraint_TSO(),
+            ],
+            reduce=Constraint.notany,
+        )
+
+
+class Constraint_NotTSO(Constraint):
+    """Match on non-Time-Series Observations."""
+
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
+        super(Constraint_NotTSO, self).__init__(
+            [Constraint_TSO()],
+            reduce=Constraint.notany,
         )
 
 

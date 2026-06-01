@@ -82,25 +82,6 @@ class WithDefaultsStep(Step):
         return input_data
 
 
-class MakeListStep(Step):
-    """Make a list of all arguments and parameters."""
-
-    spec = """
-    par1 = float() # Control the frobulization
-    par2 = string() # Reticulate the splines
-    par3 = boolean(default=False) # Does it blend?
-    """
-
-    def process(self, a=None, b=None):  # noqa: D102
-        log.info("Arguments a=%s b=%s", a, b)
-        log.info("Parameters par1=%s, par2=%s, par3=%s", self.par1, self.par2, self.par3)
-
-        result = [item for item in [a, b, self.par1, self.par2, self.par3] if item is not None]
-
-        log.info("The list is %s", result)
-        return result
-
-
 class OptionalRefTypeStep(Step):
     """Do-nothing step that demonstrates optionally omitting a reference file."""
 
@@ -258,21 +239,6 @@ class SavePipeline(Pipeline):
         r = self.savestep.run(r)
 
         return r
-
-
-class MakeListPipeline(Pipeline):
-    """A pipeline that calls MakeListStep."""
-
-    spec = """
-    par1 = string(default='Name the atomizer') # Control the frobulization
-    """
-
-    step_defs = {
-        "make_list": MakeListStep,
-    }
-
-    def process(self, *args):  # noqa: D102
-        return self.make_list.run(*args)
 
 
 class CalLogsStep(Step):
