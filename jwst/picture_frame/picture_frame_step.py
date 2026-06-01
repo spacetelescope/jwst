@@ -1,3 +1,5 @@
+"""Correct NIRSpec ramp or rate data for thermal effects."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -34,7 +36,7 @@ class PictureFrameStep(Step):
         regions, then iteratively sigma-clipping.  Then, the median levels are computed
         from background data in a central region and from the edges of each group image.
         These levels are used to scale and offset the correction image in the
-        ``pictureframe`` reference file, then the scaled image is subtracted from the
+        PICTUREFRAME reference file, then the scaled image is subtracted from the
         input data in each group.
 
         Input data is expected to be a NIRSpec FULL frame ramp file (RampModel),
@@ -47,16 +49,16 @@ class PictureFrameStep(Step):
 
         Parameters
         ----------
-        input_data : str or `~stdatamodels.jwst.datamodels.RampModel` \
-                     or `~stdatamodels.jwst.datamodels.ImageModel` \
-                     or `~stdatamodels.jwst.datamodels.CubeModel`
+        input_data : str, `~stdatamodels.jwst.datamodels.RampModel`, \
+                     `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                     `~stdatamodels.jwst.datamodels.CubeModel`
             Filename or input datamodel to be corrected. Must be NIRSpec full-frame.
 
         Returns
         -------
-        output_model : `~stdatamodels.jwst.datamodels.RampModel` \
-                       or `~stdatamodels.jwst.datamodels.ImageModel` \
-                       or `~stdatamodels.jwst.datamodels.CubeModel`
+        output_model : `~stdatamodels.jwst.datamodels.RampModel`, \
+                       `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                       `~stdatamodels.jwst.datamodels.CubeModel`
             The corrected datamodel, matching the type of the input.
         """
         # Open the input data model

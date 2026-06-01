@@ -1,0 +1,1 @@
+Numpy >= 2.0, Astropy >= 6.1.4, and Photutils >= 3.0 are now required.

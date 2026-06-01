@@ -10,7 +10,7 @@ from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 
 @pytest.mark.bigdata
-def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
+def test_flat_field_step_user_supplied_flat_nrs_mos(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
     basename = "jw01345066001_05101_00001_nrs1"
     output_file = f"{basename}_flat_from_user_file.fits"

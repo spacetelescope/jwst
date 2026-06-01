@@ -1,4 +1,4 @@
-"""Regression tests for NIRSpec trace modeling."""
+"""Regression tests for NIRSpec IFU trace modeling."""
 
 import os
 

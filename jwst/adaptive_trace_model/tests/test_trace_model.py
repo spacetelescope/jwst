@@ -14,6 +14,26 @@ def nrs_slit_model():
 
 
 @pytest.fixture(scope="module")
+def fit_region_input_no_source_noisy_edge():
+    with helpers.nirspec_slit_model() as model:
+        flux = model.slits[0].data
+        wcs = model.slits[0].meta.wcs
+        region_map = (~np.isnan(model.slits[0].wavelength)).astype(int)
+
+    x, y = np.meshgrid(np.arange(flux.shape[1]), np.arange(flux.shape[0]))
+    _, alpha, _ = wcs.transform("detector", "slit_frame", x, y)
+    err = flux / 2  # for SNR=2 everywhere
+
+    # Add noisy edges
+    flux[alpha < -0.5] = 15
+    flux[alpha > 0.5] = -15
+    err[alpha < -0.5] = 30
+    err[alpha > 0.5] = 30
+
+    return flux, err, alpha, region_map
+
+
+@pytest.fixture(scope="module")
 def fit_2d_spline_input(nrs_slit_model):
     slit = nrs_slit_model.slits[0]
     flux = slit.data
@@ -86,53 +106,263 @@ def test_fit_2d_spline_trace_none(monkeypatch, fit_2d_spline_input):
     assert mock_fit.call_count == 2 * flux.shape[1]
 
 
+def test_crossdisp_profile(fit_2d_spline_input):
+    slit, flux, alpha = fit_2d_spline_input
+    err = flux * 0.01
+
+    alpha_xdisp, flux_xdisp, err_xdisp, snr_xdisp = tm._crossdisp_profile(flux, err, alpha)
+    np.testing.assert_allclose(alpha_xdisp.min(), np.nanmin(alpha))
+    np.testing.assert_allclose(alpha_xdisp.max(), np.nanmax(alpha), atol=0.016)
+    for xdisp in [flux_xdisp, err_xdisp, snr_xdisp]:
+        assert xdisp.shape == alpha_xdisp.shape
+    np.testing.assert_allclose(snr_xdisp, 100)
+
+
+def test_crossdisp_profile_no_error(fit_2d_spline_input):
+    slit, flux, alpha = fit_2d_spline_input
+    err = np.zeros_like(flux)
+
+    profile = tm._crossdisp_profile(flux, err, alpha)
+
+    # Profile is all None if no errors provided
+    for xdisp in profile:
+        assert xdisp is None
+
+
+def test_trim_edges(fit_2d_spline_input):
+    slit, flux, alpha = fit_2d_spline_input
+    err = flux * 0.01
+    alpha_xdisp, _, err_xdisp, snr_xdisp = tm._crossdisp_profile(flux, err, alpha)
+
+    flux_copy = flux.copy()
+    tm._trim_edges(flux_copy, alpha, alpha_xdisp, err_xdisp, snr_xdisp)
+
+    # no change for clean edges
+    np.testing.assert_allclose(flux_copy, flux)
+
+    # mark edges bad: SNR low, error high
+    err_xdisp[:4] = 1000
+    err_xdisp[-4:] = 1000
+    snr_xdisp[:4] = 4
+    snr_xdisp[-4:] = 4
+    tm._trim_edges(flux_copy, alpha, alpha_xdisp, err_xdisp, snr_xdisp)
+
+    # each column now has a few NaNs at top and bottom edge of slit
+    assert np.sum(np.isnan(flux)) == 0
+    assert np.allclose(np.sum(np.isnan(flux_copy), axis=0), 3, atol=1)
+
+
+def test_trim_edges_all_invalid(fit_2d_spline_input):
+    slit, flux, alpha = fit_2d_spline_input
+    err = flux * 0.01
+    alpha_xdisp, _, err_xdisp, snr_xdisp = tm._crossdisp_profile(flux, err, alpha)
+
+    # all invalid snr
+    snr_xdisp[:] = np.nan
+    flux_copy = flux.copy()
+    tm._trim_edges(flux_copy, alpha, alpha_xdisp, err_xdisp, snr_xdisp)
+
+    # no change
+    np.testing.assert_allclose(flux_copy, flux)
+
+
+def test_threshold_test():
+    flux_xdisp = [1, 2, 3, np.nan]
+    snr_xdisp = [4, 5, 6, np.nan]
+    regnum = 1
+    peak_threshold = {1: 2}
+    snr_thresold = 5
+    assert tm._threshold_test(flux_xdisp, snr_xdisp, regnum, None, None)
+    assert tm._threshold_test(flux_xdisp, snr_xdisp, regnum, peak_threshold, None)
+    assert tm._threshold_test(flux_xdisp, snr_xdisp, regnum, None, snr_thresold)
+    assert tm._threshold_test(flux_xdisp, snr_xdisp, regnum, peak_threshold, snr_thresold)
+    assert not tm._threshold_test(flux_xdisp, snr_xdisp, regnum, None, 6)
+    assert not tm._threshold_test(flux_xdisp, snr_xdisp, regnum, {1: 3}, None)
+    assert not tm._threshold_test(flux_xdisp, snr_xdisp, regnum, {1: 3}, 6)
+
+
+def test_fit_one_region_below_threshold(caplog, fit_region_input_no_source_noisy_edge):
+    flux, err, alpha, region_map = fit_region_input_no_source_noisy_edge
+    regnum = 1
+    peak_threshold = None
+
+    # SNR threshold below all signal: expect no splines fit
+    snr_threshold = 3
+    splines = tm._fit_one_region(
+        flux, err, alpha, region_map, regnum, peak_threshold, snr_threshold
+    )
+    assert len(splines) == 0
+
+    # Peak threshold above edge noise but below real signal: expect no splines fit,
+    # since the edges are trimmed
+    peak_threshold = {1: 10}
+    snr_threshold = None
+    splines = tm._fit_one_region(
+        flux, err, alpha, region_map, regnum, peak_threshold, snr_threshold
+    )
+    assert len(splines) == 0
+
+
 @pytest.mark.parametrize(
-    "detector,expected",
+    "mode, detector, slit, expected",
     [
         (
+            "NRS_IFU",
             "NRS1",
+            None,
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                "require_ngood": 15,
-                "spline_bkpt": 68,
                 "space_ratio": 1.6,
+                "sigma_low": 2.5,
+                "sigma_high": 2.5,
+                "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 2.0,
+                "auto_ngood_factor": 0.5,
             },
         ),
         (
+            "NRS_IFU",
             "NRS2",
+            None,
             {
                 "lrange": 50,
                 "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
-                "require_ngood": 15,
-                "spline_bkpt": 68,
                 "space_ratio": 1.6,
+                "sigma_low": 2.5,
+                "sigma_high": 2.5,
+                "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 2.0,
+                "auto_ngood_factor": 0.5,
             },
         ),
         (
+            "NRS_SLIT",
+            "NRS2",
+            None,
+            {
+                "lrange": 50,
+                "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+                "space_ratio": 1.6,
+                "sigma_low": 2.5,
+                "sigma_high": 2.5,
+                "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 2.0,
+                "auto_ngood_factor": 0.5,
+            },
+        ),
+        (
+            "NRS_SLIT",
+            "NRS1",
+            "PRISM",
+            {
+                "lrange": 10,
+                "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "space_ratio": 1.6,
+                "sigma_low": 2.5,
+                "sigma_high": 2.5,
+                "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 1.0,
+                "auto_ngood_factor": 0.25,
+            },
+        ),
+        (
+            "NRS_MOS",
+            "NRS1",
+            None,
+            {
+                "lrange": 50,
+                "col_index": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "space_ratio": 1.6,
+                "sigma_low": 2.5,
+                "sigma_high": 2.5,
+                "fit_iter": 3,
+                "spline_bkpt": None,
+                "require_ngood": None,
+                "auto_bkpt_factor": 2.0,
+                "auto_ngood_factor": 0.5,
+            },
+        ),
+        (
+            "MIR_MRS",
             "MIRIFUSHORT",
+            None,
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
-                "require_ngood": 8,
-                "spline_bkpt": 36,
                 "space_ratio": 1.2,
+                "sigma_low": 2.5,
+                "sigma_high": 2.5,
+                "fit_iter": 3,
+                "spline_bkpt": 36,
+                "require_ngood": 8,
+                "auto_bkpt_factor": None,
+                "auto_ngood_factor": None,
             },
         ),
         (
+            "MIR_MRS",
             "MIRIFULONG",
+            None,
             {
                 "lrange": 50,
                 "col_index": [0, 1, 2, 3, 4, 5, 9, 8, 7, 6],
-                "require_ngood": 8,
-                "spline_bkpt": 36,
                 "space_ratio": 1.2,
+                "sigma_low": 2.5,
+                "sigma_high": 2.5,
+                "fit_iter": 3,
+                "spline_bkpt": 36,
+                "require_ngood": 8,
+                "auto_bkpt_factor": None,
+                "auto_ngood_factor": None,
+            },
+        ),
+        (
+            "MIR_LRS_SLIT",
+            "MIRIMAGE",
+            None,
+            {
+                "lrange": 5,
+                "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+                "space_ratio": 1.2,
+                "sigma_low": 3.0,
+                "sigma_high": 3.0,
+                "fit_iter": 3,
+                "spline_bkpt": 40,
+                "require_ngood": 8,
+                "auto_bkpt_factor": None,
+                "auto_ngood_factor": None,
+            },
+        ),
+        (
+            "MIR_LRS_SLITLESS",
+            "MIRIMAGE",
+            None,
+            {
+                "lrange": 5,
+                "col_index": [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+                "space_ratio": 1.2,
+                "sigma_low": 3.0,
+                "sigma_high": 3.0,
+                "fit_iter": 2,
+                "spline_bkpt": 60,
+                "require_ngood": 8,
+                "auto_bkpt_factor": None,
+                "auto_ngood_factor": None,
             },
         ),
     ],
 )
-def test_set_fit_kwargs(detector, expected):
-    fit_kwargs = tm._set_fit_kwargs(detector, 10)
+def test_set_fit_kwargs(mode, detector, slit, expected):
+    fit_kwargs = tm._set_fit_kwargs(mode, detector, slit, 10)
     assert list(fit_kwargs.keys()) == list(expected.keys())
     for key in expected:
         if key == "col_index":
@@ -143,44 +373,49 @@ def test_set_fit_kwargs(detector, expected):
 
 def test_set_fit_kwargs_error():
     with pytest.raises(ValueError, match="Unknown detector"):
-        tm._set_fit_kwargs("NIS", 10)
+        tm._set_fit_kwargs("NRS_SLIT", "NIS", None, 10)
 
 
 @pytest.mark.parametrize(
-    "detector,expected",
+    "mode, detector,expected",
     [
         (
+            "NRS_IFU",
             "NRS1",
-            {
-                "pad": 2,
-                "trim_ends": True,
-            },
+            {"pad": 2, "trim_ends": True, "require_ngood": 3},
         ),
         (
+            "NRS_SLIT",
+            "NRS1",
+            {"pad": 1, "trim_ends": True, "require_ngood": 3},
+        ),
+        (
+            "MIR_MRS",
             "MIRIFUSHORT",
-            {
-                "pad": 3,
-                "trim_ends": False,
-            },
+            {"pad": 3, "trim_ends": False, "require_ngood": 3},
         ),
     ],
 )
-def test_set_oversample_kwargs(detector, expected):
-    oversample_kwargs = tm._set_oversample_kwargs(detector)
+def test_set_oversample_kwargs(mode, detector, expected):
+    oversample_kwargs = tm._set_oversample_kwargs(mode, detector)
     assert oversample_kwargs == expected
 
 
 def test_set_oversample_kwargs_error():
     with pytest.raises(ValueError, match="Unknown detector"):
-        tm._set_oversample_kwargs("NIS")
+        tm._set_oversample_kwargs("NRS_SLIT", "NIS")
 
 
-@pytest.mark.parametrize(
-    "detector,message",
-    [("NRS1", "Unsupported mode"), ("MIRIFULONG", "Unsupported mode"), ("NIS", "Unknown detector")],
-)
-def test_fit_and_oversample_unsupported_model(detector, message):
+def test_fit_and_oversample_unknown_detector():
     model = ImageModel((10, 10))
-    model.meta.instrument.detector = detector
-    with pytest.raises(ValueError, match=message):
+    model.meta.instrument.detector = "NIS"
+    with pytest.raises(ValueError, match="Unknown detector"):
+        tm.fit_and_oversample(model)
+
+
+def test_fit_and_oversample_unsupported_exptype():
+    model = ImageModel((10, 10))
+    model.meta.exposure.type = "MIR_WFSS"
+    model.meta.instrument.detector = "MIRIMAGE"
+    with pytest.raises(ValueError, match="MIRI WFSS is not supported"):
         tm.fit_and_oversample(model)

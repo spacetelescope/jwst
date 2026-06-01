@@ -1,6 +1,6 @@
 .. _mrsxartcorr_reffile:
 
-MRSXARTCORR reference file
+MRSXARTCORR Reference File
 --------------------------
 
 :REFTYPE: MRSXARTCORR
@@ -20,15 +20,15 @@ the following keywords are *required* in MRSXARTCORR reference files,
 because they are used as CRDS selectors
 (see :ref:`mrsxartcorr_selectors`):
 
-=========  ==============================
+=========  ========================
 Keyword    Data Model Name
-=========  ==============================
+=========  ========================
 EXP_TYPE   model.meta.exposure.type
-=========  ==============================
+=========  ========================
 
 MIRI Reference File Format
 ++++++++++++++++++++++++++
-The MIRI MRSXARTCORR reference files are FITS format, with  12  BINTABLE extensions.
+The MIRI MRSXARTCORR reference files are FITS format, with 12 BINTABLE extensions.
 The FITS primary data array is assumed to be empty.
 The format and content of the MIRI MRSXARTCORR reference file
 

@@ -1,3 +1,5 @@
+"""Fit ramps creating an ImageModel and CubeModel from RampModel."""
+
 import logging
 
 import numpy as np
@@ -24,19 +26,19 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model):
 
     Parameters
     ----------
-    model : data model
-        Input data model, assumed to be of type RampModel.
-    readnoise_model : instance of data Model
+    model : `~stdatamodels.jwst.datamodels.RampModel`
+        Input data model.
+    readnoise_model : `~stdatamodels.jwst.datamodels.ReadnoiseModel`
         Readnoise for all pixels.
-    gain_model : instance of gain Model
+    gain_model : `~stdatamodels.jwst.datamodels.GainModel`
         Gain for all pixels.
 
     Returns
     -------
-    readnoise_2d : float, 2D array
-        Readnoise subarray
-    gain_2d : float, 2D array
-        Gain subarray
+    readnoise_2d : ndarray
+        Readnoise 2D subarray
+    gain_2d : ndarray
+        Gain 2D subarray
     """
     if reffile_utils.ref_matches_sci(model, gain_model):
         gain_2d = gain_model.data
@@ -59,15 +61,15 @@ def create_image_model(input_model, image_info):
 
     Parameters
     ----------
-    input_model : RampModel
-        Input RampModel for which the output ImageModel is created.
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Input ramp model for which the output image model is created.
     image_info : tuple
-        The ramp fitting arrays needed for the ImageModel.
+        The ramp fitting arrays needed for the image model.
 
     Returns
     -------
-    out_model : ImageModel
-        The output ImageModel to be returned from the ramp fit step.
+    out_model : `~stdatamodels.jwst.datamodels.ImageModel`
+        The output image model to be returned from the ramp_fit step.
     """
     # Create output datamodel
     out_model = datamodels.ImageModel(image_info["slope"].shape)
@@ -91,19 +93,19 @@ def create_integration_model(input_model, integ_info, int_times, int_times_strip
 
     Parameters
     ----------
-    input_model : RampModel
-        Input RampModel for which the output CubeModel is created.
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Input ramp model for which the output cube model is created.
     integ_info : tuple
-        The ramp fitting arrays needed for the CubeModel for each integration.
-    int_times : astropy.io.fits.fitsrec.FITS_rec or None
+        The ramp fitting arrays needed for the cube model for each integration.
+    int_times : `~astropy.io.fits.FITS_rec` or None
         Integration times.
-    int_times_stripe : astropy.io.fits.fitsrec.FITS_rec or None
+    int_times_stripe : `~astropy.io.fits.FITS_rec` or None
         Integration times table for superstripe data.
 
     Returns
     -------
-    int_model : CubeModel
-        The output CubeModel to be returned from the ramp fit step.
+    int_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        The output cube model to be returned from the ramp_fit step.
     """
     # Create output datamodel
     int_model = datamodels.CubeModel(integ_info["slope"].shape)
@@ -130,15 +132,15 @@ def create_optional_results_model(input_model, opt_info):
 
     Parameters
     ----------
-    input_model : RampModel
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
         The input ramp model used to create the optional results product.
     opt_info : tuple
-        The ramp fitting arrays needed for the RampFitOutputModel.
+        The ramp fitting arrays needed for the output model.
 
     Returns
     -------
-    opt_model : RampFitOutputModel
-        The optional RampFitOutputModel to be returned from the ramp fit step.
+    opt_model : `~stdatamodels.jwst.datamodels.RampFitOutputModel`
+        The optional output model to be returned from the ramp_fit step.
     """
     opt_model = datamodels.RampFitOutputModel(
         slope=opt_info["slope"],
@@ -189,7 +191,7 @@ class RampFitStep(Step):
 
         Returns
         -------
-        out_model :  `~stdatamodels.jwst.datamodels.ImageModel`
+        out_model : `~stdatamodels.jwst.datamodels.ImageModel`
             The output 2-D image model with the fit ramps.
 
         int_model : `~stdatamodels.jwst.datamodels.CubeModel`
@@ -314,7 +316,7 @@ class RampFitStep(Step):
 
 def set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags):
     """
-    Set the groupdq flags based on the values of firstgroup, lastgroup.
+    Set the groupdq flags based on the values of firstgroup and lastgroup.
 
     Parameters
     ----------

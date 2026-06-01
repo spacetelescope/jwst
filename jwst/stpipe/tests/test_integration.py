@@ -1,23 +1,7 @@
-from stpipe.utilities import import_class
-
 import jwst.pipeline
 import jwst.step
 from jwst.stpipe import Pipeline, Step
-from jwst.stpipe.integration import get_steps
 from jwst.stpipe.utilities import NON_STEPS
-
-
-def test_get_steps():
-    tuples = get_steps()
-
-    assert {t[0].split(".")[-1] for t in tuples} == set(jwst.step.__all__ + jwst.pipeline.__all__)
-
-    for class_name, class_alias, is_pipeline in tuples:
-        step_class = import_class(class_name)
-        assert issubclass(step_class, Step)
-        assert step_class.class_alias == class_alias
-        if is_pipeline:
-            assert issubclass(step_class, Pipeline)
 
 
 def _get_subclass_names(class_, ignore=None, ignore_tests=True):

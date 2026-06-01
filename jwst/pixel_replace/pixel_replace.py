@@ -10,7 +10,7 @@ from jwst.assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
 
-__all__ = ["PixelReplacement"]
+__all__ = ["PixelReplaceArrays", "PixelReplacement"]
 
 
 @dataclass
@@ -22,33 +22,30 @@ class PixelReplaceArrays:
     `~stdatamodels.jwst.datamodels.JwstDataModel`.
     This avoids the overhead of constructing intermediate DataModel objects,
     which was slowing runtime for TSO data with thousands of integrations,
-    and provides a consistent interface for mingrad and fit_profile.
-
-    Attributes
-    ----------
-    data : ndarray
-        Science array.
-    dq : ndarray
-        Data quality array.
-    err : ndarray
-        Total error array.
-    var_poisson : ndarray or None
-        Poisson variance array.
-    var_rnoise : ndarray or None
-        Read-noise variance array.
-    var_flat : ndarray or None
-        Flat-field variance array.
-    dispersion_direction : int
-        Dispersion direction.
+    and provides a consistent interface for :meth:`PixelReplacement.mingrad`
+    and :meth:`PixelReplacement.fit_profile`.
     """
 
     data: np.ndarray
+    """Science array."""
+
     dq: np.ndarray
+    """Data quality array."""
+
     err: np.ndarray
+    """Total error array."""
+
     var_poisson: np.ndarray | None
+    """Poisson variance array."""
+
     var_rnoise: np.ndarray | None
+    """Read-noise variance array."""
+
     var_flat: np.ndarray | None
+    """Flat-field variance array."""
+
     dispersion_direction: int
+    """Dispersion direction."""
 
 
 class PixelReplacement:
@@ -59,6 +56,15 @@ class PixelReplacement:
     method for pixel replacement, and executing each step. This class
     should provide modularization to allow for multiple options and possible
     future reference files.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Datamodel with bad pixels to replace. Updated in-place.
+
+    **pars
+        Optional parameters to modify how pixel replacement
+        will execute.
     """
 
     # Shortcuts for DQ Flags
@@ -72,18 +78,6 @@ class PixelReplacement:
     LOG_SLICE = ["column", "row"]
 
     def __init__(self, input_model, **pars):
-        """
-        Initialize the class with input data model.
-
-        Parameters
-        ----------
-        input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
-            Datamodel with bad pixels to replace. Updated in place.
-
-        **pars : dict, optional
-            Optional parameters to modify how pixel replacement
-            will execute.
-        """
         self.input = input_model
         self.pars = {}
         self.pars.update(pars)
@@ -131,7 +125,8 @@ class PixelReplacement:
         """
         Unpack model and apply pixel replacement algorithm.
 
-        Process the input DataModel, unpack any model that holds
+        Process the input `~stdatamodels.jwst.datamodels.JwstDataModel`,
+        unpack any model that holds
         more than one 2D spectrum, then apply selected algorithm
         to each 2D spectrum in input.
         """
@@ -315,14 +310,14 @@ class PixelReplacement:
 
         Parameters
         ----------
-        arrays : PixelReplaceArrays
+        arrays : `PixelReplaceArrays`
             Pixel arrays and dispersion direction for the 2D spectrum to process.
             Arrays are modified in place.
 
         Returns
         -------
-        arrays : PixelReplaceArrays
-            The same PixelReplaceArrays with bad pixels now flagged with FLUX_ESTIMATED
+        arrays : `PixelReplaceArrays`
+            The input with bad pixels now flagged with FLUX_ESTIMATED
             and holding a flux value estimated from the spatial profile.
         """
         # np.nanmedian() entry full of NaN values would produce a numpy
@@ -536,12 +531,13 @@ class PixelReplacement:
         arr : ndarray
             2-D input array.
         yindx, xindx : ndarray
-            1D arrays, each length N, of row/column indices of the bad pixels.
+            1-D arrays, each length N, of row/column indices of the bad pixels.
 
         Returns
         -------
-        ndarray, shape (2, N)
-            Interpolations in the horizontal (0th index) and vertical (1st index) directions.
+        ndarray
+            Interpolations with shape of ``(2, N)`` in the horizontal (0th index)
+            and vertical (1st index) directions.
         """
         horiz = (arr[yindx, xindx - 1] + arr[yindx, xindx + 1]) / 2.0
         vert = (arr[yindx - 1, xindx] + arr[yindx + 1, xindx]) / 2.0
@@ -566,14 +562,14 @@ class PixelReplacement:
 
         Parameters
         ----------
-        arrays : PixelReplaceArrays
+        arrays : `PixelReplaceArrays`
             Pixel arrays and dispersion direction for the 2D spectrum to process.
-            Arrays are modified in place.
+            Arrays are modified in-place.
 
         Returns
         -------
-        arrays : PixelReplaceArrays
-            The same PixelReplaceArrays with flagged bad pixels now flagged with FLUX_ESTIMATED
+        arrays : `PixelReplaceArrays`
+            The input with flagged bad pixels now flagged with FLUX_ESTIMATED
             and holding a flux value estimated from adjacent pixels.
         """
         # np.nanmedian() entry full of NaN values would produce a numpy
@@ -673,8 +669,10 @@ class PixelReplacement:
         Parameters
         ----------
         dispaxis : int
-            Using module-defined HORIZONTAL=1,
-            VERTICAL=2
+            Using module-defined:
+
+            * 1 = HORIZONTAL
+            * 2 = VERTICAL
 
         index : int or list
             Index or indices of cross-dispersion
@@ -682,8 +680,8 @@ class PixelReplacement:
 
         Returns
         -------
-        Tuple
-            Slice constructed using np.s_
+        tuple
+            Slice constructed using numpy
         """
         if dispaxis == self.HORIZONTAL:
             return np.s_[:, index]
@@ -694,24 +692,22 @@ class PixelReplacement:
 
     def profile_mse(self, scale, median, current):
         """
-        Calculate mean squared error of fitted profile.
+        Calculate mean-squared error of fitted profile.
 
         Parameters
         ----------
         scale : float
             Initial estimate of scale factor to bring
             normalized median profile up to current profile
-        median : array
-            Median profile constructed from neighboring
-            profile slices
-        current : array
-            Current profile with bad pixels to be
-            replaced
+        median : ndarray
+            Median profile constructed from neighboring profile slices
+        current : ndarray
+            Current profile with bad pixels to be replaced
 
         Returns
         -------
         float
-            Mean squared error for minimization purposes
+            Mean-squared error for minimization purposes
         """
         return np.nansum((current - (median * scale)) ** 2.0) / (
             len(median) - np.count_nonzero(np.isnan(current))

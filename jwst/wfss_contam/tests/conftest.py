@@ -1,18 +1,17 @@
+import types
+
 import numpy as np
-import photutils
 import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.convolution import convolve
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
-from astropy.utils import minversion
 from photutils.datasets import make_100gaussians_image
 from photutils.segmentation import SourceFinder, make_2dgaussian_kernel
 
 from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs, create_wfss_wcs
 
 DIR_IMAGE = "direct_image.fits"
-PHOTUTILS_GE_3 = minversion(photutils, "2.3.1.dev")
 
 
 @pytest.fixture(scope="module")
@@ -101,10 +100,7 @@ def segmentation_map(direct_image):
     """
     _mean, median, stddev = sigma_clipped_stats(direct_image, sigma=3.0)
     threshold = median + 3 * stddev
-    if PHOTUTILS_GE_3:
-        finder = SourceFinder(n_pixels=10)
-    else:
-        finder = SourceFinder(npixels=10)
+    finder = SourceFinder(n_pixels=10)
     segm = finder(direct_image, threshold)
 
     # turn this into a jwst datamodel
@@ -256,3 +252,19 @@ def photom_ref_model(request):
     """
     fixture_name = getattr(request, "param", "photom_ref_model_niriss")
     return request.getfixturevalue(fixture_name)
+
+
+@pytest.fixture(scope="module")
+def wavelengthrange_ref_model():
+    """
+    Mock WAVELENGTHRANGE reference file object simulating NIRISS order 1.
+
+    Returns
+    -------
+    types.SimpleNamespace
+        Mock class with `order` and `get_wfss_wavelength_range` attributes.
+    """
+    wr = types.SimpleNamespace()
+    wr.order = np.array([1])
+    wr.get_wfss_wavelength_range = lambda _filter_name, orders: {orders[0]: (1.0, 3.0)}
+    return wr
