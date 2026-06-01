@@ -52,7 +52,6 @@ class CubeBuildStep(Step):
 
     reference_file_types = ["cubepar"]
 
-    # ________________________________________________________________________________
     def process(self, input_data):
         """
         Build an IFU cube from overlapping IFU image data.
@@ -326,7 +325,7 @@ class CubeBuildStep(Step):
                 master_table,
                 **pars_cube,
             )
-            # ________________________________________________________________________________
+
             thiscube.check_ifucube()  # basic checks
 
             # Based on channel/subchannel or grating/prism find:
@@ -343,7 +342,7 @@ class CubeBuildStep(Step):
             else:
                 thiscube.determine_cube_parameters()
             thiscube.setup_ifucube_wcs()
-            # _______________________________________________________________________________
+
             # build the IFU Cube
 
             status = 0
