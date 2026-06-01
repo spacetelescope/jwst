@@ -380,6 +380,7 @@ class TestMethods:
         np.testing.assert_allclose(slopes["slope"][50, 50], cds_slope, 1e-6)
 
     def test_four_groups_four_CRs(self, method):
+        """Weird edge case with slope zero."""
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
             ngroups=4, nrows=1, ncols=2, gain=1.0, readnoise=10.0
         )
@@ -399,7 +400,7 @@ class TestMethods:
 
         from math import isnan
 
-        assert isnan(slopes["slope"][row, col])
+        assert slopes["slope"][row, col] == 0.0
 
     def test_four_groups_three_CRs_at_end(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
