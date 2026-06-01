@@ -113,3 +113,29 @@ def test_slit_exptype(mock_input):
         model.close()
     for model in outputs.values():
         model.close()
+
+
+def test_empty_source_name(mock_input):
+    """Test for source name handling."""
+
+    container = ModelContainer(mock_input)
+
+    # Set an empty source name in each slit
+    for model in container:
+        for slit in model.slits:
+            slit.source_name = ""
+
+    # Make the source-based containers
+    outputs = multislit_to_container(container)
+
+    # Check that output is still sorted by source id, not the empty source name
+    assert len(container) == 3
+    assert len(outputs) == 5
+    assert list(outputs.keys()) == [str(n) for n in range(1, 6)]
+
+    # Closeout
+    container.close()
+    for model in mock_input:
+        model.close()
+    for model in outputs.values():
+        model.close()
