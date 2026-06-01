@@ -5,6 +5,7 @@ from astropy.io.fits import FITS_rec
 from astropy.table import vstack
 from stdatamodels.jwst import datamodels
 
+from jwst.adaptive_trace_model import adaptive_trace_model_step
 from jwst.extract_1d import extract_1d_step
 from jwst.lib.pipe_utils import is_tso
 from jwst.outlier_detection import outlier_detection_step
@@ -23,8 +24,8 @@ class Tso3Pipeline(Pipeline):
     """
     Apply level 3 processing to TSO-mode data from any JWST instrument.
 
-    Included steps are: outlier_detection, tso_photometry, pixel_replace,
-    extract_1d, photom, and white_light.
+    Included steps are: outlier_detection, tso_photometry, adaptive_trace_model,
+    pixel_replace, extract_1d, photom, and white_light.
     """
 
     class_alias = "calwebb_tso3"
@@ -36,6 +37,7 @@ class Tso3Pipeline(Pipeline):
     step_defs = {
         "outlier_detection": outlier_detection_step.OutlierDetectionStep,
         "tso_photometry": tso_photometry_step.TSOPhotometryStep,
+        "adaptive_trace_model": adaptive_trace_model_step.AdaptiveTraceModelStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "extract_1d": extract_1d_step.Extract1dStep,
         "photom": photom_step.PhotomStep,
@@ -141,11 +143,17 @@ class Tso3Pipeline(Pipeline):
             x1d_result.meta.target.source_type = None
 
             # For each exposure in the TSO...
+            atm_status = []
+            pr_status = []
             for cube in input_models:
-                # interpolate pixels that have a NaN value or are flagged
-                # as DO_NOT_USE or NON_SCIENCE.
+                # model the spectral trace
+                cube = self.adaptive_trace_model.run(cube)
+                atm_status.append(cube.meta.cal_step.adaptive_trace_model)
+
+                # interpolate pixels that have a NaN value
                 cube = self.pixel_replace.run(cube)
-                state = cube.meta.cal_step.pixel_replace
+                pr_status.append(cube.meta.cal_step.pixel_replace)
+
                 # Process spectroscopic TSO data
                 # extract 1D
                 log.info("Extracting 1-D spectra ...")
@@ -181,7 +189,6 @@ class Tso3Pipeline(Pipeline):
             x1d_result.meta.asn.table_name = input_models.asn_table_name
 
             # Save the final x1d Multispec model
-            x1d_result.meta.cal_step.pixel_replace = state
             if len(x1d_result.spec) == 0:
                 log.warning("extract_1d step could not be completed for any integrations")
                 log.warning("x1dints products will not be created.")
@@ -189,6 +196,18 @@ class Tso3Pipeline(Pipeline):
                 # Set S_REGION to allow the x1dints file to show up in MAST spatial queries
                 self._populate_tso_spectral_sregion(x1d_result, input_models)
                 self.save_model(x1d_result, suffix="x1dints")
+
+                # Update cal step status for optional steps
+                for step, status in zip(
+                    ("adaptive_trace_model", "pixel_replace"), (atm_status, pr_status), strict=True
+                ):
+                    if any(s == "COMPLETE" for s in status):
+                        summary_status = "COMPLETE"
+                    elif any(s == "FAILED" for s in atm_status):
+                        summary_status = "FAILED"
+                    else:
+                        summary_status = "SKIPPED"
+                    setattr(x1d_result.meta.cal_step, step, summary_status)
 
         # Done with all the inputs
         if input_models is not input_data:
