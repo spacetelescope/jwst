@@ -1,44 +1,45 @@
-import asdf
 import os
+
+import asdf
 import numpy as np
 import pytest
-
+from astropy.io import fits
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.persistence import persistence
 from jwst.persistence.persistence_step import PersistenceStep
 
-from astropy.io import fits
-
 
 def set_up_int_times(nints, ngroups, nrows, ncols):
     """Sets up an int_times table to be used by a test."""
-    cols = fits.ColDefs([
-        fits.Column(name = 'integration_number', format = 'J'),
-        fits.Column(name = 'int_start_MJD_UTC', format = 'D'),
-        fits.Column(name = 'int_mid_MJD_UTC', format = 'D'),
-        fits.Column(name = 'int_end_MJD_UTC', format = 'D'),
-        fits.Column(name = 'int_start_BJD_TDB', format = 'D'),
-        fits.Column(name = 'int_mid_BJD_TDB', format = 'D'),
-        fits.Column(name = 'int_end_BJD_TDB', format = 'D'),
-    ])
+    cols = fits.ColDefs(
+        [
+            fits.Column(name="integration_number", format="J"),
+            fits.Column(name="int_start_MJD_UTC", format="D"),
+            fits.Column(name="int_mid_MJD_UTC", format="D"),
+            fits.Column(name="int_end_MJD_UTC", format="D"),
+            fits.Column(name="int_start_BJD_TDB", format="D"),
+            fits.Column(name="int_mid_BJD_TDB", format="D"),
+            fits.Column(name="int_end_BJD_TDB", format="D"),
+        ]
+    )
 
     int_times = fits.FITS_rec.from_columns(cols, nrows=nints)
-    int_times['integration_number'][:] = np.arange(1, nints + 1, dtype=np.int32)
+    int_times["integration_number"][:] = np.arange(1, nints + 1, dtype=np.int32)
 
     return int_times
 
 
 def test_persistence_int_times(create_sci_model):
-    """Test persitence flag gets set inside of persistence window using int_times table."""
+    """Test persistence flag gets set inside of persistence window using int_times table."""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
 
     model.int_times = set_up_int_times(nints, ngroups, nrows, ncols)
     mjd_start = [59672.64004629629, 59672.64178605069]
-    model.int_times['int_start_MJD_UTC'][:] = np.array(mjd_start)
+    model.int_times["int_start_MJD_UTC"][:] = np.array(mjd_start)
 
     step = PersistenceStep(persistence_time=70)
     res = step.run(model)
@@ -65,7 +66,7 @@ def test_persistence_time_none_keeps_groupdq_unchanged(create_sci_model):
 
 
 def test_persistence_time_nonneg_sec(create_sci_model):
-    """Test persitence flag gets set inside of persistence window using exposure start time"""
+    """Test persistence flag gets set inside of persistence window using exposure start time"""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
@@ -88,7 +89,7 @@ def test_persistence_time_nonneg_sec(create_sci_model):
 
 
 def test_persistence_time_0_sec(create_sci_model):
-    """Test persitence flag gets set inside of persistence window of 0 seconds"""
+    """Test persistence flag gets set inside of persistence window of 0 seconds"""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
@@ -110,7 +111,7 @@ def test_persistence_time_0_sec(create_sci_model):
 
 
 def test_persistence_time_neg_sec(create_sci_model):
-    """Test persitence flag gets set inside of negative persistence window."""
+    """Test persistence flag gets set inside of negative persistence window."""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
@@ -133,7 +134,7 @@ def test_persistence_time_neg_sec(create_sci_model):
 
 
 def test_persistence_time_save_persistence(create_sci_model, tmp_path):
-    """Test persitence flag file gets created."""
+    """Test persistence flag file gets created."""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
@@ -152,7 +153,7 @@ def test_persistence_time_save_persistence(create_sci_model, tmp_path):
     check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
     check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
     check3 = np.array([0, 0, 0, 0, 0, 34, 34], dtype=np.uint8)
-    check4 = np.array([32, 32, 0, 0, 0, 0, 0], dtype=np.uint8)
+
     np.testing.assert_equal(res.groupdq[0, :, 0, 0], check1)
     np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
     np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
@@ -163,7 +164,7 @@ def test_persistence_time_save_persistence(create_sci_model, tmp_path):
 
 
 def test_persistence_time_with_array(create_sci_model, tmp_path):
-    """Test persitence flag gets set using a persistence_array"""
+    """Test persistence flag gets set using a persistence_array"""
     # Setup model
     nints, ngroups, nrows, ncols = 2, 7, 1, 3
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
@@ -172,16 +173,16 @@ def test_persistence_time_with_array(create_sci_model, tmp_path):
 
     # Setup persistence array file
     persistence_time = 70
-    asdf_file = os.path.join(tmp_path,  "persistence_array.asdf")
+    asdf_file = os.path.join(tmp_path, "persistence_array.asdf")
     persistence_array = np.array([[0.0, 0.0, 1648999345.9470801]], dtype=np.float64)
     rows, cols = np.nonzero(persistence_array)
     vals = persistence_array[rows, cols]
     tree = {
-        "filename" : "dummy.fits",
-        "rows" : rows,
-        "cols" : cols,
-        "vals" : vals,
-        "pers_time" : persistence_time,
+        "filename": "dummy.fits",
+        "rows": rows,
+        "cols": cols,
+        "vals": vals,
+        "pers_time": persistence_time,
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(asdf_file)
@@ -214,16 +215,16 @@ def test_persistence_mismatch_persistencetime_guard(create_sci_model, tmp_path):
     # Setup persistence array file
     persistence_time = 70
     persistence_time2 = 80
-    asdf_file = os.path.join(tmp_path,  "persistence_array.asdf")
+    asdf_file = os.path.join(tmp_path, "persistence_array.asdf")
     persistence_array = np.array([[0.0, 0.0, 1648999345.9470801]], dtype=np.float64)
     rows, cols = np.nonzero(persistence_array)
     vals = persistence_array[rows, cols]
     tree = {
-        "filename" : "dummy.fits",
-        "rows" : rows,
-        "cols" : cols,
-        "vals" : vals,
-        "pers_time" : persistence_time,
+        "filename": "dummy.fits",
+        "rows": rows,
+        "cols": cols,
+        "vals": vals,
+        "pers_time": persistence_time,
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(asdf_file)
@@ -232,7 +233,7 @@ def test_persistence_mismatch_persistencetime_guard(create_sci_model, tmp_path):
 
     # Run persistence step
     with pytest.raises(ValueError):
-        res = step.run(model)
+        step.run(model)
 
 
 def test_persistence_backwards_flagging_guard(create_sci_model, tmp_path):
@@ -245,18 +246,18 @@ def test_persistence_backwards_flagging_guard(create_sci_model, tmp_path):
 
     # Setup persistence array file
     persistence_time = 70
-    asdf_file = os.path.join(tmp_path,  "persistence_array.asdf")
+    asdf_file = os.path.join(tmp_path, "persistence_array.asdf")
     # Make entry for [0, 2] too far ahead in the future to guarantee
     # backwards flagging for that pixel.
     persistence_array = np.array([[0.0, 0.0, 1748994345.9470801]], dtype=np.float64)
     rows, cols = np.nonzero(persistence_array)
     vals = persistence_array[rows, cols]
     tree = {
-        "filename" : "dummy.fits",
-        "rows" : rows,
-        "cols" : cols,
-        "vals" : vals,
-        "pers_time" : persistence_time,
+        "filename": "dummy.fits",
+        "rows": rows,
+        "cols": cols,
+        "vals": vals,
+        "pers_time": persistence_time,
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(asdf_file)
@@ -265,11 +266,11 @@ def test_persistence_backwards_flagging_guard(create_sci_model, tmp_path):
 
     # Run persistence step
     with pytest.raises(ValueError):
-        res = step.run(model)
-            
+        step.run(model)
+
 
 def test_persistence_time_dnu(create_sci_model):
-    """Test persitence flag gets set with DO_NOT_USE"""
+    """Test persistence flag gets set with DO_NOT_USE"""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
@@ -289,9 +290,7 @@ def test_persistence_time_dnu(create_sci_model):
 
 def test_step_persistence_fails(monkeypatch, create_sci_model):
     # mock a known error condition in the persistence call
-    monkeypatch.setattr(
-        persistence.DataSet, "do_all", lambda *args: (datamodels.RampModel(), True)
-    )
+    monkeypatch.setattr(persistence.DataSet, "do_all", lambda *args: (datamodels.RampModel(), True))
 
     sci = create_sci_model()
     result = PersistenceStep.call(sci)
