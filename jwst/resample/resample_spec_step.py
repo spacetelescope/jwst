@@ -3,13 +3,13 @@ import logging
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel
 
-from jwst.assign_wcs.util import update_s_region_spectral
+from jwst.assign_wcs.util import is_sky_like, update_s_region_spectral
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.exp_to_source import multislit_to_container
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
 from jwst.resample import ResampleStep, resample_spec
-from jwst.resample.resample_utils import find_miri_lrs_sregion, is_sky_like, load_custom_wcs
+from jwst.resample.resample_utils import find_miri_lrs_sregion, load_custom_wcs
 from jwst.stpipe import Step
 
 __all__ = ["ResampleSpecStep"]

@@ -2,6 +2,9 @@
 Test the utility functions
 """
 
+import gwcs
+from astropy import coordinates as coord
+from astropy import units as u
 from astropy.modeling.models import Identity, Shift
 from astropy.table import QTable
 from astropy.utils.data import get_pkg_data_filename
@@ -10,6 +13,7 @@ from stdatamodels.jwst import datamodels
 from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
     get_object_info,
+    is_sky_like,
     subarray_transform,
     transform_bbox_from_shape,
     wcs_bbox_from_shape,
@@ -98,3 +102,20 @@ def test_bounding_box_from_subarray():
     im.meta.subarray.xsize = 400
     im.meta.subarray.ysize = 600
     assert bounding_box_from_subarray(im) == ((-0.5, 599.5), (-0.5, 399.5))
+
+
+def test_is_sky_like():
+    frame = "test"
+    assert not is_sky_like(frame)
+
+    frame = gwcs.Frame2D()
+    assert not is_sky_like(frame)
+
+    frame = gwcs.Frame2D(unit=[u.um, u.pix])
+    assert not is_sky_like(frame)
+
+    frame = gwcs.Frame2D(unit=[u.arcsec, u.arcsec])
+    assert is_sky_like(frame)
+
+    frame = gwcs.CelestialFrame(name="icrs", axes_order=(0, 1), reference_frame=coord.ICRS())
+    assert is_sky_like(frame)
