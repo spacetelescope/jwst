@@ -1,12 +1,9 @@
 #
 #  Module for correcting for persistence
 
-import datetime
 import logging
-import math
 
 import numpy as np
-from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
