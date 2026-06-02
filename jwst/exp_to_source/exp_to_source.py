@@ -36,7 +36,7 @@ def exp_to_source(inputs):
         log.info(f"Reorganizing data from exposure {exposure.meta.filename}")
 
         for slit in exposure.slits:
-            if slit.source_name is None:
+            if slit.source_name is None or str(slit.source_name).strip() == "":
                 # All MultiSlit data other than NIRSpec MOS get sorted by
                 # source_id (source_name is not populated)
                 key = slit.source_id
