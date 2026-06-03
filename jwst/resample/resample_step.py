@@ -149,6 +149,17 @@ class ResampleStep(Step):
             )
             result = resamp.resample_many_to_one()
 
+        with input_models:
+            for model in input_models:
+                result.member_wcs.append(
+                    {
+                        "filename": model.meta.filename,
+                        "ra_ref": model.meta.wcsinfo.ra_ref,
+                        "dec_ref": model.meta.wcsinfo.dec_ref,
+                        "wcs": model.meta.wcs,
+                    }
+                )
+                input_models.shelve(model)
         # The output is a new datamodel.
         # Clean up the input model(s) if they were opened here.
         if input_model is not input_data:
