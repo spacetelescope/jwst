@@ -115,6 +115,7 @@ class DataSet:
                 current_time = current_time + group_time
                 if self.persistence_time is not None:
                     self.process_persistence_flagging(current_time, sat_array, integ, group)
+            sat_array[:, :] = 0
 
         return self.output_obj, skipped
 
@@ -169,7 +170,6 @@ class DataSet:
         #     outside the window and subtracting it will be a positive number.
         # Raise an exception if a backwards flagging situation arrives, as this is
         #     an invalid state.
-        # XXX Needs to be more fully tested.
         start_plane = self.persistence_array - (self.persistence_time + current_time)
         start_plane[self.persistence_array == 0.0] = 0.0
         if np.any(start_plane > 0.0):
