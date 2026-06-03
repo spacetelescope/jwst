@@ -34,7 +34,6 @@ def create_sci_model():
         dm.meta.instrument.detector = "NRCA1"
         dm.meta.instrument.name = "NIRCAM"
 
-
         dm.meta.observation.date = "2022-04-03"
         dm.meta.observation.time = "11:21:40"
         dm.meta.observation.date_beg = "2022-04-03T11:21:40"
