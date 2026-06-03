@@ -1,8 +1,8 @@
-import asdf
 import logging
-import numpy as np
-import os
+from pathlib import Path
 
+import asdf
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.persistence import persistence
@@ -47,7 +47,6 @@ class PersistenceStep(Step):
 
         self.process_persistence_options(result)
 
-
         pers_a = persistence.DataSet(
             result,
             self.save_persistence,
@@ -69,7 +68,7 @@ class PersistenceStep(Step):
 
     def process_persistence_options(self, result):
         """
-        Processing  persistence_time, persistence_array, and persistence_dnu as the inputs.
+        Process persistence_time, persistence_array, and persistence_dnu as the inputs.
 
         Parameters
         ----------
@@ -97,7 +96,10 @@ class PersistenceStep(Step):
         result : RampModel
             The RampModel on which to process the persistence flag.
         """
-        root, ext = os.path.splitext(filename)
+        ext = str(Path(filename).suffix)
+        stem = Path(filename).stem
+        parent = Path(filename).parent
+        root = str(parent / stem)
         if ext != ".asdf":
             filename = f"{root}.asdf"
 
@@ -105,11 +107,11 @@ class PersistenceStep(Step):
         rows, cols = np.nonzero(self.persistence_array)
         vals = self.persistence_array[rows, cols]
         tree = {
-            "filename" : result.meta.filename,
-            "rows" : rows,
-            "cols" : cols,
-            "vals" : vals,
-            "pers_time" : self.persistence_time,
+            "filename": result.meta.filename,
+            "rows": rows,
+            "cols": cols,
+            "vals": vals,
+            "pers_time": self.persistence_time,
         }
 
         with asdf.AsdfFile(tree) as af:

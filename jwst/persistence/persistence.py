@@ -15,6 +15,7 @@ from traps, compared with photon-generated charges.
 
 __all__ = ["DataSet"]
 
+
 class DataSet:
     """
     Input dataset to which persistence will be applied.
@@ -28,10 +29,16 @@ class DataSet:
         If True, the persistence that was subtracted will be written to an
         output file.
 
-    persistence_time : 
-    persistence_array : 
-    persistence_dnu : 
+    persistence_time : int
+        The number of seconds for a persistence window to persist.
+
+    persistence_array : string or None
+        If not None, then it is the path to a file containing a persistence array.
+
+    persistence_dnu : boolean
+        When flagging PERSISTENCE, if true, then flag as DO_NOT_USE as well.
     """
+
     def __init__(
         self,
         output_obj,
@@ -90,7 +97,6 @@ class DataSet:
 
         (nints, ngroups, nrows, ncols) = shape
 
-
         epoch_time = mjd_to_epoch(self.output_obj.meta.exposure.start_time)
         integration_time = self.output_obj.meta.exposure.integration_time
         group_time = self.output_obj.meta.exposure.group_time
@@ -124,13 +130,12 @@ class DataSet:
         that pixel. The entry is the epoch time of the end of that window for a pixel. To
         check to see if any groups are within a persistence flagging window, it is first
         decided if there is a non-zero entry in the persistence_array for that pixel. If
-        non-zero, make sure
-            persisrtence_array[row, col] > current_time > persistence_array[row, col] - persistence_time
+        non-zero, make sure the current_time is between the start and end times of the
+        persistence window in the persistence_array.
 
         Additionally, the current time may be the beginning of a persistence window if it
-        is determined to be the first group in a ramp to be saturated, in which case
-            persisrtence_array[row, col] = current_time + persistence_time
-        which indicates the end of the persistence time window.
+        is determined to be the first group in a ramp to be saturated, in which case the
+        end time of the window is current_time + persistence_time.
 
         Parameters
         ----------
@@ -156,7 +161,7 @@ class DataSet:
         gdq_plane = self.output_obj.groupdq[integ, group, :, :]
         sat_loc = np.bitwise_and(gdq_plane, dqflags.group["SATURATED"])
         sat_array[sat_loc > 0] += 1
-        self.persistence_array[sat_array==1] = current_time + self.persistence_time
+        self.persistence_array[sat_array == 1] = current_time + self.persistence_time
 
         # This prevents 'backwards flagging'.
         # Subtracting the persistence_time gives the beginning of the window.
