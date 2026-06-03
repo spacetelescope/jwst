@@ -469,6 +469,10 @@ def wfss(input_model, reference_files):
         log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
         det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
 
+    # forward input is (x,y,lam,order) -> x, y
+    # backward input needs to be the same ra, dec, lam, order -> x, y
+    grism_pipeline = [(gdetector, det2det)]
+
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
     # it also needs to be part of the grism image wcs pipeline to
@@ -477,12 +481,54 @@ def wfss(input_model, reference_files):
     # manner that gives you the originating pixels ra and dec, not the
     # pure ra/dec on the sky from the pointing wcs.
 
+    if (direct_file := getattr(input_model.meta, "direct_image", None)) is not None:
+        try:
+            direct = ImageModel(direct_file)
+            bestsep = 1.0  # deg
+            bestfit = -1
+            spec_coord = coord.SkyCoord(
+                input_model.meta.wcsinfo.ra_ref,
+                input_model.meta.wcsinfo.dec_ref,
+                unit=(u.deg, u.deg),
+            )
+            for i, wcs in enumerate(direct.member_wcs.instance):
+                member_coord = coord.SkyCoord(
+                    wcs["ra_ref"],
+                    wcs["dec_ref"],
+                    unit=(u.deg, u.deg),
+                )
+                sep = member_coord.separation(spec_coord)
+                if sep.value < bestsep:
+                    bestfit = i
+                    bestsep = sep.value
+
+            if bestfit >= 0:
+                log.info(
+                    f"Pulling WCS from {direct.member_wcs.instance[bestfit]['filename']} "
+                    f"with pointing separation of {bestsep * 3600} arcsec."
+                )
+                imagepipe = []
+                mosaic_wcs = direct.member_wcs.instance[bestfit]["wcs"]
+                mos_frames = mosaic_wcs.available_frames
+                for i in range(len(mos_frames) - 1):
+                    cframe = getattr(mosaic_wcs, mos_frames[i])
+                    trans = mosaic_wcs.get_transform(mos_frames[i], mos_frames[i + 1]) & Identity(2)
+                    spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=cframe.name)
+                    imagepipe.append((spatial_and_spectral, trans))
+
+                world = getattr(mosaic_wcs, mos_frames[-1])
+                world.name = "sky"
+                imagepipe.append((cf.CompositeFrame([world, spec], name="world"), None))
+
+                grism_pipeline.extend(imagepipe)
+
+                return grism_pipeline
+
+        except FileNotFoundError:
+            log.warning(f"Direct image file {direct_file} not found.")
+
     # use the imaging_distortion reference file here
     image_pipeline = imaging(input_model, reference_files)
-
-    # forward input is (x,y,lam,order) -> x, y
-    # backward input needs to be the same ra, dec, lam, order -> x, y
-    grism_pipeline = [(gdetector, det2det)]
 
     # pass through the wave, beam  and theta in the pipeline
     # Theta is a constant for each grism exposure and is in the
