@@ -21,7 +21,7 @@ so, this file is expected to be an ASDF file with a 2-D array called
 persistence flagging to persist across exposures, not just integrations.
 The entries into this array will 0.0, indicating no current timing window
 for that pixel, or the time of the end of the current persistence window
-in epoch time. If there is no file indicated with this parameter, interally
+in epoch time. If there is no file indicated with this parameter, internally
 this array is created with all 0.0 entries. If the ``--save_persistence``
 is option is selected, this persistence array will be save as an ASDF file
 with the file name used for this parameter.
