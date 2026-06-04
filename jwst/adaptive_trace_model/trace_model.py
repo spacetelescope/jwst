@@ -1974,6 +1974,8 @@ def fit_and_oversample(
             errors[extname] = getattr(model, extname)
             if rotate:
                 errors[extname] = np.rot90(errors[extname])
+            if extname.startswith("var"):
+                errors[extname] = np.sqrt(errors[extname])
     dq = model.dq
     if rotate:
         dq = np.rot90(dq)
@@ -2005,9 +2007,14 @@ def fit_and_oversample(
         is_nan = ~np.isfinite(error_array[closest_pix])
         error_os[is_nan & ~is_estimated] = np.nan
 
+        # Re-square variances if needed
+        if extname.startswith("var"):
+            error_os = error_os**2
+
         # Inflate the errors to account for oversampling covariance
         _inflate_error(error_os, extname, oversample_factor)
 
+        # Store the error array
         errors_os[extname] = error_os
 
     # Update the wcs for new pixel scale

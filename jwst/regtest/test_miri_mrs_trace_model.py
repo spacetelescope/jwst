@@ -29,6 +29,8 @@ def run_spec2_trace_model(rtdata_module):
         "--steps.adaptive_trace_model.oversample=1.0",
         "--steps.adaptive_trace_model.skip=false",
         "--steps.adaptive_trace_model.save_results=true",
+        "--steps.pixel_replace.skip=false",
+        "--steps.pixel_replace.save_results=true",
     ]
     Step.from_cmdline(args)
     return rtdata
@@ -57,7 +59,7 @@ def run_spec3_oversample(rtdata_module):
 
 @pytest.mark.parametrize(
     "suffix",
-    ["cal", "adaptive_trace_model", "s3d", "x1d"],
+    ["cal", "adaptive_trace_model", "pixel_replace", "s3d", "x1d"],
 )
 def test_miri_mrs_spec2_trace_model(
     run_spec2_trace_model, fitsdiff_default_kwargs, suffix, rtdata_module

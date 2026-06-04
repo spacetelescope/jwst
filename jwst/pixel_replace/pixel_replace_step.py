@@ -17,7 +17,8 @@ class PixelReplaceStep(Step):
     class_alias = "pixel_replace"
 
     spec = """
-        algorithm = option("fit_profile", "mingrad", "N/A", default="fit_profile") # Replacement algorithm
+        algorithm = option("fit_profile", "mingrad", "N/A", default="mingrad") # Replacement algorithm
+        use_trace_model = boolean(default=True) # Use trace model if available
         n_adjacent_cols = integer(default=3) # Number of adjacent columns to use in profile creation
         skip = boolean(default=True) # Step must be turned on by parameter reference or user
         output_use_model = boolean(default=True) # Use input filenames in the output models
@@ -64,6 +65,7 @@ class PixelReplaceStep(Step):
 
         pars = {
             "algorithm": self.algorithm,
+            "use_trace_model": self.use_trace_model,
             "n_adjacent_cols": self.n_adjacent_cols,
         }
 
