@@ -1,0 +1,1 @@
+Check for an empty string in the slit ``source_name`` attribute, to fix an edge case bug in reducing fixed slit regions from NRS_MSASPEC exposures.
