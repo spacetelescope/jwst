@@ -398,8 +398,6 @@ class TestMethods:
             model1, True, rnoise, gain, method, "optimal", "none", dqflags.pixel
         )
 
-        from math import isnan
-
         assert slopes["slope"][row, col] == 0.0
 
     def test_four_groups_three_CRs_at_end(self, method):
