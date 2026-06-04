@@ -436,17 +436,28 @@ class Spec3Pipeline(Pipeline):
             The list of input_models provided to Spec3Pipeline by the
             input association.
         """
-        # WCS of any slit should be ok - internally this does a round-trip, so any offsets
-        # introduced for a specific slit won't matter
-        wcs = cal_model_list[0].meta.wcs
         try:
-            input_sregions = [w.spec[0].s_region for w in cal_model_list]
+            input_sregions = [w.spec[0].s_region for w in cal_model_list if w.spec[0].s_region]
         except AttributeError:
             log.warning(
                 "One or more input model(s) are missing an `s_region` attribute; "
                 "output S_REGION will not be set."
             )
             return
+
+        n_sreg = len(input_sregions)
+        if n_sreg == 0:
+            log.warning(
+                "None of the input model(s) have valid S_REGION; output S_REGION will not be set."
+            )
+            return
+        if n_sreg == 1:
+            wfss_model.spec[0].s_region = input_sregions[0]
+            return
+
+        # WCS of any slit should be ok - internally this does a round-trip, so any offsets
+        # introduced for a specific slit won't matter
+        wcs = cal_model_list[0].meta.wcs
 
         # Modify the det2world transform to ignore extra inputs/outputs (wavelength and order)
         if "moving_target" in wcs.available_frames:
