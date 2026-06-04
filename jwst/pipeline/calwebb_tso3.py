@@ -12,7 +12,7 @@ from jwst.outlier_detection import outlier_detection_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
 from jwst.stpipe import Pipeline
-from jwst.stpipe.utilities import summary_step_status
+from jwst.stpipe.utilities import invariant_filename, summary_step_status
 from jwst.tso_photometry import tso_photometry_step
 from jwst.white_light import white_light_step
 
@@ -65,6 +65,16 @@ class Tso3Pipeline(Pipeline):
         if not input_tsovisit:
             log.error("INPUT DATA ARE NOT TSO MODE. ABORTING PROCESSING.")
             return
+
+        # Overriding the Step.save_model method for the following steps.
+        # These steps may save intermediate files, resulting in meta.filename
+        # being modified. This can affect the filenames of subsequent
+        # steps.
+        self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
+        self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
+        self.adaptive_trace_model.save_model = invariant_filename(
+            self.adaptive_trace_model.save_model
+        )
 
         if self.output_file is None:
             self.output_file = input_models.asn_table["products"][0]["name"]

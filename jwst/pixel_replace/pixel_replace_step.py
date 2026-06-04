@@ -67,12 +67,12 @@ class PixelReplaceStep(Step):
             "n_adjacent_cols": self.n_adjacent_cols,
         }
 
+        # Set up output path name to include the ASN ID
+        # if associations are involved
+        self.add_asn_id_to_output_name(output_model)
+
         # calwebb_spec3 case / ModelContainer
         if isinstance(output_model, datamodels.ModelContainer):
-            # Set up output path name to include the ASN ID
-            # if associations are involved
-            self.add_asn_id_to_output_name(output_model)
-
             # Check models to confirm they are the correct type
             for i, model in enumerate(output_model):
                 if isinstance(
