@@ -7,7 +7,7 @@ import jwst.pipeline
 import jwst.step
 from jwst import datamodels as dm
 from jwst.stpipe import query_step_status, record_step_status
-from jwst.stpipe.utilities import NOT_SET, all_steps, invariant_filename
+from jwst.stpipe.utilities import NOT_SET, all_steps, invariant_filename, summary_step_status
 
 # All steps available to users should be represented in one
 # of these two modules:
@@ -89,3 +89,21 @@ def test_invariant_filename():
 
     # The output model is not a copy - the name is reset in place
     assert output_model is input_model
+
+
+@pytest.mark.parametrize(
+    "status_values,expected",
+    [
+        (("COMPLETE", "COMPLETE"), "COMPLETE"),
+        (("COMPLETE", "SKIPPED"), "COMPLETE"),
+        (("COMPLETE", "FAILED"), "COMPLETE"),
+        (("COMPLETE", "BAD"), "COMPLETE"),
+        (("FAILED", "FAILED"), "FAILED"),
+        (("FAILED", "SKIPPED"), "FAILED"),
+        (("FAILED", "BAD"), "FAILED"),
+        (("SKIPPED", "SKIPPED"), "SKIPPED"),
+        (("SKIPPED", "BAD"), "SKIPPED"),
+    ],
+)
+def test_summary_step_status(status_values, expected):
+    assert summary_step_status(status_values) == expected
