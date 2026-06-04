@@ -793,6 +793,8 @@ class PixelReplacement:
                 wl_values = yy[:, xd]
 
             valid = np.isfinite(xdisp_values)
+            if not np.any(valid):
+                continue
             interp_wl = np.interp(wl_to_fix, wl_values[valid], xdisp_values[valid])
 
             if dispersion_direction == self.HORIZONTAL:

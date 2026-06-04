@@ -436,3 +436,53 @@ def test_custom_slice():
     # invalid
     with pytest.raises(IndexError, match="requires valid"):
         pr.custom_slice(3, 5)
+
+
+@pytest.mark.parametrize("dispersion_direction", [1, 2])
+@pytest.mark.parametrize("bad_value", [0, np.nan])
+@pytest.mark.parametrize(
+    "xindx,yindx",
+    [
+        (1, 2),
+        ([3, 5], [6, 7]),
+        ([3, 3, 3], [4, 5, 6]),
+        ([4, 5, 6], [3, 3, 3]),
+        ([4, 4, 5, 5], [4, 5, 4, 5]),
+    ],
+)
+def test_interp_along_wavelength(dispersion_direction, bad_value, xindx, yindx):
+    pr = PixelReplacement(None)
+
+    data = np.tile(np.arange(10, dtype=float), 10).reshape(10, 10)
+    expected = data.copy()
+
+    xindx = np.array(xindx)
+    yindx = np.array(yindx)
+    data[yindx, xindx] = bad_value
+    pr._interp_along_wavelength(data, dispersion_direction, xindx, yindx)
+    np.testing.assert_allclose(data, expected)
+
+
+def test_interp_along_wavelength_no_valid():
+    data = np.full((10, 10), np.nan)
+    xindx = np.array([3, 5])
+    yindx = np.array([6, 7])
+    pr = PixelReplacement(None)
+    pr._interp_along_wavelength(data, 1, xindx, yindx)
+    assert np.all(np.isnan(data))
+
+
+def test_interp_along_wavelength_edge_value():
+    data = np.tile(np.arange(10, dtype=float), 10).reshape(10, 10)
+    expected = data.copy()
+
+    xindx = np.array([9])
+    yindx = np.array([9])
+    data[9, 9] = np.nan
+
+    # Edge pixel is extended from last available
+    expected[9, 9] = 8
+
+    pr = PixelReplacement(None)
+    pr._interp_along_wavelength(data, 1, xindx, yindx)
+    np.testing.assert_allclose(data, expected)
