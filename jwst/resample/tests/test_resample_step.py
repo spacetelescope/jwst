@@ -1779,6 +1779,9 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     assert_allclose(result.slits[0].data.shape[0], nirspec_lamp.slits[0].data.shape[0], atol=5)
     assert result.slits[0].data.shape[1] == nirspec_lamp.slits[0].data.shape[1]
 
+    # no output s_region since the WCS is not sky-like
+    assert result.slits[0].meta.wcsinfo.s_region is None
+
     # test pixel scale setting: will not work without sky-based WCS
     result2 = ResampleSpecStep.call(nirspec_lamp, pixel_scale=0.5)
     assert_allclose(result2.slits[0].data, result.slits[0].data, equal_nan=True)

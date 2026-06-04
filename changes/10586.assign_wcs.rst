@@ -1,0 +1,1 @@
+Unset the S_REGION if the output WCS is not celestial (e.g., NIRSpec lamp exposures).

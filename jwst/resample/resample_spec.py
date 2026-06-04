@@ -21,7 +21,7 @@ from gwcs import coordinate_frames as cf
 from stcal.alignment.util import compute_scale, wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.util import wrap_ra
+from jwst.assign_wcs.util import is_sky_like, wrap_ra
 from jwst.datamodels import ModelLibrary
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleImage
@@ -167,7 +167,7 @@ class ResampleSpec(ResampleImage):
             # These functions internally use pixel_scale_ratio to accommodate
             # user settings.
             # Any other customizations (crpix, crval, rotation) are ignored.
-            if resample_utils.is_sky_like(input_models[0].meta.wcs.output_frame):
+            if is_sky_like(input_models[0].meta.wcs.output_frame):
                 if input_models[0].meta.instrument.name != "NIRSPEC":
                     output_wcs = self.build_interpolated_output_wcs(
                         input_models, pixel_scale_ratio=pixel_scale_ratio

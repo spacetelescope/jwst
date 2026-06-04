@@ -209,8 +209,10 @@ def test_nirspec_imaging_via_step_call(exptype):
     ]
     if exptype == "NRS_LAMP":
         assert result.meta.wcs.bounding_box is None
+        assert result.meta.wcsinfo.s_region is None
     else:
         assert result.meta.wcs.bounding_box is not None
+        assert result.meta.wcsinfo.s_region is not None
 
 
 def test_nirspec_imaging_opaque():
