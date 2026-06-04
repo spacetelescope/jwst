@@ -12,6 +12,7 @@ from jwst.outlier_detection import outlier_detection_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
 from jwst.stpipe import Pipeline
+from jwst.stpipe.utilities import summary_step_status
 from jwst.tso_photometry import tso_photometry_step
 from jwst.white_light import white_light_step
 
@@ -179,35 +180,28 @@ class Tso3Pipeline(Pipeline):
 
                 x1d_result.spec.extend(result.spec)
 
-            # perform white-light photometry on all 1d extracted data
-            if len(x1d_result.spec) > 0:
-                log.info("Performing white-light photometry ...")
-                phot_result_list.append(self.white_light.run(x1d_result))
-
-            # Update some metadata from the association
-            x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
-            x1d_result.meta.asn.table_name = input_models.asn_table_name
-
-            # Save the final x1d Multispec model
+            # Skip remaining processing if no spectra were extracted
             if len(x1d_result.spec) == 0:
                 log.warning("extract_1d step could not be completed for any integrations")
                 log.warning("x1dints products will not be created.")
             else:
-                # Set S_REGION to allow the x1dints file to show up in MAST spatial queries
-                self._populate_tso_spectral_sregion(x1d_result, input_models)
-                self.save_model(x1d_result, suffix="x1dints")
+                # perform white-light photometry on all 1d extracted data
+                log.info("Performing white-light photometry")
+                phot_result_list.append(self.white_light.run(x1d_result))
+
+                # Update some metadata from the association
+                x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
+                x1d_result.meta.asn.table_name = input_models.asn_table_name
 
                 # Update cal step status for optional steps
-                for step, status in zip(
-                    ("adaptive_trace_model", "pixel_replace"), (atm_status, pr_status), strict=True
-                ):
-                    if any(s == "COMPLETE" for s in status):
-                        summary_status = "COMPLETE"
-                    elif any(s == "FAILED" for s in atm_status):
-                        summary_status = "FAILED"
-                    else:
-                        summary_status = "SKIPPED"
-                    setattr(x1d_result.meta.cal_step, step, summary_status)
+                x1d_result.meta.cal_step.adaptive_trace_model = summary_step_status(atm_status)
+                x1d_result.meta.cal_step.pixel_replace = summary_step_status(pr_status)
+
+                # Set S_REGION to allow the x1dints file to show up in MAST spatial queries
+                self._populate_tso_spectral_sregion(x1d_result, input_models)
+
+                # Save the final x1d Multispec model
+                self.save_model(x1d_result, suffix="x1dints")
 
         # Done with all the inputs
         if input_models is not input_data:
