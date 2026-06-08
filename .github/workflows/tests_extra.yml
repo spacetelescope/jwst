@@ -17,6 +17,9 @@ on:
       - 'release/*.x'
     tags:
       - '*'
+      - labeled
+      - reopened
+      - ready_for_review
   schedule:
     - cron: "0 0 * * 1" # every Monday at 6a
   workflow_dispatch:
@@ -25,7 +28,7 @@ on:
         description: CRDS context (leave blank for latest)
         type: string
         required: false
-        default: ''
+        default: ""
       crds_server:
         description: CRDS server
         type: string
@@ -116,11 +119,15 @@ jobs:
       cache-key: crds-${{ needs.crds.outputs.context }}
       envs: |
         - linux: check-docs-links
-          python-version: ${{ needs.supported-pythons.outputs.latest }}
+          python-version: '${{ needs.supported-pythons.outputs.latest }}'
         - linux: py3-stdevdeps-xdist
-        - linux: py3-devdeps-xdist
+          python-version: '${{ needs.supported-pythons.outputs.latest }}'
         - macos: py3-stdevdeps-xdist
+          python-version: '${{ needs.supported-pythons.outputs.latest }}'
+        - linux: py3-devdeps-xdist
+          python-version: '${{ needs.supported-pythons.outputs.latest }}'
         - macos: py3-devdeps-xdist
+          python-version: '${{ needs.supported-pythons.outputs.latest }}'
       fill: true
       fill_platforms: macos
       fill_factors: xdist

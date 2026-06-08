@@ -1,28 +1,69 @@
 name: build
 
 on:
-  release:
-    types: [ released ]
   pull_request:
+  release:
+    types: [released]
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+permissions: {}
 
 jobs:
   build:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@2835f0cacddf3f8de198db9afdb5354a5cebe0ef  # v2.6.3
-    with:
-      upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
-      targets: |
-        # Linux wheels
-        - cp3*-manylinux_x86_64
-        # MacOS wheels
-        - cp3*-macosx_x86_64
-        # MacOS arm64 wheels
-        - cp3*-macosx_arm64
-      sdist: true
-      test_command: python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"
-    secrets:
-      pypi_token: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
+    strategy:
+      matrix:
+        runs-on:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3"
+      - if: ${{ runner.os == 'Linux' }}
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+        with:
+          platforms: all
+      - uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
+        with:
+          package-dir: ./
+          output-dir: dist/
+      - run: pip install build
+      - run: python -m build --sdist
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: dist-${{ runner.os }}-${{ runner.arch }}
+          path: ./dist/
+  publish:
+    if: (github.event_name == 'release') && (github.event.action == 'released')
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+    # To add required reviewers before deployment,
+    # edit the protection rules in GitHub Settings:
+    # Settings > Environments > pypi > Add required reviewers
+    environment:
+      name: pypi
+      url: https://pypi.org/p/jwst
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: dist*
+          path: dist/
+          merge-multiple: true
+      - uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        with:
+          subject-path: "dist/*"
+      # To upload to PyPI without a token, add this workflow file as a Trusted Publisher in the project settings on the PyPI website
+      - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
