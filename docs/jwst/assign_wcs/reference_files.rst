@@ -16,7 +16,7 @@ Reference file types used by ``assign_wcs``
 REFTYPE                                           Description                                           Instruments
 ================================================  ====================================================  =============================
 :ref:`CAMERA <camera_reffile>`                    NIRSpec Camera model                                  NIRSpec
-:ref:`CHROMCORR` <chromcorr_reffile>              NIRSpec IFU chromaticity correction model             NIRSpec
+:ref:`CHROMCORR <chromcorr_reffile>`              NIRSpec IFU chromaticity correction model             NIRSpec
 :ref:`COLLIMATOR <collimator_reffile>`            NIRSpec Collimator Model                              NIRSpec
 :ref:`DISPERSER <disperser_reffile>`              Disperser parameters                                  NIRSpec
 :ref:`DISTORTION <distortion_reffile>`            Spatial distortion model                              FGS, MIRI, NIRCam, NIRISS

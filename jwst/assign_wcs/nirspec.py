@@ -259,7 +259,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
         Requires the 'ifufore', 'ifuslicer', 'ifupost', 'disperser', 'wavelengthrange',
-        'fpa', 'camera', 'collimator', 'fore', and 'ote' reference files.
+        'fpa', 'camera', 'collimator', 'fore', 'chromcorr', and 'ote' reference files.
     slit_y_range : tuple
         The slit Y-range for Nirspec slits, relative to (0, 0) in the center.
 
