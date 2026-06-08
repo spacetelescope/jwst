@@ -37,7 +37,8 @@ each band will be created.
   association table contain all the filters). 
 
 ``output_type [string]``
-  This parameter has four valid options of "band", "channel", "grating", and "multi". This parameter can be combined
+  This parameter has four valid options of "band", "channel", "grating", and "multi". The default value
+  is "band". This parameter can be combined
   with the options above (``band``, ``channel``, ``grating``, ``filter``) to fully control the type of IFU
   cubes to make.
 
@@ -55,13 +56,9 @@ each band will be created.
     parameters will be combined into an "uber" cube.
 
 
-  The default rules for creating IFU cube depend on the instrument and which pipeline called ``cube_build``.
+  By default ``output_type=band``. This can be overridden in a pipeline using a parameter reference file. The
+  MIRI :ref:`calwebb_spec2 <calwebb_spec2>` parameter reference file defines ``output_type=multi``. 
 
-  - :ref:`calwebb_spec2 <calwebb_spec2>` pipeline rules for NIRSpec is to produce ``output_type=band``.
-  - :ref:`calwebb_spec3 <calwebb_spec3>` pipeline rules for NIRSpec is to produce ``output_type=band``.
-
-  - :ref:`calwebb_spec2 <calwebb_spec2>` pipeline rules for MIRI is to produce ``output_type=multi``.
-  - :ref:`calwebb_spec3 <calwebb_spec3>` pipeline rules for MIRI is to produce ``output_type=band``.
 
 ``linear_wave [boolean]``
 Sets the wavelength sampling for the output cubes (default is True). If True, the output cubes have equally

@@ -190,13 +190,8 @@ bands, the default behavior is to create a set of separate band cubes.
 
 In the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, on the other hand, where
 the input can be a collection of data from multiple exposures covering multiple
-bands, the default behavior is to create a set of single-channel cubes. For MIRI,
-for example, this can mean separate cubes for channel 1, 2, 3, and 4.
-depending on what's included in the input. For NIRSpec this may mean
-multiple cubes, one for each grating+filter combination contained in the input
-collection. The :ref:`calwebb_spec3 <calwebb_spec3>` pipeline calls ``cube_build`` with
-``output_type=band``. These types of IFU cubes will have a linear-wavelength
-dimension. If the user wants to combine all the data together covering several
+bands, the default behavior is to create a set of single-band cubes with a linear-wavelength
+dimension.  If the user wants to combine all the data together covering several
 band they can using the option ``output_type=multi`` and the resulting IFU cubes
 will have a non-linear wavelength dimension.
 
