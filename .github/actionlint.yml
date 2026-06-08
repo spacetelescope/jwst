@@ -1,0 +1,5 @@
+paths:
+  .github/workflows/**/*.{yml,yaml}:
+    ignore:
+      - "SC2086"
+      - "SC2046"
