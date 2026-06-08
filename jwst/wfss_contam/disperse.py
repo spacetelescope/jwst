@@ -71,7 +71,11 @@ def _determine_native_wl_spacing(
     # Create list of wavelengths on which to compute dispersed pixels
     dw = np.abs((wmax - wmin) / (dyw - dxw))
     dlam = np.median(dw / oversample_factor)
-    lambdas = np.arange(wmin, wmax + dlam, dlam)
+    # need at least three points because often the sensitivity curve
+    # is not well-defined at the edges. This is typically hit only for Order 0,
+    # since dlam can be large or poorly defined in that case.
+    npts = max(int(np.ceil((wmax - wmin) / dlam)), 3)
+    lambdas = np.linspace(wmin, wmax, npts)
     return lambdas
 
 

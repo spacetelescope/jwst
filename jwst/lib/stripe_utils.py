@@ -555,11 +555,21 @@ def clean_superstripe_metadata(input_model):
         The model cleaned of metadata indicating the presence
         of superstripe data.
     """
+    intstart = (
+        input_model.meta.exposure.integration_start
+        if input_model.meta.exposure.integration_start is not None
+        else 1
+    )
+    intend = (
+        input_model.meta.exposure.integration_end
+        if input_model.meta.exposure.integration_end is not None
+        else input_model.meta.exposure.nints
+    )
     input_model.meta.exposure.integration_start = np.ceil(
-        input_model.meta.exposure.integration_start / input_model.meta.subarray.num_superstripe
+        intstart / input_model.meta.subarray.num_superstripe
     ).astype(int)
     input_model.meta.exposure.integration_end = np.ceil(
-        input_model.meta.exposure.integration_end / input_model.meta.subarray.num_superstripe
+        intend / input_model.meta.subarray.num_superstripe
     ).astype(int)
     input_model.meta.exposure.nints = np.ceil(
         input_model.meta.exposure.nints / input_model.meta.subarray.num_superstripe
@@ -606,7 +616,12 @@ def generate_stripe_int_times(input_model):
 
     nstr = input_model.meta.subarray.num_superstripe
     nints_sci = len(input_model.int_times) // nstr
-    int_start = int(np.ceil(input_model.meta.exposure.integration_start / nstr))
+    default_intstart = (
+        input_model.meta.exposure.integration_start
+        if input_model.meta.exposure.integration_start is not None
+        else 1
+    )
+    int_start = int(np.ceil(default_intstart / nstr))
 
     otab = np.array(
         list(

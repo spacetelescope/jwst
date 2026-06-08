@@ -530,8 +530,9 @@ def test_stripe_read_superstripe(superstripe_model):
 @pytest.mark.parametrize("with_int_times", [True, False])
 @pytest.mark.parametrize("with_zeroframe", [True, False])
 @pytest.mark.parametrize("swap_axes", [True, False])
+@pytest.mark.parametrize("is_segmented", [True, False])
 def test_collate_superstripes(
-    superstripe_model, with_dq, with_int_times, with_zeroframe, swap_axes
+    superstripe_model, with_dq, with_int_times, with_zeroframe, swap_axes, is_segmented
 ):
     model = superstripe_model.copy()
 
@@ -540,6 +541,9 @@ def test_collate_superstripes(
     if not with_zeroframe:
         model.meta.exposure.zero_frame = False
         model.zeroframe = None
+    if not is_segmented:
+        model.meta.exposure.integration_start = None
+        model.meta.exposure.integration_end = None
 
     if swap_axes:
         # transpose axes, use positive orientation
