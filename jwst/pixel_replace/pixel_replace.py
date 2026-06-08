@@ -320,11 +320,6 @@ class PixelReplacement:
             The input with bad pixels now flagged with FLUX_ESTIMATED
             and holding a flux value estimated from the spatial profile.
         """
-        # np.nanmedian() entry full of NaN values would produce a numpy
-        # warning (despite well-defined behavior - return a NaN)
-        # so we suppress that here.
-        warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
-
         dispaxis = arrays.dispersion_direction
 
         # Make a copy of the input DQ, before replacement
@@ -431,14 +426,15 @@ class PixelReplacement:
                 norm_errors[err_name] = norm_err[region_condition] / profile_norm_scale
 
             # Pull median for each pixel across profile.
-            # Profile entry full of NaN values would produce a numpy
-            # warning (despite well-defined behavior - return a NaN)
-            # so we suppress that above.
-            median_profile = np.nanmedian(normalized, axis=(2 - dispaxis))
+            with warnings.catch_warnings():
+                # Profile entry full of NaN values would produce a numpy
+                # warning (despite well-defined behavior - return a NaN)
+                warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
+                median_profile = np.nanmedian(normalized, axis=(2 - dispaxis))
 
-            # Do the same for the errors
-            for err_name in norm_errors:
-                norm_errors[err_name] = np.nanmedian(norm_errors[err_name], axis=(2 - dispaxis))
+                # Do the same for the errors
+                for err_name in norm_errors:
+                    norm_errors[err_name] = np.nanmedian(norm_errors[err_name], axis=(2 - dispaxis))
 
             # Clean current profile of values flagged as bad
             current_condition = self.custom_slice(dispaxis, ind)
@@ -462,8 +458,11 @@ class PixelReplacement:
             # Only do this scaling if we didn't default to all-unity scaling above,
             # and require input values below 1e20 so that we don't overflow the
             # minimization routine with extremely bad noise.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
+                profile_norm_scale_median = np.nanmedian(profile_norm_scale)
             if (
-                (np.nanmedian(profile_norm_scale) != 1.0)
+                (profile_norm_scale_median != 1.0)
                 & (np.nanmax(np.abs(min_median)) < 1e20)
                 & (np.nanmax(np.abs(norm_current)) < 1e20)
             ):
@@ -572,11 +571,6 @@ class PixelReplacement:
             The input with flagged bad pixels now flagged with FLUX_ESTIMATED
             and holding a flux value estimated from adjacent pixels.
         """
-        # np.nanmedian() entry full of NaN values would produce a numpy
-        # warning (despite well-defined behavior - return a NaN)
-        # so we suppress that here.
-        warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
-
         log.info("Using minimum gradient method.")
 
         in_var_dict = {
