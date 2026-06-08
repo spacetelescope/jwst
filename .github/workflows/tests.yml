@@ -111,6 +111,8 @@ jobs:
       cache-path: ${{ needs.crds.outputs.path }}
       cache-key: crds-${{ needs.crds.outputs.context }}
       envs: |
+        - linux: check-dependencies
+          python-version: ${{ needs.supported-pythons.outputs.latest }} 
         - name: run tests (oldest supported Python, ubuntu-latest)
           linux: py3-oldestdeps-xdist-cov
           python-version: ${{ needs.supported-pythons.outputs.oldest }}
