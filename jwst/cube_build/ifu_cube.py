@@ -398,7 +398,7 @@ class IFUCubeData:
 
         # set up the lambda (z) coordinate of the cube
         self.cdelt3_normal = None
-        if self.linear_wave:  # CHANGE HERE
+        if self.linear_wave:
             self.lambda_min = lambda_min
             self.lambda_max = lambda_max
             range_lambda = self.lambda_max - self.lambda_min
@@ -573,7 +573,7 @@ class IFUCubeData:
             self.b_min,
             self.b_max,
         )
-        if self.linear_wave:  # CHANGE HERE
+        if self.linear_wave:
             log.info("axis#  Naxis  CRPIX    CRVAL      CDELT(microns)  Min & Max (microns)")
             log.info(
                 "Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f",
@@ -585,7 +585,7 @@ class IFUCubeData:
                 self.lambda_max,
             )
 
-        if not self.linear_wave:  # CHANGE HERE
+        if not self.linear_wave:
             log.info("Non-linear wavelength dimension; CDELT3 variable")
             log.info("axis#  Naxis  CRPIX    CRVAL     Min & Max (microns)")
             log.info(
@@ -792,7 +792,7 @@ class IFUCubeData:
                         cdelt3_mean = np.nanmean(self.cdelt3_normal)
                         xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
                         linear = 0
-                        if self.linear_wave:  # CHANGE HERE
+                        if self.linear_wave:
                             linear = 1
                         if debug_cube_index >= 0:
                             log.info(f"Input filename: {input_model.meta.filename}")
@@ -1073,12 +1073,10 @@ class IFUCubeData:
             self.soft_rad = softrad[0]
             self.scalerad = scalerad[0]
 
-        # self.linear_wavelength = self.linear_wave
-
         # Non-linear wavelength case
         # The wavelength dimension is non linear.
         # We read the wavelength table from the reference file
-        if not self.linear_wave:  # CHANGE HERE
+        if not self.linear_wave:
             if self.instrument == "NIRSPEC":
                 # determine if have Prism, Medium or High resolution
                 med = ["g140m", "g235m", "g395m"]
@@ -1172,7 +1170,7 @@ class IFUCubeData:
         # check on valid values
 
         found_error = False
-        if self.linear_wave:  # CHANGE HERE
+        if self.linear_wave:
             # check we have valid data for key values
             if self.interpolation == "pointcloud":
                 if np.isnan(self.rois):
