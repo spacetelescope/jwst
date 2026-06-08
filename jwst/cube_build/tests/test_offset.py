@@ -260,7 +260,7 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
         **pars_cube,
     )
 
-    thiscube.linear_wavelength = True
+    thiscube.linear_wave = True
     thiscube.spatial_size = 0.13
     thiscube.spectral_size = 0.001
     thiscube.setup_ifucube_wcs()

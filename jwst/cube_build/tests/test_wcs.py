@@ -226,7 +226,7 @@ def test_setup_wcs():
     thiscube.cdelt1 = 0.13
     thiscube.cdelt2 = 0.13
     thiscube.cdelt3 = 0.001
-    thiscube.linear_wavelength = True
+    thiscube.linear_wave = True
     thiscube.set_geometry(corner_a, corner_b, lambda_min, lambda_max)
 
     assert thiscube.naxis1 == 41

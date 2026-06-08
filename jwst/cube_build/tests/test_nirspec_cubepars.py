@@ -205,7 +205,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
     this_cube.determine_cube_parameters()
 
     # we are testing PRISM data. Linear wavelength = True
-    assert this_cube.linear_wavelength is True
+    assert this_cube.linear_wave is True
 
     # Add output_type = 'multi' and  Prism/Clear will produce a non-linear wavelength plane.
 
@@ -237,7 +237,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
     this_cube.determine_cube_parameters()
 
     # we are testing PRISM data. Linear wavelength = False
-    assert this_cube.linear_wavelength is False
+    assert this_cube.linear_wave is False
 
 
 def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
@@ -328,7 +328,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
     assert math.isclose(this_cube.wavemin, wavemin, abs_tol=0.00001)
     assert math.isclose(this_cube.wavemax, wavemax, abs_tol=0.00001)
     # we are testing g140m/f100lp which will have a linear wavelength range.
-    assert this_cube.linear_wavelength is True
+    assert this_cube.linear_wave is True
 
     assert math.isclose(this_cube.weight_power, 2, abs_tol=0.00001)
     assert math.isclose(this_cube.roiw, 0.0013, abs_tol=0.00001)
@@ -379,7 +379,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
     assert math.isclose(this_cube.wavemin, user_wave_min, abs_tol=0.00001)
     assert math.isclose(this_cube.wavemax, user_wave_max, abs_tol=0.00001)
     # we are testing g140m/f100lp  data
-    assert this_cube.linear_wavelength is True
+    assert this_cube.linear_wave is True
     assert math.isclose(this_cube.spatial_size, user_ascale, abs_tol=0.00001)
     assert math.isclose(this_cube.spectral_size, user_wscale, abs_tol=0.00001)
     assert math.isclose(this_cube.weight_power, user_power, abs_tol=0.00001)
