@@ -143,7 +143,6 @@ class IFUCubeData:
         self.wavemax_user = False
         self.soft_rad = None
         self.scalerad = None
-        self.linear_wavelength = True
         self.roiw_table = None
         self.rois_table = None
         self.softrad_table = None
@@ -399,7 +398,7 @@ class IFUCubeData:
 
         # set up the lambda (z) coordinate of the cube
         self.cdelt3_normal = None
-        if self.linear_wavelength:
+        if self.linear_wave:  # CHANGE HERE
             self.lambda_min = lambda_min
             self.lambda_max = lambda_max
             range_lambda = self.lambda_max - self.lambda_min
@@ -574,7 +573,7 @@ class IFUCubeData:
             self.b_min,
             self.b_max,
         )
-        if self.linear_wavelength:
+        if self.linear_wave:  # CHANGE HERE
             log.info("axis#  Naxis  CRPIX    CRVAL      CDELT(microns)  Min & Max (microns)")
             log.info(
                 "Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f",
@@ -586,7 +585,7 @@ class IFUCubeData:
                 self.lambda_max,
             )
 
-        if not self.linear_wavelength:
+        if not self.linear_wave:  # CHANGE HERE
             log.info("Non-linear wavelength dimension; CDELT3 variable")
             log.info("axis#  Naxis  CRPIX    CRVAL     Min & Max (microns)")
             log.info(
@@ -793,7 +792,7 @@ class IFUCubeData:
                         cdelt3_mean = np.nanmean(self.cdelt3_normal)
                         xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
                         linear = 0
-                        if self.linear_wavelength:
+                        if self.linear_wave:  # CHANGE HERE
                             linear = 1
                         if debug_cube_index >= 0:
                             log.info(f"Input filename: {input_model.meta.filename}")
@@ -984,10 +983,8 @@ class IFUCubeData:
 
         if self.scalew != 0:
             self.spectral_size = self.scalew
-            self.linear_wavelength = True
         else:
             self.spectral_size = w_scale
-            self.linear_wavelength = True
 
     # ________________________________________________________________________________
     def determine_cube_parameters(self):
@@ -1064,26 +1061,24 @@ class IFUCubeData:
         # check if scalew has been set - if yes then linear scale
         if self.scalew != 0:
             self.spectral_size = self.scalew
-            self.linear_wavelength = True
             wave_roi = np.amin(roiw)
             weight_power = np.amin(power)
             self.soft_rad = np.amin(softrad)
             self.scalerad = np.amin(scalerad)
-        # all bands have the same spectral size then linear_wavelength
+        # all bands have the same spectral size
         elif all_same_spectral:
             self.spectral_size = spectralsize[0]
             wave_roi = roiw[0]
             weight_power = power[0]
-            self.linear_wavelength = True  # added this 10/01/19
             self.soft_rad = softrad[0]
             self.scalerad = scalerad[0]
 
-        self.linear_wavelength = self.linear_wave
+        # self.linear_wavelength = self.linear_wave
 
         # Non-linear wavelength case
         # The wavelength dimension is non linear.
         # We read the wavelength table from the reference file
-        if not self.linear_wavelength:
+        if not self.linear_wave:  # CHANGE HERE
             if self.instrument == "NIRSPEC":
                 # determine if have Prism, Medium or High resolution
                 med = ["g140m", "g235m", "g395m"]
@@ -1177,7 +1172,7 @@ class IFUCubeData:
         # check on valid values
 
         found_error = False
-        if self.linear_wavelength:
+        if self.linear_wave:  # CHANGE HERE
             # check we have valid data for key values
             if self.interpolation == "pointcloud":
                 if np.isnan(self.rois):
@@ -1246,7 +1241,7 @@ class IFUCubeData:
         log.debug(f"spectral size {self.spectral_size}")
         log.debug(f"spatial roi {self.rois}")
         log.debug(f"wave min and max {self.wavemin} {self.wavemax}")
-        log.debug(f"linear wavelength {self.linear_wavelength}")
+        log.debug(f"linear wavelength {self.linear_wave}")
         log.debug(f"roiw {self.roiw}")
         log.debug(f"output_type {self.output_type}")
         if self.weighting == "msm":
@@ -1277,7 +1272,7 @@ class IFUCubeData:
         """
         self.cdelt1 = self.spatial_size
         self.cdelt2 = self.spatial_size
-        if self.linear_wavelength:
+        if self.linear_wave:
             self.cdelt3 = self.spectral_size
 
         parameter1 = self.list_par1
@@ -1601,7 +1596,7 @@ class IFUCubeData:
         # Note that the cube lambda refer to the spaxel midpoints, so we must account for both
         # the spaxel width and the ROI size
 
-        if self.linear_wavelength:
+        if self.linear_wave:
             min_wave_tolerance = self.zcoord[0] - self.roiw
             max_wave_tolerance = self.zcoord[-1] + self.roiw
         else:
@@ -1610,7 +1605,7 @@ class IFUCubeData:
         if self.interpolation == "drizzle":
             dmax = np.nanmax(dwave_all)
 
-            if self.linear_wavelength:
+            if self.linear_wave:
                 min_wave_tolerance = self.zcoord[0] - (self.cdelt3 + dmax)
                 max_wave_tolerance = self.zcoord[-1] + (self.cdelt3 + dmax)
             else:
@@ -1695,7 +1690,7 @@ class IFUCubeData:
         # ________________________________________________________________________
         # if working with msm or emsm need roi sizes and other parameters defined:
         if self.weighting == "msm" or self.weighting == "emsm":
-            if self.linear_wavelength:
+            if self.linear_wave:
                 rois_det[:] = self.rois
                 roiw_det[:] = self.roiw
                 weight_det[:] = self.weight_power
@@ -2403,7 +2398,7 @@ class IFUCubeData:
         var[dnu] = np.nan
 
         var = np.sqrt(var)
-        if self.linear_wavelength:
+        if self.linear_wave:
             crval3 = self.crval3
             cdelt3 = self.cdelt3
             crpix3 = self.crpix3
@@ -2463,7 +2458,7 @@ class IFUCubeData:
         ifucube_model.meta.photometry.pixelarea_steradians = (
             ifucube_model.meta.photometry.pixelarea_arcsecsq * 2.3504e-11
         )
-        if self.linear_wavelength:
+        if self.linear_wave:
             ifucube_model.meta.wcsinfo.crval3 = self.crval3
             ifucube_model.meta.wcsinfo.cdelt3 = self.cdelt3
             ifucube_model.meta.wcsinfo.ctype3 = "WAVE"
