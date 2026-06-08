@@ -63,13 +63,7 @@ class PixelReplacement:
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Datamodel with bad pixels to replace. Updated in-place.
     algorithm : str, optional
-        Replacement algorithm. Options are "mingrad", "fit_profile", or "N/A".
-        If the algorithm is "N/A" and ``use_trace_model`` is `True`, only the
-        trace model pixels are replaced. If ``use_trace_model`` is `False`,
-        no pixel replacement is attempted.
-    use_trace_model : bool, optional
-        If `True`, and a trace model is present in the input model, bad pixels
-        are replaced by trace model values before running ``algorithm``.
+        Replacement algorithm. Options are "mingrad", "fit_profile", or "trace_model".
     n_adjacent_cols : int, optional
         The number of adjacent columns to consider in building a spatial
         profile.  Used only if ``algorithm`` is "fit_profile".
@@ -85,18 +79,17 @@ class PixelReplacement:
     VERTICAL = 2
     LOG_SLICE = ["column", "row"]
 
-    def __init__(self, input_model, algorithm="mingrad", use_trace_model=True, n_adjacent_cols=3):
+    def __init__(self, input_model, algorithm="mingrad", n_adjacent_cols=3):
         self.input = input_model
         self.pars = {
             "algorithm": algorithm,
             "n_adjacent_cols": n_adjacent_cols,
-            "use_trace_model": use_trace_model,
         }
         # Store algorithm options here.
         self.algorithm_dict = {
             "fit_profile": self.fit_profile,
             "mingrad": self.mingrad,
-            "N/A": None,
+            "trace_model": self.trace_model,
         }
 
         # Choose algorithm from dict using input par.
@@ -174,12 +167,6 @@ class PixelReplacement:
         more than one 2D spectrum, then apply selected algorithm
         to each 2D spectrum in input.
         """
-        # Check first for something to do
-        use_trace_model = self.pars["use_trace_model"]
-        if self.algorithm is None and not use_trace_model:
-            log.info("No pixels replaced for algorithm='N/A', use_trace_model=False.")
-            return
-
         # ImageModel inputs (MIR_LRS-FIXEDSLIT)
         # or 2D SlitModel inputs (e.g. NRS_FIXEDSLIT in spec3)
         if isinstance(self.input, datamodels.ImageModel) or (
@@ -188,10 +175,7 @@ class PixelReplacement:
             # Count pixels previously estimated first
             previous_flag = self._is_estimated(self.input.data, self.input.dq)
             arrays = self._arrays_from_model(self.input)
-            if use_trace_model:
-                arrays = self.replace_from_trace_model(arrays)
-            if self.algorithm is not None:
-                arrays = self.algorithm(arrays)
+            arrays = self.algorithm(arrays)
             self._model_from_arrays(arrays, self.input)
 
             # Count newly estimated pixels
@@ -204,12 +188,7 @@ class PixelReplacement:
             previous_flag = self._is_estimated(self.input.data, self.input.dq)
             arrays = self._arrays_from_model(self.input)
 
-            if use_trace_model:
-                arrays = self.replace_from_trace_model(arrays)
-                # Copy back into input, so that later algorithms get updated arrays
-                self._model_from_arrays(arrays, self.input)
-
-            if self.pars["algorithm"] == "mingrad":
+            if self.pars["algorithm"] == "mingrad" or self.pars["algorithm"] == "trace_model":
                 arrays = self.algorithm(arrays)
                 self._model_from_arrays(arrays, self.input)
             elif self.pars["algorithm"] == "fit_profile":
@@ -231,6 +210,8 @@ class PixelReplacement:
 
                 region_numbers = np.unique(region_map[region_map > 0])
                 for slice_num in region_numbers:
+                    log.info(f"Replacing pixels for slice {slice_num}")
+
                     # Define a mask that is True where this trace is located
                     trace_mask = region_map == slice_num
                     arrays = self._arrays_from_model(self.input)
@@ -265,10 +246,7 @@ class PixelReplacement:
                 slit_model.close()
 
                 previous_flag = self._is_estimated(arrays.data, arrays.dq)
-                if use_trace_model:
-                    arrays = self.replace_from_trace_model(arrays)
-                if self.algorithm is not None:
-                    arrays = self.algorithm(arrays)
+                arrays = self.algorithm(arrays)
                 n_replaced = np.count_nonzero(
                     self._is_estimated(arrays.data, arrays.dq) & ~previous_flag
                 )
@@ -303,10 +281,7 @@ class PixelReplacement:
                     dispersion_direction=dispaxis,
                 )
                 previous_flag = self._is_estimated(arrays.data, arrays.dq)
-                if use_trace_model:
-                    arrays = self.replace_from_trace_model(arrays)
-                if self.algorithm is not None:
-                    arrays = self.algorithm(arrays)
+                arrays = self.algorithm(arrays)
                 n_replaced = np.count_nonzero(
                     self._is_estimated(arrays.data, arrays.dq) & ~previous_flag
                 )
@@ -802,9 +777,12 @@ class PixelReplacement:
             else:
                 data[wl_to_fix, xd] = interp_wl
 
-    def replace_from_trace_model(self, arrays):
+    def trace_model(self, arrays):
         """
         Replace bad pixels from the trace model if available.
+
+        Any remaining bad pixels not available from the trace model are replaced
+        with the ``mingrad`` algorithm.
 
         Parameters
         ----------
@@ -819,16 +797,17 @@ class PixelReplacement:
             and holding a flux value estimated from adjacent pixels.
         """
         trace_model = arrays.trace_model
-        if trace_model is None or np.all(np.isnan(trace_model)):
-            log.debug("No trace model to use")
-            return arrays
+        if trace_model is None:
+            # No trace model to use: just call mingrad and return
+            log.info("No trace model to use")
+            return self.mingrad(arrays)
 
         replaceable = ~np.isfinite(arrays.data) & np.isfinite(arrays.trace_model)
         if not np.any(replaceable):
-            log.debug("No replaceable pixels in the trace model")
-            return arrays
+            log.info("No replaceable pixels in the trace model")
+            return self.mingrad(arrays)
 
-        log.debug(f"Replacing {np.sum(replaceable)} bad pixels from trace model")
+        log.info(f"Replacing {np.sum(replaceable)} bad pixels from trace model")
         arrays.data[replaceable] = arrays.trace_model[replaceable]
 
         # Update DQ flags for pixels that were replaced.
@@ -857,4 +836,5 @@ class PixelReplacement:
             # store the updated array
             setattr(arrays, error_ext, err)
 
-        return arrays
+        # Replace any remaining bad pixels via mingrad
+        return self.mingrad(arrays)

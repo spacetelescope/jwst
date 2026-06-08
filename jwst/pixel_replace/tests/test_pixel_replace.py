@@ -221,29 +221,31 @@ def test_pixel_replace_no_valid_data(caplog, nirspec_tso):
 @pytest.mark.parametrize(
     "dataset", ["nirspec_tso", "miri_lrs", "miri_mrs", "nirspec_msa_multislit"]
 )
-@pytest.mark.parametrize("algorithm", ["fit_profile", "mingrad", "N/A"])
-@pytest.mark.parametrize("use_trace_model", [True, False])
-def test_pixel_replace_with_trace_model(request, dataset, algorithm, use_trace_model):
-    """Test pixel replace with a trace model present."""
+@pytest.mark.parametrize("trace_present", [True, False, None])
+def test_pixel_replace_with_trace_model(request, dataset, trace_present):
+    """Test pixel replace with the trace model algorithm."""
     input_model, bad_idx = request.getfixturevalue(dataset)
     input_model = input_model.copy()
 
     # For this test, add a trace model with a different value at the bad index:
     # it should be ignored if trace_model is False.
     # Also set var_flat to None to make sure missing variance does not error.
+    input_model.meta.cal_step.adaptive_trace_model = "COMPLETE"
     if "multislit" in dataset:
         slit = input_model.slits[0]
-        slit.trace_model = np.full(slit.data.shape[-2:], np.nan)
-        slit.trace_model[bad_idx[-2:]] = 2.0
+        if trace_present is not None:
+            slit.trace_model = np.full(slit.data.shape[-2:], np.nan)
+            if trace_present:
+                slit.trace_model[bad_idx[-2:]] = 2.0
         slit.var_flat = None
     else:
-        input_model.trace_model = np.full(input_model.data.shape[-2:], np.nan)
-        input_model.trace_model[bad_idx[-2:]] = 2.0
+        if trace_present is not None:
+            input_model.trace_model = np.full(input_model.data.shape[-2:], np.nan)
+            if trace_present:
+                input_model.trace_model[bad_idx[-2:]] = 2.0
         input_model.var_flat = None
 
-    result = PixelReplaceStep.call(
-        input_model, algorithm=algorithm, use_trace_model=use_trace_model
-    )
+    result = PixelReplaceStep.call(input_model, algorithm="trace_model")
 
     if "multislit" in dataset:
         result = result.slits[0]
@@ -252,20 +254,54 @@ def test_pixel_replace_with_trace_model(request, dataset, algorithm, use_trace_m
         # bad pixel is replaced
         if ext == "var_flat":
             assert getattr(result, ext) is None
-        elif use_trace_model and ext == "data":
+        elif ext == "data" and trace_present:
+            # fixed via trace
             assert getattr(result, ext)[bad_idx] == 2.0
-        elif not use_trace_model and algorithm == "N/A":
-            # uncorrected if not using trace model or replacement algo
-            assert np.isnan(getattr(result, ext)[bad_idx])
         else:
+            # fixed via mingrad
             assert getattr(result, ext)[bad_idx] == 1.0
 
     # The DQ plane for the bad pixel is updated to remove do-not-use
     # and add flux-estimated.
-    if not use_trace_model and algorithm == "N/A":
-        assert result.dq[bad_idx] == flags["DO_NOT_USE"] + flags["OTHER_BAD_PIXEL"]
-    else:
-        assert result.dq[bad_idx] == flags["OTHER_BAD_PIXEL"] + flags["FLUX_ESTIMATED"]
+    assert result.dq[bad_idx] == flags["OTHER_BAD_PIXEL"] + flags["FLUX_ESTIMATED"]
+
+
+def test_pixel_replace_run_atm(nirspec_ifu):
+    # only the IFU fixture has a proper WCS, so use that
+    input_model, bad_idx = nirspec_ifu
+    result = PixelReplaceStep.call(input_model, algorithm="trace_model")
+    assert result.data[bad_idx] == 1.0
+    assert result.meta.cal_step.adaptive_trace_model == "COMPLETE"
+    assert result.trace_model is not None
+
+
+def test_pixel_replace_atm_previously_failed(caplog, nirspec_tso):
+    input_model, bad_idx = nirspec_tso
+    input_model = input_model.copy()
+    input_model.meta.cal_step.adaptive_trace_model = "FAILED"
+    result = PixelReplaceStep.call(input_model, algorithm="trace_model")
+
+    # ATM is not called
+    assert result.meta.cal_step.adaptive_trace_model == "FAILED"
+    assert result.trace_model is None
+
+    # Defaulting to mingrad fixes the bad pixel anyway
+    assert "Defaulting to the 'mingrad' method" in caplog.text
+    assert result.data[bad_idx] == 1.0
+
+
+def test_pixel_replace_atm_error(caplog, nirspec_tso):
+    input_model, bad_idx = nirspec_tso
+    result = PixelReplaceStep.call(input_model, algorithm="trace_model")
+
+    # ATM did not run
+    assert result.meta.cal_step.adaptive_trace_model is None
+    assert result.trace_model is None
+    assert "ValueError: Unknown detector" in caplog.text
+
+    # Defaulting to mingrad fixes the bad pixel anyway
+    assert "Defaulting to the 'mingrad' method" in caplog.text
+    assert result.data[bad_idx] == 1.0
 
 
 def test_skip_unexpected_type():
@@ -352,14 +388,6 @@ def test_n_replaced(caplog, nirspec_fs_slitmodel):
     result = PixelReplaceStep.call(result, algorithm="mingrad")
     assert "0 pixels replaced" in caplog.text
     assert result.dq[bad_idx] == flags["OTHER_BAD_PIXEL"] | flags["FLUX_ESTIMATED"]
-
-
-def test_no_algorithm(caplog, nirspec_fs_slitmodel):
-    input_model = nirspec_fs_slitmodel[0]
-    result = PixelReplaceStep.call(input_model, algorithm="N/A", use_trace_model=False)
-    assert "No pixels replaced for algorithm='N/A', use_trace_model=False" in caplog.text
-    np.testing.assert_allclose(result.data, input_model.data)
-    np.testing.assert_equal(result.dq, input_model.dq)
 
 
 def test_missing_regions(nirspec_ifu):
