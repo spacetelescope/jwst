@@ -1,61 +1,56 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
+readme = "README.md"
 requires-python = ">=3.11,<3.15"
+license-files = ["LICENSE"]
 authors = [
-    { name = "JWST calibration pipeline developers" },
+  { name = "JWST calibration pipeline developers" },
 ]
 classifiers = [
-    "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering :: Astronomy",
-    "Operating System :: MacOS :: MacOS X",
-    "Operating System :: POSIX",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
+  "Intended Audience :: Science/Research",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
-    "asdf>=4.2,<6",
-    "astropy>=6.1.4",
-    "BayesicFitting>=3.2.2",
-    "crds>=12.0.3,!=13.1.15",
-    "gwcs>=1.0.3,<2",
-    "numpy>=2.0",
-    "photutils>=3.0,<4",
-    "pyyaml>=6",
-    "requests>=2.31",
-    "scikit-image>=0.23.0",
-    "scipy>=1.14.1",
-    # "stdatamodels>=5.0.1,<6",
-    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
-    # "stdatamodels>=4.1.0,<4.2.0",
-    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
-    # "stcal>=1.18,<2",
-    # "stpipe>=0.12,<2",
-    "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
-    "synphot>=1.3",
-    "tweakwcs>=0.9.0,<0.10",
-    "packaging>=23.0",
-    "importlib-metadata>=4.11.4",
-    "jsonschema>=4.8",
+  "BayesicFitting>=3.2.2",
+  "asdf>=4.2,<6",
+  "astropy>=6.1.4",
+  "crds>=12.0.3,!=13.1.15",
+  "gwcs>=1.0.3,<2",
+  "importlib-metadata>=4.11.4",
+  "jsonschema>=4.8",
+  "numpy>=2.0",
+  "packaging>=23.0",
+  "photutils>=3.0,<4",
+  "pyyaml>=6",
+  "requests>=2.31",
+  "scikit-image>=0.23.0",
+  "scipy>=1.14.1",
+  # "stdatamodels>=4.1.0,<4.2.0",
+  "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
+  # "stdatamodels>=5.0.1,<6",
+  "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
+  # "stcal>=1.18,<2",
+  # "stpipe>=0.12,<2",
+  "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
+  "synphot>=1.3",
+  "tweakwcs>=0.9.0,<0.10",
 ]
-license-files = ["LICENSE"]
 dynamic = [
-    "version",
+  "version",
 ]
-
-[project.readme]
-file = "README.md"
-content-type = "text/markdown"
 
 [project.urls]
-Homepage = "https://github.com/spacetelescope/jwst"
-Tracker = "https://github.com/spacetelescope/jwst/issues"
-Documentation = "https://jwst-pipeline.readthedocs.io/en/stable/"
-"Source Code" = "https://github.com/spacetelescope/jwst"
+documentation = "https://jwst-pipeline.readthedocs.io"
+repository = "https://github.com/spacetelescope/jwst"
 
 [project.scripts]
 adjust_wcs = "jwst.scripts.adjust_wcs:main"
@@ -79,44 +74,158 @@ world_coords = "jwst.scripts.world_coords:main"
 jwst = "jwst.stpipe.integration:get_steps"
 
 [project.optional-dependencies]
+contrib = [
+  "pre-commit>=4.1.0",
+  "jwst[test, docs]",
+]
 docs = [
-    "matplotlib",
-    "numpydoc",
-    "pytest-doctestplus>=0.11",
-    "sphinx",
-    "sphinx-automodapi",
-    "sphinx-rtd-theme",
-    "sphinxcontrib-jquery",
+  "matplotlib",
+  "numpydoc",
+  "pytest-doctestplus>=0.11",
+  "sphinx",
+  "sphinx-automodapi",
+  "sphinx-rtd-theme",
+  "sphinxcontrib-jquery",
 ]
 sdp = [
-    "jplephem>=2.9",
-    "pysiaf>=0.13.0",
+  "jplephem>=2.9",
+  "pysiaf>=0.13.0",
 ]
 test = [
-    "ci-watson>=0.10",
-    "pysiaf>=0.13.0",
-    "pytest>=6.0.0",
-    "pytest-cov>=2.9.0",
-    "pytest-doctestplus>=0.10.0",
-    "requests_mock>=1.0",
-]
-contrib = [
-    "pre-commit>=4.1.0",
-    "jwst[test, docs]",
+  "ci-watson>=0.10",
+  "pysiaf>=0.13.0",
+  "pytest>=9",
+  "pytest-cov>=2.9.0",
+  "pytest-doctestplus>=0.10.0",
+  "requests_mock>=1.0",
 ]
 
 [build-system]
 requires = [
-    "setuptools>=61.2",
-    "setuptools_scm[toml]>=3.4",
-    "wheel",
-    "numpy>=2.0",
+  "numpy>=2.0",
+  "setuptools>=61.2",
+  "setuptools_scm[toml]>=3.4",
+  "wheel",
 ]
 build-backend = "setuptools.build_meta"
 
+[tool.build-sphinx]
+source-dir = "docs"
+build-dir = "docs"
+all_files = "1"
+
 [tool.cibuildwheel]
-# explicitly skip free-threaded builds
-skip = ["cp314t-*"]
+build = "cp3*"
+skip = ["cp314t-*"]  # explicitly skip free-threaded builds
+test-command = 'python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"'
+
+[tool.cibuildwheel.macos]
+archs = ["arm64", "x86_64"]
+
+[tool.codespell]
+skip = "*.c, *.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
+ignore-words-list = "indx, delt, Shepard, tread, usig"
+
+[tool.coverage.run]
+omit = [
+  "config.py",
+  "config-3.py",
+  "jwst/conftest.py",
+  "jwst/setup.py",
+  "jwst/tests/test*",
+  "jwst/regtest/test*",
+  "jwst/regtest/associations_sdp_pools/*",
+  "jwst/*/tests/*",
+  "docs/*",
+  "*/jwst/conftest.py",
+  "*/jwst/setup.py",
+  "*/jwst/tests/test*",
+  "*/jwst/regtest/test*",
+  "*/jwst/regtest/associations_sdp_pools/*",
+  "*/jwst/*/tests/*",
+  "*/docs/*",
+  "*.rmap",
+  "*.pmap",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if self.debug:",
+  "except ImportError",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == '__main__':",
+]
+omit = [
+  "*.rmap",
+  "*.pmap",
+]
+
+[tool.distutils.upload_docs]
+upload-dir = "docs/_build/html"
+show-response = 1
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+disable_error_code = "import-untyped"  # do not check imports
+exclude = ["build"]
+python_version = "3.11"
+
+[[tool.mypy.overrides]]
+# don't complain about the installed c parts of this library
+module = [
+  "jwst.cube_build.cube_match_internal",
+  "jwst.cube_build.cube_match_sky_driz",
+  "jwst.cube_build.cube_match_sky_pointcloud",
+  "jwst.lib.winclip",
+  "jwst.straylight.calc_xart",
+]
+ignore_missing_imports = true
+
+[tool.numpydoc_validation]
+checks = [
+  "all",
+  "EX01",  # No examples section found
+  "SA01",  # See Also section not found
+  "ES01",  # No extended summary found
+  "GL08",  # Object does not have a docstring. Ruff catches these, and allows more granular ignores.
+  "PR01",  # Parameters not documented. Already caught by ruff.
+  "PR09",  # Parameter description should finish with a period
+  "RT02",  # First line of return should contain only the type
+  "RT05",  # Return value description should finish with a period
+]
+
+[tool.pytest]
+addopts = [
+  "--color=yes",
+  "--show-capture=no",
+  "-p no:legacypath",
+]
+filterwarnings = [
+  "error",
+  # https://github.com/spacetelescope/gwcs/issues/738
+  "ignore:Calling .*lu_.* with arguments of dtype=float:DeprecationWarning",
+]
+junit_family = "xunit2"
+minversion = "9"
+norecursedirs = [
+  ".eggs",
+  ".tox",
+  "build",
+  "docs/_build",
+  "docs/exts",
+  "jwst/associations/tests/data",
+  "scripts",
+  "venv",
+]
+strict_xfail = true
+inputs_root = "jwst-pipeline"
+results_root = "jwst-pipeline-results"
+text_file_format = "rst"
+doctest_plus = "enabled"
+doctest_rst = "enabled"
 
 [tool.setuptools]
 zip-safe = false
@@ -128,555 +237,53 @@ include = ["jwst*"]
 
 [tool.setuptools.package-data]
 "*" = [
-    "*.asdf",
-    "*.cfg",
-    "tests/data/*.csv",
-    "tests/data/*.ecsv",
-    "tests/data/*.fits",
-    "tests/data/**/*.fits",
-    "*.json",
-    "tests/data/*.json",
-    "tests/data/**/*.json",
-    "tests/data/*.txt",
-    "*.yaml",
-    "*.cat",
-    "*.hdr",
+  "*.asdf",
+  "*.cfg",
+  "tests/data/*.csv",
+  "tests/data/*.ecsv",
+  "tests/data/*.fits",
+  "tests/data/**/*.fits",
+  "*.json",
+  "tests/data/*.json",
+  "tests/data/**/*.json",
+  "tests/data/*.txt",
+  "*.yaml",
+  "*.cat",
+  "*.hdr",
 ]
 "jwst.lib.tests" = [
-    "data/*.asdf",
-    "data/**/*.db",
-    "data/**/*.xml",
-    "data/*.ecsv",
-    "data/*.fits",
+  "data/*.asdf",
+  "data/**/*.db",
+  "data/**/*.xml",
+  "data/*.ecsv",
+  "data/*.fits",
 ]
 "jwst.associations.tests" = [
-    "data/*.py",
+  "data/*.py",
 ]
-"jwst.assign_mtwcs.tests" = [
-    "data/*.*"
-]
-"jwst.assign_wcs.tests" = [
-    "data/*.*"
-]
-"jwst.background.tests" = [
-    "data/*.*"
-]
-"jwst.datamodels.tests" = [
-    "data/*.*"
-]
-"jwst.extract_2d.tests" = [
-    "data/*.*"
-]
+"jwst.assign_mtwcs.tests" = ["data/*.*"]
+"jwst.assign_wcs.tests" = ["data/*.*"]
+"jwst.background.tests" = ["data/*.*"]
+"jwst.datamodels.tests" = ["data/*.*"]
+"jwst.extract_2d.tests" = ["data/*.*"]
 "jwst.lib.src" = [
-    "*.c",
+  "*.c",
 ]
 "jwst.cube_build.src" = [
-    "*.c",
+  "*.c",
 ]
 "jwst.straylight.src" = [
-    "*.c",
+  "*.c",
 ]
 "jwst.transforms" = [
-    "resources/schemas/stsci.edu/jwst_pipeline/*.yaml",
+  "resources/schemas/stsci.edu/jwst_pipeline/*.yaml",
 ]
 "jwst.stpipe.resources" = [
-    "schemas/*.yaml",
+  "schemas/*.yaml",
 ]
-"jwst.stpipe.tests" = [
-    "data/*.*"
-]
-"jwst.tweakreg.tests" = [
-    "data/*.*"
-]
-"jwst.wfss_contam.tests" = [
-    "data/*.*"
-]
-
-[tool.build-sphinx]
-source-dir = "docs"
-build-dir = "docs"
-all_files = "1"
-
-[tool.distutils.upload_docs]
-upload-dir = "docs/_build/html"
-show-response = 1
-
-[tool.pytest.ini_options]
-minversion = "6.0"
-norecursedirs = [
-    "docs/_build",
-    "docs/exts",
-    "jwst/associations/tests/data",
-    "scripts",
-    ".tox",
-    ".eggs",
-    "build",
-    "venv",
-]
-junit_family = "xunit2"
-inputs_root = "jwst-pipeline"
-results_root = "jwst-pipeline-results"
-text_file_format = "rst"
-doctest_plus = "enabled"
-doctest_rst = "enabled"
-addopts = [
-    "-p no:legacypath",
-    "--show-capture=no",
-    "--color=yes",
-]
-xfail_strict = true
-filterwarnings = [
-    "error",
-    # https://github.com/spacetelescope/gwcs/issues/738
-    "ignore:Calling .*lu_.* with arguments of dtype=float:DeprecationWarning",
-]
-
-[tool.coverage.run]
-omit = [
-    "config.py",
-    "config-3.py",
-    "jwst/conftest.py",
-    "jwst/setup.py",
-    "jwst/tests/test*",
-    "jwst/regtest/test*",
-    "jwst/regtest/associations_sdp_pools/*",
-    "jwst/*/tests/*",
-    "docs/*",
-    "*/jwst/conftest.py",
-    "*/jwst/setup.py",
-    "*/jwst/tests/test*",
-    "*/jwst/regtest/test*",
-    "*/jwst/regtest/associations_sdp_pools/*",
-    "*/jwst/*/tests/*",
-    "*/docs/*",
-    "*.rmap",
-    "*.pmap",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "if self.debug:",
-    "except ImportError",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == '__main__':",
-]
-omit = [
-    "*.rmap",
-    "*.pmap",
-]
+"jwst.stpipe.tests" = ["data/*.*"]
+"jwst.tweakreg.tests" = ["data/*.*"]
+"jwst.wfss_contam.tests" = ["data/*.*"]
 
 [tool.setuptools_scm]
-write_to = "jwst/_version.py"
 version_scheme = "release-branch-semver"
-
-[tool.numpydoc_validation]
-checks = [
-    "all",
-    "EX01", # No examples section found
-    "SA01", # See Also section not found
-    "ES01", # No extended summary found
-    "GL08", # Object does not have a docstring. Ruff catches these, and allows more granular ignores.
-    "PR01", # Parameters not documented. Already caught by ruff.
-    "PR09", # Parameter description should finish with a period
-    "RT02", # First line of return should contain only the type
-    "RT05", # Return value description should finish with a period
-]
-
-[tool.codespell]
-skip = "*.c, *.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
-ignore-words-list = "indx, delt, Shepard, tread, usig"
-
-[tool.mypy]
-warn_return_any = true
-warn_unused_configs = true
-disable_error_code = "import-untyped" # do not check imports
-exclude = ["build"]
-python_version = "3.11"
-
-[[tool.mypy.overrides]]
-# don't complain about the installed c parts of this library
-module = [
-    "jwst.cube_build.cube_match_internal",
-    "jwst.cube_build.cube_match_sky_driz",
-    "jwst.cube_build.cube_match_sky_pointcloud",
-    "jwst.lib.winclip",
-    "jwst.straylight.calc_xart",
-]
-ignore_missing_imports = true
-
-[tool.towncrier]
-filename = "CHANGES.rst"
-directory = "changes"
-package = "jwst"
-title_format = "{version} ({project_date})"
-ignore = [".gitkeep"]
-wrap = true
-issue_format = "`#{issue} <https://github.com/spacetelescope/jwst/issues/{issue}>`_"
-
-[[tool.towncrier.type]]
-directory = "breaking"
-name = "Breaking Changes"
-showcontent = true
-
-# general pipeline changes
-
-[[tool.towncrier.type]]
-directory = "stpipe"
-name = '``stpipe``'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "datamodels"
-name = "Data Models"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "associations"
-name = "Associations"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "scripts"
-name = "Scripts"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "set_telescope_pointing"
-name = '``set_telescope_pointing``'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "pipeline"
-name = 'Pipeline'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "model_blender"
-name = 'model_blender'
-showcontent = true
-
-# step changes
-
-[[tool.towncrier.type]]
-directory = "adaptive_trace_model"
-name = "adaptive_trace_model (spec2, spec3)"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "align_refs"
-name = 'align_refs (coron3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "ami"
-name = 'ami_analyze / ami_normalize / ami_average (ami3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "assign_mtwcs"
-name = 'assign_mtwcs (image3, spec3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "assign_wcs"
-name = 'assign_wcs (image2, spec2)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "background"
-name = 'background (image2, spec2)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "badpix_selfcal"
-name = 'badpix_selfcal (spec2)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "barshadow"
-name = 'barshadow (spec2 MOS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "charge_migration"
-name = "charge_migration (detector1 NIR)"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "clean_flicker_noise"
-name = "clean_flicker_noise (detector1)"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "combine_1d"
-name = 'combine_1d (spec3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "cube_build"
-name = 'cube_build (spec2 IFU, spec3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "dark_current"
-name = 'dark_current (detector1 NIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "dq_init"
-name = 'dq_init (detector1)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "emicorr"
-name = 'emicorr (detector1 MIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "engdb_tools"
-name = 'engdb_tools'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "exp_to_source"
-name = 'exp_to_source (spec3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "extract_1d"
-name = 'extract_1d (spec2, spec3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "extract_2d"
-name = 'extract_2d (spec2 MOS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "firstframe"
-name = 'firstframe (detector1 MIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "flatfield"
-name = 'flatfield (image2, spec2)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "fringe"
-name = 'fringe (spec2 IFU)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "gain_scale"
-name = 'gain_scale (detector1 NIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "group_scale"
-name = 'group_scale (detector1 NIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "guider_cds"
-name = 'guider_cds (FGS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "imprint"
-name = 'imprint (spec2 IFU, spec2 MOS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "ipc"
-name = 'ipc (detector1)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "jump"
-name = 'jump (detector1)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "klip"
-name = "klip (coron3)"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "lastframe"
-name = 'lastframe (detector1 MIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "linearity"
-name = 'linearity (detector1)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "master_background"
-name = 'master_background (spec2 MOS, spec3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "msaflagopen"
-name = 'msaflagopen (spec2 IFU, spec2 MOS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "nsclean"
-name = "nsclean (spec2 IFU, spec2 MOS)"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "outlier_detection"
-name = 'outlier_detection (image3, tso3, spec3, coron3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "pathloss"
-name = 'pathloss (spec2 IFU, spec2 MOS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "persistence"
-name = 'persistence (detector1 NIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "photom"
-name = 'photom (image2, spec2)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "picture_frame"
-name = "picture_frame (detector1)"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "pixel_replace"
-name = 'pixel_replace (spec2 MOS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "ramp_fitting"
-name = 'ramp_fitting (detector1)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "refpix"
-name = 'refpix (detector1)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "resample"
-name = 'resample (image2, image3, coron3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "resample_spec"
-name = 'resample_spec (spec2 MOS, spec3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "reset"
-name = 'reset (detector1 MIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "residual_fringe"
-name = 'residual_fringe (spec2 IFU)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "rscd"
-name = 'rscd (detector1 MIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "saturation"
-name = 'saturation (detector1)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "skymatch"
-name = 'skymatch (image3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "source_catalog"
-name = 'source_catalog (image3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "spectral_leak"
-name = "spectral_leak (spec3)"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "srctype"
-name = 'srctype (spec2)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "stack_refs"
-name = "stack_refs (coron3)"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "straylight"
-name = 'straylight (spec2 IFU)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "superbias"
-name = 'superbias (detector1 NIR)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "targ_centroid"
-name = 'targ_centroid (spec2)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "tso_photometry"
-name = 'tso_photometry (tso3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "tweakreg"
-name = 'tweakreg (image3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "wavecorr"
-name = 'wavecorr (spec2 MOS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "wfs_combine"
-name = 'wfs_combine'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "wfss_contam"
-name = 'wfss_contam (spec2 WFSS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "white_light"
-name = 'white_light'
-showcontent = true
-
-# other changes
-
-[[tool.towncrier.type]]
-directory = "docs"
-name = "Documentation Changes"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "other"
-name = "Other Changes"
-showcontent = true
