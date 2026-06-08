@@ -249,6 +249,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     * "slicer": frame associated with the slicer
     * "msa_frame": at the MSA
     * "oteip": after the FWA
+    * "oteip_chromocorr": after the chromaticity correction
     * "v2v3"
     * "world"
 
@@ -2204,7 +2205,7 @@ def create_frames():
 
     Returns
     -------
-    det, sca, gwa, slit_frame, slicer_frame, msa_frame, oteip, v2v3, v2v3vacorr, world : tuple
+    tuple
         The coordinate frames. Each is a `~gwcs.coordinate_frames.CoordinateFrame` object.
     """
     det = cf.Frame2D(name="detector", axes_order=(0, 1))
