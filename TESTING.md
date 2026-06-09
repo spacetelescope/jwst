@@ -4,11 +4,13 @@
 In order for a change you make to the code to be accepted and merged, that change must pass existing tests, as well as any new tests you write that cover new functionality.
 
 `jwst` uses `pytest` to define and run tests. To install `pytest` and other required testing tools to your [development environment](./CONTRIBUTING.md#creating-a-development-environment), install `jwst` with the `test` extra:
+
 ```shell
 pip install -e .[test]
 ```
 
 To run tests, simply run `pytest`:
+
 ```shell
 pytest
 ```
@@ -16,6 +18,7 @@ pytest
 `pytest` recursively searches the given directory (by default `.`) for any files with a name like `test_*.py`, and runs all functions it finds that have a name like `test_*`.
 
 For example, running `pytest` without any arguments will find and run this test from `jwst/associations/tests/test_load_from_asn.py` (along with many others):
+
 ```python
 from stdatamodels.jwst.datamodels import ImageModel
 
@@ -35,6 +38,7 @@ def test_lv2_datamodel():
 ```
 
 To run tests from a specific directory or file, pass the path to `pytest`:
+
 ```shell
 # only run tests in `jwst/associations/`
 pytest jwst/associations/
@@ -44,6 +48,7 @@ pytest jwst/associations/tests/test_load_as_asn.py
 ```
 
 To run only specific tests that contain a given string in their name, use `-k <string>`:
+
 ```shell
 # only run tests with `datamodel` in their name
 pytest -k datamodel
@@ -56,8 +61,9 @@ See the [`pytest` documentation](https://docs.pytest.org) for more instructions 
 
 > [!NOTE]
 > By default, simply running `pytest` will skip some tests that require access to large datasets.
-> 
+>
 > To run these tests, you must have access to the STScI internal network, set the environment variable `TEST_BIGDATA` to the STScI Artifactory server, and use the `--bigdata` flag with `pytest`:
+>
 > ```shell
 > TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory pytest --bigdata
 > ```
@@ -65,6 +71,7 @@ See the [`pytest` documentation](https://docs.pytest.org) for more instructions 
 > [!NOTE]
 > Additionally, some more tests are skipped by default because they take a long time.
 > These can be run by using the `--slow` flag with `pytest`:
+>
 > ```shell
 > pytest --slow
 > ```
@@ -91,6 +98,7 @@ If your change introduces new code that isn't covered by an existing test, you s
 
 > [!TIP]
 > If you are writing and / or debugging a test, you may find it helpful to have print statements printed to the terminal while running tests (which doesn't happen by default):
+>
 > ```shell
 > pytest -s
 > ```
@@ -109,6 +117,7 @@ Some of the more useful decorators include:
 # Regression Tests
 
 Whereas unit tests focus on functionality on individual features with small datasets, regression tests in `jwst/regtest/` are focused mainly on large-scale functionality and thus require access to large datasets (see above):
+
 ```shell
 pytest --bigdata --slow jwst/regtest/
 ```
@@ -116,4 +125,3 @@ pytest --bigdata --slow jwst/regtest/
 Regression tests are run on STScI-provisioned runners from the [RegressionTests repository (currently viewable by STScI staff only)](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml?query=event%3Aschedule). To run regression tests, read [the instructions](https://github.com/spacetelescope/RegressionTests/blob/main/docs/running_regression_tests.md).
 
 See [Maintaining Regression Tests](https://github.com/spacetelescope/jwst/wiki/Maintaining-Regression-Tests) for instructions on updating datasets.
-
