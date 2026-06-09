@@ -20,41 +20,22 @@ To avoid these defects in the 1-D spectrum, this step estimates the flux values 
 flagged as ``DO_NOT_USE`` in 2-D extracted spectra using interpolation methods,
 prior to rectification in the :ref:`resample_spec <resample_spec_step>` or
 :ref:`cube_build <cube_build_step>` steps.
-The ``pixel_replace`` step inserts these estimates into the 2-D data array,
-unsets the ``DO_NOT_USE`` flag, and sets the ``FLUX_ESTIMATED`` flag for each affected pixel.
-Error values and variance components for the replaced pixels are similarly updated with
-estimated values, following the same interpolation method as is used for the data.
+The ``pixel_replace`` step inserts these estimates into the 2-D spectral image array,
+unsets the ``DO_NOT_USE`` flag in the DQ array and sets the ``FLUX_ESTIMATED`` flag for
+each affected pixel instead. Error values and variance components for the replaced pixels
+are similarly updated with estimated values, following the same interpolation method as is
+used for the data.
 
 This step is provided as a cosmetic feature and, for that reason, should be used with caution.
 
 Algorithms
 ----------
 
-Trace Modeling
-^^^^^^^^^^^^^^
-
-For some exposure types, it is possible to build a detailed spectral trace model
-with the :ref:`adaptive_trace_model step <adaptive_trace_model_step>`.  The trace model
-usually only includes estimated flux values for high signal-to-noise regions over the core
-of the PSF, but it is generally a very good estimate for those values. By default, the
-``pixel_replace`` step will preferentially replace any missing values with estimates from the trace
-model if present.  Any remaining missing values can be interpolated with one of the other
-available algorithms, below.
-
-The errors and variances associated with pixels replaced from the trace model must still
-be interpolated, since the trace model does not provide error estimates.  For these pixels,
-the error values are linearly interpolated from the nearest valid pixels along the dispersion
-direction.
-
-For time series observations (TSO), the trace model is a 2D image, generated from a median
-spectral image across integrations.  Pixels replaced from the trace model for TSO observations
-will have the same value in every integration.
-
 Minimum Gradient Estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The minimum gradient estimator (``algorithm = "mingrad"``) is an optional algorithm
-that uses entirely local information to fill in missing pixel values.
+The minimum gradient estimator (``algorithm = "mingrad"``) is the default algorithm.
+It uses entirely local information to fill in missing pixel values.
 
 This method tests the gradient along the spatial and spectral axes using immediately adjacent
 pixels.  It chooses whichever dimension has the minimum absolute gradient and replaces the missing
@@ -64,6 +45,32 @@ PSF profile, while near bright extended emission lines it will favor replacement
 spatial axis due to the steep spectral profile.
 
 No replacement is attempted if a NaN value is bordered by another NaN value along a given axis.
+
+
+Trace Modeling
+^^^^^^^^^^^^^^
+
+For some exposure types, it is possible to build a detailed spectral trace model
+with the :ref:`adaptive_trace_model step <adaptive_trace_model_step>`.  The trace model
+usually includes estimated flux values only for high signal-to-noise regions over the core
+of the PSF, but it is generally a very good estimate for those values.
+If ``algorithm = "trace_model"``, the ``pixel_replace`` step will preferentially replace
+any missing values with estimates from the trace model if present.  Any remaining missing
+values will be interpolated with the minimum gradient method, above.
+
+If the :ref:`adaptive_trace_model step <adaptive_trace_model_step>` was not run prior to calling
+``pixel_replace``, then it will be run at the start of the step, with the step parameter
+``oversample=1`` and otherwise default values.
+
+The errors and variances associated with pixels replaced from the trace model must still
+be interpolated, since the trace model does not provide error estimates.  For these pixels,
+the error values are linearly interpolated from the nearest valid pixels along the dispersion
+direction.
+
+For time series observations (TSO), the trace model is a 2-D image, generated from a median
+spectral image across integrations.  Pixels replaced from the trace model for TSO observations
+will have the same value in every integration.
+
 
 Adjacent Profile Approximation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -84,8 +91,8 @@ estimated from the scaled profile.
 
 For some exposure types, PSF undersampling combined with the curvature of spectral traces on the
 detector can lead the model-based adjacent profile estimator to derive incorrect values in the
-vicinity of emission lines.  In these cases, the minimum gradient method is likely to be more
-effective and reliable.
+vicinity of emission lines.  In these cases, either the minimum gradient or trace modeling methods
+are likely to be more effective and reliable.
 
 Reference Files
 ---------------
