@@ -5,6 +5,7 @@ from gwcs.wcs import WCS
 
 from jwst.assign_wcs.miri import store_dithered_position
 from jwst.assign_wcs.util import (
+    is_sky_like,
     update_s_region_imaging,
     update_s_region_lrs,
     update_s_region_mrs,
@@ -138,6 +139,11 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
                 log.info(
                     f"Unable to update S_REGION for type {input_model.meta.exposure.type}: {exc}"
                 )
+
+    # For any exposure type, unset the S_REGION if the output WCS is not
+    # celestial (e.g. lamp exposures)
+    if not is_sky_like(input_model.meta.wcs.output_frame):
+        input_model.meta.wcsinfo.s_region = None
 
     # Store position of dithered pointing location in metadata for later spectral extraction
     if input_model.meta.exposure.type.lower() == "mir_lrs-fixedslit":

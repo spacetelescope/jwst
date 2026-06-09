@@ -158,26 +158,6 @@ def build_mask(dqarr, bitvalue):
     return _stcal_build_mask(dqarr=dqarr, good_bits=bitvalue, flag_name_map=pixel)
 
 
-def is_sky_like(frame):
-    """
-    Check that a frame is a sky-like frame by looking at its output units.
-
-    If output units are either ``deg`` or ``arcsec`` the frame is considered
-    a sky-like frame (as opposite to, e.g., a Cartesian frame.)
-
-    Parameters
-    ----------
-    frame : gwcs.wcs.WCS
-        WCS object to check.
-
-    Returns
-    -------
-    bool
-        ``True`` if the frame is sky-like, ``False`` otherwise.
-    """
-    return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit
-
-
 def load_custom_wcs(asdf_wcs_file, output_shape=None):
     """
     Load a custom output WCS from an ASDF file.

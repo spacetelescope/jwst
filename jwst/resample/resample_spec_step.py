@@ -3,7 +3,7 @@ import logging
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel
 
-from jwst.assign_wcs.util import update_s_region_spectral
+from jwst.assign_wcs.util import is_sky_like, update_s_region_spectral
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.exp_to_source import multislit_to_container
 from jwst.lib.pipe_utils import match_nans_and_flags
@@ -169,7 +169,11 @@ class ResampleSpecStep(Step):
             with drizzled_library:
                 for i, model in enumerate(drizzled_library):
                     self.update_slit_metadata(model)
-                    update_s_region_spectral(model)
+                    if not is_sky_like(model.meta.wcs.output_frame):
+                        # Output WCS is not celestial: unset the S_REGION
+                        model.meta.wcsinfo.s_region = None
+                    else:
+                        update_s_region_spectral(model)
                     result.slits.append(model)
                     drizzled_library.shelve(model, i, modify=False)
             del drizzled_library
@@ -278,7 +282,11 @@ class ResampleSpecStep(Step):
             input_wcs = input_models[0].meta.wcs
             self._transform_sourcepos(input_wcs, result)
         else:
-            update_s_region_spectral(result)
+            if not is_sky_like(result.meta.wcs.output_frame):
+                # Output WCS is not celestial: unset the S_REGION
+                result.meta.wcsinfo.s_region = None
+            else:
+                update_s_region_spectral(result)
 
         return result
 
