@@ -1073,7 +1073,7 @@ class NIRDataset(Dataset):
         """
         Perform simple median filter.
 
-        Run a box of the same width as the data and ```height = smoothing_length``.
+        Run a box of the same width as the data and ``height = smoothing_length``.
         Reflect the data at the top and bottom.
 
         Parameters

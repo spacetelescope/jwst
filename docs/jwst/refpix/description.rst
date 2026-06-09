@@ -33,7 +33,7 @@ Input details
 
 The input file must be a 4-D ramp and it should contain both a science
 (SCI) extension and a pixel data quality (PIXELDQ) extension. The PIXELDQ
-extension is normally populated by the :ref`dq_init <dq_init_step>` step, so running that
+extension is normally populated by the :ref:`dq_init <dq_init_step>` step, so running that
 step is a prerequisite for the ``refpix`` step.
 
 Algorithms
@@ -62,7 +62,7 @@ NIR Detector Data
        column effect in some datasets.  Bad pixels (those whose DQ flag has the
        "DO_NOT_USE" bit set) are not included in the calculation of the mean.
     #. The mean is calculated as a clipped mean with a 3-sigma rejection threshold
-       using :func:`scipy.stats.sigmaclip`..
+       using :func:`scipy.stats.sigmaclip`.
     #. Average the top and bottom reference pixel mean values.
     #. Subtract each mean from all pixels that the mean is representative of,
        i.e., by amplifier and using the odd mean for the odd pixels and even mean
