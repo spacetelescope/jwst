@@ -1,3 +1,5 @@
+"""Reference pixel correction step."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -41,7 +43,7 @@ class RefPixStep(Step):
         Parameters
         ----------
         step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
-            Input datamodel or file name.
+            File name or input datamodel.
 
         Returns
         -------
