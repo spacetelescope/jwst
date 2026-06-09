@@ -1,0 +1,1 @@
+Make sure no S_REGION is defined for resampled data that is not sky-like (e.g., NIRSpec lamp exposures).

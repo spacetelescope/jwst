@@ -1682,6 +1682,35 @@ def test_miri_mrs_time_cor():
     np.testing.assert_allclose(ratio, compare, rtol=1e-6)
 
 
+def test_miri_mrs_match_nans():
+    """Test that NaNs and flags match in MRS output."""
+    input_model = create_input("MIRI", "MIRIFULONG", "MIR_MRS", filter_used="F1500W", band="LONG")
+
+    # add a NaN in the data that is not in err/var
+    input_model.data[10, 10] = np.nan
+
+    save_input = input_model.copy()
+    ds = photom.DataSet(input_model)
+    value = 1.436
+    pixel_area = 0.0436
+    photmjsr = 17.3
+    shape = save_input.data.shape
+    ftab = create_photom_miri_mrs(shape, value, pixel_area, photmjsr)
+    ds.calc_miri(ftab)
+
+    # input unchanged
+    assert np.isnan(save_input.data[10, 10])
+    assert ~np.isnan(save_input.err[10, 10])
+    assert ~np.isnan(save_input.var_poisson[10, 10])
+    assert (save_input.dq[10, 10] & datamodels.dqflags.pixel["DO_NOT_USE"]) == 0
+
+    # output has NaNs at the bad pixel
+    for ext in ["data", "err", "var_poisson", "var_rnoise", "var_flat"]:
+        assert np.isnan(getattr(ds.input, ext)[10, 10])
+    # DQ has do not use
+    assert (ds.input.dq[10, 10] & datamodels.dqflags.pixel["DO_NOT_USE"]) > 0
+
+
 def test_miri_lrs():
     """Test the calc_miri method of the DataSet class, LRS data."""
     input_model = create_input("MIRI", "MIRIMAGE", "MIR_LRS-FIXEDSLIT", filter_used="P750L")

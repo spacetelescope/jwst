@@ -3,7 +3,9 @@
 import logging
 import warnings
 
+import gwcs.coordinate_frames
 import numpy as np
+from astropy import units as u
 from astropy.constants import c
 from astropy.modeling import models as astmodels
 from gwcs import WCS
@@ -38,6 +40,7 @@ __all__ = [
     "calc_rotation_matrix",
     "wrap_ra",
     "update_fits_wcsinfo",
+    "is_sky_like",
 ]
 
 
@@ -1286,3 +1289,26 @@ def get_wcs_reference_files(datamodel):
         else:
             refs[reftype] = val
     return refs
+
+
+def is_sky_like(frame):
+    """
+    Check that a frame is a sky-like frame by looking at its output units.
+
+    If output units are either ``deg`` or ``arcsec`` the frame is considered
+    a sky-like frame (as opposed to, e.g., a Cartesian frame).
+
+    Parameters
+    ----------
+    frame : `~gwcs.coordinate_frames.CoordinateFrame`
+        Coordinate frame to check.
+
+    Returns
+    -------
+    bool
+        ``True`` if the frame is sky-like, ``False`` otherwise.
+    """
+    # Make sure the frame is a coordinate frame first: if not, it's not sky-like
+    if not isinstance(frame, gwcs.coordinate_frames.CoordinateFrame):
+        return False
+    return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit

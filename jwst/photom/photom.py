@@ -344,6 +344,9 @@ class DataSet:
 
                 area_model.close()
 
+                # Make sure output model has consistent NaN and DO_NOT_USE values
+                match_nans_and_flags(self.input)
+
     def calc_niriss(self, ftab):
         """
         Apply photometric calibration data to dataset and update conversion factor.
@@ -530,6 +533,9 @@ class DataSet:
             else:
                 self.input.meta.bunit_data = "DN/s"
                 self.input.meta.bunit_err = "DN/s"
+
+            # Make sure output model has consistent NaN and DO_NOT_USE values
+            match_nans_and_flags(self.input)
 
     def calc_nircam(self, ftab):
         """
