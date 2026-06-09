@@ -1,4 +1,5 @@
-"""FormatTemplate
+"""
+FormatTemplate.
 
 Format template string allowing partial formatting.
 """
@@ -30,14 +31,12 @@ CONVERSION = {
 
 
 class FormatTemplate(Formatter):
-    """Format a template
+    """
+    Format a template.
 
     Parameters
     ----------
-    template : str
-        A Python format string
-
-    separator : string
+    separator : str
         Separator to use for values which have no
         matching replacement strings
 
@@ -50,9 +49,6 @@ class FormatTemplate(Formatter):
         By default, unused replacement fields are left in the
         result, for use in subsequent replacement usage.
         If True, such fields are removed from the result.
-
-    kwargs : dict or named parameters
-        The key/values pairs to fill into the Python format string
 
     Returns
     -------
@@ -77,36 +73,37 @@ class FormatTemplate(Formatter):
     'name="{name}" value="{value}"'
 
     But with actual values given:
-    >>> fmt(template, name='fred', value='great')
+    >>> fmt(template, name="fred", value="great")
     'name="fred" value="great"'
 
     But wait, too many values given:
-    >>> fmt(template, name='fred', value='great', extra='more')
+    >>> fmt(template, name="fred", value="great", extra="more")
     'name="fred" value="great"_more'
 
     And with too many and not enough:
-    >>> fmt(template, value='great', extra='more')
+    >>> fmt(template, value="great", extra="more")
     'name="{name}" value="great"_more'
 
     With a different separator:
-    >>> fmt.separator = '---'
-    >>> fmt(template, name='fred', value='great', extra='more')
+    >>> fmt.separator = "---"
+    >>> fmt(template, name="fred", value="great", extra="more")
     'name="fred" value="great"---more'
 
     Initializing with a different separator:
-    >>> fmt_newsep = FormatTemplate(separator='_now-with_')
-    >>> fmt_newsep(template, name='fred', value='great', extra='more')
+    >>> fmt_newsep = FormatTemplate(separator="_now-with_")
+    >>> fmt_newsep(template, name="fred", value="great", extra="more")
     'name="fred" value="great"_now-with_more'
 
     Setup preformatting
-    >>> key_formats = {'value': ['pre_{:s}_format']}
+    >>> key_formats = {"value": ["pre_{:s}_format"]}
     >>> fmt_preformat = FormatTemplate(key_formats=key_formats)
-    >>> fmt_preformat(template, name='fred', value='great')
+    >>> fmt_preformat(template, name="fred", value="great")
     'name="fred" value="pre_great_format"'
     """
 
     def __init__(self, separator="_", key_formats=None, remove_unused=False):
-        """Initialize class
+        """
+        Initialize class.
 
         Parameters
         ----------
@@ -129,14 +126,15 @@ class FormatTemplate(Formatter):
             self.key_formats.update(key_formats)
 
     def format(self, format_string, **kwargs):
-        """Perform the formatting
+        """
+        Perform the formatting.
 
         Parameters
         ----------
         format_string : str
             The string to be formatted
 
-        kwargs : dict
+        **kwargs : dict
             The key/value pairs to insert into the string
 
         Returns
@@ -182,10 +180,11 @@ class FormatTemplate(Formatter):
         return self.separator.join(result_parts)
 
     # Make the instance callable
-    __call__ = format
+    __call__ = format  # noqa: A003
 
     def get_value(self, key, args, kwargs):  # noqa: ARG002
-        """Return a given field value
+        """
+        Return a given field value.
 
         Parameters
         ----------
