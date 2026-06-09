@@ -1,1 +1,2 @@
-Allow the step to replace pixels from the trace model wherever present, before attempting other algorithms to replace any remaining missing values.
+Add a new algorithm option ("trace_model") to replace pixels from an attached trace model wherever possible.
+Also, fix a bug in the "fit_profile" algorithm for IFU data, ensuring that profiles are fit only to the current slice data.
