@@ -262,12 +262,25 @@ class TweakRegStep(Step):
                     image_model.meta.tweakreg_catalog = self._write_catalog(catalog, filename)
 
                 # construct the corrector since the model is open (and already has a group_id)
-                correctors[model_index] = twk.construct_wcs_corrector(
-                    image_model.meta.wcs,
-                    image_model.meta.wcsinfo.instance,
-                    catalog,
-                    image_model.meta.group_id,
+                catalog = twk.filter_catalog_by_bounding_box(
+                    catalog, image_model.meta.wcs.bounding_box
                 )
+                corrector = JWSTWCSCorrector(
+                    wcs=image_model.meta.wcs,
+                    wcsinfo={
+                        "roll_ref": image_model.meta.wcsinfo.roll_ref,
+                        "v2_ref": image_model.meta.wcsinfo.v2_ref,
+                        "v3_ref": image_model.meta.wcsinfo.v3_ref,
+                    },
+                    # catalog and group_id are required meta
+                    meta={
+                        "catalog": catalog,
+                        "name": catalog.meta.get("name"),
+                        "group_id": image_model.meta.group_id,
+                    },
+                )
+                correctors[model_index] = corrector
+
                 images.shelve(image_model, model_index)
 
         log.info("")

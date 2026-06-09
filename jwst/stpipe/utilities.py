@@ -34,6 +34,7 @@ __all__ = [
     "folder_traverse",
     "record_step_status",
     "query_step_status",
+    "summary_step_status",
     "invariant_filename",
 ]
 
@@ -211,6 +212,34 @@ def query_step_status(datamodel, cal_step):
         return status
     else:
         return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)
+
+
+def summary_step_status(status_values):
+    """
+    Get a summary status from a list of status values.
+
+    Used for recording a top-level status value in ``meta.cal_step`` for
+    a model that contains sub-models separately processed.
+
+    Parameters
+    ----------
+    status_values : list or tuple
+        All status values for the sub-models.
+
+    Returns
+    -------
+    str
+        "COMPLETE" if any model was successfully processed.  Otherwise,
+        "FAILED" if any model failed processing, or "SKIPPED" if no
+        processing was completed or failed.
+    """
+    if any(s == "COMPLETE" for s in status_values):
+        summary_status = "COMPLETE"
+    elif any(s == "FAILED" for s in status_values):
+        summary_status = "FAILED"
+    else:
+        summary_status = "SKIPPED"
+    return summary_status
 
 
 def invariant_filename(save_model_func):
