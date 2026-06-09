@@ -394,11 +394,6 @@ class Spec2Pipeline(Pipeline):
             resampled = self.resample_spec.run(resampled)
 
         elif (exp_type in ["MIR_MRS", "NRS_IFU"]) or is_nrs_ifu_linelamp(calibrated):
-            resampled = calibrated.copy()
-            # First call adaptive_trace_model and pixel_replace then
-            # call cube_build step for IFU data.
-            resampled = self.adaptive_trace_model.run(resampled)
-            resampled = self.pixel_replace.run(resampled)
             resampled = self.cube_build.run(resampled)
             if query_step_status(resampled, "cube_build") == "COMPLETE":
                 self.save_model(resampled[0], suffix="s3d")
