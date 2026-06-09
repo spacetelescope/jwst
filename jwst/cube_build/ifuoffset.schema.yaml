@@ -8,7 +8,7 @@ properties:
   units:
     description: Units of the ra and dec offset values.
     type: string
-    enum: ['arcsec']
+    enum: ["arcsec"]
   filename:
     description: list of filenames
     type: array
