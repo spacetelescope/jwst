@@ -76,7 +76,7 @@ def create_hdul(detector="NRS1"):
     phdu.header["instrume"] = "NIRSPEC"
     phdu.header["detector"] = detector
     phdu.header["time-obs"] = "8:59:37"
-    phdu.header["date-obs"] = "2016-09-05"
+    phdu.header["date-obs"] = "2026-09-05"
     phdu.header["program"] = "1234"
 
     scihdu = fits.ImageHDU()
