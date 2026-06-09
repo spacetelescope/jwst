@@ -6,12 +6,11 @@ from collections import defaultdict
 from os.path import split
 from pathlib import Path
 
-from stpipe.format_template import FormatTemplate
-
 from jwst.associations import Association, ListCategory, libpath
 from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
+from jwst.associations.format_template import FormatTemplate
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.constraint import (
     Constraint,
