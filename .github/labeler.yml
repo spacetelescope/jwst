@@ -34,12 +34,9 @@ automation:
 testing:
   - changed-files:
       - any-glob-to-any-file:
-          - "**/tests/**"
-          - "**/regtest/**"
           - ".github/workflows/test*.yml"
           - "**/conftest.py"
           - "tox.ini"
-          - "jwst/regtest/**"
 
 # --------------------------------------- general pipeline changes ---------------------------------------
 
