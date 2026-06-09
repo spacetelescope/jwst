@@ -7,6 +7,7 @@ ignore = [".gitkeep"]
 wrap = true
 issue_format = "`#{issue} <https://github.com/spacetelescope/jwst/issues/{issue}>`_"
 
+# changes that break step-level or public API (https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private)
 [[tool.towncrier.type]]
 directory = "breaking"
 name = "Breaking Changes"
