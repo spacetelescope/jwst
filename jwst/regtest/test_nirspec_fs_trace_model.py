@@ -50,6 +50,7 @@ def run_spec2_trace_model_bots(rtdata_module):
         "--steps.adaptive_trace_model.skip=false",
         "--steps.adaptive_trace_model.save_results=true",
         "--steps.pixel_replace.skip=false",
+        "--steps.pixel_replace.algorithm=trace_model",
         "--steps.pixel_replace.save_results=true",
     ]
     Step.from_cmdline(args)
@@ -76,7 +77,7 @@ def run_tso3_trace_model_bots(rtdata_module, resource_tracker):
         "--steps.adaptive_trace_model.skip=false",
         "--steps.adaptive_trace_model.save_results=true",
         "--steps.pixel_replace.skip=false",
-        "--steps.pixel_replace.algorithm=mingrad",
+        "--steps.pixel_replace.algorithm=trace_model",
         "--steps.pixel_replace.save_results=true",
     ]
 

@@ -30,6 +30,7 @@ def run_spec2_trace_model(rtdata_module):
         "--steps.adaptive_trace_model.skip=false",
         "--steps.adaptive_trace_model.save_results=true",
         "--steps.pixel_replace.skip=false",
+        "--steps.pixel_replace.algorithm=trace_model",
         "--steps.pixel_replace.save_results=true",
     ]
     Step.from_cmdline(args)

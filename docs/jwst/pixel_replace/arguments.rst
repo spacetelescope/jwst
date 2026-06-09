@@ -20,4 +20,4 @@ The ``pixel_replace`` step has the following step-specific arguments:
   creation of the source profile, in cross-dispersion direction. The total number of
   columns used in the profile will be twice this number; on array edges, the total number
   of columns contributing to the source profile will be less than ``2 * n_adjacent_cols``.
-  Ignored when ``algorithm`` is "mingrad" or "N/A".
+  Ignored when ``algorithm`` is "mingrad" or "trace_model".
