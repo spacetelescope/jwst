@@ -210,6 +210,73 @@ def _build_dispersed_image_of_source(x, y, flux, bounds):
     ).toarray()
 
 
+def _replace_nans(fluxes):
+    """
+    Replace NaNs in multi-band fluxes along the wavelength axis (axis 0).
+
+    Interior NaNs are filled by linear interpolation between the nearest valid
+    bands on each side.  Edge NaNs (no valid band on one side) are filled by
+    flat extrapolation from the nearest valid band.
+
+    Parameters
+    ----------
+    fluxes : ndarray
+        Array of shape (N, n_pixels) containing fluxes for N photometric bands.
+
+    Returns
+    -------
+    filled_fluxes : ndarray
+        Input array ``fluxes`` but with NaNs replaced, updated in place.
+    """
+    valid_mask = np.isfinite(fluxes)
+    if not (~valid_mask).any():
+        return fluxes
+
+    n, _npix = fluxes.shape
+    band_idx = np.arange(n)
+
+    # For each position, find the index of the nearest valid band to the left
+    # (or -1 if none) and to the right (or N if none) along wavelength axis (0).
+    left_indices = np.where(valid_mask, band_idx[:, None], -1)
+    np.maximum.accumulate(left_indices, axis=0, out=left_indices)
+
+    right_indices = np.where(valid_mask, band_idx[:, None], n)
+    np.minimum.accumulate(right_indices[::-1], axis=0, out=right_indices[::-1])
+
+    # make bool arrays for whether there is a non-NaN band to the left or right of each NaN
+    # rows is wavelength axis, cols is pixel axis
+    nan_rows, nan_cols = np.where(~valid_mask)
+    left_i = left_indices[nan_rows, nan_cols]
+    right_i = right_indices[nan_rows, nan_cols]
+    has_left = left_i >= 0
+    has_right = right_i < n
+    interior = has_left & has_right
+    only_right = ~has_left & has_right
+    only_left = has_left & ~has_right
+
+    # interior NaNs: linearly interpolate
+    if interior.any():
+        r, c = nan_rows[interior], nan_cols[interior]
+        # find flux at nearest non-nan to both left and right, then use those to find the slope
+        li, ri = left_i[interior], right_i[interior]
+        slope = (r - li) / (ri - li)
+        fluxes[r, c] = fluxes[li, c] + slope * (fluxes[ri, c] - fluxes[li, c])
+
+    # leading NaNs: flat fill from the right
+    if only_right.any():
+        r, c = nan_rows[only_right], nan_cols[only_right]
+        # replace flux with that at nearest non-nan to the right
+        fluxes[r, c] = fluxes[right_i[only_right], c]
+
+    # trailing NaNs: flat fill from the left
+    if only_left.any():
+        r, c = nan_rows[only_left], nan_cols[only_left]
+        # replace flux with that at nearest non-nan to the left
+        fluxes[r, c] = fluxes[left_i[only_left], c]
+
+    return fluxes
+
+
 def disperse(
     xs,
     ys,
@@ -319,6 +386,11 @@ def disperse(
 
     # Interpolate the input fluxes onto the wavelength grid of the dispersed image
     if len(band_wavelengths) >= 2:
+        # interp1d does not handle NaNs, so replace with interplation that assumes
+        # flat spectrum at the edges and linear interpolation in the interior,
+        # which is what the behavior would be if we were to call interp1d separately
+        # on each pixel's spectrum after removing NaNs.
+        fluxes = _replace_nans(fluxes)
         interp_fn = interp1d(
             band_wavelengths,
             fluxes,

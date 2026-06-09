@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from jwst.wfss_contam.disperse import disperse
+from jwst.wfss_contam.disperse import _replace_nans, disperse
 
 _SENS_WAVES = np.linspace(1.708, 2.28, 100)
 _WMIN, _WMAX = _SENS_WAVES[0], _SENS_WAVES[-1]
@@ -219,3 +219,17 @@ def test_flux_models_superposition(grism_wcs, direct_image_with_gradient):
 
     combined = src_sep[_SOURCE_ID]["model_counts"][0] + src_sep[_SOURCE_ID]["model_counts"][1]
     assert_allclose(combined, src_sum[_SOURCE_ID]["model_counts"][0], rtol=1e-10)
+
+
+def test_replace_nans():
+    """Test that _replace_nans() does what we expect."""
+    arr = np.array([[np.nan, np.nan, 3.0, np.nan, 5.0, np.nan]]).T
+    arr = _replace_nans(arr)
+    assert_allclose(arr, np.array([[3.0, 3.0, 3.0, 4.0, 5.0, 5.0]]).T)
+
+
+def test_replace_nans_no_nans():
+    """Test that _replace_nans() does nothing if there are no NaNs."""
+    arr = np.array([[1.0, 2.0, 3.0]]).T
+    filled = _replace_nans(arr)
+    assert filled is arr
