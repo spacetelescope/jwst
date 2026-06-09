@@ -86,6 +86,7 @@ docs = [
   "sphinx-automodapi",
   "sphinx-rtd-theme",
   "sphinxcontrib-jquery",
+  "towncrier",
 ]
 sdp = [
   "jplephem>=2.9",
