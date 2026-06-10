@@ -557,7 +557,7 @@ def contam_corr(
         band_wavelengths = None
         if isinstance(direct_model, datamodels.WFSSMultiBandModel):
             # Multi-band direct image: each wavelength plane holds the flux in that band.
-            band_wavelengths = direct_model.wavetable["wavelength"].flatten().astype(float)
+            band_wavelengths = direct_model.wavelength.flatten().astype(float)
             log.info(
                 "Direct image is a WFSSMultiBandModel with "
                 f"{len(band_wavelengths)} wavelength bands "

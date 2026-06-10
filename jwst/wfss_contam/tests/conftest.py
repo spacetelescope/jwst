@@ -78,10 +78,7 @@ def direct_image_cube_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG0
         gradient = wl * x * y / 5000.0
         cube[i] = direct_image + gradient
 
-    num = len(band_wls)
-    wavetable = np.array([(band_wls[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
-
-    model = dm.WFSSMultiBandModel(data=cube, wavetable=wavetable)
+    model = dm.WFSSMultiBandModel(data=cube, wavelength=band_wls)
     model.meta.wcs = create_imaging_wcs("F200W")
     model.save("direct_image_cube.fits")
 
