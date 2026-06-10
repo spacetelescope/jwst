@@ -78,7 +78,7 @@ The ``source_catalog`` step uses the following user-settable arguments:
   parameters defining Kron aperture. If None,
   the parameters ``(2.5, 1.4, 0.0)`` are used. (Default=None)
 
-* ``deblend``: A `bool` indicating whether to deblend sources. (Default=False)
+* ``deblend``: A `bool` indicating whether to deblend sources. (Default=True)
 
 
 **Additional source finding parameters for "dao" and "iraf":**
