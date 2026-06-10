@@ -128,31 +128,70 @@ there will be an added binary extension table to the output FITS file of the IFU
 the label ``WCS-TABLE`` and contains the wavelengths for each of the IFU cube wavelength planes. This table follows the
 FITS standard described in *Representations of spectral coordinates in FITS*, Greisen, et al., 2006, **A & A**, 446, 747-771.
 
-The input data to ``cube_build`` can take a variety of forms, as listed above in
-:ref:`cube_build_description`. Because the MIRI IFUs
-project data from two channels onto a single detector, choices can or must be made as to which parts of the input data
-to use when constructing the output cube even in the simplest case of a single input image. The default behavior
-varies according to the context in which ``cube_build`` is being run.
 
-In the case of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, for example,
-where the input is a single MIRI or NIRSpec IFU exposure, the default output
-cube will be built from all the data in that single exposure. For MIRI this
-means using the data from both channels (e.g., 1A and 2A) that are recorded in a
-single exposure and the output IFU cube will have a non-linear wavelength
-dimension. For NIRSpec, the data is from the single grating and filter
-combination contained in the exposure and will have a linear wavelength
-dimension. The :ref:`calwebb_spec2 <calwebb_spec2>` pipeline calls ``cube_build`` with
-``output_type=multi``.
+IFU Cube Geometry and Wavelength Sampling
++++++++++++++++++++++++++++++++++++++++++
+
+The output 3-D spectral data consist of a rectangular cube with three orthogonal 
+axes: two spatial and one spectral. Depending on how ``cube_build`` is run, 
+the spectral axes can be either linear or non-linear.
+
+* **Linear Wavelength Cubes:** Generally constructed from a single band of data.
+* **Non-Linear Wavelength Cubes:** Usually created from more than one band of data.
+
+The IFU cubes contain an extension labeled ``WCS-TABLE``, which contains the wavelengths
+for each of the IFU cube planes. This extension follows the FITS standard described in
+*Representations of spectral coordinates in FITS*, Greisen, et al., 2006, 
+**A & A**, 446, 747-771. If the IFU cubes have a non-linear wavelength dimension, the ``CTYPE3`` WCS parameter
+is set to ``WAVE-TAB`` and the table is used to construct the FITS WCS. For linear wavelengths,
+the ``CTYPE3`` parameter is set to ``WAVE`` and the WCS is encoded via header keywords only. 
+
+
+Pipeline Input Handling and Default Behaviors
++++++++++++++++++++++++++++++++++++++++++++++
+
+The input data to ``cube_build`` can take a variety of forms, as listed above in 
+:ref:`cube_build_description`. Because the MIRI IFUs project data from two 
+channels onto a single detector, choices  must be made as to which parts 
+of the input data to use when constructing the output cube, even in the simplest 
+case of a single input image. 
+
+By default, ``cube_build`` creates cubes from a single band. For MIRI that means data from a
+single channel and single sub-channel. For NIRSpec that means data from a single grating and filter. 
+This can be overridden
+using the ``output_type=multi`` parameter. In the pipeline, this is controlled by
+the parameter reference files for the pipeline that is being run. 
+The ``pars_spec2pipeline`` parameter reference file for MIRI sets ``output_type=multi``.
+
+In the case of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, for example, 
+where the input is a single MIRI or NIRSpec IFU exposure, the default output 
+cube will be built from all the data in that single exposure. 
+
+* **MIRI:** Uses data from both channels (e.g., 1A and 2A) that are recorded 
+  simultaneously in a single exposure.  The output IFU cube will have a non-linear wavelength dimension.
+* **NIRSpec:** The data is from the single grating and filter combination 
+  contained in the exposure and will have a linear wavelength dimension.
+
+In the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, on the other hand, where 
+the input can be a collection of data from multiple exposures covering multiple 
+bands, the default behavior is to create a set of separate band cubes.
+
+* **NIRSpec:** By default this pipeline generates multiple distinct cubes—one for each 
+  grating and filter combination contained in the input collection. These types 
+  of IFU cubes will have a linear wavelength dimension. 
+* **Custom Overrides:** If the user wants to combine all the data together 
+  covering several bands, they can override this by using the option 
+  ``output_type=multi``. The resulting combined IFU cubes will have a 
+  non-linear wavelength dimension accompanied by the ``WCS-TABLE`` extension.
+  In addition, if the user has a single grating and filter they can produce a
+  non-linear wavelength dimension using the ``linear_wave=False`` option. This is
+  particularly  useful with Prism data. 
+
 
 In the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, on the other hand, where
 the input can be a collection of data from multiple exposures covering multiple
-bands, the default behavior is to create a set of single-channel cubes. For MIRI,
-for example, this can mean separate cubes for channel 1, 2, 3, and 4.
-depending on what's included in the input. For NIRSpec this may mean
-multiple cubes, one for each grating+filter combination contained in the input
-collection. The :ref:`calwebb_spec3 <calwebb_spec3>` pipeline calls ``cube_build`` with
-``output_type=band``. These types of IFU cubes will have a linear-wavelength
-dimension. If the user wants to combine all the data together covering several
+bands, the default behavior is to create a set of single-band cubes with a linear-wavelength
+dimension.  If the user wants to combine all the data together covering several
 band they can using the option ``output_type=multi`` and the resulting IFU cubes
 will have a non-linear wavelength dimension.
 
@@ -211,14 +250,50 @@ The string defining the type of IFU is created according to the following rules:
   ``rootname_G140M-G235M_F070LP-F100LP_s3d.fits``.
 
 
+Calwebb_spec2 Pipeline
+++++++++++++++++++++++
+
+File names for cubes generated within the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline follow standard pipeline formatting rules and
+append a simple, fixed suffix to the root name:
+
+* ``rootname_s3d.fits``
+
+Standalone or calwebb_spec3 Pipeline
+++++++++++++++++++++++++++++++++++++
+
+When running ``cube_build`` as a standalone step or within the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, the output filename dynamically
+includes details about the specific channels, bands, gratings, or filters used to construct the cube.
+
+**Root Name Selection:** If the input data is a single exposure, the ``rootname`` is pulled directly from the input filename. If the input is
+an association table, the ``rootname`` is explicitly defined by the association.
+
+
+The instrument-specific naming rules are applied as follows:
+
+* MIRI Naming Rules
+  The output string suffix is determined by the channels and sub-channels (bands) utilized. The formatting follows the pattern ``_ch{#}-{band}``, resulting
+  in an output file named ``rootname_ch{#}-{band}_s3d.fits``.
+  
+  If the IFU cube combines multiple channels or bands, they are chained together. For example, a single cube constructed from Channel 1 and Channel 2,
+  covering both short and medium sub-channels, will produce:
+  
+  * ``rootname_ch1-2-shortmedium_s3d.fits``
+
+* NIRSpec Naming Rules
+  The output string suffix is determined by the specific grating and filter combinations utilized. For standard single grating/filter cubes,
+  the naming pattern is ``rootname_{grating}-{filter}_s3d.fits``.
+  
+  If the IFU cube is built from multiple bands, the elements are chained sequentially using hyphens to track each unique configuration pair.
+  For example, if an IFU cube combines data from the **G140M/F070LP** and **G235M/F100LP** combinations, the output filename will be:
+  
+  * ``rootname_g140m-f070lp-g235m-f100lp_s3d.fits``
+
+.. note::
+   All instrument hardware strings (such as ``g140m`` or ``f070lp``) are automatically normalized to lowercase characters when generating the final filename suffix.
 .. _algorithm:
 
 Algorithm
 ---------
-The type of output IFU cube created depends on which pipeline is being run,
-:ref:`calwebb_spec2 <calwebb_spec2>` or :ref:`calwebb_spec3 <calwebb_spec3>`,
-and if additional
-user provided options are being set (see the :ref:`arguments` section).
 Based on the pipeline settings and any user provided arguments defining the type of cubes to create, the program selects
 the data from each exposure that should be included in the spectral cube. The output cube is defined using the WCS
 information of all the input data. The input data are mapped to the output frame based on the WCS information that is

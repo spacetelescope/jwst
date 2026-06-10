@@ -169,7 +169,6 @@ def test_calspec2_config(tmp_cwd, miri_ifushort_short):
     pars_input["grating"] = []
     weighting = "drizzle"
     output_type = "multi"  # calspec 2 setup. Only 1 cube create from 2 channels
-    single = False
     par_filename = "None"
 
     input_models = []
@@ -181,7 +180,6 @@ def test_calspec2_config(tmp_cwd, miri_ifushort_short):
         "grating": pars_input["grating"],
         "filter": pars_input["filter"],
         "weighting": weighting,
-        "single": single,
         "output_type": output_type,
     }
 
@@ -213,7 +211,6 @@ def test_calspec3_config_miri(tmp_cwd, miri_full_coverage):
     pars_input["grating"] = []
     weighting = "drizzle"
     output_type = "band"
-    single = False
     par_filename = "None"
 
     pars = {
@@ -222,7 +219,6 @@ def test_calspec3_config_miri(tmp_cwd, miri_full_coverage):
         "grating": pars_input["grating"],
         "filter": pars_input["filter"],
         "weighting": weighting,
-        "single": single,
         "output_type": output_type,
     }
 
@@ -292,7 +288,6 @@ def test_calspec3_config_miri_multi(tmp_cwd, miri_full_coverage):
     pars_input["grating"] = []
     weighting = "drizzle"
     output_type = "multi"
-    single = False
     par_filename = "None"
 
     pars = {
@@ -301,7 +296,6 @@ def test_calspec3_config_miri_multi(tmp_cwd, miri_full_coverage):
         "grating": pars_input["grating"],
         "filter": pars_input["filter"],
         "weighting": weighting,
-        "single": single,
         "output_type": output_type,
     }
 
@@ -361,7 +355,6 @@ def test_calspec3_config_miri_multi_ch1(tmp_cwd, miri_full_coverage):
     weighting = "drizzle"
     output_type = "multi"
     channel = "1"
-    single = False
     par_filename = "None"
 
     pars = {
@@ -369,7 +362,6 @@ def test_calspec3_config_miri_multi_ch1(tmp_cwd, miri_full_coverage):
         "grating": pars_input["grating"],
         "filter": pars_input["filter"],
         "weighting": weighting,
-        "single": single,
         "channel": channel,
         "output_type": output_type,
     }
@@ -402,7 +394,6 @@ def test_calspec3_config_nirspec(tmp_cwd, nirspec_medium_coverage):
     pars_input["grating"] = []
     weighting = "drizzle"
     output_type = "band"
-    single = False
     par_filename = "None"
 
     pars = {
@@ -411,7 +402,6 @@ def test_calspec3_config_nirspec(tmp_cwd, nirspec_medium_coverage):
         "grating": pars_input["grating"],
         "filter": pars_input["filter"],
         "weighting": weighting,
-        "single": single,
         "output_type": output_type,
     }
 
@@ -447,7 +437,6 @@ def test_calspec3_config_nirspec_multi(tmp_cwd, nirspec_medium_coverage):
     pars_input["grating"] = []
     weighting = "msm"
     output_type = "multi"
-    single = False
     par_filename = "None"
 
     pars = {
@@ -456,7 +445,6 @@ def test_calspec3_config_nirspec_multi(tmp_cwd, nirspec_medium_coverage):
         "grating": pars_input["grating"],
         "filter": pars_input["filter"],
         "weighting": weighting,
-        "single": single,
         "output_type": output_type,
     }
 
@@ -491,7 +479,6 @@ def test_calspec3_config_nirspec_grating(tmp_cwd, nirspec_medium_coverage):
     grating = "g140m"
     filter = "f100lp"
     output_type = "multi"
-    single = False
     par_filename = "None"
 
     pars = {
@@ -500,7 +487,6 @@ def test_calspec3_config_nirspec_grating(tmp_cwd, nirspec_medium_coverage):
         "weighting": weighting,
         "grating": grating,
         "filter": filter,
-        "single": single,
         "output_type": output_type,
     }
 
@@ -535,7 +521,6 @@ def test_calspec3_config_nirspec_no_grating(tmp_cwd, nirspec_medium_coverage):
     grating = "g140h"
     filter = "f100lp"
     output_type = "multi"
-    single = False
     par_filename = "None"
 
     pars = {
@@ -544,7 +529,6 @@ def test_calspec3_config_nirspec_no_grating(tmp_cwd, nirspec_medium_coverage):
         "weighting": weighting,
         "grating": grating,
         "filter": filter,
-        "single": single,
         "output_type": output_type,
     }
 
