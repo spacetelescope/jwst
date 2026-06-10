@@ -531,7 +531,7 @@ the data must be given. The steps to run this correction outside the pipeline ar
 
 where ``flux`` is the extracted spectral data, and the data are from channel 4 for this example.
 
-The `~jwst.residual_fringe.fit_residual_fringes_1d` function has several additional
+The :func:`~jwst.residual_fringe.utils.fit_residual_fringes_1d` function has several additional
 options that can be used to fine-tune the correction for the input data.  The ``max_amp`` parameter
 controls the maximum correction that will be applied; the ``clip_features``, ``clip_sigma``,
 ``max_line``, and ``ignore_regions`` parameters all control the spectral feature identification
