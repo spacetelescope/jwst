@@ -1,0 +1,1 @@
+Remove empty ERR extensions from _contam and _simul_slits files
