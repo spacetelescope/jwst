@@ -164,8 +164,6 @@ def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
         "debug_spaxel": "0 0 0",
     }
 
-    pipeline = 3
-
     input_model = None
     output_name_base = None
     output_type = "band"
@@ -176,7 +174,6 @@ def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
     master_table = None
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -192,12 +189,12 @@ def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
     this_cube.num_files = 1  # set in ifu cube
     # test that the correct values read from the table are filled
     # in in the this_cube class. Also check that for this configuration
-    # linear_wavelength = True
+    # linear_wave = True
     this_cube.determine_cube_parameters()
 
     assert math.isclose(this_cube.wavemin, wavemin, abs_tol=0.00001)
     assert math.isclose(this_cube.wavemax, wavemax, abs_tol=0.00001)
-    assert this_cube.linear_wavelength
+    assert this_cube.linear_wave
 
     assert math.isclose(this_cube.weight_power, 2, abs_tol=0.00001)
     assert math.isclose(this_cube.roiw, 0.001, abs_tol=0.00001)
@@ -268,7 +265,6 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
         "debug_spaxel": "0 0 0",
     }
 
-    pipeline = 3
     input_model = None
     output_name_base = None
     output_type = "band"
@@ -279,7 +275,6 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
     master_table = None
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -295,13 +290,13 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
     this_cube.num_files = 1  # set in ifu cube
     # test that the correct values read from the table are filled
     # in in the this_cube class. Also check that for this configuration
-    # linear_wavelength = True
+    # linear_wave = True
     this_cube.determine_cube_parameters()
     # now test if the user has provided input to build cube
 
     assert math.isclose(this_cube.wavemin, wavemin, abs_tol=0.00001)
     assert math.isclose(this_cube.wavemax, wavemax, abs_tol=0.00001)
-    assert this_cube.linear_wavelength
+    assert this_cube.linear_wave
 
     assert math.isclose(this_cube.weight_power, 2, abs_tol=0.00001)
     assert math.isclose(this_cube.roiw, roiw, abs_tol=0.00001)
@@ -332,7 +327,6 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
     }
 
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -350,7 +344,7 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
     # do they match the user provided ones
     assert math.isclose(this_cube.wavemin, user_wave_min, abs_tol=0.00001)
     assert math.isclose(this_cube.wavemax, user_wave_max, abs_tol=0.00001)
-    assert this_cube.linear_wavelength
+    assert this_cube.linear_wave
     assert math.isclose(this_cube.spatial_size, user_ascale, abs_tol=0.00001)
     assert math.isclose(this_cube.spectral_size, user_wscale, abs_tol=0.00001)
     assert math.isclose(this_cube.weight_power, user_power, abs_tol=0.00001)
@@ -440,7 +434,6 @@ def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
         "debug_spaxel": "0 0 0",
     }
 
-    pipeline = 3
     input_model = None
     output_name_base = None
     output_type = "multi"
@@ -451,7 +444,6 @@ def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
     master_table = None
     instrument_info = instrument_info
     this_cube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -472,7 +464,7 @@ def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
 
     # for multiple bands the smallest spatial scale is chosen
     assert math.isclose(this_cube.spatial_size, 0.13, abs_tol=0.00001)
-    assert not this_cube.linear_wavelength
+    assert not this_cube.linear_wave
 
     # wavemin - min for channels 1-3 (min of channel 1 short)
     assert math.isclose(this_cube.wavemin, 4.89, abs_tol=0.00001)
