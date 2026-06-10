@@ -99,6 +99,11 @@ class FormatTemplate(Formatter):
     >>> fmt_preformat = FormatTemplate(key_formats=key_formats)
     >>> fmt_preformat(template, name="fred", value="great")
     'name="fred" value="pre_great_format"'
+
+    Remove unused keys:
+    >>> fmt_unused = FormatTemplate(remove_unused=True)
+    >>> fmt_unused(template, name="fred")
+    'name="fred" value=""'
     """
 
     def __init__(self, separator="_", key_formats=None, remove_unused=False):
