@@ -41,7 +41,6 @@ class CubeData:
     def __init__(self, input_models, par_filename, **pars):
         self.input_models = input_models
         self.par_filename = par_filename
-        self.single = pars.get("single")
         self.channel = pars.get("channel")
         self.subchannel = pars.get("subchannel")
         self.grating = pars.get("grating")
@@ -338,8 +337,8 @@ class CubeData:
         1 cube is created. If the data
         is MIRI MRS, then 2 channels worth of data is combined into one IFU cube.
         For :ref:`calwebb_spec3 <calwebb_spec3>` data, the default is to
-        create multiple cubes containing
-        single band data. However, the user can override this option and combine
+        create multiple cubes containing single band data.
+        However, the user can override this option and combine
         multiple bands in a single IFU cube.
 
         Returns
@@ -361,18 +360,9 @@ class CubeData:
             band_subchannel = self.all_subchannel
 
             # user, single, or multi
-            if (
-                self.output_type == "user"
-                or self.output_type == "single"
-                or self.output_type == "multi"
-            ):
+            if self.output_type == "user" or self.output_type == "multi":
                 if self.output_type == "multi":
                     log.info("Output IFUcube are constructed from all the data ")
-                if self.single:
-                    log.info(
-                        "Single = true, creating a set of single exposures mapped"
-                        " to output IFUCube coordinate system"
-                    )
                 if self.output_type == "user":
                     log.info("The user has selected the type of IFU cube to make")
 
@@ -422,18 +412,9 @@ class CubeData:
             band_grating = self.all_grating
             band_filter = self.all_filter
 
-            if (
-                self.output_type == "user"
-                or self.output_type == "single"
-                or self.output_type == "multi"
-            ):
+            if self.output_type == "user" or self.output_type == "multi":
                 if self.output_type == "multi":
                     log.info("Output IFUcube are constructed from all the data ")
-                if self.single:
-                    log.info(
-                        "Single = true, creating a set of single exposures"
-                        " mapped to output IFUCube coordinate system"
-                    )
                 if self.output_type == "user":
                     log.info("The user has selected the type of IFU cube to make")
 
