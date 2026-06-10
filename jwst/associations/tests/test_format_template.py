@@ -124,3 +124,11 @@ def test_allow_unknown():
     fmt = FormatTemplate(remove_unused=False)
     result = fmt(template)
     assert result == template
+
+
+def test_remove_unused():
+    """Remove unused values"""
+    template = 'name="{name}" value="{value}"'
+    fmt = FormatTemplate(remove_unused=True)
+    result = fmt(template, name="fred")
+    assert result == 'name="fred" value=""'
