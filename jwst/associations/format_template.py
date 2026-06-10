@@ -120,6 +120,11 @@ class FormatTemplate(Formatter):
         key_formats : {key: format(, ...)}
             dict of formats to pre-format the related values
             before insertion into the template.
+
+        remove_unused : bool
+            By default, unused replacement fields are left in the
+            result, for use in subsequent replacement usage.
+            If True, such fields are removed from the result.
         """
         super().__init__()
         self.separator = separator
