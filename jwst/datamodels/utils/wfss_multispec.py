@@ -213,7 +213,7 @@ def make_wfss_multiexposure_spec3(input_list):
     # with one WFSSMultiSpecModel table per exposure
     output_x1d = dm.WFSSMultiSpecModel()
     # WCS is needed to combine S_REGION in calwebb_spec3
-    if (not getattr(output_x1d.meta, "wcs", None)) and hasattr(input_list[0].meta, "wcs"):
+    if not getattr(output_x1d.meta, "wcs", None):
         output_x1d.meta.wcs = input_list[0].meta.wcs
     for exposure_number in sorted(exposure_nrows.keys()):
         n_rows = exposure_nrows[exposure_number]
