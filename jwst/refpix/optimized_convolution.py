@@ -1,7 +1,9 @@
-#
-# Module for using the Simple Improved Reference Subtraction (SIRS) algorithm
-# to improve the 1/f noise, only for full frame non-IRS2 NIR data
-#
+"""
+Functions for Simple Improved Reference Subtraction (SIRS).
+
+They are for using the SIRS algorithm
+to improve the 1/f noise, only for full frame non-IRS2 NIR data.
+"""
 
 import logging
 
@@ -18,20 +20,20 @@ def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
 
     Parameters
     ----------
-    sirs_kernel_model : `~jwst.datamodels.SIRSKernelModel`
+    sirs_kernel_model : `~stdatamodels.jwst.datamodels.SIRSKernelModel`
         Data model containing the Fourier coefficients from the reference files for
-        Simple Improved Reference Subtraction (SIRS)
+        Simple Improved Reference Subtraction (SIRS).
     detector : str
-        Name of the detector of the input data
+        Name of the detector of the input data.
     gaussmooth : float
         Width of Gaussian smoothing kernel to use as a low-pass filter on
-        reference file's coefficients
+        reference file's coefficients.
     halfwidth : int
-        Half-width of convolution kernel to build from reference file's coefficients
+        Half-width of convolution kernel to build from reference file's coefficients.
 
     Returns
     -------
-    kernels: list
+    kernels : list
         List of kernels appropriate for convolution with the left and right reference pixels.
     """
     gamma, zeta = get_conv_kernel_coeffs(sirs_kernel_model, detector)
@@ -65,7 +67,7 @@ def get_conv_kernel_coeffs(sirs_kernel_model, detector):
 
     Parameters
     ----------
-    sirs_kernel_model : `~jwst.datamodels.SIRSKernelModel`
+    sirs_kernel_model : `~stdatamodels.jwst.datamodels.SIRSKernelModel`
         Data model containing the Fourier coefficients from the reference files for
         Simple Improved Reference Subtraction (SIRS)
     detector : str
@@ -73,9 +75,7 @@ def get_conv_kernel_coeffs(sirs_kernel_model, detector):
 
     Returns
     -------
-    gamma: numpy array
-        Fourier coefficients
-    zeta: numpy array
+    gamma, zeta : ndarray
         Fourier coefficients
     """
     mdl_dict = sirs_kernel_model.to_flat_dict()
@@ -99,8 +99,8 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
 
     Parameters
     ----------
-    data : 2-D numpy array
-        Data to be corrected
+    data : ndarray
+        2-D data to be corrected
     kernels : list
         List containing the left and right kernels
     sigreject : float
@@ -108,8 +108,8 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
 
     Returns
     -------
-    data : 2-D numpy array
-        Data model with convolution
+    data : ndarray
+        2-D data model with convolution
     """
     data = data.astype(float)
     npix = data.shape[-1]
