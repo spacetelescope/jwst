@@ -160,9 +160,12 @@ def make_datamodel():
     return model
 
 
-def test_white_light(make_datamodel, monkeypatch):
+@pytest.mark.parametrize("units", ["Jy", None])
+def test_white_light(make_datamodel, monkeypatch, units):
     """Test white light step"""
-    data = make_datamodel
+    data = make_datamodel.copy()
+    for spec in data.spec:
+        spec.spec_table.columns["FLUX"].unit = units
 
     watcher = LogWatcher("1 spectra in order 1 with no mid time or duplicate mid time (20")
     monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
@@ -198,8 +201,11 @@ def test_white_light(make_datamodel, monkeypatch):
     expected_flux_order_1[-3] = np.nan  # the third was order 2 only
     expected_flux_order_2 = expected_flux.copy()
 
-    assert_allclose(result["whitelight_flux_order_1"], expected_flux_order_1, equal_nan=True)
-    assert_allclose(result["whitelight_flux_order_2"], expected_flux_order_2, equal_nan=True)
+    assert_allclose(result["whitelight_flux_order_1"].value, expected_flux_order_1, equal_nan=True)
+    assert_allclose(result["whitelight_flux_order_2"].value, expected_flux_order_2, equal_nan=True)
+
+    assert result["whitelight_flux_order_1"].unit == units
+    assert result["whitelight_flux_order_2"].unit == units
 
 
 def test_white_light_multi_detector(make_datamodel):
