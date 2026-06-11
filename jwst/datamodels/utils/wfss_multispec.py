@@ -204,33 +204,9 @@ def make_wfss_multiexposure_spec3(input_list):
 
     all_source_ids = sorted(all_source_ids)
     n_sources = len(all_source_ids)
-
-    all_columns = [
-        (x["name"], x["datatype"])
-        for x in dm.WFSSSpecModel().schema["properties"]["spec_table"]["datatype"]
-    ]
-    all_columns[20] = ("SOURCE_TYPE", "U20")  # schema incompatible with numpy
-    vec_cols = (
-        "WAVELENGTH",
-        "FLUX",
-        "FLUX_ERROR",
-        "FLUX_VAR_POISSON",
-        "FLUX_VAR_RNOISE",
-        "FLUX_VAR_FLAT",
-        "SURF_BRIGHT",
-        "SB_ERROR",
-        "SB_VAR_POISSON",
-        "SB_VAR_RNOISE",
-        "SB_VAR_FLAT",
-        "DQ",
-        "BACKGROUND",
-        "BKGD_ERROR",
-        "BKGD_VAR_POISSON",
-        "BKGD_VAR_RNOISE",
-        "BKGD_VAR_FLAT",
-        "NPIXELS",
-    )
-    is_vector = [True if col[0] in vec_cols else False for col in all_columns]
+    input_datatype = dm.SpecModel().schema["properties"]["spec_table"]["datatype"]
+    output_datatype = dm.WFSSSpecModel().schema["properties"]["spec_table"]["datatype"]
+    all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
     defaults = dm.WFSSSpecModel().schema["properties"]["spec_table"]["default"]
 
     # Finally, create a new WFSSMultiSpecModel to hold the combined data
