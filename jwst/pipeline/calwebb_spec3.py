@@ -303,6 +303,11 @@ class Spec3Pipeline(Pipeline):
                     if len(result.spec) > 0:
                         comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
                         comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
+                    else:
+                        log.warning(
+                            "Spectral extraction failed elsewhere, "
+                            "source RA and Dec unavailable for c1d"
+                        )
                     wfss_comb.append(comb)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
@@ -331,17 +336,23 @@ class Spec3Pipeline(Pipeline):
         # Save the final output products for WFSS modes
         # but wfss_XXX could be an empty list if processing failed.
         if exptype in WFSS_TYPES:
-            if self.save_results and wfss_x1d:
-                x1d_output = make_wfss_multiexposure_spec3(wfss_x1d)
-                self._populate_wfss_sregion(x1d_output, input_models)
-                x1d_filename = output_file + "_x1d.fits"
-                log.info(f"Saving the final x1d product as {x1d_filename}.")
-                x1d_output.save(x1d_filename)
-            if self.save_results and wfss_comb:
-                c1d_output = make_wfss_multicombined(wfss_comb)
-                c1d_filename = output_file + "_c1d.fits"
-                log.info(f"Saving the final c1d product as {c1d_filename}.")
-                c1d_output.save(c1d_filename)
+            if len(wfss_x1d) > 0:
+                if self.save_results:
+                    x1d_output = make_wfss_multiexposure_spec3(wfss_x1d)
+                    self._populate_wfss_sregion(x1d_output, input_models)
+                    x1d_filename = output_file + "_x1d.fits"
+                    log.info(f"Saving the final x1d product as {x1d_filename}.")
+                    x1d_output.save(x1d_filename)
+            else:
+                log.warning("wfss_x1d list is empty")
+            if len(wfss_comb) > 0:
+                if self.save_results:
+                    c1d_output = make_wfss_multicombined(wfss_comb)
+                    c1d_filename = output_file + "_c1d.fits"
+                    log.info(f"Saving the final c1d product as {c1d_filename}.")
+                    c1d_output.save(c1d_filename)
+            else:
+                log.warning("wfss_comb list is empty")
 
         if input_models is not input_data:
             input_models.close()
