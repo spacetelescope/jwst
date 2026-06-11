@@ -128,7 +128,7 @@ def get_center(exp_type, input_model, offsets=False):
         scale_arcsec = scale_degrees * 3600.0
         yoffset = input_model.meta.dither.y_offset / scale_arcsec
         ycenter += yoffset
-        log.info(f"Cross-slit dither offset = {yoffset} px") 
+        log.info(f"Cross-slit dither offset = {yoffset} px")
     else:
         log.info(f"LRS target location from source_xpos, source_ypos = {xcenter, ycenter}")
 
