@@ -31,12 +31,6 @@ The ``refpix`` step has the following step-specific arguments.
   calculated and applied separately for even- and odd-numbered rows.
   This applies to MIR data only.
 
-``--siglimit`` (float, default=3.0)
-  The number of standard deviations to use in
-  the iterative sigma clipping algorithm that calculates the mean of the
-  reference pixels.  The value is used as both
-  the lower and upper bounds in the sigma clipping algorithm.
-
 ``--ovr_corr_mitigation_ftr`` (float, default=3.0)
   The factor to avoid overcorrection of intermittently bad reference
   pixels in the IRS2 algorithm. This is the number of sigmas away
@@ -49,6 +43,12 @@ The ``refpix`` step has the following step-specific arguments.
   in the output.  This option is intended for calibration or diagnostic reductions
   only. For normal science operation, this argument should always be `False`,
   so that interleaved pixels are stripped before continuing processing.
+
+``--irs2_mean_subtraction`` (bool, default=False)
+  Apply or skip a mean offset
+  subtraction before IRS2 correction.  Mean values are computed across reference pixels
+  sorted by amplifier and detector column parity.  Setting this to `True` may help reduce
+  alternating column noise in some exposures.
 
 ``--refpix_algorithm`` (str, default='median')
   This is only relevant for all NIR full-frame
@@ -66,8 +66,8 @@ The ``refpix`` step has the following step-specific arguments.
 ``--halfwidth`` (int, default=30)
   The half-width of convolution kernel to build.
 
-``--irs2_mean_subtraction`` (bool, default=False)
-  Apply or skip a mean offset
-  subtraction before IRS2 correction.  Mean values are computed across reference pixels
-  sorted by amplifier and detector column parity.  Setting this to `True` may help reduce
-  alternating column noise in some exposures.
+``--siglimit`` (float, default=3.0)
+  The number of standard deviations to use in
+  the iterative sigma clipping algorithm that calculates the mean of the
+  reference pixels.  The value is used as both
+  the lower and upper bounds in the sigma clipping algorithm.
