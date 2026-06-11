@@ -16,9 +16,9 @@ from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
     make_wfss_multiexposure_spec3,
-    wfss_multispec_to_source,
 )
 from jwst.exp_to_source import multislit_to_container
+from jwst.exp_to_source.exp_to_source import wfss_multispec_to_source
 from jwst.extract_1d import extract_1d_step
 from jwst.lib.exposure_types import is_moving_target
 from jwst.master_background import master_background_step

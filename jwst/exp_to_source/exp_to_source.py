@@ -3,12 +3,15 @@
 import logging
 from collections import defaultdict
 
+import numpy as np
+import stdatamodels.jwst.datamodels as dm
 from stdatamodels.jwst.datamodels import MultiExposureModel
 from stdatamodels.properties import merge_tree
 
 from jwst.datamodels import SourceModelContainer
+from jwst.datamodels.utils.flat_multispec import _expand_wfss_table
 
-__all__ = ["exp_to_source", "multislit_to_container"]
+__all__ = ["exp_to_source", "multislit_to_container", "wfss_multispec_to_source"]
 
 log = logging.getLogger(__name__)
 
@@ -114,3 +117,56 @@ def multislit_to_container(inputs):
         containers[container_id] = SourceModelContainer(containers[container_id])
 
     return containers
+
+
+def wfss_multispec_to_source(inputs):
+    """
+    Reformat exposure-based WFSS data to source-based.
+
+    Parameters
+    ----------
+    inputs : list of `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
+        List of model instances to reformat.
+
+    Returns
+    -------
+    output_list : list[MultiSpecModel]
+        List of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects,
+        one for each source ID in the input model.
+    """
+    # first extract all spectra as SpecModels in a flat list
+    spec_list = []
+    source_ids = []
+    first_loop = True
+    exposure_time = 0
+    integration_time = 0
+    for input_model in inputs:
+        for exp in input_model.spec:
+            this_exp_list = _expand_wfss_table(exp)
+            for spec in this_exp_list:
+                if first_loop:
+                    exposure_time = spec.exposure_time
+                    integration_time = spec.integration_time
+                    first_loop = False
+                spec.source_type = spec.spec_table["SOURCE_TYPE"][0]
+                spec_list.append(spec)
+                source_ids.append(spec.source_id)
+
+    # organize by unique source id such that there is one MultiSpecModel per source
+    # with all exposures for that source in that model's model.spec
+    unique_source_ids = sorted(set(source_ids))
+    source_ids = np.array(source_ids)
+    spec_list = np.array(spec_list)
+    output_list = []
+    for source_id in unique_source_ids:
+        multispec = dm.MultiSpecModel()
+        # BUG: currently there is no infrastructure for handling per-exposure weights
+        # This is also a problem on main
+        multispec.meta.exposure.exposure_time = exposure_time
+        multispec.meta.exposure.integration_time = integration_time
+        spec_this_id = spec_list[source_ids == source_id]
+        multispec.spec.extend(spec_this_id)
+        multispec.update(input_model, only="PRIMARY")
+        output_list.append(multispec)
+
+    return output_list
