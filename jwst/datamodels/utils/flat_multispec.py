@@ -165,12 +165,14 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
 
         spec_meta = getattr(input_spec, col.lower(), None)
         if spec_meta is None:
-            try:
-                spec_meta = input_spec.spec_table[col][0]
-            except Exception:
-                problems.append(col.lower())
+            if (
+                hasattr(input_spec, "spec_table")
+                and col in input_spec.spec_table.columns
+                and len(input_spec.spec_table[col]) > 0
+            ):
+                output_table[col] = input_spec.spec_table[col][0]
             else:
-                output_table[col] = spec_meta
+                problems.append(col.lower())
         else:
             output_table[col] = spec_meta
 
