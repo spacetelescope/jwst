@@ -20,8 +20,7 @@ class PixelReplaceArrays:
     `~stdatamodels.jwst.datamodels.JwstDataModel`.
     This avoids the overhead of constructing intermediate DataModel objects,
     which was slowing runtime for TSO data with thousands of integrations,
-    and provides a consistent interface for :meth:`PixelReplacement.mingrad`
-    and :meth:`PixelReplacement.fit_profile`.
+    and provides a consistent interface for all pixel replace algorithms.
     """
 
     data: np.ndarray

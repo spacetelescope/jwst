@@ -12,21 +12,21 @@ the extracted spectrum.
 
 For MIRI MRS and NIRSpec IFU exposures, NaN-valued pixels are partially compensated for during the
 IFU cube building process by the overlap between dithered detector pixels and output cube voxels.
-The effects of NaN values are thus not as severe as for slit spectra, but can manifest
-as small dips in the extracted spectrum when a NaN value lands atop the peak of a spectral
-trace and cube building reconstructs the output voxel from lower-flux adjacent values.
+The effects of NaN values are thus not as severe as for slit spectra, but can still be seen
+when a NaN value lands atop the peak of a spectral trace. In that case, cube building reconstructs
+the output voxel from lower-flux adjacent values, leading to a small dip in the extracted spectrum.
 
-To minimize such artifacts in the 1-D spectra this step uses interpolation methods to estimate the flux values of
+To minimize such artifacts in the 1-D spectra, this step uses interpolation methods to estimate the flux values of
 missing pixels flagged as ``DO_NOT_USE`` in 2-D calibrated spectra
 prior to rectification in the :ref:`resample_spec <resample_spec_step>` or
 :ref:`cube_build <cube_build_step>` steps.
 The ``pixel_replace`` step inserts these estimates into the 2-D spectral image array,
-unsets the ``DO_NOT_USE`` flag in the DQ array and sets the ``FLUX_ESTIMATED`` flag for
+unsets the ``DO_NOT_USE`` flag in the DQ array, and sets the ``FLUX_ESTIMATED`` flag for
 each affected pixel instead. Error values and variance components for the replaced pixels
 are similarly updated with estimated values, following the same interpolation method as is
 used for the data.
 
-Empirically, this step can significantly reduce the number of artifacts in 1d spectra by using information in
+Empirically, this step can significantly reduce the number of artifacts in 1-D spectra by using information in
 detector space to estimate the missing values.  However, any such interpolation should be treated with caution,
 particularly where the input spectra are not smooth (i.e., in the vicinity of sharp spectral features).
 Three different algorithms are provided for this step, each of which have their own benefits and limitations.
@@ -74,9 +74,9 @@ If the :ref:`adaptive_trace_model step <adaptive_trace_model_step>` was not run 
 ``pixel_replace``, then it will be run at the start of the step, with the step parameter
 ``oversample=1`` and otherwise default values.
 
-The errors and variances associated with pixels replaced from the trace model must still
-be interpolated, since the trace model does not provide error estimates.  For these pixels,
-the error values are linearly interpolated from the nearest valid pixels along the dispersion
+The errors and variances associated with pixels replaced from the trace model must be
+separately interpolated, since the trace model does not provide error estimates.  These error
+values are linearly interpolated from the nearest valid pixels along the dispersion
 direction.
 
 For time series observations (TSO), the trace model is a 2-D image, generated from a median
