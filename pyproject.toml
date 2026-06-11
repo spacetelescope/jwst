@@ -214,7 +214,7 @@ norecursedirs = [
 ]
 junit_family = "xunit2"
 # TODO: Revert this change before merge!
-inputs_root = "scratch-lim"
+inputs_root = "scratch-lim-yolo"
 results_root = "jwst-pipeline-results"
 text_file_format = "rst"
 doctest_plus = "enabled"
