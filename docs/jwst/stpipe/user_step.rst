@@ -307,12 +307,9 @@ the step. The previous example could be re-written as::
 One can implement parameter reference file retrieval and use of a local
 parameter file as follows::
 
-    from stpipe import config_parser
     from jwst.flatfield import FlatFieldStep
 
-    config = FlatFieldStep.get_config_from_reference(input_data)
-    local_config = config_parser.load_config_file('my_flatfield_config.asdf')
-    config_parser.merge_config(config, local_config)
+    config, _ = FlatFieldStep.build_config(input_data, config_file='my_flatfield_config.asdf')
 
     flat_field_step = FlatFieldStep.from_config_section(config)
     output = flat_field_step.run(input_data)
