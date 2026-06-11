@@ -55,18 +55,18 @@ The ``refpix`` step has the following step-specific arguments.
   data, and can be set to ``'median'`` to use the running median or
   ``'sirs'`` to use the Simple Improved Reference Subtraction (SIRS).
 
-``--sigreject`` (float)
+``--sigreject`` (float, default=4.0)
   The number of sigmas to reject as outliers in the
   SIRS algorithm.
 
-``--gaussmooth`` (float)
+``--gaussmooth`` (float, default=1.0)
   The width of Gaussian smoothing kernel to use as
   a low-pass filter.
 
-``--halfwidth`` (int)
+``--halfwidth`` (int, default=30)
   The half-width of convolution kernel to build.
 
-``--irs2_mean_subtraction`` (bool)
+``--irs2_mean_subtraction`` (bool, default=False)
   Apply or skip a mean offset
   subtraction before IRS2 correction.  Mean values are computed across reference pixels
   sorted by amplifier and detector column parity.  Setting this to `True` may help reduce

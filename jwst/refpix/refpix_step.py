@@ -47,7 +47,7 @@ class RefPixStep(Step):
 
         Returns
         -------
-        result : ~stdatamodels.jwst.datamodels.RampModel`
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             Result of applying the reference pixel correction step.
         """
         conv_kernel_params = {
