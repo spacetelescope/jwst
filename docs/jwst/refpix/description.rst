@@ -79,7 +79,7 @@ NIR Detector Data
        If the ``--refpix_algorithm`` option is set to ``'sirs'``, the Simple Improved
        Reference Subtraction (SIRS) method will be used instead of the running median.
        The SIRS revision uses the left and right side reference pixels as described
-       in https://doi.org/10.1117/1.JATIS.8.2.028002. This implementation uses a
+       in Rauscher2022_. This implementation uses a
        mathematically equivalent formulation using convolution kernels rather than
        Fourier transforms, with the convolution kernel truncated where the weights
        approach zero. There are two convolution kernels for each readout channel,
@@ -281,3 +281,4 @@ the normal pixel data over the range of pixels for output ``k``.
 
 .. _JdoxIRS2: https://jwst-docs.stsci.edu/jwst-near-infrared-spectrograph/nirspec-instrumentation/nirspec-detectors/nirspec-detector-readout-modes-and-patterns/nirspec-irs2-detector-readout-mode
 .. _Rauscher2017: https://ui.adsabs.harvard.edu/abs/2017PASP..129j5003R/abstract
+.. _Rauscher2022: https://doi.org/10.1117/1.JATIS.8.2.028002
