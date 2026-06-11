@@ -8,6 +8,7 @@ from stdatamodels.jwst import datamodels
 from jwst.adaptive_trace_model import adaptive_trace_model_step
 from jwst.extract_1d import extract_1d_step
 from jwst.lib.pipe_utils import is_tso
+from jwst.model_blender.blender import ModelBlender
 from jwst.outlier_detection import outlier_detection_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
@@ -133,7 +134,6 @@ class Tso3Pipeline(Pipeline):
 
             # Working with spectroscopic TSO data;
             # define output for x1d (level 3) products
-
             x1d_result = datamodels.TSOMultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
             nint = input_models[0].meta.exposure.nints
@@ -156,6 +156,7 @@ class Tso3Pipeline(Pipeline):
             # For each exposure in the TSO...
             atm_status = []
             pr_status = []
+            blender = ModelBlender()
             for cube in input_models:
                 # model the spectral trace
                 cube = self.adaptive_trace_model.run(cube)
@@ -189,6 +190,7 @@ class Tso3Pipeline(Pipeline):
                     result = self.photom.run(result)
 
                 x1d_result.spec.extend(result.spec)
+                blender.accumulate(result)
 
             # Skip remaining processing if no spectra were extracted
             if len(x1d_result.spec) == 0:
@@ -198,6 +200,9 @@ class Tso3Pipeline(Pipeline):
                 # perform white-light photometry on all 1d extracted data
                 log.info("Performing white-light photometry")
                 phot_result_list.append(self.white_light.run(x1d_result))
+
+                # Update blended metadata
+                blender.finalize_model(x1d_result)
 
                 # Update some metadata from the association
                 x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
