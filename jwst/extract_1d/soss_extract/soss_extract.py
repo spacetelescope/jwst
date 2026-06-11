@@ -1597,8 +1597,14 @@ def _reconstruct_spec_from_data(spec_data):
     spec = datamodels.SpecModel(spec_table=out_table)
     spec.spectral_order = spec_data["spectral_order"]
 
-    # Int_num is used only for ATOCA spectra
+    # Int_num is used only for ATOCA spectra. It will be None for regular output spectra.
     spec.int_num = spec_data.get("int_num")
+
+    # Set units for the spectral table. Assume uncalibrated flux, wavelength in um.
+    spec.spec_table.columns["wavelength"].unit = "um"
+    spec.spec_table.columns["flux"].unit = "DN/s"
+    spec.spec_table.columns["flux_error"].unit = "DN/s"
+    spec.spec_table.columns["background"].unit = "DN/s"
 
     return spec
 
