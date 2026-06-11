@@ -1,0 +1,3 @@
+Clean up cube build interface, removing the parameters ``pipeline`` and ``single``, which were intended for internal use only. We added
+a ``linear_wave`` parameter, which defines if the output cube has a linear wavelength sampling. The parameter has a default
+value of True.

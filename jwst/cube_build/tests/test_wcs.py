@@ -201,7 +201,6 @@ def test_setup_wcs():
         "debug_spaxel": "0 0 0",
     }
 
-    pipeline = 3
     input_model = None
     output_name_base = None
     output_type = None
@@ -212,7 +211,6 @@ def test_setup_wcs():
     master_table = None
     instrument_info = None
     thiscube = ifu_cube.IFUCubeData(
-        pipeline,
         input_model,
         output_name_base,
         output_type,
@@ -228,7 +226,7 @@ def test_setup_wcs():
     thiscube.cdelt1 = 0.13
     thiscube.cdelt2 = 0.13
     thiscube.cdelt3 = 0.001
-    thiscube.linear_wavelength = True
+    thiscube.linear_wave = True
     thiscube.set_geometry(corner_a, corner_b, lambda_min, lambda_max)
 
     assert thiscube.naxis1 == 41

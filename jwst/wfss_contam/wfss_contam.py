@@ -797,11 +797,11 @@ def contam_corr(
         if this_simul is not None:
             # turn it into a SlitModel so we can use model.update
             this_simul = datamodels.SlitModel(this_simul.instance)
-            this_simul.update(this_obs)
+            this_simul.update(this_obs, only="SCI")
             simul_slits.slits.append(this_simul)
 
         contam_slit = datamodels.SlitModel()
-        contam_slit.update(this_obs)
+        contam_slit.update(this_obs, only="SCI")
         contam_slit.data = contam_cut
         contam_model.slits.append(contam_slit)
 
