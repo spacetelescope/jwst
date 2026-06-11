@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.io import fits
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
 from jwst.extract_1d.extract_1d_step import Extract1dStep
@@ -154,7 +155,6 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
     result.close()
 
 
-@pytest.mark.slow
 def test_extract_niriss_soss_256(tmp_path, mock_niriss_soss_256):
     result = Extract1dStep.call(
         mock_niriss_soss_256,
@@ -193,12 +193,14 @@ def test_extract_niriss_soss_256(tmp_path, mock_niriss_soss_256):
     result2.close()
 
 
-@pytest.mark.slow
 def test_extract_niriss_soss_96(tmp_path, mock_niriss_soss_96):
     result = Extract1dStep.call(
         mock_niriss_soss_96,
         soss_rtol=0.1,
         soss_modelname="soss_model.fits",
+        save_results=True,
+        output_file="test",
+        suffix="x1dints",
         output_dir=str(tmp_path),
     )
     assert result.meta.cal_step.extract_1d == "COMPLETE"
@@ -213,8 +215,17 @@ def test_extract_niriss_soss_96(tmp_path, mock_niriss_soss_96):
     result.close()
 
     # soss output files are saved
-    assert os.path.isfile(tmp_path / "soss_model_SossExtractModel.fits")
-    assert os.path.isfile(tmp_path / "soss_model_AtocaSpectra.fits")
+    assert (tmp_path / "soss_model_SossExtractModel.fits").is_file()
+    assert (tmp_path / "soss_model_AtocaSpectra.fits").is_file()
+    assert (tmp_path / "test_x1dints.fits").is_file()
+
+    # Make sure the output spectrum does not have a SCI or ERR extension
+    # These sometimes get added accidentally in model metadata updates.
+    with fits.open(str(tmp_path / "test_x1dints.fits")) as hdul:
+        ext_names = [hdu.name for hdu in hdul]
+        assert "EXTRACT1D" in ext_names
+        assert "SCI" not in ext_names
+        assert "ERR" not in ext_names
 
 
 def test_extract_niriss_soss_superstripe(mock_niriss_soss_superstripe):

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from astropy import units as u
 from astropy.table import Table
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
@@ -98,6 +99,9 @@ def make_datamodel():
     spec_model = datamodels.SpecModel(spec_table=otab)
     spec_model.spectral_order = 1
 
+    # Add a unit to the table to propagate
+    spec_model.spec_table.columns["FLUX"].unit = "Jy"
+
     spec_list_1 = [spec_model.copy() for _ in range(n_spec)]
 
     # change spectral order to test multiple orders in output table
@@ -160,12 +164,12 @@ def make_datamodel():
     return model
 
 
-@pytest.mark.parametrize("units", ["Jy", None])
-def test_white_light(make_datamodel, monkeypatch, units):
+@pytest.mark.parametrize("flux_unit", ["Jy", "DN/s", None])
+def test_white_light(make_datamodel, monkeypatch, flux_unit):
     """Test white light step"""
     data = make_datamodel.copy()
     for spec in data.spec:
-        spec.spec_table.columns["FLUX"].unit = units
+        spec.spec_table.columns["FLUX"].unit = flux_unit
 
     watcher = LogWatcher("1 spectra in order 1 with no mid time or duplicate mid time (20")
     monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
@@ -197,15 +201,17 @@ def test_white_light(make_datamodel, monkeypatch, units):
         ]
         * len(mid_times)
     )
+    if flux_unit is not None:
+        expected_flux = expected_flux << u.Unit(flux_unit)
     expected_flux_order_1 = expected_flux.copy()
     expected_flux_order_1[-3] = np.nan  # the third was order 2 only
     expected_flux_order_2 = expected_flux.copy()
 
-    assert_allclose(result["whitelight_flux_order_1"].value, expected_flux_order_1, equal_nan=True)
-    assert_allclose(result["whitelight_flux_order_2"].value, expected_flux_order_2, equal_nan=True)
+    assert_allclose(result["whitelight_flux_order_1"], expected_flux_order_1, equal_nan=True)
+    assert_allclose(result["whitelight_flux_order_2"], expected_flux_order_2, equal_nan=True)
 
-    assert result["whitelight_flux_order_1"].unit == units
-    assert result["whitelight_flux_order_2"].unit == units
+    assert result["whitelight_flux_order_1"].unit == flux_unit
+    assert result["whitelight_flux_order_2"].unit == flux_unit
 
 
 def test_white_light_multi_detector(make_datamodel):
