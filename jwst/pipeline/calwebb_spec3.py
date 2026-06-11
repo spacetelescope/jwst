@@ -16,7 +16,7 @@ from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
     make_wfss_multiexposure_spec3,
-    multispec_to_source,
+    wfss_multispec_to_source,
 )
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
@@ -182,7 +182,7 @@ class Spec3Pipeline(Pipeline):
             sources = list(multislit_to_container(source_models).items())
         elif isinstance(input_models[0], dm.WFSSMultiSpecModel):
             log.info("Convert from exposure-based to source-based data.")
-            sources = multispec_to_source(source_models)
+            sources = wfss_multispec_to_source(source_models)
         else:
             sources = [source_models]
 

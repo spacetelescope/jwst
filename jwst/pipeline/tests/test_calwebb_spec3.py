@@ -211,14 +211,14 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
         jwst.pipeline.calwebb_spec3, "make_wfss_multicombined", mock_wfss_multicombined
     )
 
-    def mock_multispec_to_source(input_model):
+    def mock_wfss_multispec_to_source(input_model):
         output_model = dm.MultiSpecModel()
         return [output_model]
 
     monkeypatch.setattr(
         jwst.pipeline.calwebb_spec3,
-        "multispec_to_source",
-        mock_multispec_to_source,
+        "wfss_multispec_to_source",
+        mock_wfss_multispec_to_source,
     )
 
     args = [

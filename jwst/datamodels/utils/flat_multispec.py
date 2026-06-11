@@ -312,6 +312,9 @@ def expand_wfss_table(spec):
     """
     Expand a table of spectra into a list of WFSSSpecModel objects.
 
+    This is like :func:`expand_table` but for ``calwebb_spec3``
+    where we need to break it down per source.
+
     Parameters
     ----------
     spec : `~stdatamodels.jwst.datamodels.WFSSSpecModel`

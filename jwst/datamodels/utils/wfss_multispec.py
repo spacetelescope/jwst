@@ -21,7 +21,7 @@ __all__ = [
     "make_wfss_multiexposure_spec3",
     "wfss_multiexposure_to_multispec",
     "make_wfss_multicombined",
-    "multispec_to_source",
+    "wfss_multispec_to_source",
 ]
 
 
@@ -191,14 +191,12 @@ def make_wfss_multiexposure_spec3(input_list):
     output_x1d : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
         The extract_1d product for WFSS modes.
     """
-    results_list = input_list
-
     # First loop over source and exposure to figure out final parameters
     specs_db = defaultdict()  # (group_id, source_id): spec
     all_source_ids = set()
     exposure_nrows = defaultdict(int)
     # For calwebb_spec3 the outer loop is over sources and the inner loop is over exposures
-    for model in results_list:
+    for model in input_list:
         for spec in model.spec:
             all_source_ids.add(spec.source_id)
             exposure_nrows[spec.group_id] = max(
@@ -431,7 +429,7 @@ def make_wfss_multicombined(results_list):
     return output_c1d
 
 
-def multispec_to_source(inputs):
+def wfss_multispec_to_source(inputs):
     """
     Reformat exposure-based WFSS data to source-based.
 
