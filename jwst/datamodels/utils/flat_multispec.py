@@ -17,7 +17,6 @@ __all__ = [
     "copy_column_units",
     "copy_spec_metadata",
     "expand_table",
-    "expand_wfss_table",
     "expand_flat_spec",
 ]
 
@@ -308,7 +307,7 @@ def expand_table(spec):
     return new_spec_list
 
 
-def expand_wfss_table(spec):
+def _expand_wfss_table(spec):
     """
     Expand a table of spectra into a list of WFSSSpecModel objects.
 

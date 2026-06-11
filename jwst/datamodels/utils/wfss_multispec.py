@@ -6,11 +6,11 @@ import numpy as np
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.datamodels.utils.flat_multispec import (
+    _expand_wfss_table,
     copy_column_units,
     copy_spec_metadata,
     determine_vector_and_meta_columns,
     expand_table,
-    expand_wfss_table,
     make_empty_recarray,
     populate_recarray,
     set_schema_units,
@@ -452,7 +452,7 @@ def wfss_multispec_to_source(inputs):
     integration_time = 0
     for input_model in inputs:
         for exp in input_model.spec:
-            this_exp_list = expand_wfss_table(exp)
+            this_exp_list = _expand_wfss_table(exp)
             for spec in this_exp_list:
                 if first_loop:
                     exposure_time = spec.exposure_time
