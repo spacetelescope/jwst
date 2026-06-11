@@ -122,7 +122,7 @@ def get_center(exp_type, input_model, offsets=False):
 
         # compute cross-slit dither offset
         location = (_ref_ra, _ref_dec, ref_wave)
-        scale_degrees = util.compute_scale(
+        scale_degrees = compute_scale(
             input_model.meta.wcs, location, disp_axis=input_model.meta.wcsinfo.dispersion_direction
         )
         scale_arcsec = scale_degrees * 3600.0
