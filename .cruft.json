@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/zacharyburnett/stsci-package-template",
-  "commit": "c51a7d2b4623c6fb06a6f0b9ca1158730d3b9d1a",
+  "commit": "d042d258f0aa70967c40f164479c593124009060",
   "checkout": null,
   "context": {
     "cookiecutter": {
@@ -17,7 +17,7 @@
       "python_build_backend": "setuptools",
       "crds_observatory": "jwst",
       "_template": "https://github.com/zacharyburnett/stsci-package-template",
-      "_commit": "f6b04868f5dcbf675b4a81f90043db9efdd6f39b"
+      "_commit": "d042d258f0aa70967c40f164479c593124009060"
     }
   },
   "directory": "python-package"
