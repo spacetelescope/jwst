@@ -80,10 +80,9 @@ class PixelReplacement:
 
     def __init__(self, input_model, algorithm="mingrad", n_adjacent_cols=3):
         self.input = input_model
-        self.pars = {
-            "algorithm": algorithm,
-            "n_adjacent_cols": n_adjacent_cols,
-        }
+        self.algorithm_name = algorithm
+        self.n_adjacent_cols = n_adjacent_cols
+
         # Store algorithm options here.
         self.algorithm_dict = {
             "fit_profile": self.fit_profile,
@@ -93,11 +92,11 @@ class PixelReplacement:
 
         # Choose algorithm from dict using input par.
         try:
-            self.algorithm = self.algorithm_dict[self.pars["algorithm"]]
+            self.algorithm = self.algorithm_dict[self.algorithm_name]
 
         except KeyError as err:
             log.critical(
-                f"Algorithm name '{self.pars['algorithm']}' provided does "
+                f"Algorithm name '{self.algorithm_name}' provided does "
                 "not match an implemented algorithm."
             )
             raise KeyError from err
@@ -187,10 +186,10 @@ class PixelReplacement:
             previous_flag = self._is_estimated(self.input.data, self.input.dq)
             arrays = self._arrays_from_model(self.input)
 
-            if self.pars["algorithm"] == "mingrad" or self.pars["algorithm"] == "trace_model":
+            if self.algorithm_name == "mingrad" or self.algorithm_name == "trace_model":
                 arrays = self.algorithm(arrays)
                 self._model_from_arrays(arrays, self.input)
-            elif self.pars["algorithm"] == "fit_profile":
+            elif self.algorithm_name == "fit_profile":
                 # Attempt to run pixel replacement on each throw of the IFU slicer
                 # individually.
                 region_map = None
@@ -374,9 +373,7 @@ class PixelReplacement:
         log.debug(f"Number of profiles with at least one bad pixel: {len(profiles_to_replace)}")
         for ind in profiles_to_replace:
             # Use sets for convenient finding of neighboring slices to use in profile creation
-            adjacent_inds = set(
-                range(ind - self.pars["n_adjacent_cols"], ind + self.pars["n_adjacent_cols"] + 1)
-            )
+            adjacent_inds = set(range(ind - self.n_adjacent_cols, ind + self.n_adjacent_cols + 1))
             adjacent_inds.discard(ind)
             valid_adjacent_inds = list(adjacent_inds.intersection(valid_profiles))
 
