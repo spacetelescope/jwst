@@ -76,7 +76,7 @@ def create_hdul(detector="NRS1"):
     phdu.header["instrume"] = "NIRSPEC"
     phdu.header["detector"] = detector
     phdu.header["time-obs"] = "8:59:37"
-    phdu.header["date-obs"] = "2026-09-05"
+    phdu.header["date-obs"] = "2016-09-05"
     phdu.header["program"] = "1234"
 
     scihdu = fits.ImageHDU()
@@ -133,6 +133,7 @@ def create_nirspec_ifu_file(
     gwa_tilt=None,
 ):
     image = create_hdul(detector)
+    image[0].header["date-obs"] = "2026-01-01"  # chromcorr CRDS selector requires date > launch
     image[0].header["exp_type"] = "NRS_IFU"
     image[0].header["filter"] = filter
     image[0].header["grating"] = grating
