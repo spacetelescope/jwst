@@ -246,9 +246,9 @@ def test_build_simulated_image_from_slits_overflow():
 
 _ITER_NROWS, _ITER_NCOLS = 40, 80
 _ITER_FRAME_SHAPE = (80, 90)
-_ITER_OVERLAP = 3
+_ITER_OVERLAP = 20
 _ITER_XA, _ITER_YA = 1, 1
-_ITER_XB, _ITER_YB = 1, 38
+_ITER_XB, _ITER_YB = 1, 21
 
 
 def _iter_geometry():
@@ -269,7 +269,7 @@ def two_source_input(tmp_cwd, grism_wcs):
     MultiSlitModel with two slits whose grism traces partially overlap.
 
     Source A (ID=1) is placed at (xstart=1, ystart=1) and source B (ID=2) at
-    (xstart=1, ystart=38) on the full-frame detector, giving a 3-row overlap.
+    (xstart=1, ystart=21) on the full-frame detector, giving a 20-row overlap.
     Observed slit data in each slit is contaminated by its neighbor.
 
     Direct image and segmentation map files corresponding to the same scenario
