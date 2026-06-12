@@ -1,0 +1,1 @@
+Bumped minimum supported versions for astropy to 7.2, requests to 2.32, and scipy to 1.15.3.
