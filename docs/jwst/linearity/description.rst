@@ -44,6 +44,18 @@ coefficients, and :math:`F_\text{c}` is the corrected counts. There is no
 limit to the order of the polynomial correction; all coefficients contained in
 the :ref:`linearity_reffile` will be applied.
 
+If the reference file provides inverse polynomial coefficients in the INV_COEFFS
+extension and the science data contain multiple frames per group, additional steps are taken to
+ensure the correction is not biased by the averaging of frames.
+
+The step generates an initial linearity correction to make a simple estimate for the count rate
+of each pixel. It then uses that to simulate the individual reads entering into each group, and
+applies an inverse linearity polynomial to see how different that simulated group was from the
+observed group. It applies the difference to the simulated reads, leaving one with a set of
+individual reads that average to the observed group and also increase with count rate in the
+correct way. It then applies the linearity correction to these reads and averages the result to
+get the final linearity-corrected group.
+
 Upon successful completion of the linearity correction the S_LINEAR keyword is
 set to "COMPLETE".
 
