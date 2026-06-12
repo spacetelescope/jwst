@@ -24,7 +24,7 @@ TIME_KEYS = [
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def make_datamodel():
     """Make data for white light tests"""
     n_spec = 5
@@ -99,9 +99,6 @@ def make_datamodel():
     spec_model = datamodels.SpecModel(spec_table=otab)
     spec_model.spectral_order = 1
 
-    # Add a unit to the table to propagate
-    spec_model.spec_table.columns["FLUX"].unit = "Jy"
-
     spec_list_1 = [spec_model.copy() for _ in range(n_spec)]
 
     # change spectral order to test multiple orders in output table
@@ -167,7 +164,7 @@ def make_datamodel():
 @pytest.mark.parametrize("flux_unit", ["Jy", "DN/s", None])
 def test_white_light(make_datamodel, monkeypatch, flux_unit):
     """Test white light step"""
-    data = make_datamodel.copy()
+    data = make_datamodel
     for spec in data.spec:
         spec.spec_table.columns["FLUX"].unit = flux_unit
 
@@ -217,7 +214,7 @@ def test_white_light(make_datamodel, monkeypatch, flux_unit):
 def test_white_light_multi_detector(make_datamodel):
     """Test white light step on data with multiple detectors."""
     # Set the detectors in the two spec tables to different values
-    data = make_datamodel.copy()
+    data = make_datamodel
     data.spec[0].detector = "NRS1"
     data.spec[1].detector = "NRS2"
 
@@ -267,7 +264,7 @@ def test_white_light_multi_detector(make_datamodel):
 def test_white_light_duplicate_times(monkeypatch, make_datamodel):
     """Test white light step on data with duplicate time stamps."""
     # Set all times to the same value for order 1
-    data = make_datamodel.copy()
+    data = make_datamodel
     for key in TIME_KEYS:
         data.spec[0].spec_table[key][:] = data.spec[0].spec_table[key][0]
 
@@ -369,7 +366,7 @@ def test_get_reference_wavelength_range(make_datamodel):
 
 def test_get_reference_wavelength_range_other_exptype(make_datamodel):
     """Test that non-SOSS exposure types return None."""
-    model = make_datamodel.copy()
+    model = make_datamodel
     model.meta.exposure.type = "NRC_TSIMAGE"
     wr = WhiteLightStep()._get_reference_wavelength_range(model)
     assert wr is None
@@ -377,7 +374,7 @@ def test_get_reference_wavelength_range_other_exptype(make_datamodel):
 
 def test_get_reference_wavelength_range_no_file(make_datamodel, monkeypatch, log_watcher):
     """Test that missing wavelength range reference files are handled."""
-    model = make_datamodel.copy()
+    model = make_datamodel
     monkeypatch.setattr(WhiteLightStep, "get_reference_file", lambda *args: "N/A")
 
     watcher = log_watcher(
