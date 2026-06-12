@@ -23,8 +23,7 @@ def run_persistence_step(rtdata_module):
     args = [
         "jwst.persistence.PersistenceStep",
         rtdata.input,
-        "--steps.persistence.persistence_time=500",
-        "--steps.persistence.save_persistence_time=False",
+        "--persistence_time=500",
     ]
     Step.from_cmdline(args)
 
