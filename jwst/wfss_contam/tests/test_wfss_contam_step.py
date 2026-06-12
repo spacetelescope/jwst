@@ -47,6 +47,7 @@ def multislitmodel(
 
     fname = "multislit_model.fits"
     model.save(fname)
+    model.close()
     return fname
 
 
@@ -70,6 +71,7 @@ def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
     assert (tmp_cwd_module / "multislit_model_simul.fits").exists()
     assert (tmp_cwd_module / "multislit_model_simul_slits.fits").exists()
     assert (tmp_cwd_module / "multislit_model_contam.fits").exists()
+    result.close()
 
 
 def test_wfss_contam_step_defaults(multislitmodel, tmp_cwd_module):
@@ -79,6 +81,7 @@ def test_wfss_contam_step_defaults(multislitmodel, tmp_cwd_module):
     result = WfssContamStep.call(multislitmodel)
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
+    result.close()
 
 
 def test_wfss_contam_skip_maglimit(multislitmodel, tmp_cwd_module):
@@ -94,6 +97,7 @@ def test_wfss_contam_skip_maglimit(multislitmodel, tmp_cwd_module):
     )
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "SKIPPED"
+    result.close()
 
 
 def test_wfss_contam_skip_bad_order(multislitmodel, tmp_cwd_module):
@@ -109,6 +113,7 @@ def test_wfss_contam_skip_bad_order(multislitmodel, tmp_cwd_module):
     )
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "SKIPPED"
+    result.close()
 
 
 def test_output_is_not_input(multislitmodel, tmp_cwd_module):
@@ -141,3 +146,4 @@ def test_wfss_contam_step_with_polyfit(multislitmodel, tmp_cwd_module):
     result = WfssContamStep.call(multislitmodel, orders=[1], polyfit_degree=2, n_iterations=2)
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
+    result.close()

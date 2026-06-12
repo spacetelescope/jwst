@@ -56,7 +56,7 @@ class SourceCatalogStep(Step):
         localbkg_width = integer(default=0) # Width of rectangular annulus used to compute local background around each source
         apermask_method = option('correct', 'mask', 'none', default='correct') # How to handle neighboring sources
         kron_params = float_list(min=2, max=3, default=None) # Parameters defining Kron aperture
-        deblend = boolean(default=False) # deblend sources?
+        deblend = boolean(default=True) # deblend sources?
     """  # noqa: E501
 
     reference_file_types = ["apcorr", "abvegaoffset"]

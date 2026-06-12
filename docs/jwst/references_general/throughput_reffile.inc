@@ -1,7 +1,7 @@
 .. _throughput_reffile:
 
 THROUGHPUT Reference File
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 :REFTYPE: THROUGHPUT
 :Data model: `~stdatamodels.jwst.datamodels.ThroughputModel`

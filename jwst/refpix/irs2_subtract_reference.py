@@ -33,10 +33,10 @@ def correct_model(
 
     Parameters
     ----------
-    output_model : ramp model
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         The input science data model.
 
-    irs2_model : IRS2 model
+    irs2_model : `~stdatamodels.jwst.datamodels.IRS2Model`
         The reference file model for IRS2 correction.
 
     scipix_n_default : int
@@ -53,43 +53,43 @@ def correct_model(
         the phase of temporally periodic signals.
 
     preserve_refpix : bool
-        If True, reference pixels will be preserved in the output.
+        If `True`, reference pixels will be preserved in the output.
         This is not used in the science pipeline, but is necessary to
         create new bias files for IRS2 mode.
 
     Returns
     -------
-    output_model : ramp model
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         The science data with reference output and reference pixels
         subtracted.
     """
     #
-    """Readout parameters
-    scipix_n   16         Number of regular samples before stepping out
-                          to collect reference samples
-    refpix_r    4         Number of reference samples before stepping back
-                          in to collect regular samples
-    NFOH        1 row     New frame overhead (714?)
-    NROH        8 pixels  New row overhead (`pad`)
-    JOH         1 pixel   Jump overhead for stepping out to or in from
-                          reference pixels
-    TPIX       10 microseconds  Pixel dwell time
-    tframe     14.5889 s  Frame readout time
+    # Readout parameters
+    # scipix_n   16         Number of regular samples before stepping out
+    #                       to collect reference samples
+    # refpix_r    4         Number of reference samples before stepping back
+    #                       in to collect regular samples
+    # NFOH        1 row     New frame overhead (714?)
+    # NROH        8 pixels  New row overhead (`pad`)
+    # JOH         1 pixel   Jump overhead for stepping out to or in from
+    #                       reference pixels
+    # TPIX       10 microseconds  Pixel dwell time
+    # tframe     14.5889 s  Frame readout time
 
-    The image and reference data will be rearranged into a 1-D array
-    containing the values in time order, i.e. the element number * TPIX
-    is the relative time at which a pixel was read out.  This array will
-    have elements corresponding to the gaps (overheads) when no pixel was
-    being read.  This 1-D array has length 1,458,176, which is equal to
-    712 * 2048:
+    # The image and reference data will be rearranged into a 1-D array
+    # containing the values in time order, i.e. the element number * TPIX
+    # is the relative time at which a pixel was read out.  This array will
+    # have elements corresponding to the gaps (overheads) when no pixel was
+    # being read.  This 1-D array has length 1,458,176, which is equal to
+    # 712 * 2048:
 
-    ((scipix_n + refpix_r + 2) * (512 // scipix_n) + NROH) * 2048
+    # ((scipix_n + refpix_r + 2) * (512 // scipix_n) + NROH) * 2048
 
-    The total frame readout time is:
-    (((scipix_n + refpix_r + 2) * (512 // scipix_n) + NROH) * 2048 + NFOH)
-        * TPIX
-    This agrees with the above value of tframe (14.5889 s) if NFOH = 714.
-    """
+    # The total frame readout time is:
+    # (((scipix_n + refpix_r + 2) * (512 // scipix_n) + NROH) * 2048 + NFOH)
+    #     * TPIX
+    # This agrees with the above value of tframe (14.5889 s) if NFOH = 714.
+
     # Get SCI and PIXELDQ arrays for now; that's all we need.
     data = output_model.data
     pixeldq = output_model.pixeldq
@@ -290,12 +290,12 @@ def strip_ref_pixels(output_model, irs2_mask):
 
     Parameters
     ----------
-    output_model : ramp model
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         The output science data model, to be modified in-place
 
     irs2_mask : ndarray of bool
-        1D array of length 3200.  True means the element corresponds to a normal
-        pixel in the raw, IRS2-format data.  False corresponds either to a reference
+        1D array of length 3200.  `True` means the element corresponds to a normal
+        pixel in the raw, IRS2-format data.  `False` corresponds either to a reference
         output pixel or to one of the interspersed reference pixel values.
     """
     detector = output_model.meta.instrument.detector
@@ -331,19 +331,19 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2, scipix_n=16, r
     """
     Set some interleaved reference pixel values to zero.
 
-    This is an explanation of the arithmetic for computing `ref` in the loop
-    over the list of bit numbers that is returned by `decode_mask`.
+    This is an explanation of the arithmetic for computing ``ref`` in the loop
+    over the list of bit numbers that is returned by :func:`decode_mask`.
     Reads of reference pixels are interleaved with reads of science data.  The
-    pattern of science pixels (S) and reference pixels (r) looks like this:
+    pattern of science pixels (S) and reference pixels (r) looks like this::
 
-    SSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrr ... rrrrSSSSSSSS
+        SSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrr ... rrrrSSSSSSSS
 
     Within each amplifier output, a row starts and ends with 8 (scipix_n / 2)
     science pixels, and the row contains 32 blocks of 4 reference pixels.
     There are 20 (scipix_n + refpix_r) pixels from the start of one block of
-    reference pixels to the start of the next.  `k` is an integer between
+    reference pixels to the start of the next.  ``k`` is an integer between
     0 and 31, inclusive, an index to identify the block of reference pixels
-    that we need to modify (we'll set two of the pixels to zero).  `odd_even`
+    that we need to modify (we'll set two of the pixels to zero).  ``odd_even``
     is either 1 or 2, indicating that we should set either the first or the
     second pair of reference pixels to 0.
 
@@ -352,30 +352,30 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2, scipix_n=16, r
 
     Parameters
     ----------
-    data : 4-D ndarray
-        The data array in detector orientation.  This includes both the
-        science and interleaved reference pixel values.  `data` will be
+    data : ndarray
+        The 4-D data array in detector orientation.  This includes both the
+        science and interleaved reference pixel values.  ``data`` will be
         modified in-place to set some of the reference pixel values to zero.
         The science data values will not be modified.
 
-    output : 1-D ndarray of int16
-        An array of amplifier output numbers, 1, 2, 3, or 4, read from the
+    output : ndarray of int16
+        A 1-D array of amplifier output numbers, 1, 2, 3, or 4, read from the
         OUTPUT column in the DQ extension of the CRDS reference file.
 
-    odd_even : 1-D ndarray of int16
-        An array of integer values, which may be either 1 or 2, read from the
+    odd_even : ndarray of int16
+        A 1-D array of integer values, which may be either 1 or 2, read from the
         ODD_EVEN column in the DQ extension of the CRDS reference file.
 
-    mask : 1-D ndarray of uint32
-        The MASK column read from the CRDS reference file.
+    mask : ndarray of uint32
+        The MASK column (1-D) read from the CRDS reference file.
 
-    ref_flags : 1-D ndarray of bool
-        Bad reference pixel flags, matching the data row size in detector
-        orientation.  True indicates a bad reference pixel.
+    ref_flags : ndarray of bool
+        Bad reference pixel flags (1-D) , matching the data row size in detector
+        orientation.  `True` indicates a bad reference pixel.
 
-    is_irs2 : 1-D ndarray of bool
-        Array matching the data row size in detector orientation.
-        True indicates an interleaved reference pixel.
+    is_irs2 : ndarray of bool
+        A 1-D array matching the data row size in detector orientation.
+        `True` indicates an interleaved reference pixel.
 
     scipix_n : int, optional
         Number of regular (science) samples before stepping out to collect
@@ -450,7 +450,7 @@ def decode_mask(mask):
     Returns
     -------
     bits : list
-        A list of the indices of bits set in the `mask` value.
+        A list of the indices of bits set in the ``mask`` value.
     """
     # The bit number corresponds to a count of groups of reads of the
     # interleaved reference pixels. The 32-bit unsigned integer encoding
@@ -485,21 +485,21 @@ def replace_refpix(
     ----------
     bad_pix : int
         The bad pixel index to replace.
-    data : 4-D ndarray
-        The data array containing reference and science pixels.
-        If in science orientation, `axis` should be -2. If in detector
-        orientation, `axis` should be set to -1.
-    bad_mask : 1-D ndarray
-        A boolean mask, where True indicates a bad reference value.
-        Should match the shape of the data along `axis`.
-    is_irs2 : 1-D ndarray
-        A boolean mask, where True indicates an interleaved reference pixel.
-        Should match the shape of the data along `axis`.
+    data : ndarray
+        The 4-D data array containing reference and science pixels.
+        If in science orientation, ``axis`` should be -2. If in detector
+        orientation, ``axis`` should be set to -1.
+    bad_mask : ndarray
+        A 1-D boolean mask, where `True` indicates a bad reference value.
+        Should match the shape of the data along ``axis``.
+    is_irs2 : ndarray
+        A 1-D boolean mask, where `True` indicates an interleaved reference pixel.
+        Should match the shape of the data along ``axis``.
     low_limit : int
-        The lower limit of the data indices along `axis` to check
+        The lower limit of the data indices along ``axis`` to check
         for replacement values, usually set to the bottom of the amplifier.
     high_limit : int
-        The upper limit of the data indices along `axis` to check
+        The upper limit of the data indices along ``axis`` to check
         for replacement values, usually set to the bottom of the amplifier.
     scipix_n : int
         Number of regular (science) samples before stepping out to collect
@@ -576,7 +576,7 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
 
     Parameters
     ----------
-    datamodel : DataModel
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The data, in science orientation.  This includes both the
         science and interleaved reference pixel values.  Data and pixeldq
         will be modified in-place. The science data values will not be
@@ -712,12 +712,16 @@ def subtract_reference(
         data and reference pixels, not the reference output).  The second
         axis has length 2048 * 712, corresponding to the time-ordered
         arrangement of the data.  For each sector, the correction is
-        applied as follows:  data * alpha[i] + reference_output * beta[i].
+        applied as follows::
+
+            data * alpha[i] + reference_output * beta[i]
+
     beta : ndarray
-        Data read from the reference file.  See `alpha` for details.
-    irs2_mask : Boolean, 1-D array
-        True means the element corresponds to a normal pixel in the raw,
-        IRS2-format data.  False corresponds either to a reference output
+        Data read from the reference file.  See ``alpha`` for details.
+    irs2_mask : ndarray
+        A 1-D boolean array, where `True` means the element corresponds
+        to a normal pixel in the raw, IRS2-format data;
+        `False` corresponds either to a reference output
         pixel or to one of the interspersed reference pixel values.
     scipix_n : int
         Number of regular samples before stepping out to collect
@@ -729,7 +733,7 @@ def subtract_reference(
         The effective number of pixels sampled during the pause at the end
         of each row (new-row overhead).
     preserve_refpix : bool
-        If True, reference pixels will be preserved in the output.
+        If `True`, reference pixels will be preserved in the output.
         This is not used in the science pipeline, but is necessary to
         create new bias files for IRS2 mode.
 
@@ -740,7 +744,7 @@ def subtract_reference(
         and embedded reference pixels subtracted and also removed, leaving
         only the normal pixel data (including the reference pixels on each
         edge).  The shape is expected to be (ngroups, ny, nx), where
-        nx = ny = 2048.
+        ``nx = ny = 2048``.
     """
     shape = data0.shape
     ngroups = shape[0]
@@ -1014,12 +1018,12 @@ def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1, ny, ngroups, aa, n_iter_norm
     Parameters
     ----------
     dd0 : ndarray
-        Data array containing all groups, updated in place
+        Data array containing all groups, updated in place.
     mask0 : ndarray
         Mask for pixels to filter, with dimensions ny x nrow. 1 means use the pixel,
         0 means do not use it.
     row : int
-        Row size. Computed from the number of science pixels, reference pixels
+        Row size computed from the number of science pixels, reference pixels,
         and padding in an amplifier.
     hnorm : ndarray
         Array of column indices for normal pixels.
@@ -1128,9 +1132,11 @@ def replace_bad_pixels(data0, ngroups, ny, row):
     Replace bad pixels.
 
     Use cosine weighted interpolation to replace 0.0 values and bad
-    pixels and gaps.
+    pixels and gaps::
 
-    s[1] = nx  s[2] = ny  s[3] = ngroups
+        s[1] = nx
+        s[2] = ny
+        s[3] = ngroups
 
     Parameters
     ----------
@@ -1141,8 +1147,15 @@ def replace_bad_pixels(data0, ngroups, ny, row):
     ny : int
         Number of rows in input data array
     row : int
-        Row definition - row = (scipix_n + refpix_r + 2) * 512 // scipix_n + pad
-        row = 712, if scipix_n = 16, refpix_r = 4, pad = 8
+        Row definition::
+
+            row = (scipix_n + refpix_r + 2) * 512 // scipix_n + pad
+            # This means that if
+            scipix_n = 16
+            refpix_r = 4
+            pad = 8
+            # then
+            row = 712
     """
     w_ind = np.arange(1, 32, dtype=np.float32) / 32.0
     w = np.sin(w_ind * np.pi)
@@ -1165,9 +1178,11 @@ def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm
     """
     Fill the bad regions in the data.
 
-    Use Fourier filter/interpolation to replace
-      (a) bad pixel, gaps, and reference data in the time-ordered normal data
-      (b) gaps and normal data in the time-ordered reference data
+    Use Fourier filter/interpolation to replace:
+
+    a. bad pixel, gaps, and reference data in the time-ordered normal data
+    b. gaps and normal data in the time-ordered reference data
+
     This "improves" upon the cosine interpolation performed above.
 
     Parameters
@@ -1175,26 +1190,25 @@ def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm
     data0 : ndarray
         Input data array.  Modified in place.
     ngroups : int
-        Number of groups in input data
+        Number of groups in input data.
     ny : int
-        Number of rows in input data
+        Number of rows in input data.
     nx : int
-        Number of columns in input data
+        Number of columns in input data.
     row : int
-        Row definition: row = (scipix_n + refpix_r + 2) * 512 // scipix_n + pad
-        row = 712, if scipix_n = 16, refpix_r = 4, pad = 8
+        See :func:`replace_bad_pixels`.
     scipix_n : int
-        Number of regular samples before stepping out to collect reference samples
+        Number of regular samples before stepping out to collect reference samples.
     refpix_r : int
-        Number of reference samples before stepping back in to collect regular samples
+        Number of reference samples before stepping back in to collect regular samples.
     pad : int
         The effective number of pixels sampled during the pause at the end
         of each row (new-row overhead).  The padding is needed to preserve
         the phase of temporally periodic signals.
     hnorm : ndarray
-        Array of column indices for normal pixels
+        Array of column indices for normal pixels.
     hnorm1 : ndarray
-        Shifted index values for normal pixels
+        Shifted index values for normal pixels.
     """
     # Parameters for the filter to be used:
     # length of apodization cosine filter

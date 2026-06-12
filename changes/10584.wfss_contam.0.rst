@@ -1,0 +1,1 @@
+Process sources brightest first, and update contam estimate after every source, when polynomial fitting is requested
