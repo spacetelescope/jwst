@@ -146,7 +146,7 @@ emicorr:
 engdb_tools:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**libengdb_*"
+          - "jwst/**engdb**"
 
 exp_to_source:
   - changed-files:

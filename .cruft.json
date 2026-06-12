@@ -1,0 +1,24 @@
+{
+  "template": "https://github.com/zacharyburnett/stsci-package-template",
+  "commit": "d042d258f0aa70967c40f164479c593124009060",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "jwst",
+      "package_name": "jwst",
+      "repository_url": "https://github.com/spacetelescope/jwst",
+      "git_username": "spacetelescope/jwst-pipeline-maintainers",
+      "project_description": "processing pipeline for James Webb Space Telescope imagery and spectroscopy",
+      "manage_changelog_with_towncrier": true,
+      "publish_docs_to": "readthedocs.io",
+      "task_runner": "tox",
+      "python_version": ">=3.11,<3.15",
+      "python_c_extensions": true,
+      "python_build_backend": "setuptools",
+      "crds_observatory": "jwst",
+      "_template": "https://github.com/zacharyburnett/stsci-package-template",
+      "_commit": "d042d258f0aa70967c40f164479c593124009060"
+    }
+  },
+  "directory": "python-package"
+}

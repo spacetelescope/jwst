@@ -1,9 +1,5 @@
-.. image:: _static/stsci_logo.png
-   :width: 15%
-   :target: https://stsci.edu
-
-.. image:: _static/stsci_name.png
-   :width: 68%
+.. image:: _static/stsci_pri_combo_mark_horizonal_white_bkgd.png
+   :width: 83%
    :target: https://stsci.edu
 
 .. image:: _static/jwst_logo.png

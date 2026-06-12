@@ -1,6 +1,5 @@
 <a href="https://stsci.edu">
-  <img src="docs/_static/stsci_logo.png" alt="STScI Logo" width="15%" style="margin-left: auto;"/>
-  <img src="docs/_static/stsci_name.png" alt="STScI Logo" width="68%"/>
+  <img src="docs/_static/stsci_pri_combo_mark_horizonal_white_bkgd.png" alt="Space Telescope Science Institute" width="83%" style="margin-left: auto;"/>
 </a>
 <a href="https://science.nasa.gov/mission/webb/">
   <img src="docs/_static/jwst_logo.png" alt="JWST Logo" width="15%" style="margin-right: auto;"/>
@@ -8,17 +7,12 @@
 
 # James Webb Space Telescope Calibration Pipeline
 
-[![DOI](https://zenodo.org/badge/60551519.svg)](https://zenodo.org/badge/latestdoi/60551519)
-[![PyPI](https://img.shields.io/pypi/v/jwst.svg)](https://pypi.org/project/jwst)
-[![Python Support](https://img.shields.io/pypi/pyversions/jwst)](https://pypi.org/project/jwst/)
-[![Powered by STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](https://www.stsci.edu)
-[![Powered by Astropy](https://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](https://www.astropy.org/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
-[![ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![build](https://github.com/spacetelescope/jwst/actions/workflows/build.yml/badge.svg)](https://github.com/spacetelescope/jwst/actions/workflows/build.yml)
 [![tests](https://github.com/spacetelescope/jwst/actions/workflows/tests.yml/badge.svg)](https://github.com/spacetelescope/jwst/actions/workflows/tests.yml)
-[![readthedocs](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](https://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
+[![ReadTheDocs](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](https://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
+[![Powered by STScI](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](https://www.stsci.edu)
 [![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/main/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
+[![ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 This package (`jwst`) processes uncalibrated data from both imagers and spectrographs onboard the [James Webb Space Telescope (JWST)](https://science.nasa.gov/mission/webb/), an orbiting infrared observatory stationed at Earth-Sun L<sub>2</sub>.
 The pipeline performs a series of calibration steps that result in standard data products usable for science.
@@ -30,6 +24,7 @@ Detailed explanations of specific calibration stages, reference files, and pipel
 > please [open an issue on GitHub](https://github.com/spacetelescope/jwst/issues) or [contact the JWST Help Desk](https://jwsthelp.stsci.edu).
 
 <!--toc:start-->
+
 - [Quick Start](#quick-start)
   - [1. Install the Pipeline](#1-install-the-pipeline)
     - [Option: Build Pipeline Directly from Source Code](#option-build-pipeline-directly-from-source-code)
@@ -57,27 +52,32 @@ These instructions assume you are creating Conda environments with the `mamba` c
 to use `conda` instead, simply replace `mamba` with `conda` in the following commands.
 
 First, create an empty environment with Python installed:
+
 ```shell
 mamba create -n jwst_env python=3.13
 ```
 
 Then, **activate** that environment (necessary to be able to access this isolated Python installation):
+
 ```shell
 mamba activate jwst_env
 ```
 
 Finally, install `jwst` into the environment:
+
 ```shell
 pip install jwst
 ```
 
 Without a specified version, `pip` defaults to the latest released version that supports your environment.
 To install a specific version of `jwst`, explicitly set that version in your `pip install` command:
+
 ```shell
 pip install jwst==1.20.2
 ```
 
 To install a different version of `jwst`, simply create a new environment for that version:
+
 ```shell
 mamba create -n jwst1.20_env python=3.13
 mamba activate jwst1.20_env
@@ -107,6 +107,7 @@ We package releases for operations [as environment snapshots that specify exact 
 See the [DMS Operational Build Versions](#dms-operational-build-versions) table for the version of the pipeline corresponding to each operational build.
 For example, use `jwst==1.17.1` for **DMS build 11.2**.
 Also note that Linux and macOS systems require different snapshot files:
+
 ```shell
 mamba env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.18.1/delivery/latest-py312-macos-arm64.yml
 mamba activate JWSTDP-1.18.1-1-py312-macos-arm64
@@ -114,6 +115,7 @@ mamba activate JWSTDP-1.18.1-1-py312-macos-arm64
 
 > [!NOTE]
 > Starting with `jwst==1.16.1`, the JWST pipeline uses [`stasis`](https://github.com/spacetelescope/stasis) to package environments and deliver releases. If you need a version of `jwst` prior to `1.16.1`, use a slightly different procedure:
+>
 > ```shell
 > mamba create -n jwstdp-1.16.0 --file https://ssb.stsci.edu/releases/jwstdp/1.16.0/conda_python_macos-stable-deps.txt
 > mamba activate jwstdp-1.16.0
@@ -126,6 +128,7 @@ Before running the pipeline, you must first set up your local machine to retriev
 CRDS provides calibration reference files for several telescopes, including JWST.
 
 Set `CRDS_SERVER_URL` and `CRDS_PATH` to run the pipeline with access to reference files from CRDS:
+
 ```shell
 export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 export CRDS_PATH=$HOME/data/crds_cache/
@@ -142,6 +145,7 @@ The pipeline will automatically download individual reference files and cache th
 > Users within the STScI network do not need to set `CRDS_PATH` (it defaults to shared network storage).
 
 To use a specific CRDS context other than that [automatically associated with a given pipeline version](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates), explicitly set the `CRDS_CONTEXT` environment variable:
+
 ```shell
 export CRDS_CONTEXT=jwst_1179.pmap
 ```
@@ -176,7 +180,7 @@ The table below provides information on each release of the `jwst` package and i
 Each `jwst` tag was released on PyPI on the date given in `Released`, and then subsequently installed into operations on the date given in `Ops Install`.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
-|---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
+| ------------------- | --------- | -------- | ------------ | ---------- | ----------- | --------------------------------------------- |
 | 2.0.1               | B12.3.1   | 2026.1.0 | 1533         | 2026-05-06 |             | First release candidate for B12.3.1           |
 | 2.0.0               | B12.3     | 2026.1.0 | 1533         | 2026-04-13 |             | First release candidate for B12.3             |
 | 1.20.2              | B12.1.1   | 2025.4.1 | 1464         | 2025-10-31 |             | Patch release for B12.1.1                     |

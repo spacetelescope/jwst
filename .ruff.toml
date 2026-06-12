@@ -1,13 +1,11 @@
-extend = "pyproject.toml"
-
 exclude = [
-    "jwst/extern",
-    "docs",
-    ".tox",
-    ".eggs",
-    "build",
-    "*.ipynb",
-    "**/tests/**/__init__.py",
+  "jwst/extern",
+  "docs",
+  ".tox",
+  ".eggs",
+  "build",
+  "*.ipynb",
+  "**/tests/**/__init__.py",
 ]
 line-length = 100
 
@@ -20,41 +18,41 @@ docstring-code-format = true
 
 [lint]
 select = [
-    "F",      # Pyflakes (part of default flake8)
-    "E",      # pycodestyle (part of default flake8)
-    "W",      # pycodestyle (part of default flake8)
-    "D",      # docstrings, see also numpydoc pre-commit action
-    "N",      # pep8-naming (naming conventions)
-    "A",      # flake8-builtins (prevent shadowing of builtins)
-    "ARG",    # flake8-unused-arguments (prevent unused arguments)
-    "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
-    "C4",     # flake8-comprehensions (best practices for comprehensions)
-    "I",      # isort
-    "ICN",    # flake8-import-conventions (enforce import conventions)
-    "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
-    "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
-    "LOG",    # flake8-logging
-    "NPY",    # numpy-specific rules
-    "PGH",    # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
-    "PTH",    # flake8-use-pathlib (enforce using Pathlib instead of os)
-    "S",      # flake8-bandit (security checks)
-    "SLF",    # flake8-self (prevent using private class members outside class)
-    "SLOT",   # flake8-slots (require __slots__ for immutable classes)
-    "T20",    # flake8-print (prevent print statements in code)
-    "TRY",    # tryceratops (best practices for try/except blocks)
-    "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
-    "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
-    "TID252"  # Checks for relative imports
+  "F",  # Pyflakes (part of default flake8)
+  "E",  # pycodestyle (part of default flake8)
+  "W",  # pycodestyle (part of default flake8)
+  "D",  # docstrings, see also numpydoc pre-commit action
+  "N",  # pep8-naming (naming conventions)
+  "A",  # flake8-builtins (prevent shadowing of builtins)
+  "ARG",  # flake8-unused-arguments (prevent unused arguments)
+  "B",  # flake8-bugbear (miscellaneous best practices to avoid bugs)
+  "C4",  # flake8-comprehensions (best practices for comprehensions)
+  "I",  # isort
+  "ICN",  # flake8-import-conventions (enforce import conventions)
+  "INP",  # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
+  "ISC",  # flake8-implicit-str-concat (conventions for concatenating long strings)
+  "LOG",  # flake8-logging
+  "NPY",  # numpy-specific rules
+  "PGH",  # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
+  "PTH",  # flake8-use-pathlib (enforce using Pathlib instead of os)
+  "S",  # flake8-bandit (security checks)
+  "SLF",  # flake8-self (prevent using private class members outside class)
+  "SLOT",  # flake8-slots (require __slots__ for immutable classes)
+  "T20",  # flake8-print (prevent print statements in code)
+  "TRY",  # tryceratops (best practices for try/except blocks)
+  "UP",  # pyupgrade (simplified syntax allowed by newer Python versions)
+  "YTT",  # flake8-2020 (prevent some specific gotchas from sys.version)
+  "TID252"  # Checks for relative imports
 ]
 ignore = [
-    "D100", # missing docstring in public module
-    "D105", # missing docstring in magic method
-    "E741", # ambiguous variable name (O/0, l/I, etc.)
-    "UP008", # use super() instead of super(class, self). no harm being explicit
-    "UP015", # unnecessary open(file, "r"). no harm being explicit
-    "TRY003", # prevents custom exception messages not defined in exception itself.
-    "TRY400", # enforces log.exception instead of log.error in except clause.
-    "ISC001", # single line implicit string concatenation. formatter recommends ignoring this.
+  "D100",  # missing docstring in public module
+  "D105",  # missing docstring in magic method
+  "E741",  # ambiguous variable name (O/0, l/I, etc.)
+  "UP008",  # use super() instead of super(class, self). no harm being explicit
+  "UP015",  # unnecessary open(file, "r"). no harm being explicit
+  "TRY003",  # prevents custom exception messages not defined in exception itself.
+  "TRY400",  # enforces log.exception instead of log.error in except clause.
+  "ISC001",  # single line implicit string concatenation. formatter recommends ignoring this.
 ]
 
 [lint.pydocstyle]
@@ -68,87 +66,95 @@ ban-relative-imports = "all"  # Disallow all relative imports.
 
 [lint.per-file-ignores]
 "jwst/**/__init__.py" = [
-    "E402", # module-level import not at top of file
-    "F401", # unused import
-    "F403", # import with *
-    "F405", # ambiguous import from *
-    "TID252",  # Checks for relative imports
+  "E402",  # module-level import not at top of file
+  "F401",  # unused import
+  "F403",  # import with *
+  "F405",  # ambiguous import from *
+  "TID252",  # Checks for relative imports
 ]
 "**/tests/test_*.py" = [
-    "E",      # pycodestyle (part of default flake8)
-    "W",      # pycodestyle (part of default flake8)
-    "D",      # docstrings, see also numpydoc pre-commit action
-    "N",      # pep8-naming (naming conventions)
-    "A",      # flake8-builtins (prevent shadowing of builtins)
-    "ARG",    # flake8-unused-arguments (prevent unused arguments)
-    "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
-    "C4",     # flake8-comprehensions (best practices for comprehensions)
-    "F841",   # Local variable `result` is assigned to but never used
-    "ICN",    # flake8-import-conventions (enforce import conventions)
-    "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
-    "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
-    "LOG",    # flake8-logging
-    "NPY",    # numpy-specific rules
-    "PGH",    # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
-    "PTH",    # flake8-use-pathlib (enforce using Pathlib instead of os)
-    "S",      # flake8-bandit (security checks)
-    "SLF",    # flake8-self (prevent using private class members outside class)
-    "SLOT",   # flake8-slots (require __slots__ for immutable classes)
-    "TRY",    # tryceratops (best practices for try/except blocks)
-    "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
-    "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
+  "E",  # pycodestyle (part of default flake8)
+  "W",  # pycodestyle (part of default flake8)
+  "D",  # docstrings, see also numpydoc pre-commit action
+  "N",  # pep8-naming (naming conventions)
+  "A",  # flake8-builtins (prevent shadowing of builtins)
+  "ARG",  # flake8-unused-arguments (prevent unused arguments)
+  "B",  # flake8-bugbear (miscellaneous best practices to avoid bugs)
+  "C4",  # flake8-comprehensions (best practices for comprehensions)
+  "F841",  # Local variable `result` is assigned to but never used
+  "ICN",  # flake8-import-conventions (enforce import conventions)
+  "INP",  # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
+  "ISC",  # flake8-implicit-str-concat (conventions for concatenating long strings)
+  "LOG",  # flake8-logging
+  "NPY",  # numpy-specific rules
+  "PGH",  # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
+  "PTH",  # flake8-use-pathlib (enforce using Pathlib instead of os)
+  "S",  # flake8-bandit (security checks)
+  "SLF",  # flake8-self (prevent using private class members outside class)
+  "SLOT",  # flake8-slots (require __slots__ for immutable classes)
+  "TRY",  # tryceratops (best practices for try/except blocks)
+  "UP",  # pyupgrade (simplified syntax allowed by newer Python versions)
+  "YTT",  # flake8-2020 (prevent some specific gotchas from sys.version)
 ]
 "**/regtest/test_*.py" = [
-    "E",      # pycodestyle (part of default flake8)
-    "W",      # pycodestyle (part of default flake8)
-    "D",      # docstrings, see also numpydoc pre-commit action
-    "N",      # pep8-naming (naming conventions)
-    "A",      # flake8-builtins (prevent shadowing of builtins)
-    "ARG",    # flake8-unused-arguments (prevent unused arguments)
-    "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
-    "C4",     # flake8-comprehensions (best practices for comprehensions)
-    "ICN",    # flake8-import-conventions (enforce import conventions)
-    "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
-    "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
-    "LOG",    # flake8-logging
-    "NPY",    # numpy-specific rules
-    "PGH",    # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
-    "PTH",    # flake8-use-pathlib (enforce using Pathlib instead of os)
-    "S",      # flake8-bandit (security checks)
-    "SLF",    # flake8-self (prevent using private class members outside class)
-    "SLOT",   # flake8-slots (require __slots__ for immutable classes)
-    "TRY",    # tryceratops (best practices for try/except blocks)
-    "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
-    "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
+  "E",  # pycodestyle (part of default flake8)
+  "W",  # pycodestyle (part of default flake8)
+  "D",  # docstrings, see also numpydoc pre-commit action
+  "N",  # pep8-naming (naming conventions)
+  "A",  # flake8-builtins (prevent shadowing of builtins)
+  "ARG",  # flake8-unused-arguments (prevent unused arguments)
+  "B",  # flake8-bugbear (miscellaneous best practices to avoid bugs)
+  "C4",  # flake8-comprehensions (best practices for comprehensions)
+  "ICN",  # flake8-import-conventions (enforce import conventions)
+  "INP",  # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
+  "ISC",  # flake8-implicit-str-concat (conventions for concatenating long strings)
+  "LOG",  # flake8-logging
+  "NPY",  # numpy-specific rules
+  "PGH",  # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
+  "PTH",  # flake8-use-pathlib (enforce using Pathlib instead of os)
+  "S",  # flake8-bandit (security checks)
+  "SLF",  # flake8-self (prevent using private class members outside class)
+  "SLOT",  # flake8-slots (require __slots__ for immutable classes)
+  "TRY",  # tryceratops (best practices for try/except blocks)
+  "UP",  # pyupgrade (simplified syntax allowed by newer Python versions)
+  "YTT",  # flake8-2020 (prevent some specific gotchas from sys.version)
 ]
 "jwst/conftest.py" = [
-    "SLF", "ARG", "PTH",
-    "B003", # Assigning to os.environ does not clear the environment
+  "SLF",
+  "ARG",
+  "PTH",
+  "B003",  # Assigning to os.environ does not clear the environment
 ]
 "jwst/regtest/regtestdata.py" = [
-    "SLF", "ARG", "PTH",
-    "A002", # builtin variable shadowing
-    "A003", # builtin variable shadowing
-    "S101", # use of assert
+  "SLF",
+  "ARG",
+  "PTH",
+  "A002",  # builtin variable shadowing
+  "A003",  # builtin variable shadowing
+  "S101",  # use of assert
 ]
 "jwst/regtest/conftest.py" = [
-    "SLF", "ARG", "PTH",
-    "A002", # builtin variable shadowing
-    "S101", # use of assert
+  "SLF",
+  "ARG",
+  "PTH",
+  "A002",  # builtin variable shadowing
+  "S101",  # use of assert
 ]
 "jwst/associations/lib/*" = [
-    "N801", # Use CapWords class naming convention
+  "N801",  # Use CapWords class naming convention
 ]
 "jwst/associations/tests*" = [
-    "S101", # use of assert
+  "S101",  # use of assert
 ]
 "jwst/regtest/associations_sdp_pools/*.py" = [
-    "SLF", "ARG", "PTH",
-    "D103", # Missing docstring in public function
-    "D104", # Missing docstring in public package
-    "E501", # Line too long
-    "N802", # Function name should be lowercase
-    "N813", # Camelcase imported as lowercase
+  "SLF",
+  "ARG",
+  "PTH",
+  "D103",  # Missing docstring in public function
+  "D104",  # Missing docstring in public package
+  "E501",  # Line too long
+  "N802",  # Function name should be lowercase
+  "N813",  # Camelcase imported as lowercase
 ]
 
 [lint.isort]

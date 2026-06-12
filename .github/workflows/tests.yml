@@ -24,7 +24,7 @@ on:
         description: CRDS context (leave blank for latest)
         type: string
         required: false
-        default: ''
+        default: ""
       crds_server:
         description: CRDS server
         type: string
@@ -114,15 +114,16 @@ jobs:
         - linux: check-dependencies
           python-version: ${{ needs.supported-pythons.outputs.latest }} 
         - name: run tests (oldest supported Python, ubuntu-latest)
-          linux: py3-oldestdeps-xdist-cov
+          linux: py3-oldestdeps-cov-xdist
           python-version: ${{ needs.supported-pythons.outputs.oldest }}
+          coverage: codecov
         - name: run tests with coverage (latest supported Python, ubuntu-latest)
-          linux: py3-cov
+          linux: py3-cov-xdist
           python-version: ${{ needs.supported-pythons.outputs.latest }}
           pytest-results-summary: true
           coverage: codecov
         - name: run tests (latest supported Python, macos-latest)
-          macos: py3
+          macos: py3-xdist
           python-version: ${{ needs.supported-pythons.outputs.latest }}
       fill: true
       fill_platforms: linux

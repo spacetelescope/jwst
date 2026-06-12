@@ -1,0 +1,73 @@
+name: template
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: retrieve upstream updates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3"
+      - name: Check for updates to upstream template
+        id: upstream-updates
+        run: |
+          CHANGES=0
+          if [ -f .cruft.json ]; then
+            if ! cruft check; then
+              CHANGES=1
+            fi
+          else
+            echo "No .cruft.json file"
+          fi
+
+          echo "available=$CHANGES" >> "$GITHUB_OUTPUT"
+      - if: steps.upstream-updates.outputs.available
+        id: branch
+        run: echo name=cruft/update-$(date +"%Y%m%d")>> $GITHUB_OUTPUT
+      - if: steps.upstream-updates.outputs.available
+        name: Configure git credentials
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+      - if: steps.upstream-updates.outputs.available
+        name: Apply updates from upstream template
+        run: |
+          git checkout -b ${{ steps.branch.outputs.name }}
+          pipx run cruft update --skip-apply-ask --refresh-private-variables
+          git restore --staged .
+      - if: steps.upstream-updates.outputs.available
+        name: Commit changes to `${{ steps.branch.outputs.name }}`
+        run: |
+          git add -A
+          git commit -a -m "apply changes from the upstream template with Cruft"
+          git push -u origin ${{ steps.branch.outputs.name }}
+      - if: steps.upstream-updates.outputs.available
+        name: Create pull request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --head=${{ steps.branch.outputs.name }} \
+          --title='[TEMPLATE] Apply update(s) from upstream template' \
+          --body='[Cruft](https://cruft.github.io/cruft/) has detected updates to the upstream Cookiecutter template https://github.com/spacetelescope/stsci-package-template
+
+          Please manually review any new `*.rej` files (changes that failed to apply automatically).
+          
+          > [!TIP]
+          > To skip these updates, modify `${{ steps.branch.outputs.name }}` to only increment `.cruft.json`.'
