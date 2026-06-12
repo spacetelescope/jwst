@@ -55,12 +55,16 @@ def do_correction(output_model, lin_model):
         sub_lin_model.close()
 
     read_pattern = None
-    if inv_coeffs is not None:
+    if inv_coeffs is not None and output_model.meta.exposure.nframes > 1:
         ngroups = output_model.meta.exposure.ngroups
         nframes = output_model.meta.exposure.nframes
         read_pattern = [
             [x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)
         ]
+        log.info(
+            "Providing inverse linearity coefficients and read_pattern to detailed"
+            "linearity correction."
+        )
 
     # Call linearity correction function in stcal
     new_data, new_pdq, new_zframe = linearity_correction(
