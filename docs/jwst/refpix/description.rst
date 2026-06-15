@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.refpix.RefPixStep`
+:Class: `jwst.refpix.refpix_step.RefPixStep`
 :Alias: refpix
 
 Overview
@@ -33,7 +33,7 @@ Input details
 
 The input file must be a 4-D ramp and it should contain both a science
 (SCI) extension and a pixel data quality (PIXELDQ) extension. The PIXELDQ
-extension is normally populated by the ``dq_init`` step, so running that
+extension is normally populated by the :ref:`dq_init <dq_init_step>` step, so running that
 step is a prerequisite for the ``refpix`` step.
 
 Algorithms
@@ -41,7 +41,7 @@ Algorithms
 
 The algorithms for the NIR and MIR detectors are somewhat different.
 An entirely different algorithm for NIRSpec IRS2 readout mode is
-described in IRS2_.
+described in :ref:`IRS2`.
 
 NIR Detector Data
 +++++++++++++++++
@@ -62,10 +62,10 @@ NIR Detector Data
        column effect in some datasets.  Bad pixels (those whose DQ flag has the
        "DO_NOT_USE" bit set) are not included in the calculation of the mean.
     #. The mean is calculated as a clipped mean with a 3-sigma rejection threshold
-       using the ``scipy.stats.sigmaclip`` method.
-    #. Average the top and bottom reference pixel mean values
+       using :func:`scipy.stats.sigmaclip`.
+    #. Average the top and bottom reference pixel mean values.
     #. Subtract each mean from all pixels that the mean is representative of,
-       i.e. by amplifier and using the odd mean for the odd pixels and even mean
+       i.e., by amplifier and using the odd mean for the odd pixels and even mean
        for even pixels if this option is selected.
     #. If the ``--use_side_ref_pixels`` option is selected, use the reference pixels
        up the side of the A and D amplifiers to calculate a smoothed reference pixel
@@ -76,10 +76,10 @@ NIR Detector Data
        (set by the step parameter ``side_gain``, which defaults to 1.0) is
        subtracted from the full group on a row-by-row basis.  Note that the ``odd_even_rows``
        parameter is ignored for NIR data when the side reference pixels are processed.
-       If the ``--refpix_algorithm`` option is set to 'sirs', the Simple Improved
+       If the ``--refpix_algorithm`` option is set to ``'sirs'``, the Simple Improved
        Reference Subtraction (SIRS) method will be used instead of the running median.
        The SIRS revision uses the left and right side reference pixels as described
-       in https://doi.org/10.1117/1.JATIS.8.2.028002. This implementation uses a
+       in Rauscher2022_. This implementation uses a
        mathematically equivalent formulation using convolution kernels rather than
        Fourier transforms, with the convolution kernel truncated where the weights
        approach zero. There are two convolution kernels for each readout channel,
@@ -104,17 +104,17 @@ MIR Detector Data
        it has been found that there is a significant odd-even row effect.
        Bad pixels (those whose DQ flag has the "DO_NOT_USE" bit set) are not
        included in the calculation of the mean. The mean is calculated as a
-       clipped mean with a 3-sigma rejection threshold using the
-       ``scipy.stats.sigmaclip`` method.  Note that the ``odd_even_columns``,
-       ``use_side_ref_pixels``, ``side_smoothing_length`` and ``side_gain``
+       clipped mean with a 3-sigma rejection threshold using
+       :func:`scipy.stats.sigmaclip`.  Note that the ``odd_even_columns``,
+       ``use_side_ref_pixels``, ``side_smoothing_length``, and ``side_gain``
        parameters are ignored for MIRI data.
     #. Average the left and right reference pixel mean values.
     #. Subtract each mean from all pixels that the mean is representative of,
-       i.e. by amplifier and using the odd mean for the odd row pixels and even
+       i.e., by amplifier and using the odd mean for the odd row pixels and even
        mean for even row pixels if this option is selected.
     #. Add the first group of each integration back to each group.
 
-At the end of the refpix step, the S_REFPIX keyword is set to "COMPLETE".
+At the end of the ``refpix`` step, the S_REFPIX keyword is set to "COMPLETE".
 
 NIRCam Frame 0
 --------------
@@ -132,26 +132,26 @@ and/or rotated to convert to the detector frame.
 NIR Data
 ++++++++
 
-For single amplifier readout (NOUTPUTS keyword = 1):
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Single amplifier readout (NOUTPUTS=1)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the ``odd_even_columns`` flag is set to True, then the clipped means of all
+If the ``odd_even_columns`` flag is set to `True`, then the clipped means of all
 reference pixels in odd-numbered columns and those in even numbered columns
 are calculated separately, and subtracted from their respective data columns.
-If the flag is False, then a single clipped mean is calculated from all of
+If the flag is `False`, then a single clipped mean is calculated from all of
 the reference pixels in each group and subtracted from each pixel.
 
 .. note::
 
   In subarray data, reference pixels are identified by the PIXELDQ array having the
-  value of "REFERENCE_PIXEL" (defined in datamodels/dqflags.py).  These values
-  are populated when the ``dq_init`` step is run, so it is important to run that
+  value of "REFERENCE_PIXEL" (see :ref:`Data Quality Flags`).  These values
+  are populated when the :ref:`dq_init <dq_init_step>` step is run, so it is important to run that
   step before running the ``refpix`` step on subarray data.
 
-  Additionally, certain NIRSpec subarrays (SUB32, SUB512 and SUB512S) do not include
+  Additionally, certain NIRSpec subarrays (SUB32, SUB512, and SUB512S) do not include
   any physical reference pixels in their readouts.
   For these subarrays, the first and last four image columns should not receive
-  any incoming light with the filter+grating combinations for which they are
+  any incoming light with the filter + grating combinations for which they are
   approved for use, hence they can be used in place of actual reference pixels.
   The step assigns the "REFERENCE_PIXEL" DQ flag to these image columns,
   which then causes them to be used to perform the reference pixel correction.
@@ -159,11 +159,11 @@ the reference pixels in each group and subtracted from each pixel.
 If the science dataset has at least 1 group with no valid reference pixels,
 the step is skipped and the S_REFPIX header keyword is set to 'SKIPPED'.
 
-The ``use_side_ref_pixels``, ``side_smoothing_length``, ``side_gain`` and
+The ``use_side_ref_pixels``, ``side_smoothing_length``, ``side_gain``, and
 ``odd_even_rows`` parameters are ignored for these types of data.
 
-For 4 amplifier readout (NOUTPUTS keyword = 4):
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4 amplifier readout (NOUTPUTS=4)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the NOUTPUTS keyword is 4 for a subarray exposure, then the data are calibrated
 the same as for full-frame exposures.  The top/bottom reference values are obtained from available
@@ -227,11 +227,10 @@ column parity. The algorithm described above for the traditional NIR readout
 mode is applied to IRS2 data to perform this correction, with two small
 differences:
 
-    #. Side pixel correction is never applied for IRS2 data.
-
-    #. "Even" and "odd" refer to detector column addresses, rather than
-       data array locations, to ensure that interleaved reference pixel
-       columns are accounted for correctly.
+#. Side pixel correction is never applied for IRS2 data.
+#. "Even" and "odd" refer to detector column addresses, rather than
+   data array locations, to ensure that interleaved reference pixel
+   columns are accounted for correctly.
 
 After the mean offsets are subtracted and bad pixels are replaced, some processing
 is done on the remaining reference values, and the CRDS reference file
@@ -255,11 +254,11 @@ overheads mentioned in the previous paragraph.  The gaps will then be
 assigned values by interpolation (cosine-weighted, then Fourier filtered).
 Note that the above is done for every group.
 
-The ``alpha`` and ``beta`` arrays that were read from the CRDS reference
-file are next applied, and this is done in Fourier space.  These are
+The ``alpha`` and ``beta`` arrays that were read from the :ref:`refpix_reffile`
+are next applied, and this is done in Fourier space.  These are
 applied to the temporary 1-D arrays of reference pixel data and to the
 reference output array.  ``alpha`` and ``beta`` have shape (4, 712 * 2048)
-and data type Complex64 (stored as pairs of Float32 in the reference file).
+and data type ``complex64`` (stored as pairs of ``float32`` in the reference file).
 The first index corresponds to the sector number for the different
 output amplifiers.  ``alpha`` is read from columns 'ALPHA_0', 'ALPHA_1',
 'ALPHA_2', and 'ALPHA_3'.  ``beta`` is read from columns 'BETA_0',
@@ -267,11 +266,11 @@ output amplifiers.  ``alpha`` is read from columns 'ALPHA_0', 'ALPHA_1',
 
 For each integration, the following is done in a loop over groups.
 
-Let ``k`` be the output number, i.e. an index for sectors 0 through 3.
+Let ``k`` be the output number, i.e., an index for sectors 0 through 3.
 Let ``ft_refpix`` be an array of shape (4, 712 * 2048); for each output
 number ``k``, ``ft_refpix[k]`` is the Fourier transform of the temporary
 1-D array of reference pixel data.  Let ``ft_refout`` be the Fourier
-transform of the temporary 1-D array of reference output data.  Then: ::
+transform of the temporary 1-D array of reference output data.  Then::
 
     for k in range(4):
         ft_refpix_corr[k] = ft_refpix[k] * beta[k] + ft_refout * alpha[k]
@@ -282,3 +281,4 @@ the normal pixel data over the range of pixels for output ``k``.
 
 .. _JdoxIRS2: https://jwst-docs.stsci.edu/jwst-near-infrared-spectrograph/nirspec-instrumentation/nirspec-detectors/nirspec-detector-readout-modes-and-patterns/nirspec-irs2-detector-readout-mode
 .. _Rauscher2017: https://ui.adsabs.harvard.edu/abs/2017PASP..129j5003R/abstract
+.. _Rauscher2022: https://doi.org/10.1117/1.JATIS.8.2.028002

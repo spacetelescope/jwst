@@ -1,0 +1,1 @@
+Subtract the flat-spectrum simulated contam estimate before the first iteration of polynomial fitting (when requested), making successful fits more likely in that first iteration

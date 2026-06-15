@@ -1,5 +1,5 @@
 Description
------------
+===========
 
 :Class: `jwst.ami.ami_normalize_step.AmiNormalizeStep`
 :Alias: ami_normalize
@@ -11,10 +11,6 @@ a science target using LG results of a reference PSF target. The algorithm
 subtracts the PSF target closure phases from the science target closure
 phases and divides the science target fringe amplitudes by the PSF target
 fringe amplitudes.
-
-Arguments
----------
-The ``ami_normalize`` step does not have any step-specific arguments.
 
 Inputs
 ------
@@ -46,6 +42,10 @@ closure phases and fringe amplitudes. The remaining components of the science
 target data model are left unchanged. The output file name syntax is source-based,
 using the product name specified in the input ASN file and having a product type
 of "_aminorm-oi.fits", e.g. "jw87600-a3001_t001_niriss_f480m-nrm_aminorm-oi.fits."
+
+Arguments
+---------
+The ``ami_normalize`` step does not have any step-specific arguments.
 
 Reference Files
 ---------------

@@ -7,10 +7,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import jsonschema
-from stpipe.format_template import FormatTemplate
 
 from jwst import __version__
 from jwst.associations.exceptions import AssociationNotValidError
+from jwst.associations.format_template import FormatTemplate
 from jwst.associations.lib.constraint import Constraint, meets_conditions
 from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
 

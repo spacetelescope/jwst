@@ -47,6 +47,7 @@ def multislitmodel(
 
     fname = "multislit_model.fits"
     model.save(fname)
+    model.close()
     return fname
 
 
@@ -70,6 +71,7 @@ def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
     assert (tmp_cwd_module / "multislit_model_simul.fits").exists()
     assert (tmp_cwd_module / "multislit_model_simul_slits.fits").exists()
     assert (tmp_cwd_module / "multislit_model_contam.fits").exists()
+    result.close()
 
 
 def test_wfss_contam_step_defaults(multislitmodel, tmp_cwd_module):
@@ -79,6 +81,7 @@ def test_wfss_contam_step_defaults(multislitmodel, tmp_cwd_module):
     result = WfssContamStep.call(multislitmodel)
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
+    result.close()
 
 
 def test_wfss_contam_skip_maglimit(multislitmodel, tmp_cwd_module):
@@ -94,6 +97,7 @@ def test_wfss_contam_skip_maglimit(multislitmodel, tmp_cwd_module):
     )
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "SKIPPED"
+    result.close()
 
 
 def test_wfss_contam_skip_bad_order(multislitmodel, tmp_cwd_module):
@@ -109,28 +113,29 @@ def test_wfss_contam_skip_bad_order(multislitmodel, tmp_cwd_module):
     )
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "SKIPPED"
+    result.close()
 
 
 def test_output_is_not_input(multislitmodel, tmp_cwd_module):
     """Check that input is not modified by the step."""
-    datamodel = dm.open(multislitmodel)
-    input_copy = datamodel.copy()
+    with dm.open(multislitmodel) as datamodel:
+        input_copy = datamodel.copy()
 
-    result = WfssContamStep.call(datamodel)
-    assert isinstance(result, dm.MultiSlitModel)
-    assert result.meta.cal_step.wfss_contam == "COMPLETE"
+        result = WfssContamStep.call(datamodel)
+        assert isinstance(result, dm.MultiSlitModel)
+        assert result.meta.cal_step.wfss_contam == "COMPLETE"
 
-    # input is not modified
-    assert result is not datamodel
-    assert datamodel.meta.cal_step.wfss_contam is None
-    any_modified = False
-    for i in range(len(datamodel.slits)):
-        # Input data is not modified
-        np.testing.assert_allclose(datamodel.slits[i].data, input_copy.slits[i].data)
+        # input is not modified
+        assert result is not datamodel
+        assert datamodel.meta.cal_step.wfss_contam is None
+        any_modified = False
+        for i in range(len(datamodel.slits)):
+            # Input data is not modified
+            np.testing.assert_allclose(datamodel.slits[i].data, input_copy.slits[i].data)
 
-        # Output data may have been modified
-        if not np.allclose(result.slits[i].data, datamodel.slits[i].data):
-            any_modified = True
+            # Output data may have been modified
+            if not np.allclose(result.slits[i].data, datamodel.slits[i].data):
+                any_modified = True
 
     # There was at least one slit updated in the output and not modified in the input
     assert any_modified
@@ -141,3 +146,4 @@ def test_wfss_contam_step_with_polyfit(multislitmodel, tmp_cwd_module):
     result = WfssContamStep.call(multislitmodel, orders=[1], polyfit_degree=2, n_iterations=2)
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
+    result.close()

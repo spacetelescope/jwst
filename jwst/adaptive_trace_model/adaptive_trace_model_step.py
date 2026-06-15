@@ -77,12 +77,11 @@ class AdaptiveTraceModelStep(Step):
         output_model = self.prepare_output(input_data)
         if isinstance(output_model, ModelContainer):
             models = output_model
-
-            # Set up output path name to include the ASN ID if available
-            self.add_asn_id_to_output_name(models)
-
         else:
             models = [output_model]
+
+        # Set up output path name to include the ASN ID if available
+        self.add_asn_id_to_output_name(models)
 
         # Update each model in place
         for model in models:

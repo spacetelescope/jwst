@@ -1,0 +1,1 @@
+Removed the ``pipeline`` and ``single``  step parameters from the ``cube_build`` step. The ``single`` parameter was used in legacy code and is no longer used by the pipeline. The ``pipeline`` parameter was for internal use and no longer needed. 

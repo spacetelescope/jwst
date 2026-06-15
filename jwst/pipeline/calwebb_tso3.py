@@ -5,12 +5,14 @@ from astropy.io.fits import FITS_rec
 from astropy.table import vstack
 from stdatamodels.jwst import datamodels
 
+from jwst.adaptive_trace_model import adaptive_trace_model_step
 from jwst.extract_1d import extract_1d_step
 from jwst.lib.pipe_utils import is_tso
 from jwst.outlier_detection import outlier_detection_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
 from jwst.stpipe import Pipeline
+from jwst.stpipe.utilities import invariant_filename, summary_step_status
 from jwst.tso_photometry import tso_photometry_step
 from jwst.white_light import white_light_step
 
@@ -23,8 +25,8 @@ class Tso3Pipeline(Pipeline):
     """
     Apply level 3 processing to TSO-mode data from any JWST instrument.
 
-    Included steps are: outlier_detection, tso_photometry, pixel_replace,
-    extract_1d, photom, and white_light.
+    Included steps are: outlier_detection, tso_photometry, adaptive_trace_model,
+    pixel_replace, extract_1d, photom, and white_light.
     """
 
     class_alias = "calwebb_tso3"
@@ -36,6 +38,7 @@ class Tso3Pipeline(Pipeline):
     step_defs = {
         "outlier_detection": outlier_detection_step.OutlierDetectionStep,
         "tso_photometry": tso_photometry_step.TSOPhotometryStep,
+        "adaptive_trace_model": adaptive_trace_model_step.AdaptiveTraceModelStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "extract_1d": extract_1d_step.Extract1dStep,
         "photom": photom_step.PhotomStep,
@@ -62,6 +65,16 @@ class Tso3Pipeline(Pipeline):
         if not input_tsovisit:
             log.error("INPUT DATA ARE NOT TSO MODE. ABORTING PROCESSING.")
             return
+
+        # Overriding the Step.save_model method for the following steps.
+        # These steps may save intermediate files, resulting in meta.filename
+        # being modified. This can affect the filenames of subsequent
+        # steps.
+        self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
+        self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
+        self.adaptive_trace_model.save_model = invariant_filename(
+            self.adaptive_trace_model.save_model
+        )
 
         if self.output_file is None:
             self.output_file = input_models.asn_table["products"][0]["name"]
@@ -141,11 +154,17 @@ class Tso3Pipeline(Pipeline):
             x1d_result.meta.target.source_type = None
 
             # For each exposure in the TSO...
+            atm_status = []
+            pr_status = []
             for cube in input_models:
-                # interpolate pixels that have a NaN value or are flagged
-                # as DO_NOT_USE or NON_SCIENCE.
+                # model the spectral trace
+                cube = self.adaptive_trace_model.run(cube)
+                atm_status.append(cube.meta.cal_step.adaptive_trace_model)
+
+                # interpolate pixels that have a NaN value
                 cube = self.pixel_replace.run(cube)
-                state = cube.meta.cal_step.pixel_replace
+                pr_status.append(cube.meta.cal_step.pixel_replace)
+
                 # Process spectroscopic TSO data
                 # extract 1D
                 log.info("Extracting 1-D spectra ...")
@@ -171,23 +190,27 @@ class Tso3Pipeline(Pipeline):
 
                 x1d_result.spec.extend(result.spec)
 
-            # perform white-light photometry on all 1d extracted data
-            if len(x1d_result.spec) > 0:
-                log.info("Performing white-light photometry ...")
-                phot_result_list.append(self.white_light.run(x1d_result))
-
-            # Update some metadata from the association
-            x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
-            x1d_result.meta.asn.table_name = input_models.asn_table_name
-
-            # Save the final x1d Multispec model
-            x1d_result.meta.cal_step.pixel_replace = state
+            # Skip remaining processing if no spectra were extracted
             if len(x1d_result.spec) == 0:
                 log.warning("extract_1d step could not be completed for any integrations")
                 log.warning("x1dints products will not be created.")
             else:
+                # perform white-light photometry on all 1d extracted data
+                log.info("Performing white-light photometry")
+                phot_result_list.append(self.white_light.run(x1d_result))
+
+                # Update some metadata from the association
+                x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
+                x1d_result.meta.asn.table_name = input_models.asn_table_name
+
+                # Update cal step status for optional steps
+                x1d_result.meta.cal_step.adaptive_trace_model = summary_step_status(atm_status)
+                x1d_result.meta.cal_step.pixel_replace = summary_step_status(pr_status)
+
                 # Set S_REGION to allow the x1dints file to show up in MAST spatial queries
                 self._populate_tso_spectral_sregion(x1d_result, input_models)
+
+                # Save the final x1d Multispec model
                 self.save_model(x1d_result, suffix="x1dints")
 
         # Done with all the inputs
