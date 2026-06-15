@@ -62,6 +62,7 @@ def test_persistence_time_none_keeps_groupdq_unchanged(create_sci_model):
     model.groupdq[0, 0, y, x] |= dqflags.group["SATURATED"]
     step = PersistenceStep(persistence_time=None)
     res = step.run(model)
+    assert res.meta.cal_step.persistence == "FAILED"
     assert np.array_equal(res.groupdq, model.groupdq)
 
 
@@ -100,6 +101,7 @@ def test_persistence_time_0_sec(create_sci_model):
     # With a zero persistence window, no groups should be flagged as persistent and
     # persistence_time gets set to None.
     assert step.persistence_time is None
+    assert res.meta.cal_step.persistence == "FAILED"
     check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
     check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
     check3 = np.array([0, 0, 0, 0, 0, 2, 2], dtype=np.uint8)
@@ -123,6 +125,7 @@ def test_persistence_time_neg_sec(create_sci_model):
     # With a negative persistence window, no groups should be flagged as persistent and
     # persistence_time gets set to None.
     assert step.persistence_time is None
+    assert res.meta.cal_step.persistence == "FAILED"
     check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
     check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
     check3 = np.array([0, 0, 0, 0, 0, 2, 2], dtype=np.uint8)
@@ -296,7 +299,7 @@ def test_step_persistence_fails(monkeypatch, create_sci_model):
     result = PersistenceStep.call(sci)
 
     # Step is skipped
-    assert result.meta.cal_step.persistence == "SKIPPED"
+    assert result.meta.cal_step.persistence == "FAILED"
 
     # Input is not modified
     assert result is not sci
