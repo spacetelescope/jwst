@@ -259,12 +259,12 @@ class Spec3Pipeline(Pipeline):
                         pass
 
             if exptype in SLITLESS_TYPES:
-                # interpolate pixels that have a NaN value or are flagged
-                # as DO_NOT_USE or NON_SCIENCE
-                result = self.pixel_replace.run(result)
-
                 # For slitless data, extract 1D spectra and then combine them
                 if exptype == "NIS_SOSS":
+                    # interpolate pixels that have a NaN value or are flagged
+                    # as DO_NOT_USE or NON_SCIENCE
+                    result = self.pixel_replace.run(result)
+
                     # For NIRISS SOSS, don't save the extract_1d results,
                     # instead run photom on the extract_1d results and save
                     # those instead.

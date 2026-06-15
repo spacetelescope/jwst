@@ -32,7 +32,7 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
 | :ref:`adaptive_trace_model <adaptive_trace_model_step>`     | |c| | |c| | |c| | |c| | |c| |      |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
-| :ref:`pixel_replace <pixel_replace_step>`                   | |c| | |c| | |c| | |c| | |c| | |c|  +      |  |c| |   |c|  |
+| :ref:`pixel_replace <pixel_replace_step>`                   | |c| | |c| | |c| | |c| | |c| |      |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
 | :ref:`resample_spec <resample_spec_step>`                   | |c| | |c| |     | |c| |     |      |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
@@ -94,12 +94,13 @@ Inputs
 ^^^^^^^^^^^^^^^^^^
 
 :Data model: `~stdatamodels.jwst.datamodels.ImageModel`, `~stdatamodels.jwst.datamodels.IFUImageModel`,
-             `~stdatamodels.jwst.datamodels.SlitModel`, or `~stdatamodels.jwst.datamodels.MultiSlitModel`
-:File suffix: _cal
+             `~stdatamodels.jwst.datamodels.SlitModel`, `~stdatamodels.jwst.datamodels.MultiSlitModel`,
+             or `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
+:File suffix: _cal, _x1d
 
 The inputs to ``calwebb_spec3`` should be in the form of an ASN file that
 lists the multiple exposures to be processed into combined output products.
-The individual exposures should be calibrated the ("_cal") products from
+The individual exposures should be the calibrated ("_cal" or "_x1d") products from
 :ref:`calwebb_spec2 <calwebb_spec2>` processing.
 
 The member list for each product in the ASN file can also contain exposures
@@ -146,7 +147,7 @@ If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new 
 each input calibrated exposure is created, in which the DQ array has been updated to
 flag pixels detected as outliers. These files use the "_crf" (CR-Flagged)
 product type suffix and also includes the association candidate ID as a
-new field in the original product root name, e.g.
+new field in the original product root name, e.g.,
 "jw96090001001_03101_00001_nrs2_o001_crf.fits."
 
 
@@ -173,7 +174,7 @@ created by the :ref:`cube_build <cube_build_step>` step is saved as an "_s3d" fi
 1D extracted spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~stdatamodels.jwst.datamodels.MultiSpecModel`
+:Data model: `~stdatamodels.jwst.datamodels.MultiSpecModel` or `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
 :File suffix: _x1d
 
 All types of inputs result in a 1D extracted spectral data product, which is
@@ -199,7 +200,7 @@ Those spectra are combined using the subsequent
 1D combined spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~stdatamodels.jwst.datamodels.CombinedSpecModel`
+:Data model: `~stdatamodels.jwst.datamodels.CombinedSpecModel` or `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel`
 :File suffix: _c1d
 
 For NIRCam, MIRI, and NIRISS WFSS, as well as NIRISS SOSS data, the
