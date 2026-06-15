@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "asdf>=4.2,<6",
+    "asdf>=5.1,<6",
     "astropy>=7.2",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3,!=13.1.15",
