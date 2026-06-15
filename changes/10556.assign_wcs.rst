@@ -1,0 +1,1 @@
+Add chromaticity correction for NIRSpec IFU data by adding support for new chromcorr reference file type

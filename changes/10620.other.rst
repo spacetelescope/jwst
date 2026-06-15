@@ -1,0 +1,1 @@
+Bumped minimum supported versions for asdf to 5.1, astropy to 7.2, requests to 2.32, scipy to 1.15.3, and synphot to 1.6.

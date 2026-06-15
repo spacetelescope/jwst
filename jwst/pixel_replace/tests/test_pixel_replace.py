@@ -89,7 +89,7 @@ def nirspec_msa_multislit():
 
 def nirspec_ifu():
     shape = (2048, 2048)
-    bad_idx = (1414, 690)
+    bad_idx = (1424, 690)
 
     # IFU mode requires WCS information, so make a more realistic model
     hdul = create_nirspec_ifu_file(
