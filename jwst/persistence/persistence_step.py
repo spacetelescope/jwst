@@ -45,7 +45,10 @@ class PersistenceStep(Step):
             result.meta.cal_step.persistence = "SKIPPED"
             return result
 
-        self.process_persistence_options(result)
+        if self.process_persistence_options(result) == "Failed":
+            log.info("Persistence step failed due to invalid persistence_time.")
+            result.meta.cal_step.persistence = "FAILED"
+            return result
 
         pers_a = persistence.DataSet(
             result,
@@ -74,18 +77,26 @@ class PersistenceStep(Step):
         ----------
         result : RampModel
             The RampModel on which to process the persistence flag.
+
+        Returns
+        -------
+        ret : str or None
+            "Failed" if invalid persistence_time; otherwise NoneType.
         """
         # Could make less than or equal to frametime.
         if self.persistence_time is None or self.persistence_time <= 0.0:
             self.persistence_time = None
             self.persistence_array = None
-            return  # No persistence option chosen
+            ret = "Failed"
+            return ret
 
         _, _, nrows, ncols = result.groupdq.shape
         if self.persistence_array_file is not None:
             self.get_persistence_array_from_file(nrows, ncols)
         else:
             self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
+
+        return None
 
     def write_persistence_array(self, result, filename):
         """
