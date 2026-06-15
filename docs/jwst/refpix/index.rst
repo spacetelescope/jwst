@@ -10,5 +10,4 @@ Reference Pixel Correction
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.refpix
+   api_ref.rst

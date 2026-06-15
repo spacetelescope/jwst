@@ -9,30 +9,11 @@ The step arguments can be used to control the properties of the output IFU cube 
 created. For example, if the input data span several bands, but ``output_type=band``  then a cube for
 each band will be created.
 
-``pipeline [integer]``
-  ``cube_build`` can be called from :ref:`calwebb_spec2 <calwebb_spec2>`, :ref:`calwebb_spec3 <calwebb_spec3>`, or stand-alone. The output IFU cubes
-  have a different name depending which pipeline calls it. This parameter defaults to 3 which follows the rules
-  for creating cubes based on the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline and is also the behavior when running
-  ``cube_build`` stand-alone. When the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline calls
-  ``cube_build``, it sets ``pipeline=2``. When running stand-alone or in
-  :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, the parameter ``pipeline=3`` is set for ``cube_build``.
-
-  - ``pipeline=2`` sets up the rules for making :ref:`calwebb_spec2 <calwebb_spec2>` pipeline type cubes. For NIRSpec data the default
-    rules produce cubes with a single grating and filter and  with a linear wavelength dimension. For MIRI data
-    the default rules produce a single IFU cube containing the two channels in the input data with a non-linear
-    wavelength dimension. In both cases, the input filename  suffix ``cal`` is replaced with ``s3d``.
-
-  - ``pipeline=3`` setups up the results for making :ref:`calwebb_spec3 <calwebb_spec3>` pipeline type cubes. For NIRSpec data
-    the default rules will produce a single IFU cube from the same grating and filter, while for MIRI data a single
-    IFU cube is created for each channel and band. In both cases, the output IFU cube will contain the grating and
-    filter name (NIRSpec) or channel and band (MIRI).
 
 ``channel [string]``
   This is a MIRI only option and the valid values are 1, 2, 3, 4, and ALL.
   If the ``channel`` argument is given, then only data corresponding to that channel will be used in
-  constructing the cube. A comma-separated list can be used to designate multiple channels.
-  For example, to create a cube with data from channels 1 and 2, specify the
-  list as ``--channel='1,2'``.  All the sub-channels (bands) for the chosen channel(s) will
+  constructing the cube.   All the sub-channels (bands) for the chosen channel will
   be used to create the IFU cube, unless the ``band`` argument is used to select specific bands.  This parameter can be combined
   with the ``output_type`` parameter to fully control the type of IFU cubes to make.
 
@@ -49,19 +30,16 @@ each band will be created.
 ``grating [string]``
   This is a NIRSpec only option with valid values PRISM, G140M, G140H, G235M, G235H, G395M, G395H, and ALL.
   If the option "ALL" is used, then all the gratings in the association are used.
-  Because association tables only contain exposures of the same resolution, the use of "ALL" will at most combine
-  data from gratings G140M, G235M, and G395M, or G140H, G235H, and G395H. The user can supply a comma-separated string
-  containing the names of multiple gratings to use.
 
 ``filter [string]``
   This is a NIRSpec only option with values of Clear, F100LP, F070LP, F170LP, F290LP, and ALL.
   To cover the full wavelength range of NIRSpec, the option "ALL" can be used (provided the exposures in the
-  association table contain all the filters). The user can supply a comma-separated string containing the names of
-  multiple filters to use.
+  association table contain all the filters). 
 
 ``output_type [string]``
-  This parameter has four valid options of Band, Channel, Grating, and Multi. This parameter can be combined
-  with the options above [band, channel, grating, filter] to fully control the type of IFU
+  This parameter has four valid options of "band", "channel", "grating", and "multi". The default value
+  is "band". This parameter can be combined
+  with the options above (``band``, ``channel``, ``grating``, ``filter``) to fully control the type of IFU
   cubes to make.
 
   - ``output_type=band`` creates IFU cubes containing only one band
@@ -72,27 +50,20 @@ each band will be created.
 
   - ``output_type=grating`` combines all the gratings in the NIRSpec data or set by the
     grating option into a single IFU cube. This option is currently not being used by the pipeline.
-    For NIRSpec data ``output_type=band`` or ``output_type=multi`` only.
 
   - ``output_type=multi`` combines data into a single "uber" cube.
     In addition, if channel, band, grating, or filter are also set, then only the data set by those
     parameters will be combined into an "uber" cube.
 
 
-  The default rules for creating IFU cube depend on the instrument and which pipeline called ``cube_build``.
+  By default ``output_type=band``. This can be overridden in a pipeline using a parameter reference file. The
+  MIRI :ref:`calwebb_spec2 <calwebb_spec2>` parameter reference file defines ``output_type=multi``. 
 
-  - :ref:`calwebb_spec2 <calwebb_spec2>` pipeline rules for NIRSpec is to produce ``output_type=band``.
-  - :ref:`calwebb_spec3 <calwebb_spec3>` pipeline rules for NIRSpec is to produce ``output_type=band``.
-
-  - :ref:`calwebb_spec2 <calwebb_spec2>` pipeline rules for MIRI is to produce ``output_type=multi``.
-  - :ref:`calwebb_spec3 <calwebb_spec3>` pipeline rules for MIRI is to produce ``output_type=band``.
 
 ``linear_wave [boolean]``
 Sets the wavelength sampling for the output cubes (default is True). If True, the output cubes have equally
 spaced (linear) wavelengths. If False, the cubes use a non-linear wavelength sampling as defined by the
-cube_pars reference file. Currently, this non-linear option is limited to NIRSpec data (e.g., prism observations).
-For MIRI cubes, the wavelength sampling (linear vs. non-linear) is automatically determined by the specific
-bands and channels included.
+cube_pars reference file.
 
 The following arguments control the size and sampling characteristics of the output IFU cube.
 
