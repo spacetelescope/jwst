@@ -21,6 +21,7 @@ from gwcs.spectroscopy import AnglesFromGratingEquation3D, WavelengthFromGrating
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import (
     CameraModel,
+    ChromCorrModel,
     CollimatorModel,
     DisperserModel,
     FOREModel,
@@ -248,6 +249,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     * "slicer": frame associated with the slicer
     * "msa_frame": at the MSA
     * "oteip": after the FWA
+    * "oteip_chromcorr": after the chromaticity correction
     * "v2v3"
     * "world"
 
@@ -258,7 +260,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
         Requires the 'ifufore', 'ifuslicer', 'ifupost', 'disperser', 'wavelengthrange',
-        'fpa', 'camera', 'collimator', 'fore', and 'ote' reference files.
+        'fpa', 'camera', 'collimator', 'fore', 'chromcorr', and 'ote' reference files.
     slit_y_range : tuple
         The slit Y-range for Nirspec slits, relative to (0, 0) in the center.
 
@@ -321,9 +323,19 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     slicer2msa = slicer_to_msa(reference_files)
     slicer2msa.name = "slicer2msa"
 
-    det, sca, gwa, slit_frame, slicer_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = (
-        create_frames()
-    )
+    (
+        det,
+        sca,
+        gwa,
+        slit_frame,
+        slicer_frame,
+        msa_frame,
+        oteip,
+        oteip_chromcorr,
+        v2v3,
+        v2v3vacorr,
+        world,
+    ) = create_frames()
 
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -347,6 +359,13 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     msa2oteip.name = "msa2oteip"
     msa2oteip.inputs = ("x_msa", "y_msa", "lam", "name")
     msa2oteip.outputs = ("x_ote", "y_ote", "lam", "name")
+
+    # Transform to correct OTEIP for wavelength dependent spatial shifts
+    # due to chromaticity of NIRSpec fore-optics
+    chrom_corr = oteip_to_chromcorr(reference_files) & Identity(1)
+    chrom_corr.name = "chrom_corr"
+    chrom_corr.inputs = ("x_ote", "y_ote", "lam", "name")
+    chrom_corr.outputs = ("x_ote", "y_ote", "lam", "name")
 
     # OTEIP to V2,V3 transform
     # This includes a wavelength unit conversion from meters to microns.
@@ -385,7 +404,8 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
         (slit_frame, slit2slicer),
         (slicer_frame, slicer2msa),
         (msa_frame, msa2oteip),
-        (oteip, oteip2v23),
+        (oteip, chrom_corr),
+        (oteip_chromcorr, oteip2v23),
         (v2v3, va_corr),
         (v2v3vacorr, tel2sky),
         (world, None),
@@ -488,10 +508,20 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     slit2msa = slit_to_msa(open_slits_id, reference_files["msa"])
     slit2msa.name = "slit2msa"
 
-    # Create coordinate frames in the NIRSPEC WCS pipeline"
-    # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "v2v3vacorr", "world"
-    # _ would be the slicer_frame that is not used
-    det, sca, gwa, slit_frame, _, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
+    # Create coordinate frames in the NIRSPEC WCS pipeline
+    (
+        det,
+        sca,
+        gwa,
+        slit_frame,
+        _slicer_frame,
+        msa_frame,
+        oteip,
+        _oteip_chromcorr,
+        v2v3,
+        v2v3vacorr,
+        world,
+    ) = create_frames()
 
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -2116,6 +2146,33 @@ def msa_to_oteip(reference_files):
     return msa2fore_mapping | (fore & Identity(1))
 
 
+def oteip_to_chromcorr(reference_files):
+    """
+    Transform to correct ``oteip`` frame for chromaticity effects.
+
+    The output transform takes in x_ote, y_ote, and wavelength,
+    and returns x_ote_corrected, y_ote_corrected, and wavelength.
+
+    Parameters
+    ----------
+    reference_files : dict
+        Mapping between reftype (keys) and reference file name (vals).
+        Requires the 'ote' reference file.
+
+    Returns
+    -------
+    model : `~astropy.modeling.Model`
+        Transform to correct ``oteip`` frame for fore-optics chromaticity effects.
+    """
+    with ChromCorrModel(reference_files["chromcorr"]) as f:
+        chrom_corr = f.model
+    # Identity is needed because the parts of the WCS pipeline before or after this
+    # are asymmetric in inputs/outputs. This should be fixed in the future, for now
+    # this hack allows round-trip
+    chrom_corr.inverse = chrom_corr.inverse & Identity(1)
+    return chrom_corr
+
+
 def oteip_to_v23(reference_files):
     """
     Transform from ``oteip`` frame to ``v2v3`` frame.
@@ -2151,7 +2208,7 @@ def create_frames():
 
     Returns
     -------
-    det, sca, gwa, slit_frame, slicer_frame, msa_frame, oteip, v2v3, v2v3vacorr, world : tuple
+    tuple
         The coordinate frames. Each is a `~gwcs.coordinate_frames.CoordinateFrame` object.
     """
     det = cf.Frame2D(name="detector", axes_order=(0, 1))
@@ -2198,8 +2255,21 @@ def create_frames():
         name="oteip", axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=("X_OTEIP", "Y_OTEIP")
     )
     oteip = cf.CompositeFrame([oteip_spatial, spec], name="oteip")
+    oteip_chromcorr = cf.CompositeFrame([oteip_spatial, spec], name="oteip_chromcorr")
     world = cf.CompositeFrame([sky, spec], name="world")
-    return det, sca, gwa, slit_frame, slicer_frame, msa_frame, oteip, v2v3, v2v3vacorr, world
+    return (
+        det,
+        sca,
+        gwa,
+        slit_frame,
+        slicer_frame,
+        msa_frame,
+        oteip,
+        oteip_chromcorr,
+        v2v3,
+        v2v3vacorr,
+        world,
+    )
 
 
 def create_imaging_frames():
