@@ -2166,6 +2166,9 @@ def oteip_to_chromcorr(reference_files):
     """
     with ChromCorrModel(reference_files["chromcorr"]) as f:
         chrom_corr = f.model
+    # Identity is needed because the parts of the WCS pipeline before or after this
+    # are asymmetric in inputs/outputs. This should be fixed in the future, for now
+    # this hack allows round-trip
     chrom_corr.inverse = chrom_corr.inverse & Identity(1)
     return chrom_corr
 

@@ -24,7 +24,7 @@ NIRSpec    INSTRUME, EXP_TYPE, FILTER
 
 Reference File Format
 +++++++++++++++++++++
-The chromatic correction reference file contains an astropy compound model made up of polynomial models,
-rotations, and translations.
+The chromatic correction reference file contains an astropy compound model made up of
+polynomial models, translations, and other transformations.
 
 :model: Chromaticity correction transform.
