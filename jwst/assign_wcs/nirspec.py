@@ -249,7 +249,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     * "slicer": frame associated with the slicer
     * "msa_frame": at the MSA
     * "oteip": after the FWA
-    * "oteip_chromocorr": after the chromaticity correction
+    * "oteip_chromcorr": after the chromaticity correction
     * "v2v3"
     * "world"
 
