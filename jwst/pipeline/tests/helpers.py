@@ -115,7 +115,7 @@ def make_nirspec_ifu_rate_model():
     image.meta.instrument.filter = "CLEAR"
     image.meta.instrument.grating = "PRISM"
     image.meta.exposure.type = "NRS_IFU"
-    image.meta.observation.date = "2019-02-27"
+    image.meta.observation.date = "2026-02-27"
     image.meta.observation.time = "13:37:18.548"
     image.meta.date = "2019-02-27T13:37:18.548"
     image.meta.subarray.xstart = 1
