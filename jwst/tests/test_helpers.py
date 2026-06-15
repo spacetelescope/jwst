@@ -21,7 +21,7 @@ def test_unexpected_warning_inside_capture_logging():
     Check that pytest.warns with _help_pytest_warns correctly
     raises an exception when no warning matches.
     """
-    with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+    with pytest.raises(pytest.fail.Exception, match="(DID NOT WARN|did not match)"):
         with _help_pytest_warns(), pytest.warns(UserWarning, match="expected"):
             warnings.warn("not the warning you're looking for", UserWarning)
 
