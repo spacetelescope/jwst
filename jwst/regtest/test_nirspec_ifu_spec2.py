@@ -139,9 +139,7 @@ def run_extract1d(rtdata):
     step_params = {
         "input_path": cube_path,
         "step": "jwst.extract_1d.Extract1dStep",
-        "args": [
-            "--save_results=True",
-        ],
+        "args": ["--save_results=True", "--ifu_autocen=False"],
     }
 
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
