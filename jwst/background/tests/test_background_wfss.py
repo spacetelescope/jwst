@@ -230,7 +230,7 @@ def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
 
     # do the subtraction
-    result = subtract_wfss_bkg(data, bkg_file, wavelenrange)
+    result = subtract_wfss_bkg(data, bkg_file, wl_range_name=wavelenrange)
     sci = result.data.copy()
 
     # ensure NaN fraction did not increase. Rejecting outliers during determination
@@ -256,7 +256,7 @@ def test_nis_wfss_background(subarray, make_nis_wfss_datamodel, make_nis_wfss_su
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
 
     # do the subtraction
-    result = subtract_wfss_bkg(data, bkg_file, wavelenrange)
+    result = subtract_wfss_bkg(data, bkg_file, wl_range_name=wavelenrange)
     sci = result.data.copy()
 
     # ensure NaN fraction did not increase. Rejecting outliers during determination
@@ -555,7 +555,9 @@ def test_user_mask(make_nrc_wfss_datamodel, bkg_file, user_mask, caplog):
 
     # Do the subtraction with user mask
     with caplog.at_level(logging.INFO):
-        result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+        result = subtract_wfss_bkg(
+            model, bkg_file, mask_method="user", wl_range_name=wavelenrange, user_mask=user_mask
+        )
     assert "Using user-supplied source mask" in caplog.text
 
     # Verify the user mask is saved in the output model
@@ -582,7 +584,9 @@ def test_user_mask_no_catalog(make_nrc_wfss_datamodel, bkg_file, user_mask):
     model.meta.source_catalog = None
 
     # Do the subtraction with user mask (should work despite missing catalog)
-    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+    result = subtract_wfss_bkg(
+        model, bkg_file, mask_method="user", wl_range_name=wavelenrange, user_mask=user_mask
+    )
 
     # Verify the user mask is saved and background subtraction succeeded
     np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
@@ -601,7 +605,9 @@ def test_user_mask_low_pixels(make_nrc_wfss_datamodel, bkg_file):
     user_mask[:10, :10] = True
 
     # Do the subtraction with user mask
-    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+    result = subtract_wfss_bkg(
+        model, bkg_file, mask_method="user", wl_range_name=wavelenrange, user_mask=user_mask
+    )
 
     # Should succeed with user mask despite having < 5% background pixels
     assert np.isfinite(result.meta.background.scaling_factor)
@@ -622,7 +628,9 @@ def test_user_mask_no_valid_pixels(make_nrc_wfss_datamodel, bkg_file):
     model.dq[:100, :100] = pixel["DO_NOT_USE"]
 
     # Do the subtraction with user mask
-    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+    result = subtract_wfss_bkg(
+        model, bkg_file, mask_method="user", wl_range_name=wavelenrange, user_mask=user_mask
+    )
 
     # Should fail because DQ flags eliminate all valid background pixels
     assert result.meta.cal_step.bkg_subtract == "FAILED"
@@ -638,7 +646,7 @@ def test_no_catalog_no_user_mask(make_nrc_wfss_datamodel, bkg_file, caplog):
     model.meta.source_catalog = None
 
     # Do the subtraction without user mask and without source catalog
-    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=None)
+    result = subtract_wfss_bkg(model, bkg_file, wl_range_name=wavelenrange, user_mask=None)
     assert "No source_catalog found in input.meta. Setting all pixels as background." in caplog.text
 
     # Should succeed using all pixels as background
@@ -668,7 +676,9 @@ def test_user_mask_step(mock_asn_and_data, user_mask, caplog):
     mask_model.close()
 
     with caplog.at_level(logging.INFO):
-        result = BackgroundStep.call(asn_name, wfss_mask=mask_fname, save_results=False)
+        result = BackgroundStep.call(
+            asn_name, wfss_method="user", wfss_mask=mask_fname, save_results=False
+        )
     # return to previous working dir
     os.chdir(cwd)
 
@@ -709,3 +719,29 @@ def test_user_mask_wrong_shape(make_nrc_wfss_datamodel, tmp_cwd):
     # Should raise ValueError
     with pytest.raises(ValueError, match="WFSS mask shape .* does not match input data shape"):
         BackgroundStep.call(model, wfss_mask=str(mask_fname), save_results=False)
+
+
+def test_clip_method_basic(make_nrc_wfss_datamodel, bkg_file, caplog):
+    """Test that mask_method='clip' runs, logs the right message, and produces valid output."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    with caplog.at_level(logging.INFO):
+        result = subtract_wfss_bkg(model, bkg_file, mask_method="clip")
+
+    assert "Using variance-weighted sigma clipping" in caplog.text
+    assert np.isfinite(result.meta.background.scaling_factor)
+    assert result.meta.background.scaling_factor > 0
+    assert result.mask.dtype == np.uint32
+    # At least some pixels should be masked
+    assert np.any(result.mask == 0)
+    # The majority of pixels should survive as background
+    assert np.mean(result.mask) > 0.5
+
+
+def test_clip_method_requires_dispaxis(make_wfss_datamodel, bkg_file):
+    """Test that mask_method='clip' raises ValueError when no dispaxis is available."""
+    model = make_nrc_wfss_datamodel.copy()
+    model.meta.wcsinfo.dispersion_axis = None
+
+    with pytest.raises(ValueError, match="Valid dispersion axis is required for method=clip"):
+        subtract_wfss_bkg(model, bkg_file, mask_method="clip")

@@ -36,14 +36,14 @@ class WeightedSigmaClip:
         defaults to ``sigma``.
     """
 
-    def __init__(self, iters=10, tolerance=1e-3, sigma=3.0, sigma_lower=None, sigma_upper=None):
+    def __init__(self, iters=10, tolerance=1e-3, sigma=2.0, sigma_lower=None, sigma_upper=None):
 
         self.sigma_lower = -sigma_lower if sigma_lower is not None else -sigma
         self.sigma_upper = sigma_upper if sigma_upper is not None else sigma
         self.iters = iters
         self.tolerance = tolerance
 
-    def __call__(self, data, weights, axis=None, return_mask=True):
+    def __call__(self, data, weights, axis=None):
         """
         Run weighted sigma-clipping on ``data``.
 
@@ -58,37 +58,25 @@ class WeightedSigmaClip:
         axis : int or None, optional
             Axis along which to clip.  If ``None`` (default), the statistic
             is computed over the entire flattened array.
-        return_mask : bool, optional
-            If ``True`` (default), return the final boolean mask as a third
-            element.  Masked (clipped or originally invalid) pixels are
-            ``True``.
 
         Returns
         -------
-        ave : scalar or ndarray
-            Weighted mean of the unclipped data.
-        sig : scalar or ndarray
-            Weighted standard deviation of the unclipped data.
         mask : ndarray of bool
-            Boolean mask of clipped/invalid pixels (only returned when
-            ``return_mask=True``).
+            Boolean mask of clipped/invalid pixels, True where unmasked.
         """
-        # get new weights
-        w = np.maximum(weights, 0.0)
+        weights = np.maximum(weights, 0.0)
         mask = np.isnan(data) | np.isnan(weights)
-
-        # an internal variable
         x = np.ma.masked_array(data, mask=mask)
 
         # the initial setting for the output weighted mean
         ave = np.inf
         for _itr in range(self.iters):
             # a temporary mean for this iteration
-            thisave = np.ma.average(x, weights=w, axis=axis, keepdims=True)
+            thisave = np.ma.average(x, weights=weights, axis=axis, keepdims=True)
 
             # compute the difference, variance, and sigma
             dif = x - thisave
-            var = np.ma.average(dif * dif, weights=w, axis=axis, keepdims=True)
+            var = np.ma.average(dif * dif, weights=weights, axis=axis, keepdims=True)
             sig = np.sqrt(var)
 
             # scale differences by sigma
@@ -105,24 +93,4 @@ class WeightedSigmaClip:
         else:
             log.warning("Clipping did not converge.")
 
-        ave = ave[0] if axis is None else np.squeeze(ave)
-        sig = sig[0] if axis is None else np.squeeze(sig)
-
-        if return_mask:
-            return ave, sig, x.mask
-        else:
-            return ave, sig
-
-    # def total(self, data, weights, **kwargs):
-    #     """
-    #     Return a sigma-clipped weighted sum.
-
-    #     This is like
-
-    #     .. math::
-    #        total = sum(w*x)
-    #     """
-    #     kwargs["return_mask"] = True
-    #     ave, _sig, _mask = self(data, weights, **kwargs)
-    #     # tot = ave*np.nansum(mask*weights)
-    #     return ave
+        return ~x.mask
