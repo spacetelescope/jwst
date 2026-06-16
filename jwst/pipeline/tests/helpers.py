@@ -35,7 +35,9 @@ def make_miri_ramp_model(nints=1, ngroups=5, ysize=1024, xsize=1032):
     ramp.meta.instrument.detector = "MIRIMAGE"
     ramp.meta.exposure.frame_time = 1.0
     ramp.meta.exposure.groupgap = 0
+    ramp.meta.exposure.start_time = 60728.97621633101
     ramp.meta.exposure.group_time = 1.0
+    ramp.meta.exposure.integration_time = ngroups * ramp.meta.exposure.group_time
     ramp.meta.exposure.nframes = 1
     ramp.meta.exposure.nints = nints
     ramp.meta.exposure.ngroups = ngroups
