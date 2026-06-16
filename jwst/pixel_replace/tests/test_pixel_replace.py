@@ -25,6 +25,7 @@ def nirspec_fs_slitmodel():
     yield model, bad_idx
     model.close()
 
+
 @pytest.fixture(scope="module")
 def miri_lrs():
     model, bad_idx = helpers.miri_lrs()
