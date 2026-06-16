@@ -114,6 +114,7 @@ def generate_substripe_ranges(sci_model, science_frame=False):
     repeat_stripe = sci_model.meta.subarray.repeat_stripe
     interleave_reads1 = sci_model.meta.subarray.interleave_reads1
     slowaxis = sci_model.meta.subarray.slowaxis
+    subname = sci_model.meta.subarray.name
 
     # Get the slow axis size and start position
     if np.abs(slowaxis) > 1:
@@ -125,6 +126,10 @@ def generate_substripe_ranges(sci_model, science_frame=False):
 
     # Start values are in science coord, 1-indexed: convert to detector start index
     slow_start = _detector_coord_slow_start(slowaxis, slow_start)
+    if "DHS" in str(subname).upper() and slow_start != 0:
+        # Accommodate early DHS data with incorrect slow start values
+        log.warning("Setting detector start index to 0 for DHS")
+        slow_start = 0
 
     # Check for valid input
     if nreads2 <= 0:
@@ -259,6 +264,7 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
     num_superstripe = sci_model.meta.subarray.num_superstripe
     fastaxis = sci_model.meta.subarray.fastaxis
     slowaxis = sci_model.meta.subarray.slowaxis
+    subname = sci_model.meta.subarray.name
 
     # Get slow axis size and start position
     if np.abs(fastaxis) == 1:
@@ -270,6 +276,10 @@ def generate_superstripe_ranges(sci_model, science_frame=False):
 
     # Start values are in science coord, 1-indexed: convert to detector start index
     slow_start = _detector_coord_slow_start(slowaxis, slow_start)
+    if "DHS" in str(subname).upper() and slow_start != 0:
+        # Accommodate early DHS data with incorrect slow start values
+        log.warning("Setting detector start index to 0 for DHS")
+        slow_start = 0
 
     # Check for the number of pixels to read per stripe
     if nreads2 <= 0:

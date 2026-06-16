@@ -70,8 +70,15 @@ def test_generate_substripe_ranges_swap_slow(caplog, substripe_model):
 
     # ystart was set to 1, which is incorrect for a negative slow axis.
     # The utility can handle this case: it will warn and assume ystart=2048
-    # was intended
+    # was intended (detector start = 0)
     assert "Slow start is set to 1 for slowaxis=-2" in caplog.text
+
+    # Test also that ystart with other values for DHS is assumed to mean
+    # detector start = 0
+    model.meta.subarray.ystart = 2008
+    all_ranges = stripe_utils.generate_substripe_ranges(model, science_frame=True)
+    assert all_ranges == expected
+    assert "Setting detector start index to 0 for DHS" in caplog.text
 
 
 def test_generate_substripe_ranges_invalid_input(substripe_model):
@@ -181,6 +188,33 @@ def test_generate_superstripe_ranges_wrong_size(superstripe_model):
 
     with pytest.raises(ValueError, match="readout does not match science array shape"):
         stripe_utils.generate_superstripe_ranges(model)
+
+
+def test_generate_superstripe_ranges_dhs(caplog, substripe_model):
+    model = substripe_model.copy()
+    model.meta.subarray.slowaxis *= -1
+    model.meta.subarray.superstripe_step = 0
+
+    all_ranges = stripe_utils.generate_superstripe_ranges(model)
+    expected = {
+        "full": {0: [(1527, 1567), (1652, 1692), (1777, 1817), (1902, 1942)]},
+        "subarray": {0: [(1, 41), (42, 82), (83, 123), (124, 164)]},
+        "reference_full": {0: [(0, 1), (0, 1), (0, 1), (0, 1)]},
+        "reference_subarray": {0: [(0, 1), (41, 42), (82, 83), (123, 124)]},
+    }
+    assert all_ranges == expected
+
+    # ystart was set to 1, which is incorrect for a negative slow axis.
+    # The utility can handle this case: it will warn and assume ystart=2048
+    # was intended (detector start = 0)
+    assert "Slow start is set to 1 for slowaxis=-2" in caplog.text
+
+    # Test also that ystart with other values for DHS is assumed to mean
+    # detector start = 0
+    model.meta.subarray.ystart = 2008
+    all_ranges = stripe_utils.generate_superstripe_ranges(model)
+    assert all_ranges == expected
+    assert "Setting detector start index to 0 for DHS" in caplog.text
 
 
 def _assign_metadata(metanode, keys, vals):
