@@ -71,7 +71,7 @@ def do_correction(output_model, lin_model):
             [x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)
         ]
         log.info(
-            "Providing inverse linearity coefficients and read_pattern to detailed"
+            "Providing inverse linearity coefficients and read_pattern to detailed "
             "linearity correction."
         )
     else:
