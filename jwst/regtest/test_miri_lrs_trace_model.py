@@ -49,6 +49,9 @@ def run_spec2_trace_model_slitless(rtdata_module):
         rtdata.input,
         "--steps.adaptive_trace_model.skip=false",
         "--steps.adaptive_trace_model.save_results=true",
+        "--steps.pixel_replace.skip=false",
+        "--steps.pixel_replace.algorithm=trace_model",
+        "--steps.pixel_replace.save_results=true",
     ]
     Step.from_cmdline(args)
     return rtdata
@@ -75,7 +78,7 @@ def test_miri_lrs_fs_spec2_trace_model(
 
 @pytest.mark.parametrize(
     "suffix",
-    ["calints", "adaptive_trace_model", "x1dints"],
+    ["calints", "adaptive_trace_model", "pixel_replace", "x1dints"],
 )
 def test_miri_lrs_slitless_spec2_trace_model(
     run_spec2_trace_model_slitless, fitsdiff_default_kwargs, suffix, rtdata_module
