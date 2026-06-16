@@ -391,6 +391,6 @@ def test_nircam_image_inv_linearity(
 
     fitsdiff_default_kwargs["rtol"] = 5e-5
     fitsdiff_default_kwargs["atol"] = 1e-4
-    fitsdiff_default_kwargs["ignore_keywords"].append("R_PERSAT")
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_LINEAR")
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
