@@ -54,9 +54,9 @@ def do_correction(output_model, lin_model):
         )
         sub_lin_model.close()
 
-    read_times_unset = output_model.meta.exposure.read_times is None or (
-        isinstance(output_model.meta.exposure.read_times, list)
-        and len(output_model.meta.exposure.read_times) == 0
+    read_times_unset = (
+        output_model.meta.exposure.read_times is None
+        or len(output_model.meta.exposure.read_times) == 0
     )
 
     read_pattern = None
