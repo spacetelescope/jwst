@@ -23,6 +23,7 @@ class PersistenceStep(Step):
         persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
         persistence_array_file = string(default=None) # A path to an ASDF file containing a 2-D array of persistence times per pixel
         persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
+        skip = boolean(default=True) # By default, skip the step.
     """  # noqa: E501
 
     def process(self, step_input):
@@ -59,11 +60,7 @@ class PersistenceStep(Step):
         )
         result, skipped = pers_a.do_all()
 
-        if skipped:
-            result.meta.cal_step.persistence = "SKIPPED"
-        else:
-            result.meta.cal_step.persistence = "COMPLETE"
-
+        result.meta.cal_step.persistence = "COMPLETE"
         if pers_a.save_persistence is not None:
             self.write_persistence_array(result, pers_a.save_persistence)
 
