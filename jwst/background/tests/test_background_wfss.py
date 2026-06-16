@@ -738,7 +738,7 @@ def test_clip_method_basic(make_nrc_wfss_datamodel, bkg_file, caplog):
     assert np.mean(result.mask) > 0.5
 
 
-def test_clip_method_requires_dispaxis(make_wfss_datamodel, bkg_file):
+def test_clip_method_requires_dispaxis(make_nrc_wfss_datamodel, bkg_file):
     """Test that mask_method='clip' raises ValueError when no dispaxis is available."""
     model = make_nrc_wfss_datamodel.copy()
     model.meta.wcsinfo.dispersion_axis = None
