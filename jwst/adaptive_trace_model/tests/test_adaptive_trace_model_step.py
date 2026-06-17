@@ -302,10 +302,24 @@ def test_adaptive_trace_model_step_with_container(miri_mrs_model):
 def test_adaptive_trace_model_unsupported_model(caplog):
     model = datamodels.ImageModel()
     result = AdaptiveTraceModelStep.call(model)
-    assert "not implemented for <ImageModel>" in caplog.text
+    assert "not implemented for datamodel type <ImageModel>" in caplog.text
 
     assert result is not model
-    assert result.meta.cal_step.adaptive_trace_model == "SKIPPED"
+    assert result.meta.cal_step.adaptive_trace_model == "FAILED"
+    assert model.meta.cal_step.adaptive_trace_model is None
+
+
+def test_adaptive_trace_model_old_miri_lrs(caplog):
+    model = datamodels.ImageModel()
+    model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+    result = AdaptiveTraceModelStep.call(model)
+    assert "not implemented for datamodel type <ImageModel>" in caplog.text
+
+    # a specific warning message is issued in this case
+    assert "requires MIRI LRS cal files in <SlitModel> format, from jwst v2.0" in caplog.text
+
+    assert result is not model
+    assert result.meta.cal_step.adaptive_trace_model == "FAILED"
     assert model.meta.cal_step.adaptive_trace_model is None
 
 
