@@ -220,7 +220,7 @@ def test_extract_niriss_soss_96(tmp_path, mock_niriss_soss_96):
     assert (tmp_path / "test_x1dints.fits").is_file()
 
     # Make sure the output spectrum does not have a SCI or ERR extension
-    # These sometimes get added accidentally in model metadata updates.
+    # This covers a bug where these were added accidentally in model metadata updates.
     with fits.open(str(tmp_path / "test_x1dints.fits")) as hdul:
         ext_names = [hdu.name for hdu in hdul]
         assert "EXTRACT1D" in ext_names
