@@ -102,7 +102,7 @@ def subtract_wfss_bkg(
 
     elif mask_method == "user":
         if user_mask is None:
-            raise ValueError("method=user requires a user_mask to be provided.")
+            raise ValueError("mask_method='user' requires a user_mask to be provided.")
         log.info("Using user-supplied source mask for background scaling.")
         # we want a more generous criterion for sufficient background pixels here,
         # since the user is explicitly specifying the mask.
@@ -122,7 +122,9 @@ def subtract_wfss_bkg(
             return model
         bkg_mask = user_mask.astype(bool)
     else:
-        raise ValueError(f"Unrecognized mask_method {mask_method} for WFSS background subtraction.")
+        raise ValueError(
+            f"Unrecognized mask_method '{mask_method}' for WFSS background subtraction."
+        )
 
     # save the mask in expected data type for the datamodel
     model.mask = bkg_mask.astype(np.uint32)

@@ -702,6 +702,19 @@ def test_user_mask_no_mask_attribute(make_nrc_wfss_datamodel, tmp_cwd):
         BackgroundStep.call(model, wfss_mask=str(mask_fname), save_results=False)
 
 
+def test_user_mask_incompatible_params(make_nrc_wfss_datamodel, tmp_cwd):
+    """Test that BackgroundStep raises error when mask method is user but mask param isn't set."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Should raise ValueError when wfss_mask_method is 'user' but wfss_mask is None
+    with pytest.raises(ValueError, match="mask_method='user' requires a user_mask to be provided."):
+        BackgroundStep.call(
+            model,
+            wfss_mask=None,
+            wfss_mask_method="user",
+        )
+
+
 def test_user_mask_wrong_shape(make_nrc_wfss_datamodel, tmp_cwd):
     """Test that BackgroundStep raises error when mask shape doesn't match data."""
     model = make_nrc_wfss_datamodel.copy()
@@ -745,3 +758,11 @@ def test_clip_method_requires_dispaxis(make_nrc_wfss_datamodel, bkg_file):
 
     with pytest.raises(ValueError, match="Valid dispersion axis is required for method=clip"):
         subtract_wfss_bkg(model, bkg_file, mask_method="clip")
+
+
+def test_unrecognized_mask_method(make_nrc_wfss_datamodel, bkg_file):
+    """Test that an unrecognized mask_method raises ValueError."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    with pytest.raises(ValueError, match="Unrecognized mask_method 'invalid_method'"):
+        subtract_wfss_bkg(model, bkg_file, mask_method="invalid_method")
