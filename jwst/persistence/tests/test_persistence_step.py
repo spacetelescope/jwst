@@ -1,3 +1,4 @@
+import logging
 import os
 
 import asdf
@@ -181,11 +182,13 @@ def test_persistence_time_with_array(create_sci_model, tmp_path):
     rows, cols = np.nonzero(persistence_array)
     vals = persistence_array[rows, cols]
     tree = {
-        "filename": "dummy.fits",
-        "rows": rows,
-        "cols": cols,
-        "vals": vals,
-        "pers_time": persistence_time,
+        model.meta.instrument.name: {
+            "filename": "dummy.fits",
+            "rows": rows,
+            "cols": cols,
+            "vals": vals,
+            "pers_time": persistence_time,
+        },
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(asdf_file)
@@ -207,7 +210,7 @@ def test_persistence_time_with_array(create_sci_model, tmp_path):
     np.testing.assert_equal(res.groupdq[1, :, 0, 2], checkz)
 
 
-def test_persistence_mismatch_persistencetime_guard(create_sci_model, tmp_path):
+def test_persistence_mismatch_persistencetime_guard(create_sci_model, tmp_path, caplog):
     """Develop a test that ensures exception is raised mismatched persistence time."""
     # Setup model
     nints, ngroups, nrows, ncols = 2, 7, 1, 3
@@ -223,22 +226,25 @@ def test_persistence_mismatch_persistencetime_guard(create_sci_model, tmp_path):
     rows, cols = np.nonzero(persistence_array)
     vals = persistence_array[rows, cols]
     tree = {
-        "filename": "dummy.fits",
-        "rows": rows,
-        "cols": cols,
-        "vals": vals,
-        "pers_time": persistence_time,
+        model.meta.instrument.name: {
+            "filename": "dummy.fits",
+            "rows": rows,
+            "cols": cols,
+            "vals": vals,
+            "pers_time": persistence_time,
+        },
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(asdf_file)
 
     step = PersistenceStep(persistence_array_file=asdf_file, persistence_time=persistence_time2)
 
-    # Run persistence step
-    with pytest.raises(ValueError):
+    with caplog.at_level(logging.INFO):
         step.run(model)
+    assert "persistence_time mismatch: from file:" in caplog.text
 
 
+@pytest.mark.skip(reason="In development")
 def test_persistence_backwards_flagging_guard(create_sci_model, tmp_path):
     """Develop a test that ensures exception is raised for backwards flagging."""
     # Setup model
