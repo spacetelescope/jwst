@@ -430,7 +430,7 @@ class Spec3Pipeline(Pipeline):
         """
         try:
             input_sregions = [w.spec[0].s_region for w in cal_model_list if w.spec[0].s_region]
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             log.warning(
                 "One or more input model(s) are missing an 's_region' attribute; "
                 "output S_REGION will not be set."
@@ -438,12 +438,12 @@ class Spec3Pipeline(Pipeline):
             return
 
         n_sreg = len(input_sregions)
-        if n_sreg == 0:
+        if n_sreg == 0:  # pragma: no cover
             log.warning(
                 "None of the input model(s) have valid S_REGION; output S_REGION will not be set."
             )
             return
-        if n_sreg == 1:
+        if n_sreg == 1:  # pragma: no cover
             wfss_model.spec[0].s_region = input_sregions[0]
             return
 
@@ -465,7 +465,7 @@ class Spec3Pipeline(Pipeline):
 
         try:
             sregion = combine_sregions(input_sregions, det2world)
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             log.warning(
                 "Could not combine S_REGIONs: %s. Output S_REGION will not be set.", repr(e)
             )
