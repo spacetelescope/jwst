@@ -28,8 +28,11 @@ def make_wfss_multiexposure(input_list):
 
     Parameters
     ----------
-    input_list : `~stdatamodels.jwst.datamodels.MultiSpecModel` or list[MultiSpecModel]
-        List of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects to be combined.
+    input_list : `~stdatamodels.jwst.datamodels.MultiSpecModel`, \
+                 `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`, \
+                 `~jwst.datamodels.container.ModelContainer`, or \
+                 list
+        Model, model container, or a list of models to be combined.
 
     Returns
     -------
@@ -37,7 +40,7 @@ def make_wfss_multiexposure(input_list):
         The extract_1d product for WFSS modes.
     """
     if isinstance(input_list, dm.JwstDataModel):
-        # if input is a single MultiSpecModel, convert to list
+        # if input is a single model, convert to list
         input_list = [input_list]
 
     results_list = []

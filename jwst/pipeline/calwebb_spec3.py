@@ -177,12 +177,13 @@ class Spec3Pipeline(Pipeline):
             log.info("Convert from exposure-based to source-based data.")
             sources = list(multislit_to_container(source_models).items())
         elif isinstance(input_models[0], dm.WFSSMultiSpecModel):
-            sources = source_models._models  # noqa: SLF001
+            # source_models is ModelContainer that we use directly later
+            # so we bypass the for loop completely with empty sources.
+            sources = []
         else:
             sources = [source_models]
 
         # Process each source
-        wfss_x1d = []
         for source in sources:
             # If each source is a SourceModelContainer,
             # the output name needs to be updated based on the source ID,
@@ -279,12 +280,6 @@ class Spec3Pipeline(Pipeline):
                         result = self.photom.run(result)
                         result = self.combine_1d.run(result)
 
-                else:
-                    # for WFSS modes, do not save the results with one file per source
-                    # instead compile the results over the for loop to be put into a single file
-                    # at the end.
-                    wfss_x1d.append(result)
-
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
                 # If 2D data were resampled and combined, just do a 1D extraction
 
@@ -309,32 +304,27 @@ class Spec3Pipeline(Pipeline):
                 log.warning("Resampling was not completed. Skipping extract_1d.")
 
         # Save the final output products for WFSS modes
-        # but wfss_XXX could be an empty list if processing failed.
         if exptype in WFSS_TYPES and self.save_results:
             x1d_filename = output_file + "_x1d.fits"
             c1d_filename = output_file + "_c1d.fits"
-            if len(wfss_x1d) > 0:
-                x1d_output = make_wfss_multiexposure(wfss_x1d)
-                self._populate_wfss_sregion(x1d_output, input_models)
 
-                log.info("Saving the final x1d product as %s", x1d_filename)
-                x1d_output.save(x1d_filename)
+            x1d_output = make_wfss_multiexposure(source_models)
+            self._populate_wfss_sregion(x1d_output, input_models)
 
-                # Combine the results for all sources
-                self.combine_1d.save_results = False
-                c1d_output = self.combine_1d.run(x1d_output)
-                comb_complete = (
-                    c1d_output is not None and c1d_output.meta.cal_step.combine_1d == "COMPLETE"
-                )
-                if not comb_complete:
-                    log.error("combine_1d failed to create %s", c1d_filename)
-                else:
-                    log.info("Saving the final c1d product as %s", c1d_filename)
-                    c1d_output.save(c1d_filename)
+            log.info("Saving the final x1d product as %s", x1d_filename)
+            x1d_output.save(x1d_filename)
+
+            # Combine the results for all sources
+            self.combine_1d.save_results = False
+            c1d_output = self.combine_1d.run(x1d_output)
+            comb_complete = (
+                c1d_output is not None and c1d_output.meta.cal_step.combine_1d == "COMPLETE"
+            )
+            if not comb_complete:  # pragma: no cover
+                log.error("combine_1d failed to create %s", c1d_filename)
             else:
-                log.error(
-                    "wfss_x1d list is empty, cannot make %s and %s", x1d_filename, c1d_filename
-                )
+                log.info("Saving the final c1d product as %s", c1d_filename)
+                c1d_output.save(c1d_filename)
 
         if input_models is not input_data:
             input_models.close()
