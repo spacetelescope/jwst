@@ -89,13 +89,13 @@ class PersistenceStep(Step):
 
         _, _, nrows, ncols = result.groupdq.shape
         if self.persistence_array_file is not None:
-            self.get_persistence_array_from_file(nrows, ncols)
+            self.get_persistence_array_from_file(result, nrows, ncols)
         else:
             self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
 
         return None
 
-    def write_persistence_array(self, result, filename):
+    def write_persistence_array(self, result, filename, tree=None):
         """
         Write the persistence array to an ASDF file.
 
@@ -112,20 +112,35 @@ class PersistenceStep(Step):
             filename = f"{root}.asdf"
 
         # Write persistence array to ASDF file
+        #    Only write out the non-zero rows and columns
+        #    and their values, to save disk space.
         rows, cols = np.nonzero(self.persistence_array)
         vals = self.persistence_array[rows, cols]
-        tree = {
-            "filename": result.meta.filename,
-            "rows": rows,
-            "cols": cols,
-            "vals": vals,
-            "pers_time": self.persistence_time,
-        }
+        if tree is None:
+            # Set up the tree with only one detector.
+            tree = {
+                result.meta.instrument.name: {
+                    "filename": result.meta.filename,
+                    "rows": rows,
+                    "cols": cols,
+                    "vals": vals,
+                    "pers_time": self.persistence_time,
+                },
+            }
+        else:
+            # Add or overwrite the current detector if it already exists in the tree
+            tree[result.meta.instrument.name] = {
+                "filename": result.meta.filename,
+                "rows": rows,
+                "cols": cols,
+                "vals": vals,
+                "pers_time": self.persistence_time,
+            }
 
         with asdf.AsdfFile(tree) as af:
             af.write_to(filename)
 
-    def get_persistence_array_from_file(self, nrows, ncols):
+    def get_persistence_array_from_file(self, result, nrows, ncols):
         """
         Get the persistence array from an ASDF file.
 
@@ -137,13 +152,19 @@ class PersistenceStep(Step):
         ncols : int
             The number of columns in the RampModel data.
         """
+        self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
         with asdf.open(self.persistence_array_file) as pers_file:
-            if pers_file["pers_time"] != self.persistence_time:
-                raise ValueError("Invalid persistence file. Mismatch of persistence time.")
-
-            rows = pers_file["rows"]
-            cols = pers_file["cols"]
-            vals = pers_file["vals"]
-
-            self.persistence_array = np.zeros((nrows, ncols), dtype=vals.dtype)
-            self.persistence_array[rows, cols] = vals
+            det = result.meta.instrument.name
+            if det in pers_file:
+                rows = pers_file[det]["rows"]
+                cols = pers_file[det]["cols"]
+                vals = pers_file[det]["vals"]
+                pers_time = pers_file[det]["pers_time"]
+                if pers_time != self.persistence_time:
+                    msg = f"{pers_time} does not equalpersistence_time :{self.persistence_time}"
+                    log.info(f"persistence_time mismatch: from file: {msg}")
+                    return  # XXX Not sure if this is desired
+                self.persistence_array[rows, cols] = vals
+            else:
+                log.info(f"Detector {det} not in perisstence array file.")
+                log.info(".... Creating new persistence array.")
