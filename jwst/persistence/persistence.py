@@ -168,13 +168,13 @@ class DataSet:
         # Subtracting the persistence_time gives the beginning of the window.
         # If the current time occurs before this time, then the current group is
         #     outside the window and subtracting it will be a positive number.
-        # Raise an exception if a backwards flagging situation arrives, as this is
-        #     an invalid state.
+        # Reset window for pixels where backwards flagging situation arrives, as
+        #     this is an invalid state.
         start_plane = self.persistence_array - (self.persistence_time + current_time)
         start_plane[self.persistence_array == 0.0] = 0.0
         if np.any(start_plane > 0.0):
-            # XXX change
-            raise ValueError("Invalid persistence array, due to backwards flagging.")
+            log.info("Backwards flagging found. Resetting the window for those pixels")
+            self.persistence_array[start_plane > 0.0] = 0.0
 
         # Set persistence flag for any group in persistence window
         if self.persistence_dnu:
