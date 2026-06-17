@@ -44,6 +44,7 @@ class DataSet:
         output_obj,
         save_persistence,
         persistence_time=None,
+        dn_threshold=None,
         persistence_array=None,
         persistence_dnu=None,
     ):
@@ -65,6 +66,7 @@ class DataSet:
         self.save_persistence = save_persistence
         self.output_pers = None
 
+        self.dn_threshold = dn_threshold
         self.persistence_time = persistence_time
         self.persistence_array = persistence_array
         self.persistence_dnu = persistence_dnu
@@ -183,6 +185,10 @@ class DataSet:
             flag = dqflags.group["PERSISTENCE"]
 
         gdq_plane[self.persistence_array > 0.0] |= flag
+        if self.dn_threshold is not None:
+            sci_plane = self.output_obj.data[integ, group, :, :]
+            gdq_plane[sci_plane > self.dn_threshold] |= flag
+
         self.output_obj.groupdq[integ, group, :, :] = gdq_plane
 
 

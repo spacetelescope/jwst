@@ -21,6 +21,7 @@ class PersistenceStep(Step):
     spec = """
         save_persistence = string(default=None) # Name of ASDF output file to save the persistence array
         persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
+        dn_threshold = float(default=None) # A threshold obove which to flag persistence.
         persistence_array_file = string(default=None) # A path to an ASDF file containing a 2-D array of persistence times per pixel
         persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
         skip = boolean(default=True) # By default, skip the step.
@@ -55,6 +56,7 @@ class PersistenceStep(Step):
             result,
             self.save_persistence,
             self.persistence_time,
+            self.dn_threshold,
             self.persistence_array,
             self.persistence_dnu,
         )
@@ -153,6 +155,11 @@ class PersistenceStep(Step):
             The number of columns in the RampModel data.
         """
         self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
+        # if not os.path.exists(self.persistence_array_file):
+        if not Path.exists(self.persistence_array_file):
+            log.info("Persistence array file does not exist: '{self.persistence_array_file}'")
+            log.info(".... Creating new persistence array.")
+            return
         with asdf.open(self.persistence_array_file) as pers_file:
             det = result.meta.instrument.name
             if det in pers_file:
