@@ -173,6 +173,7 @@ class DataSet:
         start_plane = self.persistence_array - (self.persistence_time + current_time)
         start_plane[self.persistence_array == 0.0] = 0.0
         if np.any(start_plane > 0.0):
+            # XXX change
             raise ValueError("Invalid persistence array, due to backwards flagging.")
 
         # Set persistence flag for any group in persistence window
