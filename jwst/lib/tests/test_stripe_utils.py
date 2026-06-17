@@ -3,9 +3,14 @@ import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.tests.helpers import make_mock_dhs_nrca1_rate
-from jwst.dq_init.tests.helpers import make_superstripe_mask_model, make_superstripe_model
 from jwst.lib import stripe_utils
 from jwst.lib.reffile_utils import science_detector_frame_transform
+from jwst.lib.tests.helpers import (
+    int_times_table,
+    make_sub64p_multistripe_model,
+    make_superstripe_mask_model,
+    make_superstripe_model,
+)
 
 
 @pytest.fixture(scope="module")
@@ -16,6 +21,11 @@ def substripe_model():
 @pytest.fixture(scope="module")
 def superstripe_model():
     return make_superstripe_model(add_inttimes=True, add_zeroframe=True)
+
+
+@pytest.fixture(scope="module")
+def multistripe_subarray_model():
+    return make_sub64p_multistripe_model(add_inttimes=True, add_zeroframe=True)
 
 
 @pytest.mark.parametrize("science_frame", [True, False])
@@ -34,7 +44,7 @@ def test_generate_substripe_ranges(substripe_model, science_frame):
     assert all_ranges == expected
 
 
-def test_generate_substripe_ranges_swap_slow(substripe_model):
+def test_generate_substripe_ranges_swap_slow(caplog, substripe_model):
     model = substripe_model.copy()
     model.meta.subarray.slowaxis *= -1
 
@@ -57,6 +67,18 @@ def test_generate_substripe_ranges_swap_slow(substripe_model):
         "reference_subarray": {0: [163, 164], 1: [122, 123], 2: [81, 82], 3: [40, 41]},
     }
     assert all_ranges == expected
+
+    # ystart was set to 1, which is incorrect for a negative slow axis.
+    # The utility can handle this case: it will warn and assume ystart=2048
+    # was intended (detector start = 0)
+    assert "Slow start is set to 1 for slowaxis=-2" in caplog.text
+
+    # Test also that ystart with other values for DHS is assumed to mean
+    # detector start = 0
+    model.meta.subarray.ystart = 2008
+    all_ranges = stripe_utils.generate_substripe_ranges(model, science_frame=True)
+    assert all_ranges == expected
+    assert "Setting detector start index to 0 for DHS" in caplog.text
 
 
 def test_generate_substripe_ranges_invalid_input(substripe_model):
@@ -124,12 +146,40 @@ def test_generate_superstripe_ranges_science_frame(superstripe_model):
     assert all_ranges["reference_subarray"] == expected_ref_sub
 
 
-def test_generate_superstripe_ranges_invalid_input(superstripe_model):
+def test_generate_superstripe_ranges_pure_superstripe(superstripe_model):
+    # Set up a model with pure super stripes: start just after the refpix,
+    # set all reads and skips to 0
     model = superstripe_model.copy()
+    model.meta.subarray.multistripe_reads1 = 0
+    model.meta.subarray.multistripe_skips1 = 0
     model.meta.subarray.multistripe_reads2 = 0
+    model.meta.subarray.multistripe_skips2 = 0
+    model.meta.subarray.superstripe_step = 204
+    model.meta.subarray.xsize = 204
+    model.meta.subarray.xstart = 2044
+    model.data = model.data[:, :, :, 4:]
 
-    with pytest.raises(ValueError, match="Invalid value for multistripe_reads2"):
-        stripe_utils.generate_superstripe_ranges(model)
+    all_ranges = stripe_utils.generate_superstripe_ranges(model)
+
+    expected_full = {
+        0: [(4, 208)],
+        1: [(208, 412)],
+        2: [(412, 616)],
+        3: [(616, 820)],
+        4: [(820, 1024)],
+        5: [(1024, 1228)],
+        6: [(1228, 1432)],
+        7: [(1432, 1636)],
+        8: [(1636, 1840)],
+        9: [(1840, 2044)],
+    }
+    expected_sub = dict.fromkeys(range(10), [(0, 204)])
+    expected_ref_full = dict.fromkeys(range(10), [])
+    expected_ref_sub = dict.fromkeys(range(10), [])
+    assert all_ranges["full"] == expected_full
+    assert all_ranges["subarray"] == expected_sub
+    assert all_ranges["reference_full"] == expected_ref_full
+    assert all_ranges["reference_subarray"] == expected_ref_sub
 
 
 def test_generate_superstripe_ranges_wrong_size(superstripe_model):
@@ -140,6 +190,33 @@ def test_generate_superstripe_ranges_wrong_size(superstripe_model):
         stripe_utils.generate_superstripe_ranges(model)
 
 
+def test_generate_superstripe_ranges_dhs(caplog, substripe_model):
+    model = substripe_model.copy()
+    model.meta.subarray.slowaxis *= -1
+    model.meta.subarray.superstripe_step = 0
+
+    all_ranges = stripe_utils.generate_superstripe_ranges(model)
+    expected = {
+        "full": {0: [(1527, 1567), (1652, 1692), (1777, 1817), (1902, 1942)]},
+        "subarray": {0: [(1, 41), (42, 82), (83, 123), (124, 164)]},
+        "reference_full": {0: [(0, 1), (0, 1), (0, 1), (0, 1)]},
+        "reference_subarray": {0: [(0, 1), (41, 42), (82, 83), (123, 124)]},
+    }
+    assert all_ranges == expected
+
+    # ystart was set to 1, which is incorrect for a negative slow axis.
+    # The utility can handle this case: it will warn and assume ystart=2048
+    # was intended (detector start = 0)
+    assert "Slow start is set to 1 for slowaxis=-2" in caplog.text
+
+    # Test also that ystart with other values for DHS is assumed to mean
+    # detector start = 0
+    model.meta.subarray.ystart = 2008
+    all_ranges = stripe_utils.generate_superstripe_ranges(model)
+    assert all_ranges == expected
+    assert "Setting detector start index to 0 for DHS" in caplog.text
+
+
 def _assign_metadata(metanode, keys, vals):
     """
     Assign a list of values to parameters in a datamodel
@@ -147,6 +224,9 @@ def _assign_metadata(metanode, keys, vals):
     Stripe params: xsize_sci, ysize_sci, nreads1, nreads2, nskips1,
                    nskips2, repeat_stripe, interleave_reads1, fastaxis, slowaxis
     """
+    # always set xstart/ystart to 1
+    metanode.subarray.xstart = 1
+    metanode.subarray.ystart = 1
     for key, val in zip(keys, vals):
         setattr(metanode.subarray, key, val)
 
@@ -551,6 +631,8 @@ def test_collate_superstripes(
         model.meta.subarray.slowaxis = 2
         model.meta.subarray.xsize = superstripe_model.meta.subarray.ysize
         model.meta.subarray.ysize = superstripe_model.meta.subarray.xsize
+        model.meta.subarray.xstart = superstripe_model.meta.subarray.ystart
+        model.meta.subarray.ystart = 1
         model.data = np.swapaxes(model.data, -2, -1)
 
     # expected data shapes
@@ -635,3 +717,221 @@ def test_collate_superstripes(
         assert collated.zeroframe.shape == (nint_after, ny_after, nx_after)
     else:
         assert collated.zeroframe is None
+
+    # No subframe stripes for this mode, so read_times is not updated
+    assert collated.meta.exposure.read_times == []
+
+
+def test_collate_superstripes_with_slowsize_subarray_and_repeat(multistripe_subarray_model):
+    model = multistripe_subarray_model
+
+    # expected data shapes
+    nint_before, ngroup_before, ny_before, nx_before = model.data.shape
+    nstripe = model.meta.subarray.num_superstripe
+    nstep = model.meta.subarray.superstripe_step
+    nint_after = nint_before // nstripe
+    ngroup_after = ngroup_before * 4  # expecting 4 in-frame repeats for this mode
+    nx_after = nx_before
+    ny_after = nstripe * nstep
+
+    # set the data value to the stripe number
+    for integ in range(nint_before):
+        model.data[integ] = integ % nstripe
+
+    model.pixeldq = np.zeros((nstripe, ny_before, nx_before))
+    model.groupdq = np.zeros((nint_before, ngroup_before, ny_before, nx_before))
+    collated = stripe_utils.collate_superstripes(model)
+
+    assert collated.data.shape == (nint_after, ngroup_after, ny_after, nx_after)
+    assert collated.groupdq.shape == (nint_after, ngroup_after, ny_after, nx_after)
+    assert collated.pixeldq.shape == (ny_after, nx_after)
+
+    # groupdq all zeros
+    np.testing.assert_equal(collated.groupdq, 0)
+
+    # pixeldq all zeros (no refpix in output)
+    np.testing.assert_equal(collated.pixeldq, 0)
+
+    # data for each integration is composed from all stripes
+    # added in reverse order from left to right for original data
+    expected = np.arange(nstripe - 1, -1, -1)
+
+    # rows match expected
+    assert np.allclose(collated.data, expected[None, None, :, None], equal_nan=True)
+
+    # old int_times copied to int_times_stripe
+    assert len(collated.int_times_stripe) == nint_before
+    # new int_times matches new integration size
+    assert len(collated.int_times) == nint_after
+
+    # 4 subframe stripes are present for this mode, so read_times is updated
+    # nframes = 1, so one sample per output group.
+    # groupgap = 0, so each input group starts at frametime * (group + 1)
+    # fmt: off
+    expected_read_times = [
+        [0.00304], [0.00456], [0.00608], [0.00760],  # input group 0, 4 subframes
+        [0.01064], [0.01216], [0.01368], [0.01520],  # input group 1
+        [0.01824], [0.01976], [0.02128], [0.02280],  # input group 2
+        [0.02584], [0.02736], [0.02888], [0.03040],  # input group 3
+        [0.03344], [0.03496], [0.03648], [0.03800],  # input group 4
+    ]
+    # fmt: on
+    np.testing.assert_allclose(collated.meta.exposure.read_times, expected_read_times)
+
+
+def test_collate_repeat_stripe(substripe_model):
+    # Make a ramp model from the synthetic cube
+    model = datamodels.RampModel()
+    model.update(substripe_model)
+    data_shape = substripe_model.data.shape
+    model.data = substripe_model.data.reshape((data_shape[0], 1, data_shape[1], data_shape[2]))
+    model.int_times = int_times_table(data_shape[0])
+
+    # add more needed metadata for read times
+    model.meta.exposure.nints = 1
+    model.meta.exposure.ngroups = 1
+    model.meta.exposure.nframes = 1
+    model.meta.exposure.groupgap = 0
+    model.meta.exposure.noutputs = 4
+    model.meta.exposure.frame_time = 0.864610
+
+    # Input model interleaves different detector regions: instead
+    # repeat the stripe with the same detector region
+    model.meta.subarray.interleave_reads1 = 0
+    model.meta.subarray.superstripe_step = 0
+
+    # number of stripes is the repeats in frame
+    nreads1 = model.meta.subarray.multistripe_reads1
+    nreads2 = model.meta.subarray.multistripe_reads2
+    n_repeat = data_shape[-2] // (nreads1 + nreads2)
+
+    # expected data shapes
+    nint_before, ngroup_before, ny_before, nx_before = model.data.shape
+    nint_after = nint_before
+    ngroup_after = ngroup_before * n_repeat
+    nx_after = nx_before
+    ny_after = nreads2  # shape should match the subframe science readout
+
+    model.pixeldq = np.zeros((ny_before, nx_before))
+    model.groupdq = np.zeros((nint_before, ngroup_before, ny_before, nx_before))
+    collated = stripe_utils.collate_superstripes(model)
+
+    assert collated.data.shape == (nint_after, ngroup_after, ny_after, nx_after)
+    assert collated.groupdq.shape == (nint_after, ngroup_after, ny_after, nx_after)
+    assert collated.pixeldq.shape == (ny_after, nx_after)
+
+    # groupdq all zeros
+    np.testing.assert_equal(collated.groupdq, 0)
+
+    # pixeldq all zeros (no refpix in output)
+    np.testing.assert_equal(collated.pixeldq, 0)
+
+    # data for each group is composed from one each of the repeats
+    expected = np.arange(10, 6, -1)
+    assert np.allclose(collated.data, expected[None, :, None, None], equal_nan=True)
+
+    # old int_times stays unmodified, since integrations did not change
+    assert collated.int_times_stripe is None
+    assert len(collated.int_times) == nint_after
+
+    # 4 repeat stripes are present for this mode, so read_times is updated
+    expected_read_times = [[0.22009], [0.43493], [0.64977], [0.86461]]
+    np.testing.assert_allclose(collated.meta.exposure.read_times, expected_read_times)
+
+
+@pytest.mark.parametrize("slowaxis", [1, 2])
+@pytest.mark.parametrize(
+    "stripe_params,expected",
+    [
+        (  # SUB64P_SUPSTP002 nframes=1, groupgap=0
+            (1, 0, 1, 64, 8, 1, 1),
+            [
+                [0.00304],
+                [0.00456],
+                [0.00608],
+                [0.00760],
+                [0.01064],
+                [0.01216],
+                [0.01368],
+                [0.01520],
+            ],
+        ),
+        (  # SUB64P_SUPSTP002 nframes=1, groupgap=1
+            (1, 1, 1, 64, 8, 1, 1),
+            [
+                [0.00304],
+                [0.00456],
+                [0.00608],
+                [0.00760],
+                [0.01824],
+                [0.01976],
+                [0.02128],
+                [0.02280],
+            ],
+        ),
+        (  # SUB64P_SUPSTP002 nframes=2, groupgap=0
+            (2, 0, 1, 64, 8, 1, 1),
+            [
+                [0.00304, 0.01064],
+                [0.00456, 0.01216],
+                [0.00608, 0.01368],
+                [0.00760, 0.01520],
+                [0.01824, 0.02584],
+                [0.01976, 0.02736],
+                [0.02128, 0.02888],
+                [0.02280, 0.03040],
+            ],
+        ),
+        (  # SUB64P_SUPSTP008 nframes=1, groupgap=0
+            (1, 0, 1, 64, 8, 0, 0),
+            [[0.00760], [0.0152]],
+        ),
+        (  # SUB64P_SUPSTP008 nframes=1, groupgap=0, reads None
+            (1, 0, 1, 64, 8, None, None),
+            [[0.00760], [0.0152]],
+        ),
+        (  # SUB260STRIPE4_DHS nframes=1, groupgap=0
+            (1, 0, 4, 2048, 260, 1, 64),
+            [[0.34585], [0.68645], [1.02705], [1.36765], [1.7135], [2.0541], [2.3947], [2.7353]],
+        ),
+        (  # SUB164STRIPE4_DHS nframes=1, groupgap=0
+            (1, 0, 4, 2048, 164, 1, 40),
+            [[0.22009], [0.43493], [0.64977], [0.86461], [1.0847], [1.29954], [1.51438], [1.72922]],
+        ),
+        (  # SUB82STRIPE4_DHS nframes=1, groupgap=0
+            (1, 0, 4, 2048, 82, 1, 40),
+            [[0.22009], [0.43493], [0.65502], [0.86986]],
+        ),
+        (  # SUB82STRIPE4_DHS nframes=2, groupgap=2
+            (2, 2, 4, 2048, 82, 1, 40),
+            [[0.22009, 0.65502], [0.43493, 0.86986], [1.95981, 2.39474], [2.17465, 2.60958]],
+        ),
+        (  # SUB41STRIPE4_DHS nframes=1, groupgap=0
+            (1, 0, 4, 2048, 41, 1, 40),
+            [[0.22009], [0.44018]],
+        ),
+    ],
+)
+def test_stripe_read_times(slowaxis, stripe_params, expected):
+    nframes, groupgap, noutputs, ncols, nrows, reads1, reads2 = stripe_params
+    model = datamodels.SuperstripeRampModel()
+    model.meta.exposure.ngroups = 2
+    model.meta.exposure.nframes = nframes
+    model.meta.exposure.groupgap = groupgap
+    model.meta.exposure.noutputs = noutputs
+    model.meta.exposure.frametime = 1
+    model.meta.subarray.multistripe_reads1 = reads1
+    model.meta.subarray.multistripe_reads2 = reads2
+    if slowaxis == 1:
+        model.meta.subarray.fastaxis = 2
+        model.meta.subarray.slowaxis = 1
+        model.meta.subarray.xsize = nrows
+        model.meta.subarray.ysize = ncols
+    else:
+        model.meta.subarray.fastaxis = 1
+        model.meta.subarray.slowaxis = 2
+        model.meta.subarray.xsize = ncols
+        model.meta.subarray.ysize = nrows
+
+    read_times = stripe_utils.stripe_read_times(model)
+    np.testing.assert_allclose(read_times, expected)

@@ -78,6 +78,9 @@ def mk_data_mdl(data, subarray, readpatt, detector):
     input_model.meta.instrument.name = "MIRI"
     input_model.meta.instrument.detector = detector
     input_model.meta.exposure.type = "MIR_4QPM"
+    input_model.meta.exposure.start_time = 60728.97621633101
+    input_model.meta.exposure.integration_time = 29.832
+    input_model.meta.exposure.group_time = 2.775
     input_model.meta.subarray.name = subarray
     input_model.meta.exposure.readpatt = readpatt
     input_model.meta.subarray.xsize = 288

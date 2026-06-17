@@ -138,12 +138,6 @@ documentation on each reference file.
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`pathloss <pathloss_step>`                       | :ref:`PATHLOSS <pathloss_reffile>`               |
 +-------------------------------------------------------+--------------------------------------------------+
-| :ref:`persistence <persistence_step>`                 | :ref:`PERSAT <persat_reffile>`                   |
-+                                                       +--------------------------------------------------+
-|                                                       | :ref:`TRAPDENSITY <trapdensity_reffile>`         |
-+                                                       +--------------------------------------------------+
-|                                                       | :ref:`TRAPPARS <trappars_reffile>`               |
-+-------------------------------------------------------+--------------------------------------------------+
 | :ref:`photom <photom_step>`                           | :ref:`PHOTOM <photom_reffile>`                   |
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`AREA <area_reffile>`                       |
@@ -278,8 +272,6 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PATHLOSS <pathloss_reffile>`               | :ref:`pathloss <pathloss_step>`                       |
 +--------------------------------------------------+-------------------------------------------------------+
-| :ref:`PERSAT <persat_reffile>`                   | :ref:`persistence <persistence_step>`                 |
-+--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PHOTOM <photom_reffile>`                   | :ref:`photom <photom_step>`                           |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`wfss_contam <wfss_contam_step>`                 |
@@ -317,10 +309,6 @@ documentation on each reference file.
 | :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`saturation <saturation_step>`                   |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`superbias <superbias_step>`                     |
-+--------------------------------------------------+-------------------------------------------------------+
-| :ref:`TRAPDENSITY <trapdensity_reffile>`         | :ref:`persistence <persistence_step>`                 |
-+--------------------------------------------------+-------------------------------------------------------+
-| :ref:`TRAPPARS <trappars_reffile>`               | :ref:`persistence <persistence_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` | :ref:`assign_wcs <assign_wcs_step>`                   |
 +                                                  +-------------------------------------------------------+

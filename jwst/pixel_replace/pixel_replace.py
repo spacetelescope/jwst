@@ -6,8 +6,6 @@ import numpy as np
 from scipy.optimize import minimize
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs import nirspec
-
 log = logging.getLogger(__name__)
 
 __all__ = ["PixelReplaceArrays", "PixelReplacement"]
@@ -22,8 +20,7 @@ class PixelReplaceArrays:
     `~stdatamodels.jwst.datamodels.JwstDataModel`.
     This avoids the overhead of constructing intermediate DataModel objects,
     which was slowing runtime for TSO data with thousands of integrations,
-    and provides a consistent interface for :meth:`PixelReplacement.mingrad`
-    and :meth:`PixelReplacement.fit_profile`.
+    and provides a consistent interface for all pixel replace algorithms.
     """
 
     data: np.ndarray
@@ -44,6 +41,9 @@ class PixelReplaceArrays:
     var_flat: np.ndarray | None
     """Flat-field variance array."""
 
+    trace_model: np.ndarray | None
+    """Trace model array."""
+
     dispersion_direction: int
     """Dispersion direction."""
 
@@ -61,10 +61,11 @@ class PixelReplacement:
     ----------
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Datamodel with bad pixels to replace. Updated in-place.
-
-    **pars
-        Optional parameters to modify how pixel replacement
-        will execute.
+    algorithm : str, optional
+        Replacement algorithm. Options are "mingrad", "fit_profile", or "trace_model".
+    n_adjacent_cols : int, optional
+        The number of adjacent columns to consider in building a spatial
+        profile.  Used only if ``algorithm`` is "fit_profile".
     """
 
     # Shortcuts for DQ Flags
@@ -77,37 +78,50 @@ class PixelReplacement:
     VERTICAL = 2
     LOG_SLICE = ["column", "row"]
 
-    def __init__(self, input_model, **pars):
+    def __init__(self, input_model, algorithm="mingrad", n_adjacent_cols=3):
         self.input = input_model
-        self.pars = {}
-        self.pars.update(pars)
+        self.algorithm_name = algorithm
+        self.n_adjacent_cols = n_adjacent_cols
+
         # Store algorithm options here.
         self.algorithm_dict = {
             "fit_profile": self.fit_profile,
             "mingrad": self.mingrad,
+            "trace_model": self.trace_model,
         }
 
         # Choose algorithm from dict using input par.
         try:
-            self.algorithm = self.algorithm_dict[self.pars["algorithm"]]
+            self.algorithm = self.algorithm_dict[self.algorithm_name]
 
         except KeyError as err:
             log.critical(
-                f"Algorithm name {self.pars['algorithm']} provided does "
-                "not match an implemented algorithm!"
+                f"Algorithm name '{self.algorithm_name}' provided does "
+                "not match an implemented algorithm."
             )
             raise KeyError from err
 
     @staticmethod
     def _arrays_from_model(model):
         """Extract PixelReplaceArrays from DataModel, copying arrays."""  # numpydoc ignore: RT01
+        # Ensure variance arrays exist
+        var_dict = {
+            "var_poisson": None,
+            "var_rnoise": None,
+            "var_flat": None,
+        }
+        for key in var_dict.keys():
+            if model[key] is not None:
+                var_dict[key] = model[key].copy()
+
         return PixelReplaceArrays(
             data=model.data.copy(),
             dq=model.dq.copy(),
             err=model.err.copy(),
-            var_poisson=model.var_poisson.copy(),
-            var_rnoise=model.var_rnoise.copy(),
-            var_flat=model.var_flat.copy(),
+            var_poisson=var_dict["var_poisson"],
+            var_rnoise=var_dict["var_rnoise"],
+            var_flat=var_dict["var_flat"],
+            trace_model=getattr(model, "trace_model", None),  # info-only, no need to copy
             dispersion_direction=model.meta.wcsinfo.dispersion_direction,
         )
 
@@ -120,6 +134,27 @@ class PixelReplacement:
         model.var_poisson = arrays.var_poisson
         model.var_rnoise = arrays.var_rnoise
         model.var_flat = arrays.var_flat
+
+    def _is_estimated(self, data, dq):
+        """
+        Make a mask of estimated pixels.
+
+        Parameters
+        ----------
+        data : ndarray
+            Data array.
+        dq : ndarray
+            DQ array.
+
+        Returns
+        -------
+        ndarray
+            Boolean array. True where pixels are flagged as FLUX_ESTIMATED and finite.
+        """
+        # This could be a one-liner, but the bitwise operator precedence is finicky,
+        # so this helper function exists to keep the logic in one place.
+        is_flagged = (dq & self.FLUX_ESTIMATED) > 0
+        return np.isfinite(data) & is_flagged
 
     def replace(self):
         """
@@ -135,109 +170,71 @@ class PixelReplacement:
         if isinstance(self.input, datamodels.ImageModel) or (
             isinstance(self.input, datamodels.SlitModel) and self.input.data.ndim == 2
         ):
+            # Count pixels previously estimated first
+            previous_flag = self._is_estimated(self.input.data, self.input.dq)
             arrays = self._arrays_from_model(self.input)
             arrays = self.algorithm(arrays)
             self._model_from_arrays(arrays, self.input)
-            n_replaced = np.count_nonzero(self.input.dq & self.FLUX_ESTIMATED)
+
+            # Count newly estimated pixels
+            n_replaced = np.count_nonzero(
+                self._is_estimated(self.input.data, self.input.dq) & ~previous_flag
+            )
             log.info(f"Input model had {n_replaced} pixels replaced.")
+
         elif isinstance(self.input, datamodels.IFUImageModel):
-            # Attempt to run pixel replacement on each throw of the IFU slicer
-            # individually.
-            xx, yy = np.indices(self.input.data.shape)
-            if self.input.meta.exposure.type == "MIR_MRS":
-                if self.pars["algorithm"] == "mingrad":
-                    # mingrad method
-                    arrays = self._arrays_from_model(self.input)
-                    arrays = self.algorithm(arrays)
-                    self._model_from_arrays(arrays, self.input)
-                else:
-                    # fit_profile method
+            previous_flag = self._is_estimated(self.input.data, self.input.dq)
+            arrays = self._arrays_from_model(self.input)
+
+            if self.algorithm_name == "mingrad" or self.algorithm_name == "trace_model":
+                arrays = self.algorithm(arrays)
+                self._model_from_arrays(arrays, self.input)
+            elif self.algorithm_name == "fit_profile":
+                # Attempt to run pixel replacement on each throw of the IFU slicer
+                # individually.
+                region_map = None
+                if hasattr(self.input, "regions") and self.input.regions is not None:
+                    region_map = self.input.regions
+                elif self.input.meta.exposure.type == "MIR_MRS":
                     det2ab = self.input.meta.wcs.get_transform(
                         self.input.meta.wcs.available_frames[0], "alpha_beta"
                     )
-                    _, beta_array, _ = det2ab(yy, xx)
-                    unique_beta = np.unique(beta_array)
-                    unique_beta = unique_beta[~np.isnan(unique_beta)]
-                    for i, beta in enumerate(unique_beta):
-                        # Define a mask that is True where this trace is located
-                        trace_mask = beta_array == beta
-                        arrays = self._arrays_from_model(self.input)
-                        arrays.dq = np.where(
-                            # When not in this trace, set NON_SCIENCE and DO_NOT_USE
-                            ~trace_mask,
-                            arrays.dq | self.DO_NOT_USE | self.NON_SCIENCE,
-                            arrays.dq,
-                        )
+                    region_map = det2ab.label_mapper.mapper.copy()
 
-                        arrays = self.algorithm(arrays)
-                        self.input.data = np.where(trace_mask, arrays.data, self.input.data)
-                        self.input.dq = np.where(trace_mask, arrays.dq, self.input.dq)
-                        self.input.err = np.where(trace_mask, arrays.err, self.input.err)
-                        self.input.var_poisson = np.where(
-                            trace_mask, arrays.var_poisson, self.input.var_poisson
-                        )
-                        self.input.var_rnoise = np.where(
-                            trace_mask, arrays.var_rnoise, self.input.var_rnoise
-                        )
-                        self.input.var_flat = np.where(
-                            trace_mask, arrays.var_flat, self.input.var_flat
-                        )
+                if region_map is None:
+                    raise ValueError(
+                        "Cannot use algorithm='fit_profile' for IFU data with missing region map"
+                    )
 
-                        n_replaced = np.count_nonzero(arrays.dq & self.FLUX_ESTIMATED)
-                        log.info(
-                            f"Input MRS frame had {n_replaced} pixels replaced "
-                            f"in IFU slice {i + 1}."
-                        )
+                region_numbers = np.unique(region_map[region_map > 0])
+                for slice_num in region_numbers:
+                    log.info(f"Replacing pixels for slice {slice_num}")
 
-                n_replaced = np.count_nonzero(self.input.dq & self.FLUX_ESTIMATED)
-                log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
-            else:
-                if self.pars["algorithm"] == "mingrad":
-                    # mingrad method
+                    # Define a mask that is True where this trace is located
+                    trace_mask = region_map == slice_num
                     arrays = self._arrays_from_model(self.input)
+                    arrays.dq = np.where(
+                        # When not in this trace, set NON_SCIENCE and DO_NOT_USE
+                        ~trace_mask,
+                        arrays.dq | self.DO_NOT_USE | self.NON_SCIENCE,
+                        arrays.dq,
+                    )
+
                     arrays = self.algorithm(arrays)
-                    self._model_from_arrays(arrays, self.input)
-                else:
-                    # fit_profile method - iterate over IFU slices
-                    for i in range(30):
-                        slice_wcs = nirspec.nrs_wcs_set_input(self.input, i)
-                        det2slicer = slice_wcs.get_transform(
-                            self.input.meta.wcs.available_frames[0], "slicer"
-                        )
-                        _, _, wave = det2slicer(yy, xx)
+                    self.input.data = np.where(trace_mask, arrays.data, self.input.data)
+                    self.input.dq = np.where(trace_mask, arrays.dq, self.input.dq)
+                    self.input.err = np.where(trace_mask, arrays.err, self.input.err)
+                    for var in ["var_poisson", "var_rnoise", "var_flat"]:
+                        input_var = getattr(self.input, var)
+                        update_var = getattr(arrays, var)
+                        if input_var is not None and update_var is not None:
+                            input_var = np.where(trace_mask, update_var, input_var)
+                            setattr(self.input, var, input_var)
 
-                        # Define a mask that is True where this trace is located
-                        trace_mask = wave > 0
-                        arrays = self._arrays_from_model(self.input)
-                        arrays.dq = np.where(
-                            # When not in this trace, set NON_SCIENCE and DO_NOT_USE
-                            ~trace_mask,
-                            arrays.dq | self.DO_NOT_USE | self.NON_SCIENCE,
-                            arrays.dq,
-                        )
-
-                        arrays = self.algorithm(arrays)
-                        self.input.data = np.where(trace_mask, arrays.data, self.input.data)
-                        self.input.dq = np.where(trace_mask, arrays.dq, self.input.dq)
-                        self.input.err = np.where(trace_mask, arrays.err, self.input.err)
-                        self.input.var_poisson = np.where(
-                            trace_mask, arrays.var_poisson, self.input.var_poisson
-                        )
-                        self.input.var_rnoise = np.where(
-                            trace_mask, arrays.var_rnoise, self.input.var_rnoise
-                        )
-                        self.input.var_flat = np.where(
-                            trace_mask, arrays.var_flat, self.input.var_flat
-                        )
-
-                        n_replaced = np.count_nonzero(arrays.dq & self.FLUX_ESTIMATED)
-                        log.info(
-                            f"Input NRS_IFU frame had {n_replaced} pixels "
-                            f"replaced in IFU slice {i + 1}."
-                        )
-
-                n_replaced = np.count_nonzero(self.input.dq & self.FLUX_ESTIMATED)
-                log.info(f"Input NRS_IFU frame had {n_replaced} total pixels replaced.")
+            n_replaced = np.count_nonzero(
+                self._is_estimated(self.input.data, self.input.dq) & ~previous_flag
+            )
+            log.info(f"Input IFU frame had {n_replaced} total pixels replaced.")
 
         # MultiSlitModel inputs (WFSS, NRS_FIXEDSLIT, ?)
         elif isinstance(self.input, datamodels.MultiSlitModel):
@@ -246,9 +243,11 @@ class PixelReplacement:
                 arrays = self._arrays_from_model(slit_model)
                 slit_model.close()
 
+                previous_flag = self._is_estimated(arrays.data, arrays.dq)
                 arrays = self.algorithm(arrays)
-
-                n_replaced = np.count_nonzero(arrays.dq & self.FLUX_ESTIMATED)
+                n_replaced = np.count_nonzero(
+                    self._is_estimated(arrays.data, arrays.dq) & ~previous_flag
+                )
                 log.info(f"Slit {i} had {n_replaced} pixels replaced.")
 
                 self._model_from_arrays(arrays, self.input.slits[i])
@@ -276,10 +275,14 @@ class PixelReplacement:
                     var_poisson=var_dict["var_poisson"],
                     var_rnoise=var_dict["var_rnoise"],
                     var_flat=var_dict["var_flat"],
+                    trace_model=getattr(self.input, "trace_model", None),
                     dispersion_direction=dispaxis,
                 )
+                previous_flag = self._is_estimated(arrays.data, arrays.dq)
                 arrays = self.algorithm(arrays)
-                n_replaced = np.count_nonzero(arrays.dq & self.FLUX_ESTIMATED)
+                n_replaced = np.count_nonzero(
+                    self._is_estimated(arrays.data, arrays.dq) & ~previous_flag
+                )
                 log.info(f"Input TSO integration {i} had {n_replaced} pixels replaced.")
 
                 self.input.data[i] = arrays.data
@@ -291,9 +294,7 @@ class PixelReplacement:
 
         else:
             # This should never happen, as these should be caught in the step code.
-            log.critical(
-                "Pixel replacement code did not filter this input correctly - skipping step."
-            )
+            log.critical(f"Input model {self.input} is not supported - skipping step.")
             return
 
     def fit_profile(self, arrays):
@@ -320,11 +321,6 @@ class PixelReplacement:
             The input with bad pixels now flagged with FLUX_ESTIMATED
             and holding a flux value estimated from the spatial profile.
         """
-        # np.nanmedian() entry full of NaN values would produce a numpy
-        # warning (despite well-defined behavior - return a NaN)
-        # so we suppress that here.
-        warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
-
         dispaxis = arrays.dispersion_direction
 
         # Make a copy of the input DQ, before replacement
@@ -377,9 +373,7 @@ class PixelReplacement:
         log.debug(f"Number of profiles with at least one bad pixel: {len(profiles_to_replace)}")
         for ind in profiles_to_replace:
             # Use sets for convenient finding of neighboring slices to use in profile creation
-            adjacent_inds = set(
-                range(ind - self.pars["n_adjacent_cols"], ind + self.pars["n_adjacent_cols"] + 1)
-            )
+            adjacent_inds = set(range(ind - self.n_adjacent_cols, ind + self.n_adjacent_cols + 1))
             adjacent_inds.discard(ind)
             valid_adjacent_inds = list(adjacent_inds.intersection(valid_profiles))
 
@@ -408,12 +402,16 @@ class PixelReplacement:
             # Normalize profile data
             # TODO: check on signs here - absolute max sometimes picks up
             #  large negative outliers
-            profile_norm_scale = np.nanmax(np.abs(profile_data), axis=(dispaxis - 1), keepdims=True)
-            # If profile data has SNR < 5 everywhere just use unity scaling
-            # (so we don't normalize to noise)
-            if np.nanmax(profile_snr) < 5:
-                profile_norm_scale[:] = 1.0
-            normalized = profile_data / profile_norm_scale
+            with warnings.catch_warnings():
+                warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
+                profile_norm_scale = np.nanmax(
+                    np.abs(profile_data), axis=(dispaxis - 1), keepdims=True
+                )
+                # If profile data has SNR < 5 everywhere just use unity scaling
+                # (so we don't normalize to noise)
+                if np.nanmax(profile_snr) < 5:
+                    profile_norm_scale[:] = 1.0
+                normalized = profile_data / profile_norm_scale
 
             # Get corresponding error and variance data and scale and mask to match
             # Handle the variance arrays as errors, so the scales match.
@@ -433,12 +431,14 @@ class PixelReplacement:
             # Pull median for each pixel across profile.
             # Profile entry full of NaN values would produce a numpy
             # warning (despite well-defined behavior - return a NaN)
-            # so we suppress that above.
-            median_profile = np.nanmedian(normalized, axis=(2 - dispaxis))
+            # so we suppress that
+            with warnings.catch_warnings():
+                warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
+                median_profile = np.nanmedian(normalized, axis=(2 - dispaxis))
 
-            # Do the same for the errors
-            for err_name in norm_errors:
-                norm_errors[err_name] = np.nanmedian(norm_errors[err_name], axis=(2 - dispaxis))
+                # Do the same for the errors
+                for err_name in norm_errors:
+                    norm_errors[err_name] = np.nanmedian(norm_errors[err_name], axis=(2 - dispaxis))
 
             # Clean current profile of values flagged as bad
             current_condition = self.custom_slice(dispaxis, ind)
@@ -462,23 +462,26 @@ class PixelReplacement:
             # Only do this scaling if we didn't default to all-unity scaling above,
             # and require input values below 1e20 so that we don't overflow the
             # minimization routine with extremely bad noise.
-            if (
-                (np.nanmedian(profile_norm_scale) != 1.0)
-                & (np.nanmax(np.abs(min_median)) < 1e20)
-                & (np.nanmax(np.abs(norm_current)) < 1e20)
-            ):
-                # TODO: check on signs here - absolute max sometimes picks up
-                #  large negative outliers
-                norm_scale = minimize(
-                    self.profile_mse,
-                    x0=np.abs(np.nanmax(norm_current)),
-                    args=(np.abs(min_median), np.abs(norm_current)),
-                    method="Nelder-Mead",
-                ).x
-                scale = np.max(min_current)
-            else:
-                norm_scale = 1.0
-                scale = 1.0
+            with warnings.catch_warnings():
+                warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
+
+                if (
+                    (np.nanmedian(profile_norm_scale) != 1.0)
+                    & (np.nanmax(np.abs(min_median)) < 1e20)
+                    & (np.nanmax(np.abs(norm_current)) < 1e20)
+                ):
+                    # TODO: check on signs here - absolute max sometimes picks up
+                    #  large negative outliers
+                    norm_scale = minimize(
+                        self.profile_mse,
+                        x0=np.abs(np.nanmax(norm_current)),
+                        args=(np.abs(min_median), np.abs(norm_current)),
+                        method="Nelder-Mead",
+                    ).x
+                    scale = np.max(min_current)
+                else:
+                    norm_scale = 1.0
+                    scale = 1.0
 
             # Replace pixels that are do-not-use but not non-science
             current_dq = input_dq[current_condition][range(*profile_cut)]
@@ -543,6 +546,69 @@ class PixelReplacement:
         vert = (arr[yindx - 1, xindx] + arr[yindx + 1, xindx]) / 2.0
         return np.array([horiz, vert])
 
+    def _mingrad_interp(self, data, arrays_to_correct, xindx, yindx):
+        """
+        Use mingrad interpolation to interpolate arrays at selected indices.
+
+        Parameters
+        ----------
+        data : ndarray
+            Flux array, used to get the minimum gradient.
+        arrays_to_correct : dict
+            Specific arrays to correct. Updated in place.
+        xindx : ndarray
+            X-index values for pixels to interpolate.
+        yindx : ndarray
+            Y-index values for pixels to interpolate.
+        """
+        # Absolute gradient along each axis from indata, shape (2, N), used to choose direction
+        diffs = np.array(
+            [
+                np.abs(data[yindx, xindx - 1] - data[yindx, xindx + 1]),
+                np.abs(data[yindx - 1, xindx] - data[yindx + 1, xindx]),
+            ]
+        )
+
+        # Replace NaN diffs with inf so argmin naturally prefers the valid direction.
+        # Mask is True where at least one valid direction, False elsewhere,
+        # such that pixels where both diffs are inf have no usable neighbor pair and are skipped.
+        diffs_with_infs = np.where(np.isnan(diffs), np.inf, diffs)  # (2, N)
+        mask = ~np.all(np.isinf(diffs_with_infs), axis=0)  # (N,)
+
+        # Per-pixel direction index: 0 = horizontal, 1 = vertical
+        indmin = np.argmin(diffs_with_infs, axis=0)  # (N,)
+        col_idx = np.arange(len(yindx))
+
+        # Select the minimium-gradient interpolated values and update model with them
+        indmin = indmin[mask]
+        col_idx = col_idx[mask]
+
+        # Interpolate arrays to correct in both directions then select the minimum-gradient
+        # direction
+        for array_name, array_data in arrays_to_correct.items():
+            if array_data is None:
+                continue
+
+            if array_name == "dq":
+                # Update DQ flags for pixels that were replaced.
+                orig_dq = array_data[yindx, xindx]  # (N,)
+                remove_dnu = (
+                    mask
+                    & (orig_dq & self.DO_NOT_USE).astype(bool)
+                    & ~(orig_dq & self.NON_SCIENCE).astype(bool)
+                )
+                array_data[yindx[remove_dnu], xindx[remove_dnu]] -= self.DO_NOT_USE
+                array_data[yindx[mask], xindx[mask]] |= self.FLUX_ESTIMATED
+            else:
+                # Interpolate over data
+                if array_name.startswith("var"):
+                    # Take the square root first to get the scales right
+                    interp_data = self._interp_neighbors(np.sqrt(array_data), yindx, xindx) ** 2
+                else:
+                    interp_data = self._interp_neighbors(array_data, yindx, xindx)
+
+                array_data[yindx[mask], xindx[mask]] = interp_data[indmin, col_idx]
+
     def mingrad(self, arrays):
         """
         Replace pixels with the minimum gradient replacement method.
@@ -572,31 +638,25 @@ class PixelReplacement:
             The input with flagged bad pixels now flagged with FLUX_ESTIMATED
             and holding a flux value estimated from adjacent pixels.
         """
-        # np.nanmedian() entry full of NaN values would produce a numpy
-        # warning (despite well-defined behavior - return a NaN)
-        # so we suppress that here.
-        warnings.filterwarnings(action="ignore", message="All-NaN slice encountered")
-
         log.info("Using minimum gradient method.")
 
-        in_var_dict = {
+        arrays_to_correct = {
+            "data": None,
+            "err": None,
             "var_poisson": None,
             "var_rnoise": None,
             "var_flat": None,
+            "dq": None,
         }
-        interp_rootvar_dict = {
-            "var_poisson": None,
-            "var_rnoise": None,
-            "var_flat": None,
-        }
-        for key in in_var_dict.keys():
-            if getattr(arrays, key) is not None:
-                in_var_dict[key] = getattr(arrays, key)
+        for key in arrays_to_correct.keys():
+            arrays_to_correct[key] = getattr(arrays, key)
 
         # Make an array of x/y values on the detector
         (ysize, xsize) = arrays.data.shape
         basex, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
-        pad = 1  # Padding around edge of array to ensure we don't look for neighbors outside array
+
+        # Padding around edge of array to ensure we don't look for neighbors outside array
+        pad = 1
 
         # Find NaN-valued pixels
         indx = np.where(
@@ -609,56 +669,8 @@ class PixelReplacement:
         # X and Y indices
         yindx, xindx = indx[0], indx[1]
 
-        # Absolute gradient along each axis from indata, shape (2, N), used to choose direction
-        diffs = np.array(
-            [
-                np.abs(arrays.data[yindx, xindx - 1] - arrays.data[yindx, xindx + 1]),
-                np.abs(arrays.data[yindx - 1, xindx] - arrays.data[yindx + 1, xindx]),
-            ]
-        )
-
-        # Interpolated values for each quantity in both directions, shape (2, N)
-        interp_data = self._interp_neighbors(arrays.data, yindx, xindx)
-        interp_err = self._interp_neighbors(arrays.err, yindx, xindx)
-        # Propagate variance components as errors to get the scales right
-        for key in in_var_dict.keys():
-            if in_var_dict[key] is not None:
-                interp_rootvar_dict[key] = self._interp_neighbors(
-                    np.sqrt(in_var_dict[key]), yindx, xindx
-                )
-
-        # Replace NaN diffs with inf so argmin naturally prefers the valid direction.
-        # Mask is True where at least one valid direction, False elsewhere,
-        # such that pixels where both diffs are inf have no usable neighbor pair and are skipped.
-        diffs_with_infs = np.where(np.isnan(diffs), np.inf, diffs)  # (2, N)
-        mask = ~np.all(np.isinf(diffs_with_infs), axis=0)  # (N,)
-
-        # Per-pixel direction index: 0 = horizontal, 1 = vertical
-        indmin = np.argmin(diffs_with_infs, axis=0)  # (N,)
-        col_idx = np.arange(len(yindx))
-
-        # Select the minimium-gradient interpolated values and update model with them
-        indmin = indmin[mask]
-        col_idx = col_idx[mask]
-        arrays.data[yindx[mask], xindx[mask]] = interp_data[indmin, col_idx]
-        arrays.err[yindx[mask], xindx[mask]] = interp_err[indmin, col_idx]
-        # Square the interpolated errors back to variances for insertion
-        for key in interp_rootvar_dict.keys():
-            if interp_rootvar_dict[key] is not None:
-                in_var_dict[key][yindx[mask], xindx[mask]] = (
-                    interp_rootvar_dict[key][indmin, col_idx] ** 2
-                )
-                setattr(arrays, key, in_var_dict[key])
-
-        # Update DQ flags for pixels that were replaced.
-        orig_dq = arrays.dq[yindx, xindx]  # (N,)
-        remove_dnu = (
-            mask
-            & (orig_dq & self.DO_NOT_USE).astype(bool)
-            & ~(orig_dq & self.NON_SCIENCE).astype(bool)
-        )
-        arrays.dq[yindx[remove_dnu], xindx[remove_dnu]] -= self.DO_NOT_USE
-        arrays.dq[yindx[mask], xindx[mask]] |= self.FLUX_ESTIMATED
+        # Interpolate arrays in place
+        self._mingrad_interp(arrays.data, arrays_to_correct, xindx, yindx)
 
         return arrays
 
@@ -712,3 +724,113 @@ class PixelReplacement:
         return np.nansum((current - (median * scale)) ** 2.0) / (
             len(median) - np.count_nonzero(np.isnan(current))
         )
+
+    def _interp_along_wavelength(self, data, dispersion_direction, xindx, yindx):
+        """
+        Interpolate missing values along the wavelength dimension.
+
+        Parameters
+        ----------
+        data : ndarray
+            The array with missing values. Updated in place.
+        dispersion_direction : int
+            Axis containing the dispersion coordinates.
+        xindx : ndarray
+            X-index for missing values.
+        yindx : ndarray
+            Y-index for missing values.
+        """
+        if dispersion_direction == self.HORIZONTAL:
+            bad_xd = yindx
+            bad_wvlen = xindx
+        else:
+            bad_xd = xindx
+            bad_wvlen = yindx
+
+        shape = data.shape
+        yy, xx = np.mgrid[: shape[0], : shape[1]]
+
+        # make sure bad pixels are NaN to start so they are not included in interpolation
+        data[yindx, xindx] = np.nan
+
+        for xd in np.unique(bad_xd):
+            wl_to_fix = bad_wvlen[bad_xd == xd]
+
+            if dispersion_direction == self.HORIZONTAL:
+                xdisp_values = data[xd, :]
+                wl_values = xx[xd, :]
+            else:
+                xdisp_values = data[:, xd]
+                wl_values = yy[:, xd]
+
+            valid = np.isfinite(xdisp_values)
+            if not np.any(valid):
+                continue
+            interp_wl = np.interp(wl_to_fix, wl_values[valid], xdisp_values[valid])
+
+            if dispersion_direction == self.HORIZONTAL:
+                data[xd, wl_to_fix] = interp_wl
+            else:
+                data[wl_to_fix, xd] = interp_wl
+
+    def trace_model(self, arrays):
+        """
+        Replace bad pixels from the trace model if available.
+
+        Any remaining bad pixels not available from the trace model are replaced
+        with the ``mingrad`` algorithm.
+
+        Parameters
+        ----------
+        arrays : `PixelReplaceArrays`
+            Pixel arrays and dispersion direction for the 2D spectrum to process.
+            Arrays are modified in-place.
+
+        Returns
+        -------
+        arrays : `PixelReplaceArrays`
+            The input with flagged bad pixels now flagged with FLUX_ESTIMATED
+            and holding a flux value estimated from adjacent pixels.
+        """
+        trace_model = arrays.trace_model
+        if trace_model is None:
+            # No trace model to use: just call mingrad and return
+            log.info("No trace model to use")
+            return self.mingrad(arrays)
+
+        replaceable = ~np.isfinite(arrays.data) & np.isfinite(arrays.trace_model)
+        if not np.any(replaceable):
+            log.info("No replaceable pixels in the trace model")
+            return self.mingrad(arrays)
+
+        log.info(f"Replacing {np.sum(replaceable)} bad pixels from trace model")
+        arrays.data[replaceable] = arrays.trace_model[replaceable]
+
+        # Update DQ flags for pixels that were replaced.
+        remove_dnu = replaceable & (arrays.dq & self.DO_NOT_USE > 0)
+        arrays.dq[remove_dnu] ^= self.DO_NOT_USE
+        arrays.dq[replaceable] |= self.FLUX_ESTIMATED
+
+        # Interpolate along wavelengths to fill in error values for missing data
+        yindx, xindx = np.where(replaceable)
+        for error_ext in ["err", "var_poisson", "var_rnoise", "var_flat"]:
+            err = getattr(arrays, error_ext)
+            if err is None:
+                continue
+
+            # interpolate variance as error
+            if error_ext.startswith("var"):
+                err = np.sqrt(err)
+
+            # interpolate the array in place
+            self._interp_along_wavelength(err, arrays.dispersion_direction, xindx, yindx)
+
+            # re-square the variance
+            if error_ext.startswith("var"):
+                err = err**2
+
+            # store the updated array
+            setattr(arrays, error_ext, err)
+
+        # Replace any remaining bad pixels via mingrad
+        return self.mingrad(arrays)

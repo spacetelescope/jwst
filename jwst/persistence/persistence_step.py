@@ -1,5 +1,8 @@
 import logging
+from pathlib import Path
 
+import asdf
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.persistence import persistence
@@ -16,14 +19,12 @@ class PersistenceStep(Step):
     class_alias = "persistence"
 
     spec = """
-        input_trapsfilled = string(default="") # Name of the most recent trapsfilled file for the current detector
-        flag_pers_cutoff = float(default=40.) # Pixels with persistence correction >= this value in DN will be flagged in the DQ
-        save_persistence = boolean(default=False) # Save subtracted persistence to an output file with suffix '_output_pers'
-        save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
-        modify_input = boolean(default=False)
+        save_persistence = string(default=None) # Name of ASDF output file to save the persistence array
+        persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
+        persistence_array_file = string(default=None) # A path to an ASDF file containing a 2-D array of persistence times per pixel
+        persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
+        skip = boolean(default=True) # By default, skip the step.
     """  # noqa: E501
-
-    reference_file_types = ["trapdensity", "trappars", "persat"]
 
     def process(self, step_input):
         """
@@ -36,79 +37,113 @@ class PersistenceStep(Step):
 
         Returns
         -------
-        output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             The persistence corrected datamodel
         """
-        if self.input_trapsfilled is not None:
-            if (self.input_trapsfilled == "None") or (len(self.input_trapsfilled) == 0):
-                self.input_trapsfilled = None
-
         result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
-
-        trap_density_filename = self.get_reference_file(result, "trapdensity")
-        trappars_filename = self.get_reference_file(result, "trappars")
-        persat_filename = self.get_reference_file(result, "persat")
-
-        # Is any reference file missing?
-        missing = False
-        missing_reftypes = []
-        if persat_filename == "N/A":
-            missing = True
-            missing_reftypes.append("PERSAT")
-        if trap_density_filename == "N/A":
-            missing = True
-            missing_reftypes.append("TRAPDENSITY")
-        if trappars_filename == "N/A":
-            missing = True
-            missing_reftypes.append("TRAPPARS")
-        if missing:
-            if len(missing_reftypes) == 1:
-                msg = "Missing reference file type:  " + missing_reftypes[0]
-            else:
-                msg = "Missing reference file types: "
-                for name in missing_reftypes:
-                    msg += " " + name
-            log.warning("%s", msg)
+        if self.skip:
+            log.info("Skipping persistence step as requested.")
             result.meta.cal_step.persistence = "SKIPPED"
             return result
 
-        if self.input_trapsfilled is None:
-            traps_filled_model = None
-        else:
-            traps_filled_model = datamodels.TrapsFilledModel(self.input_trapsfilled)
-        trap_density_model = datamodels.TrapDensityModel(trap_density_filename)
-        trappars_model = datamodels.TrapParsModel(trappars_filename)
-        persat_model = datamodels.PersistenceSatModel(persat_filename)
+        if self.process_persistence_options(result) == "Failed":
+            log.info("Persistence step failed due to invalid persistence_time.")
+            result.meta.cal_step.persistence = "FAILED"
+            return result
 
         pers_a = persistence.DataSet(
             result,
-            traps_filled_model,
-            self.flag_pers_cutoff,
             self.save_persistence,
-            trap_density_model,
-            trappars_model,
-            persat_model,
+            self.persistence_time,
+            self.persistence_array,
+            self.persistence_dnu,
         )
-        (result, traps_filled, output_pers, skipped) = pers_a.do_all()
-        if skipped:
-            result.meta.cal_step.persistence = "SKIPPED"
-        else:
-            result.meta.cal_step.persistence = "COMPLETE"
+        result, skipped = pers_a.do_all()
 
-        if traps_filled_model is not None:  # input traps_filled
-            del traps_filled_model
-        if traps_filled is not None:  # output traps_filled
-            # Save the traps_filled image with suffix 'trapsfilled'.
-            self.save_model(traps_filled, "trapsfilled", force=self.save_trapsfilled)
-            del traps_filled
-
-        if output_pers is not None:  # output file of persistence
-            self.save_model(output_pers, suffix="output_pers", force=self.save_persistence)
-            del output_pers
-
-        # Cleanup
-        del trap_density_model
-        del trappars_model
-        del persat_model
+        result.meta.cal_step.persistence = "COMPLETE"
+        if pers_a.save_persistence is not None:
+            self.write_persistence_array(result, pers_a.save_persistence)
 
         return result
+
+    def process_persistence_options(self, result):
+        """
+        Process persistence_time, persistence_array, and persistence_dnu as the inputs.
+
+        Parameters
+        ----------
+        result : RampModel
+            The RampModel on which to process the persistence flag.
+
+        Returns
+        -------
+        ret : str or None
+            "Failed" if invalid persistence_time; otherwise NoneType.
+        """
+        # Could make less than or equal to frametime.
+        if self.persistence_time is None or self.persistence_time <= 0.0:
+            self.persistence_time = None
+            self.persistence_array = None
+            ret = "Failed"
+            return ret
+
+        _, _, nrows, ncols = result.groupdq.shape
+        if self.persistence_array_file is not None:
+            self.get_persistence_array_from_file(nrows, ncols)
+        else:
+            self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
+
+        return None
+
+    def write_persistence_array(self, result, filename):
+        """
+        Write the persistence array to an ASDF file.
+
+        Parameters
+        ----------
+        result : RampModel
+            The RampModel on which to process the persistence flag.
+        """
+        ext = str(Path(filename).suffix)
+        stem = Path(filename).stem
+        parent = Path(filename).parent
+        root = str(parent / stem)
+        if ext != ".asdf":
+            filename = f"{root}.asdf"
+
+        # Write persistence array to ASDF file
+        rows, cols = np.nonzero(self.persistence_array)
+        vals = self.persistence_array[rows, cols]
+        tree = {
+            "filename": result.meta.filename,
+            "rows": rows,
+            "cols": cols,
+            "vals": vals,
+            "pers_time": self.persistence_time,
+        }
+
+        with asdf.AsdfFile(tree) as af:
+            af.write_to(filename)
+
+    def get_persistence_array_from_file(self, nrows, ncols):
+        """
+        Get the persistence array from an ASDF file.
+
+        Parameters
+        ----------
+        nrows : int
+            The number of rows in the RampModel data.
+
+        ncols : int
+            The number of columns in the RampModel data.
+        """
+        with asdf.open(self.persistence_array_file) as pers_file:
+            if pers_file["pers_time"] != self.persistence_time:
+                raise ValueError("Invalid persistence file. Mismatch of persistence time.")
+
+            rows = pers_file["rows"]
+            cols = pers_file["cols"]
+            vals = pers_file["vals"]
+
+            self.persistence_array = np.zeros((nrows, ncols), dtype=vals.dtype)
+            self.persistence_array[rows, cols] = vals

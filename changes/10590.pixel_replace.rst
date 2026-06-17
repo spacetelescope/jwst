@@ -1,0 +1,2 @@
+Add a new algorithm option ("trace_model") to replace pixels from a spectral trace model, running the ``adaptive_trace_model`` step first if necessary, and replacing any remaining bad pixels with the ``mingrad`` algorithm if needed.
+Fix a bug in the "fit_profile" algorithm for IFU data that caused profiles to be fit to data across the whole image rather than just the current slice.
