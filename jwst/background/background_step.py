@@ -31,7 +31,7 @@ class BackgroundStep(Step):
         maxiters = integer(default=None)  # Number of clipping iterations
         soss_source_percentile = float(default=35.0) # Threshold flux percentile to mask out source pixels
         soss_bkg_percentile = float_list(min=2, max=2, default=None) # Background percentiles to use; default is [25.0, 50.0]
-        wfss_method = string(default="catalog") # options are "catalog", "clip", or "user"
+        wfss_mask_method = string(default="catalog") # options are "catalog", "clip", or "user"
         wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
         wfss_mask = string(default=None)  # WFSS source mask file
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
@@ -101,7 +101,7 @@ class BackgroundStep(Step):
             result = subtract_wfss_bkg(
                 model,
                 bkg_name,
-                self.wfss_method,
+                self.wfss_mask_method,
                 wl_range_name=wlrange_name,
                 mmag_extract=self.wfss_mmag_extract,
                 user_mask=wfss_mask,
