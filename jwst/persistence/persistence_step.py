@@ -97,7 +97,7 @@ class PersistenceStep(Step):
 
         return None
 
-    def write_persistence_array(self, result, filename, tree=None):
+    def write_persistence_array(self, result, filename):
         """
         Write the persistence array to an ASDF file.
 
@@ -113,15 +113,20 @@ class PersistenceStep(Step):
         if ext != ".asdf":
             filename = f"{root}.asdf"
 
+        # XXX Think more about this. The output file is what matters.
+
+        det = result.meta.instrument.name
         # Write persistence array to ASDF file
         #    Only write out the non-zero rows and columns
         #    and their values, to save disk space.
         rows, cols = np.nonzero(self.persistence_array)
         vals = self.persistence_array[rows, cols]
-        if tree is None:
+
+        # if not Path.exists(Path(filename)):
+        if not Path(filename).exists():
             # Set up the tree with only one detector.
             tree = {
-                result.meta.instrument.name: {
+                det: {
                     "filename": result.meta.filename,
                     "rows": rows,
                     "cols": cols,
@@ -129,18 +134,23 @@ class PersistenceStep(Step):
                     "pers_time": self.persistence_time,
                 },
             }
+            with asdf.AsdfFile(tree) as af:
+                af.write_to(filename)
         else:
-            # Add or overwrite the current detector if it already exists in the tree
-            tree[result.meta.instrument.name] = {
-                "filename": result.meta.filename,
-                "rows": rows,
-                "cols": cols,
-                "vals": vals,
-                "pers_time": self.persistence_time,
-            }
-
-        with asdf.AsdfFile(tree) as af:
-            af.write_to(filename)
+            with asdf.open(filename, memmap=True) as pers_file:
+                # XXX Is this sufficient? Is this lazy? Or is there something that
+                #     needs to be done to force the entire tree to load, so it can
+                #     be written properly. Maybe use memmap=True
+                # Add or overwrite the current detector if it already exists in the tree
+                pers_file[det] = {
+                    "filename": result.meta.filename,
+                    "rows": rows,
+                    "cols": cols,
+                    "vals": vals,
+                    "pers_time": self.persistence_time,
+                }
+                # XXX Will this work?
+                pers_file.write_to(filename)
 
     def get_persistence_array_from_file(self, result, nrows, ncols):
         """
@@ -155,8 +165,7 @@ class PersistenceStep(Step):
             The number of columns in the RampModel data.
         """
         self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
-        # if not os.path.exists(self.persistence_array_file):
-        if not Path.exists(self.persistence_array_file):
+        if not Path(self.persistence_array_file).exists():
             log.info("Persistence array file does not exist: '{self.persistence_array_file}'")
             log.info(".... Creating new persistence array.")
             return
