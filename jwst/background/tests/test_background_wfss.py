@@ -677,7 +677,7 @@ def test_user_mask_step(mock_asn_and_data, user_mask, caplog):
 
     with caplog.at_level(logging.INFO):
         result = BackgroundStep.call(
-            asn_name, wfss_method="user", wfss_mask=mask_fname, save_results=False
+            asn_name, wfss_mask_method="user", wfss_mask=mask_fname, save_results=False
         )
     # return to previous working dir
     os.chdir(cwd)
@@ -741,7 +741,7 @@ def test_clip_method_basic(make_nrc_wfss_datamodel, bkg_file, caplog):
 def test_clip_method_requires_dispaxis(make_nrc_wfss_datamodel, bkg_file):
     """Test that mask_method='clip' raises ValueError when no dispaxis is available."""
     model = make_nrc_wfss_datamodel.copy()
-    model.meta.wcsinfo.dispersion_axis = None
+    model.meta.wcsinfo.dispersion_direction = None
 
     with pytest.raises(ValueError, match="Valid dispersion axis is required for method=clip"):
         subtract_wfss_bkg(model, bkg_file, mask_method="clip")
