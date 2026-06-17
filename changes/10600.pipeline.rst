@@ -1,1 +1,6 @@
-Streamlined stage3 spectral processing inputs for WFSS mode.
+Streamlined stage3 spectral processing inputs for WFSS mode
+by enabling the Spec3Pipeline to take 1-D extracted spectra (x1d)
+instead of cal files, bypassing identical calls to pixel_replace
+and extract_1d steps between the spec2 and spec3 pipelines for
+those data. As a result, the runtime could be improved by
+at least 4x (just a rough estimate as runtime is very machine-dependent).

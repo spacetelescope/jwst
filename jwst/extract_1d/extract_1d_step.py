@@ -473,7 +473,9 @@ class Extract1dStep(Step):
         # For WFSS, reorder the x1d product to save it in the flat format
         if exp_type in extract.WFSS_EXPTYPES:
             result = make_wfss_multiexposure(result)
-            if "WFSS" in exp_type:  # Needed for calwebb_spec3
+            if "WFSS" in exp_type:
+                # WCS needs to be added to x1d files so that the S_REGION can be
+                # computed in the spec3 pipeline for combined x1d and c1d products
                 if isinstance(input_data, SourceModelContainer) and isinstance(
                     input_data[0], datamodels.SlitModel
                 ):
