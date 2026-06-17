@@ -1,0 +1,1 @@
+For exposures with uneven readout sampling, set the fitting algorithm to LIKELY. This applies to some multistripe modes with repeated in-frame samples.

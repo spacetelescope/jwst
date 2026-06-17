@@ -1,0 +1,1 @@
+For oversampled data, interpolate variance arrays as errors for correct weighting then square them afterward, instead of directly interpolating the variances.
