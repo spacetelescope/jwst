@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from astropy import units as u
 from astropy.table import Table
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
@@ -23,7 +24,7 @@ TIME_KEYS = [
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def make_datamodel():
     """Make data for white light tests"""
     n_spec = 5
@@ -160,9 +161,12 @@ def make_datamodel():
     return model
 
 
-def test_white_light(make_datamodel, monkeypatch):
+@pytest.mark.parametrize("flux_unit", ["Jy", "DN/s", None])
+def test_white_light(make_datamodel, monkeypatch, flux_unit):
     """Test white light step"""
     data = make_datamodel
+    for spec in data.spec:
+        spec.spec_table.columns["FLUX"].unit = flux_unit
 
     watcher = LogWatcher("1 spectra in order 1 with no mid time or duplicate mid time (20")
     monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
@@ -194,6 +198,8 @@ def test_white_light(make_datamodel, monkeypatch):
         ]
         * len(mid_times)
     )
+    if flux_unit is not None:
+        expected_flux = expected_flux << u.Unit(flux_unit)
     expected_flux_order_1 = expected_flux.copy()
     expected_flux_order_1[-3] = np.nan  # the third was order 2 only
     expected_flux_order_2 = expected_flux.copy()
@@ -201,11 +207,14 @@ def test_white_light(make_datamodel, monkeypatch):
     assert_allclose(result["whitelight_flux_order_1"], expected_flux_order_1, equal_nan=True)
     assert_allclose(result["whitelight_flux_order_2"], expected_flux_order_2, equal_nan=True)
 
+    assert result["whitelight_flux_order_1"].unit == flux_unit
+    assert result["whitelight_flux_order_2"].unit == flux_unit
+
 
 def test_white_light_multi_detector(make_datamodel):
     """Test white light step on data with multiple detectors."""
     # Set the detectors in the two spec tables to different values
-    data = make_datamodel.copy()
+    data = make_datamodel
     data.spec[0].detector = "NRS1"
     data.spec[1].detector = "NRS2"
 
@@ -255,7 +264,7 @@ def test_white_light_multi_detector(make_datamodel):
 def test_white_light_duplicate_times(monkeypatch, make_datamodel):
     """Test white light step on data with duplicate time stamps."""
     # Set all times to the same value for order 1
-    data = make_datamodel.copy()
+    data = make_datamodel
     for key in TIME_KEYS:
         data.spec[0].spec_table[key][:] = data.spec[0].spec_table[key][0]
 
@@ -357,7 +366,7 @@ def test_get_reference_wavelength_range(make_datamodel):
 
 def test_get_reference_wavelength_range_other_exptype(make_datamodel):
     """Test that non-SOSS exposure types return None."""
-    model = make_datamodel.copy()
+    model = make_datamodel
     model.meta.exposure.type = "NRC_TSIMAGE"
     wr = WhiteLightStep()._get_reference_wavelength_range(model)
     assert wr is None
@@ -365,7 +374,7 @@ def test_get_reference_wavelength_range_other_exptype(make_datamodel):
 
 def test_get_reference_wavelength_range_no_file(make_datamodel, monkeypatch, log_watcher):
     """Test that missing wavelength range reference files are handled."""
-    model = make_datamodel.copy()
+    model = make_datamodel
     monkeypatch.setattr(WhiteLightStep, "get_reference_file", lambda *args: "N/A")
 
     watcher = log_watcher(

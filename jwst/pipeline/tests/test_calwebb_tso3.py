@@ -212,3 +212,35 @@ def test_tso3_single_model_input(tmp_path):
     # Input is not modified
     assert input_model.meta.cal_step.instance == model_copy.meta.cal_step.instance
     np.testing.assert_allclose(input_model.data, model_copy.data)
+
+
+def test_tso3_model_blender(tmp_path):
+    """Test metadata blending for tso3."""
+    model_1 = niriss_soss_tso()
+    model_1.meta.filename = "test_tso3_1_calints.fits"
+    model_1.meta.exposure.integration_start = 1
+    model_1.meta.exposure.integration_end = 2
+    model_1.meta.exposure.exposure_time = 20.0
+    model_2 = niriss_soss_tso()
+    model_2.meta.exposure.integration_start = 3
+    model_2.meta.exposure.integration_end = 4
+    model_2.meta.exposure.exposure_time = 20.0
+    model_2.meta.filename = "test_tso3_2_calints.fits"
+
+    # Reduce runtime for soss extraction
+    steps = {"extract_1d": {"soss_rtol": 0.1, "soss_tikfac": 2.434559775e-13}}
+    Tso3Pipeline.call(
+        [model_1, model_2], output_dir=str(tmp_path), steps=steps, output_file="test_tso3"
+    )
+
+    # Check for expected output files
+    expected = ["test_tso3_x1dints.fits", "test_tso3_whtlt.ecsv"]
+    for filename in expected:
+        assert (tmp_path / filename).exists()
+
+    # Output has blended metadata
+    with dm.open(tmp_path / "test_tso3_x1dints.fits") as result:
+        assert result.meta.filename == "test_tso3_x1dints.fits"
+        assert result.meta.exposure.integration_start == 1
+        assert result.meta.exposure.integration_end == 4
+        assert result.meta.exposure.exposure_time == 40.0

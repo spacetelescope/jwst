@@ -1,0 +1,1 @@
+Metadata improvements for FITS output for SOSS spectra: stop creating an empty SCI FITS extension containing only header values and stop adding an unnecessary INT_NUM value to EXTRACT1D extensions.

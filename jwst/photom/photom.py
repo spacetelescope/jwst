@@ -986,9 +986,10 @@ class DataSet:
             match_nans_and_flags(slit)
 
         elif isinstance(self.input, datamodels.TSOMultiSpecModel):
-            # Does this block need to address SB columns as well, or will
-            # they (presumably) never be populated for SOSS?
-            # It appears flux_error is the only error column populated?
+            # This block does not address SB columns - they are never populated for SOSS.
+            # Variance columns are also not currently populated for SOSS: they are
+            # zero-filled. Conversions are applied here anyway in case variances are
+            # populated in the future.
             spec = self.input.spec[self.specnum]
             spec.spec_table.FLUX[self.integ_row] *= conversion
             spec.spec_table.FLUX_ERROR[self.integ_row] *= conversion
@@ -1000,16 +1001,21 @@ class DataSet:
             spec.spec_table.BKGD_VAR_POISSON[self.integ_row] *= conversion**2.0
             spec.spec_table.BKGD_VAR_RNOISE[self.integ_row] *= conversion**2.0
             spec.spec_table.BKGD_VAR_FLAT[self.integ_row] *= conversion**2.0
-            spec.spec_table.columns["FLUX"].unit = "MJy"
-            spec.spec_table.columns["FLUX_ERROR"].unit = "MJy"
-            spec.spec_table.columns["FLUX_VAR_POISSON"].unit = "MJy^2"
-            spec.spec_table.columns["FLUX_VAR_RNOISE"].unit = "MJy^2"
-            spec.spec_table.columns["FLUX_VAR_FLAT"].unit = "MJy^2"
-            spec.spec_table.columns["BACKGROUND"].unit = "MJy"
-            spec.spec_table.columns["BKGD_ERROR"].unit = "MJy"
-            spec.spec_table.columns["BKGD_VAR_POISSON"].unit = "MJy^2"
-            spec.spec_table.columns["BKGD_VAR_RNOISE"].unit = "MJy^2"
-            spec.spec_table.columns["BKGD_VAR_FLAT"].unit = "MJy^2"
+
+            # TODO: confirm flux unit. The photmj value may be delivered as Jy, not MJy,
+            #  for calibrating extracted SOSS spectra.
+            flux_unit = "MJy"
+            flux_squared_unit = "MJy^2"
+            spec.spec_table.columns["FLUX"].unit = flux_unit
+            spec.spec_table.columns["FLUX_ERROR"].unit = flux_unit
+            spec.spec_table.columns["FLUX_VAR_POISSON"].unit = flux_squared_unit
+            spec.spec_table.columns["FLUX_VAR_RNOISE"].unit = flux_squared_unit
+            spec.spec_table.columns["FLUX_VAR_FLAT"].unit = flux_squared_unit
+            spec.spec_table.columns["BACKGROUND"].unit = flux_unit
+            spec.spec_table.columns["BKGD_ERROR"].unit = flux_unit
+            spec.spec_table.columns["BKGD_VAR_POISSON"].unit = flux_squared_unit
+            spec.spec_table.columns["BKGD_VAR_RNOISE"].unit = flux_squared_unit
+            spec.spec_table.columns["BKGD_VAR_FLAT"].unit = flux_squared_unit
 
         else:
             conversion_squared = conversion * conversion

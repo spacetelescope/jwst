@@ -1,0 +1,1 @@
+For TSO spectroscopy, blend metadata from all input exposures for the output ``x1dints`` product instead of taking all metadata from the first exposure.
