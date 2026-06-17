@@ -13,12 +13,8 @@ from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
 from jwst.datamodels import SourceModelContainer
-from jwst.datamodels.utils.wfss_multispec import (
-    make_wfss_multicombined,
-    make_wfss_multiexposure_spec3,
-)
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.exp_to_source import multislit_to_container
-from jwst.exp_to_source.exp_to_source import wfss_multispec_to_source
 from jwst.extract_1d import extract_1d_step
 from jwst.lib.exposure_types import is_moving_target
 from jwst.master_background import master_background_step
@@ -181,14 +177,12 @@ class Spec3Pipeline(Pipeline):
             log.info("Convert from exposure-based to source-based data.")
             sources = list(multislit_to_container(source_models).items())
         elif isinstance(input_models[0], dm.WFSSMultiSpecModel):
-            log.info("Convert from exposure-based to source-based data.")
-            sources = wfss_multispec_to_source(source_models)
+            sources = source_models._models  # noqa: SLF001
         else:
             sources = [source_models]
 
         # Process each source
         wfss_x1d = []
-        wfss_comb = []
         for source in sources:
             # If each source is a SourceModelContainer,
             # the output name needs to be updated based on the source ID,
@@ -210,7 +204,7 @@ class Spec3Pipeline(Pipeline):
                     # name that separates source, background, and virtual slits
                     srcid = self._create_nrsmos_source_id(result)
                     self.output_file = format_product(output_file, source_id=srcid)
-                    log.debug(f"output_file = {self.output_file}")
+                    log.debug("output_file = %s", self.output_file)
 
                 else:
                     # All other types just use the source_id directly in the file name
@@ -289,23 +283,7 @@ class Spec3Pipeline(Pipeline):
                     # for WFSS modes, do not save the results with one file per source
                     # instead compile the results over the for loop to be put into a single file
                     # at the end.
-                    self.combine_1d.save_results = False
                     wfss_x1d.append(result)
-                    # Combine the results for all sources
-                    comb = self.combine_1d.run(result)
-                    comb_complete = comb is not None and comb.meta.cal_step.combine_1d == "COMPLETE"
-                    if not comb_complete:
-                        continue
-                    # add metadata that only WFSS wants
-                    if len(result.spec) > 0:
-                        comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
-                        comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
-                    else:
-                        log.warning(
-                            "Spectral extraction failed elsewhere, "
-                            "source RA and Dec unavailable for c1d"
-                        )
-                    wfss_comb.append(comb)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
                 # If 2D data were resampled and combined, just do a 1D extraction
@@ -332,30 +310,36 @@ class Spec3Pipeline(Pipeline):
 
         # Save the final output products for WFSS modes
         # but wfss_XXX could be an empty list if processing failed.
-        if exptype in WFSS_TYPES:
+        if exptype in WFSS_TYPES and self.save_results:
+            x1d_filename = output_file + "_x1d.fits"
+            c1d_filename = output_file + "_c1d.fits"
             if len(wfss_x1d) > 0:
-                if self.save_results:
-                    x1d_output = make_wfss_multiexposure_spec3(wfss_x1d)
-                    self._populate_wfss_sregion(x1d_output, input_models)
-                    x1d_filename = output_file + "_x1d.fits"
-                    log.info(f"Saving the final x1d product as {x1d_filename}.")
-                    x1d_output.save(x1d_filename)
-            else:
-                log.warning("wfss_x1d list is empty")
-            if len(wfss_comb) > 0:
-                if self.save_results:
-                    c1d_output = make_wfss_multicombined(wfss_comb)
-                    c1d_filename = output_file + "_c1d.fits"
-                    log.info(f"Saving the final c1d product as {c1d_filename}.")
+                x1d_output = make_wfss_multiexposure(wfss_x1d)
+                self._populate_wfss_sregion(x1d_output, input_models)
+
+                log.info("Saving the final x1d product as %s", x1d_filename)
+                x1d_output.save(x1d_filename)
+
+                # Combine the results for all sources
+                self.combine_1d.save_results = False
+                c1d_output = self.combine_1d.run(x1d_output)
+                comb_complete = (
+                    c1d_output is not None and c1d_output.meta.cal_step.combine_1d == "COMPLETE"
+                )
+                if not comb_complete:
+                    log.error("combine_1d failed to create %s", c1d_filename)
+                else:
+                    log.info("Saving the final c1d product as %s", c1d_filename)
                     c1d_output.save(c1d_filename)
             else:
-                log.warning("wfss_comb list is empty")
+                log.error(
+                    "wfss_x1d list is empty, cannot make %s and %s", x1d_filename, c1d_filename
+                )
 
         if input_models is not input_data:
             input_models.close()
 
         log.info("Ending calwebb_spec3")
-        return
 
     def _create_nrsfs_slit_name(self, source_models):
         """
@@ -409,13 +393,13 @@ class Spec3Pipeline(Pipeline):
         if "BKG" in source_name:
             # prepend "b" to the source_id number and format to 9 chars
             srcid = f"b{str(source_id):>09s}"
-            log.debug(f"Source {source_name} is a MOS background slitlet: ID={srcid}")
+            log.debug("Source %s is a MOS background slitlet: ID=%s", source_name, srcid)
 
         # MOS virtual sources have a negative source_id value
         elif source_id < 0:
             # prepend "v" to the source_id number and remove the leading negative sign
             srcid = f"v{str(source_id)[1:]:>09s}"
-            log.debug(f"Source {source_name} is a MOS virtual slitlet: ID={srcid}")
+            log.debug("Source %s is a MOS virtual slitlet: ID=%s", source_name, srcid)
 
         # Regular MOS sources
         else:
@@ -448,7 +432,7 @@ class Spec3Pipeline(Pipeline):
             input_sregions = [w.spec[0].s_region for w in cal_model_list if w.spec[0].s_region]
         except AttributeError:
             log.warning(
-                "One or more input model(s) are missing an `s_region` attribute; "
+                "One or more input model(s) are missing an 's_region' attribute; "
                 "output S_REGION will not be set."
             )
             return
@@ -482,7 +466,9 @@ class Spec3Pipeline(Pipeline):
         try:
             sregion = combine_sregions(input_sregions, det2world)
         except ValueError as e:
-            log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
+            log.warning(
+                "Could not combine S_REGIONs: %s. Output S_REGION will not be set.", repr(e)
+            )
             return
-        log.info(f"Setting S_REGION for combined footprint to: {sregion}")
+        log.info("Setting S_REGION for combined footprint to: %s", sregion)
         wfss_model.spec[0].s_region = sregion

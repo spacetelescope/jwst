@@ -129,10 +129,10 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
     input_spec : `~stdatamodels.jwst.datamodels.SpecModel` or \
                  `~stdatamodels.jwst.datamodels.CombinedSpecModel`
         The input data model containing the spectral data.
-    columns : array-like[tuple]
-        Array or list of tuples containing the column names and their dtypes.
-    is_vector : array-like[bool]
-        Array or list of booleans indicating whether each column is vector-like,
+    columns : ndarray[tuple]
+        Array of tuples containing the column names and their dtypes.
+    is_vector : ndarray[bool]
+        Array of booleans indicating whether each column is vector-like,
     ignore_columns : list[str], optional
         List of column names to ignore when copying data or metadata from the input
         spectrum to the output table. This is useful for columns that are not
@@ -143,8 +143,6 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
         ignore_columns = []
     input_table = input_spec.spec_table
 
-    columns = np.asarray(columns)
-    is_vector = np.asarray(is_vector)
     vector_columns = columns[is_vector]
     meta_columns = columns[~is_vector]
 
@@ -164,14 +162,7 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
 
         spec_meta = getattr(input_spec, col.lower(), None)
         if spec_meta is None:
-            if (
-                hasattr(input_spec, "spec_table")
-                and col in input_spec.spec_table.columns
-                and len(input_spec.spec_table[col]) > 0
-            ):
-                output_table[col] = input_spec.spec_table[col][0]
-            else:
-                problems.append(col.lower())
+            problems.append(col.lower())
         else:
             output_table[col] = spec_meta
 

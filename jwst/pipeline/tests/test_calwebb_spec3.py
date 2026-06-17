@@ -10,7 +10,7 @@ from gwcs import wcs
 from stcal.alignment.util import compute_s_region_keyword, sregion_to_footprint
 
 import jwst
-from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure_spec3
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.extract_1d.tests.helpers import mock_nirspec_fs_one_slit_func
 from jwst.pipeline import Spec3Pipeline
 from jwst.stpipe import Step
@@ -60,10 +60,8 @@ def _offset_sregion(s_region, dx, dy):
 
 
 def wfss_one_spec(source_id):
-    spec = dm.WFSSSpecModel()
+    spec = dm.SpecModel()
     spec.source_id = source_id
-    spec.exposure_time = 7.0
-    spec.integration_time = 7.0
     spec.dispersion_direction = 3
     spec.spectral_order = 1
     spec.s_region = (
@@ -72,15 +70,10 @@ def wfss_one_spec(source_id):
     )
     # fmt: off
     spec_table = np.array(
-        [(source_id, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, "POINT", 0, 0, 0, 0, 0, 0, 0, 0),
-         (source_id, 5.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, "POINT", 0, 0, 0, 0, 0, 0, 0, 0),
-         (source_id, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, "POINT", 0, 0, 0, 0, 0, 0, 0, 0),
-         ],
+        [(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+         (5.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+         (10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)],
         dtype=[
-            ('SOURCE_ID', 'int32'),
             ('WAVELENGTH', 'float64'),
             ('FLUX', 'float64'),
             ('FLUX_ERROR', 'float64'),
@@ -98,17 +91,7 @@ def wfss_one_spec(source_id):
             ('BKGD_VAR_POISSON', 'float64'),
             ('BKGD_VAR_RNOISE', 'float64'),
             ('BKGD_VAR_FLAT', 'float64'),
-            ('NPIXELS', 'float64'),
-            ('N_ALONGDISP', 'uint32'),
-            ('SOURCE_TYPE', 'str'),
-            ('SOURCE_XPOS', 'float64'),
-            ('SOURCE_YPOS', 'float64'),
-            ('SOURCE_RA', 'float64'),
-            ('SOURCE_DEC', 'float64'),
-            ('EXTRACT2D_XSTART', 'uint32'),
-            ('EXTRACT2D_YSTART', 'uint32'),
-            ('EXTRACT2D_XSTOP', 'uint32'),
-            ('EXTRACT2D_YSTOP', 'uint32')])
+            ('NPIXELS', 'float64')])
     # fmt: on
     spec.spec_table = spec_table
     spec.spec_table.columns["WAVELENGTH"].unit = "um"
@@ -117,9 +100,11 @@ def wfss_one_spec(source_id):
 
 def wfss_exp_spec3(source_id):
     spec0 = wfss_one_spec(source_id)
-    multi = dm.WFSSMultiSpecModel()
+    multi = dm.MultiSpecModel()
     multi.meta.instrument.name = "NIRISS"
     multi.meta.instrument.detector = "ANY"
+    multi.meta.exposure.exposure_time = 7.0
+    multi.meta.exposure.integration_time = 7.0
     multi.meta.exposure.type = "NIS_WFSS"
     multi.meta.observation.date = "2024-01-01"
     multi.meta.observation.time = "00:00:00.000"
@@ -127,15 +112,15 @@ def wfss_exp_spec3(source_id):
     for j in range(N_EXPOSURES):
         # create a new SpecModel for each exposure
         spec = spec0.copy()
-        spec.filename = f"exposure_{j}.fits"
-        spec.group_id = str(j + 1)
+        spec.meta.filename = f"exposure_{j}.fits"
+        spec.meta.group_id = str(j + 1)
         multi.spec.append(spec)
     return multi
 
 
 @pytest.fixture
 def spec3_wfss_asn(tmp_cwd):
-    model = make_wfss_multiexposure_spec3([wfss_exp_spec3(N_SOURCES - i) for i in range(N_SOURCES)])
+    model = make_wfss_multiexposure([wfss_exp_spec3(N_SOURCES - i) for i in range(N_SOURCES)])
     model.save(INPUT_WFSS)
     model2 = model.copy()
     new_s_region = _offset_sregion(model.spec[0].s_region, 0.005, 0.005)
@@ -162,8 +147,8 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
 
         Ensure it receives the right input type for a WFSS association.
         """
-        if not isinstance(input_model, dm.MultiSpecModel):
-            raise TypeError(f"Input to combine_1d is not a MultiSpecModel: {input_model}")
+        if not isinstance(input_model, dm.WFSSMultiSpecModel):
+            raise TypeError(f"Input to combine_1d is not a WFSSMultiSpecModel: {input_model}")
         output_model = dm.MultiCombinedSpecModel()
         spec = dm.SpecModel()
         output_model.spec.append(spec)
@@ -172,7 +157,7 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
 
     monkeypatch.setattr("jwst.combine_1d.Combine1dStep.process", mock_combine1d)
 
-    def mock_wfss_multiexposure_spec3(input_model):
+    def mock_wfss_multiexposure(input_model):
         """
         Bypass reorganizing the output list.
 
@@ -180,45 +165,15 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
         the pipeline has the correct type.
         """
         if not isinstance(input_model, list):
-            raise TypeError("Input to make_wfss_multiexposure_spec3 is not a list")
-        if not all(isinstance(m, dm.MultiSpecModel) for m in input_model):
-            raise TypeError(
-                f"Input to make_wfss_multiexposure_spec3 is not a list of MultiSpecModel: {input_model}"
-            )
+            raise TypeError("Input to make_wfss_multiexposure is not a list")
+        if not all(isinstance(m, dm.WFSSMultiSpecModel) for m in input_model):
+            raise TypeError("Input to make_wfss_multiexposure is not a list of WFSSMultiSpecModel")
         output_model = dm.WFSSMultiSpecModel()
         output_model.spec.append(dm.WFSSSpecModel())
         return output_model
 
     monkeypatch.setattr(
-        jwst.pipeline.calwebb_spec3, "make_wfss_multiexposure_spec3", mock_wfss_multiexposure_spec3
-    )
-
-    def mock_wfss_multicombined(input_model):
-        """
-        Bypass reorganizing the output list.
-
-        Ensure the input type is correct, which is equivalent to ensuring the result of
-        the pipeline has the correct type.
-        """
-        if not isinstance(input_model, list):
-            raise TypeError("Input to make_wfss_multicombined is not a list")
-        if not all(isinstance(m, dm.MultiCombinedSpecModel) for m in input_model):
-            raise TypeError("Input to make_wfss_multicombined is not a list of MultiSpecModel")
-        output_model = dm.WFSSMultiCombinedSpecModel()
-        return output_model
-
-    monkeypatch.setattr(
-        jwst.pipeline.calwebb_spec3, "make_wfss_multicombined", mock_wfss_multicombined
-    )
-
-    def mock_wfss_multispec_to_source(input_model):
-        output_model = dm.MultiSpecModel()
-        return [output_model]
-
-    monkeypatch.setattr(
-        jwst.pipeline.calwebb_spec3,
-        "wfss_multispec_to_source",
-        mock_wfss_multispec_to_source,
+        jwst.pipeline.calwebb_spec3, "make_wfss_multiexposure", mock_wfss_multiexposure
     )
 
     args = [

@@ -1,7 +1,5 @@
 """Utilities for manipulating WFSS multi-spectral data."""
 
-from collections import defaultdict
-
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 
@@ -15,12 +13,7 @@ from jwst.datamodels.utils.flat_multispec import (
     set_schema_units,
 )
 
-__all__ = [
-    "make_wfss_multiexposure",
-    "make_wfss_multiexposure_spec3",
-    "wfss_multiexposure_to_multispec",
-    "make_wfss_multicombined",
-]
+__all__ = ["make_wfss_multiexposure", "wfss_multiexposure_to_multispec", "make_wfss_multicombined"]
 
 
 def make_wfss_multiexposure(input_list):
@@ -79,6 +72,7 @@ def make_wfss_multiexposure(input_list):
                     "exposure_time": model.meta.exposure.exposure_time,  # need for combine_1d
                     "integration_time": model.meta.exposure.integration_time,  # need for combine_1d
                     "spectral_order": spec.spectral_order,
+                    "s_region": spec.s_region,
                 }
             else:
                 # if this exposure has already been encountered,
@@ -162,107 +156,14 @@ def make_wfss_multiexposure(input_list):
         ext.spectral_order = exposure_counter[exposure_number]["spectral_order"]
         ext.exposure_time = exposure_counter[exposure_number]["exposure_time"]
         ext.integration_time = exposure_counter[exposure_number]["integration_time"]
+        ext.s_region = exposure_counter[exposure_number]["s_region"]
 
         output_x1d.spec.append(ext)
 
-    output_x1d.update(input_list[0], only="PRIMARY")
-    return output_x1d
-
-
-def make_wfss_multiexposure_spec3(input_list):
-    """
-    Compile a list of extracted sources into a single binary table for calwebb_spec3.
-
-    The output model will contain one binary table per exposure,
-    with each table containing all sources extracted from that exposure
-    (one row per source). The number of elements in each table row
-    will be the same across all exposures, with NaNs used to pad
-    shorter rows to match the longest row in the exposure.
-
-    Parameters
-    ----------
-    input_list : list[MultiSpecModel]
-        List of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects to be combined.
-
-    Returns
-    -------
-    output_x1d : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
-        The extract_1d product for WFSS modes.
-    """
-    # First loop over source and exposure to figure out final parameters
-    specs_db = defaultdict()  # (group_id, source_id): spec
-    all_source_ids = set()
-    exposure_nrows = defaultdict(int)
-    # For calwebb_spec3 the outer loop is over sources and the inner loop is over exposures
-    for model in input_list:
-        for spec in model.spec:
-            all_source_ids.add(spec.source_id)
-            exposure_nrows[spec.group_id] = max(
-                exposure_nrows[spec.group_id], spec.spec_table.shape[0]
-            )
-            specs_db[(spec.group_id, spec.source_id)] = spec
-
-    all_source_ids = sorted(all_source_ids)
-    n_sources = len(all_source_ids)
-    input_datatype = dm.SpecModel().schema["properties"]["spec_table"]["datatype"]
-    output_datatype = dm.WFSSSpecModel().schema["properties"]["spec_table"]["datatype"]
-    all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
-    defaults = dm.WFSSSpecModel().schema["properties"]["spec_table"]["default"]
-
-    # Finally, create a new WFSSMultiSpecModel to hold the combined data
-    # with one WFSSMultiSpecModel table per exposure
-    output_x1d = dm.WFSSMultiSpecModel()
-    # WCS is needed to combine S_REGION in calwebb_spec3
-    if not getattr(output_x1d.meta, "wcs", None):
-        output_x1d.meta.wcs = input_list[0].meta.wcs
-    for exposure_number in sorted(exposure_nrows.keys()):
-        n_rows = exposure_nrows[exposure_number]
-        spec_table = make_empty_recarray(
-            n_rows, n_sources, all_columns, is_vector, defaults=defaults
-        )
-        spec_table["SOURCE_ID"] = all_source_ids
-        first_loop = True
-
-        for src_id in all_source_ids:
-            key = (exposure_number, src_id)
-            if key not in specs_db:
-                continue
-            spec = specs_db[key]
-
-            # ensure data goes to the correct source
-            spec_idx = np.where(spec_table["SOURCE_ID"] == src_id)[0][0]
-
-            # populate the table with data from the input spectrum
-            populate_recarray(
-                spec_table[spec_idx],
-                spec,
-                all_columns,
-                is_vector,
-                ignore_columns=["SOURCE_ID", "N_ALONGDISP"],
-            )
-
-            # special handling for N_ALONGDISP because not defined in specmeta schema
-            spec_table[spec_idx]["N_ALONGDISP"] = spec.spec_table.shape[0]
-
-            if first_loop:
-                example_spec = spec
-
-        ext = dm.WFSSSpecModel(spec_table)
-        # Set default units from the model schema
-        set_schema_units(ext)
-        # copy units from the example specmodel, overriding the schema defaults where applicable
-        copy_column_units(example_spec, ext)
-        # copy metadata
-        ext.filename = example_spec.filename
-        ext.group_id = exposure_number
-        ext.dispersion_direction = example_spec.dispersion_direction
-        ext.spectral_order = example_spec.spectral_order
-        ext.exposure_time = example_spec.exposure_time
-        ext.integration_time = example_spec.integration_time
-        ext.s_region = example_spec.s_region
-        output_x1d.spec.append(ext)
-
-    output_x1d.update(input_list[0], only="PRIMARY")
+    example_model = input_list[0]
+    output_x1d.update(example_model, only="PRIMARY")
+    if hasattr(example_model.meta, "wcs"):
+        output_x1d.meta.wcs = example_model.meta.wcs
     return output_x1d
 
 
