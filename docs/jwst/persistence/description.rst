@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.persistence.PersistenceStep`
+:Class: `jwst.persistence.persistence_step.PersistenceStep`
 :Alias: persistence
 
 This step computes persistence flagging based on the ``SATURATED`` flag.
@@ -16,7 +16,7 @@ be flagged ``PERSISTENCE``. This flagging window will persist across
 integration times.
 
 An optional ``--persistence_array_file`` can be passed to this step. If
-so, this file is expected to be an ASDF file with a 2-D array called 
+so, this file is expected to be an ASDF file with a 2-D array called
 "persistence_data". This array will contain timing data that will allow
 persistence flagging to persist across exposures, not just integrations.
 The entries into this array will 0.0, indicating no current timing window
@@ -27,16 +27,20 @@ is option is selected, this persistence array will be save as an ASDF file
 with the file name used for this parameter.
 
 Input
-=====
-The input science file is a RampModel.
+-----
+The input science file is a `~stdatamodels.jwst.datamodels.RampModel`.
 
 Output
-======
-The output science file is a RampModel with the ``PERSISTENCE`` flag set
-for identified pixels.
+------
+The output science file is a `~stdatamodels.jwst.datamodels.RampModel`
+with the ``PERSISTENCE`` flag set for identified pixels.
 
-If the user specifies ``save_persistence`` with a file path, a third output
+If the user specifies ``--save_persistence`` with a file path, a third output
 file will be written to that path. This is an ASDF file with ``persistence_data``
 attribute. This attribute contains the end of the computed persistence window.
 If a pixel has a 0.0 entry, there is no persistence window that persisted past
 the end of the processing time for the previous exposure processed.
+
+Reference Files
+---------------
+The ``persistence`` step does not use any reference files.

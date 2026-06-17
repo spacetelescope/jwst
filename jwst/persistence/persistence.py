@@ -1,5 +1,4 @@
-#
-#  Module for correcting for persistence
+"""Utility functions for correcting for persistence."""
 
 import logging
 
@@ -20,23 +19,32 @@ class DataSet:
     """
     Input dataset to which persistence will be applied.
 
-    Attributes
+    Parameters
     ----------
-    output_obj : JWST data model
+    output_obj : `~stdatamodels.jwst.datamodels.JwstDataModel`
         A copy of the input model.  This will be modified in-place.
 
     save_persistence : bool
-        If True, the persistence that was subtracted will be written to an
-        output file.
+        If `True`, the persistence that was subtracted will be written
+        to an output file.
+
+    Attributes
+    ----------
+    output_obj : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        A copy of the input model.  This will be modified in-place.
+
+    save_persistence : bool
+        If `True`, the persistence that was subtracted will be written
+        to an output file.
 
     persistence_time : int
         The number of seconds for a persistence window to persist.
 
-    persistence_array : string or None
+    persistence_array : str or None
         If not None, then it is the path to a file containing a persistence array.
 
-    persistence_dnu : boolean
-        When flagging PERSISTENCE, if true, then flag as DO_NOT_USE as well.
+    persistence_dnu : bool
+        When flagging PERSISTENCE, if `True`, then flag as DO_NOT_USE as well.
     """
 
     def __init__(
@@ -48,18 +56,6 @@ class DataSet:
         persistence_array=None,
         persistence_dnu=None,
     ):
-        """
-        Assign values to attributes.
-
-        Parameters
-        ----------
-        output_obj : JWST data model
-            Copy of input data model object
-
-        save_persistence : bool
-            If True, the persistence that was subtracted will be written
-            to an output file.
-        """
         log.debug("save_persistence = %s", str(save_persistence))
 
         self.output_obj = output_obj
@@ -77,16 +73,16 @@ class DataSet:
 
         Returns
         -------
-        output_obj : data model
-            The persistence-corrected science data, a RampModel object.
+        output_obj : `~stdatamodels.jwst.datamodels.RampModel`
+            The persistence-corrected science data.
 
-        output_pers :  data model or None
-            A RampModel object, giving the value of persistence that
+        output_pers : `~stdatamodels.jwst.datamodels.RampModel` or None
+            A model giving the value of persistence that
             was subtracted from each pixel of each group of each
             integration.
 
         skipped : bool
-            This will be True if the step has been skipped.
+            This will be `True` if the step has been skipped.
         """
         # Initial value, indicates that processing was done successfully.
         skipped = False
@@ -126,8 +122,9 @@ class DataSet:
         Flag groups that are within a persistence window.
 
         The structure of the persistence_array is as follows:
-            1. Zero entries indicate no persistence flagging.
-            2. Non-zero entries indicate the end time of the persistence flagging window.
+
+        1. Zero entries indicate no persistence flagging.
+        2. Non-zero entries indicate the end time of the persistence flagging window.
 
         Since a non-zero entry indicates a persistence flagging window has been found for
         that pixel. The entry is the epoch time of the end of that window for a pixel. To
