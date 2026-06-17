@@ -89,6 +89,32 @@ def test_persistence_time_nonneg_sec(create_sci_model):
     np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
 
 
+def test_persistence_time_nonneg_sec_thresh(create_sci_model):
+    """Test persistence flag gets set inside of persistence window using exposure start time"""
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+
+    slope = 1500.0
+    arr = [slope * (g + 1) for g in range(ngroups)]
+    model.data[0, :, 0, 1] = np.array(arr, dtype=model.data.dtype)
+
+    step = PersistenceStep(persistence_time=70, dn_threshold=8000.0)
+    res = step.run(model)
+
+    # With a persistence window of 70 seconds and group time of 21.47354 seconds, the 5th
+    # group of the first integration for pixel (0, 1) and the following three groups
+    # (crossing the integration) will be flagged as persistent.
+
+    check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check3 = np.array([0, 0, 0, 0, 0, 32, 32], dtype=np.uint8)
+    check4 = np.array([32, 32, 0, 0, 0, 0, 0], dtype=np.uint8)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 0], check1)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
+
+
 def test_persistence_time_0_sec(create_sci_model):
     """Test persistence flag gets set inside of persistence window of 0 seconds"""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
@@ -209,7 +235,7 @@ def test_persistence_time_with_array(create_sci_model, tmp_path):
     np.testing.assert_equal(res.groupdq[1, :, 0, 2], checkz)
 
 
-def test_persistence_mismatch_persistencetime_guard(create_sci_model, tmp_path, caplog):
+def test_persistence_mismatch_persistence_time_guard(create_sci_model, tmp_path, caplog):
     """Develop a test that ensures exception is raised mismatched persistence time."""
     # Setup model
     nints, ngroups, nrows, ncols = 2, 7, 1, 3

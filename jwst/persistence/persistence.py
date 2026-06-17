@@ -158,13 +158,23 @@ class DataSet:
         # persistence window has ended for that pixel because the current time is
         # after the end of the persistence window.
         self.persistence_array[self.persistence_array < current_time] = 0.0
+        window_end = current_time + self.persistence_time
 
         # Calculate any first saturation points. Any group found to be the first
         # saturated group in a ramp is the beginning of a persistence window.
         gdq_plane = self.output_obj.groupdq[integ, group, :, :]
         sat_loc = np.bitwise_and(gdq_plane, dqflags.group["SATURATED"])
         sat_array[sat_loc > 0] += 1
-        self.persistence_array[sat_array == 1] = current_time + self.persistence_time
+        self.persistence_array[sat_array == 1] = window_end
+
+        # Open a persistence window based on the dn_threshold.
+        if self.dn_threshold is not None:
+            sci_plane = self.output_obj.data[integ, group, :, :]
+            set_window = np.full(self.persistence_array.shape, False, dtype=bool)
+            set_window[sci_plane > self.dn_threshold] = True
+            set_window[self.persistence_array > 0.0] = False
+            self.persistence_array[set_window] = window_end
+            del set_window
 
         # This prevents 'backwards flagging'.
         # Subtracting the persistence_time gives the beginning of the window.
@@ -172,7 +182,7 @@ class DataSet:
         #     outside the window and subtracting it will be a positive number.
         # Reset window for pixels where backwards flagging situation arrives, as
         #     this is an invalid state.
-        start_plane = self.persistence_array - (self.persistence_time + current_time)
+        start_plane = self.persistence_array - window_end
         start_plane[self.persistence_array == 0.0] = 0.0
         if np.any(start_plane > 0.0):
             log.info("Backwards flagging found. Resetting the window for those pixels")
@@ -185,9 +195,6 @@ class DataSet:
             flag = dqflags.group["PERSISTENCE"]
 
         gdq_plane[self.persistence_array > 0.0] |= flag
-        if self.dn_threshold is not None:
-            sci_plane = self.output_obj.data[integ, group, :, :]
-            gdq_plane[sci_plane > self.dn_threshold] |= flag
 
         self.output_obj.groupdq[integ, group, :, :] = gdq_plane
 
