@@ -7,6 +7,8 @@ from numpy.testing import assert_array_equal
 from stdatamodels.jwst.datamodels import GainModel, RampModel, ReadnoiseModel, dqflags
 
 from jwst.jump import JumpStep
+from jwst.lib.tests.helpers import make_sub64p_multistripe_model
+from jwst.refpix.refpix_step import RefPixStep
 
 MAXIMUM_CORES = ["2", "none", "quarter", "half", "all"]
 
@@ -2051,3 +2053,25 @@ def test_output_is_not_input_when_skipped(generate_miri_reffiles, setup_inputs):
     # Input is not modified
     assert out_model is not model1
     assert model1.meta.cal_step.jump is None
+
+
+def test_uneven_sampling(caplog):
+    caplog.set_level("DEBUG", "jwst")
+
+    # Superstripe ramp model with in-frame reads: readout times are not evenly sampled
+    model = make_sub64p_multistripe_model()
+    model.pixeldq = model.get_default("pixeldq")
+    collated = RefPixStep.call(model)
+    assert len(collated.meta.exposure.read_times) > 0
+
+    # Set the data equal to the read time
+    for group in range(collated.data.shape[1]):
+        collated.data[:, group, :, :] = collated.meta.exposure.read_times[group][0]
+
+    # Don't configure the log, so that caplog picks up the messages correctly.
+    jump = JumpStep.call(collated, configure_log=False)
+    assert "Using explicit read times" in caplog.text
+
+    # No jumps expected, since data matches readtimes
+    assert jump.meta.exposure.extended_emission_events == 0
+    assert not np.any(jump.groupdq & JUMP_DET > 0)

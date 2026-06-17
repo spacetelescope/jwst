@@ -36,6 +36,9 @@ Miscellaneous Utilities
 .. automodapi:: jwst.lib.signal_slot
    :no-inheritance-diagram:
 
+.. automodapi:: jwst.lib.stripe_utils
+   :no-inheritance-diagram:
+
 .. automodapi:: jwst.lib.suffix
    :no-inheritance-diagram:
 

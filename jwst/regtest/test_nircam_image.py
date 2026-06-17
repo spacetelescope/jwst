@@ -365,3 +365,32 @@ def test_nircam_image_detector1_with_likelihood(
     fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+def test_nircam_image_inv_linearity(
+    run_detector1pipeline_with_sirs, rtdata_module, fitsdiff_default_kwargs
+):
+    """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
+    rtdata = rtdata_module
+    rtdata.get_data("nircam/image/jwst_nircam_linearity_0053_invcoef.fits")
+    rtdata.input = "jw01345001001_10201_00001_nrca3_sirs_refpix.fits"
+
+    args = [
+        "linearity",
+        rtdata.input,
+        "--override_linearity='jwst_nircam_linearity_0053_invcoef.fits'",
+        "--save_results=True",
+    ]
+    Step.from_cmdline(args)
+
+    output = "jw01345001001_10201_00001_nrca3_sirs_linearitystep.fits"
+    rtdata.output = output
+    rtdata.get_truth(
+        "truth/test_nircam_image_stages/jw01345001001_10201_00001_nrca3_sirs_linearitystep.fits"
+    )
+
+    fitsdiff_default_kwargs["rtol"] = 5e-5
+    fitsdiff_default_kwargs["atol"] = 1e-4
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_LINEAR")
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()

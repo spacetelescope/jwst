@@ -141,7 +141,8 @@ Polynomial Flux Modeling
 By default, each source is simulated with a spectrally flat flux model - that is, the
 flux at every wavelength is taken directly from the direct image pixel values. 
 When the step argument ``--polyfit_degree`` is set to an integer ``N``, the step
-fits a spectral model to each source. The procedure is:
+fits a spectral model to each source, starting with the brightest sources first.
+The procedure is:
 
 1. In addition to the standard flat-spectrum simulation (the constant, degree-0 term),
    *N* additional grism-frame images are simulated for each source, where for the *i*\ th
@@ -177,22 +178,18 @@ fits a spectral model to each source. The procedure is:
 
 4. If a good solution was found, the best-fit linear combination replaces the original
    simulation for that source, and this spectrally corrected simulation is used in the
-   contamination model to be applied before the subsequent iteration.
+   contamination model. The contamination model is updated immediately after each source
+   is fit, so fainter sources fit later in an iteration can benefit from the improved
+   contamination correction from brighter sources fit earlier in the same iteration.
    If no good solution was found, the original flat-spectrum simulation is not modified.
 
-5. The simulated contamination from all other sources is subtracted from each observed slit,
-   and the resulting contamination-corrected slit is used as the "observed data"
-   for the next iteration of the fit. Note that each iteration starts the fitting over from
-   the original basis images; the fitted coefficients from the previous iteration are not
-   used as a starting point.
-   
 The ``--n_iterations`` argument controls how many times the polynomial fit is repeated.
-On the first iteration the observed spectrum still contains contamination from neighboring
-sources; on subsequent iterations it is replaced by the contamination-corrected spectrum
-from the previous pass, so the polynomial flux fit is less biased by contamination
-from other sources. In practice, the polynomial fit typically converges for only relatively
-isolated sources on the first iteration, but the second iteration allows almost all sources
-to be fit even for test data in crowded fields.  ``n_iterations > 3`` typically does not
+On the first iteration only the flat-spectrum simulated contamination has been subtracted from the
+observed spectrum; on subsequent iterations it is replaced by the updated contamination correction
+based on the spectra from the previous pass.
+In practice, the polynomial fit typically converges for the majority of sources on the first
+iteration, and the second iteration improves fits and allows more fits to be accepted in
+highly-contaminated regions.  ``n_iterations > 2`` typically does not
 provide much additional improvement.
 Iteration has no effect when ``--polyfit_degree`` is not set.
 

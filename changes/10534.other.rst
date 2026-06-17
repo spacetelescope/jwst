@@ -1,0 +1,1 @@
+Expand stripe utilities to support pure superstripe modes with no reference pixels and stripe modes with repeated in-frame samples.

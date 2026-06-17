@@ -19,13 +19,11 @@ def run_persistence_step(rtdata_module):
     # Run persistence step on the _linearity file of the previous exposure to get the
     # _trapsfilled file
     # Need custom trap_density file as the default reference file is all zeros
-    rtdata.get_data("nircam/persistence/trap_density.fits")
-    trapdensity = rtdata.input
     rtdata.get_data("nircam/persistence/jw01076101001_02101_00001_nrca1_linearity.fits")
     args = [
         "jwst.persistence.PersistenceStep",
         rtdata.input,
-        "--override_trapdensity=" + trapdensity,
+        "--persistence_time=500",
     ]
     Step.from_cmdline(args)
 
@@ -35,8 +33,7 @@ def run_persistence_step(rtdata_module):
     args = [
         "jwst.persistence.PersistenceStep",
         rtdata.input,
-        "--override_trapdensity=" + trapdensity,
-        "--input_trapsfilled=jw01076101001_02101_00001_nrca1_trapsfilled.fits",
+        "--persistence_time=500",
     ]
     Step.from_cmdline(args)
 

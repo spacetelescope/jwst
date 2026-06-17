@@ -1,19 +1,22 @@
 name: tests
 
 on:
+  pull_request:
+    branches:
+      - main
+      - 'release/*.x'
+    types:
+      - opened
+      - synchronize
+      - reopened
   push:
     branches:
       - main
       - 'release/*.x'
     tags:
       - '*'
-  pull_request:
-    branches:
-      - main
-      - 'release/*.x'
   schedule:
-    # Weekly Monday 9AM build
-    - cron: "0 9 * * 1"
+    - cron: "0 9 * * 1" # every Monday at 9a
   workflow_dispatch:
     inputs:
       crds_context:
@@ -28,57 +31,100 @@ on:
         default: https://jwst-crds.stsci.edu
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.crds_context }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.crds_context }}
   cancel-in-progress: true
 
+permissions: {}
+
+env:
+  PYTHON_VERSIONS: 3.9 3.10 3.11 3.12 3.13 3.14
+  CRDS_PATH: /tmp/data/crds_cache
+  CRDS_OBSERVATORY: jwst
+  CRDS_SERVER_URL: ${{ inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
+  CRDS_CLIENT_RETRY_COUNT: 3
+  CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
+
 jobs:
-  check:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@2835f0cacddf3f8de198db9afdb5354a5cebe0ef  # v2.6.3
-    with:
-      default_python: "3.12"
-      envs: |
-        - linux: check-dependencies
-  latest_crds_contexts:
-    uses: ./.github/workflows/contexts.yml
-  crds_context:
-    needs: [ latest_crds_contexts ]
+  supported-pythons:
     runs-on: ubuntu-latest
     steps:
-      - id: context
-        run: echo context=${{ github.event_name == 'workflow_dispatch' && (inputs.crds_context != '' && inputs.crds_context || needs.latest_crds_contexts.outputs.jwst) || needs.latest_crds_contexts.outputs.jwst }} >> $GITHUB_OUTPUT
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3"
+      - run: pip install packaging tomli
+      - name: convert Python version(s) into JSON list
+        id: versions
+        shell: python
+        run: |
+          import os
+          import json
+
+          import tomli
+          from packaging.specifiers import SpecifierSet
+          from packaging.version import Version
+
+          with open("pyproject.toml", "rb") as pyproject_toml_file:
+            version_requirements = SpecifierSet(tomli.load(pyproject_toml_file)["project"]["requires-python"])
+
+          versions = [str(version) for version in sorted([Version(version) for version in os.environ["PYTHON_VERSIONS"].split() if version in version_requirements])]
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as github_output:
+              print(f"json={json.dumps(versions)}", file=github_output)
+              print(f"oldest={versions[0]}", file=github_output)
+              print(f"latest={versions[-1]}", file=github_output)
     outputs:
-      context: ${{ steps.context.outputs.context }}
+      python-version-json: ${{ steps.versions.outputs.json }}
+      oldest: ${{ steps.versions.outputs.oldest }}
+      latest: ${{ steps.versions.outputs.latest }}
+  crds:
+    runs-on: ubuntu-latest
+    steps:
+      - if: inputs.crds_context
+        id: latest-context
+        run: >
+          echo latest-context=$(
+            curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["${{ env.CRDS_OBSERVATORY }}", "latest"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ --retry 8 --connect-timeout 10 |
+            python -c "import sys, json; print(json.load(sys.stdin)['result'])"
+          ) >> $GITHUB_OUTPUT
+    outputs:
+      path: ${{ env.CRDS_PATH }}
+      server-url: ${{ env.CRDS_SERVER_URL }}
+      context: ${{ inputs.crds_context || steps.latest-context.outputs.latest-context }}
+      client-retry-count: ${{ env.CRDS_CLIENT_RETRY_COUNT }}
+      client-retry-delay-seconds: ${{ env.CRDS_CLIENT_RETRY_DELAY_SECONDS }}
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@2835f0cacddf3f8de198db9afdb5354a5cebe0ef  # v2.6.3
-    needs: [ crds_context ]
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    needs:
+      - supported-pythons
+      - crds
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@4193751d511425d4edc1d5657c24b2128d49b017 # v2.6.4
     with:
       setenv: |
-        CRDS_PATH: /tmp/data/crds_cache
-        CRDS_SERVER_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
-        CRDS_CONTEXT: ${{ needs.crds_context.outputs.context }}
-        CRDS_CLIENT_RETRY_COUNT: 3
-        CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
-      cache-path: /tmp/data/crds_cache
-      cache-key: crds-${{ needs.crds_context.outputs.context }}
+        CRDS_PATH: ${{ needs.crds.outputs.path }}
+        CRDS_SERVER_URL: ${{ needs.crds.outputs.server-url }}
+        CRDS_CONTEXT: ${{ needs.crds.outputs.context }}
+        CRDS_CLIENT_RETRY_COUNT: ${{ needs.crds.outputs.client-retry-count }}
+        CRDS_CLIENT_RETRY_DELAY_SECONDS: ${{ needs.crds.outputs.client-retry-delay-seconds}}
+      cache-path: ${{ needs.crds.outputs.path }}
+      cache-key: crds-${{ needs.crds.outputs.context }}
+      envs: |
+        - linux: check-dependencies
+          python-version: ${{ needs.supported-pythons.outputs.latest }} 
+        - name: run tests (oldest supported Python, ubuntu-latest)
+          linux: py3-oldestdeps-xdist-cov
+          python-version: ${{ needs.supported-pythons.outputs.oldest }}
+        - name: run tests with coverage (latest supported Python, ubuntu-latest)
+          linux: py3-cov
+          python-version: ${{ needs.supported-pythons.outputs.latest }}
+          pytest-results-summary: true
+          coverage: codecov
+        - name: run tests (latest supported Python, macos-latest)
+          macos: py3
+          python-version: ${{ needs.supported-pythons.outputs.latest }}
+      fill: true
+      fill_platforms: linux
+      fill_factors: xdist
       artifact-path: |
         results.xml
-      submodules: false
-      coverage: ''
-      envs: |
-        - linux: py311-oldestdeps-xdist-cov
-          coverage: codecov
-          pytest-results-summary: true
-        - linux: py311-xdist
-          posargs: -vv
-          pytest-results-summary: true
-        - linux: py312-xdist
-          pytest-results-summary: true
-        # `tox` does not currently respect `requires-python` versions when creating testing environments;
-        # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
-        - linux: py313-cov-xdist
-          coverage: codecov
-          pytest-results-summary: true
-        - macos: py314-xdist
-          pytest-results-summary: true

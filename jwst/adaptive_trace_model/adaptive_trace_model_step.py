@@ -130,10 +130,23 @@ class AdaptiveTraceModelStep(Step):
                 )
             else:
                 log.warning(
-                    "The adaptive_trace_model step is not implemented for %s.", str(output_model)
+                    "The adaptive_trace_model step is not implemented for datamodel type <%s>.",
+                    model.meta.model_type,
                 )
-                log.warning("Skipping processing.")
-                model.meta.cal_step.adaptive_trace_model = "SKIPPED"
+
+                # Might be old-style MIRI LRS data, which used to be ImageModel or CubeModel.
+                # Issue a specific warning in this case.
+                if "MIR_LRS" in str(model.meta.exposure.type):
+                    log.warning(
+                        "The adaptive_trace_model step requires MIRI LRS cal files "
+                        "in <SlitModel> format, from jwst v2.0 or later."
+                    )
+                    log.warning(
+                        "Try reprocessing the input exposures with the latest pipeline version."
+                    )
+
+                log.warning("No trace model will be attempted.")
+                model.meta.cal_step.adaptive_trace_model = "FAILED"
                 continue
 
             model.meta.cal_step.adaptive_trace_model = "COMPLETE"

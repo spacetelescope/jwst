@@ -204,6 +204,11 @@ class RampFitStep(Step):
         readnoise_filename = self.get_reference_file(result, "readnoise")
         gain_filename = self.get_reference_file(result, "gain")
 
+        read_times = getattr(result.meta.exposure, "read_times", None)
+        if read_times is not None and len(read_times) > 0 and self.algorithm.upper() != "LIKELY":
+            log.warning("Setting the algorithm to LIKELY for unevenly sampled exposure")
+            self.algorithm = "LIKELY"
+
         ngroups = result.data.shape[1]
         if self.algorithm.upper() == "LIKELY" and ngroups < LIKELY_MIN_NGROUPS:
             log.info(

@@ -879,7 +879,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
         not_ifu = Constraint([Constraint_IFU()], reduce=Constraint.notany)
 
         # Exclude NIRCam TSO grism engineering modes: CLEAR pupil or module B long detector.
-        # Also excludes DHS exposures.
+        # Also excludes DHS exposures through subarray and pupil constraints.
         not_nrc_tsgrism_invalid = Constraint(
             [
                 Constraint(
@@ -903,6 +903,11 @@ class Asn_Lv3TSO(AsnMixin_Science):
                         ),
                         DMSAttrConstraint(name="module", sources=["detector"], value="nrcblong"),
                     ]
+                ),
+                DMSAttrConstraint(
+                    name="subarray",
+                    sources=["subarray"],
+                    value="sub260stripe4_dhs|sub41stripe1_dhs|sub82stripe2_dhs|sub164stripe4_dhs",
                 ),
             ],
             reduce=Constraint.notany,
