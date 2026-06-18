@@ -115,7 +115,7 @@ class PersistenceStep(Step):
 
         # XXX Think more about this. The output file is what matters.
 
-        det = result.meta.instrument.name
+        det = result.meta.instrument.detector
         # Write persistence array to ASDF file
         #    Only write out the non-zero rows and columns
         #    and their values, to save disk space.
@@ -170,7 +170,7 @@ class PersistenceStep(Step):
             log.info(".... Creating new persistence array.")
             return
         with asdf.open(self.persistence_array_file) as pers_file:
-            det = result.meta.instrument.name
+            det = result.meta.instrument.detector
             if det in pers_file:
                 rows = pers_file[det]["rows"]
                 cols = pers_file[det]["cols"]
