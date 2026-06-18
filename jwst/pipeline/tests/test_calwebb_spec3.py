@@ -10,6 +10,7 @@ from gwcs import wcs
 from stcal.alignment.util import compute_s_region_keyword, sregion_to_footprint
 
 import jwst
+from jwst.datamodels.container import ModelContainer
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.extract_1d.tests.helpers import mock_nirspec_fs_one_slit_func
 from jwst.pipeline import Spec3Pipeline
@@ -164,8 +165,10 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
         Ensure the input type is correct, which is equivalent to ensuring the result of
         the pipeline has the correct type.
         """
-        if not isinstance(input_model, list):
-            raise TypeError("Input to make_wfss_multiexposure is not a list")
+        if not isinstance(input_model, ModelContainer):
+            raise TypeError(
+                f"Input to make_wfss_multiexposure is not a ModelContainer: {input_model}"
+            )
         if not all(isinstance(m, dm.WFSSMultiSpecModel) for m in input_model):
             raise TypeError("Input to make_wfss_multiexposure is not a list of WFSSMultiSpecModel")
         output_model = dm.WFSSMultiSpecModel()
