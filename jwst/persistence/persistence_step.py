@@ -116,19 +116,19 @@ class PersistenceStep(Step):
         # Write persistence array to ASDF file
         # Only write out the non-zero rows and columns
         # and their values, to save disk space.
-        det = result.meta.instrument.detector
+        detector = result.meta.instrument.detector
         rows, cols = np.nonzero(self.persistence_array)
         vals = self.persistence_array[rows, cols]
 
         if Path(filename).exists():
-            # There is a pre-existing persistence file, read it's contents
+            # There is a pre-existing persistence file, read its contents.
             tree = asdf.load(filename)
         else:
             # There is no persistence file, so start with a blank tree
             tree = {}
 
         # Add/update values for this detector
-        tree[det] = {
+        tree[detector] = {
             "filename": result.meta.filename,
             "rows": rows,
             "cols": cols,
@@ -157,17 +157,17 @@ class PersistenceStep(Step):
             log.info(".... Creating new persistence array.")
             return
         with asdf.open(self.persistence_array_file) as pers_file:
-            det = result.meta.instrument.detector
-            if det in pers_file:
-                rows = pers_file[det]["rows"]
-                cols = pers_file[det]["cols"]
-                vals = pers_file[det]["vals"]
-                pers_time = pers_file[det]["pers_time"]
+            detector = result.meta.instrument.detector
+            if detector in pers_file:
+                rows = pers_file[detector]["rows"]
+                cols = pers_file[detector]["cols"]
+                vals = pers_file[detector]["vals"]
+                pers_time = pers_file[detector]["pers_time"]
                 if pers_time != self.persistence_time:
                     msg = f"{pers_time} does not equal persistence_time :{self.persistence_time}"
                     log.info(msg)
                     return
                 self.persistence_array[rows, cols] = vals
             else:
-                log.info(f"Detector {det} not in persistence array file.")
+                log.info(f"Detector {detector} not in persistence array file.")
                 log.info(".... Creating new persistence array.")
