@@ -3,6 +3,7 @@ import os
 
 import asdf
 import numpy as np
+import pytest
 from astropy.io import fits
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
@@ -113,6 +114,18 @@ def test_persistence_time_nonneg_sec_thresh(create_sci_model):
     np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
     np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
     np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
+
+
+@pytest.mark.skip(reason="Needs development.")
+def test_persistence_array_file_overwrite(create_sci_model):
+    """Use existing persistence file to overwrite data for an existing detector."""
+    pass
+
+
+@pytest.mark.skip(reason="Needs development.")
+def test_persistence_array_file_add(create_sci_model):
+    """Use existing persistence file to add data for a new detector."""
+    pass
 
 
 def test_persistence_time_0_sec(create_sci_model):
