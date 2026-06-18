@@ -1,0 +1,1 @@
+Changing usage of persistence array file for batch processing.
