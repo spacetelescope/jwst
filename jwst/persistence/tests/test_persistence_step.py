@@ -128,9 +128,6 @@ def test_persistence_array_file_overwrite(tmp_path, create_sci_model):
 
     tree1 = asdf.load(save_persistence)
 
-    del model
-    del res
-
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 0] |= dqflags.group["SATURATED"]
@@ -153,9 +150,6 @@ def test_persistence_array_file_add(tmp_path, create_sci_model):
 
     step = PersistenceStep(persistence_time=70, save_persistence=save_persistence)
     res = step.run(model)
-
-    del model
-    del res
 
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
@@ -244,8 +238,6 @@ def test_persistence_time_save_persistence(create_sci_model, tmp_path):
     np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
 
     assert os.path.exists(save_persistence) is True
-
-    del step
 
 
 def test_persistence_time_with_array(create_sci_model, tmp_path):
