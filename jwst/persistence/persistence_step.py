@@ -116,44 +116,31 @@ class PersistenceStep(Step):
         if ext != ".asdf":
             filename = f"{root}.asdf"
 
-        # XXX Not working as desired. Figure it out.
-
-        det = result.meta.instrument.detector
         # Write persistence array to ASDF file
         #    Only write out the non-zero rows and columns
         #    and their values, to save disk space.
+        det = result.meta.instrument.detector
         rows, cols = np.nonzero(self.persistence_array)
         vals = self.persistence_array[rows, cols]
 
-        # if not Path.exists(Path(filename)):
-        if not Path(filename).exists():
-            # Set up the tree with only one detector.
-            tree = {
-                det: {
-                    "filename": result.meta.filename,
-                    "rows": rows,
-                    "cols": cols,
-                    "vals": vals,
-                    "pers_time": self.persistence_time,
-                },
-            }
-            with asdf.AsdfFile(tree) as af:
-                af.write_to(filename)
+        if Path(filename).exists():
+            # There is a pre-existing persistence file, read it's contents
+            tree = asdf.load(filename)
         else:
-            with asdf.open(filename, memmap=True) as pers_file:
-                # XXX Is this sufficient? Is this lazy? Or is there something that
-                #     needs to be done to force the entire tree to load, so it can
-                #     be written properly. Maybe use memmap=True
-                # Add or overwrite the current detector if it already exists in the tree
-                pers_file[det] = {
-                    "filename": result.meta.filename,
-                    "rows": rows,
-                    "cols": cols,
-                    "vals": vals,
-                    "pers_time": self.persistence_time,
-                }
-                # XXX Will this work?
-                pers_file.write_to(filename)
+            # There is no persistence file, so start with a blank tree
+            tree = {}
+
+        # Add/update values for this detector
+        tree[det] = {
+            "filename": result.meta.filename,
+            "rows": rows,
+            "cols": cols,
+            "vals": vals,
+            "pers_time": self.persistence_time,
+        }
+
+        # Write out the persistence file
+        asdf.dump(tree, filename)
 
     def get_persistence_array_from_file(self, result, nrows, ncols):
         """
