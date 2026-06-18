@@ -1,0 +1,1 @@
+Gracefully handle missing MSA metadata files in picture_frame step
