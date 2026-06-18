@@ -603,6 +603,15 @@ def contam_corr(
     direct_file = input_model.meta.direct_image
     log.debug(f"Direct image ={direct_file}")
     with datamodels.open(direct_file) as direct_model:
+        band_wavelengths = None
+        if isinstance(direct_model, datamodels.WFSSMultiBandModel):
+            # Multi-band direct image: each wavelength plane holds the flux in that band.
+            band_wavelengths = direct_model.wavelength.flatten().astype(float)
+            log.info(
+                "Direct image is a WFSSMultiBandModel with "
+                f"{len(band_wavelengths)} wavelength bands "
+                f"covering {band_wavelengths[0]:.4f} to {band_wavelengths[-1]:.4f} microns"
+            )
         direct_image = direct_model.data
         direct_image_wcs = direct_model.meta.wcs
 
@@ -658,6 +667,7 @@ def contam_corr(
         max_cpu=ncpus,
         max_pixels_per_chunk=max_pixels_per_chunk,
         oversample_factor=oversample_factor,
+        band_wavelengths=band_wavelengths,
     )
     seg_model.close()
 

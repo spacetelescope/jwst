@@ -101,6 +101,40 @@ There is one primary output and two optional outputs from the step:
 
 .. _polynomial_flux_modeling:
 
+Multi-Band Direct Imaging
+-------------------------
+
+By default, each source is simulated with a spectrally flat flux model - that is, the
+flux at every wavelength is taken directly from the pixel values of a single input direct image.
+If desired, e.g. if multiple direct images are available in different filters, one can specify
+fluxes at multiple wavelengths in each direct-image pixel. This is done by replacing the direct
+image (`_i2d`) file in the input association with a `~stdatamodels.jwst.datamodels.WFSSMultiBandModel`
+file. This file contains a 3-D array in its ``model.data`` attribute, where the last two dimensions
+are the spatial dimensions of the direct image, and the first dimension has the same length as the
+number of direct images provided. The ``model.wavelength`` attribute is a 1-D array
+that specifies the corresponding wavelengths.
+See the `JWST pipeline notebooks <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-pipeline-notebooks>`_
+for examples of how to create a `~stdatamodels.jwst.datamodels.WFSSMultiBandModel` file from
+multiple direct images, and how to run it through the pipeline.
+
+When the step encounters a `~stdatamodels.jwst.datamodels.WFSSMultiBandModel` file in place of the direct image,
+it performs a linear interpolation in wavelength for each pixel to determine the flux at the simulated
+dispersed wavelengths. This allows the step to improve its simulation based on known spectral information.
+The utility of this approach is not limited to the case of multiple direct images in a single observation;
+arbitrarily complex spectral information can be encoded by hand-editing the model, e.g. to include stellar
+simulations for certain sources. Any number of wavelengths can be included in the model.
+
+If the dispersed wavelengths extend outside the wavelengths specified in the
+``model.wavelength``, a flat extrapolation is used. If NaNs are encountered in a given pixel at some
+wavelengths but not others, they are filled in as if those pixels did not exist: if the NaN is bounded
+in the wavelength dimension by valid flux values, it is filled in with a linear interpolation in wavelength;
+if the NaN is only bounded on one side by valid flux values, it is filled in with a flat extrapolation
+of the nearest valid value. If the whole wavelength dimension is NaN, that pixel is not modeled at all.
+
+Note that the last two dimensions of the data must match the shape of the segmentation map.
+As normal, nonzero pixels in the segmentation map are the ones that get simulated.
+
+
 Polynomial Flux Modeling
 ------------------------
 

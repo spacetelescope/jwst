@@ -54,6 +54,38 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
 
 
 @pytest.fixture(scope="module")
+def direct_image_cube_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
+    """
+    Build a multi-band direct image cube and save it as a WFSSMultiBandModel.
+
+    Each wavelength plane is a copy of the direct image with a different linear
+    gradient added, so the planes are not identical and tests can distinguish
+    which wavelength was sampled.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.WFSSMultiBandModel`
+        Multi-band direct image, also saved to filename "direct_image_cube.fits"
+    """
+    ny, nx = direct_image.shape
+    y, x = np.mgrid[:ny, :nx]
+
+    band_wls = np.array([1.75, 1.90, 2.05, 2.20], dtype=np.float32)
+    n_bands = len(band_wls)
+    cube = np.zeros((n_bands, ny, nx), dtype=np.float32)
+    for i, wl in enumerate(band_wls):
+        # Scale the gradient by wavelength so each plane is distinct
+        gradient = wl * x * y / 5000.0
+        cube[i] = direct_image + gradient
+
+    model = dm.WFSSMultiBandModel(data=cube, wavelength=band_wls)
+    model.meta.wcs = create_imaging_wcs("F200W")
+    model.save("direct_image_cube.fits")
+
+    return model
+
+
+@pytest.fixture(scope="module")
 def segmentation_map(direct_image):
     """
     Make a segmentation map from the mock direct image.
