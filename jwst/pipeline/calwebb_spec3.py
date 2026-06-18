@@ -1,4 +1,5 @@
 import logging
+import time
 from collections import defaultdict
 from pathlib import Path
 
@@ -78,6 +79,7 @@ class Spec3Pipeline(Pipeline):
             The exposure or association of exposures to process
         """
         log.info("Starting calwebb_spec3 ...")
+        t_start = time.time()
         asn_exptypes = ["science", "background"]
 
         # Setup sub-step defaults
@@ -308,6 +310,7 @@ class Spec3Pipeline(Pipeline):
             x1d_filename = output_file + "_x1d.fits"
             c1d_filename = output_file + "_c1d.fits"
 
+            log.info("Reordering the %s spectra to be per-source", exptype)
             x1d_output = make_wfss_multiexposure(source_models)
             self._populate_wfss_sregion(x1d_output, source_models)
 
@@ -315,21 +318,15 @@ class Spec3Pipeline(Pipeline):
             x1d_output.save(x1d_filename)
 
             # Combine the results for all sources
-            self.combine_1d.save_results = False
-            c1d_output = self.combine_1d.run(x1d_output)
-            comb_complete = (
-                c1d_output is not None and c1d_output.meta.cal_step.combine_1d == "COMPLETE"
-            )
-            if not comb_complete:  # pragma: no cover
-                log.error("combine_1d failed to create %s", c1d_filename)
-            else:
-                log.info("Saving the final c1d product as %s", c1d_filename)
-                c1d_output.save(c1d_filename)
+            self.combine_1d.save_results = True
+            self.combine_1d.output_file = c1d_filename
+            self.combine_1d.run(x1d_output)
 
         if input_models is not input_data:
             input_models.close()
 
-        log.info("Ending calwebb_spec3")
+        t_end = time.time()
+        log.info("Ending calwebb_spec3 (took %.1f seconds)", t_end - t_start)
 
     def _create_nrsfs_slit_name(self, source_models):
         """
@@ -420,7 +417,7 @@ class Spec3Pipeline(Pipeline):
         """
         try:
             input_sregions = [w.spec[0].s_region for w in cal_model_list if w.spec[0].s_region]
-        except AttributeError:  # pragma: no cover
+        except AttributeError:
             log.warning(
                 "One or more input model(s) are missing an 's_region' attribute; "
                 "output S_REGION will not be set."
@@ -428,12 +425,12 @@ class Spec3Pipeline(Pipeline):
             return
 
         n_sreg = len(input_sregions)
-        if n_sreg == 0:  # pragma: no cover
+        if n_sreg == 0:
             log.warning(
                 "None of the input model(s) have valid S_REGION; output S_REGION will not be set."
             )
             return
-        if n_sreg == 1:  # pragma: no cover
+        if n_sreg == 1:
             wfss_model.spec[0].s_region = input_sregions[0]
             return
 
@@ -455,7 +452,7 @@ class Spec3Pipeline(Pipeline):
 
         try:
             sregion = combine_sregions(input_sregions, det2world)
-        except ValueError as e:  # pragma: no cover
+        except ValueError as e:
             log.warning(
                 "Could not combine S_REGIONs: %s. Output S_REGION will not be set.", repr(e)
             )
