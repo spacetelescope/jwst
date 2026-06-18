@@ -52,7 +52,6 @@ class PersistenceStep(Step):
             result.meta.cal_step.persistence = "FAILED"
             return result
 
-        log.info("Persistence options set. Running step.")
         pers_a = persistence.DataSet(
             result,
             self.save_persistence,
@@ -66,8 +65,6 @@ class PersistenceStep(Step):
         result.meta.cal_step.persistence = "COMPLETE"
         if pers_a.save_persistence is not None:
             self.write_persistence_array(result, pers_a.save_persistence)
-
-        log.info("Finished the persistence step")
 
         return result
 
