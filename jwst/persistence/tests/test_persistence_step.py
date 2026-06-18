@@ -3,7 +3,6 @@ import os
 
 import asdf
 import numpy as np
-import pytest
 from astropy.io import fits
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
@@ -116,16 +115,60 @@ def test_persistence_time_nonneg_sec_thresh(create_sci_model):
     np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
 
 
-@pytest.mark.skip(reason="Needs development.")
-def test_persistence_array_file_overwrite(create_sci_model):
+def test_persistence_array_file_overwrite(tmp_path, create_sci_model):
     """Use existing persistence file to overwrite data for an existing detector."""
-    pass
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    save_persistence = str(tmp_path / "dummy_persistence_array.asdf")
+
+    step = PersistenceStep(persistence_time=700, save_persistence=save_persistence)
+    res = step.run(model)
+
+    tree1 = asdf.load(save_persistence)
+
+    del model
+    del res
+
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 0] |= dqflags.group["SATURATED"]
+
+    step = PersistenceStep(persistence_time=700, save_persistence=save_persistence)
+    res = step.run(model)
+
+    tree2 = asdf.load(save_persistence)
+
+    assert tree1["NRCA1"]["cols"][0] != tree2["NRCA1"]["cols"][0]
 
 
-@pytest.mark.skip(reason="Needs development.")
-def test_persistence_array_file_add(create_sci_model):
+def test_persistence_array_file_add(tmp_path, create_sci_model):
     """Use existing persistence file to add data for a new detector."""
-    pass
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    save_persistence = str(tmp_path / "dummy_persistence_array.asdf")
+
+    step = PersistenceStep(persistence_time=70, save_persistence=save_persistence)
+    res = step.run(model)
+
+    del model
+    del res
+
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+    model.meta.instrument.detector = "NRCA2"
+
+    step = PersistenceStep(persistence_time=70, save_persistence=save_persistence)
+    res = step.run(model)
+
+    tree = asdf.load(save_persistence)
+
+    assert "NRCA1" in tree
+    assert "NRCA2" in tree
 
 
 def test_persistence_time_0_sec(create_sci_model):
