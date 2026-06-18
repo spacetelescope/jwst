@@ -314,7 +314,7 @@ def test_persistence_mismatch_persistence_time_guard(create_sci_model, tmp_path,
 
     with caplog.at_level(logging.INFO):
         step.run(model)
-    assert "persistence_time mismatch: from file:" in caplog.text
+    assert "does not equal persistence_time" in caplog.text
 
 
 def test_persistence_backwards_flagging_guard(create_sci_model, tmp_path, caplog):
