@@ -35,8 +35,3 @@ pixel. The time is giving in epoch time.
 
 This boolean determines if the ``DO_NOT_USE`` flag will get set when the ``PERSISTENCE``
 flag gets set.
-
-*  ``--skip``
-
-This boolean determines if to skip this step or not. The default is ``True`` to skip
-this step.
