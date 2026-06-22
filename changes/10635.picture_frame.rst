@@ -1,1 +1,1 @@
-Gracefully handle missing MSA metadata files in picture_frame step
+If MSA metadata files are missing and mask_science_regions is True, set the step to FAILED status and return instead of raising an exception.
