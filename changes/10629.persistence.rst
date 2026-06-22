@@ -1,2 +1,1 @@
-Changing for reuse persistence array file for batch processing, to handle out
-of chronological processing and separate detector level information.
+Improve support for batch processing by separating detector-level information and reusing the persistence array file.
