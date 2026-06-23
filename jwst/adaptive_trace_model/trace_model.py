@@ -1661,7 +1661,8 @@ def _intermediate_models(model, data_arrays):
             new_model = model_type(data=data)
             new_model.update(model)
 
-            # prevent empty error arrays
+            # prevent empty arrays
+            new_model.dq = None
             new_model.err = None
             new_model.meta.bunit_err = None
 

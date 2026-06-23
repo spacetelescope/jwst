@@ -50,6 +50,7 @@ def run_spec3_oversample(rtdata_module):
         "--steps.pixel_replace.skip=true",  # skip for speed
         "--steps.adaptive_trace_model.skip=false",
         "--steps.adaptive_trace_model.save_results=true",
+        "--steps.adaptive_trace_model.save_intermediate=true",
         "--steps.adaptive_trace_model.oversample=2.0",
         "--steps.cube_build.save_results=true",
         "--steps.extract_1d.save_results=true",
@@ -80,6 +81,7 @@ def test_miri_mrs_spec2_trace_model(
 @pytest.mark.parametrize(
     "output",
     [
+        # Check all 8 ATM output files
         "jw01024009001_02101_00001_mirifushort_c1000_adaptive_trace_model.fits",
         "jw01024009001_02101_00002_mirifushort_c1000_adaptive_trace_model.fits",
         "jw01024009001_02101_00003_mirifushort_c1000_adaptive_trace_model.fits",
@@ -88,6 +90,12 @@ def test_miri_mrs_spec2_trace_model(
         "jw01024013001_02101_00002_mirifushort_c1000_adaptive_trace_model.fits",
         "jw01024013001_02101_00003_mirifushort_c1000_adaptive_trace_model.fits",
         "jw01024013001_02101_00004_mirifushort_c1000_adaptive_trace_model.fits",
+        # Check the 4 intermediate files for 1 of the 8 inputs
+        "jw01024009001_02101_00001_mirifushort_c1000_spline_used.fits",
+        "jw01024009001_02101_00001_mirifushort_c1000_spline_full.fits",
+        "jw01024009001_02101_00001_mirifushort_c1000_spline_residual.fits",
+        "jw01024009001_02101_00001_mirifushort_c1000_linear_interp.fits",
+        # Check all expected spectra and cubes
         "jw01024-c1000_t002_miri_ch1-long_x1d.fits",
         "jw01024-c1000_t002_miri_ch1-medium_x1d.fits",
         "jw01024-c1000_t002_miri_ch2-long_x1d.fits",
