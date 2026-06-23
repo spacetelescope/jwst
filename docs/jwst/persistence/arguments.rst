@@ -20,6 +20,12 @@ if 200, then once a flagging window has been determined, the flagging window for
 that pixel will end 200 seconds later. The default is ``None``. A positive integer
 is needed for the persistence flagging to be done.
 
+*  ``--dn_threshold``
+
+This is a float parameter. Any group in the science data above this threshold will
+open a persistence window for flagging, if there is no existing flagging window
+already open.
+
 *  ``--persistence_array_file``
 
 This is a path to a file with timing data for the end of a timing window for each

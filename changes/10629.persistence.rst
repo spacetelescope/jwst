@@ -1,0 +1,1 @@
+Improve support for batch processing by separating detector-level information and reusing the persistence array file.
