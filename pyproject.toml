@@ -113,8 +113,8 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-# explicitly skip free-threaded builds
-skip = ["cp314t-*"]
+build = "cp311-*"  # build for CPython 3.11 Stable API
+skip = ["cp314t-*"]  # explicitly skip free-threaded builds
 
 [tool.setuptools]
 zip-safe = false
