@@ -273,9 +273,9 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
 
         if exp_type == "NRS_BRIGHTOBJ":
             detector = input_model.meta.instrument.detector
-            wlc_flux = whitelight_table[f"whitelight_flux_{detector}"]
+            wlc_flux = whitelight_table[f"whitelight_flux_{detector}"].value
         else:
-            wlc_flux = whitelight_table["whitelight_flux"]
+            wlc_flux = whitelight_table["whitelight_flux"].value
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)

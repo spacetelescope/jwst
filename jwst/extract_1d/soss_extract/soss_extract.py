@@ -1562,7 +1562,6 @@ def _process_one_integration(
             "background": integration.col_bkg[:table_size],
             "npixels": npixels[order][:table_size],
             "spectral_order": ORDER_STR_TO_INT[order],
-            "int_num": int_num,
         }
 
     return tracemodels, spec_list_data, atoca_list_data, tikfacs_out, wave_grid
@@ -1597,7 +1596,15 @@ def _reconstruct_spec_from_data(spec_data):
 
     spec = datamodels.SpecModel(spec_table=out_table)
     spec.spectral_order = spec_data["spectral_order"]
-    spec.int_num = spec_data["int_num"]
+
+    # Int_num is used only for ATOCA spectra. It will be None for regular output spectra.
+    spec.int_num = spec_data.get("int_num")
+
+    # Set units for the spectral table. Assume uncalibrated flux, wavelength in um.
+    spec.spec_table.columns["wavelength"].unit = "um"
+    spec.spec_table.columns["flux"].unit = "DN/s"
+    spec.spec_table.columns["flux_error"].unit = "DN/s"
+    spec.spec_table.columns["background"].unit = "DN/s"
 
     return spec
 
@@ -1698,17 +1705,17 @@ def run_extract1d(
 
     # Initialize the output model.
     output_model = datamodels.TSOMultiSpecModel()
-    output_model.update(input_model)  # Copy meta data from input to output.
+    output_model.update(input_model, only="PRIMARY")  # Copy meta data from input to output.
 
     # Initialize output spectra returned by ATOCA
     # NOTE: these diagnostic spectra are formatted as a simple MultiSpecModel,
     # with integrations in separate spectral extensions.
     output_atoca = datamodels.MultiSpecModel()
-    output_atoca.update(input_model)
+    output_atoca.update(input_model, only="PRIMARY")
 
     # Initialize output references (model of the detector and box aperture weights).
     output_references = datamodels.SossExtractModel()
-    output_references.update(input_model)
+    output_references.update(input_model, only="PRIMARY")
 
     # Convert to Cube if datamodels is an ImageModel
     if isinstance(input_model, datamodels.ImageModel):

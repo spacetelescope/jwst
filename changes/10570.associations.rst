@@ -1,1 +1,0 @@
-Enable creation of pure parallel associations for MIRI WFSS

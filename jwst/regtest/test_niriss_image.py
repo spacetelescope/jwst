@@ -25,7 +25,6 @@ def run_detector1(rtdata_module):
     args = [
         "calwebb_detector1",
         rtdata.input,
-        "--steps.persistence.save_trapsfilled=False",
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",
         "--steps.superbias.save_results=True",
@@ -53,7 +52,6 @@ def run_detector1_multiprocess_rate(rtdata_module):
     args = [
         "calwebb_detector1",
         rtdata.input,
-        "--steps.persistence.save_trapsfilled=False",
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",
         "--steps.superbias.save_results=True",
@@ -82,7 +80,6 @@ def run_detector1_multiprocess_rate_save_opt(rtdata_module, resource_tracker):
     args = [
         "calwebb_detector1",
         rtdata.input,
-        "--steps.persistence.save_trapsfilled=False",
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",
         "--steps.superbias.save_results=True",
@@ -113,7 +110,6 @@ def run_detector1_multiprocess_jump(rtdata_module):
     args = [
         "calwebb_detector1",
         rtdata.input,
-        "--steps.persistence.save_trapsfilled=False",
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",
         "--steps.superbias.save_results=True",
