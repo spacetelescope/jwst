@@ -29,7 +29,7 @@ dependencies = [
     "requests>=2.32",
     "scikit-image>=0.23.0",
     "scipy>=1.15.3",
-    "stdatamodels>=6.0.0,<7",
+    "stdatamodels>=6.0.0,<6.1",
     # "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     "stcal>=1.19.0,<2",
     # "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
