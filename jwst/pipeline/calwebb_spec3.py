@@ -305,21 +305,24 @@ class Spec3Pipeline(Pipeline):
             else:
                 log.warning("Resampling was not completed. Skipping extract_1d.")
 
-        # Save the final output products for WFSS modes
-        if exptype in WFSS_TYPES and self.save_results:
-            x1d_filename = output_file + "_x1d.fits"
-            c1d_filename = output_file + "_c1d.fits"
-
+        # Generate and save the final output products for WFSS modes
+        if exptype in WFSS_TYPES:
             log.info("Reordering the %s spectra to be per-source", exptype)
             x1d_output = make_wfss_multiexposure(source_models)
             self._populate_wfss_sregion(x1d_output, source_models)
 
-            log.info("Saving the final x1d product as %s", x1d_filename)
-            x1d_output.save(x1d_filename)
+            self.combine_1d.save_results = self.save_results
+
+            if self.save_results:
+                x1d_filename = output_file + "_x1d.fits"
+                c1d_filename = output_file + "_c1d.fits"
+
+                log.info("Saving the final x1d product as %s", x1d_filename)
+                x1d_output.save(x1d_filename)
+
+                self.combine_1d.output_file = c1d_filename
 
             # Combine the results for all sources
-            self.combine_1d.save_results = True
-            self.combine_1d.output_file = c1d_filename
             self.combine_1d.run(x1d_output)
 
         if input_models is not input_data:
