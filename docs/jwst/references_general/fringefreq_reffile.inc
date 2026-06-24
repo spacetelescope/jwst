@@ -28,10 +28,10 @@ EXP_TYPE   model.meta.exposure.type
 =========  ==============================
 
 Reference File Format
-++++++++++++++++++++++++++
-The FRINGEFREQ reference files are FITS format, with  4  BINTABLE extensions.
++++++++++++++++++++++
+The FRINGEFREQ reference files are FITS format, with 4 BINTABLE extensions.
 The FITS primary data array is assumed to be empty.
-The format and content of the FRINGEFREQ reference file is
+The format and content of the FRINGEFREQ reference file is:
 
 ===================  ========  ===========
 EXTNAME              XTENSION  Dimensions
@@ -49,10 +49,17 @@ The formats of the individual table extensions are listed below.
 These reference files contain tables for each MIRI band giving the
 fringe frequencies and other parameters for each band to fit and remove residual fringes.
 
-
 The reference table descriptions:
 
-- **RFC_FREQ_SHORT** table contains the fringe frequencies and parameters for the SHORT band.
-- **RFC_FREQ_MEDIUM** table contains the fringe frequencies and parameters for the MEDIUM band.
-- **RFC_FREQ_LONG** table contains the fringe frequencies and parameters for the LONG band.
-- **MAX_AMP** table contains a wavelength dependent maximum amplitude which is use for feature identification and fit rejection.
+RFC_FREQ_SHORT
+  Table that contains the fringe frequencies and parameters for the SHORT band.
+
+RFC_FREQ_MEDIUM
+  Table that contains the fringe frequencies and parameters for the MEDIUM band.
+
+RFC_FREQ_LONG
+  Table that contains the fringe frequencies and parameters for the LONG band.
+
+MAX_AMP
+  Table contains a wavelength dependent maximum amplitude which is use for
+  feature identification and fit rejection.

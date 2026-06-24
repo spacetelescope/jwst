@@ -23,7 +23,32 @@ __all__ = ["ResidualFringeCorrection", "NoFringeFlatError"]
 
 
 class ResidualFringeCorrection:
-    """Calculate and apply correction for residual fringes."""
+    """
+    Calculate and apply correction for residual fringes.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        Input data to correct; updated in-place.
+    residual_fringe_reference_file : str
+        Path to FRINGEFREQ reference file.
+    regions_reference_file : str
+        Path to REGIONS reference file.
+    ignore_regions : dict
+        Wavelength regions to ignore. Keys are "num", "min", and "max".
+        Values are the number of regions specified (int), the list
+        of minimum wavelength values, and the list of maximum wavelength
+        values.  Length of minimum and maximum lists must match.
+    save_intermediate_results : bool, optional
+        If `True`, intermediate files are saved to disk.
+    transmission_level : int, optional
+        The transmission level used to extract the appropriate region
+        definitions from the REGIONS reference file.
+    make_output_path : callable or None, optional
+        If provided, is used to create the output file names when
+        ``save_intermediate_results`` is `True`.  If None, filenames
+        are created with the default ``Step.make_output_path`` method.
+    """
 
     def __init__(
         self,
@@ -35,32 +60,6 @@ class ResidualFringeCorrection:
         transmission_level=80,
         make_output_path=None,
     ):
-        """
-        Manage residual fringe correction.
-
-        Parameters
-        ----------
-        input_model : IFUImageModel
-            Input data to correct.  Updated in place.
-        residual_fringe_reference_file : str
-            Path to FRINGEFREQ reference file.
-        regions_reference_file : str
-            Path to REGIONS reference file.
-        ignore_regions : dict
-            Wavelength regions to ignore. Keys are "num", "min", and "max".
-            Values are the number of regions specified (int), the list
-            of minimum wavelength values, and the list of maximum wavelength
-            values.  Length of minimum and maximum lists must match.
-        save_intermediate_results : bool, optional
-            If True, intermediate files are saved to disk.
-        transmission_level : int, optional
-            The transmission level used to extract the appropriate region
-            definitions from the REGIONS reference file.
-        make_output_path : callable or None, optional
-            If provided, is used to create the output file names when
-            `save_intermediate_results` is True.  If None, filenames
-            are created with the default `Step.make_output_path` function.
-        """
         self.input_model = input_model
         self.residual_fringe_reference_file = residual_fringe_reference_file
         self.regions_reference_file = regions_reference_file
@@ -94,11 +93,11 @@ class ResidualFringeCorrection:
 
     def do_correction(self):
         """
-        Apply residual fringe correction to a copy of self.input_model.
+        Apply residual fringe correction to a copy of input model.
 
         Returns
         -------
-        output_model : IFUImageModel
+        output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
             Datamodel with correction applied.
         """
         # Check that the fringe flat has been applied
