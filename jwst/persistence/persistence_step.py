@@ -1,3 +1,5 @@
+"""Remove persistence signal from ramp data."""
+
 import logging
 from pathlib import Path
 
@@ -74,13 +76,14 @@ class PersistenceStep(Step):
 
         Parameters
         ----------
-        result : RampModel
-            The RampModel on which to process the persistence flag.
+        result : `~stdatamodels.jwst.datamodels.RampModel`
+            The `~stdatamodels.jwst.datamodels.RampModel`
+            on which to process the persistence flag.
 
         Returns
         -------
         ret : str or None
-            "Failed" if invalid persistence_time; otherwise NoneType.
+            "Failed" if invalid persistence_time; otherwise None.
         """
         # Could make less than or equal to frametime.
         if self.persistence_time is None or self.persistence_time <= 0.0:
@@ -103,8 +106,9 @@ class PersistenceStep(Step):
 
         Parameters
         ----------
-        result : RampModel
-            The RampModel on which to process the persistence flag.
+        result : `~stdatamodels.jwst.datamodels.RampModel`
+            The `~stdatamodels.jwst.datamodels.RampModel`
+            on which to process the persistence flag.
         """
         ext = str(Path(filename).suffix)
         stem = Path(filename).stem
@@ -146,10 +150,10 @@ class PersistenceStep(Step):
         Parameters
         ----------
         nrows : int
-            The number of rows in the RampModel data.
+            The number of rows in the `~stdatamodels.jwst.datamodels.RampModel` data.
 
         ncols : int
-            The number of columns in the RampModel data.
+            The number of columns in the `~stdatamodels.jwst.datamodels.RampModel` data.
         """
         self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
         if not Path(self.persistence_array_file).exists():

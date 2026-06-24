@@ -9,5 +9,4 @@ Persistence Correction
 
    description.rst
    arguments.rst
-
-.. automodapi:: jwst.persistence
+   api_ref.rst
