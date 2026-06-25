@@ -311,16 +311,10 @@ class Spec3Pipeline(Pipeline):
             x1d_output = make_wfss_multiexposure(source_models)
             self._populate_wfss_sregion(x1d_output, source_models)
 
-            self.combine_1d.save_results = self.save_results
-
             if self.save_results:
                 x1d_filename = output_file + "_x1d.fits"
-                c1d_filename = output_file + "_c1d.fits"
-
                 log.info("Saving the final x1d product as %s", x1d_filename)
                 x1d_output.save(x1d_filename)
-
-                self.combine_1d.output_file = c1d_filename
 
             # Combine the results for all sources
             self.combine_1d.run(x1d_output)
