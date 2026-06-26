@@ -188,19 +188,23 @@ def test_outlier_step_with_source_no_outliers(mirimage_three_sci, tmp_cwd, src_t
 
 
 @pytest.mark.parametrize("weight", ["exptime", "ivm"])
+@pytest.mark.parametrize("resample_data", [True, False])
 @pytest.mark.parametrize("src_type", ["gaussian", "square", "strip", "point"])
 @pytest.mark.parametrize("idx", [0, 1, 2])
-def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weight, idx):
-    """Test whole step with outlier(s) added besides a uniform square source."""
+def test_outlier_step_with_outliers(
+    mirimage_three_sci, tmp_cwd, src_type, weight, idx, resample_data
+):
+    """Test whole step with outlier of various shapes added on top of a uniform square source."""
     container = ModelLibrary(list(mirimage_three_sci))
 
     atol = 2.0 * np.finfo(np.float32).eps
 
-    # Create artificial source
+    # Input data already contain a hot pixel at index 7,7 with a correspondingly higher error value.
+    # On top of that, create an artificial square source, uniform across all images
     src_sl = np.s_[5:16, 5:16]
     src = np.full((11, 11), 100 * helpers.SIGMA, dtype=np.float32)
 
-    # Create artificial CR
+    # Also create an artificial CR of variable shape, to add to one image.
     if src_type == "strip":
         sl = np.s_[9:12, 5:16]
         cr = np.full((3, 11), 100 * helpers.SIGMA, dtype=np.float32)
@@ -216,15 +220,16 @@ def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weigh
         fwhm = 1.5
         cr = 100 * helpers.SIGMA * np.exp(-4.0 * np.log(2.0) * (x**2 + y**2) / fwhm**2)
 
-    cr_mask = cr > 5 * helpers.SIGMA
-
-    # put a Gaussian source in all three exposures
+    # Put the square source in all three exposures. Add the CR to one exposure.
     with container:
         for i, ccont in enumerate(container):
             ccont.data[src_sl] += src
             if i == idx:
                 ccont.data[sl] += cr
-                # ccont.err[5:16, 5:16] = np.sqrt(ccont.err[5:16, 5:16]**2 + src)
+
+                # Expected CRs: anywhere the added signal is greater than 5 sigma
+                cr_mask = cr > 5 * ccont.err[sl]
+
             container.shelve(ccont)
 
     # Save all the data into a separate array before passing into step
@@ -238,7 +243,17 @@ def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weigh
             non_nan_mask_as_cube.append(np.isfinite(model.data))
             container.shelve(model, modify=False)
 
-    result = OutlierDetectionStep.call(container, in_memory=True, weight_type=weight)
+    # Call outlier detection with SNR 5.  For resampled data, set the secondary
+    # scale such that the smoothed wings of the hot pixel are still flagged as outliers,
+    # for consistency with the other tests.
+    result = OutlierDetectionStep.call(
+        container,
+        in_memory=True,
+        weight_type=weight,
+        resample_data=resample_data,
+        snr="5.0 4.0",
+        scale="1.2 0.2",
+    )
 
     with result:
         for i, corrected in enumerate(result):
@@ -247,11 +262,6 @@ def test_outlier_step_with_outliers(mirimage_three_sci, tmp_cwd, src_type, weigh
                 # Make sure CR pixels are now NaN in SCI and flagged in DQ
                 m[sl] = np.logical_not(cr_mask)
                 m2 = np.isfinite(corrected.data)
-
-                if src_type == "square":
-                    pytest.xfail(
-                        "Square CR fails with pixels in the interior of the square not flagged as outliers."
-                    )
 
                 assert np.all(m == m2)
                 assert np.all(
