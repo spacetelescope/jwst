@@ -10,7 +10,6 @@ from jwst.datamodels.utils.flat_multispec import (
     expand_table,
     make_empty_recarray,
     populate_recarray,
-    set_schema_units,
 )
 
 __all__ = ["make_wfss_multiexposure", "wfss_multiexposure_to_multispec", "make_wfss_multicombined"]
@@ -143,8 +142,6 @@ def make_wfss_multiexposure(input_list):
         spec_table = fltdata_by_exposure[i]
         ext = dm.WFSSSpecModel(spec_table)
 
-        # Set default units from the model schema
-        set_schema_units(ext)
         # copy units from the example specmodel, overriding the schema defaults where applicable
         copy_column_units(example_spec, ext)
 
@@ -283,8 +280,6 @@ def make_wfss_multicombined(results_list):
         fltdata.sort(order=["SOURCE_ID"])
         spec.spec_table = fltdata
 
-        # Set default units from the model schema
-        set_schema_units(spec)
         # copy units from any of the SpecModels (they should all be the same)
         copy_column_units(example_spec, spec)
         copy_spec_metadata(example_spec, spec)

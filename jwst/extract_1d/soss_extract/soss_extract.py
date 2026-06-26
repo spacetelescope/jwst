@@ -1601,10 +1601,10 @@ def _reconstruct_spec_from_data(spec_data):
     spec.int_num = spec_data.get("int_num")
 
     # Set units for the spectral table. Assume uncalibrated flux, wavelength in um.
-    spec.spec_table.columns["wavelength"].unit = "um"
-    spec.spec_table.columns["flux"].unit = "DN/s"
-    spec.spec_table.columns["flux_error"].unit = "DN/s"
-    spec.spec_table.columns["background"].unit = "DN/s"
+    spec.spec_table_units.WAVELENGTH = "um"
+    spec.spec_table_units.FLUX = "DN/s"
+    spec.spec_table_units.FLUX_ERROR = "DN/s"
+    spec.spec_table_units.BACKGROUND = "DN/s"
 
     return spec
 
@@ -1884,9 +1884,13 @@ def run_extract1d(
     if pipe_utils.is_tso(input_model):
         log.info("Populating INT_TIMES keywords from input table.")
         populate_time_keywords(input_model, output_model)
-        output_model.int_times = input_model.int_times.copy()
-        if getattr(input_model, "int_times_stripe", None) is not None:
-            output_model.int_times_stripe = input_model.int_times_stripe.copy()
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=DeprecationWarning, message="Setting '.unit' on Column."
+            )
+            output_model.int_times = input_model.int_times.copy()
+            if getattr(input_model, "int_times_stripe", None) is not None:
+                output_model.int_times_stripe = input_model.int_times_stripe.copy()
 
     if soss_kwargs["wave_grid_out"] is not None:
         # Ensure wave grid is saved with float64 precision to avoid rounding errors

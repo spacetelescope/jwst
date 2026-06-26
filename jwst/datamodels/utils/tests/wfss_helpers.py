@@ -48,7 +48,7 @@ def example_spec():
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)
     spec.spec_table = spec_table
-    spec.spec_table.columns["wavelength"].unit = "um"
+    spec.spec_table_units.WAVELENGTH = "um"
     return spec
 
 
@@ -171,7 +171,7 @@ def wfss_comb():
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)
     spec.spec_table = spec_table
-    spec.spec_table.columns["wavelength"].unit = "um"
+    spec.spec_table_units.WAVELENGTH = "um"
     spec.dispersion_direction = 3
 
     spec.spectral_order = 1

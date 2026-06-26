@@ -1,5 +1,6 @@
 import json
 import logging
+import warnings
 from json.decoder import JSONDecodeError
 from pathlib import Path
 
@@ -1836,22 +1837,22 @@ def create_extraction(
 
         spec = datamodels.SpecModel(spec_table=otab)
         spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
-        spec.spec_table.columns["wavelength"].unit = "um"
-        spec.spec_table.columns["flux"].unit = flux_units
-        spec.spec_table.columns["flux_error"].unit = flux_units
-        spec.spec_table.columns["flux_var_poisson"].unit = f_var_units
-        spec.spec_table.columns["flux_var_rnoise"].unit = f_var_units
-        spec.spec_table.columns["flux_var_flat"].unit = f_var_units
-        spec.spec_table.columns["surf_bright"].unit = sb_units
-        spec.spec_table.columns["sb_error"].unit = sb_units
-        spec.spec_table.columns["sb_var_poisson"].unit = sb_var_units
-        spec.spec_table.columns["sb_var_rnoise"].unit = sb_var_units
-        spec.spec_table.columns["sb_var_flat"].unit = sb_var_units
-        spec.spec_table.columns["background"].unit = sb_units
-        spec.spec_table.columns["bkgd_error"].unit = sb_units
-        spec.spec_table.columns["bkgd_var_poisson"].unit = sb_var_units
-        spec.spec_table.columns["bkgd_var_rnoise"].unit = sb_var_units
-        spec.spec_table.columns["bkgd_var_flat"].unit = sb_var_units
+        spec.spec_table_units.WAVELENGTH = "um"
+        spec.spec_table_units.FLUX = flux_units
+        spec.spec_table_units.FLUX_ERROR = flux_units
+        spec.spec_table_units.FLUX_VAR_POISSON = f_var_units
+        spec.spec_table_units.FLUX_VAR_RNOISE = f_var_units
+        spec.spec_table_units.FLUX_VAR_FLAT = f_var_units
+        spec.spec_table_units.SURF_BRIGHT = sb_units
+        spec.spec_table_units.SB_ERROR = sb_units
+        spec.spec_table_units.SB_VAR_POISSON = sb_var_units
+        spec.spec_table_units.SB_VAR_RNOISE = sb_var_units
+        spec.spec_table_units.SB_VAR_FLAT = sb_var_units
+        spec.spec_table_units.BACKGROUND = sb_units
+        spec.spec_table_units.BKGD_ERROR = sb_units
+        spec.spec_table_units.BKGD_VAR_POISSON = sb_var_units
+        spec.spec_table_units.BKGD_VAR_RNOISE = sb_var_units
+        spec.spec_table_units.BKGD_VAR_FLAT = sb_var_units
         spec.slit_ra = ra
         spec.slit_dec = dec
         spec.spectral_order = sp_order
@@ -1995,7 +1996,11 @@ def _make_output_model(data_model, meta_source):
     else:
         output_model = datamodels.MultiSpecModel()
     if getattr(meta_source, "int_times", None) is not None:
-        output_model.int_times = meta_source.int_times.copy()
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=DeprecationWarning, message="Setting '.unit' on Column."
+            )
+            output_model.int_times = meta_source.int_times.copy()
     if getattr(meta_source, "int_times_stripe", None) is not None:
         output_model.int_times_stripe = meta_source.int_times_stripe.copy()
     output_model.update(meta_source, only="PRIMARY")

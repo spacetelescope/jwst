@@ -2,6 +2,7 @@
 #  Module for 2d extraction of Nirspec fixed slits or MOS slitlets.
 #
 import logging
+import warnings
 
 import numpy as np
 from astropy.modeling.models import Shift
@@ -340,7 +341,11 @@ def extract_slit(input_model, slit):
         ext_var_poisson = input_model.var_poisson[slit_slice].copy()
         if pipe_utils.is_tso(input_model):
             log.debug("TSO data, so copying the INT_TIMES table.")
-            int_times = input_model.int_times.copy()
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", category=DeprecationWarning, message="Setting '.unit' on Column."
+                )
+                int_times = input_model.int_times.copy()
         else:
             int_times = None
     else:

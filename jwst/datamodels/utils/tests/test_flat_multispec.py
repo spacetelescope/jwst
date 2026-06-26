@@ -12,7 +12,6 @@ from jwst.datamodels.utils.flat_multispec import (
     expand_flat_spec,
     make_empty_recarray,
     populate_recarray,
-    set_schema_units,
 )
 from jwst.datamodels.utils.tests.wfss_helpers import mock_wcs
 from jwst.tests.helpers import LogWatcher
@@ -57,7 +56,7 @@ def input_spec():
 
     # Set some units
     for column in spec.spec_table.columns:
-        column.unit = "s"
+        setattr(spec.spec_table_units, column, "s")
     return spec
 
 
@@ -86,7 +85,7 @@ def tso_multi_spec():
     spec_table["N_ALONGDISP"] = 10
     tso_spec.spec_table = spec_table
     for column in tso_spec.spec_table.columns:
-        column.unit = "s"
+        setattr(tso_spec.spec_table_units, column, "s")
 
     # Add spectra to a multispec model
     tso_multi = dm.TSOMultiSpecModel()
@@ -249,24 +248,6 @@ def test_copy_column_units(input_spec, output_spec):
     # otherwise matched.
     expected[: len(input_spec.spec_table.columns)] = input_spec.spec_table.columns.units
     assert output_spec.spec_table.columns.units == expected
-
-
-def test_set_schema_units():
-    model = dm.WFSSSpecModel((10,))
-    set_schema_units(model)
-
-    # get expected units from the schema
-    data_type = model.schema["properties"]["spec_table"]["datatype"]
-    # check that the units are set correctly
-    for i in range(len(model.spec_table.columns)):
-        if "unit" in data_type[i]:
-            atleast_one = True
-            assert model.spec_table.columns[i].unit == data_type[i]["unit"]
-        else:
-            assert model.spec_table.columns[i].unit is None
-
-    # ensure that the test was not empty
-    assert atleast_one
 
 
 def test_copy_spec_metadata(input_spec, output_spec):

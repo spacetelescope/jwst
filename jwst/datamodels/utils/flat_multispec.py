@@ -1,6 +1,7 @@
 """Utilities for re-organizing spectral products into a flat structure."""
 
 import logging
+import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -13,7 +14,6 @@ __all__ = [
     "determine_vector_and_meta_columns",
     "make_empty_recarray",
     "populate_recarray",
-    "set_schema_units",
     "copy_column_units",
     "copy_spec_metadata",
     "expand_table",
@@ -170,26 +170,6 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
         log.warning(f"Metadata could not be determined from input spec_table: {problems}")
 
 
-def set_schema_units(model):
-    """
-    Give all columns in the model the units defined in the model schema.
-
-    This gets around a bug/bad behavior in stdatamodels that units are not
-    automatically assigned to the spec_table.
-
-    Model is modified in place.
-
-    Parameters
-    ----------
-    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
-        Any model containing a spec_table attribute.
-    """
-    data_type = model.schema["properties"]["spec_table"]["datatype"]
-    for col in data_type:
-        if "unit" in col:
-            model.spec_table.columns[col["name"]].unit = col["unit"]
-
-
 def copy_column_units(input_model, output_model):
     """
     Copy units from input columns to output columns.
@@ -206,11 +186,9 @@ def copy_column_units(input_model, output_model):
         Output spectral model containing a mix of vector columns
         and metadata columns in the ``spec_table`` attribute.
     """
-    input_columns = input_model.spec_table.columns
-    output_columns = output_model.spec_table.columns
-    for col_name in input_columns.names:
-        if col_name in output_columns.names:
-            output_columns[col_name].unit = input_columns[col_name].unit
+    if getattr(input_model, "spec_table_units", None) is None:
+        raise ValueError("Input model does not have spec_table_units attribute.")
+    output_model.spec_table_units = input_model.spec_table_units
 
 
 def copy_spec_metadata(input_model, output_model):
@@ -326,6 +304,10 @@ def expand_flat_spec(input_model):
 
     # Copy int_times if present
     if getattr(input_model, "int_times", None) is not None:
-        output_model.int_times = input_model.int_times.copy()
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=DeprecationWarning, message="Setting '.unit' on Column."
+            )
+            output_model.int_times = input_model.int_times.copy()
 
     return output_model

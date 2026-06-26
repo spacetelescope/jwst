@@ -445,11 +445,11 @@ class OutputSpectrumModel:
         )
         output_model = datamodels.CombinedSpecModel(spec_table=data)
 
-        output_model.spec_table.columns["wavelength"].unit = "um"
-        output_model.spec_table.columns["flux"].unit = self.flux_unit
-        output_model.spec_table.columns["error"].unit = self.flux_unit
-        output_model.spec_table.columns["surf_bright"].unit = self.sb_unit
-        output_model.spec_table.columns["sb_error"].unit = self.sb_unit
+        output_model.spec_table_units.wavelength = "um"
+        output_model.spec_table_units.flux = self.flux_unit
+        output_model.spec_table_units.error = self.flux_unit
+        output_model.spec_table_units.surf_bright = self.sb_unit
+        output_model.spec_table_units.sb_error = self.sb_unit
 
         return output_model
 
