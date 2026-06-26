@@ -29,7 +29,7 @@ dependencies = [
     "requests>=2.32",
     "scikit-image>=0.23.0",
     "scipy>=1.15.3",
-    "stdatamodels @ git+https://github.com/emolter/stdatamodels.git@fits-rec-units-smoke",
+    "stdatamodels @ git+https://github.com/emolter/stdatamodels.git@JP-4014",
     "stcal>=1.19.0,<2",
     # "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     "stpipe>=1.0.0,<2",
