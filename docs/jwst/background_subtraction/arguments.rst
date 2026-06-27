@@ -31,14 +31,28 @@ control the sigma clipping, and are passed as arguments to
   This pair of percentile values describes the range of flux percentiles in the
   background mask to use for reference template scaling. The default is [25.0, 50.0].
 
-``--wfss_mmag_extract``
+``--wfss_mask_method``
   Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
+  The method to use for masking the background. Options are "catalog", "clip", and "user".
+  When ``wfss_mask_method="catalog"`` (the default), the step uses the bounding box around sources
+  in the source catalog (derived from the direct image) to estimate the extent of the
+  dispersed spectra in the WFSS image, and creates a mask using those estimated extents.
+  When ``wfss_mask_method="user"``, the ``wfss_mask`` argument must be provided to specify a
+  user-defined mask.
+  When ``wfss_mask_method="clip"``, the step will use an inverse-variance-weighted 
+  sigma-clipping method along the cross-dispersion axis to determine the background mask
+  directly from the dispersed data.
+
+``--wfss_mmag_extract``
+  Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures and only if
+  ``wfss_mask_method="catalog"``.
   Sets the minimum (faintest) magnitude limit to use when selecting sources
   from the WFSS source catalog, based on the value of ``isophotal_abmag`` in the
   source catalog. Defaults to ``None``.
 
 ``--wfss_mask``
-  Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
+  Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures and only if
+  ``wfss_mask_method="user"`` (in which case it is required).
   Provides a custom user mask to use for background scaling, overriding
   the source-catalog-derived mask. The argument should point to
   a FITS or ASDF file openable as `~stdatamodels.jwst.datamodels.ImageModel`
