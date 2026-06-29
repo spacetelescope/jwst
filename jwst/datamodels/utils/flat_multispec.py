@@ -1,7 +1,6 @@
 """Utilities for re-organizing spectral products into a flat structure."""
 
 import logging
-import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -304,10 +303,6 @@ def expand_flat_spec(input_model):
 
     # Copy int_times if present
     if getattr(input_model, "int_times", None) is not None:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=DeprecationWarning, message="Setting '.unit' on Column."
-            )
-            output_model.int_times = input_model.int_times.copy()
+        output_model.int_times = input_model.int_times.copy()
 
     return output_model

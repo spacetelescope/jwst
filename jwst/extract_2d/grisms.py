@@ -4,7 +4,6 @@
 
 import copy
 import logging
-import warnings
 
 import numpy as np
 from astropy.coordinates import SkyCoord
@@ -137,11 +136,7 @@ def build_grism_submodel(
     sub_model.meta.bunit_data = input_model.meta.bunit_data
     sub_model.meta.bunit_err = input_model.meta.bunit_err
     if getattr(input_model, "int_times", None) is not None:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=DeprecationWarning, message="Setting '.unit' on Column."
-            )
-            sub_model.int_times = input_model.int_times.copy()
+        sub_model.int_times = input_model.int_times.copy()
 
 
 def _set_tso_subwcs_transform(input_model, subwcs, xstart, ymin, order):
@@ -510,11 +505,7 @@ def _extract_tso_dhs_object(
             )
             output_model.slits.append(sub_model)
     if getattr(input_model, "int_times", None) is not None:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=DeprecationWarning, message="Setting '.unit' on Column."
-            )
-            output_model.int_times = input_model.int_times.copy()
+        output_model.int_times = input_model.int_times.copy()
     return output_model
 
 

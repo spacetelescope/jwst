@@ -3,27 +3,13 @@
 import inspect
 import logging
 import os
-import warnings
 from pathlib import Path
 
 import pytest
-from astropy.io.fits import column
 from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations import AssociationPool, AssociationRegistry
 from jwst.tests.helpers import LogWatcher
-
-original_setattr = column.Column.__setattr__
-
-
-def warned_setattr(self, name, value):
-    """Warn when setting the unit attribute on a FITS column."""
-    if name == "unit":
-        warnings.warn("Setting '.unit' on Column.", DeprecationWarning, stacklevel=2)
-    original_setattr(self, name, value)
-
-
-column.Column.__setattr__ = warned_setattr
 
 
 @pytest.fixture

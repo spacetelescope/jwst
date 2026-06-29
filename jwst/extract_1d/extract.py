@@ -1,6 +1,5 @@
 import json
 import logging
-import warnings
 from json.decoder import JSONDecodeError
 from pathlib import Path
 
@@ -1996,11 +1995,7 @@ def _make_output_model(data_model, meta_source):
     else:
         output_model = datamodels.MultiSpecModel()
     if getattr(meta_source, "int_times", None) is not None:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=DeprecationWarning, message="Setting '.unit' on Column."
-            )
-            output_model.int_times = meta_source.int_times.copy()
+        output_model.int_times = meta_source.int_times.copy()
     if getattr(meta_source, "int_times_stripe", None) is not None:
         output_model.int_times_stripe = meta_source.int_times_stripe.copy()
     output_model.update(meta_source, only="PRIMARY")
