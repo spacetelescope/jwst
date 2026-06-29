@@ -36,7 +36,7 @@ class PoolParams(
         if candidates is None:
             candidates = []
             if valid_suffixes is None:
-                valid_suffixes = ["cal", "calints", "cat"]
+                valid_suffixes = ["cal", "calints", "cat", "x1d"]
         return super(PoolParams, cls).__new__(
             cls, path, n_asns, n_orphaned, candidates, valid_suffixes, kwargs
         )

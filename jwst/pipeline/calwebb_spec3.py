@@ -1,5 +1,5 @@
-#!/usr/bin/env python
 import logging
+import time
 from collections import defaultdict
 from pathlib import Path
 
@@ -14,7 +14,7 @@ from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
 from jwst.datamodels import SourceModelContainer
-from jwst.datamodels.utils.wfss_multispec import make_wfss_multicombined, make_wfss_multiexposure
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
 from jwst.lib.exposure_types import is_moving_target
@@ -79,6 +79,7 @@ class Spec3Pipeline(Pipeline):
             The exposure or association of exposures to process
         """
         log.info("Starting calwebb_spec3 ...")
+        t_start = time.time()
         asn_exptypes = ["science", "background"]
 
         # Setup sub-step defaults
@@ -174,14 +175,17 @@ class Spec3Pipeline(Pipeline):
         # source into its own ModelContainer. This produces a list of
         # sources, each represented by a MultiExposureModel instead of
         # a single ModelContainer.
-        sources = [source_models]
         if isinstance(input_models[0], dm.MultiSlitModel):
             log.info("Convert from exposure-based to source-based data.")
             sources = list(multislit_to_container(source_models).items())
+        elif isinstance(input_models[0], dm.WFSSMultiSpecModel):
+            # source_models is ModelContainer that we use directly later
+            # so we bypass the for loop completely with empty sources.
+            sources = []
+        else:
+            sources = [source_models]
 
         # Process each source
-        wfss_x1d = []
-        wfss_comb = []
         for source in sources:
             # If each source is a SourceModelContainer,
             # the output name needs to be updated based on the source ID,
@@ -203,7 +207,7 @@ class Spec3Pipeline(Pipeline):
                     # name that separates source, background, and virtual slits
                     srcid = self._create_nrsmos_source_id(result)
                     self.output_file = format_product(output_file, source_id=srcid)
-                    log.debug(f"output_file = {self.output_file}")
+                    log.debug("output_file = %s", self.output_file)
 
                 else:
                     # All other types just use the source_id directly in the file name
@@ -251,18 +255,18 @@ class Spec3Pipeline(Pipeline):
                     except AttributeError:
                         pass
 
-            # Do 1-D spectral extraction
             if exptype in SLITLESS_TYPES:
-                # interpolate pixels that have a NaN value or are flagged
-                # as DO_NOT_USE or NON_SCIENCE
-                result = self.pixel_replace.run(result)
-
                 # For slitless data, extract 1D spectra and then combine them
-                if exptype in ["NIS_SOSS"]:
+                if exptype == "NIS_SOSS":
+                    # interpolate pixels that have a NaN value or are flagged
+                    # as DO_NOT_USE or NON_SCIENCE
+                    result = self.pixel_replace.run(result)
+
                     # For NIRISS SOSS, don't save the extract_1d results,
                     # instead run photom on the extract_1d results and save
                     # those instead.
 
+                    # Do 1-D spectral extraction
                     self.extract_1d.save_results = False
                     result = self.extract_1d.run(result)
 
@@ -278,36 +282,12 @@ class Spec3Pipeline(Pipeline):
                         result = self.photom.run(result)
                         result = self.combine_1d.run(result)
 
-                else:
-                    # for WFSS modes, do not save the results with one file per source
-                    # instead compile the results over the for loop to be put into a single file
-                    # at the end.
-                    self.extract_1d.save_results = False
-                    self.combine_1d.save_results = False
-                    result = self.extract_1d.run(result)
-                    wfss_x1d.append(result)
-                    # Check whether extraction was completed
-                    extraction_complete = (
-                        result is not None and result.meta.cal_step.extract_1d == "COMPLETE"
-                    )
-                    if not extraction_complete:
-                        continue
-                    # Combine the results for all sources
-                    comb = self.combine_1d.run(result)
-                    comb_complete = comb is not None and comb.meta.cal_step.combine_1d == "COMPLETE"
-                    if not comb_complete:
-                        continue
-                    # add metadata that only WFSS wants
-                    comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
-                    comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
-                    wfss_comb.append(comb)
-
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
                 # If 2D data were resampled and combined, just do a 1D extraction
 
                 if exptype in IFU_EXPTYPES:
                     self.extract_1d.search_output_file = False
-                    if exptype in ["MIR_MRS"]:
+                    if exptype == "MIR_MRS":
                         if not self.spectral_leak.skip:
                             self.extract_1d.save_results = False
                             self.spectral_leak.suffix = "x1d"
@@ -316,7 +296,7 @@ class Spec3Pipeline(Pipeline):
 
                 result = self.extract_1d.run(result)
 
-                if exptype in ["MIR_MRS"]:
+                if exptype == "MIR_MRS":
                     result = self.spectral_leak.run(result)
             elif exptype not in IFU_EXPTYPES:
                 # Extract spectra and combine results
@@ -325,25 +305,25 @@ class Spec3Pipeline(Pipeline):
             else:
                 log.warning("Resampling was not completed. Skipping extract_1d.")
 
-        # Save the final output products for WFSS modes
+        # Generate and save the final output products for WFSS modes
         if exptype in WFSS_TYPES:
+            log.info("Reordering the %s spectra to be per-source", exptype)
+            x1d_output = make_wfss_multiexposure(source_models)
+            self._populate_wfss_sregion(x1d_output, source_models)
+
             if self.save_results:
-                x1d_output = make_wfss_multiexposure(wfss_x1d)
-                self._populate_wfss_sregion(x1d_output, input_models)
                 x1d_filename = output_file + "_x1d.fits"
-                log.info(f"Saving the final x1d product as {x1d_filename}.")
+                log.info("Saving the final x1d product as %s", x1d_filename)
                 x1d_output.save(x1d_filename)
-            if self.save_results:
-                c1d_output = make_wfss_multicombined(wfss_comb)
-                c1d_filename = output_file + "_c1d.fits"
-                log.info(f"Saving the final c1d product as {c1d_filename}.")
-                c1d_output.save(c1d_filename)
+
+            # Combine the results for all sources
+            self.combine_1d.run(x1d_output)
 
         if input_models is not input_data:
             input_models.close()
 
-        log.info("Ending calwebb_spec3")
-        return
+        t_end = time.time()
+        log.info("Ending calwebb_spec3 (took %.1f seconds)", t_end - t_start)
 
     def _create_nrsfs_slit_name(self, source_models):
         """
@@ -397,13 +377,13 @@ class Spec3Pipeline(Pipeline):
         if "BKG" in source_name:
             # prepend "b" to the source_id number and format to 9 chars
             srcid = f"b{str(source_id):>09s}"
-            log.debug(f"Source {source_name} is a MOS background slitlet: ID={srcid}")
+            log.debug("Source %s is a MOS background slitlet: ID=%s", source_name, srcid)
 
         # MOS virtual sources have a negative source_id value
         elif source_id < 0:
             # prepend "v" to the source_id number and remove the leading negative sign
             srcid = f"v{str(source_id)[1:]:>09s}"
-            log.debug(f"Source {source_name} is a MOS virtual slitlet: ID={srcid}")
+            log.debug("Source %s is a MOS virtual slitlet: ID=%s", source_name, srcid)
 
         # Regular MOS sources
         else:
@@ -425,24 +405,35 @@ class Spec3Pipeline(Pipeline):
         Parameters
         ----------
         wfss_model : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
-            The newly generated WfssMultiExposureModel made as part of
+            The newly generated WFSS model made as part of
             the save operation for spec3 processing of WFSS data.
 
         cal_model_list : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The list of input_models provided to Spec3Pipeline by the
             input association.
         """
-        # WCS of any slit should be ok - internally this does a round-trip, so any offsets
-        # introduced for a specific slit won't matter
-        wcs = cal_model_list[0].slits[0].meta.wcs
         try:
-            input_sregions = [w.slits[0].meta.wcsinfo.s_region for w in cal_model_list]
+            input_sregions = [w.spec[0].s_region for w in cal_model_list if w.spec[0].s_region]
         except AttributeError:
             log.warning(
-                "One or more input model(s) are missing an `s_region` attribute; "
+                "One or more input model(s) are missing an 's_region' attribute; "
                 "output S_REGION will not be set."
             )
             return
+
+        n_sreg = len(input_sregions)
+        if n_sreg == 0:
+            log.warning(
+                "None of the input model(s) have valid S_REGION; output S_REGION will not be set."
+            )
+            return
+        if n_sreg == 1:
+            wfss_model.spec[0].s_region = input_sregions[0]
+            return
+
+        # WCS of any slit should be ok - internally this does a round-trip, so any offsets
+        # introduced for a specific slit won't matter
+        wcs = cal_model_list[0].meta.wcs
 
         # Modify the det2world transform to ignore extra inputs/outputs (wavelength and order)
         if "moving_target" in wcs.available_frames:
@@ -459,7 +450,9 @@ class Spec3Pipeline(Pipeline):
         try:
             sregion = combine_sregions(input_sregions, det2world)
         except ValueError as e:
-            log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
+            log.warning(
+                "Could not combine S_REGIONs: %s. Output S_REGION will not be set.", repr(e)
+            )
             return
-        log.info(f"Setting S_REGION for combined footprint to: {sregion}")
+        log.info("Setting S_REGION for combined footprint to: %s", sregion)
         wfss_model.spec[0].s_region = sregion
