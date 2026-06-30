@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.io import fits
 from numpy.testing import assert_allclose
 
 from jwst.datamodels.utils.tests.wfss_helpers import (
@@ -40,7 +41,7 @@ def multi_combined():
 
 
 @pytest.mark.parametrize("input_model_maker", ["wfss_spec2_multispec", "wfss_spec3_multispec"])
-def test_make_wfss_multiexposure(input_model_maker, request):
+def test_make_wfss_multiexposure(input_model_maker, request, tmp_path):
     """
     Test reorganization of x1d data to flat file format.
 
@@ -51,6 +52,23 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     """
     input_model = request.getfixturevalue(input_model_maker)
     output_model = make_wfss_multiexposure(input_model)
+
+    # save to set TUNIT header keywords
+    temp_file = tmp_path / "temp.fits"
+    output_model.save(temp_file)
+
+    # ensure these did get populated in the FITS header on save
+    # by opening with astropy we can ensure it happens on save, not load
+    with fits.open(temp_file) as hdul:
+        wavelength_column_index = hdul[1].columns.names.index("WAVELENGTH")
+        wavelength_tunit_kw = f"TUNIT{wavelength_column_index + 1}"
+        assert hdul[1].header[wavelength_tunit_kw] == "um"
+        source_ra_column_index = hdul[1].columns.names.index("SOURCE_RA")
+        source_ra_tunit_kw = f"TUNIT{source_ra_column_index + 1}"
+        assert hdul[1].header[source_ra_tunit_kw] == "deg"
+
+    # load to get units into FITS_rec object in memory
+    output_model = dm.open(temp_file)
 
     assert isinstance(output_model, dm.WFSSMultiSpecModel)
     if input_model_maker == "wfss_spec2_multispec":
@@ -74,6 +92,7 @@ def test_make_wfss_multiexposure(input_model_maker, request):
         for col in to_check:
             assert col in exposure.spec_table.columns.names
             assert exposure.spec_table.columns[col].unit == expected_units[to_check.index(col)]
+    output_model.close()
 
 
 def test_orders_are_separated(wfss_spec3_multispec):
@@ -184,11 +203,25 @@ def comb1d_list(multi_combined):
     return results_list
 
 
-def test_make_wfss_combined(comb1d_list):
+def test_make_wfss_combined(comb1d_list, tmp_path):
     """Test restructuring of a list of combine_1d output models into a WFSSMultiCombinedSpecModel."""
     output_model = make_wfss_multicombined(comb1d_list)
     assert isinstance(output_model, dm.WFSSMultiCombinedSpecModel)
     assert len(output_model.spec) == 2  # 2 spectral orders
+
+    # save to set TUNIT header keywords
+    temp_file = tmp_path / "temp.fits"
+    output_model.save(temp_file)
+
+    with fits.open(temp_file) as hdul:
+        wavelength_column_index = hdul[1].columns.names.index("WAVELENGTH")
+        wavelength_tunit_kw = f"TUNIT{wavelength_column_index + 1}"
+        assert hdul[1].header[wavelength_tunit_kw] == "um"
+        source_ra_column_index = hdul[1].columns.names.index("SOURCE_RA")
+        source_ra_tunit_kw = f"TUNIT{source_ra_column_index + 1}"
+        assert hdul[1].header[source_ra_tunit_kw] == "deg"
+
+    output_model = dm.open(temp_file)
 
     for i, spec in enumerate(output_model.spec):
         assert spec.spec_table.shape == (N_SOURCES,)
@@ -203,3 +236,5 @@ def test_make_wfss_combined(comb1d_list):
         # check metadata
         assert spec.dispersion_direction == 3
         assert spec.spectral_order == i + 1
+
+    output_model.close()

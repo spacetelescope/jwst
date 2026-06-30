@@ -169,6 +169,25 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
         log.warning(f"Metadata could not be determined from input spec_table: {problems}")
 
 
+def set_schema_units(model):
+    """
+    Give all columns in the model the units defined in the model schema.
+
+    Model is modified in place. Units that were previously set are NOT overwritten.
+
+    Parameters
+    ----------
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Any model containing a spec_table and spec_table_units attribute.
+    """
+    cols = model.spec_table.columns
+    for col in cols:
+        name = col.name
+        current_unit = getattr(model.spec_table_units, name, None)
+        if current_unit is None:
+            setattr(model.spec_table_units, name, model.spec_table_units.get_default(name))
+
+
 def copy_column_units(input_model, output_model):
     """
     Copy units from input columns to output columns.
