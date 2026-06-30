@@ -194,7 +194,28 @@ def test_outlier_step_with_source_no_outliers(mirimage_three_sci, tmp_cwd, src_t
 def test_outlier_step_with_outliers(
     mirimage_three_sci, tmp_cwd, src_type, weight, idx, resample_data
 ):
-    """Test whole step with outlier of various shapes added on top of a uniform square source."""
+    """
+    Test whole step with outlier of various shapes added on top of a uniform square source.
+
+    This test is for imaging outlier detection with a complex input scene: a square
+    source present in all input images, a hot pixel present in all input images, and
+    an extended outlier present in only one image, but on top of both the source and
+    the hot pixel.
+
+    For the test with the square outlier, with default parameters, outlier_detection
+    correctly identifies the outlier except for some interior pixels near the hot pixel.
+    This is the correct behavior for outlier detection with resampling: the hot pixel
+    itself should not be flagged as an outlier because it does not exceed the sigma limit
+    (the error for that pixel is also high). The 4 pixels neighboring the hot pixel are
+    also not flagged because they don't exceed the smoothed threshold mask accounting
+    for resampling effects.
+
+    To make the test results consistent with and without resampling, this test checks
+    the sigma limit via the input error image, so that the hot pixel is not expected
+    to be flagged. Also, the input parameters for outlier detection are modified to
+    pass an input scale that lowers the threshold for the neighboring pixels, so that
+    they are flagged as outliers, even when resampling is used.
+    """
     container = ModelLibrary(list(mirimage_three_sci))
 
     atol = 2.0 * np.finfo(np.float32).eps
