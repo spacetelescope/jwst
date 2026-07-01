@@ -3,7 +3,6 @@ import os
 
 import asdf
 import numpy as np
-from astropy.io import fits
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -11,24 +10,25 @@ from jwst.persistence import persistence
 from jwst.persistence.persistence_step import PersistenceStep
 
 
-def set_up_int_times(nints, ngroups, nrows, ncols):
+def set_up_int_times(nints, dtype):
     """Sets up an int_times table to be used by a test."""
-    cols = fits.ColDefs(
-        [
-            fits.Column(name="integration_number", format="J"),
-            fits.Column(name="int_start_MJD_UTC", format="D"),
-            fits.Column(name="int_mid_MJD_UTC", format="D"),
-            fits.Column(name="int_end_MJD_UTC", format="D"),
-            fits.Column(name="int_start_BJD_TDB", format="D"),
-            fits.Column(name="int_mid_BJD_TDB", format="D"),
-            fits.Column(name="int_end_BJD_TDB", format="D"),
-        ]
+    integration_number = np.arange(1, nints + 1, dtype=np.int32)
+    tab = np.array(
+        list(
+            zip(
+                integration_number,
+                np.zeros(nints),
+                np.zeros(nints),
+                np.zeros(nints),
+                np.zeros(nints),
+                np.zeros(nints),
+                np.zeros(nints),
+                strict=True,
+            )
+        ),
+        dtype=dtype,
     )
-
-    int_times = fits.FITS_rec.from_columns(cols, nrows=nints)
-    int_times["integration_number"][:] = np.arange(1, nints + 1, dtype=np.int32)
-
-    return int_times
+    return tab
 
 
 def test_persistence_int_times(create_sci_model):
@@ -37,7 +37,8 @@ def test_persistence_int_times(create_sci_model):
     model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
     model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
 
-    model.int_times = set_up_int_times(nints, ngroups, nrows, ncols)
+    model.int_times = set_up_int_times(nints, model.get_dtype("int_times"))
+    model.int_times["integration_number"][:] = np.arange(1, nints + 1, dtype=np.int32)
     mjd_start = [59672.64004629629, 59672.64178605069]
     model.int_times["int_start_MJD_UTC"][:] = np.array(mjd_start)
 

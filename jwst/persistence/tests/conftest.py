@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from astropy.io import fits
 from stdatamodels.jwst import datamodels
 
 
@@ -98,12 +97,13 @@ def create_trappars_model():
     trappars_model : TrapParsModel DataModel
         Sample TrapParsModel for testing
     """
-    capture0 = fits.Column(name="capture0", array=np.array([180.0, 270.0, 80.0]), format="D")
-    capture1 = fits.Column(name="capture1", array=np.array([-0.0004, -0.004, -0.0009]), format="D")
-    capture2 = fits.Column(name="capture2", array=np.array([290.0, 140.0, 320.0]), format="D")
-    decay = fits.Column(name="decay_param", array=np.array([-0.01, -0.001, -0.0002]), format="D")
-    column_definitions = fits.ColDefs([capture0, capture1, capture2, decay])
-    trappars_table = fits.BinTableHDU.from_columns(column_definitions, nrows=3)
+    capture0 = np.array([180.0, 270.0, 80.0])
+    capture1 = np.array([-0.0004, -0.004, -0.0009])
+    capture2 = np.array([290.0, 140.0, 320.0])
+    decay = np.array([-0.01, -0.001, -0.0002])
     trappars_model = datamodels.TrapParsModel()
-    trappars_model.trappars_table = trappars_table.data
+    dtype = trappars_model.get_dtype("trappars_table")
+    trappars_model.trappars_table = np.array(
+        list(zip(capture0, capture1, capture2, decay, strict=True)), dtype=dtype
+    )
     return trappars_model
