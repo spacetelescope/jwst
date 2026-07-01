@@ -1,0 +1,1 @@
+Added functionality for propagating cross-slit offsets to the source position used for pathloss correction.
