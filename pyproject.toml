@@ -36,7 +36,7 @@ dependencies = [
     "stpipe>=1.0.0,<2",
     # "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
     "synphot>=1.6",
-    "tweakwcs>=0.9.0,<0.10",
+    "tweakwcs>=0.9.1,<0.10",
     "packaging>=23.0",
     "importlib-metadata>=4.11.4",
     "jsonschema>=4.8",
