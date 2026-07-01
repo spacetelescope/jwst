@@ -13,15 +13,22 @@ The ``outlier_detection`` step supports multiple
 algorithms and determines the appropriate algorithm for the type of observation
 being processed.  This step supports:
 
-* **Image modes**: 'FGS_IMAGE', 'MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE'
+* **Image modes**:
+   - Exposure types: 'FGS_IMAGE', 'MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE'
    - See :ref:`outlier-detection-imaging` for algorithm details
-* **Slit-like Spectroscopic modes**: 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC'
+* **Slit-like Spectroscopic modes**:
+   - Exposure types: 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC'
    - See :ref:`outlier-detection-spec` for algorithm details
-* **Time-Series-Observation (TSO) modes**: 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NIS_SOSS', 'NRS_BRIGHTOBJ', 'NRC_TSIMAGE', as well as TSOs obtained with the MIRI imager ('MIR_IMAGE' with TSOVISIT=True).
+* **Time-Series-Observation (TSO) modes**:
+   - Exposure types: 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NIS_SOSS', 'NRS_BRIGHTOBJ',
+     and 'NRC_TSIMAGE', as well as TSOs obtained with the MIRI imager or in fixed slit mode
+     ('MIR_IMAGE' or 'MIR_LRS-FIXEDSLIT' with TSOVISIT=True).
    - See :ref:`outlier-detection-tso` for algorithm details
-* **IFU Spectroscopic modes**: 'MIR_MRS', 'NRS_IFU'
+* **IFU Spectroscopic modes**:
+   - Exposure types: 'MIR_MRS', 'NRS_IFU'
    - See :ref:`outlier-detection-ifu` for algorithm details
-* **Coronagraphic Image modes**: 'MIR_LYOT', 'MIR_4QPM', 'NRC_CORON'
+* **Coronagraphic Image modes**:
+   - Exposure types: 'MIR_LYOT', 'MIR_4QPM', 'NRC_CORON'
    - See :ref:`outlier-detection-coron` for algorithm details
 
 This step uses the following logic to apply the appropriate algorithm to the

@@ -102,6 +102,7 @@ def test_std_strict(_jail, rtdata, resource_tracker, request, pool_args):
             "jw05554_20250528t204800_c1012_pool",
             ["--DMS", "-i", "o009", "o010", "c1012"],
         ),  # This pool checks background behavior with paired MIRI MRS/Imaging exposures
+        ("jw06219_20251211t073827_pool", []),  # MIR_LRS-FIXEDSLIT TSO
     ],
     ids=parfunc,
 )
