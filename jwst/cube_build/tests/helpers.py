@@ -91,7 +91,6 @@ def make_miri_cube_pars():
     )
 
     # set units of all tables to default
-
     for table_name in [
         "ifucubepars_table",
         "ifucubepars_msm_table",
