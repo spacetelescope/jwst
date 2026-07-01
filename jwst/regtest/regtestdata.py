@@ -33,7 +33,7 @@ class RegtestData:
         self,
         env="dev",
         inputs_root="jwst-pipeline",
-        results_root="jwst-pipeline-results",
+        results_root="jwst-pipeline-results/regression-tests/runs",
         docopy=True,
         input=None,
         input_remote=None,
