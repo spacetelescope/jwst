@@ -810,7 +810,7 @@ def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
         The weighting type for adding models' data.
     enable_var : bool
         Indicates whether to resample variance arrays.
-    compute_err : str
+    compute_err : str or None
         The method to compute the output model's error array.
 
     Returns
