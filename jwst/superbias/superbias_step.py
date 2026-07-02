@@ -1,3 +1,5 @@
+"""Subtract super-bias reference data from the input science data model."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
