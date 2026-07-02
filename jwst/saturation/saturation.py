@@ -25,28 +25,28 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, bias_
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.RampModel`
-        The input science data to be corrected
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        The input science data to be corrected.
 
-    ref_model : `~jwst.datamodels.SaturationModel`
-        Saturation reference file data model
+    ref_model : `~stdatamodels.jwst.datamodels.SaturationModel`
+        Saturation reference file data model.
 
     n_pix_grow_sat : int
         Number of layers of pixels adjacent to a saturated pixel to also flag
-        as saturated (i.e '1' will flag the surrounding 8 pixels) to account for
+        as saturated (i.e., '1' will flag the surrounding 8 pixels) to account for
         charge spilling.
 
     use_readpatt : bool
-        Use grouped read pattern information to assist with flagging
+        Use grouped read pattern information to assist with flagging.
 
-    bias_model : `~jwst.datamodels.SuperBiasModel` or None, optional
+    bias_model : `~stdatamodels.jwst.datamodels.SuperBiasModel` or None, optional
         Superbias reference file data model.
 
     Returns
     -------
-    output_model : `~jwst.datamodels.RampModel`
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Data model with saturation, A/D floor, and do not use flags set in
-        the GROUPDQ array
+        the GROUPDQ array.
     """
     ngroups = output_model.meta.exposure.ngroups
     nframes = output_model.meta.exposure.nframes
@@ -137,26 +137,26 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, 
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.RampModel`
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         The input science data to be corrected
 
-    ref_model : `~jwst.datamodels.SaturationModel`
+    ref_model : `~stdatamodels.jwst.datamodels.SaturationModel`
         Saturation reference file data model
 
     n_pix_grow_sat : int
         Number of layers of pixels adjacent to a saturated pixel to also flag
-        as saturated (i.e '1' will flag the surrounding 8 pixels) to account for
+        as saturated (i.e., '1' will flag the surrounding 8 pixels) to account for
         charge spilling.
 
     use_readpatt : bool
         Use grouped read pattern information to assist with flagging
 
-    bias_model : `~jwst.datamodels.SuperBiasModel` or None, optional
+    bias_model : `~stdatamodels.jwst.datamodels.SuperBiasModel` or None, optional
         Superbias reference file data model.
 
     Returns
     -------
-    output_model : `~jwst.datamodels.RampModel`
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Data model with saturation, A/D floor, and do not use flags set in
         the GROUPDQ array
     """
@@ -325,7 +325,7 @@ def adjacency_sat(flag_temp, saturated, n_pix_grow_sat):
 
     n_pix_grow_sat : int
         Number of layers of pixels adjacent to a saturated pixel to also flag
-        as saturated (i.e '1' will flag the surrounding 8 pixels) to account for
+        as saturated (i.e., '1' will flag the surrounding 8 pixels) to account for
         charge spilling.
 
     Returns
