@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-from astropy.io.fits import FITS_rec
 from astropy.table import vstack
 from stdatamodels.jwst import datamodels
 
@@ -137,17 +136,16 @@ class Tso3Pipeline(Pipeline):
             x1d_result = datamodels.TSOMultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
             nint = input_models[0].meta.exposure.nints
-            x1d_result.int_times = FITS_rec.from_columns(
-                input_models[0].int_times.columns, nrows=nint
-            )
+            int_times_dtype = x1d_result.get_dtype("int_times")
+            x1d_result.int_times = np.zeros((nint,), dtype=int_times_dtype)
 
             nstripe = 0
             stripe_times = getattr(input_models[0], "int_times_stripe", None)
             if stripe_times is not None and len(stripe_times) > 0:
                 nstripe = np.max(stripe_times["stripe_number"])
-                x1d_result.int_times_stripe = FITS_rec.from_columns(
-                    input_models[0].int_times_stripe.columns, nrows=nint * nstripe
-                )
+                nrows = nint * nstripe
+                int_times_stripe_dtype = x1d_result.get_dtype("int_times_stripe")
+                x1d_result.int_times_stripe = np.zeros((nrows,), dtype=int_times_stripe_dtype)
 
             # Remove source_type from the output model, if it exists, to prevent
             # the creation of an empty SCI extension just for that keyword.

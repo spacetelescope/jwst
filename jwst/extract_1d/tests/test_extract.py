@@ -1435,24 +1435,30 @@ def test_extract_one_slit_optimal_vertical(
     assert result[-1].shape == model.data.shape
 
 
-def test_create_extraction_with_photom(create_extraction_inputs):
+def test_create_extraction_with_photom(tmp_path, create_extraction_inputs):
     model = create_extraction_inputs[0]
     model.meta.cal_step.photom = "COMPLETE"
 
     ex.create_extraction(*create_extraction_inputs)
 
     output_model = create_extraction_inputs[2]
-    assert output_model.spec[0].spec_table.columns["flux"].unit == "Jy"
+
+    # units don't exist on FITS_rec until save-load with stdatamodels
+    output_model.save(tmp_path / "output.fits")
+    with dm.open(tmp_path / "output.fits") as saved_model:
+        assert saved_model.spec[0].spec_table.columns["FLUX"].unit == "Jy"
 
 
-def test_create_extraction_without_photom(create_extraction_inputs):
+def test_create_extraction_without_photom(tmp_path, create_extraction_inputs):
     model = create_extraction_inputs[0]
     model.meta.cal_step.photom = "SKIPPED"
 
     ex.create_extraction(*create_extraction_inputs)
 
     output_model = create_extraction_inputs[2]
-    assert output_model.spec[0].spec_table.columns["flux"].unit == "DN/s"
+    output_model.save(tmp_path / "output.fits")
+    with dm.open(tmp_path / "output.fits") as saved_model:
+        assert saved_model.spec[0].spec_table.columns["flux"].unit == "DN/s"
 
 
 def test_create_extraction_missing_src_type(create_extraction_inputs):

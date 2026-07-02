@@ -1006,16 +1006,16 @@ class DataSet:
             #  for calibrating extracted SOSS spectra.
             flux_unit = "MJy"
             flux_squared_unit = "MJy^2"
-            spec.spec_table.columns["FLUX"].unit = flux_unit
-            spec.spec_table.columns["FLUX_ERROR"].unit = flux_unit
-            spec.spec_table.columns["FLUX_VAR_POISSON"].unit = flux_squared_unit
-            spec.spec_table.columns["FLUX_VAR_RNOISE"].unit = flux_squared_unit
-            spec.spec_table.columns["FLUX_VAR_FLAT"].unit = flux_squared_unit
-            spec.spec_table.columns["BACKGROUND"].unit = flux_unit
-            spec.spec_table.columns["BKGD_ERROR"].unit = flux_unit
-            spec.spec_table.columns["BKGD_VAR_POISSON"].unit = flux_squared_unit
-            spec.spec_table.columns["BKGD_VAR_RNOISE"].unit = flux_squared_unit
-            spec.spec_table.columns["BKGD_VAR_FLAT"].unit = flux_squared_unit
+            spec.spec_table_units.FLUX = flux_unit
+            spec.spec_table_units.FLUX_ERROR = flux_unit
+            spec.spec_table_units.FLUX_VAR_POISSON = flux_squared_unit
+            spec.spec_table_units.FLUX_VAR_RNOISE = flux_squared_unit
+            spec.spec_table_units.FLUX_VAR_FLAT = flux_squared_unit
+            spec.spec_table_units.BACKGROUND = flux_unit
+            spec.spec_table_units.BKGD_ERROR = flux_unit
+            spec.spec_table_units.BKGD_VAR_POISSON = flux_squared_unit
+            spec.spec_table_units.BKGD_VAR_RNOISE = flux_squared_unit
+            spec.spec_table_units.BKGD_VAR_FLAT = flux_squared_unit
 
         else:
             conversion_squared = conversion * conversion

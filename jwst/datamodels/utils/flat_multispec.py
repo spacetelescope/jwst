@@ -13,7 +13,6 @@ __all__ = [
     "determine_vector_and_meta_columns",
     "make_empty_recarray",
     "populate_recarray",
-    "set_schema_units",
     "copy_column_units",
     "copy_spec_metadata",
     "expand_table",
@@ -174,20 +173,19 @@ def set_schema_units(model):
     """
     Give all columns in the model the units defined in the model schema.
 
-    This gets around a bug/bad behavior in stdatamodels that units are not
-    automatically assigned to the spec_table.
-
-    Model is modified in place.
+    Model is modified in place. Units that were previously set are NOT overwritten.
 
     Parameters
     ----------
     model : `~stdatamodels.jwst.datamodels.JwstDataModel`
-        Any model containing a spec_table attribute.
+        Any model containing a spec_table and spec_table_units attribute.
     """
-    data_type = model.schema["properties"]["spec_table"]["datatype"]
-    for col in data_type:
-        if "unit" in col:
-            model.spec_table.columns[col["name"]].unit = col["unit"]
+    cols = model.spec_table.columns
+    for col in cols:
+        name = col.name
+        current_unit = getattr(model.spec_table_units, name, None)
+        if current_unit is None:
+            setattr(model.spec_table_units, name, model.spec_table_units.get_default(name))
 
 
 def copy_column_units(input_model, output_model):
@@ -206,11 +204,9 @@ def copy_column_units(input_model, output_model):
         Output spectral model containing a mix of vector columns
         and metadata columns in the ``spec_table`` attribute.
     """
-    input_columns = input_model.spec_table.columns
-    output_columns = output_model.spec_table.columns
-    for col_name in input_columns.names:
-        if col_name in output_columns.names:
-            output_columns[col_name].unit = input_columns[col_name].unit
+    if getattr(input_model, "spec_table_units", None) is None:
+        raise ValueError("Input model does not have spec_table_units attribute.")
+    output_model.spec_table_units = input_model.spec_table_units
 
 
 def copy_spec_metadata(input_model, output_model):

@@ -82,7 +82,7 @@ def make_tso_specmodel(spec_list, segment=None):
     # Add some units to the new columns
     flat_multispec.copy_column_units(spec_list[0], tso_spec)
     for column_name in time_keys:
-        tso_spec.spec_table.columns[column_name].unit = "d"
+        setattr(tso_spec.spec_table_units, column_name, "d")
 
     # Copy metadata from the first input_spec
     tso_spec.update(spec_list[0])

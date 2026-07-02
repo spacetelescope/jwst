@@ -109,8 +109,8 @@ class InputSpectrumModel:
         self.name = spec.name
         for attr in SPECMETA_ATTRIBUTES:
             setattr(self, attr, getattr(spec, attr))
-        self.flux_unit = spec.spec_table.columns["flux"].unit
-        self.sb_unit = spec.spec_table.columns["surf_bright"].unit
+        self.flux_unit = spec.spec_table_units.FLUX
+        self.sb_unit = spec.spec_table_units.SURF_BRIGHT
 
         self.weight = np.ones_like(self.wavelength)
         if exptime_key == "integration_time":
@@ -445,11 +445,11 @@ class OutputSpectrumModel:
         )
         output_model = datamodels.CombinedSpecModel(spec_table=data)
 
-        output_model.spec_table.columns["wavelength"].unit = "um"
-        output_model.spec_table.columns["flux"].unit = self.flux_unit
-        output_model.spec_table.columns["error"].unit = self.flux_unit
-        output_model.spec_table.columns["surf_bright"].unit = self.sb_unit
-        output_model.spec_table.columns["sb_error"].unit = self.sb_unit
+        output_model.spec_table_units.WAVELENGTH = "um"
+        output_model.spec_table_units.FLUX = self.flux_unit
+        output_model.spec_table_units.ERROR = self.flux_unit
+        output_model.spec_table_units.SURF_BRIGHT = self.sb_unit
+        output_model.spec_table_units.SB_ERROR = self.sb_unit
 
         return output_model
 
