@@ -126,3 +126,5 @@ jobs:
           python-version: ${{ needs.supported-pythons.outputs.latest }}
       artifact-path: |
         results.xml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
