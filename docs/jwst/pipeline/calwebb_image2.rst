@@ -38,16 +38,6 @@ table below.
 .. [1] Resampling is only performed for exposure types "MIR_IMAGE", "NRC_IMAGE", and
    "NIS_IMAGE".
 
-Arguments
----------
-
-The ``calwebb_image2`` pipeline has one optional argument, which is deprecated::
-
-  --save_bsub  boolean  default=False
-
-This parameter will be removed in a future version. To toggle saving of background-subtracted
-data, use the background step's ``save_results`` parameter instead.
-
 Inputs
 ------
 
