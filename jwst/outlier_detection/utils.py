@@ -17,6 +17,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.outlier_detection import _fileio
+from jwst.resample.resample import input_jwst_model_to_dict
 
 log = logging.getLogger(__name__)
 
@@ -126,8 +127,13 @@ def median_without_resampling(
                 drizzled_err = drizzled_model.err.copy()
             else:
                 drizzled_err = None
+
+            im_dict = input_jwst_model_to_dict(
+                drizzled_model, weight_type=weight_type, enable_var=False, compute_err=None
+            )
+
             weight = build_driz_weight(
-                drizzled_model,
+                im_dict,
                 weight_type=weight_type,
                 good_bits=good_bits,
                 flag_name_map=datamodels.dqflags.pixel,
