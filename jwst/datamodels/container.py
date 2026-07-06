@@ -11,6 +11,7 @@ from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst.datamodels.util import is_association
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
 
+from jwst.associations import Association
 from jwst.datamodels.utils import attrs_to_group_id
 
 __all__ = ["ModelContainer"]
@@ -182,6 +183,8 @@ to supply custom catalogs.
             self.asn_file_path = init.asn_file_path
         elif is_association(init):
             self.from_asn(init)
+        elif isinstance(init, Association):
+            self.from_asn(init.data)
         elif isinstance(init, (str, Path)):
             init_from_asn = self.read_asn(init)
             self.asn_file_path = init
