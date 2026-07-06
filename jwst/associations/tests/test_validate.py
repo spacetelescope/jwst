@@ -17,3 +17,6 @@ def test_valid():
         asn = load_asn(asn_fp)
     valid_schema_list = rules.validate(asn)
     assert isinstance(valid_schema_list, list)
+
+    asn2 = load_asn(asn)
+    assert asn2 is asn

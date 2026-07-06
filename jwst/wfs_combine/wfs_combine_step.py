@@ -85,10 +85,17 @@ class WfsCombineStep(Step):
             model_1.close()
             model_2.close()
 
+            if isinstance(input_table, str):
+                table_name = Path(input_table).name
+            elif hasattr(input_table, "filename"):
+                table_name = input_table.filename
+            else:
+                table_name = ""
+
             # Update necessary meta info in the output
             output_model.meta.cal_step.wfs_combine = "COMPLETE"
             output_model.meta.asn.pool_name = asn_table["asn_pool"]
-            output_model.meta.asn.table_name = Path(input_table).name
+            output_model.meta.asn.table_name = table_name
             # format the filename here
             output_model.meta.filename = (
                 which_set["name"].format(suffix=self.suffix) + self.output_ext
