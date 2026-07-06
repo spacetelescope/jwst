@@ -8,7 +8,7 @@ from stdatamodels.exceptions import NoTypeWarning
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import JwstDataModel
 
-from jwst.associations import load_as_asn
+from jwst.associations import Association, load_as_asn
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels import ModelContainer
 from jwst.lib.file_utils import pushdir
@@ -180,6 +180,18 @@ def test_open_kwargs(container):
             # but schema can be passed all the way through to DataModel.__init__ on the
             # individual datamodels, and cause AttributeError
             ModelContainer(fnames, schema=wrong_schema)
+
+
+def test_open_asn_obj():
+    asn_file_path, asn_file_name = os.path.split(ASN_FILE)
+    with (
+        pushdir(asn_file_path),
+        open(asn_file_name) as f,
+        pytest.warns(NoTypeWarning, match="model_type not found"),
+    ):
+        a = Association.load(f)
+        m = ModelContainer(a)
+    assert isinstance(m, ModelContainer)
 
 
 def test_copy(container):
