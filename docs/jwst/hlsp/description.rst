@@ -4,6 +4,9 @@ Description
 :Class: `jwst.coron.hlsp_step.HlspStep`
 :Alias: hlsp
 
+.. warning::
+    The ``hlsp`` step has been deprecated and will be removed in a future release.
+
 The ``hlsp`` step is one of the coronagraphic-specific steps in the ``coron``
 sub-package. It produces high-level science products for KLIP-processed
 (PSF-subtracted) coronagraphic images. The step is currently a prototype and
