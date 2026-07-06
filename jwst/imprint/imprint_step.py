@@ -19,7 +19,7 @@ class ImprintStep(Step):
     imprint (a.k.a. leakcal) exposure.
     """
 
-    class_alias = "imprint"
+    class_alias = "imprint_subtract"
 
     spec = """
     """  # noqa: E501
@@ -105,11 +105,11 @@ class ImprintStep(Step):
             output_model.dq |= match_model.dq
 
             # Update the step status and close the imprint model
-            output_model.meta.cal_step.imprint = "COMPLETE"
+            output_model.meta.cal_step.imprint_subtract = "COMPLETE"
         else:
             log.warning(f"No matching imprint image found for {output_model.meta.filename}")
             log.warning("Step will be skipped")
-            output_model.meta.cal_step.imprint = "SKIPPED"
+            output_model.meta.cal_step.imprint_subtract = "SKIPPED"
 
         # Close any open imprint models
         for model in imprint_models:
