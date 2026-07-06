@@ -6,6 +6,7 @@ Particularly, load and store associations as JSON.
 
 import json as json_lib
 import logging
+from pathlib import Path
 
 from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.lib.member import Member
@@ -61,7 +62,10 @@ def json_asn_load(_cls, serialized):
     AssociationNotValidError
         Cannot create or validate the association.
     """
-    if isinstance(serialized, str):
+    if isinstance(serialized, dict):  # No-op
+        return serialized
+
+    if isinstance(serialized, (str, Path)):
         loader = json_lib.loads
     else:
         # Presume a file object

@@ -1,4 +1,4 @@
-"""Test LoadAsAssociation"""
+"""Test LoadAsLevel2Asn"""
 
 import pytest
 from astropy.utils.data import get_pkg_data_filename
@@ -36,6 +36,9 @@ def test_lv2_asn():
     asn = LoadAsLevel2Asn.load(asn_file)
     assert asn.filename == asn_file
     assert len(asn["products"]) == 6
+
+    asn2 = LoadAsLevel2Asn.load(asn)
+    assert asn2 is asn
 
 
 def test_lv2_obj():
