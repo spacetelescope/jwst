@@ -3,6 +3,7 @@
 import json as json_lib
 import logging
 import warnings
+from pathlib import Path
 
 import numpy as np
 import yaml as yaml_lib
@@ -67,7 +68,10 @@ class json:  # noqa: N801
         AssociationNotValidError
             Cannot create or validate the association.
         """
-        if isinstance(serialized, str):
+        if isinstance(serialized, dict):  # No-op
+            return serialized
+
+        if isinstance(serialized, (str, Path)):
             loader = json_lib.loads
         else:
             # Presume a file object
