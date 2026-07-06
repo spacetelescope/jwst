@@ -34,6 +34,11 @@ body:
       options:
         - label: Is this a release candidate (NOT to be published to PyPI)?
   - type: textarea
+    id: release_notes
+    attributes:
+      label: Optionally, include release notes for the GitHub release.
+      description: If not provided, will use the entry from `CHANGES.rst`.
+  - type: textarea
     id: process
     attributes:
       label: Release Procedure
@@ -57,7 +62,7 @@ body:
         - [ ] Okify any failures for this regression test run with `okify_regtests jwst <RUN_NUMBER>`.
 
         ### publish release and deliver frozen environment
-        - [ ] IF NOT A RELEASE CANDIDATE (indicated above), publish a GitHub release for the new version at the tag you just made (you could use the new entry in `CHANGES.rst` as the description).
+        - [ ] IF NOT A RELEASE CANDIDATE (indicated above), publish a GitHub release for the new version at the tag you just made, using the release notes provided above.
         - [ ] Write a `stasis` INI delivery configuration at a publicly accessible URL, e.g. `/eng/ssb/websites/ssbpublic/zburnett/JWSTDP-<VERSION>-1.ini`, pointing to `jwst[sdp]=<VERSION>`.
         - [ ] Run `stasis` at https://github.com/spacetelescope/datapipeline-workflows/actions/workflows/stasis_public.yml pointing to the INI delivery configuration.
         
