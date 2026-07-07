@@ -1,6 +1,18 @@
+import pytest
+
 from jwst.coron.hlsp_step import HlspStep
 
 
+def test_hlsp_raises_deprecation_warning(tmp_path, target_image):
+    """Test that calling HlspStep triggers a DeprecationWarning."""
+    # pytest.warns captures the warning and checks the message
+    with pytest.warns(DeprecationWarning, match="deprecated"):
+        step = HlspStep()
+        step.output_dir = str(tmp_path)
+        step.run(target_image)
+
+
+@pytest.mark.filterwarnings("ignore:'HlspStep' has been deprecated:DeprecationWarning")
 def test_hlsp_step(tmp_path, target_image):
     # This step expects image models
     input_model = target_image

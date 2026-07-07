@@ -461,5 +461,5 @@ class Spec3Pipeline(Pipeline):
         except ValueError as e:
             log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
             return
-        log.info(f"Setting S_REGION for combined footprint to: {sregion}")
+        log.debug(f"Setting S_REGION for combined footprint to: {sregion}")
         wfss_model.spec[0].s_region = sregion
