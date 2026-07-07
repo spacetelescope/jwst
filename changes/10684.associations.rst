@@ -1,0 +1,7 @@
+Removed deprecated code from Association loader, which include:
+
+- Removed deprecated YAML format support for reading and writing association files; use JSON format.
+- Removed deprecated supported for loading JSON format from files without "json" suffix.
+- Additional trailing commas in JSON association files now throws an exception because they are invalid according to the JSON specification; please manually fix the violations.
+
+Deprecated unused ``fmt`` keyword from ``load_asn()`` function.

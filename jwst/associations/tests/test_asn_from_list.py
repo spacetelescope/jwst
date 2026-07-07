@@ -65,12 +65,6 @@ def test_file_ext():
     assert name.endswith("json")
     name, serialized = asn.dump(fmt="json")
     assert name.endswith("json")
-    # check that extension with format = 'yaml'  returns yaml
-    with pytest.warns(
-        DeprecationWarning, match="Support for associations as YAML files is deprecated"
-    ):
-        name, serialized = asn.dump(fmt="yaml")
-    assert name.endswith("yaml")
 
 
 def test_level2_from_cmdline(tmp_path):
@@ -195,29 +189,15 @@ def test_cmdline_fails():
         Main.cli(["-o", "test_asn.json"])
 
 
-@pytest.mark.parametrize("fmt", ["json", "yaml"])
-def test_cmdline_success(fmt, tmp_path):
+def test_cmdline_success(tmp_path):
     """Create Level3 associations in different formats"""
     path = tmp_path / "test_asn.json"
     product_name = "test_product"
     inlist = ["a", "b", "c"]
-    args = ["-o", str(path), "--product-name", product_name, "--format", fmt]
-    args = args + inlist
-    if fmt == "yaml":
-        with pytest.warns(
-            DeprecationWarning, match="Support for associations as YAML files is deprecated"
-        ):
-            Main.cli(args)
-    else:
-        Main.cli(args)
+    args = ["-o", str(path), "--product-name", product_name, "--format", "json"] + inlist
+    Main.cli(args)
     with open(path, "r") as fp:
-        if fmt == "yaml":
-            with pytest.warns(
-                DeprecationWarning, match="Association file has json suffix but is invalid JSON"
-            ):
-                asn = load_asn(fp, fmt=fmt)
-        else:
-            asn = load_asn(fp, fmt=fmt)
+        asn = load_asn(fp)
     assert len(asn["products"]) == 1
     assert asn["products"][0]["name"] == product_name
     members = asn["products"][0]["members"]

@@ -298,8 +298,7 @@ class Association(MutableMapping):
 
         Notes
         -----
-        The serialized object can be in any format
-        supported by the registered I/O routines. For example, for
+        While the serialized object must be in
         JSON format, the input can be either a string or
         a file object containing the string.
         """

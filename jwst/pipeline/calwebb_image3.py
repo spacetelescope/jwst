@@ -126,7 +126,7 @@ class Image3Pipeline(Pipeline):
                 # single file input
                 input_data = self.prepare_output(input_data)
                 input_data = [input_data]
-            elif ext not in (".yaml", ".yml", ".json"):
+            elif ext != ".json":
                 # unrecognized input: neither asn nor datamodel
                 raise ValueError(f"Input file {input_data} has unsupported extension {ext}")
             return ModelLibrary(input_data, asn_exptypes=["science"], on_disk=not self.in_memory)
