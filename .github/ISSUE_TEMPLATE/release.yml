@@ -1,7 +1,7 @@
 # https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
 name: pipeline build delivery request
 description: request a pipeline build and delivery
-title: "[BUILD DELIVERY REQUEST] "
+title: "[BUILD DELIVERY REQUEST] <insert build name here>"
 assignees:
   - zacharyburnett
   - jhunkeler
@@ -10,7 +10,15 @@ body:
     id: build
     attributes:
       label: What is the name of this build?
+      description: Copy this to the issue title as well.
       placeholder: B13.0 
+    validations:
+      required: true
+  - type: input
+    id: crds_context
+    attributes:
+      label: Which CRDS context should this build use?
+      placeholder: roman_0051.pmap
     validations:
       required: true
   - type: input
@@ -38,31 +46,43 @@ body:
     attributes:
       label: Optionally, include release notes for the GitHub release.
       description: If not provided, will use the entry from `CHANGES.rst`.
+  - type: checkboxes
+    id: maintainer_understands_okify
+    attributes:
+      label:
+      options:
+        - label: I understand that a pipeline maintainer should handle okifying any newly-created truth file directory for this build.
+          required: true
   - type: textarea
     id: process
     attributes:
       label: Release Procedure
       description: these are the steps that will be undertaken to perform this release, build, and delivery; please don't modify this unless you know what you're doing
       value: |
-        ### freeze and tag code
+        #### freeze and tag code
         - [ ] Release new versions of STScI-developed dependencies (`stcal`, `stpipe`, etc.) if they introduce new bugfixes or features required by the pipeline.
         - [ ] Ensure pipeline dependencies in `pyproject.toml` are **NOT** floating on `main` (e.g. `stcal@git+https://github.com/spacetelescope/stcal.git@main`), and instead use PyPI releases (e.g. `stcal>=1.19,<2`) instead (or, at the very least, point to a specific commit hash). The lower pin does **not necessarily need to be the latest release**, but rather is based on features / fixes **required by the pipeline code**.
-        - [ ] Determine the new `<VERSION>`; if breaking changes are present (`changes/*.breaking.rst`) increment the major version (`1.1.3` -> `2.0.0`), else if new features are present increment the minor version (`1.1.3` -> `1.2.0`), else if only bugfixes are present increment the micro version (`1.1.3` -> `1.1.4`). If this is a release candidate (indicated above), add an `rc1`, or `rc2`, etc. to the end of the version.
+        - [ ] add a new line to [the `DMS Operational Build Versions` table in `README.md`](https://github.com/spacetelescope/jwst#dms-operational-build-versions)
+        - [ ] Determine the new `<VERSION>`:
+            - if breaking changes are present (`changes/*.breaking.rst`) increment the major version (`1.1.3` -> `2.0.0`),
+            - else if new features are present increment the minor version (`1.1.3` -> `1.2.0`),
+            - else if only bugfixes are present increment the micro version (`1.1.3` -> `1.1.4`).
+            - If this is a release candidate (indicated above), add an `rc1`, or `rc2`, etc. to the end of the version.
         - [ ] Switch to the release branch corresponding to the minor version, with the micro release as `x` (`1.1.3` -> `release/1.1.x`).
         - [ ] IF THIS IS A PATCH ON AN EXISTING RELEASE, duplicate the desired changes (indicated above), onto the desired base revision (indicated above).
         - [ ] Run `towncrier build --version <VERSION>` to consume fragments in `changes/` and add an entry to `CHANGES.rst`.
         - [ ] Tag the head of the release branch with `<VERSION>`; if this is NOT a patch release, also increment `main` to point to the new tag.
 
-        ### run "canonical" regression test for metrics dashboard
+        #### run "canonical" regression test for metrics dashboard
         - [ ] On Artifactory (https://bytesalad.stsci.edu), copy a truth file directory to `jwst-pipeline/build/<BUILDNAME>` in order to freeze them. IF THIS IS A PATCH RELEASE it will be the previous build directory `jwst-pipeline/build/<PREVIOUSBUILDNAME>` -> `jwst-pipeline/build/<BUILDNAME>`; otherwise simply copy `jwst-pipeline/dev` -> `jwst-pipeline/build/<BUILDNAME>`. 
-        - [ ] Run a regression test with the following parameters, and note the run number:
-            - using the `<VERSION>` tag you just made
-            - "Artifactory environment" pointing to the truth file directory you just copied
-            - "INT build directory" as `<VERSION>`
-        - [ ] Okify any failures for this regression test run with `okify_regtests jwst <RUN_NUMBER>`.
+        - [ ] [Run a regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml) with the following parameters, and attach the URL to this issue as a comment:
+            - `git branch / ref`: the `<VERSION>` tag you just made, e.g. `3.0.0`
+            - `Artifactory truth directory`: the truth directory you just copied, e.g. `jwst-pipeline/build/B13.0`
+            - `INT build directory to also upload results to`: the build name, e.g. `B13.0`
+        - [ ] Okify any failures for this regression test run with `okify_regtests jwst <RUN_NUMBER>`. This should be done by a pipeline maintainer.
 
-        ### publish release and deliver frozen environment
+        #### publish release and deliver frozen environment
         - [ ] IF NOT A RELEASE CANDIDATE (indicated above), publish a GitHub release for the new version at the tag you just made, using the release notes provided above.
-        - [ ] Write a `stasis` INI delivery configuration at a publicly accessible URL, e.g. `/eng/ssb/websites/ssbpublic/zburnett/JWSTDP-<VERSION>-1.ini`, pointing to `jwst[sdp]=<VERSION>`.
-        - [ ] Run `stasis` at https://github.com/spacetelescope/datapipeline-workflows/actions/workflows/stasis_public.yml pointing to the INI delivery configuration.
+        - [ ] Write a [`stasis` INI delivery configuration](https://github.com/spacetelescope/stasis#step-2-create-a-delivery-configuration) at a publicly accessible URL, e.g. `/eng/ssb/websites/ssbpublic/zburnett/JWSTDP-3.0.0-8.ini` pointing to `jwst[sdp]=3.0.0`
+        - [ ] [Run `stasis`](https://github.com/spacetelescope/datapipeline-workflows/actions/workflows/stasis_public.yml), pointing `path to stasis input file (.ini)` to the URL of the delivery configuration you just wrote.
         
