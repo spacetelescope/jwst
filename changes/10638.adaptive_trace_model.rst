@@ -1,2 +1,0 @@
-Make sure intermediate files have unique output names in ``spec3`` processing.
-Stop writing empty DQ extensions for intermediate files.

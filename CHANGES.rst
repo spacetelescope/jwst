@@ -1,4 +1,4 @@
-3.0.0 (2026-06-23)
+3.0.0 (2026-07-07)
 ==================
 
 Breaking Changes
@@ -70,6 +70,10 @@ adaptive_trace_model (spec2, spec3)
 - For oversampled data, interpolate variance arrays as errors for correct
   weighting then square them afterward, instead of directly interpolating the
   variances. (`#10590 <https://github.com/spacetelescope/jwst/issues/10590>`_)
+- Make sure intermediate files have unique output names in ``spec3``
+  processing.
+  Stop writing empty DQ extensions for intermediate files. (`#10638
+  <https://github.com/spacetelescope/jwst/issues/10638>`_)
 
 
 ami_analyze / ami_normalize / ami_average (ami3)
@@ -136,6 +140,10 @@ exp_to_source (spec3)
 - Check for an empty string in the slit ``source_name`` attribute, to fix an
   edge case bug in reducing fixed slit regions from NRS_MSASPEC exposures.
   (`#10588 <https://github.com/spacetelescope/jwst/issues/10588>`_)
+- Remove an unused and unmaintained command-line interface to the
+  ``exp_to_source`` functions. (`#10652
+  <https://github.com/spacetelescope/jwst/issues/10652>`_)
+
 
 
 extract_1d (spec2, spec3)
@@ -316,7 +324,9 @@ Other Changes
 - Bumped minimum supported versions for asdf to 5.1, astropy to 7.2, requests
   to 2.32, scipy to 1.15.3, and synphot to 1.6. (`#10620
   <https://github.com/spacetelescope/jwst/issues/10620>`_)
-
+- Deprecate the ``HlspStep``, which was originally intended for coronagraphy
+  support, but is currently unused and unmaintained. (`#10648
+  <https://github.com/spacetelescope/jwst/issues/10648>`_)
 
 2.0.1 (2026-05-06)
 ==================
