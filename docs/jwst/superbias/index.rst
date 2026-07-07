@@ -8,7 +8,5 @@ Superbias Subtraction
    :maxdepth: 2
 
    description.rst
-   arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.superbias
+   api_ref.rst

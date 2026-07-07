@@ -269,14 +269,9 @@ abbreviations used in the table are as follows:
 In the :ref:`resample_spec <resample_spec_step>` and :ref:`cube_build <cube_build_step>` steps, the spectra are
 transformed to a space of (wavelength, offset along the slit) without applying a tangent plane projection.
 
-Arguments
----------
-The ``calwebb_spec2`` pipeline has three optional arguments.
-
-``--save_bsub`` (boolean, default=False)
-  This parameter is deprecated and will be removed in a future release.
-  To save background-subtracted data ("_bsub" or "_bsubints"), use the background step's
-  ``--save_results`` parameter instead.
+Pipeline Arguments
+------------------
+The ``calwebb_spec2`` pipeline has the following optional arguments.
 
 ``--fail_on_exception`` (boolean, default=False)
   If set to ``True``, the pipeline will stop processing and raise an exception

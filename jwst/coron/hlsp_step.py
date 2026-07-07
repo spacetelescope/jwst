@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 from stdatamodels.jwst import datamodels
 
@@ -11,7 +12,12 @@ log = logging.getLogger(__name__)
 
 
 class HlspStep(Step):
-    """Make High-Level Science Products (HLSP's) after KLIP processing has been applied."""
+    """
+    Make High-Level Science Products (HLSP's) after KLIP processing has been applied.
+
+    .. deprecated:: 3.0.0
+       The `HlspStep` has been deprecated and will be removed in a future release.
+    """
 
     class_alias = "hlsp"
 
@@ -22,6 +28,12 @@ class HlspStep(Step):
 
     def process(self, target):
         """Execute the HLSP calibration step."""
+        deprecation_message = (
+            "'HlspStep' has been deprecated since 3.0.0 and will be removed in a future release."
+        )
+        warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+        log.warning(deprecation_message)
+
         width = self.annuli_width
 
         # Open the input target image model
