@@ -275,7 +275,7 @@ class ResampleSpecStep(Step):
             s_region_model1 = input_models[0].meta.wcsinfo.s_region
             s_region = find_miri_lrs_sregion(s_region_model1, result.meta.wcs)
             result.meta.wcsinfo.s_region = s_region
-            log.info(f"Updating S_REGION: {s_region}.")
+            log.debug(f"Updating S_REGION: {s_region}.")
 
             # Transform source_xpos and source_ypos to resampled image frame, since they
             # are defined in full-frame coordinates for MIRI LRS Fixed Slit
