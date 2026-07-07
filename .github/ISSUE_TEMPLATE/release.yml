@@ -49,7 +49,7 @@ body:
   - type: checkboxes
     id: maintainer_understands_okify
     attributes:
-      label:
+      label: Maintainer Should Okify
       options:
         - label: I understand that a pipeline maintainer should handle okifying any newly-created truth file directory for this build.
           required: true
