@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.superbias.SuperBiasStep`
+:Class: `jwst.superbias.superbias_step.SuperBiasStep`
 :Alias: superbias
 
 The superbias subtraction step removes the fixed detector bias from a
@@ -37,3 +37,7 @@ NIRSpec IRS2
 ------------
 No special handling is necessary for science data taken in the IRS2 readout
 mode, because matching IRS2 superbias reference files are supplied in CRDS.
+
+Step Arguments
+--------------
+The superbias subtraction step has no step-specific arguments.
