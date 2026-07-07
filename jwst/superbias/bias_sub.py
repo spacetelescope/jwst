@@ -13,7 +13,7 @@ __all__ = ["do_correction", "subtract_bias"]
 
 def do_correction(input_model, bias_model):
     """
-    Execute all tasks for Superbias Subtraction.
+    Execute all tasks for superbias Subtraction.
 
     Parameters
     ----------

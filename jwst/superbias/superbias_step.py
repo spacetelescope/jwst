@@ -1,4 +1,4 @@
-"""Subtract super-bias reference data from the input science data model."""
+"""Subtract superbias reference data from the input science data model."""
 
 import logging
 
@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class SuperBiasStep(Step):
-    """Subtract super-bias reference data from the input science data model."""
+    """Subtract superbias reference data from the input science data model."""
 
     class_alias = "superbias"
 
