@@ -1,10 +1,8 @@
 import logging
-import warnings
 
 import numpy as np
 from astropy.io.fits import FITS_rec
 from astropy.table import vstack
-from astropy.utils.metadata.exceptions import MergeConflictWarning
 from stdatamodels.jwst import datamodels
 
 from jwst.adaptive_trace_model import adaptive_trace_model_step
@@ -230,8 +228,7 @@ class Tso3Pipeline(Pipeline):
             log.warning("Could not create a photometric catalog; all results are null")
         else:
             # Otherwise, save results to a photometry catalog file
-            with warnings.catch_warnings(category=MergeConflictWarning):
-                phot_results = vstack(phot_result_list)
+            phot_results = vstack(phot_result_list)
             phot_results.meta["number_of_integrations"] = len(phot_results)
             phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext="ecsv")
             log.info(f"Writing Level 3 photometry catalog {phot_tab_name}")
