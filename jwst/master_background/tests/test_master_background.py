@@ -23,10 +23,14 @@ from jwst.stpipe import query_step_status
 
 
 @pytest.fixture(scope="module")
-def user_background(tmp_path_factory):
+def mbg_input_directory(tmp_path_factory):
+    return tmp_path_factory.mktemp("mbg_input")
+
+
+@pytest.fixture(scope="module")
+def user_background(mbg_input_directory):
     """Generate a user background spectrum."""
-    filename = tmp_path_factory.mktemp("master_background_user_input")
-    filename = filename / "user_background.fits"
+    filename = mbg_input_directory / "user_background.fits"
     wavelength = np.linspace(0.5, 25, num=100)
     flux = np.linspace(2.0, 2.2, num=100)
     data = create_background(wavelength, flux)
@@ -35,7 +39,7 @@ def user_background(tmp_path_factory):
     return str(filename)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def nirspec_rate():
     ysize = 2048
     xsize = 2048
@@ -100,7 +104,7 @@ def nirspec_rate():
     im.close()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def nirspec_ifu_cal(nirspec_rate):
     im = datamodels.IFUImageModel(nirspec_rate)
     im.data += 1.0
@@ -115,7 +119,7 @@ def nirspec_ifu_cal(nirspec_rate):
     im.close()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def nirspec_cal_pair(nirspec_rate):
     # copy the rate model to make files with different filters
     rate2 = nirspec_rate.copy()
@@ -139,7 +143,7 @@ def nirspec_cal_pair(nirspec_rate):
     im2.close()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def nirspec_ifu_pair(nirspec_ifu_cal):
     cal1 = nirspec_ifu_cal
     cal1.meta.filename = "nrs_ifu_1_cal.fits"
@@ -173,13 +177,13 @@ def _make_asn(sci_filename, x1d_filename):
     return asn
 
 
-@pytest.fixture
-def nirspec_asn(nirspec_cal_pair, tmp_cwd):
+@pytest.fixture(scope="module")
+def nirspec_asn(mbg_input_directory, nirspec_cal_pair):
     """Create an association with the mock data."""
     sci, im2 = nirspec_cal_pair
 
     sci_filename = sci.meta.filename
-    sci.save(sci_filename)
+    sci.save(str(mbg_input_directory / sci_filename))
 
     x1d = Extract1dStep.call(im2)
 
@@ -188,7 +192,7 @@ def nirspec_asn(nirspec_cal_pair, tmp_cwd):
 
     x1d_filename = im2.meta.filename.replace("cal", "x1d")
     x1d.meta.filename = x1d_filename
-    x1d.save(x1d_filename)
+    x1d.save(str(mbg_input_directory / x1d_filename))
 
     # Make a basic association with the science image
     # and the x1d as a background member
@@ -196,35 +200,35 @@ def nirspec_asn(nirspec_cal_pair, tmp_cwd):
 
     # Save the association
     new_data = json.dumps(asn)
-    asn_file = "asn.json"
-    with Path(asn_file).open("w") as file:
+    asn_file = mbg_input_directory / "asn.json"
+    with asn_file.open("w") as file:
         file.write(new_data)
-    return asn_file
+    return str(asn_file)
 
 
-@pytest.fixture
-def nirspec_ifu_asn(nirspec_ifu_pair, tmp_cwd):
+@pytest.fixture(scope="module")
+def nirspec_ifu_asn(mbg_input_directory, nirspec_ifu_pair):
     """Create an association with the mock data."""
     sci, x1d = nirspec_ifu_pair
 
     sci_filename = sci.meta.filename
-    sci.save(sci_filename)
+    sci.save(str(mbg_input_directory / sci_filename))
 
     x1d_filename = sci_filename.replace("cal", "x1d")
     x1d.meta.filename = x1d_filename
-    x1d.save(x1d_filename)
+    x1d.save(str(mbg_input_directory / x1d_filename))
 
     asn = _make_asn(sci_filename, x1d_filename)
 
     # Save the association
     new_data = json.dumps(asn)
-    asn_file = "ifu_asn.json"
-    with Path(asn_file).open("w") as file:
+    asn_file = mbg_input_directory / "ifu_asn.json"
+    with asn_file.open("w") as file:
         file.write(new_data)
-    return asn_file
+    return str(asn_file)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def science_image():
     """Generate science image."""
     image = datamodels.ImageModel((10, 10))
