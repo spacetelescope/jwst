@@ -24,17 +24,16 @@ def pool():
 
 @pytest.fixture(scope="module")
 def make_asns(pool, tmp_path_factory):
-    asn_format = "json"
     path = str(tmp_path_factory.mktemp("data"))
     generated = Main.cli(
-        ["-p", path, "-i", "o001", "--save-orphans", "--format", asn_format], pool=pool
+        ["-p", path, "-i", "o001", "--save-orphans", "--format", "json"], pool=pool
     )
-    yield generated, path, asn_format
+    return generated, path
 
 
 def test_roundtrip(make_asns):
-    generated, path, asn_format = make_asns
-    asn_files = glob(os.path.join(path, "*." + asn_format))
+    generated, path = make_asns
+    asn_files = glob(os.path.join(path, "*.json"))
     assert len(asn_files) == len(generated.associations)
 
     for asn_file in asn_files:
@@ -48,8 +47,8 @@ def test_roundtrip(make_asns):
 
 
 def test_load_asn_all(make_asns):
-    generated, path, asn_format = make_asns
-    asn_files = glob(os.path.join(path, "*." + asn_format))
+    generated, path = make_asns
+    asn_files = glob(os.path.join(path, "*.json"))
     assert len(asn_files) == len(generated.associations)
 
     for asn_file in asn_files:
