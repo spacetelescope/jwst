@@ -1,7 +1,4 @@
-import warnings
-
 import pytest
-from astropy.utils.metadata.exceptions import MergeConflictWarning
 
 from jwst.lib.set_telescope_pointing import add_wcs
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
@@ -42,9 +39,8 @@ def run_tsgrism_sw_img_pipeline(rtdata_module, resource_tracker):
 
     rtdata.get_asn("nircam/tsimg/jw01442-o003_tso3_00002_asn.json")
     args = ["calwebb_tso3", rtdata.input]
-    with warnings.catch_warnings(category=MergeConflictWarning):
-        with resource_tracker.track():
-            Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     return rtdata
 
