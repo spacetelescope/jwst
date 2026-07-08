@@ -16,19 +16,19 @@ __all__ = ["find_dither_position", "center_from_ta_image", "NoFinitePixelsError"
 
 
 class NoFinitePixelsError(Exception):
-    """Custom exception raised when no finite pixels are found in the TA image."""
+    """No finite pixels are found in the TA image."""
 
     pass
 
 
 class BadFitError(Exception):
-    """Custom exception raised when the model fit does not meet quality criteria."""
+    """The model fit does not meet quality criteria."""
 
     pass
 
 
 class WCSError(Exception):
-    """Custom exception raised when WCS assignment or usage fails."""
+    """WCS assignment or usage fails."""
 
     pass
 
@@ -42,17 +42,17 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
     ta_image : ndarray
         2D target acquisition image data.
     ref_center : tuple of float
-        (x_ref, y_ref) reference center position in subarray coordinates, zero-indexed.
+        ``(x_ref, y_ref)`` reference center position in subarray coordinates, zero-indexed.
         Dither position comes out of the WCS transform already in subarray coordinates.
     subarray_origin : tuple of int, optional
-        (xstart, ystart) 1-indexed origin of the subarray in full-frame coordinates.
-        Default is (1, 1) for full frame.
+        ``(xstart, ystart)`` 1-indexed origin of the subarray in full-frame coordinates.
+        Default is ``(1, 1)`` for full frame.
 
     Returns
     -------
-    x_center, y_center : tuple of float
+    x_center, y_center : float
         Fitted x, y center position in full-frame detector coordinates.
-    x_center_subarray, y_center_subarray : tuple of float
+    x_center_subarray, y_center_subarray : float
         Fitted x, y center position in subarray coordinates.
     """
     log.info("Computing centroid of source in TA verification image.")
@@ -118,7 +118,7 @@ def _cutout_center(image, center, size=16):
     image : ndarray
         2D image array.
     center : tuple of float
-        (x_center, y_center) position for the center of the cutout.
+        ``(x_center, y_center)`` position for the center of the cutout.
     size : int, optional
         Size of the square cutout in pixels.
 
@@ -127,7 +127,7 @@ def _cutout_center(image, center, size=16):
     cutout : ndarray
         Square cutout of the image.
     cutout_origin : tuple of int
-        (x_origin, y_origin) position of the lower-left corner of the cutout
+        ``(x_origin, y_origin)`` position of the lower-left corner of the cutout
         in the original image coordinates.
     """
     x_center, y_center = center
@@ -162,15 +162,15 @@ def find_dither_position(model):
     Parameters
     ----------
     model : `~jwst.datamodels.container.ModelContainer`, \
-            `~stdatamodels.jwst.datamodels.ImageModel`, \
+            `~stdatamodels.jwst.datamodels.ImageModel`, or \
             `~stdatamodels.jwst.datamodels.CubeModel`
         The input datamodel, either science or TA verification type.
 
     Returns
     -------
-    x_center, y_center : tuple of float
+    x_center, y_center : float
         Dithered x, y center position in pixels.
-    x_offset, y_offset : tuple of float
+    x_offset, y_offset : float
         Dither x, y offsets in pixels from the nominal position.
     """
     if not model.meta.hasattr("wcs"):

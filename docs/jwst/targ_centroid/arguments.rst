@@ -1,7 +1,7 @@
 Step Arguments
 ==============
 
-The ``targ_centroid`` step has the following optional arguments to control
+The ``targ_centroid`` step has the following optional argument to control
 the behavior of the processing.
 
 ``--ta_file`` (string, default=None)
