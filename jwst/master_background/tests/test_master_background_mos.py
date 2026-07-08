@@ -9,6 +9,8 @@ from jwst.extract_1d import Extract1dStep
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.tests.test_nirspec import create_nirspec_hdul
 from jwst.master_background import MasterBackgroundMosStep, nirspec_utils
+from jwst.master_background.create_master_bkg import create_background
+from jwst.pipeline import Spec2Pipeline
 from jwst.pixel_replace import PixelReplaceStep
 from jwst.resample import ResampleSpecStep
 from jwst.stpipe import query_step_status
@@ -109,9 +111,31 @@ def mk_multispec(model):
     return specs_model
 
 
-def test_master_background_mos(nirspec_msa_extracted2d):
+def user_background():
+    wavelength = np.linspace(0.5, 25, num=100)
+    flux = np.linspace(2.0, 2.2, num=100)
+    bg_model = create_background(wavelength, flux)
+    return bg_model
+
+
+@pytest.mark.parametrize("user_bg", [True, False])
+def test_master_background_mos(tmp_path, nirspec_msa_extracted2d, user_bg):
+    if user_bg:
+        bg_model = user_background()
+        bg_file = str(tmp_path / "test_user_bg.fits")
+        bg_model.save(bg_file)
+    else:
+        bg_file = None
+
     model = nirspec_msa_extracted2d
-    result = MasterBackgroundMosStep.call(model)
+    result = MasterBackgroundMosStep.call(
+        model,
+        user_background=bg_file,
+        output_dir=str(tmp_path),
+        save_background=True,
+        save_results=True,
+        suffix="mbg",
+    )
 
     # Check that the master_background_mos step was run
     assert query_step_status(result, "master_background") == "COMPLETE"
@@ -120,15 +144,33 @@ def test_master_background_mos(nirspec_msa_extracted2d):
     assert result is not model
     assert query_step_status(model, "master_background") is None
 
+    # Check that a background was subtracted from the science data
     finite = np.isfinite(result.slits[-1].data) & np.isfinite(model.slits[-1].data)
     sci_orig = model.slits[-1].data[finite]
     sci_bkgsub = result.slits[-1].data[finite]
-
-    # Check that a background was subtracted from the science data
     assert not np.allclose(sci_orig, sci_bkgsub)
 
-    del model
-    del result
+    # Expected output files are present
+    if user_bg:
+        expected = [
+            "test_user_bg_masterbg1d.fits",
+            "test_nrs_msa_masterbg2d.fits",
+            "test_nrs_msa_mbg.fits",
+        ]
+    else:
+        expected = [
+            "test_nrs_msa_masterbg1d.fits",
+            "test_nrs_msa_masterbg2d.fits",
+            "test_nrs_msa_bkgx1d.fits",
+            "test_nrs_msa_mbg.fits",
+        ]
+    for filename in expected:
+        assert (tmp_path / filename).exists()
+
+    model.close()
+    result.close()
+    if user_bg:
+        bg_model.close()
 
 
 def test_create_background_from_multispec(nirspec_msa_extracted2d):
@@ -272,3 +314,46 @@ def test_skip_no_master_bg(monkeypatch, nirspec_msa_extracted2d):
     # Input is not modified
     assert result is not model
     assert model.meta.cal_step.master_background is None
+
+
+@pytest.mark.parametrize("with_bg", [True, False])
+def test_extend_bg_slits(nirspec_msa_extracted2d, with_bg):
+    model = nirspec_msa_extracted2d
+    step = MasterBackgroundMosStep()
+
+    # Mark all slits as either sources or backgrounds
+    for i, slit in enumerate(model.slits):
+        if with_bg:
+            slit.source_name = f"BKG{i}"
+        else:
+            slit.source_name = f"SRC{i}"
+
+    bkg_model = step._extend_bg_slits(model)
+    if with_bg:
+        assert len(bkg_model.slits) == len(model.slits)
+    else:
+        assert bkg_model is None
+
+
+def test_parent_params():
+    pipe = Spec2Pipeline()
+
+    # Set some parameters to pass on
+    pipe.flat_field.user_supplied_flat = "test_flat.fits"
+    pipe.pathloss.user_slit_loc = 0.01
+    pipe.photom.apply_time_correction = False
+
+    # And some that should be ignored
+    pipe.flat_field.inverse = True
+    pipe.barshadow.source_type = "POINT"
+
+    pipe.master_background_mos.set_pars_from_parent()
+
+    # Expected parameters are set
+    assert pipe.master_background_mos.flat_field.user_supplied_flat == "test_flat.fits"
+    assert pipe.master_background_mos.pathloss.user_slit_loc == 0.01
+    assert pipe.master_background_mos.photom.apply_time_correction is False
+
+    # Ignored parameters are not set
+    assert pipe.master_background_mos.flat_field.inverse is False
+    assert pipe.master_background_mos.barshadow.source_type is None
