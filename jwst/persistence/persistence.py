@@ -1,5 +1,4 @@
-#
-#  Module for correcting for persistence
+"""Utility functions for correcting for persistence."""
 
 import logging
 
@@ -20,23 +19,32 @@ class DataSet:
     """
     Input dataset to which persistence will be applied.
 
-    Attributes
+    Parameters
     ----------
-    output_obj : JWST data model
+    output_obj : `~stdatamodels.jwst.datamodels.JwstDataModel`
         A copy of the input model.  This will be modified in-place.
 
     save_persistence : bool
-        If True, the persistence that was subtracted will be written to an
-        output file.
+        If `True`, the persistence that was subtracted will be written
+        to an output file.
+
+    Attributes
+    ----------
+    output_obj : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        A copy of the input model.  This will be modified in-place.
+
+    save_persistence : bool
+        If `True`, the persistence that was subtracted will be written
+        to an output file.
 
     persistence_time : int
         The number of seconds for a persistence window to persist.
 
-    persistence_array : string or None
+    persistence_array : str or None
         If not None, then it is the path to a file containing a persistence array.
 
-    persistence_dnu : boolean
-        When flagging PERSISTENCE, if true, then flag as DO_NOT_USE as well.
+    persistence_dnu : bool
+        When flagging PERSISTENCE, if `True`, then flag as DO_NOT_USE as well.
     """
 
     def __init__(
@@ -44,27 +52,17 @@ class DataSet:
         output_obj,
         save_persistence,
         persistence_time=None,
+        dn_threshold=None,
         persistence_array=None,
         persistence_dnu=None,
     ):
-        """
-        Assign values to attributes.
-
-        Parameters
-        ----------
-        output_obj : JWST data model
-            Copy of input data model object
-
-        save_persistence : bool
-            If True, the persistence that was subtracted will be written
-            to an output file.
-        """
         log.debug("save_persistence = %s", str(save_persistence))
 
         self.output_obj = output_obj
         self.save_persistence = save_persistence
         self.output_pers = None
 
+        self.dn_threshold = dn_threshold
         self.persistence_time = persistence_time
         self.persistence_array = persistence_array
         self.persistence_dnu = persistence_dnu
@@ -75,16 +73,16 @@ class DataSet:
 
         Returns
         -------
-        output_obj : data model
-            The persistence-corrected science data, a RampModel object.
+        output_obj : `~stdatamodels.jwst.datamodels.RampModel`
+            The persistence-corrected science data.
 
-        output_pers :  data model or None
-            A RampModel object, giving the value of persistence that
+        output_pers : `~stdatamodels.jwst.datamodels.RampModel` or None
+            A model giving the value of persistence that
             was subtracted from each pixel of each group of each
             integration.
 
         skipped : bool
-            This will be True if the step has been skipped.
+            This will be `True` if the step has been skipped.
         """
         # Initial value, indicates that processing was done successfully.
         skipped = False
@@ -124,8 +122,9 @@ class DataSet:
         Flag groups that are within a persistence window.
 
         The structure of the persistence_array is as follows:
-            1. Zero entries indicate no persistence flagging.
-            2. Non-zero entries indicate the end time of the persistence flagging window.
+
+        1. Zero entries indicate no persistence flagging.
+        2. Non-zero entries indicate the end time of the persistence flagging window.
 
         Since a non-zero entry indicates a persistence flagging window has been found for
         that pixel. The entry is the epoch time of the end of that window for a pixel. To
@@ -156,24 +155,35 @@ class DataSet:
         # persistence window has ended for that pixel because the current time is
         # after the end of the persistence window.
         self.persistence_array[self.persistence_array < current_time] = 0.0
+        window_end = current_time + self.persistence_time
 
         # Calculate any first saturation points. Any group found to be the first
         # saturated group in a ramp is the beginning of a persistence window.
         gdq_plane = self.output_obj.groupdq[integ, group, :, :]
         sat_loc = np.bitwise_and(gdq_plane, dqflags.group["SATURATED"])
         sat_array[sat_loc > 0] += 1
-        self.persistence_array[sat_array == 1] = current_time + self.persistence_time
+        self.persistence_array[sat_array == 1] = window_end
+
+        # Open a persistence window based on the dn_threshold.
+        if self.dn_threshold is not None:
+            sci_plane = self.output_obj.data[integ, group, :, :]
+            set_window = np.full(self.persistence_array.shape, False, dtype=bool)
+            set_window[sci_plane > self.dn_threshold] = True
+            set_window[self.persistence_array > 0.0] = False
+            self.persistence_array[set_window] = window_end
+            del set_window
 
         # This prevents 'backwards flagging'.
         # Subtracting the persistence_time gives the beginning of the window.
         # If the current time occurs before this time, then the current group is
         #     outside the window and subtracting it will be a positive number.
-        # Raise an exception if a backwards flagging situation arrives, as this is
-        #     an invalid state.
-        start_plane = self.persistence_array - (self.persistence_time + current_time)
+        # Reset window for pixels where backwards flagging situation arrives, as
+        #     this is an invalid state.
+        start_plane = self.persistence_array - window_end
         start_plane[self.persistence_array == 0.0] = 0.0
         if np.any(start_plane > 0.0):
-            raise ValueError("Invalid persistence array, due to backwards flagging.")
+            log.info("Backwards flagging found. Resetting the window for those pixels")
+            self.persistence_array[start_plane > 0.0] = 0.0
 
         # Set persistence flag for any group in persistence window
         if self.persistence_dnu:
@@ -182,6 +192,7 @@ class DataSet:
             flag = dqflags.group["PERSISTENCE"]
 
         gdq_plane[self.persistence_array > 0.0] |= flag
+
         self.output_obj.groupdq[integ, group, :, :] = gdq_plane
 
 

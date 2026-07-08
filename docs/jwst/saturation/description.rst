@@ -1,11 +1,11 @@
 Description
-============
+===========
 
-:Class: `jwst.saturation.SaturationStep`
+:Class: `jwst.saturation.saturation_step.SaturationStep`
 :Alias: saturation
 
 The core algorithm for this step is called from the external package ``stcal``, an STScI
-effort to unify common calibration processing algorithms for use by multiple observatories.
+effort to unify common calibration processing algorithms for use by multiple observatories; see :ref:`Saturation in stcal <stcal:saturation_module>`.
 
 Saturation Checking
 -------------------
@@ -46,8 +46,8 @@ of the following criteria must be met:
    and the superbias if available), which may occur for bright sources.
 
 #. The difference in counts between the first and second group is larger than the
-   remaining counts needed to saturate divided by the number of frames in the 
-   second group, i.e., the expected frame-averaged counts of a saturating signal 
+   remaining counts needed to saturate divided by the number of frames in the
+   second group, i.e., the expected frame-averaged counts of a saturating signal
    that occurs in the last frame of the group.
 
 #. The third group is saturated.
@@ -57,7 +57,7 @@ of the following criteria must be met:
 Charge Migration
 ----------------
 There is an effect in IR detectors that results in charge migrating (spilling)
-from a pixel that has "hard" saturation (i.e. where the pixel no longer accumulates
+from a pixel that has "hard" saturation (i.e., where the pixel no longer accumulates
 charge) into neighboring pixels. This results in non-linearities in the accumulating
 signal ramp in the neighboring pixels and hence the ramp data following the onset
 of saturation is not usable.
@@ -66,7 +66,7 @@ The ``saturation`` step accounts for charge migration by flagging - as saturated
 all pixels neighboring a pixel that goes above the saturation threshold. This is
 accomplished by first flagging all pixels that cross their saturation thresholds
 and then making a second pass through the data to flag neighbors within a specified
-region. The region of neighboring pixels is specified as a 2N+1 pixel wide box that
+region. The region of neighboring pixels is specified as a ``2N+1`` pixel wide box that
 is centered on the saturating pixel and N is set by the step parameter
 ``n_pix_grow_sat``. The default value is 1, resulting in a 3x3 box of neighboring
 pixels that will be flagged.
@@ -78,8 +78,8 @@ handling in this step, due to the extra reference pixel values that are interlea
 within the science data. The saturation reference file data does not contain
 extra entries for these pixels. The step-by-step process is as follows:
 
-#. Retrieve and load data from the appropriate "SATURATION" and "SUPERBIAS" 
-   reference files from CRDS
+#. Retrieve and load data from the appropriate :ref:`SATURATION <saturation_reffile>`
+   and :ref:`SUPERBIAS <superbias_reffile>` reference files from CRDS
 
 #. If the input science exposure used the NIRSpec IRS2 readout pattern:
 
@@ -100,10 +100,10 @@ extra entries for these pixels. The step-by-step process is as follows:
    "GROUPDQ" array if the pixel value is greater than or equal to the saturation
    threshold from the reference file
 
-#. If the "use_readpatt" keyword is set, trimmed versions of the data, 
-   saturation threshold, and superbias arrays (i.e., excluding interleaved 
+#. If the "use_readpatt" keyword is set, trimmed versions of the data,
+   saturation threshold, and superbias arrays (i.e., excluding interleaved
    reference pixels), will be used to identify the special case of pixels that
-   saturate in the middle of the second group for readout patterns that have 
+   saturate in the middle of the second group for readout patterns that have
    frame-averaged groups.
 
 NIRCam Frame 0

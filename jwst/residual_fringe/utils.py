@@ -52,8 +52,8 @@ def slice_info(slice_map, channel):
     ----------
     slice_map : ndarray of int
         2D image containing slice identification values by pixel.
-        Slice ID values are integers with the value 100 * channel number
-        + slice number.  Pixels not included in a slice have value 0.
+        Slice ID values are integers with the value ``100 * channel number
+        + slice number``.  Pixels not included in a slice have value 0.
     channel : int
         Channel number.
 
@@ -197,7 +197,7 @@ def fit_envelope(wavenum, signal, check_extra_neighbors=False):
     signal : ndarray
         Signal values
     check_extra_neighbors : bool, optional
-        If True, check two neighboring pixels instead of one, for
+        If `True`, check two neighboring pixels instead of one, for
         identifying peaks and troughs.
 
     Returns
@@ -385,7 +385,7 @@ def check_res_fringes(res_fringe_fit, max_amp):
         with 0.
     flags: ndarray
         1D flag array indicating where the fit was altered, matching
-        the size of the first dimension of `res_fringe_fit`.
+        the size of the first dimension of ``res_fringe_fit``.
         1 indicates a bad fit region; 0 indicates a good region, left
         unchanged.
     """
@@ -431,7 +431,7 @@ def interp_helper(mask):
     """
     Create a convenience function for indexing low-weight values.
 
-    Low-weight is defined to be a value < 1e-5.
+    Low-weight is defined to be a value less than 1e-5.
 
     Parameters
     ----------
@@ -443,7 +443,7 @@ def interp_helper(mask):
     index_array : ndarray of bool
         Boolean index array for low weight pixels.
     index_function : callable
-        A function, with signature indices = index_function(index_array),
+        A function, with signature ``indices = index_function(index_array)``,
         to convert logical indices to equivalent direct index values.
     """
     return mask < 1e-05, lambda z: z.nonzero()[0]
@@ -466,7 +466,7 @@ def fit_1d_background_complex(flux, weights, wavenum, ffreq=None, channel=1):
         1D array of wavenumbers.
     ffreq : float, optional
         The expected fringe frequency, used to determine number of knots.
-        If None, defaults to NUM_KNOTS constant
+        If None, defaults to NUM_KNOTS constant.
     channel : int, optional
         The channel to process. Used to determine if other arrays
         need to be reversed given the direction of increasing
@@ -476,7 +476,7 @@ def fit_1d_background_complex(flux, weights, wavenum, ffreq=None, channel=1):
     -------
     bg_fit : ndarray
         The fitted background.
-    bgindx: ndarray
+    bgindx : ndarray
         The location of the knots.
     """
     # first get the weighted pixel fraction
@@ -564,11 +564,11 @@ def fit_1d_fringes_bayes_evidence(
     res_fringes : ndarray
         The 1D array with residual fringes.
     weights : ndarray
-        The 1D array of weights
+        The 1D array of weights.
     wavenum : ndarray
         The 1D array of wavenum.
     ffreq : float
-        The central scan frequency
+        The central scan frequency.
     dffreq : float
         The one-sided interval of scan frequencies.
     max_nfringes : int
@@ -941,7 +941,7 @@ def fit_1d_fringes_bayes_evidence_1d(
         The 1D array of wavenum.
     ffreq : float
         The central scan frequency.
-    dffreq :  float
+    dffreq : float
         The one-sided interval of scan frequencies.
     max_nfringes : int
         The maximum number of fringes to check.
@@ -1078,17 +1078,17 @@ def fit_residual_fringes_1d(
         The maximum relative amplitude value for fringe correction. If not provided,
         is set to ``MAXAMP_1D``.
     clip_features : bool, optional
-        If True, spectral features are masked via sigma clipping.  If False, they
+        If `True`, spectral features are masked via sigma clipping.  If False, they
         are detected and masked via comparison to the ``max_line`` value.
     clip_sigma : float, optional
-        If ``clip_features`` is True, then this value is used as the sigma threshold
+        If ``clip_features`` is `True`, then this value is used as the sigma threshold
         for clipping spectral features.
     max_line : float, optional
         The maximum relative amplitude value to detect an emission line.  If not provided,
-        is set to ``MAXLINE_1D``.  Used only if ``clip_features`` is False.
+        is set to ``MAXLINE_1D``.  Used only if ``clip_features`` is `False`.
     ignore_regions : list of list of float, optional
         If provided, data in the wavelengths specified is ignored in the fringe
-        fits. The expected format is a list of [min_region, max_region] values, in
+        fits. The expected format is a list of ``[min_region, max_region]`` values, in
         input wavelength units.
 
     Returns

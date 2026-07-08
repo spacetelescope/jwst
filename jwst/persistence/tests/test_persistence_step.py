@@ -1,8 +1,8 @@
+import logging
 import os
 
 import asdf
 import numpy as np
-import pytest
 from astropy.io import fits
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
@@ -89,6 +89,82 @@ def test_persistence_time_nonneg_sec(create_sci_model):
     np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
 
 
+def test_persistence_time_nonneg_sec_thresh(create_sci_model):
+    """Test persistence flag gets set inside of persistence window using exposure start time"""
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+
+    slope = 1500.0
+    arr = [slope * (g + 1) for g in range(ngroups)]
+    model.data[0, :, 0, 1] = np.array(arr, dtype=model.data.dtype)
+
+    step = PersistenceStep(persistence_time=70, dn_threshold=8000.0)
+    res = step.run(model)
+
+    # With a persistence window of 70 seconds and group time of 21.47354 seconds, the 5th
+    # group of the first integration for pixel (0, 1) and the following three groups
+    # (crossing the integration) will be flagged as persistent.
+
+    check1 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check2 = np.array([0, 0, 0, 0, 0, 0, 0], dtype=np.uint8)
+    check3 = np.array([0, 0, 0, 0, 0, 32, 32], dtype=np.uint8)
+    check4 = np.array([32, 32, 0, 0, 0, 0, 0], dtype=np.uint8)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 0], check1)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 0], check2)
+    np.testing.assert_equal(res.groupdq[0, :, 0, 1], check3)
+    np.testing.assert_equal(res.groupdq[1, :, 0, 1], check4)
+
+
+def test_persistence_array_file_overwrite(tmp_path, create_sci_model):
+    """Use existing persistence file to overwrite data for an existing detector."""
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    save_persistence = str(tmp_path / "dummy_persistence_array.asdf")
+
+    step = PersistenceStep(persistence_time=700, save_persistence=save_persistence)
+    res = step.run(model)
+
+    tree1 = asdf.load(save_persistence)
+
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 0] |= dqflags.group["SATURATED"]
+
+    step = PersistenceStep(persistence_time=700, save_persistence=save_persistence)
+    res = step.run(model)
+
+    tree2 = asdf.load(save_persistence)
+
+    assert tree1["NRCA1"]["cols"][0] != tree2["NRCA1"]["cols"][0]
+
+
+def test_persistence_array_file_add(tmp_path, create_sci_model):
+    """Use existing persistence file to add data for a new detector."""
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+
+    save_persistence = str(tmp_path / "dummy_persistence_array.asdf")
+
+    step = PersistenceStep(persistence_time=70, save_persistence=save_persistence)
+    res = step.run(model)
+
+    nints, ngroups, nrows, ncols = 2, 7, 1, 2
+    model = create_sci_model(nints=nints, ngroups=ngroups, nrows=nrows, ncols=ncols)
+    model.groupdq[0, 5:, 0, 1] |= dqflags.group["SATURATED"]
+    model.meta.instrument.detector = "NRCA2"
+
+    step = PersistenceStep(persistence_time=70, save_persistence=save_persistence)
+    res = step.run(model)
+
+    tree = asdf.load(save_persistence)
+
+    assert "NRCA1" in tree
+    assert "NRCA2" in tree
+
+
 def test_persistence_time_0_sec(create_sci_model):
     """Test persistence flag gets set inside of persistence window of 0 seconds"""
     nints, ngroups, nrows, ncols = 2, 7, 1, 2
@@ -163,8 +239,6 @@ def test_persistence_time_save_persistence(create_sci_model, tmp_path):
 
     assert os.path.exists(save_persistence) is True
 
-    del step
-
 
 def test_persistence_time_with_array(create_sci_model, tmp_path):
     """Test persistence flag gets set using a persistence_array"""
@@ -181,11 +255,13 @@ def test_persistence_time_with_array(create_sci_model, tmp_path):
     rows, cols = np.nonzero(persistence_array)
     vals = persistence_array[rows, cols]
     tree = {
-        "filename": "dummy.fits",
-        "rows": rows,
-        "cols": cols,
-        "vals": vals,
-        "pers_time": persistence_time,
+        model.meta.instrument.detector: {
+            "filename": "dummy.fits",
+            "rows": rows,
+            "cols": cols,
+            "vals": vals,
+            "pers_time": persistence_time,
+        },
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(asdf_file)
@@ -207,7 +283,7 @@ def test_persistence_time_with_array(create_sci_model, tmp_path):
     np.testing.assert_equal(res.groupdq[1, :, 0, 2], checkz)
 
 
-def test_persistence_mismatch_persistencetime_guard(create_sci_model, tmp_path):
+def test_persistence_mismatch_persistence_time_guard(create_sci_model, tmp_path, caplog):
     """Develop a test that ensures exception is raised mismatched persistence time."""
     # Setup model
     nints, ngroups, nrows, ncols = 2, 7, 1, 3
@@ -223,23 +299,25 @@ def test_persistence_mismatch_persistencetime_guard(create_sci_model, tmp_path):
     rows, cols = np.nonzero(persistence_array)
     vals = persistence_array[rows, cols]
     tree = {
-        "filename": "dummy.fits",
-        "rows": rows,
-        "cols": cols,
-        "vals": vals,
-        "pers_time": persistence_time,
+        model.meta.instrument.detector: {
+            "filename": "dummy.fits",
+            "rows": rows,
+            "cols": cols,
+            "vals": vals,
+            "pers_time": persistence_time,
+        },
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(asdf_file)
 
     step = PersistenceStep(persistence_array_file=asdf_file, persistence_time=persistence_time2)
 
-    # Run persistence step
-    with pytest.raises(ValueError):
+    with caplog.at_level(logging.INFO):
         step.run(model)
+    assert "does not equal persistence_time" in caplog.text
 
 
-def test_persistence_backwards_flagging_guard(create_sci_model, tmp_path):
+def test_persistence_backwards_flagging_guard(create_sci_model, tmp_path, caplog):
     """Develop a test that ensures exception is raised for backwards flagging."""
     # Setup model
     nints, ngroups, nrows, ncols = 2, 7, 1, 3
@@ -256,20 +334,23 @@ def test_persistence_backwards_flagging_guard(create_sci_model, tmp_path):
     rows, cols = np.nonzero(persistence_array)
     vals = persistence_array[rows, cols]
     tree = {
-        "filename": "dummy.fits",
-        "rows": rows,
-        "cols": cols,
-        "vals": vals,
-        "pers_time": persistence_time,
+        model.meta.instrument.detector: {
+            "filename": "dummy.fits",
+            "rows": rows,
+            "cols": cols,
+            "vals": vals,
+            "pers_time": persistence_time,
+        },
     }
     with asdf.AsdfFile(tree) as af:
         af.write_to(asdf_file)
 
     step = PersistenceStep(persistence_array_file=asdf_file, persistence_time=persistence_time)
 
-    # Run persistence step
-    with pytest.raises(ValueError):
+    with caplog.at_level(logging.INFO):
         step.run(model)
+    msg = "Backwards flagging found."
+    assert msg in caplog.text
 
 
 def test_persistence_time_dnu(create_sci_model):

@@ -17,22 +17,22 @@ def spline_fitter(x, y, weights, knots, degree, reject_outliers=False, domain=10
     Parameters
     ----------
     x : ndarray
-        Independent variable. Must be increasing.
+        Independent variable.  Must be increasing.
     y : ndarray
-        Dependent variable, matching dimensions of `x`.
+        Dependent variable, matching dimensions of ``x``.
     weights : ndarray
         Weights for spline fitting.  Must be positive.
     knots : ndarray
         Interior knots for the spline.
     degree : int
-        Degree of the spline to fit, >= 1 and <= 5.
+        Degree of the spline to fit, ``>= 1`` and ``<= 5``.
     reject_outliers : bool, optional
-        If True, iteratively fit the data with outlier rejection.
+        If `True`, iteratively fit the data with outlier rejection.
     domain : int, optional
-        Factor controlling the outlier threshold when `reject_outliers`
-        is True.
+        Factor controlling the outlier threshold when ``reject_outliers``
+        is `True`.
     tolerance : float, optional
-        Fit convergence tolerance when reject_outliers` is True.
+        Fit convergence tolerance when ``reject_outliers`` is `True`.
 
     Returns
     -------

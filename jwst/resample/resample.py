@@ -502,7 +502,7 @@ class ResampleImage(Resample):
             # only for an imaging WCS:
             self.update_fits_wcsinfo(self.output_jwst_model)
             output_sregion = self.combine_input_sregions()
-            log.info(f"Assigning output S_REGION: {output_sregion}")
+            log.debug(f"Assigning output S_REGION: {output_sregion}")
             self.output_jwst_model.meta.wcsinfo.s_region = output_sregion
 
         self.output_jwst_model.meta.cal_step.resample = "COMPLETE"
@@ -810,7 +810,7 @@ def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
         The weighting type for adding models' data.
     enable_var : bool
         Indicates whether to resample variance arrays.
-    compute_err : str
+    compute_err : str or None
         The method to compute the output model's error array.
 
     Returns

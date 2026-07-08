@@ -1,3 +1,5 @@
+"""Remove persistence signal from ramp data."""
+
 import logging
 from pathlib import Path
 
@@ -21,6 +23,7 @@ class PersistenceStep(Step):
     spec = """
         save_persistence = string(default=None) # Name of ASDF output file to save the persistence array
         persistence_time = integer(default=None) # Time, in seconds, to use for persistence window
+        dn_threshold = float(default=None) # A threshold above which to flag persistence.
         persistence_array_file = string(default=None) # A path to an ASDF file containing a 2-D array of persistence times per pixel
         persistence_dnu = boolean(default=False) # If True the set the DO_NOT_USE flag with PERSISTENCE
         skip = boolean(default=True) # By default, skip the step.
@@ -55,6 +58,7 @@ class PersistenceStep(Step):
             result,
             self.save_persistence,
             self.persistence_time,
+            self.dn_threshold,
             self.persistence_array,
             self.persistence_dnu,
         )
@@ -72,13 +76,14 @@ class PersistenceStep(Step):
 
         Parameters
         ----------
-        result : RampModel
-            The RampModel on which to process the persistence flag.
+        result : `~stdatamodels.jwst.datamodels.RampModel`
+            The `~stdatamodels.jwst.datamodels.RampModel`
+            on which to process the persistence flag.
 
         Returns
         -------
         ret : str or None
-            "Failed" if invalid persistence_time; otherwise NoneType.
+            "Failed" if invalid persistence_time; otherwise None.
         """
         # Could make less than or equal to frametime.
         if self.persistence_time is None or self.persistence_time <= 0.0:
@@ -89,7 +94,7 @@ class PersistenceStep(Step):
 
         _, _, nrows, ncols = result.groupdq.shape
         if self.persistence_array_file is not None:
-            self.get_persistence_array_from_file(nrows, ncols)
+            self.get_persistence_array_from_file(result, nrows, ncols)
         else:
             self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
 
@@ -101,8 +106,9 @@ class PersistenceStep(Step):
 
         Parameters
         ----------
-        result : RampModel
-            The RampModel on which to process the persistence flag.
+        result : `~stdatamodels.jwst.datamodels.RampModel`
+            The `~stdatamodels.jwst.datamodels.RampModel`
+            on which to process the persistence flag.
         """
         ext = str(Path(filename).suffix)
         stem = Path(filename).stem
@@ -112,9 +118,21 @@ class PersistenceStep(Step):
             filename = f"{root}.asdf"
 
         # Write persistence array to ASDF file
+        # Only write out the non-zero rows and columns
+        # and their values, to save disk space.
+        detector = result.meta.instrument.detector
         rows, cols = np.nonzero(self.persistence_array)
         vals = self.persistence_array[rows, cols]
-        tree = {
+
+        if Path(filename).exists():
+            # There is a pre-existing persistence file, read its contents.
+            tree = asdf.load(filename)
+        else:
+            # There is no persistence file, so start with a blank tree
+            tree = {}
+
+        # Add/update values for this detector
+        tree[detector] = {
             "filename": result.meta.filename,
             "rows": rows,
             "cols": cols,
@@ -122,28 +140,38 @@ class PersistenceStep(Step):
             "pers_time": self.persistence_time,
         }
 
-        with asdf.AsdfFile(tree) as af:
-            af.write_to(filename)
+        # Write out the persistence file
+        asdf.dump(tree, filename)
 
-    def get_persistence_array_from_file(self, nrows, ncols):
+    def get_persistence_array_from_file(self, result, nrows, ncols):
         """
         Get the persistence array from an ASDF file.
 
         Parameters
         ----------
         nrows : int
-            The number of rows in the RampModel data.
+            The number of rows in the `~stdatamodels.jwst.datamodels.RampModel` data.
 
         ncols : int
-            The number of columns in the RampModel data.
+            The number of columns in the `~stdatamodels.jwst.datamodels.RampModel` data.
         """
+        self.persistence_array = np.zeros(shape=(nrows, ncols), dtype=np.float64)
+        if not Path(self.persistence_array_file).exists():
+            log.info("Persistence array file does not exist: '{self.persistence_array_file}'")
+            log.info(".... Creating new persistence array.")
+            return
         with asdf.open(self.persistence_array_file) as pers_file:
-            if pers_file["pers_time"] != self.persistence_time:
-                raise ValueError("Invalid persistence file. Mismatch of persistence time.")
-
-            rows = pers_file["rows"]
-            cols = pers_file["cols"]
-            vals = pers_file["vals"]
-
-            self.persistence_array = np.zeros((nrows, ncols), dtype=vals.dtype)
-            self.persistence_array[rows, cols] = vals
+            detector = result.meta.instrument.detector
+            if detector in pers_file:
+                rows = pers_file[detector]["rows"]
+                cols = pers_file[detector]["cols"]
+                vals = pers_file[detector]["vals"]
+                pers_time = pers_file[detector]["pers_time"]
+                if pers_time != self.persistence_time:
+                    msg = f"{pers_time} does not equal persistence_time :{self.persistence_time}"
+                    log.info(msg)
+                    return
+                self.persistence_array[rows, cols] = vals
+            else:
+                log.info(f"Detector {detector} not in persistence array file.")
+                log.info(".... Creating new persistence array.")

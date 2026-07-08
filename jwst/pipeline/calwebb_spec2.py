@@ -1,6 +1,5 @@
 import logging
 import traceback
-import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -71,7 +70,6 @@ class Spec2Pipeline(Pipeline):
     class_alias = "calwebb_spec2"
 
     spec = """
-        save_bsub = boolean(default=False) # Deprecated; use the background step's save_results parameter instead.
         fail_on_exception = boolean(default=True) # Fail if any product fails.
         save_wfss_esec = boolean(default=False)   # Save WFSS e-/sec image
     """  # noqa: E501
@@ -121,15 +119,6 @@ class Spec2Pipeline(Pipeline):
             The calibrated data models.
         """
         log.info("Starting calwebb_spec2 ...")
-
-        if self.save_bsub:
-            deprecation_message = (
-                "The --save_bsub parameter is deprecated and will be removed in a future release. "
-                "To toggle saving background-subtracted data, use the background step's "
-                "--save_results parameter instead."
-            )
-            warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
-            log.warning(deprecation_message)
 
         # Setup step parameters required by the pipeline.
         self.resample_spec.save_results = self.save_results
@@ -497,10 +486,6 @@ class Spec2Pipeline(Pipeline):
                 self.bkg_subtract.suffix = "bsub"
                 if multi_int:
                     self.bkg_subtract.suffix = "bsubints"
-
-                # Backwards compatibility
-                if self.save_bsub:
-                    self.bkg_subtract.save_results = True
             else:
                 log.debug(
                     "Science data does not allow direct background subtraction. "
