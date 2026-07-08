@@ -72,7 +72,7 @@ def test_err_invalid_json_trailing_comma(tmp_path):
         load_asn(f)
 
 
-def test_err_invalid_yaml(tmp_path):
+def test_err_invalid_json_suffix(tmp_path):
     fname = tmp_path / "bad_asn.yaml"
     with open(fname, "w") as f:
         # Valid JSON, but we will force YAML suffix
