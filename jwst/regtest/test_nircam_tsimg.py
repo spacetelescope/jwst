@@ -37,6 +37,8 @@ def run_pipelines(rtdata_module, resource_tracker):
 def run_tsgrism_sw_img_pipeline(rtdata_module, resource_tracker):
     rtdata = rtdata_module
 
+    rtdata.get_data("nircam/tsimg/jw01442003001_02104_00001_nrca1_calints.fits")
+    rtdata.get_data("nircam/tsimg/jw01442003001_02104_00001_nrca3_calints.fits")
     rtdata.get_data("nircam/tsimg/jw01442-o003_tso3_00002_asn.json")
     args = ["calwebb_tso3", rtdata.input]
     with resource_tracker.track():
