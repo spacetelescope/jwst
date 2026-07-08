@@ -280,7 +280,11 @@ def _get_int_times(datamodel):
     num_integ = 1
     if len(shape) > 2:
         num_integ = shape[0]
-    int_start = datamodel.meta.exposure.integration_start
+    int_start = (
+        datamodel.meta.exposure.integration_start
+        if datamodel.meta.exposure.integration_start is not None
+        else 1
+    )
 
     # Columns of integration numbers & times of integration from the
     # INT_TIMES table.
