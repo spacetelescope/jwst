@@ -1,4 +1,4 @@
-3.0.0 (2026-07-07)
+3.0.0 (2026-07-09)
 ==================
 
 Breaking Changes
@@ -272,6 +272,13 @@ superbias (detector1 NIR)
 
 - Fix array indexing for zeroframe arrays with superstripe modes. (`#10494
   <https://github.com/spacetelescope/jwst/issues/10494>`_)
+
+
+tso_photometry (tso3)
+---------------------
+
+- Use an integration start value of 1 if the keyword is not populated. (`#10689
+  <https://github.com/spacetelescope/jwst/issues/10689>`_)
 
 
 wfss_contam (spec2 WFSS)
