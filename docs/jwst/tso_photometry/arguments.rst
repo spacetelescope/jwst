@@ -42,7 +42,7 @@ The ``tso_photometry`` step has the following optional arguments.
 
 ``--moving_centroid`` (boolean, default=False)
     If ``centroid_source`` is `True`, a centroid is fit to each integration.
-    If this is also `True`, these centroids are used directly to compute
+    If this parameter is also `True`, these centroids are used directly to compute
     the photometry for each integration, such that the source position is
     allowed to vary over the exposure.
     Otherwise, the median of the computed centroid positions

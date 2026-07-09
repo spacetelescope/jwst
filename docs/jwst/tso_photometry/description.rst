@@ -55,8 +55,7 @@ product), and if the file contains an INT_TIMES table extension, the times
 listed in the output table from this step will be extracted from column
 "int_mid_MJD_UTC" of the INT_TIMES extension.  Otherwise,
 the times will be computed from the exposure start time, the integration time,
-and the number of integrations.  In either case, the times are in format of
-Modified Julian Date (UTC).
+and the number of integrations.  In either case, the times are Modified Julian Date (UTC).
 
 If NaNs exist in the source or background annulus, they are masked and the value
 returned is the sum over the unmasked data.
