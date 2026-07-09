@@ -5,6 +5,7 @@ title: "[BUILD DELIVERY REQUEST] <insert build name here>"
 assignees:
   - zacharyburnett
   - jhunkeler
+labels: Release
 body:
   - type: input
     id: build
@@ -85,4 +86,3 @@ body:
         - [ ] IF NOT A RELEASE CANDIDATE (indicated above), publish a GitHub release for the new version at the tag you just made, using the release notes provided above.
         - [ ] Write a [`stasis` INI delivery configuration](https://github.com/spacetelescope/stasis#step-2-create-a-delivery-configuration) at a publicly accessible URL, e.g. `/eng/ssb/websites/ssbpublic/zburnett/JWSTDP-3.0.0-8.ini` pointing to `jwst[sdp]=3.0.0`
         - [ ] [Run `stasis`](https://github.com/spacetelescope/datapipeline-workflows/actions/workflows/stasis_public.yml), pointing `path to stasis input file (.ini)` to the URL of the delivery configuration you just wrote.
-        
