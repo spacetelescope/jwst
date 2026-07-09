@@ -3,7 +3,7 @@
 calwebb_wfs-image3: Stage 3 WFS&C Processing
 ============================================
 
-:Class: `jwst.wfs_combine.WfsCombineStep`
+:Class: `jwst.wfs_combine.wfs_combine_step.WfsCombineStep`
 :Alias: calwebb_wfs-image3
 
 Stage 3 processing of Wavefront Sensing and Control (WFS&C) images is only performed
@@ -15,13 +15,12 @@ be obtained by just running the :ref:`wfs_combine <wfs_combine_step>` step direc
 
 Arguments
 ---------
-The ``calwebb_wfs-image3`` pipeline has one optional argument::
+The ``calwebb_wfs-image3`` pipeline has one optional argument.
 
-  --do_refine  boolean  default=False
-
-If set to ``True``, offsets between the dithered images computed from the WCS will be
-refined empirically using a cross-correlation technique.
-See :ref:`wfs_combine <wfs_combine_step>` for details.
+``--do_refine`` (boolean, default=False)
+  If set to `True`, offsets between the dithered images computed from the WCS will be
+  refined empirically using a cross-correlation technique.
+  See :ref:`wfs_combine <wfs_combine_step>` for details.
 
 Inputs
 ------
@@ -44,6 +43,6 @@ Outputs
 :Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _wfscmb
 
-The output is a combined image, using the product type suffix "_wfscmb."
+The output is a combined image, using the product type suffix "_wfscmb".
 See :ref:`wfs_combine <wfs_combine_step>` for details on how this combined
 image is produced.
