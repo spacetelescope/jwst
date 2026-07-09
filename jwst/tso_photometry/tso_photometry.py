@@ -26,7 +26,8 @@ def convert_data_units(datamodel, gain_2d=None):
     Parameters
     ----------
     datamodel : `~stdatamodels.jwst.datamodels.CubeModel`
-        The input CubeModel of a TSO imaging observation.
+        The input `~stdatamodels.jwst.datamodels.CubeModel`
+        of a TSO imaging observation.
     gain_2d : ndarray or None, optional
         The gain for all pixels.  Required if the input units are "DN/s".
     """
@@ -71,7 +72,8 @@ def tso_aperture_photometry(
     Parameters
     ----------
     datamodel : `~stdatamodels.jwst.datamodels.CubeModel`
-        The input CubeModel of a TSO imaging observation.
+        The input `~stdatamodels.jwst.datamodels.CubeModel`
+        of a TSO imaging observation.
     xcenter, ycenter : float or ndarray
         The ``x`` and ``y`` center of the aperture.  If a single value
         is provided, it will be used for all integrations.  If an array
@@ -100,7 +102,7 @@ def tso_aperture_photometry(
     Returns
     -------
     catalog : `~astropy.table.QTable`
-        An astropy QTable (Quantity Table) containing the source
+        Astropy Quantity Table containing the source
         photometry.
     """
     if not isinstance(datamodel, CubeModel):
@@ -317,27 +319,19 @@ def _fit_source(data, mask, source_mask, xcenter, ycenter, box_size, fit_psf=Fal
     box_size : int
         Subimage size to fit.
     fit_psf : bool, optional
-        If True and a centroid is successfully fit, the source will be fit
+        If `True` and a centroid is successfully fit, the source will be fit
         with a Gaussian model and the PSF width and flux will be returned.
 
     Returns
     -------
-    fit_results : tuple
-        If fit_psf is False, a 2-tuple is returned, containing:
+    centroid_x, centroid_y : ndarray
+        The x and y center, respectively, of the source for each integration, zero-indexed.
 
-        centroid_x : ndarray
-            The x center of the source for each integration, zero-indexed.
-        centroid_y : ndarray
-            The y center of the source for each integration, zero-indexed.
-
-        If fit_psf is True, a 5-tuple is returned, additionally containing:
-
-        psf_width_x : ndarray
-            An array of PSF fit widths in the x-direction, one per integration.
-        psf_width_y : ndarray
-            An array of PSF fit widths in the y-direction, one per integration.
-        psf_flux : ndarray
-            An array of PSF fit flux, one per integration.
+    psf_width_x, psf_width_y, psf_flux : ndarray
+        These are *only* returned if ``fit_psf`` is `True`.
+        They are arrays of PSF fit widths in the x- and y-direction,
+        respectively, one per integration, and an array of PSF fit flux,
+        also one per integration.
     """
     # Set up output arrays
     nimg = data.shape[0]
@@ -404,7 +398,7 @@ def _psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter):
     data : ndarray of float
         Background subtracted image to fit.
     mask : ndarray of bool
-        Mask for bad pixels, matching the data shape. True indicates an invalid pixel.
+        Mask for bad pixels, matching the data shape. `True` indicates an invalid pixel.
     fit_box_width : int
         Width of the subimage to use for the fit to the source.
     xcenter, ycenter : float
@@ -492,7 +486,8 @@ def tso_source_centroid(
     Parameters
     ----------
     datamodel : `~stdatamodels.jwst.datamodels.CubeModel`
-        The input CubeModel of a TSO imaging observation.
+        The input `~stdatamodels.jwst.datamodels.CubeModel`
+        of a TSO imaging observation.
     xcenter : float
         Initial guess for the x-center of the source.
     ycenter : float
