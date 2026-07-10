@@ -18,9 +18,9 @@ def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None)
 
     Parameters
     ----------
-    input_model : TSOMultiSpecModel
+    input_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
         Datamodel containing the multi-integration data.
-    waverange_table : astropy.table.Table, optional
+    waverange_table : `~astropy.table.Table`, optional
         Wavelength range information from the reference file. These ranges will be
         superseded by user-specified values if provided.
     min_wave : float, optional
@@ -30,7 +30,7 @@ def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None)
 
     Returns
     -------
-    tbl : astropy.table.table.QTable
+    tbl : `~astropy.table.QTable`
         Table containing the integrated flux as a function of time.
     """
     # The input should contain separate spectra for each spectral
@@ -183,12 +183,12 @@ def _make_empty_output_table(input_model):
 
     Parameters
     ----------
-    input_model : MultiSpecModel
+    input_model : `~stdatamodels.jwst.datamodels.MultiSpecModel`
         Datamodel containing the multi-integration data
 
     Returns
     -------
-    astropy.table.table.QTable
+    `~astropy.table.QTable`
         Empty table with the same metadata as the input model.
     """
     tbl_meta = OrderedDict()
@@ -217,7 +217,7 @@ def _determine_wavelength_range(order, filt, waverange_table=None, min_wave=None
         Spectral order for which to determine the wavelength range.
     filt : str
         Filter for which to determine the wavelength range.
-    waverange_table : astropy.table.Table, optional
+    waverange_table : `~astropy.table.Table`, optional
         Wavelength range information from the reference file.
     min_wave : float, optional
         User-specified minimum wavelength for integration.

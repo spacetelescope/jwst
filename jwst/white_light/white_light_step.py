@@ -32,8 +32,8 @@ class WhiteLightStep(Step):
         """
         Sum the flux over all wavelengths in each integration.
 
-        Produce an integrated (“white”) flux as a function of time for the target. This
-        is to be applied to the _x1dints product in a spectroscopic
+        Produce an integrated ("white") flux as a function of time for the target. This
+        is to be applied to the "_x1dints" product in a spectroscopic
         Time-Series Observation (TSO).
 
         Parameters
@@ -43,7 +43,7 @@ class WhiteLightStep(Step):
 
         Returns
         -------
-        result : `~astropy.table.table.QTable` or None
+        result : `~astropy.table.QTable` or None
             Table containing the integrated flux as a function of time.
             If input is invalid, None is returned.
         """
@@ -79,12 +79,12 @@ class WhiteLightStep(Step):
 
         Parameters
         ----------
-        input_model : datamodels.Model
+        input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input data model from which to extract the wavelength range.
 
         Returns
         -------
-        astropy.table.Table or None
+        `~astropy.table.Table` or None
             If the input model is of type NIS_SOSS, returns a table with the wavelength
             range information. Otherwise, returns None.
         """
