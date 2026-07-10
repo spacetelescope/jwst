@@ -2,13 +2,15 @@
 
 import gwcs
 import numpy as np
+import pytest
 from astropy.modeling.models import Identity, Mapping, Planar2D
 from stdatamodels.jwst import datamodels
 
+from jwst.datamodels import ModelContainer
 from jwst.master_background import expand_to_2d
 
 
-def test_expand_to_2d_1():
+def test_expand_to_2d_multispec():
     input_data = slit_data_a()  # MultiSlitModel
     m_bkg_spec = user_bkg_spec_a()  # MultiSpecModel
     bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
@@ -17,7 +19,7 @@ def test_expand_to_2d_1():
     assert np.allclose(bkg.slits[0].data, truth_a, rtol=1.0e-6)
 
 
-def test_expand_to_2d_2():
+def test_expand_to_2d_multispec_reversed():
     # Same input data as in the first test.
     input_data = slit_data_a()  # MultiSlitModel
     # Check that expand_to_2d works if the wavelength array is reversed.
@@ -30,13 +32,140 @@ def test_expand_to_2d_2():
     assert np.allclose(bkg.slits[0].data, truth_a, rtol=1.0e-6)
 
 
-def test_expand_to_2d_3():
+def test_expand_to_2d_multispec_ignore_extra(caplog):
+    input_data = slit_data_a()  # MultiSlitModel
+    m_bkg_spec = user_bkg_spec_a()  # MultiSpecModel
+
+    # Add an extra spectrum
+    m_bkg_spec.spec.append(m_bkg_spec.spec[0].instance.copy())
+
+    # Expect the same results: only the first is used
+    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
+    truth_a = truth_array_a()
+    assert np.allclose(bkg.slits[0].data, truth_a, rtol=1.0e-6)
+
+    # Warning is logged
+    assert "contains multiple spectra" in caplog.text
+
+
+def test_expand_to_2d_combined_spec():
     input_data = image_data_c()  # ImageModel
     m_bkg_spec = user_bkg_spec_c()  # CombinedSpecModel
     bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
     truth_c = truth_array_c()
 
     assert np.allclose(bkg.data, truth_c, rtol=1.0e-6)
+
+
+def test_expand_to_2d_container():
+    input_data = ModelContainer([slit_data_a()])  # Container of MultiSlitModel
+    m_bkg_spec = user_bkg_spec_a()  # MultiSpecModel
+    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
+
+    # output is a container with a single MultiSlitModel
+    assert isinstance(bkg, ModelContainer)
+    assert len(bkg) == 1
+    assert isinstance(bkg[0], datamodels.MultiSlitModel)
+
+    # check against expected truth array
+    truth_a = truth_array_a()
+    assert np.allclose(bkg[0].slits[0].data, truth_a, rtol=1.0e-6)
+
+
+def test_create_bkg_unsupported_model():
+    # Unsupported model raises error
+    input_model = datamodels.RampModel()
+    with pytest.raises(TypeError, match="not supported"):
+        expand_to_2d.create_bkg(input_model, None, None)
+
+
+def test_bkg_for_multislit_missing_wl():
+    input_data = slit_data_a()
+
+    # Modify input to unset wavelengths
+    input_data.slits[0].wavelength = None
+
+    # Raises error
+    with pytest.raises(RuntimeError, match="Can't determine wavelengths"):
+        expand_to_2d.bkg_for_multislit(input_data, None, None)
+
+
+@pytest.mark.parametrize("allow_mos", [True, False])
+def test_bkg_for_multislit_allow_mos(caplog, allow_mos):
+    input_data = slit_data_a()
+    input_data.meta.exposure.type = "NRS_MSASPEC"
+
+    m_bkg_spec = user_bkg_spec_a()
+    tab_wl = m_bkg_spec.spec[0].spec_table["WAVELENGTH"]
+    tab_bg = m_bkg_spec.spec[0].spec_table["SURF_BRIGHT"]
+
+    # Warns and sets all backgrounds and dq to 0 with allow_mos=False
+    bg = expand_to_2d.bkg_for_multislit(input_data, tab_wl, tab_bg, allow_mos=allow_mos)
+    if not allow_mos:
+        assert "not supported for NIRSpec MOS spectra" in caplog.text
+        for slit in bg.slits:
+            assert np.allclose(slit.data, 0.0)
+            assert np.all(slit.dq == 0)
+    else:
+        for slit in bg.slits:
+            assert not np.allclose(slit.data, 0.0)
+
+
+def test_bkg_for_multislit_nrs_fs_point(caplog):
+    input_data = slit_data_a()
+    input_data.meta.exposure.type = "NRS_FIXEDSLIT"
+    input_data.slits[0].source_type = "POINT"
+    shape = input_data.slits[0].data.shape
+    input_data.slits[0].pathloss_point = np.full(shape, 2.0)
+    input_data.slits[0].pathloss_uniform = np.full(shape, 3.0)
+    input_data.slits[0].flatfield_point = np.full(shape, 4.0)
+    input_data.slits[0].flatfield_uniform = np.full(shape, 5.0)
+    input_data.slits[0].photom_point = np.full(shape, 6.0)
+    input_data.slits[0].photom_uniform = np.full(shape, 7.0)
+
+    m_bkg_spec = user_bkg_spec_a()
+    tab_wl = m_bkg_spec.spec[0].spec_table["WAVELENGTH"]
+    tab_bg = m_bkg_spec.spec[0].spec_table["SURF_BRIGHT"]
+
+    bkg = expand_to_2d.bkg_for_multislit(input_data, tab_wl, tab_bg)
+
+    # Background is corrected by ratio of point to uniform for 3 corrections.
+    # Note: the pathloss and flat corrections are inverted.
+    truth_a = truth_array_a()
+    corrected = truth_a * (3 / 2) * (5 / 4) * (6 / 7)
+    np.testing.assert_allclose(bkg.slits[0].data, corrected, rtol=1.0e-6)
+
+
+def test_bkg_for_image_missing_wl():
+    input_data = image_data_c()
+
+    # Modify input to unset wcs
+    input_data.meta.wcs = None
+
+    # Raises error
+    with pytest.raises(RuntimeError, match="Can't determine wavelengths"):
+        expand_to_2d.bkg_for_image(input_data, None, None)
+
+
+def test_bkg_for_ifu_image_miri():
+    input_data = image_data_c()
+    input_data.meta.instrument.name = "MIRI"
+
+    m_bkg_spec = user_bkg_spec_c()
+    tab_wl = m_bkg_spec.spec_table["WAVELENGTH"]
+    tab_bg = m_bkg_spec.spec_table["SURF_BRIGHT"]
+
+    bkg = expand_to_2d.bkg_for_ifu_image(input_data, tab_wl, tab_bg)
+    truth_c = truth_array_c()
+    assert np.allclose(bkg.data, truth_c, rtol=1.0e-6)
+
+
+def test_bkg_for_ifu_unsupported_instrument():
+    # Unsupported instrument raises error
+    input_model = image_data_c()
+    input_model.meta.instrument.name = "NIRISS"
+    with pytest.raises(TypeError, match="not supported"):
+        expand_to_2d.bkg_for_ifu_image(input_model, None, None)
 
 
 # slit_data_a and image_data_c create `input` for the tests above.

@@ -114,7 +114,17 @@ def nirspec_ifu_cal(nirspec_rate):
     im.meta.subarray.xsize = 2048
     im.meta.subarray.ystart = 1
     im.meta.subarray.ysize = 2048
+    # im.meta.target.source_type_apt = "POINT"
     im = AssignWcsStep.call(im)
+    yield im
+    im.close()
+
+
+@pytest.fixture(scope="module")
+def nirspec_ifu_point_cal(nirspec_ifu_cal):
+    im = nirspec_ifu_cal.copy()
+    im.meta.target.source_type_apt = "POINT"
+    im = SourceTypeStep.call(im)
     yield im
     im.close()
 
@@ -146,10 +156,24 @@ def nirspec_cal_pair(nirspec_rate):
 @pytest.fixture(scope="module")
 def nirspec_ifu_pair(nirspec_ifu_cal):
     cal1 = nirspec_ifu_cal
-    cal1.meta.filename = "nrs_ifu_1_cal.fits"
+    cal1.meta.filename = "nirspec_ifu_cal.fits"
 
     s3d = CubeBuildStep.call(cal1)
-    x1d = Extract1dStep.call(s3d)
+    x1d = Extract1dStep.call(s3d, ifu_autocen=False)
+    s3d.close()
+
+    yield cal1, x1d
+    cal1.close()
+    x1d.close()
+
+
+@pytest.fixture(scope="module")
+def nirspec_ifu_point_pair(nirspec_ifu_point_cal):
+    cal1 = nirspec_ifu_point_cal
+    cal1.meta.filename = "nirspec_ifu_point_cal.fits"
+
+    s3d = CubeBuildStep.call(cal1)
+    x1d = Extract1dStep.call(s3d, ifu_autocen=False)
     s3d.close()
 
     yield cal1, x1d
@@ -177,55 +201,50 @@ def _make_asn(sci_filename, x1d_filename):
     return asn
 
 
+def _save_asn(sci, x1d, save_path):
+    sci_filename = sci.meta.filename
+    sci.save(str(save_path / sci_filename))
+
+    x1d_filename = sci_filename.replace("cal", "x1d")
+    x1d.meta.filename = x1d_filename
+    x1d.save(str(save_path / x1d_filename))
+
+    asn = _make_asn(sci_filename, x1d_filename)
+
+    # Save the association
+    new_data = json.dumps(asn)
+    asn_file = save_path / "ifu_point_asn.json"
+    with asn_file.open("w") as file:
+        file.write(new_data)
+    return str(asn_file)
+
+
 @pytest.fixture(scope="module")
 def nirspec_asn(mbg_input_directory, nirspec_cal_pair):
     """Create an association with the mock data."""
     sci, im2 = nirspec_cal_pair
 
-    sci_filename = sci.meta.filename
-    sci.save(str(mbg_input_directory / sci_filename))
-
+    # Extract a spectrum
     x1d = Extract1dStep.call(im2)
 
     # Add a CR to the x1d
     x1d.spec[0].spec_table["SURF_BRIGHT"][10] += 10
 
-    x1d_filename = im2.meta.filename.replace("cal", "x1d")
-    x1d.meta.filename = x1d_filename
-    x1d.save(str(mbg_input_directory / x1d_filename))
-
-    # Make a basic association with the science image
-    # and the x1d as a background member
-    asn = _make_asn(sci_filename, x1d_filename)
-
-    # Save the association
-    new_data = json.dumps(asn)
-    asn_file = mbg_input_directory / "asn.json"
-    with asn_file.open("w") as file:
-        file.write(new_data)
-    return str(asn_file)
+    return _save_asn(sci, x1d, mbg_input_directory)
 
 
 @pytest.fixture(scope="module")
 def nirspec_ifu_asn(mbg_input_directory, nirspec_ifu_pair):
     """Create an association with the mock data."""
     sci, x1d = nirspec_ifu_pair
+    return _save_asn(sci, x1d, mbg_input_directory)
 
-    sci_filename = sci.meta.filename
-    sci.save(str(mbg_input_directory / sci_filename))
 
-    x1d_filename = sci_filename.replace("cal", "x1d")
-    x1d.meta.filename = x1d_filename
-    x1d.save(str(mbg_input_directory / x1d_filename))
-
-    asn = _make_asn(sci_filename, x1d_filename)
-
-    # Save the association
-    new_data = json.dumps(asn)
-    asn_file = mbg_input_directory / "ifu_asn.json"
-    with asn_file.open("w") as file:
-        file.write(new_data)
-    return str(asn_file)
+@pytest.fixture(scope="module")
+def nirspec_ifu_point_asn(mbg_input_directory, nirspec_ifu_point_pair):
+    """Create an association with the mock data."""
+    sci, x1d = nirspec_ifu_point_pair
+    return _save_asn(sci, x1d, mbg_input_directory)
 
 
 @pytest.fixture(scope="module")
@@ -384,9 +403,11 @@ def test_master_background_logic(caplog, tmp_cwd, user_background, science_image
     assert science_image.meta.cal_step.master_background is None
 
 
-def test_master_background_nirspec_ifu(tmp_cwd, nirspec_ifu_asn):
+@pytest.mark.parametrize("dataset", ["nirspec_ifu_asn", "nirspec_ifu_point_asn"])
+def test_master_background_nirspec_ifu(tmp_cwd, request, dataset):
+    input_asn = request.getfixturevalue(dataset)
     output_model = MasterBackgroundStep.call(
-        nirspec_ifu_asn, save_background=True, save_results=True, suffix="mbg"
+        input_asn, save_background=True, save_results=True, suffix="mbg"
     )
 
     # Output is a container
@@ -395,7 +416,7 @@ def test_master_background_nirspec_ifu(tmp_cwd, nirspec_ifu_asn):
     assert result.meta.cal_step.master_background == "COMPLETE"
 
     # Expected output files are present
-    basename = "nrs_ifu_1"
+    basename = dataset.replace("_asn", "")
     expected = [
         f"{basename}_o001_masterbg1d.fits",
         f"{basename}_o001_masterbg2d.fits",
