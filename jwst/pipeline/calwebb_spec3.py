@@ -248,7 +248,9 @@ class Spec3Pipeline(Pipeline):
                         resample_complete = result[0].meta.cal_step.cube_build
                     except AttributeError:
                         pass
-                else:
+                elif exptype != "MIR_LRS-SLITLESS":
+                    # LRS slitless data is never resampled, matching spec2 handling
+                    # for non-TSO slitless data.
                     result = self.resample_spec.run(result)
                     try:
                         resample_complete = result.meta.cal_step.resample

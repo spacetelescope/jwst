@@ -12,7 +12,7 @@ from stcal.alignment.util import compute_s_region_keyword, sregion_to_footprint
 import jwst
 from jwst.datamodels.container import ModelContainer
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
-from jwst.extract_1d.tests.helpers import mock_nirspec_fs_one_slit_func
+from jwst.extract_1d.tests.helpers import mock_miri_lrs_fs_func, mock_nirspec_fs_one_slit_func
 from jwst.pipeline import Spec3Pipeline
 from jwst.stpipe import Step
 
@@ -211,3 +211,22 @@ def test_spec3_nrs_fs(tmp_cwd):
     # make sure input model was not modified
     assert input_model.meta.cal_step.instance == model_copy.meta.cal_step.instance
     np.testing.assert_allclose(input_model.data, model_copy.data)
+
+
+def test_spec3_miri_lrs_slitless(tmp_cwd):
+    # Mock a slitless non-TSO observation by modifying a LRS fixed slit fixture
+    input_model = mock_miri_lrs_fs_func()
+    input_model.meta.exposure.type = "MIR_LRS-SLITLESS"
+
+    input_model.meta.filename = "test_spec3_cal.fits"
+    steps = {"outlier_detection": {"skip": True}}
+    Spec3Pipeline.call([input_model], steps=steps, save_results=True)
+
+    # check for expected output
+    x1d_file = "test_spec3_x1d.fits"
+    assert Path(x1d_file).exists()
+
+    # make sure resample_spec was not called, nor skipped:
+    # it is explicitly avoided for this mode
+    with dm.open(x1d_file) as output_model:
+        assert output_model.meta.cal_step.resample is None
