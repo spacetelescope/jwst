@@ -41,6 +41,11 @@ class Ami3Pipeline(Pipeline):
 
         # Load the input association table
         asn = self.load_as_level3_asn(input_data)
+        table_name = Path(asn.filename).name
+
+        # Grab first member
+        if "asn_id" not in asn:
+            asn = asn["members"][0]
 
         # We assume there's one final product defined by the association
         asn_id = asn["asn_id"]
@@ -72,7 +77,7 @@ class Ami3Pipeline(Pipeline):
 
             # Save the averaged LG analysis results to a file
             result1.meta.asn.pool_name = asn["asn_pool"]
-            result1.meta.asn.table_name = Path(asn.filename).name
+            result1.meta.asn.table_name = table_name
             self.save_model(result1, output_file=input_file, suffix="ami-oi", asn_id=asn_id)
 
             # Save the result
@@ -91,7 +96,7 @@ class Ami3Pipeline(Pipeline):
 
             # Save the LG analysis results to a file
             result1.meta.asn.pool_name = asn["asn_pool"]
-            result1.meta.asn.table_name = Path(asn.filename).name
+            result1.meta.asn.table_name = table_name
             self.save_model(result1, output_file=input_file, suffix="psf-ami-oi", asn_id=asn_id)
 
             # Save the result
@@ -109,7 +114,7 @@ class Ami3Pipeline(Pipeline):
                 result = self.ami_normalize.run(targ, psf)
                 # Save the result
                 result.meta.asn.pool_name = asn["asn_pool"]
-                result.meta.asn.table_name = Path(asn.filename).name
+                result.meta.asn.table_name = table_name
 
                 # Perform blending of metadata for all inputs to this output file
                 # log.info('Blending metadata for PSF normalized target')

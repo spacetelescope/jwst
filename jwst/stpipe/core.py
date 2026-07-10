@@ -71,14 +71,18 @@ class JwstStep(_Step):
                 crds_observatory,
             )
 
+        is_asn = False
+        if isinstance(dataset, dict) and "products" in dataset:
+            is_asn = True
+
         # If we get here, we had better have a filename
-        if isinstance(dataset, str):
+        elif isinstance(dataset, str):
             dataset = Path(dataset)
-        if not isinstance(dataset, Path):
+        elif not isinstance(dataset, Path):
             raise TypeError(f"Cannot get CRDS parameters for {dataset} of type {type(dataset)}")
 
         # for associations, open as ModelLibrary, which supports lazy-loading
-        if dataset.suffix.lower() == ".json":
+        if is_asn or dataset.suffix.lower() == ".json":
             model = ModelLibrary(dataset, asn_n_members=1, asn_exptypes=["science"])
             return (model.get_crds_parameters(), crds_observatory)
 
