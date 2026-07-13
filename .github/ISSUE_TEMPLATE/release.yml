@@ -60,6 +60,9 @@ body:
       label: Release Procedure
       description: these are the steps that will be undertaken to perform this release, build, and delivery; please don't modify this unless you know what you're doing
       value: |
+        - [ ] set the corresponding build milestone for this issue (create it if it doesn't exist)
+        - [ ] add a comment pinging @stscijgbot-jp to track this as a JP ticket on Jira
+
         #### freeze and tag code
         - [ ] Release new versions of STScI-developed dependencies (`stcal`, `stpipe`, etc.) if they introduce new bugfixes or features required by the pipeline.
         - [ ] Ensure pipeline dependencies in `pyproject.toml` are **NOT** floating on `main` (e.g. `stcal@git+https://github.com/spacetelescope/stcal.git@main`), and instead use PyPI releases (e.g. `stcal>=1.19,<2`) instead (or, at the very least, point to a specific commit hash). The lower pin does **not necessarily need to be the latest release**, but rather is based on features / fixes **required by the pipeline code**.
@@ -67,7 +70,7 @@ body:
         - [ ] Determine the new `<VERSION>`:
             - if breaking changes are present (`changes/*.breaking.rst`) increment the major version (`1.1.3` -> `2.0.0`),
             - else if new features are present increment the minor version (`1.1.3` -> `1.2.0`),
-            - else if only bugfixes are present increment the micro version (`1.1.3` -> `1.1.4`).
+            - else if only bugfixes are present increment the patch version (`1.1.3` -> `1.1.4`).
             - If this is a release candidate (indicated above), add an `rc1`, or `rc2`, etc. to the end of the version.
         - [ ] Switch to the release branch corresponding to the minor version, with the micro release as `x` (`1.1.3` -> `release/1.1.x`).
         - [ ] IF THIS IS A PATCH ON AN EXISTING RELEASE, duplicate the desired changes (indicated above), onto the desired base revision (indicated above).
