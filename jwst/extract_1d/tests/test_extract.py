@@ -341,7 +341,7 @@ def test_populate_time_keywords_multislit_table(
     watcher.assert_seen()
 
     # int_times present but not used - no update
-    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.colnames
 
 
 def test_populate_time_keywords_averaged(
@@ -355,7 +355,7 @@ def test_populate_time_keywords_averaged(
     watcher.assert_seen()
 
     # int_times not used - no update
-    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.colnames
 
 
 def test_populate_time_keywords_mismatched_table(mock_nirspec_bots, mock_10_spec, log_watcher):
@@ -366,7 +366,7 @@ def test_populate_time_keywords_mismatched_table(mock_nirspec_bots, mock_10_spec
     watcher.assert_seen()
 
     # int_times not used - no update
-    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.colnames
 
 
 def test_populate_time_keywords_missing_ints(mock_nirspec_bots, mock_10_spec, log_watcher):
@@ -376,7 +376,7 @@ def test_populate_time_keywords_missing_ints(mock_nirspec_bots, mock_10_spec, lo
     watcher.assert_seen()
 
     # int_times not used - no update
-    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.colnames
 
 
 def test_populate_time_keywords_ifu_table(
@@ -390,7 +390,7 @@ def test_populate_time_keywords_ifu_table(
     watcher.assert_seen()
 
     # int_times present but not used - no update
-    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.colnames
 
 
 def test_populate_time_keywords_mismatched_spec(
@@ -1442,7 +1442,7 @@ def test_create_extraction_with_photom(create_extraction_inputs):
     ex.create_extraction(*create_extraction_inputs)
 
     output_model = create_extraction_inputs[2]
-    assert output_model.spec[0].spec_table.columns["flux"].unit == "Jy"
+    assert output_model.spec[0].spec_table.columns["FLUX"].unit == "Jy"
 
 
 def test_create_extraction_without_photom(create_extraction_inputs):
@@ -1452,7 +1452,7 @@ def test_create_extraction_without_photom(create_extraction_inputs):
     ex.create_extraction(*create_extraction_inputs)
 
     output_model = create_extraction_inputs[2]
-    assert output_model.spec[0].spec_table.columns["flux"].unit == "DN/s"
+    assert output_model.spec[0].spec_table.columns["FLUX"].unit == "DN/s"
 
 
 def test_create_extraction_missing_src_type(create_extraction_inputs):
@@ -1707,7 +1707,7 @@ def test_run_extract1d_tso(mock_nirspec_bots):
 
     # time and integration keywords are populated
     for i, spec in enumerate(output_model.spec[0].spec_table):
-        assert spec["int_num"] == i + 1
+        assert spec["INT_NUM"] == i + 1
         start_time = mock_nirspec_bots.int_times["int_start_MJD_UTC"][i]
         assert_allclose(spec["MJD-BEG"], start_time)
 
@@ -1726,7 +1726,7 @@ def test_run_extract1d_tso_one_int(mock_nirspec_bots):
     assert len(output_model.spec[0].spec_table) == 1
 
     # time and integration keywords are populated
-    assert output_model.spec[0].spec_table["int_num"] == 1
+    assert output_model.spec[0].spec_table["INT_NUM"] == 1
     start_time = mock_nirspec_bots.int_times["int_start_MJD_UTC"][0]
     avg_time = mock_nirspec_bots.int_times["int_mid_MJD_UTC"][0]
     assert output_model.spec[0].spec_table["MJD-BEG"] == start_time

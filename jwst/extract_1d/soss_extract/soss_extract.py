@@ -1601,10 +1601,10 @@ def _reconstruct_spec_from_data(spec_data):
     spec.int_num = spec_data.get("int_num")
 
     # Set units for the spectral table. Assume uncalibrated flux, wavelength in um.
-    spec.spec_table.columns["wavelength"].unit = "um"
-    spec.spec_table.columns["flux"].unit = "DN/s"
-    spec.spec_table.columns["flux_error"].unit = "DN/s"
-    spec.spec_table.columns["background"].unit = "DN/s"
+    spec.spec_table["WAVELENGTH"].unit = "um"
+    spec.spec_table["FLUX"].unit = "DN/s"
+    spec.spec_table["FLUX_ERROR"].unit = "DN/s"
+    spec.spec_table["BACKGROUND"].unit = "DN/s"
 
     return spec
 

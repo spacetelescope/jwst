@@ -55,10 +55,10 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     assert isinstance(output_model, dm.WFSSMultiSpecModel)
     if input_model_maker == "wfss_spec2_multispec":
         assert len(output_model.spec) == 1
-        assert output_model.spec[0].spec_table.shape == (N_SOURCES,)
+        assert len(output_model.spec[0].spec_table) == N_SOURCES
     elif input_model_maker == "wfss_spec3_multispec":
         assert len(output_model.spec) == 4
-        assert output_model.spec[0].spec_table.shape == (1,)
+        assert len(output_model.spec[0].spec_table) == 1
 
     # check the required metadata attributes
     assert getattr(output_model.meta, "wcs", None) is None
@@ -72,7 +72,7 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     expected_units = ["um", "deg"]
     for exposure in output_model.spec:
         for col in to_check:
-            assert col in exposure.spec_table.columns.names
+            assert col in exposure.spec_table.colnames
             assert exposure.spec_table.columns[col].unit == expected_units[to_check.index(col)]
 
 
@@ -101,7 +101,7 @@ def test_wfss_flat_to_multispec(wfss_multiexposure):
     # first test that the fixture is giving a model with the correct dimensions
     assert isinstance(wfss_multiexposure, dm.WFSSMultiSpecModel)
     assert len(wfss_multiexposure.spec) == N_EXPOSURES
-    assert wfss_multiexposure.spec[0].spec_table.shape == (N_SOURCES,)
+    assert len(wfss_multiexposure.spec[0].spec_table) == N_SOURCES
     assert wfss_multiexposure.spec[0].dispersion_direction == 3
 
     # convert back to a list of MultiSpecModel objects
@@ -159,12 +159,12 @@ def test_wfss_multi_from_wfss_multi(wfss_multiexposure):
     # check that the output model has the correct dimensions
     assert isinstance(output_model, dm.WFSSMultiSpecModel)
     assert len(output_model.spec) == N_EXPOSURES
-    assert output_model.spec[0].spec_table.shape == (N_SOURCES * 2,)
+    assert len(output_model.spec[0].spec_table) == N_SOURCES * 2
 
     # test that the data has all the appropriate data and metadata
     for i, exposure in enumerate(output_model.spec):
         assert exposure.group_id == str(i + 1)
-        assert exposure.spec_table.shape == (N_SOURCES * 2,)
+        assert len(exposure.spec_table) == N_SOURCES * 2
 
 
 @pytest.fixture
@@ -191,13 +191,13 @@ def test_make_wfss_combined(comb1d_list):
     assert len(output_model.spec) == 2  # 2 spectral orders
 
     for i, spec in enumerate(output_model.spec):
-        assert spec.spec_table.shape == (N_SOURCES,)
+        assert len(spec.spec_table) == N_SOURCES
 
         # test units
         to_check = ["WAVELENGTH", "SOURCE_RA"]
         expected_units = ["um", "deg"]
         for col in to_check:
-            assert col in spec.spec_table.columns.names
+            assert col in spec.spec_table.colnames
             assert spec.spec_table.columns[col].unit == expected_units[to_check.index(col)]
 
         # check metadata

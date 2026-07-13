@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from astropy.io import fits
 from astropy.table import Table
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import JwstDataModel
@@ -34,7 +33,6 @@ def inputs(request):
     table = None
 
     instrument, exptype = request.param
-
     dm = JwstDataModel()
     dm.meta.instrument.name = instrument
     dm.meta.exposure.type = exptype
@@ -68,6 +66,9 @@ def inputs(request):
         table["APCORR"] = table["APCORR"].reshape(
             (len(table), 3, 2048, 3)
         )  # Reshape test data to expected shape
+        for col in table.colnames:
+            # all the other tests have lowercase column names, but these files have uppercase
+            table.rename_column(col, col.lower())
 
     if instrument == "NIRCAM":
         dm.meta.instrument.filter = "F322W2"
@@ -101,7 +102,7 @@ def inputs(request):
             }
         )
 
-    return dm, fits.table_to_hdu(table).data
+    return dm, table
 
 
 @pytest.fixture(scope="module")

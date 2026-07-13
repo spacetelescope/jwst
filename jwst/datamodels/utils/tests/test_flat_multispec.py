@@ -56,8 +56,8 @@ def input_spec():
     spec.source_id = 1
 
     # Set some units
-    for column in spec.spec_table.columns:
-        column.unit = "s"
+    for column in spec.spec_table.colnames:
+        spec.spec_table[column].unit = "s"
     return spec
 
 
@@ -85,8 +85,8 @@ def tso_multi_spec():
     spec_table = make_empty_recarray(n_rows, n_spectra, all_cols, is_vector, defaults=defaults)
     spec_table["N_ALONGDISP"] = 10
     tso_spec.spec_table = spec_table
-    for column in tso_spec.spec_table.columns:
-        column.unit = "s"
+    for column in tso_spec.spec_table.colnames:
+        tso_spec.spec_table[column].unit = "s"
 
     # Add spectra to a multispec model
     tso_multi = dm.TSOMultiSpecModel()
@@ -240,15 +240,17 @@ def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
 
 def test_copy_column_units(input_spec, output_spec):
     # Before copying, units are blank
-    expected = [""] * len(output_spec.spec_table.columns)
-    assert output_spec.spec_table.columns.units == expected
+    expected = [None] * len(output_spec.spec_table.columns)
+    assert [output_spec.spec_table[col].unit for col in output_spec.spec_table.colnames] == expected
 
     copy_column_units(input_spec, output_spec)
 
     # After copying, expected units are blank if not in input spectrum,
     # otherwise matched.
-    expected[: len(input_spec.spec_table.columns)] = input_spec.spec_table.columns.units
-    assert output_spec.spec_table.columns.units == expected
+    expected[: len(input_spec.spec_table.columns)] = [
+        input_spec.spec_table[col].unit for col in input_spec.spec_table.colnames
+    ]
+    assert [output_spec.spec_table[col].unit for col in output_spec.spec_table.colnames] == expected
 
 
 def test_set_schema_units():
@@ -306,4 +308,6 @@ def test_expand_flat_spec(tso_multi_spec):
         assert spec.meta.wcs.pipeline[0].transform.name == "copy"
         assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs.pipeline[0].transform.name == "test"
 
-        assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)
+        assert [spec.spec_table[col].unit for col in spec.spec_table.colnames] == ["s"] * len(
+            spec.spec_table.columns
+        )

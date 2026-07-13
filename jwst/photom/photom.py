@@ -571,7 +571,7 @@ class DataSet:
         else:
             # check for subarray in the phot_table: older files do not have it
             fields_to_match = {"filter": self.filter, "pupil": self.pupil}
-            if "subarray" in ftab.phot_table.columns.names:
+            if "subarray" in ftab.phot_table.colnames:
                 log.info("Matching to subarray: %s", self.subarray)
                 fields_to_match["subarray"] = self.subarray
 
@@ -991,16 +991,16 @@ class DataSet:
             # zero-filled. Conversions are applied here anyway in case variances are
             # populated in the future.
             spec = self.input.spec[self.specnum]
-            spec.spec_table.FLUX[self.integ_row] *= conversion
-            spec.spec_table.FLUX_ERROR[self.integ_row] *= conversion
-            spec.spec_table.FLUX_VAR_POISSON[self.integ_row] *= conversion**2.0
-            spec.spec_table.FLUX_VAR_RNOISE[self.integ_row] *= conversion**2.0
-            spec.spec_table.FLUX_VAR_FLAT[self.integ_row] *= conversion**2.0
-            spec.spec_table.BACKGROUND[self.integ_row] *= conversion
-            spec.spec_table.BKGD_ERROR[self.integ_row] *= conversion
-            spec.spec_table.BKGD_VAR_POISSON[self.integ_row] *= conversion**2.0
-            spec.spec_table.BKGD_VAR_RNOISE[self.integ_row] *= conversion**2.0
-            spec.spec_table.BKGD_VAR_FLAT[self.integ_row] *= conversion**2.0
+            spec.spec_table["FLUX"][self.integ_row] *= conversion
+            spec.spec_table["FLUX_ERROR"][self.integ_row] *= conversion
+            spec.spec_table["FLUX_VAR_POISSON"][self.integ_row] *= conversion**2.0
+            spec.spec_table["FLUX_VAR_RNOISE"][self.integ_row] *= conversion**2.0
+            spec.spec_table["FLUX_VAR_FLAT"][self.integ_row] *= conversion**2.0
+            spec.spec_table["BACKGROUND"][self.integ_row] *= conversion
+            spec.spec_table["BKGD_ERROR"][self.integ_row] *= conversion
+            spec.spec_table["BKGD_VAR_POISSON"][self.integ_row] *= conversion**2.0
+            spec.spec_table["BKGD_VAR_RNOISE"][self.integ_row] *= conversion**2.0
+            spec.spec_table["BKGD_VAR_FLAT"][self.integ_row] *= conversion**2.0
 
             # TODO: confirm flux unit. The photmj value may be delivered as Jy, not MJy,
             #  for calibrating extracted SOSS spectra.

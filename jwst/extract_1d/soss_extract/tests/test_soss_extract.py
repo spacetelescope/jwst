@@ -21,7 +21,7 @@ def test_build_null_spec_table(wave_grid, order):
 
     assert isinstance(spec, SpecModel)
     assert spec.spectral_order == order
-    assert spec.spec_table.shape == (93,)
+    assert len(spec.spec_table) == 93
     assert np.all(np.isnan(spec.spec_table["FLUX"]))
     assert np.all(spec.spec_table["DQ"] == 1)
 
