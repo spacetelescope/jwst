@@ -74,6 +74,78 @@ failed_mem_alloc1:
     return 1;
 }
 
+int
+alloc_flux_dq_arrays(
+    int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv, int **dqv)
+{
+
+    /*
+      Allocate memory for the spaxel output vectors to be of size nelem.
+
+     nelem : int
+         Number of elements to allocate memory
+     fluxv : double ndarray
+        Flux vector
+     weightv : double ndarray
+        Weight vector
+     varv : double ndarray
+        Variance vector
+     iflux : double ndarray
+        Counter index vector
+     dqv : int ndarray
+        Dq vector
+    */
+
+    const char *msg = "Couldn't allocate memory for output arrays.";
+
+    // flux:
+    if (!(*fluxv = (double *) calloc(nelem, sizeof(double)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        return 1; // Nothing was allocated yet, just return
+    }
+
+    // weight
+    if (!(*weightv = (double *) calloc(nelem, sizeof(double)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        goto failed_weightv;
+    }
+
+    // variance
+    if (!(*varv = (double *) calloc(nelem, sizeof(double)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        goto failed_varv;
+    }
+
+    // iflux
+    if (!(*ifluxv = (double *) calloc(nelem, sizeof(double)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        goto failed_ifluxv;
+    }
+
+    // dq
+    if (!(*dqv = (int *) calloc(nelem, sizeof(int)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        goto failed_dqv;
+    }
+
+    return 0;
+
+failed_dqv:
+    free(*ifluxv);
+    *ifluxv = NULL;
+failed_ifluxv:
+    free(*varv);
+    *varv = NULL;
+failed_varv:
+    free(*weightv);
+    *weightv = NULL;
+failed_weightv:
+    free(*fluxv);
+    *fluxv = NULL;
+
+    return 1;
+}
+
 void
 addpoint(double x, double y, double xnew[], double ynew[], int *nVertices2)
 {
