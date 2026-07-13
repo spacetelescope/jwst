@@ -275,7 +275,7 @@ def test_wfss_multi_input(wfss_multiexposure):
     assert result is not wfss_multiexposure
 
     tab = result.spec[0].spec_table
-    assert tab.shape == (N_SOURCES,)
+    assert len(tab) == N_SOURCES
     assert result.meta.cal_step.combine_1d == "COMPLETE"
     assert np.allclose(tab["FLUX"], 1.0)
 
@@ -414,8 +414,8 @@ def test_combine1d_wavelength_merging_test():
     result = step.run(ms)
 
     # 3. get wavelengths
-    combined_wave = result.spec[0].spec_table["wavelength"]
-    spec1_wave = spec1.spec_table["wavelength"]
+    combined_wave = result.spec[0].spec_table["WAVELENGTH"]
+    spec1_wave = spec1.spec_table["WAVELENGTH"]
 
     # 4. Assert they are the same within a small tolerance
     assert np.allclose(combined_wave, spec1_wave, atol=1e-12)
@@ -424,5 +424,5 @@ def test_combine1d_wavelength_merging_test():
     assert np.all(np.diff(combined_wave) > 0)
 
     # 6. Test only 1 spectra was used to make the final combined spectra
-    n_input = result.spec[0].spec_table["n_input"]
+    n_input = result.spec[0].spec_table["N_INPUT"]
     assert np.all(n_input == 1)

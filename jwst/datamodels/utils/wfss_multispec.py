@@ -65,7 +65,7 @@ def make_wfss_multiexposure(input_list):
             # if this is the first time this exposure has been encountered,
             # create a new dictionary entry for it
             if exp_number not in exposure_counter.keys():
-                n_rows = spec.spec_table.shape[0]
+                n_rows = len(spec.spec_table)
                 exposure_counter[exp_number] = {
                     "n_rows": n_rows,
                     "filename": fname,
@@ -77,7 +77,7 @@ def make_wfss_multiexposure(input_list):
                 # if this exposure has already been encountered,
                 # check if number of rows is larger than the previous one
                 exposure_counter[exp_number]["n_rows"] = max(
-                    exposure_counter[exp_number]["n_rows"], spec.spec_table.shape[0]
+                    exposure_counter[exp_number]["n_rows"], len(spec.spec_table)
                 )
 
             all_source_ids.append(spec.source_id)
@@ -133,7 +133,7 @@ def make_wfss_multiexposure(input_list):
             )
 
             # special handling for N_ALONGDISP because not defined in specmeta schema
-            fltdata[spec_idx]["N_ALONGDISP"] = spec.spec_table.shape[0]
+            fltdata[spec_idx]["N_ALONGDISP"] = len(spec.spec_table)
 
     # Finally, create a new WFSSMultiSpecModel to hold the combined data
     # with one WFSSMultiSpecModel table per exposure
@@ -246,9 +246,9 @@ def make_wfss_multicombined(results_list):
         for spec in model.spec:
             order = spec.spectral_order
             if order not in order_rows:
-                order_rows[order] = spec.spec_table.shape[0]
+                order_rows[order] = len(spec.spec_table)
             else:
-                order_rows[order] = max(order_rows[order], spec.spec_table.shape[0])
+                order_rows[order] = max(order_rows[order], len(spec.spec_table))
 
     order_data = {}
     for j, model in enumerate(results_list):
@@ -271,7 +271,7 @@ def make_wfss_multicombined(results_list):
                 ignore_columns=["N_ALONGDISP"],
             )
             # special handling for N_ALONGDISP because not defined in specmeta schema
-            fltdata[j]["N_ALONGDISP"] = spec.spec_table.shape[0]
+            fltdata[j]["N_ALONGDISP"] = len(spec.spec_table)
 
     # Create a new model to hold the combined data table
     output_c1d = dm.WFSSMultiCombinedSpecModel()

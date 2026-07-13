@@ -60,10 +60,10 @@ def read_cubepars(
                 for tabdata in ptab.ifucubepars_table:
                     table_channel = tabdata["channel"]
                     table_band = tabdata["band"].lower()
-                    table_spaxelsize = tabdata["SPAXELSIZE"]
-                    table_spectralstep = tabdata["SPECTRALSTEP"]
-                    table_wavemin = tabdata["WAVEMIN"]
-                    table_wavemax = tabdata["WAVEMAX"]
+                    table_spaxelsize = tabdata["spaxelsize"]
+                    table_spectralstep = tabdata["spectralstep"]
+                    table_wavemin = tabdata["wavemin"]
+                    table_wavemax = tabdata["wavemax"]
                     # match on this_channel and this_sub
                     if this_channel == table_channel and this_sub == table_band:
                         instrument_info.set_spatial_size(table_spaxelsize, this_channel, this_sub)
@@ -77,10 +77,10 @@ def read_cubepars(
                     for tabdata in ptab.ifucubepars_msm_table:
                         table_channel = tabdata["channel"]
                         table_band = tabdata["band"].lower()
-                        table_sroi = tabdata["ROISPATIAL"]
-                        table_wroi = tabdata["ROISPECTRAL"]
-                        table_power = tabdata["POWER"]
-                        table_softrad = tabdata["SOFTRAD"]
+                        table_sroi = tabdata["roispatial"]
+                        table_wroi = tabdata["roispectral"]
+                        table_power = tabdata["power"]
+                        table_softrad = tabdata["softrad"]
                         # match on this_channel and this_sub
                         if this_channel == table_channel and this_sub == table_band:
                             instrument_info.set_msm(
@@ -97,9 +97,9 @@ def read_cubepars(
                     for tabdata in ptab.ifucubepars_emsm_table:
                         table_channel = tabdata["channel"]
                         table_band = tabdata["band"].lower()
-                        table_sroi = tabdata["ROISPATIAL"]
-                        table_wroi = tabdata["ROISPECTRAL"]
-                        table_scalerad = tabdata["SCALERAD"]
+                        table_sroi = tabdata["roispatial"]
+                        table_wroi = tabdata["roispectral"]
+                        table_scalerad = tabdata["scalerad"]
                         # match on this_channel and this_sub
                         if this_channel == table_channel and this_sub == table_band:
                             instrument_info.set_emsm(
@@ -109,27 +109,27 @@ def read_cubepars(
             #  read in wavelength table for multi-band data
             if weighting == "msm":
                 for tabdata in ptab.ifucubepars_multichannel_msm_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
-                    table_sroi = tabdata["ROISPATIAL"]
-                    table_wroi = tabdata["ROISPECTRAL"]
-                    table_power = tabdata["POWER"]
-                    table_softrad = tabdata["SOFTRAD"]
+                    table_wave = tabdata["wavelength"]
+                    table_sroi = tabdata["roispatial"]
+                    table_wroi = tabdata["roispectral"]
+                    table_power = tabdata["power"]
+                    table_softrad = tabdata["softrad"]
                     instrument_info.set_multi_channel_table(
                         table_wave, table_sroi, table_wroi, table_power, table_softrad
                     )
             #  read in wavelength table for modified Shepard method 1/r weighting
             elif weighting == "emsm":
                 for tabdata in ptab.ifucubepars_multichannel_emsm_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
-                    table_sroi = tabdata["ROISPATIAL"]
-                    table_wroi = tabdata["ROISPECTRAL"]
-                    table_scalerad = tabdata["SCALERAD"]
+                    table_wave = tabdata["wavelength"]
+                    table_sroi = tabdata["roispatial"]
+                    table_wroi = tabdata["roispectral"]
+                    table_scalerad = tabdata["scalerad"]
                     instrument_info.set_multi_channel_emsm_table(
                         table_wave, table_sroi, table_wroi, table_scalerad
                     )
             elif weighting == "drizzle":
                 for tabdata in ptab.ifucubepars_multichannel_driz_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
+                    table_wave = tabdata["wavelength"]
                     instrument_info.set_multi_channel_driz_table(table_wave)
             ptab.close()
             del ptab
@@ -142,12 +142,12 @@ def read_cubepars(
                 this_gwa = all_grating[i]
                 this_filter = all_filter[i]
                 for tabdata in ptab.ifucubepars_table:
-                    table_grating = tabdata["DISPERSER"].lower()
-                    table_filter = tabdata["FILTER"].lower()
-                    table_spaxelsize = tabdata["SPAXELSIZE"]
-                    table_spectralstep = tabdata["SPECTRALSTEP"]
-                    table_wavemin = tabdata["WAVEMIN"]
-                    table_wavemax = tabdata["WAVEMAX"]
+                    table_grating = tabdata["disperser"].lower()
+                    table_filter = tabdata["filter"].lower()
+                    table_spaxelsize = tabdata["spaxelsize"]
+                    table_spectralstep = tabdata["spectralstep"]
+                    table_wavemin = tabdata["wavemin"]
+                    table_wavemax = tabdata["wavemax"]
                     if this_gwa == table_grating and this_filter == table_filter:
                         instrument_info.set_spatial_size(table_spaxelsize, this_gwa, this_filter)
                         instrument_info.set_spectral_step(table_spectralstep, this_gwa, this_filter)
@@ -156,12 +156,12 @@ def read_cubepars(
                 #  modified Shepard method 1/r weighting
                 if weighting == "msm":
                     for tabdata in ptab.ifucubepars_msm_table:
-                        table_grating = tabdata["DISPERSER"].lower()
-                        table_filter = tabdata["FILTER"].lower()
-                        table_sroi = tabdata["ROISPATIAL"]
-                        table_wroi = tabdata["ROISPECTRAL"]
-                        table_power = tabdata["POWER"]
-                        table_softrad = tabdata["SOFTRAD"]
+                        table_grating = tabdata["disperser"].lower()
+                        table_filter = tabdata["filter"].lower()
+                        table_sroi = tabdata["roispatial"]
+                        table_wroi = tabdata["roispectral"]
+                        table_power = tabdata["power"]
+                        table_softrad = tabdata["softrad"]
 
                         if this_gwa == table_grating and this_filter == table_filter:
                             instrument_info.set_msm(
@@ -175,11 +175,11 @@ def read_cubepars(
                 #  modified Shepard method e^-r weighting
                 elif weighting == "emsm":
                     for tabdata in ptab.ifucubepars_emsm_table:
-                        table_grating = tabdata["DISPERSER"].lower()
-                        table_filter = tabdata["FILTER"].lower()
-                        table_sroi = tabdata["ROISPATIAL"]
-                        table_wroi = tabdata["ROISPECTRAL"]
-                        table_scalerad = tabdata["SCALERAD"]
+                        table_grating = tabdata["disperser"].lower()
+                        table_filter = tabdata["filter"].lower()
+                        table_sroi = tabdata["roispatial"]
+                        table_wroi = tabdata["roispectral"]
+                        table_scalerad = tabdata["scalerad"]
 
                         if this_gwa == table_grating and this_filter == table_filter:
                             instrument_info.set_emsm(
@@ -189,72 +189,72 @@ def read_cubepars(
             # read in wavelength tables
             if weighting == "msm":
                 for tabdata in ptab.ifucubepars_prism_msm_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
-                    table_sroi = tabdata["ROISPATIAL"]
-                    table_wroi = tabdata["ROISPECTRAL"]
-                    table_power = tabdata["POWER"]
-                    table_softrad = tabdata["SOFTRAD"]
+                    table_wave = tabdata["wavelength"]
+                    table_sroi = tabdata["roispatial"]
+                    table_wroi = tabdata["roispectral"]
+                    table_power = tabdata["power"]
+                    table_softrad = tabdata["softrad"]
                     instrument_info.set_prism_table(
                         table_wave, table_sroi, table_wroi, table_power, table_softrad
                     )
 
                 for tabdata in ptab.ifucubepars_med_msm_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
-                    table_sroi = tabdata["ROISPATIAL"]
-                    table_wroi = tabdata["ROISPECTRAL"]
-                    table_power = tabdata["POWER"]
-                    table_softrad = tabdata["SOFTRAD"]
+                    table_wave = tabdata["wavelength"]
+                    table_sroi = tabdata["roispatial"]
+                    table_wroi = tabdata["roispectral"]
+                    table_power = tabdata["power"]
+                    table_softrad = tabdata["softrad"]
                     instrument_info.set_med_table(
                         table_wave, table_sroi, table_wroi, table_power, table_softrad
                     )
 
                 for tabdata in ptab.ifucubepars_high_msm_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
-                    table_sroi = tabdata["ROISPATIAL"]
-                    table_wroi = tabdata["ROISPECTRAL"]
-                    table_power = tabdata["POWER"]
-                    table_softrad = tabdata["SOFTRAD"]
+                    table_wave = tabdata["wavelength"]
+                    table_sroi = tabdata["roispatial"]
+                    table_wroi = tabdata["roispectral"]
+                    table_power = tabdata["power"]
+                    table_softrad = tabdata["softrad"]
                     instrument_info.set_high_table(
                         table_wave, table_sroi, table_wroi, table_power, table_softrad
                     )
 
             elif weighting == "emsm":
                 for tabdata in ptab.ifucubepars_prism_emsm_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
-                    table_sroi = tabdata["ROISPATIAL"]
-                    table_wroi = tabdata["ROISPECTRAL"]
-                    table_scalerad = tabdata["SCALERAD"]
+                    table_wave = tabdata["wavelength"]
+                    table_sroi = tabdata["roispatial"]
+                    table_wroi = tabdata["roispectral"]
+                    table_scalerad = tabdata["scalerad"]
                     instrument_info.set_prism_emsm_table(
                         table_wave, table_sroi, table_wroi, table_scalerad
                     )
 
                 for tabdata in ptab.ifucubepars_med_emsm_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
-                    table_sroi = tabdata["ROISPATIAL"]
-                    table_wroi = tabdata["ROISPECTRAL"]
-                    table_scalerad = tabdata["SCALERAD"]
+                    table_wave = tabdata["wavelength"]
+                    table_sroi = tabdata["roispatial"]
+                    table_wroi = tabdata["roispectral"]
+                    table_scalerad = tabdata["scalerad"]
                     instrument_info.set_med_emsm_table(
                         table_wave, table_sroi, table_wroi, table_scalerad
                     )
 
                 for tabdata in ptab.ifucubepars_high_emsm_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
-                    table_sroi = tabdata["ROISPATIAL"]
-                    table_wroi = tabdata["ROISPECTRAL"]
-                    table_scalerad = tabdata["SCALERAD"]
+                    table_wave = tabdata["wavelength"]
+                    table_sroi = tabdata["roispatial"]
+                    table_wroi = tabdata["roispectral"]
+                    table_scalerad = tabdata["scalerad"]
                     instrument_info.set_high_emsm_table(
                         table_wave, table_sroi, table_wroi, table_scalerad
                     )
 
             elif weighting == "drizzle":
                 for tabdata in ptab.ifucubepars_prism_driz_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
+                    table_wave = tabdata["wavelength"]
                     instrument_info.set_prism_driz_table(table_wave)
                 for tabdata in ptab.ifucubepars_med_driz_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
+                    table_wave = tabdata["wavelength"]
                     instrument_info.set_med_driz_table(table_wave)
                 for tabdata in ptab.ifucubepars_high_driz_wavetable:
-                    table_wave = tabdata["WAVELENGTH"]
+                    table_wave = tabdata["wavelength"]
                     instrument_info.set_high_driz_table(table_wave)
             ptab.close()
             del ptab

@@ -365,13 +365,13 @@ def lrs_xytoabl(input_model, reference_files):
     # centroid trace along the detector in pixels relative to nominal location.
     # x0,y0(ul) x1,y1 (ur) x2,y2(lr) x3,y3(ll) define corners of the box within which the distortion
     # and wavelength calibration was derived
-    xcen = refmodel.wavetable.x_center
-    ycen = refmodel.wavetable.y_center
-    wavetab = refmodel.wavetable.wavelength
-    x0 = refmodel.wavetable.x0
-    y0 = refmodel.wavetable.y0
-    x1 = refmodel.wavetable.x1
-    y2 = refmodel.wavetable.y2
+    xcen = refmodel.wavetable["x_center"]
+    ycen = refmodel.wavetable["y_center"]
+    wavetab = refmodel.wavetable["wavelength"]
+    x0 = refmodel.wavetable["x0"]
+    y0 = refmodel.wavetable["y0"]
+    x1 = refmodel.wavetable["x1"]
+    y2 = refmodel.wavetable["y2"]
     refmodel.close()
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.

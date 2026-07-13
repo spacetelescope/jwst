@@ -151,7 +151,7 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
         if col in ignore_columns:
             continue
 
-        output_table[col][: input_table.shape[0]] = input_table[col]
+        output_table[col][: len(input_table)] = input_table[col]
 
     # Copy the metadata into the new table
     # Metadata columns must have identical names to spec_meta columns
@@ -206,11 +206,13 @@ def copy_column_units(input_model, output_model):
         Output spectral model containing a mix of vector columns
         and metadata columns in the ``spec_table`` attribute.
     """
-    input_columns = input_model.spec_table.columns
-    output_columns = output_model.spec_table.columns
-    for col_name in input_columns.names:
-        if col_name in output_columns.names:
-            output_columns[col_name].unit = input_columns[col_name].unit
+    input_columns = input_model.spec_table.colnames
+    output_colnames = output_model.spec_table.colnames
+    for col_name in input_columns:
+        if col_name in output_colnames:
+            output_model.spec_table.columns[col_name].unit = input_model.spec_table.columns[
+                col_name
+            ].unit
 
 
 def copy_spec_metadata(input_model, output_model):

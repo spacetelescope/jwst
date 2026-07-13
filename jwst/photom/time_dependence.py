@@ -137,7 +137,7 @@ def get_correction_table(photom_model, midtime, bounded=False):
         return None
 
     # Multiply together any existing corrections
-    correction = np.full(photom_model.phot_table.shape, 1.0)
+    correction = np.full((len(photom_model.phot_table),), 1.0)
     if photom_model.hasattr("timecoeff_linear"):
         param = photom_model.timecoeff_linear
         correction *= linear_correction(midtime, param["t0"], param["lossperyear"], bounded=bounded)

@@ -96,12 +96,12 @@ class InputSpectrumModel:
     """
 
     def __init__(self, ms, spec, exptime_key):
-        self.wavelength = spec.spec_table.field("wavelength")
-        self.flux = spec.spec_table.field("flux")
-        self.flux_error = spec.spec_table.field("flux_error")
-        self.surf_bright = spec.spec_table.field("surf_bright")
-        self.sb_error = spec.spec_table.field("sb_error")
-        self.dq = spec.spec_table.field("dq")
+        self.wavelength = spec.spec_table.field("WAVELENGTH")
+        self.flux = spec.spec_table.field("FLUX")
+        self.flux_error = spec.spec_table.field("FLUX_ERROR")
+        self.surf_bright = spec.spec_table.field("SURF_BRIGHT")
+        self.sb_error = spec.spec_table.field("SB_ERROR")
+        self.dq = spec.spec_table.field("DQ")
         self.nelem = self.wavelength.shape[0]
         self.unit_weight = False  # may be reset below
         self.right_ascension = np.zeros_like(self.wavelength)
@@ -109,8 +109,8 @@ class InputSpectrumModel:
         self.name = spec.name
         for attr in SPECMETA_ATTRIBUTES:
             setattr(self, attr, getattr(spec, attr))
-        self.flux_unit = spec.spec_table.columns["flux"].unit
-        self.sb_unit = spec.spec_table.columns["surf_bright"].unit
+        self.flux_unit = spec.spec_table.columns["FLUX"].unit
+        self.sb_unit = spec.spec_table.columns["SURF_BRIGHT"].unit
 
         self.weight = np.ones_like(self.wavelength)
         if exptime_key == "integration_time":
@@ -272,7 +272,7 @@ class OutputSpectrumModel:
             # Get the pixel numbers in the output corresponding to the
             # wavelengths of the current input spectrum.
             out_pixel = self.wcs.invert(
-                in_spec.right_ascension, in_spec.declination, in_spec.wavelength
+                in_spec.right_ascension.data, in_spec.declination.data, in_spec.wavelength.data
             )
             # i is a pixel number in the current input spectrum, and
             # k is the corresponding pixel number in the output spectrum.
@@ -445,11 +445,11 @@ class OutputSpectrumModel:
         )
         output_model = datamodels.CombinedSpecModel(spec_table=data)
 
-        output_model.spec_table.columns["wavelength"].unit = "um"
-        output_model.spec_table.columns["flux"].unit = self.flux_unit
-        output_model.spec_table.columns["error"].unit = self.flux_unit
-        output_model.spec_table.columns["surf_bright"].unit = self.sb_unit
-        output_model.spec_table.columns["sb_error"].unit = self.sb_unit
+        output_model.spec_table["WAVELENGTH"].unit = "um"
+        output_model.spec_table["FLUX"].unit = self.flux_unit
+        output_model.spec_table["ERROR"].unit = self.flux_unit
+        output_model.spec_table["SURF_BRIGHT"].unit = self.sb_unit
+        output_model.spec_table["SB_ERROR"].unit = self.sb_unit
 
         return output_model
 
@@ -737,7 +737,7 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
     else:
         spectra = input_model.spec
     for in_spec in spectra:
-        if not np.any(np.isfinite(in_spec.spec_table.field("flux"))):
+        if not np.any(np.isfinite(in_spec.spec_table.field("FLUX"))):
             if in_spec.meta.hasattr("group_id"):
                 msg = (
                     f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
@@ -750,7 +750,7 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
                 )
             log.warning(msg)
             continue
-        wavelength = in_spec.spec_table.field("wavelength")
+        wavelength = in_spec.spec_table.field("WAVELENGTH")
         monotonic = check_monotonic(wavelength)
         if not monotonic:
             log.warning(

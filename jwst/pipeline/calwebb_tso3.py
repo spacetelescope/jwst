@@ -137,9 +137,8 @@ class Tso3Pipeline(Pipeline):
             x1d_result = datamodels.TSOMultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
             nint = input_models[0].meta.exposure.nints
-            x1d_result.int_times = FITS_rec.from_columns(
-                input_models[0].int_times.columns, nrows=nint
-            )
+            int_times_dtype = x1d_result.get_dtype("int_times")
+            x1d_result.int_times = np.zeros((nint,), dtype=int_times_dtype)
 
             nstripe = 0
             stripe_times = getattr(input_models[0], "int_times_stripe", None)

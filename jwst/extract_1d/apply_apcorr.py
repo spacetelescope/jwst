@@ -167,14 +167,15 @@ class ApCorrBase(abc.ABC):
             A single row from the reference table.
         """
         table = self._reference_table.copy()
+        table.convert_bytestring_to_unicode()
 
         for key, value in self.match_pars.items():
             if isinstance(value, str):
                 # Not all files will have the same format as input model metadata values.
                 if NUMPY_LT_2:
-                    table = table[table[key].upper() == value.upper()]
+                    table = table[table[key].data.upper() == value.upper()]
                 else:
-                    table = table[np.strings.upper(table[key]) == value.upper()]
+                    table = table[np.strings.upper(table[key].data) == value.upper()]
             else:
                 table = table[table[key] == value]
 
@@ -196,18 +197,18 @@ class ApCorrBase(abc.ABC):
         spec_table : `~fits.FITS_rec`
             Table of aperture corrections values from apcorr reference file.
         """
-        flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
+        flux_cols_to_correct = ("FLUX", "FLUX_ERROR", "SURF_BRIGHT", "SB_ERROR")
         var_cols_to_correct = (
-            "flux_var_poisson",
-            "flux_var_rnoise",
-            "flux_var_flat",
-            "sb_var_poisson",
-            "sb_var_rnoise",
-            "sb_var_flat",
+            "FLUX_VAR_POISSON",
+            "FLUX_VAR_RNOISE",
+            "FLUX_VAR_FLAT",
+            "SB_VAR_POISSON",
+            "SB_VAR_RNOISE",
+            "SB_VAR_FLAT",
         )
 
         for row in spec_table:
-            correction = self.apcorr_func(row["npixels"], row["wavelength"])
+            correction = self.apcorr_func(row["NPIXELS"], row["WAVELENGTH"])
 
             for col in flux_cols_to_correct:
                 row[col] *= correction.item()
@@ -304,7 +305,7 @@ class ApCorrPhase(ApCorrBase):
         coefs = []
         for row in spec_table:
             try:
-                correction = self.apcorr_func(row["wavelength"], row["npixels"], self.phase)
+                correction = self.apcorr_func(row["WAVELENGTH"], row["NPIXELS"], self.phase)
             except ValueError:
                 # Some input wavelengths might not be supported
                 # (especially at the ends of the range)
@@ -329,14 +330,14 @@ class ApCorrPhase(ApCorrBase):
             Use self.tabulated_correction to perform the aperture correction?
             Default False (recompute correction from scratch).
         """
-        flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
+        flux_cols_to_correct = ("FLUX", "FLUX_ERROR", "SURF_BRIGHT", "SB_ERROR")
         var_cols_to_correct = (
-            "flux_var_poisson",
-            "flux_var_rnoise",
-            "flux_var_flat",
-            "sb_var_poisson",
-            "sb_var_rnoise",
-            "sb_var_flat",
+            "FLUX_VAR_POISSON",
+            "FLUX_VAR_RNOISE",
+            "FLUX_VAR_FLAT",
+            "SB_VAR_POISSON",
+            "SB_VAR_RNOISE",
+            "SB_VAR_FLAT",
         )
 
         if use_tabulated:
@@ -353,7 +354,7 @@ class ApCorrPhase(ApCorrBase):
         else:
             for row in spec_table:
                 try:
-                    correction = self.apcorr_func(row["wavelength"], row["npixels"], self.phase)
+                    correction = self.apcorr_func(row["WAVELENGTH"], row["NPIXELS"], self.phase)
                 except ValueError:
                     # Some input wavelengths might not be supported
                     # (especially at the ends of the range)
@@ -423,22 +424,22 @@ class ApCorrRadial(ApCorrBase):
         # check if MIRI data and correct the residual fringe flux and surface brightness columns.
         if self.model.meta.instrument.name == "MIRI":
             flux_cols_to_correct = (
-                "flux",
-                "flux_error",
-                "surf_bright",
-                "sb_error",
-                "rf_flux",
-                "rf_surf_bright",
+                "FLUX",
+                "FLUX_ERROR",
+                "SURF_BRIGHT",
+                "SB_ERROR",
+                "RF_FLUX",
+                "RF_SURF_BRIGHT",
             )
         else:
-            flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
+            flux_cols_to_correct = ("FLUX", "FLUX_ERROR", "SURF_BRIGHT", "SB_ERROR")
         var_cols_to_correct = (
-            "flux_var_poisson",
-            "flux_var_rnoise",
-            "flux_var_flat",
-            "sb_var_poisson",
-            "sb_var_rnoise",
-            "sb_var_flat",
+            "FLUX_VAR_POISSON",
+            "FLUX_VAR_RNOISE",
+            "FLUX_VAR_FLAT",
+            "SB_VAR_POISSON",
+            "SB_VAR_RNOISE",
+            "SB_VAR_FLAT",
         )
 
         for i, row in enumerate(spec_table):
