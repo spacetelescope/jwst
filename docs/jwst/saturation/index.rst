@@ -10,5 +10,4 @@ Saturation Detection
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.saturation
+   api_ref.rst

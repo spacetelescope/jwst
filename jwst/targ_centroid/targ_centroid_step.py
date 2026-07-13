@@ -1,3 +1,5 @@
+"""Use target acquisition verification image to find position of target on detector."""
+
 import logging
 
 import jwst.datamodels as dm
@@ -34,17 +36,18 @@ class TargCentroidStep(Step):
 
         Parameters
         ----------
-        step_input : str, `~jwst.datamodels.container.ModelContainer`, \
-                `~stdatamodels.jwst.datamodels.ImageModel`, \
-                `~stdatamodels.jwst.datamodels.CubeModel`
-            The input data model or association.
+        step_input : str, \
+                     `~jwst.datamodels.container.ModelContainer`, \
+                     `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                     `~stdatamodels.jwst.datamodels.CubeModel`
+            The input data filename, association, or model.
 
         Returns
         -------
         result : `~jwst.datamodels.container.ModelContainer`, \
-                `~stdatamodels.jwst.datamodels.ImageModel`, \
-                `~stdatamodels.jwst.datamodels.CubeModel`
-            The output data model or association with TA centering applied.
+                 `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                 `~stdatamodels.jwst.datamodels.CubeModel`
+            The output data association or model with TA centering applied.
         """
         result = self.prepare_output(step_input)
         if isinstance(result, dm.ModelContainer):
@@ -195,14 +198,14 @@ class TargCentroidStep(Step):
 
         Parameters
         ----------
-        container : ModelContainer
+        container : `~jwst.datamodels.container.ModelContainer`
             The input container.
 
         Returns
         -------
-        sci_model : DataModel
+        sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The science data model.
-        ta_model : DataModel
+        ta_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The TA image data model.
         """
         sci_idx = container.ind_asn_type("science")
@@ -220,15 +223,15 @@ class TargCentroidStep(Step):
 
         Parameters
         ----------
-        container : ModelContainer or DataModel
+        container : `~jwst.datamodels.container.ModelContainer` or None
             The original container if present. If None, the updated science model
             is returned as is.
-        updated_sci_model : DataModel
+        updated_sci_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The updated science data model.
 
         Returns
         -------
-        new_container : ModelContainer
+        new_container : `~jwst.datamodels.container.ModelContainer`
             The rebuilt container with the updated science model.
         """
         if container is None:

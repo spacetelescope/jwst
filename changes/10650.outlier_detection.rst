@@ -1,0 +1,1 @@
+Fix a KeyError crash encountered with the combination of input parameters ``resample_data = False`` and ``weight_type = exptime``.

@@ -14,7 +14,6 @@ from jwst.targ_centroid.tests.helpers import (
     make_slit_data,
     make_ta_association,
 )
-from jwst.tests.helpers import _help_pytest_warns
 
 INPUT_FILE = "test_rate.fits"
 INPUT_FILE_2 = "test2_rate.fits"
@@ -143,32 +142,6 @@ def test_filenotfounderror_raised(capsys):
     # Verify the failure is printed to stderr
     captured = capsys.readouterr()
     assert "FileNotFoundError" in captured.err
-
-
-def test_bsub_deprecated(make_test_rate_file):
-    """
-    Ensure that the deprecated save_bsub parameter raises a
-    DeprecationWarning when set to True.
-    """
-    args = [
-        "calwebb_spec2",
-        INPUT_FILE,
-        "--save_bsub=true",
-        "--steps.badpix_selfcal.skip=true",
-        "--steps.msa_flagging.skip=true",
-        "--steps.clean_flicker_noise.skip=true",
-        "--steps.flat_field.skip=true",
-        "--steps.pathloss.skip=true",
-        "--steps.photom.skip=true",
-        "--steps.pixel_replace.skip=true",
-        "--steps.extract_1d.skip=true",
-    ]
-
-    with (
-        _help_pytest_warns(),
-        pytest.warns(DeprecationWarning, match="The --save_bsub parameter is deprecated"),
-    ):
-        Step.from_cmdline(args)
 
 
 @pytest.mark.parametrize("use_asn", [True, False])

@@ -38,7 +38,6 @@ concurrency:
 permissions: {}
 
 env:
-  PYTHON_VERSIONS: 3.9 3.10 3.11 3.12 3.13 3.14
   CRDS_PATH: /tmp/data/crds_cache
   CRDS_OBSERVATORY: jwst
   CRDS_SERVER_URL: ${{ inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
@@ -46,41 +45,6 @@ env:
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
 jobs:
-  supported-pythons:
-    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3"
-      - run: pip install packaging tomli
-      - name: convert Python version(s) into JSON list
-        id: versions
-        shell: python
-        run: |
-          import os
-          import json
-
-          import tomli
-          from packaging.specifiers import SpecifierSet
-          from packaging.version import Version
-
-          with open("pyproject.toml", "rb") as pyproject_toml_file:
-            version_requirements = SpecifierSet(tomli.load(pyproject_toml_file)["project"]["requires-python"])
-
-          versions = [str(version) for version in sorted([Version(version) for version in os.environ["PYTHON_VERSIONS"].split() if version in version_requirements])]
-
-          with open(os.environ["GITHUB_OUTPUT"], "a") as github_output:
-              print(f"json={json.dumps(versions)}", file=github_output)
-              print(f"oldest={versions[0]}", file=github_output)
-              print(f"latest={versions[-1]}", file=github_output)
-    outputs:
-      python-version-json: ${{ steps.versions.outputs.json }}
-      oldest: ${{ steps.versions.outputs.oldest }}
-      latest: ${{ steps.versions.outputs.latest }}
   crds:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
     runs-on: ubuntu-latest
@@ -101,9 +65,8 @@ jobs:
   test:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
     needs:
-      - supported-pythons
       - crds
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@4193751d511425d4edc1d5657c24b2128d49b017 # v2.6.4
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@e5af21e4ae37af089a73bb032e10b78b0e746174 # v3.0.1
     with:
       setenv: |
         CRDS_PATH: ${{ needs.crds.outputs.path }}
@@ -115,13 +78,10 @@ jobs:
       cache-key: crds-${{ needs.crds.outputs.context }}
       envs: |
         - linux: check-docs-links
-          python-version: ${{ needs.supported-pythons.outputs.latest }}
+        - macos: py*-xdist
         - linux: py3-stdevdeps-xdist
         - linux: py3-devdeps-xdist
         - macos: py3-stdevdeps-xdist
         - macos: py3-devdeps-xdist
-      fill: true
-      fill_platforms: macos
-      fill_factors: xdist
       artifact-path: |
         results.xml

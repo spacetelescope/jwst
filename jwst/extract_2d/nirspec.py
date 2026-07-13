@@ -88,7 +88,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             orig_s_region = str(output_model.meta.wcsinfo.s_region).strip()
             util.update_s_region_nrs_slit(output_model)
             if orig_s_region != str(output_model.meta.wcsinfo.s_region).strip():
-                log.info(f"extract_2d updated S_REGION to {output_model.meta.wcsinfo.s_region}")
+                log.debug(f"extract_2d updated S_REGION to {output_model.meta.wcsinfo.s_region}")
     else:
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
@@ -122,7 +122,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             if "world" in input_model.meta.wcs.available_frames:
                 util.update_s_region_nrs_slit(new_model)
                 if orig_s_region != str(new_model.meta.wcsinfo.s_region).strip():
-                    log.info(f"Updated S_REGION to {new_model.meta.wcsinfo.s_region}")
+                    log.debug(f"Updated S_REGION to {new_model.meta.wcsinfo.s_region}")
 
             # Copy BUNIT values to output slit
             new_model.meta.bunit_data = input_model.meta.bunit_data

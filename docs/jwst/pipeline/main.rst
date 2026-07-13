@@ -115,11 +115,13 @@ mode are marked as "N/A" in the TSOVISIT column.
 +---------------------+----------+----------------------------------------------+-----------------------------------------+----------------------------------------+
 | | MIR_CORONCAL      | N/A      | :ref:`calwebb_detector1 <calwebb_detector1>` | :ref:`calwebb_image2 <calwebb_image2>`  | N/A                                    |
 +---------------------+----------+----------------------------------------------+-----------------------------------------+----------------------------------------+
-| | MIR_IMAGE         | False    | :ref:`calwebb_detector1 <calwebb_detector1>` | :ref:`calwebb_image2 <calwebb_image2>`  | :ref:`calwebb_image3 <calwebb_image3>` |
+| | MIR_IMAGE         | True     | :ref:`calwebb_detector1 <calwebb_detector1>` | :ref:`calwebb_image2 <calwebb_image2>`  | :ref:`calwebb_tso3 <calwebb_tso3>`     |
 +                     +----------+----------------------------------------------+-----------------------------------------+----------------------------------------+
-|                     | True     | :ref:`calwebb_detector1 <calwebb_detector1>` | :ref:`calwebb_image2 <calwebb_image2>`  | :ref:`calwebb_tso3 <calwebb_tso3>`     |
+|                     | False    | :ref:`calwebb_detector1 <calwebb_detector1>` | :ref:`calwebb_image2 <calwebb_image2>`  | :ref:`calwebb_image3 <calwebb_image3>` |
 +---------------------+----------+----------------------------------------------+-----------------------------------------+----------------------------------------+
-| | MIR_LRS-FIXEDSLIT | N/A      | :ref:`calwebb_detector1 <calwebb_detector1>` | :ref:`calwebb_spec2 <calwebb_spec2>`    | :ref:`calwebb_spec3 <calwebb_spec3>`   |
+| | MIR_LRS-FIXEDSLIT | True     | :ref:`calwebb_detector1 <calwebb_detector1>` | :ref:`calwebb_spec2 <calwebb_spec2>`    | :ref:`calwebb_tso3 <calwebb_tso3>`     |
++                     +----------+----------------------------------------------+-----------------------------------------+----------------------------------------+
+|                     | False    | :ref:`calwebb_detector1 <calwebb_detector1>` | :ref:`calwebb_spec2 <calwebb_spec2>`    | :ref:`calwebb_spec3 <calwebb_spec3>`   |
 +---------------------+----------+----------------------------------------------+-----------------------------------------+----------------------------------------+
 | | MIR_LRS-SLITLESS  | True     | :ref:`calwebb_detector1 <calwebb_detector1>` | :ref:`calwebb_spec2 <calwebb_spec2>`    | :ref:`calwebb_tso3 <calwebb_tso3>`     |
 +                     +----------+----------------------------------------------+-----------------------------------------+----------------------------------------+

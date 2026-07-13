@@ -121,7 +121,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
                     f"Unable to update S_REGION for type {input_model.meta.exposure.type}: {exc}"
                 )
             else:
-                log.info(f"assign_wcs updated S_REGION to {input_model.meta.wcsinfo.s_region}")
+                log.debug(f"assign_wcs updated S_REGION to {input_model.meta.wcsinfo.s_region}")
             if input_model.meta.exposure.type.lower() == "mir_lrs-slitless":
                 input_model.wavelength = get_wavelengths(input_model)
         elif input_model.meta.exposure.type.lower() == "nrs_ifu":
