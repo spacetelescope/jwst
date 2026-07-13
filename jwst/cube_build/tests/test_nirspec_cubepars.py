@@ -6,7 +6,7 @@ import math
 
 import numpy as np
 import pytest
-from astropy.io import fits
+from stdatamodels.jwst.datamodels import NirspecIFUCubeParsModel
 
 from jwst.cube_build import cube_build_io_util, ifu_cube, instrument_defaults
 
@@ -17,14 +17,12 @@ def nirspec_cube_pars(tmp_path_factory):
 
     filename = tmp_path_factory.mktemp("cube_pars")
     filename = filename / "nirspec_cube_pars.fits"
-    hdu0 = fits.PrimaryHDU()
-    hdu0.header["REFTYPE"] = "CUBEPAR"
-    hdu0.header["INSTRUME"] = "NIRSPEC"
-    hdu0.header["MODELNAM"] = "FM"
-    hdu0.header["DETECTOR"] = "N/A"
-    hdu0.header["EXP_TYPE"] = "NRS_IFU"
-    hdu0.header["BAND"] = "N/A"
-    hdu0.header["CHANNEL"] = "N/A"
+    model = NirspecIFUCubeParsModel()
+    model.meta.reftype = "CUBEPAR"
+    model.meta.instrument.name = "NIRSPEC"
+    model.meta.exposure.type = "NRS_IFU"
+    model.meta.instrument.detector = "N/A"
+    model.meta.instrument.band = "N/A"
 
     # make the first extension
     disp = np.array(
@@ -40,15 +38,10 @@ def nirspec_cube_pars(tmp_path_factory):
     wmin = np.array([0.6, 0.7, 0.97, 0.7, 0.97, 1.66, 1.66, 2.87, 2.87])
     wmax = np.array([5.3, 1.27, 1.89, 1.27, 1.89, 3.17, 3.17, 5.27, 5.27])
 
-    col1 = fits.Column(name="DISPERSER", format="5A", array=disp)
-    col2 = fits.Column(name="FILTER", format="6A", array=filt)
-    col3 = fits.Column(name="WAVEMIN", format="E", array=wmin, unit="micron")
-    col4 = fits.Column(name="WAVEMAX", format="E", array=wmax, unit="micron")
-    col5 = fits.Column(name="SPAXELSIZE", format="E", array=spsize, unit="arcsec")
-    col6 = fits.Column(name="SPECTRALSTEP", format="D", array=wsamp, unit="micron")
-
-    hdu1 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5, col6])
-    hdu1.header["EXTNAME"] = "CUBEPAR"
+    dtype1 = model.get_dtype("ifucubepars_table")
+    model.ifucubepars_table = np.array(
+        list(zip(disp, filt, wmin, wmax, spsize, wsamp, strict=True)), dtype=dtype1
+    )
 
     roispat = np.array([0.201, 0.202, 0.203, 0.204, 0.205, 0.206, 0.207, 0.208, 0.209])
     roispec = np.array([0.011, 0.0012, 0.0013, 0.0004, 0.0004, 0.002, 0.0008, 0.003, 0.0012])
@@ -56,15 +49,10 @@ def nirspec_cube_pars(tmp_path_factory):
     power = np.array([2, 2, 2, 2, 2, 2, 2, 2, 2])
     softrad = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01])
 
-    col1 = fits.Column(name="DISPERSER", format="5A", array=disp)
-    col2 = fits.Column(name="FILTER", format="6A", array=filt)
-    col3 = fits.Column(name="ROISPATIAL", format="E", array=roispat, unit="arcsec")
-    col4 = fits.Column(name="ROISPECTRAL", format="E", array=roispec, unit="micron")
-    col5 = fits.Column(name="POWER", format="I", array=power)
-    col6 = fits.Column(name="SOFTRAD", format="E", array=softrad, unit="arcsec")
-
-    hdu2 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5, col6])
-    hdu2.header["EXTNAME"] = "CUBEPAR_MSM"
+    dtype2 = model.get_dtype("ifucubepars_msm_table")
+    model.ifucubepars_msm_table = np.array(
+        list(zip(disp, filt, roispat, roispec, power, softrad, strict=True)), dtype=dtype2
+    )
 
     # make the third extension
     # Define the multiextension wavelength solution
@@ -80,14 +68,10 @@ def nirspec_cube_pars(tmp_path_factory):
     # Softening radius is 0.01 at all wavelengths
     softrad = np.ones(nelem) * 0.01
 
-    col1 = fits.Column(name="WAVELENGTH", format="D", array=finalwave, unit="micron")
-    col2 = fits.Column(name="ROISPATIAL", format="E", array=roispat, unit="arcsec")
-    col3 = fits.Column(name="ROISPECTRAL", format="E", array=roispec, unit="micron")
-    col4 = fits.Column(name="POWER", format="I", array=power)
-    col5 = fits.Column(name="SOFTRAD", format="E", array=softrad, unit="arcsec")
-
-    hdu3 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
-    hdu3.header["EXTNAME"] = "MULTICHAN_PRISM_MSM"
+    dtype3 = model.get_dtype("ifucubepars_prism_msm_wavetable")
+    model.ifucubepars_prism_msm_wavetable = np.array(
+        list(zip(finalwave, roispat, roispec, power, softrad, strict=True)), dtype=dtype3
+    )
 
     # make the 4th extension
     # Define the multiextension wavelength solution
@@ -102,20 +86,32 @@ def nirspec_cube_pars(tmp_path_factory):
     # Softening radius is 0.01 at all wavelengths
     softrad = np.ones(nelem) * 0.01
 
-    col1 = fits.Column(name="WAVELENGTH", format="D", array=finalwave, unit="micron")
-    col2 = fits.Column(name="ROISPATIAL", format="E", array=roispat, unit="arcsec")
-    col3 = fits.Column(name="ROISPECTRAL", format="E", array=roispec, unit="micron")
-    col4 = fits.Column(name="POWER", format="I", array=power)
-    col5 = fits.Column(name="SOFTRAD", format="E", array=softrad, unit="arcsec")
+    dtype4 = model.get_dtype("ifucubepars_med_msm_wavetable")
+    model.ifucubepars_med_msm_wavetable = np.array(
+        list(zip(finalwave, roispat, roispec, power, softrad, strict=True)), dtype=dtype4
+    )
 
-    hdu4 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
-    hdu4.header["EXTNAME"] = "MULTICHAN_MED_MSM"
+    dtype5 = model.get_dtype("ifucubepars_high_msm_wavetable")
+    model.ifucubepars_high_msm_wavetable = np.array(
+        list(zip(finalwave, roispat, roispec, power, softrad, strict=True)), dtype=dtype5
+    )
 
-    hdu5 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
-    hdu5.header["EXTNAME"] = "MULTICHAN_HIGH_MSM"
+    # set units of all tables to default
+    for table_name in [
+        "ifucubepars_table",
+        "ifucubepars_msm_table",
+        "ifucubepars_prism_msm_wavetable",
+        "ifucubepars_med_msm_wavetable",
+        "ifucubepars_high_msm_wavetable",
+    ]:
+        table = getattr(model, table_name)
+        unit_table_name = table_name + "_units"
+        for name in table.dtype.names:
+            default_unit = getattr(model, unit_table_name).get_default(name)
+            setattr(getattr(model, unit_table_name), name, default_unit)
 
-    hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5])
-    hdu.writeto(filename, overwrite=True)
+    model.save(filename)
+
     return filename
 
 

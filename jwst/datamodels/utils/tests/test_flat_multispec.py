@@ -12,7 +12,6 @@ from jwst.datamodels.utils.flat_multispec import (
     expand_flat_spec,
     make_empty_recarray,
     populate_recarray,
-    set_schema_units,
 )
 from jwst.datamodels.utils.tests.wfss_helpers import mock_wcs
 from jwst.tests.helpers import LogWatcher
@@ -57,7 +56,7 @@ def input_spec():
 
     # Set some units
     for column in spec.spec_table.columns:
-        column.unit = "s"
+        setattr(spec.spec_table_units, column.name, "s")
     return spec
 
 
@@ -86,7 +85,7 @@ def tso_multi_spec():
     spec_table["N_ALONGDISP"] = 10
     tso_spec.spec_table = spec_table
     for column in tso_spec.spec_table.columns:
-        column.unit = "s"
+        setattr(tso_spec.spec_table_units, column.name, "s")
 
     # Add spectra to a multispec model
     tso_multi = dm.TSOMultiSpecModel()
@@ -251,24 +250,6 @@ def test_copy_column_units(input_spec, output_spec):
     assert output_spec.spec_table.columns.units == expected
 
 
-def test_set_schema_units():
-    model = dm.WFSSSpecModel((10,))
-    set_schema_units(model)
-
-    # get expected units from the schema
-    data_type = model.schema["properties"]["spec_table"]["datatype"]
-    # check that the units are set correctly
-    for i in range(len(model.spec_table.columns)):
-        if "unit" in data_type[i]:
-            atleast_one = True
-            assert model.spec_table.columns[i].unit == data_type[i]["unit"]
-        else:
-            assert model.spec_table.columns[i].unit is None
-
-    # ensure that the test was not empty
-    assert atleast_one
-
-
 def test_copy_spec_metadata(input_spec, output_spec):
     # Before copying, source_id and name are blank
     assert output_spec.name is None
@@ -281,9 +262,14 @@ def test_copy_spec_metadata(input_spec, output_spec):
     assert output_spec.source_id == 1
 
 
-def test_expand_flat_spec(tso_multi_spec):
+def test_expand_flat_spec(tso_multi_spec, tmp_path):
     expanded_spec = expand_flat_spec(tso_multi_spec)
     assert isinstance(expanded_spec, dm.MultiSpecModel)
+
+    # save to set TUNIT header keywords
+    temp_file = tmp_path / "temp.fits"
+    expanded_spec.save(temp_file)
+    expanded_spec = dm.open(temp_file)
 
     # expected output has extensions for each spec * each int
     n_spec = 3
@@ -307,3 +293,5 @@ def test_expand_flat_spec(tso_multi_spec):
         assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs.pipeline[0].transform.name == "test"
 
         assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)
+
+    expanded_spec.close()

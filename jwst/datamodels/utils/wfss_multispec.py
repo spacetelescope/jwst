@@ -143,10 +143,11 @@ def make_wfss_multiexposure(input_list):
         spec_table = fltdata_by_exposure[i]
         ext = dm.WFSSSpecModel(spec_table)
 
-        # Set default units from the model schema
-        set_schema_units(ext)
-        # copy units from the example specmodel, overriding the schema defaults where applicable
+        # copy units from the example specmodel
         copy_column_units(example_spec, ext)
+
+        # Set default units from the model schema, ignoring already set
+        set_schema_units(ext)
 
         # copy metadata
         ext.filename = exposure_counter[exposure_number]["filename"]
@@ -283,10 +284,10 @@ def make_wfss_multicombined(results_list):
         fltdata.sort(order=["SOURCE_ID"])
         spec.spec_table = fltdata
 
-        # Set default units from the model schema
-        set_schema_units(spec)
         # copy units from any of the SpecModels (they should all be the same)
         copy_column_units(example_spec, spec)
+        # Set default units from the model schema, ignoring the ones already copied
+        set_schema_units(spec)
         copy_spec_metadata(example_spec, spec)
         spec.spectral_order = order
 
