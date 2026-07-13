@@ -521,6 +521,64 @@ def _build_contam(output_model, per_slit_simuls, simul_data, original_data):
     return contam_cuts
 
 
+def _is_bbox_on_detector(input_model, sourcecat_row, sky_to_grism, wlmin, wlmax, order):
+    # Modified from assign_wcs.util._create_grism_bbox
+    ra = np.array(
+        [
+            sourcecat_row["sky_bbox_ll"].ra.value,
+            sourcecat_row["sky_bbox_lr"].ra.value,
+            sourcecat_row["sky_bbox_ul"].ra.value,
+            sourcecat_row["sky_bbox_ur"].ra.value,
+        ]
+    ).flatten()
+    dec = np.array(
+        [
+            sourcecat_row["sky_bbox_ll"].dec.value,
+            sourcecat_row["sky_bbox_lr"].dec.value,
+            sourcecat_row["sky_bbox_ul"].dec.value,
+            sourcecat_row["sky_bbox_ur"].dec.value,
+        ]
+    ).flatten()
+    x1, y1 = sky_to_grism(ra, dec, wlmin, order)
+    x2, y2 = sky_to_grism(ra, dec, wlmax, order)
+
+    xstack = np.hstack([x1, x2])
+    ystack = np.hstack([y1, y2])
+    xmin = np.nanmin(xstack)
+    xmax = np.nanmax(xstack)
+    ymin = np.nanmin(ystack)
+    ymax = np.nanmax(ystack)
+
+    pts = np.array([[ymin, xmin], [ymax, xmax]])
+    subarr_extent = np.array(
+        [
+            [0, 0],
+            [
+                input_model.meta.subarray.ysize - 1,
+                input_model.meta.subarray.xsize - 1,
+            ],
+        ]
+    )
+
+    if input_model.slits[0].meta.wcsinfo.dispersion_direction == 1:
+        # X-axis is dispersion direction
+        disp_col = 1
+        xdisp_col = 0
+    else:
+        # Y-axis is dispersion direction
+        disp_col = 0
+        xdisp_col = 1
+
+    dispaxis_check = (pts[1, disp_col] - subarr_extent[0, disp_col] > 0) and (
+        subarr_extent[1, disp_col] - pts[0, disp_col] > 0
+    )
+    xdispaxis_check = (pts[1, xdisp_col] - subarr_extent[0, xdisp_col] >= 0) and (
+        subarr_extent[1, xdisp_col] - pts[0, xdisp_col] >= 0
+    )
+    contained = dispaxis_check and xdispaxis_check
+    return contained
+
+
 def contam_corr(
     input_model,
     waverange,
@@ -641,8 +699,8 @@ def contam_corr(
 
     # Read the source catalog to perform magnitude-based source selection later
     # mag limit will be scaled according to order 1 sensitivity
+    source_catalog = read_source_catalog(input_model.meta.source_catalog)
     if magnitude_limit is not None:
-        source_catalog = read_source_catalog(input_model.meta.source_catalog)
         order1_wave_response, order1_sens_response = get_photom_data(
             photom, filter_kwd, pupil_kwd, order=1
         )
@@ -688,13 +746,31 @@ def contam_corr(
                 magnitude_limit,
                 min_relresp_order1,
             )
-            if good_ids is None:
-                log.info(
-                    f"No sources meet the magnitude limit of {magnitude_limit} for order {order}. "
-                    "Skipping contamination correction for this order."
-                )
-                continue
-            selected_ids = good_ids
+        else:
+            good_ids = source_catalog["label"].tolist()
+        log.debug(
+            f"Number of good IDs before checking detector bounds for order {order}: {len(good_ids)}"
+        )
+        good_ids = [
+            source_id
+            for source_id in good_ids
+            if _is_bbox_on_detector(
+                input_model,
+                source_catalog[source_catalog["label"] == source_id],
+                grism_wcs.backward_transform,
+                wmin,
+                wmax,
+                order,
+            )
+        ]
+        log.debug(f"Number of good IDs for order {order}: {len(good_ids)}")
+        if not good_ids:
+            log.info(
+                f"No sources meet the magnitude limit of {magnitude_limit} for order {order}. "
+                "Skipping contamination correction for this order."
+            )
+            continue
+        selected_ids = good_ids
         no_sources = False
 
         # Compute the dispersion for all sources in this order
