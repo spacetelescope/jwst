@@ -521,62 +521,77 @@ def _build_contam(output_model, per_slit_simuls, simul_data, original_data):
     return contam_cuts
 
 
-def _is_bbox_on_detector(input_model, sourcecat_row, sky_to_grism, wlmin, wlmax, order):
-    # Modified from assign_wcs.util._create_grism_bbox
+def _reject_off_detector_bounds(
+    source_catalog, sky_to_grism, wlmin, wlmax, order, subarray_xsize, subarray_ysize
+):
+    """
+    Determine which sources have any part of their grism-frame bounding boxes on the detector.
+
+    Modified from assign_wcs.util._create_grism_bbox.
+    This version is vectorized, does not create GrismObjects,
+    does not distinguish partially-on-detector sources, and
+    just returns a boolean array indicating which sources are on the detector.
+
+    Parameters
+    ----------
+    source_catalog : `~astropy.table.QTable`
+        The catalog of sources with sky bounding boxes.
+    sky_to_grism : callable
+        A function that maps sky coordinates and wavelength to grism-frame coordinates.
+        This should be the "world" to "grism_detector" transform. For MultiSlitModel remember
+        that each SlitModel's input_model also has a "grism_slit" frame that must be bypassed.
+    wlmin, wlmax : float
+        The minimum/maximum wavelength for the grism order as set by the wavelengthrange file.
+    order : int
+        The spectral order to consider.
+    subarray_xsize, subarray_ysize : int
+        The size of the detector subarray in the x- and y-direction.
+
+    Returns
+    -------
+    np.ndarray
+        Boolean array indicating which sources are on the detector.
+    """
     ra = np.array(
         [
-            sourcecat_row["sky_bbox_ll"].ra.value,
-            sourcecat_row["sky_bbox_lr"].ra.value,
-            sourcecat_row["sky_bbox_ul"].ra.value,
-            sourcecat_row["sky_bbox_ur"].ra.value,
+            source_catalog["sky_bbox_ll"].ra.value,
+            source_catalog["sky_bbox_lr"].ra.value,
+            source_catalog["sky_bbox_ul"].ra.value,
+            source_catalog["sky_bbox_ur"].ra.value,
         ]
     ).flatten()
     dec = np.array(
         [
-            sourcecat_row["sky_bbox_ll"].dec.value,
-            sourcecat_row["sky_bbox_lr"].dec.value,
-            sourcecat_row["sky_bbox_ul"].dec.value,
-            sourcecat_row["sky_bbox_ur"].dec.value,
+            source_catalog["sky_bbox_ll"].dec.value,
+            source_catalog["sky_bbox_lr"].dec.value,
+            source_catalog["sky_bbox_ul"].dec.value,
+            source_catalog["sky_bbox_ur"].dec.value,
         ]
     ).flatten()
     x1, y1, _, _, _ = sky_to_grism(ra, dec, wlmin, order)
     x2, y2, _, _, _ = sky_to_grism(ra, dec, wlmax, order)
 
-    xstack = np.hstack([x1, x2])
-    ystack = np.hstack([y1, y2])
-    xmin = np.nanmin(xstack)
-    xmax = np.nanmax(xstack)
-    ymin = np.nanmin(ystack)
-    ymax = np.nanmax(ystack)
+    # return to being per-source
+    x1 = x1.reshape((4, -1))
+    y1 = y1.reshape((4, -1))
+    x2 = x2.reshape((4, -1))
+    y2 = y2.reshape((4, -1))
 
-    pts = np.array([[ymin, xmin], [ymax, xmax]])
-    subarr_extent = np.array(
-        [
-            [0, 0],
-            [
-                input_model.meta.subarray.ysize - 1,
-                input_model.meta.subarray.xsize - 1,
-            ],
-        ]
-    )
+    # stack for min/max calc
+    xstack = np.vstack([x1, x2])  # shape 8, len(source_catalog)
+    ystack = np.vstack([y1, y2])  # shape 8, len(source_catalog)
+    xmin = np.nanmin(xstack, axis=0)
+    xmax = np.nanmax(xstack, axis=0)
+    ymin = np.nanmin(ystack, axis=0)
+    ymax = np.nanmax(ystack, axis=0)
 
-    if input_model.slits[0].meta.wcsinfo.dispersion_direction == 1:
-        # X-axis is dispersion direction
-        disp_col = 1
-        xdisp_col = 0
-    else:
-        # Y-axis is dispersion direction
-        disp_col = 0
-        xdisp_col = 1
-
-    dispaxis_check = (pts[1, disp_col] - subarr_extent[0, disp_col] > 0) and (
-        subarr_extent[1, disp_col] - pts[0, disp_col] > 0
-    )
-    xdispaxis_check = (pts[1, xdisp_col] - subarr_extent[0, xdisp_col] >= 0) and (
-        subarr_extent[1, xdisp_col] - pts[0, xdisp_col] >= 0
-    )
-    contained = dispaxis_check and xdispaxis_check
-    return contained
+    # check against bounds
+    xmin_too_big = xmin > subarray_xsize - 1
+    xmax_too_small = xmax < 0
+    ymin_too_big = ymin > subarray_ysize - 1
+    ymax_too_small = ymax < 0
+    bad = xmin_too_big | xmax_too_small | ymin_too_big | ymax_too_small
+    return ~bad
 
 
 def contam_corr(
@@ -748,29 +763,30 @@ def contam_corr(
             )
         else:
             good_ids = source_catalog["label"].tolist()
-        log.debug(
-            f"Number of good IDs before checking detector bounds for order {order}: {len(good_ids)}"
+
+        # further constrain by checking against grism-frame detector extent
+        source_catalog.add_index("label")
+        sourcecat = source_catalog.loc[good_ids]
+        is_in_bounds = _reject_off_detector_bounds(
+            sourcecat,
+            grism_wcs.get_transform("world", "grism_detector"),
+            wmin,
+            wmax,
+            order,
+            input_model.meta.subarray.xsize,
+            input_model.meta.subarray.ysize,
         )
-        good_ids = [
-            source_id
-            for source_id in good_ids
-            if _is_bbox_on_detector(
-                input_model,
-                source_catalog[source_catalog["label"] == source_id],
-                grism_wcs.get_transform("world", "grism_detector"),
-                wmin,
-                wmax,
-                order,
-            )
-        ]
-        log.debug(f"Number of good IDs for order {order}: {len(good_ids)}")
-        if not good_ids:
+        selected_ids = np.array(good_ids)[is_in_bounds]
+        log.info(
+            f"Number of selected IDs for order {order} after checking bounding box against "
+            f"detector bounds: {len(selected_ids)}"
+        )
+        if not len(selected_ids):
             log.info(
                 f"No sources meet the magnitude limit of {magnitude_limit} for order {order}. "
                 "Skipping contamination correction for this order."
             )
             continue
-        selected_ids = good_ids
         no_sources = False
 
         # Compute the dispersion for all sources in this order
