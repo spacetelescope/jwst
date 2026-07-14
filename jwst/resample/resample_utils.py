@@ -145,7 +145,7 @@ def build_mask(dqarr, bitvalue):
 
     Parameters
     ----------
-    dqarr : darray
+    dqarr : ndarray
         Data quality array.
     bitvalue : int
         Bit value to be used for flagging good pixels.
