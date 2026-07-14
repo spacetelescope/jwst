@@ -539,8 +539,8 @@ def _is_bbox_on_detector(input_model, sourcecat_row, sky_to_grism, wlmin, wlmax,
             sourcecat_row["sky_bbox_ur"].dec.value,
         ]
     ).flatten()
-    x1, y1 = sky_to_grism(ra, dec, wlmin, order)
-    x2, y2 = sky_to_grism(ra, dec, wlmax, order)
+    x1, y1, _, _, _ = sky_to_grism(ra, dec, wlmin, order)
+    x2, y2, _, _, _ = sky_to_grism(ra, dec, wlmax, order)
 
     xstack = np.hstack([x1, x2])
     ystack = np.hstack([y1, y2])
@@ -757,7 +757,7 @@ def contam_corr(
             if _is_bbox_on_detector(
                 input_model,
                 source_catalog[source_catalog["label"] == source_id],
-                grism_wcs.backward_transform,
+                grism_wcs.get_transform("world", "grism_detector"),
                 wmin,
                 wmax,
                 order,
