@@ -35,8 +35,8 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
     """
     Add a gradient to the direct image and save it as a JWST datamodel.
 
-    Returns
-    -------
+    Yields
+    ------
     ImageModel
         Direct image with a background gradient.
     """
@@ -50,7 +50,8 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
     model.meta.wcs = create_imaging_wcs("F200W")
     model.save(DIR_IMAGE)
 
-    return model
+    yield model
+    model.close()
 
 
 @pytest.fixture(scope="module")
@@ -58,8 +59,8 @@ def segmentation_map(direct_image):
     """
     Make a segmentation map from the mock direct image.
 
-    Returns
-    -------
+    Yields
+    ------
     SegmentationMapModel
         The segmentation map as a JwstDataModel.
     """
@@ -71,7 +72,8 @@ def segmentation_map(direct_image):
     # turn this into a jwst datamodel
     model = dm.SegmentationMapModel(data=segm.data)
     model.meta.wcs = create_imaging_wcs("F200W")
-    return model
+    yield model
+    model.close()
 
 
 def _sky_bbox(xcentroid, ycentroid, wcs, half_size=10):
@@ -193,14 +195,15 @@ def photom_ref_model_niriss(phot_table):
     phot_table : np.recarray
         Photometry table.
 
-    Returns
-    -------
+    Yields
+    ------
     `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
         Photom ref file model.
     """
     model = dm.NisWfssPhotomModel(phot_table=phot_table)
     model.phot_unit = "MJy micron s / (DN sr)"
-    return model
+    yield model
+    model.close()
 
 
 @pytest.fixture(scope="module")
@@ -213,14 +216,15 @@ def photom_ref_model_nircam(phot_table):
     phot_table : np.recarray
         Photometry table.
 
-    Returns
-    -------
+    Yields
+    ------
     `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`
         Photom ref file model.
     """
     model = dm.NrcWfssPhotomModel(phot_table=phot_table)
     model.phot_unit = "MJy Angstrom s / (DN sr)"
-    return model
+    yield model
+    model.close()
 
 
 @pytest.fixture

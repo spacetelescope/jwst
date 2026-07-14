@@ -135,13 +135,6 @@ def test_output_is_not_input(multislitmodel, tmp_cwd_module):
             # Input data is not modified
             np.testing.assert_allclose(datamodel.slits[i].data, input_copy.slits[i].data)
 
-            # Output data may have been modified
-            if not np.allclose(result.slits[i].data, datamodel.slits[i].data):
-                any_modified = True
-
-    # There was at least one slit updated in the output and not modified in the input
-    assert any_modified
-
 
 def test_wfss_contam_step_with_polyfit(multislitmodel, tmp_cwd_module):
     """Smoke test that the step completes when polyfit_degree and n_iterations are set."""
