@@ -25,9 +25,7 @@ def pool():
 @pytest.fixture(scope="module")
 def make_asns(pool, tmp_path_factory):
     path = str(tmp_path_factory.mktemp("data"))
-    generated = Main.cli(
-        ["-p", path, "-i", "o001", "--save-orphans", "--format", "json"], pool=pool
-    )
+    generated = Main.cli(["-p", path, "-i", "o001", "--save-orphans"], pool=pool)
     return generated, path
 
 

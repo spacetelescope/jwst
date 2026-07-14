@@ -1,9 +1,12 @@
-"""Define the I/O methods for Level 3 associations."""
+"""
+Define the I/O methods for Level 3 associations.
+
+Particularly, load and store associations as JSON.
+"""
 
 import json as json_lib
 import logging
 
-from jwst.associations.association import Association
 from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.lib.member import Member
 
@@ -35,69 +38,64 @@ class AssociationEncoder(json_lib.JSONEncoder):
             return obj.data
 
 
-@Association.ioregistry
-class json:  # noqa: N801
-    """Load and store associations as JSON."""
+def json_asn_load(_cls, serialized):
+    """
+    Unserialize an association from JSON.
 
-    @staticmethod
-    def load(_cls, serialized):
-        """
-        Unserialize an association from JSON.
+    Parameters
+    ----------
+    _cls : class
+        The class from which further information will be gathered
+        and possibly instantiated.
 
-        Parameters
-        ----------
-        _cls : class
-            The class from which further information will be gathered
-            and possibly instantiated.
+    serialized : str or file object
+        The JSON to read
 
-        serialized : str or file object
-            The JSON to read
+    Returns
+    -------
+    association : dict
+        The association
 
-        Returns
-        -------
-        association : dict
-            The association
+    Raises
+    ------
+    AssociationNotValidError
+        Cannot create or validate the association.
+    """
+    if isinstance(serialized, str):
+        loader = json_lib.loads
+    else:
+        # Presume a file object
+        serialized.seek(0)
+        loader = json_lib.load
+    try:
+        asn = loader(serialized)
+    except Exception as err:
+        logger.debug(f'Error unserializing: "{err}"')
+        raise AssociationNotValidError(f"Container is not JSON: '{serialized}'") from err
 
-        Raises
-        ------
-        AssociationNotValidError
-            Cannot create or validate the association.
-        """
-        if isinstance(serialized, str):
-            loader = json_lib.loads
-        else:
-            # Presume a file object
-            serialized.seek(0)
-            loader = json_lib.load
-        try:
-            asn = loader(serialized)
-        except Exception as err:
-            logger.debug(f'Error unserializing: "{err}"')
-            raise AssociationNotValidError(f"Container is not JSON: '{serialized}'") from err
+    return asn
 
-        return asn
 
-    @staticmethod
-    def dump(asn):
-        """
-        Create JSON representation.
+def json_asn_dump(asn):
+    """
+    Create JSON representation.
 
-        Parameters
-        ----------
-        asn : Association
-            The association to serialize
+    Parameters
+    ----------
+    asn : Association
+        The association to serialize
 
-        Returns
-        -------
-        (name, str):
-            Tuple where the first item is the suggested
-            Name for the JSON file.
-            Second item is the string containing the JSON serialization.
-        """
-        asn_filename = asn.asn_name
-        if not asn_filename.endswith(".json"):
-            asn_filename = asn_filename + ".json"
-        return (
-            asn_filename,
-            json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(",", ": ")),
-        )
+    Returns
+    -------
+    name, str : tuple
+        Tuple where the first item is the suggested
+        Name for the JSON file.
+        Second item is the string containing the JSON serialization.
+    """
+    asn_filename = asn.asn_name
+    if not asn_filename.endswith(".json"):
+        asn_filename = asn_filename + ".json"
+    return (
+        asn_filename,
+        json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(",", ": ")),
+    )

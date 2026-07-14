@@ -59,11 +59,8 @@ def test_file_ext():
     """check that the filename extension is correctly appended"""
     items = ["a", "b", "c"]
     asn = asn_from_list(items, rule=DMSLevel2bBase)
-    # check that extension defaults to json
+    # check that extension is json
     name, serialized = asn.dump()
-    # check that extension with format = 'json'  returns json
-    assert name.endswith("json")
-    name, serialized = asn.dump(fmt="json")
     assert name.endswith("json")
 
 
@@ -194,7 +191,7 @@ def test_cmdline_success(tmp_path):
     path = tmp_path / "test_asn.json"
     product_name = "test_product"
     inlist = ["a", "b", "c"]
-    args = ["-o", str(path), "--product-name", product_name, "--format", "json"] + inlist
+    args = ["-o", str(path), "--product-name", product_name] + inlist
     Main.cli(args)
     with open(path, "r") as fp:
         asn = load_asn(fp)

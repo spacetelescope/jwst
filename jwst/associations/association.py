@@ -7,12 +7,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import jsonschema
+from astropy.utils.decorators import deprecated_renamed_argument
+from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from jwst import __version__
+from jwst.associations.association_io import json_asn_dump, json_asn_load
 from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.format_template import FormatTemplate
 from jwst.associations.lib.constraint import Constraint, meets_conditions
-from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
 
 __all__ = ["Association"]
 
@@ -79,9 +81,6 @@ class Association(MutableMapping):
     """Attribute values that indicate the
     attribute is not specified.
     """
-
-    ioregistry: KeyValueRegistry = KeyValueRegistry()
-    """The association IO registry"""
 
     def __init__(self, version_id=None):
         self.data = {}
@@ -232,7 +231,12 @@ class Association(MutableMapping):
                     warnings.warn(err_str, UserWarning, stacklevel=1)
         return True
 
-    def dump(self, fmt=None, **kwargs):
+    @deprecated_renamed_argument("fmt", None, since="2.1")
+    def dump(
+        self,
+        fmt=None,  # noqa: ARG002
+        **kwargs,
+    ):
         """
         Serialize the association.
 
@@ -241,13 +245,19 @@ class Association(MutableMapping):
         fmt : str
             The format to use to dump the association into.
 
+            .. version-deprecated:: 2.1
+                Only JSON format is supported now.
+
         **kwargs : dict
             List of arguments to pass to the registered
             routines for the current association type.
 
+            .. version-deprecated:: 2.1
+                This is completely ignored.
+
         Returns
         -------
-        (name, serialized):
+        name, serialized : tuple
             Tuple where the first item is the suggested
             base name for the file.
             Second item is the serialization.
@@ -260,15 +270,29 @@ class Association(MutableMapping):
         jwst.associations.AssociationNotValidError
             If the given association does not validate.
         """
-        if fmt is None:
-            fmt = kwargs.pop("format", "json")
+        if kwargs:
+            warnings.warn(
+                "Usage of kwargs was deprecated in version 2.1 and "
+                "will be removed in a future version; it currently "
+                "is completely ignored.",
+                AstropyDeprecationWarning,
+                stacklevel=2,
+            )
+
         if self.is_valid:
-            return self.ioregistry[fmt].dump(self, **kwargs)
-        else:
-            raise AssociationNotValidError(f"Association {self} is not valid")
+            return json_asn_dump(self)
+
+        raise AssociationNotValidError(f"Association {self} is not valid")
 
     @classmethod
-    def load(cls, serialized, fmt=None, validate=True, **kwargs):
+    @deprecated_renamed_argument("fmt", None, since="2.1")
+    def load(
+        cls,
+        serialized,
+        fmt=None,  # noqa: ARG003
+        validate=True,
+        **kwargs,
+    ):
         """
         Marshal a previously serialized association.
 
@@ -280,11 +304,17 @@ class Association(MutableMapping):
         fmt : str or None
             The format to force. If None, try all available.
 
+            .. version-deprecated:: 2.1
+                Only JSON format is supported now.
+
         validate : bool
             Validate against the class' defined schema, if any.
 
         **kwargs : dict
             Other arguments to pass to the ``load`` method.
+
+            .. version-deprecated:: 2.1
+                This is completely ignored.
 
         Returns
         -------
@@ -302,24 +332,17 @@ class Association(MutableMapping):
         JSON format, the input can be either a string or
         a file object containing the string.
         """
-        if fmt is None:
-            fmt = kwargs.pop("format", None)
-        if fmt is None:
-            formats = [format_func for format_name, format_func in cls.ioregistry.items()]
-        else:
-            formats = [cls.ioregistry[fmt]]
+        if kwargs:
+            warnings.warn(
+                "Usage of kwargs was deprecated in version 2.1 and "
+                "will be removed in a future version; it currently "
+                "is completely ignored.",
+                AstropyDeprecationWarning,
+                stacklevel=2,
+            )
 
-        for format_func in formats:
-            try:
-                asn = format_func.load(cls, serialized, **kwargs)
-            except AssociationNotValidError:
-                continue
-            else:
-                break
-        else:
-            raise AssociationNotValidError(f'Cannot translate "{serialized}" to an association')
+        asn = json_asn_load(cls, serialized)
 
-        # Validate
         if validate:
             cls.validate(asn)
 

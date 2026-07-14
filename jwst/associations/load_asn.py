@@ -86,11 +86,10 @@ def load_asn(
 
 
 def _do_load(serialized, first=True, validate=True, registry=AssociationRegistry, **kwargs):
-    fmt = "json"
     if registry is None:
-        asn = Association.load(serialized, fmt=fmt, validate=validate)
+        asn = Association.load(serialized, validate=validate)
     else:
         if isclass(registry):
             registry = registry()
-        asn = registry.load(serialized, fmt=fmt, first=first, validate=validate, **kwargs)
+        asn = registry.load(serialized, first=first, validate=validate, **kwargs)
     return asn

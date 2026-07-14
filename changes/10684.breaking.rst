@@ -1,1 +1,5 @@
 Removed deprecated code from Association loader, which include removing deprecated YAML format support for reading and writing association files (use JSON format), removing deprecated supported for loading JSON format from files without "json" suffix, and ending support for additional trailing commas in JSON association files because they are invalid according to the JSON specification (please manually fix the violations).
+
+Removed deprecated ``--no-merge`` option in ``asn_generate`` command-line interface.
+
+Removed internal ``Association.ioregistry`` class attribute without deprecation.
