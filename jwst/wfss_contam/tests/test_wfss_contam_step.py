@@ -19,6 +19,8 @@ def multislitmodel(
     model.meta.observation.time = "12:00:00"
 
     model.meta.exposure.type = "NIS_WFSS"
+    model.meta.subarray.xsize = 2048
+    model.meta.subarray.ysize = 2048
 
     # save direct image and segmentation map to file, then point model to those
     dim = "direct_image.fits"

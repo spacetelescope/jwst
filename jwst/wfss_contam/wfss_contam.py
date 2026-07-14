@@ -761,6 +761,12 @@ def contam_corr(
                 magnitude_limit,
                 min_relresp_order1,
             )
+            if not good_ids:
+                log.info(
+                    f"No sources meet the magnitude limit of {magnitude_limit} for order {order} ."
+                    "Skipping contamination correction for this order."
+                )
+                continue
         else:
             good_ids = source_catalog["label"].tolist()
 
@@ -783,7 +789,8 @@ def contam_corr(
         )
         if not len(selected_ids):
             log.info(
-                f"No sources meet the magnitude limit of {magnitude_limit} for order {order}. "
+                f"No sources meet the magnitude limit of {magnitude_limit} for order {order} "
+                "and also disperse onto the detector. "
                 "Skipping contamination correction for this order."
             )
             continue
