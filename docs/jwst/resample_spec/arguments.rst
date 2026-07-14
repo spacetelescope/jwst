@@ -85,10 +85,10 @@ image.
       If ``pixel_area`` is not provided, the code will attempt to estimate
       this value from the WCS.
 
-    - ``pixel_shape``: dimensions of the output image in the order ``(nx, ny)``.
+    - ``pixel_shape``: Dimensions of the output image in the order ``(nx, ny)``.
       Overrides the value of ``array_shape`` if provided.
 
-    - ``array_shape``: shape of the output image in ``numpy`` convention: ``(ny, nx)``.
+    - ``array_shape``: Shape of the output image in ``numpy`` convention: ``(ny, nx)``.
 
     .. note::
         When ``output_wcs`` is specified, WCS-related arguments
