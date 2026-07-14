@@ -1,7 +1,11 @@
 Description
 ===========
 
-The ``wfs_combine`` step combines a pair of dithered Wavefront Sensing and Control (WFS&C) images.
+:Class: `jwst.wfs_combine.wfs_combine_step.WfsCombineStep`
+:Alias: wfs_combine
+
+The ``wfs_combine`` step (see :ref:`calwebb_wfs-image3`)
+combines a pair of dithered Wavefront Sensing and Control (WFS&C) images.
 The input images are aligned with one another and then combined using a pixel
 replacement technique, described in detail below. The images are aligned to only the nearest
 integer pixel in each direction. No sub-pixel resampling is done.
@@ -70,6 +74,8 @@ following logic:
 Upon successful completion of this step, the status keyword S_WFSCOM will be set to "COMPLETE"
 in the output image header.
 
+.. _wfs_comb_inputs:
+
 Inputs
 ------
 
@@ -79,9 +85,11 @@ Inputs
 :Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _cal
 
-The input to ``wfs_combine`` is a pair of calibrated ("_cal") exposures, specified
+The input to the step is a pair of calibrated ("_cal") exposures, specified
 via an ASN file. The ASN file may contain a list of several combined products to be created, in
 which case the step will loop over each set of inputs, creating a combined output for each pair.
+
+.. _wfs_comb_outputs:
 
 Outputs
 -------

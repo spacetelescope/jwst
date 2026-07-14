@@ -13,36 +13,9 @@ The ``calwebb_wfs-image3`` alias exists only for consistency and
 compatibility with stage 3 processing of other observing modes. The same result could
 be obtained by just running the :ref:`wfs_combine <wfs_combine_step>` step directly.
 
-Arguments
----------
-The ``calwebb_wfs-image3`` pipeline has one optional argument.
+For more details:
 
-``--do_refine`` (boolean, default=False)
-  If set to `True`, offsets between the dithered images computed from the WCS will be
-  refined empirically using a cross-correlation technique.
-  See :ref:`wfs_combine <wfs_combine_step>` for details.
-
-Inputs
-------
-
-2D calibrated images
-^^^^^^^^^^^^^^^^^^^^
-
-:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
-:File suffix: _cal
-
-The input to ``calwebb_wfs-image3`` is a pair of calibrated ("_cal") exposures, specified
-via an ASN file.
-
-Outputs
--------
-
-2D combined image
-^^^^^^^^^^^^^^^^^
-
-:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
-:File suffix: _wfscmb
-
-The output is a combined image, using the product type suffix "_wfscmb".
-See :ref:`wfs_combine <wfs_combine_step>` for details on how this combined
-image is produced.
+* :ref:`wfs_combine_args`
+* :ref:`wfs_comb_inputs`
+* :ref:`wfs_comb_outputs`
+* :ref:`wfs_comb_algo`

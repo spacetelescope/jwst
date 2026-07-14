@@ -1,3 +1,5 @@
+.. _wfs_combine_args:
+
 Step Arguments
 ==============
 The ``wfs_combine`` step has the following optional arguments.
