@@ -64,7 +64,7 @@ def test_err_invalid_json_trailing_comma(tmp_path):
             ' "asn_type": "image2", "products": [{"name": "test_rate",'
             ' "members": [{"expname": "test_rate.fits", "exptype": "science"},]}]}'
         )
-    msg = "Cannot translate"
+    msg = "Container is not JSON"
     with open(fname) as f, pytest.raises(AssociationNotValidError, match=msg):
         load_asn(f)
 
