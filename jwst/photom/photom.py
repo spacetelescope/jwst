@@ -374,11 +374,7 @@ class DataSet:
         mid_time = self.input.meta.exposure.mid_time
         correction_table = time_dependence.get_correction_table(ftab, mid_time)
 
-        # Handle MultiSlit models separately, which are used for NIRISS WFSS
-        if isinstance(self.input, datamodels.MultiSlitModel):
-            self.calc_wfss(ftab, correction_table, ["filter", "pupil", "order"])
-
-        elif isinstance(self.input, datamodels.CubeModel):
+        if isinstance(self.input, datamodels.CubeModel | datamodels.MultiSlitModel):
             raise DataModelTypeError(
                 f"Unexpected input data model type for NIRISS: {str(self.input)}"
             )
@@ -404,6 +400,8 @@ class DataSet:
                         order=self.order,
                         time_correction=correction_table[row],
                     )
+        elif self.exptype in ["NIS_WFSS"]:
+            self.calc_wfss(ftab, correction_table, ["filter", "pupil", "order"])
         else:
             fields_to_match = {"filter": self.filter, "pupil": self.pupil}
             row = find_row(ftab.phot_table, fields_to_match)
@@ -433,7 +431,7 @@ class DataSet:
             MIRI photom reference file data model.
         """
         # Handle MultiSlit models and MIRI WFSS
-        if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == "MIR_WFSS":
+        if self.exptype == "MIR_WFSS":
             # Get a time-dependent correction from the reference file if available
             mid_time = self.input.meta.exposure.mid_time
             correction_table = time_dependence.get_correction_table(ftab, mid_time)
@@ -560,7 +558,7 @@ class DataSet:
         correction_table = time_dependence.get_correction_table(ftab, mid_time)
 
         # Handle WFSS data separately from regular imaging
-        if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == "NRC_WFSS":
+        if self.exptype == "NRC_WFSS":
             self.calc_wfss(ftab, correction_table, ["filter", "pupil", "order"])
         elif self.exptype == "NRC_TSGRISM":
             fields_to_match = {"filter": self.filter, "pupil": self.pupil, "order": self.order}
@@ -682,15 +680,16 @@ class DataSet:
         """
         Apply photometric calibration to all slits in a WFSS exposure.
 
-        Iterates over each slit in the input
-        `~stdatamodels.jwst.datamodels.MultiSlitModel`, looks up the
+        Iterates over each spectrum in the input
+        `~stdatamodels.jwst.datamodels.WfssMultiSpecModel`, looks up the
         row in the photom reference table matched by the attributes specified
         in ``match_fields``, and calls :meth:`photom_io` to apply the conversion.
 
         Parameters
         ----------
         ftab : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel` or \
-               `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
+               `~stdatamodels.jwst.datamodels.NisWfssPhotomModel` or \
+               `~stdatamodels.jwst.datamodels.MirWfssPhotomModel`
             Photom reference file data model.
         correction_table : array-like
             Time-dependence correction values.
@@ -701,7 +700,7 @@ class DataSet:
         for field in match_fields:
             value = getattr(self, field)
             fields_to_match[field] = value
-        for slit in self.input.slits:
+        for slit in self.input.slits:  # change to query spec
             log.info(f"Working on slit {slit.name}")
             # Increment slit number
             self.slitnum += 1
@@ -899,14 +898,13 @@ class DataSet:
 
                 elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS", "MIR_WFSS"]:
                     log.info("Including spectral dispersion in 2-d flux calibration")
-                    conversion, no_cal = self.create_2d_conversion(
+                    conversion, no_cal = self.create_1d_conversion(
                         slit,
-                        self.exptype,
                         conversion,
                         waves,
                         relresps,
-                        order,
-                        include_dispersion=True,
+                        self.integ_row,
+                        # order,
                     )
 
                 else:
@@ -922,16 +920,15 @@ class DataSet:
                 )
             else:
                 # NRC_TSGRISM data produces a SpecModel, which is handled here
-                if self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
+                if self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS", "MIR_WFSS"]:
                     log.info("Including spectral dispersion in 2-d flux calibration")
-                    conversion, no_cal = self.create_2d_conversion(
-                        self.input,
-                        self.exptype,
+                    conversion, no_cal = self.create_1d_conversion(
+                        self.input.spec[self.specnum],
                         conversion,
                         waves,
                         relresps,
-                        order,
-                        include_dispersion=True,
+                        self.integ_row,
+                        # order,
                     )
 
                 else:

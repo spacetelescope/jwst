@@ -395,9 +395,9 @@ class Spec2Pipeline(Pipeline):
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
 
-        # SOSS data need to run photom on x1d products and optionally save the photom
+        # SOSS and WFSS/grism data need to run photom on x1d products and optionally save the photom
         # output, while all other exptypes simply run extract_1d.
-        if exp_type == "NIS_SOSS":
+        if exp_type in ["NIS_SOSS", "MIR_WFSS"] + GRISM_TYPES:
             if multi_int:
                 self.photom.suffix = "x1dints"
             else:
@@ -648,7 +648,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss.run(calibrated)
         calibrated = self.barshadow.run(calibrated)
         calibrated = self.wfss_contam.run(calibrated)
-        calibrated = self.photom.run(calibrated)
         return calibrated
 
     def _process_miri_wfss(self, data):
