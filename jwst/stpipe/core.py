@@ -9,7 +9,7 @@ from pathlib import Path
 from stdatamodels.exceptions import ValidationWarning
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import JwstDataModel, read_metadata
-from stpipe import Pipeline, crds_client
+from stpipe import Pipeline, config_parser, crds_client
 from stpipe import Step as _Step
 
 from jwst import __version__, __version_commit__
@@ -491,3 +491,30 @@ class JwstPipeline(Pipeline, JwstStep):
                     result.cal_logs = {}
 
                 setattr(result.cal_logs, self.class_alias, self._log_records)
+
+    @classmethod
+    def get_config_from_reference(cls, dataset, **kwargs):  # numpydoc ignore=PR02
+        """
+        Retrieve step parameters from reference database.
+
+        Parameters
+        ----------
+        cls : `~stpipe.Step`
+            Either a class or instance of a class derived
+            from `~stpipe.Step`.
+        dataset : `~stpipe.datamodel.AbstractDataModel` or dict
+            A model of the input file.  Metadata on this input file will
+            be used by the CRDS "bestref" algorithm to obtain a reference
+            file.
+        **kwargs : dict
+            Keywords for :meth:`stpipe.Step.get_config_from_reference`.
+
+        Returns
+        -------
+        step_parameters : configobj
+            The parameters as retrieved from CRDS. If there is an issue, log as such
+            and return an empty config obj.
+        """
+        if isinstance(dataset, dict) and "products" in dataset:  # Association
+            return config_parser.ConfigObj()
+        return super().get_config_from_reference(dataset, **kwargs)
