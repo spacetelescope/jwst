@@ -43,31 +43,31 @@ observing modes, including:
 
 The table below represents the same information as described above, but alphabetically ordered by pipeline class.
 
-+------------------------------------+--------------------+------------------------------+
-| Pipeline Class                     | Alias              | Used For                     |
-+====================================+====================+==============================+
-| `~jwst.pipeline.Ami3Pipeline`      | calwebb_ami3       | Stage 3: NIRISS AMI mode     |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.pipeline.Coron3Pipeline`    | calwebb_coron3     | Stage 3: Coronagraphic mode  |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.pipeline.DarkPipeline`      | calwebb_dark       | Stage 1: darks               |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.pipeline.Detector1Pipeline` | calwebb_detector1  | Stage 1: all modes           |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.pipeline.GuiderPipeline`    | calwebb_guider     | Stage 1+2: FGS guiding modes |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.pipeline.Image2Pipeline`    | calwebb_image2     | Stage 2: imaging modes       |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.pipeline.Image3Pipeline`    | calwebb_image3     | Stage 3: imaging modes       |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.pipeline.Spec2Pipeline`     | calwebb_spec2      | Stage 2: spectroscopy modes  |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.pipeline.Spec3Pipeline`     | calwebb_spec3      | Stage 3: spectroscopy modes  |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.pipeline.Tso3Pipeline`      | calwebb_tso3       | Stage 3: TSO modes           |
-+------------------------------------+--------------------+------------------------------+
-| `~jwst.wfs_combine.WfsCombineStep` | calwebb_wfs-image3 | Stage 3: WFS&C imaging       |
-+------------------------------------+--------------------+------------------------------+
++-----------------------------------------------------+--------------------+------------------------------+
+| Pipeline Class                                      | Alias              | Used For                     |
++=====================================================+====================+==============================+
+| `~jwst.pipeline.Ami3Pipeline`                       | calwebb_ami3       | Stage 3: NIRISS AMI mode     |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.pipeline.Coron3Pipeline`                     | calwebb_coron3     | Stage 3: Coronagraphic mode  |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.pipeline.DarkPipeline`                       | calwebb_dark       | Stage 1: darks               |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.pipeline.Detector1Pipeline`                  | calwebb_detector1  | Stage 1: all modes           |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.pipeline.GuiderPipeline`                     | calwebb_guider     | Stage 1+2: FGS guiding modes |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.pipeline.Image2Pipeline`                     | calwebb_image2     | Stage 2: imaging modes       |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.pipeline.Image3Pipeline`                     | calwebb_image3     | Stage 3: imaging modes       |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.pipeline.Spec2Pipeline`                      | calwebb_spec2      | Stage 2: spectroscopy modes  |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.pipeline.Spec3Pipeline`                      | calwebb_spec3      | Stage 3: spectroscopy modes  |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.pipeline.Tso3Pipeline`                       | calwebb_tso3       | Stage 3: TSO modes           |
++-----------------------------------------------------+--------------------+------------------------------+
+| `~jwst.wfs_combine.wfs_combine_step.WfsCombineStep` | calwebb_wfs-image3 | Stage 3: WFS&C imaging       |
++-----------------------------------------------------+--------------------+------------------------------+
 
 Pipelines vs. Exposure Type
 ===========================
@@ -222,7 +222,7 @@ Configuration File Deprecation
 ==============================
 
 Up to version 1.1.0, the primary way specific pipelines were referred to was by
-their configuration file name, i.e. ``calwebb_detector1.cfg``. These
+their configuration file name, i.e., ``calwebb_detector1.cfg``. These
 configuration files were delivered as part of the JWST calibration package.
 Below is the table that matched configuration file to observing mode it was
 intended to be used with.
@@ -263,38 +263,38 @@ The deprecated configuration to mode mapping up to version 1.1.0 is in the table
 below. This table is given only as historical reference for software and
 documentation that used this terminology.
 
-+------------------------------------+---------------------------+------------------------------+
-| Pipeline Class                     | Configuration File        | Used For                     |
-+====================================+===========================+==============================+
-| `~jwst.pipeline.Detector1Pipeline` | calwebb_detector1.cfg     | Stage 1: all non-TSO modes   |
-+                                    +---------------------------+------------------------------+
-|                                    | calwebb_tso1.cfg          | Stage 1: all TSO modes       |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.pipeline.DarkPipeline`      | calwebb_dark.cfg          | Stage 1: darks               |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.pipeline.GuiderPipeline`    | calwebb_guider.cfg        | Stage 1+2: FGS guiding modes |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.pipeline.Image2Pipeline`    | calwebb_image2.cfg        | Stage 2: imaging modes       |
-+                                    +---------------------------+------------------------------+
-|                                    | calwebb_tso-image2.cfg    | Stage 2: TSO imaging modes   |
-+                                    +---------------------------+------------------------------+
-|                                    | calwebb_wfs-image2.cfg    | Stage 2: WFS&C imaging       |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.pipeline.Spec2Pipeline`     | calwebb_spec2.cfg         | Stage 2: spectroscopy modes  |
-+                                    +---------------------------+------------------------------+
-|                                    | calwebb_tso-spec2.cfg     | Stage 2: TSO spectral modes  |
-+                                    +---------------------------+------------------------------+
-|                                    | calwebb_nrslamp-spec2.cfg | Stage 2: NIRSpec lamps       |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.pipeline.Image3Pipeline`    | calwebb_image3.cfg        | Stage 3: imaging modes       |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.wfs_combine.WfsCombineStep` | calwebb_wfs-image3.cfg    | Stage 3: WFS&C imaging       |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.pipeline.Spec3Pipeline`     | calwebb_spec3.cfg         | Stage 3: spectroscopy modes  |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.pipeline.Ami3Pipeline`      | calwebb_ami3.cfg          | Stage 3: NIRISS AMI mode     |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.pipeline.Coron3Pipeline`    | calwebb_coron3.cfg        | Stage 3: Coronagraphic mode  |
-+------------------------------------+---------------------------+------------------------------+
-| `~jwst.pipeline.Tso3Pipeline`      | calwebb_tso3.cfg          | Stage 3: TSO modes           |
-+------------------------------------+---------------------------+------------------------------+
++-----------------------------------------------------+---------------------------+------------------------------+
+| Pipeline Class                                      | Configuration File        | Used For                     |
++=====================================================+===========================+==============================+
+| `~jwst.pipeline.Detector1Pipeline`                  | calwebb_detector1.cfg     | Stage 1: all non-TSO modes   |
++                                                     +---------------------------+------------------------------+
+|                                                     | calwebb_tso1.cfg          | Stage 1: all TSO modes       |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.pipeline.DarkPipeline`                       | calwebb_dark.cfg          | Stage 1: darks               |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.pipeline.GuiderPipeline`                     | calwebb_guider.cfg        | Stage 1+2: FGS guiding modes |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.pipeline.Image2Pipeline`                     | calwebb_image2.cfg        | Stage 2: imaging modes       |
++                                                     +---------------------------+------------------------------+
+|                                                     | calwebb_tso-image2.cfg    | Stage 2: TSO imaging modes   |
++                                                     +---------------------------+------------------------------+
+|                                                     | calwebb_wfs-image2.cfg    | Stage 2: WFS&C imaging       |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.pipeline.Spec2Pipeline`                      | calwebb_spec2.cfg         | Stage 2: spectroscopy modes  |
++                                                     +---------------------------+------------------------------+
+|                                                     | calwebb_tso-spec2.cfg     | Stage 2: TSO spectral modes  |
++                                                     +---------------------------+------------------------------+
+|                                                     | calwebb_nrslamp-spec2.cfg | Stage 2: NIRSpec lamps       |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.pipeline.Image3Pipeline`                     | calwebb_image3.cfg        | Stage 3: imaging modes       |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.wfs_combine.wfs_combine_step.WfsCombineStep` | calwebb_wfs-image3.cfg    | Stage 3: WFS&C imaging       |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.pipeline.Spec3Pipeline`                      | calwebb_spec3.cfg         | Stage 3: spectroscopy modes  |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.pipeline.Ami3Pipeline`                       | calwebb_ami3.cfg          | Stage 3: NIRISS AMI mode     |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.pipeline.Coron3Pipeline`                     | calwebb_coron3.cfg        | Stage 3: Coronagraphic mode  |
++-----------------------------------------------------+---------------------------+------------------------------+
+| `~jwst.pipeline.Tso3Pipeline`                       | calwebb_tso3.cfg          | Stage 3: TSO modes           |
++-----------------------------------------------------+---------------------------+------------------------------+
