@@ -11,7 +11,8 @@ replacement technique, described in detail below. The images are aligned to only
 integer pixel in each direction. No sub-pixel resampling is done.
 
 Due to the WFS dither patterns oscillating between two locations, the first image of the pair
-will oscillate between the two dither locations. Because the WFS software works in pixel space,
+will oscillate between the two dither locations. Because the
+Wavefront Sensing and Control Software Subsystem (WSS) software works in pixel space,
 we need to change which input image is "image 1" to get star to have the same pixel location in
 the output image. When the input parameter "flip_dithers" is set to `True` (the default)
 and the x offset between image 1 and image 2 is negative, the two images will be switched before
