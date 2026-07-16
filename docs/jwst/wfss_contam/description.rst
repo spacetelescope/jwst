@@ -108,16 +108,16 @@ By default, each source is simulated with a spectrally flat flux model - that is
 flux at every wavelength is taken directly from the pixel values of a single input direct image.
 If desired, e.g. if multiple direct images are available in different filters, one can specify
 fluxes at multiple wavelengths in each direct-image pixel. This is done by replacing the direct
-image (`_i2d`) file in the input association with a `~stdatamodels.jwst.datamodels.WFSSMultiBandModel`
+image (`_i2d`) file in the input association with a `~stdatamodels.jwst.datamodels.WFSSCubeModel`
 file. This file contains a 3-D array in its ``model.data`` attribute, where the last two dimensions
 are the spatial dimensions of the direct image, and the first dimension has the same length as the
 number of direct images provided. The ``model.wavelength`` attribute is a 1-D array
 that specifies the corresponding wavelengths.
 See the `JWST pipeline notebooks <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-pipeline-notebooks>`_
-for examples of how to create a `~stdatamodels.jwst.datamodels.WFSSMultiBandModel` file from
+for examples of how to create a `~stdatamodels.jwst.datamodels.WFSSCubeModel` file from
 multiple direct images, and how to run it through the pipeline.
 
-When the step encounters a `~stdatamodels.jwst.datamodels.WFSSMultiBandModel` file in place of the direct image,
+When the step encounters a `~stdatamodels.jwst.datamodels.WFSSCubeModel` file in place of the direct image,
 it performs a linear interpolation in wavelength for each pixel to determine the flux at the simulated
 dispersed wavelengths. This allows the step to improve its simulation based on known spectral information.
 The utility of this approach is not limited to the case of multiple direct images in a single observation;

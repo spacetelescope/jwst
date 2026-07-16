@@ -118,7 +118,7 @@ def test_wfss_contam_skip_bad_order(multislitmodel, tmp_cwd_module):
 
 def test_wfss_contam_step_cube_direct_image(multislitmodel, direct_image_cube_with_gradient):
     """
-    Smoke test that the step completes when the direct image is a WFSSMultiBandModel.
+    Smoke test that the step completes when the direct image is a WFSSCubeModel.
 
     Reuses the multislitmodel fixture (slits, WCS, segmentation map, source catalog)
     but just swaps in the cube as the direct image.

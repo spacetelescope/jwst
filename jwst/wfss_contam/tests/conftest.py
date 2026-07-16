@@ -56,7 +56,7 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
 @pytest.fixture(scope="module")
 def direct_image_cube_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
     """
-    Build a multi-band direct image cube and save it as a WFSSMultiBandModel.
+    Build a multi-band direct image cube and save it as a WFSSCubeModel.
 
     Each wavelength plane is a copy of the direct image with a different linear
     gradient added, so the planes are not identical and tests can distinguish
@@ -64,7 +64,7 @@ def direct_image_cube_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG0
 
     Returns
     -------
-    `~stdatamodels.jwst.datamodels.WFSSMultiBandModel`
+    `~stdatamodels.jwst.datamodels.WFSSCubeModel`
         Multi-band direct image, also saved to filename "direct_image_cube.fits"
     """
     ny, nx = direct_image.shape
@@ -78,7 +78,7 @@ def direct_image_cube_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG0
         gradient = wl * x * y / 5000.0
         cube[i] = direct_image + gradient
 
-    model = dm.WFSSMultiBandModel(data=cube, wavelength=band_wls)
+    model = dm.WFSSCubeModel(data=cube, wavelength=band_wls)
     model.meta.wcs = create_imaging_wcs("F200W")
     model.save("direct_image_cube.fits")
 
