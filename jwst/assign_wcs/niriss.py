@@ -20,6 +20,7 @@ from stdatamodels.jwst.transforms.models import (
 from jwst.assign_wcs import pointing
 from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
+    get_mosaic_member_wcs,
     not_implemented_mode,
     subarray_transform,
     transform_bbox_from_shape,
@@ -481,51 +482,24 @@ def wfss(input_model, reference_files):
     # manner that gives you the originating pixels ra and dec, not the
     # pure ra/dec on the sky from the pointing wcs.
 
-    if (direct_file := getattr(input_model.meta, "direct_image", None)) is not None:
-        try:
-            direct = ImageModel(direct_file)
-            bestsep = 1.0  # deg
-            bestfit = -1
-            spec_coord = coord.SkyCoord(
-                input_model.meta.wcsinfo.ra_ref,
-                input_model.meta.wcsinfo.dec_ref,
-                unit=(u.deg, u.deg),
-            )
-            for i, wcs in enumerate(direct.member_wcs.instance):
-                member_coord = coord.SkyCoord(
-                    wcs["ra_ref"],
-                    wcs["dec_ref"],
-                    unit=(u.deg, u.deg),
-                )
-                sep = member_coord.separation(spec_coord)
-                if sep.value < bestsep:
-                    bestfit = i
-                    bestsep = sep.value
+    mosaic_wcs = get_mosaic_member_wcs(input_model)
 
-            if bestfit >= 0:
-                log.info(
-                    f"Pulling WCS from {direct.member_wcs.instance[bestfit]['filename']} "
-                    f"with pointing separation of {bestsep * 3600} arcsec."
-                )
-                imagepipe = []
-                mosaic_wcs = direct.member_wcs.instance[bestfit]["wcs"]
-                mos_frames = mosaic_wcs.available_frames
-                for i in range(len(mos_frames) - 1):
-                    cframe = getattr(mosaic_wcs, mos_frames[i])
-                    trans = mosaic_wcs.get_transform(mos_frames[i], mos_frames[i + 1]) & Identity(2)
-                    spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=cframe.name)
-                    imagepipe.append((spatial_and_spectral, trans))
+    if mosaic_wcs is not None:
+        imagepipe = []
+        mos_frames = mosaic_wcs.available_frames
+        for i in range(len(mos_frames) - 1):
+            cframe = getattr(mosaic_wcs, mos_frames[i])
+            trans = mosaic_wcs.get_transform(mos_frames[i], mos_frames[i + 1]) & Identity(2)
+            spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=cframe.name)
+            imagepipe.append((spatial_and_spectral, trans))
 
-                world = getattr(mosaic_wcs, mos_frames[-1])
-                world.name = "sky"
-                imagepipe.append((cf.CompositeFrame([world, spec], name="world"), None))
+        world = getattr(mosaic_wcs, mos_frames[-1])
+        world.name = "sky"
+        imagepipe.append((cf.CompositeFrame([world, spec], name="world"), None))
 
-                grism_pipeline.extend(imagepipe)
+        grism_pipeline.extend(imagepipe)
 
-                return grism_pipeline
-
-        except FileNotFoundError:
-            log.warning(f"Direct image file {direct_file} not found.")
+        return grism_pipeline
 
     # use the imaging_distortion reference file here
     image_pipeline = imaging(input_model, reference_files)
