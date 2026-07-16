@@ -54,12 +54,13 @@ class PhotomStep(Step):
             | datamodels.ImageModel
             | datamodels.IFUImageModel
             | datamodels.MultiSlitModel
-            | datamodels.TSOMultiSpecModel,
+            | datamodels.TSOMultiSpecModel
+            | datamodels.WFSSMultiSpecModel,
         ):
             log.warning(
                 "Input is not one of the supported model types: "
                 "CubeModel, ImageModel, IFUImageModel, "
-                "SlitModel, MultiSlitModel, or TSOMultiSpecModel."
+                "SlitModel, MultiSlitModel, TSOMultiSpecModel, or WFSSMultiSpecModel."
             )
             log.warning("Photom step will be skipped")
             output_model.meta.cal_step.photom = "SKIPPED"
