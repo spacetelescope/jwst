@@ -95,7 +95,7 @@ class ResampleImage(Resample):
         When co-adding models using
         :py:meth:`~jwst.resample.resample.ResampleImage.add_model`,
         any pixels with
-        a non-zero DQ values are assigned a weight of zero and therefore
+        non-zero DQ values are assigned a weight of zero and therefore
         they do not contribute to the output (resampled) data.
         ``good_bits`` provides a mean to ignore some of the DQ bit flags.
 
@@ -122,7 +122,7 @@ class ResampleImage(Resample):
             "12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"
 
         In order to "translate" mnemonic code to integer bit flags,
-        ``dq_flag_name_map`` attribute must be set to either
+        the ``dq_flag_name_map`` attribute must be set to either
         a dictionary (with keys being mnemonic codes and the values being
         integer flags) or a `~astropy.nddata.BitFlagNameMap`.
 
@@ -135,7 +135,7 @@ class ResampleImage(Resample):
         use a value of ``~4+8``, or ``~4,8``. A string value of
         ``~0`` would be equivalent to a setting of `None`.
 
-        Default value (0) will make *all* pixels with non-zero DQ
+        The default value (0) will make *all* pixels with non-zero DQ
         values be considered "bad" pixels, and the corresponding data
         pixels will be assigned zero weight and thus these pixels
         will not contribute to the output resampled data array.
@@ -156,7 +156,7 @@ class ResampleImage(Resample):
         (pixel scale in arcseconds). ``'pixel_scale'``, when provided,
         will be used for computation of drizzle scaling factor. When it is
         not provided, output pixel scale will be *estimated* from the
-        provided WCS object. ``output_wcs`` object is required when
+        provided WCS object. ``output_wcs`` is required when
         ``output_model`` is `None`. ``output_wcs`` is ignored when
         ``output_model`` is provided.
 
