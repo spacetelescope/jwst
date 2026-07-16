@@ -619,7 +619,7 @@ class ResampleImage(Resample):
             `~jwst.datamodels.library.ModelLibrary` with resampled models
             loaded in memory or whether to serialize resampled models to
             files on disk and return a `~jwst.datamodels.library.ModelLibrary`
-            with only the association info. See :ref:`stpipe:library_on_disk`
+            with only the association info. See :ref:`On-Disk Mode <stpipe:library_on_disk>`
             for more details.
 
         Returns
