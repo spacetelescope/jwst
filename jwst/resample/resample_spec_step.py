@@ -1,3 +1,5 @@
+"""Apply resampling to JWST data."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -46,12 +48,14 @@ class ResampleSpecStep(Step):
 
         Parameters
         ----------
-        input_data : MultiSlitModel, ModelContainer, str
+        input_data : `~stdatamodels.jwst.datamodels.MultiSlitModel`, \
+                     `~jwst.datamodels.container.ModelContainer`, or str
             A single datamodel, a container of datamodels, or an association file.
 
         Returns
         -------
-        SlitModel or MultiSlitModel
+        `~stdatamodels.jwst.datamodels.SlitModel` or \
+        `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The resampled output, one slit per source.
         """
         output_model = self.prepare_output(input_data)
@@ -130,11 +134,11 @@ class ResampleSpecStep(Step):
         Parameters
         ----------
         input_models : `~jwst.datamodels.container.ModelContainer`
-            A container of `~jwst.datamodels.MultiSlitModel`
+            A container of `~stdatamodels.jwst.datamodels.MultiSlitModel`
 
         Returns
         -------
-        result : `~jwst.datamodels.MultiSlitModel`
+        result : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The resampled output, one per source
         """
         containers = multislit_to_container(input_models)
@@ -234,12 +238,12 @@ class ResampleSpecStep(Step):
         Parameters
         ----------
         input_models : `~jwst.datamodels.container.ModelContainer`
-            A container of `~jwst.datamodels.ImageModel`
-            or `~jwst.datamodels.SlitModel`
+            A container of `~stdatamodels.jwst.datamodels.ImageModel`
+            or `~stdatamodels.jwst.datamodels.SlitModel`
 
         Returns
         -------
-        result : `~jwst.datamodels.SlitModel`
+        result : `~stdatamodels.jwst.datamodels.SlitModel`
             The resampled output
         """
         # Make sure all input models have consistent NaN and DO_NOT_USE values
@@ -294,8 +298,8 @@ class ResampleSpecStep(Step):
         """
         Update slit attributes in the resampled slit image.
 
-        This is needed because model.slit attributes are not in model.meta, so
-        the normal update() method doesn't work with them. Updates output_model
+        This is needed because ``model.slit`` attributes are not in ``model.meta``, so
+        the normal ``update()`` method doesn't work with them. Updates output model
         in-place.
         """
         for attr in [
@@ -331,7 +335,7 @@ class ResampleSpecStep(Step):
 
         Parameters
         ----------
-        model : `~jwst.datamodels.SlitModel`
+        model : `~stdatamodels.jwst.datamodels.SlitModel`
             The resampled slit model to update.
         """
         if not (model.hasattr("source_xpos") and model.hasattr("source_ypos")):
