@@ -5,6 +5,7 @@ import warnings
 
 import gwcs.coordinate_frames
 import numpy as np
+from astropy import coordinates as coord
 from astropy import units as u
 from astropy.constants import c
 from astropy.modeling import models as astmodels
@@ -1033,6 +1034,64 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
     return onslice_ind
 
 
+def get_mosaic_member_wcs(input_model):
+    """
+    Given input model with associated direct image, find matching image WCS.
+
+    Attempt to open the listed direct image mosaic, find the mosaic member WCS
+    closest in pointing to the input model, and return the WCS object.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
+        The input data for which we'll find the closest pointing match in the
+        list of exposures used to generate the associated direct image mosaic.
+
+    Returns
+    -------
+    `~gwcs.wcs.WCS`
+        The WCS object stored for the mosaic member closest in pointing to the
+        input model.
+    """
+    mosaic_wcs = None
+    direct_file = input_model.meta.direct_image
+
+    try:
+        direct = ImageModel(direct_file)
+        bestsep = 1.0  # deg
+        bestfit = -1
+        spec_coord = coord.SkyCoord(
+            input_model.meta.wcsinfo.ra_ref,
+            input_model.meta.wcsinfo.dec_ref,
+            unit=(u.deg, u.deg),
+        )
+        for i, wcs in enumerate(direct.member_wcs.instance):
+            member_coord = coord.SkyCoord(
+                wcs["ra_ref"],
+                wcs["dec_ref"],
+                unit=(u.deg, u.deg),
+            )
+            sep = member_coord.separation(spec_coord)
+            if sep.value < bestsep:
+                bestfit = i
+                bestsep = sep.value
+
+        if bestfit >= 0:
+            log.info(
+                f"Retrieving WCS from {direct.member_wcs.instance[bestfit]['filename']} "
+                f"with pointing separation of {bestsep * 3600} arcsec."
+            )
+            mosaic_wcs = direct.member_wcs.instance[bestfit]["wcs"]
+
+    except FileNotFoundError:
+        log.warning(f"Direct image file {direct_file} not found.")
+
+    except AttributeError:
+        log.warning("Direct image does not contain WCS information.")
+
+    return mosaic_wcs
+
+
 def update_fits_wcsinfo(
     datamodel,
     max_pix_error=0.01,
@@ -1251,9 +1310,13 @@ def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
     """
     xstart = wfss_model.meta.subarray.xstart
     ystart = wfss_model.meta.subarray.ystart
-    reference_files = get_wcs_reference_files(wfss_model)
-    image_pipeline = imaging(wfss_model, reference_files)
-    imwcs = WCS(image_pipeline)
+
+    imwcs = get_mosaic_member_wcs(wfss_model)
+    if imwcs is None:
+        reference_files = get_wcs_reference_files(wfss_model)
+        image_pipeline = imaging(wfss_model, reference_files)
+        imwcs = WCS(image_pipeline)
+
     if bbox is not None:
         imwcs.bounding_box = bbox
     elif xstart is not None and ystart is not None and (xstart != 1 or ystart != 1):
