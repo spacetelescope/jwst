@@ -87,7 +87,7 @@ class ResampleImage(Resample):
         the exposure time otherwise.
 
     good_bits : int, str, or None, optional
-        An integer bit mask, `None`, a Python list of bit flags, a
+        An integer bit mask, `None`, a Python list of bit flags, or a
         delimiter-separated (comma, ``'|'``, ``'+'``) string list of integer
         bit flags or mnemonic flag names that indicate what bits in models'
         DQ bitfield array should be *ignored* (i.e., zeroed).
