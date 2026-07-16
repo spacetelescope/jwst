@@ -90,17 +90,17 @@ In addition to image data, resample step also creates a "context image" stored
 in the ``con`` attribute in the output data model or CON extension
 of the FITS file. Each pixel in the context image is a bit field that encodes
 information about which input image has contributed to the corresponding
-pixel in the resampled data array. Context image uses 32-bit integers to encode
+pixel in the resampled data array. The context image uses 32-bit integers to encode
 this information and hence it can keep track of only 32 input images.
-First bit corresponds to the first input image, second bit corresponds to the
+The first bit corresponds to the first input image, the second bit corresponds to the
 second input image, and so on. If the number of input images is larger than 32,
 then it is necessary to have multiple context images ("planes") to hold
 information about all input images,
 with the first plane encoding which of the first 32 images contributed
 to the output data pixel, the second plane representing next 32 input images
-(number 33-64), etc. For this reason, context array is a 3D array of the type
+(number 33-64), etc. For this reason, the context array is a 3D array of type
 `numpy.int32` and shape ``(np, ny, nx)``, where ``nx`` and ``ny``
-are dimensions of the image data, and ``np`` is the number of "planes" computed as
+are the dimensions of the image data, and ``np`` is the number of "planes" computed as
 ``(number of input images - 1) // 32 + 1``. If a bit at position ``k`` in a
 pixel with coordinates ``(p, y, x)`` is 0, then input image number
 ``32 * p + k`` (0-indexed) did not contribute to the output data pixel

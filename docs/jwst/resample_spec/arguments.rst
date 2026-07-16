@@ -70,9 +70,9 @@ image.
 ``--output_wcs`` (str, default='')
     File name of an ASDF file with a GWCS stored under the ``"wcs"`` key
     under the root of the file. The output image size is determined from the
-    bounding box of the WCS (if any). Argument ``output_shape`` overrides
-    computed image size and it is required when output WCS does not have
-    ``bounding_box`` property set or if ``pixel_shape`` or ``array_shape`` keys
+    bounding box of the WCS (if any). The argument ``output_shape`` overrides
+    computed image size and it is required when the output WCS does not have
+    ``bounding_box`` set or if the ``pixel_shape`` or ``array_shape`` keys
     (see below) are not provided.
 
     Additional information may be stored under

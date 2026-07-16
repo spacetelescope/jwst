@@ -36,7 +36,7 @@ image.
 
 ``--crpix`` (tuple of float, default=None)
     0-based coordinates of the reference pixel in the image array in the
-    ``x, y`` order. This is the image coordinate to which ``crval`` maps to.
+    ``x, y`` order. This is the image coordinate to which ``crval`` maps.
     If ``crpix`` is not specified, it will be set to the center of the bounding
     box of the returned WCS object. When supplied from command line, it should
     be a comma-separated list of floats. Ignored when ``output_wcs``
@@ -57,7 +57,7 @@ image.
 
     .. note::
         Specifying ``output_shape`` *is required* when the WCS in
-        ``output_wcs`` does not have ``bounding_box`` property set.
+        ``output_wcs`` does not have the ``bounding_box`` property set.
 
 ``--output_wcs`` (str, default='')
     File name of an ASDF file with a GWCS stored under the ``"wcs"`` key
@@ -110,7 +110,7 @@ image.
     if unavailable, the scaling will be set equal to the exposure time (EFFEXPTM).
 
 ``--single`` (boolean, default=False)
-    If set to `True`, resample each input image into a separate output.  If
+    If set to `True`, each image is resampled into a separate output.  If
     `False` (the default), each input is resampled additively (with weights) to
     a common output.
 
