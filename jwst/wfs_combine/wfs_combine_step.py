@@ -1,3 +1,5 @@
+"""Correct effects due to overlapping spectral traces."""
+
 import logging
 from pathlib import Path
 
@@ -41,7 +43,7 @@ class WfsCombineStep(Step):
 
         Returns
         -------
-        output_container : ModelContainer
+        output_container : `~jwst.datamodels.container.ModelContainer`
             Model container with all combined data
         """
         self.suffix = "wfscmb"
