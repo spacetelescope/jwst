@@ -124,6 +124,7 @@ class Observation:
         max_cpu=1,
         max_pixels_per_chunk=5e4,
         oversample_factor=2,
+        band_wavelengths=None,
     ):
         """
         Initialize all data and metadata for a given observation.
@@ -131,7 +132,8 @@ class Observation:
         Parameters
         ----------
         direct_image : np.ndarray
-            Direct imaging data.
+            Direct imaging data.  May be 2-D ``(ny, nx)`` for a single-band
+            direct image, or 3-D ``(N, ny, nx)`` for a multi-band cube.
         segmentation_map : np.ndarray
             Segmentation map data.
         grism_wcs : `~gwcs.wcs.WCS`
@@ -146,6 +148,9 @@ class Observation:
             Maximum number of pixels per chunk when dispersing sources
         oversample_factor : int, optional
             Factor by which to oversample the wavelength grid
+        band_wavelengths : array-like of shape (N,), optional
+            Central wavelengths (in microns) for each plane of a 3-D ``direct_image``.
+            Required when ``direct_image`` is 3-D; ignored when ``direct_image`` is 2-D.
         """
         if boundaries is None:
             boundaries = []
@@ -160,8 +165,17 @@ class Observation:
         self.max_pixels_per_chunk = max_pixels_per_chunk
         self.oversample_factor = oversample_factor
 
-        # ensure the direct image has background subtracted
-        self.dimage = background_subtract(direct_image)
+        if direct_image.ndim == 2:
+            # use placeholder value since disperse() is going to see a flat SED and ignore this
+            self.band_wavelengths = np.array([1.0])
+            self.dimage = background_subtract(direct_image)
+        else:
+            # 3-D cube
+            if band_wavelengths is None:
+                raise ValueError("band_wavelengths must be provided when direct_image is 3-D")
+            self.band_wavelengths = np.asarray(band_wavelengths, dtype=float)
+            # apply background subtraction independently to each wavelength plane
+            self.dimage = np.array([background_subtract(plane) for plane in direct_image])
 
         # Set the limits of the dispersed image to be simulated
         if len(boundaries) == 0:
@@ -189,7 +203,12 @@ class Observation:
         """Create flat lists of pixels to be dispersed."""
         self.ys, self.xs = np.nonzero(self.seg)
         self.source_ids_per_pixel = self.seg[self.ys, self.xs]
-        self.fluxes = self.dimage[self.ys, self.xs]
+        if self.dimage.ndim == 2:
+            # Give it an extra dimension to make it shape (1, n_pixels)
+            self.fluxes = self.dimage[self.ys, self.xs][np.newaxis, :]
+        else:
+            # Shape (N, n_pixels), where N is the number of input direct image bands
+            self.fluxes = self.dimage[:, self.ys, self.xs]
 
     def chunk_sources(
         self,
@@ -243,7 +262,7 @@ class Observation:
         # Get pixels for selected sources
         selected_xs = self.xs[selected_mask]
         selected_ys = self.ys[selected_mask]
-        selected_fluxes = self.fluxes[selected_mask]
+        selected_fluxes = self.fluxes[:, selected_mask]
         selected_source_ids = self.source_ids_per_pixel[selected_mask]
 
         # Sort by source ID to keep sources mostly together
@@ -252,7 +271,7 @@ class Observation:
         sort_indices = np.argsort(selected_source_ids)
         sorted_xs = selected_xs[sort_indices]
         sorted_ys = selected_ys[sort_indices]
-        sorted_fluxes = selected_fluxes[sort_indices]
+        sorted_fluxes = selected_fluxes[:, sort_indices]
         sorted_source_ids = selected_source_ids[sort_indices]
 
         # Split into chunks of max_pixels
@@ -270,7 +289,7 @@ class Observation:
 
             chunk_xs = sorted_xs[start_idx:end_idx]
             chunk_ys = sorted_ys[start_idx:end_idx]
-            chunk_fluxes = sorted_fluxes[start_idx:end_idx]
+            chunk_fluxes = sorted_fluxes[:, start_idx:end_idx]
             chunk_source_ids = sorted_source_ids[start_idx:end_idx]
 
             disperse_args.append(
@@ -278,6 +297,7 @@ class Observation:
                     chunk_xs,
                     chunk_ys,
                     chunk_fluxes,
+                    self.band_wavelengths,
                     chunk_source_ids,
                     order,
                     wmin,
