@@ -781,7 +781,9 @@ class DataSet:
                 else:
                     conversion_uniform = conversion / slit.meta.photometry.pixelarea_steradians
                     unit_is_surface_brightness = False
-            elif isinstance(self.input, datamodels.TSOMultiSpecModel):
+            elif isinstance(
+                self.input, datamodels.TSOMultiSpecModel | datamodels.WFSSMultiSpecModel
+            ):
                 # output from extract1d should not require this area conversion
                 unit_is_surface_brightness = False
             else:
@@ -913,7 +915,6 @@ class DataSet:
             ):
                 # This input does not require a 2d conversion, but a 1d interpolation on the
                 # input wavelength vector to find the relresponse.
-                # TODO: how to handle order for wfss?
                 conversion, no_cal = self.create_1d_conversion(
                     self.input.spec[self.specnum], conversion, waves, relresps, self.integ_row
                 )
@@ -1200,6 +1201,10 @@ class DataSet:
         # Interpolate the photometric response values onto the
         # 1D wavelength grid
         conv_1d = np.interp(wl_array, waves, relresps, left=np.nan, right=np.nan)
+
+        # # include dispersion?
+        # disp = np.abs(np.gradient(wl_array))
+        # conv_1d *= disp
 
         if flip_wl:
             # If wl_array was flipped, flip the conversion before returning it.
