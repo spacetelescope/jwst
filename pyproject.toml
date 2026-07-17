@@ -30,7 +30,7 @@ dependencies = [
     "scikit-image>=0.23.0",
     "scipy>=1.15.3",
     # "stdatamodels>=6.0.0,<6.1",
-    "stdatamodels @ git+https://github.com/emolter/stdatamodels.git@JP-4326",
+    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     #"stcal>=1.19.1,<2",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     "stpipe>=1.0.0,<2",
