@@ -704,6 +704,11 @@ class DataSet:
         for field in match_fields:
             value = getattr(self, field)
             fields_to_match[field] = value
+
+        # WFSS phot tables are delivered in per sr units. take that out right away
+        pixar_sr, _ = self.pixarea_from_ftab(ftab)
+        ftab.phot_table["PHOTMJSR"] *= pixar_sr * 1.0e6  # MJy/sr to Jy
+
         for spec in self.input.spec:
             self.specnum += 1
             self.order = spec.spectral_order
@@ -722,9 +727,12 @@ class DataSet:
                     order=self.order,
                     time_correction=correction_table[row],
                     phot_unit=phot_unit,
+                    include_dispersion=True,
                 )
 
-    def photom_io(self, tabdata, order=None, time_correction=None, phot_unit=None):
+    def photom_io(
+        self, tabdata, order=None, time_correction=None, phot_unit=None, include_dispersion=False
+    ):
         """
         Combine photometric conversion factors and apply to the science dataset.
 
@@ -916,7 +924,12 @@ class DataSet:
                 # This input does not require a 2d conversion, but a 1d interpolation on the
                 # input wavelength vector to find the relresponse.
                 conversion, no_cal = self.create_1d_conversion(
-                    self.input.spec[self.specnum], conversion, waves, relresps, self.integ_row
+                    self.input.spec[self.specnum],
+                    conversion,
+                    waves,
+                    relresps,
+                    self.integ_row,
+                    include_dispersion=include_dispersion,
                 )
             else:
                 conversion, no_cal = self.create_2d_conversion(
@@ -974,6 +987,15 @@ class DataSet:
             # Variance columns are also not currently populated for SOSS: they are
             # zero-filled. Conversions are applied here anyway in case variances are
             # populated in the future.
+            if isinstance(self.input, datamodels.WFSSMultiSpecModel):
+                flux_unit = "Jy"
+                flux_squared_unit = "Jy^2"
+            else:
+                # TODO: confirm flux unit. The photmj value may be delivered as Jy, not MJy,
+                #  for calibrating extracted SOSS spectra.
+                flux_unit = "MJy"
+                flux_squared_unit = "MJy^2"
+
             spec = self.input.spec[self.specnum]
             spec.spec_table.FLUX[self.integ_row] *= conversion
             spec.spec_table.FLUX_ERROR[self.integ_row] *= conversion
@@ -986,10 +1008,6 @@ class DataSet:
             spec.spec_table.BKGD_VAR_RNOISE[self.integ_row] *= conversion**2.0
             spec.spec_table.BKGD_VAR_FLAT[self.integ_row] *= conversion**2.0
 
-            # TODO: confirm flux unit. The photmj value may be delivered as Jy, not MJy,
-            #  for calibrating extracted SOSS spectra.
-            flux_unit = "MJy"
-            flux_squared_unit = "MJy^2"
             spec.spec_table.columns["FLUX"].unit = flux_unit
             spec.spec_table.columns["FLUX_ERROR"].unit = flux_unit
             spec.spec_table.columns["FLUX_VAR_POISSON"].unit = flux_squared_unit
@@ -1000,6 +1018,11 @@ class DataSet:
             spec.spec_table.columns["BKGD_VAR_POISSON"].unit = flux_squared_unit
             spec.spec_table.columns["BKGD_VAR_RNOISE"].unit = flux_squared_unit
             spec.spec_table.columns["BKGD_VAR_FLAT"].unit = flux_squared_unit
+
+            if isinstance(self.input, datamodels.WFSSMultiSpecModel):
+                # handle surface brightness columns for WFSSMultiSpecModel
+                # TODO
+                pass
 
         else:
             conversion_squared = conversion * conversion
@@ -1146,7 +1169,9 @@ class DataSet:
             log.warning(f"Can't process data with DISPAXIS={dispaxis}")
         return dispersion_array
 
-    def create_1d_conversion(self, model, conversion, waves, relresps, integ_row):
+    def create_1d_conversion(
+        self, model, conversion, waves, relresps, integ_row, include_dispersion=False
+    ):
         """
         Resample the photometric conversion array.
 
@@ -1166,6 +1191,8 @@ class DataSet:
             1D photometric response values, as a function of waves.
         integ_row : int
             Table row number for the spectrum for the current integration.
+        include_dispersion : bool, optional
+            Whether to include the effect of dispersion in the conversion.
 
         Returns
         -------
@@ -1202,9 +1229,10 @@ class DataSet:
         # 1D wavelength grid
         conv_1d = np.interp(wl_array, waves, relresps, left=np.nan, right=np.nan)
 
-        # # include dispersion?
-        # disp = np.abs(np.gradient(wl_array))
-        # conv_1d *= disp
+        if include_dispersion:
+            # this is needed for WFSS modes
+            dispersion = np.abs(np.gradient(wl_array))
+            conv_1d /= dispersion
 
         if flip_wl:
             # If wl_array was flipped, flip the conversion before returning it.
