@@ -147,6 +147,7 @@ class DataSet:
         self.inverse = inverse
         self.source_type = None
         self.apply_time_correction = apply_time_correction
+        self.sb_conversion = None
 
         # For MultiSlitModels, only set a generic source_type value for the
         # entire datamodel if the user has set the source_type parameter.
@@ -706,8 +707,10 @@ class DataSet:
             fields_to_match[field] = value
 
         # WFSS phot tables are delivered in per sr units. take that out right away
+        # but store it because it needs to be inversely applied to surface brightness later
         pixar_sr, _ = self.pixarea_from_ftab(ftab)
-        ftab.phot_table["PHOTMJSR"] *= pixar_sr * 1.0e6  # MJy/sr to Jy
+        self.sb_conversion = pixar_sr * 1.0e6  # MJy/sr to Jy
+        ftab.phot_table["PHOTMJSR"] *= self.sb_conversion  # MJy/sr to Jy
 
         for spec in self.input.spec:
             self.specnum += 1
@@ -1022,6 +1025,21 @@ class DataSet:
             if isinstance(self.input, datamodels.WFSSMultiSpecModel):
                 # handle surface brightness columns for WFSSMultiSpecModel
                 # TODO
+                conv_sb = conversion / self.sb_conversion
+                spec.spec_table.SURF_BRIGHT[self.integ_row] *= conv_sb
+                spec.spec_table.SB_ERROR[self.integ_row] *= conv_sb
+                spec.spec_table.SB_VAR_POISSON[self.integ_row] *= conv_sb**2.0
+                spec.spec_table.SB_VAR_RNOISE[self.integ_row] *= conv_sb**2.0
+                spec.spec_table.SB_VAR_FLAT[self.integ_row] *= conv_sb**2.0
+
+                sb_unit = "MJy/sr"
+                sb_var_unit = "MJy^2 / sr^2"
+                spec.spec_table.columns["SURF_BRIGHT"].unit = sb_unit
+                spec.spec_table.columns["SB_ERROR"].unit = sb_unit
+                spec.spec_table.columns["SB_VAR_POISSON"].unit = sb_var_unit
+                spec.spec_table.columns["SB_VAR_RNOISE"].unit = sb_var_unit
+                spec.spec_table.columns["SB_VAR_FLAT"].unit = sb_var_unit
+
                 pass
 
         else:
