@@ -8,6 +8,9 @@ from jwst import datamodels
 from jwst.lib import reffile_utils
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 parent_root = "jw01118001001_03101_00001-seg001"
 
 params = {}
