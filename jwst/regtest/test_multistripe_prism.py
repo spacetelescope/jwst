@@ -241,13 +241,13 @@ def test_uncal(detector, multistripe_name):
     Test that the create_multistripe uncal files match the data in the parent uncal files.
     """
     parent = f"{parent_root}_{detector}_uncal.fits"
-    with fits.open(parent) as f1:
+    with datamodels.open(parent) as parent_model:
         multistripe_filename = f"{multistripe_name.lower()}_{detector}_uncal.fits"
-        sci1 = f1["sci"].data
-        with fits.open(multistripe_filename) as f2:
-            nstripes = f2[0].header["SSTR_NST"]
+        sci1 = parent_model.data
+        with datamodels.open(multistripe_filename) as multistripe_model:
+            nstripes = multistripe_model.meta.subarray.num_superstripe
             columns_per_integration = 512 // nstripes - 4
-            sci2 = f2["sci"].data
+            sci2 = multistripe_model.data
             for i in range(nstripes):
                 if detector == "nrs1":
                     start_col = i * columns_per_integration
@@ -272,13 +272,17 @@ def test_saturation(detector, multistripe_name):
     parent = f"{parent_root}_{detector}_saturation.fits"
     everything_ok = True
     bad_extensions = []
-    with fits.open(parent) as f1:
+    with datamodels.open(parent) as parent_model:
         multistripe_filename = f"{multistripe_name.lower()}_{detector}_saturation.fits"
-        sci1 = f1["sci"].data
-        with fits.open(multistripe_filename) as f2:
+        sci1 = parent_model.data
+        pixeldq1 = parent_model.pixeldq
+        groupdq1 = parent_model.groupdq
+        with datamodels.open(multistripe_filename) as multistripe_model:
             nstripes = params[multistripe_name]["NSTRIPES"]
             columns_per_integration = 512 // nstripes - 4
-            sci2 = f2["sci"].data
+            sci2 = multistripe_model.data
+            pixeldq2 = multistripe_model.pixeldq
+            groupdq2 = multistripe_model.groupdq
             for i in range(nstripes):
                 if detector == "nrs1":
                     start_col = i * columns_per_integration
@@ -287,12 +291,10 @@ def test_saturation(detector, multistripe_name):
                         sci1[..., start_col:end_col] != sci2[i::nstripes, :, :, 4:]
                     )
                     result_pixeldq = np.where(
-                        f1["pixeldq"].data[..., start_col:end_col]
-                        != f2["pixeldq"].data[i::nstripes, :, 4:]
+                        pixeldq1[..., start_col:end_col] != pixeldq2[i::nstripes, :, 4:]
                     )
                     result_groupdq = np.where(
-                        f1["groupdq"].data[..., start_col:end_col]
-                        != f2["groupdq"].data[i::nstripes, :, :, 4:]
+                        groupdq1[..., start_col:end_col] != groupdq2[i::nstripes, :, :, 4:]
                     )
                 else:
                     end_col = 512 - i * columns_per_integration
@@ -301,12 +303,10 @@ def test_saturation(detector, multistripe_name):
                         sci1[..., start_col:end_col] != sci2[i::nstripes, :, :, :-4]
                     )
                     result_pixeldq = np.where(
-                        f1["pixeldq"].data[..., start_col:end_col]
-                        != f2["pixeldq"].data[i::nstripes, :, :-4]
+                        pixeldq1[..., start_col:end_col] != pixeldq2[i::nstripes, :, :-4]
                     )
                     result_groupdq = np.where(
-                        f1["groupdq"].data[..., start_col:end_col]
-                        != f2["groupdq"].data[i::nstripes, :, :, :-4]
+                        groupdq1[..., start_col:end_col] != groupdq2[i::nstripes, :, :, :-4]
                     )
                 if len(result_sci[0]) != 0:
                     everything_ok = False
@@ -335,34 +335,30 @@ def test_linearity(multistripe_name, detector):
     everything_ok = True
     bad_extensions = []
     parent = f"{parent_root}_{detector}_linearity.fits"
-    with fits.open(parent) as f1:
+    with datamodels.open(parent) as parent_model:
         multistripe_filename = f"{multistripe_name.lower()}_{detector}_linearity.fits"
-        sci1 = f1["sci"].data
-        with fits.open(multistripe_filename) as f2:
+        sci1 = parent_model.data
+        pixeldq1 = parent_model.pixeldq
+        groupdq1 = parent_model.groupdq
+        with datamodels.open(multistripe_filename) as multistripe_model:
             nstripes = params[multistripe_name]["NSTRIPES"]
             columns_per_integration = 512 // nstripes - 4
             total_columns = columns_per_integration * nstripes
-            sci2 = f2["sci"].data
+            sci2 = multistripe_model.data
+            pixeldq2 = multistripe_model.pixeldq
+            groupdq2 = multistripe_model.groupdq
             if detector == "nrs1":
                 start_col = 0
                 end_col = start_col + total_columns
                 result_sci = np.where(sci1[..., start_col:end_col] != sci2)
-                result_pixeldq = np.where(
-                    f1["pixeldq"].data[..., start_col:end_col] != f2["pixeldq"].data
-                )
-                result_groupdq = np.where(
-                    f1["groupdq"].data[..., start_col:end_col] != f2["groupdq"].data
-                )
+                result_pixeldq = np.where(pixeldq1[..., start_col:end_col] != pixeldq2)
+                result_groupdq = np.where(groupdq1[..., start_col:end_col] != groupdq2)
             else:
                 end_col = 512
                 start_col = end_col - total_columns
                 result_sci = np.where(sci1[..., start_col:end_col] != sci2)
-                result_pixeldq = np.where(
-                    f1["pixeldq"].data[..., start_col:end_col] != f2["pixeldq"].data
-                )
-                result_groupdq = np.where(
-                    f1["groupdq"].data[..., start_col:end_col] != f2["groupdq"].data
-                )
+                result_pixeldq = np.where(pixeldq1[..., start_col:end_col] != pixeldq2)
+                result_groupdq = np.where(groupdq1[..., start_col:end_col] != groupdq2)
             if len(result_sci[0]) != 0:
                 everything_ok = False
                 bad_extensions.append("sci")
