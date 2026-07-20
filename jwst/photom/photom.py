@@ -985,19 +985,15 @@ class DataSet:
             # Make sure output model has consistent NaN and DO_NOT_USE values
             match_nans_and_flags(slit)
 
-        elif isinstance(self.input, datamodels.TSOMultiSpecModel | datamodels.WFSSMultiSpecModel):
+        elif isinstance(self.input, datamodels.TSOMultiSpecModel):
             # This block does not address SB columns - they are never populated for SOSS.
             # Variance columns are also not currently populated for SOSS: they are
             # zero-filled. Conversions are applied here anyway in case variances are
             # populated in the future.
-            if isinstance(self.input, datamodels.WFSSMultiSpecModel):
-                flux_unit = "Jy"
-                flux_squared_unit = "Jy^2"
-            else:
-                # TODO: confirm flux unit. The photmj value may be delivered as Jy, not MJy,
-                #  for calibrating extracted SOSS spectra.
-                flux_unit = "MJy"
-                flux_squared_unit = "MJy^2"
+            # TODO: confirm flux unit. The photmj value may be delivered as Jy, not MJy,
+            #  for calibrating extracted SOSS spectra.
+            flux_unit = "MJy"
+            flux_squared_unit = "MJy^2"
 
             spec = self.input.spec[self.specnum]
             spec.spec_table.FLUX[self.integ_row] *= conversion
@@ -1022,25 +1018,36 @@ class DataSet:
             spec.spec_table.columns["BKGD_VAR_RNOISE"].unit = flux_squared_unit
             spec.spec_table.columns["BKGD_VAR_FLAT"].unit = flux_squared_unit
 
-            if isinstance(self.input, datamodels.WFSSMultiSpecModel):
-                # handle surface brightness columns for WFSSMultiSpecModel
-                # TODO
-                conv_sb = conversion / self.sb_conversion
-                spec.spec_table.SURF_BRIGHT[self.integ_row] *= conv_sb
-                spec.spec_table.SB_ERROR[self.integ_row] *= conv_sb
-                spec.spec_table.SB_VAR_POISSON[self.integ_row] *= conv_sb**2.0
-                spec.spec_table.SB_VAR_RNOISE[self.integ_row] *= conv_sb**2.0
-                spec.spec_table.SB_VAR_FLAT[self.integ_row] *= conv_sb**2.0
+        elif isinstance(self.input, datamodels.WFSSMultiSpecModel):
+            spec = self.input.spec[self.specnum]
 
-                sb_unit = "MJy/sr"
-                sb_var_unit = "MJy^2 / sr^2"
-                spec.spec_table.columns["SURF_BRIGHT"].unit = sb_unit
-                spec.spec_table.columns["SB_ERROR"].unit = sb_unit
-                spec.spec_table.columns["SB_VAR_POISSON"].unit = sb_var_unit
-                spec.spec_table.columns["SB_VAR_RNOISE"].unit = sb_var_unit
-                spec.spec_table.columns["SB_VAR_FLAT"].unit = sb_var_unit
+            # Fluxes are in units of Jy
+            flux_unit = "Jy"
+            flux_squared_unit = "Jy^2"
+            for att in ["FLUX", "FLUX_ERROR"]:
+                spec.spec_table[att][self.integ_row] *= conversion
+                spec.spec_table.columns[att].unit = flux_unit
+            for att in ["FLUX_VAR_POISSON", "FLUX_VAR_RNOISE", "FLUX_VAR_FLAT"]:
+                spec.spec_table[att][self.integ_row] *= conversion**2.0
+                spec.spec_table.columns[att].unit = flux_squared_unit
 
-                pass
+            # Background and surface brightness are in surface brightness units of MJy/sr
+            conv_sb = conversion / self.sb_conversion
+            sb_unit = "MJy/sr"
+            sb_var_unit = "MJy^2 / sr^2"
+            for att in ["BACKGROUND", "BKGD_ERROR", "SURF_BRIGHT", "SB_ERROR"]:
+                spec.spec_table[att][self.integ_row] *= conv_sb
+                spec.spec_table.columns[att].unit = sb_unit
+            for att in [
+                "BKGD_VAR_POISSON",
+                "BKGD_VAR_RNOISE",
+                "BKGD_VAR_FLAT",
+                "SB_VAR_POISSON",
+                "SB_VAR_RNOISE",
+                "SB_VAR_FLAT",
+            ]:
+                spec.spec_table[att][self.integ_row] *= conv_sb**2.0
+                spec.spec_table.columns[att].unit = sb_var_unit
 
         else:
             conversion_squared = conversion * conversion
