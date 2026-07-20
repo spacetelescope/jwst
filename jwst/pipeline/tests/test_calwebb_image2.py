@@ -5,14 +5,16 @@ from pathlib import Path
 import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
+from stpipe import _log
 
+from jwst.associations.asn_from_list import asn_from_list
+from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.pipeline import Image2Pipeline
 from jwst.pipeline.tests.helpers import make_nircam_rate_model
 from jwst.stpipe import Step
 
 INPUT_FILE = "test_rate.fits"
 INPUT_FILE_2 = "test2_rate.fits"
-INPUT_ASN = "test_asn.json"
 OUTPUT_FILE = "custom_name.fits"
 OUTPUT_FILE_ASN = "custom_name_asn.fits"  # cannot reuse because everything runs in same cwd
 LOGFILE = "run_asn.log"
@@ -32,7 +34,7 @@ def make_rate_file(tmp_cwd_module):
 @pytest.fixture(scope="module")
 def make_association(make_rate_file):
     shutil.copy(INPUT_FILE, INPUT_FILE_2)
-    os.system(f"asn_from_list -o {INPUT_ASN} -r DMSLevel2bBase {INPUT_FILE} {INPUT_FILE_2}")
+    return asn_from_list([INPUT_FILE, INPUT_FILE_2], rule=DMSLevel2bBase)
 
 
 @pytest.fixture(scope="module", params=[OUTPUT_FILE])
@@ -52,25 +54,26 @@ def run_image2_pipeline_file(make_rate_file, request):
     Step.from_cmdline(args)
 
 
-@pytest.fixture(scope="module", params=[OUTPUT_FILE_ASN])
-def run_image2_pipeline_asn(make_association, request):
+@pytest.fixture(scope="module")
+def run_image2_pipeline_asn(make_association):
     """
     Two-product association passed in. This should trigger a warning
     and the output_file parameter should be ignored.
     """
     # save warnings to logfile so can be checked later
-    args = [
-        "calwebb_image2",
-        INPUT_ASN,
-        "--log-level=INFO",
-        f"--log-file={LOGFILE}",
-        "--steps.flat_field.skip=true",
-        "--steps.photom.skip=true",
-        "--steps.resample.skip=true",
-        f"--output_file={request.param}",
-    ]
-
-    Step.from_cmdline(args)
+    log_cfg = _log.load_configuration(log_level="INFO", log_file=LOGFILE)
+    log_cfg.set_recording_formatter(Image2Pipeline._log_records_formatter)
+    with log_cfg.context(Image2Pipeline.get_stpipe_loggers()):
+        Image2Pipeline.call(
+            make_association,
+            save_results=True,
+            steps={
+                "flat_field": {"skip": True},
+                "photom": {"skip": True},
+                "resample": {"skip": True},
+            },
+            output_file=OUTPUT_FILE_ASN,
+        )
 
 
 def test_output_file_rename_file(run_image2_pipeline_file):
@@ -90,7 +93,6 @@ def test_output_file_norename_asn(run_image2_pipeline_asn):
     when multiple products are in the same association.
     """
     # ensure tmp_cwd_module is successfully keeping all files in cwd
-    assert os.path.exists(INPUT_ASN)
     assert os.path.exists(INPUT_FILE)
     assert os.path.exists(INPUT_FILE_2)
 
