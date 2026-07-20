@@ -9,7 +9,6 @@ from stdatamodels.jwst import datamodels
 from jwst.pipeline import Image2Pipeline
 from jwst.pipeline.tests.helpers import make_nircam_rate_model
 from jwst.stpipe import Step
-from jwst.tests.helpers import _help_pytest_warns
 
 INPUT_FILE = "test_rate.fits"
 INPUT_FILE_2 = "test2_rate.fits"
@@ -113,26 +112,6 @@ def test_output_file_norename_asn(run_image2_pipeline_asn):
     assert (
         "Multiple products in input association. Output file name will be ignored." in log_content
     )
-
-
-def test_bsub_deprecated(make_rate_file):
-    """
-    Ensure that the deprecated save_bsub parameter raises a
-    DeprecationWarning when set to True.
-    """
-    args = [
-        "calwebb_image2",
-        INPUT_FILE,
-        "--save_bsub=true",
-        "--steps.flat_field.skip=true",
-        "--steps.photom.skip=true",
-        "--steps.resample.skip=true",
-    ]
-    with (
-        _help_pytest_warns(),
-        pytest.warns(DeprecationWarning, match="The --save_bsub parameter is deprecated"),
-    ):
-        Step.from_cmdline(args)
 
 
 def test_image2_nircam_model(make_rate_file):

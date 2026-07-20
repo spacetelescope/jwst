@@ -25,14 +25,16 @@ def do_correction(input_model, wavecorr_file):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
-        Input data model.  Updated in place.
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
+        Input data model. It is updated in place.
     wavecorr_file : str
         Wavecorr reference file name.
 
     Returns
     -------
-    output_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+    output_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                   `~stdatamodels.jwst.datamodels.CubeModel`
         Corrected data model.
     """
     wavecorr_supported_modes = ["NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_BRIGHTOBJ", "NRS_AUTOFLAT"]
@@ -77,7 +79,8 @@ def apply_zero_point_correction(slit, reffile):
 
     Parameters
     ----------
-    slit : `~jwst.datamodels.SlitModel`, `~jwst.datamodels.CubeModel`
+    slit : `~stdatamodels.jwst.datamodels.SlitModel` or \
+           `~stdatamodels.jwst.datamodels.CubeModel`
         Slit data to be corrected.
     reffile : str
         The ``wavecorr`` reference file.
@@ -138,9 +141,9 @@ def calculate_wavelength_correction_transform(
     Parameters
     ----------
     lam : ndarray
-        Wavelength array [in m].
+        Wavelength array in meters.
     dispersion : ndarray
-        The pixel dispersion [in m].
+        The pixel dispersion in meters.
     freference : str
         ``wavecorr`` reference file name.
     source_xpos : float
@@ -150,7 +153,7 @@ def calculate_wavelength_correction_transform(
 
     Returns
     -------
-    model : `~astropy.modeling.tabular.Tabular1D`or None
+    model : `~astropy.modeling.tabular.Tabular1D` or None
         A model which takes wavelength inputs and returns zero-point
         corrected wavelengths.  Returns None if an invertible model
         cannot be generated.
@@ -209,7 +212,7 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
     """
     Compute the pixel dispersion.
 
-    If `xpix` or `ypix` is not provided, the dispersion is computed on a grid
+    If ``xpix`` or ``ypix`` is not provided, the dispersion is computed on a grid
     based on ``wcs.bounding_box``.
 
     Parameters
@@ -224,7 +227,7 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
     Returns
     -------
     dispersion : ndarray
-        The pixel dispersion [in m].
+        The pixel dispersion in meters.
     """
     if xpix is None or ypix is None:
         xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
@@ -239,7 +242,7 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
     """
     Compute the pixel wavelength.
 
-    If `xpix` or `ypix` is not provided, the dispersion is computed on a grid
+    If ``xpix`` or ``ypix`` is not provided, the dispersion is computed on a grid
     based on ``wcs.bounding_box``.
 
     Parameters
@@ -254,7 +257,7 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
     Returns
     -------
     wavelength : ndarray
-        The wavelength [in microns].
+        The wavelength in microns.
     """
     if xpix is None or ypix is None:
         xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
@@ -275,7 +278,7 @@ def _is_point_source(slit):
     Returns
     -------
     bool
-        True if point source; False otherwise.
+        `True` if point source; `False` otherwise.
     """
     result = False
 
