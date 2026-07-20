@@ -1032,7 +1032,18 @@ class DataSet:
                 spec.spec_table.columns[att].unit = flux_squared_unit
 
             # Background and surface brightness are in surface brightness units of MJy/sr
-            conv_sb = conversion / self.sb_conversion
+            if self.sb_conversion is None:
+                # this should never be hit during pipeline processing
+                warnings.warn(
+                    "Surface brightness conversion factor (DataSet.sb_conversion) is not defined. "
+                    "Using 1.0 as default. Call photom_io via calc_wfss, or set the attribute "
+                    " explicitly.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                conv_sb = conversion
+            else:
+                conv_sb = conversion / self.sb_conversion
             sb_unit = "MJy/sr"
             sb_var_unit = "MJy^2 / sr^2"
             for att in ["BACKGROUND", "BKGD_ERROR", "SURF_BRIGHT", "SB_ERROR"]:

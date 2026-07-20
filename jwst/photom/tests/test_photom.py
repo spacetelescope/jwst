@@ -1,4 +1,5 @@
 import math
+import warnings
 
 import numpy as np
 import pytest
@@ -8,8 +9,8 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, TSOMultiSpecModel
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.extract_1d.tests.helpers import simple_wcs_func
-from jwst.lib.dispaxis import get_dispersion_direction
 from jwst.photom import photom
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))
@@ -201,27 +202,35 @@ def create_input(
     data = None  # Not defined for niriss_soss
     if instrument == "NIRISS":
         if exptype == "NIS_WFSS":
-            nslits = 2
-            input_model = datamodels.MultiSlitModel()
-            if filter_used.endswith("R"):
-                shape = (69, 5)
-                dispaxis = 2  # vertical
-            else:
-                shape = (5, 69)
-                dispaxis = 1  # horizontal
+            # just two spectra, one in each spectral order, same source id
+            nspec = 2
+            input_model = datamodels.WFSSMultiSpecModel()
+            shape = (69,)
+            dispaxis = (
+                2 if filter_used.endswith("R") else 1
+            )  # vertical if "R", horizontal otherwise
             input_model.meta.target.source_type = "POINT"
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
-            wl = mk_wavelength(shape, 1.0, 5.0, dispaxis)
-            for k in range(nslits):
-                slit = datamodels.SlitModel(data=data, dq=dq, err=err, wavelength=wl)
-                slit.var_poisson = var_p
-                slit.var_rnoise = var_r
-                slit.var_flat = var_f
-                slit.meta.wcsinfo.spectral_order = k + 1
-                # Not realistic, just something for a default.
-                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
-                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
-                input_model.slits.append(slit.copy())
+            wl = np.linspace(1.0, 5.0, shape[0])
+
+            table_dtype = datamodels.SpecModel().get_dtype("spec_table")
+            multispec = datamodels.MultiSpecModel()
+            for k in range(nspec):
+                tab = np.zeros(shape, dtype=table_dtype)
+                tab["WAVELENGTH"] = wl
+                tab["FLUX"] = data
+                tab["FLUX_ERROR"] = err
+                tab["FLUX_VAR_POISSON"] = var_p
+                tab["FLUX_VAR_RNOISE"] = var_r
+                tab["FLUX_VAR_FLAT"] = var_f
+
+                mod = datamodels.SpecModel(spec_table=tab)
+                mod.source_id = 1000
+                mod.meta.group_id = "0"
+                mod.spectral_order = k + 1
+                mod.dispersion_direction = dispaxis
+                multispec.spec.append(mod)
+            input_model = make_wfss_multiexposure(multispec)
         elif exptype == "NIS_SOSS":
             settings = [
                 {"filter": filter_used, "pupil": pupil, "order": 1},
@@ -295,27 +304,35 @@ def create_input(
             raise RuntimeError(f"exp_type {exptype} is not currently tested")
     elif instrument == "NIRCAM":
         if exptype == "NRC_WFSS":
-            nslits = 1
-            input_model = datamodels.MultiSlitModel()
+            nspec = 1
+            input_model = datamodels.WFSSMultiSpecModel()
+            shape = (69,)
             if pupil.endswith("C"):
-                shape = (69, 5)
                 dispaxis = 2  # vertical
             else:
-                shape = (5, 69)
                 dispaxis = 1  # horizontal
             (data, dq, err, var_p, var_r, var_f) = mk_data(shape)
-            wl = mk_wavelength(shape, 2.4, 5.0, dispaxis)
+            wl = np.linspace(2.4, 5.0, shape[0])
             input_model.meta.target.source_type = "POINT"
-            for k in range(nslits):
-                slit = datamodels.SlitModel(data=data, dq=dq, err=err, wavelength=wl)
-                slit.name = str(k + 1)
-                slit.var_poisson = var_p
-                slit.var_rnoise = var_r
-                slit.var_flat = var_f
-                slit.meta.wcsinfo.spectral_order = 1
-                slit.meta.photometry.pixelarea_arcsecsq = 0.0025
-                slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
-                input_model.slits.append(slit.copy())
+
+            table_dtype = datamodels.SpecModel().get_dtype("spec_table")
+            multispec = datamodels.MultiSpecModel()
+            for k in range(nspec):
+                tab = np.zeros(shape, dtype=table_dtype)
+                tab["WAVELENGTH"] = wl
+                tab["FLUX"] = data
+                tab["FLUX_ERROR"] = err
+                tab["FLUX_VAR_POISSON"] = var_p
+                tab["FLUX_VAR_RNOISE"] = var_r
+                tab["FLUX_VAR_FLAT"] = var_f
+                mod = datamodels.SpecModel(spec_table=tab)
+                mod.source_id = 1000
+                mod.meta.group_id = "0"
+                mod.spectral_order = k + 1
+                mod.dispersion_direction = dispaxis
+                multispec.spec.append(mod)
+            input_model = make_wfss_multiexposure(multispec)
+
         else:  # NRC_IMAGE
             (data, dq, err, var_p, var_r, var_f) = mk_data((128, 256))
             input_model = datamodels.ImageModel(data=data, dq=dq, err=err)
@@ -392,7 +409,7 @@ def create_input(
     input_model.meta.observation.date = "2024-01-01"
     input_model.meta.observation.time = "00:00:00"
 
-    if data is not None:
+    if data is not None and not isinstance(input_model, datamodels.WFSSMultiSpecModel):
         input_model.meta.subarray.xsize = data.shape[-1]
         input_model.meta.subarray.ysize = data.shape[-2]
     if filter_used is not None:
@@ -707,6 +724,8 @@ def create_photom_niriss_wfss(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
         dtype=dtype,
     )
     ftab = datamodels.NisWfssPhotomModel(phot_table=reftab)
+    ftab.meta.photometry.pixelarea_arcsecsq = 0.0025
+    ftab.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     ftab.phot_unit = "MJy micron s / (DN sr)"
     return ftab
 
@@ -1163,6 +1182,8 @@ def create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0):
 
     ftab = datamodels.NrcWfssPhotomModel(phot_table=reftab)
     ftab.phot_unit = "Angstrom MJy s / (DN sr)"
+    ftab.meta.photometry.pixelarea_arcsecsq = 0.0025
+    ftab.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
     return ftab
 
 
@@ -1495,10 +1516,10 @@ def test_niriss_wfss():
     ds.calc_niriss(ftab)
 
     result = []
-    for k, slit in enumerate(save_input.slits):
-        input_data = slit.data  # this is from save_input
-        output = ds.input.slits[k].data  # ds.input is the output
-        sp_order = slit.meta.wcsinfo.spectral_order
+    for k, spec in enumerate(save_input.spec):
+        input_data = spec.spec_table  # this is from save_input
+        output = ds.input.spec[k].spec_table  # ds.input is the output
+        sp_order = spec.spectral_order
 
         # retrieve relevant photom table data
         rownum = find_row_in_ftab(
@@ -1509,20 +1530,17 @@ def test_niriss_wfss():
         wavelength = ftab.phot_table["wavelength"][rownum][0:nelem]
         relresponse = ftab.phot_table["relresponse"][rownum][0:nelem]
         shape = input_data.shape
-        ix = shape[1] // 2
-        iy = shape[0] // 2
-        wl = slit.wavelength[iy, ix]
+        wl = input_data["WAVELENGTH"][0]
 
         # compute dispersion
-        dispersion_array = np.gradient(slit.wavelength[:, ix])
-        dispersion = dispersion_array[iy]
+        dispersion = np.gradient(wl)
 
         # compute expected value
         rel_resp = np.interp(wl, wavelength, relresponse, left=np.nan, right=np.nan)
         compare = photmjsr * rel_resp / np.abs(dispersion)
 
         # Compare the values at the center pixel.
-        ratio = output[iy, ix] / input_data[iy, ix]
+        ratio = output["FLUX"] / input_data["FLUX"]
         result.append(np.allclose(ratio, compare, rtol=1.0e-7))
 
     assert np.all(result)
@@ -1871,31 +1889,24 @@ def test_nircam_spec():
     ftab = create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0)
     ds.calc_nircam(ftab)
 
-    for k, slit in enumerate(save_input.slits):
-        input_data = slit.data
-        output = ds.input.slits[k].data  # ds.input is the output
+    for k, spec in enumerate(save_input.spec):
+        input_data = spec.spec_table
+        output = ds.input.spec[k].spec_table  # ds.input is the output
         rownum = find_row_in_ftab(save_input, ftab, ["filter", "pupil"], slitname=None, order=None)
         photmjsr = ftab.phot_table["photmjsr"][rownum]
-        shape = input_data.shape
-        ix = shape[1] // 2
-        iy = shape[0] // 2
         nelem = ftab.phot_table["nelem"][rownum]
         wavelength = ftab.phot_table["wavelength"][rownum][0:nelem]
         relresponse = ftab.phot_table["relresponse"][rownum][0:nelem]
-        shape = input_data.shape
-        ix = shape[1] // 2
-        iy = shape[0] // 2
-        wl = slit.wavelength[iy, ix]
+        wl = spec.spec_table["WAVELENGTH"][0]
         # Include the dispersion in the correction, as per JP-3238
-        dispaxis = get_dispersion_direction(ds.exptype, ds.grating, ds.filter, ds.pupil)
-        dispersion_array = ds.get_dispersion_array(slit.wavelength, dispaxis)
+        dispersion_array = np.gradient(wl)
         # Convert dispersion in micron/pixel to Angstrom/pixel
-        disp = dispersion_array[iy, ix] * 10000.0
-        rel_resp = np.interp(wl, wavelength, relresponse, left=np.nan, right=np.nan)
+        disp = dispersion_array * 10000.0
+        rel_resp = np.interp(wl, wavelength, relresponse, left=0.0, right=0.0)
         compare = photmjsr * rel_resp / disp
         # Compare the values at the center pixel.
-        ratio = output[iy, ix] / input_data[iy, ix]
-        assert_allclose(ratio, compare, rtol=1.0e-7)
+        ratio = output["FLUX"] / input_data["FLUX"]
+        assert_allclose(ratio.flatten(), compare, rtol=1.0e-7)
 
 
 def test_unit_handling_no_expected_unit(log_watcher):
@@ -1911,7 +1922,11 @@ def test_unit_handling_no_expected_unit(log_watcher):
         message="phot_unit attribute found (placeholder), but no expected unit defined",
         level="warning",
     )
-    ds.photom_io(ftab.phot_table[0], phot_unit="placeholder")
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, message="Surface brightness conversion factor"
+        )
+        ds.photom_io(ftab.phot_table[0], phot_unit="placeholder")
     watcher.assert_seen()
 
 
