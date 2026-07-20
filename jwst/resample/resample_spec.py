@@ -720,10 +720,10 @@ class ResampleSpec(ResampleImage):
         all_wave = np.sort(all_wave, axis=None)
         # Tabular interpolation model, pixels -> lambda
         wavelength_array = np.unique(all_wave)
-        # Check if the data is MIRI LRS FIXED Slit. If it is then
+        # Check if the data is MIRI LRS. If it is, then
         # the wavelength array needs to be flipped so that the resampled
         # dispersion direction matches the dispersion direction on the detector.
-        if input_models[0].meta.exposure.type == "MIR_LRS-FIXEDSLIT":
+        if input_models[0].meta.exposure.type.startswith("MIR_LRS"):
             wavelength_array = np.flip(wavelength_array, axis=None)
 
         step = 1
