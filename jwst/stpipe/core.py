@@ -278,6 +278,8 @@ class JwstStep(_Step):
             if open_models:
                 if open_as_type is not None:
                     # It is assumed the provided class is appropriate for the input.
+                    if isinstance(init, dict):  # first association member
+                        init = init["products"][0]["members"][0]["expname"]
                     input_models = open_as_type(init, **kwargs)
                 elif open_as_ramp:
                     if isinstance(init, dict):  # first association member
