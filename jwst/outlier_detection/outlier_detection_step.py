@@ -1,4 +1,4 @@
-"""Public common step definition for OutlierDetection processing."""
+"""Detect outliers and set DQ flags accordingly."""
 
 import logging
 
@@ -63,11 +63,12 @@ class OutlierDetectionStep(Step):
 
         Parameters
         ----------
-        input_data : asn file, `~jwst.datamodels.container.ModelContainer`, or \
+        input_data : str, `~jwst.datamodels.container.ModelContainer`, or \
                      `~jwst.datamodels.library.ModelLibrary`
-            The input association.
-            For imaging modes a ModelLibrary is expected, whereas for spectroscopic modes a
-            ModelContainer is expected.
+            The input association filename or object.
+            For imaging modes a `~jwst.datamodels.library.ModelLibrary`
+            is expected, whereas for spectroscopic modes a
+            `~jwst.datamodels.container.ModelContainer` expected.
 
         Returns
         -------
