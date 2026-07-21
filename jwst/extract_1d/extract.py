@@ -1580,12 +1580,15 @@ def create_extraction(
         sb_units = "MJy/sr"
         sb_var_units = "MJy^2 / sr^2"
     else:
+        # This is the expected processing flow for WFSS modes
+        # For other modes this should be an outside-pipeline run if this logical path is hit
         photom_has_been_run = False
         flux_units = "DN/s"
         f_var_units = "DN^2 / s^2"
         sb_units = "DN/s"
         sb_var_units = "DN^2 / s^2"
-        log.warning("The photom step has not been run.")
+        if exp_type not in WFSS_EXPTYPES:
+            log.warning("The photom step has not been run.")
 
     # Get the source type for the data
     if slit is not None:
