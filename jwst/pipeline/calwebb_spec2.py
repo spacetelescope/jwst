@@ -412,6 +412,14 @@ class Spec2Pipeline(Pipeline):
             else:
                 self.photom.save_results = self.save_results
                 x1d = self.photom.run(x1d)
+                # at this stage if photom was skipped we still want the x1d to save
+                if x1d.meta.cal_step.photom == "SKIPPED" and self.save_results:
+                    log.info(
+                        "Photom step was skipped for this x1d product. "
+                        "Saving uncalibrated x1d instead."
+                    )
+                    self.save_model(x1d, suffix=self.photom.suffix)
+
         elif exp_type == "NRS_MSASPEC":
             # Special handling for MSA spectra, to handle mixed-in
             # fixed slits separately
