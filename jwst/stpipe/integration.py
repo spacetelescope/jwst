@@ -58,7 +58,7 @@ def get_steps():
         ("jwst.step.GainScaleStep", "gain_scale", False),
         ("jwst.step.GroupScaleStep", "group_scale", False),
         ("jwst.step.GuiderCdsStep", "guider_cds", False),
-        ("jwst.step.ImprintStep", "imprint", False),
+        ("jwst.step.ImprintStep", "imprint_subtract", False),
         ("jwst.step.IPCStep", "ipc", False),
         ("jwst.step.JumpStep", "jump", False),
         ("jwst.step.LastFrameStep", "lastframe", False),
