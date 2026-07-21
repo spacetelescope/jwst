@@ -13,6 +13,7 @@ from stpipe import Pipeline, crds_client
 from stpipe import Step as _Step
 
 from jwst import __version__, __version_commit__
+from jwst.associations import Association
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib import exposure_types
 from jwst.lib.suffix import remove_suffix
@@ -219,7 +220,7 @@ class JwstStep(_Step):
 
         Parameters
         ----------
-        init : str, list, JwstDataModel, ModelContainer, or ModelLibrary
+        init : str, list, Association, JwstDataModel, ModelContainer, or ModelLibrary
             Input data to open.
         make_copy : bool or None, optional
             If True, a copy of the input will always be made.
@@ -267,6 +268,9 @@ class JwstStep(_Step):
                 copy_needed = True
         elif isinstance(init, (datamodels.JwstDataModel, ModelContainer)):
             copy_needed = True
+
+        if isinstance(init, Association):
+            init = init.data
 
         # Input might be a filename or path.
         # In that case, open it if desired.
