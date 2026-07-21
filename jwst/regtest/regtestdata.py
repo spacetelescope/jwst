@@ -2,6 +2,7 @@ import os
 import os.path as op
 import pprint
 import sys
+from dataclasses import dataclass
 from difflib import unified_diff
 from glob import glob as _sys_glob
 from pathlib import Path
@@ -536,3 +537,12 @@ def _data_glob_url(*url_parts, root=None):
         url_paths = r.json()["files"]
 
     return url_paths
+
+
+@dataclass
+class RTData:
+    """Structure containing all information about a regression test data file."""
+
+    from_mast: bool = True
+    mod_code: str = "N/A"
+    comment: str = "N/A"
