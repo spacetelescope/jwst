@@ -3,6 +3,7 @@ import types
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.table import QTable
 
 from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs
 from jwst.wfss_contam.wfss_contam import (
@@ -311,9 +312,15 @@ def two_source_input(tmp_cwd, grism_wcs):
     seg.save("seg_map.fits")
     direct.close()
     seg.close()
+    srccat = QTable()
+    srccat["label"] = [1, 2]
+    srccat["xcentroid"] = [_ITER_XA, _ITER_XB]
+    srccat["ycentroid"] = [_ITER_YA, _ITER_YB]
+    srccat.write("source_catalog.ecsv", format="ascii.ecsv")
 
     model.meta.direct_image = "direct_image.fits"
     model.meta.segmentation_map = "seg_map.fits"
+    model.meta.source_catalog = "source_catalog.ecsv"
 
     yield model
 
@@ -370,6 +377,10 @@ def test_iteration_improves_contamination_correction(
         obs.disperse_order = lambda *args, **kwargs: None
         return obs
 
+    def mock_reject_off_detector_bounds(*args, **kwargs):
+        # Always return True for all sources, i.e., all sources are in bounds
+        return np.array([True] * len(args[0]))
+
     # Inject our fake Observation so no real dispersion is performed
     monkeypatch.setattr(
         "jwst.wfss_contam.wfss_contam.Observation",
@@ -379,6 +390,11 @@ def test_iteration_improves_contamination_correction(
     monkeypatch.setattr(
         "jwst.wfss_contam.wfss_contam._validate_orders_against_transform",
         lambda _wcs, orders: orders,
+    )
+    # Mock the off-detector bounds check to always return True
+    monkeypatch.setattr(
+        "jwst.wfss_contam.wfss_contam._reject_off_detector_bounds",
+        mock_reject_off_detector_bounds,
     )
 
     def _run(n_iter, polyfit_degree):

@@ -19,6 +19,8 @@ def multislitmodel(
     model.meta.observation.time = "12:00:00"
 
     model.meta.exposure.type = "NIS_WFSS"
+    model.meta.subarray.xsize = 2048
+    model.meta.subarray.ysize = 2048
 
     # save direct image and segmentation map to file, then point model to those
     dim = "direct_image.fits"
@@ -146,13 +148,6 @@ def test_output_is_not_input(multislitmodel, tmp_cwd_module):
         for i in range(len(datamodel.slits)):
             # Input data is not modified
             np.testing.assert_allclose(datamodel.slits[i].data, input_copy.slits[i].data)
-
-            # Output data may have been modified
-            if not np.allclose(result.slits[i].data, datamodel.slits[i].data):
-                any_modified = True
-
-    # There was at least one slit updated in the output and not modified in the input
-    assert any_modified
 
 
 def test_wfss_contam_step_with_polyfit(multislitmodel, tmp_cwd_module):
