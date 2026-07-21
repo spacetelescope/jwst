@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 
@@ -40,73 +42,65 @@ def niriss_soss_tso(subarray="SUBSTRIP96"):
     return input_model
 
 
-def tso3_asn(tmp_path, input_model):
+def tso3_asn(input_model):
+    """
+    This must be called from the working directory.
+    Use tmp_cwd in calling test function.
+    """
     input_name = "test_calints.fits"
     input_model.meta.filename = input_name
-    input_model.save(str(tmp_path / input_name))
+    input_model.save(input_name)
     input_model.close()
 
-    asn_path = tmp_path / "test_tso3_asn.json"
-    asn = asn_from_list([input_name], product_name="test_tso3")
-
-    with asn_path.open("w") as outfile:
-        name, serialized = asn.dump(format="json")
-        outfile.write(serialized)
-
-    return str(asn_path)
+    return asn_from_list([input_name], product_name="test_tso3")
 
 
-def test_niriss_soss(tmp_path):
+def test_niriss_soss(tmp_cwd):
     """Smoke test for tso3 for a valid NIRISS SOSS TSO mode."""
-    asn = tso3_asn(tmp_path, niriss_soss_tso())
+    asn = tso3_asn(niriss_soss_tso())
 
     # Reduce runtime for soss extraction
     steps = {"extract_1d": {"soss_rtol": 0.1, "soss_tikfac": 2.434559775e-13}}
 
-    # No errors
-    Tso3Pipeline.call(asn, output_dir=str(tmp_path), steps=steps)
+    Tso3Pipeline.call(asn, steps=steps)
 
     # Check for expected output files
-    expected = ["test_a3001_crfints.fits", "test_tso3_x1dints.fits", "test_tso3_whtlt.ecsv"]
+    expected = ("test_a3001_crfints.fits", "test_tso3_x1dints.fits", "test_tso3_whtlt.ecsv")
     for filename in expected:
-        assert (tmp_path / filename).exists()
+        assert Path(filename).exists()
 
-    with dm.open(tmp_path / "test_tso3_x1dints.fits") as x1d:
+    with dm.open("test_tso3_x1dints.fits") as x1d:
         assert x1d.spec[0].s_region == "POLYGON ICRS 0 0 0 1 1 1 1 0"
 
 
-def test_niriss_soss_full(tmp_path):
+def test_niriss_soss_full(tmp_cwd):
     """Smoke test for tso3 for an invalid NIRISS SOSS TSO mode."""
-    asn = tso3_asn(tmp_path, niriss_soss_tso(subarray="FULL"))
+    asn = tso3_asn(niriss_soss_tso(subarray="FULL"))
 
-    # No errors
-    Tso3Pipeline.call(asn, output_dir=str(tmp_path))
+    Tso3Pipeline.call(asn)
 
     # Check for expected output files
-    expected = ["test_a3001_crfints.fits"]
-    not_expected = ["test_tso3_x1dints.fits", "test_tso3_whtlt.ecsv"]
-    for filename in expected:
-        assert (tmp_path / filename).exists()
+    assert Path("test_a3001_crfints.fits").exists()
+    not_expected = ("test_tso3_x1dints.fits", "test_tso3_whtlt.ecsv")
     for filename in not_expected:
-        assert not (tmp_path / filename).exists()
+        assert not Path(filename).exists()
 
 
-def test_niriss_soss_superstripe(tmp_path):
+def test_niriss_soss_superstripe(tmp_cwd):
     """Smoke test for tso3 for a superstripe NIRISS SOSS TSO mode."""
-    asn = tso3_asn(tmp_path, niriss_soss_tso(subarray="SUB204STRIPE_SOSS"))
+    asn = tso3_asn(niriss_soss_tso(subarray="SUB204STRIPE_SOSS"))
 
     # Reduce runtime for soss extraction
     steps = {"extract_1d": {"soss_rtol": 0.1, "soss_tikfac": 2.434559775e-13}}
 
-    # No errors
-    Tso3Pipeline.call(asn, output_dir=str(tmp_path), steps=steps)
+    Tso3Pipeline.call(asn, steps=steps)
 
     # Check for expected output files
-    expected = ["test_a3001_crfints.fits", "test_tso3_x1dints.fits", "test_tso3_whtlt.ecsv"]
+    expected = ("test_a3001_crfints.fits", "test_tso3_x1dints.fits", "test_tso3_whtlt.ecsv")
     for filename in expected:
-        assert (tmp_path / filename).exists()
+        assert Path(filename).exists()
 
-    with dm.open(tmp_path / "test_tso3_x1dints.fits") as x1d:
+    with dm.open("test_tso3_x1dints.fits") as x1d:
         assert x1d.spec[0].s_region == "POLYGON ICRS 0 0 0 1 1 1 1 0"
 
         # int_times and int_times_stripe are propagated
