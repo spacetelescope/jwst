@@ -1,5 +1,5 @@
 Reference Files
 ===============
-The ``tso_photometry`` step uses a GAIN reference file.
+The ``tso_photometry`` step uses the following reference file:
 
-.. include:: ../references_general/gain_reffile.inc
+* :ref:`gain_reffile`

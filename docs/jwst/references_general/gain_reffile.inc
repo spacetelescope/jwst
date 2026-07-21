@@ -1,4 +1,6 @@
-GAIN reference file
+.. _gain_reffile:
+
+GAIN Reference File
 -------------------
 
 :REFTYPE: GAIN

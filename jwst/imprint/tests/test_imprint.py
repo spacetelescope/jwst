@@ -24,12 +24,12 @@ def test_step():
     imprint = [im]
     result = ImprintStep.call(im, imprint)
 
-    assert result.meta.cal_step.imprint == "COMPLETE"
+    assert result.meta.cal_step.imprint_subtract == "COMPLETE"
     assert result.data.sum() == 0
 
     # Input is not modified
     assert result is not im
-    assert im.meta.cal_step.imprint is None
+    assert im.meta.cal_step.imprint_subtract is None
 
 
 def test_step_single_imprint():
@@ -42,7 +42,7 @@ def test_step_single_imprint():
     result = ImprintStep.call(science, [imprint])
 
     # for a single imprint, it's used anyway
-    assert result.meta.cal_step.imprint == "COMPLETE"
+    assert result.meta.cal_step.imprint_subtract == "COMPLETE"
     assert result.data.sum() == 0
 
 
@@ -60,7 +60,7 @@ def test_step_match_dither():
     result = ImprintStep.call(science, imprints)
 
     # The matching imprint is used (i=1, value=1.0)
-    assert result.meta.cal_step.imprint == "COMPLETE"
+    assert result.meta.cal_step.imprint_subtract == "COMPLETE"
     assert np.all(result.data == 2.0)
 
 
@@ -76,7 +76,7 @@ def test_step_match_background():
     result = ImprintStep.call(science, [imprint_bg, imprint_sci])
 
     # The matching imprint is used
-    assert result.meta.cal_step.imprint == "COMPLETE"
+    assert result.meta.cal_step.imprint_subtract == "COMPLETE"
     assert np.all(result.data == 2.0)
 
 
@@ -96,7 +96,7 @@ def test_step_match_background_mismatched_dither():
     result = ImprintStep.call(science, [imprint_bg, imprint_sci])
 
     # The matching imprint is used
-    assert result.meta.cal_step.imprint == "COMPLETE"
+    assert result.meta.cal_step.imprint_subtract == "COMPLETE"
     assert np.all(result.data == 2.0)
 
 
@@ -115,9 +115,9 @@ def test_step_no_match():
     result = ImprintStep.call(science, imprints)
 
     # No match is found
-    assert result.meta.cal_step.imprint == "SKIPPED"
+    assert result.meta.cal_step.imprint_subtract == "SKIPPED"
     assert np.all(result.data == 3.0)
 
     # Input is not modified
     assert result is not science
-    assert science.meta.cal_step.imprint is None
+    assert science.meta.cal_step.imprint_subtract is None
