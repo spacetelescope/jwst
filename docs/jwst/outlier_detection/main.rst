@@ -16,7 +16,7 @@ The ``outlier_detection`` step supports multiple
 algorithms and determines the appropriate algorithm for the type of observation
 being processed.  This step supports:
 
-* :ref:`Image modes <outlier-detection-imaging>`
+* :ref:`Imaging modes <outlier-detection-imaging>`
     - Exposure types: 'FGS_IMAGE', 'MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE'
 * :ref:`Slit-like Spectroscopic modes <outlier-detection-spec>`
     - Exposure types: 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC'
@@ -75,9 +75,8 @@ This routine performs the following operations:
      from the same exposure into a single image. Each dither position will result in
      a separate grouped mosaic, so only a single exposure ever contributes to each pixel in these mosaics.
      An explanation of how all NIRCam multiple detector group mosaics are
-     defined from `a single exposure or from a dithered set of exposures
-     <https://jwst-docs.stsci.edu/jwst-near-infrared-camera/nircam-operations/nircam-dithers-and-mosaics>`_
-     can be found here.
+     defined from a single exposure or from a dithered set of exposures
+     can be found `at this link <https://jwst-docs.stsci.edu/jwst-near-infrared-camera/nircam-operations/nircam-dithers-and-mosaics>`_
    * Fill in pixels that have no valid contribution from any input exposure with the value
      specified by the ``fillval`` parameter.
 
@@ -268,7 +267,7 @@ which is loaded into a `~jwst.datamodels.container.ModelContainer` object,
 serves as the basic format for all processing performed by this step.
 
 After the JWST launch, it was discovered that the bad pixels on the MIRI detectors vary with time.
-The pixels varied from usable to unusable, and at times, back to usable on a time frame that was too short
+The pixels varied from usable to unusable, and at times, back to usable on a time scale that was too short
 (sometimes as short as 2 days) to fold into the bad pixel mask applied in the
 :ref:`calwebb_detector1 <calwebb_detector1>` pipeline. At this time it is believed that NIRSpec IFU data
 also have bad pixels that vary with time, though the time variation is still under study.
@@ -291,7 +290,7 @@ This routine performs the following operations:
    For NIRSpec, with the dispersion along the x axis, the neighbors that are used to
    find the differences are above and below the pixel being examined.
    The smaller of the two (left/right or up/down) differences is stored as the difference value for each
-   pixel; This avoids artifacts from bright edges.
+   pixel; this avoids artifacts from bright edges.
 
 #. Compare the nearest-neighbor differences across science exposures to find the minimum
    neighbor difference at each detector pixel.

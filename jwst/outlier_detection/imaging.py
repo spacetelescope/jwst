@@ -43,7 +43,7 @@ def detect_outliers(
 
     Parameters
     ----------
-    input_models : ~jwst.datamodels.library.ModelLibrary`
+    input_models : `~jwst.datamodels.library.ModelLibrary`
         The library of datamodels.
     save_intermediate_results : bool
         If `True`, save intermediate results.
