@@ -692,7 +692,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.extract_2d.run(calibrated)
         calibrated = self.srctype.run(calibrated)
         calibrated = self.pathloss.run(calibrated)
-        calibrated = self.photom.run(calibrated)
         return calibrated
 
     def _process_nirspec_slits(self, data):

@@ -1021,6 +1021,10 @@ class DataSet:
         elif isinstance(self.input, datamodels.WFSSMultiSpecModel):
             spec = self.input.spec[self.specnum]
 
+            # npixels should be set to 0 where conversion is NaN but wavelengths are not NaN
+            mask = np.isnan(conversion) & ~np.isnan(spec.spec_table["WAVELENGTH"][self.integ_row])
+            spec.spec_table["NPIXELS"][self.integ_row][mask] = 0
+
             # Fluxes are in units of Jy
             flux_unit = "Jy"
             flux_squared_unit = "Jy^2"
@@ -1239,7 +1243,7 @@ class DataSet:
         """
         # Get the 2D wavelength array corresponding to the input
         # image pixel values
-        wl_array = model.spec_table["WAVELENGTH"][integ_row]
+        wl_array = model.spec_table["WAVELENGTH"][integ_row].copy()
         if np.all(np.isnan(wl_array)):
             # In example data the last 5 in order 2 from extract1d are all-NaN for some reason
             # but it should have nothing to do with photom step
@@ -1276,7 +1280,7 @@ class DataSet:
         # Combine the scalar and 1D conversion factors
         conversion = conversion * conv_1d
         no_cal = np.isnan(conv_1d)
-        conversion[no_cal] = 0.0
+        conversion[no_cal] = np.nan
 
         return conversion, no_cal
 
