@@ -1,0 +1,1 @@
+``calwebb`` pipelines now can take Association objects as inputs. Previously, an Association must be passed in as JSON file. However, for ``calwebb_dark`` and ``calwebb_guider``, support for Association object is limited to the first product member.
