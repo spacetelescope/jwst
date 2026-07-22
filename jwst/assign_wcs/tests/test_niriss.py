@@ -64,7 +64,7 @@ def create_hdul(detector="NIS", filtername="CLEAR", exptype="NIS_IMAGE", pupil="
     scihdu = fits.ImageHDU()
     scihdu.header["EXTNAME"] = "SCI"
     scihdu.header.update(wcs_kw)
-    scihdu.data = np.zeros((10, 10))
+    scihdu.data = np.zeros((2048, 2048))
     hdul.append(phdu)
     hdul.append(scihdu)
     return hdul
