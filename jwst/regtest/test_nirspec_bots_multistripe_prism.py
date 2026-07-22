@@ -150,9 +150,8 @@ def create_multistripe(base_datamodel, format="SUB256M2_PRISM"):
     return multistripe_datamodel
 
 
-@pytest.mark.parametrize("detector", ["nrs1", "nrs2"])
-@pytest.mark.parametrize("multistripe_name", list(params.keys()))
-def test_run_pipelines(rtdata_module, detector, multistripe_name):
+@pytest.fixture(scope="module")
+def run_pipelines(rtdata_module):
     """
     Test that the multistripe prism pipeline results match those from the parent data.
 
@@ -160,83 +159,84 @@ def test_run_pipelines(rtdata_module, detector, multistripe_name):
     can be used.
     """
     rtdata = rtdata_module
-    parent = f"{parent_root}_{detector}_uncal.fits"
-    input_file = parent
-    if not os.path.exists(parent):
-        rtdata.get_data(f"nirspec/tso/{parent}")
-        input_file = rtdata.input
-    # The refpix step will be skipped for the parent data, as it uses the rows of real data as
-    # proxy reference pixels.  Since the multistripe data MUST be run through the refpix step,
-    # as this is where the data get reformatted from multistripe to normal format, the
-    # MASK file is replaced with one where the REFERENCE_PIXELS bit is unset, and this
-    # MASK file is used for both parent and multistripe data.
-    mask = f"mask_norefpixels_{detector}.fits"
-    maskfile = mask
-    if not os.path.exists(mask):
-        rtdata.get_data(f"nirspec/tso/{mask}")
-        maskfile = rtdata.input
-    # The SUPERBIAS file is used in both the saturation and superbias steps.  CRDS selection
-    # is format-dependent, but the steps will also run with a full-frame superbias file, with
-    # the code extracting the appropriate section.  To ensure the same reference is used for both
-    # parent and multistripe data, the full-frame superbias file is used for both.
-    superbias = f"superbias_full_{detector}.fits"
-    superbiasfile = superbias
-    if not os.path.exists(superbias):
-        rtdata.get_data(f"nirspec/tso/{superbias}")
-        superbiasfile = rtdata.input
-    # Technically, only the data from after the refpix step and before need to be compared,
-    # since the multistripe data are reformatted to normal format in the refpix step and
-    # the stripe_utils routines are not used after the refpix step.
-    # Since the refpix step is skipped for parent data, there is no saved data from after
-    # the refpix step, so the comparison is done after the linearity step.
-    # Results are saved after the saturation, superbias and linearity steps.
-    # The comparison fails after the jump step, because occasionally there are events
-    # in the parent data that aren't in the the multistripe data (since the reformatted
-    # multistripe data are truncated in size relative to the parent data).  These events
-    # can cause flagging of pixels quite far away from the event, so they spill over
-    # into the region shared by the multistripe data, and cause the comparison to fail.
-    # Similarly, the clean_flicker_noise step causes differences because the data sizes
-    # are different, and the use of Fourier transforms causes non-local effects.
-    # The saturation.n_pix_grow_sat parameter is set to 0 to avoid the growth of any
-    # saturated pixels in the region that is only in the parent data into the common region.
-    step_args = [
-        "calwebb_detector1",
-        input_file,
-        f"--steps.dq_init.override_mask={maskfile}",
-        f"--steps.saturation.override_superbias={superbiasfile}",
-        "--steps.saturation.n_pix_grow_sat=0",
-        f"--steps.superbias.override_superbias={superbiasfile}",
-        "--steps.refpix.skip=True",
-        "--steps.clean_flicker_noise.skip=True",
-        "--steps.linearity.save_results=True",
-        "--steps.saturation.save_results=True",
-        "--steps.superbias.save_results=True",
-    ]
-    Step.from_cmdline(step_args)
-    # Now run the multistripe data through the detector1 pipeline
-    parent_model = datamodels.open(input_file)
-    multistripe_model = create_multistripe(parent_model, format=multistripe_name)
-    multistripe_filename = f"{multistripe_name.lower()}_{detector}_uncal.fits"
-    multistripe_model.to_fits(multistripe_filename, overwrite=True)
-    step_args = [
-        "calwebb_detector1",
-        multistripe_filename,
-        f"--steps.dq_init.override_mask=mask_norefpixels_{detector}.fits",
-        f"--steps.saturation.override_superbias=superbias_full_{detector}.fits",
-        "--steps.saturation.n_pix_grow_sat=0",
-        f"--steps.superbias.override_superbias=superbias_full_{detector}.fits",
-        "--steps.dark_current.skip=True",
-        "--steps.clean_flicker_noise.skip=True",
-        "--steps.linearity.save_results=True",
-        "--steps.saturation.save_results=True",
-    ]
-    Step.from_cmdline(step_args)
-    assert True
+    for detector in ["nrs1", "nrs2"]:
+        parent = f"{parent_root}_{detector}_uncal.fits"
+        input_file = parent
+        if not os.path.exists(parent):
+            rtdata.get_data(f"nirspec/tso/{parent}")
+            input_file = rtdata.input
+        # The refpix step will be skipped for the parent data, as it uses the rows of real data as
+        # proxy reference pixels.  Since the multistripe data MUST be run through the refpix step,
+        # as this is where the data get reformatted from multistripe to normal format, the
+        # MASK file is replaced with one where the REFERENCE_PIXELS bit is unset, and this
+        # MASK file is used for both parent and multistripe data.
+        mask = f"mask_norefpixels_{detector}.fits"
+        maskfile = mask
+        if not os.path.exists(mask):
+            rtdata.get_data(f"nirspec/tso/{mask}")
+            maskfile = rtdata.input
+        # The SUPERBIAS file is used in both the saturation and superbias steps.  CRDS selection
+        # is format-dependent, but the steps will also run with a full-frame superbias file, with
+        # the code extracting the appropriate section.  To ensure the same reference is used for both
+        # parent and multistripe data, the full-frame superbias file is used for both.
+        superbias = f"superbias_full_{detector}.fits"
+        superbiasfile = superbias
+        if not os.path.exists(superbias):
+            rtdata.get_data(f"nirspec/tso/{superbias}")
+            superbiasfile = rtdata.input
+        # Technically, only the data from after the refpix step and before need to be compared,
+        # since the multistripe data are reformatted to normal format in the refpix step and
+        # the stripe_utils routines are not used after the refpix step.
+        # Since the refpix step is skipped for parent data, there is no saved data from after
+        # the refpix step, so the comparison is done after the linearity step.
+        # Results are saved after the saturation, superbias and linearity steps.
+        # The comparison fails after the jump step, because occasionally there are events
+        # in the parent data that aren't in the the multistripe data (since the reformatted
+        # multistripe data are truncated in size relative to the parent data).  These events
+        # can cause flagging of pixels quite far away from the event, so they spill over
+        # into the region shared by the multistripe data, and cause the comparison to fail.
+        # Similarly, the clean_flicker_noise step causes differences because the data sizes
+        # are different, and the use of Fourier transforms causes non-local effects.
+        # The saturation.n_pix_grow_sat parameter is set to 0 to avoid the growth of any
+        # saturated pixels in the region that is only in the parent data into the common region.
+        step_args = [
+            "calwebb_detector1",
+            input_file,
+            f"--steps.dq_init.override_mask={maskfile}",
+            f"--steps.saturation.override_superbias={superbiasfile}",
+            "--steps.saturation.n_pix_grow_sat=0",
+            f"--steps.superbias.override_superbias={superbiasfile}",
+            "--steps.refpix.skip=True",
+            "--steps.clean_flicker_noise.skip=True",
+            "--steps.linearity.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.superbias.save_results=True",
+        ]
+        Step.from_cmdline(step_args)
+        # Now run the multistripe data through the detector1 pipeline
+        parent_model = datamodels.open(input_file)
+        for multistripe_name in sorted(params.keys()):
+            multistripe_model = create_multistripe(parent_model, format=multistripe_name)
+            multistripe_filename = f"{multistripe_name.lower()}_{detector}_uncal.fits"
+            multistripe_model.save(multistripe_filename, overwrite=True)
+            step_args = [
+                "calwebb_detector1",
+                multistripe_filename,
+                f"--steps.dq_init.override_mask=mask_norefpixels_{detector}.fits",
+                f"--steps.saturation.override_superbias=superbias_full_{detector}.fits",
+                "--steps.saturation.n_pix_grow_sat=0",
+                f"--steps.superbias.override_superbias=superbias_full_{detector}.fits",
+                "--steps.dark_current.skip=True",
+                "--steps.clean_flicker_noise.skip=True",
+                "--steps.linearity.save_results=True",
+                "--steps.saturation.save_results=True",
+            ]
+            Step.from_cmdline(step_args)
 
 
 @pytest.mark.parametrize("detector", ["nrs1", "nrs2"])
-@pytest.mark.parametrize("multistripe_name", list(params.keys()))
-def test_uncal(detector, multistripe_name):
+@pytest.mark.parametrize("multistripe_name", sorted(params.keys()))
+def test_uncal(run_pipelines, detector, multistripe_name):
     """
     Test that the create_multistripe uncal files match the data in the parent uncal files.
     """
@@ -261,8 +261,8 @@ def test_uncal(detector, multistripe_name):
 
 
 @pytest.mark.parametrize("detector", ["nrs1", "nrs2"])
-@pytest.mark.parametrize("multistripe_name", list(params.keys()))
-def test_saturation(detector, multistripe_name):
+@pytest.mark.parametrize("multistripe_name", sorted(params.keys()))
+def test_saturation(run_pipelines, detector, multistripe_name):
     """
     Test that the saturation step output is identical for the multistripe and parent data.
 
@@ -322,8 +322,8 @@ def test_saturation(detector, multistripe_name):
 
 
 @pytest.mark.parametrize("detector", ["nrs1", "nrs2"])
-@pytest.mark.parametrize("multistripe_name", list(params.keys()))
-def test_linearity(multistripe_name, detector):
+@pytest.mark.parametrize("multistripe_name", sorted(params.keys()))
+def test_linearity(run_pipelines, multistripe_name, detector):
     """
     Test that the linearity step output in the is identical for the multistripe and parent data.
 
