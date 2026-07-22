@@ -127,6 +127,7 @@ def test_wfss_contam_step_cube_direct_image(multislitmodel, direct_image_cube_wi
     Reuses the multislitmodel fixture (slits, WCS, segmentation map, source catalog)
     but just swaps in the cube as the direct image.
     """
+    direct_image_cube_with_gradient.save("direct_image_cube.fits")
     with dm.open(multislitmodel) as model:
         model.meta.direct_image = "direct_image_cube.fits"
         result = WfssContamStep.call(model, magnitude_limit=25, orders=[1])
