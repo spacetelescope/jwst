@@ -48,38 +48,38 @@ def ifu_extract1d(
 
     Parameters
     ----------
-    input_model : JWST data model for an IFU cube (IFUCubeModel)
+    input_model : `~stdatamodels.jwst.datamodels.IFUCubeModel`
         The input model.
     ref_file : str
-        File name for the extract1d reference file, in ASDF format.
+        File name for the EXTRACT1D reference file, in ASDF format.
     source_type : str
-        "POINT" or "EXTENDED"
+        "POINT" or "EXTENDED".
     subtract_background : bool or None
         User supplied flag indicating whether the background should be subtracted.
-        If None, the value in the extract_1d reference file will be used.
+        If None, the value in the EXTRACT1D reference file will be used.
         If not None, this parameter overrides the value in the
-        extract_1d reference file.
+        EXTRACT1D reference file.
     bkg_sigma_clip : float
-        Background sigma clipping value to use to remove noise/outliers in background
+        Background sigma clipping value to use to remove noise/outliers in background.
     apcorr_ref_file : str or None, optional
         File name for aperture correction reference file.
     center_xy : float or None, optional
         A list of 2 pixel coordinate values at which to place the center
         of the extraction aperture for IFU data, overriding any centering
-        done by the step.  Two values, in x,y order, are used for extraction
+        done by the step.  Two values, in ``x,y`` order, are used for extraction
         from IFU cubes. Default is None.
     ifu_autocen : bool, optional
         Switch to turn on auto-centering for point source spectral extraction
-        in IFU mode.  Default is False.
+        in IFU mode.  Default is `False`.
     ifu_rfcorr : bool, optional
-        Switch to select whether or not to apply a 1d residual fringe correction
-        for MIRI MRS IFU spectra.  Default is False.
+        Switch to select whether or not to apply a 1D residual fringe correction
+        for MIRI MRS IFU spectra.  Default is `False`.
     ifu_rscale : float, optional
         For MRS IFU data, a value for changing the extraction radius. The value
         provided is the number of PSF FWHMs to use for the extraction radius.
         Values accepted are between 0.5 to 3.0. The default extraction size is
-        set to 2 * FWHM. Values below 2 will result in a smaller radius, a value
-        of 2 results in no change to radius and a value above 2 results in a larger
+        set to ``2 * FWHM``. Values below 2 will result in a smaller radius, a value
+        of 2 results in no change to radius, and a value above 2 results in a larger
         extraction radius.
     ifu_covar_scale : float, optional
         Scaling factor by which to multiply the ERR values in extracted spectra to
@@ -87,7 +87,7 @@ def ifu_extract1d(
 
     Returns
     -------
-    output_model : MultiSpecModel
+    output_model : `~stdatamodels.jwst.datamodels.MultiSpecModel`
         This will contain the extracted spectrum.
     """
     if not isinstance(input_model, datamodels.IFUCubeModel):
@@ -416,7 +416,7 @@ def get_extract_parameters(ref_file, bkg_sigma_clip):
     Parameters
     ----------
     ref_file : dict
-        File name for the extract1d reference file, in ASDF format
+        File name for the EXTRACT1D reference file, in ASDF format.
     bkg_sigma_clip : float
         Background sigma clipping value to use to remove noise/outliers in background.
 
@@ -456,7 +456,7 @@ def _apply_bkg_sigma_clip(
     bkg_data, temp_weightmap, bmask, bkg_sigma_clip, aperture_type, method, subpixels
 ):
     """
-    Apply the background sigma_clipping algorithm.
+    Apply the background sigma clipping algorithm.
 
     Parameters
     ----------
@@ -477,9 +477,9 @@ def _apply_bkg_sigma_clip(
 
     Returns
     -------
-    bkg_table : astropy.tableray
-        Table of the photometry with the columns as in the documentation of
-        photutils.aperture.photometry.aperture_photometry.
+    bkg_table : `~astropy.table.Table`
+        Table of the photometry with the columns as documented in
+        :func:`~photutils.aperture.aperture_photometry`.
     maskclip : array or None
         Mask to reject data outside the valid data footprint.
     """
@@ -525,10 +525,10 @@ def extract_ifu(input_model, source_type, extract_params):
 
     Parameters
     ----------
-    input_model : IFUCubeModel
+    input_model : `~stdatamodels.jwst.datamodels.IFUCubeModel`
         The input model.
     source_type : str
-        "POINT" or "EXTENDED"
+        "POINT" or "EXTENDED".
     extract_params : dict
         The extraction parameters for aperture photometry.
 
@@ -537,53 +537,53 @@ def extract_ifu(input_model, source_type, extract_params):
     ra, dec : float
         RA and Dec are the right ascension and declination respectively
         at the nominal center of the image.
-    wavelength : ndarray, 1D
-        The wavelength in micrometers at each plane of the IFU cube.
-    temp_flux : ndarray, 1D
-        The sum of the data values in the extraction aperture minus the
+    wavelength : ndarray
+        The 1D wavelength in micrometers at each plane of the IFU cube.
+    temp_flux : ndarray
+        The 1D sum of the data values in the extraction aperture minus the
         sum of the data values in the background region (scaled by the
         ratio of areas), for each plane.
         The data values are in units of surface brightness, so this value
         isn't really the flux, it's an intermediate value.  Dividing by
-        `npixels` (to compute the average) will give the value for the
-        `surf_bright` (surface brightness) column, and multiplying by
+        ``npixels`` (to compute the average) will give the value for the
+        ``surf_bright`` (surface brightness) column, and multiplying by
         the solid angle of a pixel will give the flux for a point source.
-    f_var_poisson : ndarray, 1D
-        The extracted poisson variance values to go along with the
-        temp_flux array.
-    f_var_rnoise : ndarray, 1D
-        The extracted read noise variance values to go along with the
-        temp_flux array.
-    f_var_flat : ndarray, 1D
-        The extracted flat field variance values to go along with the
-        temp_flux array.
-    background : ndarray, 1D
+    f_var_poisson : ndarray
+        The 1D extracted Poisson variance values to go along with the
+        ``temp_flux`` array.
+    f_var_rnoise : ndarray
+        The 1D extracted read noise variance values to go along with the
+        ``temp_flux`` array.
+    f_var_flat : ndarray
+        The 1D extracted flat field variance values to go along with the
+        ``temp_flux`` array.
+    background : ndarray
         For point source data, the background array is the count rate that was subtracted
-        from the total source data values to get `temp_flux`. This background is determined
+        from the total source data values to get ``temp_flux``. This background is determined
         for annulus region. For extended source data, the background array is the sigma clipped
         extracted region.
-    b_var_poisson : ndarray, 1D
-        The extracted poisson variance values to go along with the
+    b_var_poisson : ndarray
+        The 1D extracted Poisson variance values to go along with the
         background array.
-    b_var_rnoise : ndarray, 1D
-        The extracted read noise variance values to go along with the
+    b_var_rnoise : ndarray
+        The 1D extracted read noise variance values to go along with the
         background array.
-    b_var_flat : ndarray, 1D
-        The extracted flat field variance values to go along with the
+    b_var_flat : ndarray
+        The 1D extracted flat field variance values to go along with the
         background array.
-    npixels : ndarray, 1D, float64
+    npixels : ndarray
         For each slice, this is the number of pixels that were added
-        together to get `temp_flux`.
-    dq : ndarray, 1D, uint32
-        The data quality array.
-    npixels_bkg : ndarray, 1D, float64
-        For each slice, for point source data  this is the number of pixels that were added
-        together to get `temp_flux` for an annulus region or for extended source
-        data it is the number of pixels used to determine the background
-    radius_match : ndarray,1D, float64
-        The size of the extract radius in pixels used at each wavelength of the IFU cube
+        together to get ``temp_flux``.
+    dq : ndarray
+        The 1D data quality array.
+    npixels_bkg : ndarray
+        For each slice, for point source data, this is the number of pixels that were added
+        together to get ``temp_flux`` for an annulus region; for extended source
+        data, it is the number of pixels used to determine the background
+    radius_match : ndarray
+        The size of the extract radius in pixels used at each wavelength of the IFU cube.
     x_center, y_center : float
-        The x and y center of the extraction region
+        The x and y center of the extraction region.
     """
     data = input_model.data
     try:
@@ -1035,21 +1035,21 @@ def celestial_to_cartesian(ra, dec):
     Parameters
     ----------
     ra, dec : ndarray or float
-        The right ascension and declination (degrees).  Both `ra` and `dec`
+        The right ascension and declination (degrees).  Both ``ra`` and ``dec``
         should be arrays of the same shape, or they should both be float.
 
     Returns
     -------
     cart : ndarray
-        If `ra` and `dec` are float, `cart` with be a 3-element array.
-        If `ra` and `dec` are arrays, `cart` will be an array with shape
-        ra.shape + (3,).
-        For each element of `ra` (or `dec`), the last axis of `cart` will
+        If ``ra`` and ``dec`` are float, this will be a 3-element array.
+        If ``ra`` and ``dec`` are arrays, this will be an array with shape
+        ``ra.shape + (3,)``.
+        For each element of ``ra`` (or ``dec``), the last axis of ``cart`` will
         give the Cartesian coordinates of a unit vector in the direction
-        `ra`, `dec`.  The elements of the vector in Cartesian coordinates
-        are in the order x, y, z, where x is the direction toward the
-        vernal equinox, y is the direction toward right ascension = 90
-        degrees (6 hours) and declination = 0, and z is toward the north
+        ``ra``, ``dec``.  The elements of the vector in Cartesian coordinates
+        are in the order ``x, y, z``, where x is the direction toward the
+        vernal equinox, y is the direction toward right ascension of 90
+        degrees (6 hours) and declination of 0, and z is toward the north
         celestial pole.
     """
     if hasattr(ra, "shape"):
@@ -1072,21 +1072,21 @@ def get_coordinates(input_model, x0, y0):
 
     Parameters
     ----------
-    input_model : IFUCubeModel
+    input_model : `~stdatamodels.jwst.datamodels.IFUCubeModel`
         The input model.
     x0, y0 : float
         The pixel number at which the coordinates should be determined.
-        If the extract1d reference file is JSON format, this point will be the
-        nominal center of the image.  For an image extract1d reference file this
+        If the EXTRACT1D reference file is JSON format, this point will be the
+        nominal center of the image.  For an image EXTRACT1D reference file, this
         will be the centroid of the pixels that were flagged as source.
 
     Returns
     -------
     ra, dec : float
-        RA and Dec are the right ascension and declination respectively
-        at pixel (0, y0, x0).
-    wavelength : ndarray, 1D
-        The wavelength in micrometers at each pixel.
+        The right ascension and declination, respectively,
+        at pixel ``(0, y0, x0)``.
+    wavelength : ndarray
+        The 1D wavelength in micrometers at each pixel.
     """
     if getattr(input_model.meta, "wcs", None) is not None:
         wcs = input_model.meta.wcs
@@ -1117,23 +1117,23 @@ def nans_in_wavelength(wavelength, dq):
     """
     Check for NaNs in the wavelength array.
 
-    If NaNs are found in the wavelength array, flag them in the dq array,
+    If NaNs are found in the wavelength array, flag them in the DQ array,
     and truncate the arrays at either or both ends if NaNs are found at
     endpoints (unless the entire array is NaN).
 
     Parameters
     ----------
-    wavelength : ndarray, 1D, float64
-        The wavelength in micrometers at each pixel.
-    dq : ndarray, 1D, uint32
-        The data quality array.
+    wavelength : ndarray
+        The 1D wavelength in micrometers at each pixel.
+    dq : ndarray
+        The 1D data quality array.
 
     Returns
     -------
-    wavelength : ndarray, 1D, float64
-        Truncated wavelength array
-    dq : ndarray, 1D, uint32
-        Truncated DQ array.
+    wavelength : ndarray
+        Truncated 1D wavelength array.
+    dq : ndarray
+        Truncated 1D DQ array.
     slc : slice
         Slice used for truncation.
     """
@@ -1172,8 +1172,8 @@ def separate_target_and_background(ref):
 
     Parameters
     ----------
-    ref : ndarray, 2D or 3D
-        This is the reference image data array.  This should be the same
+    ref : ndarray
+        This is the reference image data array (2D or 3D).  This should be the same
         shape as one plane of the science data (or the same shape as the
         entire 3D science data array).  A value of 1 in a pixel indicates
         that the pixel should be included when computing the target
@@ -1183,17 +1183,17 @@ def separate_target_and_background(ref):
 
     Returns
     -------
-    mask_target : ndarray, 2D or 3D
+    mask_target : ndarray
         This is an array of the same type and shape as the reference
-        image, but with values of only 0 or 1.  A value of 1 indicates
+        image (2D or 3D), but with values of only 0 or 1.  A value of 1 indicates
         that the corresponding pixel of the science data array should be
         included when adding up values to make the 1D spectrum, and a
         value of 0 means that it should not be included.
-    mask_bkg : ndarray, 2D or 3D, or None.
-        This is like `mask_target` (i.e. values are 0 or 1) but for
-        background regions.  A value of -1 in `mask_bkg` indicates a pixel
+    mask_bkg : ndarray or None
+        This is like ``mask_target`` (i.e., values are 0 or 1) but for
+        background regions (2D or 3D).  A value of -1 indicates a pixel
         that should be included as part of the background.  If there is no
-        pixel in the reference image with a value of -1, `mask_bkg` will
+        pixel in the reference image with a value of -1, this will
         be set to None.
     """
     mask_target = np.where(ref == 1.0, 1.0, 0.0)
@@ -1212,17 +1212,17 @@ def im_centroid(data, mask_target):
 
     Parameters
     ----------
-    data : ndarray, 3D
-        This is the science image data array.
-    mask_target : ndarray, 2D or 3D
-        This is an array of the same type and shape as one plane of the
+    data : ndarray
+        This is the 3D science image data array.
+    mask_target : ndarray
+        This is a 2D or 3D array of the same type and shape as one plane of the
         science image (or the same type and shape of the entire 3D science
         image), but with values of 0 or 1, where 1 indicates a pixel within
         the source.
 
     Returns
     -------
-    y0, x0 : tuple of two float
+    y0, x0 : float
         The centroid of pixels flagged as source.
     """
     # Collapse the science data along the dispersion direction to get a
@@ -1259,27 +1259,27 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
 
     Parameters
     ----------
-    mask : ndarray, 2D or 3D
-        This is either the target mask or the background mask, which was
-        created from an image extract1d reference file.
+    mask : ndarray
+        This is either the 2D or 3D target mask or background mask, which was
+        created from an image EXTRACT1D reference file.
         It is assumed that all pixels in the science data are good.  If
-        that is not correct, `shift_ref_image` may be called with a data
+        that is not correct, this function may be called with a data
         quality array as the first argument, in order to obtain a shifted
-        data quality array.  In this case, `fill` should be set to a
-        positive value, e.g. 1.
+        data quality array.  In this case, ``fill`` should be set to a
+        positive value, e.g., 1.
     delta_y, delta_x : int
         These are the shifts to be applied to the vertical and horizontal
         axes respectively.
     fill : int or float
         The output array will be initialized to this value.  This should
-        be 0 (the default) if `mask` is a target or background mask, but
-        it should be set to 1 (or some other positive value) if `mask` is
+        be 0 (the default) if ``mask`` is a target or background mask, but
+        it should be set to 1 (or some other positive value) if ``mask`` is
         a data quality array.
 
     Returns
     -------
-    temp : ndarray, same type and shape as `mask`
-        A copy of `mask`, but shifted by `delta_y` and `delta_x`.
+    temp : ndarray
+        A copy of ``mask``, but shifted by ``delta_y`` and ``delta_x``.
     """
     if delta_x == 0 and delta_y == 0:
         return mask.copy()
@@ -1323,33 +1323,33 @@ def sigma_clip_extended_region(
 
     Parameters
     ----------
-    data : ndarray, 3D
-        Input data array to perform extraction from.
-    var_poisson : ndarray, 2D
-        Poisson noise variance array to be extracted following data extraction method.
-    var_rnoise : ndarray, 2D
-        Read noise variance array to be extracted following data extraction method.
-    var_flat : ndarray, 2D
-        Flat noise variance array to be extracted following data extraction method.
-    mask_targ : ndarray, 2D or 3D
-        Mask of pixels defining the extended source region. A value of 1 indicated
+    data : ndarray
+        Input 3D data array to perform extraction from.
+    var_poisson : ndarray
+        Poisson noise variance array (2D) to be extracted following data extraction method.
+    var_rnoise : ndarray
+        Read noise variance array (2D) to be extracted following data extraction method.
+    var_flat : ndarray
+        Flat noise variance array (2D) to be extracted following data extraction method.
+    mask_targ : ndarray
+        Mask of pixels (2D or 3D) defining the extended source region. A value of 1 indicated
         pixel is in the extraction region.
-    wmap : ndarray, 3D
-        Weight map for IFU.
+    wmap : ndarray
+        Weight map (3D) for IFU.
     sigma_clip : float
         Outlier sigma clipping parameter.
 
     Returns
     -------
-    sigma_clip_region : ndarray, 1D
-        Summed extracted region with sigma clipping for each wavelength plane.
-    d_var_poisson : ndarray, 1D
-        Sigma-clipped var_poisson array.
-    d_var_rnoise : ndarray, 1D
-        Sigma-clipped var_rnoise array.
-    d_var_flat : ndarray, 1D
-        Sigma-clipped var_flat array.
-    n_bkg : ndarray, 1D
+    sigma_clip_region : ndarray
+        Summed extracted region (1D) with sigma clipping for each wavelength plane.
+    d_var_poisson : ndarray
+        Sigma-clipped Poisson noise variance array (1D).
+    d_var_rnoise : ndarray
+        Sigma-clipped read noise variance array (1D).
+    d_var_flat : ndarray
+        Sigma-clipped flat noise variance array (1D).
+    n_bkg : ndarray
         Sum of pixels used in sigma clipped extracted region.
     """
     shape = data.shape

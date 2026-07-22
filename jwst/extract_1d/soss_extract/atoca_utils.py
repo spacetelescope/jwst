@@ -1,11 +1,4 @@
-"""
-Utilities for the ATOCA (Darveau-Bernier 2021, in prep).
-
-ATOCA: Algorithm to Treat Order ContAmination (English)
-       Algorithme de Traitement d’Ordres ContAmines (French)
-
-@authors: Antoine Darveau-Bernier, Geert Jan Talens
-"""
+"""Utilities for `jwst.extract_1d.soss_extract.atoca`."""
 
 import logging
 import warnings
@@ -32,6 +25,7 @@ __all__ = [
     "grid_from_map",
     "grid_from_map_with_extrapolation",
     "make_combined_adaptive_grid",
+    "ThroughputInterpolator",
     "throughput_soss",
     "WebbKernel",
     "get_c_matrix",
@@ -59,7 +53,7 @@ def arange_2d(starts, stops):
     Returns
     -------
     out : array[uint16]
-        2D array of ranges with invalid values set to -1
+        2D array of ranges with invalid values set to -1.
     """
     if starts.shape != stops.shape:
         msg = (
@@ -90,22 +84,22 @@ def arange_2d(starts, stops):
 
 def sparse_k(val, k, n_k):
     """
-    Transform a 2D array `val` to a sparse matrix.
+    Transform a 2D array ``val`` to a sparse matrix.
 
     Parameters
     ----------
     val : array
-        2D array to be transformed
+        2D array to be transformed.
     k : array
         2D array to set column position of values in sparse matrix.
-        Negative values used for undefined positions in val.
+        Negative values used for undefined positions in ``val``.
     n_k : int
         Number of columns in output sparse matrix.
 
     Returns
     -------
     mat : array
-        Sparse matrix to be returned
+        Sparse matrix to be returned.
     """
     # Length of axis 0
     n_i = len(k)
@@ -128,9 +122,9 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
     Parameters
     ----------
     wave_map : array[float]
-        2d-map of the pixel central wavelength
+        2d-map of the pixel central wavelength.
     dispersion_axis : int, optional
-        Which axis is the dispersion axis (0 or 1)
+        Which axis is the dispersion axis (0 or 1).
 
     Returns
     -------
@@ -176,11 +170,11 @@ def _get_wv_map_bounds(wave_map, dispersion_axis=1):
     -----
     Handling of invalid pixels may lead to unexpected results as follows:
     Bad pixels are completely ignored when computing pixel-to-pixel differences, so
-    wv_map=[2,4,6,NaN,NaN,12,14,16] will give wave_top=[1,3,5,0,0,9,13,15]
-    because the difference at index 5 was calculated as 12-(12-6)/2=9,
+    ``wv_map=[2,4,6,NaN,NaN,12,14,16]`` will give ``wave_top=[1,3,5,0,0,9,13,15]``
+    because the difference at index 5 was calculated as ``12-(12-6)/2=9``,
     i.e., as though index 2 and 5 were next to each other.
     A human (or a smarter linear interpolation) would figure out the slope is 2 and
-    determine the value of wave_top[5] should most likely be 11.
+    determine the value of ``wave_top[5]`` should most likely be 11.
     This is found not to matter in practice for the current use cases.
     """
     if dispersion_axis == 1:
@@ -236,7 +230,7 @@ def oversample_grid(wave_grid, n_os):
     n_os : int or array[int]
         Oversampling factor. If it is a scalar, take the same value for each
         interval of the grid. If it is an array, n_os specifies the oversampling
-        at each interval of the grid, so len(n_os) = len(wave_grid) - 1.
+        at each interval of the grid, so ``len(n_os) = len(wave_grid) - 1``.
 
     Returns
     -------
@@ -367,7 +361,7 @@ def grid_from_map(wave_map, trace_profile):
     Returns
     -------
     grid : array[float]
-        Output wavelength grid
+        Output wavelength grid.
     cols : array[int]
         Column indices used.
     """
@@ -403,11 +397,13 @@ def grid_from_map_with_extrapolation(wave_map, trace_profile, wave_range=None, n
         Array of the spatial profile for a given order.
     wave_range : list[float]
         Minimum and maximum boundary of the grid to generate, in microns.
-        Wave_range must include some wavelengths of wave_map.
-        Note wave_range is exclusive, in the sense that wave_range[0] and wave_range[1]
-        will not be between min(output) and max(output). Instead, min(output) will be
-        the smallest value in the extrapolated grid that is greater than wave_range[0]
-        and max(output) will be the largest value that is less than wave_range[1].
+        This list must include some wavelengths of ``wave_map``.
+        Note that this list is exclusive, in the sense that
+        ``wave_range[0]`` and ``wave_range[1]``
+        will not be between ``min(output)`` and ``max(output)``.
+        Instead, ``min(output)`` will be
+        the smallest value in the extrapolated grid that is greater than ``wave_range[0]``
+        and ``max(output)`` will be the largest value that is less than ``wave_range[1]``.
     n_os : int
         Oversampling of the grid compared to the pixel sampling.
 
@@ -520,27 +516,27 @@ def make_combined_adaptive_grid(
     Parameters
     ----------
     all_grids : list[array]
-        List of grid (arrays) to pass to _adapt_grid, in order of importance.
+        List of grid (arrays) to pass to ``_adapt_grid``, in order of importance.
     all_estimates : list[callable]
         List of function (callable) to estimate the precision needed to oversample the grid.
-        Must match the corresponding `grid` in `all_grid`.
+        Must match the corresponding grid in ``all_grids``.
     grid_range : list[float]
         Wavelength range the new grid should cover.
     max_iter : int, optional
         Number of times the intervals can be subdivided. The smallest
         subdivison of the grid if max_iter is reached will then be given
-        by delta_grid / 2^max_iter. Needs to be greater than zero.
+        by ``delta_grid / 2^max_iter``. Needs to be greater than zero.
         Default is 10.
     rtol : float, optional
         The desired relative tolerance. Default is 10e-6, so 10 ppm.
     max_total_size : int, optional
-        Maximum size of the output grid. Default is 1 000 000.
+        Maximum size of the output grid. Default is 1 million.
 
     Returns
     -------
-    os_grid : 1D array
-        Oversampled combined grid which minimizes the integration error based on
-        Romberg's method
+    os_grid : ndarray
+        Oversampled combined 1D grid which minimizes the integration error based on
+        Romberg's method.
     """
     # Remove unneeded parts of the grids
     all_grids = _trim_grids(all_grids, grid_range)
@@ -621,11 +617,11 @@ def _difftrap(fct, intervals, numtraps):
     Perform part of the trapezoidal rule to integrate a function.
 
     Assume that we had called difftrap with all lower powers-of-2 starting with 1.
-    Calling difftrap only returns the summation of the new ordinates. It does not
+    Calling this function only returns the summation of the new ordinates. It does not
     multiply by the width of the trapezoids. This must be performed by the
     caller.
 
-    Note: This function is based on scipy.integrate.quadrature. Adapted to work
+    Note: This function is based on `scipy.integrate.quadrature`. Adapted to work
     with multiple intervals.
 
     Parameters
@@ -739,7 +735,8 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6, mi
     The precision is computed based on the estimate of the integrals
     using a first order Romberg integration.
 
-    See also `scipy.integrate.quadrature.romberg`.
+    See also ``scipy.integrate.romberg`` (deprecated in scipy 1.12
+    and removed in scipy 1.15).
 
     Parameters
     ----------
@@ -836,9 +833,9 @@ class ThroughputInterpolator:
 
     Parameters
     ----------
-    wavelength : np.ndarray
+    wavelength : ndarray
         Wavelength array
-    throughput : np.ndarray
+    throughput : ndarray
         Throughput array
     """
 
@@ -867,14 +864,14 @@ def throughput_soss(wavelength, throughput):
 
     Parameters
     ----------
-    wavelength : array[float]
+    wavelength : ndarray
         A wavelength array.
-    throughput : array[float]
+    throughput : ndarray
         The throughput values corresponding to the wavelengths.
 
     Returns
     -------
-    ThroughputInterpolator
+    `ThroughputInterpolator`
         A callable interpolator that interpolates the throughput values.
 
     Notes
@@ -885,29 +882,28 @@ def throughput_soss(wavelength, throughput):
 
 
 class WebbKernel:
-    """The JWST kernel."""
+    """
+    The JWST kernel.
+
+    Parameters
+    ----------
+    wave_kernels : ndarray
+        Wavelength array for the kernel. Must have same shape as kernels.
+    kernels : ndarray
+        Kernel for throughput array.
+        Dimensions are (wavelength, oversampled pixels).
+        Center (approx. max throughput) of the kernel is at the center of the 2nd axis.
+    wave_trace : ndarray
+        1-D trace of the detector central wavelengths for the given order.
+        Since kernels are originally defined in the pixel space, this is used to
+        convert to wavelength space.
+    n_pix : int
+        Number of detector pixels spanned by the kernel. Second axis of kernels
+        has shape ``(n_os * n_pix) - (n_os - 1)``, where ``n_os`` is the
+        spectral oversampling factor.
+    """
 
     def __init__(self, wave_kernels, kernels, wave_trace, n_pix):
-        """
-        Initialize the kernel object.
-
-        Parameters
-        ----------
-        wave_kernels : array[float]
-            Wavelength array for the kernel. Must have same shape as kernels.
-        kernels : array[float]
-            Kernel for throughput array.
-            Dimensions are (wavelength, oversampled pixels).
-            Center (~max throughput) of the kernel is at the center of the 2nd axis.
-        wave_trace : array[float]
-            1-D trace of the detector central wavelengths for the given order.
-            Since kernels are originally defined in the pixel space, this is used to
-            convert to wavelength space.
-        n_pix : int
-            Number of detector pixels spanned by the kernel. Second axis of kernels
-            has shape (n_os * n_pix) - (n_os - 1), where n_os is the
-            spectral oversampling factor.
-        """
         self.n_pix = n_pix
 
         # Mask where trace is equal to 0
@@ -1001,14 +997,14 @@ class WebbKernel:
 
         Parameters
         ----------
-        wave : array[float]
+        wave : ndarray
             Wavelength where the kernel is projected.
-        wave_c : array[float]
+        wave_c : ndarray
             Central wavelength of the kernel.
 
         Returns
         -------
-        out : array[float]
+        out : ndarray
             The kernel value.
         """
         wave_center = self.wave_center
@@ -1056,8 +1052,8 @@ def _constant_kernel_to_2d(c, grid_range):
 
     Parameters
     ----------
-    c : float or size-1 np.ndarray
-        Constant value to expand into a 2-D kernel
+    c : float or numpy scalar
+        Constant value to expand into a 2-D kernel.
     grid_range : list[int]
         Indices over which convolution is defined on grid.
 
@@ -1212,7 +1208,7 @@ def _fct_to_array(fct, grid, grid_range, thresh):
         equal to grid[grid_range[0]:grid_range[1]].
     thresh : float, required
         Threshold to define the maximum length of the kernel.
-        Truncate when `kernel` < `thresh`.
+        Truncate when ``kernel < thresh``.
 
     Returns
     -------
@@ -1308,42 +1304,43 @@ def get_c_matrix(kernel, grid, i_bounds=None, thresh=1e-5):
     """
     Return a convolution matrix.
 
-    Returns a sparse matrix (N_k_convolved, N_k).
-    N_k is the length of the grid on which the convolution
-    will be applied, N_k_convolved is the length of the
-    grid after convolution and N_ker is the maximum length of
+    Returns a sparse matrix ``(N_k_convolved, N_k)``.
+    ``N_k`` is the length of the grid on which the convolution
+    will be applied, ``N_k_convolved`` is the length of the
+    grid after convolution and ``N_ker`` is the maximum length of
     the kernel.
-    The convolution can be applied on an array f | f = fct(grid)
-    by a simple matrix multiplication:
-    f_convolved = c_matrix.dot(f)
+    The convolution can be applied on an array ``f | f = fct(grid)``
+    by a simple matrix multiplication::
+
+        f_convolved = c_matrix.dot(f)
 
     Parameters
     ----------
-    kernel : ndarray (2D) or callable
-        Convolution kernel. Can be already 2D (N_ker, N_k_convolved),
+    kernel : ndarray or callable
+        Convolution kernel. Can be already 2D ``(N_ker, N_k_convolved)``,
         giving the kernel for each items of the convolved grid.
         Can be a callable
-        with the form f(x, x0) where x0 is the position of the center of
-        the kernel. Must return a 1D array (len(x)), so a kernel value
-        for each pairs of (x, x0).
-    grid : 1D np.array
-        The grid on which the convolution will be applied.
-        For example, if C is the convolution matrix,
-        f_convolved = C.f(grid)
+        with the form ``f(x, x0)`` where ``x0`` is the position of the center of
+        the kernel. Must return a 1D array (``len(x)``), so a kernel value
+        for each pairs of ``(x, x0)``.
+    grid : ndarray
+        The 1D grid on which the convolution will be applied.
+        For example, if ``C`` is the convolution matrix,
+        ``f_convolved = C.f(grid)``.
     i_bounds : 2-elements object, optional, default None
         The bounds of the grid on which the convolution is defined.
-        For example, if bounds = (a,b),
-        then grid_convolved = grid[a <= grid <= b].
-        It dictates also the dimension of f_convolved.
+        For example, if ``bounds = (a,b)``,
+        then ``grid_convolved = grid[a <= grid <= b]``.
+        It dictates also the dimension of ``f_convolved``.
         If None, the convolution is defined on the whole grid.
     thresh : float, optional
-        Only used when `kernel` is callable to define the maximum
-        length of the kernel. Truncate when `kernel` < `thresh`
+        Only used when ``kernel`` is callable to define the maximum
+        length of the kernel. Truncate when ``kernel < thresh``.
 
     Returns
     -------
-    c_matrix : array[float]
-        Convolution matrix in sparse form (N_k_convolved, N_k).
+    c_matrix : ndarray
+        Convolution matrix in sparse form ``(N_k_convolved, N_k)``.
     """
     # Define range where the convolution is defined on the grid.
     if i_bounds is None:
@@ -1388,8 +1385,8 @@ def _finite_diff(x):
     Returns
     -------
     diff_matrix : array[float]
-        Sparse matrix. When applied to x `diff_matrix.dot(x)`,
-        the result is the same as np.diff(x)
+        Sparse matrix. When applied to x ``diff_matrix.dot(x)``,
+        the result is the same as ``np.diff(x)``
     """
     n_x = len(x)
     diff_matrix = diags([-1.0], shape=(n_x - 1, n_x))
@@ -1410,8 +1407,8 @@ def finite_first_d(grid):
     -------
     first_d : array[float]
         Operator to compute the first derivative, so that
-        f' = first_d.dot(f), where f is a function
-        projected on `grid`.
+        ``f' = first_d.dot(f)``, where ``f`` is a function
+        projected on ``grid``.
     """
     # Finite difference operator
     d_matrix = _finite_diff(grid)
@@ -1441,7 +1438,7 @@ def _curvature_finite(factors, log_reg2, log_chi2):
     factors : array[float]
         Sorted and cut version of input factors array.
     curvature : array[float]
-        Second derivative of the log10 of the regularized chi2
+        Second derivative of the log10 of the regularized chi2.
     """
     # Make sure it is sorted according to the factors
     idx = np.argsort(factors)
@@ -1482,9 +1479,9 @@ def _get_finite_derivatives(x_array, y_array):
     Returns
     -------
     mean_first_d : array[float]
-        Mean of left and right finite derivatives
+        Mean of left and right finite derivatives.
     second_d : array[float]
-        Second finite derivative
+        Second finite derivative.
     """
     # Compute first finite derivative
     first_d = np.diff(y_array) / np.diff(x_array)
@@ -1533,12 +1530,12 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate=True, interp_index=N
     Parameters
     ----------
     factors : array[float]
-        1D array of Tikhonov factors for which value array is calculated
+        1D array of Tikhonov factors for which value array is calculated.
     val_to_minimize : array[float]
-        1D array of values to be minimized, e.g. chi^2 or curvature.
+        1D array of values to be minimized, e.g., chi^2 or curvature.
     interpolate : bool, optional
-        If True, use akima spline interpolation to find a finer minimum;
-        otherwise, return minimum value in array. Default is true.
+        If `True`, use akima spline interpolation to find a finer minimum;
+        otherwise, return minimum value in array. Default is `True`.
     interp_index : iterable[int], optional
         Relative range of grid indices around the minimum value to interpolate
         across. If not specified, defaults to [-2,4].
@@ -1608,19 +1605,22 @@ DEFAULT_THRESH_DERIVATIVE = {"chi2": 1e-5, "chi2_soft_l1": 1e-4, "chi2_cauchy": 
 
 
 class TikhoTests(dict):
-    """Store results of Tikhonov tests for different factors."""
+    """
+    Store results of Tikhonov tests for different factors.
+
+    Merge output of Tikhonov solver with chi2 and curvature.
+
+    Parameters
+    ----------
+    test_dict : dict
+        Dictionary holding arrays for ``factors``, ``solution``,
+        ``error``, ``reg``, and ``grid``.
+    default_chi2 : str, optional
+        Type of chi2 loss used by default. Options are
+        ``'chi2'``, ``'chi2_soft_l1'``, or ``'chi2_cauchy'`` (default).
+    """
 
     def __init__(self, test_dict, default_chi2="chi2_cauchy"):
-        """
-        Merge output of Tikhonov solver with chi2 and curvature.
-
-        Parameters
-        ----------
-        test_dict : dict
-            Dictionary holding arrays for `factors`, `solution`, `error`, `reg`, and `grid`.
-        default_chi2 : str
-            Type of chi2 loss used by default. Options are chi2, chi2_soft_l1, chi2_cauchy.
-        """
         # Define the number of data points
         # (length of the "b" vector in the tikhonov regularisation)
         n_points = len(test_dict["error"][0].squeeze())
@@ -1651,9 +1651,9 @@ class TikhoTests(dict):
         Parameters
         ----------
         addnl_dict : dict
-            Dictionary holding arrays for `factors`, `solution`, `error`, `reg`.
-            Will be appended onto the existing arrays using np.hstack or
-            np.vstack, as appropriate.
+            Dictionary holding arrays for ``factors``, ``solution``, ``error``, and ``reg``.
+            Will be appended onto the existing arrays using `numpy.hstack` or
+            `numpy.vstack`, as appropriate.
         """
         self["factors"] = np.hstack([self["factors"], addnl_dict["factors"]])
         for key in ["error", "solution", "reg"]:
@@ -1677,7 +1677,7 @@ class TikhoTests(dict):
         Returns
         -------
         float
-            Sum of the squared error array divided by the number of data points
+            Sum of the squared error array divided by the number of data points.
         """
         try:
             loss = LOSS_FUNCTIONS[loss]
@@ -1721,14 +1721,15 @@ class TikhoTests(dict):
         """
         Compute the best scale factor for Tikhonov regularisation.
 
-        Best factor is determined by taking the factor giving the highest logL on
+        Best factor is determined by taking the factor giving the highest log L on
         the detector or the highest curvature of the l-curve,
         depending on the chosen mode.
 
         Parameters
         ----------
-        mode : str
-            How to find the best factor: 'chi2', 'curvature' or 'd_chi2'.
+        mode : str, optional
+            How to find the best factor:
+            ``'chi2'``, ``'curvature'`` (default), or ``'d_chi2'``
 
         Returns
         -------
@@ -1817,14 +1818,14 @@ def try_solve_two_methods(matrix, result):
     Parameters
     ----------
     matrix : array-like
-        Matrix A in the system to solve A.x = b
+        Matrix A in the system to solve ``A.x = b``
     result : array-like
-        Vector b in the system to solve A.x = b
+        Vector b in the system to solve ``A.x = b``
 
     Returns
     -------
     array
-        Solution x of the system (1d array)
+        Solution x of the system (1D array)
     """
     with warnings.catch_warnings():
         warnings.filterwarnings(action="error", category=MatrixRankWarning)
@@ -1845,23 +1846,23 @@ class Tikhonov:
 
     The matrix A is accidentally singular or close to singularity. Tikhonov regularization
     adds a regularization term in the equation and aim to minimize the
-    equation: ||A.x - b||^2 + ||gamma.x||^2
+    equation::
+
+        ||A.x - b||^2 + ||gamma.x||^2
+
     where gamma is the Tikhonov regularization matrix.
+
+    Parameters
+    ----------
+    a_mat : ndarray
+        Matrix A (2D) in the system to solve ``A.x = b``
+    b_vec : ndarray
+        Vector b (1D) in the system to solve ``A.x = b``
+    t_mat : ndarray
+        Tikhonov regularisation matrix (2D) to be applied on ``b_vec``
     """
 
     def __init__(self, a_mat, b_vec, t_mat):
-        """
-        Initialize the solver.
-
-        Parameters
-        ----------
-        a_mat : matrix-like object (2d)
-            Matrix A in the system to solve A.x = b
-        b_vec : vector-like object (1d)
-            Vector b in the system to solve A.x = b
-        t_mat : matrix-like object (2d)
-            Tikhonov regularisation matrix to be applied on b_vec.
-        """
         # Save input matrix
         self.a_mat = a_mat
         self.b_vec = b_vec
@@ -1880,9 +1881,15 @@ class Tikhonov:
         """
         Solve the Tikhonov regularization problem.
 
-        Minimize the equation ||A.x - b||^2 + ||gamma.x||^2
-        by solving (A_T.A + gamma_T.gamma).x = A_T.b
-        gamma is the Tikhonov matrix multiplied by a scale factor
+        Minimize the equation::
+
+            ||A.x - b||^2 + ||gamma.x||^2
+
+        by solving::
+
+            (A_T.A + gamma_T.gamma).x = A_T.b
+
+        gamma is the Tikhonov matrix multiplied by a scale factor.
 
         Parameters
         ----------
@@ -1891,8 +1898,8 @@ class Tikhonov:
 
         Returns
         -------
-        array
-            Solution of the system (1d array)
+        ndarray
+            Solution of the system (1D)
         """
         # Get needed attributes
         a_mat_2 = self.a_mat_2
@@ -1922,12 +1929,12 @@ class Tikhonov:
 
         Parameters
         ----------
-        factors : array[float]
+        factors : ndarray
             1D array of factors to test
 
         Returns
         -------
-        TikhoTests
+        `TikhoTests`
             Dictionary of test results
         """
         log.info("Testing factors...")

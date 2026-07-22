@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 ORDER_STR_TO_INT = {f"Order {order}": order for order in [1, 2, 3]}
 
 
-__all__ = ["get_ref_file_args", "run_extract1d"]
+__all__ = ["DetectorModelOrder", "get_ref_file_args", "run_extract1d"]
 
 
 @dataclass
@@ -53,47 +53,51 @@ class DetectorModelOrder:
     ----------
     spectral_order : int
         The spectral order number.
-    wavemap : np.ndarray
+    wavemap : ndarray
         The 2-D map of the expected wavelengths at each pixel for this order
         as determined by PASTASOSS.
-    spectrace : np.ndarray
+    spectrace : ndarray
         The 1-D spectral trace as determined by PASTASOSS.
-    specprofile : np.ndarray
-        The 2-D spatial profile of the spectral trace from the specprofile reference file.
-    throughput : Callable
+    specprofile : ndarray
+        The 2-D spatial profile of the spectral trace from the SPECPROFILE reference file.
+    throughput : callable
         An interpolation function for the throughput of the order, computed from the throughput
-        in the pastasoss reference file.
-    kernel : WebbKernel or np.ndarray or None
-        The spectral resolution kernel for this order on the input wave_grid,
-        either as a WebbKernel object (callable) or as a 2-D array.
-    kernel_native : WebbKernel or np.ndarray or None
+        in the PASTASOSS reference file.
+    kernel : `~jwst.extract_1d.soss_extract.atoca_utils.WebbKernel`, ndarray, or None
+        The spectral resolution kernel for this order on the input wavelength grid,
+        either as a `~jwst.extract_1d.soss_extract.atoca_utils.WebbKernel`
+        object (callable) or as a 2-D array.
+    kernel_native : `~jwst.extract_1d.soss_extract.atoca_utils.WebbKernel`, ndarray, or None
         The spectral resolution kernel for this order on the native pixel grid,
-        either as a WebbKernel object (callable) or as a 2-D array.
-    kernel_func : WebbKernel or None
+        either as a `~jwst.extract_1d.soss_extract.atoca_utils.WebbKernel`
+        object (callable) or as a 2-D array.
+    kernel_func : `~jwst.extract_1d.soss_extract.atoca_utils.WebbKernel` or None
         The spectral resolution kernel for this order. This is intended not to be modified, so the
-        ExtractionEngine can use it to generate a kernel at any wavelength grid.
+        `~jwst.extract_1d.soss_extract.atoca.ExtractionEngine`
+        can use it to generate a kernel at any wavelength grid.
     subarray : str or None
         The name of the subarray used for the extraction.
     trace_cutoff : int
-        The maximum x pixel to consider for this order, as determined by the pastasoss ref file.
+        The maximum x pixel to consider for this order, as determined by
+        the PASTASOSS reference file.
     short_cutoff : float or None
         The shortest wavelength to consider for this order, in microns,
-        as determined by the pastasoss ref file.
-    orderengine : ExtractionEngine or None
+        as determined by the PASTASOSS reference file.
+    orderengine : `~jwst.extract_1d.soss_extract.atoca.ExtractionEngine` or None
         Precomputed extraction engine for this order.  This is intended to be
         computed for the first integration and stored thereafter.
-    order12engine : ExtractionEngine or None
+    order12engine : `~jwst.extract_1d.soss_extract.atoca.ExtractionEngine` or None
         Precomputed extraction engine for orders 1+2.  This is intended to be
         computed for the first integration and stored thereafter.
-    mederr : np.ndarray or None
+    mederr : ndarray or None
         Median error across integrations
-    m_inv : np.ndarray or None
+    m_inv : ndarray or None
         Inverse of the design matrix of the regularized least squares problem.
         Intended to be computed for the first integration and stored thereafter.
-    bmat : np.ndarray or None
+    bmat : ndarray or None
         Matrix of pixel values divided by the median error.
         Intended to be computed for the first integration and stored thereafter.
-    mask : np.ndarray or None
+    mask : ndarray or None
         Mask for pixels valid in at least some integrations.
         Intended to be computed for the first integration and stored thereafter.
     """
@@ -124,8 +128,8 @@ class DetectorModelOrder:
 
         Returns
         -------
-        xtrace, ytrace, wavetrace : array[float]
-            The x, y and wavelength of the trace.
+        xtrace, ytrace, wavetrace : ndarray
+            The x, y, and wavelength of the trace, respectively.
         """
         spectrace = self.spectrace
         xtrace = np.arange(self.trace_cutoff)
@@ -143,13 +147,13 @@ class DetectorModelOrder:
     @lazyproperty
     def native_grid(self):
         """
-        Make a 1d-grid of the pixels boundary based on the wavelength solution.
+        Make a 1D grid of the pixels boundary based on the wavelength solution.
 
         Returns
         -------
-        wave : array[float]
-            Grid of the pixels boundaries at the native sampling (1d array)
-        col : array[int]
+        wave : ndarray
+            Grid of the pixels boundaries at the native sampling (1D array)
+        col : ndarray
             The column number of the pixel
         """
         # From wavelength solution
@@ -175,18 +179,18 @@ class DetectorModelOrder:
 
     def get_grid_from_trace(self, n_os):
         """
-        Make a 1d-grid of the pixels boundary based on the wavelength solution.
+        Make a 1D grid of the pixels boundary based on the wavelength solution.
 
         Parameters
         ----------
-        n_os : int or array
+        n_os : int or ndarray
             The oversampling factor of the wavelength grid used when solving for
             the uncontaminated flux.
 
         Returns
         -------
-        array[float]
-            Grid of the pixels boundaries at the native sampling (1d array)
+        ndarray
+            Grid of the pixels boundaries at the native sampling (1D array).
         """
         wave, _ = self.native_grid
 
@@ -210,16 +214,17 @@ def get_ref_file_args(ref_files, orders_requested=None):
     Parameters
     ----------
     ref_files : dict
-        A dictionary of the reference file DataModels, along with values
-        for the subarray and pwcpos, i.e. the pupil wheel position.
+        A dictionary of the reference file
+        `~stdatamodels.jwst.datamodels.JwstDataModel`, along with values
+        for the subarray and pwcpos, i.e., the pupil wheel position.
     orders_requested : list or None, optional
         A list of the spectral orders requested for extraction.
-        If None, all orders in the pastasoss reference file are used.
+        If None, all orders in the PASTASOSS reference file are used.
 
     Returns
     -------
-    list[DetectorModelOrder]
-        A list of DetectorModelOrder objects containing PASTASOSS outputs and other reference
+    list
+        A list of `DetectorModelOrder` objects containing PASTASOSS outputs and other reference
         information, one per spectral order to be extracted.
     """
     pastasoss_ref = ref_files["pastasoss"]
@@ -313,21 +318,21 @@ def _infill_data_get_mederr(cube_model, refmask, ninterp=9):
 
     Parameters
     ----------
-    cube_model : CubeModel
-        The input DataModel as a CubeModel.
-    refmask : np.ndarray
-        Boolean mask for the reference pixels
+    cube_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input datamodel.
+    refmask : ndarray
+        Boolean mask for the reference pixels.
     ninterp : int, optional
         Number of neighboring images (in time) to use to impute missing data.
-        Used with ndimage.median_filter.  Should be odd.
+        Used with `scipy.ndimage.median_filter`.  Should be odd.
 
     Returns
     -------
-    data_nanreplaced : np.ndarray
-        Array of shape (nintegrations, ny, nx) with NaNs replaced with the
-        mean of ninterp neighboring images.
-    medarr : np.ndarray
-        Median uncertainty from cube_model.err, excluding NaNs.
+    data_nanreplaced : ndarray
+        Array of shape ``(nintegrations, ny, nx)`` with NaNs replaced with the
+        mean of ``ninterp`` neighboring images.
+    medarr : ndarray
+        Median uncertainty from ``cube_model.err``, excluding NaNs.
     """
     # Pixels that are bad in all integrations
     allbad = np.sum(np.isfinite(cube_model.err) & np.isfinite(cube_model.data), axis=0) == 0
@@ -384,22 +389,22 @@ def _refine_tikfac(tiktests, tikho_struct, engine, niter_refine=3):
 
     Parameters
     ----------
-    tiktests : Tikhonov
+    tiktests : `~jwst.extract_1d.soss_extract.atoca_utils.Tikhonov`
         Dictionary-like object with Tikhonov factors and associated
-        goodness-of-fit quantities
-    tikho_struct : Tikhonov
+        goodness-of-fit quantities.
+    tikho_struct : `~jwst.extract_1d.soss_extract.atoca_utils.Tikhonov`
         A Tikhonov structure appropriately initialized to enable the
-        calculation of goodness-of-fit metrics for trial Tikhonov factors
-    engine : ExtractionEngine
+        calculation of goodness-of-fit metrics for trial Tikhonov factors.
+    engine : `~jwst.extract_1d.soss_extract.atocaExtractionEngine`
         Used to determine the best Tikhonov factor after the goodness-
-        of-fit quantities have been calculated
+        of-fit quantities have been calculated.
     niter_refine : int
         Number of times to refine the calculation by adding two points.
 
     Returns
     -------
     tifac : float
-        The best Tikhonov factor
+        The best Tikhonov factor.
     """
     tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
 
@@ -446,30 +451,31 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, force_recompute_engi
 
     Parameters
     ----------
-    engine : ExtractionEngine
+    engine : `~jwst.extract_1d.soss_extract.atoca.ExtractionEngine`
         The extraction engine used to extract the spectrum.
-    order_model : DetectorModelOrder
+    order_model : `DetectorModelOrder`
         The model for the spectral order to be extracted.
-    f_k : np.ndarray
+    f_k : ndarray
         The extracted flux for the spectral order.
-    mask : np.ndarray[bool]
+    mask : ndarray[bool]
         The global mask of pixels to be modeled. Bad pixels in the science data
         should remain unmasked.
     force_recompute_engine : bool, optional
-        Force the recomputation of the ExtractionEngine inside this function,
+        Force the recomputation of the
+        `~jwst.extract_1d.soss_extract.atoca.ExtractionEngine` inside this function,
         and prevent it from being saved to the order_model?  Alternative is to
-        use or generate the engine already associated with order_model.  This
-        boolean should be True if reconstructing spectra within the Tikhonov
-        tests, and False if using the function within the main integration
-        routine.  If True, order_model.orderengine will not be modified.
-        Default False.
+        use or generate the engine already associated with ``order_model``.  This
+        boolean should be `True` if reconstructing spectra within the Tikhonov
+        tests, and `False` if using the function within the main integration
+        routine.  If `True`, ``order_model.orderengine`` will not be modified.
+        Default is `False`.
 
     Returns
     -------
-    tracemodel_ord : np.ndarray
+    tracemodel_ord : ndarray
         The modeled detector image for the spectral order.
-    spec_ord : SpecModel
-        The SpecModel containing the extracted spectrum for the spectral order.
+    spec_ord : `~stdatamodels.jwst.datamodels.SpecModel`
+        The data model containing the extracted spectrum for the spectral order.
     """
     i_order = engine.orders.index(order_model.spectral_order)
     # Pre-convolve the extracted flux (f_k) at the order's resolution
@@ -547,18 +553,18 @@ def _build_null_spec_table(wave_grid, order, cut=None):
 
     Parameters
     ----------
-    wave_grid : np.array
-        Input wavelengths
+    wave_grid : ndarray
+        Input wavelengths.
     order : int
-        Spectral order
+        Spectral order.
     cut : float or None
         The shortest wavelength to consider for this order, in microns.
 
     Returns
     -------
-    spec : SpecModel
-        Null SpecModel. Flux values are NaN, DQ flags are 1,
-        but note that DQ gets overwritten at end of run_extract1d
+    spec : `~stdatamodels.jwst.datamodels.SpecModel`
+        Null data model. Flux values are NaN, DQ flags are 1,
+        but note that DQ gets overwritten at end of ``run_extract1d``.
     """
     if cut is None:
         wave_grid_cut = wave_grid
@@ -595,25 +601,25 @@ def _do_tiktests(
 
     Parameters
     ----------
-    engine : ExtractionEngine
+    engine : `~jwst.extract_1d.soss_extract.atoca.ExtractionEngine`
         The extraction engine to use for the tests.
-    scidata_bkg : np.ndarray
+    scidata_bkg : ndarray
         The science data with background subtracted.
-    scierr : np.ndarray
+    scierr : ndarray
         The error in the science data.
     guess_factor : float
         Initial guess for the Tikhonov factor.
     order_models : list[DetectorModelOrder]
         Models of the detector and trace properties, one per spectral order.
-    global_mask : np.ndarray
+    global_mask : ndarray
         Mask determining the aperture used for rebuilding the trace. This typically includes
         only pixels that do not belong to either spectral trace, i.e., regions of the detector
         where no real data could exist.
     save_tiktests : bool, optional
-        If True, re-construct spectra for all tested Tikhonov factors and for all spectral orders
+        If `True`, re-construct spectra for all tested Tikhonov factors and for all spectral orders
         to provide a diagnostic product.
     tikfac_log_range : list[float], optional
-        Logarithmic range around `guess_factor` to search. The default is [-2, 8], which was
+        Logarithmic range around ``guess_factor`` to search. The default is [-2, 8], which was
         chosen because we are looking for the smoothest (largest-factor) solution that
         still provides a good fit to the data.
     niter_refine : int
@@ -626,7 +632,8 @@ def _do_tiktests(
     tikfac : float
         The best-fitting Tikhonov factor.
     spec_list : list[SpecModel]
-        If save_tiktests is True, a list of SpecModels for all tested Tikhonov factors
+        If ``save_tiktests`` is `True`, a list of `~stdatamodels.jwst.datamodels.SpecModel`
+        for all tested Tikhonov factors
         and all spectral orders; otherwise, an empty list.
     """
     # reset the kernel so it can get a new shape here
@@ -731,38 +738,38 @@ def _model_single_order(
     Extract an output spectrum for a single spectral order using the ATOCA algorithm.
 
     The Tikhonov factor is derived in two stages: first, ten factors are tested
-    spanning tikfac_log_range, and then a further 10 factors are tested across
+    spanning ``tikfac_log_range``, and then a further 10 factors are tested across
     1 order of magnitude in each direction around the best factor from the first stage.
     The best-fitting model and spectrum are reconstructed using the best-fit Tikhonov factor
-    and respecting mask_rebuild.
+    and respecting ``mask_rebuild``.
 
     Parameters
     ----------
-    data_order : np.array
+    data_order : ndarray
         The 2D data array for the spectral order to be extracted.
-    err_order : np.array
+    err_order : ndarray
         The 2D error array for the spectral order to be extracted.
-    order_model : DetectorModelOrder
+    order_model : `DetectorModelOrder`
         The model for the spectral order to be extracted.
-    mask_fit : np.array
+    mask_fit : ndarray
         Mask determining the aperture used for extraction. This typically includes
-        detector bad pixels and any pixels that are not part of the trace
-    mask_rebuild : np.array
+        detector bad pixels and any pixels that are not part of the trace.
+    mask_rebuild : ndarray
         Mask determining the aperture used for rebuilding the trace. This typically includes
         only pixels that do not belong to either spectral trace, i.e., regions of the detector
         where no real data could exist.
-    wave_grid : np.array
+    wave_grid : ndarray
         The wavelength grid used to model the data.
     tikfac : float
-        The Tikhonov factor to use. If do_tiktests is True, the best factor will be
+        The Tikhonov factor to use. If ```do_tiktests`` is `True`, the best factor will be
         determined by testing a range of factors around this value; otherwise, it will be taken
         to be the best value.
     do_tiktests : bool, optional
-        If True, test a range of Tikhonov factors to determine the best value.
-        Default is False.
+        If `True`, test a range of Tikhonov factors to determine the best value.
+        Default is `False`.
     save_tiktests : bool, optional
-        If True, save the intermediate models and spectra for each Tikhonov factor tested.
-        Has no effect if do_tiktests is False. Default is False.
+        If `True`, save the intermediate models and spectra for each Tikhonov factor tested.
+        Has no effect if ``do_tiktests`` is `False`. Default is `False`.
     tikfac_log_range : list, optional
         The range in log10 space around the initial guess to test Tikhonov factors.
         The default is [-2, 8], which was
@@ -771,21 +778,21 @@ def _model_single_order(
 
     Returns
     -------
-    model : np.array
-        Model derived from the best Tikhonov factor, same shape as data_order.
-    spec_list : list of SpecModel
-        If save_tiktests is True, returns a list of the model spectra
+    model : ndarray
+        Model derived from the best Tikhonov factor, same shape as ``data_order``.
+    spec_list : list of `~stdatamodels.jwst.datamodels.SpecModel`
+        If ``save_tiktests`` is `True`, returns a list of the model spectra
         for each Tikhonov factor tested,
         with the best-fitting spectrum last in the list.
-        If save_tiktests is False, returns a one-element list with the best-fitting spectrum.
+        If ``save_tiktests`` is `False`, returns a one-element list with the best-fitting spectrum.
 
     Notes
     -----
-    The last spectrum in the list of SpecModels lacks
+    The last spectrum in the list of `~stdatamodels.jwst.datamodels.SpecModel` lacks
     the "chi2", "chi2_soft_l1", "chi2_cauchy", and "reg" attributes,
     as these are only calculated for the intermediate models. The last spectrum is not
     necessarily identical to any of the spectra in the list, as it is reconstructed according to
-    mask_rebuild instead of fit respecting mask_fit; that is, bad pixels are included.
+    ``mask_rebuild`` instead of fit respecting ``mask_fit``; that is, bad pixels are included.
     """
     order = order_model.spectral_order
 
@@ -877,24 +884,24 @@ class Integration:
 
     Parameters
     ----------
-    scidata : np.ndarray
+    scidata : ndarray
         2D science data array.
-    scierr : np.ndarray
+    scierr : ndarray
         2D science error array.
-    scimask : np.ndarray[bool]
-        2D boolean mask array for the science data. True values are masked.
-    refmask : np.ndarray[bool]
-        2D boolean mask array for the reference pixels. True values are masked.
-    order_models : list[DetectorModelOrder]
+    scimask : ndarray
+        2D boolean mask array for the science data. `True` values are masked.
+    refmask : ndarra
+        2D boolean mask array for the reference pixels. `True` values are masked.
+    order_models : list of `DetectorModelOrder`
         Models of the detector and trace properties, one per spectral order.
     box_weights : dict
         A dictionary of the weights for each order.
     do_bkgsub : bool, optional
-        Whether to perform background subtraction. Default is True.
+        Whether to perform background subtraction. Default is `True`.
     extract_order3 : bool, optional
-        Whether to extract order 3. Default is True.
+        Whether to extract order 3. Default is `True`.
     save_intermediate : bool, optional
-        Whether to save intermediate products for debugging. Default is False.
+        Whether to save intermediate products for debugging. Default is `False`.
     order2_separation_cutoff : tuple(float, float), optional
         Wavelengths short of which to consider Order 2 to be well-separated from order 1.
         Two values are defined. The first is the cutoff longwave of which should be included
@@ -982,23 +989,24 @@ class Integration:
         Extract the uncontaminated spectra of using the ATOCA algorithm.
 
         The model consists of three separate extractions:
+
         1. A simultaneous extraction of orders 1 and 2.
         2. An extraction of the blue (uncontaminated) part of order 2.
         3. An extraction of order 3, if requested.
 
         For each of these extractions, the Tikhonov factor can either be provided
-        using the tikfacs_in dictionary, or else determined via a grid search.
+        using the ``tikfacs_in`` dictionary, or else determined via a grid search.
 
         Parameters
         ----------
-        wave_grid : np.array
+        wave_grid : ndarray or None
             The wavelength grid to use for the simultaneous extraction of orders 1 and 2.
         estimate : func, optional
             An estimate of the target flux as a function of wavelength in microns.
-            This is used to generate the wavelength grid if wave_grid is None,
-            and to estimate the Tikhonov factor if not provided in tikfacs_in.
-            If wave_grid is given and the Tikhonov factor for order 1 is provided
-            in tikfacs_in, this is not needed. If either is not provided, this must be given.
+            This is used to generate the wavelength grid if ``wave_grid`` is None,
+            and to estimate the Tikhonov factor if not provided in ``tikfacs_in``.
+            If ``wave_grid`` is given and the Tikhonov factor for order 1 is provided
+            in ``tikfacs_in``, this is not needed. If either is not provided, this must be given.
         tikfacs_in : dict, optional
             A dictionary with keys "Order 1", "Order 2", and "Order 3" and values
             giving the Tikhonov factor to use for each order. If None (default), the Tikhonov factor
@@ -1013,7 +1021,7 @@ class Integration:
         tracemodels : dict
             A dictionary with keys "Order 1", "Order 2", and "Order 3" (if extracted)
             and values giving the modeled detector image for each order.
-        spec_list : list of SpecModel
+        spec_list : list of `~stdatamodels.jwst.datamodels.SpecModel`
             A list of the extracted spectra for each order. If the Tikhonov factor
             was determined via a grid search, this will include the intermediate spectra
             for each factor tested, with the best-fitting spectrum last in the list.
@@ -1220,7 +1228,7 @@ class Integration:
         Parameters
         ----------
         threshold : float, optional
-            The pixels with an aperture[order 2] > `threshold` are considered contaminated
+            The pixels with an ``aperture[order 2] > threshold`` are considered contaminated
             and will be masked.
 
         Returns
@@ -1261,16 +1269,18 @@ class Integration:
         Create the grid to use for the simultaneous extraction of order 1 and 2.
 
         The grid is made by:
-        1) requiring that it satisfies the oversampling n_os
-        2) trying to reach the specified tolerance for the spectral range
-           shared between order 1 and 2
-        3) trying to reach the specified tolerance in the rest of spectral range
-        The max_grid_size overrules steps 2) and 3), so the precision may not be reached if
+
+        1. requiring that it satisfies the oversampling ``n_os``,
+        2. trying to reach the specified tolerance for the spectral range
+           shared between order 1 and 2, and
+        3. trying to reach the specified tolerance in the rest of spectral range.
+
+        The ``max_grid_size`` overrules steps 2 and 3, so the precision may not be reached if
         the grid size needed is too large.
 
         Parameters
         ----------
-        estimate : UnivariateSpline
+        estimate : `~scipy.interpolate.UnivariateSpline`
             Estimate of the target flux as a function of wavelength in microns.
         rtol : float, optional
             The relative tolerance needed on a pixel model.
@@ -1282,8 +1292,8 @@ class Integration:
 
         Returns
         -------
-        wave_grid : 1d array
-            The grid of the pixels boundaries at the native sampling.
+        wave_grid : ndarray
+            The 1D grid of the pixels boundaries at the native sampling.
         """
         # Build native grid for each order
         spectral_orders = [2, 1]
@@ -1361,17 +1371,17 @@ class Integration:
 
         Parameters
         ----------
-        decontaminated_data : array[float]
+        decontaminated_data : ndarray
             A single background subtracted NIRISS SOSS detector image.
         bad_pix : str
             How to handle the bad pixels. Options are 'masking' and 'model'.
             'masking' will simply mask the bad pixels, such that the number of pixels
             in each column in the box extraction will not be constant, while the
-            'model' option uses `tracemodels` to replace the bad pixels.
+            'model' option uses ``tracemodels`` to replace the bad pixels.
         tracemodels : dict
             Dictionary of the modeled detector images for each order.
         verbose : bool
-            Print bad pixel imputation messages to log.info?
+            Print bad pixel imputation messages to INFO-level logging?
 
         Returns
         -------
@@ -1580,8 +1590,8 @@ def _reconstruct_spec_from_data(spec_data):
 
     Returns
     -------
-    spec : SpecModel
-        Reconstructed SpecModel
+    spec : `~stdatamodels.jwst.datamodels.SpecModel`
+        Reconstructed data model
     """
     table_size = len(spec_data["wavelength"])
     out_table = np.zeros(table_size, dtype=datamodels.SpecModel().get_dtype("spec_table"))
@@ -1623,26 +1633,27 @@ def run_extract1d(
 
     Parameters
     ----------
-    input_model : DataModel
-        The input DataModel.
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        The input data model.
     pastasoss_ref_name : str
-        Name of the pastasoss reference file.
+        Name of the PASTASOSS reference file.
     specprofile_ref_name : str
-        Name of the specprofile reference file.
+        Name of the SPECPROFILE reference file.
     speckernel_ref_name : str
-        Name of the speckernel reference file.
+        Name of the SPECKERNEL reference file.
     subarray : str
         Subarray on which the data were recorded; one of 'SUBSTRIP96',
-        'SUBSTRIP256' or 'FULL'.
+        'SUBSTRIP256', or 'FULL'.
     soss_filter : str
         Filter in place during observations; one of 'CLEAR' or 'F277W'.
     soss_kwargs : dict
-        Dictionary of keyword arguments passed from extract_1d_step.
+        Dictionary of keyword arguments passed from
+        `~jwst.extract_1d.extract_1d_step.Extract1dStep`.
 
     Returns
     -------
-    output_model : DataModel
-        DataModel containing the extracted spectra.
+    output_model, output_references, output_atoca : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Data models containing the extracted spectra.
     """
     # Generate the atoca models or not (not necessarily for decontamination)
     generate_model = soss_kwargs["atoca"] or (soss_kwargs["bad_pix"] == "model")
