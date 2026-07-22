@@ -13,4 +13,3 @@ NIRCam     INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 NIRISS     INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 NIRSpec    INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ======================================
-
