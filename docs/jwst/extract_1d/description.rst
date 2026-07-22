@@ -1,27 +1,29 @@
 Description
 ===========
 
-:Class: `jwst.extract_1d.Extract1dStep`
+:Class: `jwst.extract_1d.extract_1d_step.Extract1dStep`
 :Alias: extract_1d
 
 Overview
 --------
 The ``extract_1d`` step extracts a 1D signal from a 2D or 3D dataset and
 writes spectral data to an "x1d" product (or "x1dints" for time series data).
-This step works on all JWST spectroscopic modes, including MIRI LRS (slit and slitless) and MIRI WFSS, 
-and MRS, NIRCam WFSS and TSGRISM, NIRISS WFSS and SOSS, and NIRSpec fixed-slit, IFU, and MOS.
+This step works on all JWST spectroscopic modes, including
+MIRI LRS (slit and slitless) and MIRI Wide-Field Slitless Spectroscopy (WFSS),
+and MRS, NIRCam WFSS and TSGRISM, NIRISS WFSS and SOSS,
+and NIRSpec fixed-slit, IFU, and MOS.
 
-An EXTRACT1D reference file is used for most modes to specify the location and
+An :ref:`extract1d_reffile` is used for most modes to specify the location and
 size of the target and background extraction apertures.
-The EXTRACT1D reference file is not used for Wide-Field Slitless Spectroscopy data
-(MIRI_WFSS, NIS_WFSS or NRC_WFSS). For these modes the extraction region is instead taken to be
+However, it is not used for WFSS data (MIRI_WFSS, NIS_WFSS, or NRC_WFSS).
+For these modes the extraction region is instead taken to be
 the full size of the input 2D subarray or cutout for each source, or restricted to
 the region within which the world coordinate system (WCS) is defined in each cutout.
 
 For slit-like 2D input data, source and background extractions are, by default, done
 using a rectangular aperture that covers one pixel in the dispersion direction and
 uses a height in the cross-dispersion direction that is defined by parameters in
-the EXTRACT1D reference file.  Optionally, for point sources, a PSF-based optimal
+the :ref:`extract1d_reffile`.  Optionally, for point sources, a PSF-based optimal
 extraction may be performed, using a model of the spectral PSF to fit the total flux
 at each dispersion element.
 
@@ -34,15 +36,15 @@ the entire image being extracted, and no background subtraction, regardless
 of what was specified in the reference file or step arguments.
 For both point or extended sources, photometric measurements make use of
 the Astropy affiliated package
-`photutils <https://photutils.readthedocs.io/en/latest/>`_ to define an aperture
+:ref:`photutils <photutils:user_guide>` to define an aperture
 object and perform extraction.  For 3D NIRSpec fixed slit rateints data, the
 ``extract_1d`` step will be skipped as 3D input for the mode is not supported.
 
 For most spectral modes, an aperture correction will be applied to the extracted
 1D spectral data (unless otherwise selected by the user), in order to put the
 results onto an infinite aperture scale.
-This is done by creating interpolation functions based on the APCORR reference
-file data and applying the interpolated aperture correction (a multiplicative
+This is done by creating interpolation functions based on the :ref:`apcorr_reffile`
+data and applying the interpolated aperture correction (a multiplicative
 factor between 0 and 1) to the extracted, 1D spectral data (corrected data
 include the "flux", "surf_bright", "flux_error", "sb_error", and all flux and
 surface brightness variance columns in the output table).  For optimal extractions,
@@ -52,11 +54,13 @@ modeled by the PSF.
 Input
 -----
 The input data are calibrated and potentially resampled 2D images or 3D cubes.
-The format should be a
-CubeModel, SlitModel, IFUCubeModel, ImageModel, MultiSlitModel, or a ModelContainer.
+The format should be a `~stdatamodels.jwst.datamodels.CubeModel`,
+`~stdatamodels.jwst.datamodels.SlitModel`, `~stdatamodels.jwst.datamodels.IFUCubeModel`,
+`~stdatamodels.jwst.datamodels.ImageModel`, `~stdatamodels.jwst.datamodels.MultiSlitModel`,
+or a `~jwst.datamodels.container.ModelContainer`.
 For some JWST modes this is usually a resampled product, such as the "s2d" products
 for MIRI LRS fixed-slit, NIRSpec fixed-slit, and NIRSpec MOS, or the "s3d" products
-for MIRI MRS and NIRSpec IFU. For other modes that are not resampled (e.g. MIRI
+for MIRI MRS and NIRSpec IFU. For other modes that are not resampled (e.g., MIRI
 LRS slitless, MIRI WFSS, NIRISS SOSS, NIRSpec BOTS, and NIRCam and NIRISS WFSS), this will
 be a "cal" or "calints" product.
 For modes that have multiple slit instances (NIRSpec fixed-slit and MOS, WFSS),
@@ -65,9 +69,9 @@ the SCI extensions should have the keyword SLTNAME to specify which slit was ext
 Normally the :ref:`photom <photom_step>` step should be applied before running
 ``extract_1d``.  If ``photom`` has not been run, a warning will be logged and the
 output of ``extract_1d`` will be in units of count rate.  The ``photom`` step
-converts data to units of either surface brightness (megajanskys per steradian) or,
+converts data to units of either surface brightness (MJy per steradian) or,
 for point sources observed with NIRSpec and NIRISS SOSS, units of flux density
-(megajanskys).
+(MJy).
 
 Output
 ------
@@ -77,7 +81,8 @@ Output data for this step are in the form of :ref:`x1d`.
 Data structure
 ^^^^^^^^^^^^^^
 
-The output for most modes will be in ``MultiSpecModel`` format. This datamodel collects
+The output for most modes will be in
+`~stdatamodels.jwst.datamodels.MultiSpecModel` format. This datamodel collects
 multiple spectra in a list, stored in the ``spec`` attribute.  The data for each spectrum
 is stored in a table under the ``spec_table`` attribute for the spectrum.  The spectral models
 in the ``spec`` attribute also hold related metadata, such as the slit name (``name``) or the
@@ -87,7 +92,7 @@ In the output file, the spectral data is stored as a table extension with the na
 This extension will have columns WAVELENGTH, FLUX, FLUX_ERROR, FLUX_VAR_POISSON, FLUX_VAR_RNOISE,
 FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
-BKGD_VAR_FLAT and NPIXELS.
+BKGD_VAR_FLAT, and NPIXELS.
 
 For example, to access the slit name, wavelength, and flux from each spectrum in a model::
 
@@ -98,25 +103,29 @@ For example, to access the slit name, wavelength, and flux from each spectrum in
         wave = spectrum.spec_table["WAVELENGTH"]
         flux = spectrum.spec_table["FLUX"]
 
-In the case of MIRI MRS data, the output is a ``MRSMultiSpecModel``. This model has the
-same structure as a ``MultiSpecModel``, except that there are three additional
-columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
+In the case of MIRI MRS data, the output is a
+`~stdatamodels.jwst.datamodels.MRSMultiSpecModel`. This model has the
+same structure as a `~stdatamodels.jwst.datamodels.MultiSpecModel`,
+except that there are three additional
+columns in the output table: RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
 
 For NIRCam, MIRI, and NIRISS WFSS data, hundreds to thousands of spectra from different sources
-may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
+may be extracted. For those modes, the output is a
+`~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`.
 The data in this model is stored in the ``spec`` attribute, such that one spectral table
 is created for each exposure for each spectral order in the input data.
 Each extension of the output FITS file thus represents one exposure/spectral order combination.
 The extension metadata contains a unique exposure ID (FITS keyword EXPGRPID) for each extension,
 which combines exposure grouping metadata, the exposure number, and the spectral order.
-The spectral tables for this model contain the same columns as the ``MultiSpecModel``, but
+The spectral tables for this model contain the same columns as the
+`~stdatamodels.jwst.datamodels.MultiSpecModel`, but
 each row in the table contains the full spectrum for a single source and order. The spectral columns
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
 These metadata fields include:
 SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC,
-EXTRACT2D_XSTART, EXTRACT2D_YSTART.
+EXTRACT2D_XSTART, and EXTRACT2D_YSTART.
 
 Note that the vector columns have the same length for all the sources in the table, meaning that
 the number of elements in the table rows is set by the spectrum with the most data points.
@@ -125,7 +134,7 @@ and the number of valid data points for each spectrum is recorded
 in the N_ALONGDISP column.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200) and
-integration (the first) in a WFSSMultiSpecModel::
+integration (the first) in a `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`::
 
     from stdatamodels.jwst import datamodels
     model = datamodels.open('multi_wfss_x1d.fits')
@@ -136,8 +145,10 @@ integration (the first) in a WFSSMultiSpecModel::
     wave, flux = row_want["WAVELENGTH"][:nelem], row_want["FLUX"][:nelem]
 
 For time series observations (TSO) with spectra extracted from multiple integrations,
-the output is a ``TSOMultiSpecModel``.  The spectral tables for this model have
-the same columns as the ``MultiSpecModel``, but each row in the table contains the full
+the output is a `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`.
+The spectral tables for this model have
+the same columns as the `~stdatamodels.jwst.datamodels.MultiSpecModel`,
+but each row in the table contains the full
 spectrum for a single integration.  The spectral columns are 2D: each row is a 1D
 vector containing all data points for the spectrum in that integration.  The spectral tables
 for this model have extra 1D columns to contain the metadata for the spectrum in each row.
@@ -176,11 +187,11 @@ values, following FITS header conventions.
 
 The output WAVELENGTH data is copied from the wavelength array of the input 2D data,
 if that attribute exists and was populated. Otherwise, it is calculated from the WCS.
-FLUX is the summed flux density in janskys (see keyword TUNIT2 in the FITS table header).
+FLUX is the summed flux density in Jy (see keyword TUNIT2 in the FITS table header).
 FLUX_ERROR is the error estimate for FLUX; it has the
 same units as FLUX. The error is calculated as the square root of the sum of the
 three variance arrays: Poisson, read noise (RNOISE), and flat field (FLAT).
-SURF_BRIGHT is the surface brightness in MJy / sr, except that for point
+SURF_BRIGHT is the surface brightness in MJy/sr, except that for point
 sources observed with NIRSpec and NIRISS SOSS, or optimal extractions, SURF_BRIGHT will be set to
 zero, because there is no way to express the extracted results from those modes
 as a surface brightness. SB_ERROR is the error estimate for SURF_BRIGHT, calculated
@@ -193,16 +204,16 @@ The ``extract_1d`` step collapses the input data from 2-D to 1-D by summing
 one or more rows (or columns, depending on the dispersion direction).
 A residual background may optionally be subtracted, in addition to any
 background subtraction performed prior to ``extract_1d``.
-For the case of input data in units of MJy / sr, the SURF_BRIGHT
+For the case of input data in units of MJy/sr, the SURF_BRIGHT
 and BACKGROUND columns are populated by dividing the sum by the number of pixels
 (see the NPIXELS column, described below) summed over during extraction.
 The FLUX column is populated by multiplying the sum by the solid angle of a pixel,
 and also multiplying by 10^6 to convert from MJy to Jy.
-For the case of input data in units of MJy (i.e. point sources,
+For the case of input data in units of MJy (i.e., point sources,
 NIRSpec or NIRISS SOSS), the SURF_BRIGHT column is set to zero, the
-FLUX column is just multiplied by 10^6, and the BACKGROUND column is
+FLUX column is multiplied by 10^6, and the BACKGROUND column is
 divided by NPIXELS and by the solid angle of a pixel to convert to surface
-brightness (MJy / sr).
+brightness (MJy/sr).
 
 NPIXELS is the number of pixels that were added together for the source
 extraction region.  Note that this is not necessarily a constant, since some
@@ -218,14 +229,13 @@ BKGD_VAR arrays.
 The DQ array is set to DO_NOT_USE for pixels with NaN flux values and zero
 otherwise.
 
-
 .. _extract-1d-for-slits:
 
 Box Extraction for 2D Slit Data
 -------------------------------
 For standard box extractions, the operational details depend heavily on the parameter
 values given in the :ref:`EXTRACT1D <extract1d_reffile>` reference file.
-Here we describe their use within the ``extract_1d`` step.
+In the subsections below, we describe their use within the ``extract_1d`` step.
 
 Source Extraction Region
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -253,8 +263,8 @@ option. This option is available for NIRSpec MOS, fixed-slit, and BOTS data,
 as well as MIRI LRS fixed-slit.
 If ``use_source_posn`` is set to None via the reference file or input parameters,
 it is turned on by default for all point sources in these modes.
-To turn it on for extended sources, set ``use_source_posn`` to True.
-To turn it off for any mode, set ``use_source_posn`` to False.
+To turn it on for extended sources, set ``use_source_posn`` to `True`.
+To turn it off for any mode, set ``use_source_posn`` to `False`.
 If source position option is enabled, the planned location for the source and its
 trace are calculated internally via header metadata recording the source position
 and the spectral WCS transforms.  The source location will be used to offset the
@@ -269,7 +279,7 @@ If no ``extract_width`` has been provided, the shifted extraction start and
 stop values will be used.
 
 A more flexible way to specify the source extraction region is via the ``src_coeff``
-parameter. ``src_coeff`` is specified as a list of lists of floating-point
+parameter, which is specified as a list of lists of floating-point
 polynomial coefficients that define the lower and upper
 limits of the source extraction region as a function of dispersion. This allows,
 for example, following a tilted or curved spectral trace or simply
@@ -277,13 +287,13 @@ following the variation in cross-dispersion FWHM as a function of wavelength.
 If both ``src_coeff`` and cross-dispersion start/stop values are given, ``src_coeff``
 takes precedence. The start/stop values can still be used to
 limit the range of the extraction in the dispersion direction. More details on
-the specification and use of polynomial coefficients is given below.
+the specification and use of polynomial coefficients is given
+in :ref:`extract1d_src_bg_coeff_list`.
 
 Note that if source position correction is enabled, the position offset is applied to
 any supplied ``src_coeff`` values, as well as the cross-dispersion start/stop values.
 To ensure the provided ``src_coeff`` values are used as-is, set ``use_source_posn``
-to False.
-
+to `False`.
 
 Background Extraction Regions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -294,8 +304,8 @@ extraction regions and functions in exactly the same way. More details on the
 use of polynomial coefficients is given in the next section.
 
 By default, background subtraction will be done if ``bkg_coeff`` is set in
-the EXTRACT1D reference file. To turn it off without modifying the reference
-file, set ``subtract_background`` to False in the input step parameters.
+the :ref:`extract1d_reffile` . To turn it off without modifying the reference
+file, set ``subtract_background`` to `False` in the input step parameters.
 
 The background values are determined independently for
 each column (or row, if dispersion is vertical), using pixel values from all
@@ -329,7 +339,9 @@ over the aperture.
 If source position correction is enabled, the calculated position offset is applied to
 any supplied ``bkg_coeff`` values, as well as the source aperture limit values.
 To ensure the provided ``bkg_coeff`` values are used as-is, set ``use_source_posn``
-to False.
+to `False`.
+
+.. _extract1d_src_bg_coeff_list:
 
 Source and Background Coefficient Lists
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -390,7 +402,6 @@ not need to have the same number of coefficients; each of the inner lists specif
 a separate polynomial. However, the independent variable (wavelength or pixel)
 does need to be the same for all polynomials for a given slit.
 
-
 Optimal Extraction for 2D Slit Data
 -----------------------------------
 
@@ -406,29 +417,29 @@ Optimal extraction is suited only to point sources with known source locations, 
 high-fidelity PSF model is available.  Currently, only the MIRI LRS fixed slit exposure type
 has a PSF model available in CRDS.
 
-When optimal extraction is selected (``extraction_type = 'optimal'``), the aperture definitions in
+When optimal extraction is selected (``extraction_type='optimal'``), the aperture definitions in
 the extraction reference file are ignored, and the following parameters
 are used instead:
 
 * ``use_source_posn``: Source position is estimated from the input metadata and used to
-  center the PSF model.  The recommended value is True, in order to account for spatial offsets
-  within the slit; if False, or if the source position could not be estimated, the source is
+  center the PSF model.  The recommended value is `True`, in order to account for spatial offsets
+  within the slit; if `False`, or if the source position could not be estimated, the source is
   assumed to be at the center of the slit.
 * ``model_nod_pair``: If nod subtraction occurred prior to extraction, setting this option to
-  True will allow the extraction algorithm to model a single negative trace from the nod pair
+  `True` will allow the extraction algorithm to model a single negative trace from the nod pair
   alongside the positive trace. This can be helpful in accounting for PSF overlap between the
   positive and negative traces.  This option is ignored if no background subtraction occurred,
   or if the dither pattern was not a 2-point nod.
 * ``optimize_psf_location``: Since source position estimates may be slightly inaccurate,
-  it may be useful to iteratively optimize the PSF location.  When this option is set to True, the
+  it may be useful to iteratively optimize the PSF location.  When this option is set to `True`, the
   location of the positive and negative traces (if used) are optimized with respect to the
   residuals of the scene modeled by the PSF at that location.  This option is
-  strongly recommended if ``model_nod_pair`` is True, since the negative nod location is less
+  strongly recommended if ``model_nod_pair`` is `True`, since the negative nod location is less
   reliably estimated than the positive trace location.
 * ``subtract_background``: Unlike during box extraction, the background levels can be modeled and removed
   during optimal extraction without explicitly setting a background region.  It is recommended to
-  set this parameter to True if background subtraction was skipped prior to extraction. Set this
-  parameter to False if a negative nod trace is present but not modeled (``model_nod_pair = False``).
+  set this parameter to `True` if background subtraction was skipped prior to extraction. Set this
+  parameter to `False` if a negative nod trace is present but not modeled (``model_nod_pair=False``).
 * ``override_psf``: If a custom flux model is required, it is possible to provide one by overriding
   the PSF model reference file. Set this parameter to the filename for a FITS file matching the
   :ref:`SpecPsfModel <psf_reffile>` format.
@@ -511,8 +522,8 @@ is part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, but currently it i
 information see :ref:`residual_fringe <residual_fringe_step>`.
 
 The pipeline also can apply a 1-D residual fringe correction. This correction is only relevant for MIRI MRS
-single band data. The parameter controlling applying the residual fringe correction is by default set to True,
-``ifu_rfcorr = True``,  in the ``extract_1d`` step.
+single band data. The parameter controlling applying the residual fringe correction is by default set to `True`,
+``ifu_rfcorr=True``,  in the ``extract_1d`` step.
 Empirically, the 1-D correction step has been found to work better than the 2-D correction step if it is
 applied to per-band spectra. If the MIRI MRS data is from multiple bands/channels the residual fringe correction
 is turned off. Three additional columns are present in MIRI MRS extracted spectra: RF_FLUX, RF_SURF_BRIGHT, and
@@ -551,9 +562,10 @@ from the other two orders; internally, ATOCA treats it as a separate extraction.
 
 The algorithm uses a wavelength solution, a spectral throughput, a spectral resolution, and a spatial throughput for
 both orders to determine the flux contribution from each order falling on a given pixel. Most of these references are
-determined by analysis of on-sky data and supplied to the algorithm via the ``pastasoss`` and ``spec_profile`` reference
+determined by analysis of on-sky data and supplied to the algorithm via the
+:ref:`pastasoss_reffile` and ``spec_profile`` reference
 files. The exception is the ``spec_kernel`` reference file which supplies the convolution kernels used in the extraction,
-determined from monochromatic PSFs generated by STPSF. The ``pastasoss`` reference file predicts the trace centroids,
+determined from monochromatic PSFs generated by STPSF. The :ref:`pastasoss_reffile` predicts the trace centroids,
 taking into account the small rotations of the trace introduced by the slight visit-to-visit offsets of the GR700XD
 grism in the optical path.
 

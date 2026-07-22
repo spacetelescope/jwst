@@ -1,18 +1,47 @@
 import abc
 
 import numpy as np
-from astropy.utils import minversion
 from scipy.interpolate import RectBivariateSpline, interp1d
 from stcal.alignment.util import compute_scale
 from stdatamodels.jwst.datamodels import MultiSlitModel
 
 __all__ = ["ApCorrBase", "ApCorrPhase", "ApCorrRadial", "ApCorr", "select_apcorr"]
 
-NUMPY_LT_2 = not minversion(np, "2.0")
-
 
 class ApCorrBase(abc.ABC):
-    """Base class for aperture correction classes."""
+    """
+    Base class for aperture correction classes.
+
+    Create and apply an aperture correction.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Input data model used to determine matching parameters.
+    apcorr_table : `~astropy.io.fits.FITS_rec`
+        Aperture correction table data from APCORR reference file.
+    sizeunit : str
+        Units for the aperture correction data "row" values (assuming the
+        aperture correction is a 2D array).
+    location : tuple or None, optional
+        Reference location (RA, Dec) used to calculate the pixel scale
+        used in converting values in arcsec to pixels.
+        Default is None, however, if the input reference data contains
+        size/radius data in units of arcsecs, a location is required.
+    slit_name : str, optional
+        For `~stdatamodels.jwst.datamodels.MultiSlitModel`,
+        the name of the slit being processed.
+    **match_kwargs : dict, optional
+        Additional keywords for matching data to reference table entries.
+
+    Raises
+    ------
+    ValueError
+        If ``apcorr_row_units`` are not supplied and units are undefined
+        in ``apcorr_table`` columns, or if the input ``apcorr_table``
+        cannot be reduced to a single row based on match criteria from
+        ``input_model``.
+    """
 
     match_pars = {
         "MIRI": {"LRS": {"subarray": ["name"]}, "WFSS": {"subarray": ["name"]}},
@@ -33,36 +62,6 @@ class ApCorrBase(abc.ABC):
     def __init__(
         self, input_model, apcorr_table, sizeunit, location=None, slit_name=None, **match_kwargs
     ):
-        """
-        Create and apply an aperture correction.
-
-        Parameters
-        ----------
-        input_model : `~/jwst.datamodels.JwstDataModel`
-            Input data model used to determine matching parameters.
-        apcorr_table : `~/astropy.io.fits.FITS_rec`
-            Aperture correction table data from APCORR reference file.
-        sizeunit : str
-            Units for the aperture correction data "row" values (assuming the
-            aperture correction is a 2D array).
-        location : tuple, optional
-            Reference location (RA, DEC) used to calculate the pixel scale
-            used in converting values in arcec to pixels.
-            Default is None, however, if the input reference data contains
-            size/radius data in units of arcsecs, a location is required.
-        slit_name : str, optional
-            For MultiSlitModels, the name of the slit being processed.
-        **match_kwargs : dict, optional
-            Additional keywords for matching data to reference table entries.
-
-        Raises
-        ------
-        ValueError :
-            If apcorr_row_units are not supplied and units are undefined in apcorr_table ColDefs.
-        ValueError :
-            If the input apcorr_table cannot be reduced to a single row
-            based on match criteria from input_model.
-        """
         self.correction = None
 
         self.model = input_model
@@ -84,7 +83,7 @@ class ApCorrBase(abc.ABC):
         """
         Size key for the reference.
 
-        The value is intended to index into self.reference.  Implementations
+        The value is intended to index into ``self.reference``.  Implementations
         of this abstract class should define this property as appropriate.
         """
         return None
@@ -163,7 +162,7 @@ class ApCorrBase(abc.ABC):
 
         Returns
         -------
-        `~fits.FITS_record`
+        `~astropy.io.fits.FITS_rec`
             A single row from the reference table.
         """
         table = self._reference_table.copy()
@@ -171,10 +170,7 @@ class ApCorrBase(abc.ABC):
         for key, value in self.match_pars.items():
             if isinstance(value, str):
                 # Not all files will have the same format as input model metadata values.
-                if NUMPY_LT_2:
-                    table = table[table[key].upper() == value.upper()]
-                else:
-                    table = table[np.strings.upper(table[key]) == value.upper()]
+                table = table[np.strings.upper(table[key]) == value.upper()]
             else:
                 table = table[table[key] == value]
 
@@ -193,7 +189,7 @@ class ApCorrBase(abc.ABC):
 
         Parameters
         ----------
-        spec_table : `~fits.FITS_rec`
+        spec_table : `~astropy.io.fits.FITS_rec`
             Table of aperture corrections values from apcorr reference file.
         """
         flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
@@ -216,30 +212,29 @@ class ApCorrBase(abc.ABC):
 
 
 class ApCorrPhase(ApCorrBase):
-    """Produce and apply aperture correction for input data with pixel phase."""
+    """
+    Produce and apply aperture correction for input data with pixel phase.
+
+    Parameters
+    ----------
+    *args : tuple
+        Input arguments as defined in `ApCorrBase`.
+    pixphase : float, optional
+        Pixel phase of the input data.
+    **kwargs : dict, optional
+        Additional parameters as defined in `ApCorrBase`.
+    """
 
     size_key = "size"
 
     def __init__(self, *args, pixphase=0.5, **kwargs):
-        """
-        Create an aperture correction for data with pixel phase.
-
-        Parameters
-        ----------
-        *args : list
-            Input arguments.  See `ApCorrBase` for more.
-        pixphase : float, optional
-            Pixel phase of the input data.
-        **kwargs : dict, optional
-            Additional parameters. See `ApCorrBase` for more.
-        """
         self.phase = pixphase
 
         super().__init__(*args, **kwargs)
 
     def approximate(self):
         """
-        Generate an approximate function for interpolating apcorr values.
+        Generate an approximate function for interpolating APCORR values.
 
         Returns
         -------
@@ -256,7 +251,7 @@ class ApCorrPhase(ApCorrBase):
             wavelength : float
                 Input wavelength
             size : float
-                Input size (In extract.py this would be `n_pixels`)
+                Input size (in ``extract.py`` this would be ``n_pixels``)
             pixel_phase : float
                 Input pixel phase
 
@@ -294,12 +289,12 @@ class ApCorrPhase(ApCorrBase):
         Storing the values saves time when applying it later, especially if
         it is to be applied to multiple integrations.
 
-        Modifies self.tabulated_correction.
+        Modifies ``self.tabulated_correction``.
 
         Parameters
         ----------
-        spec_table : `~fits.FITS_rec`
-            Table of aperture corrections values from apcorr reference file.
+        spec_table : `~astropy.io.fits.FITS_rec`
+            Table of aperture corrections values from APCORR reference file.
         """
         coefs = []
         for row in spec_table:
@@ -323,11 +318,11 @@ class ApCorrPhase(ApCorrBase):
 
         Parameters
         ----------
-        spec_table : `~fits.FITS_rec`
-            Table of aperture corrections values from apcorr reference file.
+        spec_table : `~astropy.io.fits.FITS_rec`
+            Table of aperture corrections values from APCORR reference file.
         use_tabulated : bool, optional
-            Use self.tabulated_correction to perform the aperture correction?
-            Default False (recompute correction from scratch).
+            Use ``self.tabulated_correction`` to perform the aperture correction?
+            Default is `False` (recompute correction from scratch).
         """
         flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
         var_cols_to_correct = (
@@ -367,7 +362,21 @@ class ApCorrPhase(ApCorrBase):
 
 
 class ApCorrRadial(ApCorrBase):
-    """Aperture correction class for spectra produced from an extraction aperture radius."""
+    """
+    Aperture correction class for spectra produced from an extraction aperture radius.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Input data model used to determine matching parameters.
+    apcorr_table : `~astropy.io.fits.FITS_rec`
+        Aperture correction table data from APCORR reference file.
+    location : tuple or None, optional
+        Reference location (RA, Dec) used to calculate the pixel scale
+        used in converting values in arcsec to pixels.
+        Default is None, however, if the input reference data contains
+        size/radius data in units of arcsecs, a location is required.
+    """
 
     def __init__(self, input_model, apcorr_table, location=None):
         self.correction = None
@@ -387,7 +396,8 @@ class ApCorrRadial(ApCorrBase):
         Implement the approximation method.
 
         Has no effect for this class.  The base class requires that it be implemented,
-        but the equivalent functionality for this class is performed in `find_apcorr_func`.
+        but the equivalent functionality for this class is performed in
+        :meth:`find_apcorr_func`.
         """
         pass
 
@@ -417,7 +427,7 @@ class ApCorrRadial(ApCorrBase):
 
         Parameters
         ----------
-        spec_table : `~fits.FITS_rec`
+        spec_table : `~astropy.io.fits.FITS_rec`
             Table of aperture corrections values from apcorr reference file.
         """
         # check if MIRI data and correct the residual fringe flux and surface brightness columns.
@@ -452,8 +462,8 @@ class ApCorrRadial(ApCorrBase):
         """
         Interpolate aperture correction and radial size onto input wavelengths.
 
-        Interpolated correction and size values are stored in `self.apcorr`
-        and `self.size`.
+        Interpolated correction and size values are stored in ``self.apcorr``
+        and ``self.size``.
 
         Parameters
         ----------
@@ -489,7 +499,7 @@ class ApCorrRadial(ApCorrBase):
         """
         Interpolate aperture correction onto a specific wavelength and radius.
 
-        The correction is appended to `self.apcorr_correction`.
+        The correction is appended to ``self.apcorr_correction``.
 
         Parameters
         ----------
@@ -511,7 +521,17 @@ class ApCorrRadial(ApCorrBase):
 
 
 class ApCorr(ApCorrBase):
-    """Default aperture correction class for use with most spectroscopic modes."""
+    """
+    Default aperture correction class for use with most spectroscopic modes.
+
+    Parameters
+    ----------
+    *args : tuple
+        See `ApCorrBase`
+
+    **kwargs : dict, optional
+        See `ApCorrBase`
+    """
 
     size_key = "size"
 
@@ -520,7 +540,7 @@ class ApCorr(ApCorrBase):
 
     def approximate(self):
         """
-        Generate an approximate function for interpolating apcorr values.
+        Generate an approximate function for interpolating APCORR values.
 
         Returns
         -------
@@ -544,11 +564,11 @@ class ApCorr(ApCorrBase):
 
 def select_apcorr(input_model):
     """
-    Select appropriate Aperture correction class based on input DataModel.
+    Select appropriate aperture correction class based on input data model.
 
     Parameters
     ----------
-    input_model : `~/jwst.datamodels.JwstDataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input data on which the aperture correction is to be applied.
 
     Returns

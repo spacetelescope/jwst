@@ -83,20 +83,20 @@ class ContinueError(Exception):
 
 def read_extract1d_ref(refname):
     """
-    Read the extract1d reference file.
+    Read the EXTRACT1D reference file.
 
     Parameters
     ----------
     refname : str
-        The name of the extract1d reference file, or 'N/A'.
+        The name of the EXTRACT1D reference file, or 'N/A'.
         If specified, this file is expected to be a JSON file
         giving extraction information.
 
     Returns
     -------
     ref_dict : dict or None
-        If the extract1d reference file is specified, ref_dict will be the
-        dictionary returned by json.load().
+        Dictionary returned by JSON loader, if applicable;
+        None otherwise.
     """
     refname_type = refname[-4:].lower()
     if refname == "N/A":
@@ -107,16 +107,16 @@ def read_extract1d_ref(refname):
             fd = Path(refname).open()
             try:
                 ref_dict = json.load(fd)
-                fd.close()
             except (UnicodeDecodeError, JSONDecodeError):
                 # Input file does not load correctly as json file.
                 # Probably an error in json file
-                fd.close()
                 log.error(
                     "Extract1d JSON reference file has an error. "
                     "Run a json validator off line and fix the file."
                 )
                 raise RuntimeError("Invalid JSON extract1d reference file.") from None
+            finally:
+                fd.close()
         else:
             log.error("Invalid Extract1d reference file: must be JSON.")
             raise RuntimeError("Invalid extract1d reference file: must be JSON.")
@@ -126,9 +126,9 @@ def read_extract1d_ref(refname):
 
 def read_apcorr_ref(refname, exptype):
     """
-    Read the apcorr reference file.
+    Read the APCORR reference file.
 
-    Determine the appropriate DataModel class to use for an APCORR reference file
+    Determine the appropriate datamodel class to use for an APCORR reference file
     and read the file into it.
 
     Parameters
@@ -136,11 +136,11 @@ def read_apcorr_ref(refname, exptype):
     refname : str
         Path to the APCORR reference file.
     exptype : str
-        EXP_TYPE of the input to the extract_1d step.
+        EXP_TYPE of the input to the ``extract_1d`` step.
 
     Returns
     -------
-    DataModel
+    `~stdatamodels.jwst.datamodels.JwstDataModel`
         A datamodel containing the reference file input.
     """
     apcorr_model_map = {
@@ -184,19 +184,19 @@ def get_extract_parameters(
     Parameters
     ----------
     ref_dict : dict or None
-        For an extract1d reference file in JSON format, ``ref_dict`` will be
-        the entire contents of the file.  If there is no extract1d reference
-        file, ``ref_dict`` will be None.
-    input_model : JWSTDataModel
-        This can be either the input science file or one SlitModel out of
+        For an EXTRACT1D reference file in JSON format, this will be
+        the entire contents of the file; otherwise None.
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        This can be either the input science file or one
+        `~stdatamodels.jwst.datamodels.SlitModel` out of
         a list of slits.
     slitname : str
         The name of the slit, or "ANY".
     sp_order : int
         The spectral order number.
-    meta : ObjectNode
-        The metadata for the actual input model, i.e. not just for the
-        current slit, from input_model.meta.
+    meta : `~stdatamodels.properties.ObjectNode`
+        The metadata for the actual input model, i.e., not just for the
+        current slit, from ``input_model.meta``.
     smoothing_length : int or None, optional
         Width of a boxcar function for smoothing the background regions.
         If None, the smoothing length will be retrieved from ``ref_dict``, or
@@ -224,9 +224,9 @@ def get_extract_parameters(
         This argument must be positive or zero, and it is only used if
         background regions have been specified.
     subtract_background : bool or None, optional
-        If False, all background parameters will be ignored.
+        If `False`, all background parameters will be ignored.
     use_source_posn : bool or None, optional
-        If True, the target and background positions specified in ``ref_dict``
+        If `True`, the target and background positions specified in ``ref_dict``
         (or a default target position) will be shifted to account for
         the actual source location in the data.
         If None, a default value will be set, based on the exposure type.
@@ -235,17 +235,17 @@ def get_extract_parameters(
         If None, the value specified in ``ref_dict`` will be used or it
         will default to 0.
     model_nod_pair : bool, optional
-        If True, and if ``extraction_type`` is 'optimal', then a negative
+        If `True`, and if ``extraction_type`` is 'optimal', then a negative
         trace from nod subtraction will be modeled alongside the positive
         source, if possible.
     optimize_psf_location : bool
-        If True, and if ``extraction_type`` is 'optimal', then the source
+        If `True`, and if ``extraction_type`` is 'optimal', then the source
         location will be optimized, via iterative comparisons of the scene
         model with the input data.
     extraction_type : str, optional
         Extraction type ('box' or 'optimal').  Optimal extraction is
         only available if ``psf_ref_name`` is not 'N/A'.  If set to None,
-        optimal extraction will be used if ``use_source_posn`` is True.
+        optimal extraction will be used if ``use_source_posn`` is `True`.
     psf_ref_name : str, optional
         The name of the PSF reference file, or "N/A".
 
@@ -462,7 +462,7 @@ def create_poly(coeff):
 
     Returns
     -------
-    `astropy.modeling.polynomial.Polynomial1D` or None
+    `~astropy.modeling.polynomial.Polynomial1D` or None
         None is returned if ``coeff`` is empty.
     """
     n = len(coeff)
@@ -480,7 +480,8 @@ def populate_time_keywords(input_model, output_model):
 
     Parameters
     ----------
-    input_model : TSOMultiSpecModel or MultiSlitModel
+    input_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel` or \
+                  `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The input science model.
     output_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
         The output science model.  This may be modified in-place.
@@ -635,8 +636,9 @@ def get_spectral_order(slit):
 
     Parameters
     ----------
-    slit : SlitModel
-        One slit from an input MultiSlitModel or similar.
+    slit : `~stdatamodels.jwst.datamodels.SlitModel`
+        One slit from an input
+        `~stdatamodels.jwst.datamodels.MultiSlitModel` or similar.
 
     Returns
     -------
@@ -664,13 +666,13 @@ def is_prism(input_model):
 
     Parameters
     ----------
-    input_model : JWSTDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science model.
 
     Returns
     -------
     bool
-        True if the exposure used a prism; False otherwise.
+        `True` if the exposure used a prism; `False` otherwise.
     """
     instrument = input_model.meta.instrument.name
 
@@ -707,11 +709,12 @@ def copy_keyword_info(slit, slitname, spec):
 
     Parameters
     ----------
-    slit : A SlitModel object
+    slit : `~stdatamodels.jwst.datamodels.SlitModel`
         Metadata will be copied from the input ``slit`` to output ``spec``.
     slitname : str or None
         The name of the slit.
-    spec : One element of MultiSpecModel.spec
+    spec : obj
+        One element of ``spec`` in a `~stdatamodels.jwst.datamodels.MultiSpecModel`
         Metadata attributes will be updated in-place.
     """
     if slitname is not None and slitname != "ANY":
@@ -776,8 +779,8 @@ def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partia
         Upper limit for the aperture. If not a single value, dimensions must
         match ``profile`` shape.
     allow_partial : bool, optional
-        If True, partial pixel weights are set where the pixel index intersects
-        the limit values.  If False, only whole integer weights are set.
+        If `True`, partial pixel weights are set where the pixel index intersects
+        the limit values.  If `False`, only whole integer weights are set.
     """
     # Both limits are inclusive
     profile[(idx >= lower_limit) & (idx <= upper_limit)] = 1.0
@@ -820,11 +823,11 @@ def box_profile(
     Upper and lower limits for the aperture are determined from the
     ``extract_params``, in this priority order:
 
-       1. src_coeff upper and lower limits (or bkg_coeff, for a background profile)
-       2. trace +/- extraction width / 2
-       3. center of start/stop values +/- extraction width / 2
-       4. cross-dispersion start/stop values
-       5. array limits.
+    1. ``src_coeff`` upper and lower limits (or ``bkg_coeff``, for a background profile)
+    2. trace +/- extraction width / 2
+    3. center of start/stop values +/- extraction width / 2
+    4. cross-dispersion start/stop values
+    5. array limits
 
     Left and right limits are set from start/stop values only.
 
@@ -838,7 +841,7 @@ def box_profile(
     shape : tuple of int
         Data shape for the output profile, to match the spectral image.
     extract_params : dict
-        Extraction parameters, as returned from `get_extract_parameters`.
+        Extraction parameters, as returned from :func:`get_extract_parameters`.
     wl_array : ndarray
         Array of wavelength values, matching ``shape``, for each pixel in
         the array.
@@ -849,7 +852,7 @@ def box_profile(
     label : str, optional
         A label to use for the aperture, while logging limit values.
     return_limits : bool, optional
-        If True, an upper and lower limit value for the aperture are
+        If `True`, an upper and lower limit value for the aperture are
         returned along with the spatial profile.  These are used for
         recording the aperture extent in output metadata.  For
         apertures set from polynomial coefficients, the returned values
@@ -1029,8 +1032,8 @@ def aperture_center(profile, dispaxis=1, middle_pix=None):
     should be determined.  In this case, the profile must contain
     some non-zero elements at that dispersion coordinate.
 
-    If ``dispaxis`` is 1 (the default), the return values are in (y,x)
-    order. Otherwise, the return values are in (x,y) order.
+    If ``dispaxis`` is 1 (the default), the return values are in ``(y,x)``
+    order. Otherwise, the return values are in ``(x,y)`` order.
 
     Parameters
     ----------
@@ -1101,7 +1104,7 @@ def shift_by_offset(offset, extract_params, update_trace=True):
         Extraction parameters to update, as created by
         :func:`get_extract_parameters`.
     update_trace : bool
-        If True, the trace in ``extract_params['trace']`` is also updated
+        If `True`, the trace in ``extract_params['trace']`` is also updated
         if present.
     """
     # Shift polynomial coefficients
@@ -1131,10 +1134,11 @@ def define_aperture(input_model, slit, extract_params, exp_type):
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science model containing metadata information.
-    slit : DataModel or None
-        One slit from a MultiSlitModel (or similar), or None.
+    slit : `~stdatamodels.jwst.datamodels.JwstDataModel` or None
+        One slit from a `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        (or similar), or None.
         The spectral image and WCS information will be retrieved from ``slit``
         unless ``slit`` is None. In that case, they will be retrieved
         from ``input_model``.
@@ -1162,7 +1166,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         and 1.0 (pixel fully included in the aperture).
     bg_profile : ndarray of float or None
         If background regions are specified in ``extract_params['bkg_coeff']``,
-        and ``extract_params['subtract_background']`` is True, then
+        and ``extract_params['subtract_background']`` is `True`, then
         ``bg_profile`` is a 2D image containing pixel weights for background
         regions, to be fit during extraction.  Otherwise, ``bg_profile`` is
         None.
@@ -1172,10 +1176,11 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         in the slit. This second spatial profile is returned in ``nod_profile``
         if generated.  Otherwise, ``nod_profile`` is None.
     limits : tuple of float
-        Index limit values for the aperture, returned as (lower_limit, upper_limit,
-        left_limit, right_limit).  Upper/lower limits are along the
+        Index limit values for the aperture, returned as
+        ``(lower_limit, upper_limit, left_limit, right_limit)``.
+        Upper/lower limits are along the
         cross-dispersion axis.  Left/right limits are along the dispersion axis.
-        All limits are inclusive and start at zero index value.
+        All limits are inclusive and 0-indexed.
     """
     if slit is None:
         data_model = input_model
@@ -1296,14 +1301,19 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
 
     Parameters
     ----------
-    data_model : JWSTDataModel
-        The input science model. May be a single slit from a MultiSlitModel
-        (or similar), or a single data type, like an ImageModel, SlitModel,
-        or CubeModel.
+    data_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        The input science model. May be a single slit from a
+        `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        (or similar), or a single data type, like an
+        `~stdatamodels.jwst.datamodels.ImageModel`,
+        `~stdatamodels.jwst.datamodels.SlitModel`,
+        or `~stdatamodels.jwst.datamodels.CubeModel`.
     integration : int
-        For the case that data_model is a SlitModel or a CubeModel,
+        For the case that data_model is a
+        `~stdatamodels.jwst.datamodels.SlitModel` or a
+        `~stdatamodels.jwst.datamodels.CubeModel`,
         ``integration`` is the integration number.  If the integration number is
-        not relevant (i.e. the data array is 2-D), ``integration`` should be -1.
+        not relevant (i.e., the data array is 2-D), ``integration`` should be -1.
     profile : ndarray of float
         Spatial profile indicating the aperture location. Must be a
         2D image matching the input, with floating point values between 0
@@ -1312,7 +1322,7 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
     bg_profile : ndarray of float or None
         Background profile indicating any background regions to use, following
         the same format as the spatial profile. Ignored if
-        extract_params['subtract_background'] is False.
+        ``extract_params['subtract_background']`` is `False`.
     nod_profile : ndarray of float or None
         For optimal extraction, if nod subtraction was performed, a
         second spatial profile is generated, modeling the negative source
@@ -1320,13 +1330,13 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         for simultaneous fitting with the primary source in ``profile``.
         Otherwise, ``nod_profile`` should be None.
     extract_params : dict
-        Parameters read from the extract1d reference file, as returned by
-        `get_extract_parameters`.
+        Parameters read from the EXTRACT1D reference file, as returned by
+        :func:`get_extract_parameters`.
 
     Returns
     -------
-    sum_flux : ndarray, 1-D, float64
-        The sum of the data values in the extraction region minus the sum
+    sum_flux : ndarray
+        The 1D sum of the data values in the extraction region minus the sum
         of the data values in the background regions (scaled by the ratio
         of the numbers of pixels), for each pixel.
         The data values are usually in units of surface brightness,
@@ -1335,36 +1345,36 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         point source (column "flux").  Divide ``sum_flux`` by ``npixels`` (to
         compute the average) to get the array for the "surf_bright"
         (surface brightness) output column.
-    f_var_rnoise : ndarray, 1-D
-        The extracted read noise variance values to go along with the
-        sum_flux array.
-    f_var_poisson : ndarray, 1-D
-        The extracted poisson variance values to go along with the
-        sum_flux array.
-    f_var_flat : ndarray, 1-D
-        The extracted flat field variance values to go along with the
-        sum_flux array.
-    background : ndarray, 1-D
-        The background count rate that was subtracted from the sum of
+    f_var_rnoise : ndarray
+        The 1D extracted read noise variance values to go along with the
+        ``sum_flux`` array.
+    f_var_poisson : ndarray
+        The 1D extracted Poisson variance values to go along with the
+        ``sum_flux`` array.
+    f_var_flat : ndarray
+        The 1D extracted flat field variance values to go along with the
+        ``sum_flux`` array.
+    background : ndarray
+        The 1D background count rate that was subtracted from the sum of
         the source data values to get ``sum_flux``.
-    b_var_rnoise : ndarray, 1-D
-        The extracted read noise variance values to go along with the
+    b_var_rnoise : ndarray
+        The 1D extracted read noise variance values to go along with the
         background array.
-    b_var_poisson : ndarray, 1-D
-        The extracted poisson variance values to go along with the
+    b_var_poisson : ndarray
+        The 1D extracted Poisson variance values to go along with the
         background array.
-    b_var_flat : ndarray, 1-D
-        The extracted flat field variance values to go along with the
+    b_var_flat : ndarray
+        The 1D extracted flat field variance values to go along with the
         background array.
-    npixels : ndarray, 1-D, float64
+    npixels : ndarray
         The number of pixels that were added together to get ``sum_flux``,
         including any fractional pixels included via non-integer weights
         in the input profile.
-    scene_model : ndarray, 2-D, float64
+    scene_model : ndarray
         A 2D model of the flux in the spectral image, corresponding to
         the extracted aperture.
-    residual : ndarray, 2-D, float64
-        Residual image from the input minus the scene model.
+    residual : ndarray
+        Residual 2D image from the input minus the scene model.
     """
     # Get the data and variance arrays
     data = data_model.data
@@ -1477,45 +1487,48 @@ def create_extraction(
 
     The process is:
 
-       1. Retrieve extraction parameters from ``extract_ref_dict`` and
-          set defaults for any missing values as needed.
-       2. Define an extraction aperture from the input parameters, as
-          well as the nominal RA, Dec, and 1D wavelength arrays for
-          the output spectrum.
-       3. Set up an aperture correction to apply to each spectrum,
-          if ``apcorr_ref_model`` is not None.
-       4. Loop over integrations to extract all spectra.
+    1. Retrieve extraction parameters from ``extract_ref_dict`` and
+       set defaults for any missing values as needed.
+    2. Define an extraction aperture from the input parameters, as
+       well as the nominal RA, Dec, and 1D wavelength arrays for
+       the output spectrum.
+    3. Set up an aperture correction to apply to each spectrum,
+       if ``apcorr_ref_model`` is not None.
+    4. Loop over integrations to extract all spectra.
 
     For each integration, the extraction process is:
 
-       1. Extract summed flux and variance values from the aperture.
-       2. Compute an average value (from flux / npixels), to be stored
-          as the surface brightness.
-       3. Convert the summed flux to flux density (Jy).
-       4. Compute an error spectrum from the square root of the sum
-          of the variance components.
-       5. Set a DQ array, with DO_NOT_USE flags set where the
-          flux is NaN.
-       6. Create a spectral table to contain all extracted values
-          and store it in a `~stdatamodels.jwst.datamodels.SpecModel`.
-       7. Apply the aperture correction to the spectral table, if
-          available.
-       8. Append the new SpecModel to the output_model.
+    1. Extract summed flux and variance values from the aperture.
+    2. Compute an average value (from flux / npixels), to be stored
+       as the surface brightness.
+    3. Convert the summed flux to flux density (Jy).
+    4. Compute an error spectrum from the square root of the sum
+       of the variance components.
+    5. Set a DQ array, with DO_NOT_USE flags set where the
+       flux is NaN.
+    6. Create a spectral table to contain all extracted values
+       and store it in a `~stdatamodels.jwst.datamodels.SpecModel`.
+    7. Apply the aperture correction to the spectral table, if
+       available.
+    8. Append the new `~stdatamodels.jwst.datamodels.SpecModel`
+       to the ``output_model``.
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Top-level datamodel containing metadata for the input data.
         If slit is not specified, ``input_model`` must also contain the
         spectral image(s) to extract, in the data attribute.
-    slit : SlitModel or None
-        One slit from an input MultiSlitModel or similar. If not None,
+    slit : `~stdatamodels.jwst.datamodels.SlitModel` or None
+        One slit from an input `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        or similar. If not None,
         ``slit`` must contain the spectral image(s) to extract, in the data
         attribute, along with appropriate WCS metadata.
-    output_model : MultiSpecModel, TSOMultiSpecModel
+    output_model : `~stdatamodels.jwst.datamodels.MultiSpecModel` or \
+                   `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
         The output model to append spectral tables to.
     extract_ref_dict : dict or None
-        Extraction parameters read in from the extract_1d reference file,
+        Extraction parameters read in from the EXTRACT1D reference file,
         or None, if there was no reference file.
     slitname : str
         Slit name for the input data.
@@ -1523,36 +1536,43 @@ def create_extraction(
         Spectral order for the input data.
     exp_type : str
         Exposure type for the input data.
-    apcorr_ref_model : DataModel or None, optional
+    apcorr_ref_model : `~stdatamodels.jwst.datamodels.JwstDataModel` or None, optional
         The aperture correction reference datamodel, containing the
         APCORR reference file data.
     log_increment : int, optional
         If greater than 0 and the input data are multi-integration, a message
         will be written to the log every ``log_increment`` integrations.
     save_profile : bool, optional
-        If True, the spatial profile created for the aperture will be returned
-        as an ImageModel.  If False, the return value is None.
+        If `True`, the spatial profile created for the aperture will be returned
+        as an `~stdatamodels.jwst.datamodels.ImageModel`.
+        If `False`, the return value is None.
     save_scene_model : bool, optional
-        If True, the flux model created during extraction will be returned
-        as an ImageModel or CubeModel.  If False, the return value is None.
+        If `True`, the flux model created during extraction will be returned
+        as an `~stdatamodels.jwst.datamodels.ImageModel` or
+        `~stdatamodels.jwst.datamodels.CubeModel`.
+        If `False`, the return value is None.
     save_residual_image : bool, optional
-        If True, the residual image (from input minus scene model) will be returned
-        as an ImageModel or CubeModel.  If False, the return value is None.
+        If `True`, the residual image (from input minus scene model) will be returned
+        as an `~stdatamodels.jwst.datamodels.ImageModel` or
+        `~stdatamodels.jwst.datamodels.CubeModel`.
+        If `False`, the return value is None.
     **kwargs
-        Additional options to pass to `get_extract_parameters`.
+        Additional options to pass to :func:`get_extract_parameters`.
 
     Returns
     -------
-    profile_model : ImageModel or None
-        If ``save_profile`` is True, the return value is an ImageModel containing
+    profile_model : `~stdatamodels.jwst.datamodels.ImageModel` or None
+        If ``save_profile`` is ``True`, the return value is an image data model containing
         the spatial profile with aperture weights, used in extracting all
         integrations.
-    scene_model : ImageModel, CubeModel, or None
-        If ``save_scene_model`` is True, the return value is an ImageModel or CubeModel
+    scene_model : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                  `~stdatamodels.jwst.datamodels.CubeModel`, or None
+        If ``save_scene_model`` is `True`, the return value is a data model
         matching the input data, containing the flux model generated during
         extraction.
-    residual : ImageModel, CubeModel, or None
-        If ``save_residual_image`` is True, the return value is an ImageModel or CubeModel
+    residual : `~stdatamodels.jwst.datamodels.ImageModel`, \
+               `~stdatamodels.jwst.datamodels.CubeModel`, or None
+        If ``save_residual_image`` is `True`, the return value is a data model
         matching the input data, containing the residual image.
     """
     if slit is None:
@@ -1959,7 +1979,7 @@ def _make_group_id(model, spectral_order):
 
     Parameters
     ----------
-    model : DataModel
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model.
     spectral_order : int
         The spectral order for the exposure.
@@ -1979,16 +1999,18 @@ def _make_output_model(data_model, meta_source):
 
     Parameters
     ----------
-    data_model : DataModel
+    data_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         A data model containing a "data" attribute.
-    meta_source : DataModel
+    meta_source : `~stdatamodels.jwst.datamodels.JwstDataModel`
         A data model containing top-level metadata to copy to the output.
 
     Returns
     -------
-    MultiSpecModel or TSOMultiSpecModel
-        If the input data is multi-integration, a TSOMultiSpecModel is
-        returned.  Otherwise, a MultiSpecModel is returned.
+    `~stdatamodels.jwst.datamodels.MultiSpecModel` or \
+    `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
+        If the input data is multi-integration, a
+        `~stdatamodels.jwst.datamodels.TSOMultiSpecModel` is
+        returned.  Otherwise, a `~stdatamodels.jwst.datamodels.MultiSpecModel` is returned.
     """
     if data_model.data.ndim == 3:
         output_model = datamodels.TSOMultiSpecModel()
@@ -2026,12 +2048,12 @@ def run_extract1d(
 
     Parameters
     ----------
-    input_model : JWSTDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science model.
     extract_ref_name : str
-        The name of the extract1d reference file, or "N/A".
+        The name of the EXTRACT1D reference file, or "N/A".
     apcorr_ref_name : str or None
-        Name of the APCORR reference file. Default is None
+        Name of the APCORR reference file. Default is None.
     psf_ref_name : str
         The name of the PSF reference file, or "N/A".
     extraction_type : str
@@ -2046,7 +2068,7 @@ def run_extract1d(
     bkg_order : int or None
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background. Only used if ``bkg_fit``
-        is 'poly'.  Allowed values are >= 0.
+        is 'poly'.  Allowed values are ``>= 0``.
     log_increment : int
         If ``log_increment`` is greater than 0 and the input data are
         multi-integration, a message will be written to the log every
@@ -2054,53 +2076,68 @@ def run_extract1d(
     subtract_background : bool or None
         User supplied flag indicating whether the background should be
         subtracted.
-        If None, the value in the extract_1d reference file will be used.
-        If not None, this parameter overrides the value in the
-        extract_1d reference file.
+        If None, the value in the EXTRACT1D reference file will be used.
+        Otherwise, this parameter overrides the value in the
+        reference file.
     use_source_posn : bool or None
-        If True, the target and background positions specified in the
+        If `True`, the target and background positions specified in the
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
     position_offset : float
         Number of pixels to shift the nominal source position in the
         cross-dispersion direction.
     model_nod_pair : bool
-        If True, and if ``extraction_type`` is 'optimal', then a negative trace
+        If `True`, and if ``extraction_type`` is 'optimal', then a negative trace
         from nod subtraction is modeled alongside the positive source during
-        extraction.  Even if set to True, this will be attempted only if the
+        extraction.  Even if set to `True`, this will be attempted only if the
         input data has been background subtracted and the dither pattern
         indicates that only 2 nods were used.
     optimize_psf_location : bool
-        If True, and if ``extraction_type`` is 'optimal', then the source
+        If `True`, and if ``extraction_type`` is 'optimal', then the source
         location will be optimized, via iterative comparisons of the scene
         model with the input data.
     save_profile : bool
-        If True, the spatial profiles created for the input model will be returned
-        as ImageModels. If False, the return value is None.
+        If `True`, the spatial profiles created for the input model will be returned
+        as `~stdatamodels.jwst.datamodels.ImageModel`.
+        If `False`, the return value is None.
     save_scene_model : bool
-        If True, a model of the 2D flux as defined by the extraction aperture
-        is returned as an ImageModel or CubeModel.  If False, the return value
+        If `True`, a model of the 2D flux as defined by the extraction aperture
+        is returned as an `~stdatamodels.jwst.datamodels.ImageModel`
+        or `~stdatamodels.jwst.datamodels.CubeModel`.  If `False`, the return value
         is None.
     save_residual_image : bool
-        If True, the residual image (from the input minus the scene model)
-        is returned as an ImageModel or CubeModel.  If False, the return value
+        If `True`, the residual image (from the input minus the scene model)
+        is returned as an `~stdatamodels.jwst.datamodels.ImageModel`
+        or `~stdatamodels.jwst.datamodels.CubeModel`.  If `False`, the return value
         is None.
 
     Returns
     -------
-    output_model : MultiSpecModel or TSOMultiSpecModel
+    output_model : `~stdatamodels.jwst.datamodels.MultiSpecModel` or \
+                   `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
         A new data model containing the extracted spectra.
-    profile_model : ModelContainer, ImageModel, or None
-        If ``save_profile`` is True, the return value is an ImageModel containing
+    profile_model : `~jwst.datamodels.container.ModelContainer`, \
+                    `~stdatamodels.jwst.datamodels.ImageModel`, or None
+        If ``save_profile`` is `True`, the return value is an
+        `~stdatamodels.jwst.datamodels.ImageModel` containing
         the spatial profile with aperture weights, used in extracting a single
-        slit, or else a container of ImageModels, one for each slit extracted.
+        slit, or else a container of `~stdatamodels.jwst.datamodels.ImageModel`,
+        one for each slit extracted.
         Otherwise, the return value is None.
-    scene_model : ModelContainer, ImageModel, CubeModel, or None
-        If ``save_scene_model`` is True, the return value is an ImageModel or CubeModel
+    scene_model : `~jwst.datamodels.container.ModelContainer`, \
+                  `~stdatamodels.jwst.datamodels.ImageModel`, \
+                  `~stdatamodels.jwst.datamodels.CubeModel`, or None
+        If ``save_scene_model`` is `True`, the return value is an
+        `~stdatamodels.jwst.datamodels.ImageModel` or
+        `~stdatamodels.jwst.datamodels.CubeModel`
         matching the input data, containing a model of the flux as defined by the
         aperture, created during extraction. Otherwise, the return value is None.
-    residual : ModelContainer, ImageModel, CubeModel, or None
-        If ``save_residual_image`` is True, the return value is an ImageModel or CubeModel
+    residual : `~jwst.datamodels.container.ModelContainer`, \
+               `~stdatamodels.jwst.datamodels.ImageModel`, \
+               `~stdatamodels.jwst.datamodels.CubeModel`, or None
+        If ``save_residual_image`` is `True`, the return value is an
+        `~stdatamodels.jwst.datamodels.ImageModel` or
+        `~stdatamodels.jwst.datamodels.CubeModel`
         matching the input data, containing the residual image (from the input minus
         the scene model). Otherwise, the return value is None.
     """
