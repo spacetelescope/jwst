@@ -17,6 +17,10 @@ wavelength bounds, with limits inclusive.
 
 Inputs
 ------
+
+:Data model: `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
+:File suffix: _x1dints
+
 The input should be in the form of an ``_x1dints`` product, which contains
 extracted spectra from multiple integrations for a given target.
 

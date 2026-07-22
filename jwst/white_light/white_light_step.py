@@ -38,7 +38,7 @@ class WhiteLightStep(Step):
 
         Parameters
         ----------
-        input_data : str or `~stdatamodels.jwst.datamodels.MultiSpecModel`
+        input_data : str or `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
             Either the path to the file or the science data model for the sum.
 
         Returns
@@ -79,7 +79,7 @@ class WhiteLightStep(Step):
 
         Parameters
         ----------
-        input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        input_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
             The input data model from which to extract the wavelength range.
 
         Returns

@@ -183,7 +183,7 @@ def _make_empty_output_table(input_model):
 
     Parameters
     ----------
-    input_model : `~stdatamodels.jwst.datamodels.MultiSpecModel`
+    input_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
         Datamodel containing the multi-integration data
 
     Returns
