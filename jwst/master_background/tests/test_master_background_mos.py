@@ -9,6 +9,8 @@ from jwst.extract_1d import Extract1dStep
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.tests.test_nirspec import create_nirspec_hdul
 from jwst.master_background import MasterBackgroundMosStep, nirspec_utils
+from jwst.master_background.create_master_bkg import create_background
+from jwst.pipeline import Spec2Pipeline
 from jwst.pixel_replace import PixelReplaceStep
 from jwst.resample import ResampleSpecStep
 from jwst.stpipe import query_step_status
@@ -58,42 +60,6 @@ def create_msa_hdul():
     return hdul
 
 
-@pytest.fixture
-def nirspec_msa_rate(tmp_path):
-    hdul = create_nirspec_hdul()
-    hdul[0].header["MSAMETFL"] = str(tmp_path / "test_msa_01.fits")
-    hdul[0].header["EFFEXPTM"] = 1.0
-    hdul[0].header["DURATION"] = 1.0
-    filename = str(tmp_path / "test_nrs_msa_rate.fits")
-    hdul.writeto(filename, overwrite=True)
-    hdul.close()
-    return filename
-
-
-@pytest.fixture
-def nirspec_msa_metfl(tmp_path):
-    hdul = create_msa_hdul()
-    filename = str(tmp_path / "test_msa_01.fits")
-    hdul.writeto(filename, overwrite=True)
-    hdul.close()
-    return filename
-
-
-@pytest.fixture
-def nirspec_msa_extracted2d(nirspec_msa_rate, nirspec_msa_metfl):
-    model = ImageModel(nirspec_msa_rate)
-    model.dq = model.get_default("dq")
-    model.err = model.get_default("err")
-    model.var_rnoise = model.get_default("var_rnoise")
-    model.var_poisson = model.get_default("var_poisson")
-    model = AssignWcsStep.call(model)
-    model = Extract2dStep.call(model)
-    for slit in model.slits:
-        slit.var_rnoise = np.ones_like(slit.data) * 0.01
-        slit.var_poisson = np.ones_like(slit.data) * 0.01
-    return model
-
-
 def mk_multispec(model):
     specs_model = MultiSlitModel()
     specs_model.update(model)
@@ -109,9 +75,75 @@ def mk_multispec(model):
     return specs_model
 
 
-def test_master_background_mos(nirspec_msa_extracted2d):
+def user_background():
+    wavelength = np.linspace(0.5, 25, num=100)
+    flux = np.linspace(2.0, 2.2, num=100)
+    bg_model = create_background(wavelength, flux)
+    return bg_model
+
+
+@pytest.fixture(scope="module")
+def mbg_mos_input_directory(tmp_path_factory):
+    return tmp_path_factory.mktemp("mbg_mos_input")
+
+
+@pytest.fixture(scope="module")
+def nirspec_msa_rate(mbg_mos_input_directory):
+    """Generate a user background spectrum."""
+    hdul = create_nirspec_hdul()
+    hdul[0].header["MSAMETFL"] = str(mbg_mos_input_directory / "test_msa_01.fits")
+    hdul[0].header["EFFEXPTM"] = 1.0
+    hdul[0].header["DURATION"] = 1.0
+    filename = str(mbg_mos_input_directory / "test_nrs_msa_rate.fits")
+    hdul.writeto(filename, overwrite=True)
+    hdul.close()
+    return filename
+
+
+@pytest.fixture(scope="module")
+def nirspec_msa_metfl(mbg_mos_input_directory):
+    hdul = create_msa_hdul()
+    filename = str(mbg_mos_input_directory / "test_msa_01.fits")
+    hdul.writeto(filename, overwrite=True)
+    hdul.close()
+    return filename
+
+
+@pytest.fixture(scope="module")
+def nirspec_msa_extracted2d(nirspec_msa_rate, nirspec_msa_metfl):
+    model = ImageModel(nirspec_msa_rate)
+    model.dq = model.get_default("dq")
+    model.err = model.get_default("err")
+    model.var_rnoise = model.get_default("var_rnoise")
+    model.var_poisson = model.get_default("var_poisson")
+    model = AssignWcsStep.call(model)
+    model = Extract2dStep.call(model)
+    for slit in model.slits:
+        slit.var_rnoise = np.ones_like(slit.data) * 0.01
+        slit.var_poisson = np.ones_like(slit.data) * 0.01
+    yield model
+    model.close()
+
+
+@pytest.mark.parametrize("user_bg", [True, False])
+def test_master_background_mos(tmp_path, nirspec_msa_extracted2d, user_bg):
+    if user_bg:
+        bg_model = user_background()
+        bg_file = str(tmp_path / "test_user_bg.fits")
+        bg_model.save(bg_file)
+        bg_model.close()
+    else:
+        bg_file = None
+
     model = nirspec_msa_extracted2d
-    result = MasterBackgroundMosStep.call(model)
+    result = MasterBackgroundMosStep.call(
+        model,
+        user_background=bg_file,
+        output_dir=str(tmp_path),
+        save_background=True,
+        save_results=True,
+        suffix="mbg",
+    )
 
     # Check that the master_background_mos step was run
     assert query_step_status(result, "master_background") == "COMPLETE"
@@ -120,19 +152,34 @@ def test_master_background_mos(nirspec_msa_extracted2d):
     assert result is not model
     assert query_step_status(model, "master_background") is None
 
+    # Check that a background was subtracted from the science data
     finite = np.isfinite(result.slits[-1].data) & np.isfinite(model.slits[-1].data)
     sci_orig = model.slits[-1].data[finite]
     sci_bkgsub = result.slits[-1].data[finite]
-
-    # Check that a background was subtracted from the science data
     assert not np.allclose(sci_orig, sci_bkgsub)
 
-    del model
-    del result
+    # Expected output files are present
+    if user_bg:
+        expected = [
+            "test_user_bg_masterbg1d.fits",
+            "test_nrs_msa_masterbg2d.fits",
+            "test_nrs_msa_mbg.fits",
+        ]
+    else:
+        expected = [
+            "test_nrs_msa_masterbg1d.fits",
+            "test_nrs_msa_masterbg2d.fits",
+            "test_nrs_msa_bkgx1d.fits",
+            "test_nrs_msa_mbg.fits",
+        ]
+    for filename in expected:
+        assert (tmp_path / filename).exists()
+
+    result.close()
 
 
 def test_create_background_from_multispec(nirspec_msa_extracted2d):
-    model = nirspec_msa_extracted2d
+    model = nirspec_msa_extracted2d.copy()
 
     # Insert outliers into one of the background spectra
     nypix = len(model.slits[0].data)
@@ -156,8 +203,8 @@ def test_create_background_from_multispec(nirspec_msa_extracted2d):
     master_background = nirspec_utils.create_background_from_multispec(specs_model, sigma_clip=3)
     assert np.allclose(master_background.spec[0].spec_table["surf_bright"], 1)
 
-    del model
-    del specs_model
+    model.close()
+    specs_model.close()
 
 
 def test_map_to_science_slits(nirspec_msa_extracted2d):
@@ -176,8 +223,7 @@ def test_map_to_science_slits(nirspec_msa_extracted2d):
     nonzero = slit_data != 0
     assert np.allclose(slit_data[nonzero], 1)
 
-    del model
-    del specs_model
+    specs_model.close()
 
 
 def test_apply_master_background(nirspec_msa_extracted2d):
@@ -208,13 +254,12 @@ def test_apply_master_background(nirspec_msa_extracted2d):
     assert np.any(diff != 0)
     assert np.allclose(diff[diff != 0], -1)
 
-    del model
-    del result
-    del specs_model
+    result.close()
+    specs_model.close()
 
 
 def test_skip_bg_complete(nirspec_msa_extracted2d):
-    model = nirspec_msa_extracted2d
+    model = nirspec_msa_extracted2d.copy()
     model.meta.cal_step.bkg_subtract = "COMPLETE"
 
     # Step is skipped
@@ -225,9 +270,12 @@ def test_skip_bg_complete(nirspec_msa_extracted2d):
     assert result is not model
     assert model.meta.cal_step.master_background is None
 
+    model.close()
+    result.close()
+
 
 def test_skip_no_bg_slits(nirspec_msa_extracted2d):
-    model = nirspec_msa_extracted2d
+    model = nirspec_msa_extracted2d.copy()
 
     # Mark all slits as sources
     for i, slit in enumerate(model.slits):
@@ -241,9 +289,12 @@ def test_skip_no_bg_slits(nirspec_msa_extracted2d):
     assert result is not model
     assert model.meta.cal_step.master_background is None
 
+    model.close()
+    result.close()
+
 
 def test_skip_no_src_slits(nirspec_msa_extracted2d):
-    model = nirspec_msa_extracted2d
+    model = nirspec_msa_extracted2d.copy()
 
     # Mark all slits as background
     for i, slit in enumerate(model.slits):
@@ -256,6 +307,9 @@ def test_skip_no_src_slits(nirspec_msa_extracted2d):
     # Input is not modified
     assert result is not model
     assert model.meta.cal_step.master_background is None
+
+    model.close()
+    result.close()
 
 
 def test_skip_no_master_bg(monkeypatch, nirspec_msa_extracted2d):
@@ -272,3 +326,50 @@ def test_skip_no_master_bg(monkeypatch, nirspec_msa_extracted2d):
     # Input is not modified
     assert result is not model
     assert model.meta.cal_step.master_background is None
+
+    result.close()
+
+
+@pytest.mark.parametrize("with_bg", [True, False])
+def test_extend_bg_slits(nirspec_msa_extracted2d, with_bg):
+    model = nirspec_msa_extracted2d.copy()
+    step = MasterBackgroundMosStep()
+
+    # Mark all slits as either sources or backgrounds
+    for i, slit in enumerate(model.slits):
+        if with_bg:
+            slit.source_name = f"BKG{i}"
+        else:
+            slit.source_name = f"SRC{i}"
+
+    bkg_model = step._extend_bg_slits(model)
+    if with_bg:
+        assert len(bkg_model.slits) == len(model.slits)
+    else:
+        assert bkg_model is None
+
+    model.close()
+
+
+def test_parent_params():
+    pipe = Spec2Pipeline()
+
+    # Set some parameters to pass on
+    pipe.flat_field.user_supplied_flat = "test_flat.fits"
+    pipe.pathloss.user_slit_loc = 0.01
+    pipe.photom.apply_time_correction = False
+
+    # And some that should be ignored
+    pipe.flat_field.inverse = True
+    pipe.barshadow.source_type = "POINT"
+
+    pipe.master_background_mos.set_pars_from_parent()
+
+    # Expected parameters are set
+    assert pipe.master_background_mos.flat_field.user_supplied_flat == "test_flat.fits"
+    assert pipe.master_background_mos.pathloss.user_slit_loc == 0.01
+    assert pipe.master_background_mos.photom.apply_time_correction is False
+
+    # Ignored parameters are not set
+    assert pipe.master_background_mos.flat_field.inverse is False
+    assert pipe.master_background_mos.barshadow.source_type is None
