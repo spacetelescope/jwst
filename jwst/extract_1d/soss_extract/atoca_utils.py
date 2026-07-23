@@ -1,11 +1,4 @@
-"""
-Utilities for the ATOCA (Darveau-Bernier 2021, in prep).
-
-ATOCA: Algorithm to Treat Order ContAmination (English)
-       Algorithme de Traitement d’Ordres ContAmines (French)
-
-@authors: Antoine Darveau-Bernier, Geert Jan Talens
-"""
+"""Utilities for `jwst.extract_1d.soss_extract.atoca`."""
 
 import logging
 import warnings
@@ -59,7 +52,7 @@ def arange_2d(starts, stops):
     Returns
     -------
     out : array[uint16]
-        2D array of ranges with invalid values set to -1
+        2D array of ranges with invalid values set to -1.
     """
     if starts.shape != stops.shape:
         msg = (
@@ -90,22 +83,22 @@ def arange_2d(starts, stops):
 
 def sparse_k(val, k, n_k):
     """
-    Transform a 2D array `val` to a sparse matrix.
+    Transform a 2D array ``val`` to a sparse matrix.
 
     Parameters
     ----------
     val : array
-        2D array to be transformed
+        2D array to be transformed.
     k : array
         2D array to set column position of values in sparse matrix.
-        Negative values used for undefined positions in val.
+        Negative values used for undefined positions in ``val``.
     n_k : int
         Number of columns in output sparse matrix.
 
     Returns
     -------
     mat : array
-        Sparse matrix to be returned
+        Sparse matrix to be returned.
     """
     # Length of axis 0
     n_i = len(k)

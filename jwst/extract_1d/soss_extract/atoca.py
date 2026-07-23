@@ -1,19 +1,18 @@
 """
-Main classes for the ATOCA (Darveau-Bernier 2021, in prep).
+Main classes for the ATOCA (Darveau-Bernier 2021, in prep.).
 
-ATOCA: Algorithm to Treat Order ContAmination (English)
-       Algorithme de Traitement d’Ordres ContAmines (French)
+ATOCA:
 
-@authors: Antoine Darveau-Bernier, Geert Jan Talens
+* Algorithm to Treat Order ContAmination (English)
+* Algorithme de Traitement d’Ordres ContAmines (French)
 """
+# Original authors: Antoine Darveau-Bernier, Geert Jan Talens
 
-# General imports.
 import logging
 
 import numpy as np
 from scipy.sparse import csr_matrix, diags, issparse
 
-# Local imports.
 from jwst.extract_1d.soss_extract import atoca_utils
 
 log = logging.getLogger(__name__)
@@ -22,7 +21,7 @@ __all__ = ["MaskOverlapError", "ExtractionEngine"]
 
 
 class MaskOverlapError(Exception):
-    """Exception to raise if there are too few valid pixels in a spectral order."""
+    """Too few valid pixels in a spectral order."""
 
     def __init__(self, message):
         self.message = message
@@ -30,16 +29,16 @@ class MaskOverlapError(Exception):
 
 
 class KernelShapeError(Exception):
-    """Exception to raise if the kernel shape is inconsistent with the wavelength grid."""
+    """Kernel shape is inconsistent with the wavelength grid."""
 
     pass
 
 
 class ExtractionEngine:
     """
-    Run the ATOCA algorithm (Darveau-Bernier 2022, PASP, DOI:10.1088/1538-3873/ac8a77).
+    Run the ATOCA algorithm [1]_.
 
-    The ExtractionEngine is basically a fitter. On instantiation, it generates a model
+    This class is basically a fitter. On instantiation, it generates a model
     of the detector, including a mapping between the detector pixels and the wavelength
     for each spectral order, the throughput and convolution kernel, and known detector
     bad pixels. This does not require any real data.
@@ -48,12 +47,60 @@ class ExtractionEngine:
     within the constraints of the model.
 
     The engine can also run in reverse:
-    The `rebuild` method generates a synthetic 2-D detector 'observation'
-    from a known or fitted spectrum, and the `compute_likelihood` method
+    The :meth:`rebuild` method generates a synthetic 2-D detector 'observation'
+    from a known or fitted spectrum, and the :meth:`compute_likelihood` method
     compares the synthetic data to the real data to generate a likelihood.
     This allows for a likelihood-based optimization of the spectrum.
 
     This version models the pixels of the detector using an oversampled trapezoidal integration.
+
+    Parameters
+    ----------
+    wave_map : list or ndarray
+        A list or array of 2-D arrays of the central wavelength position for each
+        order on the detector. Has shape ``(N_ord, N, M)``.
+        It has to have the same ``(N, M)`` as data.
+    trace_profile : list or ndarray
+        A list or array of 2-D arrays of the spatial profile for each order
+        Has shape ``(N_ord, N, M)``.
+        on the detector. It has to have the same ``(N, M)`` as data.
+    throughput : list of array or callable
+        A list of functions or array of the throughput at each order.
+        If callable, the functions depend on the wavelength.
+        If array, projected on ``wave_grid``. Has shape ``(N_ord [, N_k])``.
+    kernels : callable, sparse matrix, or None
+        Convolution kernel to be applied on spectrum (``f_k``) for each orders.
+        Can be a callable with the form ``f(x, x0)`` where ``x0`` is
+        the position of the center of the kernel. In this case, it must
+        return a 1D array (``len(x)``), so a kernel value
+        for each pairs of ``(x, x0)``. If callable,
+        it will be passed to :func:`~jwst.extract_1d.soss_extract.atoca_utils.get_c_matrix`
+        and the ``c_kwargs`` can be passed to this function.
+        If sparse, the shape has to be ``(N_k_c, N_k)`` and it will
+        be used directly. ``N_k`` is the length of the effective kernel
+        and ``N_k_c`` is the length of the spectrum (``f_k``) convolved.
+        If None, the kernel is set to 1, i.e., do not do any convolution.
+    wave_grid : array-like, required
+        The grid on which ``f(lambda)`` will be projected, shape ``(N_k)``.
+    mask_trace_profile : list or ndarray
+        A list or array of 2-D boolean arrays of the pixel that need to be used for extraction,
+        for each order on the detector.
+        It has to have the same shape ``(N_ord, N, M)`` as ``trace_profile``.
+    global_mask : ndarray, optional
+        Boolean mask of the detector pixels to mask for every extraction, e.g., bad pixels.
+        Should not be related to a specific order (if so, use ``mask_trace_profile`` instead).
+        Has shape ``(N, M)``.
+    orders : list, optional
+        List of orders considered. Default is ``[1, 2]``.
+    threshold : float, optional
+        The contribution of any order on a pixel is considered significant if
+        its estimated spatial profile is greater than this threshold value.
+        If it is not properly modeled (not covered by the wavelength grid),
+        it will be masked. Default is 1e-3.
+
+    References
+    ----------
+    .. [1] Darveau-Bernier 2022, PASP, DOI:10.1088/1538-3873/ac8a77
     """
 
     # The desired data-type for computations. 'float64' is recommended.
@@ -71,53 +118,6 @@ class ExtractionEngine:
         orders=None,
         threshold=1e-3,
     ):
-        """
-        Initialize the ExtractionEngine with a detector model.
-
-        Parameters
-        ----------
-        wave_map : list or array of 2-D arrays
-            A list or array of the central wavelength position for each
-            order on the detector. Has shape (N_ord, N, M).
-            It has to have the same (N, M) as `data`.
-        trace_profile : list or array of 2-D arrays
-            A list or array of the spatial profile for each order
-            Has shape (N_ord, N, M).
-            on the detector. It has to have the same (N, M) as `data`.
-        throughput : list of array or callable
-            A list of functions or array of the throughput at each order.
-            If callable, the functions depend on the wavelength.
-            If array, projected on `wave_grid`. Has shape (N_ord [, N_k]).
-        kernels : callable, sparse matrix, or None
-            Convolution kernel to be applied on spectrum (f_k) for each orders.
-            Can be a callable with the form f(x, x0) where x0 is
-            the position of the center of the kernel. In this case, it must
-            return a 1D array (len(x)), so a kernel value
-            for each pairs of (x, x0). If callable,
-            it will be passed to `convolution.get_c_matrix` function
-            and the `c_kwargs` can be passed to this function.
-            If sparse, the shape has to be (N_k_c, N_k) and it will
-            be used directly. N_ker is the length of the effective kernel
-            and N_k_c is the length of the spectrum (f_k) convolved.
-            If None, the kernel is set to 1, i.e., do not do any convolution.
-        wave_grid : array-like, required
-            The grid on which f(lambda) will be projected, shape (N_k).
-        mask_trace_profile : List or array of 2-D arrays[bool], required
-            A list or array of the pixel that need to be used for extraction,
-            for each order on the detector.
-            It has to have the same shape (N_ord, N, M) as `trace_profile`.
-        global_mask : array[bool], optional
-            Boolean Mask of the detector pixels to mask for every extraction, e.g. bad pixels.
-            Should not be related to a specific order (if so, use `mask_trace_profile` instead).
-            Has shape (N, M).
-        orders : list, optional
-            List of orders considered. Default is orders = [1, 2]
-        threshold : float, optional:
-            The contribution of any order on a pixel is considered significant if
-            its estimated spatial profile is greater than this threshold value.
-            If it is not properly modeled (not covered by the wavelength grid),
-            it will be masked. Default is 1e-3.
-        """
         if orders is None:
             orders = [1, 2]
         # Set the attributes and ensure everything has correct dtype
@@ -201,17 +201,18 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        *args : str or list[str]
-            All attributes to return.
+        *args : str or list
+            All attributes (str) to return.
         i_order : None or int, optional
             Index of order to extract. If specified, it will
-            be applied to all attributes in args, so it cannot
-            be mixed with non-order dependent attributes).
+            be applied to all attributes in ``args``, so it cannot
+            be mixed with non-order dependent attributes.
 
         Returns
         -------
         list
-            Result of [getattr(arg) for arg in args], with i_order indexing if provided
+            Result of ``[getattr(arg) for arg in args]``,
+            with ``i_order`` indexing if provided.
         """
         if i_order is None:
             out = [getattr(self, arg) for arg in args]
@@ -231,7 +232,7 @@ class ExtractionEngine:
         ----------
         throughput : array[float] or callable
             Throughput values for each order, given either as an array
-            or as a callable function with self.wave_grid as input.
+            or as a callable function with ``self.wave_grid`` as input.
         """
         throughput_new = []
         for throughput_n in throughput:  # Loop over orders.
@@ -257,7 +258,7 @@ class ExtractionEngine:
         Parameters
         ----------
         kernels : callable, sparse matrix, or None
-            Convolution kernel to be applied on the spectrum (f_k) for each order.
+            Convolution kernel to be applied on the spectrum (``f_k``) for each order.
             If None, kernel is set to 1, i.e., do not do any convolution.
 
         Returns
@@ -309,9 +310,9 @@ class ExtractionEngine:
         Returns
         -------
         general_mask : array[bool]
-            Mask that combines global_mask, wavelength mask, trace_profile mask
+            Mask that combines global_mask, wavelength mask, trace_profile mask.
         mask_ord : array[bool]
-            Mask applied to each order
+            Mask applied to each order.
         """
         # Get needed attributes
         args = ("threshold", "n_orders", "mask_trace_profile", "trace_profile")
@@ -378,12 +379,12 @@ class ExtractionEngine:
         Parameters
         ----------
         i_order : int
-            Order to select the wave_grid for.
+            Order to select the ``wave_grid`` for.
 
         Returns
         -------
         array[float]
-            Wave_grid for the given order.
+            ``wave_grid`` for the given order.
         """
         index = slice(*self.i_bounds[i_order])
 
@@ -395,7 +396,7 @@ class ExtractionEngine:
 
         The weights depend on the integration method used to solve
         the integral of the flux over a pixel and are encoded
-        in the class method `get_w()`.
+        in the method :meth:`get_w`.
 
         Returns
         -------
@@ -464,33 +465,35 @@ class ExtractionEngine:
         """
         Calculate the pixel mapping.
 
-        Compute the matrix `b_n = (P/sig).w.T.lambda.c_n` ,
-        where `P` is the spatial profile matrix (diag),
-        `w` is the integrations weights matrix,
-        `T` is the throughput matrix (diag),
-        `lambda` is the convolved wavelength grid matrix (diag),
-        `c_n` is the convolution kernel.
-        The model of the detector at order n (`model_n`) is given by the system:
-        model_n = b_n.c_n.f ,
-        where f is the incoming flux projected on the wavelength grid.
-        This method updates the `b_n_list` attribute.
+        Compute the matrix ``b_n = (P/sig).w.T.lambda.c_n``,
+        where ``P`` is the spatial profile matrix (diag),
+        ``w`` is the integrations weights matrix,
+        ``T`` is the throughput matrix (diag),
+        ``lambda`` is the convolved wavelength grid matrix (diag),
+        ``c_n`` is the convolution kernel.
+        The model of the detector at order n (``model_n``) is given by the system:
+        ``model_n = b_n.c_n.f``,
+        where ``f`` is the incoming flux projected on the wavelength grid.
+        This method updates the ``b_n_list`` attribute.
 
         Parameters
         ----------
         i_order : int
             Label of the order (depending on the initiation of the object).
         error : array-like or None, optional
-            Estimate of the error on each pixel. Same shape (N, M) as `data`.
+            Estimate of the error on each pixel. Same shape ``(N, M)`` as data.
             If None, the error is set to 1, which means the method will return
-            b_n instead of b_n/sigma. Default is None.
+            ``b_n`` instead of ``b_n/sigma``. Default is None.
         quick : bool, optional
-            If True, only perform one matrix multiplication
-            instead of the whole system: (P/sig).(w.T.lambda.c_n)
+            If `True`, only perform one matrix multiplication
+            instead of the whole system::
+
+                (P/sig).(w.T.lambda.c_n)
 
         Returns
         -------
         array[float]
-            Sparse matrix of b_n coefficients
+            Sparse matrix of ``b_n`` coefficients.
         """
         if (quick) and (self.w_t_wave_c is None):
             msg = "Attribute w_t_wave_c of ExtractionEngine must exist if quick=True"
@@ -559,8 +562,8 @@ class ExtractionEngine:
 
         Returns
         -------
-        scipy.sparse.csr_matrix, array[float]
-            A, b from Ax = b being the system to solve.
+        `scipy.sparse.csr_matrix`, array[float]
+            ``A, b`` from ``Ax = b`` being the system to solve.
         """
         # Get the detector model
         b_matrix, data = self.get_detector_model(data, error)
@@ -579,14 +582,16 @@ class ExtractionEngine:
         Parameters
         ----------
         data : array-like
-            A 2-D array of real values representing the detector image, shape (N, M).
+            A 2-D array of real values representing the detector image, shape ``(N, M)``.
         error : array-like
-            Estimate of the error on each pixel, shape (N, M).
+            Estimate of the error on each pixel, shape ``(N, M)``.
 
         Returns
         -------
         B, pix_array : array[float]
-            From the linear equation B.dot(flux) = pix_array
+            From the linear equation::
+
+                B.dot(flux) = pix_array
         """
         # Check if `w_t_wave_c` is pre-computed
         quick = self.w_t_wave_c is not None
@@ -625,15 +630,15 @@ class ExtractionEngine:
         Estimate an initial guess of the Tikhonov factor.
 
         The output factor will be used to find the best Tikhonov factor.
-        The flux_estimate is used to generate a factor_guess.
+        The ``flux_estimate`` is used to generate a ``factor_guess``.
         The user should construct a grid with this output in log space,
-        e.g. np.logspace(np.log10(flux_estimate)-4, np.log10(flux_estimate)+4, 9).
+        e.g., ``np.logspace(np.log10(flux_estimate)-4, np.log10(flux_estimate)+4, 9)``.
 
         Parameters
         ----------
         flux_estimate : callable
-            Estimate of the underlying flux (the solution f_k). Must be function
-            of wavelengths and it will be projected on self.wave_grid.
+            Estimate of the underlying flux (the solution ``f_k``). Must be function
+            of wavelengths and it will be projected on ``self.wave_grid``.
 
         Returns
         -------
@@ -669,13 +674,13 @@ class ExtractionEngine:
         data : (N, M) array-like
             A 2-D array of real values representing the detector image.
         error : (N, M) array-like
-            Estimate of the error on each pixel. Same shape as `data`.
+            Estimate of the error on each pixel. Same shape as data.
 
         Returns
         -------
-        tikho : Tikhonov class
-            Instance of class with matrices pre-computed
-            Suitable for calling get_tikho_tests
+        tikho : `~jwst.extract_1d.soss_extract.atoca_utils.Tikhonov`
+            Instance of class with matrices pre-computed.
+            Suitable for calling :meth:`get_tikho_tests`.
         """
         # Build the system to solve
         b_matrix, pix_array = self.get_detector_model(data, error)
@@ -690,8 +695,8 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        tikho : Tikhonov class
-            Instance of class with matrices pre-computed
+        tikho : `~jwst.extract_1d.soss_extract.atoca_utils.Tikhonov`
+            Instance of class with matrices pre-computed.
         factors : 1D list or array-like
             Factors to be tested.
 
@@ -718,12 +723,12 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        tests : dictionary
+        tests : dict
             Results of Tikhonov extraction tests for different factors.
             Must have the keys "factors" and "-logl".
         fit_mode : str
             Which mode is used to find the best Tikhonov factor. Options are
-            'all', 'curvature', 'chi2', 'd_chi2'. If 'all' is chosen, the best of the
+            'all', 'curvature', 'chi2', or 'd_chi2'. If 'all' is chosen, the best of the
             three other options will be selected.
 
         Returns
@@ -779,8 +784,8 @@ class ExtractionEngine:
         ----------
         spectrum : callable or array-like
             Flux as a function of wavelength if callable
-            or array of flux values corresponding to self.wave_grid.
-        fill_value : float or np.nan, optional
+            or array of flux values corresponding to ``self.wave_grid``.
+        fill_value : float or numpy.nan, optional
             Pixel value where the detector is masked. Default is 0.0.
 
         Returns
@@ -816,12 +821,12 @@ class ExtractionEngine:
         ----------
         spectrum : array[float] or callable
             Flux as a function of wavelength if callable
-            or array of flux values corresponding to self.wave_grid.
+            or array of flux values corresponding to ``self.wave_grid``.
         data : (N, M) array-like
             A 2-D array of real values representing the detector image.
         error : (N, M) array-like
             Estimate of the error on each pixel.
-            Same shape as `data`.
+            Same shape as data.
 
         Returns
         -------
@@ -839,7 +844,7 @@ class ExtractionEngine:
     @staticmethod
     def _solve(matrix, result):
         """
-        Solve the linear system using `scipy.spsolve`.
+        Solve the linear system using `scipy.sparse.linalg.spsolve`.
 
         Parameters
         ----------
@@ -885,7 +890,7 @@ class ExtractionEngine:
         Returns
         -------
         array[float]
-            Solution of the linear system
+            Solution of the linear system.
         """
         # Note that the indexing is applied inside the function
         tikho = atoca_utils.Tikhonov(matrix, result, t_mat)
@@ -896,37 +901,41 @@ class ExtractionEngine:
         """
         Extract underlying flux on the detector.
 
-        Performs an overlapping extraction of the form:
-        (B_T * B) * f = (data/sig)_T * B
-        where B is a matrix and f is an array.
-        The matrix multiplication B * f is the 2d model of the detector.
-        We want to solve for the array f.
-        The elements of f are labelled by 'k'.
+        Performs an overlapping extraction of the form::
+
+            (B_T * B) * f = (data/sig)_T * B
+
+        where ``B`` is a matrix and ``f`` is an array.
+        The matrix multiplication ``B * f`` is the 2D model of the detector.
+        We want to solve for the array ``f``.
+        The elements of ``f`` are labelled by 'k'.
         The pixels are labeled by 'i'.
         Every pixel 'i' is covered by a set of 'k' for each order
         of diffraction.
 
-        TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
-              There will be only one matrix multiplication:
-              (P/sig).(w.T.lambda.c_n).
+        .. note::
+            To be quicker, only specify the psf (``p_list``) in ``kwargs``.
+            There will be only one matrix multiplication::
+
+                (P/sig).(w.T.lambda.c_n)
 
         Parameters
         ----------
         data : (N, M) array-like
             A 2-D array of real values representing the detector image.
         error : (N, M) array-like
-            Estimate of the error on each pixel`
-            Same shape as `data`.
+            Estimate of the error on each pixel.
+            Same shape as data.
         tikhonov : bool, optional
             Whether to use Tikhonov extraction
-            Default is False.
+            Default is `False`.
         factor : float, optional
-            The Tikhonov factor to use if tikhonov is True
+            The Tikhonov factor to use if ``tikhonov`` is `True`.
 
         Returns
         -------
-        spectrum (f_k) : array[float]
-            Solution of the linear system
+        spectrum : array[float]
+            Solution of the linear system (``f_k``).
         """
         # Solve with the specified solver.
         if tikhonov:
@@ -959,17 +968,17 @@ class ExtractionEngine:
         data : (N, M) array-like
             A 2-D array of real values representing the detector image.
         error : (N, M) array-like
-            Estimate of the error on each pixel`
-            Same shape as `data`.
+            Estimate of the error on each pixel.
+            Same shape as data.
         tikfac : float
-            The Tikhonov factor to use
+            The Tikhonov factor to use.
 
         Returns
         -------
         design_matrix_inv : (N, N) array
-            The inverse of the design matrix M in M*f_k=b*(y/err)
+            The inverse of the design matrix ``M`` in ``M*f_k=b*(y/err)``.
         b_matrix : (N, M) array
-            The matrix b in M*f_k=b*(y/err)
+            The matrix ``b`` in ``M*f_k=b*(y/err)``.
         """
         # Build the system to solve
         b_matrix, _ = self.get_detector_model(data, error)
@@ -994,7 +1003,7 @@ class ExtractionEngine:
         Parameters
         ----------
         grid : array[float]
-            Wave_grid to check.
+            ``wave_grid`` to check.
         wave_p : array[float]
             Wavelengths on the higher side of each pixel.
         wave_m : array[float]
@@ -1025,12 +1034,12 @@ class ExtractionEngine:
         Parameters
         ----------
         i_order : int
-            Order to select the wave_map on which a mask will be generated
+            Order to select the ``wave_map`` on which a mask will be generated
 
         Returns
         -------
         array[bool]
-            A mask with True where wave_map is outside the bounds of wave_grid
+            A mask with `True` where ``wave_map`` is outside the bounds of ``wave_grid``
         """
         attrs = ["wave_p", "wave_m", "i_bounds"]
         wave_p, wave_m, i_bnds = self.get_attributes(*attrs, i_order=i_order)
@@ -1043,21 +1052,21 @@ class ExtractionEngine:
         """
         Compute integration weights 'k' for each grid point and pixel 'i'.
 
-        These depend on the type of interpolation used, i.e. the order `n`.
+        These depend on the type of interpolation used, i.e., the order ``n``.
 
         Parameters
         ----------
         i_order : int
-            Order to set the value of n in output arrays.
+            Order to set the value of ``n`` in output arrays.
 
         Returns
         -------
         w_n : array
-            2D array of weights at this specific order `n`. The shape is given by:
-            (number of pixels, max number of wavelengths covered by a pixel)
+            2D array of weights at this specific order ``n``. The shape is given by:
+            (number of pixels, max number of wavelengths covered by a pixel).
         k_n : array
             2D array of the wavelength grid indices corresponding to the weights.
-            Same shape as w_n
+            Same shape as ``w_n``.
         """
         log.debug("Computing weights and k.")
 
