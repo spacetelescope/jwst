@@ -521,6 +521,79 @@ def _build_contam(output_model, per_slit_simuls, simul_data, original_data):
     return contam_cuts
 
 
+def _reject_off_detector_bounds(
+    source_catalog, sky_to_grism, wlmin, wlmax, order, subarray_xsize, subarray_ysize
+):
+    """
+    Determine which sources have any part of their grism-frame bounding boxes on the detector.
+
+    Modified from assign_wcs.util._create_grism_bbox.
+    This version is vectorized, does not create GrismObjects,
+    does not distinguish partially-on-detector sources, and
+    just returns a boolean array indicating which sources are on the detector.
+
+    Parameters
+    ----------
+    source_catalog : `~astropy.table.QTable`
+        The catalog of sources with sky bounding boxes.
+    sky_to_grism : callable
+        A function that maps sky coordinates and wavelength to grism-frame coordinates.
+        This should be the "world" to "grism_detector" transform. For MultiSlitModel remember
+        that each SlitModel's input_model also has a "grism_slit" frame that must be bypassed.
+    wlmin, wlmax : float
+        The minimum/maximum wavelength for the grism order as set by the wavelengthrange file.
+    order : int
+        The spectral order to consider.
+    subarray_xsize, subarray_ysize : int
+        The size of the detector subarray in the x- and y-direction.
+
+    Returns
+    -------
+    np.ndarray
+        Boolean array indicating which sources are on the detector.
+    """
+    ra = np.array(
+        [
+            source_catalog["sky_bbox_ll"].ra.value,
+            source_catalog["sky_bbox_lr"].ra.value,
+            source_catalog["sky_bbox_ul"].ra.value,
+            source_catalog["sky_bbox_ur"].ra.value,
+        ]
+    ).flatten()
+    dec = np.array(
+        [
+            source_catalog["sky_bbox_ll"].dec.value,
+            source_catalog["sky_bbox_lr"].dec.value,
+            source_catalog["sky_bbox_ul"].dec.value,
+            source_catalog["sky_bbox_ur"].dec.value,
+        ]
+    ).flatten()
+    x1, y1, _, _, _ = sky_to_grism(ra, dec, wlmin, order)
+    x2, y2, _, _, _ = sky_to_grism(ra, dec, wlmax, order)
+
+    # return to being per-source
+    x1 = x1.reshape((4, -1))
+    y1 = y1.reshape((4, -1))
+    x2 = x2.reshape((4, -1))
+    y2 = y2.reshape((4, -1))
+
+    # stack for min/max calc
+    xstack = np.vstack([x1, x2])  # shape 8, len(source_catalog)
+    ystack = np.vstack([y1, y2])  # shape 8, len(source_catalog)
+    xmin = np.nanmin(xstack, axis=0)
+    xmax = np.nanmax(xstack, axis=0)
+    ymin = np.nanmin(ystack, axis=0)
+    ymax = np.nanmax(ystack, axis=0)
+
+    # check against bounds
+    xmin_too_big = xmin > subarray_xsize - 1
+    xmax_too_small = xmax < 0
+    ymin_too_big = ymin > subarray_ysize - 1
+    ymax_too_small = ymax < 0
+    bad = xmin_too_big | xmax_too_small | ymin_too_big | ymax_too_small
+    return ~bad
+
+
 def contam_corr(
     input_model,
     waverange,
@@ -603,6 +676,15 @@ def contam_corr(
     direct_file = input_model.meta.direct_image
     log.debug(f"Direct image ={direct_file}")
     with datamodels.open(direct_file) as direct_model:
+        band_wavelengths = None
+        if isinstance(direct_model, datamodels.WFSSCubeModel):
+            # Multi-band direct image: each wavelength plane holds the flux in that band.
+            band_wavelengths = direct_model.wavelength.flatten().astype(float)
+            log.info(
+                "Direct image is a WFSSCubeModel with "
+                f"{len(band_wavelengths)} wavelength planes "
+                f"covering {band_wavelengths[0]:.4f} to {band_wavelengths[-1]:.4f} microns"
+            )
         direct_image = direct_model.data
         direct_image_wcs = direct_model.meta.wcs
 
@@ -641,8 +723,8 @@ def contam_corr(
 
     # Read the source catalog to perform magnitude-based source selection later
     # mag limit will be scaled according to order 1 sensitivity
+    source_catalog = read_source_catalog(input_model.meta.source_catalog)
     if magnitude_limit is not None:
-        source_catalog = read_source_catalog(input_model.meta.source_catalog)
         order1_wave_response, order1_sens_response = get_photom_data(
             photom, filter_kwd, pupil_kwd, order=1
         )
@@ -658,6 +740,7 @@ def contam_corr(
         max_cpu=ncpus,
         max_pixels_per_chunk=max_pixels_per_chunk,
         oversample_factor=oversample_factor,
+        band_wavelengths=band_wavelengths,
     )
     seg_model.close()
 
@@ -688,13 +771,39 @@ def contam_corr(
                 magnitude_limit,
                 min_relresp_order1,
             )
-            if good_ids is None:
+            if not good_ids:
                 log.info(
-                    f"No sources meet the magnitude limit of {magnitude_limit} for order {order}. "
+                    f"No sources meet the magnitude limit of {magnitude_limit} for order {order} ."
                     "Skipping contamination correction for this order."
                 )
                 continue
-            selected_ids = good_ids
+        else:
+            good_ids = source_catalog["label"].tolist()
+
+        # further constrain by checking against grism-frame detector extent
+        source_catalog.add_index("label")
+        sourcecat = source_catalog.loc[good_ids]
+        is_in_bounds = _reject_off_detector_bounds(
+            sourcecat,
+            grism_wcs.get_transform("world", "grism_detector"),
+            wmin,
+            wmax,
+            order,
+            input_model.meta.subarray.xsize,
+            input_model.meta.subarray.ysize,
+        )
+        selected_ids = np.array(good_ids)[is_in_bounds]
+        log.info(
+            f"Number of selected IDs for order {order} after checking bounding box against "
+            f"detector bounds: {len(selected_ids)}"
+        )
+        if not len(selected_ids):
+            log.info(
+                f"No sources meet the magnitude limit of {magnitude_limit} for order {order} "
+                "and also disperse onto the detector. "
+                "Skipping contamination correction for this order."
+            )
+            continue
         no_sources = False
 
         # Compute the dispersion for all sources in this order

@@ -8,6 +8,8 @@ import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import AssignWcsStep
+from jwst.cube_build import CubeBuildStep
+from jwst.datamodels import ModelContainer
 from jwst.extract_1d import Extract1dStep
 from jwst.extract_2d import Extract2dStep
 from jwst.master_background import MasterBackgroundStep
@@ -21,10 +23,14 @@ from jwst.stpipe import query_step_status
 
 
 @pytest.fixture(scope="module")
-def user_background(tmp_path_factory):
+def mbg_input_directory(tmp_path_factory):
+    return tmp_path_factory.mktemp("mbg_input")
+
+
+@pytest.fixture(scope="module")
+def user_background(mbg_input_directory):
     """Generate a user background spectrum."""
-    filename = tmp_path_factory.mktemp("master_background_user_input")
-    filename = filename / "user_background.fits"
+    filename = mbg_input_directory / "user_background.fits"
     wavelength = np.linspace(0.5, 25, num=100)
     flux = np.linspace(2.0, 2.2, num=100)
     data = create_background(wavelength, flux)
@@ -33,7 +39,7 @@ def user_background(tmp_path_factory):
     return str(filename)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def nirspec_rate():
     ysize = 2048
     xsize = 2048
@@ -72,7 +78,7 @@ def nirspec_rate():
         "ysize": 416,
         "ystart": 529,
     }
-    im.meta.observation = {"program_number": "1234", "date": "2016-09-05", "time": "8:59:37"}
+    im.meta.observation = {"program_number": "1234", "date": "2025-09-05", "time": "8:59:37"}
     im.meta.exposure = {
         "duration": 11.805952,
         "end_time": 58119.85416,
@@ -98,7 +104,32 @@ def nirspec_rate():
     im.close()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
+def nirspec_ifu_cal(nirspec_rate):
+    im = datamodels.IFUImageModel(nirspec_rate)
+    im.data += 1.0
+    im.meta.exposure.type = "NRS_IFU"
+    im.meta.subarray.name = "FULL"
+    im.meta.subarray.xstart = 1
+    im.meta.subarray.xsize = 2048
+    im.meta.subarray.ystart = 1
+    im.meta.subarray.ysize = 2048
+    # im.meta.target.source_type_apt = "POINT"
+    im = AssignWcsStep.call(im)
+    yield im
+    im.close()
+
+
+@pytest.fixture(scope="module")
+def nirspec_ifu_point_cal(nirspec_ifu_cal):
+    im = nirspec_ifu_cal.copy()
+    im.meta.target.source_type_apt = "POINT"
+    im = SourceTypeStep.call(im)
+    yield im
+    im.close()
+
+
+@pytest.fixture(scope="module")
 def nirspec_cal_pair(nirspec_rate):
     # copy the rate model to make files with different filters
     rate2 = nirspec_rate.copy()
@@ -122,23 +153,35 @@ def nirspec_cal_pair(nirspec_rate):
     im2.close()
 
 
-@pytest.fixture
-def nirspec_asn(nirspec_cal_pair, tmp_cwd):
-    """Create an association with the mock data."""
-    sci, im2 = nirspec_cal_pair
+@pytest.fixture(scope="module")
+def nirspec_ifu_pair(nirspec_ifu_cal):
+    cal1 = nirspec_ifu_cal
+    cal1.meta.filename = "nirspec_ifu_cal.fits"
 
-    sci_filename = sci.meta.filename
-    sci.save(sci_filename)
+    s3d = CubeBuildStep.call(cal1)
+    x1d = Extract1dStep.call(s3d, ifu_autocen=False)
+    s3d.close()
 
-    x1d = Extract1dStep.call(im2)
+    yield cal1, x1d
+    cal1.close()
+    x1d.close()
 
-    # Add a CR to the x1d
-    x1d.spec[0].spec_table["SURF_BRIGHT"][10] += 10
 
-    x1d_filename = im2.meta.filename.replace("cal", "x1d")
-    x1d.meta.filename = x1d_filename
-    x1d.save(x1d_filename)
+@pytest.fixture(scope="module")
+def nirspec_ifu_point_pair(nirspec_ifu_point_cal):
+    cal1 = nirspec_ifu_point_cal
+    cal1.meta.filename = "nirspec_ifu_point_cal.fits"
 
+    s3d = CubeBuildStep.call(cal1)
+    x1d = Extract1dStep.call(s3d, ifu_autocen=False)
+    s3d.close()
+
+    yield cal1, x1d
+    cal1.close()
+    x1d.close()
+
+
+def _make_asn(sci_filename, x1d_filename):
     # Make a basic association with the science image
     # and the x1d as a background member
     asn = {
@@ -155,21 +198,62 @@ def nirspec_asn(nirspec_cal_pair, tmp_cwd):
             },
         ],
     }
+    return asn
+
+
+def _save_asn(sci, x1d, save_path):
+    sci_filename = sci.meta.filename
+    sci.save(str(save_path / sci_filename))
+
+    x1d_filename = sci_filename.replace("cal", "x1d")
+    x1d.meta.filename = x1d_filename
+    x1d.save(str(save_path / x1d_filename))
+
+    asn = _make_asn(sci_filename, x1d_filename)
 
     # Save the association
     new_data = json.dumps(asn)
-    asn_file = "asn.json"
-    with Path(asn_file).open("w") as file:
+    asn_file = save_path / "ifu_point_asn.json"
+    with asn_file.open("w") as file:
         file.write(new_data)
-    return asn_file
+    return str(asn_file)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
+def nirspec_asn(mbg_input_directory, nirspec_cal_pair):
+    """Create an association with the mock data."""
+    sci, im2 = nirspec_cal_pair
+
+    # Extract a spectrum
+    x1d = Extract1dStep.call(im2)
+
+    # Add a CR to the x1d
+    x1d.spec[0].spec_table["SURF_BRIGHT"][10] += 10
+
+    return _save_asn(sci, x1d, mbg_input_directory)
+
+
+@pytest.fixture(scope="module")
+def nirspec_ifu_asn(mbg_input_directory, nirspec_ifu_pair):
+    """Create an association with the mock data."""
+    sci, x1d = nirspec_ifu_pair
+    return _save_asn(sci, x1d, mbg_input_directory)
+
+
+@pytest.fixture(scope="module")
+def nirspec_ifu_point_asn(mbg_input_directory, nirspec_ifu_point_pair):
+    """Create an association with the mock data."""
+    sci, x1d = nirspec_ifu_point_pair
+    return _save_asn(sci, x1d, mbg_input_directory)
+
+
+@pytest.fixture(scope="module")
 def science_image():
     """Generate science image."""
     image = datamodels.ImageModel((10, 10))
     image.dq = image.get_default("dq")
     image.err = image.get_default("err")
+    image.meta.filename = "test_rate.fits"
     image.meta.instrument.name = "MIRI"
     image.meta.instrument.detector = "MIRIMAGE"
     image.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
@@ -180,21 +264,39 @@ def science_image():
     image.meta.wcsinfo.v2_ref = 0
     image.meta.wcsinfo.v3_ref = 0
     image.meta.wcsinfo.v3yangle = 0
-    image.meta.wcsinfo.vparity = 0
+    image.meta.wcsinfo.vparity = -1
     image.meta.wcsinfo.roll_ref = 0
     image.meta.wcsinfo.ra_ref = 0
     image.meta.wcsinfo.dec_ref = 0
+    image.meta.dither.x_offset = 0.0
+    image.meta.dither.y_offset = 0.0
     image = AssignWcsStep.call(image)
     return image
 
 
-def test_master_background_userbg(tmp_cwd, user_background, science_image):
+@pytest.mark.parametrize("with_container", [True, False])
+def test_master_background_userbg(tmp_cwd, user_background, science_image, with_container):
     """Verify data can run through the step with a user-supplied background."""
+    if with_container:
+        input_model = ModelContainer([science_image])
+    else:
+        input_model = science_image
+
     # Run with a user-supplied background and verify this is recorded in header
-    result = MasterBackgroundStep.call(
-        science_image,
+    output_model = MasterBackgroundStep.call(
+        input_model,
         user_background=user_background,
+        save_background=True,
+        save_results=True,
+        suffix="mbg",
     )
+
+    if with_container:
+        assert isinstance(output_model, ModelContainer)
+        assert output_model is not input_model
+        result = output_model[0]
+    else:
+        result = output_model
 
     assert type(science_image) is type(result)
     assert result.meta.cal_step.master_background == "COMPLETE"
@@ -203,6 +305,14 @@ def test_master_background_userbg(tmp_cwd, user_background, science_image):
     # Input is not modified
     assert result is not science_image
     assert science_image.meta.cal_step.master_background is None
+
+    # Expected output files are present
+    assert Path("test_masterbg2d.fits").exists()
+    assert Path("test_mbg.fits").exists()
+
+    # Close models
+    input_model.close()
+    output_model.close()
 
 
 def test_master_background_medfilt(tmp_cwd, nirspec_asn):
@@ -235,16 +345,38 @@ def test_master_background_medfilt(tmp_cwd, nirspec_asn):
     assert np.allclose(bkg_sub_pixels, 0)
 
 
-def test_master_background_logic(tmp_cwd, user_background, science_image):
+@pytest.mark.parametrize("input_type", ["single", "matched_container", "mismatched_container"])
+def test_master_background_logic(caplog, tmp_cwd, user_background, science_image, input_type):
     """Verify if calspec2 background step was run the master background step is skipped."""
     # the background step in calspec2 was done
     science_image.meta.cal_step.bkg_subtract = "COMPLETE"
+    messages = ["Not subtracting master background"]
+    if input_type == "matched_container":
+        input_model = ModelContainer([science_image])
+        messages.append("run again and set force_subtract")
+    elif input_type == "mismatched_container":
+        science_copy = science_image.copy()
+        science_copy.meta.cal_step.bkg_subtract = "SKIPPED"
+        input_model = ModelContainer([science_image, science_copy])
+        messages.append("contains a mixture of data")
+        messages.append("run again and set force_subtract")
+    else:
+        input_model = science_image
 
     # Run with a user-supplied background
-    result = MasterBackgroundStep.call(
-        science_image,
+    output_model = MasterBackgroundStep.call(
+        input_model,
         user_background=user_background,
     )
+
+    # Check for expected messages for the input type
+    for message in messages:
+        assert message in caplog.text
+
+    if "container" in input_type:
+        result = output_model[0]
+    else:
+        result = output_model
 
     assert result.meta.cal_step.master_background == "SKIPPED"
     assert type(science_image) is type(result)
@@ -254,9 +386,14 @@ def test_master_background_logic(tmp_cwd, user_background, science_image):
     assert science_image.meta.cal_step.master_background is None
 
     # Now force it
-    result = MasterBackgroundStep.call(
-        science_image, user_background=user_background, force_subtract=True
+    output_model = MasterBackgroundStep.call(
+        input_model, user_background=user_background, force_subtract=True
     )
+
+    if "container" in input_type:
+        result = output_model[0]
+    else:
+        result = output_model
 
     assert result.meta.cal_step.master_background == "COMPLETE"
     assert type(science_image) is type(result)
@@ -264,6 +401,63 @@ def test_master_background_logic(tmp_cwd, user_background, science_image):
     # Input is still not modified
     assert result is not science_image
     assert science_image.meta.cal_step.master_background is None
+
+
+@pytest.mark.parametrize("dataset", ["nirspec_ifu_asn", "nirspec_ifu_point_asn"])
+def test_master_background_nirspec_ifu(tmp_cwd, request, dataset):
+    input_asn = request.getfixturevalue(dataset)
+    output_model = MasterBackgroundStep.call(
+        input_asn, save_background=True, save_results=True, suffix="mbg"
+    )
+
+    # Output is a container
+    assert isinstance(output_model, ModelContainer)
+    result = output_model[0]
+    assert result.meta.cal_step.master_background == "COMPLETE"
+
+    # Expected output files are present
+    basename = dataset.replace("_asn", "")
+    expected = [
+        f"{basename}_o001_masterbg1d.fits",
+        f"{basename}_o001_masterbg2d.fits",
+        f"{basename}_mbg.fits",
+    ]
+    for filename in expected:
+        assert Path(filename).exists()
+
+    # Correction should match data in most of the science regions
+    # Boundaries for valid data will differ a bit from the input regions image,
+    # so check the median value
+    valid_regions = result.regions > 0
+    assert np.isclose(np.median(result.data[valid_regions]), 0)
+
+    # Outside those regions, all data is uncorrected
+    np.testing.assert_allclose(result.data[~valid_regions], 1)
+
+    output_model.close()
+
+
+def test_master_background_invalid_input(caplog):
+    input_model = datamodels.RampModel()
+    result = MasterBackgroundStep.call(input_model)
+    assert "cannot be handled" in caplog.text
+    assert result.meta.cal_step.master_background == "FAILED"
+    assert input_model.meta.cal_step.master_background is None
+
+    input_model.close()
+    result.close()
+
+
+def test_master_background_no_background_data(caplog):
+    input_model = ModelContainer([datamodels.ImageModel(), datamodels.ImageModel()])
+
+    result = MasterBackgroundStep.call(input_model)
+    assert "No background data found" in caplog.text
+    assert result[0].meta.cal_step.master_background == "FAILED"
+    assert result[1].meta.cal_step.master_background == "FAILED"
+
+    input_model.close()
+    result.close()
 
 
 def test_copy_background_to_surf_bright():

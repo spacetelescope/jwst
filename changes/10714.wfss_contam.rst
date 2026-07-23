@@ -1,0 +1,1 @@
+Pre-determine if source bounding boxes will fall on dispersed frame detector to avoid wasted computations. For one NIRCam dataset tested, this reduced the number of pixels dispersed (and correspondingly the runtime) by nearly a factor of 2
