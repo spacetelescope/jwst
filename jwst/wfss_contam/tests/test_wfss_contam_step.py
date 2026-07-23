@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
@@ -145,9 +146,9 @@ def test_wfss_contam_step_cube_direct_image(
     but just swaps in the cube as the direct image.
     """
     direct_image_cube_with_gradient.save("direct_image_cube.fits")
-    with dm.open(multislitmodel) as model:
-        model.meta.direct_image = str(Path("direct_image_cube.fits").resolve())
-        result = WfssContamStep.call(model, magnitude_limit=25, orders=[1])
+    model = deepcopy(multislitmodel)
+    model.meta.direct_image = str(Path("direct_image_cube.fits").resolve())
+    result = WfssContamStep.call(model, magnitude_limit=25, orders=[1])
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
     result.close()
