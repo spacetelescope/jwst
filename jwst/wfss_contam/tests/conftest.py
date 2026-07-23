@@ -11,8 +11,6 @@ from photutils.segmentation import SourceFinder, make_2dgaussian_kernel
 
 from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs, create_wfss_wcs
 
-DIR_IMAGE = "direct_image.fits"
-
 
 @pytest.fixture(scope="module")
 def direct_image():
@@ -31,13 +29,13 @@ def direct_image():
 
 
 @pytest.fixture(scope="module")
-def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
+def direct_image_with_gradient(direct_image):
     """
     Add a gradient to the direct image and save it as a JWST datamodel.
 
-    Yields
-    ------
-    ImageModel
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.ImageModel`
         Direct image with a background gradient.
     """
     ny, nx = direct_image.shape
@@ -48,10 +46,8 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
     # obs expects input list of direct image filenames
     model = dm.ImageModel(data=data)
     model.meta.wcs = create_imaging_wcs("F200W")
-    model.save(DIR_IMAGE)
 
-    yield model
-    model.close()
+    return model
 
 
 @pytest.fixture(scope="module")

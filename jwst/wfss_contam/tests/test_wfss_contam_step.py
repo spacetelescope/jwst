@@ -7,9 +7,9 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.wfss_contam.wfss_contam_step import WfssContamStep
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def multislitmodel(
-    tmp_cwd, direct_image_with_gradient, segmentation_map, source_catalog, grism_wcs
+    tmp_path_factory, direct_image_with_gradient, segmentation_map, source_catalog, grism_wcs
 ):
     model = dm.MultiSlitModel()
     # add metadata
@@ -25,12 +25,13 @@ def multislitmodel(
     model.meta.subarray.ysize = 2048
 
     # save direct image and segmentation map to file, then point model to those
-    dim = "direct_image.fits"
+    tmp_path = tmp_path_factory.mktemp("data")
+    dim = str(tmp_path / "direct_image.fits")
     direct_image_with_gradient.save(dim)
-    seg = "segmentation_map.fits"
+    seg = str(tmp_path / "segmentation_map.fits")
     segmentation_map.save(seg)
-    srccat = "source_catalog.ecsv"
-    source_catalog.write(srccat, format="ascii.ecsv")  # , overwrite=True)
+    srccat = str(tmp_path / "source_catalog.ecsv")
+    source_catalog.write(srccat, format="ascii.ecsv")
     model.meta.direct_image = dim
     model.meta.segmentation_map = seg
     model.meta.source_catalog = srccat
@@ -49,13 +50,10 @@ def multislitmodel(
         slit.ysize = slit.data.shape[0]
         model.slits.append(slit)
 
-    fname = "multislit_model.fits"
-    model.save(fname)
-    model.close()
-    return fname
+    return model
 
 
-def test_wfss_contam_step(multislitmodel):
+def test_wfss_contam_step(tmp_cwd, multislitmodel):
     """
     Smoke test that the step runs with some user-defined options enabled.
 
@@ -65,6 +63,7 @@ def test_wfss_contam_step(multislitmodel):
     """
     result = WfssContamStep.call(
         multislitmodel,
+        output_file="multislit_model",
         save_simulated_image=True,
         save_contam_images=True,
         magnitude_limit=25,
@@ -78,17 +77,33 @@ def test_wfss_contam_step(multislitmodel):
     result.close()
 
 
-def test_wfss_contam_step_defaults(multislitmodel):
+def test_wfss_contam_step_defaults(tmp_cwd, multislitmodel):
     """
     Smoke test that the step runs with all default options.
+    Also check that input is not modified by the step.
     """
+    input_copy = multislitmodel.copy()
+
     result = WfssContamStep.call(multislitmodel)
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
+
+    # Input is not modified
+    assert result is not multislitmodel
     result.close()
 
+    # Input data is not modified
+    assert multislitmodel.meta.cal_step.wfss_contam is None
+    i_modified = [
+        i
+        for i in range(len(multislitmodel.slits))
+        if (not np.allclose(multislitmodel.slits[i].data, input_copy.slits[i].data))
+    ]
+    if len(i_modified) > 0:
+        raise AssertionError(f"Slits modified: {i_modified}")
 
-def test_wfss_contam_skip_maglimit(multislitmodel):
+
+def test_wfss_contam_skip_maglimit(tmp_cwd, multislitmodel):
     """
     Test that the step is skipped if no sources meet the magnitude limit.
     """
@@ -104,7 +119,7 @@ def test_wfss_contam_skip_maglimit(multislitmodel):
     result.close()
 
 
-def test_wfss_contam_skip_bad_order(multislitmodel):
+def test_wfss_contam_skip_bad_order(tmp_cwd, multislitmodel):
     """
     Test that the step is skipped if no valid spectral orders are found.
     """
@@ -120,7 +135,9 @@ def test_wfss_contam_skip_bad_order(multislitmodel):
     result.close()
 
 
-def test_wfss_contam_step_cube_direct_image(multislitmodel, direct_image_cube_with_gradient):
+def test_wfss_contam_step_cube_direct_image(
+    tmp_cwd, multislitmodel, direct_image_cube_with_gradient
+):
     """
     Smoke test that the step completes when the direct image is a WFSSCubeModel.
 
@@ -129,33 +146,14 @@ def test_wfss_contam_step_cube_direct_image(multislitmodel, direct_image_cube_wi
     """
     direct_image_cube_with_gradient.save("direct_image_cube.fits")
     with dm.open(multislitmodel) as model:
-        model.meta.direct_image = "direct_image_cube.fits"
+        model.meta.direct_image = str(Path("direct_image_cube.fits").resolve())
         result = WfssContamStep.call(model, magnitude_limit=25, orders=[1])
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
     result.close()
 
 
-def test_output_is_not_input(multislitmodel):
-    """Check that input is not modified by the step."""
-    with dm.open(multislitmodel) as datamodel:
-        input_copy = datamodel.copy()
-
-        result = WfssContamStep.call(datamodel)
-        assert isinstance(result, dm.MultiSlitModel)
-        assert result.meta.cal_step.wfss_contam == "COMPLETE"
-
-        # input is not modified
-        assert result is not datamodel
-        result.close()
-        assert datamodel.meta.cal_step.wfss_contam is None
-        any_modified = False
-        for i in range(len(datamodel.slits)):
-            # Input data is not modified
-            np.testing.assert_allclose(datamodel.slits[i].data, input_copy.slits[i].data)
-
-
-def test_wfss_contam_step_with_polyfit(multislitmodel):
+def test_wfss_contam_step_with_polyfit(tmp_cwd, multislitmodel):
     """Smoke test that the step completes when polyfit_degree and n_iterations are set."""
     result = WfssContamStep.call(multislitmodel, orders=[1], polyfit_degree=2, n_iterations=2)
     assert isinstance(result, dm.MultiSlitModel)
