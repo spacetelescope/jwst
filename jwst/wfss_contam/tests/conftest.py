@@ -86,10 +86,10 @@ def segmentation_map(direct_image):
     """
     Make a segmentation map from the mock direct image.
 
-    Yields
-    ------
-    SegmentationMapModel
-        The segmentation map as a JwstDataModel.
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.SegmentationMapModel`
+        The segmentation map as a data model.
     """
     _mean, median, stddev = sigma_clipped_stats(direct_image, sigma=3.0)
     threshold = median + 3 * stddev
@@ -99,8 +99,7 @@ def segmentation_map(direct_image):
     # turn this into a jwst datamodel
     model = dm.SegmentationMapModel(data=segm.data)
     model.meta.wcs = create_imaging_wcs("F200W")
-    yield model
-    model.close()
+    return model
 
 
 def _sky_bbox(xcentroid, ycentroid, wcs, half_size=10):
