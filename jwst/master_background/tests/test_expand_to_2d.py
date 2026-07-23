@@ -2,51 +2,21 @@
 
 import gwcs
 import numpy as np
+import pytest
 from astropy.modeling.models import Identity, Mapping, Planar2D
 from stdatamodels.jwst import datamodels
 
+from jwst.datamodels import ModelContainer
 from jwst.master_background import expand_to_2d
 
 
-def test_expand_to_2d_1():
-    input_data = slit_data_a()  # MultiSlitModel
-    m_bkg_spec = user_bkg_spec_a()  # MultiSpecModel
-    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
-    truth_a = truth_array_a()
+@pytest.fixture(scope="module")
+def multislit_science_data():
+    """
+    Create multi-slit "science" data for testing.
 
-    assert np.allclose(bkg.slits[0].data, truth_a, rtol=1.0e-6)
-
-
-def test_expand_to_2d_2():
-    # Same input data as in the first test.
-    input_data = slit_data_a()  # MultiSlitModel
-    # Check that expand_to_2d works if the wavelength array is reversed.
-    # The flux array is also reversed, so the results should be unchanged.
-    m_bkg_spec = user_bkg_spec_b()
-    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
-    # Same truth array as in the first test.
-    truth_a = truth_array_a()
-
-    assert np.allclose(bkg.slits[0].data, truth_a, rtol=1.0e-6)
-
-
-def test_expand_to_2d_3():
-    input_data = image_data_c()  # ImageModel
-    m_bkg_spec = user_bkg_spec_c()  # CombinedSpecModel
-    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
-    truth_c = truth_array_c()
-
-    assert np.allclose(bkg.data, truth_c, rtol=1.0e-6)
-
-
-# slit_data_a and image_data_c create `input` for the tests above.
-
-
-def slit_data_a():
-    """Create "science" data for testing.
-
-    Returns
-    -------
+    Yields
+    ------
     input_model : `~jwst.datamodels.MultiSlitModel`
     """
     # Create a MultiSlitModel object.
@@ -67,14 +37,17 @@ def slit_data_a():
     slit = datamodels.SlitModel(init=None, data=data, dq=dq, wavelength=wavelength)
     input_model.slits.append(slit)
 
-    return input_model
+    yield input_model
+    input_model.close()
 
 
-def image_data_c():
-    """Create "science" data for testing.
+@pytest.fixture(scope="module")
+def image_science_data():
+    """
+    Create "science" data for testing in ImageModel format.
 
-    Returns
-    -------
+    Yields
+    ------
     input_model : `~jwst.datamodels.ImageModel`
     """
     data_shape = (9, 5)
@@ -97,18 +70,17 @@ def image_data_c():
 
     input_model.meta.wcs = wcs
 
-    return input_model
+    yield input_model
+    input_model.close()
 
 
-# Functions user_bkg_spec_a, user_bkg_spec_b, and user_bkg_spec_c create
-# "user-supplied" background data for the tests above.
+@pytest.fixture(scope="module")
+def multispec_background_data():
+    """
+    Create multi-spec "user-background" data for testing.
 
-
-def user_bkg_spec_a():
-    """Create "user-background" data for testing.
-
-    Returns
-    -------
+    Yields
+    ------
     m_bkg_spec : `~jwst.datamodels.MultiSpecModel`
     """
     # This data type is used for creating a MultiSpecModel.
@@ -157,22 +129,26 @@ def user_bkg_spec_a():
     spec = datamodels.SpecModel(spec_table=otab)
     m_bkg_spec.spec.append(spec)
 
-    return m_bkg_spec
+    yield m_bkg_spec
+    m_bkg_spec.close()
 
 
-def user_bkg_spec_b():
-    """Create "user-background" data for testing.
+@pytest.fixture(scope="module")
+def multispec_background_data_reversed():
+    """
+    Create reversed "user-background" data for testing.
 
     `expand_to_2d` uses `np.interp` for interpolation, and the wavelength
     array that is passed to `np.interp` must be increasing.  `expand_to_2d`
     is supposed to handle the case that the wavelengths are decreasing.
+
     Create data for checking that the results are the same even if the
     wavelength array in `m_bkg_spec` is reversed so that the values are
     decreasing, and the corresponding flux array is also reversed to retain
     the original (wavelength, flux) relation.
 
-    Returns
-    -------
+    Yields
+    ------
     m_bkg_spec : `~jwst.datamodels.MultiSpecModel`
     """
     # This data type is used for creating a MultiSpecModel.
@@ -220,14 +196,17 @@ def user_bkg_spec_b():
     spec = datamodels.SpecModel(spec_table=otab)
     m_bkg_spec.spec.append(spec)
 
-    return m_bkg_spec
+    yield m_bkg_spec
+    m_bkg_spec.close()
 
 
-def user_bkg_spec_c():
-    """Create "user-background" data for testing.
+@pytest.fixture(scope="module")
+def combined_spec_background_data():
+    """
+    Create "user-background" data for testing in combined spec format.
 
-    Returns
-    -------
+    Yields
+    ------
     m_bkg_spec : `~jwst.datamodels.CombinedSpecModel`
     """
     # This is the data type of an output table from combine_1d.
@@ -249,18 +228,21 @@ def user_bkg_spec_c():
     )
     m_bkg_spec = datamodels.CombinedSpecModel(spec_table=data)
 
-    return m_bkg_spec
+    yield m_bkg_spec
+    m_bkg_spec.close()
 
 
-def truth_array_a():
-    """Create an array of comparison values, for testing.
+@pytest.fixture(scope="module")
+def multispec_truth():
+    """
+    Create an array of comparison values, for testing multispec background input.
 
     Returns
     -------
-    truth_a : ndarray, 2-D, float64
+    truth : ndarray, 2-D, float64
         An array to compare with the data in the output from `expand_to_2d`.
     """
-    truth_a = np.array(
+    truth = np.array(
         [
             [0.0, 14.603571, 17.057364, 19.059263, 20.748844, 22.21304, 23.506573, 24.658548, 0.0],
             [0.0, 15.213889, 17.548525, 19.470137, 21.102207, 22.524107, 23.77871, 24.906878, 0.0],
@@ -271,18 +253,19 @@ def truth_array_a():
         dtype=np.float64,
     )
 
-    return truth_a
+    return truth
 
 
-def truth_array_c():
-    """Create an array of comparison values, for testing.
+@pytest.fixture(scope="module")
+def combined_spec_truth():
+    """Create an array of comparison values, for testing combined spec background input.
 
     Returns
     -------
-    truth_c : ndarray, 2-D, float64
+    truth : ndarray, 2-D, float64
         An array to compare with the data in the output from `expand_to_2d`.
     """
-    truth_c = np.array(
+    truth = np.array(
         [
             [0.0, 17.057364, 20.748844, 23.506573, 0.0],
             [0.0, 17.548523, 21.102207, 23.77871, 0.0],
@@ -297,4 +280,168 @@ def truth_array_c():
         dtype=np.float64,
     )
 
-    return truth_c
+    return truth
+
+
+def test_expand_to_2d_multispec(multislit_science_data, multispec_background_data, multispec_truth):
+    input_data = multislit_science_data  # MultiSlitModel
+    m_bkg_spec = multispec_background_data  # MultiSpecModel
+    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
+
+    assert np.allclose(bkg.slits[0].data, multispec_truth, rtol=1.0e-6)
+
+
+def test_expand_to_2d_multispec_reversed(
+    multislit_science_data, multispec_background_data_reversed, multispec_truth
+):
+    # Same input data as in the first test.
+    input_data = multislit_science_data  # MultiSlitModel
+
+    # Check that expand_to_2d works if the wavelength array is reversed.
+    # The flux array is also reversed, so the results should be unchanged.
+    m_bkg_spec = multispec_background_data_reversed
+    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
+
+    # Same truth array as in the first test.
+    assert np.allclose(bkg.slits[0].data, multispec_truth, rtol=1.0e-6)
+
+
+def test_expand_to_2d_multispec_ignore_extra(
+    caplog, multislit_science_data, multispec_background_data, multispec_truth
+):
+    input_data = multislit_science_data  # MultiSlitModel
+    m_bkg_spec = multispec_background_data  # MultiSpecModel
+
+    # Add an extra spectrum
+    m_bkg_spec.spec.append(m_bkg_spec.spec[0].instance.copy())
+
+    # Expect the same results: only the first is used
+    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
+    assert np.allclose(bkg.slits[0].data, multispec_truth, rtol=1.0e-6)
+
+    # Warning is logged
+    assert "contains multiple spectra" in caplog.text
+
+
+def test_expand_to_2d_combined_spec(
+    image_science_data, combined_spec_background_data, combined_spec_truth
+):
+    input_data = image_science_data  # ImageModel
+    m_bkg_spec = combined_spec_background_data  # CombinedSpecModel
+    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
+
+    assert np.allclose(bkg.data, combined_spec_truth, rtol=1.0e-6)
+
+
+def test_expand_to_2d_container(multislit_science_data, multispec_background_data, multispec_truth):
+    input_data = ModelContainer([multislit_science_data])  # Container of MultiSlitModel
+    m_bkg_spec = multispec_background_data  # MultiSpecModel
+    bkg = expand_to_2d.expand_to_2d(input_data, m_bkg_spec)
+
+    # output is a container with a single MultiSlitModel
+    assert isinstance(bkg, ModelContainer)
+    assert len(bkg) == 1
+    assert isinstance(bkg[0], datamodels.MultiSlitModel)
+
+    # check against expected truth array
+    assert np.allclose(bkg[0].slits[0].data, multispec_truth, rtol=1.0e-6)
+
+
+def test_create_bkg_unsupported_model():
+    # Unsupported model raises error
+    input_model = datamodels.RampModel()
+    with pytest.raises(TypeError, match="not supported"):
+        expand_to_2d.create_bkg(input_model, None, None)
+
+
+def test_bkg_for_multislit_missing_wl(multislit_science_data):
+    input_data = multislit_science_data.copy()
+
+    # Modify input to unset wavelengths
+    input_data.slits[0].wavelength = None
+
+    # Raises error
+    with pytest.raises(RuntimeError, match="Can't determine wavelengths"):
+        expand_to_2d.bkg_for_multislit(input_data, None, None)
+
+
+@pytest.mark.parametrize("allow_mos", [True, False])
+def test_bkg_for_multislit_allow_mos(
+    caplog, multislit_science_data, multispec_background_data, allow_mos
+):
+    input_data = multislit_science_data.copy()
+    input_data.meta.exposure.type = "NRS_MSASPEC"
+
+    m_bkg_spec = multispec_background_data
+    tab_wl = m_bkg_spec.spec[0].spec_table["WAVELENGTH"]
+    tab_bg = m_bkg_spec.spec[0].spec_table["SURF_BRIGHT"]
+
+    # Warns and sets all backgrounds and dq to 0 with allow_mos=False
+    bg = expand_to_2d.bkg_for_multislit(input_data, tab_wl, tab_bg, allow_mos=allow_mos)
+    if not allow_mos:
+        assert "not supported for NIRSpec MOS spectra" in caplog.text
+        for slit in bg.slits:
+            assert np.allclose(slit.data, 0.0)
+            assert np.all(slit.dq == 0)
+    else:
+        for slit in bg.slits:
+            assert not np.allclose(slit.data, 0.0)
+
+
+def test_bkg_for_multislit_nrs_fs_point(
+    caplog, multislit_science_data, multispec_background_data, multispec_truth
+):
+    input_data = multislit_science_data.copy()
+    input_data.meta.exposure.type = "NRS_FIXEDSLIT"
+    input_data.slits[0].source_type = "POINT"
+    shape = input_data.slits[0].data.shape
+    input_data.slits[0].pathloss_point = np.full(shape, 2.0)
+    input_data.slits[0].pathloss_uniform = np.full(shape, 3.0)
+    input_data.slits[0].flatfield_point = np.full(shape, 4.0)
+    input_data.slits[0].flatfield_uniform = np.full(shape, 5.0)
+    input_data.slits[0].photom_point = np.full(shape, 6.0)
+    input_data.slits[0].photom_uniform = np.full(shape, 7.0)
+
+    m_bkg_spec = multispec_background_data
+    tab_wl = m_bkg_spec.spec[0].spec_table["WAVELENGTH"]
+    tab_bg = m_bkg_spec.spec[0].spec_table["SURF_BRIGHT"]
+
+    bkg = expand_to_2d.bkg_for_multislit(input_data, tab_wl, tab_bg)
+
+    # Background is corrected by ratio of point to uniform for 3 corrections.
+    # Note: the pathloss and flat corrections are inverted.
+    corrected = multispec_truth * (3 / 2) * (5 / 4) * (6 / 7)
+    np.testing.assert_allclose(bkg.slits[0].data, corrected, rtol=1.0e-6)
+
+
+def test_bkg_for_image_missing_wl(image_science_data):
+    input_data = image_science_data.copy()
+
+    # Modify input to unset wcs
+    input_data.meta.wcs = None
+
+    # Raises error
+    with pytest.raises(RuntimeError, match="Can't determine wavelengths"):
+        expand_to_2d.bkg_for_image(input_data, None, None)
+
+
+def test_bkg_for_ifu_image_miri(
+    image_science_data, combined_spec_background_data, combined_spec_truth
+):
+    input_data = image_science_data.copy()
+    input_data.meta.instrument.name = "MIRI"
+
+    m_bkg_spec = combined_spec_background_data
+    tab_wl = m_bkg_spec.spec_table["WAVELENGTH"]
+    tab_bg = m_bkg_spec.spec_table["SURF_BRIGHT"]
+
+    bkg = expand_to_2d.bkg_for_ifu_image(input_data, tab_wl, tab_bg)
+    assert np.allclose(bkg.data, combined_spec_truth, rtol=1.0e-6)
+
+
+def test_bkg_for_ifu_unsupported_instrument(image_science_data):
+    # Unsupported instrument raises error
+    input_model = image_science_data.copy()
+    input_model.meta.instrument.name = "NIRISS"
+    with pytest.raises(TypeError, match="not supported"):
+        expand_to_2d.bkg_for_ifu_image(input_model, None, None)
