@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.12,<3.15"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -12,7 +12,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -28,7 +27,7 @@ dependencies = [
     "pyyaml>=6",
     "requests>=2.32",
     "scikit-image>=0.23.0",
-    "scipy>=1.15.3",
+    "scipy>=1.18.0",
     # "stdatamodels>=6.0.0,<6.1",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     #"stcal>=1.19.1,<2",
