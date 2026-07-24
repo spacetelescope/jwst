@@ -6,32 +6,43 @@ import numpy as np
 import pytest
 from astropy.table import Table
 
-from jwst.regtest.regtestdata import text_diff
+from jwst.regtest.regtestdata import RTData, text_diff
+
+INPUT_DATA_PATH = "infrastructure/test_regtestdata"
+file1 = "file1_rate.fits"
+asn_file = "my_asn.json"
+INPUT_DATA = {
+    file1: RTData(
+        from_mast=False,
+        mod_code="code_name_used_to_create_file_here",
+        comment="This code was used to create the files in the association.",
+    )
+}
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_data(rtdata, tmp_cwd):
-    rtdata.get_data("infrastructure/test_regtestdata/file1_rate.fits")
-    rtdata.output = "file1_cal.fits"
+    rtdata.get_data(INPUT_DATA_PATH + "/" + file1)
+    rtdata.output = file1.replace("rate", "cal")
 
-    assert rtdata.input == str(tmp_cwd / "file1_rate.fits")
+    assert rtdata.input == str(tmp_cwd / file1)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_truth(rtdata, tmp_cwd):
-    rtdata.get_truth("infrastructure/test_regtestdata/file1_rate.fits")
-    rtdata.output = "file1_rate.fits"
+    rtdata.get_truth(INPUT_DATA_PATH + "/" + file1)
+    rtdata.output = file1
 
-    assert rtdata.truth == str(tmp_cwd / "truth" / "file1_rate.fits")
+    assert rtdata.truth == str(tmp_cwd / "truth" / file1)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_asn(rtdata):
-    rtdata.get_asn("infrastructure/test_regtestdata/my_asn.json")
+    rtdata.get_asn(INPUT_DATA_PATH + "/" + asn_file)
     files = glob("*.fits")
-    rtdata.output = "file1_rate.fits"
+    rtdata.output = file1
 
-    assert os.path.isfile("my_asn.json")
+    assert os.path.isfile(asn_file)
     assert len(files) == 3
 
 
