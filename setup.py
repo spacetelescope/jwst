@@ -1,11 +1,23 @@
+import sysconfig
+
 import numpy as np
 from setuptools import Extension, setup
+
+FREE_THREADED_PYTHON = sysconfig.get_config_var("Py_GIL_DISABLED") == 1
 
 # Setup C module include directories
 include_dirs = [np.get_include()]
 
 # Setup C module macros
-define_macros = [("NUMPY", "1")]
+define_macros = [
+    ("NUMPY", "1"),
+]
+if not FREE_THREADED_PYTHON:
+    define_macros.append(("Py_LIMITED_API", 0x030B0000))  # PY_VERSION_HEX for 3.11
+
+SETUPTOOLS_OPTIONS = {}
+if not FREE_THREADED_PYTHON:
+    SETUPTOOLS_OPTIONS["bdist_wheel"] = {"py_limited_api": "cp311"}
 
 setup(
     # importing these extension modules is tested in `.github/workflows/build.yml`;
@@ -16,6 +28,7 @@ setup(
             ["jwst/lib/src/winclip.c"],
             include_dirs=include_dirs,
             define_macros=define_macros,
+            py_limited_api=not FREE_THREADED_PYTHON,
         ),
         Extension(
             "jwst.cube_build.cube_match_internal",
@@ -25,6 +38,7 @@ setup(
             ],
             include_dirs=include_dirs,
             define_macros=define_macros,
+            py_limited_api=not FREE_THREADED_PYTHON,
         ),
         Extension(
             "jwst.cube_build.cube_match_sky_pointcloud",
@@ -35,6 +49,7 @@ setup(
             ],
             include_dirs=include_dirs,
             define_macros=define_macros,
+            py_limited_api=not FREE_THREADED_PYTHON,
         ),
         Extension(
             "jwst.cube_build.cube_match_sky_driz",
@@ -45,18 +60,22 @@ setup(
             ],
             include_dirs=include_dirs,
             define_macros=define_macros,
+            py_limited_api=not FREE_THREADED_PYTHON,
         ),
         Extension(
             "jwst.cube_build.blot_median",
             ["jwst/cube_build/src/blot_median.c"],
             include_dirs=include_dirs,
             define_macros=define_macros,
+            py_limited_api=not FREE_THREADED_PYTHON,
         ),
         Extension(
             "jwst.straylight.calc_xart",
             ["jwst/straylight/src/calc_xart.c"],
             include_dirs=include_dirs,
             define_macros=define_macros,
+            py_limited_api=not FREE_THREADED_PYTHON,
         ),
     ],
+    options=SETUPTOOLS_OPTIONS,
 )
