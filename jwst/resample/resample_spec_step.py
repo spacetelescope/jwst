@@ -2,6 +2,7 @@
 
 import logging
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel
 
@@ -147,6 +148,7 @@ class ResampleSpecStep(Step):
         result.update(input_models[0])
 
         pscale_ratio = None
+        wave_cols = {}
         for container in containers.values():
             # Make sure all input models have consistent NaN and DO_NOT_USE values
             for model in container:
@@ -178,6 +180,15 @@ class ResampleSpecStep(Step):
                         model.meta.wcsinfo.s_region = None
                     else:
                         update_s_region_spectral(model)
+
+                    # Store the wavelength column and unset the wavelength table for the slit
+                    if model.meta.wcsinfo.dispersion_direction == 1:
+                        col_name = model.meta.wcsinfo.ps1_1
+                    else:
+                        col_name = model.meta.wcsinfo.ps2_1
+                    wave_cols[col_name] = model.wavetable[col_name]
+                    model.wavetable = None
+
                     result.slits.append(model)
                     drizzled_library.shelve(model, i, modify=False)
             del drizzled_library
@@ -191,6 +202,21 @@ class ResampleSpecStep(Step):
         else:
             result.meta.resample.pixel_scale_ratio = pscale_ratio
         result.meta.resample.pixfrac = self.pixfrac
+
+        # Set a single output wavetable from all the slit columns
+        schema_dtypes = []
+        np_dtypes = []
+        for col_name, wave in wave_cols.items():
+            schema_dtypes.append({"name": col_name, "datatype": "float32"})
+            np_dtypes.append((col_name, "<f4", (wave.size, 1)))
+        wavetable = np.array([tuple(wave_cols.values())], dtype=np_dtypes)
+        schema = {
+            "title": "Wavelength values",
+            "fits_hdu": "WCS-TABLE",
+            "datatype": schema_dtypes,
+        }
+        result.add_schema_entry("wavetable", schema)
+        result.wavetable = wavetable
 
         return result
 

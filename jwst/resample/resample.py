@@ -500,9 +500,9 @@ class ResampleImage(Resample):
             self.output_model,
         )
 
+        self.update_fits_wcsinfo(self.output_jwst_model)
         if is_imaging_wcs(self.output_jwst_model.meta.wcs):
             # only for an imaging WCS:
-            self.update_fits_wcsinfo(self.output_jwst_model)
             output_sregion = self.combine_input_sregions()
             log.debug(f"Assigning output S_REGION: {output_sregion}")
             self.output_jwst_model.meta.wcsinfo.s_region = output_sregion
@@ -677,8 +677,7 @@ class ResampleImage(Resample):
 
         return self.output_jwst_model
 
-    @staticmethod
-    def update_fits_wcsinfo(model):
+    def update_fits_wcsinfo(self, model):
         """
         Update FITS WCS keywords of the resampled image.
 

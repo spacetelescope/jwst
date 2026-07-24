@@ -263,6 +263,79 @@ class ResampleSpec(ResampleImage):
         # model.meta.resample.pointings
         # model.meta.cal_step.resample
 
+    def update_fits_wcsinfo(self, model):
+        """
+        Update FITS WCS keywords of the resampled image.
+
+        The wavelengths are nonlinear but have the same value for all spatial elements.
+        The values are extracted from the WCS at the central spatial index. They
+        are stored in a new WCS-TABLE extension, with the column named for the
+        current slit.
+
+        The spatial coordinates are set to a simple linear scaling by the
+        output pixel scale, centered on the central spatial index. The scaling value
+        is stored in the standard FITS WCS keyword (CDELTi).
+
+        Parameters
+        ----------
+        model : `~stdatamodels.jwst.datamodels.SlitModel`
+            The resampled image
+        """
+        spectral_axis = find_dispersion_axis(model)
+        model.meta.wcsinfo.wcsaxes = 2
+        if model.name is None:
+            col_name = "wavelength"
+        else:
+            col_name = f"wave_slit_{model.name}"
+        if spectral_axis == 0:
+            # wavelengths along x
+            w_idx = np.arange(model.data.shape[-1], dtype=np.float64)
+            s_idx = model.data.shape[-2] // 2
+            _, _, wave = model.meta.wcs(w_idx, s_idx)
+
+            model.meta.wcsinfo.ctype1 = "WAVE-TAB"
+            model.meta.wcsinfo.ps1_0 = "WCS-TABLE"
+            model.meta.wcsinfo.ps1_1 = col_name
+            model.meta.wcsinfo.crval1 = 1.0
+            model.meta.wcsinfo.crpix1 = 1.0
+            model.meta.wcsinfo.cdelt1 = None
+            model.meta.wcsinfo.cunit1 = "um"
+
+            model.meta.wcsinfo.ctype2 = "SPATIAL"
+            model.meta.wcsinfo.crval2 = 0.0
+            model.meta.wcsinfo.crpix2 = s_idx + 1
+            model.meta.wcsinfo.cdelt2 = self._output_pixel_scale
+            model.meta.wcsinfo.cunit2 = "arcsec"
+
+        else:
+            # wavelengths along y
+            w_idx = np.arange(model.data.shape[-2], dtype=np.float64)
+            s_idx = model.data.shape[-1] // 2
+            _, _, wave = model.meta.wcs(s_idx, w_idx)
+
+            model.meta.wcsinfo.ctype2 = "WAVE-TAB"
+            model.meta.wcsinfo.ps2_0 = "WCS-TABLE"
+            model.meta.wcsinfo.ps2_1 = col_name
+            model.meta.wcsinfo.crval2 = 1.0
+            model.meta.wcsinfo.crpix2 = 1.0
+            model.meta.wcsinfo.cdelt2 = None
+            model.meta.wcsinfo.cunit2 = "um"
+
+            model.meta.wcsinfo.ctype1 = "SPATIAL"
+            model.meta.wcsinfo.crval1 = 0.0
+            model.meta.wcsinfo.crpix1 = s_idx + 1
+            model.meta.wcsinfo.cdelt1 = self._output_pixel_scale
+            model.meta.wcsinfo.cunit1 = "arcsec"
+
+        wavetable = np.array([(wave[None].T,)], dtype=[(col_name, "<f4", (wave.size, 1))])
+        schema = {
+            "title": "Wavelength values",
+            "fits_hdu": "WCS-TABLE",
+            "datatype": [{"name": col_name, "datatype": "float32"}],
+        }
+        model.add_schema_entry("wavetable", schema)
+        model.wavetable = wavetable
+
     def build_nirspec_output_wcs(
         self, input_models, refmodel=None, good_bits=None, pixel_scale_ratio=1.0
     ):
