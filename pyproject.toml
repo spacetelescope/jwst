@@ -113,8 +113,12 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-# explicitly skip free-threaded builds
-skip = ["cp314t-*"]
+build = "cp3*"
+skip = ["cp314t-*"]  # explicitly skip free-threaded builds
+test-command = 'python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"'
+
+[tool.cibuildwheel.macos]
+archs = ["arm64", "x86_64"]
 
 [tool.setuptools]
 zip-safe = false
