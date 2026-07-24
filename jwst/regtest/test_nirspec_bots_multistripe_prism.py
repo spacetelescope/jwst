@@ -50,14 +50,14 @@ def create_multistripe(base_datamodel, format="SUB256M2_PRISM"):
 
     Parameters
     ----------
-    base_datamodel : datamodels.DataModel
+    base_datamodel : `~stdatamodels.jwst.datamodels.RampModel`
         A base datamodel to modify.
     format : str
         The format of the multistripe datamodel to create.
 
     Returns
     -------
-    multistripe_datamodel : datamodels.DataModel
+    multistripe_datamodel : `~stdatamodels.jwst.datamodels.RampModel`
         A new datamodel with the multistripe format.
     """
     # Create a copy of the base datamodel
@@ -155,8 +155,7 @@ def run_pipelines(rtdata_module):
     """
     Test that the multistripe prism pipeline results match those from the parent data.
 
-    Framed as a test rather than a fixture so that parameterization
-    can be used.
+    Loops over the two detectors and all NIRSPEC BOTS prism multistripe formats.
     """
     rtdata = rtdata_module
     for detector in ["nrs1", "nrs2"]:
@@ -218,7 +217,7 @@ def run_pipelines(rtdata_module):
         for multistripe_name in sorted(params.keys()):
             multistripe_model = create_multistripe(parent_model, format=multistripe_name)
             multistripe_filename = f"{multistripe_name.lower()}_{detector}_uncal.fits"
-            multistripe_model.save(multistripe_filename, overwrite=True)
+            multistripe_model.save(multistripe_filename)
             step_args = [
                 "calwebb_detector1",
                 multistripe_filename,
@@ -325,7 +324,7 @@ def test_saturation(run_pipelines, detector, multistripe_name):
 @pytest.mark.parametrize("multistripe_name", sorted(params.keys()))
 def test_linearity(run_pipelines, multistripe_name, detector):
     """
-    Test that the linearity step output in the is identical for the multistripe and parent data.
+    Test that the linearity step output is identical for the multistripe and parent data.
 
     Basically tests that the routines in lib/stripe_utils.py work correctly
     for the NIRSPEC prism multistripe data.  After the refpix step, the multistripe
