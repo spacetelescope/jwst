@@ -57,7 +57,7 @@ def wfs_association(tmp_path_factory):
             category=UserWarning,
             message="Input association file contains path information",
         )
-        asn_json, serialized = asn.dump(format="json")
+        asn_json, serialized = asn.dump()
     path_asn = tmp_path / asn_json
     with open(path_asn, "w") as f:
         f.write(serialized)

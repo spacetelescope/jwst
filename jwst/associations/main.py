@@ -321,8 +321,8 @@ class Main:
         )
         parser.add_argument(
             "--format",
-            default="json",
-            help='Format of the association files. Default: "%(default)s"',
+            action=DeprecateFormat,
+            help="Deprecated: Only JSON format is supported for association files.",
         )
         parser.add_argument(
             "--version",
@@ -341,11 +341,6 @@ class Main:
             help="Merge associations into single associations with multiple products",
         )
         parser.add_argument(
-            "--no-merge",
-            action=DeprecateNoMerge,
-            help='Deprecated: Default is to not merge. See "--merge".',
-        )
-        parser.add_argument(
             "--per-pool-algorithm",
             action="store_true",
             help="Use the original, per-pool, algorithm that does not "
@@ -361,7 +356,7 @@ class Main:
 
         for asn in self.associations:
             try:
-                (fname, serialized) = asn.dump(format=self.parsed.format)
+                (fname, serialized) = asn.dump()
             except AssociationError as exception:
                 logger.warning("Cannot serialize association %s", asn)
                 logger.warning("Reason:", exc_info=exception)
@@ -414,18 +409,11 @@ def main(args=None, pool=None):
 # #########
 # Utilities
 # #########
-class DeprecateNoMerge(argparse.Action):
-    """Deprecate the ``--no-merge`` option."""
-
-    def __init__(self, option_strings, dest, **kwargs):
-        super(DeprecateNoMerge, self).__init__(option_strings, dest, const=True, nargs=0, **kwargs)
+class DeprecateFormat(argparse.Action):
+    """Deprecate the ``--format`` option."""
 
     def __call__(self, parser, namespace, values, option_string=None):  # noqa: ARG002
-        logger.warning(
-            'The "--no-merge" option is now the default and deprecated.'
-            ' Use "--merge" to force merging.'
-        )
-        setattr(namespace, self.dest, values)
+        logger.warning('The "--format" option is now deprecated. Only JSON is supported.')
 
 
 if __name__ == "__main__":
