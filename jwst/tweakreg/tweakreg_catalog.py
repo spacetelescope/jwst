@@ -15,7 +15,6 @@ from photutils import use_future_column_names
 from photutils.background import Background2D, MedianBackground
 from photutils.detection import DAOStarFinder, IRAFStarFinder
 from photutils.segmentation import SourceCatalog, SourceFinder
-from photutils.segmentation.catalog import DEFAULT_COLUMNS
 from photutils.utils import NoDetectionsWarning
 from stdatamodels.jwst.datamodels import ImageModel, dqflags
 
@@ -23,14 +22,6 @@ log = logging.getLogger(__name__)
 
 
 __all__ = ["make_tweakreg_catalog"]
-
-SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
-    "ellipticity",
-    "sky_bbox_ll",
-    "sky_bbox_ul",
-    "sky_bbox_lr",
-    "sky_bbox_ur",
-]
 
 
 class JWSTBackground:
@@ -246,13 +237,21 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     if segment_map is None:
         return None, None
     with use_future_column_names():  # remove when photutils 4.0+ is required
-        sources = SourceCatalog(
+        cat = SourceCatalog(
             data,
             segment_map,
             mask=mask,
             convolved_data=conv_data,
             **catalog_dict,
-        ).to_table(columns=SOURCECAT_COLUMNS)
+        )
+        columns = cat.default_columns + [
+            "ellipticity",
+            "sky_bbox_ll",
+            "sky_bbox_ul",
+            "sky_bbox_lr",
+            "sky_bbox_ur",
+        ]
+        sources = cat.to_table(columns=columns)
 
     return sources, segment_map
 
