@@ -672,7 +672,6 @@ def contam_corr(
     ncpus = compute_num_cores(max_cores, 1e10, max_available_cores)
 
     # Get the segmentation map and direct image for this grism exposure
-    seg_model = datamodels.open(input_model.meta.segmentation_map)
     direct_file = input_model.meta.direct_image
     log.debug(f"Direct image ={direct_file}")
     with datamodels.open(direct_file) as direct_model:
@@ -731,18 +730,18 @@ def contam_corr(
         min_relresp_order1 = _find_min_relresp(order1_wave_response, order1_sens_response)
 
     # set up observation object to disperse
-    obs = Observation(
-        direct_image,
-        seg_model.data,
-        grism_wcs,
-        direct_image_wcs,
-        boundaries=[0, 2047, 0, 2047],
-        max_cpu=ncpus,
-        max_pixels_per_chunk=max_pixels_per_chunk,
-        oversample_factor=oversample_factor,
-        band_wavelengths=band_wavelengths,
-    )
-    seg_model.close()
+    with datamodels.open(input_model.meta.segmentation_map) as seg_model:
+        obs = Observation(
+            direct_image,
+            seg_model.data,
+            grism_wcs,
+            direct_image_wcs,
+            boundaries=[0, 2047, 0, 2047],
+            max_cpu=ncpus,
+            max_pixels_per_chunk=max_pixels_per_chunk,
+            oversample_factor=oversample_factor,
+            band_wavelengths=band_wavelengths,
+        )
 
     no_sources = True
     for order in spec_orders:

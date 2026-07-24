@@ -11,8 +11,6 @@ from photutils.segmentation import SourceFinder, make_2dgaussian_kernel
 
 from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs, create_wfss_wcs
 
-DIR_IMAGE = "direct_image.fits"
-
 
 @pytest.fixture(scope="module")
 def direct_image():
@@ -31,13 +29,13 @@ def direct_image():
 
 
 @pytest.fixture(scope="module")
-def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
+def direct_image_with_gradient(direct_image):
     """
     Add a gradient to the direct image and save it as a JWST datamodel.
 
-    Yields
-    ------
-    ImageModel
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.ImageModel`
         Direct image with a background gradient.
     """
     ny, nx = direct_image.shape
@@ -48,14 +46,12 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
     # obs expects input list of direct image filenames
     model = dm.ImageModel(data=data)
     model.meta.wcs = create_imaging_wcs("F200W")
-    model.save(DIR_IMAGE)
 
-    yield model
-    model.close()
+    return model
 
 
 @pytest.fixture(scope="module")
-def direct_image_cube_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
+def direct_image_cube_with_gradient(direct_image):
     """
     Build a multi-band direct image cube and save it as a WFSSCubeModel.
 
@@ -81,7 +77,6 @@ def direct_image_cube_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG0
 
     model = dm.WFSSCubeModel(data=cube, wavelength=band_wls)
     model.meta.wcs = create_imaging_wcs("F200W")
-    model.save("direct_image_cube.fits")
 
     return model
 
@@ -91,10 +86,10 @@ def segmentation_map(direct_image):
     """
     Make a segmentation map from the mock direct image.
 
-    Yields
-    ------
-    SegmentationMapModel
-        The segmentation map as a JwstDataModel.
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.SegmentationMapModel`
+        The segmentation map as a data model.
     """
     _mean, median, stddev = sigma_clipped_stats(direct_image, sigma=3.0)
     threshold = median + 3 * stddev
@@ -104,8 +99,7 @@ def segmentation_map(direct_image):
     # turn this into a jwst datamodel
     model = dm.SegmentationMapModel(data=segm.data)
     model.meta.wcs = create_imaging_wcs("F200W")
-    yield model
-    model.close()
+    return model
 
 
 def _sky_bbox(xcentroid, ycentroid, wcs, half_size=10):
