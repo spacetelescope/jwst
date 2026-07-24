@@ -13,6 +13,7 @@ from stpipe import Pipeline, crds_client
 from stpipe import Step as _Step
 
 from jwst import __version__, __version_commit__
+from jwst.associations import Association
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib import exposure_types
 from jwst.lib.suffix import remove_suffix
@@ -71,14 +72,18 @@ class JwstStep(_Step):
                 crds_observatory,
             )
 
+        is_asn = False
+        if isinstance(dataset, dict) and "products" in dataset:
+            is_asn = True
+
         # If we get here, we had better have a filename
-        if isinstance(dataset, str):
+        elif isinstance(dataset, str):
             dataset = Path(dataset)
-        if not isinstance(dataset, Path):
+        elif not isinstance(dataset, Path):
             raise TypeError(f"Cannot get CRDS parameters for {dataset} of type {type(dataset)}")
 
         # for associations, open as ModelLibrary, which supports lazy-loading
-        if dataset.suffix.lower() == ".json":
+        if is_asn or dataset.suffix.lower() == ".json":
             model = ModelLibrary(dataset, asn_n_members=1, asn_exptypes=["science"])
             return (model.get_crds_parameters(), crds_observatory)
 
@@ -215,7 +220,7 @@ class JwstStep(_Step):
 
         Parameters
         ----------
-        init : str, list, JwstDataModel, ModelContainer, or ModelLibrary
+        init : str, list, Association, JwstDataModel, ModelContainer, or ModelLibrary
             Input data to open.
         make_copy : bool or None, optional
             If True, a copy of the input will always be made.
@@ -264,14 +269,21 @@ class JwstStep(_Step):
         elif isinstance(init, (datamodels.JwstDataModel, ModelContainer)):
             copy_needed = True
 
+        if isinstance(init, Association):
+            init = init.data
+
         # Input might be a filename or path.
         # In that case, open it if desired.
         if not isinstance(init, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
             if open_models:
                 if open_as_type is not None:
                     # It is assumed the provided class is appropriate for the input.
+                    if isinstance(init, dict):  # first association member
+                        init = init["products"][0]["members"][0]["expname"]
                     input_models = open_as_type(init, **kwargs)
                 elif open_as_ramp:
+                    if isinstance(init, dict):  # first association member
+                        init = init["products"][0]["members"][0]["expname"]
                     ramp_type = self._ramp_type(init)
                     input_models = ramp_type(init, **kwargs)
                 else:

@@ -10,17 +10,16 @@ from gwcs import wcs
 from stcal.alignment.util import compute_s_region_keyword, sregion_to_footprint
 
 import jwst
+from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels.container import ModelContainer
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.extract_1d.tests.helpers import mock_miri_lrs_fs_func, mock_nirspec_fs_one_slit_func
 from jwst.pipeline import Spec3Pipeline
-from jwst.stpipe import Step
 
 N_SOURCES = 5
 N_EXPOSURES = 4
 INPUT_WFSS = "mock_wfss_x1d.fits"
 INPUT_WFSS_2 = "mock_wfss_2_x1d.fits"
-INPUT_ASN = "mock_wfss_asn.json"
 
 
 def simple_wcs_wfss():
@@ -119,8 +118,8 @@ def wfss_exp_spec3(source_id):
     return multi
 
 
-@pytest.fixture
-def spec3_wfss_asn(tmp_cwd):
+@pytest.fixture(scope="module")
+def spec3_wfss_asn(tmp_cwd_module):
     model = make_wfss_multiexposure([wfss_exp_spec3(N_SOURCES - i) for i in range(N_SOURCES)])
     model.save(INPUT_WFSS)
     model2 = model.copy()
@@ -129,7 +128,7 @@ def spec3_wfss_asn(tmp_cwd):
         spec.group_id = "8"
         spec.s_region = new_s_region
     model2.save(INPUT_WFSS_2)
-    os.system(f"asn_from_list -o {INPUT_ASN} --product-name test {INPUT_WFSS} {INPUT_WFSS_2}")
+    return asn_from_list([INPUT_WFSS, INPUT_WFSS_2], product_name="test")
 
 
 @pytest.fixture
@@ -179,11 +178,7 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
         jwst.pipeline.calwebb_spec3, "make_wfss_multiexposure", mock_wfss_multiexposure
     )
 
-    args = [
-        "calwebb_spec3",
-        INPUT_ASN,
-    ]
-    Step.from_cmdline(args)
+    Spec3Pipeline.call(spec3_wfss_asn, save_results=True)
 
 
 def test_spec3_wfss(run_spec3_wfss):
