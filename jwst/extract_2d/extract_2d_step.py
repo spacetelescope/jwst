@@ -1,3 +1,5 @@
+"""Perform extract_2d calibration step."""
+
 from jwst.extract_2d import extract_2d
 from jwst.stpipe import Step
 
@@ -33,11 +35,11 @@ class Extract2dStep(Step):
         ----------
         input_data : str, `~stdatamodels.jwst.datamodels.ImageModel`, or \
                      `~stdatamodels.jwst.datamodels.CubeModel`
-            Input datamodel or file name.
+            Input filename or datamodel.
 
         Returns
         -------
-        result : `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+        result : `~stdatamodels.jwst.datamodels.MultiSlitModel` or \
                  `~stdatamodels.jwst.datamodels.SlitModel`
             Output datamodel containing spectral cutouts in separate extensions.
         """
