@@ -1,0 +1,1 @@
+Add a simple spatial-spectral FITS WCS for resampled spectral images. The spatial dimension encodes relative offsets from the center of the array in arcsec.
