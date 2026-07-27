@@ -155,7 +155,15 @@ def run_pipelines(rtdata_module):
     """
     Test that the multistripe prism pipeline results match those from the parent data.
 
-    Loops over the two detectors and all NIRSPEC BOTS prism multistripe formats.
+    Runs the detector1 pipeline on the parent data, saving some of the intermediate results.
+    Creates the 4 different multistripe formats from the parent data, and then runs the
+    detector1 pipeline on the multistripe products, again saving the intermediate results.
+    Some custom reference files are used to ensure they can be used with both parent and
+    multistripe data, and the refpix step is skipped for both datatypes by using
+    the skip=True option for the parent data and using a mask with the REFERENCE_PIXELS
+    bit unset for the multistripe data.
+
+    Loops over both detectors and all 4 NIRSPEC BOTS prism multistripe formats.
     """
     rtdata = rtdata_module
     for detector in ["nrs1", "nrs2"]:
