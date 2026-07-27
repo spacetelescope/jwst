@@ -81,6 +81,7 @@ def get_steps():
         ("jwst.step.RscdStep", "rscd", False),
         ("jwst.step.SaturationStep", "saturation", False),
         ("jwst.step.SkyMatchStep", "skymatch", False),
+        ("jwst.step.SlitCubeBuildStep", "slit_cube_build", False),
         ("jwst.step.SourceCatalogStep", "source_catalog", False),
         ("jwst.step.SourceTypeStep", "srctype", False),
         ("jwst.step.SpectralLeakStep", "spectral_leak", False),
