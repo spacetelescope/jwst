@@ -5,6 +5,7 @@ import asdf
 import numpy as np
 import pytest
 from astropy import coordinates as coord
+from astropy import wcs as astropy_wcs
 from astropy.io import fits
 from astropy.modeling import models
 from gwcs import coordinate_frames as cf
@@ -1896,3 +1897,44 @@ def test_combine_input_sregions(nircam_rate):
     expected_footprint = expected_footprint[np.argsort(expected_footprint[:, 0])]
     actual_footprint = actual_footprint[np.argsort(actual_footprint[:, 0])]
     assert_allclose(actual_footprint, expected_footprint, atol=1e-5, rtol=0)
+
+
+def test_spec_fits_wcs(tmp_path, nirspec_cal):
+    im = ResampleSpecStep.call(
+        nirspec_cal, output_dir=str(tmp_path), save_results=True, output_file="test", suffix="s2d"
+    )
+    assert isinstance(im, MultiSlitModel)
+    assert (tmp_path / "test_s2d.fits").exists()
+
+    # FITS WCS requires a single wavetable with one column per slit
+    slit = im.slits[0]
+    assert im.wavetable is not None
+    assert slit.wavetable is None
+    # The column name is recorded in the slit metadata
+    assert slit.meta.wcsinfo.ps1_1 == f"wave_slit_{slit.name}"
+    assert slit.meta.wcsinfo.ps1_1 in im.wavetable.columns.names
+
+    # GWCS
+    x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    ra, dec, gwcs_wave = slit.meta.wcs(x, y)
+
+    # FITS WCS
+    with fits.open(tmp_path / "test_s2d.fits") as hdul:
+        slit_wcs = astropy_wcs.WCS(hdul[1], hdul)
+        fits_wave, slit_pos = slit_wcs.pixel_to_world_values(x, y)
+
+        # Slit position is 0 at the center of the array
+        _, slit_center = slit_wcs.pixel_to_world_values(x, slit.data.shape[0] // 2)
+        np.testing.assert_allclose(slit_center, 0)
+
+    # Wavelengths are the same for the GWCS and FITS WCS
+    np.testing.assert_allclose(fits_wave, gwcs_wave)
+
+    # FITS WCS records spatial offset instead of RA/Dec
+    all_pos = coord.SkyCoord(ra, dec, unit="deg")
+    gwcs_diff = all_pos[1:].separation(all_pos[:-1]).to("arcsec").value
+    fits_diff = slit_pos[1:] - slit_pos[:-1]
+    np.testing.assert_allclose(gwcs_diff, fits_diff)
+    np.testing.assert_allclose(gwcs_diff, slit.meta.wcsinfo.cdelt2)
+
+    im.close()
