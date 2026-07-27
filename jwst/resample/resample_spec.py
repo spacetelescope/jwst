@@ -281,52 +281,48 @@ class ResampleSpec(ResampleImage):
         model : `~stdatamodels.jwst.datamodels.SlitModel`
             The resampled image
         """
-        spectral_axis = find_dispersion_axis(model)
-        model.meta.wcsinfo.wcsaxes = 2
-        if model.name is None:
-            col_name = "wavelength"
-        else:
-            col_name = f"wave_slit_{model.name}"
-        if spectral_axis == 0:
+        # WCS info dictionary to update
+        wcsinfo = model.meta.wcsinfo.instance
+
+        # Wavelength avalues from dispersion direction
+        dispaxis = wcsinfo["dispersion_direction"]
+        if dispaxis == 1:
             # wavelengths along x
+            spataxis = 2
             w_idx = np.arange(model.data.shape[-1], dtype=np.float64)
             s_idx = model.data.shape[-2] // 2
             _, _, wave = model.meta.wcs(w_idx, s_idx)
-
-            model.meta.wcsinfo.ctype1 = "WAVE-TAB"
-            model.meta.wcsinfo.ps1_0 = "WCS-TABLE"
-            model.meta.wcsinfo.ps1_1 = col_name
-            model.meta.wcsinfo.crval1 = 1.0
-            model.meta.wcsinfo.crpix1 = 1.0
-            model.meta.wcsinfo.cdelt1 = None
-            model.meta.wcsinfo.cunit1 = "um"
-
-            model.meta.wcsinfo.ctype2 = "SPATIAL"
-            model.meta.wcsinfo.crval2 = 0.0
-            model.meta.wcsinfo.crpix2 = s_idx + 1
-            model.meta.wcsinfo.cdelt2 = self._output_pixel_scale
-            model.meta.wcsinfo.cunit2 = "arcsec"
-
         else:
             # wavelengths along y
+            spataxis = 1
             w_idx = np.arange(model.data.shape[-2], dtype=np.float64)
             s_idx = model.data.shape[-1] // 2
             _, _, wave = model.meta.wcs(s_idx, w_idx)
 
-            model.meta.wcsinfo.ctype2 = "WAVE-TAB"
-            model.meta.wcsinfo.ps2_0 = "WCS-TABLE"
-            model.meta.wcsinfo.ps2_1 = col_name
-            model.meta.wcsinfo.crval2 = 1.0
-            model.meta.wcsinfo.crpix2 = 1.0
-            model.meta.wcsinfo.cdelt2 = None
-            model.meta.wcsinfo.cunit2 = "um"
+        # Column name from slit name
+        if model.name is None:
+            col_name = "wavelength"
+        else:
+            col_name = f"wave_slit_{model.name}"
 
-            model.meta.wcsinfo.ctype1 = "SPATIAL"
-            model.meta.wcsinfo.crval1 = 0.0
-            model.meta.wcsinfo.crpix1 = s_idx + 1
-            model.meta.wcsinfo.cdelt1 = self._output_pixel_scale
-            model.meta.wcsinfo.cunit1 = "arcsec"
+        # Add FITS WCS keywords
+        wcsinfo["wcsaxes"] = 2
+        wcsinfo[f"ctype{dispaxis}"] = "WAVE-TAB"
+        wcsinfo[f"ps{dispaxis}_0"] = "WCS-TABLE"
+        wcsinfo[f"ps{dispaxis}_1"] = col_name
+        wcsinfo[f"crval{dispaxis}"] = 1.0
+        wcsinfo[f"crpix{dispaxis}"] = 1.0
+        wcsinfo[f"cdelt{dispaxis}"] = None
+        wcsinfo[f"cunit{dispaxis}"] = "um"
 
+        wcsinfo[f"ctype{spataxis}"] = "SPATIAL"
+        wcsinfo[f"crval{spataxis}"] = 0.0
+        wcsinfo[f"crpix{spataxis}"] = s_idx + 1
+        wcsinfo[f"cdelt{spataxis}"] = self._output_pixel_scale
+        wcsinfo[f"cunit{spataxis}"] = "arcsec"
+
+        # Add the wavelength table to the model
+        # Schema must be generated on the fly since the columns are variable.
         wavetable = np.array([(wave[None].T,)], dtype=[(col_name, "<f4", (wave.size, 1))])
         schema = {
             "title": "Wavelength values",

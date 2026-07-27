@@ -182,10 +182,8 @@ class ResampleSpecStep(Step):
                         update_s_region_spectral(model)
 
                     # Store the wavelength column and unset the wavelength table for the slit
-                    if model.meta.wcsinfo.dispersion_direction == 1:
-                        col_name = model.meta.wcsinfo.ps1_1
-                    else:
-                        col_name = model.meta.wcsinfo.ps2_1
+                    disp = model.meta.wcsinfo.dispersion_direction
+                    col_name = model.meta.wcsinfo.instance[f"ps{disp}_1"]
                     wave_cols[col_name] = model.wavetable[col_name]
                     model.wavetable = None
 

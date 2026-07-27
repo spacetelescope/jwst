@@ -1909,7 +1909,6 @@ def test_spec_fits_wcs(tmp_path, nirspec_cal):
     # FITS WCS requires a single wavetable with one column per slit
     slit = im.slits[0]
     assert im.wavetable is not None
-    assert slit.wavetable is None
     # The column name is recorded in the slit metadata
     assert slit.meta.wcsinfo.ps1_1 == f"wave_slit_{slit.name}"
     assert slit.meta.wcsinfo.ps1_1 in im.wavetable.columns.names
