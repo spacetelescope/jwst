@@ -50,7 +50,7 @@ def tso3_asn(tmp_path, input_model):
     asn = asn_from_list([input_name], product_name="test_tso3")
 
     with asn_path.open("w") as outfile:
-        name, serialized = asn.dump(format="json")
+        name, serialized = asn.dump()
         outfile.write(serialized)
 
     return str(asn_path)
