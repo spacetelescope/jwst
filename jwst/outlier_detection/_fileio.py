@@ -13,8 +13,9 @@ def save_median(median_model, make_output_path):
 
     Parameters
     ----------
-    median_model : `~jwst.datamodels.ImageModel`
-        The median ImageModel or CubeModel to save
+    median_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                   `~stdatamodels.jwst.datamodels.CubeModel`
+        The median data model to save.
 
     make_output_path : function
         A function to be used to create an output path from
@@ -32,8 +33,9 @@ def save_drizzled(drizzled_model, make_output_path):
 
     Parameters
     ----------
-    drizzled_model : `~jwst.datamodels.ImageModel`
-        The median ImageModel or CubeModel to save.
+    drizzled_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                     `~stdatamodels.jwst.datamodels.CubeModel`
+        The median data model to save.
 
     make_output_path : function
         A function to be used to create an output path from
@@ -50,7 +52,7 @@ def save_blot(input_model, blot, blot_err, make_output_path):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel`
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         An input model corresponding to the blotted data,
         containing metadata to copy.
 
@@ -74,7 +76,7 @@ def _make_blot_model(input_model, blot, blot_err):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel`
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         An input model corresponding to the blotted data,
         containing metadata to copy.
 
@@ -86,7 +88,7 @@ def _make_blot_model(input_model, blot, blot_err):
 
     Returns
     -------
-    blot_model : `~jwst.datamodels.ImageModel`
+    blot_model : `~stdatamodels.jwst.datamodels.ImageModel`
         An image model containing the blotted data.
     """
     blot_model = type(input_model)()
@@ -106,7 +108,7 @@ def _save_intermediate_output(model, suffix, make_output_path):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.ImageModel`
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
         The intermediate datamodel to save.
 
     suffix : str
@@ -118,7 +120,7 @@ def _save_intermediate_output(model, suffix, make_output_path):
 
     Notes
     -----
-    self.make_output_path() is updated globally for the step in the main pipeline
+    ``obj.make_output_path()`` is updated globally for the step in the main pipeline
     to include the asn_id in the output path, so no need to handle it here.
     """
     # outlier_?2d is not a known suffix, and make_output_path cannot handle an

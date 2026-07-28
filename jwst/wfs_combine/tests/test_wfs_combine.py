@@ -75,7 +75,7 @@ def wfs_association(tmp_path_factory):
     asn.data["program"] = "00024"
     asn.data["asn_type"] = "image2"
     asn.sequence = 1
-    asn_name, serialized = asn.dump(format="json")
+    asn_name, serialized = asn.dump()
     path_asn = tmp_path / asn_name
     with open(path_asn, "w") as f:
         f.write(serialized)

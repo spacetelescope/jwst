@@ -1,24 +1,33 @@
 Description
-============
+===========
 
-The ``wfs_combine`` step combines a pair of dithered Wavefront Sensing and Control (WFS&C) images.
+:Class: `jwst.wfs_combine.wfs_combine_step.WfsCombineStep`
+:Alias: wfs_combine
+
+The ``wfs_combine`` step (see :ref:`calwebb_wfs-image3`)
+combines a pair of dithered Wavefront Sensing and Control (WFS&C) images.
 The input images are aligned with one another and then combined using a pixel
 replacement technique, described in detail below. The images are aligned to only the nearest
 integer pixel in each direction. No sub-pixel resampling is done.
 
 Due to the WFS dither patterns oscillating between two locations, the first image of the pair
-will oscillate between the two dither locations. Because the WSS software works in pixel space,
+will oscillate between the two dither locations. Because the
+Wavefront Sensing and Control Software Subsystem (WSS) software works in pixel space,
 we need to change which input image is "image 1" to get star to have the same pixel location in
-the output image. When the input parameter "flip_dithers" is set to True (the default)
+the output image. When the input parameter "flip_dithers" is set to `True` (the default)
 and the x offset between image 1 and image 2 is negative, the two images will be switched before
 any processing is performed.
+
+.. _wfs_comb_algo:
 
 Algorithm
 ---------
 Creation of the output combined image is a three-step process: first the offsets between the
-images are computed using the World Coordinate System, then the offsets are used to shift
-image 2 to be in alignment with image 1, and finally the aligned data from the two images
-are combined.
+images are computed (see :ref:`wfs_comb_comp_offset`) using the World Coordinate System (WCS),
+then the offsets are used to shift image 2 to be in alignment with image 1,
+and finally the aligned data from the two images are combined (see :ref:`wfs_comb_create_image`).
+
+.. _wfs_comb_comp_offset:
 
 Computing Offsets
 ^^^^^^^^^^^^^^^^^
@@ -27,7 +36,7 @@ in image 1, and then the pixel indexes of those RA/Dec values are computed in im
 difference in the pixel indexes, rounded to the nearest whole pixel, is used as the nominal
 offsets in the x/y image axes.
 
-If the optional argument "--do_refine" is set to ``True``, the nominal offsets are empirically
+If the optional argument "do_refine" is set to `True`, the nominal offsets are empirically
 refined using a cross-correlation technique. The steps in the refinement are as follows:
 
 1. Create a smoothed version of image 1 using a Gaussian kernel.
@@ -37,10 +46,11 @@ refined using a cross-correlation technique. The steps in the refinement are as 
 3. Create subarrays from image 1 and 2 centered on the computed source centroid.
 4. Create the cross-correlation image of the two input images.
 5. Find the peak intensity of the cross-correlation image and use this to determine the
-    refined offset.
+   refined offset.
 6. Use the find the difference between the cross-correlation pixel offsets and the WCS offsets.
-    Add these deltas to the nominal offsets computed from the WCS info to form the refined offsets.
+   Add these deltas to the nominal offsets computed from the WCS info to form the refined offsets.
 
+.. _wfs_comb_create_image:
 
 Creating the Combined Image
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -48,22 +58,24 @@ The image 2 data are shifted using the pixel offsets computed above, in order to
 image 1. For each pixel location in image 1, the output combined image is populated using the
 following logic:
 
-1. If the pixel values in both image 1 and 2 are good, i.e. DQ=0, the output SCI and ERR image
+1. If the pixel values in both image 1 and 2 are good, i.e., ``DQ=0``, the output SCI and ERR image
    values are the average of the input SCI and ERR values, respectively, and the output DQ is
    set to 0.
 
-2. If the image 1 pixel is bad (DQ>0) and the image 2 pixel is good, the output SCI and ERR image
+2. If the image 1 pixel is bad (``DQ>0``) and the image 2 pixel is good, the output SCI and ERR image
    values are copied from image 2, and the output DQ is set to 0.
 
-3. If the image 1 pixel is good (DQ=0) and the image 2 pixel is bad, the output SCI and ERR image
+3. If the image 1 pixel is good (``DQ=0``) and the image 2 pixel is bad, the output SCI and ERR image
    values are copied from image 1, and the output DQ is set to 0.
 
-4. If both image 1 and 2 pixels are bad (DQ>0), the output SCI and ERR image values are set to
+4. If both image 1 and 2 pixels are bad (``DQ>0``), the output SCI and ERR image values are set to
    0 and the output DQ contains the combination of input DQ values, as well as the "DO_NOT_USE"
    flag.
 
 Upon successful completion of this step, the status keyword S_WFSCOM will be set to "COMPLETE"
 in the output image header.
+
+.. _wfs_comb_inputs:
 
 Inputs
 ------
@@ -74,9 +86,11 @@ Inputs
 :Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _cal
 
-The input to ``wfs_combine`` is a pair of calibrated ("_cal") exposures, specified
+The input to the step is a pair of calibrated ("_cal") exposures, specified
 via an ASN file. The ASN file may contain a list of several combined products to be created, in
 which case the step will loop over each set of inputs, creating a combined output for each pair.
+
+.. _wfs_comb_outputs:
 
 Outputs
 -------

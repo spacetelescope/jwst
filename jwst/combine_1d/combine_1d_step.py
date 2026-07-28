@@ -32,8 +32,9 @@ class Combine1dStep(Step):
         ----------
         input_data : str, `~jwst.datamodels.container.ModelContainer`, \
                      `~stdatamodels.jwst.datamodels.MultiSpecModel`, \
-                     `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`, or \
-                     `~stdatamodels.jwst.datamodels.MRSMultiSpecModel`
+                     `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`, \
+                     `~stdatamodels.jwst.datamodels.MRSMultiSpecModel`, or \
+                     `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
             Input is expected to be an association file name, ModelContainer,
             or multi-spectrum model containing multiple spectra to be combined.
             Individual members of the association or container are expected

@@ -54,7 +54,7 @@ def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module, resource_tracker):
     rtdata = rtdata_module
 
     # Get the level3 association file and run the spec3 pipeline on it.
-    # We don't need to retrieve any of the cal members of the association,
+    # We don't need to retrieve any of the x1d members of the association,
     # because they were all just created by the preceding spec2 test.
     rtdata.get_data("niriss/wfss/jw01324-o001_spec3_00005_asn.json")
     args = ["calwebb_spec3", rtdata.input]

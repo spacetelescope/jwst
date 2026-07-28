@@ -508,9 +508,15 @@ in binary table extensions of FITS files. The overall layout of the FITS file is
 +-----+-------------+----------+-----------+---------------+
 |  2  | ASDF        | BINTABLE | N/A       | variable      |
 +-----+-------------+----------+-----------+---------------+
+|  3  | HDRTAB*     | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
 
  - EXTRACT1D: A table containing the extracted spectral data.
  - ADSF: The data model meta data.
+ - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
+   that were combined to produce the output image. Only appears when multiple inputs are used,
+   for ``x1dints`` output from the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
+
 
 Multiple "EXTRACT1D" extensions can be present if there is data for more than one source,
 segment, spectral order, or exposure. For ``x1dints`` products, there is one "EXTRACT1D"

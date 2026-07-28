@@ -34,10 +34,8 @@ __all__ = ["ResampleSpec"]
 
 class ResampleSpec(ResampleImage):
     """
-    Resample spectral data.
+    Python Interface to Drizzle: Resample spectral data.
 
-    Notes
-    -----
     This routine performs the following operations:
 
     1. Extracts parameter settings from input model, such as pixfrac,
@@ -47,26 +45,23 @@ class ResampleSpec(ResampleImage):
        between all input arrays and the output array.
     3. Updates output data model with output arrays from drizzle, including
        a record of metadata from all input models.
+
+    Parameters
+    ----------
+    input_models : list
+        List of data models, one for each input image
+    good_bits : int
+        Bit values that should be considered good when creating a mask
+    output_wcs : dict
+        Output WCS parameters
+    wcs_pars : dict
+        Additional parameters for WCS
+    **kwargs : dict
+        Additional parameters to be passed into the constructor of
+        `~jwst.resample.resample.ResampleImage`.
     """
 
     def __init__(self, input_models, good_bits=0, output_wcs=None, wcs_pars=None, **kwargs):
-        """
-        Initialize the ResampleSpec object.
-
-        Parameters
-        ----------
-        input_models : list
-            List of data models, one for each input image
-        good_bits : int
-            Bit values that should be considered good when creating a mask
-        output_wcs : dict
-            Output WCS parameters
-        wcs_pars : dict
-            Additional parameters for WCS
-        **kwargs : dict
-            Additional parameters to be passed into ``ResampleImage.__init__()``.
-            See the docstring of that method for more details.
-        """
         shape = None
         pixel_scale = None
         pixel_area = None
@@ -295,14 +290,14 @@ class ResampleSpec(ResampleImage):
         ----------
         refmodel : `~stdatamodels.jwst.datamodels.JwstDataModel`, optional
             The reference input image from which the fiducial WCS is created.
-            If not specified, the first image in input_models. If the
+            If not specified, the first image in ``input_models``. If the
             first model is empty (all-NaN or all-zero), the first non-empty
             model is used.
 
         Returns
         -------
         output_wcs : `~gwcs.wcs.WCS`
-            A GWCS object defining the output frame WCS.
+            The output frame WCS.
         """
         all_wcs = [m.meta.wcs for m in input_models if m is not refmodel]
         if refmodel:
@@ -593,14 +588,14 @@ class ResampleSpec(ResampleImage):
         Parameters
         ----------
         input_models : list
-            List of data models, one for each input image
+            List of data models, one for each input image.
         pixel_scale_ratio : float
             The ratio of the input pixel scale to the output pixel scale.
 
         Returns
         -------
         output_wcs : `~gwcs.wcs.WCS` object
-            A GWCS object defining the output frame WCS
+            The output frame WCS.
         """
         # for each input model convert slit x,y to ra,dec,lam
         # use first input model to set spatial scale
@@ -725,10 +720,10 @@ class ResampleSpec(ResampleImage):
         all_wave = np.sort(all_wave, axis=None)
         # Tabular interpolation model, pixels -> lambda
         wavelength_array = np.unique(all_wave)
-        # Check if the data is MIRI LRS FIXED Slit. If it is then
+        # Check if the data is MIRI LRS. If it is, then
         # the wavelength array needs to be flipped so that the resampled
         # dispersion direction matches the dispersion direction on the detector.
-        if input_models[0].meta.exposure.type == "MIR_LRS-FIXEDSLIT":
+        if input_models[0].meta.exposure.type.startswith("MIR_LRS"):
             wavelength_array = np.flip(wavelength_array, axis=None)
 
         step = 1
@@ -1059,14 +1054,14 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
 
     Parameters
     ----------
-    wcs : `gwcs.wcs.WCS`
+    wcs : `~gwcs.wcs.WCS`
         Spatial/spectral WCS.
     fiducial : tuple of float, optional
         (RA, Dec, wavelength) taken as the fiducial reference. If
         not specified, the center of the array is used.
     disp_axis : int
         Dispersion axis for the data. Assumes the same convention
-        as `wcsinfo.dispersion_direction` (1 for NIRSpec, 2 for MIRI).
+        as ``wcsinfo.dispersion_direction`` (1 for NIRSpec, 2 for MIRI).
 
     Returns
     -------

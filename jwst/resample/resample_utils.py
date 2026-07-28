@@ -44,15 +44,15 @@ def resampled_wcs_from_models(
         model's WCS at the fiducial point (taken as the ``ref_ra`` and
         ``ref_dec`` from the ``wcsinfo`` meta attribute of the first input
         image). Ignored when ``pixel_scale`` is specified.
-    pixel_scale : float, None, optional
+    pixel_scale : float or None, optional
         Desired pixel scale (in degrees) of the output WCS. When provided,
         overrides ``pixel_scale_ratio``.
-    output_shape : tuple of two integers (int, int), None, optional
-        Shape of the image (data array) using ``np.ndarray`` convention
+    output_shape : tuple of two integers (int, int) or None, optional
+        Shape of the image (data array) using ``numpy`` convention
         (``ny`` first and ``nx`` second). This value will be assigned to
         ``pixel_shape`` and ``array_shape`` properties of the returned
         WCS object.
-    rotation : float, None, optional
+    rotation : float or None, optional
         Position angle of output image's Y-axis relative to North.
         A value of 0.0 would orient the final output image to be North up.
         The default of `None` specifies that the images will not be rotated,
@@ -60,11 +60,11 @@ def resampled_wcs_from_models(
         camera with the x and y axes of the resampled image corresponding
         approximately to the detector axes. Ignored when ``transform`` is
         provided.
-    crpix : tuple of float, None, optional
+    crpix : tuple of float or None, optional
         Position of the reference pixel in the resampled image array.
         If ``crpix`` is not specified, it will be set to the center of the
         bounding box of the returned WCS object.
-    crval : tuple of float, None, optional
+    crval : tuple of float or None, optional
         Right ascension and declination of the reference pixel.
         Automatically computed if not provided.
 
@@ -145,14 +145,14 @@ def build_mask(dqarr, bitvalue):
 
     Parameters
     ----------
-    dqarr : numpy.ndarray
+    dqarr : ndarray
         Data quality array.
     bitvalue : int
         Bit value to be used for flagging good pixels.
 
     Returns
     -------
-    numpy.ndarray
+    ndarray
         Bit mask, where 1 is good and 0 is bad.
     """
     return _stcal_build_mask(dqarr=dqarr, good_bits=bitvalue, flag_name_map=pixel)
@@ -165,13 +165,13 @@ def load_custom_wcs(asdf_wcs_file, output_shape=None):
     Parameters
     ----------
     asdf_wcs_file : str
-        Path to an ASDF file containing a GWCS structure. The WCS object
-        must be under the ``"wcs"`` key. Additional keys recognized by
-        :py:func:`load_custom_wcs` are: ``"pixel_area"``, ``"pixel_scale"``,
+        Path to an ASDF file containing a `~gwcs.wcs.GWCS` structure. The WCS object
+        must be under the ``"wcs"`` key. Additional keys recognized
+        are: ``"pixel_area"``, ``"pixel_scale"``,
         ``"pixel_shape"``, and ``"array_shape"``. The latter two are used only
         when the WCS object does not have the corresponding attributes set.
         Pixel scale and pixel area should be provided in units of ``arcsec``
-        and ``arcsec**2``.
+        and ``arcsec**2``, respectively.
     output_shape : tuple of int, optional
         Array shape for the output data.  If not provided,
         the custom WCS must specify one of (in order of priority):
@@ -228,19 +228,19 @@ def load_custom_wcs(asdf_wcs_file, output_shape=None):
 
 def find_miri_lrs_sregion(sregion_model1, wcs):
     """
-    Find s region for MIRI LRS resampled data.
+    Find S_REGION for MIRI LRS resampled data.
 
     Parameters
     ----------
     sregion_model1 : str
-        The s_regions of the first input model
-    wcs : gwcs.wcs.WCS
+        The ``s_region``'s of the first input model.
+    wcs : `~gwcs.wcs.WCS`
         Spatial/spectral WCS.
 
     Returns
     -------
     sregion : str
-        The s_region for the resample data.
+        The ``s_region`` for the resample data.
     """
     # use the first sregion to set the width of the slit
     spatial_box = sregion_model1

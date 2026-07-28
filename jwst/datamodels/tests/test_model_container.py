@@ -83,7 +83,7 @@ def test_modelcontainer_group_names(container):
 
 def test_modelcontainer_error_from_asn(tmp_path):
     asn = asn_from_list(["foo.fits"], product_name="foo_out")
-    name, serialized = asn.dump(format="json")
+    name, serialized = asn.dump()
     # The following Path object needs to be stringified because
     # datamodels.open() doesn't deal with pathlib objects when they are
     # .json files

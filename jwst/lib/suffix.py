@@ -124,7 +124,7 @@ _calculated_suffixes = {
     "whitelightstep",
     "photom",
     "guidercdsstep",
-    "imprint",
+    "imprint_subtract",
     "resample_spec",
     "white_light",
     "resample",

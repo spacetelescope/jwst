@@ -1,13 +1,12 @@
-"""Define the I/O methods for Level 3 associations."""
+"""
+Define the I/O methods for Level 3 associations.
+
+Particularly, load and store associations as JSON.
+"""
 
 import json as json_lib
 import logging
-import warnings
 
-import numpy as np
-import yaml as yaml_lib
-
-from jwst.associations.association import Association
 from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.lib.member import Member
 
@@ -18,7 +17,7 @@ __all__: list = []
 
 
 class AssociationEncoder(json_lib.JSONEncoder):
-    """JSON encoder to handle Associations and convert `Member` to dict."""
+    """JSON encoder to handle Associations and convert Member to dict."""
 
     def default(self, obj):
         """
@@ -39,198 +38,64 @@ class AssociationEncoder(json_lib.JSONEncoder):
             return obj.data
 
 
-@Association.ioregistry
-class json:  # noqa: N801
-    """Load and store associations as JSON."""
-
-    @staticmethod
-    def load(_cls, serialized):
-        """
-        Unserialize an association from JSON.
-
-        Parameters
-        ----------
-        _cls : class
-            The class from which further information will be gathered
-            and possibly instantiated.
-
-        serialized : str or file object
-            The JSON to read
-
-        Returns
-        -------
-        association : dict
-            The association
-
-        Raises
-        ------
-        AssociationNotValidError
-            Cannot create or validate the association.
-        """
-        if isinstance(serialized, str):
-            loader = json_lib.loads
-        else:
-            # Presume a file object
-            serialized.seek(0)
-            loader = json_lib.load
-        try:
-            asn = loader(serialized)
-        except Exception as err:
-            logger.debug(f'Error unserializing: "{err}"')
-            raise AssociationNotValidError(f"Container is not JSON: '{serialized}'") from err
-
-        return asn
-
-    @staticmethod
-    def dump(asn):
-        """
-        Create JSON representation.
-
-        Parameters
-        ----------
-        asn : Association
-            The association to serialize
-
-        Returns
-        -------
-        (name, str):
-            Tuple where the first item is the suggested
-            Name for the JSON file.
-            Second item is the string containing the JSON serialization.
-        """
-        asn_filename = asn.asn_name
-        if not asn_filename.endswith(".json"):
-            asn_filename = asn_filename + ".json"
-        return (
-            asn_filename,
-            json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(",", ": ")),
-        )
-
-
-@Association.ioregistry
-class yaml:  # noqa: N801
+def json_asn_load(_cls, serialized):
     """
-    Load and store associations as YAML.
-
-    Support for associations as YAML files is deprecated
-    and will be removed in a future release.
-    Use JSON instead.
-    """
-
-    @staticmethod
-    def load(_cls, serialized):
-        """
-        Unserialize an association from YAML.
-
-        Parameters
-        ----------
-        _cls : class
-            The class from which further information will be gathered
-            and possibly instantiated.
-
-        serialized : str or file object
-            The YAML to read
-
-        Returns
-        -------
-        association : dict
-            The association
-
-        Raises
-        ------
-        AssociationNotValidError
-            Cannot create or validate the association.
-        """
-        try:
-            serialized.seek(0)
-        except AttributeError:
-            pass
-        try:
-            asn = yaml_lib.safe_load(serialized)
-        except Exception as err:
-            logger.debug(f'Error unserializing: "{err}"')
-            raise AssociationNotValidError(f"Container is not YAML: '{serialized}'") from err
-        # warning should only happen if the load was successful
-        # otherwise, user would see DeprecationWarning when attempting to load a file that is
-        # neither valid JSON nor valid YAML, since the base load method attempts to load using
-        # all available registered formats
-        warnings.warn(
-            "Support for associations as YAML files is deprecated and will be removed "
-            "in a future release. Use JSON instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return asn
-
-    @staticmethod
-    def dump(asn):
-        """
-        Create YAML representation.
-
-        Parameters
-        ----------
-        asn : Association
-            The association to serialize
-
-        Returns
-        -------
-        (name, str):
-            Tuple where the first item is the suggested
-            Name for the YAML file.
-            Second item is the string containing the YAML serialization.
-        """
-        warnings.warn(
-            "Support for associations as YAML files is deprecated and will be removed "
-            "in a future release. Use JSON instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        asn_filename = asn.asn_name
-        if not asn.asn_name.endswith(".yaml"):
-            asn_filename = asn.asn_name + ".yaml"
-        return (asn_filename, yaml_lib.dump(asn.data, default_flow_style=False))
-
-
-# Register YAML representers
-def np_str_representer(dumper, data):
-    """
-    Convert numpy.str_ into standard YAML string.
+    Unserialize an association from JSON.
 
     Parameters
     ----------
-    dumper : class
-        File specification class that has a `represent_dict` method.
-    data : str
-        The numpy string to be converted to a YAML string.
+    _cls : class
+        The class from which further information will be gathered
+        and possibly instantiated.
+
+    serialized : str or file object
+        The JSON to read
 
     Returns
     -------
-    str
-        The YAML string.
+    association : dict
+        The association
+
+    Raises
+    ------
+    AssociationNotValidError
+        Cannot create or validate the association.
     """
-    return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
+    if isinstance(serialized, str):
+        loader = json_lib.loads
+    else:
+        # Presume a file object
+        serialized.seek(0)
+        loader = json_lib.load
+    try:
+        asn = loader(serialized)
+    except Exception as err:
+        logger.debug(f'Error unserializing: "{err}"')
+        raise AssociationNotValidError(f"Container is not JSON: '{serialized}'") from err
+
+    return asn
 
 
-yaml_lib.add_representer(np.str_, np_str_representer)
-
-
-def member_representer(dumper, member):
+def json_asn_dump(asn):
     """
-    Convert a Member to its basic dict representation.
+    Create JSON representation.
 
     Parameters
     ----------
-    dumper : class
-        File specification class that has a `represent_dict` method.
-    member : Member
-        The Member object to be converted to a dict.
+    asn : Association
+        The association to serialize
 
     Returns
     -------
-    dict
-        The dict representation of the member.
+    name, str : tuple
+        Tuple where the first item is the suggested
+        Name for the JSON file.
+        Second item is the string containing the JSON serialization.
     """
-    return dumper.represent_dict(member.data)
-
-
-yaml_lib.add_representer(Member, member_representer)
+    asn_filename = asn.asn_name
+    if not asn_filename.endswith(".json"):
+        asn_filename = asn_filename + ".json"
+    return (
+        asn_filename,
+        json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(",", ": ")),
+    )

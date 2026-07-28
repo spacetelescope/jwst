@@ -29,10 +29,10 @@ dependencies = [
     "requests>=2.32",
     "scikit-image>=0.23.0",
     "scipy>=1.15.3",
-    "stdatamodels>=6.0.0,<6.1",
-    # "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
-    "stcal>=1.19.1,<2",
-    # "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
+    # "stdatamodels>=6.0.0,<6.1",
+    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
+    #"stcal>=1.19.1,<2",
+    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     "stpipe>=1.0.0,<2",
     # "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
     "synphot>=1.6",
@@ -113,8 +113,12 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-# explicitly skip free-threaded builds
-skip = ["cp314t-*"]
+build = "cp3*"
+skip = ["cp3*t-*"]  # explicitly skip free-threaded builds
+test-command = 'python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"'
+
+[tool.cibuildwheel.macos]
+archs = ["arm64", "x86_64"]
 
 [tool.setuptools]
 zip-safe = false
