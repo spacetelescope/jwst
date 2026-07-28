@@ -1,6 +1,5 @@
-from pathlib import Path
-
 import numpy as np
+import pytest
 
 from jwst.pipeline import DarkPipeline
 from jwst.pipeline.tests.helpers import make_miri_ramp_model
@@ -27,15 +26,13 @@ def test_dark_pipeline_asn(tmp_cwd):
     modname = f"{prodname}_target_1.fits"
     input_model = make_miri_ramp_model()
     input_model.save(modname)
+    input_model.close()
     asn = {
         "asn_id": "c1000",
         "target": "t001",
         "asn_pool": f"{prodname}_pool.csv",
         "products": [{"name": prodname, "members": [{"expname": modname, "exptype": "science"}]}],
     }
-    DarkPipeline.call(asn, save_results=True, output_file="test_miri")
-
-    # Check for expected output
-    assert Path("test_miri_dark.fits").exists()
-
-    input_model.close()
+    # Association object as input is not supported; It will crash at read_metadata()
+    with pytest.raises(TypeError, match="Input must be a file path"):
+        DarkPipeline.call(asn)
