@@ -11,7 +11,7 @@ exclude = [
 ]
 line-length = 100
 
-target-version = "py311"
+target-version = "py313"
 
 [format]
 quote-style = "double"
