@@ -52,7 +52,7 @@ def example_asn_path(tmp_path):
         m.close()
 
     asn = asn_from_list(fns, product_name=_PRODUCT_NAME)
-    base_fn, contents = asn.dump(format="json")
+    base_fn, contents = asn.dump()
     contents_as_dict = json.loads(contents)
     contents_as_dict["asn_pool"] = _POOL_NAME
     contents = json.dumps(contents_as_dict)

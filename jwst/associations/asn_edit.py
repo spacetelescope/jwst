@@ -67,7 +67,7 @@ def reader(association_file):
     try:
         with association_path.open() as fd:
             serialized = fd.read()
-            asn = Association.load(serialized, format=asn_format)
+            asn = Association.load(serialized)
     except AssociationNotValidError as err:
         raise OSError("Cannot read association file: " + association_file) from err
     return asn
