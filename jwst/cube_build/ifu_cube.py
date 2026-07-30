@@ -134,7 +134,6 @@ class IFUCubeData:
         self.wavemax = pars_cube.get("wavemax")
         self.weighting = pars_cube.get("weighting")
         self.weight_power = pars_cube.get("weight_power")
-        self.skip_dqflagging = pars_cube.get("skip_dqflagging")
         self.suffix = pars_cube.get("suffix")
         self.num_bands = 0
         self.output_name = None
@@ -177,9 +176,9 @@ class IFUCubeData:
 
         # Not needed remove after final testing of DQ flags, Remove passing to c program
         # self.tolerance_dq_overlap = 0.05  # spaxel has to have 5% overlap to flag in FOV
-        self.overlap_partial = 8  # intermediate flag )
-        self.overlap_full = 4  # intermediate flag     #
-        self.overlap_hole = 1025
+        # self.overlap_partial = 8  # intermediate flag )
+        # self.overlap_full = 4  # intermediate flag     #
+        # self.overlap_hole = 1025
         # self.overlap_no_coverage = dqflags.pixel["NON_SCIENCE"]
 
     # ________________________________________________________________________________
@@ -719,17 +718,11 @@ class IFUCubeData:
                         y_det,
                     ) = pixelresult
 
-                    # by default flag the dq plane based on the FOV of the detector projected to sky
-                    flag_dq_plane = 1
-                    if self.skip_dqflagging:
-                        flag_dq_plane = 0
-
                     # check that there is valid data returned
                     # If all the data is flagged as DO_NOT_USE - not common- then log warning
                     build_cube = True
                     if wave is None:
                         log.warning(f"No valid data found on file {input_model.meta.filename}")
-                        flag_dq_plane = 0
                         build_cube = False
 
                     # C extension setup
@@ -737,28 +730,21 @@ class IFUCubeData:
                     end_region = 0
 
                     if self.instrument == "MIRI":
-                        instrument = 0
                         start_region = self.instrument_info.get_start_slice(this_par1)
                         end_region = self.instrument_info.get_end_slice(this_par1)
 
-                    else:  # NIRSPEC
-                        instrument = 1
-
                     result = None
                     weight_type = 0  # default to emsm instead of msm
+
                     if self.weighting == "msm":
                         weight_type = 1
 
                     if self.interpolation == "pointcloud" and build_cube:
                         roiw_ave = np.mean(roiw_pixel)
                         result = cube_wrapper(
-                            instrument,
-                            flag_dq_plane,
                             weight_type,
                             start_region,
                             end_region,
-                            self.overlap_partial,
-                            self.overlap_full,
                             self.xcoord,
                             self.ycoord,
                             self.zcoord,
@@ -767,6 +753,7 @@ class IFUCubeData:
                             wave,
                             flux,
                             err,
+                            dq,
                             slice_no,
                             rois_pixel,
                             roiw_pixel,
@@ -800,12 +787,8 @@ class IFUCubeData:
                         if debug_cube_index >= 0:
                             log.info(f"Input filename: {input_model.meta.filename}")
                         result = cube_wrapper_driz(
-                            instrument,
-                            flag_dq_plane,
                             start_region,
                             end_region,
-                            self.overlap_partial,
-                            self.overlap_full,
                             self.xcoord,
                             self.ycoord,
                             self.zcoord,
@@ -1594,7 +1577,6 @@ class IFUCubeData:
         err_all = input_model.err[y, x]
         readvar_all = input_model.var_rnoise[y, x]
         dq_all = input_model.dq[y, x]
-        # valid2 = np.isfinite(flux_all)
 
         x_all = x
         y_all = y
@@ -1638,13 +1620,16 @@ class IFUCubeData:
         # select on wavelengths
         valid3 = np.logical_and(wave_all >= min_wave_tolerance, wave_all <= max_wave_tolerance)
 
+        # We all flux with Nans to pass through to allow saturated DQ data to be counted in DQ plane
         # find the location of good data based on DQ flags in input image
         is_do_not_use = np.bitwise_and(dq_all, dqflags.pixel["DO_NOT_USE"]).astype(bool)
         is_non_science = np.bitwise_and(dq_all, dqflags.pixel["NON_SCIENCE"]).astype(bool)
         is_saturated = np.bitwise_and(dq_all, dqflags.pixel["SATURATED"]).astype(bool)
 
-        # good data is NOT NON_SCIENCE and
-        #              [NOT DO_NOT_USE  unless DQ with DO_NOT_USE is also SATURATED]
+        # Select good data based on:
+        # valid3 selects on wavelength
+        # Data is not NON-Science (data not falling on IFU slices)
+        # Is not flagged to DO_NOT_USE, UNLESS it is also saturated
         good_data = np.where(~is_non_science & (~is_do_not_use | is_saturated) & valid3)
         num_good = len(good_data[0])
 
@@ -1692,7 +1677,7 @@ class IFUCubeData:
         x_det = x_all[good_data]
         y_det = y_all[good_data]
 
-        # Filter DQ flags to only saturated and do not use values
+        # Filter DQ flags to only have allowed values of 'DO_NOT_USE' and/or 'SATURATED'
         # 1. Combine the two allowed flags into a single mask using bitwise OR
         allowed_mask = dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["SATURATED"]
 
@@ -2253,123 +2238,15 @@ class IFUCubeData:
         * NON_SCIENCE
         * DO_NOT_USE.
         """
-        # An initial set of dq flags was set in overlap_fov_with_spaxel or
-        # overlap_slice_with_spaxel. The initial dq dlags are defined in ifu_cube
-        # class:
-        # self.overlap_partial = 8  # intermediate flag
-        # self.overlap_full  = 4    # intermediate flag
-        # self.overlap_hole = 1025
-        # self.overlap_no_coverage = dqflags.pixel['NON_SCIENCE'] (also bitwise and with
-        # dqflags.pixel['DO_NOT_USE'] )
-
-        # compare the weight plane and spaxel_dq. The initial spaxel_dq flagging
-        # has too small a FOV in NIRSpec line mapping case.
-
-        # flatten to match the size of spaxel_weight
+        # flatten to match the size of spaxel_dq
         self.spaxel_dq = np.ndarray.flatten(self.spaxel_dq)
 
-        # the fov is an underestimate. Check the spaxel_weight plane
-        # if weight map > 0 then set spaxel_dq to overlap_partial
-        # under_data = self.spaxel_weight > 0
-        # self.spaxel_dq[under_data] = self.overlap_partial
-
-        # convert all remaining spaxel_dq of 0 to NON_SCIENCE + DO_NOT_USE
-        # these pixel should have no overlap with the data
-        # non_science = self.spaxel_dq == 0
+        # convert all remaining spaxel_weight = 0 to NON_SCIENCE + DO_NOT_USE
         non_science = self.spaxel_weight == 0
-        # self.spaxel_dq[non_science] = np.bitwise_or(
-        #    self.overlap_no_coverage, dqflags.pixel["DO_NOT_USE"]
-        # )
 
         self.spaxel_dq[non_science] = np.bitwise_or(
             dqflags.pixel["NON_SCIENCE"], dqflags.pixel["DO_NOT_USE"]
         )
-
-        # non_science = self.spaxel_dq == self.overlap_no_coverage
-        # self.spaxel_dq[non_science] = np.bitwise_or(
-        #    self.overlap_no_coverage, dqflags.pixel["DO_NOT_USE"]
-        # )
-
-        # refine where good data should be
-        # ind_full = np.where(np.bitwise_and(self.spaxel_dq, self.overlap_full))
-        # ind_partial = np.where(np.bitwise_and(self.spaxel_dq, self.overlap_partial))
-
-        # self.spaxel_dq[ind_full] = 0
-        # self.spaxel_dq[ind_partial] = 0
-
-        # location_holes = np.where((self.spaxel_dq == 0) & (self.spaxel_weight == 0))
-
-        # log.info(f"Number of  holes:, {len(location_holes[0])}")
-        # self.spaxel_dq[location_holes] = self.overlap_hole
-
-        # one last check. Remove pixels flagged as hole but have 1 adjacent spaxel
-        # that has no coverage (NON_SCIENCE).  If NON_SCIENCE flag is next to pixel
-        # flagged as hole then set the Hole flag to NON_SCIENCE
-        spaxel_dq_temp = self.spaxel_dq
-        nxy = self.naxis1 * self.naxis2
-        index = np.where(self.spaxel_dq == self.overlap_hole)
-        for i in range(len(index[0])):
-            iwave = int(index[0][i] / nxy)
-            rem = index[0][i] - iwave * nxy
-            yrem = int(rem / self.naxis1)
-            xrem = rem - yrem * self.naxis1
-
-            found = 0
-            ij = 0
-            # do not allow holes to occur at the edge of IFU cube
-            if yrem == 0 or yrem == (self.naxis2 - 1) or xrem == 0 or xrem == (self.naxis1 - 1):
-                spaxel_dq_temp[index[0][i]] = np.bitwise_or(
-                    self.overlap_no_coverage, dqflags.pixel["DO_NOT_USE"]
-                )
-                found = 1
-            # flag as NON_SCIENCE instead of hole if left, right, top, bottom pixel
-            # is NON_SCIENCE
-            xcheck = np.zeros(4, dtype=int)
-            ycheck = np.zeros(4, dtype=int)
-            # left
-            xcheck[0] = xrem - 1
-            ycheck[0] = yrem
-            # right
-            xcheck[1] = xrem + 1
-            ycheck[1] = yrem
-            # bottom
-            xcheck[2] = xrem
-            ycheck[2] = yrem - 1
-            # top
-            xcheck[3] = xrem
-            ycheck[3] = yrem + 1
-
-            while (ij < 4) and (found == 0):
-                if (
-                    xcheck[ij] > 0
-                    and xcheck[ij] < self.naxis1
-                    and ycheck[ij] > 0
-                    and ycheck[ij] < self.naxis2
-                ):
-                    index_check = iwave * nxy + ycheck[ij] * self.naxis1 + xcheck[ij]
-                    # If the nearby spaxel_dq contains overlap_no_coverage
-                    # then unmark dq flag as hole. A hole has to have nearby
-                    # pixels all in FOV.
-                    check = (
-                        np.bitwise_and(self.spaxel_dq[index_check], self.overlap_no_coverage)
-                        == self.overlap_no_coverage
-                    )
-                    if check:
-                        spaxel_dq_temp[index[0][i]] = np.bitwise_or(
-                            self.overlap_no_coverage, dqflags.pixel["DO_NOT_USE"]
-                        )
-                        found = 1
-                ij = ij + 1
-
-        # self.spaxel_dq = spaxel_dq_temp
-        # location_holes = np.where(self.spaxel_dq == self.overlap_hole)
-        # ave_holes = len(location_holes[0]) / self.naxis3
-
-        # if ave_holes < 1:
-        #    log.info("Average # of holes/wavelength plane is < 1")
-        # else:
-        #    log.info("Average # of holes/wavelength plane: %i", ave_holes)
-        # log.info("Total # of holes for IFU cube is : %i", len(location_holes[0]))
 
     # ________________________________________________________________________________
     def setup_final_ifucube_model(self, model_ref):

@@ -43,7 +43,6 @@ class CubeBuildStep(Step):
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
-         skip_dqflagging = boolean(default=false) # skip setting the DQ plane of the IFU
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
          offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files.
@@ -262,7 +261,6 @@ class CubeBuildStep(Step):
             "wavemin": self.wavemin,
             "wavemax": self.wavemax,
             "offsets": self.offsets,
-            "skip_dqflagging": self.skip_dqflagging,
             "suffix": self.suffix,
             "debug_spaxel": self.debug_spaxel,
         }

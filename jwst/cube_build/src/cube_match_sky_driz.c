@@ -7,11 +7,7 @@ This is the top level c routine that interfaces with the python wrapper.
 Main function for Python: cube_wrapper_driz
 
 Python signature:  result = cube_wrapper_driz(
-                            instrument,
-                            flag_dq_plane,
                             start_region, end_region,
-                            overlap_partial,
-                            overlap_full,
                             xcoord, ycoord, zcoord,
                             coord1, coord2,
                             wave,
@@ -40,19 +36,10 @@ spaxel_iflux, spaxel_dq)
 
 Parameters
 ----------
-instrument : int
-    0 = MIRI, 1 = NIRSPEC. Used for set the dq plane
-flag_dq_plane : int
-   0 do set the DQ plane based on FOV, but set all values =0
-   1 set the DQ plane based on the FOV
 start_region : int
     starting slice number for detector region used in dq flagging
 end_region: int
     ending slice number for detector region used in dq flagging
-overlap_partial : int
-    a dq flag indicating that only a portion of the spaxel is overlapped by a mapped detector pixel
-overlap_full : int
-    a dq flag indicating that the entire spaxel is overlapped by the mapped detector pixel
 xcoord : ndarray of float
    size of naxis1. This array holds the center x axis values of the ifu cube
 ycoord : ndarray of float
@@ -134,22 +121,6 @@ extern int
 alloc_flux_dq_arrays(
     int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv, int **dqv);
 
-extern int
-dq_miri(
-    int start_region, int end_region, int overlap_partial, int overlap_full, int nx, int ny, int nz,
-    double cdelt1, double cdelt2, double cdelt3_mean, double *xc, double *yc, double *zc,
-    double *coord1, double *coord2, double *wave, double *sliceno, long ncube, long npt,
-    int *spaxel_dq);
-
-extern int
-dq_nirspec(
-    int overlap_partial, int nx, int ny, int nz, double cdelt1, double cdelt2, double cdelt3_mean,
-    double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave,
-    double *sliceno, long ncube, long npt, int **spaxel_dq);
-
-extern int
-set_dqplane_to_zero(int ncube, int **spaxel_dq);
-
 extern double
 sh_find_overlap(
     double xcenter, double ycenter, double xlength, double ylength, double xPixelCorner[],
@@ -197,14 +168,9 @@ match_driz(
     // spaxel_iflux :return value of weighted combined iweighting map
     // spaxel_dq :return value of combined dq (saturated and do_not_use)
 
-    // COMMENTED CODE ********
-    // double *fluxv = NULL, *weightv = NULL, *varv = NULL, *ifluxv = NULL;
-    // int *dqv = NULL;
-
     int k, j, ix1, ix2, iy1, iy2, iw1, iw2;
     int nxy, ix, iy, iw, index_xy, index_cube;
     double wdiff, zreg;
-    // double w1;
     double weighted_flux, weighted_var;
     double max_dwave;
     double xpixel[5], ypixel[5];
@@ -437,7 +403,7 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
     int nwave, nxx, nyy;
     long npt, ncube, debug_cube_index;
     int linear;
-    int instrument, flag_dq_plane, start_region, end_region, overlap_partial, overlap_full;
+    int start_region, end_region;
     double *spaxel_flux = NULL, *spaxel_weight = NULL, *spaxel_var = NULL;
     double *spaxel_iflux = NULL;
     int *spaxel_dq = NULL;
@@ -460,9 +426,8 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
     int ny, nz;
 
     if (!PyArg_ParseTuple(
-            args, "iiiiiiOOOOOOOOOOOOOOOOOOOOOdddiOOl:cube_wrapper_driz", &instrument,
-            &flag_dq_plane, &start_region, &end_region, &overlap_partial, &overlap_full, &xco, &yco,
-            &zco, &coord1o, &coord2o, &waveo, &fluxo, &erro, &readvaro, &dqo,
+            args, "iiOOOOOOOOOOOOOOOOOOOOOdddiOOl:cube_wrapper_driz", &start_region, &end_region,
+            &xco, &yco, &zco, &coord1o, &coord2o, &waveo, &fluxo, &erro, &readvaro, &dqo,
             &slicenoo, // codespell:ignore erro
             &xi1o, &eta1o, &xi2o, &eta2o, &xi3o, &eta3o, &xi4o, &eta4o, &dwaveo, &cdelt3o, &cdelt1,
             &cdelt2, &cdelt3_mean, &linear, &x_deto, &y_deto, &debug_cube_index)) {
@@ -553,30 +518,6 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         goto fail;
     }
 
-    // if flag_dq_plane = 1, Set up the dq plane of the IFU cube.
-    int status1 = 0;
-
-    if (flag_dq_plane == 2) { // Disable DQ flagging for holes. flag_dq_plane ==2 will never occur
-        if (instrument == 0) {
-
-            status1 = dq_miri(
-                start_region, end_region, overlap_partial, overlap_full, nxx, nyy, nwave, cdelt1,
-                cdelt2, cdelt3_mean, (double *) PyArray_DATA(xc), (double *) PyArray_DATA(yc),
-                (double *) PyArray_DATA(zc), (double *) PyArray_DATA(coord1),
-                (double *) PyArray_DATA(coord2), (double *) PyArray_DATA(wave),
-                (double *) PyArray_DATA(sliceno), ncube, npt, spaxel_dq);
-
-        } else {
-            status1 = dq_nirspec(
-                overlap_partial, nxx, nyy, nwave, cdelt1, cdelt2, cdelt3_mean,
-                (double *) PyArray_DATA(xc), (double *) PyArray_DATA(yc),
-                (double *) PyArray_DATA(zc), (double *) PyArray_DATA(coord1),
-                (double *) PyArray_DATA(coord2), (double *) PyArray_DATA(wave),
-                (double *) PyArray_DATA(sliceno), ncube, npt, &spaxel_dq);
-        }
-    } else { // set dq plane to 0
-        status1 = set_dqplane_to_zero(ncube, &spaxel_dq);
-    }
     //______________________________________________________________________
     // Driz the mapped detector data onto the IFU cube
     //______________________________________________________________________
@@ -591,7 +532,7 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         (double *) PyArray_DATA(y_det), cdelt1, cdelt2, nxx, nyy, nwave, ncube, npt, linear,
         debug_cube_index, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux, &spaxel_dq);
 
-    if (status || status1) {
+    if (status) {
         goto fail;
 
     } else {
