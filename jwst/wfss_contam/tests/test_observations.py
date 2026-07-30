@@ -21,7 +21,6 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     direct_image_with_gradient still needs to be run to produce the file,
     even though it is not called directly
     """
-    seg = segmentation_map.data
     return Observation(
         direct_image_with_gradient.data,
         segmentation_map.data,

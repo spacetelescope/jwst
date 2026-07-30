@@ -11,25 +11,22 @@ around the spectral traces produced by each object in the NIRCam, MIRI, and NIRI
 WFSS modes.
 If a list of `~stdatamodels.jwst.transforms.GrismObject` is supplied, then no reference file is necessary.
 
-.. include:: ../references_general/wavelengthrange_selection.inc
-
 .. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for WAVELENGTHRANGE
 ++++++++++++++++++++++++++++++++++++++++++
 In addition to the standard reference file keywords listed above,
-the following keywords are *required* in WAVELENGTHRANGE reference files
+the following keywords are *required* in WAVELENGTHRANGE reference files:
 
-=========  ==============================
+=========  ========================
 Keyword    Data Model Name
-=========  ==============================
+=========  ========================
 EXP_TYPE   model.meta.exposure.type
-=========  ==============================
+=========  ========================
 
-These keywords are used as CRDS selectors
+These keywords are used as CRDS selectors:
 
 .. include:: ../references_general/wavelengthrange_selection.inc
-
 
 Reference File Format
 +++++++++++++++++++++
@@ -43,17 +40,23 @@ MIRI MRS
 For MIRI MRS, the WAVELENGTHRANGE file consists of two fields that define the
 wavelength range for each combination of channel and band.
 
-:channels: An ordered list of all possible channel and band combinations for MIRI MRS, e.g. "1SHORT".
-:wavelengthrange: An ordered list of (lambda_min, lambda_max) for each item in the list above
+``channels``
+  An ordered list of all possible channel and band combinations for MIRI MRS, e.g., "1SHORT".
+
+``wavelengthrange``
+  An ordered list of ``(lambda_min, lambda_max)`` for each item in the list above.
 
 NIRSpec
 :::::::
 For NIRSpec, the WAVELENGTHRANGE file is a dictionary storing information about default
-wavelength range and spectral order for each combination of filter and grating.
+spectral order and wavelength range for each combination of filter and grating
+(``filter_grating``).
 
-:filter_grating:
-                 :order: Default spectral order
-                 :range: Default wavelength range
+``order``
+  Default spectral order
+
+``range``
+  Default wavelength range
 
 NIRCam WFSS, NIRCam TSGRISM, NIRISS WFSS, MIRI WFSS
 :::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -64,7 +67,14 @@ of orders that should be extracted for each filter.
 To be consistent with other modes, and for convenience, it also lists the orders
 and filters that are valid with the file.
 
-:order: A list of orders this file covers
-:wavelengthrange: A list containing the list of [order, filter, wavelength min, wavelength max]
-:waverange_selector: The list of FILTER names available
-:extract_orders: A list containing the list of orders to extract for each filter
+``order``
+    A list of orders this file covers
+
+``wavelengthrange``
+  A list containing the list of ``[order, filter, wavelength min, wavelength max]``
+
+``waverange_selector``
+  The list of FILTER names available
+
+``extract_orders``
+  A list containing the list of orders to extract for each filter

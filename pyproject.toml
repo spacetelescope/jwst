@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.12,<3.15"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -12,7 +12,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -25,10 +24,10 @@ dependencies = [
     "gwcs>=1.0.3,<2",
     "numpy>=2.0",
     "photutils>=3.0,<4",
-    "pyyaml>=6",
+    "pyyaml>=6.0.1",
     "requests>=2.32",
     "scikit-image>=0.23.0",
-    "scipy>=1.15.3",
+    "scipy>=1.18.0",
     # "stdatamodels>=6.0.0,<6.1",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     #"stcal>=1.19.1,<2",
@@ -113,8 +112,12 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-# explicitly skip free-threaded builds
-skip = ["cp314t-*"]
+build = "cp3*"
+skip = ["cp3*t-*"]  # explicitly skip free-threaded builds
+test-command = 'python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"'
+
+[tool.cibuildwheel.macos]
+archs = ["arm64", "x86_64"]
 
 [tool.setuptools]
 zip-safe = false
@@ -291,7 +294,7 @@ warn_return_any = true
 warn_unused_configs = true
 disable_error_code = "import-untyped" # do not check imports
 exclude = ["build"]
-python_version = "3.11"
+python_version = "3.13"
 
 [[tool.mypy.overrides]]
 # don't complain about the installed c parts of this library
