@@ -653,7 +653,7 @@ dq_miri(
        0 : success
        1 : failure
     */
-    int status, status_wave, w, nxy, i, istart, iend, in, ii;
+    int status, status_wave, w, nxy, i, istart;
     double xi_corner[4], eta_corner[4];
 
     int overlap_no_coverage = 512;
