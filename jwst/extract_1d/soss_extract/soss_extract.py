@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 ORDER_STR_TO_INT = {f"Order {order}": order for order in [1, 2, 3]}
 
 
-__all__ = ["DetectorModelOrder", "get_ref_file_args", "run_extract1d"]
+__all__ = ["DetectorModelOrder", "get_ref_file_args", "Integration", "run_extract1d"]
 
 
 @dataclass
@@ -388,8 +388,8 @@ def _refine_tikfac(tiktests, tikho_struct, engine, niter_refine=3):
 
     Parameters
     ----------
-    tiktests : `~jwst.extract_1d.soss_extract.atoca_utils.Tikhonov`
-        Dictionary-like object with Tikhonov factors and associated
+    tiktests : `~jwst.extract_1d.soss_extract.atoca_utils.TikhoTests`
+        Dictionary-like object with Tikhonov test factors and associated
         goodness-of-fit quantities.
     tikho_struct : `~jwst.extract_1d.soss_extract.atoca_utils.Tikhonov`
         A Tikhonov structure appropriately initialized to enable the

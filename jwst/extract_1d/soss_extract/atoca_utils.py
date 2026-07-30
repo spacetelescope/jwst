@@ -1052,14 +1052,15 @@ def _constant_kernel_to_2d(c, grid_range):
 
     Parameters
     ----------
-    c : float or numpy scalar
+    c : float or ndarray
         Constant value to expand into a 2-D kernel.
-    grid_range : list[int]
+        If an array is provided, it must have size of 1.
+    grid_range : list of int
         Indices over which convolution is defined on grid.
 
     Returns
     -------
-    kernel_2d : array[float]
+    kernel_2d : ndarray
         2D array of input 1D kernel tiled over axis with
         length equal to difference of grid_range values.
     """

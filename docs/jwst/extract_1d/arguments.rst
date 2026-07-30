@@ -2,6 +2,9 @@ Step Arguments
 ==============
 The ``extract_1d`` step has the following step-specific arguments.
 
+All Modes
+---------
+
 The following arguments apply to **all modes** unless otherwise specified:
 
 ``--subtract_background`` (boolean, default=None)
@@ -14,6 +17,9 @@ The following arguments apply to **all modes** unless otherwise specified:
   Switch to select whether or not to apply an APERTURE correction during
   processing. Has no effect for NIRISS SOSS data
   or for optimal extractions.
+
+Slit and Slitless Spectroscopic Data
+------------------------------------
 
 The following arguments apply to **slit and slitless spectroscopic data** only:
 
@@ -114,6 +120,9 @@ The following arguments apply to **slit and slitless spectroscopic data** only:
   Flag to enable saving the residual image (from the input minus the scene model).
   If `True`, the model is saved to disk with suffix "residual".
 
+IFU Data
+--------
+
 The following arguments apply to **IFU data** only:
 
 ``--center_xy`` (string, default=None)
@@ -155,6 +164,9 @@ The following arguments apply to **IFU data** only:
    for covariance between adjacent spaxels in the IFU data cube.  The default value of
    1.0 means no correction. This
    parameter only affects MIRI and NIRSpec IFU spectroscopy.
+
+NIRISS SOSS Data
+----------------
 
 The following arguments apply to **NIRISS SOSS data** only:
 
