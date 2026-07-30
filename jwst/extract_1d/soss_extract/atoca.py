@@ -1,5 +1,5 @@
 """
-Main classes for the ATOCA (Darveau-Bernier 2021, in prep.).
+Main classes for ATOCA (Darveau-Bernier 2021, in prep.).
 
 ATOCA:
 
@@ -36,7 +36,7 @@ class KernelShapeError(Exception):
 
 class ExtractionEngine:
     """
-    Run the ATOCA algorithm [1]_.
+    Run the ATOCA algorithm.
 
     This class is basically a fitter. On instantiation, it generates a model
     of the detector, including a mapping between the detector pixels and the wavelength
@@ -100,7 +100,7 @@ class ExtractionEngine:
 
     References
     ----------
-    .. [1] Darveau-Bernier 2022, PASP, DOI:10.1088/1538-3873/ac8a77
+    Darveau-Bernier 2022, PASP, DOI:10.1088/1538-3873/ac8a77
     """
 
     # The desired data-type for computations. 'float64' is recommended.
@@ -201,8 +201,8 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        *args : str or list
-            All attributes (str) to return.
+        *args : str or list of str
+            All attributes to return.
         i_order : None or int, optional
             Index of order to extract. If specified, it will
             be applied to all attributes in ``args``, so it cannot
@@ -785,7 +785,7 @@ class ExtractionEngine:
         spectrum : callable or array-like
             Flux as a function of wavelength if callable
             or array of flux values corresponding to ``self.wave_grid``.
-        fill_value : float or numpy.nan, optional
+        fill_value : float, optional
             Pixel value where the detector is masked. Default is 0.0.
 
         Returns

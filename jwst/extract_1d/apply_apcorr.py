@@ -31,7 +31,7 @@ class ApCorrBase(abc.ABC):
     slit_name : str, optional
         For `~stdatamodels.jwst.datamodels.MultiSlitModel`,
         the name of the slit being processed.
-    **match_kwargs : dict, optional
+    **match_kwargs
         Additional keywords for matching data to reference table entries.
 
     Raises
@@ -221,7 +221,7 @@ class ApCorrPhase(ApCorrBase):
         Input arguments as defined in `ApCorrBase`.
     pixphase : float, optional
         Pixel phase of the input data.
-    **kwargs : dict, optional
+    **kwargs
         Additional parameters as defined in `ApCorrBase`.
     """
 
@@ -526,10 +526,9 @@ class ApCorr(ApCorrBase):
 
     Parameters
     ----------
-    *args : tuple
+    *args
         See `ApCorrBase`
-
-    **kwargs : dict, optional
+    **kwargs
         See `ApCorrBase`
     """
 

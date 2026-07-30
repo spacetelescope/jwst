@@ -24,8 +24,7 @@ The following arguments apply to **slit and slitless spectroscopic data** only:
     This is suitable for any input data (point sources and extended sources;
     resampled and unresampled images).
   * ``'optimal'``: A PSF-based optimal extraction is performed. This is
-    best suited for un-resampled point sources. Currently, optimal extraction
-    is only available for MIRI LRS Fixed Slit data.
+    best suited for un-resampled point sources.
   * None: Optimal extraction is attempted whenever ``use_source_posn`` is `True`.
 
 ``--use_source_posn`` (boolean, default=None)
@@ -154,7 +153,7 @@ The following arguments apply to **IFU data** only:
 ``--ifu_covar_scale`` (float, default=1.0)
    A scale to be multiplied into the error arrays of the extracted spectra to account
    for covariance between adjacent spaxels in the IFU data cube.  The default value of
-   1.0 means no correction. It can be set by a user or a parameter reference file.  This
+   1.0 means no correction. This
    parameter only affects MIRI and NIRSpec IFU spectroscopy.
 
 The following arguments apply to **NIRISS SOSS data** only:

@@ -122,7 +122,7 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
     Parameters
     ----------
     wave_map : array[float]
-        2d-map of the pixel central wavelength.
+        2D map of the pixel central wavelength.
     dispersion_axis : int, optional
         Which axis is the dispersion axis (0 or 1).
 
@@ -1321,8 +1321,8 @@ def get_c_matrix(kernel, grid, i_bounds=None, thresh=1e-5):
         giving the kernel for each items of the convolved grid.
         Can be a callable
         with the form ``f(x, x0)`` where ``x0`` is the position of the center of
-        the kernel. Must return a 1D array (``len(x)``), so a kernel value
-        for each pairs of ``(x, x0)``.
+        the kernel. Must return a 1D array with ``len(x)``, i.e., a kernel value
+        for each pair of ``(x, x0)``.
     grid : ndarray
         The 1D grid on which the convolution will be applied.
         For example, if ``C`` is the convolution matrix,
@@ -1845,7 +1845,7 @@ class Tikhonov:
     Use Tikhonov regularization to solve the ill-posed problem A.x = b.
 
     The matrix A is accidentally singular or close to singularity. Tikhonov regularization
-    adds a regularization term in the equation and aim to minimize the
+    adds a regularization term in the equation and aims to minimize the
     equation::
 
         ||A.x - b||^2 + ||gamma.x||^2
@@ -1859,7 +1859,7 @@ class Tikhonov:
     b_vec : ndarray
         Vector b (1D) in the system to solve ``A.x = b``
     t_mat : ndarray
-        Tikhonov regularisation matrix (2D) to be applied on ``b_vec``
+        Tikhonov regularization matrix (2D) to be applied on ``b_vec``
     """
 
     def __init__(self, a_mat, b_vec, t_mat):
@@ -1889,7 +1889,7 @@ class Tikhonov:
 
             (A_T.A + gamma_T.gamma).x = A_T.b
 
-        gamma is the Tikhonov matrix multiplied by a scale factor.
+        where gamma is the Tikhonov matrix multiplied by a scale factor.
 
         Parameters
         ----------

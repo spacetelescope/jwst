@@ -480,7 +480,7 @@ def _apply_bkg_sigma_clip(
     bkg_table : `~astropy.table.Table`
         Table of the photometry with the columns as documented in
         :func:`~photutils.aperture.aperture_photometry`.
-    maskclip : array or None
+    maskclip : ndarray or None
         Mask to reject data outside the valid data footprint.
     """
     # pull out the data with coverage in IFU cube. We do not want to use
@@ -1332,8 +1332,8 @@ def sigma_clip_extended_region(
     var_flat : ndarray
         Flat noise variance array (2D) to be extracted following data extraction method.
     mask_targ : ndarray
-        Mask of pixels (2D or 3D) defining the extended source region. A value of 1 indicated
-        pixel is in the extraction region.
+        Mask of pixels (2D or 3D) defining the extended source region. A value of 1 indicates
+        the pixel is in the extraction region.
     wmap : ndarray
         Weight map (3D) for IFU.
     sigma_clip : float

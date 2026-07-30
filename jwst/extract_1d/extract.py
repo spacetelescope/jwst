@@ -714,7 +714,7 @@ def copy_keyword_info(slit, slitname, spec):
     slitname : str or None
         The name of the slit.
     spec : obj
-        One element of ``spec`` in a `~stdatamodels.jwst.datamodels.MultiSpecModel`
+        One element from the ``spec`` list in a `~stdatamodels.jwst.datamodels.MultiSpecModel`
         Metadata attributes will be updated in-place.
     """
     if slitname is not None and slitname != "ANY":
@@ -1136,7 +1136,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     ----------
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science model containing metadata information.
-    slit : `~stdatamodels.jwst.datamodels.JwstDataModel` or None
+    slit : `~stdatamodels.jwst.datamodels.SlitModel` or None
         One slit from a `~stdatamodels.jwst.datamodels.MultiSlitModel`
         (or similar), or None.
         The spectral image and WCS information will be retrieved from ``slit``
@@ -1309,7 +1309,7 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         `~stdatamodels.jwst.datamodels.SlitModel`,
         or `~stdatamodels.jwst.datamodels.CubeModel`.
     integration : int
-        For the case that data_model is a
+        For the case that ``data_model`` is a
         `~stdatamodels.jwst.datamodels.SlitModel` or a
         `~stdatamodels.jwst.datamodels.CubeModel`,
         ``integration`` is the integration number.  If the integration number is

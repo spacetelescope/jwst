@@ -197,7 +197,7 @@ def _rotate(x, y, angle, origin=(0, 0)):
         The y-coordinates of the points to be transformed.
     angle : float
         The angle (in degrees) by which to rotate the points.
-    origin : tuple[float, float], optional
+    origin : tuple, optional
         The point about which to rotate the points. Default is (0, 0).
 
     Returns

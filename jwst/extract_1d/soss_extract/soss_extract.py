@@ -214,8 +214,7 @@ def get_ref_file_args(ref_files, orders_requested=None):
     Parameters
     ----------
     ref_files : dict
-        A dictionary of the reference file
-        `~stdatamodels.jwst.datamodels.JwstDataModel`, along with values
+        A dictionary of the reference file datamodels, along with values
         for the subarray and pwcpos, i.e., the pupil wheel position.
     orders_requested : list or None, optional
         A list of the spectral orders requested for extraction.
@@ -395,7 +394,7 @@ def _refine_tikfac(tiktests, tikho_struct, engine, niter_refine=3):
     tikho_struct : `~jwst.extract_1d.soss_extract.atoca_utils.Tikhonov`
         A Tikhonov structure appropriately initialized to enable the
         calculation of goodness-of-fit metrics for trial Tikhonov factors.
-    engine : `~jwst.extract_1d.soss_extract.atocaExtractionEngine`
+    engine : `~jwst.extract_1d.soss_extract.atoca.ExtractionEngine`
         Used to determine the best Tikhonov factor after the goodness-
         of-fit quantities have been calculated.
     niter_refine : int
@@ -457,7 +456,7 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, force_recompute_engi
         The model for the spectral order to be extracted.
     f_k : ndarray
         The extracted flux for the spectral order.
-    mask : ndarray[bool]
+    mask : ndarray
         The global mask of pixels to be modeled. Bad pixels in the science data
         should remain unmasked.
     force_recompute_engine : bool, optional
@@ -609,7 +608,7 @@ def _do_tiktests(
         The error in the science data.
     guess_factor : float
         Initial guess for the Tikhonov factor.
-    order_models : list[DetectorModelOrder]
+    order_models : list of `DetectorModelOrder`
         Models of the detector and trace properties, one per spectral order.
     global_mask : ndarray
         Mask determining the aperture used for rebuilding the trace. This typically includes
@@ -618,7 +617,7 @@ def _do_tiktests(
     save_tiktests : bool, optional
         If `True`, re-construct spectra for all tested Tikhonov factors and for all spectral orders
         to provide a diagnostic product.
-    tikfac_log_range : list[float], optional
+    tikfac_log_range : list, optional
         Logarithmic range around ``guess_factor`` to search. The default is [-2, 8], which was
         chosen because we are looking for the smoothest (largest-factor) solution that
         still provides a good fit to the data.
@@ -631,7 +630,7 @@ def _do_tiktests(
     -------
     tikfac : float
         The best-fitting Tikhonov factor.
-    spec_list : list[SpecModel]
+    spec_list : list of `~stdatamodels.jwst.datamodels.SpecModel`
         If ``save_tiktests`` is `True`, a list of `~stdatamodels.jwst.datamodels.SpecModel`
         for all tested Tikhonov factors
         and all spectral orders; otherwise, an empty list.
@@ -890,7 +889,7 @@ class Integration:
         2D science error array.
     scimask : ndarray
         2D boolean mask array for the science data. `True` values are masked.
-    refmask : ndarra
+    refmask : ndarray
         2D boolean mask array for the reference pixels. `True` values are masked.
     order_models : list of `DetectorModelOrder`
         Models of the detector and trace properties, one per spectral order.
