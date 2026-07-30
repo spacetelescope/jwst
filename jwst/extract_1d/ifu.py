@@ -996,7 +996,7 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
 
     Parameters
     ----------
-    input_model : JWSTDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science model.
     ra_targ, dec_targ : float or None
         The right ascension and declination of the target (degrees).
