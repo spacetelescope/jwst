@@ -16,19 +16,19 @@ def get_box_weights(centroid, n_pix, shape, cols):
 
     Parameters
     ----------
-    centroid : array[float]
-        Position of the centroid (in rows). Same shape as `cols`
+    centroid : ndarray
+        Position of the centroid (in rows). Same shape as ``cols``.
     n_pix : float
         Width of the extraction box in pixels.
-    shape : Tuple(int, int)
-        Shape of the output image. (n_row, n_column)
-    cols : array[int]
-        Column indices of good columns. Used if the centroid is defined
+    shape : tuple
+        Shape of the output image, i.e., ``(n_row, n_column)``.
+    cols : array
+        Column indices (int) of good columns. Used if the centroid is defined
         for specific columns or a sub-range of columns.
 
     Returns
     -------
-    weights : array[float]
+    weights : ndarray
         An array of pixel weights to use with the box extraction.
     """
     nrows, _ = shape
@@ -64,23 +64,23 @@ def box_extract(scidata, scierr, scimask, box_weights):
 
     Parameters
     ----------
-    scidata : array[float]
-        2d array of science data with shape (n_row, n_columns)
-    scierr : array[float]
-        2d array of uncertainty map with same shape as scidata
-    scimask : array[bool]
-        2d boolean array of masked pixels with same shape as scidata
-    box_weights : array[float]
-        2d array of pre-computed weights for box extraction,
-        with same shape as scidata
+    scidata : ndarray
+        2D array of science data with shape ``(n_row, n_columns)``
+    scierr : ndarray
+        2D array of uncertainty map with same shape as ``scidata``
+    scimask : ndarray
+        2D boolean array of masked pixels with same shape as ``scidata``
+    box_weights : ndarray
+        2D array of pre-computed weights for box extraction,
+        with same shape as ``scidata``
 
     Returns
     -------
-    cols : array[int]
+    cols : ndarray
         Indices of extracted columns
-    flux : array[float]
+    flux : ndarray
         The flux in each column
-    flux_var : array[float]
+    flux_var : ndarray
         The variance of the flux in each column
     """
     cols = np.arange(scidata.shape[1])
@@ -132,30 +132,30 @@ def box_extract(scidata, scierr, scimask, box_weights):
 
 def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     """
-    Estimate pixel error empirically using error on nearby pixel values in (`data`).
+    Estimate pixel error empirically using error on nearby pixel values in data.
 
     Intended to be used in a box extraction when the bad pixels are modeled.
 
     Parameters
     ----------
-    err : 2d array[float]
-        Uncertainty map of the pixels.
-    data : 2d array[float]
-        Pixel values.
-    pix_to_estim : 2d array[bool]
-        Map of the pixels where the uncertainty needs to be estimated.
-    valid_pix : 2d array[bool]
-        Map of valid pixels to be used to find the error empirically.
+    err : ndarray
+        Uncertainty map (2D) of the pixels.
+    data : ndarray
+        Pixel values (2D).
+    pix_to_estim : ndarray
+        Boolean map (2D) of the pixels where the uncertainty needs to be estimated.
+    valid_pix : ndarray
+        Boolean map (2D) of valid pixels to be used to find the error empirically.
 
     Returns
     -------
-    err_filled : 2d array[float]
-        Same as `err`, but the pixels to be estimated are filled with the estimated values.
+    err_filled : ndarray
+        Same as ``err`` (2D), but the pixels to be estimated are filled with the estimated values.
 
     Notes
     -----
     For uncorrelated noise, the average error on the replaced pixels will be roughly
-    half of the average error on the original good pixels
+    half of the average error on the original good pixels.
     The reason is because this method chooses the lower error between the two nearest-flux
     data points, leading to a factor-of-2 decrease (assuming errors are normally distributed).
     Future work should follow up on whether this remains the desired behavior.
@@ -187,7 +187,7 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     # Get the corresponding error (that's what we want to find!)
     err_estimate = err_valid[idx_closest]
 
-    # Replace estimated values in the output error 2d image
+    # Replace estimated values in the output error 2D image
     err_out = err.copy()
     err_out[pix_to_estim] = err_estimate
 

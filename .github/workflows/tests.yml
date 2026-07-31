@@ -37,7 +37,7 @@ concurrency:
 permissions: {}
 
 env:
-  PYTHON_VERSIONS: 3.9 3.10 3.11 3.12 3.13 3.14
+  PYTHON_VERSIONS: 3.12 3.13 3.14
   CRDS_PATH: /tmp/data/crds_cache
   CRDS_OBSERVATORY: jwst
   CRDS_SERVER_URL: ${{ inputs.crds_server || 'https://jwst-crds.stsci.edu' }}

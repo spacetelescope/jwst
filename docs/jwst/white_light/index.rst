@@ -10,5 +10,4 @@ White Light Curve Generation
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.white_light
+   api_ref.rst
