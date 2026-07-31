@@ -182,13 +182,14 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
     args = [
         "calwebb_spec3",
         INPUT_ASN,
+        "--output_dir=out",
     ]
     Step.from_cmdline(args)
 
 
 def test_spec3_wfss(run_spec3_wfss):
     """Smoke test to ensure pipeline runs for WFSS input."""
-    files_created = os.listdir(".")
+    files_created = os.listdir("out")
     assert "test_x1d.fits" in files_created
     assert "test_c1d.fits" in files_created
     with dm.open("test_x1d.fits") as x1d:
