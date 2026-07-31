@@ -189,10 +189,11 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
 
 def test_spec3_wfss(run_spec3_wfss):
     """Smoke test to ensure pipeline runs for WFSS input."""
-    files_created = os.listdir("out")
-    assert "test_x1d.fits" in files_created
-    assert "test_c1d.fits" in files_created
-    with dm.open(os.path.join("out", "test_x1d.fits")) as x1d:
+    outpath = Path("out")
+    x1d_file = outpath / "test_x1d.fits"
+    assert x1d_file.exists()
+    assert (outpath / "test_c1d.fits").exists()
+    with dm.open(x1d_file) as x1d:
         assert (
             x1d.spec[0].s_region
             == "POLYGON ICRS  247.901987783 30.174116268 247.864126916 30.158804440 247.846405241 30.190721550 247.852683427 30.193419510 247.851405241 30.195721550 247.888569817 30.211692493 247.906987783 30.179116268 247.900617472 30.176539964"
