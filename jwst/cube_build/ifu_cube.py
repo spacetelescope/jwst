@@ -1525,6 +1525,8 @@ class IFUCubeData:
            Flux associated with ``coord1, coord2``
         err : ndarray
            Error associated with ``coord1, coord2``
+        var_rnoise : ndarray
+           var_rnoise associated with ``coord1, coord2``
         rois_det : float
            Spatial ROI size to use
         roiw_det : ndarray
