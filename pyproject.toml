@@ -231,8 +231,8 @@ filterwarnings = [
     # https://github.com/spacetelescope/gwcs/issues/738
     "ignore:Calling .*lu_.* with arguments of dtype=float:DeprecationWarning",
     # https://github.com/spacetelescope/jwst/issues/10744
-    "ignore:diags is being replaced by diags_array:DeprecationWarning",
-    "ignore:coo_matrix is being replaced by coo_array:DeprecationWarning",
+    "ignore:.*diags.* is being replaced:DeprecationWarning",
+    "ignore:.*coo_matrix.* is being replaced:DeprecationWarning",
 ]
 
 [tool.coverage.run]
