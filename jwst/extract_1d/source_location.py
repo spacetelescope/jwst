@@ -28,7 +28,7 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
     bounding_box : tuple
         A pair of tuples, each consisting of two numbers.
         Represents the range of useful pixel values in both dimensions,
-        ((xmin, xmax), (ymin, ymax)).
+        ``((xmin, xmax), (ymin, ymax))``.
     dispaxis : int
         Dispersion axis.
 
@@ -99,7 +99,7 @@ def location_from_wcs(input_model, slit, make_trace=True):
     Get the cross-dispersion location of the spectrum, based on the WCS.
 
     None values will be returned if there was insufficient information
-    available, e.g. if the wavelength attribute or wcs function is not
+    available, e.g., if the wavelength attribute or wcs function is not
     defined.
 
     Parameters
@@ -107,13 +107,14 @@ def location_from_wcs(input_model, slit, make_trace=True):
     input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science model containing metadata information.
     slit : `~stdatamodels.jwst.datamodels.JwstDataModel` or None
-        One slit from a MultiSlitModel (or similar), or None.
+        One slit from a `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        (or similar), or None.
         The WCS and target coordinates will be retrieved from ``slit``
         unless ``slit`` is None. In that case, they will be retrieved
         from ``input_model``.
     make_trace : bool, optional
-        If True, the source position will be calculated for each
-        dispersion element and returned in ``trace``.  If False,
+        If `True`, the source position will be calculated for each
+        dispersion element and returned in ``trace``.  If `False`,
         None is returned.
 
     Returns
@@ -136,7 +137,7 @@ def location_from_wcs(input_model, slit, make_trace=True):
         to the location at each point in the wavelength array. If the
         input data is resampled, the trace corresponds directly to the
         location. If the trace could not be generated, or ``make_trace`` is
-        False, None is returned.
+        `False`, None is returned.
     """
     if slit is not None:
         shape = slit.data.shape[-2:]
@@ -416,7 +417,7 @@ def _nod_pair_from_dither(input_model, middle_wl, dispaxis):
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Model containing WCS and dither data.
     middle_wl : float
         Wavelength at the middle of the array.
@@ -470,7 +471,7 @@ def _nod_pair_from_slitpos(input_model, middle_wl):
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Model containing WCS and dither data.
     middle_wl : float
         Wavelength at the middle of the array.
@@ -504,7 +505,7 @@ def nod_pair_location(input_model, middle_wl):
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Model containing WCS and dither data.
     middle_wl : float
         Wavelength at the middle of the array.

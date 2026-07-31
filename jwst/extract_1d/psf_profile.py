@@ -25,13 +25,13 @@ def open_psf(psf_refname, slit_name):
     Parameters
     ----------
     psf_refname : str
-        The name of the psf reference file.
+        The name of the PSF reference file.
     slit_name : str or None
         The slit name for the data.
 
     Returns
     -------
-    psf_model : SpecPsfModel
+    psf_model : `~stdatamodels.jwst.datamodels.SpecPsfModel`
         Returns the EPSF model.
     """
     try:
@@ -97,7 +97,7 @@ def _make_cutout_profile(
         cross-dispersion indices.
     nod_offset : float, optional
         If not None, a negative trace is added to the spatial profile,
-        with a cross-dispersion shift of `nod_offset`.
+        with a cross-dispersion shift of ``nod_offset``.
 
     Returns
     -------
@@ -137,16 +137,16 @@ def _profile_residual(
     """
     Residual function to minimize for optimizing trace locations.
 
-    Call `_make_cutout_profile` to generate a profile from input parameters.
-    Call `extract1d` to generate a scene model from the data and the new profile.
-    Compute a residual value from the sum of (model - cutout) ** 2 / cutout_var.
+    Call ``_make_cutout_profile`` to generate a profile from input parameters.
+    Call ``extract1d`` to generate a scene model from the data and the new profile.
+    Compute a residual value from the sum of ``(model - cutout) ** 2 / cutout_var``.
 
     Parameters
     ----------
     shifts_to_optimize : list of float
-        The first value is used as the `extra_shift` parameter to
-        `_make_cutout_profile`.  If two are provided, the second value is
-        used as the `nod_offset` parameter to `_make_cutout_profile`.
+        The first value is used as the ``extra_shift`` parameter to
+        ``_make_cutout_profile``.  If two are provided, the second value is
+        used as the ``nod_offset`` parameter to ``_make_cutout_profile``.
         If only one value is provided, no nod offset is applied.
     cutout : ndarray
         Input data array, trimmed to the bounding box.
@@ -164,7 +164,7 @@ def _profile_residual(
     dispaxis : int
         Dispersion axis.
     fit_bkg : bool, optional
-        If True, background subtraction is performed during extraction.
+        If `True`, background subtraction is performed during extraction.
 
     Returns
     -------
@@ -213,15 +213,16 @@ def psf_profile(
     Provides PSF-based profiles for point sources in slit-like data containing
     one positive trace and, optionally, one negative trace resulting from nod
     subtraction.  The location of the positive trace should be provided in the
-    `trace` input parameter; the negative trace location will be guessed from
+    ``trace`` input parameter; the negative trace location will be guessed from
     the input metadata. If a negative trace is modeled, it is recommended that
-    ``optimize_shifts`` also be set to True, to improve the initial guess for the
+    ``optimize_shifts`` also be set to `True`, to improve the initial guess for the
     trace location.
 
     Parameters
     ----------
-    input_model : data model
-        This can be either the input science file or one SlitModel out of
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        This can be either the input science file or one
+        `~stdatamodels.jwst.datamodels.SlitModel` out of
         a list of slits.
     trace : ndarray or None
         Array of source cross-dispersion position values, one for each
@@ -233,11 +234,11 @@ def psf_profile(
     psf_ref_name : str
         PSF reference filename.
     optimize_shifts : bool, optional
-        If True, the spatial location of the trace will be optimized by
+        If `True`, the spatial location of the trace will be optimized by
         minimizing the residuals in a scene model compared to the data in
         the first integration of ``input_model``.
     model_nod_pair : bool, optional
-        If True, and if background subtraction has taken place, a negative
+        If `True`, and if background subtraction has taken place, a negative
         PSF will be modeled at the mirrored spatial location of the positive
         trace.
 
