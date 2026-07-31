@@ -5676,7 +5676,7 @@ documentation
 extract_1d
 ----------
 
-- Clean the logging statements made by `extract_1d` to make the log
+- Clean the logging statements made by ``extract_1d`` to make the log
   more useful [#6696]
 
 - Check for non-zero array size before computing sigma-clipped

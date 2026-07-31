@@ -1,3 +1,5 @@
+"""Extract 1-D spectra from JWST spectroscopic data."""
+
 import logging
 
 import crds
@@ -69,7 +71,7 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input model.
         exp_type : str
             Exposure type.
@@ -115,12 +117,12 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input model.
 
         Returns
         -------
-        DataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The output spectra.
         """
         # Set the filter configuration
@@ -221,7 +223,7 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input model.
 
         Returns
@@ -251,7 +253,7 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input model.
         exp_type : str
             Exposure type.
@@ -262,7 +264,7 @@ class Extract1dStep(Step):
 
         Returns
         -------
-        DataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The output spectra.
         """
         source_type = model.meta.target.source_type
@@ -306,7 +308,7 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        intermediate_model : DataModel
+        intermediate_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             A model to save
         suffix : str
             Suffix to append to the output filename.
