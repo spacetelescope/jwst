@@ -192,7 +192,7 @@ def test_spec3_wfss(run_spec3_wfss):
     files_created = os.listdir("out")
     assert "test_x1d.fits" in files_created
     assert "test_c1d.fits" in files_created
-    with dm.open("test_x1d.fits") as x1d:
+    with dm.open(os.path.join("out", "test_x1d.fits")) as x1d:
         assert (
             x1d.spec[0].s_region
             == "POLYGON ICRS  247.901987783 30.174116268 247.864126916 30.158804440 247.846405241 30.190721550 247.852683427 30.193419510 247.851405241 30.195721550 247.888569817 30.211692493 247.906987783 30.179116268 247.900617472 30.176539964"
