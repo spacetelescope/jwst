@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from jwst.wfss_contam.disperse import _replace_nans, disperse
+from jwst.wfss_contam.disperse import _build_dispersed_image_of_source, _replace_nans, disperse
 
 _SENS_WAVES = np.linspace(1.708, 2.28, 100)
 _WMIN, _WMAX = _SENS_WAVES[0], _SENS_WAVES[-1]
@@ -219,6 +219,17 @@ def test_flux_models_superposition(grism_wcs, direct_image_with_gradient):
 
     combined = src_sep[_SOURCE_ID]["model_counts"][0] + src_sep[_SOURCE_ID]["model_counts"][1]
     assert_allclose(combined, src_sum[_SOURCE_ID]["model_counts"][0], rtol=1e-10)
+
+
+def test_build_dispersed_image_of_source_accumulates_duplicates():
+    """Duplicate coordinates should sum their flux contributions."""
+    img = _build_dispersed_image_of_source(
+        x=np.array([0, 0, 1]),
+        y=np.array([0, 0, 1]),
+        flux=np.array([1.0, 2.0, 3.0]),
+        bounds=[0, 1, 0, 1],
+    )
+    assert_allclose(img, np.array([[3.0, 0.0], [0.0, 3.0]]))
 
 
 def test_replace_nans():
