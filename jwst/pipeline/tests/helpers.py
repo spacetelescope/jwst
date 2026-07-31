@@ -111,6 +111,7 @@ def make_nirspec_ifu_rate_model():
     """
     image = datamodels.IFUImageModel((2048, 2048))
     image.data[:, :] = 1
+    image.var_rnoise[:, :] = 1
 
     image.meta.instrument.name = "NIRSPEC"
     image.meta.instrument.detector = "NRS1"
