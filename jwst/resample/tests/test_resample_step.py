@@ -19,6 +19,7 @@ from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.exp_to_source import multislit_to_container
+from jwst.extract_1d.source_location import location_from_wcs
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample import ResampleImage, input_jwst_model_to_dict
@@ -1899,7 +1900,12 @@ def test_combine_input_sregions(nircam_rate):
     assert_allclose(actual_footprint, expected_footprint, atol=1e-5, rtol=0)
 
 
-def test_spec_fits_wcs(tmp_path, nirspec_cal):
+@pytest.mark.parametrize("use_source_location", [True, False])
+def test_spec_fits_wcs(tmp_path, nirspec_cal, use_source_location):
+    if not use_source_location:
+        nirspec_cal.slits[0].source_xpos = None
+        nirspec_cal.slits[0].source_ypos = None
+
     im = ResampleSpecStep.call(
         nirspec_cal, output_dir=str(tmp_path), save_results=True, output_file="test", suffix="s2d"
     )
@@ -1916,14 +1922,19 @@ def test_spec_fits_wcs(tmp_path, nirspec_cal):
     # GWCS
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
     ra, dec, gwcs_wave = slit.meta.wcs(x, y)
+    _, _, location, _ = location_from_wcs(slit, None, make_trace=False)
 
     # FITS WCS
     with fits.open(tmp_path / "test_s2d.fits") as hdul:
         slit_wcs = astropy_wcs.WCS(hdul[1], hdul)
         fits_wave, slit_pos = slit_wcs.pixel_to_world_values(x, y)
 
-        # Slit position is 0 at the center of the array
-        _, slit_center = slit_wcs.pixel_to_world_values(x, slit.data.shape[0] // 2)
+        if use_source_location:
+            # Slit position is 0 at the source location
+            _, slit_center = slit_wcs.pixel_to_world_values(x, location)
+        else:
+            # Slit position is 0 at the center of the array
+            _, slit_center = slit_wcs.pixel_to_world_values(x, slit.data.shape[0] // 2)
         np.testing.assert_allclose(slit_center, 0)
 
     # Wavelengths are the same for the GWCS and FITS WCS

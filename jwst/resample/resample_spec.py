@@ -23,6 +23,8 @@ from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import is_sky_like, wrap_ra
 from jwst.datamodels import ModelLibrary
+from jwst.extract_1d.source_location import location_from_wcs
+from jwst.lib.basic_utils import disable_logging
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleImage
 
@@ -284,7 +286,11 @@ class ResampleSpec(ResampleImage):
         # WCS info dictionary to update
         wcsinfo = model.meta.wcsinfo.instance
 
-        # Wavelength avalues from dispersion direction
+        # Get the expected cross-dispersion location for the source if possible
+        with disable_logging():
+            _, _, location, _ = location_from_wcs(model, None, make_trace=False)
+
+        # Wavelength values from dispersion direction at center of data array
         dispaxis = wcsinfo["dispersion_direction"]
         if dispaxis == 1:
             # wavelengths along x
@@ -317,9 +323,15 @@ class ResampleSpec(ResampleImage):
 
         wcsinfo[f"ctype{spataxis}"] = "SPATIAL"
         wcsinfo[f"crval{spataxis}"] = 0.0
-        wcsinfo[f"crpix{spataxis}"] = s_idx + 1
         wcsinfo[f"cdelt{spataxis}"] = self._output_pixel_scale
         wcsinfo[f"cunit{spataxis}"] = "arcsec"
+
+        # Use the expected location as the spatial origin if possible.
+        # Otherwise, use the center.
+        if location is not None:
+            wcsinfo[f"crpix{spataxis}"] = location + 1
+        else:
+            wcsinfo[f"crpix{spataxis}"] = s_idx + 1
 
         # Add the wavelength table to the model
         # Schema must be generated on the fly since the columns are variable.
