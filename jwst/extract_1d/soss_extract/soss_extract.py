@@ -1108,7 +1108,7 @@ class Integration:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", "invalid value encountered in divide", RuntimeWarning)
             y_over_err = (self.scidata_bkg / self.order_models[0].mederr)[~engine.mask]
-            f_k = self.order_models[0].m_inv.dot(self.order_models[0].bmat.T * y_over_err)
+            f_k = self.order_models[0].m_inv.dot(self.order_models[0].bmat.T @ y_over_err)
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
         # Model the traces for each order separately.

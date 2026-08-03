@@ -12,7 +12,7 @@ from scipy.interpolate import (
     make_interp_spline,
 )
 from scipy.optimize import minimize_scalar
-from scipy.sparse import csr_matrix, diags
+from scipy.sparse import csr_array, diags_array
 from scipy.sparse.linalg import MatrixRankWarning, lsqr, spsolve
 
 log = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ def sparse_k(val, k, n_k):
     col = k[k >= 0]
     data = val[k >= 0]
 
-    return csr_matrix((data, (row, col)), shape=(n_i, n_k))
+    return csr_array((data, (row, col)), shape=(n_i, n_k))
 
 
 def get_wave_p_or_m(wave_map, dispersion_axis=1):
@@ -1298,7 +1298,7 @@ def _sparse_c(ker, n_k, i_zero):
         offset.append(i_k)
 
     # Build convolution matrix
-    return diags(diag_val, offset, shape=(n_k_c, n_k), format="csr")
+    return diags_array(diag_val, offsets=offset, shape=(n_k_c, n_k), format="csr")
 
 
 def get_c_matrix(kernel, grid, i_bounds=None, thresh=1e-5):
@@ -1390,8 +1390,8 @@ def _finite_diff(x):
         the result is the same as ``np.diff(x)``
     """
     n_x = len(x)
-    diff_matrix = diags([-1.0], shape=(n_x - 1, n_x))
-    diff_matrix += diags([1.0], 1, shape=(n_x - 1, n_x))
+    diff_matrix = diags_array([-1.0], shape=(n_x - 1, n_x))
+    diff_matrix += diags_array([1.0], offsets=1, shape=(n_x - 1, n_x))
     return diff_matrix
 
 
@@ -1418,7 +1418,7 @@ def finite_first_d(grid):
     d_grid = d_matrix.dot(grid)
 
     # First derivative operator
-    return diags(1.0 / d_grid).dot(d_matrix)
+    return diags_array(1.0 / d_grid).dot(d_matrix)
 
 
 def _curvature_finite(factors, log_reg2, log_chi2):
