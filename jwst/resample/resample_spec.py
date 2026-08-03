@@ -275,8 +275,10 @@ class ResampleSpec(ResampleImage):
         current slit.
 
         The spatial coordinates are set to a simple linear scaling by the
-        output pixel scale, centered on the central spatial index. The scaling value
-        is stored in the standard FITS WCS keyword (CDELTi).
+        output pixel scale. The scaling value is stored in the standard FITS WCS
+        keyword (CDELTi). The origin for the spatial scale (CRPIXi) is set to the
+        planned source location if available; the center of the cross-dispersion
+        axis if not.
 
         Parameters
         ----------
