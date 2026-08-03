@@ -4,7 +4,6 @@ import warnings
 
 import numpy as np
 from astropy.modeling.mappings import Mapping
-from scipy import sparse
 from scipy.interpolate import interp1d
 
 from jwst.lib.winclip import get_clipped_pixels
@@ -205,9 +204,9 @@ def _build_dispersed_image_of_source(x, y, flux, bounds):
         2-D dispersed image of the source
     """
     minx, maxx, miny, maxy = bounds
-    return sparse.coo_matrix(
-        (flux, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)
-    ).toarray()
+    img = np.zeros((maxy - miny + 1, maxx - minx + 1), dtype=flux.dtype)
+    np.add.at(img, (y - miny, x - minx), flux)
+    return img
 
 
 def _replace_nans(fluxes):
