@@ -183,6 +183,28 @@ for each band in which a correction has been determined. If the time-dependent
 coefficients are present in the reference file for a given band, the ``photom`` step will
 apply the correction to the exposure being processed.
 
+WFSS
+----
+
+For WFSS modes, the photom step uses a tabular PHOTOM reference file with a table of values for
+each filter/grism/order combination. The table contains PHOTMJSR and RELRESPONSE columns,
+which correspond to photometric conversion factors and scalar relative responses, respectively,
+as a function of wavelength (WAVELENGTH column). The photometric
+calibration differs from the fixed slit case because the wavelength dispersion
+per pixel varies slightly across the field of view. The tabulated values are
+given per inverse wavelength interval. The photometric calibration values
+from the reference file are divided by the dispersion in microns/pixel
+for the spectrum derived from the wavelength solution, and then interpolated
+to the individual pixel wavelengths. These values are applied to the count
+rate spectrum to produce a spectrum in MJy/sr.
+
+.. note::
+   The units of the PHOTMJSR column differ between NIRISS, NIRCam, and MIRI. For MIRI and NIRISS
+   the unit is micron MJy s / (DN sr), while for NIRCam the unit is Angstrom MJy s / (DN sr). These
+   units are encoded in the reference file metadata, and the pipeline code handles the
+   unit conversions needed to process all modes into the appropriate output units.
+ 
+
 Time-Dependent Corrections
 --------------------------
 
@@ -230,25 +252,3 @@ For a power law correction:
 where *year1value* (relative throughput one year after t0), *t0* (reference day in MJD),
 *tsoft* (softening parameter for the initial decline), and *alpha* (loss coefficient)
 are stored as coefficients in the TIMECOEFF_POWERLAW extension.
-
-WFSS Modes
-----------
-
-For WFSS modes, the photom step uses a tabular PHOTOM reference file with a table of values for
-each filter/grism/order combination. The table contains PHOTMJSR and RELRESPONSE columns,
-which correspond to photometric conversion factors and scalar relative responses, respectively,
-as a function of wavelength (WAVELENGTH column). The photometric
-calibration differs from the fixed slit case because the wavelength dispersion
-per pixel varies slightly across the field of view. The tabulated values are
-given per inverse wavelength interval. The photometric calibration values
-from the reference file are divided by the dispersion in microns/pixel
-for the spectrum derived from the wavelength solution, and then interpolated
-to the individual pixel wavelengths. These values are applied to the count
-rate spectrum to produce a spectrum in MJy/Sr.
-
-.. note::
-   The units of the PHOTMJSR column differ between NIRISS, NIRCam, and MIRI. For MIRI and NIRISS
-   the unit is micron MJy s / (DN sr), while for NIRCam the unit is Angstrom MJy s / (DN sr). These
-   units are encoded in the reference file metadata, and the pipeline code handles the
-   unit conversions needed to process all modes into the appropriate output units.
- 
