@@ -112,6 +112,9 @@ class SlitCubeBuildStep(Step):
 
         log.info(f"Coordinate system to use: {self.coord_system}")
 
+
+        self.slit_frac = 1.0 # change this later to be an input parameter
+        
         # Read in the input data and make a copy as needed.
         input_model = self.prepare_output(input_data)
 
@@ -157,6 +160,7 @@ class SlitCubeBuildStep(Step):
             "cube_pa": self.cube_pa,
             "nspax_x": self.nspax_x,
             "nspax_y": self.nspax_y,
+            "slit_frac": self.slit_frac,
             "wavemin": self.wavemin,
             "wavemax": self.wavemax,
             "wavetable": self.wavetable,
@@ -192,17 +196,17 @@ class SlitCubeBuildStep(Step):
 
         msacube.set_slit_wcs(corner_ra, corner_dec, final_lam_min, final_lam_max, rot_angle)
 
-        print("Mapped coordinate system")
-        print("naxis, cdelt, crpix, crval")
-        print("Axis 1 ", self.naxis1, self.cdelt1, self.crpix1, self.crval1)
-        print("Axis 2", self.naxis2, self.cdelt2, self.crpix2, self.crval2)
-        print("Axis 3", self.naxis3, self.cdelt3, self.crpix3, self.crval3)
-        print("crval1 crval2", self.crval1, self.crval2)
-        print("crpix1 crpix2", self.crpix1, self.crpix2)
-        print("cdelt1 cdelt2", self.cdelt1, self.cdelt2)
+        #print("Mapped coordinate system")
+        #print("naxis, cdelt, crpix, crval")
+        #print("Axis 1 ", self.naxis1, self.cdelt1, self.crpix1, self.crval1)
+        #print("Axis 2", self.naxis2, self.cdelt2, self.crpix2, self.crval2)
+        #print("Axis 3", self.naxis3, self.cdelt3, self.crpix3, self.crval3)
+        #print("crval1 crval2", self.crval1, self.crval2)
+        #print("crpix1 crpix2", self.crpix1, self.crpix2)
+        #print("cdelt1 cdelt2", self.cdelt1, self.cdelt2)
 
-        print_geometry()
-
+        msacube.print_geometry()
+        
         status = 0
         result, status = msacube.build_msacube()
 
