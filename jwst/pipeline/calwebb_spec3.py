@@ -314,7 +314,7 @@ class Spec3Pipeline(Pipeline):
             self._populate_wfss_sregion(x1d_output, source_models)
 
             if self.save_results:
-                x1d_filename = output_file + "_x1d.fits"
+                x1d_filename = self.make_output_path(basepath=output_file, ext="fits", suffix="x1d")
                 log.info("Saving the final x1d product as %s", x1d_filename)
                 x1d_output.save(x1d_filename)
 
