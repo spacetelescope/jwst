@@ -232,6 +232,7 @@ filterwarnings = [
     "ignore:Calling .*lu_.* with arguments of dtype=float:DeprecationWarning",
     # https://github.com/spacetelescope/jwst/issues/10744
     "ignore:.*coo_matrix.* is being replaced:DeprecationWarning",
+    "ignore:.*csc_matrix.* is being replaced:DeprecationWarning",
     "ignore:.*csr_matrix.* is being replaced:DeprecationWarning",
     "ignore:.*dia_matrix.* is being replaced:DeprecationWarning",
     "ignore:.*diags.* is being replaced:DeprecationWarning",
