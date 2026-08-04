@@ -6,11 +6,11 @@ The following arguments apply to **all modes** unless otherwise specified:
 
 ``--slit_names`` (list of strings or integers, default=None)
   Names of specific slits to extract.
-  If None (default), all known slits for the instrument mode to be extracted.
+  If None (default), all known slits for the instrument mode will be extracted.
 
 ``--source_ids`` (list of strings or integers, default=None)
   Source IDs of specific slits to extract.
-  If None (default), all known slits for the instrument to be extracted.
+  If None (default), all known slits for the instrument will be extracted.
   For WFSS data, the selected source IDs correspond to the ``label`` column of the source catalog.
   ``slit_names`` and ``source_ids`` can be used at the same time, and duplicates will be filtered out.
   If either argument is specified, but no valid slits are identified, an error will be
@@ -27,7 +27,7 @@ The following arguments apply to **TSO mode** only:
 ``--tsgrism_extract_height`` (integer, default=None)
   The cross-dispersion extraction size, in units of pixels.
 
-The following arguments apply to **WFSS mode** only:
+The following arguments apply to **WFSS modes** only:
 
 ``--source_ra`` (list of floats, default=None)
   The RA coordinates (in decimal degrees) of specific sources to extract from
@@ -41,7 +41,7 @@ The following arguments apply to **WFSS mode** only:
   ``source_ids`` can be used at the same time as ``source_ra`` and ``source_dec``;
   duplicates will be filtered out.
 
-``--source_max_sep`` (float, default=2)
+``--source_max_sep`` (float, default=2.0)
   The maximum separation in arcseconds within which ``source_ra`` and ``source_dec``
   will be matched to sources in the catalog. If no source is found within this radius, a warning
   will be emitted and no source will be extracted corresponding to that RA, Dec pair.

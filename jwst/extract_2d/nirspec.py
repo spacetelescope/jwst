@@ -370,7 +370,7 @@ def extract_slit(input_model, slit):
 
 
 class DitherMetadataError(Exception):
-    """Slit object does not have the required dither attribute, or the x and y offsets are not numeric."""  # noqa: E501
+    """Slit object does not have the required dither attribute, or the offsets are not numeric."""
 
     pass
 

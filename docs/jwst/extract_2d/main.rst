@@ -42,19 +42,18 @@ Algorithm
 This step is currently applied only to:
 
 * :ref:`extract2d_nirspec_fs_mos`
-* NIRSpec TSO (BrightObj)
 * :ref:`extract2d_nircam_miri_niriss_wfss`
 * :ref:`extract2d_tsgrism_non_dhs` and :ref:`extract2d_tsgrism_dhs`
 
 .. _extract2d_nirspec_fs_mos:
 
-NIRSpec Fixed Slit and MOS
-++++++++++++++++++++++++++
+NIRSpec FS, MOS, and TSO (BrightObj)
+++++++++++++++++++++++++++++++++++++
 
 If the step parameter ``slit_name`` is left unspecified, the default behavior is
 to extract all slits that project onto the detector. A single slit may be extracted by
 specifying the slit name with the ``slit_name`` argument. In the case of a NIRSpec
-fixed-slit exposure the allowed slit names are: "S1600A1", "S200A1", "S200A2", "S200B1"
+fixed-slit (FS) exposure the allowed slit names are: "S1600A1", "S200A1", "S200A2", "S200B1"
 and "S400A1". For NIRSpec MOS exposures, the slit name is the slitlet number from the
 MSA metadata file, corresponding to the value of the "SLTNAME" keyword in FITS products,
 and it has to be provided as a string, e.g., ``slit_name='60'``.

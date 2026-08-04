@@ -14,15 +14,15 @@ class Extract2dStep(Step):
     spec = """
         slit_names = force_list(default=None)   # slits to be extracted
         source_ids = force_list(default=None)     # source ids to be extracted
+        extract_orders = int_list(default=None)  # list of orders to extract
+        tsgrism_extract_height =  integer(default=None)  # extraction height in pixels, TSGRISM mode
         source_ra = force_list(default=None)  # source RAs to be extracted, WFSS only
         source_dec = force_list(default=None)  # source DECs to be extracted, WFSS only
         source_max_sep = float(default=2.0)  # maximum separation in arcseconds around source_ra, source_dec, WFSS only
-        extract_orders = int_list(default=None)  # list of orders to extract
         grism_objects = list(default=None)  # list of grism objects to use
-        tsgrism_extract_height =  integer(default=None)  # extraction height in pixels, TSGRISM mode
-        wfss_extract_half_height =  integer(default=5)  # extraction half height in pixels, WFSS mode
-        wfss_mmag_extract = float(default=None)  # minimum abmag to extract, WFSS mode
-        wfss_nbright = integer(default=1000)  # number of brightest objects to extract, WFSS mode
+        wfss_extract_half_height =  integer(default=5)  # extraction half height in pixels, WFSS modes
+        wfss_mmag_extract = float(default=None)  # minimum abmag to extract, WFSS modes
+        wfss_nbright = integer(default=1000)  # number of brightest objects to extract, WFSS modes
     """  # noqa: E501
 
     reference_file_types = ["wavelengthrange"]

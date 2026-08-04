@@ -200,6 +200,7 @@ def extract_tso_object(
     in the WFSS modes are overkill. Instead, similar structures are created
     during the extract2d process and then directly used.
 
+    For more information on the NRC_TSGRISM mode, see:
     https://jwst-docs.stsci.edu/jwst-near-infrared-camera/nircam-observing-modes/nircam-time-series-observations/nircam-grism-time-series
     """
     # Check for reference files
@@ -557,18 +558,18 @@ def extract_grism_objects(
         This parameter is only used for WFSS modes.
 
     mmag_extract : float
-        The minimum magnitude extraction cutoff; Sources fainter than this
+        The minimum magnitude extraction cutoff. Sources fainter than this
         will not be extracted.
 
     compute_wavelength : bool
         Compute a wavelength array for the datamodel.
 
     wfss_extract_half_height : int
-        Cross-dispersion extraction half height in pixels (WFSS mode only).
+        Cross-dispersion extraction half height in pixels (WFSS modes only).
         Overwrites the computed extraction height.
 
     nbright : int
-        Number of brightest objects to extract (WFSS mode only).
+        Number of brightest objects to extract (WFSS modes only).
 
     Returns
     -------
@@ -577,7 +578,7 @@ def extract_grism_objects(
 
     Notes
     -----
-    This method supports NRC_WFSS and NIS_WFSS only.
+    This method supports WFSS modes only.
 
     `~stdatamodels.jwst.transforms.GrismObject`
     is a named tuple which contains distilled
@@ -592,9 +593,9 @@ def extract_grism_objects(
     by both MMAG_EXTRACT and NBRIGHT. Sources with magnitudes fainter than the
     extraction cutoff (MMAG_EXTRACT) will not be extracted, but are
     accounted for when computing the spectral contamination and background
-    estimates; The default value is 99.
+    estimates; the default value is 99.
     NBRIGHT further limits the list to the NBRIGHT brightest objects;
-    The default value is 999.
+    the default value is 999.
 
     The sensitivity information from the original aXe-style configuration
     file needs to be modified by the passband of the filter used for
@@ -604,8 +605,8 @@ def extract_grism_objects(
     grism WAVELENGTHRANGE reference file.
 
     1. Convert the source catalog from the reference frame of the
-       uberimage to that of the dispersed image.  For the Vanilla
-       Pipeline, we assume that the pointing information in the file
+       uber-image to that of the dispersed image.
+       We assume that the pointing information in the file
        headers is sufficient.  This will be strictly true if all images
        were obtained in a single visit (same guide stars).
 
