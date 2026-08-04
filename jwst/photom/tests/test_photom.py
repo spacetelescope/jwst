@@ -1902,7 +1902,7 @@ def test_nircam_spec():
         dispersion_array = np.gradient(wl)
         # Convert dispersion in micron/pixel to Angstrom/pixel
         disp = dispersion_array * 10000.0
-        rel_resp = np.interp(wl, wavelength, relresponse, left=0.0, right=0.0)
+        rel_resp = np.interp(wl, wavelength, relresponse, left=np.nan, right=np.nan)
         compare = photmjsr * rel_resp / disp
         # Compare the values at the center pixel.
         ratio = output["FLUX"] / input_data["FLUX"]
