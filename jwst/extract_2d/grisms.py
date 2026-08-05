@@ -555,7 +555,6 @@ def extract_grism_objects(
         Radius in arcseconds within which ``source_ra`` and ``source_dec`` will be matched
         to sources in the catalog. If no source is found within this radius, a warning
         will be emitted and no source will be extracted corresponding to that RA, Dec pair.
-        This parameter is only used for WFSS modes.
 
     mmag_extract : float
         The minimum magnitude extraction cutoff. Sources fainter than this
@@ -565,11 +564,11 @@ def extract_grism_objects(
         Compute a wavelength array for the datamodel.
 
     wfss_extract_half_height : int
-        Cross-dispersion extraction half height in pixels (WFSS modes only).
+        Cross-dispersion extraction half height in pixels.
         Overwrites the computed extraction height.
 
     nbright : int
-        Number of brightest objects to extract (WFSS modes only).
+        Number of brightest objects to extract.
 
     Returns
     -------
@@ -846,7 +845,7 @@ def compute_dispersion(wcs):
     """
     Compute the pixel dispersion.
 
-    Make a model for the pixel dispersion from the ```grismconf`` specs.
+    Make a model for the pixel dispersion from the ``grismconf`` specs.
 
     Parameters
     ----------

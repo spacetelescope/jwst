@@ -14,29 +14,6 @@ are stored as one or more ``slit`` objects in an output
 `~stdatamodels.jwst.datamodels.MultiSlitModel`
 and saved as separate tuples of extensions in the output FITS file.
 
-Assumptions
------------
-This step uses the ``bounding_box`` attribute of the WCS stored in the data model,
-which is populated by the :ref:`assign_wcs <assign_wcs_step>` step; hence that step
-must be applied to the science exposure before running this step.
-
-For NIRCam, MIRI, and NIRISS WFSS modes, no ``bounding_box`` is attached to the data
-model by the :ref:`assign_wcs <assign_wcs_step>` step.
-This is to keep the WCS flexible enough to be used with any
-source catalog or similar list of objects that may be associated with the dispersed image.
-Instead, there
-is a helper method that is used to calculate the bounding boxes that contain
-the spectral trace for each object. One box is made for each spectral order of
-each object. In regular, automated processing, the ``extract_2d`` step uses the
-source catalog specified in the input
-model's meta information to create the list of objects and their corresponding
-bounding box. This list is used to make the 2D cutouts from the dispersed image.
-
-NIRCam TSGRISM exposures do not use a source catalog, so the step instead relies on the
-assumption that the source of interest is located at the aperture reference point
-and centers the extraction there.
-More details are given in :ref:`extract2d_tsgrism_non_dhs` and :ref:`extract2d_tsgrism_dhs`.
-
 Algorithm
 ---------
 This step is currently applied only to:
@@ -87,23 +64,35 @@ estimate the fractional location of the source within the given slit.
 Note that this computation can only be performed for the primary slit
 in the exposure, which is given in the "FXD_SLIT" keyword. The positions
 of sources in any additional slits cannot be estimated and therefore
-are set to 0.0 (the center of the slit).\ :sup:`1`
+are set to 0.0 (the center of the slit). [#extract2d_f1]_
 
-:sup:`1`\ Note that fixed slits that are planned as part of a combined
-MOS and FS observation do have *a priori* estimates of their source
-locations, via the :ref:`MSA metadata file <msa_metadata>`. When available,
-these source locations are directly used, instead of recomputing the source
-position from the WCS information.
+.. [#extract2d_f1] Note that fixed slits that are planned as part of a combined
+  MOS and FS observation do have *a priori* estimates of their source
+  locations, via the :ref:`MSA metadata file <msa_metadata>`. When available,
+  these source locations are directly used, instead of recomputing the source
+  position from the WCS information.
 
 .. _extract2d_nircam_miri_niriss_wfss:
 
 NIRCam, MIRI, and NIRISS WFSS
 +++++++++++++++++++++++++++++
 
+For WFSS modes, no ``bounding_box`` is attached to the data
+model by the :ref:`assign_wcs <assign_wcs_step>` step.
+This is to keep the WCS flexible enough to be used with any
+source catalog or similar list of objects that may be associated with the dispersed image.
+Instead, there
+is a helper method that is used to calculate the bounding boxes that contain
+the spectral trace for each object. One box is made for each spectral order of
+each object. In regular, automated processing, the ``extract_2d`` step uses the
+source catalog specified in the input
+model's meta information to create the list of objects and their corresponding
+bounding box. This list is used to make the 2D cutouts from the dispersed image.
+
 During normal, automated processing of WFSS grism images, the
 step parameter ``grism_objects`` is left unspecified, in which case the ``extract_2d``
 step uses the source catalog that is specified in the input model's meta information,
-``input_model.meta.source_catalog.filename`` ("SCATFILE" keyword) to define the
+``input_model.meta.source_catalog`` ("SCATFILE" keyword) to define the
 list of objects to be extracted.
 Otherwise, a user can submit a list of `~stdatamodels.jwst.transforms.GrismObject` that contains information
 about the objects that they want extracted.
@@ -257,9 +246,9 @@ defined in that list::
     result = step.call(input_model, grism_objects=grism_objects)
 
 ``result`` is a `~stdatamodels.jwst.datamodels.MultiSlitModel`,
-containing one `~stdatamodels.jwst.datamodels.SlitModel`
-instance for each extracted object, which includes metadata that identify
-each object and the actual extracted data arrays, e.g.:
+with its ``slits`` attribute containing one spectrum for each
+extracted object including metadata that identify
+each source ID and the actual extracted data arrays, e.g.:
 
 .. doctest-skip::
 
