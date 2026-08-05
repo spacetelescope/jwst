@@ -11,7 +11,7 @@ ATOCA:
 import logging
 
 import numpy as np
-from scipy.sparse import csr_matrix, diags, issparse
+from scipy.sparse import csr_array, diags_array, issparse
 
 from jwst.extract_1d.soss_extract import atoca_utils
 
@@ -526,14 +526,14 @@ class ExtractionEngine:
             right = self.w_t_wave_c[i_order]
 
             # Apply new p_n
-            pixel_mapping = diags(trace_profile_n).dot(right)
+            pixel_mapping = diags_array(trace_profile_n).dot(right)
 
         else:
             # First (T * lam) for the convolve axis (n_k_c)
             product = (throughput_n * wave_grid)[slice(*i_bnds)]
 
             # then convolution
-            product = diags(product).dot(kernel_n)
+            product = diags_array(product).dot(kernel_n)
 
             # then weights
             product = weights_n.dot(product)
@@ -542,7 +542,7 @@ class ExtractionEngine:
             self._set_w_t_wave_c(i_order, product)
 
             # Then spatial profile
-            pixel_mapping = diags(trace_profile_n).dot(product)
+            pixel_mapping = diags_array(trace_profile_n).dot(product)
 
         # Save new pixel mapping matrix.
         self.pixel_mapping[i_order] = pixel_mapping
@@ -562,7 +562,7 @@ class ExtractionEngine:
 
         Returns
         -------
-        `scipy.sparse.csr_matrix`, array[float]
+        `scipy.sparse.csr_array`, array[float]
             ``A, b`` from ``Ax = b`` being the system to solve.
         """
         # Get the detector model
@@ -599,7 +599,7 @@ class ExtractionEngine:
         # Build matrix B
         # Initiate with empty matrix
         n_i = (~self.mask).sum()  # n good pixels
-        b_matrix = csr_matrix((n_i, self.n_wavepoints))
+        b_matrix = csr_array((n_i, self.n_wavepoints))
 
         # Sum over orders
         for i_order in range(self.n_orders):
@@ -610,7 +610,8 @@ class ExtractionEngine:
         # Take only valid pixels and apply `error` on data
         data = data[~self.mask] / error[~self.mask]
 
-        return b_matrix, csr_matrix(data)
+        # Keep data 2-D (row vector)
+        return b_matrix, csr_array(np.atleast_2d(data))
 
     @property
     def tikho_mat(self):  # numpydoc ignore=RT01
