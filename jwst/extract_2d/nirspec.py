@@ -1,6 +1,5 @@
-#
-#  Module for 2d extraction of Nirspec fixed slits or MOS slitlets.
-#
+"""Functions for 2D extraction of NIRSpec fixed slits or MOS slitlets."""
+
 import logging
 
 import numpy as np
@@ -37,16 +36,16 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
                   `~stdatamodels.jwst.datamodels.CubeModel`
         Input data model. May be updated in place with a "SKIPPED" status,
         if a new model cannot be created.
-    slit_names : list containing strings or ints
+    slit_names : list of str or int
         Slit names.
-    source_ids : list containing strings or ints
-        Source ids.
+    source_ids : list of str or int
+        Source IDs.
 
     Returns
     -------
-    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`, or
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel` or \
                    `~stdatamodels.jwst.datamodels.SlitModel`
-        DataModel containing extracted slit(s)
+        Data model containing extracted slit(s).
     """
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -144,12 +143,12 @@ def select_slits(open_slits, slit_names, source_ids):
     slit_names : list
         List of slit names to process
     source_ids : list
-        List of source ids to process
+        List of source IDs to process
 
     Returns
     -------
     selected_open_slits : list
-        List of slits selected by slit_name or source_id
+        List of slits selected by ``slit_names`` or ``source_ids``
 
     Raises
     ------
@@ -201,16 +200,17 @@ def process_slit(input_model, slit):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
-        Input data model. The ``CubeModel`` is used only for TSO data, i.e.
-        ``NRS_BRIGHTOBJ`` exposure or internal lamp exposures with lamp_mode
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
+        Input data model. The cube model is used only for TSO data, i.e.,
+        ``NRS_BRIGHTOBJ`` exposure or internal lamp exposures with ``lamp_mode``
         set to ``BRIGHTOBJ``.
     slit : `~stdatamodels.jwst.transforms.models.Slit`
         A slit object.
 
     Returns
     -------
-    new_model : `~jwst.datamodels.SlitModel`
+    new_model : `~stdatamodels.jwst.datamodels.SlitModel`
         The new data model for a slit.
     xlo, xhi, ylo, yhi : float
         The corners of the extracted slit in pixel space.
@@ -229,10 +229,10 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.SlitModel`
+    output_model : `~stdatamodels.jwst.datamodels.SlitModel`
         The output model representing a slit.
-    slit : namedtuple
-        A `~stdatamodels.jwst.transforms.models.Slit` object representing a slit.
+    slit : `~stdatamodels.jwst.transforms.models.Slit`
+        An object representing a slit.
     xlo, xhi, ylo, yhi : float
         Indices into the data array where extraction should be done.
         These are converted to "pixel indices" - the center of a pixel.
@@ -278,17 +278,17 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
 
 def offset_wcs(slit_wcs):
     """
-    Prepend a Shift transform to the slit WCS to account for subarrays.
+    Prepend a shift transform to the slit WCS to account for subarrays.
 
     Parameters
     ----------
     slit_wcs : `~gwcs.wcs.WCS`
-        The WCS for this  slit.
+        The WCS for this slit.
 
     Returns
     -------
-    xlo, xhi, ylo, yhi : tuple of floats
-        Indices of the bounding box of the WCS
+    xlo, xhi, ylo, yhi : tuple of float
+        Indices of the bounding box of the WCS.
     """
     xlo, xhi = to_index(slit_wcs.bounding_box[0])
     ylo, yhi = to_index(slit_wcs.bounding_box[1])
@@ -303,18 +303,19 @@ def offset_wcs(slit_wcs):
 
 def extract_slit(input_model, slit):
     """
-    Extract a slit from a full frame image.
+    Extract a slit from a full-frame image.
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.image.ImageModel` or `~jwst.datamodels.cube.CubeModel`
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         The input model.
     slit : `~stdatamodels.jwst.transforms.models.Slit`
         A slit object.
 
     Returns
     -------
-    new_model : `~jwst.datamodels.SlitModel`
+    new_model : `~stdatamodels.jwst.datamodels.SlitModel`
         The slit data model with WCS attached to it.
     """
     slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
@@ -369,12 +370,7 @@ def extract_slit(input_model, slit):
 
 
 class DitherMetadataError(Exception):
-    """
-    Handle DitherMetadataError exception.
-
-    This exception is raised if a Slit object doesn't have the required
-    dither attribute, or the x and y offsets aren't numeric.
-    """
+    """Slit object does not have the required dither attribute, or the offsets are not numeric."""
 
     pass
 
@@ -385,7 +381,7 @@ def get_source_xpos(slit):
 
     Parameters
     ----------
-    slit : `~jwst.datamodels.SlitModel`
+    slit : `~stdatamodels.jwst.datamodels.SlitModel`
         The slit object.
 
     Returns
