@@ -1607,7 +1607,7 @@ def create_extraction(
         f_var_units = "DN^2 / s^2"
         sb_units = "DN/s"
         sb_var_units = "DN^2 / s^2"
-        if exp_type not in WFSS_EXPTYPES:
+        if exp_type not in WFSS_EXPTYPES + ["NRC_TSGRISM"]:
             log.warning("The photom step has not been run.")
 
     # Get the source type for the data

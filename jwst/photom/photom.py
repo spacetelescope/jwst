@@ -559,14 +559,8 @@ class DataSet:
         correction_table = time_dependence.get_correction_table(ftab, mid_time)
 
         # Handle WFSS data separately from regular imaging
-        if self.exptype == "NRC_WFSS":
+        if self.exptype in ["NRC_WFSS", "NRC_TSGRISM"]:
             self.calc_wfss(ftab, correction_table, ["filter", "pupil", "order"])
-        elif self.exptype == "NRC_TSGRISM":
-            fields_to_match = {"filter": self.filter, "pupil": self.pupil, "order": self.order}
-            row = find_row(ftab.phot_table, fields_to_match)
-            if row is None:
-                return
-            self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
         else:
             # check for subarray in the phot_table: older files do not have it
             fields_to_match = {"filter": self.filter, "pupil": self.pupil}
@@ -697,7 +691,8 @@ class DataSet:
         match_fields : list of str
             List of field names to use for matching rows in the photom reference table.
         """
-        if not isinstance(self.input, datamodels.WFSSMultiSpecModel):
+        if not isinstance(self.input, datamodels.WFSSMultiSpecModel | datamodels.TSOMultiSpecModel):
+            # TSOMultiSpecModel is expected for NIRCam DHS
             raise DataModelTypeError(
                 f"Unexpected input data model type for WFSS: {str(self.input)}"
             )
@@ -985,7 +980,7 @@ class DataSet:
             # Make sure output model has consistent NaN and DO_NOT_USE values
             match_nans_and_flags(slit)
 
-        elif isinstance(self.input, datamodels.TSOMultiSpecModel):
+        elif isinstance(self.input, datamodels.TSOMultiSpecModel) and self.exptype != "NRC_TSGRISM":
             # This block does not address SB columns - they are never populated for SOSS.
             # Variance columns are also not currently populated for SOSS: they are
             # zero-filled. Conversions are applied here anyway in case variances are
@@ -1018,7 +1013,7 @@ class DataSet:
             spec.spec_table.columns["BKGD_VAR_RNOISE"].unit = flux_squared_unit
             spec.spec_table.columns["BKGD_VAR_FLAT"].unit = flux_squared_unit
 
-        elif isinstance(self.input, datamodels.WFSSMultiSpecModel):
+        elif isinstance(self.input, datamodels.WFSSMultiSpecModel) or self.exptype == "NRC_TSGRISM":
             spec = self.input.spec[self.specnum]
 
             # npixels should be set to 0 where conversion is NaN but wavelengths are not NaN
