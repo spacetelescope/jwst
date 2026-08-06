@@ -38,6 +38,7 @@ __all__ = [
     "MSAFileError",
     "NoDataOnDetectorError",
     "calc_rotation_matrix",
+    "create_grism_bbox",
     "wrap_ra",
     "update_fits_wcsinfo",
     "is_sky_like",
