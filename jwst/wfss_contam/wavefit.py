@@ -8,24 +8,25 @@ log = logging.getLogger(__name__)
 
 __all__ = [
     "apply_basis_coeffs",
-    "fit_slit_by_basis_images",
+    "fit_cutout_by_basis_images",
+    "SpectralFitError",
 ]
 
 
-class SlitFitError(Exception):
+class SpectralFitError(Exception):
     """Raise when spectral fitting fails."""
 
     pass
 
 
-def _get_basis_images(simul_slit):
+def _get_basis_images(simul_cutout):
     """
     Collect the flat simulated image and all ``fluxmodel_N`` polynomial basis images.
 
     Parameters
     ----------
-    simul_slit : `~stdatamodels.jwst.datamodels.SlitModel`
-        Simulated slit with attributes ``data`` (the constant/flat term) and optional
+    simul_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
+        Simulated cutout with attributes ``data`` (the constant/flat term) and optional
         ``fluxmodel_1``, ``fluxmodel_2``, ... attributes for higher-degree terms.
 
     Returns
@@ -33,10 +34,10 @@ def _get_basis_images(simul_slit):
     basis : list of ndarray
         ``[data, fluxmodel_1, fluxmodel_2, ...]`` as numpy arrays.
     """
-    basis = [np.asarray(simul_slit.data)]
+    basis = [np.asarray(simul_cutout.data)]
     k = 1
     while True:
-        mc = getattr(simul_slit, f"fluxmodel_{k}", None)
+        mc = getattr(simul_cutout, f"fluxmodel_{k}", None)
         if mc is None:
             break
         basis.append(np.asarray(mc))
@@ -44,13 +45,15 @@ def _get_basis_images(simul_slit):
     return basis
 
 
-def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0, rejection_threshold=0.1):
+def fit_cutout_by_basis_images(
+    observed_cutout, simul_cutout, l2_alpha=0.0, rejection_threshold=0.1
+):
     """
-    Fit a linear combination of dispersed basis images to the observed slit.
+    Fit a linear combination of dispersed basis images to the observed source cutout.
 
-    The constant (degree-0) term is ``simul_slit.data`` (the flat-spectrum simulation).
+    The constant (degree-0) term is ``simul_cutout.data`` (the flat-spectrum simulation).
     Higher-degree terms are taken from the ``fluxmodel_1``, ``fluxmodel_2``, ...
-    attributes of ``simul_slit``.  These are the grism-frame images produced by
+    attributes of ``simul_cutout``.  These are the grism-frame images produced by
     passing polynomial flux models through ``disperse()``.
 
     The fit solves::
@@ -63,10 +66,10 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0, rejection_
 
     Parameters
     ----------
-    observed_slit : `~stdatamodels.jwst.datamodels.SlitModel`
+    observed_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
         Observed 2-D spectral cutout.
-    simul_slit : `~stdatamodels.jwst.datamodels.SlitModel`
-        Simulated slit with ``data`` and optional ``fluxmodel_N`` attributes.
+    simul_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
+        Simulated cutout with ``data`` and optional ``fluxmodel_N`` attributes.
     l2_alpha : float, optional
         L2 regularisation strength.  Added to the diagonal of the weighted
         normal-equation matrix as ``alpha * I`` before solving, which penalizes
@@ -89,27 +92,27 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0, rejection_
     SlitFitError
         If there are fewer valid pixels than basis terms.
     """
-    basis = _get_basis_images(simul_slit)
-    obs_data = np.asarray(observed_slit.data)
+    basis = _get_basis_images(simul_cutout)
+    obs_data = np.asarray(observed_cutout.data)
 
     mask = np.isfinite(obs_data) & np.isfinite(basis[0]) & (basis[0] != 0)
-    if getattr(observed_slit, "dq", None) is not None:
-        mask &= (np.asarray(observed_slit.dq) & 1) == 0
+    if getattr(observed_cutout, "dq", None) is not None:
+        mask &= (np.asarray(observed_cutout.dq) & 1) == 0
 
     n_valid = int(mask.sum())
     n_terms = len(basis)
     if n_valid < n_terms:
-        raise SlitFitError(
+        raise SpectralFitError(
             f"Only {n_valid} valid pixel(s) available for a {n_terms}-term linear fit "
             f"(need at least {n_terms})."
         )
 
     # Build inverse-variance weights from the error array.
-    err_arr = getattr(observed_slit, "err", None)
+    err_arr = getattr(observed_cutout, "err", None)
     if err_arr is not None:
         is_finite_err = np.isfinite(err_arr) & (err_arr > 0)
         if not np.any(is_finite_err & mask):
-            raise SlitFitError(
+            raise SpectralFitError(
                 "No valid pixels have finite positive error values; cannot compute fit weights."
             )
         with np.errstate(divide="ignore", invalid="ignore"):
@@ -139,8 +142,8 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0, rejection_
         log.debug(f"Fitted constant term c_0={coeffs[0]:.3g} is far from 1; rejecting fit.")
         return None
     log.debug(
-        f"source_id={observed_slit.source_id} "
-        f"order={observed_slit.meta.wcsinfo.spectral_order} "
+        f"source_id={observed_cutout.source_id} "
+        f"order={observed_cutout.meta.wcsinfo.spectral_order} "
         f"valid_pixels/total={n_valid}/{n_total} "
         # f"cond={cond:.3g} " # condition number of weighted design matrix
         f"coeffs={np.array2string(coeffs, precision=4, suppress_small=True)}"
@@ -148,21 +151,21 @@ def fit_slit_by_basis_images(observed_slit, simul_slit, l2_alpha=0.0, rejection_
     return coeffs
 
 
-def apply_basis_coeffs(simul_slit, coeffs):
+def apply_basis_coeffs(simul_cutout, coeffs):
     """
-    Reconstruct a fitted slit as a linear combination of dispersed basis images.
+    Reconstruct a fitted image as a linear combination of dispersed basis images.
 
     Parameters
     ----------
-    simul_slit : `~stdatamodels.jwst.datamodels.SlitModel`
-        Simulated slit with ``data`` and optional ``fluxmodel_N`` attributes.
+    simul_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
+        Simulated cutout with ``data`` and optional ``fluxmodel_N`` attributes.
     coeffs : ndarray
-        Coefficients from `fit_slit_by_basis_images`.
+        Coefficients from `fit_cutout_by_basis_images`.
 
     Returns
     -------
     ndarray
         Fitted slit image.
     """
-    basis = _get_basis_images(simul_slit)
+    basis = _get_basis_images(simul_cutout)
     return sum(c * b for c, b in zip(coeffs, basis, strict=True))

@@ -44,10 +44,11 @@ class WfssContamStep(Step):
 
         Returns
         -------
-        output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
-            A copy of the input data model, with contamination removed.
+        output_model : `~stdatamodels.jwst.datamodels.WFSSMultiCutoutModel`
+            A WFSS-specific datamodel containing contamination-corrected source cutouts,
+            simulated cutouts, and contamination estimates.
         """
-        output_model = self.prepare_output(input_data)
+        output_model = self.prepare_output(input_data, open_as_type=datamodels.WFSSMultiCutoutModel)
 
         # Get the wavelengthrange ref file
         waverange_ref = self.get_reference_file(output_model, "wavelengthrange")
@@ -64,7 +65,7 @@ class WfssContamStep(Step):
             datamodels.WavelengthrangeModel(waverange_ref) as waverange_model,
             datamodels.open(photom_ref) as photom_model,
         ):
-            result, simul, contam, simul_slits = wfss_contam.contam_corr(
+            result, simul = wfss_contam.contam_corr(
                 output_model,
                 waverange_model,
                 photom_model,
@@ -87,16 +88,7 @@ class WfssContamStep(Step):
         if self.save_simulated_image:
             simul_path = self.save_model(simul, suffix="simul", force=True)
             log.info(f'Full-frame simulated grism image saved to "{simul_path}"')
-            simul_slits_path = self.save_model(simul_slits, suffix="simul_slits", force=True)
-            log.info(f'Simulated slits saved to "{simul_slits_path}"')
-        if self.save_contam_images:
-            contam_path = self.save_model(contam, suffix="contam", force=True)
-            log.info(f'Contamination estimates saved to "{contam_path}"')
-
-        # Close intermediate files
         simul.close()
-        simul_slits.close()
-        contam.close()
 
         # If the step succeeded, it created a new output model, so
         # close the input if it was opened here.

@@ -111,7 +111,7 @@ class Observation:
     assumptions about the spectral properties of the direct image sources.
     When the `disperse_order` method is called one or more times, two products are created:
     the simulated dispersed image (``simulated_image`` attribute) and
-    the simulated `~stdatamodels.jwst.datamodels.MultiSlitModel` (``simulated_slits`` attribute).
+    the simulated source cutouts (``simulated_cutouts`` attribute).
     """
 
     def __init__(
@@ -193,8 +193,8 @@ class Observation:
         # Create lists of pixels labeled in segmentation map
         self._create_pixel_list()
 
-        # Initialize the output MultiSlitModel
-        self.simulated_slits = datamodels.MultiSlitModel()
+        # Initialize the output list of cutouts
+        self.simulated_cutouts = []
 
         # Initialize the simulated dispersed image
         self.simulated_image = np.zeros(self.dims, float)
@@ -320,7 +320,7 @@ class Observation:
         """
         Disperse the sources for a given spectral order, with multiprocessing.
 
-        The ``simulated_slits`` and ``simulated_image`` attributes are updated in place.
+        The ``simulated_cutouts`` and ``simulated_image`` attributes are updated in place.
 
         Parameters
         ----------
@@ -388,14 +388,14 @@ class Observation:
         for sid in source_results:
             bounds = source_results[sid]["bounds"]
             img = source_results[sid]["image"]
-            slit = _construct_slitmodel(img, bounds, sid, order)
+            slitmodel = _construct_slitmodel(img, bounds, sid, order)
             fluxmodels = source_results[sid].get("model_counts", [])
             for i, fm in enumerate(fluxmodels):
                 # use i+1 indexing because typically the first model will be the linear order
-                # for polynomial fitting. The 0th order is what's already in slit.data
-                setattr(slit, f"fluxmodel_{i + 1}", fm)
+                # for polynomial fitting. The 0th order is what's already in slitmodel.data
+                setattr(slitmodel, f"fluxmodel_{i + 1}", fm)
             self.simulated_image[bounds[2] : bounds[3] + 1, bounds[0] : bounds[1] + 1] += img
-            self.simulated_slits.slits.append(slit)
+            self.simulated_cutouts.append(slitmodel)
 
 
 def _aggregate_by_source(results, sid, source_results):
@@ -487,18 +487,18 @@ def _construct_slitmodel(
 
     Returns
     -------
-    slit : `jwst.datamodels.SlitModel`
-        Slit model containing the dispersed pixel values
+    `~stdatamodels.jwst.datamodels.SlitModel`
+        Simulated source cutout containing the dispersed pixel values
     """
     [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy] = bounds
-    slit = datamodels.SlitModel()
-    slit.source_id = sid
-    slit.name = f"{sid}"
-    slit.xstart = thisobj_minx + 1  # FITS pixels are 1-indexed, matching extract_2d convention
-    slit.xsize = thisobj_maxx - thisobj_minx + 1
-    slit.ystart = thisobj_miny + 1  # FITS pixels are 1-indexed, matching extract_2d convention
-    slit.ysize = thisobj_maxy - thisobj_miny + 1
-    slit.meta.wcsinfo.spectral_order = order
-    slit.data = img
+    slitmodel = datamodels.SlitModel()
+    slitmodel.source_id = sid
+    slitmodel.name = f"{sid}"
+    slitmodel.xstart = thisobj_minx + 1  # FITS pixels are 1-indexed, matching extract_2d convention
+    slitmodel.xsize = thisobj_maxx - thisobj_minx + 1
+    slitmodel.ystart = thisobj_miny + 1  # FITS pixels are 1-indexed, matching extract_2d convention
+    slitmodel.ysize = thisobj_maxy - thisobj_miny + 1
+    slitmodel.meta.wcsinfo.spectral_order = order
+    slitmodel.data = img
 
-    return slit
+    return slitmodel
