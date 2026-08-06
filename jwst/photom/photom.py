@@ -897,7 +897,7 @@ class DataSet:
                     )
                     slit.photom_point = conversion  # store the result
 
-                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS", "MIR_WFSS"]:
+                elif self.exptype in ["NRC_WFSS", "NRC_TSGRISM", "NIS_WFSS"]:
                     log.info("Including spectral dispersion in 2-d flux calibration")
                     conversion, no_cal = self.create_2d_conversion(
                         slit,
@@ -907,6 +907,17 @@ class DataSet:
                         relresps,
                         order,
                         include_dispersion=True,
+                    )
+                # MIRI WFSS does not use dispersion correction; see JP-4395
+                elif self.exptype in ["MIR_WFSS"]:
+                    conversion, no_cal = self.create_2d_conversion(
+                        slit,
+                        self.exptype,
+                        conversion,
+                        waves,
+                        relresps,
+                        order,
+                        include_dispersion=False,
                     )
 
                 else:
