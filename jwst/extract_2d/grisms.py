@@ -23,7 +23,6 @@ log = logging.getLogger(__name__)
 __all__ = [
     "extract_tso_object",
     "extract_grism_objects",
-    "clamp",
     "compute_dispersion",
     "compute_tso_wavelength_array",
     "compute_tso_offset_center",
@@ -693,13 +692,13 @@ def extract_grism_objects(
             # The bounding boxes here are also limited to the size of the detector
             # The check for boxes entirely off the detector is done in create_grism_bbox right now
             y, x = obj.order_bounding[order]
-            log.debug(f"YYY, {y}, {clamp(y[0], 0, input_model.meta.subarray.ysize)}")
 
             # limit the boxes to the detector
-            ymin = clamp(y[0], 0, input_model.meta.subarray.ysize)
-            ymax = clamp(y[1], 0, input_model.meta.subarray.ysize)
-            xmin = clamp(x[0], 0, input_model.meta.subarray.xsize)
-            xmax = clamp(x[1], 0, input_model.meta.subarray.xsize)
+            ymin = np.clip(y[0], 0, input_model.meta.subarray.ysize)
+            log.debug(f"YYY, {y}, {ymin}")
+            ymax = np.clip(y[1], 0, input_model.meta.subarray.ysize)
+            xmin = np.clip(x[0], 0, input_model.meta.subarray.xsize)
+            xmax = np.clip(x[1], 0, input_model.meta.subarray.xsize)
 
             # don't extract anything that ended up with zero dimensions in one axis
             # this means that it was identified as a partial order but only on one
@@ -818,27 +817,6 @@ def extract_grism_objects(
     # del new_slit
     log.info("Finished extractions")
     return output_model
-
-
-def clamp(value, minval, maxval):
-    """
-    Return the value clipped between given min and max values.
-
-    Parameters
-    ----------
-    value : float
-        The value to limit
-    minval : float
-        The minimal acceptable value
-    maxval : float
-        The maximum acceptable value
-
-    Returns
-    -------
-    value : float
-        The value that falls within the min-max range or the minimum limit
-    """
-    return max(minval, min(value, maxval))
 
 
 def compute_dispersion(wcs):
