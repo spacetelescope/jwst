@@ -224,7 +224,7 @@ def _validate_orders_against_transform(wcs, spec_orders):
     Parameters
     ----------
     wcs : gwcs.wcs.WCS
-        The input WFSSMultiCutoutModel's WCS object.
+        The input MultiSlitModel's WCS object.
     spec_orders : list[int]
         The list of requested spectral orders.
 
@@ -372,7 +372,7 @@ def _match_simulated_cutouts(output_model, obs):
 
     Parameters
     ----------
-    output_model : `~stdatamodels.jwst.datamodels.WFSSMultiCutoutModel`
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The observed cutouts to match against.
     obs : `~jwst.wfss_contam.observations.Observation`
         The observation object containing the dispersed simulated sources.
@@ -391,7 +391,7 @@ def _match_simulated_cutouts(output_model, obs):
 
     matched_flat_simuls = []
     good_idxs = []
-    for cutout in output_model.cutouts:
+    for cutout in output_model.slits:
         try:
             good_idx = _find_matching_simul_cutout(cutout, simul_sids, simul_orders)
             # Copy only the data arrays and metadata specifically needed by
@@ -502,7 +502,7 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
 
     Parameters
     ----------
-    output_model : `~stdatamodels.jwst.datamodels.WFSSMultiCutoutModel`
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The output model containing the observed spectral cutouts.
     per_source_simuls : list
         List of simulated spectra corresponding to each observed cutout.
@@ -518,7 +518,7 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
     """
     contam_cuts = []
     for i, (cutout, this_simul) in enumerate(
-        zip(output_model.cutouts, per_source_simuls, strict=True)
+        zip(output_model.slits, per_source_simuls, strict=True)
     ):
         if this_simul is None:
             contam_cut = np.zeros_like(cutout.data)
@@ -547,7 +547,7 @@ def _reject_off_detector_bounds(
         The catalog of sources with sky bounding boxes.
     sky_to_grism : callable
         A function that maps sky coordinates and wavelength to grism-frame coordinates.
-        This should be the "world" to "grism_detector" transform. For WFSSMultiCutoutModel remember
+        This should be the "world" to "grism_detector" transform. For MultiSlitModel remember
         that each SlitModel's input_model also has a "grism_cutout" frame that must be bypassed.
     wlmin, wlmax : float
         The minimum/maximum wavelength for the grism order as set by the wavelengthrange file.
@@ -622,7 +622,7 @@ def contam_corr(
 
     Parameters
     ----------
-    input_model : `~stdatamodels.jwst.datamodels.WFSSMultiCutoutModel`
+    input_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         Input data model containing 2D spectral cutouts. May be modified by processing:
         make a copy before calling this function, if needed.
     waverange : `~stdatamodels.jwst.datamodels.WavelengthrangeModel`
@@ -669,7 +669,7 @@ def contam_corr(
 
     Returns
     -------
-    output_model : `~stdatamodels.jwst.datamodels.WFSSMultiCutoutModel`
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         A copy of the input_model that has been corrected
     simul_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Full-frame simulated image of the grism exposure
@@ -700,7 +700,7 @@ def contam_corr(
     # The "detector" to "grism_detector" and "world" to "detector" transforms are identical
     # for all sources, so just use the first one. The "grism_detector" to "grism_slit"
     # transform is not used by the step.
-    grism_wcs = input_model.cutouts[0].meta.wcs
+    grism_wcs = input_model.slits[0].meta.wcs
 
     # Find out how many spectral orders are defined based on the
     # array of order values in the Wavelengthrange ref file,
@@ -710,7 +710,7 @@ def contam_corr(
     spec_orders = _validate_orders_against_transform(grism_wcs, spec_orders)
     if len(spec_orders) == 0:
         log.error("No valid spectral orders found. Step will be SKIPPED.")
-        return input_model, None, None, None
+        return input_model, None
     log.info(f"Spectral orders requested = {[int(x) for x in spec_orders]}")
 
     # Get the FILTER and PUPIL wheel positions, for use later
@@ -828,20 +828,20 @@ def contam_corr(
         log.error(
             f"No sources found that met the magnitude limit {magnitude_limit}. Step will be SKIPPED"
         )
-        return input_model, None, None, None
+        return input_model, None
 
     # Initialize output model
-    output_model = datamodels.WFSSMultiCutoutModel()
+    output_model = datamodels.MultiSlitModel()
 
     # Copy over matching cutouts.
     # Note that this makes a reference to input cutouts, not a deep copy,
     # so the input data may be modified by this function.  The input data is
     # copied in the calling step, as needed.
-    good_cutouts = [cutout for cutout in input_model.cutouts if cutout.source_id in obs.source_ids]
-    output_model.cutouts.extend(good_cutouts)
+    good_cutouts = [cutout for cutout in input_model.slits if cutout.source_id in obs.source_ids]
+    output_model.slits.extend(good_cutouts)
 
     # Hold onto original input data so iterative corrections always start from the same baseline.
-    original_data = [np.array(cutout.data) for cutout in output_model.cutouts]
+    original_data = [np.array(cutout.data) for cutout in output_model.slits]
 
     if n_iterations > 1 and polyfit_degree is None:
         log.warning(
@@ -894,7 +894,7 @@ def contam_corr(
             # first.  Their corrected simulations are immediately folded into simul_data
             # so subsequent fainter sources see better contamination within this iteration.
             fittable = [
-                k for k in range(len(output_model.cutouts)) if matched_flat_simuls[k] is not None
+                k for k in range(len(output_model.slits)) if matched_flat_simuls[k] is not None
             ]
             sort_order = sorted(fittable, key=lambda k: -flat_matched_sum[k])
 
@@ -906,7 +906,7 @@ def contam_corr(
             )
             success = 0
             for i in sort_order:
-                cutout = output_model.cutouts[i]
+                cutout = output_model.slits[i]
                 matched_flat = matched_flat_simuls[i]
 
                 # Compute the latest contamination estimate
@@ -933,7 +933,7 @@ def contam_corr(
 
             log.info(
                 f"Spectral fitting successful for {success} out of "
-                f"{len(output_model.cutouts)} sources "
+                f"{len(output_model.slits)} sources "
                 f"in iteration {iteration + 1}. Turn on debug logging for details of failures."
             )
 
@@ -956,9 +956,9 @@ def contam_corr(
         this_simul = per_source_simuls[i]
         contam_cut = contam_cuts[i]
         if this_simul is not None:
-            output_model.cutouts[i].simul = this_simul.data
+            output_model.slits[i].simul = this_simul.data
 
-        output_model.cutouts[i].contam = contam_cut
+        output_model.slits[i].contam = contam_cut
 
     simul_model = datamodels.ImageModel(data=simul_data)
     simul_model.update(input_model, only="PRIMARY")

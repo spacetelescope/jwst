@@ -89,7 +89,7 @@ def fit_cutout_by_basis_images(
 
     Raises
     ------
-    SlitFitError
+    SpectralFitError
         If there are fewer valid pixels than basis terms.
     """
     basis = _get_basis_images(simul_cutout)

@@ -17,7 +17,6 @@ class WfssContamStep(Step):
 
     spec = """
         save_simulated_image = boolean(default=False)  # Save full-frame simulated image
-        save_contam_images = boolean(default=False)  # Save source contam estimates
         maximum_cores = string(default='1')
         skip = boolean(default=True)
         orders = list(default=None)  # Spectral orders to process, e.g. 1, or 1,2,3
@@ -44,11 +43,11 @@ class WfssContamStep(Step):
 
         Returns
         -------
-        output_model : `~stdatamodels.jwst.datamodels.WFSSMultiCutoutModel`
-            A WFSS-specific datamodel containing contamination-corrected source cutouts,
+        output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+            A datamodel containing contamination-corrected source cutouts,
             simulated cutouts, and contamination estimates.
         """
-        output_model = self.prepare_output(input_data, open_as_type=datamodels.WFSSMultiCutoutModel)
+        output_model = self.prepare_output(input_data, open_as_type=datamodels.MultiSlitModel)
 
         # Get the wavelengthrange ref file
         waverange_ref = self.get_reference_file(output_model, "wavelengthrange")
