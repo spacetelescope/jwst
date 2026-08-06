@@ -8,10 +8,22 @@ from jwst.stpipe import Step
 EXP_TYPES = ["fgs_acq1", "fgs_fineguide", "fgs_id-image", "fgs_id-stack"]
 INPUT_DATA_PATH = "fgs/level1b"
 INPUT_DATA = {
-    "jw01029001001_gs-acq1_2022142180746_uncal.fits": rt.RTData(),
-    "jw01029001001_gs-fg_2022142181502_uncal.fits": rt.RTData(),
-    "jw01029001001_gs-id_1_image_uncal.fits": rt.RTData(),
-    "jw01029001001_gs-id_1_stacked_uncal.fits": rt.RTData(),
+    "jw01029001001_gs-acq1_2022142180746_uncal.fits": rt.RTData(
+        file_name="jw01029001001_gs-acq1_2022142180746_uncal.fits",
+        path=INPUT_DATA_PATH,
+    ),
+    "jw01029001001_gs-fg_2022142181502_uncal.fits": rt.RTData(
+        file_name="jw01029001001_gs-fg_2022142181502_uncal.fits",
+        path=INPUT_DATA_PATH,
+    ),
+    "jw01029001001_gs-id_1_image_uncal.fits": rt.RTData(
+        file_name="jw01029001001_gs-id_1_image_uncal.fits",
+        path=INPUT_DATA_PATH,
+    ),
+    "jw01029001001_gs-id_1_stacked_uncal.fits": rt.RTData(
+        file_name="jw01029001001_gs-id_1_stacked_uncal.fits",
+        path=INPUT_DATA_PATH,
+    ),
 }
 GUIDER_SUFFIXES = ["cal", "dq_init", "guider_cds"]
 

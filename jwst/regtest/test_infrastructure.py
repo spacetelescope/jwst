@@ -9,11 +9,15 @@ from astropy.table import Table
 from jwst.regtest.regtestdata import RTData, text_diff
 
 INPUT_DATA_PATH = "infrastructure/test_regtestdata"
-file1 = "file1_rate.fits"
-asn_file = "my_asn.json"
+FILE1 = "file1_rate.fits"
+ASN_FILE = "my_asn.json"
+
 INPUT_DATA = {
-    file1: RTData(
+    ASN_FILE: RTData(
+        file_name=ASN_FILE,
+        path=INPUT_DATA_PATH,
         from_mast=False,
+        asn=[FILE1, "file2_rate.fits", "file3_rate.fits"],
         mod_code="code_name_used_to_create_file_here",
         comment="This code was used to create the files in the association.",
     )
@@ -22,27 +26,27 @@ INPUT_DATA = {
 
 @pytest.mark.bigdata
 def test_regtestdata_get_data(rtdata, tmp_cwd):
-    rtdata.get_data(INPUT_DATA_PATH + "/" + file1)
-    rtdata.output = file1.replace("rate", "cal")
+    rtdata.get_data(INPUT_DATA_PATH + "/" + FILE1)
+    rtdata.output = FILE1.replace("rate", "cal")
 
-    assert rtdata.input == str(tmp_cwd / file1)
+    assert rtdata.input == str(tmp_cwd / FILE1)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_truth(rtdata, tmp_cwd):
-    rtdata.get_truth(INPUT_DATA_PATH + "/" + file1)
-    rtdata.output = file1
+    rtdata.get_truth(INPUT_DATA_PATH + "/" + FILE1)
+    rtdata.output = FILE1
 
-    assert rtdata.truth == str(tmp_cwd / "truth" / file1)
+    assert rtdata.truth == str(tmp_cwd / "truth" / FILE1)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_asn(rtdata):
-    rtdata.get_asn(INPUT_DATA_PATH + "/" + asn_file)
+    rtdata.get_asn(INPUT_DATA[ASN_FILE])
     files = glob("*.fits")
-    rtdata.output = file1
+    rtdata.output = FILE1
 
-    assert os.path.isfile(asn_file)
+    assert os.path.isfile(ASN_FILE)
     assert len(files) == 3
 
 

@@ -6,7 +6,12 @@ from jwst.stpipe import Step
 
 INPUT_DATA_PATH = "fgs/image2"
 rate_file = "jw01029001001_04201_00001_guider2_rate.fits"
-INPUT_DATA = {rate_file: RTData()}
+INPUT_DATA = {
+    rate_file: RTData(
+        file_name=rate_file,
+        path=INPUT_DATA_PATH,
+    )
+}
 
 
 @pytest.fixture(scope="module")

@@ -2,7 +2,7 @@ import os
 import os.path as op
 import pprint
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from difflib import unified_diff
 from glob import glob as _sys_glob
 from pathlib import Path
@@ -274,8 +274,8 @@ class RegtestData:
 
         Parameters
         ----------
-        path : str
-            The remote path
+        path : str or RTData
+            The remote path or the ad hoc RT data class
 
         docopy : bool
             Switch to control whether or not to copy a file
@@ -288,6 +288,10 @@ class RegtestData:
             If an association is the input, retrieve the members.
             Otherwise, do not.
         """
+        rtdata_obj = None
+        if not isinstance(path, str):
+            rtdata_obj = path
+            path = rtdata_obj.path + "/" + rtdata_obj.file_name
         if path is None:
             path = self.input_remote
         else:
@@ -307,6 +311,13 @@ class RegtestData:
                 for member in product["members"]:
                     fullpath = os.path.join(os.path.dirname(self.input_remote), member["expname"])
                     get_bigdata(self._inputs_root, self.env, fullpath, docopy=self.docopy)
+
+                    # verify that manually written input data matches the files in the asn file
+                    if rtdata_obj is not None:
+                        if member["expname"] not in rtdata_obj.asn:
+                            raise ValueError(
+                                f"File {member['expname']} missing in list of RTData.asn!"
+                            )
 
     def to_asdf(self, path):
         """Write the RegtestData object to an ASDF file."""
@@ -541,8 +552,16 @@ def _data_glob_url(*url_parts, root=None):
 
 @dataclass
 class RTData:
-    """Structure containing all information about a regression test data file."""
+    """Class to contain all information about a regression test data file."""
 
+    file_name: str
+    path: str
     from_mast: bool = True
     mod_code: str = "N/A"
     comment: str = "N/A"
+    asn: list = field(default_factory=list)
+
+    def __post_init__(self):
+        if ".json" in self.file_name:
+            if len(self.asn) == 0:
+                raise ValueError("Association files expected to be in a list in the asn attribute.")
