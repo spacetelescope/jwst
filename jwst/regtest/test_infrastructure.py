@@ -19,10 +19,18 @@ INPUT_DATA = {
         from_mast=False,
         asn_files=[FILE1, "file2_rate.fits", "file3_rate.fits"],
         asn_files_from_mast=False,
-        mod_code="code_name_used_to_create_file_here",
+        mod_code=True,
         comment="This code was used to create the files in the association.",
     )
 }
+
+
+def mod_code():
+    """Create empty FITS files for the test."""
+    for i in range(3):
+        file = "file" + str(i + 1) + "_rate.fits"
+        with open(file, "w") as f:
+            f.write("")
 
 
 @pytest.mark.bigdata
