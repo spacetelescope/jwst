@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 
+from jwst.tests.helpers import _help_pytest_warns
 from jwst.wfss_contam.wfss_contam_step import WfssContamStep
 
 
@@ -155,3 +156,14 @@ def test_wfss_contam_step_with_polyfit(tmp_cwd, multicutoutmodel):
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
     result.close()
+
+
+@pytest.mark.parametrize("save_contam_images", [True, False])
+def test_deprecated_save_contam_images(tmp_cwd, multicutoutmodel, save_contam_images):
+    with (
+        _help_pytest_warns(),
+        pytest.warns(DeprecationWarning, match="The 'save_contam_images' parameter is deprecated"),
+    ):
+        WfssContamStep.call(
+            multicutoutmodel, save_contam_images=save_contam_images, magnitude_limit=0
+        )
