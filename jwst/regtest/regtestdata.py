@@ -314,9 +314,9 @@ class RegtestData:
 
                     # verify that manually written input data matches the files in the asn file
                     if rtdata_obj is not None:
-                        if member["expname"] not in rtdata_obj.asn:
+                        if member["expname"] not in rtdata_obj.asn_files:
                             raise ValueError(
-                                f"File {member['expname']} missing in list of RTData.asn!"
+                                f"File {member['expname']} missing in list of RTData.asn_members!"
                             )
 
     def to_asdf(self, path):
@@ -559,9 +559,12 @@ class RTData:
     from_mast: bool = True
     mod_code: str = "N/A"
     comment: str = "N/A"
-    asn: list = field(default_factory=list)
+    asn_files: list = field(default_factory=list)
+    asn_files_from_mast: bool = True
 
     def __post_init__(self):
         if ".json" in self.file_name:
-            if len(self.asn) == 0:
-                raise ValueError("Association files expected to be in a list in the asn attribute.")
+            if len(self.asn_files) == 0:
+                raise ValueError(
+                    "Association files expected to be listed in the RTData.asn_files attribute."
+                )

@@ -11,12 +11,13 @@ INPUT_DATA = {
         file_name=ASN_FILE,
         path=INPUT_DATA_PATH,
         from_mast=True,
-        asn=[
+        asn_files=[
             "jw01029001001_06201_00001_guider2_cal.fits",
             "jw01029001001_06201_00002_guider2_cal.fits",
             "jw01029001001_06201_00003_guider2_cal.fits",
             "jw01029001001_06201_00004_guider2_cal.fits",
         ],
+        asn_files_from_mast=True,
     )
 }
 

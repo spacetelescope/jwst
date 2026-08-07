@@ -17,7 +17,8 @@ INPUT_DATA = {
         file_name=ASN_FILE,
         path=INPUT_DATA_PATH,
         from_mast=False,
-        asn=[FILE1, "file2_rate.fits", "file3_rate.fits"],
+        asn_files=[FILE1, "file2_rate.fits", "file3_rate.fits"],
+        asn_files_from_mast=False,
         mod_code="code_name_used_to_create_file_here",
         comment="This code was used to create the files in the association.",
     )
