@@ -6,32 +6,56 @@ import numpy as np
 import pytest
 from astropy.table import Table
 
-from jwst.regtest.regtestdata import text_diff
+from jwst.regtest.regtestdata import RTData, text_diff
+
+INPUT_DATA_PATH = "infrastructure/test_regtestdata"
+FILE1 = "file1_rate.fits"
+ASN_FILE = "my_asn.json"
+
+INPUT_DATA = {
+    ASN_FILE: RTData(
+        file_name=ASN_FILE,
+        path=INPUT_DATA_PATH,
+        from_mast=False,
+        asn_files=[FILE1, "file2_rate.fits", "file3_rate.fits"],
+        asn_files_from_mast=False,
+        mod_code=True,
+        comment="This code was used to create the files in the association.",
+    )
+}
+
+
+def mod_code():
+    """Create empty FITS files for the test."""
+    for i in range(3):
+        file = "file" + str(i + 1) + "_rate.fits"
+        with open(file, "w") as f:
+            f.write("")
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_data(rtdata, tmp_cwd):
-    rtdata.get_data("infrastructure/test_regtestdata/file1_rate.fits")
-    rtdata.output = "file1_cal.fits"
+    rtdata.get_data(INPUT_DATA_PATH + "/" + FILE1)
+    rtdata.output = FILE1.replace("rate", "cal")
 
-    assert rtdata.input == str(tmp_cwd / "file1_rate.fits")
+    assert rtdata.input == str(tmp_cwd / FILE1)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_truth(rtdata, tmp_cwd):
-    rtdata.get_truth("infrastructure/test_regtestdata/file1_rate.fits")
-    rtdata.output = "file1_rate.fits"
+    rtdata.get_truth(INPUT_DATA_PATH + "/" + FILE1)
+    rtdata.output = FILE1
 
-    assert rtdata.truth == str(tmp_cwd / "truth" / "file1_rate.fits")
+    assert rtdata.truth == str(tmp_cwd / "truth" / FILE1)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_asn(rtdata):
-    rtdata.get_asn("infrastructure/test_regtestdata/my_asn.json")
+    rtdata.get_asn(INPUT_DATA[ASN_FILE])
     files = glob("*.fits")
-    rtdata.output = "file1_rate.fits"
+    rtdata.output = FILE1
 
-    assert os.path.isfile("my_asn.json")
+    assert os.path.isfile(ASN_FILE)
     assert len(files) == 3
 
 

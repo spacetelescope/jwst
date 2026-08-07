@@ -1,13 +1,31 @@
 import pytest
 
+from jwst.regtest.regtestdata import RTData
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
+
+INPUT_DATA_PATH = "fgs/image3"
+ASN_FILE = "jw01029-o001_20240716t172128_image3_00001_asn.json"
+INPUT_DATA = {
+    ASN_FILE: RTData(
+        file_name=ASN_FILE,
+        path=INPUT_DATA_PATH,
+        from_mast=True,
+        asn_files=[
+            "jw01029001001_06201_00001_guider2_cal.fits",
+            "jw01029001001_06201_00002_guider2_cal.fits",
+            "jw01029001001_06201_00003_guider2_cal.fits",
+            "jw01029001001_06201_00004_guider2_cal.fits",
+        ],
+        asn_files_from_mast=True,
+    )
+}
 
 
 @pytest.fixture(scope="module")
 def run_fgs_image3(rtdata_module):
     rtdata = rtdata_module
-    rtdata.get_asn("fgs/image3/jw01029-o001_20240716t172128_image3_00001_asn.json")
+    rtdata.get_asn(INPUT_DATA[ASN_FILE])
 
     args = ["calwebb_image3", rtdata.input]
     Step.from_cmdline(args)
