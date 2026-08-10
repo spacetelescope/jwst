@@ -155,8 +155,8 @@ class ResampleStep(Step):
                 result.member_wcs.append(
                     {
                         "filename": model.meta.filename,
-                        "visit_number": model.meta.observation.visit_number,
-                        "tweak": model.meta.wcs.get.transform("v2v3vacorr", "v2v3corr"),
+                        "visit_number": int(model.meta.observation.visit_number),
+                        "tweak": model.meta.wcs.get_transform("v2v3vacorr", "v2v3corr"),
                     }
                 )
                 input_models.shelve(model)
