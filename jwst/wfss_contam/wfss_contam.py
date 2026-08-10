@@ -548,7 +548,7 @@ def _reject_off_detector_bounds(
     sky_to_grism : callable
         A function that maps sky coordinates and wavelength to grism-frame coordinates.
         This should be the "world" to "grism_detector" transform. For MultiSlitModel remember
-        that each SlitModel's input_model also has a "grism_cutout" frame that must be bypassed.
+        that each SlitModel's input_model also has a "grism_slit" frame that must be bypassed.
     wlmin, wlmax : float
         The minimum/maximum wavelength for the grism order as set by the wavelengthrange file.
     order : int
