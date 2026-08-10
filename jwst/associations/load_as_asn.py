@@ -35,7 +35,7 @@ class LoadAsAssociation(dict):
     This class is normally not instantiated.
     the :meth:`load` method should be used as the factory
     method to read an association or create one from
-    a string or `~stdatamodels.jwst.datamodels.JwstDatamodel` object,
+    a string or `~stdatamodels.jwst.datamodels.JwstDataModel` object,
     or a list of such objects.
     """
 
