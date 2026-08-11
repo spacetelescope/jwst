@@ -76,6 +76,7 @@ body:
         - [ ] IF THIS IS A PATCH ON AN EXISTING RELEASE, duplicate the desired changes (indicated above), onto the desired base revision (indicated above).
         - [ ] Run `towncrier build --version <VERSION>` to consume fragments in `changes/` and add an entry to `CHANGES.rst`.
         - [ ] Tag the head of the release branch with `<VERSION>`; if this is NOT a patch release, also increment `main` to point to the new tag.
+        - [ ] IF THIS IS A PATCH ON AN EXISTING RELEASE, make sure the README and changelog changes are also on `main` (cherry-pick / duplicate the commits from the release branch)
 
         #### run "canonical" regression test for metrics dashboard
         - [ ] On Artifactory (https://bytesalad.stsci.edu), copy a truth file directory to `jwst-pipeline/build/<BUILDNAME>` in order to freeze them. IF THIS IS A PATCH RELEASE it will be the previous build directory `jwst-pipeline/build/<PREVIOUSBUILDNAME>` -> `jwst-pipeline/build/<BUILDNAME>`; otherwise simply copy `jwst-pipeline/dev` -> `jwst-pipeline/build/<BUILDNAME>`. 
