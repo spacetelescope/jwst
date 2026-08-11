@@ -186,7 +186,10 @@ apply the correction to the exposure being processed.
 WFSS
 ----
 
-For WFSS modes, the photom step uses a tabular PHOTOM reference file with a table of values for
+For WFSS modes, the ``photom`` step is expected to run after ``extract_1d``, such that
+the inputs are of type `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel` and contain
+1-D spectra of multiple sources in the field.
+The photom step uses a tabular PHOTOM reference file with a table of values for
 each filter/grism/order combination. The table contains PHOTMJSR and RELRESPONSE columns,
 which correspond to photometric conversion factors and scalar relative responses, respectively,
 as a function of wavelength (WAVELENGTH column). The photometric
