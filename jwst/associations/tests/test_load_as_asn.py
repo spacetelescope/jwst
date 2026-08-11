@@ -4,6 +4,7 @@ import pytest
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import ImageModel
 
+from jwst.associations import load_asn
 from jwst.associations.load_as_asn import LoadAsLevel2Asn
 
 DEFAULT_NAME = "singleton"
@@ -39,6 +40,9 @@ def test_lv2_asn():
 
     asn2 = LoadAsLevel2Asn.load(asn)
     assert asn2 is asn
+
+    asn3 = load_asn(asn)
+    assert asn3 is asn
 
 
 def test_lv2_obj():

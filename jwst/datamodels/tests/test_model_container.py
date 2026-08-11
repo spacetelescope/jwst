@@ -192,6 +192,9 @@ def test_open_asn_obj():
         a = Association.load(f)
         m = ModelContainer(a)
     assert isinstance(m, ModelContainer)
+    assert len(m) == len(a["products"][0]["members"])
+    for mm in m:
+        assert isinstance(mm, datamodels.QuadModel)
 
 
 def test_copy(container):
