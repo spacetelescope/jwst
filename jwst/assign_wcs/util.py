@@ -516,33 +516,37 @@ def _create_grism_bbox(
         log.warning("No grism objects saved; check catalog or step params")
         return grism_objects
 
+    # Gather all per-source values needed for the vectorized WCS calls below
+    n_objects = len(filtered_objects)
+    icrs_ra = np.empty(n_objects)
+    icrs_dec = np.empty(n_objects)
+    ra_center = np.empty(n_objects)
+    dec_center = np.empty(n_objects)
+    # Corner rows are ordered (ll, lr, ul, ur) to match get_bounding_box_extents.
+    ra_corners = np.empty((4, n_objects))
+    dec_corners = np.empty((4, n_objects))
+    for i, obj in enumerate(filtered_objects):
+        icrs_ra[i] = obj.sky_centroid.icrs.ra.value
+        icrs_dec[i] = obj.sky_centroid.icrs.dec.value
+        ra_center[i] = obj.sky_centroid.ra.value
+        dec_center[i] = obj.sky_centroid.dec.value
+        ra_corners[:, i] = (
+            obj.sky_bbox_ll.ra.value,
+            obj.sky_bbox_lr.ra.value,
+            obj.sky_bbox_ul.ra.value,
+            obj.sky_bbox_ur.ra.value,
+        )
+        dec_corners[:, i] = (
+            obj.sky_bbox_ll.dec.value,
+            obj.sky_bbox_lr.dec.value,
+            obj.sky_bbox_ul.dec.value,
+            obj.sky_bbox_ur.dec.value,
+        )
+
     # save the image frame center of each object
     # takes in ra, dec, wavelength, order but wave and order
     # don't get used until the detector->grism_detector transform
-    ra_centroid = np.array([obj.sky_centroid.icrs.ra.value for obj in filtered_objects])
-    dec_centroid = np.array([obj.sky_centroid.icrs.dec.value for obj in filtered_objects])
-    xcenters, ycenters, _, _ = sky_to_detector(ra_centroid, dec_centroid, 1, 1)
-
-    # Sky bounding box corners for all sources, used to vectorize the
-    # sky_to_grism calls below across sources instead of looping over them.
-    ra_corners = np.array(
-        [
-            [obj.sky_bbox_ll.ra.value for obj in filtered_objects],
-            [obj.sky_bbox_lr.ra.value for obj in filtered_objects],
-            [obj.sky_bbox_ul.ra.value for obj in filtered_objects],
-            [obj.sky_bbox_ur.ra.value for obj in filtered_objects],
-        ]
-    )
-    dec_corners = np.array(
-        [
-            [obj.sky_bbox_ll.dec.value for obj in filtered_objects],
-            [obj.sky_bbox_lr.dec.value for obj in filtered_objects],
-            [obj.sky_bbox_ul.dec.value for obj in filtered_objects],
-            [obj.sky_bbox_ur.dec.value for obj in filtered_objects],
-        ]
-    )
-    ra_center = np.array([obj.sky_centroid.ra.value for obj in filtered_objects])
-    dec_center = np.array([obj.sky_centroid.dec.value for obj in filtered_objects])
+    xcenters, ycenters, _, _ = sky_to_detector(icrs_ra, icrs_dec, 1, 1)
 
     # Per-object accumulators for the per-order results computed below.
     order_boundings = [{} for _ in filtered_objects]
