@@ -7,7 +7,7 @@ import pytest
 
 from jwst import datamodels
 from jwst.combine_1d import Combine1dStep
-from jwst.combine_1d.combine1d import InputSpectrumModel, check_exptime, check_monotonic
+from jwst.combine_1d.combine1d import check_exptime, check_monotonic
 from jwst.datamodels.utils.tests.wfss_helpers import N_SOURCES, wfss_multi
 from jwst.tests.helpers import LogWatcher
 
@@ -150,10 +150,6 @@ def test_exptime_keys(exptime, casing):
 
 
 def test_bad_exptime(two_spectra):
-    # Runtime error if bad key is passed to input model
-    with pytest.raises(RuntimeError):
-        InputSpectrumModel(two_spectra, two_spectra.spec[0], "bad")
-
     # Bad key is translated to unit_weight if checked
     assert check_exptime("bad") == "unit_weight"
 

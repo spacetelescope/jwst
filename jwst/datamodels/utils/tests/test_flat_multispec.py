@@ -9,7 +9,6 @@ from jwst.datamodels.utils.flat_multispec import (
     copy_column_units,
     copy_spec_metadata,
     determine_vector_and_meta_columns,
-    expand_flat_spec,
     make_empty_recarray,
     populate_recarray,
     set_schema_units,
@@ -279,31 +278,3 @@ def test_copy_spec_metadata(input_spec, output_spec):
     # After copying, metadata is filled in
     assert output_spec.name == "test_slit"
     assert output_spec.source_id == 1
-
-
-def test_expand_flat_spec(tso_multi_spec):
-    expanded_spec = expand_flat_spec(tso_multi_spec)
-    assert isinstance(expanded_spec, dm.MultiSpecModel)
-
-    # expected output has extensions for each spec * each int
-    n_spec = 3
-    n_int = 5
-    assert len(expanded_spec.spec) == n_spec * n_int
-
-    # each spectrum has rows corresponding to input n_elements,
-    # with metadata copied from the input
-    n_elements = 10
-    for i, spec in enumerate(expanded_spec.spec):
-        assert len(spec.spec_table) == n_elements
-
-        input_spec_num = i // n_int + 1
-        assert spec.source_id == input_spec_num
-        assert spec.name == f"test {input_spec_num}"
-        assert spec.int_num == input_spec_num
-
-        assert spec.meta.wcs.pipeline[0].transform.name == "test"
-        spec.meta.wcs.pipeline[0].transform.name = "copy"
-        assert spec.meta.wcs.pipeline[0].transform.name == "copy"
-        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs.pipeline[0].transform.name == "test"
-
-        assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)

@@ -7,7 +7,7 @@ from jwst.combine_1d import combine1d
 
 class DummySpectra:
     def __init__(self, wavelength):
-        # The argument to count_input is a list of InputSpectrumModel
+        # The argument to count_input is a list of spectra
         # objects, but the only attribute we need is wavelength, so this
         # DummySpectra class will suffice.
         self.wavelength = wavelength.copy()

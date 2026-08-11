@@ -17,7 +17,6 @@ __all__ = [
     "copy_column_units",
     "copy_spec_metadata",
     "expand_table",
-    "expand_flat_spec",
 ]
 
 
@@ -296,36 +295,3 @@ def expand_table(spec):
         new_spec_list.append(new_spec)
 
     return new_spec_list
-
-
-def expand_flat_spec(input_model):
-    """
-    Create simple spectra from a flat spectral table.
-
-    Parameters
-    ----------
-    input_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
-        Spectral model containing spectra with a mix of vector columns
-        and metadata columns in the ``spec_table`` attribute.
-        Metadata columns will be dropped.
-
-    Returns
-    -------
-    `~stdatamodels.jwst.datamodels.MultiSpecModel`
-        A set of simple spectra, one per extension.
-    """
-    output_model = datamodels.MultiSpecModel()
-    for old_spec in input_model.spec:
-        new_spec_list = expand_table(old_spec)
-        for new_spec in new_spec_list:
-            # Add the new spec to the output model
-            output_model.spec.append(new_spec)
-
-    # Update meta
-    output_model.update(input_model, only="PRIMARY")
-
-    # Copy int_times if present
-    if getattr(input_model, "int_times", None) is not None:
-        output_model.int_times = input_model.int_times.copy()
-
-    return output_model
