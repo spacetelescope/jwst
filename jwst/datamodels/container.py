@@ -418,7 +418,7 @@ to supply custom catalogs.
 
             else:
                 try:
-                    group_id = attrs_to_group_id(model.meta.observation.visit_id)
+                    group_id = attrs_to_group_id(model.meta.observation)
                 except KeyError:
                     # If the required keys are not present, assign a default group ID
                     group_id = f"exposure{i + 1:04d}"
