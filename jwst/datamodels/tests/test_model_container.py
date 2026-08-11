@@ -187,14 +187,16 @@ def test_open_asn_obj():
     with (
         pushdir(asn_file_path),
         open(asn_file_name) as f,
-        pytest.warns(NoTypeWarning, match="model_type not found"),
+        warnings.catch_warnings(),
     ):
+        warnings.filterwarnings("ignore", category=NoTypeWarning, message="model_type not found")
         a = Association.load(f)
+        b = ModelContainer(asn_file_name)
         m = ModelContainer(a)
     assert isinstance(m, ModelContainer)
     assert len(m) == len(a["products"][0]["members"])
-    for mm in m:
-        assert isinstance(mm, datamodels.QuadModel)
+    for bb, mm in zip(b, m):
+        assert repr(bb) == repr(mm)
 
 
 def test_copy(container):
