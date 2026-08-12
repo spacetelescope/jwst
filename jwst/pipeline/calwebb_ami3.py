@@ -41,11 +41,10 @@ class Ami3Pipeline(Pipeline):
 
         # Load the input association table
         asn = self.load_as_level3_asn(input_data)
-        table_name = Path(asn.filename).name
-
-        # Grab first member
-        if "asn_id" not in asn:
-            asn = asn["members"][0]
+        if hasattr(asn, "filename") and asn.filename:
+            table_name = Path(asn.filename).name
+        else:
+            table_name = ""
 
         # We assume there's one final product defined by the association
         asn_id = asn["asn_id"]

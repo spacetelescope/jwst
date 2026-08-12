@@ -3,6 +3,7 @@ from pathlib import Path
 from stdatamodels.jwst import datamodels
 
 from jwst.ami.tests.helpers import example_model
+from jwst.associations import Association
 from jwst.pipeline import Ami3Pipeline
 
 
@@ -31,8 +32,10 @@ def test_niriss_ami3(tmp_cwd):
             }
         ],
     }
+    ami3_asn_obj = Association()
+    ami3_asn_obj.data = ami3_asn
 
-    Ami3Pipeline.call(ami3_asn)
+    Ami3Pipeline.call(ami3_asn_obj)
 
     # Check for expected output files
     expected = [
