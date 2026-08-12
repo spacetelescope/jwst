@@ -534,13 +534,8 @@ def _data_glob_url(*url_parts, root=None):
     params = {"pattern": pattern}
     with requests.get(search_url, params=params, headers=headers, timeout=60) as r:
         r_json = r.json()
-        if "files" not in r_json:
-            err_msg = f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}"
-        else:
-            err_msg = ""
-            url_paths = r_json["files"]
-
-    if err_msg:
-        raise KeyError(err_msg)
+        if "files" in r_json:
+            return r_json["files"]
+        raise KeyError(f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}")
 
     return url_paths
