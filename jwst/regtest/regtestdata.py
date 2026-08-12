@@ -537,5 +537,3 @@ def _data_glob_url(*url_parts, root=None):
         if "files" in r_json:
             return r_json["files"]
         raise KeyError(f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}")
-
-    return url_paths
