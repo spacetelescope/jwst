@@ -351,6 +351,10 @@ slit, as created by the :ref:`extract_2d <extract_2d_step>` step. FITS "EXTVER" 
 used in each extension header to segregate the multiple instances of each extension type by
 source.
 
+Note that for some modes (NIRISS SOSS, NIRCam WFSS, MIRI WFSS, and NIRISS WFSS),
+the :ref:`photom <photom_step>` step is expected to run after ``extract_1d``, meaning that the
+``_cal`` files, despite their name, remain in count rate units by default.
+
 .. _crf:
 .. _crfints:
 
