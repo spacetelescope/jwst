@@ -226,8 +226,7 @@ class RegtestData:
             raise BigdataError(f"Path cannot be found: {path}")
 
         # Remove the root from the paths
-        file_paths = [op.relpath(filepath, root_path) for file_path in file_paths]
-        return file_paths
+        return [op.relpath(file_path, root_path) for file_path in file_paths]
 
     def get_truth(self, path=None, docopy=None):
         """
