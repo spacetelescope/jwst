@@ -66,7 +66,10 @@ be a "cal" or "calints" product.
 For modes that have multiple slit instances (NIRSpec fixed-slit and MOS, WFSS),
 the SCI extensions should have the keyword SLTNAME to specify which slit was extracted.
 
-Normally the :ref:`photom <photom_step>` step should be applied before running
+For NIRISS SOSS exposures and all WFSS exposures, the
+:ref:`photom <photom_step>` step is expected to run after ``extract_1d``, meaning that the output
+of ``extract_1d`` will remain in count rate units.
+For other modes, the :ref:`photom <photom_step>` step should be applied before running
 ``extract_1d``.  If ``photom`` has not been run, a warning will be logged and the
 output of ``extract_1d`` will be in units of count rate.  The ``photom`` step
 converts data to units of either surface brightness (MJy per steradian) or,

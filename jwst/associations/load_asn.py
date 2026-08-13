@@ -86,7 +86,9 @@ def load_asn(
 
 
 def _do_load(serialized, first=True, validate=True, registry=AssociationRegistry, **kwargs):
-    if registry is None:
+    if isinstance(serialized, Association):  # No-op
+        asn = serialized
+    elif registry is None:
         asn = Association.load(serialized, validate=validate)
     else:
         if isclass(registry):

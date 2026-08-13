@@ -1,0 +1,1 @@
+For WFSS modes, the step now expects 1-d extracted spectra (datamodel type WFSSMultiSpecModel) as input
