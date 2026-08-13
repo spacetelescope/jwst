@@ -49,7 +49,7 @@ jobs:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
     runs-on: ubuntu-latest
     steps:
-      - if: inputs.crds_context
+      - if: inputs.crds_context == ''
         id: latest-context
         run: >
           echo latest-context=$(
