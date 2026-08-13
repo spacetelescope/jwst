@@ -217,23 +217,16 @@ class RegtestData:
         root = self.bigdata_root
         if op.exists(root):
             root_path = op.join(root, self._inputs_root, self.env)
-            if root_path.endswith(os.sep):
-                root_len = len(root_path)
-            else:
-                root_len = len(root_path) + 1
             path = op.join(root_path, path)
             file_paths = _data_glob_local(path, glob)
         elif check_url(root):
-            if self.env.endswith("/"):
-                root_len = len(self.env)
-            else:
-                root_len = len(self.env) + 1
+            root_path = self.env
             file_paths = _data_glob_url(self._inputs_root, self.env, path, glob, root=root)
         else:
             raise BigdataError(f"Path cannot be found: {path}")
 
         # Remove the root from the paths
-        file_paths = [file_path[root_len:] for file_path in file_paths]
+        file_paths = [op.relpath(filepath, root_path) for file_path in file_paths]
         return file_paths
 
     def get_truth(self, path=None, docopy=None):
