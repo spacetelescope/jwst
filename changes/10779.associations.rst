@@ -1,0 +1,1 @@
+``LoadAsAssociation.load()`` can now accept a dictionary; it is assumed to be standard compliant already to be ingested into Association data.
