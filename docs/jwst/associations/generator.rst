@@ -13,7 +13,7 @@ The generator conceptual workflow is show below:
 
    Generator Conceptual Workflow
 
-This workflow is encapsulated in the :func:`~jwst.associations.generate`
+This workflow is encapsulated in the :func:`~jwst.associations.generator.generate.generate`
 function. Each member is first checked to see if it belongs to an already
 existing association. If so, it is added to each association it matches with.
 Next, the set of association rules are check to see if a new association, or
@@ -42,14 +42,14 @@ instance.
 Output
 ------
 
-Before exiting, :py:func:`~jwst.associations.generate` checks the
+Before exiting, :py:func:`~jwst.associations.generator.generate.generate` checks the
 :meth:`Association.is_valid
 <jwst.associations.association.Association.is_valid>` property of each
 association to ensure that an association has all the members it is required to
 have. For example, if a JWST coronagraphic observation was performed, but the
 related PSF observation failed, the coronagraphic association would be marked invalid.
 
-Once validation is complete, :py:func:`~jwst.associations.generate` returns a
+Once validation is complete, :py:func:`~jwst.associations.generator.generate.generate` returns a
 list of the associations created.
 
 .. _member-with-lists:
@@ -67,7 +67,7 @@ When this is the case, a *mini pool* is created. This pool consists of
 duplicates of the original member. However, for each copy of the member, the
 attribute that was the list is now populated with consecutive members of that
 list. This mini pool and the rule or association in which this was found, is
-passed back up to the :py:func:`~jwst.associations.generate` function to be
+passed back up to the :py:func:`~jwst.associations.generator.generate.generate` function to be
 reconsidered for membership. Each value of the list is considered separately
 because association membership may depend on what those individual values are.
 The figure below demonstrates the member replication.

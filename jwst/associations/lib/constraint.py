@@ -113,7 +113,7 @@ class SimpleConstraintABC(abc.ABC):
         success : bool
             True if check is successful.
 
-        reprocess : list of `~jwst.associations.ProcessList`
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
             Empty list unless overrode by subclass implementation.
         """
         self.matched = True
@@ -366,7 +366,7 @@ class SimpleConstraint(SimpleConstraintABC):
         success : bool
             True if check is successful.
 
-        reprocess : list of `~jwst.associations.ProcessList`
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
             List of ProcessLists.
         """
         source_value = self.sources(item)
@@ -428,7 +428,7 @@ class AttrConstraint(SimpleConstraintABC):
         Evaluate the item's value before checking condition.
     force_reprocess : ListCategory.state or False
         Add item back onto the reprocess list using
-        the specified `~jwst.associations.ProcessList` work over state.
+        the specified `~jwst.associations.lib.process_list.ProcessList` work over state.
     force_unique : bool
         If the initial value is `None` or a list of possible values,
         the constraint will be modified to be the value first matched.
@@ -507,7 +507,7 @@ class AttrConstraint(SimpleConstraintABC):
         success : bool
             True if check is successful.
 
-        reprocess : list of `~jwst.associations.ProcessList`
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
             List of ProcessLists.
         """
         reprocess = []
@@ -780,7 +780,7 @@ class Constraint:
         success : bool
             True if check is successful.
 
-        reprocess : list of `~jwst.associations.ProcessList`
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
             List of ProcessLists.
         """
         if work_over not in (self.work_over, ListCategory.BOTH):
@@ -1089,7 +1089,7 @@ def reprocess_multivalue(item, source, values, constraint):
 
     Returns
     -------
-    process_list : `~jwst.associations.ProcessList`
+    process_list : `~jwst.associations.lib.process_list.ProcessList`
         The process list to put on the reprocess queue
     """
     reprocess_items = []

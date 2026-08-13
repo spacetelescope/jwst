@@ -1,12 +1,11 @@
-.. currentmodule:: jwst.associations.association
-                   
 .. _reference-association:
 
+=================
 Association Rules
 =================
 
 Association definitions, or ``rules``, are Python classes, all based on
-:class:`~jwst.associations.Association`. The base class provides only a
+:class:`~jwst.associations.association.Association`. The base class provides only a
 framework, much like an abstract base class; all functionality must be
 implemented in sub-classes.
 
@@ -14,10 +13,10 @@ Any subclass that is intended to produce an association is referred to
 as a ``rule``. Any rule subclass must have a name that begins with the
 string ``Asn_``. This is to ensure that any other classes involved in
 defining the definition of the rule classes do not get used as rules
-themselves, such as the :class:`~jwst.associations.Association` itself.
+themselves, such as the :class:`~jwst.associations.association.Association` itself.
 
 Association Dynamic Definition
-------------------------------
+==============================
 
 Associations are created by matching members to rules. However, an
 important concept to remember is that an association is defined by
@@ -45,10 +44,10 @@ a specific attribute of a member does not have to be explicitly
 stated. This provides for very robust, yet concise, set of rule definitions.
 
 User-level API
---------------
+==============
 
 Core Keys
-^^^^^^^^^
+---------
 
 To be repetitive, the basic association is a :py:obj:`dict` (default) or
 a :py:obj:`list`. The structure of the dict is completely determined by the rules.
@@ -72,13 +71,13 @@ These keys are accessed in the same way any dict key is accessed:
 
     asn = Asn_MyAssociation()
     print(asn['asn_rule'])
-  
+
     #--> MyAssociation
 
 .. _ref-asn-core-methods:
 
 Core Methods
-^^^^^^^^^^^^
+------------
 
 These are the methods of an association rule deal with creation or returning the
 created association. A rule may define other methods, but the
@@ -98,7 +97,7 @@ following are required to be implemented.
 
 
 Creation
-^^^^^^^^
+--------
 
 To create an association based on a member, the :meth:`~jwst.associations.association.Association.create` method of the
 rule is called:
@@ -119,7 +118,7 @@ Whether an association is created or not, a list of
 expansion of the pool in :ref:`member-with-lists`.
 
 Addition
-^^^^^^^^
+--------
 
 To add members to an existing association, one uses the :meth:`~jwst.associations.association.Association.add` method:
 
@@ -132,12 +131,12 @@ If the association accepts the member, the ``matches`` element of the
 
 Typically, one does not deal with a single rule, but a collection of
 rules. For association creation, one therefore uses an
-:class:`~jwst.associations.AssociationRegistry` to collect all the rules a pool will be
+:class:`~jwst.associations.registry.AssociationRegistry` to collect all the rules a pool will be
 compared against. Association registries provide extra functionality to
 deal with a large and varied set of association rules.
 
 Saving and Loading
-^^^^^^^^^^^^^^^^^^
+------------------
 
 Once created, an association can be serialized using its
 :meth:`~jwst.associations.association.Association.dump` method.
@@ -170,7 +169,7 @@ loading an association is through the
 :func:`jwst.associations.load_asn` function.
 
 Defining New Associations
--------------------------
+=========================
 
 All association rules are based on the
 :class:`~jwst.associations.association.Association` base class. This
@@ -184,16 +183,16 @@ implement in order to create an association.
 .. _class-naming:
 
 Class Naming
-^^^^^^^^^^^^
+------------
 
-The :class:`~jwst.associations.AssociationRegistry` is used to store
+The :class:`~jwst.associations.registry.AssociationRegistry` is used to store
 the association rules. Since rules are defined by Python classes, a
 way of indicating what the final rule classes are is needed. By
 definition, rule classes are classes that begin with the string ``Asn_``.
 Only these classes are used to produce associations.
 
 Core Attributes
-^^^^^^^^^^^^^^^
+---------------
 
 Since rule classes will potentially have a large number of attributes
 and methods, the base :class:`~jwst.associations.association.Association` class defines two
@@ -209,7 +208,7 @@ However, it is suggested that they be used as conceptually defined here.
 .. _ref-asn-data-attr:
 
 ``data`` Attribute
-""""""""""""""""""
+^^^^^^^^^^^^^^^^^^
 
 ``data`` contains the association itself. Currently, the base class
 predefines ``data`` as a :py:obj:`dict`. The base class itself is a subclass of
@@ -220,7 +219,7 @@ dict is the contents of the ``data`` attribute. For example:
 
     asn = Asn_MyAssociation()
     asn.data['value'] = 'a value'
-  
+
     assert asn['value'] == 'a value'
     # True
 
@@ -229,14 +228,14 @@ dict is the contents of the ``data`` attribute. For example:
     # True
 
 Instantiation
-^^^^^^^^^^^^^
+-------------
 
 Instantiating a rule, in and of itself, does nothing more than setup
 the constraints that define the rule, and basic structure
 initialization.
 
 Implementing ``create()``
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 The base class :meth:`~jwst.associations.association.Association.create` performs the following steps:
 
@@ -249,7 +248,7 @@ Any override of this method is expected to first call ``super()``. On
 success, any further initialization may be performed.
 
 Implementing ``add()``
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 The :meth:`~jwst.associations.association.Association.add` method adds
 members to an association.
@@ -272,7 +271,7 @@ Constraint Modification
     the member to the association.
 
 Implementing ``dump()`` and ``load()``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------
 
 The base ``Association`` class defines the
 :meth:`~jwst.associations.association.Association.dump` and
@@ -285,9 +284,9 @@ However, if the new rule does not define ``data``, then these methods
 will need be overridden.
 
 Rule Registration
------------------
+=================
 
-In order for a rule to be used by :func:`~jwst.associations.generate`, the rule must be loaded
+In order for a rule to be used by :func:`~jwst.associations.generator.generate.generate`, the rule must be loaded
 into an :class:`~jwst.associations.registry.AssociationRegistry`.  Since a rule is just a class that is
 defined as part of a, most likely, larger module, the registry needs
 to know what classes are rules. Classes to be used as rules are marked

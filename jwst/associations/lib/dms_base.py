@@ -293,11 +293,11 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        asn : `~jwst.associations.Association` or None
+        asn : `~jwst.associations.association.Association` or None
             The association or, if the item does not
             match this rule, None
 
-        reprocess : list of `~jwst.associations.ProcessList`
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
             List of items to process again.
         """
         asn, reprocess = super(DMSBaseMixin, cls).create(item, version_id)
@@ -729,7 +729,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        asn : `~jwst.associations.Association`
+        asn : `~jwst.associations.association.Association`
             The asn candidate to validate.
 
         Returns
@@ -910,7 +910,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        other : `~jwst.associations.Association`
+        other : `~jwst.associations.association.Association`
             The other association to compare against.
 
         Returns
@@ -935,7 +935,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        other : `~jwst.associations.Association`
+        other : `~jwst.associations.association.Association`
             The other association to compare against.
 
         Returns
@@ -972,7 +972,7 @@ class Constraint_TargetAcq(SimpleConstraint):
 
     Parameters
     ----------
-    association : `~jwst.associations.Association`
+    association : `~jwst.associations.association.Association`
         If specified, use the
         :meth:`~jwst.associations.lib.dms_base.DMSBaseMixin.get_exposure_type`
         method of the association rather than the utility version.
@@ -1095,7 +1095,7 @@ def get_exposure_type(item, default="science", association=None):
     default : str or None
         The default exposure type.
         If None, routine will raise LookupError
-    association : `~jwst.associations.Association`
+    association : `~jwst.associations.association.Association`
         Association, if provided.
 
     Returns

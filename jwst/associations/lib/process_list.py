@@ -3,20 +3,23 @@ Reprocessing Lists and Queues.
 
 This modules defines what process lists are and queues of process lists.
 
-A process list, `~jwst.associations.ProcessList`, is a list of (items, rules) and meta information
+A process list, `~jwst.associations.lib.process_list.ProcessList`,
+is a list of (items, rules) and meta information
 , most notably ``work_over``. ``work_over`` is one of the values of
-`~jwst.associations.ListCategory`.
-A `~jwst.associations.ListCategory` defines which stage of association processing the list is
+`~jwst.associations.lib.process_list.ListCategory`.
+A `~jwst.associations.lib.process_list.ListCategory` defines
+which stage of association processing the list is
 relevant to. In other words, the order, or priority, of when a list should be processed
-is defined by its `~jwst.associations.ListCategory`.
-The priority is the value of each `~jwst.associations.ListCategory`,
+is defined by its `~jwst.associations.lib.process_list.ListCategory`.
+The priority is the value of each `~jwst.associations.lib.process_list.ListCategory`,
 starting with zero.
 
 ProcessLists are primarily put into queues for processing. There are two
-queues for handling ProcessLists. `~jwst.associations.ProcessListQueue` is a basic
+queues for handling ProcessLists. `~jwst.associations.lib.process_list.ProcessListQueue` is a basic
 First-In-First-Out (FIFO) queue that can be used as a generator.
 
-The second queue is `~jwst.associations.ProcessQueueSorted`, which returns ProcessLists according to
+The second queue is `~jwst.associations.lib.process_list.ProcessQueueSorted`,
+which returns ProcessLists according to
 their priority as defined by each ProcessList's ``work_over``. An important aspect of
 ProcessQueueSorted is that it is mutable: New ProcessLists can be added to the queue
 while iterating over the queue.
@@ -55,7 +58,7 @@ class ProcessItem:
     Parameters
     ----------
     obj : object
-        The object to make a `~jwst.associations.ProcessItem`.
+        The object to make a `~jwst.associations.lib.process_list.ProcessItem`.
         Objects must be equatable.
     """
 
@@ -75,7 +78,8 @@ class ProcessItem:
         Returns
         -------
         iterable
-            An iterable where the object has been converted to a `~jwst.associations.ProcessItem`.
+            An iterable where the object has been converted to a
+            `~jwst.associations.lib.process_list.ProcessItem`.
         """
         for obj in iterable:
             yield cls(obj)
@@ -208,9 +212,9 @@ class ProcessListQueue:
     First-In-First-Out queue of ProcessLists.
 
     ProcessLists can be added either individually using
-    :meth:`jwst.associations.ProcessListQueue.append` method, or
+    :meth:`jwst.associations.lib.process_list.ProcessListQueue.append` method, or
     a list of ProcessLists can be added through object initialization or
-    the  :meth:`jwst.associations.ProcessListQueue.extend` method.
+    the  :meth:`jwst.associations.lib.process_list.ProcessListQueue.extend` method.
 
     There are two generators implement. The first is the ProcessListQueue
     object itself. When the object is used as a generator, the generator will
@@ -218,7 +222,7 @@ class ProcessListQueue:
     ProcessList from the queue, hence draining the queue.
 
     The second generator is returned by the
-    :meth:`jwst.associations.ProcessListQueue.items` method. This method will
+    :meth:`jwst.associations.lib.process_list.ProcessListQueue.items` method. This method will
     return all the items from all the ProcessLists in the queue,
     non-destructively. The ProcessLists are accessed in their order in the
     queue, and then each item is retrieved from their ProcessList in the list
@@ -316,7 +320,7 @@ class ProcessQueueSorted:
     Parameters
     ----------
     init : [ProcessList[,...]]
-        List of `~jwst.associations.ProcessList` to start the queue with.
+        List of `~jwst.associations.lib.process_list.ProcessList` to start the queue with.
     """
 
     def __init__(self, init=None):

@@ -83,7 +83,7 @@ def bkg_for_container(input_data, tab_wavelength, tab_background, allow_mos=Fals
 
     Parameters
     ----------
-    input_data : `~jwst.associations.Association` or \
+    input_data : `~jwst.associations.association.Association` or \
                  `~jwst.datamodels.container.ModelContainer`
         The input science data.
     tab_wavelength : ndarray

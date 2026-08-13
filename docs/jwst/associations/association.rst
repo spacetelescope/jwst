@@ -84,6 +84,6 @@ Where Rules Live: The AssociationRegistry
 
 In order to be used, rules are loaded into an
 :ref:`design-registry`. The registry is used by the
-:py:func:`~jwst.associations.generate` to produce the associations. The registry is
+:py:func:`~jwst.associations.generator.generate.generate` to produce the associations. The registry is
 also used by the :py:func:`~jwst.associations.load_asn` function to
 validate a potential association data against list of rules.

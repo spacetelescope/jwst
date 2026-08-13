@@ -21,7 +21,7 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
     ----------
     items : [object [, ...]]
         List of items to add.
-    rule : `~jwst.associations.Association` rule
+    rule : `~jwst.associations.association.Association` rule
         The association rule to use.
     **kwargs : dict
         Other named parameters required or pertinent to adding
@@ -29,7 +29,7 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
 
     Returns
     -------
-    association : `~jwst.associations.Association`-based instance
+    association : `~jwst.associations.association.Association`-based instance
         The association with the items added.
 
     Notes
@@ -83,7 +83,7 @@ class Main:
 
         Returns
         -------
-        `~jwst.associations.Association`
+        `~jwst.associations.association.Association`
             The association created from the list.
         """
         association = cls(args=args)

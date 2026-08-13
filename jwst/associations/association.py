@@ -186,11 +186,13 @@ class Association(MutableMapping):
         Returns
         -------
         valid : bool
-            True if valid. Otherwise the `~jwst.associations.AssociationNotValidError` is raised.
+            `True` if valid. Otherwise the
+            `~jwst.associations.exceptions.AssociationNotValidError`
+            is raised.
 
         Raises
         ------
-        jwst.associations.AssociationNotValidError
+        jwst.associations.exceptions.AssociationNotValidError
             If there is some reason validation failed.
 
         Notes
@@ -267,7 +269,7 @@ class Association(MutableMapping):
         jwst.associations.AssociationError
             If the operation cannot be done
 
-        jwst.associations.AssociationNotValidError
+        jwst.associations.exceptions.AssociationNotValidError
             If the given association does not validate.
         """
         if kwargs:
@@ -323,7 +325,7 @@ class Association(MutableMapping):
 
         Raises
         ------
-        jwst.associations.AssociationNotValidError
+        jwst.associations.exceptions.AssociationNotValidError
             Cannot create or validate the association.
 
         Notes

@@ -43,7 +43,7 @@ def mkpool(
     are created by the automatic ground system process. Users should download
     and modify those pools if need be. If desired, this function can be used to
     create pools from scratch using a list of FITS files. Once created, the
-    :py:func:`~jwst.associations.generate` can be used to create associations
+    :py:func:`~jwst.associations.generator.generate.generate` can be used to create associations
     from these pools.
 
     A number of pool columns used by the Association rules cannot be derived
@@ -100,7 +100,7 @@ def mkpool(
 
     Returns
     -------
-    pool : `jwst.associations.AssociationPool`
+    pool : `jwst.associations.pool.AssociationPool`
         The association pool.
     """
     params = set()
