@@ -1,1 +1,1 @@
-Catch an edge case where repeated integration times in the input data caused a crash in the step instead of a graceful exit.
+Catch an edge case in the ``median_image`` algorithm where a normalized flux cannot be computed for each integration. This case could be triggered by repeated integration times in the input data, causing a crash in the step instead of a graceful exit.
