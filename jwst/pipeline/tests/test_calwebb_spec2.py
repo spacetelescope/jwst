@@ -5,7 +5,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
+from stpipe import _log
 
+from jwst.associations.asn_from_list import asn_from_list
+from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 from jwst.pipeline.tests.helpers import make_nirspec_ifu_rate_model
 from jwst.stpipe import Step
@@ -17,7 +20,6 @@ from jwst.targ_centroid.tests.helpers import (
 
 INPUT_FILE = "test_rate.fits"
 INPUT_FILE_2 = "test2_rate.fits"
-INPUT_ASN = "test_asn.json"
 OUTPUT_FILE = "custom_name.fits"
 OUTPUT_FILE_ASN = "custom_name_asn.fits"  # cannot reuse because everything runs in same cwd
 LOGFILE = "run_asn.log"
@@ -37,7 +39,7 @@ def make_test_rate_file(tmp_cwd_module):
 @pytest.fixture(scope="module")
 def make_test_association(make_test_rate_file):
     shutil.copy(INPUT_FILE, INPUT_FILE_2)
-    os.system(f"asn_from_list -o {INPUT_ASN} -r DMSLevel2bBase {INPUT_FILE} {INPUT_FILE_2}")
+    return asn_from_list([INPUT_FILE, INPUT_FILE_2], rule=DMSLevel2bBase)
 
 
 @pytest.fixture(scope="module", params=[OUTPUT_FILE])
@@ -64,31 +66,32 @@ def run_spec2_pipeline(make_test_rate_file, request):
     Step.from_cmdline(args)
 
 
-@pytest.fixture(scope="module", params=[OUTPUT_FILE_ASN])
-def run_spec2_pipeline_asn(make_test_association, request):
+@pytest.fixture(scope="module")
+def run_spec2_pipeline_asn(make_test_association):
     """
     Two-product association passed in. This should trigger a warning
     and the output_file parameter should be ignored.
     """
     # save warnings to logfile so can be checked later
-    args = [
-        "calwebb_spec2",
-        INPUT_ASN,
-        "--log-level=INFO",
-        f"--log-file={LOGFILE}",
-        "--steps.badpix_selfcal.skip=true",
-        "--steps.msa_flagging.skip=true",
-        "--steps.clean_flicker_noise.skip=true",
-        "--steps.flat_field.skip=true",
-        "--steps.pathloss.skip=true",
-        "--steps.photom.skip=true",
-        "--steps.pixel_replace.skip=true",
-        "--steps.cube_build.save_results=true",
-        "--steps.extract_1d.skip=true",
-        f"--output_file={request.param}",
-    ]
-
-    Step.from_cmdline(args)
+    log_cfg = _log.load_configuration(log_level="INFO", log_file=LOGFILE)
+    log_cfg.set_recording_formatter(Spec2Pipeline._log_records_formatter)
+    with log_cfg.context(Spec2Pipeline.get_stpipe_loggers()):
+        Spec2Pipeline.call(
+            make_test_association,
+            save_results=True,
+            steps={
+                "badpix_selfcal": {"skip": True},
+                "msa_flagging": {"skip": True},
+                "clean_flicker_noise": {"skip": True},
+                "flat_field": {"skip": True},
+                "pathloss": {"skip": True},
+                "photom": {"skip": True},
+                "pixel_replace": {"skip": True},
+                "cube_build": {"save_results": True},
+                "extract_1d": {"skip": True},
+            },
+            output_file=OUTPUT_FILE_ASN,
+        )
 
 
 def test_output_file_rename(run_spec2_pipeline):
@@ -110,7 +113,6 @@ def test_output_file_norename_asn(run_spec2_pipeline_asn):
     when multiple products are in the same association.
     """
     # ensure tmp_cwd_module is successfully keeping all files in cwd
-    assert os.path.exists(INPUT_ASN)
     assert os.path.exists(INPUT_FILE)
     assert os.path.exists(INPUT_FILE_2)
 
