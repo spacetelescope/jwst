@@ -16,7 +16,7 @@ class HlspStep(Step):
     Make High-Level Science Products (HLSP's) after KLIP processing has been applied.
 
     .. deprecated:: 3.0.0
-       The `HlspStep` has been deprecated and will be removed in a future release.
+       This step has been deprecated and will be removed in a future release.
     """
 
     class_alias = "hlsp"
@@ -62,5 +62,3 @@ class HlspStep(Step):
         # Close the target model if it was opened here
         if target_model is not target:
             target_model.close()
-
-        return
