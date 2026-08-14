@@ -217,18 +217,16 @@ class RegtestData:
         root = self.bigdata_root
         if op.exists(root):
             root_path = op.join(root, self._inputs_root, self.env)
-            root_len = len(root_path) + 1
             path = op.join(root_path, path)
             file_paths = _data_glob_local(path, glob)
         elif check_url(root):
-            root_len = len(self.env) + 1
+            root_path = self.env
             file_paths = _data_glob_url(self._inputs_root, self.env, path, glob, root=root)
         else:
             raise BigdataError(f"Path cannot be found: {path}")
 
         # Remove the root from the paths
-        file_paths = [file_path[root_len:] for file_path in file_paths]
-        return file_paths
+        return [op.relpath(file_path, root_path) for file_path in file_paths]
 
     def get_truth(self, path=None, docopy=None):
         """
@@ -533,6 +531,9 @@ def _data_glob_url(*url_parts, root=None):
     # Make the query
     params = {"pattern": pattern}
     with requests.get(search_url, params=params, headers=headers, timeout=60) as r:
-        url_paths = r.json()["files"]
-
-    return url_paths
+        r_json = r.json()
+        if "files" in r_json:
+            return r_json["files"]
+        raise KeyError(
+            f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}"
+        )

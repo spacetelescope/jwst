@@ -12,10 +12,6 @@ This operation prepares the PSF images for use by subsequent steps in the
 :ref:`calwebb_coron3 <calwebb_coron3>` pipeline. The image data are simply copied
 and reformatted, without being modified in any way.
 
-Arguments
----------
-The ``stack_refs`` step does not have any step-specific arguments.
-
 Inputs
 ------
 
@@ -50,7 +46,11 @@ The output of the ``stack_refs`` step will be a single 3D product containing a s
 all the PSF images from the multiple input exposures. The size of the stack will be equal
 to the sum of the number of integration (NINTS) in each input PSF exposure.
 The output file name is source-based, using the product name specified in the ASN file,
-e.g. "jw86073-a3001_t001_nircam_f140m-maskbar_psfstack.fits."
+e.g., ``jw86073-a3001_t001_nircam_f140m-maskbar_psfstack.fits``.
+
+Arguments
+---------
+The ``stack_refs`` step does not have any step-specific arguments.
 
 Reference Files
 ---------------
