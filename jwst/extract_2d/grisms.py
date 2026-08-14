@@ -659,7 +659,7 @@ def extract_grism_objects(
         raise ValueError("No grism objects created from source catalog")
 
     log.info(f"Extracting {len(grism_objects)} grism objects")
-    output_model = datamodels.MultiSlitModel()
+    output_model = datamodels.MultiSlitModel(validate_on_assignment=False)
     output_model.update(input_model)
 
     # One WCS model can be used to govern all the extractions
@@ -772,6 +772,7 @@ def extract_grism_objects(
                     var_poisson=var_poisson,
                     var_rnoise=var_rnoise,
                     var_flat=var_flat,
+                    validate_on_assignment=False,  # for runtime
                 )
 
                 new_slit.meta.wcsinfo.spectral_order = order
