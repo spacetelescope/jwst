@@ -141,36 +141,47 @@ For Wide-Field Slitless Spectroscopy exposures,
 a background reference image is subtracted from the target exposure.
 Before being subtracted, the background reference image is scaled to match the
 signal level of the WFSS image within background (source-free) regions of the
-image. The scaling factor is determined based on the variance-weighted mean
-of the science data, i.e., ``factor = sum(sci*bkg/var) / sum(bkg*bkg/var)``.
+image. To do so requires (1) determining which regions of the image are free of sources,
+and then (2) finding the optimal scaling factor to apply to the background reference image
+based on the background regions in the data.
+
+Three options are available for determining the background regions of the image, controlled by the
+``wfss_mask_method`` step argument:
+
+- ``wfss_mask_method="catalog"`` (the default): the locations of source spectra
+  are determined from a source catalog (specified by the primary header keyword ``SCATFILE``),
+  in conjunction with a reference file that gives the wavelength range (based on filter and grism)
+  that is relevant to the WFSS image.
+  The step argument ``wfss_mmag_extract`` can be used, if desired, to set the faintest AB mag
+  of the source catalog objects used to define the background regions. The default is to use all
+  source catalog entries that result in a spectrum falling within the WFSS image.
+- ``wfss_mask_method="clip"``: the background mask is determined directly from the dispersed image,
+  using an inverse-variance-weighted sigma-clipping method along the cross-dispersion axis
+  to determine the background mask. This approach can be useful for crowded fields, as sometimes
+  the source-catalog-derived bounding boxes can be larger than the actual source spectra, resulting
+  in too few background pixels being available.
+- ``wfss_mask_method="user"``: a user-defined mask is provided to specify the background regions. See
+  the "Defining a user mask" subsection below for details.
+
+When the background mask is created via any of these methods, it is saved in the ``MASK`` extension
+of the intermediate output file (with suffix "bsub"), and is also accessible in the ``mask`` attribute
+of the output datamodel. Note the mask is set to ``True`` where there are no sources, i.e., regions
+where the background can be used.
+
+The scaling factor is determined based on the variance-weighted mean
+of the masked science data, i.e., ``factor = sum(sci*bkg/var) / sum(bkg*bkg/var)``.
 This factor is equivalent to solving for the scaling constant applied to the
 reference background that gives the maximum likelihood of matching
-the science data.
+the masked science data.
 Outliers are rejected iteratively during determination of the scaling factor
 in order to avoid biasing the scaling factor based on outliers. The iterative
 rejection process is controlled by the
 ``wfss_outlier_percent``, ``wfss_rms_stop``, and ``wfss_maxiter`` step arguments.
 
-The locations of source spectra are determined from a source catalog (specified
-by the primary header keyword ``SCATFILE``), in conjunction with a reference file
-that gives the wavelength range (based on filter and grism) that is relevant
-to the WFSS image. All regions of the image that are free of source spectra
-are used for scaling the background reference image.
-
-A background mask is created and set to `True` where there are no sources, i.e., regions
-where the background can be used.
-This mask will be saved in the ``MASK`` extension of the intermediate output
-file, saved with suffix "bsub", and will be accessible in the ``mask`` attribute of the
-output datamodel.
-
-The step argument ``wfss_mmag_extract`` can be used, if
-desired, to set the minimum (faintest) AB mag of the source catalog objects
-used to define the background regions.
-The default is to use all source catalog entries that result in a spectrum
-falling within the WFSS image.
-
-The step argument ``wfss_mask`` can be used to provide a custom user mask
-that overrides the source-catalog-derived mask. The argument should point to
+Defining a user mask
+~~~~~~~~~~~~~~~~~~~~
+When ``wfss_mask_method="user"``, the step argument ``wfss_mask`` can be used to provide
+a custom user mask that overrides the source-catalog-derived mask. The argument should point to
 a FITS or ASDF file openable as `~stdatamodels.jwst.datamodels.ImageModel`
 containing a 2D array of integers in its ``.mask`` attribute (FITS ``MASK`` extension)
 with pixels to be used as background set to 1 and other pixels set to 0.
