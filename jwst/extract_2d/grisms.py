@@ -758,6 +758,12 @@ def extract_grism_objects(
                 subwcs.insert_frame(
                     input_frame=grism_slit, output_frame="grism_detector", transform=tr
                 )
+                # Force the pipelines to share their grism_detector-world transforms.
+                # We want that transform to be serialized just once on save
+                # instead of copied a bunch of times.
+                # It was found that validation of all those copies is very slow, and inflates
+                # the file size unnecessarily.
+                subwcs.pipeline[1:] = inwcs.pipeline[:]
 
                 new_slit = datamodels.SlitModel(
                     data=ext_data,
