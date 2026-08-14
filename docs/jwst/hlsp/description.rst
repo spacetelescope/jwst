@@ -21,15 +21,6 @@ nearest whole pixel; no sub-pixel calculations are performed.
 .. Note:: This step is not currently included in the :ref:`calwebb_coron3 <calwebb_coron3>`
    pipeline, but can be run standalone.
 
-Arguments
----------
-The ``hlsp`` step has one optional argument:
-
-``--annuli_width``
-  which is an integer parameter with a default value of 2 and is used to
-  specify the width, in pixels, of the annuli to use when computing the contrast
-  curve data.
-
 Inputs
 ------
 
