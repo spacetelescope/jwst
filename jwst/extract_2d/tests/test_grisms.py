@@ -181,6 +181,8 @@ def create_tso_wcsimage(filtername="F277W", subarray=False):
     im = CubeModel(hdul)
     im.meta.wcsinfo.siaf_xref_sci = 887.0
     im.meta.wcsinfo.siaf_yref_sci = 35.0
+    im.meta.dither.x_offset = 0
+    im.meta.dither.y_offset = 0
     aswcs = AssignWcsStep()
     return aswcs.process(im)
 
