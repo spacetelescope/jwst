@@ -15,6 +15,7 @@ from stdatamodels.jwst.datamodels import (
     RegionsModel,
 )
 from stdatamodels.jwst.transforms.models import (
+    IdealToV2V3,
     NIRCAMBackwardGrismDispersion,
     NIRCAMForwardColumnGrismDispersion,
     NIRCAMForwardRowGrismDispersion,
@@ -248,11 +249,6 @@ def _build_sky_pipeline_steps(input_model, reference_files, n_passthrough):
     distortion, va_corr, tel2sky : astropy models
         The three transforms ready to slot into the WCS pipeline.
     """
-    setra = Const1D(input_model.meta.wcsinfo.ra_ref)
-    setra.inverse = Const1D(input_model.meta.wcsinfo.ra_ref)
-    setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
-    setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
-
     distortion = imaging_distortion(input_model, reference_files) & Identity(n_passthrough)
 
     va_corr = pointing.dva_corr_model(
@@ -338,6 +334,36 @@ def tsgrism(input_model, reference_files):
     if yc is None:
         raise ValueError("YREF_SCI is missing.")
 
+    # SIAF is 1-indexed: subtract 1 for use in transforms
+    xc -= 1
+    yc -= 1
+
+    # Get distortion and sky frames
+    distortion, va_corr, tel2sky = _build_sky_pipeline_steps(
+        input_model, reference_files, n_passthrough=2
+    )
+
+    # Using the sky model, update the center position to get
+    # the offset into the direct image frame
+    x_off, y_off = input_model.meta.dither.x_offset, input_model.meta.dither.y_offset
+    idltov23 = IdealToV2V3(
+        input_model.meta.wcsinfo.v3yangle,
+        input_model.meta.wcsinfo.v2_ref,
+        input_model.meta.wcsinfo.v3_ref,
+        input_model.meta.wcsinfo.vparity,
+    )
+    v2_offset, v3_offset = idltov23(x_off, y_off)
+    xc_off, yc_off, _, _ = distortion.inverse(v2_offset, v3_offset, np.nan, 1)
+    v2_0, v3_0 = idltov23(0, 0)
+    xc_0, yc_0, _, _ = distortion.inverse(v2_0, v3_0, np.nan, 1)
+    if np.all(np.isfinite([xc_off, y_off, xc_0, yc_0])):
+        xc += xc_off - xc_0
+        yc += yc_off - yc_0
+
+        # Update siaf reference
+        input_model.meta.wcsinfo.siaf_xref_sci = xc + 1
+        input_model.meta.wcsinfo.siaf_yref_sci = yc + 1
+
     xcenter = Const1D(xc)
     xcenter.inverse = Const1D(xc)
     ycenter = Const1D(yc)
@@ -357,10 +383,6 @@ def tsgrism(input_model, reference_files):
         sub2direct = (
             Mapping((0, 1, 0, 1, 2)) | (Identity(2) & xcenter & ycenter & Identity(1)) | det2det
         )
-
-    distortion, va_corr, tel2sky = _build_sky_pipeline_steps(
-        input_model, reference_files, n_passthrough=2
-    )
 
     pipeline = [
         (frames["grism_detector"], sub2direct),
@@ -456,31 +478,43 @@ def dhs(input_model, reference_files):
     # Used in RegionsSelector to choose correct transform given a stripe ID.
     transforms = {}
 
+    # Get SIAF reference position
+    xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
+    if xc is None:
+        raise ValueError("XREF_SCI is missing.")
+    if yc is None:
+        raise ValueError("YREF_SCI is missing.")
+
+    # SIAF is 1-indexed: subtract 1 for use in transforms
+    xc -= 1
+    yc -= 1
+
     velosys = input_model.meta.wcsinfo.velosys
     for i, stripe in enumerate(stripes):
         det2det = _build_grism_det2det(orders, displ[i], dispx[i], dispy[i])
         det2det = _apply_velocity_correction(det2det, velosys)
 
-        xc, yc = (
-            input_model.meta.wcsinfo.siaf_xref_sci - 1,
-            input_model.meta.wcsinfo.siaf_yref_sci - 1,
-        )
-        if xc is None:
-            raise ValueError("XREF_SCI is missing.")
-        if yc is None:
-            raise ValueError("YREF_SCI is missing.")
-
+        # TODO: check these constants for round-tripping issues
+        #  Should they include the dither offsets, like the tsgrism mode?
+        #  Should they be different for each stripe?
         if longflag:
-            xform_refx = xform_refx.inverse = xcenter = xcenter.inverse = Const1D(xc)
-            xform_refy = xform_refy.inverse = ycenter = ycenter.inverse = Const1D(yc)
-
+            xform_refx = Const1D(xc)
+            xform_refx.inverse = Const1D(xc)
+            xform_refy = Const1D(yc)
+            xform_refy.inverse = Const1D(yc)
+            xcenter = Const1D(xc)
+            xcenter.inverse = Const1D(xc)
+            ycenter = Const1D(yc)
+            ycenter.inverse = Const1D(yc)
         else:
+            xform_refx = Const1D(0.0)
+            xform_refx.inverse = Const1D(0.0)
+            xform_refy = Const1D(0.0)
+            xform_refy.inverse = Const1D(0.0)
             xcenter = Const1D(xc)
             xcenter.inverse = Const1D(0.0)
             ycenter = Const1D(yc)
             ycenter.inverse = Const1D(0.0)
-
-            xform_refx = xform_refy = xform_refx.inverse = xform_refy.inverse = Const1D(0.0)
 
         stripe_model = Const1D(stripe)
         stripe_model.inverse = Const1D(stripe)
