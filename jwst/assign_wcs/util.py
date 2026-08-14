@@ -450,8 +450,9 @@ def get_bounding_box_extents(ra_corners, dec_corners, sky_to_grism, wlmin, wlmax
 
     Parameters
     ----------
-    ra_corners, dec_corners : ndarray of shape (4, n_sources)
+    ra_corners, dec_corners : ndarray
         RA/Dec, in degrees, of the four sky bounding box corners for each source.
+        Shape (4, n_sources).
     sky_to_grism : callable
         The "world" to "grism_detector" WCS transform.
     wlmin, wlmax : float
@@ -461,8 +462,8 @@ def get_bounding_box_extents(ra_corners, dec_corners, sky_to_grism, wlmin, wlmax
 
     Returns
     -------
-    xmin, xmax, ymin, ymax : ndarray of shape (n_sources,)
-        Per-source grism-frame bounding box extents.
+    xmin, xmax, ymin, ymax : ndarray
+        Per-source grism-frame bounding box extents, shape (n_sources,).
     """
     n_sources = np.shape(ra_corners)[-1]
     ra = np.asarray(ra_corners).reshape(-1)
