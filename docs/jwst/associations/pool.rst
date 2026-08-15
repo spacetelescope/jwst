@@ -1,11 +1,11 @@
 .. _design-pool:
 
-================
 Association Pool
 ================
 
 Association pools are tables. Pools are instantiated using the
-:class:`~jwst.associations.pool.AssociationPool` class. This class is a subclass of
+:class:`~jwst.associations.pool.AssociationPool` class.
+This class is a subclass of
 :ref:`astropy Table <astropy:astropy-table>`.
 As such, any file that is supported by :ref:`astropy:table_io` can be
 used as an association pool.

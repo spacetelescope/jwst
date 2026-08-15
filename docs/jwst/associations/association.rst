@@ -6,8 +6,9 @@ Associations and Rules
 Terminology
 -----------
 
-As has been described in :ref:`asn-what-are-associations`, an ``Association``
-is a Python :py:obj:`dict` or :py:obj:`list` that is a group of things that belong together
+As has been described in :ref:`asn-what-are-associations`,
+an `~jwst.associations.association.Association` is a Python :py:obj:`dict`
+or :py:obj:`list` that is a group of things that belong together
 and are created by association rules. However, as will be described,
 the association rules are Python classes which inherit from the
 :class:`~jwst.associations.association.Association` class.
@@ -18,27 +19,32 @@ the methods and attributes of those classes. Such instances are used
 to populate the created associations with new members and check the
 validity of said associations.
 
-However, once an association has been saved, or serialized, through
-the :meth:`Association.dump
-<jwst.associations.association.Association.dump>` method, then reload
-through the corresponding :meth:`Association.load
-<jwst.associations.association.Association.load>` method, the restored
-association is only the basic list or dict. The whole instance of the
-originating association is not serialized with the basic membership
-information.
+However, once an association has been saved, or serialized, through the
+:meth:`Association.dump <jwst.associations.association.Association.dump>`
+method, then reload through the corresponding
+:meth:`Association.load <jwst.associations.association.Association.load>`
+method (also see :ref:`asn-note-abt-loading`),
+the restored association is only the basic list or dict.
+The whole instance of the originating association is not serialized
+with the basic membership information.
 
-This relationship is shown in the following figure:
+This relationship is shown in
+:ref:`Figure 1 <figure-association-rules-to-assc>` below:
+
+.. _figure-association-rules-to-assc:
 
 .. figure:: graphics/rule_to_association.png
    :scale: 50%
 
    Rule vs. Association Relationship
 
+.. _asn-note-abt-loading:
+
 Note About Loading
 ^^^^^^^^^^^^^^^^^^
 
-:meth:`Association.load
-<jwst.associations.association.Association.load>` will only validate
+:meth:`Association.load <jwst.associations.association.Association.load>`
+will only validate
 the incoming data against whatever schema or other validation checks
 the particular subclass calls for. The generally preferred method for
 loading an association is through the
@@ -52,8 +58,8 @@ Rules
 Association rules are Python classes which must inherit from the
 :class:`~jwst.associations.association.Association` base class. What
 the rules do and what they create are completely up to the rules
-themselves. Except for a few :ref:`core methods
-<ref-asn-core-methods>`, the only other requirement is that any
+themselves. Except for a few :ref:`core methods <ref-asn-core-methods>`,
+the only other requirement is that any
 instance of an association rule must behave as the association it
 creates. If the association is a dict, the rule instance must behave
 as the dict. If the association is a list, the rule instance must
@@ -70,9 +76,12 @@ be created from which the rule classes inherit. The set of rule
 classes which share the same base parent classes are referred to as a
 *rule set*. The JWST :ref:`Stage 2 <asn-level2-techspecs>` and
 :ref:`Stage 3 <asn-level3-techspecs>` are examples of such rule sets.
-The below figure demonstrates the relationships between the base
-``Association``, the defining ruleset classes, and the rule classes
-themselves.
+:ref:`Figure 2 <figure-association-ruleset-inheritance>`
+below demonstrates the relationships between the base
+`~jwst.associations.association.Association`,
+the defining ruleset classes, and the rule classes themselves.
+
+.. _figure-association-ruleset-inheritance:
 
 .. figure:: graphics/rule_sets.png
    :scale: 50%
@@ -84,6 +93,7 @@ Where Rules Live: The AssociationRegistry
 
 In order to be used, rules are loaded into an
 :ref:`design-registry`. The registry is used by the
-:py:func:`~jwst.associations.generator.generate.generate` to produce the associations. The registry is
+:py:func:`~jwst.associations.generator.generate.generate`
+to produce the associations. The registry is
 also used by the :py:func:`~jwst.associations.load_asn` function to
 validate a potential association data against list of rules.
