@@ -266,6 +266,21 @@ def _build_sky_pipeline_steps(input_model, reference_files, n_passthrough):
     return distortion, va_corr, tel2sky
 
 
+def _get_tsgrism_source_center(input_model):
+    """Return the TSGRISM source reference position in 0-indexed WCS pixels."""
+    xc = input_model.meta.wcsinfo.siaf_xref_sci
+    yc = input_model.meta.wcsinfo.siaf_yref_sci
+
+    if xc is None:
+        raise ValueError("XREF_SCI is missing.")
+    if yc is None:
+        raise ValueError("YREF_SCI is missing.")
+
+    # SIAF XREF_SCI/YREF_SCI values stored in FITS metadata are 1-indexed,
+    # while GWCS detector/direct-image coordinates are 0-indexed.
+    return xc - 1, yc - 1
+
+
 def tsgrism(input_model, reference_files):
     """
     Create WCS pipeline for a NIRCAM Time Series Grism observation.
@@ -330,13 +345,7 @@ def tsgrism(input_model, reference_files):
     # crpix1 <--> xref_sci and crpix2 <--> yref_sci
     # offsets in X are handled in extract_2d, e.g. if an offset
     # special requirement was specified in the APT.
-    xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
-
-    if xc is None:
-        raise ValueError("XREF_SCI is missing.")
-
-    if yc is None:
-        raise ValueError("YREF_SCI is missing.")
+    xc, yc = _get_tsgrism_source_center(input_model)
 
     xcenter = Const1D(xc)
     xcenter.inverse = Const1D(xc)
