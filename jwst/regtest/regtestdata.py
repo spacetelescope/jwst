@@ -1,7 +1,6 @@
 import os
 import os.path as op
 import pprint
-import sys
 import warnings
 from difflib import unified_diff
 from glob import glob as _sys_glob
@@ -514,6 +513,7 @@ def _data_glob_url(*url_parts, root=None):
             "1000 results. Use an API key and define API_KEY_FILE environment "
             "variable to get full search results.",
             UserWarning,
+            stacklevel=2,
         )
         headers = None
 
