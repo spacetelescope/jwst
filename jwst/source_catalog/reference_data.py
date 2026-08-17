@@ -107,30 +107,42 @@ class ReferenceData:
         Parameters
         ----------
         aperture_ee : int
-            The aperture encircled energy value. Must exactly match the value
-            in a row of the APCORR reference file.
+            The aperture encircled energy value. Values between tabulated
+            APCORR rows are linearly interpolated.
 
         Returns
         -------
         ee_row : `astropy.io.fits.FITS_rec`
-            The row of the APCORR reference file that matches the input
+            The matching or interpolated APCORR row.
         """
-        ee_percent = np.round(self._aperture_ee_table["eefraction"] * 100)
-        row_mask = ee_percent == aperture_ee
+        ee_percent = self._aperture_ee_table["eefraction"] * 100.0
+        row_mask = np.isclose(ee_percent, aperture_ee)
         ee_row = self._aperture_ee_table[row_mask]
-        if len(ee_row) == 0:
-            raise RuntimeError(
-                "Aperture encircled energy value of "
-                f"{aperture_ee} appears to be invalid. No "
-                "matching row was found in the APCORR "
-                "reference file {self.apcorr_filename}"
-            )
         if len(ee_row) > 1:
             raise RuntimeError(
                 "More than one matching row was found in "
                 "the APCORR reference file "
                 f"{self.apcorr_filename}"
             )
+        if len(ee_row) == 1:
+            return ee_row
+
+        order = np.argsort(ee_percent)
+        ee_sorted = ee_percent[order]
+        if aperture_ee < ee_sorted[0] or aperture_ee > ee_sorted[-1]:
+            raise RuntimeError(
+                "Aperture encircled energy value of "
+                f"{aperture_ee} is outside the range available in the APCORR "
+                f"reference file {self.apcorr_filename}"
+            )
+
+        log.info(f"Interpolating APCORR data to {aperture_ee}% encircled energy")
+        ee_row = self._aperture_ee_table[order[:1]].copy()
+        for name in self._aperture_ee_table.dtype.names:
+            values = self._aperture_ee_table[name]
+            if values.ndim == 1 and np.issubdtype(values.dtype, np.number):
+                ee_row[name][0] = np.interp(aperture_ee, ee_sorted, values[order])
+
         return ee_row
 
     @lazyproperty
