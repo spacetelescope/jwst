@@ -56,7 +56,7 @@ class Association(MutableMapping):
 
     Raises
     ------
-    jwst.associations.AssociationError
+    jwst.associations.exceptions.AssociationError
         If an item doesn't match.
     """
 
@@ -72,15 +72,13 @@ class Association(MutableMapping):
     """
 
     DEFAULT_EVALUATE = False
-    """Default do not evaluate input values"""
+    """Default do not evaluate input values."""
 
     GLOBAL_CONSTRAINT = None
-    """Global constraints"""
+    """Global constraints."""
 
     INVALID_VALUES: tuple | None = None
-    """Attribute values that indicate the
-    attribute is not specified.
-    """
+    """Attribute values that indicate the attribute is not specified."""
 
     def __init__(self, version_id=None):
         self.data = {}
@@ -124,12 +122,11 @@ class Association(MutableMapping):
 
         Returns
         -------
-        tuple
-            2-tuple consisting of:
+        asn : `~jwst.associations.association.Association` or None
+            The association or, if the item does not match this rule, None.
 
-            - Association or None: The association or, if the item does not
-              match this rule, None
-            - [ProcessList[, ...]]: List of items to process again.
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of items to process again.
         """
         asn = cls(version_id=version_id)
         matches, reprocess = asn.add(item)
@@ -162,47 +159,43 @@ class Association(MutableMapping):
         return cls.__name__
 
     @property
-    def asn_rule(self):
-        """
-        Name of the rule.
-
-        Returns
-        -------
-        str
-            The asn rule name.
-        """
+    def asn_rule(self):  # numpydoc ignore=RT01
+        """Same as :meth:`rule_name`."""
         return self.rule_name()
 
     @classmethod
-    def validate(cls, asn):
+    def validate(cls, asn, error_on_fail=True):
         """
         Validate an association against this rule.
 
         Parameters
         ----------
-        asn : Association or association-like
-            The association structure to examine
+        asn : `~jwst.associations.association.Association`
+            The association structure to examine.
+
+        error_on_fail : bool
+            On validation error, throw exception instead of
+            changing return status.
 
         Returns
         -------
         valid : bool
-            `True` if valid. Otherwise the
-            `~jwst.associations.exceptions.AssociationNotValidError`
-            is raised.
+            `True` if valid. When invalid, an exception is raised
+            if ``error_on_fail`` is `True`, otherwise `False`.
 
         Raises
         ------
         jwst.associations.exceptions.AssociationNotValidError
-            If there is some reason validation failed.
+            Validation failed and ``error_on_fail`` is `True`.
 
         Notes
         -----
-        The base method checks against the rule class' schema
+        The base method checks against the rule class' schema (``schema_file``).
         If the rule class does not define a schema, a warning is issued
-        but the routine will return True.
+        in logger but the routine will still return `True`.
         """
         if not hasattr(cls, "schema_file"):
-            logger.warning(f"Cannot validate: {cls} has no schema. Presuming OK.")
+            logger.warning("Cannot validate: %s has no schema. Presuming OK.", str(cls))
             return True
 
         if isinstance(asn, cls):
@@ -216,19 +209,24 @@ class Association(MutableMapping):
         try:
             jsonschema.validate(asn_data, asn_schema)
         except (AttributeError, jsonschema.ValidationError) as err:
-            logger.debug("Validation failed:")
-            logger.debug(str(err))
-            raise AssociationNotValidError("Validation failed") from err
+            logger.debug("Validation failed:\n%s", str(err))
+            if error_on_fail:
+                raise AssociationNotValidError("Validation failed") from err
+            else:
+                return False
 
-        # Validate no path data for expnames
+        # Warn if path data found for expnames
+        no_path = Path()
         for product in asn_data["products"]:
             members = product["members"]
             for member in members:
                 fpath = Path(member["expname"]).parent
-                if fpath != Path():
-                    err_str = "Input association file contains path information;"
-                    err_str += " note that this can complicate usage and/or sharing"
-                    err_str += " of such files."
+                if fpath != no_path:
+                    err_str = (
+                        "Input association file contains path information; "
+                        "note that this can complicate usage and/or sharing "
+                        "of such files."
+                    )
                     logger.debug(err_str)
                     warnings.warn(err_str, UserWarning, stacklevel=1)
         return True
@@ -250,7 +248,7 @@ class Association(MutableMapping):
             .. version-deprecated:: 2.1
                 Only JSON format is supported now.
 
-        **kwargs : dict
+        **kwargs
             List of arguments to pass to the registered
             routines for the current association type.
 
@@ -259,18 +257,17 @@ class Association(MutableMapping):
 
         Returns
         -------
-        name, serialized : tuple
-            Tuple where the first item is the suggested
-            base name for the file.
-            Second item is the serialization.
+        asn_filename : str
+            Suggested base name for the JSON file.
+            This is taken from the ``asn_name`` attribute.
+
+        serialized : str
+            JSON serialization of this association.
 
         Raises
         ------
-        jwst.associations.AssociationError
-            If the operation cannot be done
-
         jwst.associations.exceptions.AssociationNotValidError
-            If the given association does not validate.
+            If the association does not validate.
         """
         if kwargs:
             warnings.warn(
@@ -296,11 +293,11 @@ class Association(MutableMapping):
         **kwargs,
     ):
         """
-        Marshal a previously serialized association.
+        Load a serialized association.
 
         Parameters
         ----------
-        serialized : object
+        serialized : str, dict, or file-like
             The serialized form of the association.
 
         fmt : str or None
@@ -320,19 +317,13 @@ class Association(MutableMapping):
 
         Returns
         -------
-        association : Association
+        association : `~jwst.associations.association.Association`
             The association.
 
         Raises
         ------
         jwst.associations.exceptions.AssociationNotValidError
             Cannot create or validate the association.
-
-        Notes
-        -----
-        While the serialized object must be in
-        JSON format, the input can be either a string or
-        a file object containing the string.
         """
         if kwargs:
             warnings.warn(
@@ -343,7 +334,7 @@ class Association(MutableMapping):
                 stacklevel=2,
             )
 
-        asn = json_asn_load(cls, serialized)
+        asn = json_asn_load(serialized)
 
         if validate:
             cls.validate(asn)
@@ -358,13 +349,9 @@ class Association(MutableMapping):
         Returns
         -------
         bool
-            True if association is valid.
+            `True` if association is valid, otherwise `False`.
         """
-        try:
-            self.__class__.validate(self)
-        except AssociationNotValidError:
-            return False
-        return True
+        return self.__class__.validate(self, error_on_fail=False)
 
     def add(self, item, check_constraints=True):
         """
@@ -376,16 +363,18 @@ class Association(MutableMapping):
             The item to add.
 
         check_constraints : bool
-            If True, see if the item should belong to this association.
-            If False, just add it.
+            If `True`, see if the item should belong to this association.
+            If `False`, just add it.
 
         Returns
         -------
-        tuple
-            2-tuple consisting of:
+        match : bool
+            `True` if the all constraints are satisfied or skipped.
+            This could also be the value of ``self.constraints['force_match']``
+            when it is set.
 
-            - bool : True if match
-            - [ProcessList[, ...]]: List of items to process again.
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of items to process again.
         """
         if self.is_item_member(item):
             return True, []
@@ -424,11 +413,11 @@ class Association(MutableMapping):
 
         Returns
         -------
-        tuple
-            2-tuple consisting of:
+        match : bool
+            `True` if the all constraints are satisfied.
 
-            - bool : Did constraint match?
-            - [ProcessItem[, ...]]: List of items to process again.
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of items to process again.
         """
         self.constraints.preserve()
         match, reprocess = self.constraints.check_and_set(item)
@@ -450,18 +439,18 @@ class Association(MutableMapping):
         Parameters
         ----------
         item : dict
-            The item to retrieve the values from
+            The item to retrieve the values from.
 
         conditions : dict
-            The conditions structure
+            The conditions structure.
 
         Returns
         -------
-        tuple
-            2-tuple consisting of:
+        match : bool
+            `True` if the all constraints are satisfied.
 
-            - bool : True if the all constraints are satisfied
-            - [ProcessList[, ...]]: List of items to process again.
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of items to process again.
         """
         reprocess = []
         evaled_str = conditions["inputs"](item)
@@ -477,20 +466,19 @@ class Association(MutableMapping):
             conditions["value"] = escaped_value
             conditions["force_unique"] = False
 
-        # That's all folks
         return True, reprocess
 
     def finalize(self):
         """
         Finalize association.
 
-        Finalize or close-off this association. Perform validations,
+        Finalize or close off this association. Perform validations,
         modifications, etc. to ensure that the association is
         complete.
 
         Returns
         -------
-        associations : [association[, ...]] or None
+        associations : list of `~jwst.associations.association.Association` or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
@@ -507,12 +495,12 @@ class Association(MutableMapping):
         Parameters
         ----------
         item : dict
-            The item to add.
+            The item to check.
 
         Returns
         -------
         is_item_member : bool
-            True if item is a member.
+            `True` if item is a member.
         """
         raise NotImplementedError(
             "Association.is_item_member must be implemented by a specific association rule."
@@ -534,8 +522,12 @@ class Association(MutableMapping):
 
         Parameters
         ----------
-        items : [object[, ...]]
+        items : list
             A list of items to make members of the association.
+
+        **kwargs
+            Added to signature for potentional compatibility elsewhere
+            but not used in base implementation.
 
         Notes
         -----
@@ -602,18 +594,20 @@ class Association(MutableMapping):
 
 
 # Utilities
+
+
 def finalize(asns):
     """
     Finalize associations by calling their ``finalize_hook`` method.
 
     Parameters
     ----------
-    asns : list[Association, ...]
+    asns : list of `~jwst.associations.association.Association`
         The list of associations to be finalized.
 
     Returns
     -------
-    list[Association, ...]
+    list of `~jwst.associations.association.Association`
         The finalized list of associations.
 
     Notes
@@ -623,9 +617,10 @@ def finalize(asns):
 
     .. code-block:: python
 
-       from jwst.associations.association import finalize as generic_finalize
+        from jwst.associations.association import finalize as generic_finalize
+        from jwst.associations.registry import RegistryMarker
 
-       RegistryMarker.callback("finalize")(generic_finalize)
+        RegistryMarker.callback("finalize")(generic_finalize)
     """
     finalized_asns = list(filter(lambda asn: asn is not None, [asn.finalize() for asn in asns]))
     return finalized_asns
@@ -644,5 +639,5 @@ def make_timestamp():
     return timestamp
 
 
-# Define default product name filling
 format_product = FormatTemplate()
+"""Default product name filling."""

@@ -723,30 +723,47 @@ class DMSBaseMixin(ACIDMixin):
         cls.sequence = Counter(start=1)
 
     @classmethod
-    def validate(cls, asn):
+    def validate(cls, asn, error_on_fail=True):
         """
-        Validate candidate against all asn validity tests.
+        Validate candidate against all association validity tests.
 
         Parameters
         ----------
         asn : `~jwst.associations.association.Association`
-            The asn candidate to validate.
+            The association candidate to validate.
+
+        error_on_fail : bool
+            On validation error, throw exception instead of
+            changing return status.
 
         Returns
         -------
         bool
-            True if candidate is valid.
+            `True` if candidate is valid. When invalid, an exception is raised
+            if ``error_on_fail`` is `True`, otherwise `False`.
+
+        Raises
+        ------
+        jwst.associations.exceptions.AssociationNotValidError
+            Validation failed and ``error_on_fail`` is `True`.
         """
-        super(DMSBaseMixin, cls).validate(asn)
+        result = super(DMSBaseMixin, cls).validate(asn, error_on_fail=error_on_fail)
+        if not result:
+            return result
 
         if isinstance(asn, DMSBaseMixin):
-            result = False
             try:
                 result = all(test["validated"] for test in asn.validity.values())
             except (AttributeError, KeyError):
-                raise AssociationNotValidError("Validation failed") from None
+                if error_on_fail:
+                    raise AssociationNotValidError("Validation failed") from None
+                else:
+                    return False
             if not result:
-                raise AssociationNotValidError("Validation failed validity tests.")
+                if error_on_fail:
+                    raise AssociationNotValidError("Validation failed validity tests.")
+                else:
+                    return False
 
         return True
 

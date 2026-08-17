@@ -28,18 +28,19 @@ def asn_gather(
 
     Parameters
     ----------
-    association : str, pathlib.Path
+    association : str or pathlib.Path
         The association to gather.
 
     destination : str, pathlib.Path, or None
         The folder to place the association and its members.
+        If output file exists, it will be silently overwritten.
         If None, the current working directory is used.
 
-    exp_types : [str[,...]] or None
+    exp_types : list of str or None
         List of exposure types to gather.
         If None, all are gathered.
 
-    exclude_types : [str[,...]] or None
+    exclude_types : list of str or None
         List of exposure types to exclude.
 
     source_folder : str or None
@@ -64,7 +65,7 @@ def asn_gather(
     else:
         source_folder = Path(source_folder)
     if destination is None:
-        dest_folder = Path("./")
+        dest_folder = Path.cwd()
     else:
         dest_folder = Path(destination)
 
@@ -93,12 +94,12 @@ def asn_gather(
     for product in dest_asn["products"]:
         for member in product["members"]:
             src_path = Path(member["expname"])
-            logger.info(f"*** Copying member {src_path.name}")
+            logger.info("*** Copying member %s", src_path.name)
             if str(src_path.parent).startswith("."):
                 src_path = source_folder / src_path
             dest_path = dest_folder / src_path.name
             process_args = shellcmd_args + [str(src_path), str(dest_path)]
-            logger.debug(f"Shell command in use: {process_args}")
+            logger.debug("Shell command in use: %s", str(process_args))
             result = subprocess.run(  # noqa: S603
                 process_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
             )
@@ -109,11 +110,10 @@ def asn_gather(
     # Save new association.
     dest_path = dest_folder / source_asn_path.name
     _, serialized = dest_asn.dump()
-    logger.info(f"Copying the association file itself {dest_path}")
+    logger.info("Copying the association file itself %s", dest_path)
     with Path(dest_path).open("w") as fh:
         fh.write(serialized)
 
-    # That's all folks
     return dest_path
 
 
@@ -123,13 +123,13 @@ def from_cmdline(args=None):
 
     Parameters
     ----------
-    args : [str[,...]]
-        List of arguments to parse
+    args : list of str
+        List of arguments to parse.
 
     Returns
     -------
     dict
-        Dict of the arguments and their values.
+        Dictionary of the arguments and their values.
     """
     import argparse
 

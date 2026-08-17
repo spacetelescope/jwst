@@ -61,12 +61,6 @@ Complete Developer API
 .. automodapi:: jwst.associations.lib.acid
    :no-inheritance-diagram:
 
-.. automodapi:: jwst.associations.lib.asn_schema_jw_level2b
-   :no-inheritance-diagram:
-
-.. automodapi:: jwst.associations.lib.asn_schema_jw_level3
-   :no-inheritance-diagram:
-
 .. automodapi:: jwst.associations.lib.association_rules
    :no-inheritance-diagram:
 
@@ -118,9 +112,6 @@ Complete Developer API
    :no-inheritance-diagram:
 
 .. automodapi:: jwst.associations.lib.rules_level3
-
-.. automodapi:: jwst.associations.lib.template_asn
-   :no-inheritance-diagram:
 
 .. automodapi:: jwst.associations.lib.update_path
    :no-inheritance-diagram:

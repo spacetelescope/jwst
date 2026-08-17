@@ -14,7 +14,7 @@ from jwst.associations.lib.member import Member
 # Configure logging
 logger = logging.getLogger(__name__)
 
-__all__: list = []
+__all__ = ["AssociationEncoder", "json_asn_load", "json_asn_dump"]
 
 
 class AssociationEncoder(json_lib.JSONEncoder):
@@ -26,40 +26,36 @@ class AssociationEncoder(json_lib.JSONEncoder):
 
         Parameters
         ----------
-        obj : object
-            The object - if a Member object, return its data attribute.
+        obj : `~jwst.associations.lib.member.Member`
+            If input is a Member object, return its data attribute.
 
         Returns
         -------
         dict or None
-            Return the Member data dictionary attribute, or
-            None if obj is not a Member instance.
+            Return the `~jwst.associations.lib.member.Member`
+            data attribute, otherwise None.
         """
         if isinstance(obj, Member):
             return obj.data
 
 
-def json_asn_load(_cls, serialized):
+def json_asn_load(serialized):
     """
     Unserialize an association from JSON.
 
     Parameters
     ----------
-    _cls : class
-        The class from which further information will be gathered
-        and possibly instantiated.
-
-    serialized : str or file object
-        The JSON to read
+    serialized : str, dict, or file-like
+        The JSON to read.
 
     Returns
     -------
     association : dict
-        The association
+        The association data.
 
     Raises
     ------
-    AssociationNotValidError
+    jwst.associations.exceptions.AssociationNotValidError
         Cannot create or validate the association.
     """
     if isinstance(serialized, dict):  # No-op
@@ -74,7 +70,7 @@ def json_asn_load(_cls, serialized):
     try:
         asn = loader(serialized)
     except Exception as err:
-        logger.debug(f'Error unserializing: "{err}"')
+        logger.debug('Error unserializing: "%s"', repr(err))
         raise AssociationNotValidError(f"Container is not JSON: '{serialized}'") from err
 
     return asn
@@ -86,20 +82,21 @@ def json_asn_dump(asn):
 
     Parameters
     ----------
-    asn : Association
-        The association to serialize
+    asn : `~jwst.associations.association.Association`
+        The association to serialize.
 
     Returns
     -------
-    name, str : tuple
-        Tuple where the first item is the suggested
-        Name for the JSON file.
-        Second item is the string containing the JSON serialization.
+    asn_filename : str
+        Suggested name for the JSON file.
+        This is taken from ``asn_name`` attribute of
+        the given association.
+
+    serialized : str
+        JSON serialization of the given association.
     """
     asn_filename = asn.asn_name
     if not asn_filename.endswith(".json"):
         asn_filename = asn_filename + ".json"
-    return (
-        asn_filename,
-        json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(",", ": ")),
-    )
+    serialized = json_lib.dumps(asn.data, cls=AssociationEncoder, indent=4, separators=(",", ": "))
+    return asn_filename, serialized

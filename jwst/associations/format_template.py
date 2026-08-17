@@ -1,8 +1,4 @@
-"""
-FormatTemplate.
-
-Format template string allowing partial formatting.
-"""
+"""Format template string allowing partial formatting."""
 
 from collections import defaultdict
 from string import Formatter
@@ -38,17 +34,17 @@ class FormatTemplate(Formatter):
     ----------
     separator : str
         Separator to use for values which have no
-        matching replacement strings
+        matching replacement strings.
 
     key_formats : dict or None
-        A dict of key-specific formatting where the value will
+        A dictionary of key-specific formatting where the value will
         be pre-formatted before being passed to the final format
         string. Each format will be tried until success.
 
     remove_unused : bool
         By default, unused replacement fields are left in the
         result, for use in subsequent replacement usage.
-        If True, such fields are removed from the result.
+        If `True`, such fields are removed from the result.
 
     Returns
     -------
@@ -57,75 +53,66 @@ class FormatTemplate(Formatter):
 
     Notes
     -----
-    This differences from Pythons `format` method are:
-        - If a replacement field does not have a given value,
-          the replacement field is left in the result
-        - If a key/value pair is present but has no replacement field,
-          the value is simply appended.
-        - Template can only use named replacement fields.
+    This is different from Python ``format`` for the following reasons:
+
+    - If a replacement field does not have a given value,
+      the replacement field is left in the result.
+    - If a key/value pair is present but has no replacement field,
+      the value is simply appended.
+    - Template can only use named replacement fields.
 
     Examples
     --------
     The basic example:
+
+    >>> from jwst.associations.format_template import FormatTemplate
     >>> template = 'name="{name}" value="{value}"'
     >>> fmt = FormatTemplate()
     >>> fmt(template)
     'name="{name}" value="{value}"'
 
     But with actual values given:
+
     >>> fmt(template, name="fred", value="great")
     'name="fred" value="great"'
 
     But wait, too many values given:
+
     >>> fmt(template, name="fred", value="great", extra="more")
     'name="fred" value="great"_more'
 
     And with too many and not enough:
+
     >>> fmt(template, value="great", extra="more")
     'name="{name}" value="great"_more'
 
     With a different separator:
+
     >>> fmt.separator = "---"
     >>> fmt(template, name="fred", value="great", extra="more")
     'name="fred" value="great"---more'
 
     Initializing with a different separator:
+
     >>> fmt_newsep = FormatTemplate(separator="_now-with_")
     >>> fmt_newsep(template, name="fred", value="great", extra="more")
     'name="fred" value="great"_now-with_more'
 
-    Setup preformatting
+    Setup preformatting:
+
     >>> key_formats = {"value": ["pre_{:s}_format"]}
     >>> fmt_preformat = FormatTemplate(key_formats=key_formats)
     >>> fmt_preformat(template, name="fred", value="great")
     'name="fred" value="pre_great_format"'
 
     Remove unused keys:
+
     >>> fmt_unused = FormatTemplate(remove_unused=True)
     >>> fmt_unused(template, name="fred")
     'name="fred" value=""'
     """
 
     def __init__(self, separator="_", key_formats=None, remove_unused=False):
-        """
-        Initialize class.
-
-        Parameters
-        ----------
-        separator : str
-            For key/value pairs given that do not have a
-            replacement field, the values are appended to
-            the string using this separator.
-
-        key_formats : {key: format(, ...)}
-            dict of formats to pre-format the related values
-            before insertion into the template.
-
-        remove_unused : bool
-            By default, unused replacement fields are left in the
-            result, for use in subsequent replacement usage.
-            If True, such fields are removed from the result.
-        """
         super().__init__()
         self.separator = separator
         self.remove_unused = remove_unused
@@ -142,10 +129,10 @@ class FormatTemplate(Formatter):
         Parameters
         ----------
         format_string : str
-            The string to be formatted
+            The string to be formatted.
 
-        **kwargs : dict
-            The key/value pairs to insert into the string
+        **kwargs
+            The key/value pairs to insert into the string.
 
         Returns
         -------
@@ -201,18 +188,19 @@ class FormatTemplate(Formatter):
         key : str
             The key to retrieve.
 
-        args : [arg(, ...)]
+        args : tuple
             Positional arguments passed.
             This is ignored.
 
-        kwargs : {k:v(, ...)}
+        kwargs : dict
             The key/value pairs passed in.
 
         Returns
         -------
         obj
-            The value from the kwargs.
-            If not found, the string '{key}' is returned.
+            The value from ``kwargs``.
+            If not found, ``'{key}'`` is returned, where
+            ``key`` is the input string.
         """
         if self.remove_unused:
             default = ""
