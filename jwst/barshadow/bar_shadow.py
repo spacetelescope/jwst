@@ -237,19 +237,24 @@ def create_shutter_elements(barshadow_model):
     shadow1x1 = barshadow_model.data1x1
     shadow1x3 = barshadow_model.data1x3
 
-    # Each shutter is assumed to be 1000 pixels tall, so
-    # center elements are at row 500.
-    # 1 pixel overlap is used at the boundaries, for averaging
-    # corrections between adjoining sections
-    # NOTE: the closed-closed element should not happen often, if ever:
-    # it is rare to have two adjacent shutters closed within a slitlet
+    if shadow1x1.ndim != 2 or shadow1x3.shape != shadow1x1.shape:
+        raise ValueError("Barshadow 1x1 and 1x3 arrays must be matching 2D arrays")
+
+    nrows, ncolumns = shadow1x1.shape
+    if nrows < 3 or nrows % 2 == 0:
+        raise ValueError("Barshadow reference arrays must have an odd number of rows")
+
+    # The center row is shared by adjacent shutter elements so their boundary
+    # values can be averaged when the full slitlet shadow is assembled.
+    center_row = nrows // 2
     shutter_elements = {
-        "first": shadow1x1[:501, :],
-        "open_open": shadow1x3[:501, :],
-        "open_closed": shadow1x1[500:, :],
-        "closed_open": shadow1x1[:501, :],
-        "closed_closed": np.nanmin(shadow1x1) * np.ones((501, 101)),
-        "last": shadow1x1[501:, :],
+        "first": shadow1x1[: center_row + 1, :],
+        "open_open": shadow1x3[: center_row + 1, :],
+        "open_closed": shadow1x1[center_row:, :],
+        "closed_open": shadow1x1[: center_row + 1, :],
+        "closed_closed": np.nanmin(shadow1x1)
+        * np.ones((center_row + 1, ncolumns)),
+        "last": shadow1x1[center_row + 1 :, :],
     }
 
     return shutter_elements
@@ -276,7 +281,9 @@ def create_shadow(shutter_elements, shutter_status):
         The constructed bar shadow array.
     """
     nshutters = len(shutter_status)
-    shadow = create_empty_shadow_array(nshutters)
+    shutter_height = shutter_elements["first"].shape[0] - 1
+    ncolumns = shutter_elements["first"].shape[1]
+    shadow = create_empty_shadow_array(nshutters, shutter_height, ncolumns)
     first_row = 0
     shadow = add_first_half_shutter(shadow, shutter_elements["first"])
     first_row = first_row + shutter_elements["first"].shape[0] - 1
@@ -294,7 +301,7 @@ def create_shadow(shutter_elements, shutter_status):
     return shadow
 
 
-def create_empty_shadow_array(nshutters):
+def create_empty_shadow_array(nshutters, shutter_height=500, ncolumns=101):
     """
     Create the empty bar shadow array.
 
@@ -302,16 +309,17 @@ def create_empty_shadow_array(nshutters):
     ----------
     nshutters : int
         The length of the slit in shutters.
+    shutter_height : int, optional
+        Number of reference pixels from one shutter center to the next.
+    ncolumns : int, optional
+        Number of wavelength columns in the reference arrays.
 
     Returns
     -------
     empty_shadow : ndarray
         The empty shadow array.
     """
-    # Assume the reference files have a shape of 1001 rows by 101 columns
-    # and go from -1 to +1 in Y
-    nrows = nshutters * 500 + 500
-    ncolumns = 101
+    nrows = (nshutters + 1) * shutter_height
     empty_shadow = np.zeros((nrows, ncolumns))
     return empty_shadow
 
@@ -325,15 +333,15 @@ def add_first_half_shutter(shadow, shadow_element):
     shadow : ndarray
         The bar shadow array.
     shadow_element : ndarray
-        The ``shutter_elements['first']`` array.  Should be 501 rows (Y)
-        by 101 columns (wavelength).
+        The ``shutter_elements['first']`` array. Its dimensions are derived
+        from the barshadow reference arrays.
 
     Returns
     -------
     shadow : ndarray
         The bar shadow array with the first half shutter inserted.
     """
-    shadow[0:501, :] = shadow_element[:, :]
+    shadow[0 : shadow_element.shape[0], :] = shadow_element[:, :]
     return shadow
 
 

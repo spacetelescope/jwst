@@ -184,3 +184,19 @@ def test_has_uniform_source():
     # Since source_type is not 'POINT', the step will assume that the
     # source is extended.
     assert bar.has_uniform_source(slitlet)
+
+
+def test_flexible_barshadow_reference_geometry():
+    rng = np.random.default_rng(seed=7)
+    d1x1 = rng.random((201, 41))
+    d1x3 = rng.random((201, 41))
+    model = datamodels.BarshadowModel(data1x1=d1x1, data1x3=d1x3)
+
+    elements = bar.create_shutter_elements(model)
+    assert elements["first"].shape == (101, 41)
+    assert elements["open_open"].shape == (101, 41)
+    assert elements["open_closed"].shape == (101, 41)
+    assert elements["last"].shape == (100, 41)
+
+    shadow = bar.create_shadow(elements, "1x1")
+    assert shadow.shape == (400, 41)
