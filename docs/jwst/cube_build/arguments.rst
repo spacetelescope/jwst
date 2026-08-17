@@ -86,7 +86,9 @@ The following arguments control the size and sampling characteristics of the out
   Declination center, in decimal degrees, of the IFU cube that defines the location of xi/eta tangent plane projection origin.
 
 ``cube_pa``
-  The position angle of the IFU cube in decimal degrees (E from N).
+  The position angle of the IFU cube in decimal degrees (E from N). If ``cube_pa`` is supplied together with
+  ``coord_system=ifualign``, the explicit position angle takes precedence and the output cube is built in the
+  sky coordinate system at the requested position angle.
 
 ``nspax_x``
   The odd integer number of spaxels to use in the x dimension of the tangent plane.
