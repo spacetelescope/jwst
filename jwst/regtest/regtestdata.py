@@ -2,6 +2,7 @@ import os
 import os.path as op
 import pprint
 import sys
+import warnings
 from difflib import unified_diff
 from glob import glob as _sys_glob
 from pathlib import Path
@@ -508,11 +509,11 @@ def _data_glob_url(*url_parts, root=None):
         with open(envkey) as fp:
             headers = {"X-JFrog-Art-Api": fp.readline().strip()}
     except (PermissionError, FileNotFoundError):
-        print(  # noqa: T201
-            "Warning: Anonymous Artifactory search requests are limited to "  # noqa: T201
+        warnings.warn(
+            "Anonymous Artifactory search requests are limited to "
             "1000 results. Use an API key and define API_KEY_FILE environment "
             "variable to get full search results.",
-            file=sys.stderr,
+            UserWarning,
         )
         headers = None
 
@@ -535,5 +536,5 @@ def _data_glob_url(*url_parts, root=None):
         if "files" in r_json:
             return r_json["files"]
         raise KeyError(
-            f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}"
+            f"URL data glob failed for {search_url}\n    JSON:\n{r_json}"
         )
