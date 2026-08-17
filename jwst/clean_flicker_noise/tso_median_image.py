@@ -277,6 +277,11 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         else:
             wlc_flux = whitelight_table["whitelight_flux"].value
 
+        if len(wlc_flux) != nints:
+            raise ValueError(
+                f"Whitelight flux count ({len(wlc_flux)}) does not match number of integrations ({nints})"
+            )
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             norm_flux = wlc_flux / np.nanmedian(wlc_flux)
