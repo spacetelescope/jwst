@@ -24,6 +24,25 @@ log = logging.getLogger(__name__)
 
 __all__ = ["IFUCubeData", "IncorrectInputError", "IncorrectParameterError"]
 
+LARGE_CUBE_VOXEL_THRESHOLD = 100_000_000
+
+
+def _check_cube_size(naxis1, naxis2, naxis3):
+    """Return the cube voxel count and warn for unusually large allocations."""
+    total_num = naxis1 * naxis2 * naxis3
+    if total_num > LARGE_CUBE_VOXEL_THRESHOLD:
+        log.warning(
+            "Requested IFU cube has %d voxels (%d x %d x %d), exceeding the "
+            "%d-voxel warning threshold. Cube allocation may fail; check input "
+            "coverage and cube sampling.",
+            total_num,
+            naxis1,
+            naxis2,
+            naxis3,
+            LARGE_CUBE_VOXEL_THRESHOLD,
+        )
+    return total_num
+
 
 class IFUCubeData:
     """
@@ -649,7 +668,7 @@ class IFUCubeData:
         cb_suffix = self.define_cubename_suffix()
         self.output_name = self.output_name_base + cb_suffix
 
-        total_num = self.naxis1 * self.naxis2 * self.naxis3
+        total_num = _check_cube_size(self.naxis1, self.naxis2, self.naxis3)
 
         self.spaxel_flux = np.zeros(total_num, dtype=np.float64)
         self.spaxel_weight = np.zeros(total_num, dtype=np.float64)
