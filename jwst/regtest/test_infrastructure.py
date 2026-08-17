@@ -107,6 +107,17 @@ def test_diff_astropy_tables_dtype(diff_astropy_tables, two_tables):
         assert diff_astropy_tables(path1, path2)
 
 
+def test_diff_astropy_tables_unit(diff_astropy_tables, two_tables):
+    path1, path2 = two_tables
+
+    t1 = Table.read(path1)
+    t1["d"].unit = u.km / u.s
+    t1.write(path1, overwrite=True, format="ascii.ecsv")
+
+    with pytest.raises(AssertionError, match="unit does not match"):
+        assert diff_astropy_tables(path1, path2)
+
+
 def test_diff_astropy_tables_all_equal(diff_astropy_tables, two_tables):
     path1, path2 = two_tables
 

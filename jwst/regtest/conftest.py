@@ -403,6 +403,11 @@ def diff_astropy_tables():
         for col_name in truth.colnames:
             try:
                 try:
+                    assert result[col_name].unit == truth[col_name].unit
+                except AssertionError as err:
+                    diffs.append(f"Column '{col_name}' unit does not match\n{err}")
+
+                try:
                     assert result[col_name].dtype == truth[col_name].dtype
                 except AssertionError as err:
                     diffs.append(f"Column '{col_name}' dtype does not match\n{err}")
