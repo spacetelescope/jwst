@@ -131,6 +131,12 @@ The following arguments apply to **IFU data** only:
   IFU cubes. Must be given in x,y order and in units of pixels along the x,y
   axes of the 3-D IFU cube, e.g., ``--center_xy="27,28"``.
 
+``--center_radec`` (string, default=None)
+  A string representing a list of two decimal-degree values giving the desired right ascension and
+  declination for the center of the circular extraction aperture. The sky coordinate is transformed
+  through the IFU cube WCS to the appropriate x/y location, so the same coordinate can be reused across
+  IFU bands with different pixel grids. ``center_xy`` and ``center_radec`` are mutually exclusive.
+
 ``--ifu_autocen`` (boolean, default=False)
   Switch to select whether or not to enable auto-centroiding of the extraction
   aperture for IFU point sources.  Auto-centroiding works by median collapsing the

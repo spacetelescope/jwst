@@ -3,12 +3,13 @@
 import logging
 
 import crds
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.extract_1d import extract
-from jwst.extract_1d.ifu import ifu_extract1d
+from jwst.extract_1d.ifu import ifu_extract1d, locn_from_wcs
 from jwst.extract_1d.soss_extract import soss_extract
 from jwst.lib.exposure_types import NIS_SOSS_SUPPORTED_SUBARRAYS
 from jwst.stpipe import Step
@@ -41,6 +42,7 @@ class Extract1dStep(Step):
     save_residual_image = boolean(default=False)  # save residual image to disk
 
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
+    center_radec = float_list(min=2, max=2, default=None)  # IFU extraction RA/Dec center in degrees
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
     ifu_rfcorr = boolean(default=True) # Apply 1d residual fringe correction (MIRI MRS only)
@@ -247,6 +249,26 @@ class Extract1dStep(Step):
 
         return band_check
 
+    @staticmethod
+    def _resolve_ifu_center(model, center_xy, center_radec):
+        """Resolve an optional IFU sky-coordinate extraction center to cube pixels."""
+        if center_xy is not None and center_radec is not None:
+            raise ValueError("center_xy and center_radec cannot both be specified")
+        if center_radec is None:
+            return center_xy
+
+        center_xy = locn_from_wcs(model, center_radec[0], center_radec[1])
+        if center_xy is None or not np.all(np.isfinite(center_xy)):
+            raise ValueError("center_radec could not be transformed to a valid IFU cube position")
+        log.info(
+            "Using IFU sky-coordinate center RA=%g, Dec=%g -> x=%g, y=%g",
+            center_radec[0],
+            center_radec[1],
+            center_xy[0],
+            center_xy[1],
+        )
+        return center_xy
+
     def _extract_ifu(self, model, exp_type, extract_ref, apcorr_ref):
         """
         Extract IFU spectra from a single datamodel.
@@ -287,6 +309,7 @@ class Extract1dStep(Step):
                 "Turning off residual fringe correction because it only works on MIRI MRS data"
             )
 
+        center_xy = self._resolve_ifu_center(model, self.center_xy, self.center_radec)
         result = ifu_extract1d(
             model,
             extract_ref,
@@ -294,7 +317,7 @@ class Extract1dStep(Step):
             self.subtract_background,
             self.bkg_sigma_clip,
             apcorr_ref,
-            self.center_xy,
+            center_xy,
             self.ifu_autocen,
             self.ifu_rfcorr,
             self.ifu_rscale,
