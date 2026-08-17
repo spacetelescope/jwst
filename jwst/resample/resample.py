@@ -80,8 +80,8 @@ class ResampleImage(Resample):
         ``weight_type="ivm"`` (the default), the weighting will be
         determined per-pixel using the inverse of the read noise
         (VAR_RNOISE) array stored in each input image.
-        If the ``VAR_RNOISE`` array does not exist,
-        the variance is set to 1 for all pixels (i.e., equal weighting).
+        The ``VAR_RNOISE`` array must exist and match the science data
+        shape; otherwise a `ValueError` is raised.
         If ``weight_type="exptime"``, the weight will be set equal
         to the measurement time when available and to
         the exposure time otherwise.
@@ -819,6 +819,13 @@ def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
     dict
         A dictionary of keywords and values expected by `stcal.resample`.
     """
+    if weight_type is not None and weight_type.startswith("ivm"):
+        var_rnoise = model.var_rnoise
+        if var_rnoise is None or var_rnoise.shape != model.data.shape:
+            raise ValueError(
+                "IVM weighting requires VAR_RNOISE to exist and match the science data shape"
+            )
+
     model_dict = {
         # arrays:
         "data": model.data,
