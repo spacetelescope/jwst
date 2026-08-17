@@ -696,6 +696,11 @@ class DataSet:
             raise DataModelTypeError(
                 f"Unexpected input data model type for WFSS: {str(self.input)}"
             )
+
+        phot_unit = getattr(ftab, "phot_unit", None)
+        if phot_unit is None:
+            raise ValueError("WFSS photom reference file is missing required 'phot_unit' metadata")
+
         fields_to_match = {}
         for field in match_fields:
             value = getattr(self, field)
@@ -717,7 +722,6 @@ class DataSet:
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 continue
-            phot_unit = getattr(ftab, "phot_unit", None)
             for integ_row in range(len(spec.spec_table)):
                 self.integ_row = integ_row
                 self.photom_io(

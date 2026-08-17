@@ -1942,6 +1942,18 @@ def test_unit_handling_phot_unit_not_astropy():
         ds.calc_nircam(ftab)
 
 
+def test_wfss_phot_unit_required():
+    """WFSS calibration should fail if phot_unit metadata is missing."""
+    input_model = create_input(
+        "NIRCAM", "NRCALONG", "NRC_WFSS", filter_used="F356W", pupil="GRISMR"
+    )
+    ds = photom.DataSet(input_model)
+    ftab = create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0)
+    ftab.phot_unit = None
+    with pytest.raises(ValueError, match="missing required 'phot_unit' metadata"):
+        ds.calc_nircam(ftab)
+
+
 def test_fgs():
     """Test the calc_fgs method of the DataSet class in photom.py."""
     input_model = create_input("FGS", "GUIDER1", "FGS_IMAGE")
