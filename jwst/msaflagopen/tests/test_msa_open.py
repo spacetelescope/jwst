@@ -5,7 +5,7 @@ from stdatamodels.jwst.datamodels import ImageModel, dqflags
 from stdatamodels.jwst.transforms.models import Slit
 
 from jwst.assign_wcs import AssignWcsStep
-from jwst.msaflagopen import MSAFlagOpenStep
+from jwst.msaflagopen import MSAFlagOpenStep, msaflagopen_step
 from jwst.msaflagopen.msaflag_open import (
     boundingbox_to_indices,
     create_slitlets,
@@ -178,3 +178,37 @@ def test_custom_ref_file():
     # input is not modified
     assert result is not im
     assert im.meta.cal_step.msa_flagging is None
+
+
+def test_reference_dictionary_fetches_uncached_crds_reference(monkeypatch, tmp_path):
+    model = ImageModel()
+    for ref_type in AssignWcsStep.reference_file_types:
+        getattr(model.meta.ref_file, ref_type).name = None
+
+    ref_type = AssignWcsStep.reference_file_types[0]
+    basename = "jwst_nirspec_test_0001.asdf"
+    getattr(model.meta.ref_file, ref_type).name = f"crds://{basename}"
+    model.meta.ref_file.crds.context_used = "jwst_1234.pmap"
+
+    uncached_path = tmp_path / basename
+    downloaded_path = tmp_path / "downloaded.asdf"
+    monkeypatch.setattr(
+        msaflagopen_step,
+        "reference_uri_to_cache_path",
+        lambda reference_uri, observatory: str(uncached_path),
+    )
+
+    calls = {}
+
+    def fake_dump_references(context, references):
+        calls["context"] = context
+        calls["references"] = references
+        return {basename: str(downloaded_path)}
+
+    monkeypatch.setattr(msaflagopen_step.crds_api, "dump_references", fake_dump_references)
+
+    result = msaflagopen_step.create_reference_filename_dictionary(model)
+
+    assert result[ref_type] == str(downloaded_path)
+    assert calls == {"context": "jwst_1234.pmap", "references": [basename]}
+    assert any(value is None for key, value in result.items() if key != ref_type)

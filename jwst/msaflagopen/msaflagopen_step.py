@@ -1,8 +1,10 @@
 """Flag pixels affected by open MSA shutters in NIRSpec exposures."""
 
 import logging
+from pathlib import Path
 
-from stpipe.crds_client import reference_uri_to_cache_path
+from crds import api as crds_api
+from stpipe.crds_client import get_context_used, reference_uri_to_cache_path
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.msaflagopen import msaflag_open
@@ -84,10 +86,24 @@ def create_reference_filename_dictionary(input_model):
         ref_file = getattr(input_model.meta.ref_file, ref_type)
         ref_files[ref_type] = ref_file.name
 
-    # Convert from crds protocol to absolute filenames
-    for key in ref_files.keys():
-        if ref_files[key].startswith("crds://"):
-            ref_files[key] = reference_uri_to_cache_path(
-                ref_files[key], input_model.crds_observatory
-            )
+    # Convert CRDS URIs to local paths, fetching exact recorded references
+    # when they are not already present in the local cache.
+    for key, ref_file in ref_files.items():
+        if isinstance(ref_file, str) and ref_file.startswith("crds://"):
+            ref_files[key] = _reference_uri_to_local_path(ref_file, input_model)
     return ref_files
+
+
+def _reference_uri_to_local_path(reference_uri, input_model):
+    """Resolve a CRDS URI to a readable local reference-file path."""
+    cache_path = reference_uri_to_cache_path(reference_uri, input_model.crds_observatory)
+    if Path(cache_path).exists():
+        return cache_path
+
+    context = getattr(input_model.meta.ref_file.crds, "context_used", None)
+    if not context:
+        context = get_context_used(input_model.crds_observatory)
+
+    basename = reference_uri.removeprefix("crds://")
+    log.info("Fetching reference file %s using CRDS context %s", basename, context)
+    return crds_api.dump_references(context, [basename])[basename]
