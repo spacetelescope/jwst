@@ -51,6 +51,16 @@ GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS", "MIR_WFSS"]
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 TA_TYPES = ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]
+IMAGE_TYPES = {"MIR_IMAGE", "NRC_IMAGE", "NIS_IMAGE", "FGS_IMAGE"}
+
+
+def _validate_spec2_exposure_type(exp_type):
+    """Reject standard imaging exposures passed to the spectroscopic pipeline."""
+    if exp_type in IMAGE_TYPES:
+        raise ValueError(
+            f"Exposure type {exp_type} is imaging data and is not supported by "
+            "Spec2Pipeline; use Image2Pipeline instead."
+        )
 
 log = logging.getLogger(__name__)
 
@@ -212,6 +222,7 @@ class Spec2Pipeline(Pipeline):
         science = self.prepare_output(science_member)
 
         exp_type = science.meta.exposure.type
+        _validate_spec2_exposure_type(exp_type)
         if isinstance(science, datamodels.CubeModel):
             multi_int = True
         else:
