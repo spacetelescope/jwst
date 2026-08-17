@@ -535,6 +535,4 @@ def _data_glob_url(*url_parts, root=None):
         r_json = r.json()
         if "files" in r_json:
             return r_json["files"]
-        raise KeyError(
-            f"URL data glob failed for {search_url}\n    JSON:\n{r_json}"
-        )
+        raise KeyError(f"URL data glob failed for {search_url}\n    JSON:\n{r_json}")
