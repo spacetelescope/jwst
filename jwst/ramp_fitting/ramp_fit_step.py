@@ -160,6 +160,15 @@ def create_optional_results_model(input_model, opt_info):
     return opt_model
 
 
+def _validate_ramp_fit_outputs(image_info, integ_info):
+    """Require ramp fitting to produce both exposure- and integration-level slopes."""
+    if image_info is None or integ_info is None:
+        raise RuntimeError(
+            "Ramp fitting did not produce slope products; the input may contain no usable ramps."
+        )
+
+
+
 class RampFitStep(Step):
     """Fit ramp data to determine the mean count rate."""
 
@@ -271,6 +280,7 @@ class RampFitStep(Step):
             dqflags.pixel,
             suppress_one_group=self.suppress_one_group,
         )
+        _validate_ramp_fit_outputs(image_info, integ_info)
 
         # Save the OLS_C optional fit product, if it exists.
         if opt_info is not None:
