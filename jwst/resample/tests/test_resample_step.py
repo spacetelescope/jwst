@@ -1039,6 +1039,29 @@ def test_wcs_keywords(nircam_rate):
     result.close()
 
 
+def test_nonfinite_resampled_pixels_are_do_not_use(nircam_rate):
+    """Non-finite output science pixels should be marked DO_NOT_USE."""
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    output_shape = (300, 300)
+    crpix = (output_shape[0] // 2, output_shape[1] // 2)
+    crval = tuple(np.mean(im.meta.wcs.footprint(), axis=0))
+
+    result = ResampleStep.call(
+        im,
+        propagate_dq=True,
+        output_shape=output_shape,
+        crpix=crpix,
+        crval=crval,
+    )
+
+    nonfinite = ~np.isfinite(result.data)
+    assert np.any(nonfinite)
+    assert np.all((result.dq[nonfinite] & dqflags.pixel["DO_NOT_USE"]) != 0)
+
+    im.close()
+    result.close()
+
+
 @pytest.mark.parametrize(
     "n_images,weight_type",
     [

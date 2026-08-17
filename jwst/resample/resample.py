@@ -430,6 +430,7 @@ class ResampleImage(Resample):
 
         if self.propagate_dq:
             model.dq = info_dict["dq"]
+            model.dq[~np.isfinite(model.data)] |= pixel["DO_NOT_USE"]
 
         if self.compute_err:
             model.err = info_dict["err"]
