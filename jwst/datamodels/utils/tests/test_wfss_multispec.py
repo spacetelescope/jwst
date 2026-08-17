@@ -203,3 +203,25 @@ def test_make_wfss_combined(comb1d_list):
         # check metadata
         assert spec.dispersion_direction == 3
         assert spec.spectral_order == i + 1
+
+
+def test_make_wfss_multiexposure_keeps_same_group_id_on_multiple_detectors(
+    wfss_spec3_multispec,
+):
+    detector_a = wfss_spec3_multispec.copy()
+    detector_b = wfss_spec3_multispec.copy()
+
+    for spec in detector_a.spec:
+        spec.meta.filename = "a_" + spec.meta.filename
+        spec.spec_table["FLUX"] = 1.0
+    for spec in detector_b.spec:
+        spec.meta.filename = "b_" + spec.meta.filename
+        spec.spec_table["FLUX"] = 2.0
+
+    output = make_wfss_multiexposure([detector_a, detector_b])
+
+    assert len(output.spec) == 8
+    assert len({spec.filename for spec in output.spec}) == 8
+    for spec in output.spec:
+        expected_flux = 1.0 if spec.filename.startswith("a_") else 2.0
+        assert_allclose(spec.spec_table["FLUX"], expected_flux)

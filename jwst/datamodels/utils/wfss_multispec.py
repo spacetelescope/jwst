@@ -63,15 +63,18 @@ def make_wfss_multiexposure(input_list):
     for model in results_list:
         for spec in model.spec:
             fname = getattr(spec.meta, "filename", None)
-            exp_number = getattr(spec.meta, "group_id", None)
+            group_id = getattr(spec.meta, "group_id", None)
+            exposure_key = (group_id, fname, spec.spectral_order)
 
-            # if this is the first time this exposure has been encountered,
-            # create a new dictionary entry for it
+            # group_id alone is not unique when the same exposure is represented
+            # on multiple detectors. Include the source filename and spectral order
+            # in the internal key while preserving group_id in output metadata.
             n_rows = spec.spec_table.shape[0]
-            if exp_number not in exposure_counter:
-                exposure_counter[exp_number] = {
+            if exposure_key not in exposure_counter:
+                exposure_counter[exposure_key] = {
                     "n_rows": n_rows,
                     "filename": fname,
+                    "group_id": group_id,
                     "exposure_time": model.meta.exposure.exposure_time,  # need for combine_1d
                     "integration_time": model.meta.exposure.integration_time,  # need for combine_1d
                     "spectral_order": spec.spectral_order,
@@ -80,8 +83,8 @@ def make_wfss_multiexposure(input_list):
             else:
                 # if this exposure has already been encountered,
                 # check if number of rows is larger than the previous one
-                exposure_counter[exp_number]["n_rows"] = max(
-                    exposure_counter[exp_number]["n_rows"], n_rows
+                exposure_counter[exposure_key]["n_rows"] = max(
+                    exposure_counter[exposure_key]["n_rows"], n_rows
                 )
 
             all_source_ids.add(spec.source_id)
@@ -89,9 +92,9 @@ def make_wfss_multiexposure(input_list):
     all_source_ids = sorted(all_source_ids)
     n_sources = len(all_source_ids)
 
-    exposure_numbers = list(exposure_counter.keys())
-    n_exposures = len(exposure_numbers)
-    n_rows_by_exposure = [exposure_counter[n]["n_rows"] for n in exposure_numbers]
+    exposure_keys = list(exposure_counter.keys())
+    n_exposures = len(exposure_keys)
+    n_rows_by_exposure = [exposure_counter[key]["n_rows"] for key in exposure_keys]
 
     # Set up output table column names and dtypes
     # Use SpecModel.spectable to determine the vector-like columns
@@ -119,8 +122,8 @@ def make_wfss_multiexposure(input_list):
     for model in results_list:
         for spec in model.spec:
             # ensure data goes to correct exposure table based on group_id attribute
-            exp_num = spec.meta.group_id
-            exposure_idx = exposure_numbers.index(exp_num)
+            exposure_key = (spec.meta.group_id, spec.meta.filename, spec.spectral_order)
+            exposure_idx = exposure_keys.index(exposure_key)
             fltdata = fltdata_by_exposure[exposure_idx]
             n_rows = n_rows_by_exposure[exposure_idx]
 
@@ -143,7 +146,7 @@ def make_wfss_multiexposure(input_list):
     # with one WFSSMultiSpecModel table per exposure
     output_x1d = dm.WFSSMultiSpecModel()
     example_spec = results_list[0].spec[0]
-    for i, exposure_number in enumerate(exposure_numbers):
+    for i, exposure_key in enumerate(exposure_keys):
         spec_table = fltdata_by_exposure[i]
         ext = dm.WFSSSpecModel(spec_table)
 
@@ -153,13 +156,13 @@ def make_wfss_multiexposure(input_list):
         copy_column_units(example_spec, ext)
 
         # copy metadata
-        ext.filename = exposure_counter[exposure_number]["filename"]
-        ext.group_id = exposure_number
+        ext.filename = exposure_counter[exposure_key]["filename"]
+        ext.group_id = exposure_counter[exposure_key]["group_id"]
         ext.dispersion_direction = example_spec.dispersion_direction
-        ext.spectral_order = exposure_counter[exposure_number]["spectral_order"]
-        ext.exposure_time = exposure_counter[exposure_number]["exposure_time"]
-        ext.integration_time = exposure_counter[exposure_number]["integration_time"]
-        ext.s_region = exposure_counter[exposure_number]["s_region"]
+        ext.spectral_order = exposure_counter[exposure_key]["spectral_order"]
+        ext.exposure_time = exposure_counter[exposure_key]["exposure_time"]
+        ext.integration_time = exposure_counter[exposure_key]["integration_time"]
+        ext.s_region = exposure_counter[exposure_key]["s_region"]
 
         output_x1d.spec.append(ext)
 
