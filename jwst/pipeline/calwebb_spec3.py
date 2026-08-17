@@ -13,7 +13,7 @@ from jwst.assign_mtwcs import assign_mtwcs_step
 from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
-from jwst.datamodels import SourceModelContainer
+from jwst.datamodels import ModelContainer, SourceModelContainer
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
@@ -114,7 +114,7 @@ class Spec3Pipeline(Pipeline):
         # could either be done via LoadAsAssociation and then manually
         # load input members into models and ModelContainer, or just
         # do a direct open of all members in ASN file, e.g.
-        input_models = self.prepare_output(input_data, asn_exptypes=asn_exptypes)
+        input_models = self._load_input_as_container(input_data, asn_exptypes)
 
         if hasattr(input_models, "asn_table_name") and input_models.asn_table_name:
             table_name = Path(input_models.asn_table_name).name
@@ -331,6 +331,18 @@ class Spec3Pipeline(Pipeline):
 
         t_end = time.time()
         log.info("Ending calwebb_spec3 (took %.1f seconds)", t_end - t_start)
+
+    def _load_input_as_container(self, input_data, asn_exptypes):
+        """Load Spec3 input, wrapping a single model or model file in a container."""
+        if isinstance(input_data, dm.JwstDataModel):
+            return ModelContainer([self.prepare_output(input_data)])
+
+        if isinstance(input_data, (str, Path)):
+            suffix = Path(input_data).suffix.lower()
+            if suffix in {".fits", ".asdf"}:
+                return ModelContainer([self.prepare_output(input_data)])
+
+        return self.prepare_output(input_data, asn_exptypes=asn_exptypes)
 
     def _create_nrsfs_slit_name(self, source_models):
         """
