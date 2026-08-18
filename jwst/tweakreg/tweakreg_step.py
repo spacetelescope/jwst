@@ -30,6 +30,12 @@ def _oxford_or_str_join(str_list):
         return ", ".join(map(repr, str_list[:-1])) + ", or " + repr(str_list[-1])
 
 
+def _log_alignment_failure(kind, error):
+    """Log alignment failures with operation context and traceback details."""
+    log.warning(f"{kind} alignment failed: {error}", exc_info=True)
+
+
+
 SINGLE_GROUP_REFCAT = ["GAIAREFCAT", "GAIADR3", "GAIADR2", "GAIADR1"]
 """List of astrometric catalogs available to the tweakreg step."""
 
@@ -307,7 +313,7 @@ class TweakRegStep(Step):
                     yoffset=self.yoffset,
                 )
             except twk.TweakregError as e:
-                log.warning(str(e))
+                _log_alignment_failure("Relative", e)
                 local_align_failed = True
             else:
                 local_align_failed = False
@@ -340,7 +346,7 @@ class TweakRegStep(Step):
                     )
                     images.shelve(ref_image, 0, modify=False)
                 except twk.TweakregError as e:
-                    log.warning(str(e))
+                    _log_alignment_failure("Absolute", e)
                     images.shelve(ref_image, 0, modify=False)
                     record_step_status(images, "tweakreg", success=False)
                     return images
