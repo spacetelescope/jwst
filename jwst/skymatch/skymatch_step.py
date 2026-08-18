@@ -27,6 +27,12 @@ log = logging.getLogger(__name__)
 __all__ = ["SkyMatchStep"]
 
 
+def _sky_match_status(is_sky_valid):
+    """Return the calibration-step status for a sky-matching result."""
+    return "COMPLETE" if is_sky_valid else "FAILED"
+
+
+
 class SkyMatchStep(Step):
     """Subtract or equalize sky background in science images."""
 
@@ -129,12 +135,12 @@ class SkyMatchStep(Step):
             for im in images:
                 if isinstance(im, SkyImage):
                     self._set_sky_background(
-                        im, library, "COMPLETE" if im.is_sky_valid else "SKIPPED"
+                        im, library, _sky_match_status(im.is_sky_valid)
                     )
                 else:
                     for gim in im:
                         self._set_sky_background(
-                            gim, library, "COMPLETE" if gim.is_sky_valid else "SKIPPED"
+                            gim, library, _sky_match_status(gim.is_sky_valid)
                         )
 
         return library
@@ -211,7 +217,7 @@ class SkyMatchStep(Step):
 
         step_status : str
             Status of the sky subtraction step. Must be one of the following:
-            'COMPLETE', 'SKIPPED'.
+            'COMPLETE', 'FAILED'.
         """
         index = sky_image.meta["index"]
         dm = library.borrow(index)
