@@ -58,9 +58,9 @@ def test_step_from_association(tmp_path):
     science.close()
     imprint.close()
 
-    asn = asn_from_list([str(science_path)], rule=DMSLevel2bBase)
+    asn = asn_from_list([science_path.name], rule=DMSLevel2bBase)
     asn["products"][0]["members"].append(
-        {"expname": str(imprint_path), "exptype": "imprint"}
+        {"expname": imprint_path.name, "exptype": "imprint"}
     )
     _, serialized = asn.dump()
     asn_path = tmp_path / "imprint_asn.json"
