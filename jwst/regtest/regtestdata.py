@@ -500,9 +500,8 @@ def _data_glob_url(repo, path, glob, root):
     url_paths : [str[, ...]]
         Full URLS that match the glob criterion
     """
-    # Fix root root-ed-ness
-    if root.endswith("/"):
-        root = root[:-1]
+    path = path.rstrip("/")
+    root = root.rstrip("/")
 
     # Access
     try:
@@ -536,7 +535,7 @@ def _data_glob_url(repo, path, glob, root):
     with requests.post(search_url, data=aql, headers=headers, timeout=900) as r:
         r_json = r.json()
         if "results" in r_json:
-            return [r["path"] for r in r_json["results"]]
+            return [os.path.join(r["path"], r["name"]) for r in r_json["results"]]
         raise KeyError(
             f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}"
         )
