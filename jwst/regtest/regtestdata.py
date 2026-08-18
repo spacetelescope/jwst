@@ -482,8 +482,14 @@ def _data_glob_url(repo, path, glob, root):
 
     Parameters
     ----------
-    *url_parts : (str[,...])
-        List of components that will be used to create a URL path
+    repo : str
+        Artifactory repository.
+
+    path : str
+        Path in repository.
+
+    glob : str
+        Filename glob to match.
 
     root : str
         The root server path to the Artifactory server.
@@ -518,7 +524,13 @@ def _data_glob_url(repo, path, glob, root):
 
     search_url = "/".join([root, "api/search/aql"])
 
-    aql = f"""items.find({{"repo": "{repo}", "type": "file", "path": {{"$match": "{path}"}}, "name": {{"$match": "{glob}"}}}}).include("repo","path","name")"""
+    aql = f"""items.find({{\
+        "repo": "{repo}", \
+        "type": "file", \
+        "path": {{"$match": "{path}"}}, \
+        "name": {{"$match": "{glob}"}}}}\
+    ).include("repo","path","name")\
+    """
 
     # 900 is the default aql timeout
     with requests.post(search_url, data=aql, headers=headers, timeout=900) as r:
