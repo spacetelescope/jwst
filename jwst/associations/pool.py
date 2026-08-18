@@ -5,7 +5,7 @@ from collections import UserDict
 from astropy.io.ascii import convert_numpy
 from astropy.table import Table
 
-__all__ = ["AssociationPool"]
+__all__ = ["AssociationPool", "PoolRow"]
 
 DEFAULT_DELIMITER = "|"
 DEFAULT_FORMAT = "ascii"

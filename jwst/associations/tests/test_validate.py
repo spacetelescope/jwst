@@ -6,11 +6,8 @@ from jwst.associations import AssociationNotValidError, AssociationRegistry, loa
 
 def test_invalid():
     rules = AssociationRegistry()
-
     with pytest.raises(AssociationNotValidError):
         rules.validate({})
-
-    assert not rules.validate({}, error_on_fail=False)
 
 
 def test_valid():

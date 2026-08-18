@@ -1,4 +1,4 @@
-"""Configure Association Logging."""
+"""Configure association logging."""
 
 import logging
 import sys
@@ -129,7 +129,7 @@ def log_config(name=None, user_name=None, logger_config=None, config=None, merge
     """
     Set up logging with defaults.
 
-    logging.dictConfig is used with optional default
+    `logging.config.dictConfig` is used with optional default
     configuration dict.
 
     Parameters
@@ -140,60 +140,57 @@ def log_config(name=None, user_name=None, logger_config=None, config=None, merge
 
     user_name : str
         User-understandable name. If not specified, it will be the same
-        as `name`.
+        as ``name``.
 
     logger_config : dict
         The dict to use to setup the logger. This is used
-        as the value to the key of `name`.
+        as the value to the key of ``name``.
 
     config : dict
         User-specified logging configuration as specified by
 
     merge : bool
-        Merge the user-specified config in with `base_config`.
+        Merge the user-specified config in with base configuration.
         If `False`, just use the user-specified config.
 
     Returns
     -------
-    Logger
-        The `logging.Logger` instance.
+    `logging.Logger`
+        The logger instance.
 
     Notes
     -----
-    Internally, the logging configuration is placed into a dict defined by
-    docs.python.org/3.5/library/logging.config.html#configuration-dictionary-schema
-    `base_config` defines a set of handlers, formatters, and filters that
+    Internally, the logging configuration is placed into `logging.config.dictConfig`.
+    ``base_config`` defines a set of handlers, formatters, and filters that
     separate out the different levels as follows:
 
-        `default`
-            Handles `logging.WARNING` and above.
+    ``default``
+        Handles `logging.WARNING` and above.
 
-        `debug`
-            Handles `logging.DEBUG` exclusively.
+    ``debug``
+        Handles `logging.DEBUG` exclusively.
 
-        `info`
-            Handles `logging.INFO` exclusively.
+    ``info``
+        Handles `logging.INFO` exclusively.
 
-    Given the defaults, a logger is created with the given `name`,
+    Given the defaults, a logger is created with the given ``name``,
     with the levels as described above.
 
-    To make modifications, the rest of this note
-    describes how the parameters interact
-    with the configuration dict.
+    To make modifications:
 
-    The pair of parameters `name` and `logger_config` together make up the
-    dict that is the value to the top-level key `loggers`
+    * The pair of parameters ``name`` and ``logger_config`` together make up the
+      dictionary that is the value to the top-level key ``loggers``.
+    * The parameter ``config`` defines the rest of the top-level keys for
+      configuration dictionary.
+    * When the parameter ``merge`` is `True`, the following happens:
 
-    The parameter `config` defines the rest of the top-level keys for
-    configuration dict.
+        * For the ``formatters`` dictionary, the dictionary for the
+          key ``name`` is created by first creating the default dictionary,
+          and then doing an ``dict.update(logger_config)`` to create
+          the logger configuration.
 
-    When the parameter `merge` is `True`, the following happens:
-    For the `formatters` dict, the dict for the key `name` is created by
-    first creating the default dict, and then doing an
-    `dict.update(logger_config)` to create the logger configuration.
-
-    For the rest of the config, and dict.update is done on each of
-    the top-level keys from the `config`.
+    * For the rest of the configuration, ``dict.update``` is done on each of
+      the top-level keys from the ``config``.
     """
     global context
 

@@ -30,6 +30,7 @@ Public API
 
 .. automodapi:: jwst.associations.pool
    :no-inheritance-diagram:
+   :include: AssociationPool
 
 .. automodapi:: jwst.associations.registry
    :no-inheritance-diagram:
@@ -126,6 +127,11 @@ Complete Developer API
    :no-inheritance-diagram:
    :no-main-docstr:
    :skip: Main
+
+.. automodapi:: jwst.associations.pool
+   :no-inheritance-diagram:
+   :no-main-docstr:
+   :skip: AssociationPool
 
 .. automodapi:: jwst.associations.registry
    :no-inheritance-diagram:

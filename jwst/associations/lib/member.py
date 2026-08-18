@@ -1,4 +1,4 @@
-"""Association Member definition - store exposure metadata as dict-like objects."""
+"""Association Member for storing exposure metadata as dict-like objects."""
 
 from collections import UserDict
 from copy import copy
@@ -10,6 +10,17 @@ class Member(UserDict):
     """
     Member of an association.
 
+    Parameters
+    ----------
+    initialdata : dict-like or `Member`
+        Initialization data. Any type of initialization that
+        `collections.UserDict` allows or `Member` itself.
+
+    item : object
+        The item to initialize with. This will override
+        any ``Member.item`` given in ``initialdata``. Most common
+        object type is a `~jwst.associations.pool.PoolRow` instance.
+
     Attributes
     ----------
     item : object
@@ -17,20 +28,6 @@ class Member(UserDict):
     """
 
     def __init__(self, initialdata=None, item=None):
-        """
-        Initialize a Member.
-
-        Parameters
-        ----------
-        initialdata : Dict-like or Member
-            Initialization data. Any type of initialization that
-            `collections.UserDict` allows or `Member` itself.
-
-        item : object
-            The item to initialize with. This will override
-            any `Member.item` given in `initialdata`. Most common
-            object type is a ~jwst.associations.pool.PoolRow instance.
-        """
         self.item = None
 
         if isinstance(initialdata, Member):
@@ -46,7 +43,7 @@ class Member(UserDict):
         """
         Compare members.
 
-        If both Members have attributes `expname` and `exptype`,
+        If both Members have attributes ``expname`` and ``exptype``,
         compare only those attributes. Otherwise, use the default
         comparison.
 
@@ -58,7 +55,7 @@ class Member(UserDict):
         Returns
         -------
         bool
-            True if deemed equal/equivalent.
+            `True` if deemed equal/equivalent.
         """
         hasexpkeys = all(k in data for k in ("expname", "exptype") for data in (self, other))
         if hasexpkeys:
