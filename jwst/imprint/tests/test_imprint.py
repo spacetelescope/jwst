@@ -3,6 +3,8 @@
 import numpy as np
 from stdatamodels.jwst.datamodels import ImageModel
 
+from jwst.associations.asn_from_list import asn_from_list
+from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.imprint import ImprintStep
 
 
@@ -44,6 +46,30 @@ def test_step_single_imprint():
     # for a single imprint, it's used anyway
     assert result.meta.cal_step.imprint_subtract == "COMPLETE"
     assert result.data.sum() == 0
+
+
+def test_step_from_association(tmp_path):
+    science = make_imagemodel(10, 10, value=3.0)
+    imprint = make_imagemodel(10, 10, value=1.0)
+    science_path = tmp_path / "science.fits"
+    imprint_path = tmp_path / "imprint.fits"
+    science.save(science_path)
+    imprint.save(imprint_path)
+    science.close()
+    imprint.close()
+
+    asn = asn_from_list([str(science_path)], rule=DMSLevel2bBase)
+    asn["products"][0]["members"].append(
+        {"expname": str(imprint_path), "exptype": "imprint"}
+    )
+    _, serialized = asn.dump()
+    asn_path = tmp_path / "imprint_asn.json"
+    asn_path.write_text(serialized)
+
+    result = ImprintStep.call(str(asn_path))
+
+    assert result.meta.cal_step.imprint_subtract == "COMPLETE"
+    assert np.all(result.data == 2.0)
 
 
 def test_step_match_dither():

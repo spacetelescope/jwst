@@ -1,6 +1,7 @@
 """Remove NIRSpec MSA imprint structure from an exposure."""
 
 import logging
+from collections import defaultdict
 
 from stdatamodels.jwst import datamodels
 
@@ -24,9 +25,15 @@ class ImprintStep(Step):
     spec = """
     """  # noqa: E501
 
-    def process(self, input_data, imprint):
+    def process(self, input_data, imprint=None):
         """
         Subtract an imprint image from the input data.
+
+        The input may be supplied as a Level-2 association containing a science
+        exposure and one or more members with ``exptype='imprint'``. In that
+        case, the science and imprint members are taken from the association.
+        An explicit imprint list may still be supplied as the second argument,
+        as is done when the step is called from ``Spec2Pipeline``.
 
         If a single imprint image is provided, it is directly subtracted
         without further checks.
@@ -48,15 +55,21 @@ class ImprintStep(Step):
         Parameters
         ----------
         input_data : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
-            Input exposure to be corrected.
-        imprint : list of str or `~stdatamodels.jwst.datamodels.JwstDataModel`
-            Imprint exposures associated with the input.
+            Input exposure to be corrected, or a Level-2 association containing
+            the science and imprint exposures.
+        imprint : list of str or `~stdatamodels.jwst.datamodels.JwstDataModel`, optional
+            Imprint exposures associated with the input. If not supplied, they
+            are read from ``input_data`` as a Level-2 association.
 
         Returns
         -------
         `~stdatamodels.jwst.datamodels.JwstDataModel`
             The imprint subtracted exposure.
         """
+        if imprint is None:
+            asn = self.load_as_level2_asn(input_data)
+            input_data, imprint = self._asn_get_data(asn)
+
         # Open the input science image and get its dither pattern position number
         output_model = self.prepare_output(input_data)
         pos_no = output_model.meta.dither.position_number
@@ -74,8 +87,8 @@ class ImprintStep(Step):
 
             if len(imprint) == 1:
                 # Exactly one imprint provided: use it.
-                match_model = datamodels.open(imprint[0])
-                imprint_models.append(match_model)
+                match_model = imprint_model
+                imprint_models.append(imprint_model)
             elif is_bkgd != imprint_bkg:
                 # More than one imprint and imprint does not match input's
                 # background status. Don't consider it further.
@@ -116,3 +129,31 @@ class ImprintStep(Step):
             model.close()
 
         return output_model
+
+    def _asn_get_data(self, asn):
+        """Return the science and imprint members from a Level-2 association."""
+        members_by_type = defaultdict(list)
+
+        if len(asn["products"]) > 1:
+            log.warning("Multiple products in input association. Using only the first one.")
+
+        product = asn["products"][0]
+        for member in product["members"]:
+            members_by_type[member["exptype"].lower()].append(member["expname"])
+
+        science_members = members_by_type["science"]
+        if not science_members:
+            raise ValueError(f"No science exposure found in association product {product['name']}.")
+        if len(science_members) > 1:
+            log.warning(
+                "Multiple science exposures found in association product %s. Using only the first one.",
+                product["name"],
+            )
+
+        science_member = science_members[0]
+        imprint_members = members_by_type["imprint"]
+        log.info("Working on input %s ...", science_member)
+        if imprint_members:
+            log.info("Using %d imprint exposure(s) from the input association.", len(imprint_members))
+
+        return science_member, imprint_members
