@@ -1,6 +1,7 @@
 import os
 import os.path as op
 import pprint
+import re
 import sys
 from difflib import unified_diff
 from glob import glob as _sys_glob
@@ -221,7 +222,7 @@ class RegtestData:
             file_paths = _data_glob_local(path, glob)
         elif check_url(root):
             root_path = self.env
-            file_paths = _data_glob_url(self._inputs_root, f"{self.env}/{path}", glob, root)
+            file_paths = _data_glob_url(self._inputs_root, os.path.join(self.env, path), glob, root)
         else:
             raise BigdataError(f"Path cannot be found: {path}")
 
@@ -522,6 +523,11 @@ def _data_glob_url(repo, path, glob, root):
         headers = None
 
     search_url = "/".join([root, "api/search/aql"])
+
+    # check inputs for only valid characters
+    for value in (repo, path, glob):
+        if not re.fullmatch(r"[a-zA-Z0-9\_\-\*\.\/]+", value):
+            raise ValueError(f"{value} contains invalid characters")
 
     aql = f"""items.find({{\
         "repo": "{repo}", \
