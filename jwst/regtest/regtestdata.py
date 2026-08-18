@@ -1,6 +1,7 @@
 import os
 import os.path as op
 import pprint
+import re
 import sys
 from difflib import unified_diff
 from glob import glob as _sys_glob
@@ -221,7 +222,7 @@ class RegtestData:
             file_paths = _data_glob_local(path, glob)
         elif check_url(root):
             root_path = self.env
-            file_paths = _data_glob_url(self._inputs_root, self.env, path, glob, root=root)
+            file_paths = _data_glob_url(self._inputs_root, os.path.join(self.env, path), glob, root)
         else:
             raise BigdataError(f"Path cannot be found: {path}")
 
@@ -476,14 +477,20 @@ def _data_glob_local(*glob_parts):
     return _sys_glob(str(full_glob))
 
 
-def _data_glob_url(*url_parts, root=None):
+def _data_glob_url(repo, path, glob, root):
     """
     Perform a glob on a URL path.
 
     Parameters
     ----------
-    *url_parts : (str[,...])
-        List of components that will be used to create a URL path
+    repo : str
+        Artifactory repository.
+
+    path : str
+        Path in repository.
+
+    glob : str
+        Filename glob to match.
 
     root : str
         The root server path to the Artifactory server.
@@ -494,9 +501,8 @@ def _data_glob_url(*url_parts, root=None):
     url_paths : [str[, ...]]
         Full URLS that match the glob criterion
     """
-    # Fix root root-ed-ness
-    if root.endswith("/"):
-        root = root[:-1]
+    path = path.rstrip("/")
+    root = root.rstrip("/")
 
     # Access
     try:
@@ -516,24 +522,26 @@ def _data_glob_url(*url_parts, root=None):
         )
         headers = None
 
-    search_url = "/".join([root, "api/search/pattern"])
+    search_url = "/".join([root, "api/search/aql"])
 
-    # Join and re-split the url so that every component is identified.
-    url = "/".join([root] + list(url_parts))
-    all_parts = url.split("/")
+    # check inputs for only valid characters
+    for value in (repo, path, glob):
+        if not re.fullmatch(r"[a-zA-Z0-9\_\-\*\.\/]+", value):
+            raise ValueError(f"{value} contains invalid characters")
 
-    # Pick out "jwst-pipeline", the repo name
-    repo = all_parts[4]
+    aql = f"""items.find({{\
+        "repo": "{repo}", \
+        "type": "file", \
+        "path": {{"$match": "{path}"}}, \
+        "name": {{"$match": "{glob}"}}}}\
+    ).include("repo","path","name")\
+    """
 
-    # Format the pattern
-    pattern = repo + ":" + "/".join(all_parts[5:])
-
-    # Make the query
-    params = {"pattern": pattern}
-    with requests.get(search_url, params=params, headers=headers, timeout=60) as r:
+    # 900 is the default aql timeout
+    with requests.post(search_url, data=aql, headers=headers, timeout=900) as r:
         r_json = r.json()
-        if "files" in r_json:
-            return r_json["files"]
+        if "results" in r_json:
+            return [os.path.join(r["path"], r["name"]) for r in r_json["results"]]
         raise KeyError(
             f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}"
         )
