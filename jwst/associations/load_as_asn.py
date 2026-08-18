@@ -53,7 +53,7 @@ class LoadAsAssociation(dict):
 
         Parameters
         ----------
-        obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
+        obj : Association, str, dict, Datamodel, [str[,...]], [Datamodel[,...]]
             The obj to return as an association.
 
         registry : AssociationRegistry
@@ -93,6 +93,9 @@ class LoadAsAssociation(dict):
                 asn.filename = obj
         elif isinstance(obj, Association):  # No-op
             asn = obj
+        elif isinstance(obj, dict):
+            asn = Association()
+            asn.data = obj
         else:
             asn = _blind_asn_load(obj, rule=rule, meta=meta, product_name_func=product_name_func)
 
@@ -109,7 +112,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
         Parameters
         ----------
-        obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
+        obj : Association, str, dict, Datamodel, [str[,...]], [Datamodel[,...]]
             The obj to return as an association.
 
         basename : str
@@ -128,6 +131,11 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         """
         if isinstance(obj, Association):  # No-op
             return obj
+
+        if isinstance(obj, dict):
+            asn = Association()
+            asn.data = obj
+            return asn
 
         product_name_func = cls.model_product_name
         if basename is not None:

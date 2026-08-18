@@ -26,7 +26,7 @@ dependencies = [
     "photutils>=3.0,<4",
     "pyyaml>=6.0.1",
     "requests>=2.32",
-    "scikit-image>=0.23.0",
+    "scikit-image>=0.23.1",
     "scipy>=1.18.0",
     # "stdatamodels>=6.0.0,<6.1",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
