@@ -1,5 +1,4 @@
 .. _calwebb_image2:
-.. _calwebb_tso-image2:
 
 calwebb_image2: Stage 2 Imaging Processing
 ==========================================
@@ -9,31 +8,32 @@ calwebb_image2: Stage 2 Imaging Processing
 
 Stage 2 imaging processing applies additional instrumental corrections and
 calibrations that result in a fully calibrated individual exposure. There are
-two parameter references used to control this pipeline, depending on whether the
-data are to be treated as Time Series Observation (TSO). The parameter reference
+separate parameter references used to control this pipeline, depending on whether the
+data are to be treated as Time Series Observation (TSO) or as
+Wavefront Sensing and Control (WFS&C) images. The parameter reference
 is provided by CRDS and the reftype ``pars-image2pipeline``. In general, for
-non-TSO exposures, all applicable steps are applied to the data. For TSO
-exposures, some steps are set to be skipped by default (see the list of steps in
-the table below).
+non-TSO and non-WFS&C exposures, all applicable steps are applied to the data.
+For TSO and WFS&C exposures, some steps are set to be skipped by default (see the
+list of steps in the table below).
 
 The list of steps applied by the ``Image2Pipeline`` pipeline is shown in the
 table below.
 
 .. |check| unicode:: U+2713 .. checkmark
 
-+--------------------------------------------+---------+---------+
-| Step                                       | Non-TSO | TSO     |
-+============================================+=========+=========+
-| :ref:`background <background_subtraction>` | |check| |         |
-+--------------------------------------------+---------+---------+
-| :ref:`assign_wcs <assign_wcs_step>`        | |check| | |check| |
-+--------------------------------------------+---------+---------+
-| :ref:`flat_field <flatfield_step>`         | |check| | |check| |
-+--------------------------------------------+---------+---------+
-| :ref:`photom <photom_step>`                | |check| | |check| |
-+--------------------------------------------+---------+---------+
-| :ref:`resample <resample_step>` [1]_       | |check| |         |
-+--------------------------------------------+---------+---------+
++--------------------------------------------+---------+---------+---------+
+| Step                                       | Non-TSO | TSO     | WFS&C   |
++============================================+=========+=========+=========+
+| :ref:`background <background_subtraction>` | |check| |         | |check| |
++--------------------------------------------+---------+---------+---------+
+| :ref:`assign_wcs <assign_wcs_step>`        | |check| | |check| | |check| |
++--------------------------------------------+---------+---------+---------+
+| :ref:`flat_field <flatfield_step>`         | |check| | |check| | |check| |
++--------------------------------------------+---------+---------+---------+
+| :ref:`photom <photom_step>`                | |check| | |check| | |check| |
++--------------------------------------------+---------+---------+---------+
+| :ref:`resample <resample_step>` [1]_       | |check| |         |         |
++--------------------------------------------+---------+---------+---------+
 
 .. [1] Resampling is only performed for exposure types "MIR_IMAGE", "NRC_IMAGE", and
    "NIS_IMAGE".
