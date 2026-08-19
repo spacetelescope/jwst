@@ -20,7 +20,12 @@ from jwst.extract_2d import extract_2d_step
 from jwst.flatfield import flat_field_step
 from jwst.fringe import fringe_step
 from jwst.imprint import imprint_step
-from jwst.lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
+from jwst.lib.exposure_types import (
+    SPEC_TYPES,
+    is_nrs_ifu_flatlamp,
+    is_nrs_ifu_linelamp,
+    is_nrs_slit_linelamp,
+)
 from jwst.master_background import master_background_mos_step
 from jwst.msaflagopen import msaflagopen_step
 from jwst.pathloss import pathloss_step
@@ -51,6 +56,7 @@ GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS", "MIR_WFSS"]
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 TA_TYPES = ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]
+SUPPORTED_EXPTYPES = set(SPEC_TYPES + NRS_SLIT_TYPES)
 
 log = logging.getLogger(__name__)
 
@@ -210,6 +216,9 @@ class Spec2Pipeline(Pipeline):
 
         log.info("Working on input %s ...", science_member)
         science = self.prepare_output(science_member)
+
+        # Validate the input before proceeding
+        self.validate_input_exptype(science, SUPPORTED_EXPTYPES)
 
         exp_type = science.meta.exposure.type
         if isinstance(science, datamodels.CubeModel):
