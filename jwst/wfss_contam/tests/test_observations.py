@@ -2,7 +2,6 @@ import copy
 
 import numpy as np
 import pytest
-import stdatamodels.jwst.datamodels as dm
 from astropy.stats import sigma_clipped_stats
 from numpy.testing import assert_allclose
 
@@ -108,20 +107,20 @@ def test_disperse_order(observation, segmentation_map, chunk_size):
     assert not np.allclose(obs.simulated_image, 0.0)
     assert np.median(obs.simulated_image) == 0.0
 
-    # test simulated slits and their associated metadata
-    assert type(obs.simulated_slits) == dm.MultiSlitModel
-    # two of the slits fall off the detector and do not end up here
-    assert len(obs.simulated_slits.slits) == 8
-    slit = obs.simulated_slits.slits[1]
+    # test simulated cutouts and their associated metadata
+    assert isinstance(obs.simulated_cutouts, list)
+    # two of the cutouts fall off the detector and do not end up here
+    assert len(obs.simulated_cutouts) == 8
+    cutout = obs.simulated_cutouts[1]
     # check metadata
-    assert slit.name == "51"
-    assert slit.data.shape == (slit.ysize, slit.xsize)
+    assert cutout.name == "51"
+    assert cutout.data.shape == (cutout.ysize, cutout.xsize)
 
     # Result should be close to the same for all chunk sizes
     # There are numerical differences due to arbitrary choice of reference
     # wavelength from which to compute the native spacing, but these are
     # understood and are inconsequential for science.
-    assert np.isclose(slit.data[5, 60], 0.09994397, rtol=0.005)
+    assert np.isclose(cutout.data[5, 60], 0.09994397, rtol=0.005)
 
 
 def test_aggregate_by_source():
