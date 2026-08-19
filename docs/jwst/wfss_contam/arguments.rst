@@ -11,11 +11,7 @@ The ``wfss_contam`` step uses the following optional arguments.
   Defaults to ``False``.
 
 ``--save_contam_images``
-  A boolean indicating whether the estimated contamination images for each source
-  cutout should be saved to a file. The file name uses a product type suffix of "contam".
-  The resulting file has one SCI extension for each source contained in the input
-  grism image.
-  Defaults to ``False``.
+  This parameter is deprecated and has no effect.
 
 ``--maximum_cores``
   The number of available cores that will be

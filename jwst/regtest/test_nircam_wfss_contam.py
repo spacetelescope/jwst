@@ -28,7 +28,6 @@ def run_spec2_with_contam(rtdata_module, resource_tracker):
             "--steps.extract_2d.wfss_nbright=10",
             "--steps.wfss_contam.magnitude_limit=20",
             "--steps.wfss_contam.save_simulated_image=True",
-            "--steps.wfss_contam.save_contam_images=True",
             "--steps.wfss_contam.save_results=true",
             "--steps.wfss_contam.skip=False",
             "--steps.wfss_contam.maximum_cores=none",
@@ -43,7 +42,7 @@ def test_log_tracked_resources_nircam_wfss_contam(log_tracked_resources, run_spe
     log_tracked_resources()
 
 
-@pytest.mark.parametrize("suffix", ["simul", "contam", "wfss_contam"])
+@pytest.mark.parametrize("suffix", ["simul", "wfss_contam"])
 def test_nrc_wfss_contam(run_spec2_with_contam, fitsdiff_default_kwargs, suffix):
     """Regression test for wfss_contam applied to NIRCam WFSS data"""
     rtdata = run_spec2_with_contam
