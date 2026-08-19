@@ -19,7 +19,6 @@ from ci_watson.artifactory_helpers import (
 from jwst.associations import load_asn
 from jwst.lib.file_utils import pushdir
 from jwst.lib.suffix import replace_suffix
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
@@ -368,14 +367,8 @@ def run_step_from_dict(rtdata, **step_params):
         else:
             rtdata.get_asn(input_path)
 
-    # Figure out whether we have a config or class
-    step = step_params["step"]
-    if step.endswith((".asdf", ".cfg")):
-        step = os.path.join("config", step)
-
     # Run the step
-    collect_pipeline_cfgs("config")
-    full_args = [step, rtdata.input]
+    full_args = [step_params["step"], rtdata.input]
     full_args.extend(step_params["args"])
 
     Step.from_cmdline(full_args)
