@@ -9,9 +9,9 @@ calwebb_image2: Stage 2 Imaging Processing
 Stage 2 imaging processing applies additional instrumental corrections and
 calibrations that result in a fully calibrated individual exposure. There are
 separate parameter references used to control this pipeline, depending on whether the
-data are to be treated as Time Series Observation (TSO) or as
-Wavefront Sensing and Control (WFS&C) images. The parameter reference
-is provided by CRDS and the reftype ``pars-image2pipeline``. In general, for
+data are to be treated as Time Series Observation (TSO), as Wavefront Sensing and Control
+(WFS&C) images, or as non-TSO science images.
+The parameter reference is provided by CRDS and the reftype ``pars-image2pipeline``. In general, for
 non-TSO and non-WFS&C exposures, all applicable steps are applied to the data.
 For TSO and WFS&C exposures, some steps are set to be skipped by default (see the
 list of steps in the table below).
