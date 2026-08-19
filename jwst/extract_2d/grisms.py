@@ -659,7 +659,7 @@ def extract_grism_objects(
         raise ValueError("No grism objects created from source catalog")
 
     log.info(f"Extracting {len(grism_objects)} grism objects")
-    output_model = datamodels.MultiSlitModel()
+    output_model = datamodels.MultiSlitModel(validate_on_assignment=False)
     output_model.update(input_model)
 
     # One WCS model can be used to govern all the extractions
@@ -758,6 +758,12 @@ def extract_grism_objects(
                 subwcs.insert_frame(
                     input_frame=grism_slit, output_frame="grism_detector", transform=tr
                 )
+                # Force the pipelines to share their grism_detector-world transforms.
+                # We want that transform to be serialized just once on save
+                # instead of copied a bunch of times.
+                # It was found that validation of all those copies is very slow, and inflates
+                # the file size unnecessarily.
+                subwcs.pipeline[1:] = inwcs.pipeline[:]
 
                 new_slit = datamodels.SlitModel(
                     data=ext_data,
@@ -766,6 +772,7 @@ def extract_grism_objects(
                     var_poisson=var_poisson,
                     var_rnoise=var_rnoise,
                     var_flat=var_flat,
+                    validate_on_assignment=False,  # for runtime
                 )
 
                 new_slit.meta.wcsinfo.spectral_order = order

@@ -1,10 +1,12 @@
 import importlib
 import logging
+import warnings
 
 from gwcs.wcs import WCS
 
 from jwst.assign_wcs.miri import store_dithered_position
 from jwst.assign_wcs.util import (
+    NoDataOnDetectorError,
     is_sky_like,
     update_s_region_imaging,
     update_s_region_lrs,
@@ -87,8 +89,18 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
         and input_model.meta.exposure.type.lower() not in IMAGING_TYPES
         and input_model.meta.instrument.grating.lower() != "mirror"
     ):
-        cbbox = mod.generate_compound_bbox(input_model)
-        input_model.meta.wcs.bounding_box = cbbox
+        # Catch invalid interval warnings here: these should only arise for modes
+        # with no data on detector. Individual slits in multislit data with invalid
+        # bounding boxes have already been filtered out.
+        try:
+            with warnings.catch_warnings(record=True):
+                warnings.filterwarnings("error", "Invalid interval", RuntimeWarning)
+                cbbox = mod.generate_compound_bbox(input_model)
+                input_model.meta.wcs.bounding_box = cbbox
+        except RuntimeWarning:
+            log_message = f"No valid data on detector {input_model.meta.instrument.detector}"
+            log.critical(log_message)
+            raise NoDataOnDetectorError(log_message) from None
     input_model.meta.cal_step.assign_wcs = "COMPLETE"
     exclude_types = [
         "nrc_wfss",

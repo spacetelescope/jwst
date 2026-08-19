@@ -1,4 +1,4 @@
-"""Replace bad pixels and align psf image with target image."""
+"""Replace bad pixels and align PSF image with target image."""
 
 import logging
 
@@ -29,19 +29,19 @@ class AlignRefsStep(Step):
 
     def process(self, target, psf):
         """
-        Execute the AlignRefs calibration step.
+        Execute the align_refs calibration step.
 
         Parameters
         ----------
         target : str or `~stdatamodels.jwst.datamodels.CubeModel`
-            CubeModel or file containing science target data
+            File or data model containing science target data.
         psf : str or `~stdatamodels.jwst.datamodels.CubeModel`
-            CubeModel or file containing PSF image stack
+            File or data model containing PSF image stack.
 
         Returns
         -------
         result : `~stdatamodels.jwst.datamodels.CubeModel`
-            CubeModel containing stack of PSF reference images shifted to the
+            Data model containing stack of PSF reference images shifted to the
             first science target image.
         """
         # Open the input science target and psf models, making a copy if needed

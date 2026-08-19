@@ -1,0 +1,1 @@
+Move photom step to take place after extract1d step in the spec2 pipeline for all WFSS modes. Output cal files will now be in count rate units.

@@ -18,6 +18,14 @@ DEFAULT_NAME = "singleton"
 DEFAULT_ASN_META = {"program": DEFAULT_NAME, "target": DEFAULT_NAME, "asn_pool": DEFAULT_NAME}
 
 
+def _blind_asn_load(obj, meta=DEFAULT_ASN_META, rule=Association, product_name_func=None):
+    if not isinstance(obj, list):
+        obj = [obj]
+    asn = asn_from_list(obj, rule=rule, meta=meta, product_name_func=product_name_func)
+    asn.filename = DEFAULT_NAME
+    return asn
+
+
 class LoadAsAssociation(dict):
     """
     Read in or create an association.
@@ -25,10 +33,10 @@ class LoadAsAssociation(dict):
     Notes
     -----
     This class is normally not instantiated.
-    the `load` method should be used as the factory
+    the :meth:`load` method should be used as the factory
     method to read an association or create one from
-    a string or `Datamodel` object, or a list of such
-    objects.
+    a string or `~stdatamodels.jwst.datamodels.JwstDataModel` object,
+    or a list of such objects.
     """
 
     @classmethod
@@ -45,7 +53,7 @@ class LoadAsAssociation(dict):
 
         Parameters
         ----------
-        obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
+        obj : Association, str, dict, Datamodel, [str[,...]], [Datamodel[,...]]
             The obj to return as an association.
 
         registry : AssociationRegistry
@@ -55,8 +63,8 @@ class LoadAsAssociation(dict):
             The rule to use if an association needs to be created.
 
         product_name_func : func
-            A function, when given the argument of `obj`, or
-            if `obj` is a list, each item in `obj`, returns
+            A function, when given the argument of ``obj``, or
+            if ``obj`` is a list, each item in ``obj``, returns
             a string that will be used as the product name in
             the association.
 
@@ -71,18 +79,25 @@ class LoadAsAssociation(dict):
         filename is added here, if such a file was passed in. Otherwise
         a default value is given.
         """
-        try:
-            with Path(obj).open() as fp:
-                pure_asn = load_asn(fp, registry=registry)
-        except Exception:
-            if not isinstance(obj, list):
-                obj = [obj]
-            asn = asn_from_list(obj, rule=rule, meta=meta, product_name_func=product_name_func)
-            asn.filename = DEFAULT_NAME
+        if isinstance(obj, (str, Path)):
+            try:
+                with Path(obj).open() as fp:
+                    pure_asn = load_asn(fp, registry=registry)
+            except Exception:
+                asn = _blind_asn_load(
+                    obj, rule=rule, meta=meta, product_name_func=product_name_func
+                )
+            else:
+                asn = rule()
+                asn.update(pure_asn)
+                asn.filename = obj
+        elif isinstance(obj, Association):  # No-op
+            asn = obj
+        elif isinstance(obj, dict):
+            asn = Association()
+            asn.data = obj
         else:
-            asn = rule()
-            asn.update(pure_asn)
-            asn.filename = obj
+            asn = _blind_asn_load(obj, rule=rule, meta=meta, product_name_func=product_name_func)
 
         return asn
 
@@ -97,7 +112,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
         Parameters
         ----------
-        obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
+        obj : Association, str, dict, Datamodel, [str[,...]], [Datamodel[,...]]
             The obj to return as an association.
 
         basename : str
@@ -114,12 +129,20 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         filename is added here, if such a file was passed in. Otherwise
         a default value is given.
         """
+        if isinstance(obj, Association):  # No-op
+            return obj
+
+        if isinstance(obj, dict):
+            asn = Association()
+            asn.data = obj
+            return asn
+
         product_name_func = cls.model_product_name
         if basename is not None:
             product_name_func = partial(cls.name_with_index, basename)
 
         # if the input string is a FITS file create an asn and return
-        if isinstance(obj, str):
+        if isinstance(obj, (str, Path)):
             file_name = Path(obj).name
             file_ext = Path(obj).suffix
 

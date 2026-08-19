@@ -24,13 +24,10 @@ def add_point_source(inarray, scale, xcen, ycen, sigx, sigy):
     for y in range(inarray.shape[0]):
         for x in range(inarray.shape[1]):
             outarray[y, x] = scale * gaussian2d(x, y, xcen, ycen, sigx, sigy)
-    #            outarray[y, x] = modeling.functional_models.Gaussian2D(amplitude=scale,
-    #                                                                   x_mean=xcen, y_mean=ycen,
-    #                                                                   x_stddev=sigx, y_stddev=sigy)
     return outarray
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def wfs_association(tmp_path_factory):
     imsize = 10
     tmp_path = tmp_path_factory.mktemp("wfs")
