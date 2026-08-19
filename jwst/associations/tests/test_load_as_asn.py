@@ -41,6 +41,9 @@ def test_lv2_asn():
     asn2 = LoadAsLevel2Asn.load(asn)
     assert asn2 is asn
 
+    asn2_1 = LoadAsLevel2Asn.load(asn.data)
+    assert asn2_1.data is asn.data
+
     asn3 = load_asn(asn)
     assert asn3 is asn
 

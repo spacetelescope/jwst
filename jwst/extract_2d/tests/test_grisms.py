@@ -335,6 +335,16 @@ def test_create_specific_orders():
         assert [1] == list(ids[0].order_bounding.keys())
 
 
+def test_create_grism_bbox_none_defined(log_watcher):
+    imwcs, refs = setup_image_cat()
+
+    watcher = log_watcher("jwst.assign_wcs.util", message="No grism objects saved", level="warning")
+    grism_objects = create_grism_bbox(imwcs, refs, mmag_extract=-100.0)
+    watcher.assert_seen()
+    assert isinstance(grism_objects, list)
+    assert len(grism_objects) == 0
+
+
 @pytest.mark.parametrize("subarray", [True, False])
 def test_extract_tso_subarray(subarray):
     """Test extraction of a TSO object.

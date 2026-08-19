@@ -12,6 +12,7 @@ from stdatamodels.jwst.transforms.models import (
     NIRISSBackwardGrismDispersion,
 )
 
+from jwst.assign_wcs.util import get_bounding_box_extents
 from jwst.lib.catalog_utils import read_source_catalog
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
@@ -536,10 +537,10 @@ def _reject_off_detector_bounds(
     """
     Determine which sources have any part of their grism-frame bounding boxes on the detector.
 
-    Modified from assign_wcs.util._create_grism_bbox.
-    This version is vectorized, does not create GrismObjects,
-    does not distinguish partially-on-detector sources, and
-    just returns a boolean array indicating which sources are on the detector.
+    Similar to the way bounding boxes are created in extract2d, but
+    this version does not create GrismObjects, does not distinguish
+    partially-on-detector sources, and just returns a boolean array indicating which
+    sources are on the detector.
 
     Parameters
     ----------
@@ -561,38 +562,25 @@ def _reject_off_detector_bounds(
     np.ndarray
         Boolean array indicating which sources are on the detector.
     """
-    ra = np.array(
+    ra_corners = np.array(
         [
             source_catalog["sky_bbox_ll"].ra.value,
             source_catalog["sky_bbox_lr"].ra.value,
             source_catalog["sky_bbox_ul"].ra.value,
             source_catalog["sky_bbox_ur"].ra.value,
         ]
-    ).flatten()
-    dec = np.array(
+    )
+    dec_corners = np.array(
         [
             source_catalog["sky_bbox_ll"].dec.value,
             source_catalog["sky_bbox_lr"].dec.value,
             source_catalog["sky_bbox_ul"].dec.value,
             source_catalog["sky_bbox_ur"].dec.value,
         ]
-    ).flatten()
-    x1, y1, _, _, _ = sky_to_grism(ra, dec, wlmin, order)
-    x2, y2, _, _, _ = sky_to_grism(ra, dec, wlmax, order)
-
-    # return to being per-source
-    x1 = x1.reshape((4, -1))
-    y1 = y1.reshape((4, -1))
-    x2 = x2.reshape((4, -1))
-    y2 = y2.reshape((4, -1))
-
-    # stack for min/max calc
-    xstack = np.vstack([x1, x2])  # shape 8, len(source_catalog)
-    ystack = np.vstack([y1, y2])  # shape 8, len(source_catalog)
-    xmin = np.nanmin(xstack, axis=0)
-    xmax = np.nanmax(xstack, axis=0)
-    ymin = np.nanmin(ystack, axis=0)
-    ymax = np.nanmax(ystack, axis=0)
+    )
+    xmin, xmax, ymin, ymax = get_bounding_box_extents(
+        ra_corners, dec_corners, sky_to_grism, wlmin, wlmax, order
+    )
 
     # check against bounds
     xmin_too_big = xmin > subarray_xsize - 1
