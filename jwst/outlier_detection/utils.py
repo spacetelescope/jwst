@@ -268,9 +268,17 @@ def median_with_resampling(
             else:
                 err_computer = None
             if save_intermediate_results:
-                # update median model's meta with meta from the first model:
+                # Update median model's meta with meta from the first model:
                 median_model.update(drizzled_model)
+
+                # Make sure the full WCS is copied over
                 median_model.meta.wcs = median_wcs
+                if drizzled_model.hasattr("wavetable"):
+                    median_model.add_schema_entry(
+                        "wavetable", drizzled_model.schema["properties"]["wavetable"]
+                    )
+                    median_model.wavetable = drizzled_model.wavetable
+
                 # Certain attributes that represent only one slit get copied over,
                 # but the median model isn't associated with any particular slit.
                 # Delete those.

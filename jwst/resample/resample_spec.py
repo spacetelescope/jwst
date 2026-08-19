@@ -23,6 +23,8 @@ from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import is_sky_like, wrap_ra
 from jwst.datamodels import ModelLibrary
+from jwst.extract_1d.source_location import location_from_wcs
+from jwst.lib.basic_utils import disable_logging
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleImage
 
@@ -262,6 +264,87 @@ class ResampleSpec(ResampleImage):
         # model.meta.resample.weight_type
         # model.meta.resample.pointings
         # model.meta.cal_step.resample
+
+    def update_fits_wcsinfo(self, model):
+        """
+        Update FITS WCS keywords of the resampled image.
+
+        The wavelengths are nonlinear but have the same value for all spatial elements.
+        The values are extracted from the WCS at the central spatial index. They
+        are stored in a new WCS-TABLE extension, with the column named for the
+        current slit.
+
+        The spatial coordinates are set to a simple linear scaling by the
+        output pixel scale. The scaling value is stored in the standard FITS WCS
+        keyword (CDELTi). The origin for the spatial scale (CRPIXi) is set to the
+        planned source location if available; the center of the cross-dispersion
+        axis if not.
+
+        Parameters
+        ----------
+        model : `~stdatamodels.jwst.datamodels.SlitModel`
+            The resampled image
+        """
+        # WCS info dictionary to update
+        wcsinfo = model.meta.wcsinfo.instance
+
+        # Get the expected cross-dispersion location for the source if possible
+        with disable_logging():
+            _, _, location, _ = location_from_wcs(model, None, make_trace=False)
+
+        # Wavelength values from dispersion direction at center of data array
+        dispaxis = wcsinfo["dispersion_direction"]
+        if dispaxis == 1:
+            # wavelengths along x
+            spataxis = 2
+            w_idx = np.arange(model.data.shape[-1], dtype=np.float64)
+            s_idx = model.data.shape[-2] // 2
+            _, _, wave = model.meta.wcs(w_idx, s_idx)
+        else:
+            # wavelengths along y
+            spataxis = 1
+            w_idx = np.arange(model.data.shape[-2], dtype=np.float64)
+            s_idx = model.data.shape[-1] // 2
+            _, _, wave = model.meta.wcs(s_idx, w_idx)
+
+        # Column name from slit name
+        if model.name is None:
+            col_name = "wavelength"
+        else:
+            col_name = f"wave_slit_{model.name}"
+
+        # Add FITS WCS keywords
+        wcsinfo["wcsaxes"] = 2
+        wcsinfo[f"ctype{dispaxis}"] = "WAVE-TAB"
+        wcsinfo[f"ps{dispaxis}_0"] = "WCS-TABLE"
+        wcsinfo[f"ps{dispaxis}_1"] = col_name
+        wcsinfo[f"crval{dispaxis}"] = 1.0
+        wcsinfo[f"crpix{dispaxis}"] = 1.0
+        wcsinfo[f"cdelt{dispaxis}"] = None
+        wcsinfo[f"cunit{dispaxis}"] = "um"
+
+        wcsinfo[f"ctype{spataxis}"] = "SPATIAL"
+        wcsinfo[f"crval{spataxis}"] = 0.0
+        wcsinfo[f"cdelt{spataxis}"] = self._output_pixel_scale
+        wcsinfo[f"cunit{spataxis}"] = "arcsec"
+
+        # Use the expected location as the spatial origin if possible.
+        # Otherwise, use the center.
+        if location is not None:
+            wcsinfo[f"crpix{spataxis}"] = location + 1
+        else:
+            wcsinfo[f"crpix{spataxis}"] = s_idx + 1
+
+        # Add the wavelength table to the model
+        # Schema must be generated on the fly since the columns are variable.
+        wavetable = np.array([(wave[None].T,)], dtype=[(col_name, "<f4", (wave.size, 1))])
+        schema = {
+            "title": "Wavelength values",
+            "fits_hdu": "WCS-TABLE",
+            "datatype": [{"name": col_name, "datatype": "float32"}],
+        }
+        model.add_schema_entry("wavetable", schema)
+        model.wavetable = wavetable
 
     def build_nirspec_output_wcs(
         self, input_models, refmodel=None, good_bits=None, pixel_scale_ratio=1.0
