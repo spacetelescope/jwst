@@ -268,3 +268,13 @@ def test_run_coron3_with_models(coron3_input):
             np.testing.assert_allclose(model.data, model_copy.data)
 
         input_copy.close()
+
+
+def test_invalid_exptype(coron3_input):
+    # Open the input as a container
+    with datamodels.open(coron3_input) as input_models:
+        # Modify one model so that it has an invalid exposure type
+        input_models[-1].meta.exposure.type = "NRC_IMAGE"
+
+        with pytest.raises(TypeError, match="not supported by calwebb_coron3"):
+            Coron3Pipeline.call(input_models)
