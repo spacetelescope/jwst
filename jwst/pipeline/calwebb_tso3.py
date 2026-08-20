@@ -62,8 +62,9 @@ class Tso3Pipeline(Pipeline):
         input_models = self.prepare_output(input_data, asn_exptypes=asn_exptypes)
 
         # Validate the input data before proceeding
-        if not is_tso(input_models[0]):
-            raise TypeError("Input data are not TSO")
+        for model in input_models:
+            if not is_tso(model):
+                raise TypeError("Input data are not TSO")
 
         # Overriding the Step.save_model method for the following steps.
         # These steps may save intermediate files, resulting in meta.filename

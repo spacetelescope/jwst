@@ -407,6 +407,11 @@ class JwstStep(_Step):
         TypeError
             If any input model does not match the expected exposure types.
         """
+        if self.class_alias:
+            class_name = self.class_alias
+        else:
+            class_name = self.__class__.__name__
+
         exptypes = {str(t).upper() for t in exptypes}
         if isinstance(models, ModelLibrary):
             model_exptypes = []
@@ -421,7 +426,7 @@ class JwstStep(_Step):
             if str(exptype).upper() not in exptypes:
                 msg = (
                     f"Input data has exposure type {exptype} "
-                    f"which is not supported by {self.class_alias}. "
+                    f"which is not supported by {class_name}. "
                     f"Expected exposure types are: {sorted(exptypes)}"
                 )
                 raise TypeError(msg)

@@ -449,3 +449,35 @@ def test_add_asn_id_to_output_name_from_model(models):
     output_name = step.make_output_path(basepath="test", suffix="cal")
     assert output_name == f"test_{asn_id_model}_cal.fits"
     assert found_asn_id == asn_id_model
+
+
+@pytest.mark.parametrize("class_alias", ["jwst_step", None])
+@pytest.mark.parametrize("models", ["container", "library", "model"])
+def test_validate_input_exptype(models, class_alias):
+    model1 = datamodels.ImageModel()
+    model1.meta.exposure.type = "NRC_IMAGE"
+    model2 = datamodels.ImageModel()
+    model2.meta.exposure.type = "MIR_IMAGE"
+
+    if models == "container":
+        input_models = ModelContainer([model1, model2])
+    elif models == "library":
+        input_models = ModelLibrary([model1, model2])
+    else:
+        input_models = model2
+
+    step = Step()
+    step.class_alias = class_alias
+
+    # exposure type included: validates
+    expected_exptypes = {"nrs_tsgrism", "nrc_image", "mir_image"}
+    step.validate_input_exptype(input_models, expected_exptypes)
+
+    # at least 1 exposure type not included: raises error
+    expected_exptypes = {"nrs_tsgrism", "nrc_image"}
+    if class_alias is None:
+        msg = "not supported by JwstStep"
+    else:
+        msg = "not supported by jwst_step"
+    with pytest.raises(TypeError, match=msg):
+        step.validate_input_exptype(input_models, expected_exptypes)
