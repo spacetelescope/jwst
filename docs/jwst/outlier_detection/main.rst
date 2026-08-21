@@ -79,12 +79,14 @@ This routine performs the following operations:
      can be found `at this link <https://jwst-docs.stsci.edu/jwst-near-infrared-camera/nircam-operations/nircam-dithers-and-mosaics>`_
    * Fill in pixels that have no valid contribution from any input exposure with the value
      specified by the ``fillval`` parameter.
+   * Resample the error arrays in the same manner as the images, rather than propagating the variance
+     components.
 
 #. If the ``save_intermediate_results`` parameter is set to `True`, write the resampled images to disk
    with the suffix ``_outlier_i2d.fits``. These are not saved if ``resample_data`` is set to `False` because
    they would be copies of the input models.
 
-#. If resampling is turned off, use the input data itself in place of the resampled data
+#. If resampling is turned off, use the input data and error in place of the resampled data
    for subsequent processing.
 
 #. Construct and apply a bad pixel mask to the resampled data based on the drizzled weights.
@@ -93,10 +95,11 @@ This routine performs the following operations:
    with a weight below this value gets flagged as bad.
 
 #. Create a median image from all grouped observation mosaics pixel-by-pixel, i.e., averaging over groups.
-   If ``save_intermediate_results`` is set to `True`, the median image is written out to disk with the
-   suffix ``_median.fits``.
+   Also compute a median error estimate by combining the corresponding error images in the same way.
+   If ``save_intermediate_results`` is set to `True`, the median image and error are written out to disk
+   with the suffix ``_median.fits``.
 
-#. Blot (inverse of resampling) the median image back to match each original input image, and write
+#. Blot (inverse of resampling) the median image and error back to match each original input image, and write
    the blotted images to disk with the suffix ``_blot.fits`` if ``save_intermediate_results`` is `True`.
 
 #. Perform statistical comparison between blotted image and original image to identify outliers.
@@ -106,7 +109,7 @@ This routine performs the following operations:
      In this case, compute the outlier mask using the following formula:
 
      .. math::
-        | image\_input - image\_median | > SNR \times input\_err
+        | image\_input - image\_median | > SNR \times median\_err
 
    * Add a user-specified background value to the median image to match the original background levels
      of the input mosaic. This is controlled by the ``backg`` parameter.
@@ -121,9 +124,8 @@ This routine performs the following operations:
      an outlier. The following rule is used:
 
      .. math::
-        | image\_input - image\_blotted | > scale \times image\_deriv + SNR \times noise
+        | image\_input - image\_blotted | > scale \times image\_deriv + SNR \times median\_err
 
-     The noise in this equation is the value of the input model's ``err`` extension.
      The SNR in this equation is the ``snr`` parameter, which encodes two values that
      determine whether a pixel should be masked:
      the first value detects the primary cosmic ray, and the second masks
@@ -199,12 +201,6 @@ with the imaging mode.
 
 This routine performs identical operations to the imaging mode, with the following *exceptions*:
 
-#. Error thresholding is handled differently: The error arrays are resampled and median-combined
-   along with the data arrays, and the median error image is used to identify outliers
-   instead of the input error images for each exposure. This median error image is included
-   alongside the median datamodel (in the ``err`` extension) if ``save_intermediate_results``
-   is `True`.
-
 #. Resampling is handled by a different class, `~jwst.resample.resample_spec.ResampleSpec`
    instead of `~jwst.resample.resample.ResampleImage`.
 
@@ -247,7 +243,8 @@ processing performed by this step. This routine performs the following operation
    `~stdatamodels.jwst.datamodels.CubeModel` to disk with the suffix ``_median.fits``.
 
 #. Perform a statistical comparison frame-by-frame between the rolling-median cube and
-   the input data. The formula used is the same as for imaging data without resampling:
+   the input data. The formula used is the same as for imaging data without resampling,
+   except that the input error is used in place of the median error:
 
    .. math::
       | image\_input - image\_median | > SNR \times input\_err
