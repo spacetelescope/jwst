@@ -418,6 +418,6 @@ def test_call_step_invalid_data(make_datamodel, log_watcher):
         message="No valid input spectra found",
         level="error",
     )
-    result = WhiteLightStep().call(input_model, save_results=True)
+    result = WhiteLightStep.call(input_model, save_results=True)
     assert result is None
     watcher.assert_seen()
