@@ -26,7 +26,6 @@ from jwst.assign_wcs import AssignWcsStep, nircam
 from jwst.assign_wcs.util import create_grism_bbox
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.grisms import (
-    compute_tso_offset_center,
     extract_grism_objects,
     extract_tso_object,
     radec_to_source_ids,
@@ -182,6 +181,8 @@ def create_tso_wcsimage(filtername="F277W", subarray=False):
     im = CubeModel(hdul)
     im.meta.wcsinfo.siaf_xref_sci = 887.0
     im.meta.wcsinfo.siaf_yref_sci = 35.0
+    im.meta.dither.x_offset = 0
+    im.meta.dither.y_offset = 0
     aswcs = AssignWcsStep()
     return aswcs.process(im)
 
@@ -387,20 +388,20 @@ def test_extract_tso_subarray(subarray):
 
 
 def test_extract_tso_height():
-    """Test extraction of a TSO object with given height.
+    """
+    Test extraction of a TSO object with given height.
 
     NRC_TSGRISM mode doesn't use the catalog since
     objects are always in the same place on the
     detector. This does an actual test of the
     extraction with a small CubeModel
     """
-
     wcsimage = create_tso_wcsimage(subarray=False)
     refs = get_reference_files(wcsimage)
     outmodel = extract_tso_object(wcsimage, tsgrism_extract_height=50, reference_files=refs)
     assert isinstance(outmodel, SlitModel)
     assert outmodel.source_xpos == (outmodel.meta.wcsinfo.siaf_xref_sci - 1)
-    assert outmodel.source_ypos == 34
+    assert outmodel.source_ypos == 25
     assert outmodel.source_id == 1
     assert outmodel.xstart > 0
     assert outmodel.ystart > 0
@@ -417,14 +418,6 @@ def test_extract_tso_height():
     assert ysize == 50
     assert xsize == NIRCAM_TSO_WIDTH
     del outmodel
-
-
-def test_compute_tso_offset_center():
-    image_model = create_tso_wcsimage(filtername="F444W", subarray=False)
-    distortion = image_model.meta.wcs.get_transform("v2v3", "direct_image")
-    xc, yc = compute_tso_offset_center(image_model, distortion)
-    assert np.isclose(yc, 59.929, atol=1e-3)
-    assert np.isclose(xc, 961.355, atol=1e-3)
 
 
 @pytest.mark.parametrize("source_ids", [None, 9, [19, 25]])
