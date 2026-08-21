@@ -96,11 +96,18 @@ def test_run_image3_single_model(caplog, make_mock_cal_model):
         assert getattr(make_mock_cal_model.meta.cal_step, step) is None
 
 
+def test_invalid_exptype(make_mock_cal_model):
+    with make_mock_cal_model.copy() as model_copy:
+        model_copy.meta.exposure.type = "NRC_TSGRISM"
+        with pytest.raises(TypeError, match="not supported by calwebb_image3"):
+            Image3Pipeline.call(model_copy)
+
+
 def _is_run_complete(logfile):
     """
     Check that the pipeline runs to completion
     """
     msg = "Step Image3Pipeline done"
-    with open(LOGFILE, "r") as f:
+    with open(logfile, "r") as f:
         log = f.read()
     assert msg in log

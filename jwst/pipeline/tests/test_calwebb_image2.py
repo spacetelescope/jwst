@@ -130,3 +130,10 @@ def test_image2_nircam_model(make_rate_file):
 
     input_model.close()
     input_model_copy.close()
+
+
+def test_invalid_exptype(make_rate_file):
+    with datamodels.open(INPUT_FILE) as input_model:
+        input_model.meta.exposure.type = "NRC_TSGRISM"
+        with pytest.raises(TypeError, match="not supported by calwebb_image2"):
+            Image2Pipeline.call(input_model)

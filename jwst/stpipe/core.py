@@ -389,6 +389,48 @@ class JwstStep(_Step):
 
         return asn_id
 
+    def validate_input_exptype(self, models, exptypes):
+        """
+        Validate input models against expected exposure types.
+
+        Parameters
+        ----------
+        models : `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+                 `~jwst.datamodels.container.ModelContainer`,  or \
+                 `~jwst.datamodels.library.ModelLibrary`
+            The model or models to validate.
+        exptypes : list or set
+            List or set of acceptable exposure types for the step.
+
+        Raises
+        ------
+        TypeError
+            If any input model does not match the expected exposure types.
+        """
+        if self.class_alias:
+            class_name = self.class_alias
+        else:
+            class_name = self.__class__.__name__
+
+        exptypes = {str(t).upper() for t in exptypes}
+        if isinstance(models, ModelLibrary):
+            model_exptypes = []
+            for i in range(len(models)):
+                meta = models.read_metadata(i)
+                model_exptypes.append(meta.get("meta.exposure.type"))
+        elif isinstance(models, JwstDataModel):
+            model_exptypes = [models.meta.exposure.type]
+        else:
+            model_exptypes = [model.meta.exposure.type for model in models]
+        for exptype in model_exptypes:
+            if str(exptype).upper() not in exptypes:
+                msg = (
+                    f"Input data has exposure type {exptype} "
+                    f"which is not supported by {class_name}. "
+                    f"Expected exposure types are: {sorted(exptypes)}"
+                )
+                raise TypeError(msg)
+
     def finalize_result(self, result, reference_files_used):
         """
         Update the result with the software version and reference files used.
