@@ -1127,7 +1127,7 @@ def get_mosaic_member_wcs(input_model):
     except FileNotFoundError:
         log.warning(f"Direct image file {direct_file} not found.")
 
-    except AttributeError:
+    except (KeyError, AttributeError):
         log.warning("Direct image does not contain WCS information.")
 
     return mosaic_wcs
