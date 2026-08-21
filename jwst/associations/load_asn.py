@@ -44,8 +44,8 @@ def load_asn(
     validate : bool
         Validate against the class's defined schema, if any.
 
-    registry : `~jwst.associations.AssociationRegistry` or None
-        The `~jwst.associations.AssociationRegistry` to use.
+    registry : `~jwst.associations.registry.AssociationRegistry` or None
+        The `~jwst.associations.registry.AssociationRegistry` to use.
         If None, no registry is used.
         Can be passed just a registry class instead of instance.
 
@@ -55,7 +55,7 @@ def load_asn(
 
     Returns
     -------
-    `~jwst.associations.Association`
+    `~jwst.associations.association.Association`
         The loaded association.
 
     Raises
@@ -70,7 +70,7 @@ def load_asn(
     a file object containing the string.
 
     If no registry is specified, the default
-    :meth:`~jwst.associations.Association.load` method is used.
+    :meth:`~jwst.associations.association.Association.load` method is used.
     """
     fname = getattr(serialized, "name", None)
     if fname is not None:

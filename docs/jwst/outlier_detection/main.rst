@@ -32,7 +32,7 @@ being processed.  This step supports:
 This step uses the following logic to apply the appropriate algorithm to the
 input data:
 
-#. Interpret inputs (`~jwst.associations.Association`,
+#. Interpret inputs (`~jwst.associations.association.Association`,
    `~jwst.datamodels.container.ModelContainer`,
    `~jwst.datamodels.library.ModelLibrary`, or
    `~stdatamodels.jwst.datamodels.CubeModel`)

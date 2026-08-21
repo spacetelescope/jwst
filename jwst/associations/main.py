@@ -31,17 +31,17 @@ class Main:
         - List of str: A list of strings which create the command line
           with the similar structure as ``sys.argv``
 
-    pool : None or `~jwst.associations.AssociationPool`
+    pool : None or `~jwst.associations.pool.AssociationPool`
         If `None`, a pool file must be specified in the ``args``.
-        Otherwise, an `~jwst.associations.AssociationPool`.
+        Otherwise, an `~jwst.associations.pool.AssociationPool`.
 
     Attributes
     ----------
-    pool : `~jwst.associations.AssociationPool`
+    pool : `~jwst.associations.pool.AssociationPool`
         The pool read in, or passed in through the parameter ``pool``.
-    rules : `~jwst.associations.AssociationRegistry`
+    rules : `~jwst.associations.registry.AssociationRegistry`
         The rules used for association creation.
-    associations : list of `~jwst.associations.Association`
+    associations : list of `~jwst.associations.association.Association`
         The list of generated associations.
 
     Notes
@@ -67,9 +67,9 @@ class Main:
             - List of str: A list of strings which create the command line
               with the similar structure as ``sys.argv``
 
-        pool : None or `~jwst.associations.AssociationPool`
+        pool : None or `~jwst.associations.pool.AssociationPool`
             If `None`, a pool file must be specified in the ``args``.
-            Otherwise, an `~jwst.associations.AssociationPool`.
+            Otherwise, an `~jwst.associations.pool.AssociationPool`.
 
         Returns
         -------
@@ -88,7 +88,7 @@ class Main:
 
         Returns
         -------
-        pool : `~jwst.associations.AssociationPool`
+        pool : `~jwst.associations.pool.AssociationPool`
             The pool of orphaned exposures.
         """
         not_in_asn = np.ones((len(self.pool),), dtype=bool)
@@ -115,9 +115,9 @@ class Main:
             - List of str: A list of strings which create the command line
               with the similar structure as ``sys.argv``
 
-        pool : None or `~jwst.associations.AssociationPool`
+        pool : None or `~jwst.associations.pool.AssociationPool`
             If `None`, a pool file must be specified in the ``args``.
-            Otherwise, an `~jwst.associations.AssociationPool`.
+            Otherwise, an `~jwst.associations.pool.AssociationPool`.
         """
         self.parse_args(args, has_pool=pool)
         parsed = self.parsed
@@ -399,9 +399,9 @@ def main(args=None, pool=None):
         - List of str: A list of strings which create the command line
           with the similar structure as ``sys.argv``
 
-    pool : None or `~jwst.associations.AssociationPool`
+    pool : None or `~jwst.associations.pool.AssociationPool`
         If `None`, a pool file must be specified in the ``args``.
-        Otherwise, an `~jwst.associations.AssociationPool`.
+        Otherwise, an `~jwst.associations.pool.AssociationPool`.
     """
     Main.cli(args, pool)
 

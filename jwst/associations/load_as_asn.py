@@ -112,16 +112,19 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
         Parameters
         ----------
-        obj : Association, str, dict, Datamodel, [str[,...]], [Datamodel[,...]]
-            The obj to return as an association.
+        obj : `~jwst.associations.association.Association`, str, dict, \
+              `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+              list of str, or \
+              list of `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The object to return as an association.
 
         basename : str
             If specified, use as the basename, with an index appended.
 
         Returns
         -------
-        association : DMSLevel2bBase
-            An association created using given obj.
+        association : `~jwst.associations.lib.rules_level2_base.DMSLevel2bBase`
+            An association created using given object.
 
         Notes
         -----
@@ -174,7 +177,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The model to get the name from
         _idx : int
             The parent method is sometimes passed an index,

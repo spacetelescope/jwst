@@ -11,16 +11,16 @@ following structure.
 As in :ref:`asn-level2-techspecs`, the structure is defined and enforced by
 the Stage 3 schema.
 
-  * :ref:`Informational Meta Keywords<asn-level3-meta-keywords>`
-  * List of :ref:`products<asn-level3-products>`, each consisting of
-    
-    * Output product name
-    * List of :ref:`exposure members<asn-level3-members>`, each consisting of
-      
-      * Filename of the exposure that is a member of this association
-      * Type of exposure
-      * If present, information about errors from the observatory log
-      * If present, the Association Candidates this exposure belongs to
+* :ref:`Informational Meta Keywords <asn-level3-meta-keywords>`
+* List of :ref:`products <asn-level3-products>`, each consisting of:
+
+  * Output product name
+  * List of :ref:`exposure members<asn-level3-members>`, each consisting of:
+
+    * Filename of the exposure that is a member of this association
+    * Type of exposure
+    * If present, information about errors from the observatory log
+    * If present, the Association Candidates this exposure belongs to
 
 .. _asn-level3-example:
 
@@ -82,8 +82,8 @@ asn_type (*optional*)
   The type of association represented. See :ref:`asn-jwst-association-types`.
 
 code_version (*optional*)
-  The version of the generator that created this association. Typically this is the version
-  of the ``jwst`` Python package.
+  The version of the generator that created this association.
+  Typically this is the version of the ``jwst`` package.
 
 constraints (*optional*)
   List of constraints used by the association generator to create this
@@ -147,7 +147,7 @@ expname (*required*)
   than if the path data is not included.
 
 exptype (*required*)
-  Type of information represented by the exposure. Possible values are
+  Type of information represented by the exposure. Possible values are:
 
   * ``science``: The primary science exposures. There is usually more than one
     since Stage 3 calibration involves combining multiple science
@@ -155,7 +155,7 @@ exptype (*required*)
     to be ``science``.
 
   * ``background``: Exposures used for background subtraction.
-    
+
   * ``psf``: Exposures that should be considered PSF references for
     coronagraphic and AMI calibration.
 
@@ -165,8 +165,7 @@ exposerr (*optional*)
   value is ``null``.
 
 asn_candidate (*optional*)
-  Contains the list of association candidates this exposure belongs
-  to.
+  Contains the list of association candidates this exposure belongs to.
 
 Editing the member list
 ^^^^^^^^^^^^^^^^^^^^^^^

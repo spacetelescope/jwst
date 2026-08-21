@@ -40,7 +40,7 @@ def generate_per_candidate(
         The pool to generate from.
 
     rule_defs : [File-like[,...]] or None
-        The rule definitions to use. None to use the defaults if `ignore_default` is False.
+        The rule definitions to use. None to use the defaults if ``ignore_default`` is `False`.
 
     candidate_ids : [str,[...]] or None
         List of candidates to produce for. If None, do all possible candidates
@@ -189,13 +189,14 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
         The pool to generate from.
 
     rule_defs : [File-like[,...]] or None
-        The rule definitions to use. None to use the defaults if `ignore_default` is False.
+        The rule definitions to use. None to use the defaults if ``ignore_default`` is `False`.
 
     version_id : None, True, or str
-        The string to use to tag associations and products.
-        If None, no tagging occurs.
-        If True, use a timestamp
-        If a string, the string.
+        The string to use to tag associations and products:
+
+        * None: no tagging occurs.
+        * `True`: use a timestamp.
+        * str: use the given string.
 
     ignore_default : bool
         Ignore the default rules. Use only the user-specified ones.

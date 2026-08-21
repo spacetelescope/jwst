@@ -49,7 +49,8 @@ class AssociationRegistry(dict):
 
     In practice, this is one step in a larger loop over all items to
     be associated. This does not account for adding items to already
-    existing associations. See :py:func:`~jwst.associations.generate` for more information.
+    existing associations. See :py:func:`~jwst.associations.generator.generate.generate`
+    for more information.
     """
 
     def __init__(
@@ -162,7 +163,7 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        association : association-like
+        association : `~jwst.associations.association.Association`
             The data to validate.
 
         Returns
@@ -172,21 +173,12 @@ class AssociationRegistry(dict):
 
         Raises
         ------
-        AssociationNotValidError
+        jwst.associations.exceptions.AssociationNotValidError
             Association did not validate.
         """
-
-        # Change rule validation from an exception
-        # to a boolean
-        def is_valid(rule, association):
-            try:
-                rule.validate(association)
-            except AssociationNotValidError:
-                return False
-            else:
-                return True
-
-        results = [rule for rule_name, rule in self.items() if is_valid(rule, association)]
+        results = [
+            rule for rule in self.values() if rule.validate(association, error_on_fail=False)
+        ]
 
         if len(results) == 0:
             raise AssociationNotValidError(f'Structure did not validate: "{association}"')

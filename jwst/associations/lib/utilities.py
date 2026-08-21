@@ -1,4 +1,4 @@
-"""General Utilities."""
+"""General utilities for associations."""
 
 import logging
 from ast import literal_eval
@@ -28,13 +28,13 @@ def constrain_on_candidates(candidates):
 
     Parameters
     ----------
-    candidates : (str, ...) or None
-        List of candidate id's.
+    candidates : list of str or None
+        List of candidate ID's.
         If None, then all candidates are matched.
 
     Returns
     -------
-    DMSAttrConstraint
+    `~jwst.associations.lib.dms_base.DMSAttrConstraint`
         The constraint built off the candidate list.
     """
     from jwst.associations.lib.dms_base import DMSAttrConstraint
@@ -69,7 +69,7 @@ def evaluate(value):
     -------
     type or str
         The evaluation. If the value cannot be
-        evaluated, the value is simply returned
+        evaluated, the value is simply returned.
     """
     try:
         evaled = literal_eval(value)
@@ -91,11 +91,12 @@ def filter_discovered_only(
     ----------
     associations : iterable
         The list of associations to check. The list
-        is that returned by the `generate` function.
+        is returned by
+        :func:`~jwst.associations.generator.generate.generate`.
     discover_ruleset : str
-        The name of the ruleset that has the discover rules
+        The name of the ruleset that has the discover rules.
     candidate_ruleset : str
-        The name of the ruleset that finds just candidates
+        The name of the ruleset that finds just candidates.
     keep_candidates : bool
         Keep explicit candidate associations in the list.
 
@@ -106,9 +107,9 @@ def filter_discovered_only(
 
     Notes
     -----
-    This utility is only meant to run on associations that have
-    been constructed. Associations that have been Association.dump
-    and then Association.load will not return proper results.
+    This function is only meant to run on associations that have
+    been constructed. Associations that have been serialized
+    and then reloaded will not return proper results.
     """
     from jwst.associations.lib.prune import identify_dups
 
@@ -229,7 +230,7 @@ def getattr_from_list_nofail(*args, **kwargs):
     """
     Call getattr_from_list without allowing exceptions.
 
-    If the specified exceptions are caught, return `default`
+    If the specified exceptions are caught, return ``default``
     instead.
 
     Parameters
@@ -258,11 +259,11 @@ def is_iterable(obj):
     Parameters
     ----------
     obj : object
-        The object to be checked for defined `__iter__` method.
+        The object to be checked for defined ``__iter__`` method.
 
     Returns
     -------
     bool
-        True if iterable, false otherwise.
+        `True` if iterable, `False` otherwise.
     """
     return not isinstance(obj, str) and not isinstance(obj, tuple) and hasattr(obj, "__iter__")

@@ -27,7 +27,6 @@ def libpath():
 
 # isort: off
 from .association import *
-from .association_io import *
 from .exceptions import *
 from .generator import *
 from .lib.process_list import *

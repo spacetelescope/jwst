@@ -23,8 +23,8 @@ def add(asn, filenames, exptype):
 
     Parameters
     ----------
-    asn : object
-        An association object.
+    asn : `~jwst.associations.association.Association`
+        Association to modify.
     filenames : list of str
         The filenames to be added to the association.
     exptype : str
@@ -32,8 +32,8 @@ def add(asn, filenames, exptype):
 
     Returns
     -------
-    object
-        The modified association object.
+    `~jwst.associations.association.Association`
+        The modified association, which is the input modified in-place.
     """
     for filename in filenames:
         path = _path(filename)
@@ -57,8 +57,13 @@ def reader(association_file):
 
     Returns
     -------
-    ~jwst.associations.association.Association
+    `~jwst.associations.association.Association`
         The association object.
+
+    Raises
+    ------
+    OSError
+        Read failed.
     """
     association_path = _path(association_file)
     asn_format = association_path.suffix[1:]
@@ -79,17 +84,17 @@ def remove(asn, filenames, ignore):
 
     Parameters
     ----------
-    asn : object
-        An association object.
+    asn : `~jwst.associations.association.Association`
+        Association to modify.
     filenames : list of str
         The filenames to be removed from the association.
     ignore : bool
-        Ignore the filename suffix when matching filenames if True.
+        Ignore the filename suffix when matching filenames if `True`.
 
     Returns
     -------
-    ~jwst.associations.association.Association
-        The modified association object.
+    `~jwst.associations.association.Association`
+        The modified association, which is the input modified in-place.
     """
     not_found = []
     for filename in filenames:
@@ -116,7 +121,7 @@ def _lookup(asn, filename, ignore_suffix=False):
 
     Parameters
     ----------
-    asn : ~jwst.associations.association.Association
+    asn : `~jwst.associations.association.Association`
         The input association object.
     filename : str or Path
         The filename to find in the association.
@@ -175,7 +180,7 @@ def writer(asn, output_file):
 
     Parameters
     ----------
-    asn : object
+    asn : `~jwst.associations.association.Association`
         An association object
 
     output_file : str or Path
@@ -184,7 +189,7 @@ def writer(asn, output_file):
     Raises
     ------
     ValueError
-        The output filename was not a json file
+        The output filename is not a JSON file
     """
     output_file = Path(output_file)
     if output_file.suffix != ".json":
@@ -214,7 +219,7 @@ def _rename(output_file):
     Parameters
     ----------
     output_file : Path
-        The filename of the association
+        The filename of the association.
 
     Returns
     -------

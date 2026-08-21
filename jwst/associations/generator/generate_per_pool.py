@@ -37,7 +37,7 @@ def generate_per_pool(
         The pool to generate from.
 
     rule_defs : [File-like[,...] or None
-        List of rule definitions to use. None to use the defaults if `ignore_default` is False.
+        List of rule definitions to use. None to use the defaults if ``ignore_default`` is `False`.
 
     candidate_ids : [str,[...]] or None
         List of candidates to produce for.

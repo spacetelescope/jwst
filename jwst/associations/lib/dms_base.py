@@ -293,11 +293,11 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        asn : `~jwst.associations.Association` or None
+        asn : `~jwst.associations.association.Association` or None
             The association or, if the item does not
             match this rule, None
 
-        reprocess : list of `~jwst.associations.ProcessList`
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
             List of items to process again.
         """
         asn, reprocess = super(DMSBaseMixin, cls).create(item, version_id)
@@ -723,30 +723,47 @@ class DMSBaseMixin(ACIDMixin):
         cls.sequence = Counter(start=1)
 
     @classmethod
-    def validate(cls, asn):
+    def validate(cls, asn, error_on_fail=True):
         """
-        Validate candidate against all asn validity tests.
+        Validate candidate against all association validity tests.
 
         Parameters
         ----------
-        asn : `~jwst.associations.Association`
-            The asn candidate to validate.
+        asn : `~jwst.associations.association.Association`
+            The association candidate to validate.
+
+        error_on_fail : bool
+            On validation error, throw exception instead of
+            changing return status.
 
         Returns
         -------
         bool
-            True if candidate is valid.
+            `True` if candidate is valid. When invalid, an exception is raised
+            if ``error_on_fail`` is `True`, otherwise `False`.
+
+        Raises
+        ------
+        jwst.associations.exceptions.AssociationNotValidError
+            Validation failed and ``error_on_fail`` is `True`.
         """
-        super(DMSBaseMixin, cls).validate(asn)
+        result = super(DMSBaseMixin, cls).validate(asn, error_on_fail=error_on_fail)
+        if not result:
+            return result
 
         if isinstance(asn, DMSBaseMixin):
-            result = False
             try:
                 result = all(test["validated"] for test in asn.validity.values())
             except (AttributeError, KeyError):
-                raise AssociationNotValidError("Validation failed") from None
+                if error_on_fail:
+                    raise AssociationNotValidError("Validation failed") from None
+                else:
+                    return False
             if not result:
-                raise AssociationNotValidError("Validation failed validity tests.")
+                if error_on_fail:
+                    raise AssociationNotValidError("Validation failed validity tests.")
+                else:
+                    return False
 
         return True
 
@@ -910,7 +927,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        other : `~jwst.associations.Association`
+        other : `~jwst.associations.association.Association`
             The other association to compare against.
 
         Returns
@@ -935,7 +952,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        other : `~jwst.associations.Association`
+        other : `~jwst.associations.association.Association`
             The other association to compare against.
 
         Returns
@@ -972,7 +989,7 @@ class Constraint_TargetAcq(SimpleConstraint):
 
     Parameters
     ----------
-    association : `~jwst.associations.Association`
+    association : `~jwst.associations.association.Association`
         If specified, use the
         :meth:`~jwst.associations.lib.dms_base.DMSBaseMixin.get_exposure_type`
         method of the association rather than the utility version.
@@ -1095,7 +1112,7 @@ def get_exposure_type(item, default="science", association=None):
     default : str or None
         The default exposure type.
         If None, routine will raise LookupError
-    association : `~jwst.associations.Association`
+    association : `~jwst.associations.association.Association`
         Association, if provided.
 
     Returns

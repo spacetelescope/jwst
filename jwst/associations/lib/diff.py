@@ -174,9 +174,9 @@ def compare_asn_lists(left_asns, right_asns, strict_expname=False):
 
     Parameters
     ----------
-    left_asns : [`Association`[, ...]]
+    left_asns : list of `~jwst.associations.association.Association`
         Group of associations.
-    right_asns : [`Association`[, ...]]
+    right_asns : list of `~jwst.associations.association.Association`
         Group of associations to compare.
     strict_expname : bool
         Option for :func:`compare_membership`.
