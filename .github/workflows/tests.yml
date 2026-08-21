@@ -107,8 +107,8 @@ jobs:
         CRDS_CONTEXT: ${{ needs.crds.outputs.context }}
         CRDS_CLIENT_RETRY_COUNT: ${{ needs.crds.outputs.client-retry-count }}
         CRDS_CLIENT_RETRY_DELAY_SECONDS: ${{ needs.crds.outputs.client-retry-delay-seconds}}
-      cache-path: ${{ needs.crds.outputs.path }}
-      cache-key: crds-${{ needs.crds.outputs.context }}
+      # cache-path: ${{ needs.crds.outputs.path }}
+      # cache-key: crds-${{ needs.crds.outputs.context }}
       envs: |
         - linux: check-dependencies
           python-version: ${{ needs.supported-pythons.outputs.latest }} 
