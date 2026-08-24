@@ -290,7 +290,6 @@ class SlitCubeBuildStep(Step):
         self.source = source
         return source
 
-    
     def read_cubepars(self, par_filename, this_grating, this_filter):
         """
         Read default cube parameters from the cubepar reference file based on the grating & filter.
@@ -307,7 +306,7 @@ class SlitCubeBuildStep(Step):
         Raises
         ------
         ValueError
-            If no matching row for the grating and filter combination is found in 
+            If no matching row for the grating and filter combination is found in
             the reference file.
         """
         from astropy.table import Table
