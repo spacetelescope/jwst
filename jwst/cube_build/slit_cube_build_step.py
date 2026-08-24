@@ -1,10 +1,20 @@
-import copy
+"""
+Module for building 3D spectral cubes from Micro-Shutter Array (MSA) data.
+
+This module defines the `SlitCubeBuildStep`, which processes individual 2D slit spectra
+from JWST MSA observations, maps them into a 3D spaxel grid, and constructs an output
+spectral cube[cite: 1].
+"""
+
 import logging
 import time
 
+from stdatamodels.jwst import datamodels
+
+from jwst.assign_wcs.util import update_s_region_keyword
 from jwst.cube_build import msa_cube
 from jwst.lib.pipe_utils import match_nans_and_flags
-from jwst.stpipe import Step
+from jwst.stpipe import Step, record_step_status
 
 __all__ = ["SlitCubeBuildStep"]
 
@@ -22,13 +32,14 @@ class SlitCubeBuildStep(Step):
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('volume','readnoise',default = 'volume') # Type of weighting function
          coord_system = option('skyalign','world','msaalign',default='skyalign') # Output Coordinate system.
-         ra_center = float(default=None) # RA center of the IFU cube
-         dec_center = float(default=None) # Declination center of the IFU cube
+         slit_frac = float(default=1.0) # Slit fraction
+         ra_center = float(default=None) # RA center of the MSA cube
+         dec_center = float(default=None) # Declination center of the MSA cube
          cube_pa = float(default=None) # The position angle of the desired cube in decimal degrees E from N
          nspax_x = integer(default=None) # The odd integer number of spaxels to use in the x dimension of cube tangent plane.
          nspax_y = integer(default=None) # The odd integer number of spaxels to use in the y dimension of cube tangent plane.
-         wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
-         wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
+         wavemin = float(default=None)  # Minimum wavelength to be used to build the Cube
+         wavemax = float(default=None)  # Maximum wavelength to be used to build the Cube
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
          debug_spaxel = string(default='-1 -1 -1') # Default not used
@@ -63,16 +74,14 @@ class SlitCubeBuildStep(Step):
 
         Returns
         -------
-        cube_container : `~jwst.datamodels.container.ModelContainer`
-           Container (list) of `~stdatamodels.jwst.datamodels.MSACubeModel`.
+        slit_cube :  str, `~stdatamodels.jwst.datamodels.IFUCubeModel`
         """
         log.info("Starting MSA Cube Building Step")
 
         t0 = time.time()
-        # ________________________________________________________________________________
+
         # For all parameters convert to a standard format
         # Report read in values to screen
-        # ________________________________________________________________________________
 
         if not self.coord_system.islower():
             self.coord_system = self.coord_system.lower()
@@ -105,25 +114,48 @@ class SlitCubeBuildStep(Step):
 
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)
-        # 2. msaalign (ifu cube aligned with slicer plane/ MRS local coord system)
+        # 2. msaalign (msa cube aligned with slicer plane/ MRS local coord system)
 
         if self.coord_system == "world":  # world and skyalign are the same things
             self.coord_system = "skyalign"
 
         log.info(f"Coordinate system to use: {self.coord_system}")
 
+        if self.slit_frac != 1.0:
+            if self.slit_frac <= 0 or self.slit_frac > 1.0:
+                log.info(f"Slit_frac must be between 0 to 1. It was set to  {self.slit_frac}")
+                log.warning("Redefining slit_frac to 1.0")
+                self.slit_frac = 1.0
 
-        self.slit_frac = 1.0 # change this later to be an input parameter
-        
         # Read in the input data and make a copy as needed.
         input_model = self.prepare_output(input_data)
 
-        print("Type data models", input_model)
-        # grab the grating and filter of the first slit (all the slits have the same grating and filter)
-        grating = input_model.exposures[0].meta.instrument.grating
-        filter = input_model.exposures[0].meta.instrument.filter
+        # 1. Check data model type
+        if not isinstance(input_model, datamodels.MultiExposureModel):
+            log.warning(
+                f"Input dataset is of type '{type(input_model).__name__}'. "
+                f"SlitCubeBuildStep requires a MultiExposureModel. Skipping step."
+            )
+            if input_model is not input_data:
+                input_model.close()
+            return input_data
+        # 2. Check instrument
+        instrument = input_model.meta.instrument.name.upper()
+        if instrument != "NIRSPEC":
+            log.warning(
+                f"Input instrument '{instrument}' is not supported. "
+                f"SlitCubeBuildStep is designed specifically for NIRSpec. Skipping step."
+            )
+            if input_model is not input_data:
+                input_model.close()
+            return input_data
 
-        # Test using the IFU cube pars reference file
+        # grab the grating and filter of the first slit
+        # all the slits for a source have the same grating and filter
+        grating_name = input_model.exposures[0].meta.instrument.grating
+        filter_name = input_model.exposures[0].meta.instrument.filter
+
+        # Using the  reference file designed for IFU cube data
         par_filename = self.get_reference_file(input_model, "cubepar")
 
         # Check for a valid reference file
@@ -135,17 +167,17 @@ class SlitCubeBuildStep(Step):
         self.spectralstep = None
         self.wavemin_ref = None
         self.wavemax_ref = None
-        self.wavetable = None
+        self.wavelength_table = None
         log.info("Reading cube parameter file %s", par_filename)
-        self.read_cubepars(par_filename, grating, filter)
+        self.read_cubepars(par_filename, grating_name, filter_name)
 
         # Override defaults if the user has setup cube parameters
         if self.scalew == 0.0:
             self.scalew = self.spectralstep
         if self.scalexy == 0.0:
             self.scalexy = self.spaxelsize
-        print("After reading ref file", self.scalew, self.scalexy)
-        # Read in the data and organize organize source file
+
+        # Read in the data from a source cal file and organize slit data
         self.organize_source(input_model)
 
         pars = {
@@ -163,7 +195,7 @@ class SlitCubeBuildStep(Step):
             "slit_frac": self.slit_frac,
             "wavemin": self.wavemin,
             "wavemax": self.wavemax,
-            "wavetable": self.wavetable,
+            "wavelength_table": self.wavelength_table,
             "suffix": self.suffix,
             "debug_spaxel": self.debug_spaxel,
         }
@@ -171,171 +203,156 @@ class SlitCubeBuildStep(Step):
         # Make sure all input models have consistent NaN and DO_NOT_USE values
         match_nans_and_flags(input_model)
 
-        status_cube = 0
         msacube = msa_cube.MSACubeData(**pars)
 
         result = msacube.find_footprint()
         corner_ra, corner_dec, final_lam_min, final_lam_max, rot_angle = result
 
-        # Check if the user set wavemin. If so use that value.
+        # final_lam_min and final_lam_max are determined from the data
+        # Check if the user set wavemin. If so use that value. It takes precedence.
         if self.wavemin is not None:
             final_lam_min = self.wavemin
-        # Wave min is min of (final_lam_min, self.wavemin_ref): from data or from reference file
+        # If the user has not set a wavemin value, then check that the one determined from the data
+        # is not larger than the value given in the reference file.
         else:
             if self.wavemin_ref < final_lam_min:
-                final_lam_min = self.wavemin_ref
+                final_lam_min = (
+                    self.wavemin_ref
+                )  # TODO Check with NIRSPEC if we should have this check
 
-        # user set wavemax use that values
+        # user set wavemax use this values.
         if self.wavemax is not None:
             final_lam_max = self.wavemax
-        # Set wave max. The maximum values can not be larger than the value provide in the reference file
-        # If the user wants it set larger then should set the parameter --wavemax
+        # If the user has not set a wavemin value,  then check that the one determined from the datsa
+        # is not larger than the value given in the reference file.
         else:
             if final_lam_max > self.wavemax_ref:
-                final_lam_min = self.wavemax_ref
+                final_lam_max = (
+                    self.wavemax_ref
+                )  # TODO Check with NIRSPEC if we should have this check
 
         msacube.set_slit_wcs(corner_ra, corner_dec, final_lam_min, final_lam_max, rot_angle)
 
-        #print("Mapped coordinate system")
-        #print("naxis, cdelt, crpix, crval")
-        #print("Axis 1 ", self.naxis1, self.cdelt1, self.crpix1, self.crval1)
-        #print("Axis 2", self.naxis2, self.cdelt2, self.crpix2, self.crval2)
-        #print("Axis 3", self.naxis3, self.cdelt3, self.crpix3, self.crval3)
-        #print("crval1 crval2", self.crval1, self.crval2)
-        #print("crpix1 crpix2", self.crpix1, self.crpix2)
-        #print("cdelt1 cdelt2", self.cdelt1, self.cdelt2)
-
         msacube.print_geometry()
-        
-        status = 0
-        result, status = msacube.build_msacube()
 
-        # check if cube_build failed
-        # if status == 1:
-        #    status_cube = 1
+        slit_cube = msacube.build_msacube()
 
         # irrelevant WCS keywords we will remove from final product
-        # rm_keys = ["v2_ref", "v3_ref", "ra_ref", "dec_ref", "roll_ref", "v3yangle", "vparity"]
+        rm_keys = ["v2_ref", "v3_ref", "ra_ref", "dec_ref", "roll_ref", "v3yangle", "vparity"]
 
-        # for cube in cube_container:
-        #    footprint = cube.meta.wcs.footprint(axis_type="spatial")
-        #    update_s_region_keyword(cube, footprint)
+        footprint = slit_cube.meta.wcs.footprint(axis_type="spatial")
+        update_s_region_keyword(slit_cube, footprint)
 
         # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
-        #    for key in rm_keys:
-        #        if key in cube.meta.wcsinfo.instance:
-        #            del cube.meta.wcsinfo.instance[key]
-        # if status_cube == 1:
-        #    record_step_status(cube_container, "cube_build", success=False)
-        # else:
-        #    record_step_status(cube_container, "cube_build", success=True)
+        for key in rm_keys:
+            if key in slit_cube.meta.wcsinfo.instance:
+                del slit_cube.meta.wcsinfo.instance[key]
 
-        # t1 = time.time()
-        # log.debug(f"Time to build all cubes {t1 - t0}")
+        record_step_status(slit_cube, "slit_cube_build", success=True)
+
+        t1 = time.time()
+        log.info(f"Time to build all cubes {t1 - t0}")
 
         # Output is a new model, so close the input if it was opened here
-        # if read_in_models is not input_data:
-        #    read_in_models.close()
+        if input_model is not input_data:
+            input_model.close()
 
-        # return cube_container
+        return slit_cube
 
     def organize_source(self, model):
+        """
+        Re-organize all the slits from an exposure into a single source dictionary.
 
-        source = {}
-        detector = model.meta.instrument.detector
-        source["slitname"] = []
-        source["slit_models"] = []
-        source["wcs"] = []
-        source["source_type"] = []
-        source["source_id"] = []
-        source["bunit"] = []
-        source["bunit_err"] = []
-        source["pixelarea_ster"] = []
-        source["pixelarea_arcsec"] = []
-        source["detector"] = []
-        source["slitnum"] = []
+        Parameters
+        ----------
+        model : `~stdatamodels.jwst.datamodels.MultiExposureModel`
+            The input data model containing exposures and slit metadata.
 
-        source["number_slits"] = len(model.exposures)
-        print("this source has ", len(model.exposures), "slit observations")
+        Returns
+        -------
+        dict
+            Dictionary containing aggregated metadata and list-based attributes
+            for each slit exposure associated with the target source.
+        """
+        exposures = list(model.exposures)
+        log.info(f"This source has {len(exposures)} slit observations")
 
-        for j, slit in enumerate(model.exposures):
-            source_id = slit.source_id
-            stype = slit.source_type
-            slitname = slit.name
-            name = slit.source_name
-            bunit = slit.meta.bunit_data
-            bunit_err = slit.meta.bunit_err
-            parea_steradians = slit.meta.photometry.pixelarea_steradians
-            parea_arcsec = slit.meta.photometry.pixelarea_arcsecsq
-            wcs = copy.deepcopy(slit.meta.wcs)
+        # Safely extract units from the first slit if exposures exist
+        first_slit_meta = exposures[0].meta if exposures else None
 
-            source["slitname"].append(slitname)
-            source["source_type"].append(stype)
-            source["slit_models"].append(slit)
-            source["wcs"].append(wcs)
-            source["pixelarea_ster"] = parea_steradians
-            source["pixelarea_arcsec"] = parea_arcsec
-            source["source_id"].append(source_id)
-            source["detector"].append(detector)
-            source["bunit"] = bunit
-            source["bunit_err"] = bunit_err
-            source["slitnum"].append(j)
+        source = {
+            "slit_models": exposures,
+            "number_slits": len(exposures),
+            "bunit": getattr(first_slit_meta, "bunit_data", None),
+            "bunit_err": getattr(first_slit_meta, "bunit_err", None),
+        }
 
         self.source = source
         return source
 
+    
     def read_cubepars(self, par_filename, this_grating, this_filter):
         """
-        Read in :ref:`cubepar_reffile`.
-        Based on filter and grating read in the appropriate columns in the
-        :ref:`cubepar_reffile` and return defaults
+        Read default cube parameters from the cubepar reference file based on the grating & filter.
 
         Parameters
         ----------
         par_filename : str
-        Cube parameter reference filename
-        grating : str
-        The grating for the MSA input data
-        filter : list
-        The filter for the MSA input data
+            Path to the cubepar reference file.
+        this_grating : str
+            The optical grating name associated with the MSA data (e.g., 'G235H', 'PRISM').
+        this_filter : str
+            The optical filter name associated with the MSA data (e.g., 'F170LP').
 
-        Returns
-        -------
-
+        Raises
+        ------
+        ValueError
+            If no matching row for the grating and filter combination is found in 
+            the reference file.
         """
         from astropy.table import Table
 
         # Read the CUBEPAR extension directly as a table
         cubepar_table = Table.read(par_filename, hdu="CUBEPAR")
 
-        # Filter for grating (disperser) G235H and filter F170LP
-        # mask = (cubepar_table["disperser"] == "G235H") & (
-        #    cubepar_table["filter"] == "F170LP"
-
         mask = (cubepar_table["disperser"] == this_grating) & (
             cubepar_table["filter"] == this_filter
         )
         target_table = cubepar_table[mask]
         if len(target_table) == 0:
-            raise ValueError("No matching configuration found for G235H and F170LP.")
+            raise ValueError(
+                f"No matching configuration found for {this_grating} and {this_filter}."
+            )
 
         # Extract the single Row object (or index [0]) to get scalar values
         target_row = target_table[0]
-        print(" Row in cubepar for this configuration", target_row)
         self.spaxelsize = target_row["spaxelsize"]
         self.spectralstep = target_row["spectralstep"]
         self.wavemin_ref = target_row["wavemin"]
         self.wavemax_ref = target_row["wavemax"]
 
-        if "PRISM" in this_grating:
-            self.wavetable = Table.read(par_filename, "MULTICHAN_PRISM_DRIZZLE")
-        elif "M" in this_grating:
-            self.wavetable = Table.read(par_filename, "MULTICHAN_MED_DRIZZLE")
-        elif "H" in this_grating:
-            self.wavetable = Table.read(par_filename, "MULTICHAN_HIGH_DRIZZLE")
-        else:
-            print("Invalid grating", this_grating)
+        if not self.linear_wave:
+            if "PRISM" in this_grating:
+                wavelength_table = Table.read(par_filename, "MULTICHAN_PRISM_DRIZZLE")
+            elif "M" in this_grating:
+                wavelength_table = Table.read(par_filename, "MULTICHAN_MED_DRIZZLE")
+            elif "H" in this_grating:
+                wavelength_table = Table.read(par_filename, "MULTICHAN_HIGH_DRIZZLE")
+            else:
+                raise ValueError(
+                    f"Invalid grating '{this_grating}': Unable to read cube parameters."
+                )
+            self.wavelength_table = wavelength_table["wavelength"]
 
-        print("spaxelsize", self.spaxelsize)
-        print("spectralstep", self.spectralstep)
-        print("wave min and max", self.wavemin_ref, self.wavemax_ref)
+        log.info("MSA cube parameters read in from the reference file:")
+        log.info(f"Spaxelsize {self.spaxelsize:.3f} ")
+        if self.linear_wave:
+            log.info(f"Spectralstep {self.spectralstep: .6f} ")
+            log.info(
+                f" Minimum wavelength {self.wavemin_ref: .2f}"
+                f" Maximum wavelength {self.wavemax_ref: .2f}"
+            )
+        else:
+            log.info(
+                f" Number of wavelength elements in wavelength table {self.wavelength_table.shape} "
+            )
