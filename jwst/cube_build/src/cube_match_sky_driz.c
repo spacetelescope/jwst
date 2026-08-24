@@ -330,10 +330,13 @@ match_driz(
                             }
 
                             // Keep print statement in code - used for debugging
-                            if (index_cube == debug_cube_index) {
+                            if (index_cube == debug_cube_index && area_weight > 0) {
                                 printf(
                                     "spaxel, flux, x, y [count starting at 0]  %i %f %f %f  \n ",
                                     index_cube, flux[k], x_det[k], y_det[k]);
+                                printf(
+                                    "ifluxv %i %f %f \n", ifluxv[index_cube], weighted_flux,
+                                    fluxv[index_cube]);
                             }
 
                             // end of print statements
