@@ -174,14 +174,6 @@ class IFUCubeData:
         self.ycoord = None
         self.zcoord = None
 
-        # Not needed remove after final testing of DQ flags, Remove passing to c program
-        # self.tolerance_dq_overlap = 0.05  # spaxel has to have 5% overlap to flag in FOV
-        # self.overlap_partial = 8  # intermediate flag )
-        # self.overlap_full = 4  # intermediate flag     #
-        # self.overlap_hole = 1025
-        # self.overlap_no_coverage = dqflags.pixel["NON_SCIENCE"]
-
-    # ________________________________________________________________________________
     def check_ifucube(self):
         """
         Perform some quick checks that the type of cube to be produced conforms to the rules.
@@ -784,8 +776,7 @@ class IFUCubeData:
                         linear = 0
                         if self.linear_wave:
                             linear = 1
-                        if debug_cube_index >= 0:
-                            log.info(f"Input filename: {input_model.meta.filename}")
+
                         result = cube_wrapper_driz(
                             start_region,
                             end_region,
@@ -1494,15 +1485,13 @@ class IFUCubeData:
     # ________________________________________________________________________________
     def map_detector_to_outputframe(self, this_par1, input_model):
         """
-        Loop over a file and map the detector pixels to the output cube.
+        Map detector pixels to the output cube frame.
 
-        The output frame is on the sky (RA-Dec).
-        Return the coordinates of all the detector pixel in the output frame.
-        In addition, an array of pixel fluxes and weighing parameters are
-        determined. The pixel flux and weighing parameters are used later in
-        the process to find the final flux of a cube spaxel based on the pixel
-        fluxes and pixel weighing parameters that fall within the ROI of
-        spaxel center
+        The output frame is on the sky (RA-Dec). This method determines the
+        coordinates of all detector pixels in the output frame, along with
+        arrays for pixel fluxes, errors, and weighting parameters. These values
+        are used downstream to calculate the final flux of a cube spaxel based on
+        the detector pixels falling within its region of interest (ROI).
 
         Parameters
         ----------
@@ -1622,7 +1611,8 @@ class IFUCubeData:
         # select on wavelengths
         valid3 = np.logical_and(wave_all >= min_wave_tolerance, wave_all <= max_wave_tolerance)
 
-        # We all flux with Nans to pass through to allow saturated DQ data to be counted in DQ plane
+        # We allow flux with Nans to pass through to allow saturated DQ data
+        # to be counted in DQ plane
         # find the location of good data based on DQ flags in input image
         is_do_not_use = np.bitwise_and(dq_all, dqflags.pixel["DO_NOT_USE"]).astype(bool)
         is_non_science = np.bitwise_and(dq_all, dqflags.pixel["NON_SCIENCE"]).astype(bool)

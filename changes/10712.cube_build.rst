@@ -1,1 +1,1 @@
-Passing saturated flags to cube_build c code and removed flagging holes in cube
+Pass saturated flags to ``cube_build`` C code and remove support for flagging holes in cube coverage.
