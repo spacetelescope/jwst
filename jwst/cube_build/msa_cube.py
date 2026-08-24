@@ -94,7 +94,7 @@ class MSACubeData:
 
         Returns
         -------
-        None 
+        None
 
         Notes
         -----
@@ -200,7 +200,6 @@ class MSACubeData:
 
         return (corner_a, corner_b, final_lam_min, final_lam_max, rot_angle)
 
-
     def set_slit_wcs(self, corner_ra, corner_dec, lambda_min, lambda_max, rot_angle):
         """
         Set up the 3D spatial/spectral World Coordinate System (WCS).
@@ -245,7 +244,6 @@ class MSACubeData:
         calculated tangent reference points.
         - Supports both linear (`self.linear_wave = True`) and tabular non-linear spectral grids.
         """
-        
         ra_min = min(corner_ra)
         ra_max = max(corner_ra)
         dec_min = min(corner_dec)
@@ -1253,7 +1251,6 @@ class MSACubeData:
 
         if not_found > 0:
             print("Number not found", not_found, npt)
-
 
     def find_spaxel_flux(self, spaxel_iflux, spaxel_flux, spaxel_weight, spaxel_var):
         """
