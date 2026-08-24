@@ -1621,7 +1621,7 @@ class IFUCubeData:
         # Select good data based on:
         # valid3 selects on wavelength
         # Data is not NON-Science (data not falling on IFU slices)
-        # Is not flagged to DO_NOT_USE, UNLESS it is also saturated
+        # Is not flagged as DO_NOT_USE, UNLESS it is also saturated
         good_data = np.where(~is_non_science & (~is_do_not_use | is_saturated) & valid3)
         num_good = len(good_data[0])
 
@@ -2234,11 +2234,14 @@ class IFUCubeData:
         self.spaxel_dq = np.ndarray.flatten(self.spaxel_dq)
 
         # convert all remaining spaxel_weight = 0 to NON_SCIENCE + DO_NOT_USE
-        non_science = self.spaxel_weight == 0
+        weight_is_zero = self.spaxel_weight == 0
 
-        self.spaxel_dq[non_science] = np.bitwise_or(
+        self.spaxel_dq[weight_is_zero] = np.bitwise_or(
             dqflags.pixel["NON_SCIENCE"], dqflags.pixel["DO_NOT_USE"]
         )
+
+        self.spaxel_flux[weight_is_zero] = np.nan
+        self.spaxel_var[weight_is_zero] = np.nan
 
     # ________________________________________________________________________________
     def setup_final_ifucube_model(self, model_ref):
@@ -2297,10 +2300,11 @@ class IFUCubeData:
                         dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NON_SCIENCE"]
                     )
 
-        # Set np.nan values wherever the DO_NOT_USE flag is set
-        dnu = np.where((dq & dqflags.pixel["DO_NOT_USE"]) != 0)
-        flux[dnu] = np.nan
-        var[dnu] = np.nan
+        # Here is the problem   - #TODO - REMOVE LINES AFTER CONFIRMING WE WANT THIS
+        # Set np.nan values whenever the DO_NOT_USE flag is set
+        # dnu = np.where((dq & dqflags.pixel["DO_NOT_USE"]) != 0)
+        # flux[dnu] = np.nan
+        # var[dnu] = np.nan
 
         var = np.sqrt(var)
         if self.linear_wave:
