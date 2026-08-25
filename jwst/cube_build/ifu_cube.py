@@ -1210,8 +1210,6 @@ class IFUCubeData:
             raise IncorrectParameterError("An essential parameter is = nan, refer to error message")
 
         # catch where self.weight_power = nan weighting = msm written to header
-        # TODO update writing to header scalerad if weighting = emsm
-
         if self.weight_power is not None:
             if np.isnan(self.weight_power):
                 self.weight_power = None
@@ -1514,8 +1512,10 @@ class IFUCubeData:
            Flux associated with ``coord1, coord2``
         err : ndarray
            Error associated with ``coord1, coord2``
-        var_rnoise : ndarray
+        readvar : ndarray
            var_rnoise associated with ``coord1, coord2``
+        dq : ndarray
+           dq associated with ``coord1, coord2``
         rois_det : float
            Spatial ROI size to use
         roiw_det : ndarray
@@ -1669,13 +1669,9 @@ class IFUCubeData:
         x_det = x_all[good_data]
         y_det = y_all[good_data]
 
-        # Filter DQ flags to only have allowed values of 'DO_NOT_USE' and/or 'SATURATED'
-        # 1. Combine the two allowed flags into a single mask using bitwise OR
-        allowed_mask = dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["SATURATED"]
-
-        # 2. Filter the dq array so ONLY those two flags remain active
-        filtered_dq = np.bitwise_and(dq, allowed_mask)
-        dq[:] = filtered_dq
+        # Filter DQ flags to only have allowed values 'SATURATED' (and GOOD DATA, 0)
+        allowed_mask = dqflags.pixel["SATURATED"]
+        dq &= allowed_mask
 
         log.debug(f"After removing pixels min and max wave: {np.min(wave)} {np.max(wave)}")
 
@@ -2300,11 +2296,9 @@ class IFUCubeData:
                         dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NON_SCIENCE"]
                     )
 
-        # Here is the problem   - #TODO - REMOVE LINES AFTER CONFIRMING WE WANT THIS
-        # Set np.nan values whenever the DO_NOT_USE flag is set
-        # dnu = np.where((dq & dqflags.pixel["DO_NOT_USE"]) != 0)
-        # flux[dnu] = np.nan
-        # var[dnu] = np.nan
+        # fluxes can be negative if all the input data was from saturated data.
+        nan_flux = np.where(np.isnan(flux))
+        dq[nan_flux] |= dqflags.pixel["DO_NOT_USE"]
 
         var = np.sqrt(var)
         if self.linear_wave:
