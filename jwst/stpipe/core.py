@@ -126,6 +126,8 @@ class JwstStep(_Step):
         from jwst.associations.lib.update_path import update_key_value
         from jwst.associations.load_as_asn import LoadAsLevel2Asn
 
+        if isinstance(obj, (str, Path)):
+            obj = Path(self.input_dir) / Path(obj)
         asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
