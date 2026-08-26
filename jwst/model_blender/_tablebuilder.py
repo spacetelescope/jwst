@@ -37,38 +37,6 @@ def _convert_dtype(value):
     return new_dtype
 
 
-def table_to_schema(table):
-    """
-    Construct a schema for a table.
-
-    Convert a "table" (a structured ndarray) to a stdatamodels
-    sub-schema that will allow the "table" to be stored to a fits
-    extension HDRTAB.
-
-    Parameters
-    ----------
-    table : ndarray
-        The structured array containing the data (and datatype).
-
-    Returns
-    -------
-    subschema : dict
-        Multiple `~stdatamodels.jwst.datamodels.JwstDataModel`
-        for the "table" datatype.
-    """
-    return {
-        "title": "Combined header table",
-        "fits_hdu": "HDRTAB",
-        "datatype": [
-            {
-                "name": col_name,
-                "datatype": _convert_dtype(str(table.dtype[col_name])),
-            }
-            for col_name in table.dtype.fields
-        ],
-    }
-
-
 class TableBuilder:
     """
     Class to build a metadata table.

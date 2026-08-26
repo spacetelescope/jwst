@@ -1,8 +1,5 @@
-from astropy.io import fits
-from stdatamodels import fits_support
-
 from jwst.model_blender._schemautil import parse_schema
-from jwst.model_blender._tablebuilder import TableBuilder, table_to_schema
+from jwst.model_blender._tablebuilder import TableBuilder
 from jwst.model_blender.rules import make_blender
 
 __all__ = ["ModelBlender"]
@@ -148,12 +145,6 @@ class ModelBlender:
                 # Ignore keys that are in the asdf tree but not in the schema
                 pass
 
-        # patch the table into the output model and the schema
+        # add the table to the model
         table = self._finalize_table()
-        schema = table_to_schema(table)
-        model.add_schema_entry("hdrtab", schema)
-
-        # because astropy will silently mangle boolean columns on write
-        # we roundtrip the data through a BinTableHDU here to allow
-        # stdatamodels to correct the data in a way that won't result in mangling
-        model.hdrtab = fits_support.from_fits_hdu(fits.BinTableHDU.from_columns(table), schema)
+        model.hdrtab = table
