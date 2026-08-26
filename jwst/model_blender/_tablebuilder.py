@@ -10,33 +10,6 @@ class _MissingValueType:
 _MISSING_VALUE = _MissingValueType()
 
 
-def _convert_dtype(value):
-    """
-    Convert numpy array column dtype into YAML-compatible format description.
-
-    Parameters
-    ----------
-    value : str, bool, or numpy.dtype
-        The datatype to convert.
-
-    Returns
-    -------
-    new_dtype : str or list
-        The converted datatype.
-    """
-    if "U" in value:
-        # working with a string description
-        str_len = int(value[value.find("U") + 1 :])
-        new_dtype = ["ascii", str_len]
-    elif value == "bool":
-        # cast all bool to int8 to avoid issues on write
-        new_dtype = "int8"
-    else:
-        new_dtype = str(value)
-
-    return new_dtype
-
-
 class TableBuilder:
     """
     Class to build a metadata table.
@@ -104,6 +77,9 @@ class TableBuilder:
         for col, items in self.columns.items():
             if all(i is _MISSING_VALUE for i in items):
                 continue
-            arrays.append(np.array([np.nan if i is _MISSING_VALUE else i for i in items]))
-            table_dtype.append((col, arrays[-1].dtype))
+            array = np.array([np.nan if i is _MISSING_VALUE else i for i in items])
+            if "U" in array.dtype.str:
+                array = array.astype("S")
+            table_dtype.append((col, array.dtype))
+            arrays.append(array)
         return np.rec.fromarrays(arrays, dtype=table_dtype)

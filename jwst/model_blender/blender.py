@@ -125,7 +125,6 @@ class ModelBlender:
 
         - setting the model metadata to the blended metadata values
         - adding an "hdrtab" attribute (containing the metadata table)
-        - updating the model schema to save "hdrtab"
 
         The provided model will be updated in-place.
 
