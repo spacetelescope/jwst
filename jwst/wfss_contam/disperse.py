@@ -115,6 +115,8 @@ def _disperse_onto_grism(x0_sky, y0_sky, sky_to_imgxy, imgxy_to_grismxy, lambdas
     y0_xy = np.repeat(y0_xy[np.newaxis, :], n_lam, axis=0)
     lambdas = np.repeat(lambdas[:, np.newaxis], n_pixels, axis=1)
     x0s, y0s = imgxy_to_grismxy(x0_xy, y0_xy, lambdas, order)
+
+    # x0s, y0s now have shape (n_lam, n_pixels)
     return x0s, y0s, lambdas
 
 
