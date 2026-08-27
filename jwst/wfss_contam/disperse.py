@@ -107,11 +107,7 @@ def _disperse_onto_grism(x0_sky, y0_sky, sky_to_imgxy, imgxy_to_grismxy, lambdas
     lambdas : ndarray
         Wavelengths corresponding to each dispersed pixel
     """
-    # sky_to_imgxy (the "world" to "detector" transform) is a purely geometric,
-    # achromatic distortion: it does not depend on wavelength (as also assumed by
-    # _determine_native_wl_spacing, which evaluates it with a placeholder wavelength
-    # of 1). So evaluate it once on the unique per-pixel positions instead of on the
-    # full (n_lam, n_pixels) outer product used further down, avoiding redundant work.
+    # Evaluate sky-to-direct transform once on the unique per-pixel positions
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
     n_pixels = len(x0_xy)
     n_lam = len(lambdas)
