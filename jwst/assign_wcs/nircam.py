@@ -31,6 +31,7 @@ from jwst.assign_wcs.util import (
     velocity_correction,
 )
 from jwst.lib import reffile_utils
+from jwst.lib.stripe_utils import generate_substripe_ranges
 
 log = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ def imaging_distortion(input_model, reference_files):
 
     Returns
     -------
-    distortion : `astropy.modeling.Model`
+    distortion : `~astropy.modeling.models.Model`
         The transform from "detector" to "v2v3".
     """
     dist = DistortionModel(reference_files["distortion"])
@@ -158,7 +159,7 @@ def imaging_distortion(input_model, reference_files):
             if col_offset != "N/A" and row_offset != "N/A":
                 transform = Shift(col_offset) & Shift(row_offset) | transform
         else:
-            log.debug("No match in fitleroffset file.")
+            log.warning("No match in filteroffset file.")
 
     # Bind the bounding box to the distortion model using the bounding box ordering used by GWCS.
     # This makes it clear the bounding box is set correctly to GWCS
@@ -262,6 +263,62 @@ def _build_sky_pipeline_steps(input_model, reference_files, n_passthrough):
     return distortion, va_corr, tel2sky
 
 
+def _offset_for_reference_position(input_model, distortion):
+    """
+    Calculate an offset from TA position, to apply to the reference x/y position.
+
+    If offsets could not be calculated, a warning is logged and zero values
+    are returned for both x and y.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Input datamodel.
+    distortion : `~astropy.modeling.models.Model`
+        The transform from "detector" to "v2v3".
+
+    Returns
+    -------
+    refx_off, refy_off : float
+        Offset values for x and y, in pixels.
+    """
+    x_off, y_off = input_model.meta.dither.x_offset, input_model.meta.dither.y_offset
+    refx_off, refy_off = None, None
+    if x_off is not None and y_off is not None:
+        idltov23 = IdealToV2V3(
+            input_model.meta.wcsinfo.v3yangle,
+            input_model.meta.wcsinfo.v2_ref,
+            input_model.meta.wcsinfo.v3_ref,
+            input_model.meta.wcsinfo.vparity,
+        )
+        v2_offset, v3_offset = idltov23(x_off, y_off)
+        v2_0, v3_0 = idltov23(0, 0)
+        if distortion.inverse.n_inputs == 4:
+            # Wavelength and order are passed through for tsgrism but values don't matter
+            xc_off, yc_off, _, _ = distortion.inverse(v2_offset, v3_offset, np.nan, 1)
+            xc_0, yc_0, _, _ = distortion.inverse(v2_0, v3_0, np.nan, 1)
+        else:
+            # Stripe is also passed through for DHS
+            xc_off, yc_off, _, _, _ = distortion.inverse(v2_offset, v3_offset, np.nan, 1, 1)
+            xc_0, yc_0, _, _, _ = distortion.inverse(v2_0, v3_0, np.nan, 1, 1)
+
+        if np.all(np.isfinite([xc_off, yc_off, xc_0, yc_0])):
+            refx_off = xc_off - xc_0
+            refy_off = yc_off - yc_0
+
+    # If no valid offset was found, log a warning and return 0
+    if refx_off is None or refy_off is None:
+        log.warning(
+            "Offsets stored in X_OFFSET and Y_OFFSET could not "
+            "be applied to the reference position."
+        )
+        log.warning("The SIAF reference position is used without correction.")
+        log.warning("Output source position and wavelength calibration may be inaccurate.")
+        refx_off, refy_off = 0.0, 0.0
+
+    return refx_off, refy_off
+
+
 def tsgrism(input_model, reference_files):
     """
     Create WCS pipeline for a NIRCAM Time Series Grism observation.
@@ -323,15 +380,14 @@ def tsgrism(input_model, reference_files):
     # input into the forward transform is x,y,x0,y0,order
     # where x,y is the pixel location in the grism image
     # and x0,y0 is the source location in the "direct" image.
+
     # For this mode (tsgrism), it is assumed that the source is
     # at the nominal aperture reference point, i.e.,
     # crpix1 <--> xref_sci and crpix2 <--> yref_sci
     # plus offsets stored in x_offset and y_offset
     xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
-
     if xc is None:
         raise ValueError("XREF_SCI is missing.")
-
     if yc is None:
         raise ValueError("YREF_SCI is missing.")
 
@@ -346,36 +402,11 @@ def tsgrism(input_model, reference_files):
 
     # Using the sky model, update the center position to get
     # the offset into the direct image frame
-    x_off, y_off = input_model.meta.dither.x_offset, input_model.meta.dither.y_offset
-    applied_offsets = False
-    if x_off is not None and y_off is not None:
-        idltov23 = IdealToV2V3(
-            input_model.meta.wcsinfo.v3yangle,
-            input_model.meta.wcsinfo.v2_ref,
-            input_model.meta.wcsinfo.v3_ref,
-            input_model.meta.wcsinfo.vparity,
-        )
-        v2_offset, v3_offset = idltov23(x_off, y_off)
-        xc_off, yc_off, _, _ = distortion.inverse(v2_offset, v3_offset, np.nan, 1)
-        v2_0, v3_0 = idltov23(0, 0)
-        xc_0, yc_0, _, _ = distortion.inverse(v2_0, v3_0, np.nan, 1)
-        if np.all(np.isfinite([xc_off, yc_off, xc_0, yc_0])):
-            xc += xc_off - xc_0
-            yc += yc_off - yc_0
-
-            # Update siaf reference
-            input_model.meta.wcsinfo.siaf_xref_sci = xc + 1
-            input_model.meta.wcsinfo.siaf_yref_sci = yc + 1
-
-            applied_offsets = True
-
-    if not applied_offsets:
-        log.warning(
-            "Offsets stored in X_OFFSET and Y_OFFSET could not "
-            "be applied to the reference position."
-        )
-        log.warning("The SIAF reference position is used without correction.")
-        log.warning("Output source position and wavelength calibration may be inaccurate.")
+    x_off, y_off = _offset_for_reference_position(input_model, distortion)
+    xc += x_off
+    yc += y_off
+    input_model.meta.wcsinfo.siaf_xref_sci += x_off
+    input_model.meta.wcsinfo.siaf_yref_sci += y_off
 
     xcenter = Const1D(xc)
     xcenter.inverse = Const1D(xc)
@@ -431,17 +462,97 @@ def dhs(input_model, reference_files):
     frames = create_coord_frames()
 
     with RegionsModel(reference_files["regions"]) as regs_model:
-        # Get the shift to full frame coordinates from stripe coords
-        # Used in final transform from initial input x, y, order
-        sub_trans_dict = substripe_subarray_transforms(input_model, regs_model)
-
         if regs_model.regions.shape == input_model.data.shape[-2:]:
-            regions = regs_model.regions
+            # Array needs to be copied to make sure it is loaded before the ASDF file closes
+            regions = regs_model.regions.copy()
         else:
             sub_regs_model = reffile_utils.get_subarray_model(input_model, regs_model)
             regions = sub_regs_model.regions
             sub_regs_model.close()
 
+    with NIRCAMGrismModel(reference_files["specwcs"]) as f:
+        orders = f.orders.instance
+        fieldpoints = f.fieldpoints.instance
+        all_displ = f.displ.instance
+        all_dispx = f.dispx.instance
+        all_dispy = f.dispy.instance
+        all_stripes = f.stripes.instance
+
+    # Get the substripe ranges in full and subarray coordinates
+    stripe_ranges = generate_substripe_ranges(input_model, science_frame=True)
+    # The first stripe starts at this value in the full frame
+    stripe_offset = stripe_ranges["full"][0][0]
+
+    if "LONG" in input_model.meta.instrument.detector.upper():
+        longflag = True
+        # Because nrcalong DHS uses existing transforms, we need to mock
+        # the new structure to allow both to pass through this method.
+        subarray_stripenum = len(stripe_ranges["subarray"])
+        stripes = np.arange(1, subarray_stripenum + 1)
+        displ = [all_displ] * subarray_stripenum
+        dispx = [all_dispx] * subarray_stripenum
+        dispy = [all_dispy] * subarray_stripenum
+
+        # Update the region map to reflect the assigned stripe IDs: input map
+        # has the same value for all stripe regions
+        for stripe, stripe_range in stripe_ranges["subarray"].items():
+            regions[stripe_range[0] : stripe_range[1]] = stripe + 1
+        detector_order_stripes = stripes
+    else:
+        longflag = False
+
+        # Short-wavelength regions and specwcs files must both have a stripe present
+        # for calibration to proceed. Currently, specwcs files will have transforms
+        # for all possible stripes on the detector, and we rely on the regions file
+        # to down-select to the appropriate stripes given the subarray.
+        region_stripes = np.unique(regions[regions > 0])
+
+        # Short-wavelength GrismModels contain stripe transforms for both fieldpoints.
+        # Down-select the transform lists to the relevant entries.
+        displ, dispx, dispy, stripes = [], [], [], []
+        for i, fieldpoint in enumerate(fieldpoints):
+            if fieldpoint not in input_model.meta.aperture.pps_name:
+                continue
+            if all_stripes[i] not in region_stripes:
+                continue
+            displ.append(all_displ[i])
+            dispx.append(all_dispx[i])
+            dispy.append(all_dispy[i])
+            stripes.append(all_stripes[i])
+
+        if len(stripes) == 0:
+            raise ValueError("No stripes present in both regions and specwcs reference files.")
+
+        # Sort the stripe IDs in reverse to match read order in detector orientation
+        detector_order_stripes = sorted(stripes, reverse=True)
+
+    # Get the shift to go from x/y in the input image to relative stripe coordinates.
+    # Used in final transform from initial input x, y, order to pass through the detector
+    # transforms per stripe.
+    sub_trans_dict = substripe_subarray_transforms(input_model, detector_order_stripes)
+
+    # Get sky transforms - same for all stripes
+    distortion, va_corr, tel2sky = _build_sky_pipeline_steps(
+        input_model, reference_files, n_passthrough=3
+    )
+
+    # Get reference position + offsets from TA
+    xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
+    if xc is None:
+        raise ValueError("XREF_SCI is missing.")
+    if yc is None:
+        raise ValueError("YREF_SCI is missing.")
+    xc -= 1
+    yc -= 1
+    x_off, y_off = _offset_for_reference_position(input_model, distortion)
+
+    # Update the SIAF positions with the offset
+    xc += x_off
+    yc += y_off
+    input_model.meta.wcsinfo.siaf_xref_sci += x_off
+    input_model.meta.wcsinfo.siaf_yref_sci += y_off
+
+    # Set up the label mapper from the regions image
     label_mapper = selector.LabelMapperArray(
         regions,
         inputs_mapping=Mapping(mapping=(0, 1), n_inputs=3),
@@ -453,100 +564,67 @@ def dhs(input_model, reference_files):
         inputs_mapping=Mapping((4,)),
     )
 
-    with NIRCAMGrismModel(reference_files["specwcs"]) as f:
-        displ = f.displ.instance
-        dispx = f.dispx.instance
-        dispy = f.dispy.instance
-        orders = f.orders.instance
-        stripes = f.stripes.instance
-        fieldpoints = f.fieldpoints.instance
-
-    if "LONG" in input_model.meta.instrument.detector.upper():
-        longflag = True
-        # Because nrcalong DHS uses existing transforms, we need to mock
-        # the new structure to allow both to pass through this method.
-        subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
-        stripes = np.array(range(subarray_stripenum)) + 1
-        displ = [displ] * subarray_stripenum
-        dispx = [dispx] * subarray_stripenum
-        dispy = [dispy] * subarray_stripenum
-    else:
-        longflag = False
-        # Short-wavelength GrismModels contain stripe transforms for both fieldpoints.
-        # Down-select the transform lists to the relevant entries.
-        fp_mask = [f in input_model.meta.aperture.pps_name for f in fieldpoints]
-        displ = [b for (a, b) in zip(fp_mask, displ, strict=True) if a]
-        dispx = [b for (a, b) in zip(fp_mask, dispx, strict=True) if a]
-        dispy = [b for (a, b) in zip(fp_mask, dispy, strict=True) if a]
-        stripes = [b for (a, b) in zip(fp_mask, stripes, strict=True) if a]
-        # Short-wavelength regions and specwcs files must both have a stripe present
-        # for calibration to proceed. Currently, specwcs files will have transforms
-        # for all possible stripes on the detector, and we rely on the regions file
-        # to down-select to the appropriate stripes given the subarray.
-        stripes = set(stripes) & set(regions.flatten())
-        if len(stripes) == 0:
-            raise ValueError("No stripes present in both regions and specwcs reference files.")
-
     # Initialize transforms dictionary to store stripe IDs as keys, transform models as values.
     # Used in RegionsSelector to choose correct transform given a stripe ID.
     transforms = {}
-
-    # Get SIAF reference position
-    xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
-    if xc is None:
-        raise ValueError("XREF_SCI is missing.")
-    if yc is None:
-        raise ValueError("YREF_SCI is missing.")
-
-    # SIAF is 1-indexed: subtract 1 for use in transforms
-    xc -= 1
-    yc -= 1
 
     velosys = input_model.meta.wcsinfo.velosys
     for i, stripe in enumerate(stripes):
         det2det = _build_grism_det2det(orders, displ[i], dispx[i], dispy[i])
         det2det = _apply_velocity_correction(det2det, velosys)
 
-        # TODO: check these constants for round-tripping issues
-        #  Should they include the dither offsets, like the tsgrism mode?
-        #  Should they be different for each stripe?
         if longflag:
+            # For long wavelength DHS, existing tsgrism calibration is used,
+            # so relative y-coordinates within each stripe should be used.
+            # Set the y reference to yc, the center of the first stripe in
+            # subarray coordinates, corrected for the dither offset.
             xform_refx = Const1D(xc)
             xform_refx.inverse = Const1D(xc)
             xform_refy = Const1D(yc)
             xform_refy.inverse = Const1D(yc)
+
+            # After the specwcs models, return the reference position in full frame coordinates
+            # for this exposure to pass to the sky models. Set the inverse for y to the
+            # relative value to pass through the transform in the other direction.
             xcenter = Const1D(xc)
             xcenter.inverse = Const1D(xc)
-            ycenter = Const1D(yc)
+            ycenter = Const1D(yc + stripe_offset)
             ycenter.inverse = Const1D(yc)
         else:
+            # TODO: specwcs is currently intended to be implemented as a relative position
+            #  within each stripe. With current reference files, this works only with
+            #  the F322W2 field position with 64 pixel stripes (e.g. PID 4453, obs 25).
+            #  Assumptions may need updating when specwcs development resumes.
+
+            # For short wavelength DHS, the trace model in specwcs encodes an absolute
+            # position within the substripe, so the reference x0, y0 values should always
+            # be 0.0 and input x and y values are offset to the start of the stripe in y.
+            # Set the inverse value to 0.0 as well: the reference value is discarded
+            # in the backward transform anyway.
             xform_refx = Const1D(0.0)
             xform_refx.inverse = Const1D(0.0)
             xform_refy = Const1D(0.0)
             xform_refy.inverse = Const1D(0.0)
+
+            # After calling the specwcs models, we'll return the reference position as
+            # x and y in full frame coordinates, to pass to the sky transforms.
+            # Set the inverse value to 0 to pass through the specwcs models appropriately
+            # in the backward transform.
             xcenter = Const1D(xc)
             xcenter.inverse = Const1D(0.0)
-            ycenter = Const1D(yc)
+            ycenter = Const1D(yc + stripe_offset)
             ycenter.inverse = Const1D(0.0)
 
         stripe_model = Const1D(stripe)
         stripe_model.inverse = Const1D(stripe)
 
-        if sub_trans_dict[stripe] is not None:
-            sub2direct = (
-                sub_trans_dict[stripe] & Identity(1)
-                | Mapping((0, 1, 0, 1, 2, 2))
-                | (Identity(2) & xform_refx & xform_refy & Identity(2))
-                | det2det & stripe_model
-                | (xcenter & ycenter & Identity(3))
-            )
-        else:
-            sub2direct = (
-                Mapping((0, 1, 0, 1, 2, 2))
-                | (Identity(2) & xform_refx & xform_refy & Identity(2))
-                | det2det & stripe_model
-                | (xcenter & ycenter & Identity(3))
-            )
+        sub2direct = (
+            sub_trans_dict[stripe] & Identity(1)
+            | Mapping((0, 1, 0, 1, 2, 2))
+            | (Identity(2) & xform_refx & xform_refy & Identity(2))
+            | det2det & stripe_model
+            | xcenter & ycenter & Identity(3)
+        )
 
         transforms[stripe] = sub2direct
 
@@ -555,10 +633,6 @@ def dhs(input_model, reference_files):
         outputs=["x0", "y0", "lam", "order", "stripe"],
         label_mapper=label_mapper,
         selector=transforms,
-    )
-
-    distortion, va_corr, tel2sky = _build_sky_pipeline_steps(
-        input_model, reference_files, n_passthrough=3
     )
 
     pipeline = [
