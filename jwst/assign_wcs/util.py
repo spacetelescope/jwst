@@ -17,7 +17,6 @@ from stcal.alignment.util import (
     wcs_bbox_from_shape,
 )
 from stdatamodels.jwst.datamodels import (
-    ImageModel,
     MiriLRSSpecwcsModel,
     WavelengthrangeModel,
 )
@@ -25,7 +24,7 @@ from stdatamodels.jwst.transforms.models import GrismObject
 from stpipe.exceptions import StpipeExitException
 
 from jwst.lib.catalog_utils import SkyObject, read_source_catalog
-from jwst.lib.stripe_utils import stripe_read
+from jwst.lib.stripe_utils import generate_substripe_ranges
 
 log = logging.getLogger(__name__)
 
@@ -152,14 +151,14 @@ def subarray_transform(input_model):
         return subarray2full
 
 
-def substripe_subarray_transforms(input_model, regions_model):
+def substripe_subarray_transforms(input_model, stripe_ids, full_frame=False):
     """
     Return a dictionary of offset models for NIRCam substripe data.
 
-    This method does not yet generalize to arbitrary fastaxis values, only +/- 1.
+    This method assumes fastaxis values are +/- 1.
 
     The dictionary will have key-value pairs of stripe number and astropy
-    CompoundModel or None. Due to the packing of stripes into a condensed,
+    CompoundModel. Due to the packing of stripes into a condensed,
     subarray-like shape, the stripe x and y start values must be calculated
     rather than taken from subarray metadata.
 
@@ -168,73 +167,38 @@ def substripe_subarray_transforms(input_model, regions_model):
     input_model : `~stdatamodels.jwst.datamodels.ImageModel` or
         `~stdatamodels.jwst.datamodels.CubeModel`
         The science model with defined multistripe parameters.
-    regions_model : `~stdatamodels.jwst.datamodels.RegionsModel`
-        The regions reference model that defines stripe labels given pixel position.
+    stripe_ids : list
+        List of stripe labels, from bottom of array to top in detector orientation.
+    full_frame : bool
+        If True, transform into the FULL frame. Otherwise, just remove stripe
+        offsets within the subarray to return relative coordinates within the stripe.
 
     Returns
     -------
     dict
         The dictionary of subarray shift models to apply to each substripe transform.
     """
-    # Start by finding defined stripes in region
-    if "NRCALONG" in input_model.meta.instrument.detector.upper():
-        # Current plan for DHS stripes in nrcalong is to use existing transform
-        # for NRC_TSGRISM, which assumes a fixed 2d extracted region and is not
-        # functional until that extraction occurs. Force a subarray shift that is
-        # useless until extract_2d is called, where we mimic existing behavior for
-        # non-DHS TSGRISM data - existing data places the trace on row 34, and we
-        # have the trace in the midpoint of the 40-row stripe.
-        ystart_offset = -14.0
-        subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
-        stripe_ids = np.array(range(subarray_stripenum)) + 1
-        subarray_transforms = {}
-        for stripe in stripe_ids:
-            subarray_transforms[stripe] = astmodels.Identity(1) & astmodels.Shift(ystart_offset)
-        return subarray_transforms
+    # Subarray start values: same for all stripes along the fast axis
+    xstart = input_model.meta.subarray.xstart - 1
 
-    else:
-        stripe_ids = np.unique(regions_model.regions).astype(int)
-        stripe_ids = stripe_ids[stripe_ids != 0]
+    # Find defined stripes in science orientation, along the slow axis
+    stripe_ranges = generate_substripe_ranges(input_model, science_frame=True)
 
     subarray_transforms = {}
-    for stripe in stripe_ids:
-        tr_xstart = astmodels.Identity(1)
-        tr_ystart = astmodels.Identity(1)
-
-        # Find minimum slowaxis index where region label is found in regions array.
-        # This index is the zero-indexed position where that subarray in the regions
-        # model begins, i.e. the "true (x, y)start" position for that stripe.
-        if np.abs(input_model.meta.subarray.fastaxis) == 1:
-            xrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[1])
-            yrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[0])
+    for i, stripe in enumerate(stripe_ids):
+        if full_frame:
+            stripe_offset = stripe_ranges["full"][i][0] - stripe_ranges["subarray"][i][0]
         else:
-            xrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[0])
-            yrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[1])
+            stripe_offset = -stripe_ranges["subarray"][i][0]
 
-        # Now we need to find where in the data array the 0th row of the stripe resides.
-        # We do this by generating a row-index-filled array and send it through the substripe
-        # readout logic, providing a row map from full frame row index to substripe array location.
-        ncols_reg, nrows_reg = regions_model.regions.shape
-        ra = np.arange(nrows_reg)
-        rowarr = np.stack((ra,) * ncols_reg).T
+        xrefstart = xstart
+        yrefstart = stripe_offset
 
-        mock_refmodel = ImageModel(data=rowarr)
-        output = stripe_read(input_model, mock_refmodel, ["data"])
-        yscistart = np.where(output.data == yrefstart)[0]
+        tr_xstart = astmodels.Shift(xrefstart)
+        tr_ystart = astmodels.Shift(yrefstart)
 
-        if xrefstart > 0:
-            tr_xstart = astmodels.Shift(xrefstart)
-
-        if yrefstart > 0 and len(yscistart) > 0:
-            yrefstart = yrefstart - yscistart[0]
-            tr_ystart = astmodels.Shift(yrefstart)
-
-        if isinstance(tr_xstart, astmodels.Identity) and isinstance(tr_ystart, astmodels.Identity):
-            # the case of a full frame observation
-            subarray_transforms[stripe] = None
-        else:
-            log.info(f"Substripe subarray shifts: x: {xrefstart} y: {yrefstart}")
-            subarray_transforms[stripe] = tr_xstart & tr_ystart
+        log.info(f"Substripe subarray shifts for stripe {stripe}: x: {xrefstart} y: {yrefstart}")
+        subarray_transforms[stripe] = tr_xstart & tr_ystart
 
     return subarray_transforms
 
