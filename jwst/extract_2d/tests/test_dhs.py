@@ -109,7 +109,7 @@ def test_extract_tso_dhs_nrcalong(dhs_nrcalong_wcs_model):
     result = extract_tso_object(dhs_nrcalong_wcs_model, reference_files=refs)
 
     assert isinstance(result, datamodels.MultiSlitModel)
-    assert len(result.slits) == len(NRCA1_DHS_STRIPE_IDS)
+    assert len(result.slits) == 4
     full_width = dhs_nrcalong_wcs_model.meta.subarray.xsize
     ref_data = result.slits[0].data
     for slit in result.slits:

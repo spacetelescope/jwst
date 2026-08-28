@@ -127,16 +127,12 @@ def make_mock_dhs_nrca1_regions(sci_model, tmp_path):
     str
         Absolute path to the saved ASDF regions file.
     """
-    reads1 = sci_model.meta.subarray.multistripe_reads1
-    skips1 = sci_model.meta.subarray.multistripe_skips1
-    reads2 = sci_model.meta.subarray.multistripe_reads2
-    skips2 = sci_model.meta.subarray.multistripe_skips2
-
+    # make a full frame regions file to cut to size
+    sub_ranges = generate_substripe_ranges(sci_model, science_frame=True)["full"]
     regions = np.zeros((2048, 2048), dtype=np.float64)
-    row_start = reads1 + skips1
-    for stripe_id in NRCA1_DHS_STRIPE_IDS:
-        regions[row_start : row_start + reads2, :] = stripe_id
-        row_start += reads2 + skips2
+    for i, stripe_id in enumerate(NRCA1_DHS_STRIPE_IDS):
+        row_start, row_stop = sub_ranges[i]
+        regions[row_start:row_stop, :] = stripe_id
 
     regions_path = tmp_path / "mock_nrca1_regions.asdf"
     model = dm.RegionsModel()
@@ -205,13 +201,14 @@ def make_mock_dhs_nrcalong_regions(sci_model, tmp_path):
     str
         Absolute path to the saved ASDF regions file.
     """
-    reads1 = sci_model.meta.subarray.multistripe_reads1
-    skips1 = sci_model.meta.subarray.multistripe_skips1
-    reads2 = sci_model.meta.subarray.multistripe_reads2
-
-    regions = np.zeros((2048, 2048), dtype=np.float64)
-    row_start = reads1 + skips1
-    regions[row_start : row_start + reads2, :] = 1
+    # Make a regions file that matches the subarray
+    sub_ranges = generate_substripe_ranges(sci_model, science_frame=True)["subarray"]
+    ysize = sci_model.meta.subarray.ysize
+    regions = np.zeros((ysize, 2048), dtype=np.float64)
+    for stripe_id in sub_ranges:
+        row_start, row_stop = sub_ranges[stripe_id]
+        # all regions have the same identifier
+        regions[row_start:row_stop, :] = 4
 
     regions_path = tmp_path / "mock_nrcalong_regions.asdf"
     model = dm.RegionsModel()
