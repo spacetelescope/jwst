@@ -2,16 +2,13 @@
 
 import numpy as np
 import pytest
-from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.helpers import (
     NRCA1_DHS_STRIPE_IDS,
     make_mock_dhs_nrca1_rate,
-    make_mock_dhs_nrca1_regions,
     make_mock_dhs_nrcalong_rate,
-    make_mock_dhs_nrcalong_regions,
 )
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.grisms import extract_tso_object
@@ -33,56 +30,25 @@ def mock_dhs_nrca1_rate():
 
 
 @pytest.fixture
-def mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path):
-    """Mock NRCA1 DHS regions reference file path."""
-    return make_mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path)
-
-
-@pytest.fixture
 def mock_dhs_nrcalong_rate():
     """Mock DHS NRCALONG rate CubeModel."""
     return make_mock_dhs_nrcalong_rate()
 
 
 @pytest.fixture
-def mock_dhs_nrcalong_regions(mock_dhs_nrcalong_rate, tmp_path):
-    """Mock NRCALONG DHS regions reference file path."""
-    return make_mock_dhs_nrcalong_regions(mock_dhs_nrcalong_rate, tmp_path)
-
-
-@pytest.fixture
-def dhs_nrca1_wcs_model(mock_dhs_nrca1_rate, mock_dhs_nrca1_regions):
+def dhs_nrca1_wcs_model(mock_dhs_nrca1_rate):
     """NRCA1 DHS CubeModel with WCS assigned."""
-    return AssignWcsStep.call(
-        mock_dhs_nrca1_rate,
-        override_specwcs=get_pkg_data_filename(
-            "data/nircam_nrca1_specwcs.asdf", package="jwst.assign_wcs.tests"
-        ),
-        override_regions=mock_dhs_nrca1_regions,
-    )
+    return AssignWcsStep.call(mock_dhs_nrca1_rate)
 
 
 @pytest.fixture
-def dhs_nrcalong_wcs_model(mock_dhs_nrcalong_rate, mock_dhs_nrcalong_regions):
-    """
-    NRCALONG DHS CubeModel with WCS assigned.
-
-    The specwcs reference file for NRCALONG is delivered through CRDS, so no
-    override is needed.
-    """
-    return AssignWcsStep.call(
-        mock_dhs_nrcalong_rate,
-        override_regions=mock_dhs_nrcalong_regions,
-    )
+def dhs_nrcalong_wcs_model(mock_dhs_nrcalong_rate):
+    """NRCALONG DHS CubeModel with WCS assigned."""
+    return AssignWcsStep.call(mock_dhs_nrcalong_rate)
 
 
 def test_extract_tso_dhs_nrca1(dhs_nrca1_wcs_model):
-    """
-    Extract NRCA1 DHS data.
-
-    The mock regions file defines 4 stripes (IDs 7-10), so the output is
-    a MultiSlitModel with four slits named by stripe ID.
-    """
+    """Extract NRCA1 DHS data."""
     refs = get_reference_files(dhs_nrca1_wcs_model)
     result = extract_tso_object(dhs_nrca1_wcs_model, reference_files=refs)
 
