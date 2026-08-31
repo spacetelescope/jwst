@@ -698,7 +698,6 @@ class IFUCubeData:
                         dwave,
                         flux,
                         err,
-                        readvar,
                         dq,
                         slice_no,
                         rois_pixel,
@@ -788,7 +787,6 @@ class IFUCubeData:
                             wave,
                             flux,
                             err,
-                            readvar,
                             dq,
                             slice_no,
                             xi1,
@@ -1512,8 +1510,6 @@ class IFUCubeData:
            Flux associated with ``coord1, coord2``
         err : ndarray
            Error associated with ``coord1, coord2``
-        readvar : ndarray
-           var_rnoise associated with ``coord1, coord2``
         dq : ndarray
            dq associated with ``coord1, coord2``
         rois_det : float
@@ -1540,7 +1536,6 @@ class IFUCubeData:
         coord2 = None
         wave = None
         flux = None
-        readvar = None
         err = None
         dq = None
         slice_no = None
@@ -1566,7 +1561,6 @@ class IFUCubeData:
 
         flux_all = input_model.data[y, x]
         err_all = input_model.err[y, x]
-        readvar_all = input_model.var_rnoise[y, x]
         dq_all = input_model.dq[y, x]
 
         x_all = x
@@ -1635,7 +1629,6 @@ class IFUCubeData:
                 dwave,
                 flux,
                 err,
-                readvar,
                 dq,
                 slice_no,
                 rois_det,
@@ -1653,7 +1646,6 @@ class IFUCubeData:
         good_shape = flux_all_good.shape
         flux = np.zeros(good_shape, dtype=np.float64)
         dq = np.zeros(good_shape, dtype=np.int32)
-        readvar = np.zeros(good_shape, dtype=np.float64)
         err = np.zeros(good_shape, dtype=np.float64)
         coord1 = np.zeros(good_shape, dtype=np.float64)
         coord2 = np.zeros(good_shape, dtype=np.float64)
@@ -1661,7 +1653,6 @@ class IFUCubeData:
         slice_no = np.zeros(good_shape)
 
         flux[:] = flux_all_good
-        readvar[:] = readvar_all[good_data]
         dq[:] = dq_all[good_data]
         err[:] = err_all[good_data]
         wave[:] = wave_all[good_data]
@@ -1749,7 +1740,6 @@ class IFUCubeData:
             dwave,
             flux,
             err,
-            readvar,
             dq,
             slice_no,
             rois_det,
