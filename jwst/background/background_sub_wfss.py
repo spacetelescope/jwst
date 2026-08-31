@@ -7,6 +7,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.assign_wcs.util import create_grism_bbox
+from jwst.background.weighted_sigma_clip import WeightedSigmaClip
 from jwst.lib.reffile_utils import get_subarray_model
 
 log = logging.getLogger(__name__)
@@ -17,7 +18,8 @@ __all__ = ["subtract_wfss_bkg", "ScalingFactorComputer"]
 def subtract_wfss_bkg(
     model,
     bkg_filename,
-    wl_range_name,
+    mask_method="catalog",
+    wl_range_name=None,
     mmag_extract=None,
     user_mask=None,
     rescaler_kwargs=None,
@@ -29,22 +31,20 @@ def subtract_wfss_bkg(
     ----------
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         Copy of input target exposure data model.
-
     bkg_filename : str
         Name of master background file for WFSS/GRISM.
-
-    wl_range_name : str
+    mask_method : str, optional
+        Method to use for WFSS background subtraction. Options are "catalog", "clip", or "user".
+        Default is "catalog".
+    wl_range_name : str or None, optional
         Name of wavelength range reference file.
-
     mmag_extract : float or None, optional
         Minimum AB mag of grism objects to extract. Default: None
-
     user_mask : ndarray[bool] or None, optional
         User-supplied boolean source mask. `True` for background,
         `False` for pixels that are part of sources. If provided, will supersede the auto-generated
         mask from the source catalog, and ``model.meta.source_catalog`` will be ignored entirely.
         Default: None
-
     rescaler_kwargs : dict or None, optional
         Keyword arguments to pass to `ScalingFactorComputer`. Default: None
 
@@ -57,27 +57,27 @@ def subtract_wfss_bkg(
     bkg_ref = get_subarray_model(model, bkg_ref)
 
     # get the dispersion axis
-    try:
-        dispaxis = model.meta.wcsinfo.dispersion_direction
-    except AttributeError:
+    dispaxis = getattr(model.meta.wcsinfo, "dispersion_direction", None)
+    if dispaxis is None:
         log.warning(
             "Dispersion axis not found in input science image metadata. "
             "Variance stopping criterion will have no effect for iterative "
             "outlier rejection (will run until maxiter)."
         )
-        dispaxis = None
     if rescaler_kwargs is None:
         rescaler_kwargs = {}
     rescaler_kwargs["dispersion_axis"] = dispaxis
 
-    # get the source catalog for masking
-    if user_mask is None:
-        if getattr(model.meta, "source_catalog", None) is not None:
+    # split processing by method
+    if mask_method == "catalog":
+        log.info("Using source catalog to mask sources for background scaling.")
+        if getattr(model.meta, "source_catalog", None) is None:
+            log.warning("No source_catalog found in input.meta. Setting all pixels as background.")
+            bkg_mask = np.ones(model.data.shape, dtype=bool)
+        else:
             # Create a mask from the source catalog, True where there are no sources,
             # i.e. in regions we can use as background.
             bkg_mask = _mask_from_source_cat(model, wl_range_name, mmag_extract)
-            log.warning("No source_catalog found in input.meta, and custom mask not specified. ")
-            log.warning("No sources will be masked for background scaling.")
             if not _sufficient_background_pixels(model.dq, bkg_mask, bkg_ref.data):
                 log.warning("Not enough background pixels to work with.")
                 log.warning("Step will be marked FAILED.")
@@ -88,10 +88,21 @@ def subtract_wfss_bkg(
                 model.meta.cal_step.bkg_subtract = "FAILED"
                 bkg_ref.close()
                 return model
-        else:
-            log.warning("No source_catalog found in input.meta. Setting all pixels as background.")
-            bkg_mask = np.ones(model.data.shape, dtype=bool)
-    else:
+    elif mask_method == "clip":
+        if dispaxis is None:
+            raise ValueError(
+                "Dispersion direction not found in input model wcsinfo metadata. "
+                "Valid dispersion axis is required for method=clip."
+            )
+        log.info("Using variance-weighted sigma clipping to mask sources for background scaling.")
+        clipper = WeightedSigmaClip()
+        inverse_variance = 1 / model.err**2
+        cross_disp = int(dispaxis - 1)
+        bkg_mask = clipper(model.data, weights=inverse_variance, axis=cross_disp)
+
+    elif mask_method == "user":
+        if user_mask is None:
+            raise ValueError("mask_method='user' requires a user_mask to be provided.")
         log.info("Using user-supplied source mask for background scaling.")
         # we want a more generous criterion for sufficient background pixels here,
         # since the user is explicitly specifying the mask.
@@ -110,6 +121,10 @@ def subtract_wfss_bkg(
             bkg_ref.close()
             return model
         bkg_mask = user_mask.astype(bool)
+    else:
+        raise ValueError(
+            f"Unrecognized mask_method '{mask_method}' for WFSS background subtraction."
+        )
 
     # save the mask in expected data type for the datamodel
     model.mask = bkg_mask.astype(np.uint32)
