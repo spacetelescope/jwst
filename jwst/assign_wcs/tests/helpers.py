@@ -24,7 +24,7 @@ def _populate_dhs_shared_metadata(model):
     Updates *model* in place.
     """
     # Aperture
-    model.meta.aperture.pps_name = "NRCA5_GRISM_F444W"
+    model.meta.aperture.pps_name = "NRCA5_260STRIPE4_DHS_F322W2"
 
     # Exposure
     model.meta.exposure.type = "NRC_TSGRISM"
@@ -35,7 +35,7 @@ def _populate_dhs_shared_metadata(model):
     model.meta.observation.time = "00:00:00.000"
 
     # Subarray
-    model.meta.subarray.name = "SUB164STRIPE4_DHS"
+    model.meta.subarray.name = "SUB260STRIPE4_DHS"
     model.meta.subarray.fastaxis = -1
     model.meta.subarray.slowaxis = 2
     model.meta.subarray.num_superstripe = 0
@@ -43,18 +43,25 @@ def _populate_dhs_shared_metadata(model):
     model.meta.subarray.xstart = 1
     model.meta.subarray.xsize = 2048
     model.meta.subarray.ystart = 1
-    model.meta.subarray.ysize = 164
+    model.meta.subarray.ysize = 260
 
     # WCS info
-    model.meta.wcsinfo.ra_ref = 80.0
-    model.meta.wcsinfo.dec_ref = -69.5
-    model.meta.wcsinfo.v2_ref = 120.576793
-    model.meta.wcsinfo.v3_ref = -527.501431
-    model.meta.wcsinfo.roll_ref = 305.03225951982046
-    model.meta.wcsinfo.velosys = -9378.83
+    # Example values from jw04453025001_03103_00001-seg001_nrca1
+    model.meta.wcsinfo.ra_ref = 265.74911600957546
+    model.meta.wcsinfo.dec_ref = 66.93483954623517
+    model.meta.wcsinfo.v2_ref = 120.311122
+    model.meta.wcsinfo.v3_ref = -495.782084
+    model.meta.wcsinfo.roll_ref = 245.14852360749214
+    model.meta.wcsinfo.velosys = 617.4
+    model.meta.wcsinfo.v3yangle = -0.42593583
+    model.meta.wcsinfo.vparity = -1
 
     # Velocity aberration
     model.meta.velocity_aberration.scale_factor = 1.0
+
+    # Offset from TA
+    model.meta.dither.x_offset = 0.0
+    model.meta.dither.y_offset = 1.39
 
 
 def _populate_dhs_regions_metadata(model):
@@ -80,7 +87,7 @@ def make_mock_dhs_nrca1_rate():
     model : `~stdatamodels.jwst.datamodels.CubeModel`
         Mock NRCA1 DHS rate model.
     """
-    model = dm.CubeModel((5, 164, 2048))
+    model = dm.CubeModel((5, 260, 2048))
     _populate_dhs_shared_metadata(model)
 
     model.meta.instrument.name = "NIRCAM"
@@ -92,9 +99,9 @@ def make_mock_dhs_nrca1_rate():
 
     model.meta.subarray.interleave_reads1 = 1
     model.meta.subarray.multistripe_reads1 = 1
-    model.meta.subarray.multistripe_reads2 = 40
-    model.meta.subarray.multistripe_skips1 = 1526
-    model.meta.subarray.multistripe_skips2 = 85
+    model.meta.subarray.multistripe_reads2 = 64
+    model.meta.subarray.multistripe_skips1 = 1514
+    model.meta.subarray.multistripe_skips2 = 61
 
     model.meta.wcsinfo.siaf_xref_sci = 1024.5
     model.meta.wcsinfo.siaf_yref_sci = 24.5
@@ -114,6 +121,10 @@ def make_mock_dhs_nrca1_regions(sci_model, tmp_path):
     Write a mock NRCA1 DHS regions reference file and return its path.
 
     Stripe IDs run from highest to lowest (10 - 7) as row index increases.
+
+    NOTE: this mock should no longer be needed, since regions files are
+    available via CRDS, but this function is retained for now in case it's
+    useful as a local override.
 
     Parameters
     ----------
@@ -153,24 +164,24 @@ def make_mock_dhs_nrcalong_rate():
     model : `~stdatamodels.jwst.datamodels.CubeModel`
         Mock NRCALONG DHS rate model.
     """
-    model = dm.CubeModel((5, 164, 2048))
+    model = dm.CubeModel((5, 260, 2048))
     _populate_dhs_shared_metadata(model)
 
     model.meta.instrument.name = "NIRCAM"
     model.meta.instrument.channel = "LONG"
     model.meta.instrument.detector = "NRCALONG"
-    model.meta.instrument.filter = "F444W"
+    model.meta.instrument.filter = "F322W2"
     model.meta.instrument.pupil = "GRISMR"
     model.meta.instrument.module = "A"
 
     model.meta.subarray.interleave_reads1 = 0
     model.meta.subarray.multistripe_reads1 = 1
-    model.meta.subarray.multistripe_reads2 = 40
-    model.meta.subarray.multistripe_skips1 = 971
+    model.meta.subarray.multistripe_reads2 = 64
+    model.meta.subarray.multistripe_skips1 = 959
     model.meta.subarray.multistripe_skips2 = 0
 
-    model.meta.wcsinfo.siaf_xref_sci = 862
-    model.meta.wcsinfo.siaf_yref_sci = 20.5
+    model.meta.wcsinfo.siaf_xref_sci = 1584.0
+    model.meta.wcsinfo.siaf_yref_sci = 32.5
 
     # Fill each packed stripe row range with the same pattern
     # since for NRCALONG all readouts should be from the same physical detector region
@@ -188,6 +199,10 @@ def make_mock_dhs_nrcalong_regions(sci_model, tmp_path):
 
     For NRCALONG the same detector band is read in every readout, so the
     regions map is a single nonzero stripe.
+
+    NOTE: this mock should no longer be needed, since regions files are
+    available via CRDS, but this function is retained for now in case it's
+    useful as a local override.
 
     Parameters
     ----------
