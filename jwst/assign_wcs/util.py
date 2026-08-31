@@ -197,7 +197,7 @@ def substripe_subarray_transforms(input_model, stripe_ids, full_frame=False):
         tr_xstart = astmodels.Shift(xrefstart)
         tr_ystart = astmodels.Shift(yrefstart)
 
-        log.info(f"Substripe subarray shifts for stripe {stripe}: x: {xrefstart} y: {yrefstart}")
+        log.debug(f"Substripe subarray shifts for stripe {stripe}: x: {xrefstart} y: {yrefstart}")
         subarray_transforms[stripe] = tr_xstart & tr_ystart
 
     return subarray_transforms

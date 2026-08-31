@@ -334,7 +334,7 @@ def imaging_distortion(input_model, reference_files):
             if col_offset != "N/A" and row_offset != "N/A":
                 distortion = Shift(col_offset) & Shift(row_offset) | distortion
         else:
-            log.debug("No match in filteroffset file.")
+            log.warning("No match in filteroffset file.")
 
     # Bind the bounding box to the distortion model using the bounding box ordering used by GWCS.
     # This makes it clear the bounding box is set correctly to GWCS

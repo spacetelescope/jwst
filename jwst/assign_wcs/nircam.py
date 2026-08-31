@@ -481,7 +481,7 @@ def dhs(input_model, reference_files):
     # Get the substripe ranges in full and subarray coordinates
     stripe_ranges = generate_substripe_ranges(input_model, science_frame=True)
     # The first stripe starts at this value in the full frame
-    stripe_offset = stripe_ranges["full"][0][0]
+    stripe_offset = min([stripe_range[0] for stripe_range in stripe_ranges["full"].values()])
 
     if "LONG" in input_model.meta.instrument.detector.upper():
         longflag = True
@@ -542,6 +542,8 @@ def dhs(input_model, reference_files):
         raise ValueError("XREF_SCI is missing.")
     if yc is None:
         raise ValueError("YREF_SCI is missing.")
+
+    # SIAF is 1-indexed: subtract 1 for use in transforms
     xc -= 1
     yc -= 1
     x_off, y_off = _offset_for_reference_position(input_model, distortion)
@@ -623,7 +625,7 @@ def dhs(input_model, reference_files):
             | Mapping((0, 1, 0, 1, 2, 2))
             | (Identity(2) & xform_refx & xform_refy & Identity(2))
             | det2det & stripe_model
-            | xcenter & ycenter & Identity(3)
+            | (xcenter & ycenter & Identity(3))
         )
 
         transforms[stripe] = sub2direct
