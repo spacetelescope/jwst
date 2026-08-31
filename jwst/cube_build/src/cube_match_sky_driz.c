@@ -13,7 +13,6 @@ Python signature:  result = cube_wrapper_driz(
                             wave,
                             flux,
                             err,
-                            readvar,
                             dq,
                             slice_no,
                             xi1, eta1,
@@ -56,8 +55,6 @@ flux : ndarray of float
    size: point cloud elements. Flux of each point cloud member
 err : ndarray of float
    size: point cloud elements. err of each point cloud member
-readvar : ndarray of float
-   size: point cloud elements. Read variance of each point cloud member
 dq : ndarray of int
    size: point cloud elements. DQ of each point cloud member
 slice_no : int
@@ -131,10 +128,10 @@ sh_find_overlap(
 // C routine that  does that does the drizzling
 int
 match_driz(
-    double *xc, double *yc, double *zc, double *wave, double *flux, double *err, double *readvar,
-    int *dq, double *xi1, double *eta1, double *xi2, double *eta2, double *xi3, double *eta3,
-    double *xi4, double *eta4, double *dwave, double *cdelt3, double *x_det, double *y_det,
-    double cdelt1, double cdelt2, int nx, int ny, int nwave, long ncube, long npt, int linear,
+    double *xc, double *yc, double *zc, double *wave, double *flux, double *err, int *dq,
+    double *xi1, double *eta1, double *xi2, double *eta2, double *xi3, double *eta3, double *xi4,
+    double *eta4, double *dwave, double *cdelt3, double *x_det, double *y_det, double cdelt1,
+    double cdelt2, int nx, int ny, int nwave, long ncube, long npt, int linear,
     long debug_cube_index, double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
     double **spaxel_iflux, int **spaxel_dq)
 {
@@ -145,7 +142,6 @@ match_driz(
     // wave : wavelength of pixels
     // flux : flux values of pixels
     // err : err values of the pixels
-    // readvar : read variance
     // dq : dq flag
     // xi1, eta1 :  xi, eta coordinates of a corner 1 of a pixel
     // xi2, eta2 :  xi, eta coordinates of a corner 2 of a pixel
@@ -335,7 +331,7 @@ match_driz(
                                     "spaxel, flux, x, y [count starting at 0]  %i %f %f %f  \n ",
                                     index_cube, flux[k], x_det[k], y_det[k]);
                                 printf(
-                                    "ifluxv %i %f %f \n", ifluxv[index_cube], weighted_flux,
+                                    "ifluxv %f %f %f \n", ifluxv[index_cube], weighted_flux,
                                     fluxv[index_cube]);
                             }
 
@@ -397,7 +393,7 @@ static PyObject *
 cube_wrapper_driz(PyObject *module, PyObject *args)
 {
     PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo,
-             *readvaro, *dqo; // codespell:ignore erro
+             *dqo; // codespell:ignore erro
     PyObject *cdelt3o;
     PyObject *xi1o, *eta1o, *xi2o, *eta2o, *xi3o, *eta3o, *xi4o, *eta4o, *x_deto, *y_deto;
     PyObject *dwaveo;
@@ -413,13 +409,13 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
 
     int free_xc = 0, free_yc = 0, free_zc = 0, free_coord1 = 0, free_coord2 = 0, free_wave = 0,
         status = 0;
-    int free_flux = 0, free_err = 0, free_readvar = 0, free_dq = 0, free_cdelt3 = 0;
+    int free_flux = 0, free_err = 0, free_dq = 0, free_cdelt3 = 0;
     int free_sliceno = 0, free_x_det = 0, free_y_det = 0;
     int free_xi1 = 0, free_eta1 = 0, free_xi2 = 0, free_eta2 = 0, free_xi3 = 0, free_eta3 = 0,
         free_xi4 = 0, free_eta4 = 0;
     int free_dwave = 0;
 
-    PyArrayObject *xc, *yc, *zc, *flux, *err, *readvar, *dq, *coord1, *coord2, *wave;
+    PyArrayObject *xc, *yc, *zc, *flux, *err, *dq, *coord1, *coord2, *wave;
     PyArrayObject *xi1, *eta1, *xi2, *eta2, *xi3, *eta3, *xi4, *eta4, *dwave;
     PyArrayObject *cdelt3, *sliceno, *x_det, *y_det;
     PyArrayObject *spaxel_flux_arr = NULL, *spaxel_weight_arr = NULL, *spaxel_var_arr = NULL;
@@ -429,8 +425,8 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
     int ny, nz;
 
     if (!PyArg_ParseTuple(
-            args, "iiOOOOOOOOOOOOOOOOOOOOOdddiOOl:cube_wrapper_driz", &start_region, &end_region,
-            &xco, &yco, &zco, &coord1o, &coord2o, &waveo, &fluxo, &erro, &readvaro, &dqo,
+            args, "iiOOOOOOOOOOOOOOOOOOOOdddiOOl:cube_wrapper_driz", &start_region, &end_region,
+            &xco, &yco, &zco, &coord1o, &coord2o, &waveo, &fluxo, &erro, &dqo,
             &slicenoo, // codespell:ignore erro
             &xi1o, &eta1o, &xi2o, &eta2o, &xi3o, &eta3o, &xi4o, &eta4o, &dwaveo, &cdelt3o, &cdelt1,
             &cdelt2, &cdelt3_mean, &linear, &x_deto, &y_deto, &debug_cube_index)) {
@@ -456,7 +452,6 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         (!(x_det = ensure_array(x_deto, &free_x_det))) ||
         (!(y_det = ensure_array(y_deto, &free_y_det))) ||
         (!(err = ensure_array(erro, &free_err))) || // codespell:ignore erro
-        (!(readvar = ensure_array(readvaro, &free_readvar))) ||
         (!(dq = ensure_array_int(dqo, &free_dq))) ||
         (!(sliceno = ensure_array(slicenoo, &free_sliceno))) ||
         (!(xi1 = ensure_array(xi1o, &free_xi1))) || (!(eta1 = ensure_array(eta1o, &free_eta1))) ||
@@ -527,13 +522,13 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
     status = match_driz(
         (double *) PyArray_DATA(xc), (double *) PyArray_DATA(yc), (double *) PyArray_DATA(zc),
         (double *) PyArray_DATA(wave), (double *) PyArray_DATA(flux), (double *) PyArray_DATA(err),
-        (double *) PyArray_DATA(readvar), (int *) PyArray_DATA(dq), (double *) PyArray_DATA(xi1),
-        (double *) PyArray_DATA(eta1), (double *) PyArray_DATA(xi2), (double *) PyArray_DATA(eta2),
-        (double *) PyArray_DATA(xi3), (double *) PyArray_DATA(eta3), (double *) PyArray_DATA(xi4),
-        (double *) PyArray_DATA(eta4), (double *) PyArray_DATA(dwave),
-        (double *) PyArray_DATA(cdelt3), (double *) PyArray_DATA(x_det),
-        (double *) PyArray_DATA(y_det), cdelt1, cdelt2, nxx, nyy, nwave, ncube, npt, linear,
-        debug_cube_index, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux, &spaxel_dq);
+        (int *) PyArray_DATA(dq), (double *) PyArray_DATA(xi1), (double *) PyArray_DATA(eta1),
+        (double *) PyArray_DATA(xi2), (double *) PyArray_DATA(eta2), (double *) PyArray_DATA(xi3),
+        (double *) PyArray_DATA(eta3), (double *) PyArray_DATA(xi4), (double *) PyArray_DATA(eta4),
+        (double *) PyArray_DATA(dwave), (double *) PyArray_DATA(cdelt3),
+        (double *) PyArray_DATA(x_det), (double *) PyArray_DATA(y_det), cdelt1, cdelt2, nxx, nyy,
+        nwave, ncube, npt, linear, debug_cube_index, &spaxel_flux, &spaxel_weight, &spaxel_var,
+        &spaxel_iflux, &spaxel_dq);
 
     if (status) {
         goto fail;
@@ -636,9 +631,6 @@ cleanup:
     }
     if (free_err) {
         Py_XDECREF(err);
-    }
-    if (free_readvar) {
-        Py_XDECREF(readvar);
     }
     if (free_dq) {
         Py_XDECREF(dq);
