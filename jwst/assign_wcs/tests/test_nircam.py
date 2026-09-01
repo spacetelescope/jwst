@@ -53,14 +53,17 @@ wcs_wfss_kw = {
     "cunit2": "deg",
 }
 
+# Example keyword values from jw01366002001_04103_00001
 wcs_tso_kw = {
     "wcsaxes": 2,
-    "ra_ref": 86.9875,
-    "dec_ref": 23.423,
-    "v2_ref": 95.043034,
-    "v3_ref": -556.150466,
-    "roll_ref": 359.9521,
-    "xref_sci": 887.0,
+    "ra_ref": 217.3262354867486,
+    "dec_ref": -3.444360390029802,
+    "v2_ref": 73.106857,
+    "v3_ref": -551.643196,
+    "v3i_yang": 0.24336066,
+    "vparity": -1,
+    "roll_ref": 110.12344444842617,
+    "xref_sci": 1581.0,
     "yref_sci": 35.0,
     "cdelt1": 1.76686111111111e-05,
     "cdelt2": 1.78527777777777e-05,
@@ -129,8 +132,11 @@ def create_imaging_wcs():
 
 
 @pytest.fixture
-def create_tso_wcs(filtername=tsgrism_filters[0], subarray="SUBGRISM256"):
+def create_tso_wcs():
     """Help create tsgrism GWCS object."""
+    filtername = tsgrism_filters[2]
+    subarray = "SUBGRISM256"
+
     hdul = create_hdul(
         exptype="NRC_TSGRISM",
         pupil="GRISMR",
@@ -141,6 +147,8 @@ def create_tso_wcs(filtername=tsgrism_filters[0], subarray="SUBGRISM256"):
     )
     im = CubeModel(hdul)
     im.data = np.zeros((10, 10, 10))
+    im.meta.dither.x_offset = 0.0
+    im.meta.dither.y_offset = 1.4485  # example from jw01366002001_04103_00001
     ref = get_reference_files(im)
     pipeline = nircam.create_pipeline(im, ref)
     wcsobj = wcs.WCS(pipeline)
@@ -181,6 +189,7 @@ def tsgrism_inputs(request):
         )
 
         image_model = CubeModel(hdu)
+        image_model.data = np.zeros((10, 10, 10))
 
         return image_model, get_reference_files(image_model)
 
@@ -246,20 +255,29 @@ def test_traverse_tso_grism(create_tso_wcs):
 
     # TSGRISM always has same source locations
     # takes x,y,order -> ra, dec, wave, order
-    xin, yin, order = (100, 35, 1)
+    xin, yin, order = (1024, 34.448, 1)  # y must be on the trace to round trip
     x0, y0, lam, orderdet = grism_to_detector(xin, yin, order)
     x, y, orderdet = detector_to_grism(x0, y0, lam, order)
 
-    assert np.isclose(x0, wcs_tso_kw["xref_sci"], atol=1e-3)
-    assert np.isclose(y0, wcs_tso_kw["yref_sci"], atol=1e-3)
+    # Check returned reference positions
+    assert np.isclose(x0, wcs_tso_kw["xref_sci"] - 1, atol=0.5)
+    # y reference includes a ~22.5 pixel shift from TA to science position,
+    # from the dither offset
+    assert np.isclose(y0, wcs_tso_kw["yref_sci"] - 1 + 22.5, atol=0.5)
     assert order == orderdet
-    assert np.isclose(x, xin, atol=2e-2)
 
-    # this roundtrip fails to account for the ~22.5 pixel shift from target acquisition
-    # to science position; grism shifts spectrum wrt direct image by that amount.
-    # as of 29 April 2024, how to properly store this in the header and propagate
-    # it through assign_wcs is being discussed
-    # assert np.isclose(y, wcs_tso_kw['yref_sci'])
+    # Check round trip
+    assert np.isclose(x, xin, atol=2e-2)
+    assert np.isclose(y, yin, atol=2e-2)
+
+
+def test_tsgrism_offset_warning(caplog, tsgrism_inputs):
+    # Run the pipeline on data missing x/y offsets
+    nircam.tsgrism(*tsgrism_inputs())
+
+    # A warning is logged
+    assert "could not be applied" in caplog.text
+    assert "may be inaccurate" in caplog.text
 
 
 def test_imaging_frames():

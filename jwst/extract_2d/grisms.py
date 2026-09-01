@@ -5,14 +5,13 @@ import logging
 
 import numpy as np
 from astropy.coordinates import SkyCoord
-from astropy.modeling import CompoundModel, bind_bounding_box
+from astropy.modeling import bind_bounding_box
 from astropy.modeling.models import Const1D, Mapping, Shift
 from gwcs.utils import to_index
 from gwcs.wcstools import grid_from_bounding_box
 from stcal.alignment.util import wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import ImageModel, WavelengthrangeModel
-from stdatamodels.jwst.transforms.models import IdealToV2V3
+from stdatamodels.jwst.datamodels import WavelengthrangeModel
 
 from jwst.assign_wcs import util
 from jwst.lib.catalog_utils import read_source_catalog
@@ -25,7 +24,6 @@ __all__ = [
     "extract_grism_objects",
     "compute_dispersion",
     "compute_tso_wavelength_array",
-    "compute_tso_offset_center",
     "compute_wfss_wavelength",
 ]
 
@@ -78,11 +76,6 @@ def build_grism_submodel(
     source_ypos : float, optional
         The y position of the source in the direct image frame (0-indexed).
         When provided, sets ``sub_model.source_ypos``.
-
-    Returns
-    -------
-    `~stdatamodels.jwst.datamodels.SlitModel`
-        The ``sub_model`` updated in-place.
     """
     # Cut out the subarray from the input data arrays
     ext_data = input_model.data[..., ymin : ymax + 1, xmin : xmax + 1].copy()
@@ -112,8 +105,6 @@ def build_grism_submodel(
     sub_model.meta.wcs.bounding_box = wcs_bbox_from_shape(ext_data.shape)
     if compute_wavelength:
         sub_model.wavelength = compute_tso_wavelength_array(sub_model)
-    if source_xpos is not None:
-        sub_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
     sub_model.meta.wcsinfo.spectral_order = order
     sub_model.meta.wcsinfo.dispersion_direction = input_model.meta.wcsinfo.dispersion_direction
     sub_model.meta.instrument.name = "NIRCAM"
@@ -129,6 +120,11 @@ def build_grism_submodel(
         sub_model.source_xpos = source_xpos
     if source_ypos is not None:
         sub_model.source_ypos = source_ypos
+
+        ra, dec, _, _ = subwcs(ext_data.shape[-1] / 2, source_ypos)
+        sub_model.source_ra = ra
+        sub_model.source_dec = dec
+
     sub_model.source_id = 1
     sub_model.meta.bunit_data = input_model.meta.bunit_data
     sub_model.meta.bunit_err = input_model.meta.bunit_err
@@ -285,90 +281,48 @@ def _extract_tso_tsgrism_object(
             if (x[0] == order and x[2] == input_model.meta.instrument.filter)
         ][0]
 
-        # Create the order bounding box
-        distortion = subwcs.get_transform("v2v3", "direct_image")
-        # 1-indexing already handled here
-        source_xpos, _ = compute_tso_offset_center(input_model, distortion)
-        # Remove FITS 1-indexed offset
-        source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1
-        transform = input_model.meta.wcs.get_transform("direct_image", "grism_detector")
-        xmin, ymin, _ = transform(source_xpos, source_ypos, lmin, order)
-        xmax, ymax, _ = transform(source_xpos, source_ypos, lmax, order)
+        # Source xpos can be taken as the reference x position
+        source_xpos = input_model.meta.wcsinfo.siaf_xref_sci - 1
 
-        # Add the shift to the lower corner to the subarray WCS object.
-        # The shift should just be the lower bounding box corner.
-        # Also replace the object center location inputs to the GrismDispersion
-        # model with the known object center and order information (in pixels of direct image)
-        # This changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
-        #
-        # The team wants the object to fall near row 34 for all cutouts, but the default cutout
-        # height is 64 pixels (32 on either side). So bump the extraction ycenter, when
-        # necessary, so that the height is 30 above and 34 below
-        # (in full frame) the object center.
-        bump = source_ypos - 34
-        extract_y_center = source_ypos - bump
+        # Take the input source position to be row 34, always
+        input_ypos = 34.0
 
-        splitheight = int(tsgrism_extract_height / 2)
-        below = extract_y_center - splitheight
-        if below == 34:
+        if tsgrism_extract_height >= 64:
+            # For the default 64-pixel cutout or larger, start at 0 so
+            # that source position stays at row 34
             extract_y_min = 0
-            extract_y_max = extract_y_center + splitheight
-        elif below < 0:
-            extract_y_min = 0
-            extract_y_max = tsgrism_extract_height - 1
         else:
-            extract_y_min = extract_y_center - 34  # always return source at row 34 in cutout
-            extract_y_max = extract_y_center + tsgrism_extract_height - 34 - 1
-
-        # Check for bad results
-        if extract_y_min > extract_y_max:
-            raise ValueError("Something bad happened calculating extraction y-size")
+            # Otherwise, center the extraction on the source position
+            # This may require a custom extract1d reference file to center
+            # the spectrum correctly.
+            extract_y_min = input_ypos - tsgrism_extract_height / 2
+        extract_y_max = extract_y_min + tsgrism_extract_height - 1
 
         # Limit the bounding box to the detector edges
-        # The bounding box is limited to the size of the detector in the dispersion direction
-        # and 64 pixels in the cross-dispersion direction (at request of instrument team).
-        ymin, ymax = (
-            max(extract_y_min, 0),
-            min(extract_y_max, input_model.meta.subarray.ysize),
-        )
-        xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
+        # Note: in contrast to WFSS modes, the instrument team requested that the
+        # entire detector be extracted in the x-direction, rather than determining
+        # the min/max values for x from the min/max wavelength values in the WCS.
+        ny, nx = input_model.data.shape[-2:]
+        ymin = int(np.clip(extract_y_min, 0, ny - 1))
+        ymax = int(np.clip(extract_y_max, ymin, ny - 1))
+        xmin = 0
+        xmax = nx - 1
+
+        # Output source position may be shifted
+        source_ypos = input_ypos - ymin
 
         # The order and source position are put directly into the new WCS of the subarray
         # for the forward transform.
-        #
-        # NOTE NOTE NOTE  2020-02-14
-        # We would normally use x-axis (along dispersion) extraction limits calculated
-        # above based on the min/max wavelength range and the source position to do the
-        # subarray extraction and set the subarray WCS accordingly. HOWEVER, the NIRCam
-        # team has asked for all data along the dispersion direction to be included in
-        # subarray cutout, so here we override the xmin/xmax values calculated above and
-        # instead hardwire the extraction limits for the x (dispersion) direction to
-        # cover the entire range of the data and use this new minimum x value in the
-        # subarray WCS transform. If the team ever decides to change the extraction limits,
-        # the following two constants must be modified accordingly.
-        xmin_ext = 0  # hardwire min x for extraction to zero
-        xmax_ext = input_model.data.shape[-1] - 1  # hardwire max x for extraction to size of data
-
-        _set_tso_subwcs_transform(input_model, subwcs, xmin_ext, ymin, order)
-
-        xmin = int(xmin)
-        xmax = int(xmax)
-        ymin = int(ymin)
-        ymax = int(ymax)
+        _set_tso_subwcs_transform(input_model, subwcs, xmin, ymin, order)
 
         log.info(f"WCS made explicit for order: {order}")
-        log.info(
-            f"Spectral trace extents: (xmin: {xmin}, ymin: {ymin}), (xmax: {xmax}, ymax: {ymax})"
-        )
-        log.info(
-            f"Extraction limits: (xmin: {xmin_ext}, ymin: {ymin}), (xmax: {xmax_ext}, ymax: {ymax})"
-        )
+        log.info(f"Extraction limits: (xmin: {xmin}, ymin: {ymin}), (xmax: {xmax}, ymax: {ymax})")
 
         build_grism_submodel(
             output_model,
             input_model,
-            xmin_ext,
-            xmax_ext,
+            xmin,
+            xmax,
             ymin,
             ymax,
             subwcs,
@@ -376,11 +330,8 @@ def _extract_tso_tsgrism_object(
             order,
             name="1",
             source_xpos=source_xpos,
-            source_ypos=34,
+            source_ypos=source_ypos,
         )
-        # This preserves existing behavior, but appears to be 0-indexed.
-        # SIAF values typically 1-indexed - maybe needs removing. Default value is 35.
-        output_model.meta.wcsinfo.siaf_yref_sci = 34
     del subwcs
     return output_model
 
@@ -865,63 +816,6 @@ def compute_tso_wavelength_array(slit):
     x, y = grid_from_bounding_box(wcs.bounding_box)
     wavelength = full_transform(x, y)[2]
     return wavelength
-
-
-def compute_tso_offset_center(
-    input_model: ImageModel, distortion: CompoundModel
-) -> tuple[float, float]:
-    """
-    Accurately compute the offset between the source position and aperture center.
-
-    In the case that an Offset Special Requirement is requested in the APT,
-    the source is no longer at the aperture reference point.
-    The ``dither.x_offset`` and ``dither.y_offset`` values encode the offset
-    in units of arcseconds. They need to be translated from Ideal to
-    detector coordinates and into pixel units.
-
-    Parameters
-    ----------
-    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
-        The input data model.
-    distortion : `~stdatamodels.jwst.datamodels.DistortionModel`
-        The distortion model.
-
-    Returns
-    -------
-    xc, yc : float
-        The x and y center of the image in direct image coordinates.
-
-    Raises
-    ------
-    ValueError
-        The distortion model requires less than four or more than five
-        inputs.
-
-    Notes
-    -----
-    The wavelength is not used for the distortion calculation between
-    v2v3 and direct image coordinates, so this can be hardcoded to NaN.
-    """
-    idltov23 = IdealToV2V3(
-        input_model.meta.wcsinfo.v3yangle,
-        input_model.meta.wcsinfo.v2_ref,
-        input_model.meta.wcsinfo.v3_ref,
-        input_model.meta.wcsinfo.vparity,
-    )
-    v2_offset, v3_offset = idltov23(
-        input_model.meta.dither.x_offset, input_model.meta.dither.y_offset
-    )
-    wavelength = np.nan
-    if distortion.n_inputs == 4:
-        # Default TSGRISM case
-        xc, yc, _, _ = distortion(v2_offset, v3_offset, wavelength, 1)
-    elif distortion.n_inputs == 5:
-        # DHS case, where stripe number is also passed
-        xc, yc, _, _, _ = distortion(v2_offset, v3_offset, wavelength, 1, 1)
-    else:
-        # Shouldn't be here
-        raise ValueError("TSO Distortion transform has an unexpected number of inputs.")
-    return xc, yc
 
 
 def compute_wfss_wavelength(slit):

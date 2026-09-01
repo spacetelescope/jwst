@@ -1,0 +1,2 @@
+For NIRCam TSGRISM, correct SIAF reference position for 1-indexing and incorporate x and y offsets from TA to science into reference position.
+These changes improve accuracy in wavelength calibration and recorded source position, as well as addressing round trip errors in the WCS transforms.
