@@ -1,0 +1,1 @@
+Avoid schema overhead from repeated SlitModel init when constructing simulation cutouts. For one crowded NIRISS field with ~9000 cutouts, this reduced step runtime by about 60 seconds
