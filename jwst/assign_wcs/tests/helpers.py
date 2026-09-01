@@ -14,10 +14,11 @@ __all__ = [
     "make_mock_dhs_nrca1_regions",
     "make_mock_dhs_nrcalong_rate",
     "make_mock_dhs_nrcalong_regions",
+    "make_mock_dhs_nrca1_rate_sub164",
 ]
 
 
-def _populate_dhs_shared_metadata(model):
+def _populate_dhs_shared_metadata(model, subarray="SUB260STRIPE4_DHS"):
     """
     Populate metadata that is identical between NRCA1 and NRCALONG DHS modes.
 
@@ -35,7 +36,7 @@ def _populate_dhs_shared_metadata(model):
     model.meta.observation.time = "00:00:00.000"
 
     # Subarray
-    model.meta.subarray.name = "SUB260STRIPE4_DHS"
+    model.meta.subarray.name = subarray
     model.meta.subarray.fastaxis = -1
     model.meta.subarray.slowaxis = 2
     model.meta.subarray.num_superstripe = 0
@@ -43,7 +44,10 @@ def _populate_dhs_shared_metadata(model):
     model.meta.subarray.xstart = 1
     model.meta.subarray.xsize = 2048
     model.meta.subarray.ystart = 1
-    model.meta.subarray.ysize = 260
+    if subarray == "SUB164STRIPE4_DHS":
+        model.meta.subarray.ysize = 164
+    else:
+        model.meta.subarray.ysize = 260
 
     # WCS info
     # Example values from jw04453025001_03103_00001-seg001_nrca1
@@ -80,7 +84,7 @@ def _populate_dhs_regions_metadata(model):
 
 def make_mock_dhs_nrca1_rate():
     """
-    Return a mock DHS NRCA1 rate CubeModel.
+    Return a mock DHS NRCA1 rate CubeModel with subarray SUB260STRIPE4_DHS.
 
     Returns
     -------
@@ -157,7 +161,7 @@ def make_mock_dhs_nrca1_regions(sci_model, tmp_path):
 
 def make_mock_dhs_nrcalong_rate():
     """
-    Return a mock DHS NRCALONG rate CubeModel.
+    Return a mock DHS NRCALONG rate CubeModel with subarray SUB260STRIPE4_DHS.
 
     Returns
     -------
@@ -233,3 +237,41 @@ def make_mock_dhs_nrcalong_regions(sci_model, tmp_path):
     model.close()
 
     return str(regions_path)
+
+
+def make_mock_dhs_nrca1_rate_sub164():
+    """
+    Return a mock DHS NRCA1 rate CubeModel with subarray SUB164STRIPE4_DHS.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.CubeModel`
+        Mock NRCA1 DHS rate model.
+    """
+    model = dm.CubeModel((5, 164, 2048))
+    _populate_dhs_shared_metadata(model, subarray="SUB164STRIPE4_DHS")
+
+    model.meta.instrument.name = "NIRCAM"
+    model.meta.instrument.channel = "SHORT"
+    model.meta.instrument.detector = "NRCA1"
+    model.meta.instrument.filter = "F150W2"
+    model.meta.instrument.pupil = "GDHS0"
+    model.meta.instrument.module = "A"
+
+    model.meta.subarray.interleave_reads1 = 1
+    model.meta.subarray.multistripe_reads1 = 1
+    model.meta.subarray.multistripe_reads2 = 40
+    model.meta.subarray.multistripe_skips1 = 1526
+    model.meta.subarray.multistripe_skips2 = 85
+
+    model.meta.wcsinfo.siaf_xref_sci = 1024.5
+    model.meta.wcsinfo.siaf_yref_sci = 24.5
+
+    # Fill each packed stripe row range with the stripe's ID value so tests
+    # can verify that the correct detector region ends up in each output slit.
+    sub_ranges = generate_substripe_ranges(model, science_frame=True)["subarray"]
+    for i, stripe_id in enumerate(NRCA1_DHS_STRIPE_IDS):
+        y0, y1 = sub_ranges[i]
+        model.data[:, y0:y1, :] = stripe_id
+
+    return model
