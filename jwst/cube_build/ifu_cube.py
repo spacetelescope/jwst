@@ -1511,7 +1511,7 @@ class IFUCubeData:
         err : ndarray
            Error associated with ``coord1, coord2``
         dq : ndarray
-           dq associated with ``coord1, coord2``
+           DQ associated with ``coord1, coord2``
         rois_det : float
            Spatial ROI size to use
         roiw_det : ndarray
