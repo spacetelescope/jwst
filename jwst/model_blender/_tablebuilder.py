@@ -20,8 +20,8 @@ class TableBuilder:
     >>> tb = TableBuilder({"meta.filename": "FN"})
     >>> tb.header_to_row({"meta.filename": "foo.fits"})
     >>> tb.build_table()
-    rec.array([('foo.fits',)],
-         dtype=[('FN', '<U8')])
+    rec.array([(b'foo.fits',)],
+         dtype=[('FN', 'S8')])
 
     Parameters
     ----------
