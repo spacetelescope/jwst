@@ -520,6 +520,7 @@ def _construct_simulated_cutout(
         xsize=thisobj_maxx - thisobj_minx + 1,
         ystart=thisobj_miny + 1,
         ysize=thisobj_maxy - thisobj_miny + 1,
-        data=img,
+        # Match SlitModel float32 dtype
+        data=img.astype(np.float32, copy=False),
         spectral_order=order,
     )
