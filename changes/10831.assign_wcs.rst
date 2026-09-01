@@ -1,0 +1,3 @@
+For NIRCam DHS, incorporate x and y offsets from TA to science into reference position,
+update spectral trace calculations to match assumptions in the current specwcs files, and fix a
+couple bugs causing incorrect linkages between stripes and WCS transforms.
