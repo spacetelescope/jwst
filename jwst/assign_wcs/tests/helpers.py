@@ -122,13 +122,9 @@ def make_mock_dhs_nrca1_rate():
 
 def make_mock_dhs_nrca1_regions(sci_model, tmp_path):
     """
-    Write a mock NRCA1 DHS regions reference file and return its path.
+    Write a mock subarray-size NRCA1 DHS regions reference file and return its path.
 
     Stripe IDs run from highest to lowest (10 - 7) as row index increases.
-
-    NOTE: this mock should no longer be needed, since regions files are
-    available via CRDS, but this function is retained for now in case it's
-    useful as a local override.
 
     Parameters
     ----------
@@ -143,8 +139,8 @@ def make_mock_dhs_nrca1_regions(sci_model, tmp_path):
         Absolute path to the saved ASDF regions file.
     """
     # make a full frame regions file to cut to size
-    sub_ranges = generate_substripe_ranges(sci_model, science_frame=True)["full"]
-    regions = np.zeros((2048, 2048), dtype=np.float64)
+    sub_ranges = generate_substripe_ranges(sci_model, science_frame=True)["subarray"]
+    regions = np.zeros(sci_model.data.shape[-2:], dtype=np.float64)
     for i, stripe_id in enumerate(NRCA1_DHS_STRIPE_IDS):
         row_start, row_stop = sub_ranges[i]
         regions[row_start:row_stop, :] = stripe_id

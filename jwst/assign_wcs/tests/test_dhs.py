@@ -2,13 +2,21 @@ import numpy as np
 import pytest
 from gwcs import wcs
 from numpy.testing import assert_allclose
+from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import AssignWcsStep, nircam
 from jwst.assign_wcs.tests.helpers import (
     make_mock_dhs_nrca1_rate,
+    make_mock_dhs_nrca1_regions,
     make_mock_dhs_nrcalong_rate,
 )
 from jwst.assign_wcs.tests.test_nircam import get_reference_files
+
+
+@pytest.fixture
+def mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path):
+    """Create a mock NIRCam DHS NRCA1 regions reference file."""
+    return make_mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path)
 
 
 @pytest.fixture
@@ -189,3 +197,46 @@ def test_assign_wcs_step_nrcalong_dhs(mock_dhs_nrcalong_rate):
     assert_allclose(ra, 265.7, atol=0.1)
     assert_allclose(dec, 66.9, atol=0.1)
     assert np.all(stripe_out == 1)
+
+
+def test_nrca1_subarray_regions(mock_dhs_nrca1_rate, mock_dhs_nrca1_regions):
+    # run assign_wcs with an override regions file that matches the subarray size
+    result = AssignWcsStep.call(mock_dhs_nrca1_rate, override_regions=mock_dhs_nrca1_regions)
+
+    # check that stripes are assigned where they should be
+    x_in = [1000] * 4  # same x for all stripes
+    y_in = 32.5 + np.arange(0, 260, 65)  # center y for each stripe: (32.5, 97.5, 162.5, 227.5)
+    order_in = [1] * 4  # same order for all stripes
+
+    ra, dec, lam_world, order_out, stripe_out = result.meta.wcs(x_in, y_in, order_in)
+    assert_allclose(ra, 265.7, atol=0.1)
+    assert_allclose(dec, 66.9, atol=0.1)
+    assert_allclose(stripe_out, [10, 9, 8, 7])
+
+
+def test_no_stripes_present(mock_dhs_nrca1_rate, mock_dhs_nrca1_regions):
+    # override the regions file with stripes that don't match the specwcs file
+    with datamodels.open(mock_dhs_nrca1_regions) as regions_model:
+        regions_model.regions[regions_model.regions > 0] = 100
+
+        # an error is raised
+        with pytest.raises(ValueError, match="No stripes present"):
+            AssignWcsStep.call(mock_dhs_nrca1_rate, override_regions=regions_model)
+
+
+@pytest.mark.parametrize("missing", ["X", "Y"])
+def test_missing_ref_position(mock_dhs_nrca1_rate, missing):
+    if missing == "X":
+        mock_dhs_nrca1_rate.meta.wcsinfo.siaf_xref_sci = None
+    else:
+        mock_dhs_nrca1_rate.meta.wcsinfo.siaf_yref_sci = None
+
+    # error is raised if either position is missing
+    with pytest.raises(ValueError, match=f"{missing}REF_SCI is missing"):
+        AssignWcsStep.call(mock_dhs_nrca1_rate)
+
+
+def test_missing_regions(mock_dhs_nrca1_rate):
+    # error is raised if regions file is missing
+    with pytest.raises(FileNotFoundError, match="No regions reference file"):
+        AssignWcsStep.call(mock_dhs_nrca1_rate, override_regions="N/A")

@@ -456,7 +456,7 @@ def dhs(input_model, reference_files):
     pipeline : list
         The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
-    if reference_files["regions"] == "":
+    if reference_files["regions"] in ["", "N/A", None]:
         raise FileNotFoundError("No regions reference file provided.")
 
     frames = create_coord_frames()
