@@ -14,15 +14,15 @@ from jwst.assign_wcs.tests.test_nircam import get_reference_files
 
 
 @pytest.fixture
-def mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path):
-    """Create a mock NIRCam DHS NRCA1 regions reference file."""
-    return make_mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path)
-
-
-@pytest.fixture
 def mock_dhs_nrca1_rate():
     """Create a mock DHS NRCA1 rate file."""
     return make_mock_dhs_nrca1_rate()
+
+
+@pytest.fixture
+def mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path):
+    """Create a mock NIRCam DHS NRCA1 regions reference file."""
+    return make_mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path)
 
 
 @pytest.fixture
@@ -62,7 +62,7 @@ def test_dhs_nrca1_roundtrip(create_dhs_nrca1_wcs):
     assert_allclose(order_rec, order_in)
 
     # The y coordinate returned should be at the expected trace position for each stripe:
-    # these are at the center of the stripe, but may be a few pixels up or down.
+    # these are near the center of the stripe, but may be a few pixels up or down.
     # Current calibration is preliminary, so allow a couple pixels tolerance on the
     # expected value.
     expected = [34, 105, 171, 223]

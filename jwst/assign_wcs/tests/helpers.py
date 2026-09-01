@@ -138,7 +138,7 @@ def make_mock_dhs_nrca1_regions(sci_model, tmp_path):
     str
         Absolute path to the saved ASDF regions file.
     """
-    # make a full frame regions file to cut to size
+    # make a regions file matching the subarray size for the input data
     sub_ranges = generate_substripe_ranges(sci_model, science_frame=True)["subarray"]
     regions = np.zeros(sci_model.data.shape[-2:], dtype=np.float64)
     for i, stripe_id in enumerate(NRCA1_DHS_STRIPE_IDS):

@@ -144,5 +144,5 @@ def test_substripe_subarray_transforms(full_frame):
         assert isinstance(transforms[stripe], CompoundModel)
         # x offset is zero for all stripes
         assert transforms[stripe][0].offset.value == 0
-        # y offset
+        # y offset is as expected
         assert transforms[stripe][1].offset.value == expected[i]
