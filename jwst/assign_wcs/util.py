@@ -1075,7 +1075,7 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
     return onslice_ind
 
 
-def get_mosaic_member_wcs(input_model):
+def get_mosaic_member_tweak(input_model):
     """
     Given input model with associated direct image, find matching image WCS.
 
@@ -1101,28 +1101,31 @@ def get_mosaic_member_wcs(input_model):
         direct = ImageModel(direct_file)
         bestsep = 1.0  # deg
         bestfit = -1
+        visit_number = int(input_model.meta.observation.visit_number)
         spec_coord = coord.SkyCoord(
             input_model.meta.wcsinfo.ra_ref,
             input_model.meta.wcsinfo.dec_ref,
             unit=(u.deg, u.deg),
         )
-        for i, wcs in enumerate(direct.member_wcs.instance):
-            member_coord = coord.SkyCoord(
-                wcs["ra_ref"],
-                wcs["dec_ref"],
-                unit=(u.deg, u.deg),
-            )
-            sep = member_coord.separation(spec_coord)
-            if sep.value < bestsep:
-                bestfit = i
-                bestsep = sep.value
+
+        for i, entry in enumerate(direct.member_wcs.instance):
+            if entry["visit_number"] == visit_number:
+                member_coord = coord.SkyCoord(
+                    entry["ra"],
+                    entry["dec"],
+                    unit=(u.deg, u.deg),
+                )
+                sep = member_coord.separation(spec_coord)
+                if sep.value < bestsep:
+                    bestfit = i
+                    bestsep = sep.value
 
         if bestfit >= 0:
             log.info(
                 f"Retrieving WCS from {direct.member_wcs.instance[bestfit]['filename']} "
                 f"with pointing separation of {bestsep * 3600} arcsec."
             )
-            mosaic_wcs = direct.member_wcs.instance[bestfit]["wcs"]
+            mosaic_wcs = direct.member_wcs.instance[bestfit]["tweak"]
 
     except FileNotFoundError:
         log.warning(f"Direct image file {direct_file} not found.")
@@ -1352,7 +1355,7 @@ def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
     xstart = wfss_model.meta.subarray.xstart
     ystart = wfss_model.meta.subarray.ystart
 
-    imwcs = get_mosaic_member_wcs(wfss_model)
+    imwcs = get_mosaic_member_tweak(wfss_model)
     if imwcs is None:
         reference_files = get_wcs_reference_files(wfss_model)
         image_pipeline = imaging(wfss_model, reference_files)
