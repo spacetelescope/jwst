@@ -336,7 +336,6 @@ def _make_simul_cutout(source_id, order, xstart, ystart, data, **fluxmodels):
         data=data.astype(np.float32),
         spectral_order=order,
     )
-    slit.dq = np.zeros(data.shape, dtype=np.uint32)
     for k, v in fluxmodels.items():
         setattr(slit, k, v.astype(np.float32))
     return slit
