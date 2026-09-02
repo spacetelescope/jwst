@@ -20,7 +20,7 @@ from stdatamodels.jwst.transforms.models import (
 from jwst.assign_wcs import pointing
 from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
-    get_mosaic_member_wcs,
+    get_mosaic_member_tweak,
     not_implemented_mode,
     subarray_transform,
     transform_bbox_from_shape,
@@ -482,25 +482,6 @@ def wfss(input_model, reference_files):
     # manner that gives you the originating pixels ra and dec, not the
     # pure ra/dec on the sky from the pointing wcs.
 
-    mosaic_wcs = get_mosaic_member_wcs(input_model)
-
-    if mosaic_wcs is not None:
-        imagepipe = []
-        mos_frames = mosaic_wcs.available_frames
-        for i in range(len(mos_frames) - 1):
-            cframe = getattr(mosaic_wcs, mos_frames[i])
-            trans = mosaic_wcs.get_transform(mos_frames[i], mos_frames[i + 1]) & Identity(2)
-            spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=cframe.name)
-            imagepipe.append((spatial_and_spectral, trans))
-
-        world = getattr(mosaic_wcs, mos_frames[-1])
-        world.name = "sky"
-        imagepipe.append((cf.CompositeFrame([world, spec], name="world"), None))
-
-        grism_pipeline.extend(imagepipe)
-
-        return grism_pipeline
-
     # use the imaging_distortion reference file here
     image_pipeline = imaging(input_model, reference_files)
 
@@ -512,6 +493,16 @@ def wfss(input_model, reference_files):
     imagepipe = []
     world = image_pipeline.pop()[0]
     world.name = "sky"
+
+    # Pull the wcs tweak generated for direct_image partner exposure if available
+    mosaic_tweak = get_mosaic_member_tweak(input_model)
+    if mosaic_tweak is not None:
+        # Extract the tweak frame and transform
+        tweakframe = mosaic_tweak.v2v3corr
+        tweak_xfrm = mosaic_tweak.get_transform("v2v3vacorr", "v2v3corr")
+        tweakframe.name = "v2v3corrdirect"
+        image_pipeline.append([tweakframe, tweak_xfrm])
+
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
         name = cframe.name
