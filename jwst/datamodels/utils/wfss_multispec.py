@@ -62,7 +62,6 @@ def make_wfss_multiexposure(input_list):
     # for calwebb_spec2 it is the opposite, but outer loop (exposures) should have just one element
     for model in results_list:
         for i, spec in enumerate(model.spec):
-            # get the data type for the first spectrum
             if i == 0:
                 # get the input datatype, and give it the same format as a schema
                 # to be compatible with determine_vector_and_meta_columns
