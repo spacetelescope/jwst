@@ -20,8 +20,8 @@ class TableBuilder:
     >>> tb = TableBuilder({"meta.filename": "FN"})
     >>> tb.header_to_row({"meta.filename": "foo.fits"})
     >>> tb.build_table()
-    rec.array([(b'foo.fits',)],
-         dtype=[('FN', 'S8')])
+    rec.array([('foo.fits',)],
+         dtype=[('FN', 'U8')])
 
     Parameters
     ----------
@@ -78,8 +78,6 @@ class TableBuilder:
             if all(i is _MISSING_VALUE for i in items):
                 continue
             array = np.array([np.nan if i is _MISSING_VALUE else i for i in items])
-            if "U" in array.dtype.str:
-                array = array.astype("S")
             table_dtype.append((col, array.dtype))
             arrays.append(array)
         return np.rec.fromarrays(arrays, dtype=table_dtype)
