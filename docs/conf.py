@@ -476,6 +476,7 @@ linkcheck_ignore = [
     "https://jira.stsci.edu/",  # Internal access only
     r"https://.*\.readthedocs\.io",  # 429 Client Error: Too Many Requests
     "https://doi.org",  # CI blocked by service provider (timeout)
+    "https://ui.adsabs.harvard.edu",  # 405 Client Error: Not Allowed for url
     r"https://github\.com/spacetelescope/jwst/(?:issues|pull|blob)",
 ]
 linkcheck_timeout = 180
