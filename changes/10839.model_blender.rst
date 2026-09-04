@@ -1,1 +1,1 @@
-Remove table builder schema modification and casting deferring to a schema-defined HDRTAB.
+Remove direct schema modification and data type casting, deferring the needed handling to a schema-defined HDRTAB.
