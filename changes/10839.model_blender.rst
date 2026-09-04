@@ -1,0 +1,1 @@
+Remove direct schema modification and data type casting for the HDRTAB table, allowing arbitrary columns instead. A placeholder HDRTAB extension is defined in the relevant ``stdatamodels`` schemas.

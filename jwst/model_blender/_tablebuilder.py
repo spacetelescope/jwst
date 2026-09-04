@@ -10,65 +10,6 @@ class _MissingValueType:
 _MISSING_VALUE = _MissingValueType()
 
 
-def _convert_dtype(value):
-    """
-    Convert numpy array column dtype into YAML-compatible format description.
-
-    Parameters
-    ----------
-    value : str, bool, or numpy.dtype
-        The datatype to convert.
-
-    Returns
-    -------
-    new_dtype : str or list
-        The converted datatype.
-    """
-    if "U" in value:
-        # working with a string description
-        str_len = int(value[value.find("U") + 1 :])
-        new_dtype = ["ascii", str_len]
-    elif value == "bool":
-        # cast all bool to int8 to avoid issues on write
-        new_dtype = "int8"
-    else:
-        new_dtype = str(value)
-
-    return new_dtype
-
-
-def table_to_schema(table):
-    """
-    Construct a schema for a table.
-
-    Convert a "table" (a structured ndarray) to a stdatamodels
-    sub-schema that will allow the "table" to be stored to a fits
-    extension HDRTAB.
-
-    Parameters
-    ----------
-    table : ndarray
-        The structured array containing the data (and datatype).
-
-    Returns
-    -------
-    subschema : dict
-        Multiple `~stdatamodels.jwst.datamodels.JwstDataModel`
-        for the "table" datatype.
-    """
-    return {
-        "title": "Combined header table",
-        "fits_hdu": "HDRTAB",
-        "datatype": [
-            {
-                "name": col_name,
-                "datatype": _convert_dtype(str(table.dtype[col_name])),
-            }
-            for col_name in table.dtype.fields
-        ],
-    }
-
-
 class TableBuilder:
     """
     Class to build a metadata table.
