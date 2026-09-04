@@ -1971,3 +1971,4 @@ def test_hdrtab(tmp_cwd, nircam_rate, blendheaders):
             return  # nothing more to check
         assert "HDRTAB" in ff
         tbl = ff["HDRTAB"].data
+        assert tbl["FILENAME"].size == 2
