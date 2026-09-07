@@ -31,7 +31,7 @@ repos:
       - id: text-unicode-replacement-char
   # lint and format
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.1
+    rev: v0.16.6
     hooks:
       - id: ruff-check
         args:
@@ -40,13 +40,13 @@ repos:
       - id: ruff-format
   # C style
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v22.1.8
+    rev: v23.1.0
     hooks:
       - id: clang-format
         types_or: [c]
   # type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.0
+    rev: v2.3.1
     hooks:
       - id: mypy
   # spell-checking
@@ -61,7 +61,7 @@ repos:
           - tomli
   # validate change log and fragments in `changes/`
   - repo: https://github.com/twisted/towncrier
-    rev: 25.8.0
+    rev: 26.9.0
     hooks:
       - id: towncrier-check
   # format YAML and Markdown
@@ -79,7 +79,7 @@ repos:
   #     - id: taplo-format
   # validate numpy-style docstrings
   - repo: https://github.com/numpy/numpydoc
-    rev: v1.10.0
+    rev: v1.11.0rc0
     hooks:
       - id: numpydoc-validation
         exclude: |
