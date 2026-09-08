@@ -388,7 +388,7 @@ def _match_simulated_cutouts(output_model, obs):
         or ``None`` where no match was found.
     """
     simul_sids = [s.source_id for s in obs.simulated_cutouts]
-    simul_orders = [s.meta.wcsinfo.spectral_order for s in obs.simulated_cutouts]
+    simul_orders = [s.spectral_order for s in obs.simulated_cutouts]
 
     matched_flat_simuls = []
     good_idxs = []
