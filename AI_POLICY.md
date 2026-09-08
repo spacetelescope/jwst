@@ -7,7 +7,7 @@ STScI software maintainers welcome contributions, including those developed with
     2. Contributors must understand and be able to explain all changes during review and address any concerns raised by maintainers.
     3. Contributors are responsible for ensuring all submitted code complies with STScI licensing, regardless of whether generative AI tools were used.
 3. Disclosure
-    1. Committers are required to disclose in the pull request if AI tools were used to generate any part of the contribution. We encourage committers to also apply a label of `ai-assisted` to pull requests that leveraged AI tools.
+    1. Committers are required to disclose in the pull request if AI tools were used to generate any part of the contribution. We encourage committers to specify which tool was used and to also apply a label of `ai-assisted` to pull requests that leveraged AI tools.
     2. Presence of this `AI_POLICY.md` file indicates AI tools may have been used to assist with portions of this work.
 4. Authentic engagement
     1. The pull request process is collaborative and iterative. Contributors are expected to actively engage with reviewer feedback themselves. Copying and pasting replies to/from a generative AI tool does not count as engaging with the reviewer.
