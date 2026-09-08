@@ -79,7 +79,7 @@ repos:
   #     - id: taplo-format
   # validate numpy-style docstrings
   - repo: https://github.com/numpy/numpydoc
-    rev: v1.11.0rc0
+    rev: v1.10.0
     hooks:
       - id: numpydoc-validation
         exclude: |
