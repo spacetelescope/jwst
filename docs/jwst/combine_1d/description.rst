@@ -72,8 +72,9 @@ for all sources in the observation.
 The spectral table for this model contains the same columns as the `~stdatamodels.jwst.datamodels.CombinedSpecModel`, but
 each row in the table contains the combined spectrum for a single source. The spectral columns
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
-spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
-These metadata fields include:
+spectral tables for this model have extra 2D columns CONTAM_FLUX and CONTAM_SURF_BRIGHT
+for the contamination estimate, and extra 1D columns to contain the metadata
+for the spectrum in each row. These metadata fields include:
 
 * SOURCE_ID
 * N_ALONGDISP
@@ -85,6 +86,12 @@ Note that the vector columns have the same length for all the sources in the tab
 the number of elements in the table rows is set by the spectrum with the most data points.
 The other spectra are NaN-padded to match the longest spectrum,
 and the number of valid data points for each spectrum is recorded in the N_ALONGDISP column.
+
+.. note::
+    The CONTAM_FLUX and CONTAM_SURF_BRIGHT columns are computed from the input x1d files in
+    an identical way to the FLUX and SURF_BRIGHT columns, respectively. As it currently stands,
+    the pipeline only combines fluxes from a single orient, and in that case all input spectra
+    should be contaminated in the same way. The columns are NaN-filled if the WfssContamStep was not run.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200)
 in a `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel`::
