@@ -25,7 +25,10 @@ def _populate_dhs_shared_metadata(model, subarray="SUB260STRIPE4_DHS"):
     Updates *model* in place.
     """
     # Aperture
-    model.meta.aperture.pps_name = "NRCA5_260STRIPE4_DHS_F322W2"
+    if subarray == "SUB164STRIPE4_DHS":
+        model.meta.aperture.pps_name = "NRCA5_164STRIPE4_DHS_F322W2"
+    else:
+        model.meta.aperture.pps_name = "NRCA5_260STRIPE4_DHS_F322W2"
 
     # Exposure
     model.meta.exposure.type = "NRC_TSGRISM"

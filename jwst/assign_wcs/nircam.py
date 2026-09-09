@@ -473,10 +473,10 @@ def dhs(input_model, reference_files):
     with NIRCAMGrismModel(reference_files["specwcs"]) as f:
         orders = f.orders.instance
         fieldpoints = f.fieldpoints.instance
-        all_displ = f.displ.instance
-        all_dispx = f.dispx.instance
-        all_dispy = f.dispy.instance
-        all_stripes = f.stripes.instance
+        base_displ = f.displ.instance
+        base_dispx = f.dispx.instance
+        base_dispy = f.dispy.instance
+        base_stripes = f.stripes.instance
 
     # Get the substripe ranges in full and subarray coordinates
     stripe_ranges = generate_substripe_ranges(input_model, science_frame=True)
@@ -489,9 +489,9 @@ def dhs(input_model, reference_files):
         # the new structure to allow both to pass through this method.
         subarray_stripenum = len(stripe_ranges["subarray"])
         stripes = np.arange(1, subarray_stripenum + 1)
-        displ = [all_displ] * subarray_stripenum
-        dispx = [all_dispx] * subarray_stripenum
-        dispy = [all_dispy] * subarray_stripenum
+        displ = [base_displ] * subarray_stripenum
+        dispx = [base_dispx] * subarray_stripenum
+        dispy = [base_dispy] * subarray_stripenum
 
         # Update the region map to reflect the assigned stripe IDs: input map
         # has the same value for all stripe regions
@@ -513,12 +513,12 @@ def dhs(input_model, reference_files):
         for i, fieldpoint in enumerate(fieldpoints):
             if fieldpoint not in input_model.meta.aperture.pps_name:
                 continue
-            if all_stripes[i] not in region_stripes:
+            if base_stripes[i] not in region_stripes:
                 continue
-            displ.append(all_displ[i])
-            dispx.append(all_dispx[i])
-            dispy.append(all_dispy[i])
-            stripes.append(all_stripes[i])
+            displ.append(base_displ[i])
+            dispx.append(base_dispx[i])
+            dispy.append(base_dispy[i])
+            stripes.append(base_stripes[i])
 
         if len(stripes) == 0:
             raise ValueError("No stripes present in both regions and specwcs reference files.")
