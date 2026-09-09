@@ -5,25 +5,91 @@ from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
+from jwst.regtest.regtestdata import RTData, trim_tso_data
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
+INPUT_DATA_PATH = "miri/lrs"
+RTDATA_TESTING_PATH = "rtdata_testing"
 DATASET1_ID = "jw01536028001_03103_00001-seg001_mirimage"
 DATASET2_ID = "jw01536028001_03103_00001-seg002_mirimage"
-DATASET3_ID = "jw01281001001_04103_00001-seg002_trim_mirimage"
+# DATASET3_ID = "jw01281001001_04103_00001-seg002_trim_mirimage"
+DATASET3_ID = "jw01281001001_04103_00001-seg002_mirimage_mod"
 ASN3_FILENAME = "jw01536-o028_20221202t215749_tso3_00001_asn.json"
 PRODUCT_NAME = "jw01536-o028_t008_miri_p750l-slitlessprism"
 ASN_ID = "o028"
+# DATASET4_ID = "jw04496004001_03103_00001-seg001_mirimage_truncated"
+DATASET4_ID = "jw04496004001_03103_00001-seg001_mirimage_mod"
+TARG_DATASET4 = "jw04496004001_03102_00001-seg001_mirimage_rate.fits"
+
+
+INPUT_DATA = {
+    DATASET1_ID: RTData(
+        file_name=DATASET1_ID + "_uncal.fits",
+        path=INPUT_DATA_PATH,
+    ),
+    DATASET2_ID: RTData(
+        file_name=DATASET2_ID + "_calints.fits",
+        path=INPUT_DATA_PATH,
+    ),
+    DATASET3_ID: RTData(
+        file_name=DATASET3_ID + "_uncal.fits",
+        path=RTDATA_TESTING_PATH,
+        from_mast=True,
+        mod_code="trim_tso",
+    ),
+    ASN3_FILENAME: RTData(
+        file_name=ASN3_FILENAME,
+        path=INPUT_DATA_PATH,
+        from_mast=False,
+        asn_files=[
+            "jw01536028001_03103_00001-seg001_mirimage_calints.fits",
+            "jw01536028001_03103_00001-seg002_mirimage_calints.fits",
+        ],
+        asn_files_from_mast=True,
+        mod_code="N/A",
+        comment="N/A",
+    ),
+    DATASET4_ID: RTData(
+        file_name=DATASET4_ID + "_rateints.fits",
+        path=RTDATA_TESTING_PATH,
+        from_mast=True,
+        mod_code="trim_tso",
+    ),
+    "jw04496004001_03102_00001-seg001_mirimage_rate.fits": RTData(
+        file_name="jw04496004001_03102_00001-seg001_mirimage_rate.fits",
+        path=INPUT_DATA_PATH,
+        from_mast=True,
+    ),
+}
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata]
+
+
+def trim_tso():
+    input_data = {
+        INPUT_DATA[DATASET3_ID].file_name: {
+            "ints_to_keep": 20,
+            "intstart": 133,
+            "ints_offset": 14,
+        },
+        INPUT_DATA[DATASET4_ID].file_name: {
+            "ints_to_keep": 10,
+            "intstart": 1,
+            "ints_offset": 0,
+        },
+    }
+
+    for file, fdict in input_data.items():
+        trim_tso_data(file, fdict["ints_to_keep"], fdict["intstart"], fdict["ints_offset"])
 
 
 @pytest.fixture(scope="module")
 def run_tso1_pipeline(rtdata_module):
     """Run the calwebb_detector1 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
-    rtdata.get_data(f"miri/lrs/{DATASET1_ID}_uncal.fits")
+    rtdata.get_data(INPUT_DATA[DATASET1_ID].path + "/" + INPUT_DATA[DATASET1_ID].file_name)
 
     args = [
         "calwebb_detector1",
@@ -44,7 +110,7 @@ def run_detector1_pipeline(rtdata_module):
     Focusing on the steps that depend on integration # and not covered by run_tso1_pipeline.
     Also test running RSC step"""
     rtdata = rtdata_module
-    rtdata.get_data(f"miri/lrs/{DATASET3_ID}_uncal.fits")
+    rtdata.get_data(INPUT_DATA[DATASET3_ID].path + "/" + INPUT_DATA[DATASET3_ID].file_name)
 
     args = [
         "calwebb_detector1",
@@ -62,7 +128,7 @@ def run_detector1_pipeline(rtdata_module):
 def run_detector1_pipeline_emicorr_joint(rtdata_module):
     """Run detector1 with an alternate emicorr algorithm."""
     rtdata = rtdata_module
-    rtdata.get_data(f"miri/lrs/{DATASET3_ID}_uncal.fits")
+    rtdata.get_data(INPUT_DATA[DATASET3_ID].path + "/" + INPUT_DATA[DATASET3_ID].file_name)
 
     args = [
         "calwebb_detector1",
@@ -98,8 +164,8 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module, resource_tracker):
 def run_tso3_pipeline(run_tso_spec2_pipeline, rtdata_module, resource_tracker):
     """Run the calwebb_tso3 pipeline on the output of run_spec2_pipeline."""
     rtdata = rtdata_module
-    rtdata.get_data(f"miri/lrs/{DATASET2_ID}_calints.fits")
-    rtdata.get_data(f"miri/lrs/{ASN3_FILENAME}")
+    rtdata.get_data(INPUT_DATA[DATASET2_ID].path + "/" + INPUT_DATA[DATASET2_ID].file_name)
+    rtdata.get_data(INPUT_DATA[ASN3_FILENAME].path + "/" + INPUT_DATA[ASN3_FILENAME].file_name)
 
     args = [
         "calwebb_tso3",
@@ -266,13 +332,12 @@ def run_spec2_slitless_targ_centroid(rtdata_module):
     rtdata = rtdata_module
 
     # science exposure
-    sci = rtdata.get_data(
-        "miri/lrs/jw04496004001_03103_00001-seg001_mirimage_truncated_rateints.fits"
-    )
+    sci = rtdata.get_data(INPUT_DATA[DATASET4_ID].path + "/" + INPUT_DATA[DATASET4_ID].file_name)
 
     # target acquisition verification image
-    targ_fname = "jw04496004001_03102_00001-seg001_mirimage_rate.fits"
-    taq = rtdata.get_data(f"miri/lrs/{targ_fname}")
+    taq = rtdata.get_data(
+        INPUT_DATA[TARG_DATASET4].path + "/" + INPUT_DATA[TARG_DATASET4].file_name
+    )
 
     args = [
         "calwebb_spec2",
@@ -291,7 +356,7 @@ def test_miri_lrs_slitless_spec2_targ_centroid(
     """Compare the output of a MIRI LRS slitless calwebb_spec2 pipeline including targ_centroid step."""
     rtdata = rtdata_module
 
-    output_filename = f"jw04496004001_03103_00001-seg001_mirimage_truncated_{step_suffix}.fits"
+    output_filename = f"{DATASET4_ID}_{step_suffix}.fits"
     rtdata.output = output_filename
     rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso_spec2/{output_filename}")
 

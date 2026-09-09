@@ -3,12 +3,15 @@ import os.path as op
 import pprint
 import re
 import sys
+from dataclasses import dataclass, field
 from difflib import unified_diff
 from glob import glob as _sys_glob
 from pathlib import Path
 
 import asdf
+import numpy as np
 import requests
+from astropy.io import fits
 from ci_watson.artifactory_helpers import (
     BigdataError,
     check_url,
@@ -18,7 +21,7 @@ from ci_watson.artifactory_helpers import (
 
 from jwst.associations import load_asn
 from jwst.lib.file_utils import pushdir
-from jwst.lib.suffix import replace_suffix
+from jwst.lib.suffix import SUFFIXES_TO_ADD, _calculated_suffixes, replace_suffix
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
@@ -271,8 +274,8 @@ class RegtestData:
 
         Parameters
         ----------
-        path : str
-            The remote path
+        path : str or RTData
+            The remote path or the ad hoc RT data class
 
         docopy : bool
             Switch to control whether or not to copy a file
@@ -285,6 +288,10 @@ class RegtestData:
             If an association is the input, retrieve the members.
             Otherwise, do not.
         """
+        rtdata_obj = None
+        if not isinstance(path, str):
+            rtdata_obj = path
+            path = rtdata_obj.path + "/" + rtdata_obj.file_name
         if path is None:
             path = self.input_remote
         else:
@@ -304,6 +311,13 @@ class RegtestData:
                 for member in product["members"]:
                     fullpath = os.path.join(os.path.dirname(self.input_remote), member["expname"])
                     get_bigdata(self._inputs_root, self.env, fullpath, docopy=self.docopy)
+
+                    # verify that manually written input data matches the files in the asn file
+                    if rtdata_obj is not None:
+                        if member["expname"] not in rtdata_obj.asn_files:
+                            raise ValueError(
+                                f"File {member['expname']} missing in list of RTData.asn_members!"
+                            )
 
     def to_asdf(self, path):
         """Write the RegtestData object to an ASDF file."""
@@ -538,3 +552,118 @@ def _data_glob_url(repo, path, glob, root):
         raise KeyError(
             f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}"
         )
+
+
+def find_suffix(fname):
+    """
+    Find the suffix of a file name.
+
+    Parameters
+    ----------
+    fname : str
+        File name to search.
+
+    Returns
+    -------
+    suffix : str
+        Pipeline suffix found.
+    """
+    suffix = None
+    for sfx in SUFFIXES_TO_ADD:
+        if sfx in fname:
+            if fname.split(sfx)[0].endswith("_"):
+                suffix = sfx
+                break
+    if suffix is None:
+        for sfx in _calculated_suffixes:
+            if sfx in fname:
+                if fname.split(sfx)[0].endswith("_"):
+                    suffix = sfx
+                    break
+    if suffix is None:
+        raise ValueError(f"Known suffix not found in file name: {fname}")
+    return suffix
+
+
+def mk_mod_name(file_basename):
+    """
+    Make the modified file name.
+
+    Parameters
+    ----------
+    file_basename : str
+        File name to modify.
+
+    Returns
+    -------
+    modfname : str
+        File name with 'mod' suffix.
+    """
+    suffix = find_suffix(file_basename)
+    modfname = file_basename.replace(suffix, "mod_" + suffix)
+    return modfname
+
+
+def trim_tso_data(file, ints_to_keep, intstart, ints_offset):
+    """
+    Trim TSO data and save into new file in the same directory as the input file.
+
+    Parameters
+    ----------
+    file : str
+        Full path and name of the file name to trim.
+    ints_to_keep : int
+        Number of integrations to keep.
+    intstart : int
+        Starting integration number.
+    ints_offset : int
+        Offset of integration number to start the trim in the array.
+    """
+    hdulist = fits.open(file)
+    hdu_count = len(hdulist)
+    # Trim the desired extensions and set the keywords
+    hdulist[0].header["INTSTART"] = intstart
+    hdulist[0].header["INTEND"] = intstart + ints_to_keep
+    for ext in range(hdu_count):
+        if hdulist[ext].name == "INT_TIMES":
+            trimmed_tab = hdulist[ext].data[ints_offset : ints_offset + ints_to_keep]
+            hdulist[ext].data = trimmed_tab
+        data = hdulist[ext].data
+        if len(np.shape(data)) > 2:
+            trimmed_data = hdulist[ext].data[ints_offset : ints_offset + ints_to_keep, ...]
+            hdulist[ext].data = trimmed_data
+    file_path = Path(file)
+    modfname = mk_mod_name(file_path.name)
+    trimmed_file = file_path.parent / modfname
+    hdulist.writeto(trimmed_file, overwrite=True)
+    hdulist.close()
+
+
+@dataclass
+class RTData:
+    """Class to contain all information about a regression test data file."""
+
+    file_name: str
+    path: str
+    from_mast: bool = True
+    mod_code: str = "N/A"
+    comment: str = "N/A"
+    asn_files: list = field(default_factory=list)
+    asn_files_from_mast: bool = True
+
+    def __post_init__(self):
+        if ".json" in self.file_name:
+            if len(self.asn_files) == 0:
+                raise ValueError(
+                    "Association files expected to be listed in the RTData.asn_files attribute."
+                )
+        if self.mod_code != "N/A" and self.from_mast:
+            if "mod" not in self.file_name:
+                raise ValueError("Modified file does not have the 'mod' suffix.")
+            else:
+                original_fname = self.file_name.replace("_mod", "")
+                if self.file_name != mk_mod_name(original_fname):
+                    raise ValueError(
+                        "Suffix 'mod' should be right before pipeline suffix. "
+                        "Use function mk_mod_name."
+                    )
