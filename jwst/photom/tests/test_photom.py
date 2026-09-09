@@ -225,6 +225,7 @@ def create_input(
                 tab["FLUX_VAR_FLAT"] = var_f
 
                 mod = datamodels.SpecModel(spec_table=tab)
+                _add_contam_columns(mod)
                 mod.source_id = 1000
                 mod.meta.group_id = "0"
                 mod.spectral_order = k + 1
@@ -326,6 +327,7 @@ def create_input(
                 tab["FLUX_VAR_RNOISE"] = var_r
                 tab["FLUX_VAR_FLAT"] = var_f
                 mod = datamodels.SpecModel(spec_table=tab)
+                _add_contam_columns(mod)
                 mod.source_id = 1000
                 mod.meta.group_id = "0"
                 mod.spectral_order = k + 1
@@ -424,6 +426,33 @@ def create_input(
         input_model.meta.subarray.name = subarray
 
     return input_model
+
+
+def _add_contam_columns(model):
+    """
+    Update SpecModel in place to have contam columns.
+
+    Parameters
+    ----------
+    model : SpecModel
+        Input model.
+    """
+    tab = model.spec_table
+    nelem = len(tab)
+    otab_list = list(zip(*tab.tolist()))
+    contam_flux = np.arange(nelem, dtype=np.float32) / 10.0
+    otab_list.insert(2, contam_flux)
+    contam_surf_bright = np.arange(nelem, dtype=np.float32) / 100.0
+    otab_list.insert(7, contam_surf_bright)
+    # Need to modify the dtype, but it's immutable.
+    # Use descr to get it as a list
+    otab_dtype = tab.dtype
+    descr = otab_dtype.descr
+    descr.insert(2, ("CONTAM_FLUX", float))
+    descr.insert(7, ("CONTAM_SURF_BRIGHT", float))
+    otab_dtype = np.dtype(descr)
+    new_tab = np.array(list(zip(*otab_list)), dtype=otab_dtype)
+    model.spec_table = new_tab
 
 
 def create_photom_nrs_fs(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
