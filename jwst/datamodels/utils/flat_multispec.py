@@ -262,19 +262,33 @@ def expand_table(spec):
     all_columns = np.array([str(x) for x in spec.spec_table.dtype.names])
     new_spec_list = []
     n_spectra = len(spec.spec_table)
+
+    # handle contam_flux/contam_surf_bright for WFSS modes
+    data_type = datamodels.SpecModel().schema["properties"]["spec_table"]["datatype"]
+    columns_to_copy = [col["name"] for col in data_type]
+    out_dtype = datamodels.SpecModel().get_dtype("spec_table")
+    has_contam = "CONTAM_FLUX" in all_columns
+    if has_contam:
+        descr = out_dtype.descr
+        idx = columns_to_copy.index("FLUX") + 1
+        columns_to_copy.insert(idx, "CONTAM_FLUX")
+        descr.insert(idx, ("CONTAM_FLUX", float))
+        idx = columns_to_copy.index("SURF_BRIGHT") + 1
+        columns_to_copy.insert(idx, "CONTAM_SURF_BRIGHT")
+        descr.insert(idx, ("CONTAM_SURF_BRIGHT", float))
+        out_dtype = np.dtype(descr)
+    columns_to_copy = np.array(columns_to_copy)
+
     for i in range(n_spectra):
         # initialize a new SpecModel
         spec_row = spec.spec_table[i]
         n_elements = int(spec_row["N_ALONGDISP"])
-        new_spec = datamodels.SpecModel()
-        data_type = new_spec.schema["properties"]["spec_table"]["datatype"]
-        columns_to_copy = np.array([col["name"] for col in data_type])
 
         # Copy over the vector columns from input spec_table to output spec_table
-        spec_table = np.empty(n_elements, dtype=new_spec.get_dtype("spec_table"))
+        spec_table = np.empty(n_elements, dtype=out_dtype)
         for col_name in columns_to_copy:
             spec_table[col_name] = spec_row[col_name][:n_elements]
-        new_spec.spec_table = spec_table
+        new_spec = datamodels.SpecModel(spec_table=spec_table)
 
         # Copy over the metadata columns from input spec_table to the spectrum's metadata
         meta_columns = all_columns[~np.isin(all_columns, columns_to_copy)].tolist()

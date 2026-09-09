@@ -249,7 +249,10 @@ def make_wfss_multicombined(results_list):
     n_sources = len(results_list)
 
     # figure out column names and dtypes
-    input_datatype = dm.CombinedSpecModel().schema["properties"]["spec_table"]["datatype"]
+    # use the actual input dtype, rather than the static CombinedSpecModel schema,
+    # to correctly retain any extra columns (i.e. contam_flux, contam_surf_bright)
+    dt = results_list[0].spec[0].spec_table.dtype.descr
+    input_datatype = [{"name": name, "datatype": str(dtype)} for name, dtype in dt]
     output_schema = dm.WFSSMultiCombinedSpecModel().schema
     output_table_schema = output_schema["properties"]["spec"]["items"]["properties"]["spec_table"]
     output_datatype = output_table_schema["datatype"]
