@@ -10,6 +10,11 @@ from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
 
 from jwst.wfss_contam.disperse import disperse
+from jwst.wfss_contam.trace_pdt import (
+    build_trace_pdt,
+    get_grism_detector_transform,
+    native_wavelength_grid,
+)
 
 log = logging.getLogger(__name__)
 
@@ -234,13 +239,13 @@ class Observation:
     def chunk_sources(
         self,
         order,
-        wmin,
-        wmax,
+        lambdas,
         sens_waves,
         sens_response,
         selected_ids=None,
         max_pixels=1e5,
         basis_models=None,
+        trace_pdt=None,
     ):
         """
         Chunk the sources into groups of max_pixels.
@@ -249,10 +254,9 @@ class Observation:
         ----------
         order : int
             Spectral order to process
-        wmin : float
-            Minimum wavelength for dispersed spectra
-        wmax : float
-            Maximum wavelength for dispersed spectra
+        lambdas : ndarray
+            Wavelengths at which to compute dispersed pixel values for this order,
+            precomputed once per order.
         sens_waves : ndarray
             Wavelength array from photom reference file
         sens_response : ndarray
@@ -266,6 +270,9 @@ class Observation:
             Legendre polynomials from 1st order up to a given max order, e.g.
             [P1(x), P2(x), ...], the coefficients of which are linearly fit later.
             If None, no models are included in the output.
+        trace_pdt : `~jwst.wfss_contam.trace_pdt.TracePDT`, optional
+            Precomputed pixel dispersion table for this spectral order.
+            If None, no lookup table is used.
 
         Returns
         -------
@@ -321,22 +328,30 @@ class Observation:
                     self.band_wavelengths,
                     chunk_source_ids,
                     order,
-                    wmin,
-                    wmax,
+                    lambdas,
                     sens_waves,
                     sens_response,
                     self.direct_image_wcs,
                     self.grism_wcs,
                     self.naxis,
-                    self.oversample_factor,
                     basis_models,
+                    trace_pdt,
                 ]
             )
 
         return disperse_args
 
     def disperse_order(
-        self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, basis_models=None
+        self,
+        order,
+        wmin,
+        wmax,
+        sens_waves,
+        sens_response,
+        selected_ids=None,
+        basis_models=None,
+        pdt_spacing=None,
+        pdt_wl_oversample=1,
     ):
         """
         Disperse the sources for a given spectral order, with multiprocessing.
@@ -361,18 +376,61 @@ class Observation:
             Flux distributions to evaluate at each wavelength. Typically these will be single
             polynomial orders, e.g. [lambda x: x, lambda x: x^2], ...] the coefficients of which
             are linearly fit later. If None, no models are included in the output.
+        pdt_spacing : int, optional
+            Spacing of grid points to sample along the x and y axes
+            when building a cached lookup table for the trace-shape transform. If None
+            (the default), no lookup table is used and the exact transform is evaluated directly
+            for every pixel.
+        pdt_wl_oversample : float, optional
+            Oversampling factor for the lookup table's wavelength grid, relative to the
+            native dispersion scale. If None, the lookup table's wavelength grid instead
+            exactly matches the dispersal wavelength grid, allowing
+            `~jwst.wfss_contam.trace_pdt.TracePDT.evaluate_grid` to skip wavelength-axis
+            interpolation entirely. Only used if ``pdt_spacing`` is not None.
         """
+        # Determine the wavelength grid once per order.
+        # native spacing does not vary significantly across the detector, so a single
+        # representative pixel is good enough.
+        imgxy_to_grismxy = get_grism_detector_transform(self.grism_wcs)
+        nx, ny = self.naxis
+        lambdas = native_wavelength_grid(
+            imgxy_to_grismxy,
+            order,
+            wmin,
+            wmax,
+            (nx - 1) / 2.0,
+            (ny - 1) / 2.0,
+            oversample_factor=self.oversample_factor,
+        )
+
+        trace_pdt_obj = None
+        if pdt_spacing is not None:
+            if pdt_wl_oversample is None:
+                trace_pdt_obj = build_trace_pdt(
+                    self.grism_wcs, order, wmin, wmax, self.naxis, pdt_spacing, lam_grid=lambdas
+                )
+            else:
+                trace_pdt_obj = build_trace_pdt(
+                    self.grism_wcs,
+                    order,
+                    wmin,
+                    wmax,
+                    self.naxis,
+                    pdt_spacing,
+                    wave_oversample_factor=pdt_wl_oversample,
+                )
+
         # generate lists of input parameters for the disperse function
         # for each chunk of sources
         disperse_args = self.chunk_sources(
             order,
-            wmin,
-            wmax,
+            lambdas,
             sens_waves,
             sens_response,
             selected_ids=selected_ids,
             max_pixels=self.max_pixels_per_chunk,
             basis_models=basis_models,
+            trace_pdt=trace_pdt_obj,
         )
         t0 = time.time()
         if self.max_cpu > 1:
