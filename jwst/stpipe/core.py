@@ -14,7 +14,6 @@ from stpipe import Step as _Step
 
 from jwst import __version__, __version_commit__
 from jwst.associations import Association
-from jwst.associations.load_as_asn import LoadAsLevel2Asn
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib import exposure_types
 from jwst.lib.suffix import remove_suffix
@@ -125,6 +124,9 @@ class JwstStep(_Step):
         """
         # Prevent circular import:
         from jwst.associations.lib.update_path import update_key_value
+        from jwst.associations.load_as_asn import (
+            LoadAsLevel2Asn,  # PLC0415: Prevent circular import
+        )
 
         # If input has no parent path and input_dir is provided, prepend input_dir to asn expname
         if (
