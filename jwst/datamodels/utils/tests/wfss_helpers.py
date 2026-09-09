@@ -43,7 +43,7 @@ def example_spec():
     spec = dm.SpecModel()
     spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
     recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
-    # add contam columns
+    # add contam columns right after flux and sb columns. matches order in schema
     recarray_dtype.insert(2, ("CONTAM_FLUX", "f4"))
     recarray_dtype.insert(7, ("CONTAM_SURF_BRIGHT", "f4"))
     spec.meta.wcs = mock_wcs()

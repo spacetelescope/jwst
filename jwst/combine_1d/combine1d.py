@@ -477,6 +477,7 @@ class OutputSpectrumModel:
                 weight[clipped] = 0
                 if contam_flux is not None:
                     contam_flux[clipped] = np.nan
+                if contam_surf_bright is not None:
                     contam_surf_bright[clipped] = np.nan
 
             # Perform a weighted sum of the input spectra
@@ -490,6 +491,7 @@ class OutputSpectrumModel:
             count = np.nansum(count, axis=0)
             if contam_flux is not None:
                 contam_flux = np.nansum(contam_flux * weight, axis=0) / sum_weight_nonzero
+            if contam_surf_bright is not None:
                 contam_surf_bright = (
                     np.nansum(contam_surf_bright * weight, axis=0) / sum_weight_nonzero
                 )

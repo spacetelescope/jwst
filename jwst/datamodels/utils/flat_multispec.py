@@ -263,19 +263,18 @@ def expand_table(spec):
     new_spec_list = []
     n_spectra = len(spec.spec_table)
 
-    # handle contam_flux/contam_surf_bright for WFSS modes
+    # handle contam for WFSS modes
     data_type = datamodels.SpecModel().schema["properties"]["spec_table"]["datatype"]
     columns_to_copy = [col["name"] for col in data_type]
     out_dtype = datamodels.SpecModel().get_dtype("spec_table")
     has_contam = "CONTAM_FLUX" in all_columns
     if has_contam:
+        # indexing matches WFSSSpecModel schema
         descr = out_dtype.descr
-        idx = columns_to_copy.index("FLUX") + 1
-        columns_to_copy.insert(idx, "CONTAM_FLUX")
-        descr.insert(idx, ("CONTAM_FLUX", float))
-        idx = columns_to_copy.index("SURF_BRIGHT") + 1
-        columns_to_copy.insert(idx, "CONTAM_SURF_BRIGHT")
-        descr.insert(idx, ("CONTAM_SURF_BRIGHT", float))
+        columns_to_copy.insert(2, "CONTAM_FLUX")
+        descr.insert(2, ("CONTAM_FLUX", float))
+        columns_to_copy.insert(7, "CONTAM_SURF_BRIGHT")
+        descr.insert(7, ("CONTAM_SURF_BRIGHT", float))
         out_dtype = np.dtype(descr)
     columns_to_copy = np.array(columns_to_copy)
 
