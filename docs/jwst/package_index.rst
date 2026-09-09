@@ -44,6 +44,7 @@ Package Index
    outlier_detection/index.rst
    pathloss/index.rst
    persistence/index.rst
+   pfpc/index.rst
    photom/index.rst
    picture_frame/index.rst
    pipeline/index.rst

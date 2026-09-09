@@ -138,6 +138,8 @@ documentation on each reference file.
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`pathloss <pathloss_step>`                       | :ref:`PATHLOSS <pathloss_reffile>`               |
 +-------------------------------------------------------+--------------------------------------------------+
+| :ref:`pfpc <pfpc_step>`                               | :ref:`PFPC <pfpc_reffile>`                       |
++-------------------------------------------------------+--------------------------------------------------+
 | :ref:`photom <photom_step>`                           | :ref:`PHOTOM <photom_reffile>`                   |
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`AREA <area_reffile>`                       |
@@ -271,6 +273,8 @@ documentation on each reference file.
 | :ref:`PASTASOSS <pastasoss_reffile>`             | :ref:`extract_1d <extract_1d_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PATHLOSS <pathloss_reffile>`               | :ref:`pathloss <pathloss_step>`                       |
++--------------------------------------------------+-------------------------------------------------------+
+| :ref:`PFPC <pfpc_reffile>`                       | :ref:`pfpc <pfpc_step>`                               |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PHOTOM <photom_reffile>`                   | :ref:`photom <photom_step>`                           |
 +                                                  +-------------------------------------------------------+
@@ -512,6 +516,7 @@ S_MTWCS     Assign moving target WCS
 S_OUTLIR    Outlier detection
 S_PCTFRM    Picture frame correction
 S_PERSIS    Persistence correction
+S_PFPC      Point fixed pattern correction
 S_PHOTOM    Photometric (absolute flux) calibration
 S_PSFALI    Coronagraphic PSF alignment
 S_PSFSTK    Coronagraphic PSF stacking

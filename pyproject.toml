@@ -546,6 +546,11 @@ name = 'persistence (detector1 NIR)'
 showcontent = true
 
 [[tool.towncrier.type]]
+directory = "pfpc"
+name = "pfpc (spec3)"
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "photom"
 name = 'photom (image2, spec2)'
 showcontent = true
