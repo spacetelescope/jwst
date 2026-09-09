@@ -14,6 +14,7 @@ from stpipe import Step as _Step
 
 from jwst import __version__, __version_commit__
 from jwst.associations import Association
+from jwst.associations.load_as_asn import LoadAsLevel2Asn
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib import exposure_types
 from jwst.lib.suffix import remove_suffix
@@ -124,10 +125,15 @@ class JwstStep(_Step):
         """
         # Prevent circular import:
         from jwst.associations.lib.update_path import update_key_value
-        from jwst.associations.load_as_asn import LoadAsLevel2Asn
 
-        if isinstance(obj, (str, Path)):
+        # If input has no parent path and input_dir is provided, prepend input_dir to asn expname
+        if (
+            isinstance(obj, (str, Path))
+            and self.input_dir is not None
+            and Path(obj).parent == Path()
+        ):
             obj = Path(self.input_dir) / Path(obj)
+
         asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
