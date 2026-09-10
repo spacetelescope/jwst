@@ -243,7 +243,7 @@ The ``grism_objects`` list created in the above examples can now be used
 as input to the ``extract_2d`` step in order to extract the particular objects
 defined in that list::
 
-    result = step.call(input_model, grism_objects=grism_objects)
+    result = Extract2dStep.call(input_model, grism_objects=grism_objects)
 
 ``result`` is a `~stdatamodels.jwst.datamodels.MultiSlitModel`,
 with its ``slits`` attribute containing one spectrum for each

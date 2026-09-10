@@ -6,6 +6,7 @@ import stdatamodels.jwst.datamodels as dm
 from astropy.table import QTable
 
 from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs
+from jwst.wfss_contam.observations import SimulatedCutout
 from jwst.wfss_contam.wfss_contam import (
     CutoutOverlapError,
     UnmatchedSourceIDError,
@@ -324,16 +325,17 @@ def two_source_input(tmp_cwd, grism_wcs):
     model.close()
 
 
-def _make_slit(source_id, order, xstart, ystart, data, **fluxmodels):
-    slit = dm.SlitModel()
-    slit.source_id = source_id
-    slit.meta.wcsinfo.spectral_order = order
-    slit.xstart = xstart
-    slit.ystart = ystart
-    slit.data = data.astype(np.float32)
-    slit.dq = np.zeros(data.shape, dtype=np.uint32)
-    slit.xsize = data.shape[1]
-    slit.ysize = data.shape[0]
+def _make_simul_cutout(source_id, order, xstart, ystart, data, **fluxmodels):
+    slit = SimulatedCutout(
+        source_id=source_id,
+        name=None,
+        xstart=xstart,
+        ystart=ystart,
+        xsize=data.shape[1],
+        ysize=data.shape[0],
+        data=data.astype(np.float32),
+        spectral_order=order,
+    )
     for k, v in fluxmodels.items():
         setattr(slit, k, v.astype(np.float32))
     return slit
@@ -363,8 +365,8 @@ def test_iteration_improves_contamination_correction(
     def MockObservation():
         """Use SimpleNamespace to make a mock Observation object with pre-built simulated cutouts."""
         obs = types.SimpleNamespace()
-        simul_A = _make_slit(1, 1, _ITER_XA, _ITER_YA, flat.copy(), fluxmodel_1=tilt.copy())
-        simul_B = _make_slit(2, 1, _ITER_XB, _ITER_YB, flat.copy(), fluxmodel_1=tilt.copy())
+        simul_A = _make_simul_cutout(1, 1, _ITER_XA, _ITER_YA, flat.copy(), fluxmodel_1=tilt.copy())
+        simul_B = _make_simul_cutout(2, 1, _ITER_XB, _ITER_YB, flat.copy(), fluxmodel_1=tilt.copy())
         obs.simulated_cutouts = [simul_A, simul_B]
         obs.simulated_image = np.zeros(_ITER_FRAME_SHAPE)
         obs.source_ids = {1, 2}

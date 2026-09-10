@@ -107,16 +107,15 @@ def _disperse_onto_grism(x0_sky, y0_sky, sky_to_imgxy, imgxy_to_grismxy, lambdas
     lambdas : ndarray
         Wavelengths corresponding to each dispersed pixel
     """
-    # x/y in image frame of grism image is the same for all wavelengths
-    x0_sky = np.repeat(x0_sky[np.newaxis, :], len(lambdas), axis=0)
-    y0_sky = np.repeat(y0_sky[np.newaxis, :], len(lambdas), axis=0)
-
-    x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, order)
-    del x0_sky, y0_sky
-
-    # Convert to x/y in grism frame.
-    lambdas = np.repeat(lambdas[:, np.newaxis], x0_xy.shape[1], axis=1)
+    # Evaluate sky-to-direct transform once on the unique per-pixel positions
+    x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
+    n_pixels = len(x0_xy)
+    n_lam = len(lambdas)
+    x0_xy = np.repeat(x0_xy[np.newaxis, :], n_lam, axis=0)
+    y0_xy = np.repeat(y0_xy[np.newaxis, :], n_lam, axis=0)
+    lambdas = np.repeat(lambdas[:, np.newaxis], n_pixels, axis=1)
     x0s, y0s = imgxy_to_grismxy(x0_xy, y0_xy, lambdas, order)
+
     # x0s, y0s now have shape (n_lam, n_pixels)
     return x0s, y0s, lambdas
 
