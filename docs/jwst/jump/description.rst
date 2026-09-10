@@ -38,6 +38,9 @@ second.
 
 Large Events (Snowballs and Showers)
 ------------------------------------
+
+:ref:`Snoball Algorithm <stcal:jump_snowball>`
+---------------------------------------
 All the detectors on JWST are affected by large cosmic ray
 events. While these events, in general, affect a large number of
 pixels, the more distinguishing characteristic is that they are
@@ -57,6 +60,8 @@ The mid-IR (MIRI) detectors do not, in general, have a saturated center and are 
 Thus, we fit the minimum enclosing ellipse and do not require that there are saturated pixels
 within the ellipse.  Likewise, MIRI showers are only flagged when detected features are consistent
 with the maximum known amplitude (in DN/s) of shower artifacts.
+
+
 
 Multiprocessing
 ---------------
