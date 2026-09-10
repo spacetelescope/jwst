@@ -282,6 +282,8 @@ def expand_table(spec):
         # initialize a new SpecModel
         spec_row = spec.spec_table[i]
         n_elements = int(spec_row["N_ALONGDISP"])
+        if n_elements == 0:
+            continue
 
         # Copy over the vector columns from input spec_table to output spec_table
         spec_table = np.empty(n_elements, dtype=out_dtype)
