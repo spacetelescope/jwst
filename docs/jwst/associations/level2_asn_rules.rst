@@ -4,8 +4,9 @@ Stage 2 Associations: Rules
 ===========================
 
 The following table describes exactly which exposures will go
-through any type of Stage 2 processing, such as Spec2Pipeline or
-Image2Pipeline.
+through any type of Stage 2 processing, such as
+:ref:`calwebb_spec2 <calwebb_spec2>` or
+:ref:`calwebb_image2 <calwebb_image2>`.
 
 .. list-table:: Exposure Modes for Stage 2 Processing
    :widths: 20 20 20 20
@@ -332,30 +333,24 @@ Image2Pipeline.
      - N/A
      - image2
 
-Footnotes
----------
-
 .. [#f1] Association creation is heavily dependent upon other parameters such as ``LAMP``, ``OPMODE``, and ``GRATING``.
 
-Notes
------
+Column definitions:
 
-Column definitions
+EXP_TYPE
+  The exposure type.
 
-- EXP_TYPE : The exposure type.
-- Member Exposure Type: How the association generator will classify the exposure.
-- Specials : The association rule modifications to handle the exposure.
-- Association Type : :ref:`Association type <asn-jwst-association-types>` created.
+Member Exposure Type
+  How the association generator will classify the exposure.
 
-More about Specials: Many exposures that are not directly science, such as
-backgrounds, are primarily used as auxiliary members for other science products.
-However, they are also often calibrated as if they were science products
-themselves. In these situations, a special association rule is created to
-produce the necessary associations.
+Specials
+  The association rule modifications to handle the exposure.
 
-History
--------
+  Many exposures that are not directly science, such as backgrounds,
+  are primarily used as auxiliary members for other science products.
+  However, they are also often calibrated as if they were science products
+  themselves. In these situations, a special association rule is created to
+  produce the necessary associations.
 
-The original content of this page is from `GitHub issue #1188`_.
-
-.. _GitHub issue #1188: https://github.com/spacetelescope/jwst/issues/1188
+Association Type
+  :ref:`Association type <asn-jwst-association-types>` created.

@@ -1,4 +1,4 @@
-"""Treat various objects as Associations."""
+"""Treat various objects as `~jwst.associations.association.Association`."""
 
 from functools import partial
 from pathlib import Path
@@ -33,7 +33,7 @@ class LoadAsAssociation(dict):
     Notes
     -----
     This class is normally not instantiated.
-    the :meth:`load` method should be used as the factory
+    The :meth:`load` method should be used as the factory
     method to read an association or create one from
     a string or `~stdatamodels.jwst.datamodels.JwstDataModel` object,
     or a list of such objects.
@@ -43,7 +43,7 @@ class LoadAsAssociation(dict):
     def load(
         cls,
         obj,
-        meta=DEFAULT_ASN_META,
+        meta=None,
         registry=AssociationRegistry,
         rule=Association,
         product_name_func=None,
@@ -53,13 +53,20 @@ class LoadAsAssociation(dict):
 
         Parameters
         ----------
-        obj : Association, str, dict, Datamodel, [str[,...]], [Datamodel[,...]]
-            The obj to return as an association.
+        obj : `~jwst.associations.association.Association`, str, dict, \
+              `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+              list of str, or \
+              list of `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The object to return as an association.
 
-        registry : AssociationRegistry
+        meta : dict or None
+            Metadata to attach to the association. If not given,
+            a built-in default is used.
+
+        registry : `~jwst.associations.registry.AssociationRegistry`
             The registry to use to load an association file with.
 
-        rule : Association
+        rule : `~jwst.associations.association.Association`
             The rule to use if an association needs to be created.
 
         product_name_func : func
@@ -70,15 +77,19 @@ class LoadAsAssociation(dict):
 
         Returns
         -------
-        association : Association
-            An association created using given obj.
+        association : `~jwst.associations.association.Association`
+            An association created using given object.
 
         Notes
         -----
-        Along with the attributes belonging to a Level2 association, the
+        Along with the attributes belonging to a Level 2 association, the
         filename is added here, if such a file was passed in. Otherwise
         a default value is given.
         """
+        # This is to avoid Sphinx build from throwing warning.
+        if meta is None:
+            meta = DEFAULT_ASN_META
+
         if isinstance(obj, (str, Path)):
             try:
                 with Path(obj).open() as fp:
@@ -103,29 +114,32 @@ class LoadAsAssociation(dict):
 
 
 class LoadAsLevel2Asn(LoadAsAssociation):
-    """Read in or create a Level2 association."""
+    """Read in or create a Level 2 association."""
 
     @classmethod
     def load(cls, obj, basename=None):
         """
-        Open object and return a Level2 association of it.
+        Open object and return a Level 2 association of it.
 
         Parameters
         ----------
-        obj : Association, str, dict, Datamodel, [str[,...]], [Datamodel[,...]]
-            The obj to return as an association.
+        obj : `~jwst.associations.association.Association`, str, dict, \
+              `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+              list of str, or \
+              list of `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The object to return as an association.
 
         basename : str
             If specified, use as the basename, with an index appended.
 
         Returns
         -------
-        association : DMSLevel2bBase
-            An association created using given obj.
+        association : `~jwst.associations.lib.rules_level2_base.DMSLevel2bBase`
+            An association created using given object.
 
         Notes
         -----
-        Along with the attributes belonging to a Level2 association, the
+        Along with the attributes belonging to a Level 2 association, the
         filename is added here, if such a file was passed in. Otherwise
         a default value is given.
         """
@@ -174,8 +188,8 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
         Parameters
         ----------
-        model : DataModel
-            The model to get the name from
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The model to get the name from.
         _idx : int
             The parent method is sometimes passed an index,
             which this method ignores.
@@ -183,7 +197,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         Returns
         -------
         product_name : str
-            The basename of filename from the model
+            The basename of filename from the model.
         """
         return Path(model.meta.filename).stem
 
@@ -195,14 +209,14 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         Parameters
         ----------
         basename : str
-            The base of the file name
+            The base of the file name.
         idx : int
             The current index of the added item.
 
         Returns
         -------
         product_name : str
-            The concatenation of basename, '_', idx
+            The concatenation of ``basename``, '_', and ``idx``.
 
         Notes
         -----

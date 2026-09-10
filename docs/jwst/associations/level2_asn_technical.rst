@@ -10,18 +10,18 @@ All Stage 2 associations have the following structure.
 As in :ref:`asn-level3-techspecs`, the structure is defined
 and enforced by the Stage 2 schema.
 
-  * :ref:`Informational Meta Keywords<asn-level2-meta-keywords>`
-  * List of :ref:`products<asn-level2-products>`, each consisting of
-    
-    * Output product name
-    * List of :ref:`exposure members<asn-level2-members>`, each consisting of
-      
-      * Filename of the exposure that is a member of this association
-      * Type of exposure
-      * If present, information about errors from the observatory log
+* :ref:`Informational Meta Keywords <asn-level2-meta-keywords>`
+* List of :ref:`products<asn-level2-products>`, each consisting of:
+
+  * Output product name
+  * List of :ref:`exposure members <asn-level2-members>`, each consisting of:
+
+    * Filename of the exposure that is a member of this association
+    * Type of exposure
+    * If present, information about errors from the observatory log
 
 .. _asn-level2-example:
-   
+
 Example Association
 -------------------
 
@@ -63,7 +63,7 @@ The following are the informational, meta keywords of an association.
 
 asn_id (*required*)
   The association ID. The ID is what appears in the :ref:`asn-jwst-naming`.
-  
+
 asn_pool (*required*)
   Association pool from which this association was created.
 
@@ -74,8 +74,8 @@ asn_type (*optional*)
   The type of association represented. See :ref:`asn-jwst-association-types`.
 
 code_version (*optional*)
-  The version of the generator that created this association. Typically this is the version
-  of the ``jwst`` Python package.
+  The version of the generator that created this association.
+  Typically this is the version of the ``jwst`` package.
 
 constraints (*optional*)
   List of constraints used by the association generator to create this
@@ -86,8 +86,7 @@ degraded_status (*optional*)
   If any of the included members have an actual issue,
   as reported by the ``exposerr`` keyword, ``degraded_status`` will say
   ``One or more members have an error associated with them.`` If no errors
-  are indicated, it will be ``No known degraded exposures in
-  association.``
+  are indicated, it will be ``No known degraded exposures in association.``
 
 program (*optional*)
   Program number for which this association was created.
@@ -111,7 +110,7 @@ Stage 2, each product is an exposure. Each product should have one
 ``science`` member, the exposure on which the Stage 2 processing will
 occur.
 
-Association products have two components: 
+Association products have two components:
 
 name (*optional*)
   The string template to be used by Stage 2 processing tasks to create
@@ -151,16 +150,16 @@ exptype (*required*)
 
   * ``science``: Primary science exposure. For each product, only one exposure can
     be ``science``.
-    
+
   * ``background``: Background exposure to subtract.
-    
+
   * ``imprint``: Imprint exposure to subtract.
-    
+
   * ``sourcecat``: The catalog of sources to extract spectra for. Usually produced by
     :ref:`calwebb_image3 <calwebb_image3>` for wide-field slitless spectroscopy.
 
-  * ``segmap``: The 2D segmentation map used to produce the source catalog. Usually produced by
-    :ref:`calwebb_image3 <calwebb_image3>` for wide-field slitless spectroscopy.
+  * ``segmap``: The 2D segmentation map used to produce the source catalog.
+    Usually produced by :ref:`calwebb_image3 <calwebb_image3>` for WFSS.
 
   * ``direct_image``: The direct image used to produce the source catalog.
 
@@ -179,4 +178,4 @@ formatted as follows:
 
 To remove a member, delete its corresponding set.
 
-To add a member, one need to only specify the two required keywords, as shown above.
+To add a member, one needs to only specify the two required keywords, as shown above.

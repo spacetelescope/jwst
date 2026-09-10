@@ -14,7 +14,7 @@ def main():
 
     Returns
     -------
-    pool : jwst.associations.AssociationPool
+    pool : jwst.associations.association.AssociationPool
        The association pool.
     """
     kwargs = mkpool.from_cmdline()

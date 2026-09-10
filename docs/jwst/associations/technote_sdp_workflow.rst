@@ -35,14 +35,15 @@ The figure represents the following workflow:
 
 - Data comes down from the observatory and is converted to the raw
   FITS files.
-- :ref:`calwebb_detector1 <calwebb_detector1>` is run on each file to convert the data to the
-  countrate format.
-- In parallel with :ref:`calwebb_detector1 <calwebb_detector1>`, the Pool Maker collects the list
+- :ref:`calwebb_detector1 <calwebb_detector1>` is run on each file
+  to convert the data to the countrate format.
+- In parallel with :ref:`calwebb_detector1 <calwebb_detector1>`,
+  the Pool Maker collects the list
   of downloaded exposures and places them in the Association Pool.
 - When enough exposures have been downloaded to complete an Association
   Candidate, such as an Observation Candidate, the Pool Maker calls
-  the Association Generator, :ref:`asn_generate <asn-generate>`, to create the set of
-  associations based on that Candidate.
+  the Association Generator, :ref:`asn_generate <asn-generate>`,
+  to create the set of associations based on that Candidate.
 - For each association generated, the workflow creates a file watch
   list from the association, then waits until all exposures needed by
   that association come into existence.

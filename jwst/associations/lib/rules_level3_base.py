@@ -78,7 +78,7 @@ MULTI_OBS_AC_TYPES = ["group", "background", "mosaic"]
 
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
-    """Basic class for DMS Level3 associations."""
+    """Base class for DMS Level 3 associations."""
 
     # Set the validation schema
     schema_file = ASN_SCHEMA.schema
@@ -130,12 +130,12 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     @property
     def dms_product_name(self):
         """
-        Define product name.
+        DMS product name.
 
         Returns
         -------
         product_name : str
-            The product name
+            The product name.
         """
         return self._dms_product_name(self)
 
@@ -146,13 +146,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        association : `~jwst.associations.Association`
+        association : `~jwst.associations.association.Association`
             Association to get the name from.
 
         Returns
         -------
         product_name : str
-            The product name
+            The product name.
         """
         target = association.get_target()
 
@@ -195,7 +195,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         item : dict or None
             Item to use as a source. If not given, item-specific
             information will be left unchanged.
-        member : Member or None
+        member : `~jwst.associations.lib.member.Member` or None
             An association member to use as source.
             If not given, member-specific information will be update
             from current association/product membership.
@@ -248,7 +248,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Returns
         -------
-        member : Member
+        member : `~jwst.associations.lib.member.Member`
             The member.
         """
         try:
@@ -291,7 +291,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Returns
         -------
-        list[asn, ...]
+        list of `~jwst.associations.association.Association`
             The list of associations.
         """
         # check to see if these are nodded backgrounds, if they are setup
@@ -366,18 +366,18 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        items : [object[, ...]]
+        items : list of obj
             A list of items to make members of the association.
         product_name : str or None
             The name of the product to add the items to.
             If the product does not already exist, it will be created.
-            If None, the default DMS Level3 naming
+            If None, the default DMS Level 3 naming
             conventions will be attempted.
         with_exptype : bool
-            If True, each item is expected to be a 2-tuple with
+            If `True`, each item is expected to be a 2-tuple with
             the first element being the item to add as ``expname``
             and the second items is the ``exptype``.
-        **kwargs : dict
+        **kwargs
             Allows other keyword arguments used by other subclasses.
 
         Notes
@@ -427,7 +427,7 @@ class Utility:
 
     @staticmethod
     def resequence(associations):
-        """Resequence the numbering for the Level3 association types."""
+        """Resequence the numbering for the Level 3 association types."""
         counters = defaultdict(lambda: defaultdict(Counter))
         for asn in associations:
             asn.current_sequence = next(counters[asn.data["asn_id"]][asn.data["asn_type"]])
@@ -437,7 +437,7 @@ class Utility:
         level1b_name, exp_type=None, use_integrations=False, member_exptype="science"
     ):
         """
-        Rename a Level 1b Exposure to a Level2 name.
+        Rename a Level 1b exposure to a Level2 name.
 
         The basic transform is changing the suffix ``uncal`` to
         ``cal``, ``calints``, or ``rate``.
@@ -449,9 +449,9 @@ class Utility:
         exp_type : str
             JWST exposure type. If not specified,
             it will be presumed that the name
-            should get a Level2b name.
+            should get a Level 2b name.
         use_integrations : bool
-            Use 'calints' instead of 'cal' as the suffix.
+            Use "calints" instead of "cal" as the suffix.
         member_exptype : str
             The association member exposure type, such as "science".
 
@@ -495,7 +495,7 @@ class Utility:
 
         Returns
         -------
-        [ACID, ...]
+        list of `~jwst.associations.lib.acid.ACID`
             The list of parsed candidates.
         """
         result = []
@@ -512,12 +512,12 @@ class Utility:
 
         Parameters
         ----------
-        associations : [Association[, ...]]
+        associations : list of `~jwst.associations.association.Association`
             List of associations.
 
         Returns
         -------
-        finalized_associations : [Association[, ...]]
+        finalized_associations : list of `~jwst.associations.association.Association`
             The validated list of associations.
         """
         finalized_asns = []
@@ -542,10 +542,11 @@ class Utility:
 # ---------
 # Utilities
 # ---------
-# Define default product name filling
+
 format_product = FormatTemplate(
     key_formats={"source_id": ["{:s}"], "expspcin": ["{:0>2s}"], "slit_name": ["{:s}"]}
 )
+"""Define default product name filling."""
 
 
 def dms_product_name_noopt(asn):
@@ -554,14 +555,14 @@ def dms_product_name_noopt(asn):
 
     Parameters
     ----------
-    asn : Association
+    asn : `~jwst.associations.association.Association`
         The association for which the product
         name is to be created.
 
     Returns
     -------
     str
-        The product name
+        The product name.
     """
     target = asn.get_target()
 
@@ -577,7 +578,7 @@ def dms_product_name_sources(asn):
 
     Parameters
     ----------
-    asn : Association
+    asn : `~jwst.associations.association.Association`
         The association for which the product
         name is to be created.
 
@@ -619,12 +620,12 @@ def dms_product_name_wfss(asn):
     Produce product names for WFSS observations.
 
     For this mode, the x1d products contain all sources
-    in the same product, and so the source_id is not
+    in the same product, and so the source ID is not
     included in the product name.
 
     Parameters
     ----------
-    asn : Association
+    asn : `~jwst.associations.association.Association`
         The association for which the product
         name is to be created.
 
@@ -671,7 +672,7 @@ def dms_product_name_nrsfs_sources(asn):
 
     Parameters
     ----------
-    asn : Association
+    asn : `~jwst.associations.association.Association`
         The association for which the product
         name is to be created.
 
@@ -712,7 +713,7 @@ def dms_product_name_coronimage(asn):
 
     Parameters
     ----------
-    asn : Association
+    asn : `~jwst.associations.association.Association`
         The association for which the product
         name is to be created.
 
@@ -755,6 +756,8 @@ def dms_product_name_coronimage(asn):
 # -----------------
 # Basic constraints
 # -----------------
+
+
 class Constraint_Base(Constraint):
     """Select on program and instrument."""
 
@@ -917,6 +920,8 @@ class Constraint_Target(Constraint):
 
 
 # Base Mixins
+
+
 class AsnMixin_AuxData:
     """Process special and non-science exposures as science."""
 
@@ -927,17 +932,16 @@ class AsnMixin_AuxData:
         Parameters
         ----------
         item : dict
-            The pool entry for which the exposure type is determined
+            The pool entry for which the exposure type is determined.
         default : str or None
             The default exposure type.
-            If None, routine will raise LookupError
+            If None, routine will raise `LookupError`.
 
         Returns
         -------
-        exposure_type : 'science'
-            Returns as science for most Exposures
-        exposure_type : 'target_acquisition'
-            Returns target_acquisition for mir_tacq
+        exposure_type : str
+            Returns "science" for most exposures, or
+            "target_acquisition" for ``mir_tacq``.
         """
         passthrough_exptype = ["target_acquisition"]
         exp_type = super().get_exposure_type(item, default=default)
@@ -1007,7 +1011,7 @@ class AsnMixin_Science(DMS_Level3_Base):
 
         Returns
         -------
-        associations : [Association[, ...]] or None
+        associations : `~jwst.associations.association.Association` or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.

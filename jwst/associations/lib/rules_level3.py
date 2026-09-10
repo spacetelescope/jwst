@@ -2,12 +2,14 @@
 
 import logging
 
+from jwst.associations.lib.constraint import Constraint, SimpleConstraint
 from jwst.associations.lib.dms_base import (
     Constraint_NotBkgd,
     Constraint_NotBkgdOrTSO,
     Constraint_NotTSO,
     Constraint_TargetAcq,
     Constraint_TSO,
+    DMSAttrConstraint,
     nissoss_calibrated_filter,
     nrccoron_valid_detector,
     nrsfss_valid_detector,
@@ -20,15 +22,12 @@ from jwst.associations.lib.rules_level3_base import (
     AsnMixin_Coronagraphy,
     AsnMixin_Science,
     AsnMixin_Spectrum,
-    Constraint,
     Constraint_IFU,
     Constraint_Image,
     Constraint_MSA,
     Constraint_Optical_Path,
     Constraint_Target,
     DMS_Level3_Base,
-    DMSAttrConstraint,
-    SimpleConstraint,
     Utility,  # noqa: F401
     dms_product_name_coronimage,
     dms_product_name_noopt,
@@ -71,6 +70,8 @@ logger = logging.getLogger(__name__)
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
+
+
 @RegistryMarker.rule
 class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
     """
@@ -78,9 +79,9 @@ class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
 
     Characteristics:
 
-        - Association type: Not applicable
-        - Pipeline: Not applicable
-        - Used to populate other related associations
+    - Association type: Not applicable
+    - Pipeline: Not applicable
+    - Used to populate other related associations
 
     Notes
     -----
@@ -106,6 +107,7 @@ class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
         super(Asn_Lv3ACQ_Reprocess, self).__init__(*args, **kwargs)
 
 
+# https://github.com/spacetelescope/jwst/issues/310
 @RegistryMarker.rule
 class Asn_Lv3AMI(AsnMixin_Science):
     """
@@ -113,17 +115,14 @@ class Asn_Lv3AMI(AsnMixin_Science):
 
     Characteristics:
 
-        - Association type: ``ami3``
-        - Pipeline: ``calwebb_ami3``
-        - Gather science and related PSF exposures
+    - Association type: ``ami3``
+    - Pipeline: ``calwebb_ami3``
+    - Gather science and related PSF exposures
 
     Notes
     -----
     AMI is nearly completely defined by the association candidates
     produced by APT.
-    Tracking Issues:
-
-        - `github #310 <https://github.com/spacetelescope/jwst/issues/310>`_
     """
 
     def __init__(self, *args, **kwargs):
@@ -167,10 +166,10 @@ class Asn_Lv3Image(AsnMixin_Science):
 
     Characteristics:
 
-        - Association type: ``image3``
-        - Pipeline: ``calwebb_image3``
-        - Non-TSO
-        - Non-WFS&C
+    - Association type: ``image3``
+    - Pipeline: ``calwebb_image3``
+    - Non-TSO
+    - Non-WFS&C
     """
 
     def __init__(self, *args, **kwargs):
@@ -202,10 +201,10 @@ class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
 
     Characteristics:
 
-        - Association type: ``image3``
-        - Pipeline: ``calwebb_image3``
-        - Non-TSO
-        - Non-WFS&C
+    - Association type: ``image3``
+    - Pipeline: ``calwebb_image3``
+    - Non-TSO
+    - Non-WFS&C
     """
 
     def __init__(self, *args, **kwargs):
@@ -234,6 +233,8 @@ class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
         super(Asn_Lv3ImageBackground, self)._init_hook(item)
 
 
+# https://github.com/spacetelescope/jwst/issues/311 and
+# https://jira.stsci.edu/browse/JP-3219
 @RegistryMarker.rule
 class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     """
@@ -241,19 +242,15 @@ class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
 
     Characteristics:
 
-        - Association type: ``coron3``
-        - Pipeline: ``calwebb_coron3``
-        - MIRI Coronagraphy
-        - Gather science and related PSF exposures
+    - Association type: ``coron3``
+    - Pipeline: ``calwebb_coron3``
+    - MIRI Coronagraphy
+    - Gather science and related PSF exposures
 
     Notes
     -----
     Coronagraphy is nearly completely defined by the association candidates
     produced by APT.
-    Tracking Issues:
-
-        - `github #311 <https://github.com/spacetelescope/jwst/issues/311>`_
-        - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
     """
 
     def __init__(self, *args, **kwargs):
@@ -288,12 +285,12 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - Just MIRI MRS
-        - optical path determined by calibration
-        - Cannot be TSO
-        - Must have pattern type defined
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Just MIRI MRS
+    - Optical path determined by calibration
+    - Cannot be TSO
+    - Must have pattern type defined
     """
 
     def __init__(self, *args, **kwargs):
@@ -332,12 +329,12 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - Just MIRI MRS
-        - optical path determined by calibration
-        - Cannot be TSO
-        - Must have pattern type defined
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Just MIRI MRS
+    - Optical path determined by calibration
+    - Cannot be TSO
+    - Must have pattern type defined
     """
 
     def __init__(self, *args, **kwargs):
@@ -374,6 +371,8 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
         return dms_product_name_noopt(self)
 
 
+# https://github.com/spacetelescope/jwst/issues/311 and
+# https://jira.stsci.edu/browse/JP-3219
 @RegistryMarker.rule
 class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     """
@@ -381,19 +380,15 @@ class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
 
     Characteristics:
 
-        - Association type: ``coron3``
-        - Pipeline: ``calwebb_coron3``
-        - Gather science and related PSF exposures
-        - Exclude "extra" NIRCam detectors that don't have target on them
+    - Association type: ``coron3``
+    - Pipeline: ``calwebb_coron3``
+    - Gather science and related PSF exposures
+    - Exclude "extra" NIRCam detectors that don't have target on them
 
     Notes
     -----
     Coronagraphy is nearly completely defined by the association candidates
     produced by APT.
-    Tracking Issues:
-
-        - `github #311 <https://github.com/spacetelescope/jwst/issues/311>`_
-        - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
     """
 
     def __init__(self, *args, **kwargs):
@@ -433,10 +428,10 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
 
     Characteristics:
 
-        - Association type: ``image3``
-        - Pipeline: ``calwebb_image3``
-        - Gather science exposures only, no psf exposures
-        - Only include NRC SW images taken in full-frame
+    - Association type: ``image3``
+    - Pipeline: ``calwebb_image3``
+    - Gather science exposures only, no psf exposures
+    - Only include NRC SW images taken in full-frame
     """
 
     def __init__(self, *args, **kwargs):
@@ -508,19 +503,19 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
 
         Coronagraphic data is to be processed both as coronagraphic
         (by default), but also as just plain imaging. Coronagraphic
-        data is processed using the Asn_Lv3Coron rule. This rule
+        data is processed using the ``Asn_Lv3...Coron`` rule. This rule
         will handle the creation of the image version. It causes
         the input members to be of type "cal", instead of "calints".
 
         Parameters
         ----------
-        _item : ACID
+        _item : `~jwst.associations.lib.acid.ACID`
             Ignored for this override method.
 
         Returns
         -------
         bool
-            False.
+            Always `False`.
         """
         return False
 
@@ -528,14 +523,14 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
 @RegistryMarker.rule
 class Asn_Lv3NRSFSS(AsnMixin_Spectrum):
     """
-    Level 3 NIRSpec Fixed-slit Science.
+    Level 3 NIRSpec Fixed-Slit Science.
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - NIRSpec Fixed-slit Science
-        - Non-TSO
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - NIRSpec Fixed-Slit Science
+    - Non-TSO
     """
 
     def __init__(self, *args, **kwargs):
@@ -569,7 +564,7 @@ class Asn_Lv3NRSFSS(AsnMixin_Spectrum):
         Returns
         -------
         str
-            The product name using both target and source ids.
+            The product name using both target and source IDs.
         """
         return dms_product_name_nrsfs_sources(self)
 
@@ -577,13 +572,13 @@ class Asn_Lv3NRSFSS(AsnMixin_Spectrum):
 @RegistryMarker.rule
 class Asn_Lv3NRSIFU(AsnMixin_Spectrum):
     """
-    Level 3 IFU gratings Association.
+    Level 3 IFU Gratings Association.
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - optical path determined by calibration
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Optical path determined by calibration
     """
 
     def __init__(self, *args, **kwargs):
@@ -621,8 +616,8 @@ class Asn_Lv3NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
     """
 
     def __init__(self, *args, **kwargs):
@@ -660,14 +655,14 @@ class Asn_Lv3NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
 @RegistryMarker.rule
 class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
     """
-    Level 3 slitless, target-based or single-object spectrographic Association.
+    Level 3 slitless, target-based, or single-object spectrographic Association.
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - Single target
-        - Non-TSO
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Single target
+    - Non-TSO
     """
 
     def __init__(self, *args, **kwargs):
@@ -719,8 +714,8 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
     """
 
     def __init__(self, *args, **kwargs):
@@ -753,10 +748,10 @@ class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - Multi-object
-        - Non-TSO
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Multi-object
+    - Non-TSO
     """
 
     def __init__(self, *args, **kwargs):
@@ -806,10 +801,10 @@ class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - Single target
-        - Non-TSO
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Single target
+    - Non-TSO
     """
 
     def __init__(self, *args, **kwargs):
@@ -847,12 +842,12 @@ class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
         """
         Finalize association.
 
-        For NRS Fixed-slit, finalization means creating new members for the
+        For NRS Fixed-Slit, finalization means creating new members for the
         background nods.
 
         Returns
         -------
-        associations : [association[, ...]] or None
+        associations : list of `~jwst.associations.association.Association` or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
@@ -870,8 +865,8 @@ class Asn_Lv3TSO(AsnMixin_Science):
 
     Characteristics:
 
-        - Association type: ``tso3``
-        - Pipeline: ``calwebb_tso3``
+    - Association type: ``tso3``
+    - Pipeline: ``calwebb_tso3``
     """
 
     def __init__(self, *args, **kwargs):
@@ -989,13 +984,13 @@ class Asn_Lv3TSO(AsnMixin_Science):
 
         Parameters
         ----------
-        _member : member
+        _member : `~jwst.associations.lib.member.Member`
             Member being added; ignored.
 
         Returns
         -------
         bool
-            True if candidate type is observation, false otherwise.
+            `True` if candidate type is observation, `False` otherwise.
         """
         # If a group candidate, reject.
         if self.acid.type.lower() != "observation":
@@ -1015,9 +1010,9 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
 
     Characteristics:
 
-        - Association type: ``wfs-image3``
-        - Pipeline: ``calwebb_wfs-image3``
-        - Coarse and fine phasing dithers
+    - Association type: ``wfs-image3``
+    - Pipeline: ``calwebb_wfs-image3``
+    - Coarse and fine phasing dithers
     """
 
     def __init__(self, *args, **kwargs):
@@ -1060,7 +1055,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
     @property
     def dms_product_name(self):
         """
-        Define product name.
+        DMS product name.
 
         Modification is to append the ``expspcin`` value
         after the calibration suffix.
@@ -1099,7 +1094,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         Returns
         -------
         bool
-            True if there are two members.
+            `True` if there are two members.
         """
         if entry is None:
             count = 2
@@ -1114,13 +1109,13 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
 
         Parameters
         ----------
-        _member : Member
+        _member : `~jwst.associations.lib.member.Member`
             Member being added; ignored.
 
         Returns
         -------
         bool
-            False if candidate is GROUP, true otherwise.
+            `False` if candidate is GROUP, `True` otherwise.
         """
         # If a group candidate, reject.
         if self.acid.type.lower() == "group":
@@ -1136,9 +1131,9 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - Gather all grism exposures
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Gather all grism exposures
     """
 
     def __init__(self, *args, **kwargs):
@@ -1187,9 +1182,9 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
 
     Characteristics:
 
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - Gather all grism exposures
+    - Association type: ``spec3``
+    - Pipeline: ``calwebb_spec3``
+    - Gather all grism exposures
     """
 
     def __init__(self, *args, **kwargs):
@@ -1284,11 +1279,11 @@ class Asn_Lv3ImageMosaic(AsnMixin_Science):
 
     Characteristics:
 
-        - Association type: ``image3``
-        - Pipeline: ``calwebb_image3``
-        - Non-TSO
-        - Non-WFS&C
-        - Collect separate tiles of mosaic into one product
+    - Association type: ``image3``
+    - Pipeline: ``calwebb_image3``
+    - Non-TSO
+    - Non-WFS&C
+    - Collect separate tiles of mosaic into one product
     """
 
     def __init__(self, *args, **kwargs):
@@ -1322,13 +1317,13 @@ class Asn_Lv3ImageMosaic(AsnMixin_Science):
 
         Parameters
         ----------
-        _item : ACID
+        _item : `~jwst.associations.lib.acid.ACID`
             Ignored in this method.
 
         Returns
         -------
         bool
-            True if candidate type is mosaic, False otherwise.
+            `True` if candidate type is mosaic, `False` otherwise.
         """
         # If a group candidate, reject.
         if self.acid.type.lower() != "mosaic":

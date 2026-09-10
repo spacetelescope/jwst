@@ -1,4 +1,4 @@
-"""Association attributes common to DMS-based Rules."""
+"""Association attributes common to DMS-based rules."""
 
 from jwst.associations.exceptions import (
     AssociationNotValidError,
@@ -261,10 +261,13 @@ _DEGRADED_STATUS_NOTOK = (
 
 
 class DMSBaseMixin(ACIDMixin):
-    """Association attributes common to DMS-based Rules."""
+    """Association attributes common to DMS-based rules."""
 
-    sequence = Counter(start=1)  # Associations of the same type are sequenced.
-    """The sequence number of the current association."""
+    sequence = Counter(start=1)
+    """
+    The sequence number of the current association.
+    Associations of the same type are sequenced.
+    """
 
     def __init__(self, *args, **kwargs):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
@@ -293,11 +296,11 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        asn : `~jwst.associations.Association` or None
+        asn : `~jwst.associations.association.Association` or None
             The association or, if the item does not
             match this rule, None
 
-        reprocess : list of `~jwst.associations.ProcessList`
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
             List of items to process again.
         """
         asn, reprocess = super(DMSBaseMixin, cls).create(item, version_id)
@@ -439,21 +442,21 @@ class DMSBaseMixin(ACIDMixin):
 
     @validity.setter
     def validity(self, item):
-        """Set validity dict."""
+        """Set validity dictionary."""
         self._validity = item
 
     def get_exposure_type(self, item, default="science"):
         """
-        Determine the exposure type of a pool item.
+        Determine the exposure type of an association pool item.
 
         Parameters
         ----------
         item : dict
-            The pool entry to determine the exposure type of.
+            The association pool entry to determine the exposure type of.
 
         default : str or None
             The default exposure type.
-            If None, routine will raise LookupError.
+            If None, routine will raise `LookupError`.
 
         Returns
         -------
@@ -461,7 +464,7 @@ class DMSBaseMixin(ACIDMixin):
             Exposure type. Can be one of:
 
             - 'science': Item contains science data
-            - 'target_acquisition': Item contains target acquisition data.
+            - 'target_acquisition': Item contains target acquisition data
             - 'autoflat': NIRSpec AUTOFLAT
             - 'autowave': NIRSpec AUTOWAVE
             - 'psf': PSF
@@ -470,7 +473,7 @@ class DMSBaseMixin(ACIDMixin):
         Raises
         ------
         LookupError
-            When ``default`` is None and an exposure type cannot be determined
+            When ``default`` is None and an exposure type cannot be determined.
         """
         return get_exposure_type(item, default=default, association=self)
 
@@ -480,13 +483,13 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        new_member : Member
-            The member to check for
+        new_member : `~jwst.associations.lib.member.Member`
+            The member to check for.
 
         Returns
         -------
         bool
-            True if member is already in current product members list.
+            `True` if member is already in current product members list.
         """
         try:
             current_members = self.current_product["members"]
@@ -510,7 +513,7 @@ class DMSBaseMixin(ACIDMixin):
         Returns
         -------
         bool
-            True if item is a member.
+            `True` if item is a member.
         """
         return item["filename"] in self.item_ids
 
@@ -563,7 +566,7 @@ class DMSBaseMixin(ACIDMixin):
         Returns
         -------
         bool
-            Item represents a true Coron exposure.
+            Item represents a true CORON exposure.
         """
         # If not a science exposure, such as target acquisitions,
         # then other indicators do not apply.
@@ -603,7 +606,7 @@ class DMSBaseMixin(ACIDMixin):
         item : dict
             The item to check for.
 
-        other_exp_types : [str[,...]] or None
+        other_exp_types : list of str or None
             List of other exposure types to consider TSO-like.
 
         Returns
@@ -663,12 +666,19 @@ class DMSBaseMixin(ACIDMixin):
         Raises
         ------
         KeyError
-            None of the attributes are found in the dict.
+            None of the attributes are found in the dictionary.
         """
         return item_getattr(item, attributes, self)
 
     def new_product(self, product_name=PRODUCT_NAME_DEFAULT):
-        """Start a new product."""
+        """
+        Start a new product.
+
+        Parameters
+        ----------
+        product_name : str
+            Product name.
+        """
         product = {"name": product_name, "members": []}
         try:
             self.data["products"].append(product)
@@ -685,9 +695,9 @@ class DMSBaseMixin(ACIDMixin):
             Item to use as a source. If not given, item-specific
             information will be left unchanged.
 
-        member : Member or None
+        member : `~jwst.associations.lib.member.Member` or None
             An association member to use as source.
-            If not given, member-specific information will be update
+            If not given, member-specific information will be updated
             from current association/product membership.
 
         Notes
@@ -723,30 +733,47 @@ class DMSBaseMixin(ACIDMixin):
         cls.sequence = Counter(start=1)
 
     @classmethod
-    def validate(cls, asn):
+    def validate(cls, asn, error_on_fail=True):
         """
-        Validate candidate against all asn validity tests.
+        Validate candidate against all association validity tests.
 
         Parameters
         ----------
-        asn : `~jwst.associations.Association`
-            The asn candidate to validate.
+        asn : `~jwst.associations.association.Association`
+            The association candidate to validate.
+
+        error_on_fail : bool
+            On validation error, throw exception instead of
+            changing return status.
 
         Returns
         -------
         bool
-            True if candidate is valid.
+            `True` if candidate is valid. When invalid, an exception is raised
+            if ``error_on_fail`` is `True`, otherwise `False`.
+
+        Raises
+        ------
+        jwst.associations.exceptions.AssociationNotValidError
+            Validation failed and ``error_on_fail`` is `True`.
         """
-        super(DMSBaseMixin, cls).validate(asn)
+        result = super(DMSBaseMixin, cls).validate(asn, error_on_fail=error_on_fail)
+        if not result:
+            return result
 
         if isinstance(asn, DMSBaseMixin):
-            result = False
             try:
                 result = all(test["validated"] for test in asn.validity.values())
             except (AttributeError, KeyError):
-                raise AssociationNotValidError("Validation failed") from None
+                if error_on_fail:
+                    raise AssociationNotValidError("Validation failed") from None
+                else:
+                    return False
             if not result:
-                raise AssociationNotValidError("Validation failed validity tests.")
+                if error_on_fail:
+                    raise AssociationNotValidError("Validation failed validity tests.")
+                else:
+                    return False
 
         return True
 
@@ -778,7 +805,7 @@ class DMSBaseMixin(ACIDMixin):
         -------
         instrument : str
             The Level3 Product name representation
-            of the instrument
+            of the instrument.
         """
         instrument = format_list(self.constraints["instrument"].found_values)
         return instrument
@@ -910,13 +937,13 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        other : `~jwst.associations.Association`
+        other : `~jwst.associations.association.Association`
             The other association to compare against.
 
         Returns
         -------
         bool
-            True if other association is equal to self.
+            `True` if other association is equal to self.
         """
         result = NotImplemented
         if isinstance(other, DMSBaseMixin):
@@ -935,13 +962,13 @@ class DMSBaseMixin(ACIDMixin):
 
         Parameters
         ----------
-        other : `~jwst.associations.Association`
+        other : `~jwst.associations.association.Association`
             The other association to compare against.
 
         Returns
         -------
         bool
-            True if other association is not equal to self.
+            `True` if other association is not equal to self.
         """
         if isinstance(other, DMSBaseMixin):
             return not self.__eq__(other)
@@ -952,6 +979,8 @@ class DMSBaseMixin(ACIDMixin):
 # -----------------
 # Basic constraints
 # -----------------
+
+
 class DMSAttrConstraint(AttrConstraint):
     """
     DMS-focused attribute constraint.
@@ -972,7 +1001,7 @@ class Constraint_TargetAcq(SimpleConstraint):
 
     Parameters
     ----------
-    association : `~jwst.associations.Association`
+    association : `~jwst.associations.association.Association`
         If specified, use the
         :meth:`~jwst.associations.lib.dms_base.DMSBaseMixin.get_exposure_type`
         method of the association rather than the utility version.
@@ -990,7 +1019,7 @@ class Constraint_TargetAcq(SimpleConstraint):
 
 
 class Constraint_TSO(Constraint):
-    """Match on Time-Series Observations."""
+    """Match on Time-Series Observations (TSO)."""
 
     def __init__(self, *args, **kwargs):  # noqa: ARG002
         super(Constraint_TSO, self).__init__(
@@ -1038,7 +1067,7 @@ class Constraint_NotBkgdOrTSO(Constraint):
 
 
 class Constraint_NotTSO(Constraint):
-    """Match on non-Time-Series Observations."""
+    """Match on non-TSO observations."""
 
     def __init__(self, *args, **kwargs):  # noqa: ARG002
         super(Constraint_NotTSO, self).__init__(
@@ -1048,7 +1077,7 @@ class Constraint_NotTSO(Constraint):
 
 
 class Constraint_WFSC(Constraint):
-    """Match on Wave Front Sensing and Control Observations."""
+    """Match on Wave Front Sensing and Control (WFSC) Observations."""
 
     def __init__(self, *args, **kwargs):  # noqa: ARG002
         super(Constraint_WFSC, self).__init__(
@@ -1067,6 +1096,8 @@ class Constraint_WFSC(Constraint):
 # #########
 # Utilities
 # #########
+
+
 def format_list(alist):
     """
     Format a list according to DMS naming specs.
@@ -1086,17 +1117,17 @@ def format_list(alist):
 
 def get_exposure_type(item, default="science", association=None):
     """
-    Determine the exposure type of a pool item.
+    Determine the exposure type of an association pool item.
 
     Parameters
     ----------
     item : dict
-        The pool entry to determine the exposure type of
+        The pool entry to determine the exposure type of.
     default : str or None
         The default exposure type.
-        If None, routine will raise LookupError
-    association : `~jwst.associations.Association`
-        Association, if provided.
+        If None, routine will raise `LookupError`.
+    association : `~jwst.associations.association.Association`
+        An association, if provided.
 
     Returns
     -------
@@ -1104,7 +1135,7 @@ def get_exposure_type(item, default="science", association=None):
         Exposure type. Can be one of:
 
         - 'science': Item contains science data
-        - 'target_acquisition': Item contains target acquisition data.
+        - 'target_acquisition': Item contains target acquisition data
         - 'autoflat': NIRSpec AUTOFLAT
         - 'autowave': NIRSpec AUTOWAVE
         - 'psf': PSF
@@ -1113,7 +1144,7 @@ def get_exposure_type(item, default="science", association=None):
     Raises
     ------
     LookupError
-        When ``default`` is None and an exposure type cannot be determined
+        When ``default`` is None and an exposure type cannot be determined.
     """
 
     # Specify how attributes of the item are retrieved.
@@ -1127,7 +1158,7 @@ def get_exposure_type(item, default="science", association=None):
         ----------
         item : object or dict
             The item with attributes.
-        sources : str or [str, ...]
+        sources : str or list of str
             The attributes to get values for.
 
         Returns
@@ -1196,14 +1227,14 @@ def item_getattr(item, attributes, association=None):
 
     Returns
     -------
-    (attribute, value)
+    tuple
         Returns the value and the attribute from
         which the value was taken.
 
     Raises
     ------
     KeyError
-        None of the attributes are found in the dict.
+        None of the attributes are found in the dictionary.
     """
     if association is None:
         invalid_values = _EMPTY
@@ -1219,7 +1250,7 @@ def nrsfss_valid_detector(item):
     Returns
     -------
     bool
-        True if the slit+grating+filter combination can generate data on the detector.
+        `True` if the slit + grating + filter combination can generate data on the detector.
     """
     try:
         _, detector = item_getattr(item, ["detector"])
@@ -1243,7 +1274,7 @@ def nrsifu_valid_detector(item):
     Returns
     -------
     bool
-        True if the grating+filter combination can generate data on the detector.
+        `True` if the grating + filter combination can generate data on the detector.
     """
     _, exp_type = item_getattr(item, ["exp_type"])
     if exp_type != "nrs_ifu":
@@ -1266,7 +1297,7 @@ def nrslamp_valid_detector(item):
     Returns
     -------
     bool
-        True if the grating+lamp combination can generate data on the detector.
+        `True` if the grating + lamp combination can generate data on the detector.
     """
     try:
         _, detector = item_getattr(item, ["detector"])
@@ -1318,12 +1349,12 @@ def nrslamp_valid_detector(item):
 
 def nrccoron_valid_detector(item):
     """
-    Check that a coronagraphic mask+detector combo is valid.
+    Check that a coronagraphic mask + detector combo is valid.
 
     Returns
     -------
     bool
-        True if the mask+detector combination should be calibrated.
+        `True` if the mask + detector combination should be calibrated.
     """
     try:
         _, detector = item_getattr(item, ["detector"])
@@ -1353,7 +1384,7 @@ def nissoss_calibrated_filter(item):
     Returns
     -------
     bool
-        True if filter is to be calibrated.
+        `True` if filter is to be calibrated.
     """
     _, exp_type = item_getattr(item, ["exp_type"])
     if exp_type != "nis_soss":

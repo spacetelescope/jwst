@@ -11,14 +11,12 @@ Data Grouping
 JWST exposures are identified and grouped in a specific order, as
 follows:
 
-- program
-
+program
   The entirety of a science observing proposal is contained within a
   ``program``. All observations, regardless of instruments, pertaining
   to a proposal are identified by the program ID.
 
-- observation
-
+observation
   A set of visits, any corresponding auxiliary
   exposures, such as wavelength calibration, using a specific
   instrument. An observation does not necessarily contain all the
@@ -26,31 +24,26 @@ follows:
   within an observation can be taken with different optical
   configurations of the same instrument.
 
-- visit
-
+visit
   A set of exposures which sharing the same source, or target, whether that would
   be external to the observatory or internal to the instrument. The
   can be many visits for the same target, and visits to different
   targets can be interspersed among themselves.
 
-- group
-
+group
   A set of exposures that share the same observatory configuration.
   This is basically a synchronization point between observatory moves
   and parallel instrument observations.
 
-- sequence
-
+sequence
   Associations of the same type are sequenced.
 
-- activity
-
+activity
   A set of exposures that are to be taken atomically. All exposures
   within an activity are associated with each other and have been
   taken consecutively.
 
-- exposure
-
+exposure
   The basic unit of science data. Starting at Stage 1, an exposure
   contains a single integrations of a single detector from a single
   instrument for a single *snap*. Note that a single integration
@@ -61,18 +54,20 @@ follows:
 Rules
 -----
 
-All rules have as their base class ``DMS_Level3_Base``. This class
+All rules have as their base class
+`~jwst.associations.lib.rules_level3_base.DMS_Level3_Base`, which
 defines the association structure, enforces the DMS naming
 conventions, and defines the basic validity checks on the Stage 3
 associations.
 
 Along with the base class, a number of mixin classes are defined.
 These mixins define some basic constraints that are found in a number
-of rules. An example is the ``AsnMixin_Base``, which
+of rules. An example is the
+`~jwst.associations.lib.dms_base.DMSBaseMixin`, which
 provides the constraints that ensure that the program identification
 and instrument are the same in each association.
 
-The rules themselves are subclasses of ``AsnMixin_Base`` and whatever
+The rules themselves are subclasses of this mixin base and whatever
 other mixin classes are necessary to build the rule. Conforming to the
 :ref:`class-naming` scheme, all the final
 Stage 3 association rules begin with ``Asn_``. An example is the

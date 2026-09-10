@@ -36,14 +36,14 @@ def generate_per_candidate(
 
     Parameters
     ----------
-    pool : AssociationPool
+    pool : `~jwst.associations.pool.AssociationPool`
         The pool to generate from.
 
-    rule_defs : [File-like[,...]] or None
-        The rule definitions to use. None to use the defaults if `ignore_default` is False.
+    rule_defs : list of file-like or None
+        The rule definitions to use. None to use the defaults if ``ignore_default`` is `False`.
 
-    candidate_ids : [str,[...]] or None
-        List of candidates to produce for. If None, do all possible candidates
+    candidate_ids : list of str or None
+        List of candidates to produce for. If None, do all possible candidates.
 
     all_candidates : bool
         Keep associations generated from candidates when in discovery mode.
@@ -52,10 +52,11 @@ def generate_per_candidate(
         Find associations that are not candidate-based.
 
     version_id : None, True, or str
-        The string to use to tag associations and products.
-        If None, no tagging occurs.
-        If True, use a timestamp
-        If a string, the string.
+        The string to use to tag associations and products:
+
+        * If None, no tagging occurs.
+        * If `True`, use a timestamp.
+        * If a string, the string.
 
     finalize : bool
         Run all rule methods marked as 'finalized'.
@@ -67,12 +68,12 @@ def generate_per_candidate(
         Ignore the default rules. Use only the user-specified ones.
 
     dms_enabled : bool
-        Flag for DMS processing, true if command-line argument '--DMS' was used.
+        Flag for DMS processing, `True` if command-line argument ``--DMS`` was used.
 
     Returns
     -------
-    associations : [Association[,...]]
-        List of associations
+    associations : list
+        List of `~jwst.associations.association.Association`.
 
     Notes
     -----
@@ -183,27 +184,28 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
     Parameters
     ----------
     cid_ctype : (str, str)
-        2-tuple of candidate ID and the candidate type
+        2-tuple of candidate ID and the candidate type.
 
-    pool : AssociationPool
+    pool : `~jwst.associations.pool.AssociationPool`
         The pool to generate from.
 
-    rule_defs : [File-like[,...]] or None
-        The rule definitions to use. None to use the defaults if `ignore_default` is False.
+    rule_defs : list of file-like or None
+        The rule definitions to use. None to use the defaults if ``ignore_default`` is `False`.
 
     version_id : None, True, or str
-        The string to use to tag associations and products.
-        If None, no tagging occurs.
-        If True, use a timestamp
-        If a string, the string.
+        The string to use to tag associations and products:
+
+        * None: no tagging occurs.
+        * `True`: use a timestamp.
+        * str: use the given string.
 
     ignore_default : bool
         Ignore the default rules. Use only the user-specified ones.
 
     Returns
     -------
-    associations : [Association[,...]]
-        List of associations
+    associations : list
+        List of `~jwst.associations.association.Association`.
     """
     cid, ctype = cid_ctype
     logger.info(f"Generating associations on candidate {cid_ctype}")
@@ -231,18 +233,19 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
 
 def ids_by_ctype(pool):
     """
-    Group candidate ids by the candidate type.
+    Group candidate IDs by the candidate type.
 
     Parameters
     ----------
-    pool : AssociationPool
-        The association pool
+    pool : `~jwst.associations.pool.AssociationPool`
+        The association pool.
 
     Returns
     -------
-    ids_by_ctype : {ctype: counter}
-        Dict with the key of the candidate type. Value is a
-        `collections.Counter` object of the ids and their counts.
+    ids_by_ctype : dict
+        Dictionary in the format of ``{ctype: counter}``, with
+        the key of the candidate type. Value is a
+        `collections.Counter` object of the IDs and their respective counts.
     """
     ids_by_ctype = collections.defaultdict(list)
     for exp_candidates in pool["asn_candidate"]:
@@ -268,16 +271,16 @@ def pool_from_candidate(pool, candidate):
 
     Parameters
     ----------
-    pool : AssociationPool
+    pool : `~jwst.associations.pool.AssociationPool`
         The pool to filter from.
 
     candidate : str
-        The candidate id to filter.
+        The candidate ID to filter.
 
     Returns
     -------
-    candidate_pool : AssociationPool
-        Pool containing only the candidate
+    candidate_pool : `~jwst.associations.pool.AssociationPool`
+        Pool containing only the candidate.
     """
     candidate_pool = pool[[candidate in row["asn_candidate"] for row in pool]]
     return candidate_pool
