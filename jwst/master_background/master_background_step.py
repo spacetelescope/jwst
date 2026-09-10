@@ -145,10 +145,7 @@ class MasterBackgroundStep(Step):
                     log.debug("Copying BACKGROUND column to SURF_BRIGHT")
                     copy_background_to_surf_bright(model)
 
-            master_background = combine_1d_spectra(
-                background_data,
-                exptime_key="exposure_time",
-            )
+            master_background = combine_1d_spectra(background_data)
 
             # If requested, apply a moving-median boxcar filter to the
             # master background spectrum.

@@ -20,7 +20,7 @@ class Combine1dStep(Step):
     class_alias = "combine_1d"
 
     spec = """
-    exptime_key = string(default="exposure_time") # Metadata key to use for weighting
+    exptime_key = string(default="exposure_time") # Metadata key to use for weighting (not used)
     sigma_clip = float(default=None) # Factor for clipping outliers
     """  # noqa: E501
 
@@ -56,9 +56,7 @@ class Combine1dStep(Step):
                 # Multiple inputs: combine in a loop, then reconstitute the final model
                 results_list = []
                 for model in input_list:
-                    result = combine1d.combine_1d_spectra(
-                        model, self.exptime_key, sigma_clip=self.sigma_clip
-                    )
+                    result = combine1d.combine_1d_spectra(model, sigma_clip=self.sigma_clip)
                     if not result.meta.cal_step.combine_1d == "SKIPPED":
                         results_list.append(result)
                 if not results_list:
@@ -75,9 +73,7 @@ class Combine1dStep(Step):
                 return result
 
         try:
-            result = combine1d.combine_1d_spectra(
-                output_model, self.exptime_key, sigma_clip=self.sigma_clip
-            )
+            result = combine1d.combine_1d_spectra(output_model, sigma_clip=self.sigma_clip)
         except TypeError:
             log.error("Invalid input model for combine_1d; skipping.")
             output_model.meta.cal_step.combine_1d = "SKIPPED"

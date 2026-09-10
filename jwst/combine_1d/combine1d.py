@@ -25,7 +25,6 @@ __all__ = [
     "OutputSpectrumModel",
     "count_input",
     "compute_output_wl",
-    "check_exptime",
     "combine_1d_spectra",
     "check_monotonic",
 ]
@@ -48,11 +47,6 @@ class InputSpectrumModel:
         The ``ms`` object may contain more than one spectrum, but ``spec``
         should be just one of those.
 
-    exptime_key : str
-        A string identifying which keyword to use to get the exposure
-        time, which is used as a weight; or "unit_weight", which means
-        to use ``weight = 1``.
-
     Attributes
     ----------
     wavelength : ndarray
@@ -69,10 +63,6 @@ class InputSpectrumModel:
         Input DQ array.
     nelem : int
         Number of spectral elements.
-    weight : ndarray
-        Weight value for each spectral element.
-    unit_weight : bool
-        Flag to indicate uniform weights are used.
     right_ascension : ndarray
         RA value for each spectral element.
     declination : ndarray
@@ -95,7 +85,7 @@ class InputSpectrumModel:
         Unit for the surface brightness values.
     """
 
-    def __init__(self, ms, spec, exptime_key):
+    def __init__(self, ms, spec):
         self.wavelength = spec.spec_table.field("wavelength")
         self.flux = spec.spec_table.field("flux")
         self.flux_error = spec.spec_table.field("flux_error")
@@ -103,7 +93,6 @@ class InputSpectrumModel:
         self.sb_error = spec.spec_table.field("sb_error")
         self.dq = spec.spec_table.field("dq")
         self.nelem = self.wavelength.shape[0]
-        self.unit_weight = False  # may be reset below
         self.right_ascension = np.zeros_like(self.wavelength)
         self.declination = np.zeros_like(self.wavelength)
         self.name = spec.name
@@ -111,16 +100,6 @@ class InputSpectrumModel:
             setattr(self, attr, getattr(spec, attr))
         self.flux_unit = spec.spec_table.columns["flux"].unit
         self.sb_unit = spec.spec_table.columns["surf_bright"].unit
-
-        self.weight = np.ones_like(self.wavelength)
-        if exptime_key == "integration_time":
-            self.weight *= ms.meta.exposure.integration_time
-        elif exptime_key == "exposure_time":
-            self.weight *= ms.meta.exposure.exposure_time
-        elif exptime_key == "unit_weight":
-            self.unit_weight = True
-        else:
-            raise RuntimeError(f"Don't understand exptime_key = '{exptime_key}'")
 
         try:
             self.right_ascension[:], self.declination[:], _ = spec.meta.wcs(0.0)
@@ -142,8 +121,6 @@ class InputSpectrumModel:
         self.sb_error = None
         self.dq = None
         self.nelem = 0
-        self.weight = 1.0
-        self.unit_weight = False
         self.right_ascension = None
         self.declination = None
         self.source_id = None
@@ -167,14 +144,10 @@ class OutputSpectrumModel:
         Output error on the surface brightness.
     dq : ndarray
         Output DQ array.
-    weight : ndarray
-        Weight value for each spectral element.
     count : ndarray
         Input value count for each output spectral element.
     wcs : gwcs.wcs.WCS
         Output spectral WCS.
-    normalized : bool
-        Flag to indicate data has been combined (sums are normalized).
     """
 
     def __init__(self):
@@ -184,10 +157,8 @@ class OutputSpectrumModel:
         self.surf_bright = None
         self.sb_error = None
         self.dq = None
-        self.weight = None
         self.count = None
         self.wcs = None
-        self.normalized = False
         self.source_id = None
         self.flux_unit = None
         self.sb_unit = None
@@ -214,7 +185,7 @@ class OutputSpectrumModel:
 
     def accumulate_sums(self, input_spectra, sigma_clip=None):
         """
-        Compute a weighted sum of all the input spectra.
+        Compute a sum of all the input spectra.
 
         Each pixel of each input spectrum will be added to one pixel of
         the output spectrum.  The wavelength spacing of the input and
@@ -254,7 +225,6 @@ class OutputSpectrumModel:
         flux_error = np.zeros((nspec, nelem), dtype=np.float64)
         surf_bright = np.zeros((nspec, nelem), dtype=np.float64)
         sb_error = np.zeros((nspec, nelem), dtype=np.float64)
-        weight = np.zeros((nspec, nelem), dtype=np.float64)
         count = np.zeros((nspec, nelem), dtype=np.float64)
 
         self.flux_unit = input_spectra[0].flux_unit
@@ -295,11 +265,10 @@ class OutputSpectrumModel:
                 flux_error[s, k] = in_spec.flux_error[i]
                 surf_bright[s, k] = in_spec.surf_bright[i]
                 sb_error[s, k] = in_spec.sb_error[i]
-                weight[s, k] = in_spec.weight[i]
                 count[s, k] = 1.0
 
-        (flux, flux_error, surf_bright, sb_error, weight, count) = self.combine_spectra(
-            flux, flux_error, surf_bright, sb_error, weight, count, sigma_clip=sigma_clip
+        (flux, flux_error, surf_bright, sb_error, count) = self.combine_spectra(
+            flux, flux_error, surf_bright, sb_error, count, sigma_clip=sigma_clip
         )
 
         if n_nan > 0:
@@ -310,7 +279,6 @@ class OutputSpectrumModel:
         self.surf_bright = surf_bright
         self.sb_error = sb_error
         self.dq = dq
-        self.weight = weight
         self.count = count
 
         # Since the output wavelengths will not usually be exactly the same
@@ -330,13 +298,10 @@ class OutputSpectrumModel:
             self.surf_bright = self.surf_bright[index]
             self.sb_error = self.sb_error[index]
             self.dq = self.dq[index]
-            self.weight = self.weight[index]
             self.count = self.count[index]
         del index
 
-    def combine_spectra(
-        self, flux, flux_error, surf_bright, sb_error, weight, count, sigma_clip=None
-    ):
+    def combine_spectra(self, flux, flux_error, surf_bright, sb_error, count, sigma_clip=None):
         """
         Combine accumulated spectra.
 
@@ -351,13 +316,11 @@ class OutputSpectrumModel:
             Surface brightnesses of input spectra.
         sb_error : ndarray, 2-D
             Surface brightness errors for input spectra.
-        weight : ndarray, 2-D
-            Pixel weights for input spectra
         count : ndarray, 2-D
             Count of how many values at each index in the input arrays.
         sigma_clip : float, optional
             Factor for clipping outliers.  Compares input spectra to the
-            median and medaian absolute devaition, by default None.
+            median and median absolute deviation, by default None.
 
         Returns
         -------
@@ -369,8 +332,6 @@ class OutputSpectrumModel:
             Combined 1-D surface brightnesses.
         sb_error : ndarray, 1-D
             Combined 1-D surface brightness errors.
-        weight : ndarray, 1-D
-            Total, per wavelength weights.
         count : ndarray, 1-D
             Total count of spectra contributing to each wavelength.
         """
@@ -380,7 +341,7 @@ class OutputSpectrumModel:
 
             if sigma_clip is not None:
                 # Copy the fluxes for modifying
-                flux_2d = np.array(flux * weight)
+                flux_2d = np.array(flux)
 
                 # Mask any missing pixels in the input spectra
                 missing = (count < 1) | (flux_2d == 0.0)
@@ -390,27 +351,20 @@ class OutputSpectrumModel:
                 mad = np.nanmedian(np.abs(flux_2d - med_flux))
 
                 # Clip any outlier pixels in the input spectra
-                clipped = np.abs(flux * weight - med_flux) > sigma_clip * mad
+                clipped = np.abs(flux - med_flux) > sigma_clip * mad
                 flux[clipped] = np.nan
                 flux_error[clipped] = np.nan
                 surf_bright[clipped] = np.nan
                 sb_error[clipped] = np.nan
                 count[clipped] = 0
-                weight[clipped] = 0
 
-            # Perform a weighted sum of the input spectra
-            sum_weight = np.nansum(weight, axis=0)
-            sum_weight_nonzero = np.where(sum_weight > 0.0, sum_weight, 1.0)
-
-            flux = np.nansum(flux * weight, axis=0) / sum_weight_nonzero
-            flux_error = np.sqrt(np.nansum((flux_error * weight) ** 2, axis=0)) / sum_weight_nonzero
-            surf_bright = np.nansum(surf_bright * weight, axis=0) / sum_weight_nonzero
-            sb_error = np.sqrt(np.nansum((sb_error * weight) ** 2, axis=0)) / sum_weight_nonzero
+            flux = np.nanmean(flux, axis=0)
+            flux_error = np.sqrt(np.nansum(flux_error**2, axis=0)) / flux_error.shape[0]
+            surf_bright = np.nanmean(surf_bright, axis=0)
+            sb_error = np.sqrt(np.nansum(sb_error**2, axis=0)) / sb_error.shape[0]
             count = np.nansum(count, axis=0)
 
-        self.normalized = True
-
-        return flux, flux_error, surf_bright, sb_error, sum_weight, count
+        return flux, flux_error, surf_bright, sb_error, count
 
     def create_output_data(self):
         """
@@ -421,10 +375,8 @@ class OutputSpectrumModel:
         output_model : `~stdatamodels.jwst.datamodels.CombinedSpecModel`
             A table of combined spectral data.
         """
-        if not self.normalized:
-            log.warning("Data have not been divided by the sum of the weights.")
-
         cmb_dtype = datamodels.CombinedSpecModel().get_dtype("spec_table")
+        weights = np.ones_like(self.flux)
 
         # Note that these arrays have to be in the right order.
         data = np.array(
@@ -436,7 +388,7 @@ class OutputSpectrumModel:
                     self.surf_bright,
                     self.sb_error,
                     self.dq,
-                    self.weight,
+                    weights,
                     self.count,
                     strict=False,
                 )
@@ -461,10 +413,8 @@ class OutputSpectrumModel:
         self.surf_bright = None
         self.sb_error = None
         self.dq = None
-        self.weight = None
         self.count = None
         self.wcs = None
-        self.normalized = False
         self.source_id = None
 
 
@@ -660,48 +610,7 @@ def compute_output_wl(wl, n_input_spectra):
     return temp_wl[np.where(temp_wl > 0.0)].copy()
 
 
-def check_exptime(exptime_key):
-    """
-    Check exptime_key for validity.
-
-    This function checks ``exptime_key``.  If it is valid, the corresponding
-    value used by the metadata interface will be returned.  This will be
-    either "integration_time" or "exposure_time".  If it is invalid,
-    "unit weight" will be returned (meaning that a weight of 1 will be
-    used when averaging spectra), and a warning will be logged.
-
-    Parameters
-    ----------
-    exptime_key : str
-        A keyword or string indicating what value (integration time or
-        exposure time) should be used as a weight when combing spectra.
-
-    Returns
-    -------
-    exptime_key : str
-        The value will be either "integration_time", "exposure_time",
-        or "unit_weight".
-    """
-    exptime_lwr = exptime_key.lower()
-    if exptime_lwr.startswith("integration") or exptime_lwr == "effinttm":
-        exptime_key = "integration_time"
-        log.info("Using integration time as the weight.")
-    elif exptime_lwr.startswith("exposure") or exptime_lwr == "effexptm":
-        exptime_key = "exposure_time"
-        log.info("Using exposure time as the weight.")
-    elif exptime_lwr == "unit_weight" or exptime_lwr == "unit weight":
-        exptime_key = "unit_weight"
-        log.info("Using weight = 1.")
-    else:
-        log.warning(f"Don't understand exptime_key = '{exptime_key}'; using unit weight.")
-        log.info("The options for exptime_key are:")
-        log.info("  integration_time, effinttm, exposure_time, effexptm, unit_weight, unit weight")
-        exptime_key = "unit_weight"
-
-    return exptime_key
-
-
-def _read_input_spectra(input_model, exptime_key, input_spectra):
+def _read_input_spectra(input_model, input_spectra):
     """
     Read input spectra from a datamodel.
 
@@ -714,8 +623,6 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
         If `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`,
         integrations in the spectral table rows
         are expanded into separate spectra.
-    exptime_key : str
-        Exposure time key to use for weighting.
     input_spectra : dict
         Dictionary to hold input spectra, keyed by spectral order;
         Updated in place.
@@ -762,11 +669,11 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
         spectral_order = in_spec.spectral_order
         if spectral_order not in input_spectra:
             input_spectra[spectral_order] = []
-        input_spectra[spectral_order].append(InputSpectrumModel(input_model, in_spec, exptime_key))
+        input_spectra[spectral_order].append(InputSpectrumModel(input_model, in_spec))
     return input_spectra
 
 
-def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
+def combine_1d_spectra(input_model, sigma_clip=None):
     """
     Combine the input spectra.
 
@@ -781,28 +688,22 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
         Input spectra may have different spectral orders
         or wavelengths but should all share the same target.
         May be updated in place if processing is skipped.
-    exptime_key : str
-        A string identifying which keyword to use to get the exposure time,
-        which is used as a weight when combining spectra.  The value should
-        be one of:  "exposure_time" (the default), "integration_time",
-        or "unit_weight".
+    sigma_clip : float or None
+        Factor for clipping outliers in spectral combination.
+        If None, there will be no clipping.
 
     Returns
     -------
     output_model : `~stdatamodels.jwst.datamodels.MultiCombinedSpecModel`
         A combined spectra datamodel.
     """
-    log.debug(f"Using exptime_key = {exptime_key}.")
-
-    exptime_key = check_exptime(exptime_key)
-
     input_spectra = {}
     output_spectra = {}
     if isinstance(input_model, ModelContainer):
         for ms in input_model:
-            _read_input_spectra(ms, exptime_key, input_spectra)
+            _read_input_spectra(ms, input_spectra)
     else:
-        _read_input_spectra(input_model, exptime_key, input_spectra)
+        _read_input_spectra(input_model, input_spectra)
 
     if len(input_spectra) == 0:
         log.error("No valid input spectra found for source. Skipping.")

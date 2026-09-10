@@ -7,7 +7,7 @@ import pytest
 
 from jwst import datamodels
 from jwst.combine_1d import Combine1dStep
-from jwst.combine_1d.combine1d import InputSpectrumModel, check_exptime, check_monotonic
+from jwst.combine_1d.combine1d import check_monotonic
 from jwst.datamodels.utils.tests.wfss_helpers import N_SOURCES, wfss_multi
 from jwst.tests.helpers import LogWatcher
 
@@ -113,49 +113,6 @@ def test_sigmaclip(three_spectra):
         result_sc.spec[0].spec_table["FLUX"][bad_pix], spec2.spec_table["FLUX"][bad_pix]
     )
     result_sc.close()
-
-
-@pytest.mark.parametrize("casing", ["upper", "lower"])
-@pytest.mark.parametrize(
-    "exptime",
-    ["exposure_time", "integration_time", "unit_weight", "effexptm", "effinttm", "unit weight"],
-)
-def test_exptime_keys(exptime, casing):
-    if casing == "upper":
-        exptime = exptime.upper()
-
-    spec1 = create_spec_model(flux=1.0, error=0.1)
-    spec2 = create_spec_model(flux=2.0, error=0.2)
-
-    ms1 = datamodels.MultiSpecModel()
-    ms1.meta.exposure.exposure_time = 1.0
-    ms1.meta.exposure.integration_time = 2.0
-    ms1.spec.append(spec1)
-
-    ms2 = datamodels.MultiSpecModel()
-    ms2.meta.exposure.exposure_time = 2.0
-    ms2.meta.exposure.integration_time = 1.0
-    ms2.spec.append(spec2)
-
-    result = Combine1dStep.call(datamodels.ModelContainer([ms1, ms2]), exptime_key=exptime)
-    if "exp" in exptime.lower():
-        # closer to 2
-        assert np.allclose(result.spec[0].spec_table["FLUX"], 1 + 2 / 3)
-    elif "int" in exptime.lower():
-        # closer to 1
-        assert np.allclose(result.spec[0].spec_table["FLUX"], 1 + 1 / 3)
-    else:
-        # equidistant
-        assert np.allclose(result.spec[0].spec_table["FLUX"], 1.5)
-
-
-def test_bad_exptime(two_spectra):
-    # Runtime error if bad key is passed to input model
-    with pytest.raises(RuntimeError):
-        InputSpectrumModel(two_spectra, two_spectra.spec[0], "bad")
-
-    # Bad key is translated to unit_weight if checked
-    assert check_exptime("bad") == "unit_weight"
 
 
 def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
