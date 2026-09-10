@@ -278,6 +278,7 @@ def test_wfss_multi_input(wfss_multiexposure):
     assert tab.shape == (N_SOURCES,)
     assert result.meta.cal_step.combine_1d == "COMPLETE"
     assert np.allclose(tab["FLUX"], 1.0)
+    assert np.allclose(tab["CONTAM_FLUX"], 0.1)
 
     # check that metadata was passed through correctly
     assert np.allclose(tab["SOURCE_RA"], 0.0)

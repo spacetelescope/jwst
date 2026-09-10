@@ -367,6 +367,9 @@ def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
         output_dir=str(tmp_path),
         suffix="x1d",
     )
+    # test that optional contam column got handled
+    np.testing.assert_allclose(result.spec[0].spec_table["contam_flux"], 150.0)
+    np.testing.assert_allclose(result.spec[0].spec_table["contam_surf_bright"], 3.0)
     result.close()
 
     fname = "test_x1d.fits"

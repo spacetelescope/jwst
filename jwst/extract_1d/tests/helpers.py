@@ -483,6 +483,8 @@ def mock_nis_wfss_l2():
     )
 
     slit0 = mock_nirspec_fs_one_slit_func()
+    # give contam a unique value so we know it has ended up in the right column later
+    slit0.contam = np.zeros_like(slit0.data) + 3
 
     nslit = 3
     for i in range(nslit):

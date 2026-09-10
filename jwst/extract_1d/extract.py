@@ -1295,7 +1295,9 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     return ra, dec, wavelength, profile, bg_profile, nod_profile, limits
 
 
-def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, extract_params):
+def extract_one_slit(
+    data_model, integration, profile, bg_profile, nod_profile, extract_params, data_attr="data"
+):
     """
     Extract data for one slit, or spectral order, or integration.
 
@@ -1332,6 +1334,9 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
     extract_params : dict
         Parameters read from the EXTRACT1D reference file, as returned by
         :func:`get_extract_parameters`.
+    data_attr : str
+        Name of attribute where data array is found. This is typically "data" but
+        can be "contam" when extracting contamination estimates for WFSS data.
 
     Returns
     -------
@@ -1377,7 +1382,9 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         Residual 2D image from the input minus the scene model.
     """
     # Get the data and variance arrays
-    data = data_model.data
+    data = getattr(data_model, data_attr, None)
+    if data is None:
+        raise AttributeError(f"Data model has no attribute {data_attr}")
     var_rnoise = data_model.var_rnoise
     var_poisson = data_model.var_poisson
     var_flat = data_model.var_flat
@@ -1756,6 +1763,22 @@ def create_extraction(
             residual_2d,
         ) = extract_one_slit(data_model, integ, profile, bg_profile, nod_profile, extract_params)
 
+        if getattr(data_model, "contam", None) is not None:
+            # compute contamination in identical way
+            contam_results = extract_one_slit(
+                data_model,
+                integ,
+                profile,
+                bg_profile,
+                nod_profile,
+                extract_params,
+                data_attr="contam",
+            )
+            contam_flux = contam_results[0]
+        else:
+            contam_flux = np.zeros_like(sum_flux) * np.nan
+            contam_surf_bright = np.zeros_like(sum_flux) * np.nan
+
         # Save the scene model and residual
         if save_scene_model:
             if isinstance(scene_model, datamodels.CubeModel):
@@ -1782,6 +1805,7 @@ def create_extraction(
             sb_var_poisson = f_var_poisson / npixels_squared
             sb_var_rnoise = f_var_rnoise / npixels_squared
             sb_var_flat = f_var_flat / npixels_squared
+            contam_surf_bright = contam_flux / npixels_temp
         background /= npixels_temp
         b_var_poisson = b_var_poisson / npixels_squared
         b_var_rnoise = b_var_rnoise / npixels_squared
@@ -1816,6 +1840,7 @@ def create_extraction(
                 f_var_poisson *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
                 f_var_rnoise *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
                 f_var_flat *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
+                contam_flux *= pixel_solid_angle * 1.0e6  # MJy / steradian --> Jy
         else:
             flux = sum_flux  # count rate
 
@@ -1830,32 +1855,39 @@ def create_extraction(
         dq[np.isnan(flux)] = datamodels.dqflags.pixel["DO_NOT_USE"]
 
         # Make a table of the values, trimming to points with valid wavelengths only
-        otab = np.array(
-            list(
-                zip(
-                    wavelength,
-                    flux[valid],
-                    error[valid],
-                    f_var_poisson[valid],
-                    f_var_rnoise[valid],
-                    f_var_flat[valid],
-                    surf_bright[valid],
-                    sb_error[valid],
-                    sb_var_poisson[valid],
-                    sb_var_rnoise[valid],
-                    sb_var_flat[valid],
-                    dq[valid],
-                    background[valid],
-                    berror[valid],
-                    b_var_poisson[valid],
-                    b_var_rnoise[valid],
-                    b_var_flat[valid],
-                    npixels[valid],
-                    strict=False,
-                )
-            ),
-            dtype=datamodels.SpecModel().get_dtype("spec_table"),
-        )
+        otab_list = [
+            wavelength,
+            flux[valid],
+            error[valid],
+            f_var_poisson[valid],
+            f_var_rnoise[valid],
+            f_var_flat[valid],
+            surf_bright[valid],
+            sb_error[valid],
+            sb_var_poisson[valid],
+            sb_var_rnoise[valid],
+            sb_var_flat[valid],
+            dq[valid],
+            background[valid],
+            berror[valid],
+            b_var_poisson[valid],
+            b_var_rnoise[valid],
+            b_var_flat[valid],
+            npixels[valid],
+        ]
+        otab_dtype = datamodels.SpecModel().get_dtype("spec_table")
+        if exp_type in WFSS_EXPTYPES:
+            # add contam columns
+            otab_list.insert(2, contam_flux[valid])
+            otab_list.insert(7, contam_surf_bright[valid])
+            # Need to modify the dtype, but it's immutable.
+            # Use descr to get it as a list
+            descr = otab_dtype.descr
+            descr.insert(2, ("CONTAM_FLUX", float))
+            descr.insert(7, ("CONTAM_SURF_BRIGHT", float))
+            otab_dtype = np.dtype(descr)
+
+        otab = np.array(list(zip(*otab_list, strict=True)), dtype=otab_dtype)
 
         spec = datamodels.SpecModel(spec_table=otab)
         spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
@@ -1870,6 +1902,10 @@ def create_extraction(
         spec.spec_table.columns["sb_var_poisson"].unit = sb_var_units
         spec.spec_table.columns["sb_var_rnoise"].unit = sb_var_units
         spec.spec_table.columns["sb_var_flat"].unit = sb_var_units
+        if "contam_flux" in spec.spec_table.columns:
+            spec.spec_table.columns["contam_flux"].unit = flux_units
+        if "contam_surf_bright" in spec.spec_table.columns:
+            spec.spec_table.columns["contam_surf_bright"].unit = sb_units
         spec.spec_table.columns["background"].unit = sb_units
         spec.spec_table.columns["bkgd_error"].unit = sb_units
         spec.spec_table.columns["bkgd_var_poisson"].unit = sb_var_units
