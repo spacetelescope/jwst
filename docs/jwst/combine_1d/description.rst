@@ -4,19 +4,16 @@ Description
 :Class: `jwst.combine_1d.combine_1d_step.Combine1dStep`
 :Alias: combine_1d
 
-The ``combine_1d`` step computes a weighted average of 1-D spectra and writes
+The ``combine_1d`` step computes an average of 1-D spectra and writes
 the combined 1-D spectrum as output.
 
 The combination of spectra proceeds as follows.  For each pixel of each
 input spectrum, the corresponding pixel in the output is identified
-(based on wavelength), and the input value multiplied by the weight is
+(based on wavelength), and the input value is
 added to the output buffer.  Pixels that are flagged (via the DQ column)
 with "DO_NOT_USE" will not contribute to the output.  After all input
 spectra have been included, the output is normalized by dividing by
-the sum of the weights.
-
-The weight will typically be the integration time or the exposure time,
-but uniform (unit) weighting can be specified instead.
+the number of inputs.
 
 The only part of this step that is not completely straightforward is the
 determination of wavelengths for the output spectrum.  The output
@@ -57,7 +54,7 @@ For most modes, the output will be in `~stdatamodels.jwst.datamodels.CombinedSpe
 having the name COMBINE1D.  This extension will have eight columns, giving
 the wavelength, flux, error estimate for the flux, surface brightness,
 error estimate for the surface brightness, the combined data quality flags,
-the sum of the weights that were used when combining the input spectra,
+the sum of the weights that were used when combining the input spectra (currently not used),
 and the number of input spectra that contributed to each output pixel.
 
 For WFSS modes, which may have hundreds or thousands of spectra from different sources,

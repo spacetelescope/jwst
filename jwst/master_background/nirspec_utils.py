@@ -114,7 +114,7 @@ def create_background_from_multispec(bkg_model, sigma_clip=3, median_kernel=1):
 
     # Call combine_1d to combine the 1D background spectra
     log.info("Combining 1D background spectra into master background")
-    master_bkg = combine_1d_spectra(bkg_model, exptime_key="exposure_time", sigma_clip=sigma_clip)
+    master_bkg = combine_1d_spectra(bkg_model, sigma_clip=sigma_clip)
 
     # If requested, apply a moving-median boxcar filter to the master background spectrum
     # Round down even kernel sizes because only odd kernel sizes are supported.

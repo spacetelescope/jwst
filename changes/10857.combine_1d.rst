@@ -1,0 +1,1 @@
+exptime_key parameter in Combine1dStep currently has no effect. This is because weighting, which was inaccurate, is temporarily disabled until a proper refactoring can be done in the future.
