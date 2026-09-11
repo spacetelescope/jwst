@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import multiprocessing as mp
 import time
@@ -7,13 +8,33 @@ import numpy as np
 from astropy.stats import SigmaClip
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
-from stdatamodels.jwst import datamodels
 
 from jwst.wfss_contam.disperse import disperse
 
 log = logging.getLogger(__name__)
 
-__all__ = ["background_subtract", "Observation"]
+__all__ = ["background_subtract", "Observation", "SimulatedCutout"]
+
+
+@dataclasses.dataclass
+class SimulatedCutout:
+    """
+    Lightweight container for simulated cutout data and attributes.
+
+    This class looks a lot like `~stdatamodels.jwst.datamodels.SlitModel` but avoids the
+    schema-copy and schema-validation overhead of constructing a full SlitModel for
+    every dispersed source in every spectral order. These objects are purely internal
+    bookkeeping and are never added to an output datamodel.
+    """
+
+    source_id: int
+    name: str
+    xstart: int
+    ystart: int
+    xsize: int
+    ysize: int
+    data: np.ndarray
+    spectral_order: int
 
 
 def background_subtract(
@@ -388,7 +409,7 @@ class Observation:
         for sid in source_results:
             bounds = source_results[sid]["bounds"]
             img = source_results[sid]["image"]
-            slitmodel = _construct_slitmodel(img, bounds, sid, order)
+            slitmodel = _construct_simulated_cutout(img, bounds, sid, order)
             fluxmodels = source_results[sid].get("model_counts", [])
             for i, fm in enumerate(fluxmodels):
                 # use i+1 indexing because typically the first model will be the linear order
@@ -465,14 +486,14 @@ def _aggregate_by_source(results, sid, source_results):
     }
 
 
-def _construct_slitmodel(
+def _construct_simulated_cutout(
     img,
     bounds,
     sid,
     order,
 ):
     """
-    Turn an output image from a single source/order into a SlitModel.
+    Turn an output image from a single source/order into a SimulatedCutout.
 
     Parameters
     ----------
@@ -487,18 +508,19 @@ def _construct_slitmodel(
 
     Returns
     -------
-    `~stdatamodels.jwst.datamodels.SlitModel`
+    SimulatedCutout
         Simulated source cutout containing the dispersed pixel values
     """
     [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy] = bounds
-    slitmodel = datamodels.SlitModel()
-    slitmodel.source_id = sid
-    slitmodel.name = f"{sid}"
-    slitmodel.xstart = thisobj_minx + 1  # FITS pixels are 1-indexed, matching extract_2d convention
-    slitmodel.xsize = thisobj_maxx - thisobj_minx + 1
-    slitmodel.ystart = thisobj_miny + 1  # FITS pixels are 1-indexed, matching extract_2d convention
-    slitmodel.ysize = thisobj_maxy - thisobj_miny + 1
-    slitmodel.meta.wcsinfo.spectral_order = order
-    slitmodel.data = img
-
-    return slitmodel
+    return SimulatedCutout(
+        source_id=sid,
+        name=f"{sid}",
+        # FITS pixels are 1-indexed, matching extract_2d convention
+        xstart=thisobj_minx + 1,
+        xsize=thisobj_maxx - thisobj_minx + 1,
+        ystart=thisobj_miny + 1,
+        ysize=thisobj_maxy - thisobj_miny + 1,
+        # Match SlitModel float32 dtype
+        data=img.astype(np.float32, copy=False),
+        spectral_order=order,
+    )

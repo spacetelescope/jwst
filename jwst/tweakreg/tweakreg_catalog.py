@@ -6,10 +6,11 @@ import warnings
 
 import astropy.units as u
 import numpy as np
+import photutils
 from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import QTable
-from astropy.utils import lazyproperty
+from astropy.utils import lazyproperty, minversion
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils import use_future_column_names
 from photutils.background import Background2D, MedianBackground
@@ -211,8 +212,13 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     """
     default_kwargs = {
         "n_pixels": 10,
-        "progress_bar": False,
     }
+
+    # The progress_bar parameter is deprecated for photutils v3.1:
+    # add it here only if the installed version is 3.0 or earlier.
+    if not minversion(photutils, "3.0.1.dev"):
+        default_kwargs["progress_bar"] = False
+
     kwargs = {**default_kwargs, **kwargs}
 
     # convolve the data with a Gaussian kernel
