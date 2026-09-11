@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from astropy.io import fits
 from astropy.modeling.models import Identity, Shift
-from stdatamodels.jwst.datamodels import IFUImageModel
+from stdatamodels.jwst.datamodels import IFUImageModel, dqflags
 
 from jwst.adaptive_trace_model import AdaptiveTraceModelStep
 from jwst.adaptive_trace_model.tests import helpers
@@ -204,13 +204,14 @@ def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename, c
     # Add a NaN in the error array, unmatched in data, to
     # check that the input is not modified by the match_nans_and_flags
     # call in the beginning of the step
-    nirspec_data.err[100, 100] = np.nan
+    step_input = nirspec_data.copy()
+    step_input.err[100, 100] = np.nan
+
     if as_filename:
         fn = tmp_path / "test_nirspec_cal.fits"
-        nirspec_data.save(fn)
+        step_input.save(fn)
         step_input = fn
-    else:
-        step_input = nirspec_data.copy()
+
     step = CubeBuildStep()
     step.coord_system = coord_system
     step.save_results = True
@@ -291,3 +292,46 @@ def test_output_crval1_positive(miri_data, shift_ra):
     # Output RA should be between 0 and 360
     for cube in result:
         assert np.isclose(cube.meta.wcsinfo.crval1, expected_ra, atol=1)
+
+
+@pytest.mark.parametrize("weighting", ["drizzle", "msm", "emsm"])
+def test_saturated_dq(nirspec_data, weighting):
+    # Add some saturated pixels in the DQ array in one of the valid regions
+    step_input = nirspec_data.copy()
+
+    # A pixel with SAT flag but valid value: appears in cube at x,y,z = 20 22 500
+    step_input.data[675, 750] = 1000
+    step_input.dq[675, 750] = dqflags.pixel["SATURATED"]
+
+    # A pixel with NaN value and SAT + DNU flags: appears in cube at x,y,z = 18 20 500
+    step_input.data[775, 738] = np.nan
+    step_input.dq[775, 738] = dqflags.pixel["SATURATED"] | dqflags.pixel["DO_NOT_USE"]
+
+    # A whole region with NaN value, only contributors to cube at x,y,z = 10 16 500
+    # with drizzle weights. One pixel has a saturated flag.
+    step_input.data[1492:1494, 641:643] = np.nan
+    step_input.data[1542, 634] = np.nan
+    step_input.dq[1492, 641] = dqflags.pixel["SATURATED"] | dqflags.pixel["DO_NOT_USE"]
+
+    result = CubeBuildStep.call(step_input, weighting=weighting)
+    cube = result[0]
+
+    # Check the values at the expected output pixel. There will be some effects
+    # on nearby pixels as well, depending on pixel overlap and weighting scheme.
+
+    # Partially saturated pixel has higher value, SAT flag only
+    assert cube.data[500, 22, 20] > 1
+    assert cube.dq[500, 20, 18] == dqflags.pixel["SATURATED"]
+
+    # NaN pixel has value from another overlapping slice. The flag is SAT only, not DNU.
+    assert np.isclose(cube.data[500, 20, 18], 1.0)
+    assert cube.dq[500, 20, 18] == dqflags.pixel["SATURATED"]
+
+    if weighting == "drizzle":
+        # All-NaN pixel has NaN value, SAT and DNU flag
+        assert np.isnan(cube.data[500, 16, 10])
+        assert cube.dq[500, 16, 10] == dqflags.pixel["SATURATED"] | dqflags.pixel["DO_NOT_USE"]
+    else:
+        # Other weighting schemes average more pixels, so output still has a value
+        assert np.isclose(cube.data[500, 16, 10], 1.0)
+        assert cube.dq[500, 16, 10] == dqflags.pixel["SATURATED"]
