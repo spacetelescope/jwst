@@ -383,7 +383,7 @@ def disperse(
         f"{mp.current_process()} dispersing {n_input_sources} "
         f"sources in order {order} with total number of pixels: {len(xs)}"
     )
-    if n_input_sources < np.iinfo(np.uint16).max:
+    if np.max(source_ids_per_pixel) < np.iinfo(np.uint16).max and np.min(source_ids_per_pixel) >= 0:
         # Conversion to 16-bit makes the array faster to sort later
         source_ids_per_pixel = source_ids_per_pixel.astype(np.uint16, copy=False)
     width = 1.0
