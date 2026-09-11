@@ -330,9 +330,6 @@ match_driz(
                                 printf(
                                     "spaxel, flux, x, y [count starting at 0]  %i %f %f %f  \n ",
                                     index_cube, flux[k], x_det[k], y_det[k]);
-                                printf(
-                                    "ifluxv %f %f %f \n", ifluxv[index_cube], weighted_flux,
-                                    fluxv[index_cube]);
                             }
 
                             // end of print statements
