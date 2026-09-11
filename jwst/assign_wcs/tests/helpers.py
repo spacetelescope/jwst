@@ -13,7 +13,6 @@ __all__ = [
     "make_mock_dhs_nrca1_rate",
     "make_mock_dhs_nrca1_regions",
     "make_mock_dhs_nrcalong_rate",
-    "make_mock_dhs_nrcalong_regions",
     "make_mock_dhs_nrca1_rate_sub164",
 ]
 
@@ -194,48 +193,6 @@ def make_mock_dhs_nrcalong_rate():
         model.data[:, y0 + 5 : y1 - 5, :] = 1.0
 
     return model
-
-
-def make_mock_dhs_nrcalong_regions(sci_model, tmp_path):
-    """
-    Write a mock NRCALONG DHS regions reference file and return its path.
-
-    For NRCALONG the same detector band is read in every readout, so the
-    regions map is a single nonzero stripe.
-
-    NOTE: this mock should no longer be needed, since regions files are
-    available via CRDS, but this function is retained for now in case it's
-    useful as a local override.
-
-    Parameters
-    ----------
-    sci_model : `~stdatamodels.jwst.datamodels.CubeModel`
-        The NRCALONG rate model whose multistripe parameters define the layout.
-    tmp_path : `pathlib.Path`
-        Writable temporary directory.
-
-    Returns
-    -------
-    str
-        Absolute path to the saved ASDF regions file.
-    """
-    # Make a regions file that matches the subarray
-    sub_ranges = generate_substripe_ranges(sci_model, science_frame=True)["subarray"]
-    ysize = sci_model.meta.subarray.ysize
-    regions = np.zeros((ysize, 2048), dtype=np.float64)
-    for stripe_id in sub_ranges:
-        row_start, row_stop = sub_ranges[stripe_id]
-        # all regions have the same identifier
-        regions[row_start:row_stop, :] = 4
-
-    regions_path = tmp_path / "mock_nrcalong_regions.asdf"
-    model = dm.RegionsModel()
-    model.regions = regions
-    _populate_dhs_regions_metadata(model)
-    model.save(str(regions_path))
-    model.close()
-
-    return str(regions_path)
 
 
 def make_mock_dhs_nrca1_rate_sub164():
