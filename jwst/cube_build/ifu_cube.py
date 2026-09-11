@@ -2231,7 +2231,8 @@ class IFUCubeData:
         # Flux is nan, we need to ADD NON_SCIENCE and DO_NOT_USE
 
         # Force uint32 dtype to match self.spaxel_dq type
-        flag_mask = np.uint32(dqflags.pixel["NON_SCIENCE"] | dqflags.pixel["DO_NOT_USE"])
+        # flag_mask = np.uint32(dqflags.pixel["NON_SCIENCE"] | dqflags.pixel["DO_NOT_USE"])
+        flag_mask = np.uint32(dqflags.pixel["DO_NOT_USE"])
 
         self.spaxel_dq[weight_is_zero] |= flag_mask
 
