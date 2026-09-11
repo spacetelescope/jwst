@@ -1,1 +1,1 @@
-Removed skip_dqflagging option from cube_build. The DQ plane of the IFUCube model is always updated.
+Removed ``skip_dqflagging`` option from the ``cube_build`` step. The DQ plane of the IFUCube model is always updated.

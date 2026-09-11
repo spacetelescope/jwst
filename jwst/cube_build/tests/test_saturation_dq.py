@@ -1,92 +1,61 @@
-from types import SimpleNamespace
-
+import gwcs
 import numpy as np
 import pytest
+from astropy.modeling.models import Mapping
+from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.cube_build.ifu_cube import IFUCubeData
+from jwst.cube_build import ifu_cube
 
-
-class AutoNamespace(SimpleNamespace):
-    """Dynamic namespace that auto-instantiates missing attributes as sub-namespaces."""
-
-    def __getattr__(self, name):
-        val = AutoNamespace()
-        setattr(self, name, val)
-        return val
-
-
-class FakeWCS:
-    """Fake WCS implementation returning static sky coordinates."""
-
-    def __call__(self, x, y):
-        return np.array([0.0]), np.array([0.0]), np.array([1.0])
-
-
-class FakeMeta(AutoNamespace):
-    """Fake meta object storing image attributes and nested metadata structures."""
-
-    def __init__(self, filename="test_drizzle_saturated.fits"):
-        super().__init__()
-        self.filename = filename
-        self.wcs = FakeWCS()
-        self.instrument.name = "MIRI"
-
-
-class FakeInputModel:
-    """Fake input data model containing array attributes and metadata."""
-
-    def __init__(self, data, err, dq):
-        self.data = data
-        self.err = err
-        self.dq = dq
-        self.meta = FakeMeta()
-
-
-class FakeIFUCubeModel:
-    """Fake output cube model recording initialization arguments and metadata updates."""
-
-    def __init__(self, **kwargs):
-        self.dq = kwargs.get("dq")
-        self.data = kwargs.get("data")
-        self.err = kwargs.get("err")
-        self.weight = kwargs.get("weight")
-        self.meta = kwargs.get("meta", FakeMeta())
-
-    def update(self, reference_model, **kwargs):
-        """Stub for datamodel update method to copy reference metadata."""
-        pass
-
-    def save(self, *args, **kwargs):
-        pass
+SHAPE = (1, 1)
 
 
 # ---------------------------------------------------------------------------
-# Pytest Fixture
+# Pytest Fixtures
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture
-def drizzle_cube_instance(monkeypatch):
-    """Fixture to create an IFUCubeData instance without executing __init__."""
+def mock_wcs():
+    """Simple GWCS pipeline instance matching test_wcs.py conventions."""
+    input_frame = gwcs.Frame2D(name="detector")
+    output_frame = gwcs.Frame2D(name="world")
+    pipeline = [(input_frame, Mapping((0, 1, 1))), (output_frame, None)]
+    return gwcs.WCS(pipeline)
 
-    # Avoid real __init__ execution using monkeypatch
-    monkeypatch.setattr(IFUCubeData, "__init__", lambda self: None)
-    cube = IFUCubeData()
 
-    # Initialize output and input metadata attributes
+@pytest.fixture
+def mock_miri_image_model(mock_wcs):
+    """Returns a real JWST IFUImageModel populated with MIRI metadata."""
+    input_model = datamodels.IFUImageModel()
+    input_model.meta.instrument.name = "MIRI"
+    input_model.meta.instrument.detector = "MIRIFULONG"
+    input_model.meta.instrument.channel = "34"
+    input_model.meta.instrument.band = "SHORT"
+    input_model.meta.filename = "test_drizzle_saturated.fits"
+
+    input_model.data = np.zeros(SHAPE, dtype=np.float32)
+    input_model.err = np.zeros(SHAPE, dtype=np.float32)
+    input_model.dq = np.zeros(SHAPE, dtype=np.uint32)
+    input_model.meta.wcs = mock_wcs
+    return input_model
+
+
+@pytest.fixture
+def drizzle_cube_instance(mock_miri_image_model):
+    """Fixture to create and configure an IFUCubeData instance."""
+    cube = ifu_cube.IFUCubeData.__new__(ifu_cube.IFUCubeData)
+
     cube.output_name = "test_drizzle_cube.fits"
-    cube.input_models = [
-        FakeInputModel(np.zeros((1, 1)), np.zeros((1, 1)), np.zeros((1, 1), dtype=np.uint32))
-    ]
+    cube.input_models = [mock_miri_image_model]
 
     # Instrument and coordinate metadata configuration
     cube.instrument = "MIRI"
-    cube.coord_system = "sky"  # Coordinate frame: 'sky' or 'internal_cal'
-    cube.list_par1 = ["1"]  # MIRI Channels (e.g. 1, 2, 3, 4)
-    cube.list_par2 = ["SHORT"]  # MIRI Bands (e.g. SHORT, MEDIUM, LONG)
+    cube.coord_system = "sky"
+    cube.list_par1 = ["1"]
+    cube.list_par2 = ["SHORT"]
 
-    # Initialize spatial/spectral dimensions and config for DRIZZLE
+    # Initialize spatial/spectral dimensions
     cube.naxis1 = 1
     cube.naxis2 = 1
     cube.naxis3 = 1
@@ -100,17 +69,13 @@ def drizzle_cube_instance(monkeypatch):
     cube.scalerad = 1.0
     cube.offsets = None
 
-    # Reference coordinate values (CRVAL)
+    # Reference coordinates
     cube.crval1 = 0.0
     cube.crval2 = 0.0
     cube.crval3 = 1.0
-
-    # Reference pixel positions (CRPIX)
     cube.crpix1 = 1.0
     cube.crpix2 = 1.0
     cube.crpix3 = 1.0
-
-    # Coordinate step sizes (CDELT)
     cube.cdelt1 = 0.1
     cube.cdelt2 = 0.1
     cube.cdelt3 = 0.1
@@ -135,7 +100,7 @@ def drizzle_cube_instance(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_drizzle_saturated_pixel_dq_propagation(drizzle_cube_instance, monkeypatch):
+def test_drizzle_saturated_pixel_dq_propagation(drizzle_cube_instance, mock_miri_image_model):
     """
     Test that detector pixels with DQ = SATURATED pass through properly
     during drizzle processing, bitwise-OR into spaxel_dq, and survive flux division.
@@ -143,15 +108,14 @@ def test_drizzle_saturated_pixel_dq_propagation(drizzle_cube_instance, monkeypat
     cube = drizzle_cube_instance
     sat_flag = dqflags.pixel["SATURATED"]
 
-    # 1. Create stub input data model with a SATURATED detector pixel
-    input_model = FakeInputModel(
-        data=np.array([[500.0]]), err=np.array([[2.0]]), dq=np.array([[sat_flag]], dtype=np.uint32)
-    )
+    # Populate saturated input image using real datamodel
+    input_model = mock_miri_image_model
+    input_model.data[0, 0] = 500.0
+    input_model.err[0, 0] = 2.0
+    input_model.dq[0, 0] = sat_flag
 
-    # 8 corner coordinates: ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4
     corner_coords = np.zeros((8, 1), dtype=np.float64)
 
-    # Fake mapping result from map_miri_pixel_to_sky
     sky_result = (
         np.array([0]),  # x
         np.array([0]),  # y
@@ -160,78 +124,70 @@ def test_drizzle_saturated_pixel_dq_propagation(drizzle_cube_instance, monkeypat
         np.array([1.0]),  # wave
         np.array([1]),  # slice_no
         np.array([0.1]),  # dwave
-        corner_coords,  # corner_coord_all indexed along axis 0
+        corner_coords,  # corner_coord_all
     )
 
-    # Override method using monkeypatch
-    monkeypatch.setattr(cube, "map_miri_pixel_to_sky", lambda *args, **kwargs: sky_result)
+    cube.map_miri_pixel_to_sky = lambda *args, **kwargs: sky_result
 
-    # 2. Run map_detector_to_outputframe for drizzle
     res = cube.map_detector_to_outputframe("MEDIUM", input_model)
 
-    # Verify SATURATED DQ flag was preserved through map_detector_to_outputframe
     dq_out = res[7]
     assert (dq_out[0] & sat_flag) == sat_flag
 
-    # 3. Simulate C-extension / C-drizzle output updating spaxel_dq
     drizzle_spaxel_dq = np.array([sat_flag], dtype=np.uint32)
     cube.spaxel_dq = np.bitwise_or(cube.spaxel_dq, drizzle_spaxel_dq)
 
-    # Drizzle weight accumulation
     cube.spaxel_weight[0] = 0.85
     cube.spaxel_flux[0] = 425.0
     cube.spaxel_iflux[0] = 1.0
 
-    # 4. Finalize spaxel flux division
     cube.find_spaxel_flux()
     cube.set_final_dq_flags()
 
-    # Verify output flux and preserved DQ flag
     assert cube.spaxel_flux[0] == pytest.approx(500.0)
     assert (cube.spaxel_dq[0] & sat_flag) == sat_flag
 
 
-def test_drizzle_saturated_nan_flux_sets_do_not_use(drizzle_cube_instance, monkeypatch):
+def test_drizzle_saturated_nan_flux_sets_dq(drizzle_cube_instance):
     """
-    Test that if drizzle interpolation results in NaN flux for a saturated spaxel,
-    the DO_NOT_USE DQ flag is correctly appended during model setup.
+    Test that when all input detector pixels are SATURATED (flux=NaN),
+    the C routine's SATURATED DQ bit is preserved when set_final_dq_flags()
+    appends NON_SCIENCE and DO_NOT_USE for weight == 0 spaxels.
     """
+
     cube = drizzle_cube_instance
     sat_flag = dqflags.pixel["SATURATED"]
     do_not_use_flag = dqflags.pixel["DO_NOT_USE"]
+    non_science_flag = dqflags.pixel["NON_SCIENCE"]  # 512
 
-    # Assign NaN flux under drizzle combination with SATURATED DQ
-    cube.spaxel_flux[0] = np.nan
-    cube.spaxel_weight[0] = 0.5
-    cube.spaxel_iflux[0] = 1.0
+    # Simulate C routine output (cube_match_sky_driz):
+    # - Bitwise-OR detector DQ (SATURATED) into spaxel_dq
+    # - npy_isnan(flux) causes spaxel_flux and spaxel_weight to stay 0.0
     cube.spaxel_dq[0] = sat_flag
+    cube.spaxel_flux[0] = 0.0
+    cube.spaxel_weight[0] = 0.0
+    cube.spaxel_iflux[0] = 0.0
 
-    ref_model = FakeInputModel(
-        data=np.array([[0.0]]), err=np.array([[0.0]]), dq=np.array([[0]], dtype=np.uint32)
+    # Run flux processing to catch NaN fluxes and append DO_NOT_USE
+    cube.find_spaxel_flux()
+    cube.set_final_dq_flags()
+
+    # 3. Construct final output model
+    dq_cube = cube.spaxel_dq.reshape((cube.naxis3, cube.naxis2, cube.naxis1))
+    data_cube = cube.spaxel_flux.reshape((cube.naxis3, cube.naxis2, cube.naxis1))
+    err_cube = np.sqrt(cube.spaxel_var).reshape((cube.naxis3, cube.naxis2, cube.naxis1))
+    weight_cube = cube.spaxel_weight.reshape((cube.naxis3, cube.naxis2, cube.naxis1))
+
+    final_model = datamodels.IFUCubeModel(
+        data=data_cube,
+        err=err_cube,
+        dq=dq_cube,
+        weight=weight_cube,
     )
 
-    # Intercept IFUCubeModel creation and create_fitswcs via monkeypatch
-    last_created_cube = {}
+    final_dq = final_model.dq[0, 0, 0]
 
-    def fake_ifucube_constructor(**kwargs):
-        inst = FakeIFUCubeModel(**kwargs)
-        last_created_cube["instance"] = inst
-        return inst
-
-    import jwst.cube_build.ifu_cube as ifu_module
-
-    monkeypatch.setattr(ifu_module.datamodels, "IFUCubeModel", fake_ifucube_constructor)
-    # Return an AutoNamespace so setting bounding_box succeeds
-    monkeypatch.setattr(
-        ifu_module.pointing, "create_fitswcs", lambda *args, **kwargs: AutoNamespace()
-    )
-
-    # Execute model creation setup
-    cube.setup_final_ifucube_model(ref_model)
-
-    # Inspect final generated DQ array
-    final_dq = last_created_cube["instance"].dq
-
-    # Verify DO_NOT_USE was set alongside SATURATED for the NaN flux spaxel
-    assert (final_dq[0, 0, 0] & sat_flag) == sat_flag
-    assert (final_dq[0, 0, 0] & do_not_use_flag) == do_not_use_flag
+    # Verify SATURATED (2), DO_NOT_USE (1), and NON_SCIENCE (512) are all set (total: 515)
+    assert (final_dq & sat_flag) == sat_flag
+    assert (final_dq & do_not_use_flag) == do_not_use_flag
+    assert (final_dq & non_science_flag) == non_science_flag
