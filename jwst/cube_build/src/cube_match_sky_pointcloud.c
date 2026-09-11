@@ -272,8 +272,6 @@ match_point_msm(
     double **spaxel_iflux, int **spaxel_dq)
 {
 
-    // double *fluxv = NULL, *weightv = NULL, *varv = NULL, *ifluxv = NULL; // vector for spaxel
-
     int k;
     int iwstart, iwend, ixstart, ixend, iystart, iyend;
     int ii, nxy, iw, ix, iy, index_xy, index_cube;

@@ -776,6 +776,8 @@ class IFUCubeData:
                         if self.linear_wave:
                             linear = 1
 
+                        if debug_cube_index >= 0:
+                            log.info(f"Input filename: {input_model.meta.filename}")
                         result = cube_wrapper_driz(
                             start_region,
                             end_region,
