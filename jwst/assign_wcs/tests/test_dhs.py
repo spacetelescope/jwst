@@ -240,3 +240,9 @@ def test_missing_regions(mock_dhs_nrca1_rate):
     # error is raised if regions file is missing
     with pytest.raises(FileNotFoundError, match="No regions reference file"):
         AssignWcsStep.call(mock_dhs_nrca1_rate, override_regions="N/A")
+
+
+def test_missing_specwcs(mock_dhs_nrca1_rate):
+    # error is raised if specwcs file is missing
+    with pytest.raises(FileNotFoundError, match="No specwcs reference file"):
+        AssignWcsStep.call(mock_dhs_nrca1_rate, override_specwcs="N/A")

@@ -458,6 +458,8 @@ def dhs(input_model, reference_files):
     """
     if reference_files["regions"] in ["", "N/A", None]:
         raise FileNotFoundError("No regions reference file provided.")
+    if reference_files["specwcs"] in ["", "N/A", None]:
+        raise FileNotFoundError("No specwcs reference file provided.")
 
     frames = create_coord_frames()
 
