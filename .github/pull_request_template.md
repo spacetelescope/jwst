@@ -16,7 +16,7 @@ This change ...
 - [ ] If you have a specific reviewer in mind, tag them.
 - [ ] add a build milestone, i.e. `Build 12.0` (use the [latest build](https://github.com/spacetelescope/jwst/milestones) if not sure)
 - [ ] Does this PR change user-facing code / API? (if not, label with `no-changelog-entry-needed`)
-  - [ ] write news fragment(s) in `changes/`: `echo "changed something" > changes/<PR#>.<changetype>.rst` (see [changelog readme](https://github.com/spacetelescope/jwst/blob/main/changes/README.rst) for instructions) 
+  - [ ] write news fragment(s) in `changes/`: `echo "changed something" > changes/<PR#>.<changetype>.rst` (see [changelog readme](../changes/README.rst) for instructions) 
     - if your change breaks **step-level or public API** ([as defined in the docs](https://jwst.readthedocs.io/en/latest/jwst/user_documentation/more_information.html#api-public-vs-private)), also add a `changes/<PR#>.breaking.rst` news fragment
   - [ ] update or add relevant tests
   - [ ] update relevant docstrings and / or `docs/` page
