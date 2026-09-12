@@ -70,9 +70,13 @@ class Ami3Pipeline(Pipeline):
         # Run ami_analyze on all the target members
         targ_lg = []
         for input_file in targ_files:
+            # Read and validate input
+            input_model = self.prepare_output(input_file)
+            self.validate_input_exptype(input_model, ["nis_ami"])
+
             # Do the LG analysis for this image
             log.debug("Do LG processing for member %s", input_file)
-            result1, result2, result3 = self.ami_analyze.run(input_file)
+            result1, result2, result3 = self.ami_analyze.run(input_model)
 
             # Save the averaged LG analysis results to a file
             result1.meta.asn.pool_name = asn["asn_pool"]
@@ -89,9 +93,13 @@ class Ami3Pipeline(Pipeline):
         # Run ami_analyze on all the psf members
         psf_lg = []
         for input_file in psf_files:
+            # Read and validate input
+            input_model = self.prepare_output(input_file)
+            self.validate_input_exptype(input_model, ["NIS_AMI"])
+
             # Do the LG analysis for this image
             log.debug("Do LG processing for member %s", input_file)
-            result1, result2, result3 = self.ami_analyze.run(input_file)
+            result1, result2, result3 = self.ami_analyze.run(input_model)
 
             # Save the LG analysis results to a file
             result1.meta.asn.pool_name = asn["asn_pool"]

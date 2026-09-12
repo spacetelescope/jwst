@@ -61,11 +61,10 @@ class Tso3Pipeline(Pipeline):
 
         input_models = self.prepare_output(input_data, asn_exptypes=asn_exptypes)
 
-        # Sanity check the input data
-        input_tsovisit = is_tso(input_models[0])
-        if not input_tsovisit:
-            log.error("INPUT DATA ARE NOT TSO MODE. ABORTING PROCESSING.")
-            return
+        # Validate the input data before proceeding
+        for model in input_models:
+            if not is_tso(model):
+                raise TypeError("Input data are not TSO")
 
         # Overriding the Step.save_model method for the following steps.
         # These steps may save intermediate files, resulting in meta.filename
@@ -119,7 +118,7 @@ class Tso3Pipeline(Pipeline):
         phot_result_list = []
 
         # Imaging
-        if input_exptype == "NRC_TSIMAGE" or (input_exptype == "MIR_IMAGE" and input_tsovisit):
+        if input_exptype == "NRC_TSIMAGE" or input_exptype == "MIR_IMAGE":
             # Create name for extracted photometry (Level 3) product
             phot_tab_suffix = "phot"
 

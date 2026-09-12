@@ -1,9 +1,27 @@
 from pathlib import Path
 
+import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.ami.tests.helpers import example_model
 from jwst.pipeline import Ami3Pipeline
+
+
+def make_asn(input_name, psf_name):
+    ami3_asn = {
+        "asn_id": "c1000",
+        "asn_pool": "test_pool.csv",
+        "products": [
+            {
+                "name": "test_ami3",
+                "members": [
+                    {"expname": input_name, "exptype": "science"},
+                    {"expname": psf_name, "exptype": "psf"},
+                ],
+            }
+        ],
+    }
+    return ami3_asn
 
 
 def test_niriss_ami3(tmp_cwd):
@@ -18,19 +36,7 @@ def test_niriss_ami3(tmp_cwd):
     psf_model.save(psf_name)
     psf_model.close()
 
-    ami3_asn = {
-        "asn_id": "c1000",
-        "asn_pool": "test_pool.csv",
-        "products": [
-            {
-                "name": "test_ami3",
-                "members": [
-                    {"expname": input_name, "exptype": "science"},
-                    {"expname": psf_name, "exptype": "psf"},
-                ],
-            }
-        ],
-    }
+    ami3_asn = make_asn(input_name, psf_name)
 
     Ami3Pipeline.call(ami3_asn)
 
@@ -46,3 +52,16 @@ def test_niriss_ami3(tmp_cwd):
             assert model.meta.cal_step.ami_analyze == "COMPLETE"
             if "norm" in filename:
                 assert model.meta.cal_step.ami_normalize == "COMPLETE"
+
+
+def test_invalid_exptype(tmp_cwd):
+    model = example_model()
+    model.meta.instrument.name = "NIRCAM"
+    model.meta.exposure.type = "NRC_IMAGE"
+    input_name = "invalid_science.fits"
+    psf_name = "invalid_psf.fits"
+    model.save(input_name)
+    model.save(psf_name)
+    ami3_asn = make_asn(input_name, psf_name)
+    with pytest.raises(TypeError, match="not supported by calwebb_ami3"):
+        Ami3Pipeline.call(ami3_asn)

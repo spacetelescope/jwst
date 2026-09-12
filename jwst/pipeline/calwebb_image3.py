@@ -17,6 +17,8 @@ from jwst.tweakreg import tweakreg_step
 
 __all__ = ["Image3Pipeline"]
 
+SUPPORTED_EXPTYPES = {"NRC_IMAGE", "MIR_IMAGE", "NIS_IMAGE", "FGS_IMAGE", "NRS_MIMF"}
+
 log = logging.getLogger(__name__)
 
 
@@ -68,6 +70,9 @@ class Image3Pipeline(Pipeline):
         # Only load science members from input ASN;
         # background and target-acq members are not needed.
         input_models = self._load_input_as_library(input_data)
+
+        # Validate the input before proceeding
+        self.validate_input_exptype(input_models, SUPPORTED_EXPTYPES)
 
         if (self.output_file is None) and ("name" in input_models.asn["products"][0]):
             # If input is an association, set the output to the product name.
