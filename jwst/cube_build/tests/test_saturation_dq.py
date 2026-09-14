@@ -152,7 +152,7 @@ def test_drizzle_saturated_nan_flux_sets_dq(drizzle_cube_instance):
     """
     Test that when all input detector pixels are SATURATED (flux=NaN),
     the C routine's SATURATED DQ bit is preserved when set_final_dq_flags()
-    appends NON_SCIENCE and DO_NOT_USE for weight == 0 spaxels.
+    appends DO_NOT_USE for weight == 0 spaxels.
     """
 
     cube = drizzle_cube_instance
@@ -187,7 +187,6 @@ def test_drizzle_saturated_nan_flux_sets_dq(drizzle_cube_instance):
 
     final_dq = final_model.dq[0, 0, 0]
 
-    # Verify SATURATED (2), DO_NOT_USE (1), and NON_SCIENCE (512) are all set (total: 515)
+    # Verify SATURATED (2), DO_NOT_USE (1) flags are set.
     assert (final_dq & sat_flag) == sat_flag
     assert (final_dq & do_not_use_flag) == do_not_use_flag
-    # assert (final_dq & non_science_flag) == non_science_flag

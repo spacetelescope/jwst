@@ -819,12 +819,10 @@ class IFUCubeData:
                         self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
                         self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
 
-                        # spaxel_dq.astype(np.uint)
-                        # 2. Reassign the casted array so the bitwise OR receives matching dtypes
+                        # Reassign the casted array so the bitwise OR receives matching dtypes
                         spaxel_dq = np.asarray(spaxel_dq, dtype=self.spaxel_dq.dtype)
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
 
-                        # result = None
                         del result
                         del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq
 
@@ -2218,23 +2216,18 @@ class IFUCubeData:
         These flags include:
 
         * Good data (0)
-        * NON_SCIENCE
         * DO_NOT_USE.
         """
         # flatten to match the size of spaxel_dq
-        self.spaxel_dq = np.ndarray.flatten(self.spaxel_dq)
+        # self.spaxel_dq = np.ndarray.flatten(self.spaxel_dq)
 
-        # convert all remaining spaxel_weight = 0 to NON_SCIENCE + DO_NOT_USE
+        # convert all remaining spaxel_weight = 0 to DO_NOT_USE
         weight_is_zero = self.spaxel_weight == 0
 
         # If the data was only from saturating data, then the weight = 0.
-        # Flux is nan, we need to ADD NON_SCIENCE and DO_NOT_USE
+        # Flux is nan, we need to ADD DO_NOT_USE
 
-        # Force uint32 dtype to match self.spaxel_dq type
-        # flag_mask = np.uint32(dqflags.pixel["NON_SCIENCE"] | dqflags.pixel["DO_NOT_USE"])
-        flag_mask = np.uint32(dqflags.pixel["DO_NOT_USE"])
-
-        self.spaxel_dq[weight_is_zero] |= flag_mask
+        self.spaxel_dq[weight_is_zero] |= dqflags.pixel["DO_NOT_USE"]
 
         self.spaxel_flux[weight_is_zero] = np.nan
         self.spaxel_var[weight_is_zero] = np.nan
