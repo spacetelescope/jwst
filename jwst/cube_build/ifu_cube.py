@@ -2214,13 +2214,9 @@ class IFUCubeData:
         Set up the final DQ flags.
 
         These flags include:
-
         * Good data (0)
         * DO_NOT_USE.
         """
-        # flatten to match the size of spaxel_dq
-        # self.spaxel_dq = np.ndarray.flatten(self.spaxel_dq)
-
         # convert all remaining spaxel_weight = 0 to DO_NOT_USE
         weight_is_zero = self.spaxel_weight == 0
 
