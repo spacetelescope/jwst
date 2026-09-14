@@ -2,7 +2,6 @@
 
 import logging
 from collections import defaultdict
-from pathlib import Path
 
 import numpy as np
 from stdatamodels.jwst import datamodels
@@ -245,11 +244,11 @@ class BackgroundStep(Step):
         exp_type = sci.meta.exposure.type
         if exp_type in WFSS_TYPES:
             try:
-                sci.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
+                sci.meta.source_catalog = members_by_type["sourcecat"][0]
                 log.info(f"Using sourcecat file {sci.meta.source_catalog}")
-                sci.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
+                sci.meta.segmentation_map = members_by_type["segmap"][0]
                 log.info(f"Using segmentation map {sci.meta.segmentation_map}")
-                sci.meta.direct_image = Path(members_by_type["direct_image"][0]).name
+                sci.meta.direct_image = members_by_type["direct_image"][0]
                 log.info(f"Using direct image {sci.meta.direct_image}")
             except IndexError:
                 if sci.meta.source_catalog is None:

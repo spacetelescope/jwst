@@ -229,11 +229,11 @@ class Spec2Pipeline(Pipeline):
         # name from the asn and record it to the meta
         if exp_type in WFSS_TYPES:
             try:
-                science.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
+                science.meta.source_catalog = members_by_type["sourcecat"][0]
                 log.info(f"Using sourcecat file {science.meta.source_catalog}")
-                science.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
+                science.meta.segmentation_map = members_by_type["segmap"][0]
                 log.info(f"Using segmentation map {science.meta.segmentation_map}")
-                science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
+                science.meta.direct_image = members_by_type["direct_image"][0]
                 log.info(f"Using direct image {science.meta.direct_image}")
             except IndexError:
                 if science.meta.source_catalog is None:
@@ -281,7 +281,6 @@ class Spec2Pipeline(Pipeline):
                     raise RuntimeError("Cannot determine WCS.")
 
         # Steps whose order is the same for all types of input:
-
         # Self-calibrate to flag bad/warm pixels, and apply flags
         # to both background and science exposures.
         # skipped by default for all modes
