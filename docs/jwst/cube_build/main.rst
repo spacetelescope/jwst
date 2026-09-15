@@ -224,7 +224,7 @@ contains the number of detector pixels contributing to a given voxel. The data q
 
 * 0: Good data 
 * 1: Do Not Use
-* 2: Saturated Do not use
+* 2: Saturated
 * 512: Non Science or
 * Combinations of the above
 
