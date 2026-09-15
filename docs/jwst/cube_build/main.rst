@@ -215,17 +215,17 @@ WMAP     3      2 spatial and 1 spectral  integer
 =======  =====  ========================  =========
 
 The SCI image contains the surface brightness of cube spaxels in units of MJy/sr. The wavelength dimension of the IFU cube
-can either be linear or non-linear. If the wavelength is non-linear, then the IFU cube contains data from more than one band.  A
-table containing the wavelength of each plane is provided and conforms to the 'WAVE_TAB' FITS convention. The wavelengths
+can either be linear or non-linear. If the wavelength is non-linear, then the IFU cube contains data from more than one band.
+A table containing the wavelength of each plane is provided and conforms to the 'WAVE_TAB' FITS convention. The wavelengths
 in the table are read in from the :ref:`cubepar_reffile`. The ERR image contains the
 uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
-contains the number of detector pixels contributing to a given voxel. The data quality flag does not propagate the
-DQ flags from previous steps but is defined in the cube build step as:
+contains the number of detector pixels contributing to a given voxel. The data quality (DQ) flag only propagates the
+"saturated" flag from previous steps. In the cube build step, DQ flags are  defined as:
 
-* good data (value = 0),
-* non_science (value = 512),
-* do_not_use(value =1), or
-* a combination of non_science and do_not_use (value = 513).
+* 0: Good data 
+* 1: Do Not Use
+* 2: Saturated do_not_use(value =1), or
+* 3: Saturated + Do not use
 
 The SCI and ERR cubes are populated with NaN values for voxels where there is no valid data (e.g., outside
 the IFU cube footprint or for saturated pixels for which no slope could be measured).
