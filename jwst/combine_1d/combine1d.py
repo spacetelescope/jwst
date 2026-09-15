@@ -287,8 +287,8 @@ class OutputSpectrumModel:
         # contam_flux and contam_surf_bright are present for WFSS modes
         self.has_contam = any(in_spec.has_contam for in_spec in input_spectra)
         if self.has_contam:
-            contam_flux = np.zeros((nspec, nelem), dtype=np.float64)
-            contam_surf_bright = np.zeros((nspec, nelem), dtype=np.float64)
+            contam_flux = np.full((nspec, nelem), np.nan, dtype=np.float64)
+            contam_surf_bright = np.full((nspec, nelem), np.nan, dtype=np.float64)
         else:
             contam_flux = None
             contam_surf_bright = None

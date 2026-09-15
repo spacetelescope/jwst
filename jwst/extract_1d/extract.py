@@ -1777,8 +1777,8 @@ def create_extraction(
             )
             contam_flux = contam_results[0]
         else:
-            contam_flux = np.zeros_like(sum_flux) * np.nan
-            contam_surf_bright = np.zeros_like(sum_flux) * np.nan
+            contam_flux = np.full_like(sum_flux, np.nan)
+            contam_surf_bright = np.full_like(sum_flux, np.nan)
 
         # Save the scene model and residual
         if save_scene_model:
