@@ -1778,7 +1778,7 @@ def create_extraction(
             contam_flux = contam_results[0]
         else:
             contam_flux = np.full_like(sum_flux, np.nan)
-            contam_surf_bright = np.full_like(sum_flux, np.nan)
+        contam_surf_bright = np.full_like(sum_flux, np.nan)
 
         # Save the scene model and residual
         if save_scene_model:
@@ -1825,6 +1825,7 @@ def create_extraction(
             # for NIRSpec point sources
             if input_units_are_megajanskys:
                 flux = sum_flux * 1.0e6  # MJy --> Jy
+                contam_flux *= 1.0e6  # MJy --> Jy
                 f_var_poisson *= 1.0e12  # MJy**2 --> Jy**2
                 f_var_rnoise *= 1.0e12  # MJy**2 --> Jy**2
                 f_var_flat *= 1.0e12  # MJy**2 --> Jy**2
