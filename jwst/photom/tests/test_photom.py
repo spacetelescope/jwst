@@ -1574,6 +1574,11 @@ def test_niriss_wfss():
         # Compare the values at the center pixel.
         ratio = output["FLUX"] / input_data["FLUX"]
         result.append(np.allclose(ratio, compare, rtol=1.0e-7))
+        # 0th index of CONTAM_FLUX is 0, so handle this to avoid divide by zero
+        assert np.allclose(output["CONTAM_FLUX"][0][0], 0.0, rtol=1.0e-7)
+        assert np.allclose(input_data["CONTAM_FLUX"][0][0], 0.0, rtol=1.0e-7)
+        contam_ratio = output["CONTAM_FLUX"][0][1:] / input_data["CONTAM_FLUX"][0][1:]
+        result.append(np.allclose(contam_ratio, compare[1:], rtol=1.0e-7, equal_nan=True))
 
     assert np.all(result)
 
