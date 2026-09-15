@@ -536,11 +536,15 @@ class OutputSpectrumModel:
         ]
         if self.has_contam:
             # add contam columns in the same positions used for WFSSCombinedSpecModel
-            data_list.insert(2, self.contam_flux)
-            data_list.insert(5, self.contam_surf_bright)
             descr = cmb_dtype.descr
-            descr.insert(2, ("CONTAM_FLUX", float))
-            descr.insert(5, ("CONTAM_SURF_BRIGHT", float))
+            names = [name for name, _ in descr]
+            contam_idx = names.index("FLUX") + 1
+            sb_idx = names.index("SURF_BRIGHT") + 2
+            data_list.insert(contam_idx, self.contam_flux)
+            data_list.insert(sb_idx, self.contam_surf_bright)
+
+            descr.insert(contam_idx, ("CONTAM_FLUX", float))
+            descr.insert(sb_idx, ("CONTAM_SURF_BRIGHT", float))
             cmb_dtype = np.dtype(descr)
 
         data = np.array(list(zip(*data_list, strict=False)), dtype=cmb_dtype)
