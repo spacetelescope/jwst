@@ -158,7 +158,7 @@ def test_drizzle_saturated_nan_flux_sets_dq(drizzle_cube_instance):
     cube = drizzle_cube_instance
     sat_flag = dqflags.pixel["SATURATED"]
     do_not_use_flag = dqflags.pixel["DO_NOT_USE"]
-    # non_science_flag = dqflags.pixel["NON_SCIENCE"]  # 512
+    non_science_flag = dqflags.pixel["NON_SCIENCE"]  # 512
 
     # Simulate C routine output (cube_match_sky_driz):
     # - Bitwise-OR detector DQ (SATURATED) into spaxel_dq
@@ -187,6 +187,7 @@ def test_drizzle_saturated_nan_flux_sets_dq(drizzle_cube_instance):
 
     final_dq = final_model.dq[0, 0, 0]
 
-    # Verify SATURATED (2), DO_NOT_USE (1) flags are set.
+    # Verify SATURATED (2), DO_NOT_USE (1) and Non Science (512) flags are set.
     assert (final_dq & sat_flag) == sat_flag
     assert (final_dq & do_not_use_flag) == do_not_use_flag
+    assert (final_dq & non_science_flag) == non_science_flag
