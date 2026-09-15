@@ -142,8 +142,22 @@ def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel, model_count
     outputs_by_source : dict
         Dictionary containing dispersed images and bounds for each source ID
     """
+    # Chunks are pre-sorted by source ID before dispersing (see Observation.chunk_sources).
+    # Many observations have sources large enough that some chunks contain only pixels from
+    # a single source. The collect operation can be simplified a lot in that case.
+    first_sid = source_ids_per_pixel[0]
+    if (source_ids_per_pixel == first_sid).all():
+        bounds = [int(xs.min()), int(xs.max()), int(ys.min()), int(ys.max())]
+        img = _build_dispersed_image_of_source(xs, ys, counts, bounds)
+        outputs_by_source = {first_sid: {"bounds": bounds, "image": img}}
+        if model_counts is not None and len(model_counts) > 0:
+            outputs_by_source[first_sid]["model_counts"] = [
+                _build_dispersed_image_of_source(xs, ys, mc, bounds) for mc in model_counts
+            ]
+        return outputs_by_source
+
     # First sort by source ID. xs, ys input here cannot be assumed sorted after get_clipped_pixels
-    sort_idx = np.argsort(source_ids_per_pixel)
+    sort_idx = np.argsort(source_ids_per_pixel, kind="stable")
     sorted_ids = source_ids_per_pixel[sort_idx]
     sorted_xs = xs[sort_idx]
     sorted_ys = ys[sort_idx]
@@ -152,7 +166,15 @@ def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel, model_count
         sorted_model_counts = [mc[sort_idx] for mc in model_counts]
 
     # Compute per-source bounds in a vectorized way
-    unique_ids, split_points = np.unique(sorted_ids, return_index=True)
+    # The following five lines used to be just
+    # `unique_ids, split_points = np.unique(sorted_ids, return_index=True)`
+    # but that re-sorts the array. This is more verbose but faster.
+    is_boundary = np.empty(len(sorted_ids), dtype=bool)
+    is_boundary[0] = True
+    np.not_equal(sorted_ids[1:], sorted_ids[:-1], out=is_boundary[1:])
+    split_points = np.flatnonzero(is_boundary)
+    unique_ids = sorted_ids[split_points]
+
     minxs = np.minimum.reduceat(sorted_xs, split_points)
     maxxs = np.maximum.reduceat(sorted_xs, split_points)
     minys = np.minimum.reduceat(sorted_ys, split_points)
@@ -201,11 +223,24 @@ def _build_dispersed_image_of_source(x, y, flux, bounds):
     -------
     a : ndarray
         2-D dispersed image of the source
+
+    Notes
+    -----
+    This function used to read as
+        img = np.zeros((maxy - miny + 1, maxx - minx + 1), dtype=flux.dtype)
+        np.add.at(img, (y - miny, x - minx), flux)
+        return img
+    but bincount is much faster albeit less readable, since we need to cast to 1-d
+    and then cast back to 2-d at the end.
     """
     minx, maxx, miny, maxy = bounds
-    img = np.zeros((maxy - miny + 1, maxx - minx + 1), dtype=flux.dtype)
-    np.add.at(img, (y - miny, x - minx), flux)
-    return img
+    ncols = maxx - minx + 1
+    nrows = maxy - miny + 1
+
+    # Cast into 1-D so we can use bincount, which is faster than np.add.at
+    flat_idx = (y - miny) * ncols + (x - minx)
+    counts = np.bincount(flat_idx, weights=flux, minlength=nrows * ncols)
+    return counts.reshape((nrows, ncols)).astype(flux.dtype, copy=False)
 
 
 def _replace_nans(fluxes):
@@ -348,6 +383,9 @@ def disperse(
         f"{mp.current_process()} dispersing {n_input_sources} "
         f"sources in order {order} with total number of pixels: {len(xs)}"
     )
+    if np.max(source_ids_per_pixel) < np.iinfo(np.uint16).max and np.min(source_ids_per_pixel) >= 0:
+        # Conversion to 16-bit makes the array faster to sort later
+        source_ids_per_pixel = source_ids_per_pixel.astype(np.uint16, copy=False)
     width = 1.0
     height = 1.0
     x0 = xs + 0.5 * width
@@ -381,8 +419,14 @@ def disperse(
     )
     dlam = lambdas[1] - lambdas[0]
     nlam = len(lambdas)
+    # Keep 1-d versions of lambdas, source_ids_per_pixel around so the gather below
+    # can index based on these smaller arrays instead of the (nlam, n_pixels) broadcasts.
+    n_pixels = len(source_ids_per_pixel)
+    lam_grid = lambdas
+    source_ids_1d = source_ids_per_pixel
 
     # Interpolate the input fluxes onto the wavelength grid of the dispersed image
+    fluxes_1d = None
     if len(band_wavelengths) >= 2:
         # interp1d does not handle NaNs, so replace with interplation that assumes
         # flat spectrum at the edges and linear interpolation in the interior,
@@ -400,6 +444,7 @@ def disperse(
         fluxes = interp_fn(lambdas)  # (nlam, n_pixels)
     else:
         # constant flux across all wavelengths
+        fluxes_1d = fluxes[0]
         fluxes = np.repeat(fluxes[0][np.newaxis, :], nlam, axis=0)
     source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], nlam, axis=0)
 
@@ -426,9 +471,15 @@ def disperse(
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     del x0s, y0s
 
-    lambdas = np.take(lambdas, index)
-    fluxes = np.take(fluxes, index)
-    source_ids_per_pixel = np.take(source_ids_per_pixel, index)
+    # get_clipped_pixels treats its (nlam, n_pixels) inputs as flattened in C order,
+    # so `index` decomposes into a (wavelength, pixel) pair. Use that to gather
+    # lambdas and source_ids_per_pixel from their small 1-D arrays, which is cheaper to compute
+    # than, e.g., lambdas=np.take(lambdas, index)
+    lam_idx, pixel_idx = np.divmod(index, n_pixels)
+    lambdas = lam_grid[lam_idx]
+    source_ids_per_pixel = source_ids_1d[pixel_idx]
+    # This trick can only be applied to fluxes if they are flat-spectrum
+    fluxes = fluxes_1d[pixel_idx] if fluxes_1d is not None else np.take(fluxes, index)
 
     # Evaluate basis models on the 1-D lambda array.
     # even after np.take this is element-wise so this is still full resolution
