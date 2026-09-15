@@ -31,10 +31,11 @@ The ``cube_build`` algorithm is a flux conserving method, requires the input dat
 (MJy/sr), and produces 3-D cubes also in units of surface brightness.  1-D spectral extraction from these cubes may then
 produce spectra either in surface brightness units of MJy/sr or in flux units of Jy.
 
-The NIRSpec calibration plan for point source data is designed to produce units of flux density from the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
-For NIRSpec IFU point source data, the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline divides the flux values by a pixel area map to produce pseudo
-surface brightness units (MJy/sr). This allows the ``cube_build`` program to conserve flux when it combines and resamples
-the data. True fluxes are produced only at the :ref:`extract_1d_step <extract_1d_step>`, in which a 1D spectrum is extracted from the cube using an
+The NIRSpec calibration plan for point source data is designed to produce units of flux density from
+the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline. For NIRSpec IFU point source data, the :ref:`calwebb_spec2 <calwebb_spec2>`
+pipeline divides the flux values by a pixel area map to produce pseudo surface brightness units (MJy/sr). This allows
+the ``cube_build`` program to conserve flux when it combines and resamples the data. True fluxes are produced only at
+the :ref:`extract_1d_step <extract_1d_step>`, in which a 1D spectrum is extracted from the cube using an
 appropriate extraction aperture, with resulting units of Jy.
 
 Instrument Information
@@ -70,34 +71,34 @@ General IFU Terminology
 +++++++++++++++++++++++
 
 ``pixel``
-  A pixel is a physical 2-D element of the detector focal plane arrays.
+   A pixel is a physical 2-D element of the detector focal plane arrays.
 
 ``spaxel``
-  A spaxel is a 2-D spatial element of an IFU rectified data cube.  Each spaxel in a data cube
-  has an associated spectrum composed of many voxels.
+   A spaxel is a 2-D spatial element of an IFU rectified data cube.  Each spaxel in a data cube
+   has an associated spectrum composed of many voxels.
 
 ``voxel``
-  A voxel is 3-D volume element within an IFU rectified data cube.  Each voxel has two spatial dimensions and one
-  spectral dimension.
+   A voxel is 3-D volume element within an IFU rectified data cube.  Each voxel has two spatial dimensions and one
+   spectral dimension.
 
 MIRI Spectral Range Divisions
 +++++++++++++++++++++++++++++
 We use the following terminology to define the spectral range divisions of MIRI:
 
 ``Channel``
-  The spectral range covered by each MIRI IFU. The channels are labeled as 1, 2, 3 and 4.
+   The spectral range covered by each MIRI IFU. The channels are labeled as 1, 2, 3 and 4.
 
 ``Sub-Channel``
-  The 3 sub-ranges that a channel is divided into. These are designated as *Short (A)*, *Medium (B)*, and *Long (C)*.
+   The 3 sub-ranges that a channel is divided into. These are designated as *Short (A)*, *Medium (B)*, and *Long (C)*.
 
 ``Band``
-  For **MIRI**, ``band`` is one of the 12 contiguous wavelength intervals (four channels times three sub-channels each)
-  into which the spectral range of the MRS is divided.  Each band has a unique channel/sub-channel combination. For
-  example, the shortest wavelength range on MIRI is covered by Band 1-SHORT (aka 1A) and the
-  longest is covered by Band 4-LONG (aka 4C).
+   For **MIRI**, ``band`` is one of the 12 contiguous wavelength intervals (four channels times three sub-channels each)
+   into which the spectral range of the MRS is divided.  Each band has a unique channel/sub-channel combination. For
+   example, the shortest wavelength range on MIRI is covered by Band 1-SHORT (aka 1A) and the
+   longest is covered by Band 4-LONG (aka 4C).
 
-  For **NIRSpec** we define a *band* as a single grating-filter combination, e.g., G140M-F070LP. The possible grating/filter
-  combinations for NIRSpec are given in the table below.
+   For **NIRSpec** we define a *band* as a single grating-filter combination, e.g., G140M-F070LP. The possible grating/filter
+   combinations for NIRSpec are given in the table below.
 
 NIRSpec IFU Disperser and Filter Combinations
 +++++++++++++++++++++++++++++++++++++++++++++
@@ -141,7 +142,7 @@ the spectral axes can be either linear or non-linear.
 
 The IFU cubes contain an extension labeled ``WCS-TABLE``, which contains the wavelengths
 for each of the IFU cube planes. This extension follows the FITS standard described in
-*Representations of spectral coordinates in FITS*, Greisen, et al., 2006, 
+*Representations of spectral coordinates in FITS*, Greisen, et al., 2006,
 **A & A**, 446, 747-771. If the IFU cubes have a non-linear wavelength dimension, the ``CTYPE3`` WCS parameter
 is set to ``WAVE-TAB`` and the table is used to construct the FITS WCS. For linear wavelengths,
 the ``CTYPE3`` parameter is set to ``WAVE`` and the WCS is encoded via header keywords only. 
@@ -158,9 +159,8 @@ case of a single input image.
 
 By default, ``cube_build`` creates cubes from a single band. For MIRI that means data from a
 single channel and single sub-channel. For NIRSpec that means data from a single grating and filter. 
-This can be overridden
-using the ``output_type=multi`` parameter. In the pipeline, this is controlled by
-the parameter reference files for the pipeline that is being run. 
+This can be overridden using the ``output_type=multi`` parameter. In the pipeline, this is controlled
+by the parameter reference files for the pipeline that is being run. 
 The ``pars_spec2pipeline`` parameter reference file for MIRI sets ``output_type=multi``.
 
 In the case of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, for example, 
@@ -176,8 +176,8 @@ In the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, on the other hand, where
 the input can be a collection of data from multiple exposures covering multiple 
 bands, the default behavior is to create a set of separate band cubes.
 
-* **NIRSpec:** By default this pipeline generates multiple distinct cubes—one for each 
-  grating and filter combination contained in the input collection. These types 
+* **NIRSpec:** By default this pipeline generates multiple distinct cubes—one for each grating and
+  filter combination contained in the input collection. These types 
   of IFU cubes will have a linear wavelength dimension. 
 * **Custom Overrides:** If the user wants to combine all the data together 
   covering several bands, they can override this by using the option 
@@ -208,10 +208,10 @@ The 4 IMAGE extensions have the following characteristics:
 =======  =====  ========================  =========
 EXTNAME  NAXIS  Dimensions                Data type
 =======  =====  ========================  =========
-SCI      3      2 spatial and 1 spectral  float
-ERR      3      2 spatial and 1 spectral  float
-DQ       3      2 spatial and 1 spectral  integer
-WMAP     3      2 spatial and 1 spectral  integer
+ SCI      3      2 spatial and 1 spectral  float
+ ERR      3      2 spatial and 1 spectral  float
+ DQ       3      2 spatial and 1 spectral  integer
+ WMAP     3      2 spatial and 1 spectral  integer
 =======  =====  ========================  =========
 
 The SCI image contains the surface brightness of cube spaxels in units of MJy/sr. The wavelength dimension of the IFU cube
@@ -219,13 +219,14 @@ can either be linear or non-linear. If the wavelength is non-linear, then the IF
 table containing the wavelength of each plane is provided and conforms to the 'WAVE_TAB' FITS convention. The wavelengths
 in the table are read in from the :ref:`cubepar_reffile`. The ERR image contains the
 uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
-contains the number of detector pixels contributing to a given voxel. The data quality flag does not propagate the
-DQ flags from previous steps but is defined in the cube build step as:
+contains the number of detector pixels contributing to a given voxel. The data quality flag only propagates the saturation
+DQ flag from previous steps. The data quality flag in IFU cube products can be:
 
 * good data (value = 0),
-* non_science (value = 512),
+* sataturated (value = 2),
 * do_not_use(value =1), or
-* a combination of non_science and do_not_use (value = 513).
+* a combination of saturated and do_not_use (value=3). 
+
 
 The SCI and ERR cubes are populated with NaN values for voxels where there is no valid data (e.g., outside
 the IFU cube footprint or for saturated pixels for which no slope could be measured).
