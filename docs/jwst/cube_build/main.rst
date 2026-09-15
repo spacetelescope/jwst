@@ -224,8 +224,9 @@ contains the number of detector pixels contributing to a given voxel. The data q
 
 * 0: Good data 
 * 1: Do Not Use
-* 2: Saturated do_not_use(value =1), or
-* 3: Saturated + Do not use
+* 2: Saturated Do not use
+* 512: Non Science or
+* Combinations of the above
 
 The SCI and ERR cubes are populated with NaN values for voxels where there is no valid data (e.g., outside
 the IFU cube footprint or for saturated pixels for which no slope could be measured).

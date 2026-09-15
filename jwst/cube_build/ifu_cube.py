@@ -2215,6 +2215,7 @@ class IFUCubeData:
 
         These flags include:
         * Good data (0)
+        * NON_SCIENCE
         * DO_NOT_USE.
         """
         # convert all remaining spaxel_weight = 0 to DO_NOT_USE
@@ -2223,7 +2224,7 @@ class IFUCubeData:
         # If the data was only from saturating data, then the weight = 0.
         # Flux is nan, we need to ADD DO_NOT_USE
 
-        self.spaxel_dq[weight_is_zero] |= dqflags.pixel["DO_NOT_USE"]
+        self.spaxel_dq[weight_is_zero] |= dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["NON_SCIENCE"]
 
         self.spaxel_flux[weight_is_zero] = np.nan
         self.spaxel_var[weight_is_zero] = np.nan

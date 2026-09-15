@@ -330,7 +330,9 @@ def test_saturated_dq(nirspec_data, weighting):
     if weighting == "drizzle":
         # All-NaN pixel has NaN value, SAT and DNU flag
         assert np.isnan(cube.data[500, 16, 10])
-        assert cube.dq[500, 16, 10] == dqflags.pixel["SATURATED"] | dqflags.pixel["DO_NOT_USE"]
+        assert cube.dq[500, 16, 10] == (
+            dqflags.pixel["SATURATED"] | dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["NON_SCIENCE"]
+        )
     else:
         # Other weighting schemes average more pixels, so output still has a value
         assert np.isclose(cube.data[500, 16, 10], 1.0)
