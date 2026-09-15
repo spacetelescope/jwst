@@ -243,6 +243,28 @@ def copy_spec_metadata(input_model, output_model):
             setattr(output_model, key, getattr(input_model, key))
 
 
+def _idx_from_dtype(dtype, colname):
+    """
+    Get the index of a column in a numpy recarray from its dtype.
+
+    Parameters
+    ----------
+    dtype : `~numpy.dtype`
+        The dtype of the recarray.
+    colname : str
+        The name of the column to find.
+
+    Returns
+    -------
+    idx : int
+        The index of the column in the recarray.
+    """
+    for i, (name, _) in enumerate(dtype.descr):
+        if name == colname:
+            return i
+    raise ValueError(f"Column {colname} not found in dtype {dtype}")
+
+
 def expand_table(spec):
     """
     Expand a table of spectra into a list of SpecModel objects.
@@ -269,12 +291,16 @@ def expand_table(spec):
     out_dtype = datamodels.SpecModel().get_dtype("spec_table")
     has_contam = "CONTAM_FLUX" in all_columns
     if has_contam:
-        # indexing matches WFSSSpecModel schema
+        # Add the CONTAM_FLUX and CONTAM_SURF_BRIGHT columns to the output dtype
+        # directly after the FLUX and SURF_BRIGHT columns, respectively
         descr = out_dtype.descr
-        columns_to_copy.insert(2, "CONTAM_FLUX")
-        descr.insert(2, ("CONTAM_FLUX", float))
-        columns_to_copy.insert(7, "CONTAM_SURF_BRIGHT")
-        descr.insert(7, ("CONTAM_SURF_BRIGHT", float))
+        flux_idx = _idx_from_dtype(out_dtype, "FLUX")
+        sb_idx = _idx_from_dtype(out_dtype, "SURF_BRIGHT")
+        columns_to_copy.insert(flux_idx + 1, "CONTAM_FLUX")
+        descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
+        # surface brightness needs a +2 because the CONTAM_FLUX column was inserted before it
+        columns_to_copy.insert(sb_idx + 2, "CONTAM_SURF_BRIGHT")
+        descr.insert(sb_idx + 2, ("CONTAM_SURF_BRIGHT", float))
         out_dtype = np.dtype(descr)
     columns_to_copy = np.array(columns_to_copy)
 

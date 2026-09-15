@@ -18,6 +18,7 @@ from stdatamodels.jwst.datamodels.apcorr import (
 
 from jwst.datamodels import ModelContainer
 from jwst.datamodels.utils import attrs_to_group_id
+from jwst.datamodels.utils.flat_multispec import _idx_from_dtype
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.extract_1d import extract1d, spec_wcs
 from jwst.extract_1d.apply_apcorr import select_apcorr
@@ -1878,13 +1879,15 @@ def create_extraction(
         otab_dtype = datamodels.SpecModel().get_dtype("spec_table")
         if exp_type in WFSS_EXPTYPES:
             # add contam columns
-            otab_list.insert(2, contam_flux[valid])
-            otab_list.insert(7, contam_surf_bright[valid])
+            flux_idx = _idx_from_dtype(otab_dtype, "FLUX")
+            sb_idx = _idx_from_dtype(otab_dtype, "SURF_BRIGHT")
+            otab_list.insert(flux_idx + 1, contam_flux[valid])
+            otab_list.insert(sb_idx + 2, contam_surf_bright[valid])
             # Need to modify the dtype, but it's immutable.
             # Use descr to get it as a list
             descr = otab_dtype.descr
-            descr.insert(2, ("CONTAM_FLUX", float))
-            descr.insert(7, ("CONTAM_SURF_BRIGHT", float))
+            descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
+            descr.insert(sb_idx + 2, ("CONTAM_SURF_BRIGHT", float))
             otab_dtype = np.dtype(descr)
 
         otab = np.array(list(zip(*otab_list, strict=True)), dtype=otab_dtype)

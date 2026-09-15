@@ -8,6 +8,7 @@ from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, TSOMultiSpecModel
 
+from jwst.datamodels.utils.flat_multispec import _idx_from_dtype
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.extract_1d.tests.helpers import simple_wcs_func
@@ -441,15 +442,17 @@ def _add_contam_columns(model):
     nelem = len(tab)
     otab_list = list(zip(*tab.tolist()))
     contam_flux = np.arange(nelem, dtype=np.float32) / 10.0
-    otab_list.insert(2, contam_flux)
+    flux_idx = _idx_from_dtype(tab.dtype, "FLUX")
+    sb_idx = _idx_from_dtype(tab.dtype, "SURF_BRIGHT")
+    otab_list.insert(flux_idx + 1, contam_flux)
     contam_surf_bright = np.arange(nelem, dtype=np.float32) / 100.0
-    otab_list.insert(7, contam_surf_bright)
+    otab_list.insert(sb_idx + 2, contam_surf_bright)
     # Need to modify the dtype, but it's immutable.
     # Use descr to get it as a list
     otab_dtype = tab.dtype
     descr = otab_dtype.descr
-    descr.insert(2, ("CONTAM_FLUX", float))
-    descr.insert(7, ("CONTAM_SURF_BRIGHT", float))
+    descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
+    descr.insert(sb_idx + 2, ("CONTAM_SURF_BRIGHT", float))
     otab_dtype = np.dtype(descr)
     new_tab = np.array(list(zip(*otab_list)), dtype=otab_dtype)
     model.spec_table = new_tab

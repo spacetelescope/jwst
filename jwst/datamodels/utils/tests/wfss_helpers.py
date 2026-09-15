@@ -43,9 +43,12 @@ def example_spec():
     spec = dm.SpecModel()
     spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
     recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
-    # add contam columns right after flux and sb columns. matches order in schema
-    recarray_dtype.insert(2, ("CONTAM_FLUX", "f4"))
-    recarray_dtype.insert(7, ("CONTAM_SURF_BRIGHT", "f4"))
+    # add contam columns right after flux and sb columns
+    names = [d[0] for d in recarray_dtype]
+    flux_idx = names.index("FLUX")
+    sb_idx = names.index("SURF_BRIGHT")
+    recarray_dtype.insert(flux_idx + 1, ("CONTAM_FLUX", "f4"))
+    recarray_dtype.insert(sb_idx + 1, ("CONTAM_SURF_BRIGHT", "f4"))
     spec.meta.wcs = mock_wcs()
     spec_table = np.recarray((N_ROWS,), dtype=recarray_dtype)
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
