@@ -2075,3 +2075,61 @@ def test_uneven_sampling(caplog):
     # No jumps expected, since data matches readtimes
     assert jump.meta.exposure.extended_emission_events == 0
     assert not np.any(jump.groupdq & JUMP_DET > 0)
+
+
+def test_nircam_group0_zeroframe(generate_nircam_reffiles, setup_inputs):
+    """Test NIRCAM data with group 0 and zeroframe snowball flagging."""
+    override_gain, override_readnoise = generate_nircam_reffiles(xsize=100, ysize=100)
+    mod, _, _, _, _, _ = setup_inputs(
+        ngroups=5, nrows=100, ncols=100, gain=6, readnoise=7, deltatime=3.0
+    )
+
+    # set the background data to something small but nonzero
+    mod.data += 1.0
+
+    # add 'snowballs' to data array in 0th integration, 0th read.
+    center_coords = [(20, 20), (60, 60)]
+    radii = [10, 20]
+    add_circles_to_data(mod.data[0, 0], center_coords, radii)
+
+    # add circles of saturation flags in the input groupdq in the center of each snowball
+    # in every read
+    sat_rad = 4
+    for i in range(mod.data.shape[1]):
+        add_circles_to_data(mod.groupdq[0, i], center_coords, [sat_rad, sat_rad], fill_val=2)
+
+    # add a zeroframe matching the first group except that it's zero at saturated pixels
+    mod.zeroframe = mod.data[:, 0, :, :].copy()
+    mod.zeroframe[mod.groupdq[:, 0, :, :] == 2] = 0.0
+
+    jump_result = JumpStep.call(
+        mod,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        expand_large_events=True,
+        sat_required_snowball=True,
+    )
+
+    # Both clusters should have expanded saturation flags in all groups.
+    # They will also have jump circles for group 1 only.
+    for i, coord in enumerate(center_coords):
+        x, y = coord
+        expand_rad = 2 * radii[i]
+        ystart = y - expand_rad
+        ystop = y + expand_rad + 1
+        xstart = x - expand_rad
+        xstop = x + expand_rad + 1
+
+        initial_sat_area = np.sum(mod.groupdq[0, 0, ystart:ystop, xstart:xstop] > 0)
+        expanded_sat_g0 = np.sum(jump_result.groupdq[0, 0, ystart:ystop, xstart:xstop] > 0)
+        expanded_jump_g1 = np.sum(jump_result.groupdq[0, 1, ystart:ystop, xstart:xstop] > 0)
+        expanded_sat_g2 = np.sum(jump_result.groupdq[0, 2, ystart:ystop, xstart:xstop] > 0)
+        assert expanded_sat_g0 > initial_sat_area  # expanded sat only
+        assert expanded_jump_g1 > expanded_sat_g0  # expanded sat + jump
+        assert np.isclose(expanded_sat_g2, expanded_sat_g0)  # expanded sat only
+
+        # zeroframe should have expanded saturation, matching group 0
+        initial_zf_sat = np.sum(mod.zeroframe[0, ystart:ystop, xstart:xstop] == 0)
+        expanded_zf_sat = np.sum(jump_result.zeroframe[0, ystart:ystop, xstart:xstop] == 0)
+        assert expanded_zf_sat > initial_zf_sat
+        assert np.isclose(expanded_zf_sat, expanded_sat_g0)

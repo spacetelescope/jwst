@@ -91,7 +91,7 @@ in a `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel`::
 
     from stdatamodels.jwst import datamodels
     model = datamodels.open('multi_wfss_c1d.fits')
-    spec_this_order = model.spec[0]
+    spec = model.spec[0]
     print(spec.spectral_order) # returns e.g. '1'
     tab = spec.spec_table
     row_want = tab[tab["SOURCE_ID"] == 1200][0]

@@ -1,0 +1,1 @@
+Apply various small runtime improvements related to collecting results of the dispersion calculation into source cutouts. Runtime on a single core was reduced by roughly 25 percent for both the NIRCam and NIRISS case tested.
