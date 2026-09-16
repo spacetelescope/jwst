@@ -2279,9 +2279,9 @@ class IFUCubeData:
                 nlowcov = len(lowcov)
                 log.info("Number of spectral tear planes adjusted: %i", nlowcov)
                 for zz in range(0, nlowcov):
-                    flux[lowcov[zz], :, :] = 0
+                    flux[lowcov[zz], :, :] = np.nan
                     wmap[lowcov[zz], :, :] = 0
-                    var[lowcov[zz], :, :] = 0
+                    var[lowcov[zz], :, :] = np.nan
                     dq[lowcov[zz], :, :] = (
                         dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NON_SCIENCE"]
                     )
