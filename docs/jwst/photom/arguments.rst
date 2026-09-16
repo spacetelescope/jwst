@@ -1,5 +1,5 @@
-Arguments
-=========
+Step Arguments
+==============
 The ``photom`` step has the following optional arguments.
 
 ``--inverse`` (boolean, default=False)
@@ -12,5 +12,5 @@ The ``photom`` step has the following optional arguments.
   instead of using the information contained in the input data.
 
 ``--apply_time_correction`` (boolean, default=True)
-   A flag to indicate whether to apply time-dependent corrections
-   if available.
+  A flag to indicate whether to apply time-dependent corrections
+  if available.

@@ -53,7 +53,7 @@ def create_background(wavelength, surf_bright):
         return None
 
     # Create arrays for columns that we won't need.
-    dummy = np.zeros(wl_shape[0], dtype=np.float64)
+    placeholder = np.zeros(wl_shape[0], dtype=np.float64)
     dq = np.zeros(wl_shape[0], dtype=np.int32)
     npixels = np.ones(wl_shape[0], dtype=np.float64)
 
@@ -65,22 +65,22 @@ def create_background(wavelength, surf_bright):
         list(
             zip(
                 wavelength,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
                 surf_bright,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
                 dq,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
                 npixels,
                 strict=False,
             )

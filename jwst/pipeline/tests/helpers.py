@@ -35,7 +35,9 @@ def make_miri_ramp_model(nints=1, ngroups=5, ysize=1024, xsize=1032):
     ramp.meta.instrument.detector = "MIRIMAGE"
     ramp.meta.exposure.frame_time = 1.0
     ramp.meta.exposure.groupgap = 0
+    ramp.meta.exposure.start_time = 60728.97621633101
     ramp.meta.exposure.group_time = 1.0
+    ramp.meta.exposure.integration_time = ngroups * ramp.meta.exposure.group_time
     ramp.meta.exposure.nframes = 1
     ramp.meta.exposure.nints = nints
     ramp.meta.exposure.ngroups = ngroups
@@ -115,7 +117,7 @@ def make_nirspec_ifu_rate_model():
     image.meta.instrument.filter = "CLEAR"
     image.meta.instrument.grating = "PRISM"
     image.meta.exposure.type = "NRS_IFU"
-    image.meta.observation.date = "2019-02-27"
+    image.meta.observation.date = "2026-02-27"
     image.meta.observation.time = "13:37:18.548"
     image.meta.date = "2019-02-27T13:37:18.548"
     image.meta.subarray.xstart = 1

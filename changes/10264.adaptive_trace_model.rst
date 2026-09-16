@@ -1,1 +1,0 @@
-Add support for NIRSpec MOS, FS, and BOTS modes and MIRI LRS slit and slitless modes.

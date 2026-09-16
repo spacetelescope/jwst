@@ -95,7 +95,7 @@ directory as the association file and no path information is put in ``expname``.
 
    In previous versions of the pipeline, association files with additional trailing commas
    that rendered them invalid according to the JSON specification were quietly accepted.
-   This behavior has been deprecated and will be removed in a future release; please ensure
+   This violation now throws an exception; please ensure
    that trailing commas are removed from hand-edited association files.
 
 If need be, an association can be created based on the existing

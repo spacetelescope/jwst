@@ -1,5 +1,5 @@
-Reference File Types
-====================
+Reference Files
+===============
 
 The ``source_catalog`` step uses APCORR, ABVEGAOFFSET, and PARS-SOURCECATALOGSTEP reference
 files.

@@ -13,7 +13,7 @@ class KlipStep(Step):
     Performs KLIP processing on a science target coronagraphic exposure.
 
     The input science exposure is assumed to be a fully calibrated
-    level-2b image. The processing is performed using a set of reference PSF
+    Level 2b image. The processing is performed using a set of reference PSF
     images observed in the same coronagraphic mode.
     """
 
@@ -29,15 +29,15 @@ class KlipStep(Step):
 
         Parameters
         ----------
-        target : str or CubeModel
-            CubeModel or file containing science target exposure
-        psfrefs : str or CubeModel
-            CubeModel or file containing PSF Reference exposures
+        target : str or `~stdatamodels.jwst.datamodels.CubeModel`
+            File or data model containing science target exposure
+        psfrefs : str or `~stdatamodels.jwst.datamodels.CubeModel`
+            File or data model containing PSF reference exposures
 
         Returns
         -------
-        psf_sub : CubeModel
-            Science target CubeModel with the PSF subtracted
+        psf_sub : `~stdatamodels.jwst.datamodels.CubeModel`
+            Science target data model with the PSF subtracted
         """
         target_model = self.prepare_output(target)
         refs_model = self.prepare_output(psfrefs)

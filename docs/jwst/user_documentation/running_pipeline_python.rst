@@ -347,7 +347,11 @@ result of a pipeline. To control this behavior, and other aspects of output file
 generation like directory and file name, certain pipeline and step-level parameters
 can be set.
 
-**Output file behavior can be modified with the ``save_results``, ``output_file``, and ``output_dir`` parameters**
+**Output file behavior can be modified with the following parameters:**
+
+* ``save_results``
+* ``output_file``
+* ``output_dir``
 
 Saving Final Pipeline Results
 -----------------------------

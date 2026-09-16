@@ -14,6 +14,8 @@ from os.path import (
 )
 from pathlib import Path
 
+from astropy.utils.decorators import deprecated_renamed_argument
+
 from jwst.associations import libpath
 from jwst.associations.exceptions import AssociationError, AssociationNotValidError
 from jwst.associations.lib.callback_registry import CallbackRegistry
@@ -190,7 +192,15 @@ class AssociationRegistry(dict):
             raise AssociationNotValidError(f'Structure did not validate: "{association}"')
         return results
 
-    def load(self, serialized, fmt=None, validate=True, first=True, **kwargs):
+    @deprecated_renamed_argument("fmt", None, since="2.1")
+    def load(
+        self,
+        serialized,
+        fmt=None,  # noqa: ARG002
+        validate=True,
+        first=True,
+        **kwargs,
+    ):
         """
         Load a previously serialized association.
 
@@ -198,20 +208,27 @@ class AssociationRegistry(dict):
         ----------
         serialized : object
             The serialized form of the association.
+
         fmt : str or None
             The format to force. If None, try all available.
+
+            .. version-deprecated:: 2.1
+                Only JSON format is supported now.
+
         validate : bool
             Validate against the class's defined schema, if any.
+
         first : bool
             A serialization potentially matches many rules.
             Only return the first successful load.
+
         **kwargs : dict
             Other arguments to pass to the `load` method.
 
         Returns
         -------
-        association or [association, ...]
-            The Association object, or the list of association objects.
+        Association or [Association, ...]
+            The Association object, or the list of Association objects.
 
         Raises
         ------
@@ -221,7 +238,7 @@ class AssociationRegistry(dict):
         results = []
         for _rule_name, rule in self.items():
             try:
-                results.append(rule.load(serialized, format=fmt, validate=validate, **kwargs))
+                results.append(rule.load(serialized, validate=validate, **kwargs))
             except (AssociationError, AttributeError) as err:
                 lasterr = err
                 continue

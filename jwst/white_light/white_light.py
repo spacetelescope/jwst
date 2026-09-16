@@ -4,6 +4,7 @@ import logging
 from collections import OrderedDict
 
 import numpy as np
+from astropy import units as u
 from astropy.table import QTable
 
 log = logging.getLogger(__name__)
@@ -17,9 +18,9 @@ def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None)
 
     Parameters
     ----------
-    input_model : TSOMultiSpecModel
+    input_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
         Datamodel containing the multi-integration data.
-    waverange_table : astropy.table.Table, optional
+    waverange_table : `~astropy.table.Table`, optional
         Wavelength range information from the reference file. These ranges will be
         superseded by user-specified values if provided.
     min_wave : float, optional
@@ -29,7 +30,7 @@ def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None)
 
     Returns
     -------
-    tbl : astropy.table.table.QTable
+    tbl : `~astropy.table.QTable`
         Table containing the integrated flux as a function of time.
     """
     # The input should contain separate spectra for each spectral
@@ -43,10 +44,14 @@ def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None)
     mid_times = []
     mid_tdbs = []
     flux_sums = []
-
+    flux_units = None
     # Loop over the spectra in the input model and find mid times and fluxes
     for spec in input_model.spec:
         n_spec = len(spec.spec_table)
+
+        # Take flux units from the first spectrum.
+        if flux_units is None:
+            flux_units = spec.spec_table.columns["FLUX"].unit
 
         # Figure out the spectral order for this spectrum
         spectral_order = getattr(spec, "spectral_order", None)
@@ -164,7 +169,10 @@ def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None)
             if len(sporders) > 1:
                 # add the spectral order to the column name if there are more than 1
                 colname += f"_order_{order}"
-            tbl[f"{colname}{detector_name}"] = fluxes
+            if flux_units is not None:
+                tbl[f"{colname}{detector_name}"] = fluxes << u.Unit(flux_units)
+            else:
+                tbl[f"{colname}{detector_name}"] = fluxes
 
     return tbl
 
@@ -175,12 +183,12 @@ def _make_empty_output_table(input_model):
 
     Parameters
     ----------
-    input_model : MultiSpecModel
+    input_model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
         Datamodel containing the multi-integration data
 
     Returns
     -------
-    astropy.table.table.QTable
+    `~astropy.table.QTable`
         Empty table with the same metadata as the input model.
     """
     tbl_meta = OrderedDict()
@@ -209,7 +217,7 @@ def _determine_wavelength_range(order, filt, waverange_table=None, min_wave=None
         Spectral order for which to determine the wavelength range.
     filt : str
         Filter for which to determine the wavelength range.
-    waverange_table : astropy.table.Table, optional
+    waverange_table : `~astropy.table.Table`, optional
         Wavelength range information from the reference file.
     min_wave : float, optional
         User-specified minimum wavelength for integration.

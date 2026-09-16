@@ -48,9 +48,11 @@ def _add_metadata(model, shape):
     model.meta.subarray.ystart = 1
     model.meta.subarray.xsize = shape[3]
     model.meta.subarray.ysize = shape[2]
+    model.meta.exposure.start_time = 60728.97621633101
     model.meta.exposure.frame_time = 1.0
     model.meta.exposure.ngroups = shape[1]
     model.meta.exposure.group_time = 1.0
+    model.meta.exposure.integration_time = shape[1] * model.meta.exposure.group_time
     model.meta.exposure.nints = shape[0]
     model.meta.exposure.nframes = 1
     model.meta.exposure.groupgap = 0

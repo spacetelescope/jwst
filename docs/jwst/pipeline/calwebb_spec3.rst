@@ -32,13 +32,13 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
 | :ref:`adaptive_trace_model <adaptive_trace_model_step>`     | |c| | |c| | |c| | |c| | |c| |      |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
-| :ref:`pixel_replace <pixel_replace_step>`                   | |c| | |c| | |c| | |c| | |c| | |c|  +      |  |c| |   |c|  |
+| :ref:`pixel_replace <pixel_replace_step>`                   | |c| | |c| | |c| | |c| | |c| |      |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
 | :ref:`resample_spec <resample_spec_step>`                   | |c| | |c| |     | |c| |     |      |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
 | :ref:`cube_build <cube_build_step>`                         |     |     | |c| |     | |c| |      |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
-| :ref:`extract_1d <extract_1d_step>`                         | |c| | |c| | |c| | |c| | |c| | |c|  | |c|  |  |c| |  |c|   |
+| :ref:`extract_1d <extract_1d_step>`                         | |c| | |c| | |c| | |c| | |c| |      | |c|  |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
 | :ref:`spectral_leak <spectral_leak_step>`                   |     |     |     |     | |c| |      |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
@@ -54,11 +54,11 @@ exposures in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
 WFSS and SOSS Processing
 ------------------------
 
-Notice that NIRCam, MIRI,  and NIRISS WFSS, as well as NIRISS SOSS data, receive only minimal
+Notice that NIRCam, MIRI, and NIRISS WFSS, as well as NIRISS SOSS data, receive only minimal
 processing by ``calwebb_spec3``.
-WFSS 2D input data are reorganized into source-based products by the
-:ref:`exp_to_source <exp_to_source>` step (see below), have 1D
-extracted spectra produced for each source, and then the 1D spectra for each source
+WFSS 1D input data are reorganized into source-based products by the
+:ref:`exp_to_source <exp_to_source>` step (see below),
+and then the 1D spectra for each source
 are combined into a final 1D spectrum.
 NIRISS SOSS inputs do not go through the :ref:`exp_to_source <exp_to_source>` step,
 because they contain data for a single source.
@@ -94,12 +94,13 @@ Inputs
 ^^^^^^^^^^^^^^^^^^
 
 :Data model: `~stdatamodels.jwst.datamodels.ImageModel`, `~stdatamodels.jwst.datamodels.IFUImageModel`,
-             `~stdatamodels.jwst.datamodels.SlitModel`, or `~stdatamodels.jwst.datamodels.MultiSlitModel`
-:File suffix: _cal
+             `~stdatamodels.jwst.datamodels.SlitModel`, `~stdatamodels.jwst.datamodels.MultiSlitModel`,
+             or `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
+:File suffix: _cal, _x1d
 
 The inputs to ``calwebb_spec3`` should be in the form of an ASN file that
 lists the multiple exposures to be processed into combined output products.
-The individual exposures should be calibrated the ("_cal") products from
+The individual exposures should be the calibrated ("_cal" or "_x1d") products from
 :ref:`calwebb_spec2 <calwebb_spec2>` processing.
 
 The member list for each product in the ASN file can also contain exposures
@@ -132,12 +133,8 @@ contain the source ID as an identifier and use the same "_cal" suffix as the inp
 calibrated exposure files. An example source-based file name is
 "jw00042-o001_s00000002_niriss_gr150r_f150w_cal.fits", where "s00000002" is the source id.
 
-NIRCam, MIRI,  and NIRISS WFSS observations also have a defined set of sources, and those data
-still go through ``exp_to_source``, but the reorganized data products are not saved
-as intermediate files because there may be hundreds or thousands of sources
-in a single exposure.
-
-The reorganized sets of data are sent to subsequent steps to process and combine
+NIRCam, MIRI, and NIRISS WFSS observations also have a defined set of sources, and those data
+are reorganized for subsequent steps to process and combine
 all the data for one source at a time.
 
 CR-flagged exposures
@@ -150,7 +147,7 @@ If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new 
 each input calibrated exposure is created, in which the DQ array has been updated to
 flag pixels detected as outliers. These files use the "_crf" (CR-Flagged)
 product type suffix and also includes the association candidate ID as a
-new field in the original product root name, e.g.
+new field in the original product root name, e.g.,
 "jw96090001001_03101_00001_nrs2_o001_crf.fits."
 
 
@@ -177,37 +174,40 @@ created by the :ref:`cube_build <cube_build_step>` step is saved as an "_s3d" fi
 1D extracted spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~stdatamodels.jwst.datamodels.MultiSpecModel`
+:Data model: `~stdatamodels.jwst.datamodels.MultiSpecModel` or `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
 :File suffix: _x1d
 
 All types of inputs result in a 1D extracted spectral data product, which is
 saved as a "_x1d" file, and is normally the result of performing the
 :ref:`extract_1d <extract_1d_step>` step on the combined "_s2d" or "_s3d" product.
 
-For NIRCam, MIRI,  and NIRISS WFSS, as well as NIRISS SOSS data, the
+For NIRISS SOSS data, the
 :ref:`extract_1d <extract_1d_step>` is performed on the individual unresampled 2D
-cutout images, resulting in multiple 1-D spectra per source in a "_x1d" product.
+cutout images, resulting in multiple 1D spectra per source in a "_x1d" product.
 Those spectra are combined using the subsequent
-:ref:`combine_1d <combine_1d_step>` step (see below).
+:ref:`combine_1d <combine_1d_step>` step (see :ref:`calwebb_spec3_soss_wfss_combine1d`).
 
-For NIRCam, MIRI,  and NIRISS WFSS, the output ``_x1d`` product
+For NIRCam, MIRI, and NIRISS WFSS, the output ``_x1d`` product
 holds the spectra from all the sources in a single product. The data model is
 `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`, and has one extension per
 exposure per spectral order, with each extension containing a binary table of all the spectra
 (and associated metadata) for all sources extracted from that exposure and spectral order.
-See :ref:`extract_1d <extract_1d_step>` for more details.
+Those spectra are combined using the subsequent
+:ref:`combine_1d <combine_1d_step>` step (see :ref:`calwebb_spec3_soss_wfss_combine1d`).
+
+.. _calwebb_spec3_soss_wfss_combine1d:
 
 1D combined spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~stdatamodels.jwst.datamodels.CombinedSpecModel`
+:Data model: `~stdatamodels.jwst.datamodels.CombinedSpecModel` or `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel`
 :File suffix: _c1d
 
-For NIRCam, MIRI,  and NIRISS WFSS, as well as NIRISS SOSS data, the
+For NIRCam, MIRI, and NIRISS WFSS, as well as NIRISS SOSS data, the
 :ref:`combine_1d <combine_1d_step>` combines the multiple 1-D spectra for a
 given source into a final spectrum, which is saved in a "_c1d" product.
 
-For NIRCam, MIRI,  and NIRISS WFSS, the output ``_c1d`` product holds the spectra
+For NIRCam, MIRI, and NIRISS WFSS, the output ``_c1d`` product holds the spectra
 from all the sources in a single product. The data model is
 `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel`, and has a single
 binary table per spectral order containing the exposure-combined spectra for all sources

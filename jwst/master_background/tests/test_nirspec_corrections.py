@@ -10,13 +10,29 @@ from jwst.master_background.nirspec_utils import (
     is_background_msa_slit,
 )
 
+FS_CORRECTION_ARRAYS = (
+    "flatfield_point",
+    "flatfield_uniform",
+    "pathloss_point",
+    "pathloss_uniform",
+    "photom_point",
+    "photom_uniform",
+)
 
-def test_ifu_pathloss_existence():
+
+@pytest.mark.parametrize("missing", ["pathloss_point", "pathloss_uniform"])
+def test_ifu_pathloss_existence(missing):
     """Test the case where the input is missing a pathloss array."""
     input_data = datamodels.IFUImageModel((10, 10))
+    if missing == "pathloss_point":
+        input_data.pathloss_uniform = input_data.get_default("pathloss_uniform")
+    else:
+        input_data.pathloss_point = input_data.get_default("pathloss_point")
+    input_copy = input_data.copy()
     result = correct_nrs_ifu_bkg(input_data)
 
-    assert result == input_data
+    # If either array is missing, output is the same as input
+    assert np.all(result.data == input_copy.data)
 
 
 def test_ifu_correction():
@@ -55,6 +71,21 @@ def test_fs_correction():
     result = correct_nrs_fs_bkg(input_data)
 
     assert np.allclose(corrected, result.data, rtol=1.0e-7)
+
+
+@pytest.mark.parametrize("missing", FS_CORRECTION_ARRAYS)
+def test_fs_correction_missing_array(caplog, missing):
+    """Test FS correction with missing arrays."""
+    data = np.ones((5, 5))
+    input_data = datamodels.SlitModel(data=data)
+    for array_name in FS_CORRECTION_ARRAYS:
+        if array_name != missing:
+            setattr(input_data, array_name, data.copy())
+
+    # No correction if any array is missing
+    result = correct_nrs_fs_bkg(input_data)
+    assert np.allclose(result.data, 1.0)
+    assert f"{missing} array not found"
 
 
 @pytest.mark.parametrize(

@@ -392,7 +392,7 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     assoc_out = asn_from_list(
         [im1_path, im2_path, im3_path], rule=DMS_Level3_Base, product_name="skymatch"
     )
-    asn_out_fname, out_serialized = assoc_out.dump(format="json")
+    asn_out_fname, out_serialized = assoc_out.dump()
     asn_out_fname = asn_out_fname
     with open(asn_out_fname, "w") as asn_out:
         asn_out.write(out_serialized)
@@ -466,7 +466,7 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     assoc_out = asn_from_list(
         [im1_path, im2_path, im3_path], rule=DMS_Level3_Base, product_name="skymatch"
     )
-    asn_out_fname, out_serialized = assoc_out.dump(format="json")
+    asn_out_fname, out_serialized = assoc_out.dump()
     with open(asn_out_fname, "w") as asn_out:
         asn_out.write(out_serialized)
 

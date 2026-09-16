@@ -2,8 +2,10 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import GainModel, ImageModel, RampModel, ReadnoiseModel, dqflags
 
+from jwst.lib.tests.helpers import make_sub64p_multistripe_model
 from jwst.lib.tests.test_reffile_utils import generate_test_refmodel_metadata
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep, set_groupdq
+from jwst.refpix.refpix_step import RefPixStep
 
 DELIM = "-" * 80
 
@@ -406,67 +408,28 @@ def test_likely_output(tmp_path, setup_inputs):
     np.testing.assert_allclose(chisq_data, chk_chisq, rtol=tol)
 
 
-def one_group_suppressed(nints, suppress, setup_inputs):
-    """
-    Creates three pixel ramps.
-    The first ramp has no good groups.
-    The second ramp has one good group.
-    The third ramp has all good groups.
+def test_uneven_sampling(caplog):
+    caplog.set_level("DEBUG", "stcal")
 
-    Sets up the models to be used by the tests for the one
-    group suppression flag.
-    """
-    # Define the data.
-    ngroups, nrows, ncols = 5, 1, 3
-    dims = nints, ngroups, nrows, ncols
-    rnoise, gain = 10, 1
-    group_time, frame_time = 5.0, 1
-    rampmodel, gdq, rnModel, pixdq, err, gmodel = setup_inputs(
-        ngroups=ngroups,
-        readnoise=rnoise,
-        nints=nints,
-        nrows=nrows,
-        ncols=ncols,
-        gain=gain,
-        deltatime=group_time,
-    )
+    # Superstripe ramp model with in-frame reads: readout times are not evenly sampled
+    model = make_sub64p_multistripe_model()
+    model.pixeldq = model.get_default("pixeldq")
+    collated = RefPixStep.call(model)
+    assert len(collated.meta.exposure.read_times) > 0
 
-    rampmodel.meta.exposure.frame_time = frame_time
+    # Set the data equal to the read time
+    for group in range(collated.data.shape[1]):
+        collated.data[:, group, :, :] = collated.meta.exposure.read_times[group][0]
 
-    # Setup the ramp data and DQ.
-    arr = np.array([k + 1 for k in range(ngroups)], dtype=float)
-    sat = dqflags.pixel["SATURATED"]
-    sat_dq = np.array([sat] * ngroups, dtype=rampmodel.groupdq.dtype)
-    zdq = np.array([0] * ngroups, dtype=rampmodel.groupdq.dtype)
+    # Call ramp fit with OLS_C: should reset to LIKELY
+    # Don't configure the log, so that caplog picks up the messages correctly.
+    ramp_fit = RampFitStep.call(collated, algorithm="OLS_C", configure_log=False)
 
-    rampmodel.data[0, :, 0, 0] = arr
-    rampmodel.data[0, :, 0, 1] = arr
-    rampmodel.data[0, :, 0, 2] = arr
+    # Log message from the step
+    assert "Setting the algorithm to LIKELY for unevenly sampled exposure" in caplog.text
+    # Log message from stcal
+    assert "Using explicit read times" in caplog.text
 
-    rampmodel.groupdq[0, :, 0, 0] = sat_dq  # All groups sat
-    rampmodel.groupdq[0, :, 0, 1] = sat_dq  # 0th good, all others sat
-    rampmodel.groupdq[0, 0, 0, 1] = 0
-    rampmodel.groupdq[0, :, 0, 2] = zdq  # All groups good
-
-    if nints > 1:
-        rampmodel.data[1, :, 0, 0] = arr
-        rampmodel.data[1, :, 0, 1] = arr
-        rampmodel.data[1, :, 0, 2] = arr
-
-        # All good ramps
-        rampmodel.groupdq[1, :, 0, 0] = zdq
-        rampmodel.groupdq[1, :, 0, 1] = zdq
-        rampmodel.groupdq[1, :, 0, 2] = zdq
-
-    rampmodel.suppress_one_group_ramps = suppress
-
-    # Call ramp fit through the step class
-    slopes, cube_model = RampFitStep.call(
-        rampmodel,
-        override_gain=gmodel,
-        override_readnoise=rnModel,
-        suppress_one_group=suppress,
-        maximum_cores="none",
-    )
-
-    return slopes, cube_model, dims
+    # All slopes should be 1.0, since value matches read time
+    np.testing.assert_allclose(ramp_fit[0].data, 1.0)
+    np.testing.assert_allclose(ramp_fit[1].data, 1.0)

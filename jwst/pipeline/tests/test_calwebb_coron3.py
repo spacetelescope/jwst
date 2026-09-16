@@ -47,30 +47,28 @@ def cube_models(cube_and_container):
     return models
 
 
-@pytest.fixture()
-def coron3_input(tmp_path):
+@pytest.fixture(scope="module")
+def coron3_input(tmp_cwd_module):
     n_model = 3
+    prodname = "test_coron3"
     asn = {
         "asn_id": "c1000",
         "target": "t001",
-        "asn_pool": "test_coron3_pool.csv",
-        "products": [{"name": "test_coron3", "members": []}],
+        "asn_pool": f"{prodname}_pool.csv",
+        "products": [{"name": prodname, "members": []}],
     }
-    for i in range(n_model):
-        target_name = tmp_path / f"test_coron3_target_{i + 1}.fits"
+    for i in range(1, n_model + 1):
+        target_name = f"{prodname}_target_{i}.fits"
         target = target_nircam()
         target.save(target_name)
-        asn["products"][0]["members"].append({"expname": target_name.name, "exptype": "science"})
+        asn["products"][0]["members"].append({"expname": target_name, "exptype": "science"})
 
-        psf_name = tmp_path / f"test_coron3_psf_{i + 1}.fits"
+        psf_name = f"{prodname}_psf_{i}.fits"
         psf = psf_nircam()
         psf.save(psf_name)
-        asn["products"][0]["members"].append({"expname": psf_name.name, "exptype": "psf"})
+        asn["products"][0]["members"].append({"expname": psf_name, "exptype": "psf"})
 
-    asn_name = tmp_path / "test_coron3_asn.json"
-    with asn_name.open("w") as fh:
-        json.dump(asn, fh)
-    return asn_name
+    return asn
 
 
 @pytest.fixture()
@@ -169,7 +167,7 @@ def test_nonexistent_arrays(cube_models, array):
             model.getarray_noinit(array)
 
 
-def test_run_coron3(tmp_cwd, coron3_input):
+def test_run_coron3(coron3_input):
     steps = {
         # make sure outlier_detection runs
         "outlier_detection": {"skip": False},
@@ -184,10 +182,10 @@ def test_run_coron3(tmp_cwd, coron3_input):
     # outlier detection output is turned on by parameters
     basename = "test_coron3"
     expected = [f"{basename}_psfstack.fits"]
-    for i in range(3):
-        expected.append(f"{basename}_target_{i + 1}_c1000_psfalign.fits")
-        expected.append(f"{basename}_target_{i + 1}_c1000_psfsub.fits")
-        expected.append(f"{basename}_target_{i + 1}_c1000_crfints.fits")
+    for i in range(1, 4):
+        expected.append(f"{basename}_target_{i}_c1000_psfalign.fits")
+        expected.append(f"{basename}_target_{i}_c1000_psfsub.fits")
+        expected.append(f"{basename}_target_{i}_c1000_crfints.fits")
 
     # Check for expected final output files: 9 "i2d" image models that
     # were input to resample, from 3 x 3 target cube models
@@ -195,7 +193,7 @@ def test_run_coron3(tmp_cwd, coron3_input):
 
     # Check all files
     for filename in expected:
-        assert (tmp_cwd / filename).exists()
+        assert Path(filename).exists()
         with datamodels.open(filename) as model:
             if "i2d" in filename:
                 assert isinstance(model, datamodels.ImageModel)
@@ -206,7 +204,7 @@ def test_run_coron3(tmp_cwd, coron3_input):
             assert model.meta.cal_step.outlier_detection == "COMPLETE"
 
 
-def test_run_coron3_resample(monkeypatch, tmp_cwd, coron3_input):
+def test_run_coron3_resample(monkeypatch, coron3_input):
     pipeline = Coron3Pipeline()
     # Skip irrelevant steps
     pipeline.outlier_detection.skip = True
@@ -220,13 +218,13 @@ def test_run_coron3_resample(monkeypatch, tmp_cwd, coron3_input):
 
     # Check for expected final files: should be 1 i2d file
     filename = "test_coron3_i2d.fits"
-    assert (tmp_cwd / filename).exists()
+    assert Path(filename).exists()
     with datamodels.open(filename) as model:
         assert isinstance(model, datamodels.ImageModel)
 
         # make sure association information is appended
         assert model.meta.asn.pool_name == "test_coron3_pool.csv"
-        assert model.meta.asn.table_name == Path(coron3_input).name
+        assert model.meta.asn.table_name == ""
 
 
 def test_run_coron3_no_psf(tmp_cwd, caplog, coron3_science_only):
@@ -243,7 +241,7 @@ def test_run_coron3_no_science(tmp_cwd, caplog, coron3_psf_only):
     assert "No science target members" in caplog.text
 
 
-def test_run_coron3_with_models(tmp_cwd, coron3_input):
+def test_run_coron3_with_models(coron3_input):
     # Open the input as a container
     with datamodels.open(coron3_input) as input_models:
         input_copy = input_models.copy()
@@ -257,9 +255,9 @@ def test_run_coron3_with_models(tmp_cwd, coron3_input):
 
         Coron3Pipeline.call(input_models, steps=steps, save_results=True)
 
-        outlier_files = [f"test_coron3_target_{i + 1}_c1000_crfints.fits" for i in range(3)]
+        outlier_files = [f"test_coron3_target_{i}_c1000_crfints.fits" for i in range(1, 4)]
         for filename in outlier_files:
-            assert (tmp_cwd / filename).exists()
+            assert Path(filename).exists()
             with datamodels.open(filename) as model:
                 # Make sure outlier detection ran
                 assert model.meta.cal_step.outlier_detection == "COMPLETE"

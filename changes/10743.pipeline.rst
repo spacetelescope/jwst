@@ -1,0 +1,1 @@
+Combined x1d output from calwebb_spec3 for WFSS is now saved to output_dir, if specified, along with combined c1d output. Previously, it was saved to working directory regardless.

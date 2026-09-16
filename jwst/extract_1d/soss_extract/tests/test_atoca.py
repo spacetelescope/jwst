@@ -2,7 +2,7 @@ from functools import partial
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_array
 
 from jwst.extract_1d.soss_extract import atoca
 from jwst.extract_1d.soss_extract.tests.helpers import (
@@ -240,7 +240,7 @@ def test_create_kernels(webb_kernels, engine):
         assert len(kernel_list) == 2
         for order in [0, 1]:
             kern = kernel_list[order]
-            assert isinstance(kern, csr_matrix)
+            assert isinstance(kern, csr_array)
             assert kern.dtype == np.float64
 
 

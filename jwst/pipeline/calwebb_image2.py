@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import logging
-import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -31,10 +30,6 @@ class Image2Pipeline(Pipeline):
 
     class_alias = "calwebb_image2"
 
-    spec = """
-        save_bsub = boolean(default=False) # Deprecated; use the background step's save_results parameter instead.
-    """  # noqa: E501
-
     # Define alias to steps
     step_defs = {
         "bkg_subtract": background_step.BackgroundStep,
@@ -62,15 +57,6 @@ class Image2Pipeline(Pipeline):
             The calibrated data models.
         """
         log.info("Starting calwebb_image2 ...")
-
-        if self.save_bsub:
-            deprecation_message = (
-                "The --save_bsub parameter is deprecated and will be removed in a future release. "
-                "To toggle saving background-subtracted data, use the background step's "
-                "--save_results parameter instead."
-            )
-            warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
-            log.warning(deprecation_message)
 
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input_data, basename=self.output_file)
@@ -157,10 +143,6 @@ class Image2Pipeline(Pipeline):
             self.bkg_subtract.suffix = "bsub"
             if isinstance(input_data, datamodels.CubeModel):
                 self.bkg_subtract.suffix = "bsubints"
-
-            # Backwards compatibility
-            if self.save_bsub:
-                self.bkg_subtract.save_results = True
 
             # Call the background subtraction step
             input_data = self.bkg_subtract.run(input_data, members_by_type["background"])

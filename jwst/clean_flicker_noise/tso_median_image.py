@@ -266,16 +266,16 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
         log.info(
             "Calling the white_light step to compute an approximate whitelight curve for scaling"
         )
-        with disable_logging(level=logging.WARNING):
+        with disable_logging(level=logging.INFO):
             step = WhiteLightStep()
             whitelight_table = step.run(multi_spec)
         multi_spec.close()
 
         if exp_type == "NRS_BRIGHTOBJ":
             detector = input_model.meta.instrument.detector
-            wlc_flux = whitelight_table[f"whitelight_flux_{detector}"]
+            wlc_flux = whitelight_table[f"whitelight_flux_{detector}"].value
         else:
-            wlc_flux = whitelight_table["whitelight_flux"]
+            wlc_flux = whitelight_table["whitelight_flux"].value
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
@@ -302,6 +302,12 @@ def make_median_image(input_model, rateints_model, soss_refmodel=None):
             warnings.simplefilter("ignore", RuntimeWarning)
             median_flux = np.nanmedian(bgsub_rateints.data, axis=(1, 2))
             norm_flux = median_flux / np.nanmedian(median_flux)
+
+    # Check that normalized flux was found for all integrations
+    if len(norm_flux) != nints:
+        raise ValueError(
+            f"Found valid fluxes for {len(norm_flux)} integration(s) out of {nints} expected"
+        )
 
     # Check for bad values in the normalized flux
     invalid = ~np.isfinite(norm_flux)

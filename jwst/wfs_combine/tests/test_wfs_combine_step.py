@@ -51,18 +51,8 @@ def wfs_association(tmp_path_factory):
     asn.data["program"] = "00024"
     asn.data["asn_type"] = "image2"
     asn.sequence = 1
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore",
-            category=UserWarning,
-            message="Input association file contains path information",
-        )
-        asn_json, serialized = asn.dump(format="json")
-    path_asn = tmp_path / asn_json
-    with open(path_asn, "w") as f:
-        f.write(serialized)
 
-    return path_asn, path1, path2
+    return asn, path1, path2
 
 
 def test_step_pos_shift_no_refine_no_flip(wfs_association):

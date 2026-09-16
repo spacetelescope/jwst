@@ -1,6 +1,8 @@
 """Test the AssignWCSStep."""
 
+import asdf
 import numpy as np
+import pytest
 from gwcs import coordinate_frames as cf
 from stdatamodels.jwst import datamodels
 
@@ -9,6 +11,7 @@ from jwst.assign_wcs.tests.test_miri import create_hdul as create_miri
 from jwst.assign_wcs.tests.test_nircam import create_hdul as create_nircam
 from jwst.assign_wcs.tests.test_niriss import create_hdul as create_niriss
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
+from jwst.assign_wcs.util import NoDataOnDetectorError
 
 
 def test_assign_wcs_step_miri_ifu():
@@ -65,3 +68,33 @@ def test_assign_wcs_step_nrs_ifu_coord_wcs():
     assert result.meta.wcs.available_frames[0] == "coordinates"
     assert isinstance(result.meta.wcs.pipeline[0].frame, cf.Frame2D)
     assert result.meta.wcs.transform("coordinates", "detector", 1, 1) == (1, 1)
+
+
+@pytest.mark.parametrize("valid_data", [True, False])
+def test_assign_wcs_step_nrs_ifu_m_grating(tmp_path, valid_data):
+    hdul = create_nirspec_ifu_file(grating="G235M", filter="F170LP")
+    model = datamodels.IFUImageModel(hdul)
+    model.meta.instrument.detector = "NRS2"
+    hdul.close()
+
+    # Mock a wavelength range file to either cover the NRS2 wavelengths or not
+    if valid_data:
+        wrange = [1.66e-06, 5.5e-06]
+    else:
+        wrange = [1.66e-06, 3.17e-06]
+    wavelengthrange = {
+        "order": [-1],
+        "wavelengthrange": [wrange],
+        "waverange_selector": ["F170LP_G235M"],
+    }
+    mock_reffile = str(tmp_path / "wrange.asdf")
+    af = asdf.AsdfFile(tree=wavelengthrange)
+    af.write_to(mock_reffile)
+    af.close()
+
+    if valid_data:
+        result = AssignWcsStep.call(model, override_wavelengthrange=mock_reffile)
+        assert result.meta.cal_step.assign_wcs == "COMPLETE"
+    else:
+        with pytest.raises(NoDataOnDetectorError, match="NRS2"):
+            AssignWcsStep.call(model, override_wavelengthrange=mock_reffile)

@@ -51,7 +51,7 @@ def expand_to_2d(input_data, m_bkg_spec, allow_mos=False):
     with datamodels.open(m_bkg_spec) as bkg:
         if hasattr(bkg, "spec"):  # MultiSpecModel
             if len(bkg.spec) > 1:
-                log.warning("The input 1-D spectrum contains multiple spectra")
+                log.warning("The input 1-D spectrum contains multiple spectra. Using the first.")
             spec_table = bkg.spec[0].spec_table
         else:  # CombinedSpecModel
             spec_table = bkg.spec_table

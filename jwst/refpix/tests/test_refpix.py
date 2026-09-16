@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import RampModel, dqflags
 
-from jwst.dq_init.tests.helpers import make_superstripe_model
+from jwst.lib.tests.helpers import make_superstripe_model
 from jwst.refpix import reference_pixels
 from jwst.refpix.reference_pixels import (
     Dataset,

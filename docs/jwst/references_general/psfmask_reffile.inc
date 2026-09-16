@@ -1,7 +1,7 @@
 .. _psfmask_reffile:
 
 PSFMASK Reference File
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 :REFTYPE: PSFMASK
 :Data model: `~stdatamodels.jwst.datamodels.PsfMaskModel`
@@ -14,7 +14,7 @@ function when computing shifts between images.
 .. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for PSFMASK
-+++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++
 In addition to the standard reference file keywords listed above,
 the following keywords are *required* in PSFMASK reference files,
 because they are used as CRDS selectors
@@ -30,7 +30,7 @@ SUBARRAY   model.meta.subarray.name
 
 Reference File Format
 +++++++++++++++++++++
-PSFMASK reference files are FITS format, with 1 IMAGE extension.
+PSFMASK reference files are in FITS format, with 1 IMAGE extension.
 The FITS primary HDU does not contain a data array.
 The format and content of the file is as follows:
 

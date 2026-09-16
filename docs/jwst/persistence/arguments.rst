@@ -1,26 +1,28 @@
+.. _persistence_step_args:
+
 Step Arguments
 ==============
+The ``persistence`` step has the following optional arguments.
 
-The persistence step has three step-specific arguments.
+``--save_persistence`` (str, default=None)
+  This is a path for saving the persistence array to an ASDF file. If no
+  path is given, no persistence array is saved.
 
-*  ``--input_trapsfilled``
+``--persistence_time`` (int, default=None)
+  This is the length of time in seconds for the flagging window. For example,
+  if 200, then once a flagging window has been determined, the flagging window for
+  that pixel will end 200 seconds later. The default is None. A positive integer
+  is needed for the persistence flagging to be done.
 
-``input_trapsfilled`` is the name of the most recent trapsfilled file
-for the current detector.  If this is not specified, an array of zeros
-will be used as an initial value.  If this is specified, it will be used
-to predict persistence for the input science file.
-The step writes an output trapsfilled file, and that could be used
-as input to the persistence step for a subsequent exposure.
+``--dn_threshold`` (float, default=None)
+  Any group in the science data above this threshold will
+  open a persistence window for flagging, if there is no existing flagging window
+  already open.
 
-*  ``--flag_pers_cutoff``
+``--persistence_array_file`` (str, default=None)
+  This is a path to an ASDF file with timing data for the end of a timing window for each
+  pixel. The time is given in epoch time.
 
-If this floating-point value is specified, pixels that receive a
-persistence correction greater than or equal to ``flag_pers_cutoff`` DN
-(the default is 40) are flagged in the PIXELDQ array of the
-output file with the DQ value "PERSISTENCE".
-
-*  ``--save_persistence``
-
-If this boolean parameter is specified and is True (the default is False),
-the persistence that was subtracted (group by group, integration by
-integration) will be written to an output file with suffix "_output_pers".
+``--persistence_dnu`` (bool, default=False)
+  This flag determines if the ``DO_NOT_USE`` flag will get set when the ``PERSISTENCE``
+  flag gets set.

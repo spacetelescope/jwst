@@ -1,5 +1,8 @@
+"""Apply resampling to JWST data."""
+
 import logging
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel
 
@@ -46,12 +49,14 @@ class ResampleSpecStep(Step):
 
         Parameters
         ----------
-        input_data : MultiSlitModel, ModelContainer, str
+        input_data : `~stdatamodels.jwst.datamodels.MultiSlitModel`, \
+                     `~jwst.datamodels.container.ModelContainer`, or str
             A single datamodel, a container of datamodels, or an association file.
 
         Returns
         -------
-        SlitModel or MultiSlitModel
+        `~stdatamodels.jwst.datamodels.SlitModel` or \
+        `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The resampled output, one slit per source.
         """
         output_model = self.prepare_output(input_data)
@@ -130,11 +135,11 @@ class ResampleSpecStep(Step):
         Parameters
         ----------
         input_models : `~jwst.datamodels.container.ModelContainer`
-            A container of `~jwst.datamodels.MultiSlitModel`
+            A container of `~stdatamodels.jwst.datamodels.MultiSlitModel`
 
         Returns
         -------
-        result : `~jwst.datamodels.MultiSlitModel`
+        result : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The resampled output, one per source
         """
         containers = multislit_to_container(input_models)
@@ -143,6 +148,7 @@ class ResampleSpecStep(Step):
         result.update(input_models[0])
 
         pscale_ratio = None
+        wave_cols = {}
         for container in containers.values():
             # Make sure all input models have consistent NaN and DO_NOT_USE values
             for model in container:
@@ -174,6 +180,13 @@ class ResampleSpecStep(Step):
                         model.meta.wcsinfo.s_region = None
                     else:
                         update_s_region_spectral(model)
+
+                    # Store the wavelength column and unset the wavelength table for the slit
+                    disp = model.meta.wcsinfo.dispersion_direction
+                    col_name = model.meta.wcsinfo.instance[f"ps{disp}_1"]
+                    wave_cols[col_name] = model.wavetable[col_name]
+                    model.wavetable = None
+
                     result.slits.append(model)
                     drizzled_library.shelve(model, i, modify=False)
             del drizzled_library
@@ -187,6 +200,21 @@ class ResampleSpecStep(Step):
         else:
             result.meta.resample.pixel_scale_ratio = pscale_ratio
         result.meta.resample.pixfrac = self.pixfrac
+
+        # Set a single output wavetable from all the slit columns
+        schema_dtypes = []
+        np_dtypes = []
+        for col_name, wave in wave_cols.items():
+            schema_dtypes.append({"name": col_name, "datatype": "float32"})
+            np_dtypes.append((col_name, "<f4", (wave.size, 1)))
+        wavetable = np.array([tuple(wave_cols.values())], dtype=np_dtypes)
+        schema = {
+            "title": "Wavelength values",
+            "fits_hdu": "WCS-TABLE",
+            "datatype": schema_dtypes,
+        }
+        result.add_schema_entry("wavetable", schema)
+        result.wavetable = wavetable
 
         return result
 
@@ -234,12 +262,12 @@ class ResampleSpecStep(Step):
         Parameters
         ----------
         input_models : `~jwst.datamodels.container.ModelContainer`
-            A container of `~jwst.datamodels.ImageModel`
-            or `~jwst.datamodels.SlitModel`
+            A container of `~stdatamodels.jwst.datamodels.ImageModel`
+            or `~stdatamodels.jwst.datamodels.SlitModel`
 
         Returns
         -------
-        result : `~jwst.datamodels.SlitModel`
+        result : `~stdatamodels.jwst.datamodels.SlitModel`
             The resampled output
         """
         # Make sure all input models have consistent NaN and DO_NOT_USE values
@@ -275,7 +303,7 @@ class ResampleSpecStep(Step):
             s_region_model1 = input_models[0].meta.wcsinfo.s_region
             s_region = find_miri_lrs_sregion(s_region_model1, result.meta.wcs)
             result.meta.wcsinfo.s_region = s_region
-            log.info(f"Updating S_REGION: {s_region}.")
+            log.debug(f"Updating S_REGION: {s_region}.")
 
             # Transform source_xpos and source_ypos to resampled image frame, since they
             # are defined in full-frame coordinates for MIRI LRS Fixed Slit
@@ -294,8 +322,8 @@ class ResampleSpecStep(Step):
         """
         Update slit attributes in the resampled slit image.
 
-        This is needed because model.slit attributes are not in model.meta, so
-        the normal update() method doesn't work with them. Updates output_model
+        This is needed because ``model.slit`` attributes are not in ``model.meta``, so
+        the normal ``update()`` method doesn't work with them. Updates output model
         in-place.
         """
         for attr in [
@@ -331,7 +359,7 @@ class ResampleSpecStep(Step):
 
         Parameters
         ----------
-        model : `~jwst.datamodels.SlitModel`
+        model : `~stdatamodels.jwst.datamodels.SlitModel`
             The resampled slit model to update.
         """
         if not (model.hasattr("source_xpos") and model.hasattr("source_ypos")):

@@ -48,7 +48,7 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
 
 @pytest.mark.parametrize(
     "suffix",
-    ["assign_wcs", "cal", "extract_2d", "photom", "srctype", "x1d", "bsub", "flat_field"],
+    ["assign_wcs", "cal", "extract_2d", "srctype", "x1d", "bsub", "flat_field"],
 )
 def test_miri_wfss_spec2(run_miri_wfss_spec2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 applied to MIRI WFSS data"""

@@ -94,8 +94,8 @@ transforms the spatial coordinates to celestial coordinates and needs to pass th
 
     >>> tan = astmodels.Pix2Sky_TAN()
     >>> model = tan & astmodels.Identity(1)
-    >>> model(0.2, 0.3, 10**-6)
-    (146.30993247402023, 89.63944963170002, 1e-06)
+    >>> model(0.2, 0.3, 10**-6)  # doctest: +ELLIPSIS
+    (146.30993247402023, 89.6394496317..., 1e-06)
 
 **Arithmetic Operators** can be used to combine models. In this case each model is evaluated
 with all inputs and the operator is applied to the results, e.g., ``model = m1 + m2 * m3 – m4/m5**m6``:

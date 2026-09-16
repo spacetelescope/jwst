@@ -249,8 +249,7 @@ def test_sip_approx(tmp_path):
     hdu1 = create_hdul()
     im = ImageModel(hdu1)
 
-    pipe = AssignWcsStep()
-    result = pipe.call(
+    result = AssignWcsStep.call(
         im,
         sip_max_pix_error=0.1,
         sip_degree=3,

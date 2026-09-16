@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import multiprocessing as mp
 import time
@@ -7,13 +8,33 @@ import numpy as np
 from astropy.stats import SigmaClip
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
-from stdatamodels.jwst import datamodels
 
 from jwst.wfss_contam.disperse import disperse
 
 log = logging.getLogger(__name__)
 
-__all__ = ["background_subtract", "Observation"]
+__all__ = ["background_subtract", "Observation", "SimulatedCutout"]
+
+
+@dataclasses.dataclass
+class SimulatedCutout:
+    """
+    Lightweight container for simulated cutout data and attributes.
+
+    This class looks a lot like `~stdatamodels.jwst.datamodels.SlitModel` but avoids the
+    schema-copy and schema-validation overhead of constructing a full SlitModel for
+    every dispersed source in every spectral order. These objects are purely internal
+    bookkeeping and are never added to an output datamodel.
+    """
+
+    source_id: int
+    name: str
+    xstart: int
+    ystart: int
+    xsize: int
+    ysize: int
+    data: np.ndarray
+    spectral_order: int
 
 
 def background_subtract(
@@ -111,7 +132,7 @@ class Observation:
     assumptions about the spectral properties of the direct image sources.
     When the `disperse_order` method is called one or more times, two products are created:
     the simulated dispersed image (``simulated_image`` attribute) and
-    the simulated `~stdatamodels.jwst.datamodels.MultiSlitModel` (``simulated_slits`` attribute).
+    the simulated source cutouts (``simulated_cutouts`` attribute).
     """
 
     def __init__(
@@ -124,6 +145,7 @@ class Observation:
         max_cpu=1,
         max_pixels_per_chunk=5e4,
         oversample_factor=2,
+        band_wavelengths=None,
     ):
         """
         Initialize all data and metadata for a given observation.
@@ -131,7 +153,8 @@ class Observation:
         Parameters
         ----------
         direct_image : np.ndarray
-            Direct imaging data.
+            Direct imaging data.  May be 2-D ``(ny, nx)`` for a single-band
+            direct image, or 3-D ``(N, ny, nx)`` for a multi-band cube.
         segmentation_map : np.ndarray
             Segmentation map data.
         grism_wcs : `~gwcs.wcs.WCS`
@@ -146,6 +169,9 @@ class Observation:
             Maximum number of pixels per chunk when dispersing sources
         oversample_factor : int, optional
             Factor by which to oversample the wavelength grid
+        band_wavelengths : array-like of shape (N,), optional
+            Central wavelengths (in microns) for each plane of a 3-D ``direct_image``.
+            Required when ``direct_image`` is 3-D; ignored when ``direct_image`` is 2-D.
         """
         if boundaries is None:
             boundaries = []
@@ -160,8 +186,17 @@ class Observation:
         self.max_pixels_per_chunk = max_pixels_per_chunk
         self.oversample_factor = oversample_factor
 
-        # ensure the direct image has background subtracted
-        self.dimage = background_subtract(direct_image)
+        if direct_image.ndim == 2:
+            # use placeholder value since disperse() is going to see a flat SED and ignore this
+            self.band_wavelengths = np.array([1.0])
+            self.dimage = background_subtract(direct_image)
+        else:
+            # 3-D cube
+            if band_wavelengths is None:
+                raise ValueError("band_wavelengths must be provided when direct_image is 3-D")
+            self.band_wavelengths = np.asarray(band_wavelengths, dtype=float)
+            # apply background subtraction independently to each wavelength plane
+            self.dimage = np.array([background_subtract(plane) for plane in direct_image])
 
         # Set the limits of the dispersed image to be simulated
         if len(boundaries) == 0:
@@ -179,8 +214,8 @@ class Observation:
         # Create lists of pixels labeled in segmentation map
         self._create_pixel_list()
 
-        # Initialize the output MultiSlitModel
-        self.simulated_slits = datamodels.MultiSlitModel()
+        # Initialize the output list of cutouts
+        self.simulated_cutouts = []
 
         # Initialize the simulated dispersed image
         self.simulated_image = np.zeros(self.dims, float)
@@ -189,7 +224,12 @@ class Observation:
         """Create flat lists of pixels to be dispersed."""
         self.ys, self.xs = np.nonzero(self.seg)
         self.source_ids_per_pixel = self.seg[self.ys, self.xs]
-        self.fluxes = self.dimage[self.ys, self.xs]
+        if self.dimage.ndim == 2:
+            # Give it an extra dimension to make it shape (1, n_pixels)
+            self.fluxes = self.dimage[self.ys, self.xs][np.newaxis, :]
+        else:
+            # Shape (N, n_pixels), where N is the number of input direct image bands
+            self.fluxes = self.dimage[:, self.ys, self.xs]
 
     def chunk_sources(
         self,
@@ -243,7 +283,7 @@ class Observation:
         # Get pixels for selected sources
         selected_xs = self.xs[selected_mask]
         selected_ys = self.ys[selected_mask]
-        selected_fluxes = self.fluxes[selected_mask]
+        selected_fluxes = self.fluxes[:, selected_mask]
         selected_source_ids = self.source_ids_per_pixel[selected_mask]
 
         # Sort by source ID to keep sources mostly together
@@ -252,7 +292,7 @@ class Observation:
         sort_indices = np.argsort(selected_source_ids)
         sorted_xs = selected_xs[sort_indices]
         sorted_ys = selected_ys[sort_indices]
-        sorted_fluxes = selected_fluxes[sort_indices]
+        sorted_fluxes = selected_fluxes[:, sort_indices]
         sorted_source_ids = selected_source_ids[sort_indices]
 
         # Split into chunks of max_pixels
@@ -270,7 +310,7 @@ class Observation:
 
             chunk_xs = sorted_xs[start_idx:end_idx]
             chunk_ys = sorted_ys[start_idx:end_idx]
-            chunk_fluxes = sorted_fluxes[start_idx:end_idx]
+            chunk_fluxes = sorted_fluxes[:, start_idx:end_idx]
             chunk_source_ids = sorted_source_ids[start_idx:end_idx]
 
             disperse_args.append(
@@ -278,6 +318,7 @@ class Observation:
                     chunk_xs,
                     chunk_ys,
                     chunk_fluxes,
+                    self.band_wavelengths,
                     chunk_source_ids,
                     order,
                     wmin,
@@ -300,7 +341,7 @@ class Observation:
         """
         Disperse the sources for a given spectral order, with multiprocessing.
 
-        The ``simulated_slits`` and ``simulated_image`` attributes are updated in place.
+        The ``simulated_cutouts`` and ``simulated_image`` attributes are updated in place.
 
         Parameters
         ----------
@@ -368,14 +409,14 @@ class Observation:
         for sid in source_results:
             bounds = source_results[sid]["bounds"]
             img = source_results[sid]["image"]
-            slit = _construct_slitmodel(img, bounds, sid, order)
+            slitmodel = _construct_simulated_cutout(img, bounds, sid, order)
             fluxmodels = source_results[sid].get("model_counts", [])
             for i, fm in enumerate(fluxmodels):
                 # use i+1 indexing because typically the first model will be the linear order
-                # for polynomial fitting. The 0th order is what's already in slit.data
-                setattr(slit, f"fluxmodel_{i + 1}", fm)
+                # for polynomial fitting. The 0th order is what's already in slitmodel.data
+                setattr(slitmodel, f"fluxmodel_{i + 1}", fm)
             self.simulated_image[bounds[2] : bounds[3] + 1, bounds[0] : bounds[1] + 1] += img
-            self.simulated_slits.slits.append(slit)
+            self.simulated_cutouts.append(slitmodel)
 
 
 def _aggregate_by_source(results, sid, source_results):
@@ -445,14 +486,14 @@ def _aggregate_by_source(results, sid, source_results):
     }
 
 
-def _construct_slitmodel(
+def _construct_simulated_cutout(
     img,
     bounds,
     sid,
     order,
 ):
     """
-    Turn an output image from a single source/order into a SlitModel.
+    Turn an output image from a single source/order into a SimulatedCutout.
 
     Parameters
     ----------
@@ -467,18 +508,19 @@ def _construct_slitmodel(
 
     Returns
     -------
-    slit : `jwst.datamodels.SlitModel`
-        Slit model containing the dispersed pixel values
+    SimulatedCutout
+        Simulated source cutout containing the dispersed pixel values
     """
     [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy] = bounds
-    slit = datamodels.SlitModel()
-    slit.source_id = sid
-    slit.name = f"{sid}"
-    slit.xstart = thisobj_minx + 1  # FITS pixels are 1-indexed, matching extract_2d convention
-    slit.xsize = thisobj_maxx - thisobj_minx + 1
-    slit.ystart = thisobj_miny + 1  # FITS pixels are 1-indexed, matching extract_2d convention
-    slit.ysize = thisobj_maxy - thisobj_miny + 1
-    slit.meta.wcsinfo.spectral_order = order
-    slit.data = img
-
-    return slit
+    return SimulatedCutout(
+        source_id=sid,
+        name=f"{sid}",
+        # FITS pixels are 1-indexed, matching extract_2d convention
+        xstart=thisobj_minx + 1,
+        xsize=thisobj_maxx - thisobj_minx + 1,
+        ystart=thisobj_miny + 1,
+        ysize=thisobj_maxy - thisobj_miny + 1,
+        # Match SlitModel float32 dtype
+        data=img.astype(np.float32, copy=False),
+        spectral_order=order,
+    )

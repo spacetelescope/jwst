@@ -477,3 +477,54 @@ def test_skip_no_flat_multislit():
     # Input is not modified
     assert result is not model
     assert model.meta.cal_step.flat_field is None
+
+
+def test_flatfield_guider_cal():
+    """Test flat field for GuiderCalModel."""
+
+    shape = (20, 20)
+    int_shape = (10, 20, 20)
+
+    data = datamodels.GuiderCalModel(int_shape)
+    data.meta.instrument.name = "FGS"
+    data.meta.exposure.type = "FGS_FINEGUIDE"
+    data.meta.subarray.xstart = 1
+    data.meta.subarray.ystart = 1
+    data.meta.subarray.xsize = shape[1]
+    data.meta.subarray.ysize = shape[0]
+
+    # set arrays to flat values
+    data.data += 2.0
+    data.dq = data.get_default("dq")
+    data.err = data.get_default("err") + 0.1
+
+    flat = datamodels.FlatModel(shape)
+    flat.meta.instrument.name = "FGS"
+    flat.meta.subarray.xstart = 1
+    flat.meta.subarray.ystart = 1
+    flat.meta.subarray.xsize = shape[1]
+    flat.meta.subarray.ysize = shape[0]
+    flat.data += 1.5
+    flat.data[0, 0] = np.nan
+    rng = np.random.default_rng(seed=42)
+    flat.err = rng.random(shape) * 0.05
+
+    result = FlatFieldStep.call(data, override_flat=flat)
+
+    # data should have flat divided out
+    is_nan = np.isnan(result.data)
+    assert np.allclose(result.data[~is_nan], 2.0 / 1.5)
+
+    # error is propagated appropriately
+    data_var = (0.1 / 1.5) ** 2
+    flat_var = np.tile((flat.err * 2.0 / 1.5**2) ** 2, (10, 1, 1))
+    assert np.allclose(result.err[~is_nan], np.sqrt(data_var + flat_var[~is_nan]))
+
+    # where data is invalid, error is also invalid and DQ is set to DO_NOT_USE
+    assert np.all(np.isnan(result.err[is_nan]))
+    assert np.all(result.dq[0, 0] | datamodels.dqflags.pixel["DO_NOT_USE"])
+
+    # input is not modified
+    assert result is not data
+    assert result.meta.cal_step.flat_field == "COMPLETE"
+    assert data.meta.cal_step.flat_field is None

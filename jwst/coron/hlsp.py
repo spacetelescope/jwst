@@ -19,13 +19,13 @@ def snr_image(target_model):
 
     Parameters
     ----------
-    target_model : ImageModel
-        Science target ImageModel
+    target_model : `~stdatamodels.jwst.datamodels.ImageModel`
+        Science target data model
 
     Returns
     -------
-    output_model : ImageModel
-        ImageModel with signal-to_noise data attribute
+    output_model : `~stdatamodels.jwst.datamodels.ImageModel`
+        Data model with signal-to_noise data attribute
     """
     # Initialize the output model as a copy of the input model
     output_model = target_model.copy()
@@ -50,15 +50,15 @@ def contrast_curve(target_model, width):
 
     Parameters
     ----------
-    target_model : ImageModel
-        The science target ImageModel
+    target_model : `~stdatamodels.jwst.datamodels.ImageModel`
+        The science target data model
     width : float
         Width of the annuli, in pixels
 
     Returns
     -------
-    output_model : ContrastModel
-        ContrastModel with a table of radius and standard deviation of non-masked pixels
+    output_model : `~stdatamodels.jwst.datamodels.ContrastModel`
+        Data model with a table of radius and standard deviation of unmasked pixels
     """
     # Get the target array size and center
     nrows = target_model.data.shape[0]

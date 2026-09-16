@@ -1,6 +1,4 @@
-#
-#  Top level module for 2d extraction.
-#
+"""Functions for 2D extraction."""
 
 import logging
 
@@ -35,22 +33,23 @@ def extract2d(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
         Input data model. May be updated in place with a "SKIPPED" status,
         if a new model cannot be created.
-    slit_names : list containing strings or ints
+    slit_names : list of str or int
         Slit names to be processed.
-    source_ids : list containing strings or ints
-        Source ids to be processed.
-    source_ra : list[float]
-        Source right ascensions to be processed (has effect for WFSS modes only)
-    source_dec : list[float]
-        Source declinations to be processed (has effect for WFSS modes only)
+    source_ids : list of str or int
+        Source IDs to be processed.
+    source_ra : list of float
+        Source right ascensions to be processed (WFSS modes only).
+    source_dec : list of float
+        Source declinations to be processed (WFSS modes only).
     max_sep : float
-        Radius in arcseconds within which source_ra and source_dec will be matched
+        Radius in arcseconds within which ``source_ra`` and ``source_dec`` will be matched
         to sources in the catalog. If no source is found within this radius, a warning
-        will be emitted and no source will be extracted corresponding to that ra, dec pair.
-        Has effect for WFSS modes only.
+        will be emitted and no source will be extracted corresponding to that RA, Dec pair.
+        (WFSS modes only.)
     reference_files : dict
         Reference files.
     grism_objects : list
@@ -60,18 +59,18 @@ def extract2d(
         This will override the default which for NRC_TSGRISM is a set
         size of 64 pixels.
     wfss_extract_half_height : int
-        Cross-dispersion extraction half height in pixels, WFSS mode.
+        Cross-dispersion extraction half height in pixels (WFSS modes only).
         Overwrites the computed extraction height.
     extract_orders : list
         A list of spectral orders to be extracted.
     mmag_extract : float
-        Minimum (faintest) abmag to extract for WFSS mode.
+        Minimum (faintest) ABmag to extract (WFSS modes only).
     nbright : float
-        Number of brightest objects to extract, WFSS mode.
+        Number of brightest objects to extract (WFSS modes only).
 
     Returns
     -------
-    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel` or
+    output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel` or \
                    `~stdatamodels.jwst.datamodels.SlitModel`
         Datamodel containing spectral cutouts.
     """

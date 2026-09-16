@@ -2,7 +2,10 @@
 
 import argparse
 import sys
+import warnings
 from pathlib import Path
+
+from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from jwst.associations import AssociationRegistry
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
@@ -118,9 +121,8 @@ class Main:
         parser.add_argument(
             "-f",
             "--format",
-            type=str,
-            default="json",
-            help='Format of the association files. Default: "%(default)s"',
+            action=DeprecateFormat,
+            help="Deprecated: Only JSON format is supported for association files.",
         )
 
         parser.add_argument(
@@ -164,8 +166,19 @@ class Main:
         """Save association."""
         parsed = self.parsed
         with Path(parsed.output_file).open("w") as outfile:
-            name, serialized = self.asn.dump(format=parsed.format)
+            name, serialized = self.asn.dump()
             outfile.write(serialized)
+
+
+class DeprecateFormat(argparse.Action):
+    """Deprecate the ``--format`` option."""
+
+    def __call__(self, parser, namespace, values, option_string=None):  # noqa: ARG002
+        warnings.warn(
+            'The "--format" option is now deprecated. Only JSON is supported.',
+            AstropyDeprecationWarning,
+            stacklevel=2,
+        )
 
 
 def main(args=None):

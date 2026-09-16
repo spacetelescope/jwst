@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 from astropy.modeling.mappings import Mapping
-from scipy import sparse
+from scipy.interpolate import interp1d
 
 from jwst.lib.winclip import get_clipped_pixels
 from jwst.wfss_contam.sens1d import create_1d_sens
@@ -107,16 +107,15 @@ def _disperse_onto_grism(x0_sky, y0_sky, sky_to_imgxy, imgxy_to_grismxy, lambdas
     lambdas : ndarray
         Wavelengths corresponding to each dispersed pixel
     """
-    # x/y in image frame of grism image is the same for all wavelengths
-    x0_sky = np.repeat(x0_sky[np.newaxis, :], len(lambdas), axis=0)
-    y0_sky = np.repeat(y0_sky[np.newaxis, :], len(lambdas), axis=0)
-
-    x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, order)
-    del x0_sky, y0_sky
-
-    # Convert to x/y in grism frame.
-    lambdas = np.repeat(lambdas[:, np.newaxis], x0_xy.shape[1], axis=1)
+    # Evaluate sky-to-direct transform once on the unique per-pixel positions
+    x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
+    n_pixels = len(x0_xy)
+    n_lam = len(lambdas)
+    x0_xy = np.repeat(x0_xy[np.newaxis, :], n_lam, axis=0)
+    y0_xy = np.repeat(y0_xy[np.newaxis, :], n_lam, axis=0)
+    lambdas = np.repeat(lambdas[:, np.newaxis], n_pixels, axis=1)
     x0s, y0s = imgxy_to_grismxy(x0_xy, y0_xy, lambdas, order)
+
     # x0s, y0s now have shape (n_lam, n_pixels)
     return x0s, y0s, lambdas
 
@@ -143,8 +142,22 @@ def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel, model_count
     outputs_by_source : dict
         Dictionary containing dispersed images and bounds for each source ID
     """
+    # Chunks are pre-sorted by source ID before dispersing (see Observation.chunk_sources).
+    # Many observations have sources large enough that some chunks contain only pixels from
+    # a single source. The collect operation can be simplified a lot in that case.
+    first_sid = source_ids_per_pixel[0]
+    if (source_ids_per_pixel == first_sid).all():
+        bounds = [int(xs.min()), int(xs.max()), int(ys.min()), int(ys.max())]
+        img = _build_dispersed_image_of_source(xs, ys, counts, bounds)
+        outputs_by_source = {first_sid: {"bounds": bounds, "image": img}}
+        if model_counts is not None and len(model_counts) > 0:
+            outputs_by_source[first_sid]["model_counts"] = [
+                _build_dispersed_image_of_source(xs, ys, mc, bounds) for mc in model_counts
+            ]
+        return outputs_by_source
+
     # First sort by source ID. xs, ys input here cannot be assumed sorted after get_clipped_pixels
-    sort_idx = np.argsort(source_ids_per_pixel)
+    sort_idx = np.argsort(source_ids_per_pixel, kind="stable")
     sorted_ids = source_ids_per_pixel[sort_idx]
     sorted_xs = xs[sort_idx]
     sorted_ys = ys[sort_idx]
@@ -153,7 +166,15 @@ def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel, model_count
         sorted_model_counts = [mc[sort_idx] for mc in model_counts]
 
     # Compute per-source bounds in a vectorized way
-    unique_ids, split_points = np.unique(sorted_ids, return_index=True)
+    # The following five lines used to be just
+    # `unique_ids, split_points = np.unique(sorted_ids, return_index=True)`
+    # but that re-sorts the array. This is more verbose but faster.
+    is_boundary = np.empty(len(sorted_ids), dtype=bool)
+    is_boundary[0] = True
+    np.not_equal(sorted_ids[1:], sorted_ids[:-1], out=is_boundary[1:])
+    split_points = np.flatnonzero(is_boundary)
+    unique_ids = sorted_ids[split_points]
+
     minxs = np.minimum.reduceat(sorted_xs, split_points)
     maxxs = np.maximum.reduceat(sorted_xs, split_points)
     minys = np.minimum.reduceat(sorted_ys, split_points)
@@ -202,17 +223,98 @@ def _build_dispersed_image_of_source(x, y, flux, bounds):
     -------
     a : ndarray
         2-D dispersed image of the source
+
+    Notes
+    -----
+    This function used to read as
+        img = np.zeros((maxy - miny + 1, maxx - minx + 1), dtype=flux.dtype)
+        np.add.at(img, (y - miny, x - minx), flux)
+        return img
+    but bincount is much faster albeit less readable, since we need to cast to 1-d
+    and then cast back to 2-d at the end.
     """
     minx, maxx, miny, maxy = bounds
-    return sparse.coo_matrix(
-        (flux, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)
-    ).toarray()
+    ncols = maxx - minx + 1
+    nrows = maxy - miny + 1
+
+    # Cast into 1-D so we can use bincount, which is faster than np.add.at
+    flat_idx = (y - miny) * ncols + (x - minx)
+    counts = np.bincount(flat_idx, weights=flux, minlength=nrows * ncols)
+    return counts.reshape((nrows, ncols)).astype(flux.dtype, copy=False)
+
+
+def _replace_nans(fluxes):
+    """
+    Replace NaNs in multi-band fluxes along the wavelength axis (axis 0).
+
+    Interior NaNs are filled by linear interpolation between the nearest valid
+    bands on each side.  Edge NaNs (no valid band on one side) are filled by
+    flat extrapolation from the nearest valid band.
+
+    Parameters
+    ----------
+    fluxes : ndarray
+        Array of shape (N, n_pixels) containing fluxes for N photometric bands.
+
+    Returns
+    -------
+    filled_fluxes : ndarray
+        Input array ``fluxes`` but with NaNs replaced, updated in place.
+    """
+    valid_mask = np.isfinite(fluxes)
+    if not (~valid_mask).any():
+        return fluxes
+
+    n, _npix = fluxes.shape
+    band_idx = np.arange(n)
+
+    # For each position, find the index of the nearest valid band to the left
+    # (or -1 if none) and to the right (or N if none) along wavelength axis (0).
+    left_indices = np.where(valid_mask, band_idx[:, None], -1)
+    np.maximum.accumulate(left_indices, axis=0, out=left_indices)
+
+    right_indices = np.where(valid_mask, band_idx[:, None], n)
+    np.minimum.accumulate(right_indices[::-1], axis=0, out=right_indices[::-1])
+
+    # make bool arrays for whether there is a non-NaN band to the left or right of each NaN
+    # rows is wavelength axis, cols is pixel axis
+    nan_rows, nan_cols = np.where(~valid_mask)
+    left_i = left_indices[nan_rows, nan_cols]
+    right_i = right_indices[nan_rows, nan_cols]
+    has_left = left_i >= 0
+    has_right = right_i < n
+    interior = has_left & has_right
+    only_right = ~has_left & has_right
+    only_left = has_left & ~has_right
+
+    # interior NaNs: linearly interpolate
+    if interior.any():
+        r, c = nan_rows[interior], nan_cols[interior]
+        # find flux at nearest non-nan to both left and right, then use those to find the slope
+        li, ri = left_i[interior], right_i[interior]
+        slope = (r - li) / (ri - li)
+        fluxes[r, c] = fluxes[li, c] + slope * (fluxes[ri, c] - fluxes[li, c])
+
+    # leading NaNs: flat fill from the right
+    if only_right.any():
+        r, c = nan_rows[only_right], nan_cols[only_right]
+        # replace flux with that at nearest non-nan to the right
+        fluxes[r, c] = fluxes[right_i[only_right], c]
+
+    # trailing NaNs: flat fill from the left
+    if only_left.any():
+        r, c = nan_rows[only_left], nan_cols[only_left]
+        # replace flux with that at nearest non-nan to the left
+        fluxes[r, c] = fluxes[left_i[only_left], c]
+
+    return fluxes
 
 
 def disperse(
     xs,
     ys,
     fluxes,
+    band_wavelengths,
     source_ids_per_pixel,
     order,
     wmin,
@@ -238,6 +340,12 @@ def disperse(
         Fluxes of the pixels in the direct image corresponding to xs, ys,
         in units of MJy/sr.  N is the number of photometric bands; use N=1
         for a flat (wavelength-independent) SED. Note in that case the array must still be 2-D.
+    band_wavelengths : ndarray
+        Central wavelengths (in microns) of each photometric band in
+        ``fluxes`` (shape (N,)).  Fluxes are linearly interpolated onto the internal
+        wavelength grid. Fluxes are held constant (flat extrapolation)
+        outside the covered wavelength range. For a flat SED this can be any length-1 array,
+        as it is not used with N=1.
     source_ids_per_pixel : int array
         Source IDs of the input pixels in the segmentation map
     order : int
@@ -275,6 +383,9 @@ def disperse(
         f"{mp.current_process()} dispersing {n_input_sources} "
         f"sources in order {order} with total number of pixels: {len(xs)}"
     )
+    if np.max(source_ids_per_pixel) < np.iinfo(np.uint16).max and np.min(source_ids_per_pixel) >= 0:
+        # Conversion to 16-bit makes the array faster to sort later
+        source_ids_per_pixel = source_ids_per_pixel.astype(np.uint16, copy=False)
     width = 1.0
     height = 1.0
     x0 = xs + 0.5 * width
@@ -307,7 +418,35 @@ def disperse(
         oversample_factor=oversample_factor,
     )
     dlam = lambdas[1] - lambdas[0]
-    n_pix = len(fluxes)
+    nlam = len(lambdas)
+    # Keep 1-d versions of lambdas, source_ids_per_pixel around so the gather below
+    # can index based on these smaller arrays instead of the (nlam, n_pixels) broadcasts.
+    n_pixels = len(source_ids_per_pixel)
+    lam_grid = lambdas
+    source_ids_1d = source_ids_per_pixel
+
+    # Interpolate the input fluxes onto the wavelength grid of the dispersed image
+    fluxes_1d = None
+    if len(band_wavelengths) >= 2:
+        # interp1d does not handle NaNs, so replace with interplation that assumes
+        # flat spectrum at the edges and linear interpolation in the interior,
+        # which is what the behavior would be if we were to call interp1d separately
+        # on each pixel's spectrum after removing NaNs.
+        fluxes = _replace_nans(fluxes)
+        interp_fn = interp1d(
+            band_wavelengths,
+            fluxes,
+            axis=0,
+            kind="linear",
+            bounds_error=False,
+            fill_value=(fluxes[0], fluxes[-1]),  # flat extrapolation
+        )
+        fluxes = interp_fn(lambdas)  # (nlam, n_pixels)
+    else:
+        # constant flux across all wavelengths
+        fluxes_1d = fluxes[0]
+        fluxes = np.repeat(fluxes[0][np.newaxis, :], nlam, axis=0)
+    source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], nlam, axis=0)
 
     x0s, y0s, lambdas = _disperse_onto_grism(
         x0_sky,
@@ -332,13 +471,15 @@ def disperse(
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     del x0s, y0s
 
-    # Only lambdas varies along the wavelength axis
-    # fluxes and source_ids are wavelength-independent, so index % n_pix
-    # recovers the correct source pixel column without needing np.take
-    # and is a bit faster.
-    lambdas = np.take(lambdas, index)
-    fluxes = fluxes[index % n_pix]
-    source_ids_per_pixel = source_ids_per_pixel[index % n_pix]
+    # get_clipped_pixels treats its (nlam, n_pixels) inputs as flattened in C order,
+    # so `index` decomposes into a (wavelength, pixel) pair. Use that to gather
+    # lambdas and source_ids_per_pixel from their small 1-D arrays, which is cheaper to compute
+    # than, e.g., lambdas=np.take(lambdas, index)
+    lam_idx, pixel_idx = np.divmod(index, n_pixels)
+    lambdas = lam_grid[lam_idx]
+    source_ids_per_pixel = source_ids_1d[pixel_idx]
+    # This trick can only be applied to fluxes if they are flat-spectrum
+    fluxes = fluxes_1d[pixel_idx] if fluxes_1d is not None else np.take(fluxes, index)
 
     # Evaluate basis models on the 1-D lambda array.
     # even after np.take this is element-wise so this is still full resolution

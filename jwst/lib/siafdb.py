@@ -10,7 +10,6 @@ Otherwise, use the standard interface defined by the ``pysiaf`` package
 import logging
 import os
 from collections import namedtuple
-from datetime import date
 from pathlib import Path
 
 from jwst.lib.basic_utils import LoggingContext
@@ -41,8 +40,7 @@ SIAF container.
 
 The names should correspond to the names in the ``wcsinfo`` schema.
 It is populated by the SIAF values in the PRD database based
-on APERNAME and UseAfterDate and used to populate the keywords
-in Level1bModel data models.
+on APERNAME and used to populate the keywords in Level1bModel data models.
 
 Default values are set for the SIAF.
 Values which are needed by the pipeline are set to `None`, which
@@ -110,7 +108,7 @@ class SiafDb:
         self.prd_version = None
         self.xml_path = self.get_xml_path(source, prd)
 
-    def get_aperture(self, aperture, useafter=None):
+    def get_aperture(self, aperture):
         """
         Get the ``pysiaf.Aperture`` for an aperture.
 
@@ -118,27 +116,22 @@ class SiafDb:
         ----------
         aperture : str
             The name of the aperture to retrieve.
-        useafter : str
-            The date of observation (``model.meta.date``).
 
         Returns
         -------
         aperture : pysiaf.Aperture
             The aperture specification.
         """
-        if not useafter:
-            useafter = date.today().strftime("%Y-%m-%d")
-
         instrument = INSTRUMENT_MAP[aperture[:3].lower()]
         siaf = self.pysiaf.Siaf(instrument, basepath=self.xml_path)
         aperture = siaf[aperture.upper()]
         return aperture
 
-    def get_wcs(self, aperture, to_detector=False, useafter=None):
+    def get_wcs(self, aperture, to_detector=False):
         """
         Query the SIAF database file and get WCS values.
 
-        Given an ``APERTURE_NAME`` and a ``USEAFTER`` date query the SIAF database
+        Given an ``APERTURE_NAME`` query the SIAF database
         and extract the following keywords:
         ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
         ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
@@ -149,18 +142,15 @@ class SiafDb:
         ----------
         aperture : str
             The name of the aperture to retrieve.
-
         to_detector : bool
             Convert all the pixel parameters to be relative to the detector.
-        useafter : str
-            The date of observation (``model.meta.date``).
 
         Returns
         -------
         siaf : namedtuple
             The SIAF namedtuple with values from the PRD database.
         """
-        aperture = self.get_aperture(aperture, useafter=useafter)
+        aperture = self.get_aperture(aperture)
 
         # Build the SIAF entry. Missing required values is an error.
         # Otherwise, use defaults.

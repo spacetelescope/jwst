@@ -11,8 +11,6 @@ from photutils.segmentation import SourceFinder, make_2dgaussian_kernel
 
 from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs, create_wfss_wcs
 
-DIR_IMAGE = "direct_image.fits"
-
 
 @pytest.fixture(scope="module")
 def direct_image():
@@ -31,13 +29,13 @@ def direct_image():
 
 
 @pytest.fixture(scope="module")
-def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
+def direct_image_with_gradient(direct_image):
     """
     Add a gradient to the direct image and save it as a JWST datamodel.
 
     Returns
     -------
-    ImageModel
+    `~stdatamodels.jwst.datamodels.ImageModel`
         Direct image with a background gradient.
     """
     ny, nx = direct_image.shape
@@ -48,7 +46,37 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
     # obs expects input list of direct image filenames
     model = dm.ImageModel(data=data)
     model.meta.wcs = create_imaging_wcs("F200W")
-    model.save(DIR_IMAGE)
+
+    return model
+
+
+@pytest.fixture(scope="module")
+def direct_image_cube_with_gradient(direct_image):
+    """
+    Build a multi-band direct image cube and save it as a WFSSCubeModel.
+
+    Each wavelength plane is a copy of the direct image with a different linear
+    gradient added, so the planes are not identical and tests can distinguish
+    which wavelength was sampled.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.WFSSCubeModel`
+        Multi-band direct image, also saved to filename "direct_image_cube.fits"
+    """
+    ny, nx = direct_image.shape
+    y, x = np.mgrid[:ny, :nx]
+
+    band_wls = np.array([1.75, 1.90, 2.05, 2.20], dtype=np.float32)
+    n_bands = len(band_wls)
+    cube = np.zeros((n_bands, ny, nx), dtype=np.float32)
+    for i, wl in enumerate(band_wls):
+        # Scale the gradient by wavelength so each plane is distinct
+        gradient = wl * x * y / 5000.0
+        cube[i] = direct_image + gradient
+
+    model = dm.WFSSCubeModel(data=cube, wavelength=band_wls)
+    model.meta.wcs = create_imaging_wcs("F200W")
 
     return model
 
@@ -60,8 +88,8 @@ def segmentation_map(direct_image):
 
     Returns
     -------
-    SegmentationMapModel
-        The segmentation map as a JwstDataModel.
+    `~stdatamodels.jwst.datamodels.SegmentationMapModel`
+        The segmentation map as a data model.
     """
     _mean, median, stddev = sigma_clipped_stats(direct_image, sigma=3.0)
     threshold = median + 3 * stddev
@@ -72,6 +100,19 @@ def segmentation_map(direct_image):
     model = dm.SegmentationMapModel(data=segm.data)
     model.meta.wcs = create_imaging_wcs("F200W")
     return model
+
+
+def _sky_bbox(xcentroid, ycentroid, wcs, half_size=10):
+    pix_bbox_ll = np.column_stack([xcentroid - half_size, ycentroid - half_size])
+    pix_bbox_lr = np.column_stack([xcentroid + half_size, ycentroid - half_size])
+    pix_bbox_ur = np.column_stack([xcentroid + half_size, ycentroid + half_size])
+    pix_bbox_ul = np.column_stack([xcentroid - half_size, ycentroid + half_size])
+    sky_bbox_ll = wcs.pixel_to_world(pix_bbox_ll[:, 0], pix_bbox_ll[:, 1])
+    sky_bbox_lr = wcs.pixel_to_world(pix_bbox_lr[:, 0], pix_bbox_lr[:, 1])
+    sky_bbox_ur = wcs.pixel_to_world(pix_bbox_ur[:, 0], pix_bbox_ur[:, 1])
+    sky_bbox_ul = wcs.pixel_to_world(pix_bbox_ul[:, 0], pix_bbox_ul[:, 1])
+
+    return sky_bbox_ll, sky_bbox_lr, sky_bbox_ur, sky_bbox_ul
 
 
 @pytest.fixture(scope="module")
@@ -88,11 +129,18 @@ def source_catalog(segmentation_map):
     source_ids = source_ids[source_ids > 0]  # suppress background
 
     rng = np.random.default_rng(42)
+    xcentroid = rng.uniform(0, segmentation_map.data.shape[1], len(source_ids))
+    ycentroid = rng.uniform(0, segmentation_map.data.shape[0], len(source_ids))
+    sky_bbox = _sky_bbox(xcentroid, ycentroid, segmentation_map.meta.wcs)
     data = {
         "label": source_ids,
-        "xcentroid": rng.uniform(0, segmentation_map.data.shape[1], len(source_ids)),
-        "ycentroid": rng.uniform(0, segmentation_map.data.shape[0], len(source_ids)),
+        "xcentroid": xcentroid,
+        "ycentroid": ycentroid,
         "isophotal_abmag": rng.uniform(20, 30, len(source_ids)),
+        "sky_bbox_ll": sky_bbox[0],
+        "sky_bbox_lr": sky_bbox[1],
+        "sky_bbox_ur": sky_bbox[2],
+        "sky_bbox_ul": sky_bbox[3],
     }
     return Table(data)
 
@@ -173,14 +221,15 @@ def photom_ref_model_niriss(phot_table):
     phot_table : np.recarray
         Photometry table.
 
-    Returns
-    -------
+    Yields
+    ------
     `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
         Photom ref file model.
     """
     model = dm.NisWfssPhotomModel(phot_table=phot_table)
     model.phot_unit = "MJy micron s / (DN sr)"
-    return model
+    yield model
+    model.close()
 
 
 @pytest.fixture(scope="module")
@@ -193,14 +242,15 @@ def photom_ref_model_nircam(phot_table):
     phot_table : np.recarray
         Photometry table.
 
-    Returns
-    -------
+    Yields
+    ------
     `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`
         Photom ref file model.
     """
     model = dm.NrcWfssPhotomModel(phot_table=phot_table)
     model.phot_unit = "MJy Angstrom s / (DN sr)"
-    return model
+    yield model
+    model.close()
 
 
 @pytest.fixture

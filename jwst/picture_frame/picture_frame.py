@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.util import NoDataOnDetectorError
+from jwst.assign_wcs.util import MSAFileError, NoDataOnDetectorError
 from jwst.clean_flicker_noise import clean_flicker_noise as cfn
 
 __all__ = ["correct_picture_frame"]
@@ -158,6 +158,12 @@ def correct_picture_frame(
             msaflagopen=False,
             input_dir=input_dir,
         )
+    except MSAFileError:
+        log.warning(
+            "MSA metadata file not found. Cannot assign WCS. Skipping corrections for this file."
+        )
+        status = "FAILED"
+        return input_model, None, None, status
 
     # Make a background mask from the draft rate file, blocking out science regions
     background_mask = cfn.create_mask(

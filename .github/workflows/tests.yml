@@ -9,7 +9,6 @@ on:
       - opened
       - synchronize
       - reopened
-      - ready_for_review
   push:
     branches:
       - main
@@ -38,7 +37,7 @@ concurrency:
 permissions: {}
 
 env:
-  PYTHON_VERSIONS: 3.9 3.10 3.11 3.12 3.13 3.14
+  PYTHON_VERSIONS: 3.12 3.13 3.14
   CRDS_PATH: /tmp/data/crds_cache
   CRDS_OBSERVATORY: jwst
   CRDS_SERVER_URL: ${{ inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
@@ -49,10 +48,10 @@ jobs:
   supported-pythons:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3"
       - run: pip install packaging tomli
@@ -83,7 +82,7 @@ jobs:
   crds:
     runs-on: ubuntu-latest
     steps:
-      - if: inputs.crds_context
+      - if: inputs.crds_context == ''
         id: latest-context
         run: >
           echo latest-context=$(
@@ -100,7 +99,7 @@ jobs:
     needs:
       - supported-pythons
       - crds
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@4193751d511425d4edc1d5657c24b2128d49b017 # v2.6.4
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@22ddf09dfabb443adddfb9f861b7d41a787d6b1a # v3.0.3
     with:
       setenv: |
         CRDS_PATH: ${{ needs.crds.outputs.path }}
@@ -114,18 +113,18 @@ jobs:
         - linux: check-dependencies
           python-version: ${{ needs.supported-pythons.outputs.latest }} 
         - name: run tests (oldest supported Python, ubuntu-latest)
-          linux: py3-oldestdeps-xdist-cov
+          linux: py3-oldestdeps-cov-xdist
           python-version: ${{ needs.supported-pythons.outputs.oldest }}
+        - linux: py*-xdist
         - name: run tests with coverage (latest supported Python, ubuntu-latest)
-          linux: py3-cov
+          linux: py3-cov-xdist
           python-version: ${{ needs.supported-pythons.outputs.latest }}
           pytest-results-summary: true
           coverage: codecov
         - name: run tests (latest supported Python, macos-latest)
-          macos: py3
+          macos: py3-xdist
           python-version: ${{ needs.supported-pythons.outputs.latest }}
-      fill: true
-      fill_platforms: linux
-      fill_factors: xdist
       artifact-path: |
         results.xml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -7,7 +7,6 @@ SCRIPTS = [
     "asn_edit",
     "asn_gather",
     "asn_make_pool",
-    "collect_pipeline_cfgs",
     "pointing_summary",
     "set_telescope_pointing",
     "set_telescope_pointing.py",

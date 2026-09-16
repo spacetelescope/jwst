@@ -351,6 +351,10 @@ slit, as created by the :ref:`extract_2d <extract_2d_step>` step. FITS "EXTVER" 
 used in each extension header to segregate the multiple instances of each extension type by
 source.
 
+Note that for some modes (NIRISS SOSS, NIRCam WFSS, MIRI WFSS, and NIRISS WFSS),
+the :ref:`photom <photom_step>` step is expected to run after ``extract_1d``, meaning that the
+``_cal`` files, despite their name, remain in count rate units by default.
+
 .. _crf:
 .. _crfints:
 
@@ -396,6 +400,8 @@ The FITS file structure for ``i2d`` and ``s2d`` products is as follows:
 +-----+-------------+----------+-----------+-------------------------+
 |  7  | VAR_FLAT    | IMAGE    | float32   | ncols x nrows           |
 +-----+-------------+----------+-----------+-------------------------+
+|     | WCS-TABLE*  | BINTABLE | N/A       | variable cols x 1 row   |
++-----+-------------+----------+-----------+-------------------------+
 |     | HDRTAB*     | BINTABLE | N/A       | variable                |
 +-----+-------------+----------+-----------+-------------------------+
 |     | ASDF        | BINTABLE | N/A       | variable                |
@@ -409,6 +415,9 @@ The FITS file structure for ``i2d`` and ``s2d`` products is as follows:
  - VAR_POISSON: 2-D resampled Poisson variance estimates for each pixel
  - VAR_RNOISE: 2-D resampled read noise variance estimates for each pixel
  - VAR_FLAT: 2-D resampled flat-field variance estimates for each pixel
+ - WCS-TABLE: A table listing the wavelength values to be associated with each dispersion
+   element in the SCI array, in a format that conforms to the FITS spectroscopic WCS standards.
+   Only appears for spectroscopic products (``s2d``).
  - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
    that were combined to produce the output image. Only appears when multiple inputs are used.
  - ADSF: The data model meta data.
@@ -418,6 +427,19 @@ For spectroscopic exposure-based products that contain spectra for more than one
 extensions, one set for each source or slit. FITS "EXTVER" keywords are used in each
 extension header to segregate the multiple instances of each extension type by
 source.
+
+To encode wavelength information for spectral images, a single "WCS-TABLE" extension is attached,
+containing one column per slit included in the data product. In addition, the following WCS-related
+keywords are included in the header of each "SCI" extension to support the use of this table.
+These keywords allow data analysis tools that are compliant with the FITS spectroscopic WCS
+standards to automatically recognize and load the wavelength information in the table
+and assign wavelengths to the spectral image.  For dispersion coordinate axis ``i``, the
+keywords are:
+
+ - PSi_0: The name of the extension containing coordinate data for axis ``i`` (i.e., "WCS-TABLE").
+ - PSi_1: The name of the table column containing the coordinate data. Values correspond to
+   the slit name if available (e.g., "wave_slit_S200A1" for NIRSpec fixed slit S200A1),
+   or "wavelength" otherwise.
 
 For the context array, CON, though the schema represents it as an ``int32``,
 users should interpret and recast the array as ``uint32`` post-processing. This
@@ -443,7 +465,7 @@ files with the following structure:
 +-----+-------------+----------+-----------+------------------------+
 |  4  | WMAP        | IMAGE    | float32   | ncols x nrows x nwaves |
 +-----+-------------+----------+-----------+------------------------+
-|     | WCS-TABLE   | BINTABLE | N/A       | 2 cols x 1 row         |
+|     | WCS-TABLE   | BINTABLE | N/A       | 1 col x 1 row          |
 +-----+-------------+----------+-----------+------------------------+
 |     | HDRTAB*     | BINTABLE | N/A       | variable               |
 +-----+-------------+----------+-----------+------------------------+
@@ -456,9 +478,7 @@ files with the following structure:
  - WMAP: 3-D weight image giving the relative weights of the output spaxels.
  - WCS-TABLE: A table listing the wavelength to be associated with each plane of the
    third axis in the SCI, DQ, ERR, and WMAP arrays, in a format that conforms to the
-   FITS spectroscopic WCS standards. Column 1 of the table ("nelem") gives the number of
-   wavelength elements listed in the table and column 2 ("wavelength") is a 1-D array
-   giving the wavelength values.
+   FITS spectroscopic WCS standards.
  - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
    that were combined to produce the output image. Only appears when multiple inputs are used.
  - ADSF: The data model meta data.
@@ -508,9 +528,15 @@ in binary table extensions of FITS files. The overall layout of the FITS file is
 +-----+-------------+----------+-----------+---------------+
 |  2  | ASDF        | BINTABLE | N/A       | variable      |
 +-----+-------------+----------+-----------+---------------+
+|  3  | HDRTAB*     | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
 
  - EXTRACT1D: A table containing the extracted spectral data.
  - ADSF: The data model meta data.
+ - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
+   that were combined to produce the output image. Only appears when multiple inputs are used,
+   for ``x1dints`` output from the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
+
 
 Multiple "EXTRACT1D" extensions can be present if there is data for more than one source,
 segment, spectral order, or exposure. For ``x1dints`` products, there is one "EXTRACT1D"

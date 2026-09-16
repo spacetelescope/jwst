@@ -246,8 +246,7 @@ def apply_flat_field(science, flat, inverse=False):
         # Var_flat does not exist before flatfield step - set it to zero.
         science.var_flat = np.zeros_like(science.data)
 
-    # Update the variances using BASELINE algorithm.  For guider data, it has
-    # not gone through ramp fitting so there is no Poisson noise or readnoise
+    # Update the variances using BASELINE algorithm.
     if not isinstance(science, datamodels.GuiderCalModel):
         if not inverse:
             science.var_poisson /= flat_data_squared
@@ -258,8 +257,11 @@ def apply_flat_field(science, flat, inverse=False):
             science.var_rnoise *= flat_data_squared
             science.err = np.sqrt(science.var_poisson + science.var_rnoise)
     elif not inverse:
-        # Set the output ERR to be the combined input ERR plus flatfield ERR, summed in quadrature
-        science.err = np.sqrt(science.err**2 + science.var_flat)
+        # For guider data, the model does not separate out Poisson and read noise
+        # components: both are included in the error image.
+        # Set the output ERR to be the combined input ERR (scaled by the flat)
+        # plus flatfield ERR, summed in quadrature.
+        science.err = np.sqrt(science.err**2 / flat_data_squared + science.var_flat)
 
     # Combine the science and flat DQ arrays
     science.dq = np.bitwise_or(science.dq, flat_dq)

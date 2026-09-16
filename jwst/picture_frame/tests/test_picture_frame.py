@@ -7,6 +7,7 @@ from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
 from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.clean_flicker_noise.tests.helpers import make_nirspec_fs_model, make_nrs_fs_full_ramp
 from jwst.lib.basic_utils import LoggingContext
+from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
 from jwst.picture_frame import picture_frame as pf
 from jwst.picture_frame.tests.helpers import picture_frame_model
 
@@ -187,3 +188,32 @@ def test_correction_single_group(caplog):
     assert status == "SKIPPED"
     assert correction is None
     assert mask is None
+
+
+def test_correction_no_msa(caplog):
+    pctfrm_model = picture_frame_model()
+    mos_model = make_nirspec_mos_model()
+    mos_model.meta.subarray.name = "FULL"
+    mos_model.meta.instrument.msa_metadata_file = "example.fits"
+
+    # Process a MOS dataset whose MSA metadata file is not available for
+    # building WCS with mask_science_regions=True
+    cleaned, mask, correction, status = pf.correct_picture_frame(
+        mos_model.copy(),
+        pctfrm_model,
+        mask_science_regions=True,
+        save_correction=True,
+        save_mask=True,
+    )
+
+    assert "MSA metadata file not found." in caplog.text
+
+    # No correction should have been applied
+    assert np.allclose(cleaned.data, mos_model.data)
+
+    # Even though instructed to save a mask and correction they should be None
+    assert mask is None
+    assert correction is None
+
+    # Report a failure for the status of the step
+    assert status == "FAILED"

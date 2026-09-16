@@ -468,7 +468,7 @@ class Utility:
             )
             return level1b_name
 
-        if member_exptype == "background":
+        if (member_exptype == "background") or exp_type in ("mir_wfss", "nis_wfss", "nrc_wfss"):
             suffix = "x1d"
         else:
             if exp_type in LEVEL2B_EXPTYPES:

@@ -105,6 +105,12 @@ def test_all_members(gather):
     source_asn = LoadAsAssociation.load(source_folder / PRIMARY_NAME)
     asn = LoadAsAssociation.load(asn_path)
 
+    asn2 = LoadAsAssociation.load(asn)
+    assert asn2 is asn
+
+    asn3 = LoadAsAssociation.load(asn.data)
+    assert asn3.data is asn.data
+
     excludes = [] if excludes is None else excludes
     if exptypes is None:
         exptypes = {

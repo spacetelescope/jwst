@@ -8,7 +8,7 @@ from stdatamodels.exceptions import NoTypeWarning
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import JwstDataModel
 
-from jwst.associations import load_as_asn
+from jwst.associations import Association, load_as_asn
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels import ModelContainer
 from jwst.lib.file_utils import pushdir
@@ -83,7 +83,7 @@ def test_modelcontainer_group_names(container):
 
 def test_modelcontainer_error_from_asn(tmp_path):
     asn = asn_from_list(["foo.fits"], product_name="foo_out")
-    name, serialized = asn.dump(format="json")
+    name, serialized = asn.dump()
     # The following Path object needs to be stringified because
     # datamodels.open() doesn't deal with pathlib objects when they are
     # .json files
@@ -180,6 +180,23 @@ def test_open_kwargs(container):
             # but schema can be passed all the way through to DataModel.__init__ on the
             # individual datamodels, and cause AttributeError
             ModelContainer(fnames, schema=wrong_schema)
+
+
+def test_open_asn_obj():
+    asn_file_path, asn_file_name = os.path.split(ASN_FILE)
+    with (
+        pushdir(asn_file_path),
+        open(asn_file_name) as f,
+        warnings.catch_warnings(),
+    ):
+        warnings.filterwarnings("ignore", category=NoTypeWarning, message="model_type not found")
+        a = Association.load(f)
+        b = ModelContainer(asn_file_name)
+        m = ModelContainer(a)
+    assert isinstance(m, ModelContainer)
+    assert len(m) == len(a["products"][0]["members"])
+    for bb, mm in zip(b, m):
+        assert repr(bb) == repr(mm)
 
 
 def test_copy(container):

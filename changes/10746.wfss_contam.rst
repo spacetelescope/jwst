@@ -1,0 +1,1 @@
+Replace a single usage of the now-deprecated ``scipy.sparse.coo_matrix`` with numpy-only operations. This also avoids an unnecessary re-cast between types.

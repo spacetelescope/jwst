@@ -95,13 +95,14 @@ def test_std_strict(_jail, rtdata, resource_tracker, request, pool_args):
             ["-i", "o001", "o002"],
         ),  # This pair of pools test the DMS flag usage to prevent o-type ASNs when a background c-type candidate is attached to the science exposure.
         ("jw04225_20241213t150701DMS_pool", ["--DMS", "-i", "o001", "o002"]),
-        ("jw04453_o010_pool", []),  # NRC_TSGRISM / DHS pre-flight, code-to-spec
+        ("jw04453_20251228t035643_o015_pool", []),  # NRC_TSGRISM / DHS flight, sub260stripe4 only
         ("jw04462_20250318t100414_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
         ("jw04470_20250317t231014_pool", []),  # NIS_IMAGE science program
         (
             "jw05554_20250528t204800_c1012_pool",
             ["--DMS", "-i", "o009", "o010", "c1012"],
         ),  # This pool checks background behavior with paired MIRI MRS/Imaging exposures
+        ("jw06219_20251211t073827_pool", []),  # MIR_LRS-FIXEDSLIT TSO
     ],
     ids=parfunc,
 )

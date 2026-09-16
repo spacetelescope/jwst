@@ -17,26 +17,20 @@ the possibility of direct forward modeling and a significant speed increase.
 
 The KLIP algorithm consists of the following high-level steps:
 
-1) Partition the target and reference PSF images in a set of search areas, and
-   subtract their average values so that they have zero mean
-2) Compute the KL transform of the set of reference PSF's
-3) Choose the number of modes to keep in the estimated target PSF
-4) Compute the best estimate of the target PSF from the projection of the
-   target image on the KL eigenvectors
-5) Calculate the PSF-subtracted target image
-
-Arguments
----------
-The ``klip`` step has one optional argument:
-
-``--truncate``
-  This is an integer parameter with a default value of 50 and is used to specify the number
-  of KL transform rows to keep when computing the PSF fit to the target.
+1. Partition the target and reference PSF images in a set of search areas, and
+   subtract their average values so that they have zero mean.
+2. Compute the KL transform of the set of reference PSF's.
+3. Choose the number of modes to keep in the estimated target PSF.
+4. Compute the best estimate of the target PSF from the projection of the
+   target image on the KL eigenvectors.
+5. Calculate the PSF-subtracted target image.
 
 Inputs
 ------
-The ``klip`` step takes two inputs: a science target exposure in the form of a 3D data
-cube and a 3D aligned PSF image ("_psfalign") product.
+The ``klip`` step takes two inputs:
+
+* a science target exposure in the form of a 3D data cube and
+* a 3D aligned PSF image ("_psfalign") product.
 
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
@@ -69,8 +63,8 @@ The output is a 3D stack of PSF-subtracted images of the science target, having 
 dimensions as the input science target ("_calints") product. The PSF fitting and subtraction
 has been applied to each integration image independently. The file name syntax is
 exposure-based, using the root of the input "_calints" product, with the addition of the
-association candidate ID and the "_psfsub" product type suffix, e.g.
-"jw8607342001_02102_00001_nrcb3_a3001_psfsub.fits."
+association candidate ID and the "_psfsub" product type suffix, e.g.,
+``jw8607342001_02102_00001_nrcb3_a3001_psfsub.fits``.
 
 Reference Files
 ---------------

@@ -357,7 +357,7 @@ class OutputSpectrumModel:
             Count of how many values at each index in the input arrays.
         sigma_clip : float, optional
             Factor for clipping outliers.  Compares input spectra to the
-            median and medaian absolute devaition, by default None.
+            median and median absolute deviation, by default None.
 
         Returns
         -------

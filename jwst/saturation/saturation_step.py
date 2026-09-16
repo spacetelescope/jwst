@@ -1,3 +1,5 @@
+"""Set saturation flags for pixels."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -30,7 +32,7 @@ class SaturationStep(Step):
         Parameters
         ----------
         step_input : `~stdatamodels.jwst.datamodels.RampModel` or str
-            Input datamodel or string name of the fits file.
+            Input datamodel or FITS filename.
 
         Returns
         -------

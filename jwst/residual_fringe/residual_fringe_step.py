@@ -1,3 +1,5 @@
+"""Correct residual fringes in MIRI MRS data."""
+
 import logging
 
 from stdatamodels.jwst import datamodels

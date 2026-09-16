@@ -1,3 +1,5 @@
+"""Extract 1-D spectra from JWST spectroscopic data."""
+
 import logging
 
 import crds
@@ -69,7 +71,7 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input model.
         exp_type : str
             Exposure type.
@@ -115,12 +117,12 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input model.
 
         Returns
         -------
-        DataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The output spectra.
         """
         # Set the filter configuration
@@ -221,7 +223,7 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input model.
 
         Returns
@@ -251,7 +253,7 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        model : DataModel
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input model.
         exp_type : str
             Exposure type.
@@ -262,7 +264,7 @@ class Extract1dStep(Step):
 
         Returns
         -------
-        DataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The output spectra.
         """
         source_type = model.meta.target.source_type
@@ -306,7 +308,7 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        intermediate_model : DataModel
+        intermediate_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             A model to save
         suffix : str
             Suffix to append to the output filename.
@@ -473,6 +475,17 @@ class Extract1dStep(Step):
         # For WFSS, reorder the x1d product to save it in the flat format
         if exp_type in extract.WFSS_EXPTYPES:
             result = make_wfss_multiexposure(result)
+            if "WFSS" in exp_type:
+                # WCS needs to be added to x1d files so that the S_REGION can be
+                # computed in the spec3 pipeline for combined x1d and c1d products
+                if isinstance(input_data, SourceModelContainer) and isinstance(
+                    input_data[0], datamodels.SlitModel
+                ):
+                    result.meta.wcs = input_data[0].meta.wcs
+                    result.spec[0].s_region = input_data[0].meta.wcsinfo.s_region
+                else:
+                    result.meta.wcs = input_data.slits[0].meta.wcs
+                    result.spec[0].s_region = input_data.slits[0].meta.wcsinfo.s_region
             result.meta.cal_step.extract_1d = "COMPLETE"
 
         # The result is a new model, so close the input model if it was opened here.

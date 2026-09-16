@@ -502,8 +502,6 @@ class TransformParameters:
     #: If no telemetry can be found during the observation,
     #: the time, in seconds, beyond the observation time to search for telemetry.
     tolerance: float = 60.0
-    #: The date of observation (``stdatamodels.jwst.datamodels.JwstDataModel.meta.date``)
-    useafter: str | None = None
     #: V3 position angle at Guide Star
     # (``stdatamodels.jwst.datamodels.JwstDataModel.meta.guide_star.gs_v3_pa_science``)
     v3pa_at_gs: float | None = None
@@ -825,9 +823,6 @@ def update_wcs(
         prd = model.meta.prd_software_version
     siaf_db = SiafDb(source=siaf_path, prd=prd)
 
-    # Get model attributes
-    useafter = model.meta.observation.date
-
     # Configure transformation parameters.
     t_pars = t_pars_from_model(
         model,
@@ -837,7 +832,6 @@ def update_wcs(
         allow_default=allow_default,
         reduce_func=reduce_func,
         siaf_db=siaf_db,
-        useafter=useafter,
         **transform_kwargs,
     )
     if fgsid:
@@ -2482,7 +2476,7 @@ def calc_v3pags(t_pars: TransformParameters):
     gs_wcs = calc_estimated_gs_wcs(t_pars)
 
     # Retrieve the Ideal Y-angle for FGS1
-    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[1], useafter=t_pars.useafter)
+    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[1])
 
     # Calculate V3PAGS
     v3pags = gs_wcs.pa - fgs_siaf.v3yangle
@@ -2767,10 +2761,8 @@ def t_pars_from_model(model, **t_pars_kwargs):
     # Retrieve SIAF information
     if t_pars.siaf is None:
         siaf = None
-        useafter = None
         if t_pars.siaf_db is not None:
             aperture_name = model.meta.aperture.name.upper()
-            useafter = model.meta.observation.date
             if aperture_name != "UNKNOWN":
                 logger.info("Updating WCS for aperture %s", aperture_name)
 
@@ -2780,11 +2772,8 @@ def t_pars_from_model(model, **t_pars_kwargs):
                 to_detector = False
                 if aperture_name == "MIRIM_TAMRS":
                     to_detector = True
-                siaf = t_pars.siaf_db.get_wcs(
-                    aperture_name, to_detector=to_detector, useafter=useafter
-                )
+                siaf = t_pars.siaf_db.get_wcs(aperture_name, to_detector=to_detector)
         t_pars.siaf = siaf
-        t_pars.useafter = useafter
     logger.debug("SIAF: %s", t_pars.siaf)
 
     # Instrument details
@@ -3223,7 +3212,7 @@ def calc_wcs_guiding(
         crpix1 = crpix2 = 0
     else:
         apername = f"FGS{t_pars.detector[-1]}_FULL_OSS"
-        aperture = t_pars.siaf_db.get_aperture(apername, t_pars.useafter)
+        aperture = t_pars.siaf_db.get_aperture(apername)
         crpix1, crpix2 = gs_ideal_to_subarray(gs_position, aperture, flip=True)
 
     # Determine PC matrix

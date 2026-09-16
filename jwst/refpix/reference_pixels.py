@@ -1920,8 +1920,8 @@ def create_dataset(
         The appropriate subclass of the dataset class
     """
     detector = input_model.meta.instrument.detector
-
-    if reffile_utils.is_subarray(input_model):
+    is_multistripe = getattr(input_model.meta.subarray, "multistripe_reads1", None) is not None
+    if reffile_utils.is_subarray(input_model) and not is_multistripe:
         colstart = input_model.meta.subarray.xstart - 1
         colstop = colstart + input_model.meta.subarray.xsize
         rowstart = input_model.meta.subarray.ystart - 1

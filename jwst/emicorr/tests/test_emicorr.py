@@ -78,6 +78,9 @@ def mk_data_mdl(data, subarray, readpatt, detector):
     input_model.meta.instrument.name = "MIRI"
     input_model.meta.instrument.detector = detector
     input_model.meta.exposure.type = "MIR_4QPM"
+    input_model.meta.exposure.start_time = 60728.97621633101
+    input_model.meta.exposure.integration_time = 29.832
+    input_model.meta.exposure.group_time = 2.775
     input_model.meta.subarray.name = subarray
     input_model.meta.exposure.readpatt = readpatt
     input_model.meta.subarray.xsize = 288
@@ -334,38 +337,6 @@ def test_emicorrstep_user_freq(tmp_path, readpatt):
 
     # on-the-fly reference file is saved
     assert (tmp_path / "test_emi_ref_waves.asdf").exists()
-
-
-def test_emicorrstep_user_reffile(tmp_path, emicorr_model, caplog):
-    caplog.set_level("INFO", "jwst")
-
-    data = np.ones((1, 5, 20, 20))
-    input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
-
-    model_name = str(tmp_path / "test_emicorr.asdf")
-    emicorr_model.save(model_name)
-
-    message = "'user_supplied_reffile' parameter is deprecated"
-    with warnings.catch_warnings():
-        # Warning emitted for numpy 1.26 but not numpy 2.2
-        warnings.filterwarnings("ignore", message="Polyfit may be poorly conditioned")
-
-        with pytest.warns(DeprecationWarning, match=message):
-            result = emicorr_step.EmiCorrStep.call(
-                input_model, skip=False, user_supplied_reffile=model_name, configure_log=False
-            )
-
-    # deprecation message is also logged
-    assert message in caplog.text
-
-    # step completes but we expect no change for flat data
-    assert np.all(input_model.data == result.data)
-    assert result.meta.cal_step.emicorr == "COMPLETE"
-
-    # the reference file name is logged but not recorded in metadata
-    # because it was not retrieved with get_reference_file
-    assert f"Using EMICORR reference file: {model_name}" in caplog.text
-    assert result.meta.ref_file.emicorr.name is None
 
 
 def test_emicorrstep_override_reffile(tmp_path, emicorr_model, caplog):

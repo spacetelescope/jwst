@@ -1,7 +1,7 @@
 import numpy as np
 from stdatamodels.jwst.datamodels import RampModel, SaturationModel, SuperBiasModel
 
-from jwst.dq_init.tests.helpers import make_superstripe_model
+from jwst.lib.tests.helpers import make_superstripe_model
 
 __all__ = [
     "add_test_refmodel_metadata",

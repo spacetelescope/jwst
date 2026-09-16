@@ -153,6 +153,21 @@ def test_nrs_bots_extraction_fail():
     input_model.close()
 
 
+def test_nrs_bots_flux_mismatch():
+    # NIRSpec BOTS data with repeated int_times
+    input_model = helpers.make_nrs_bots_rateints()
+    first_time = input_model.int_times["int_mid_MJD_UTC"][0]
+    input_model.int_times["int_mid_MJD_UTC"][:] = first_time
+    wcs_model = AssignWcsStep.call(input_model)
+
+    # White light step returns only 1 flux value in this case, so an error is raised
+    with pytest.raises(ValueError, match="Found valid fluxes for 1"):
+        tmi.make_median_image(wcs_model, wcs_model)
+
+    input_model.close()
+    wcs_model.close()
+
+
 def test_nrs_bots_success():
     # Smoke test NIRSpec BOTS with flat data
     input_model = helpers.make_nrs_bots_rateints()

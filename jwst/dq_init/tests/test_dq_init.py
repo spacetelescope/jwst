@@ -6,8 +6,14 @@ from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.dq_init import DQInitStep
 from jwst.dq_init.dq_initialization import check_dimensions, do_dqinit
-from jwst.dq_init.tests import helpers
+from jwst.dq_init.tests.helpers import make_dq_arrays, make_rampmodel
 from jwst.lib.stripe_utils import collate_superstripes
+from jwst.lib.tests.helpers import (
+    make_rawramp,
+    make_superstripe_mask_model,
+    make_superstripe_model,
+    one_stripe_mask,
+)
 
 # Set parameters for multiple runs of data
 args = "xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type"
@@ -26,12 +32,10 @@ def test_dq_im_default(xstart, ystart, xsize, ysize, nints, ngroups, instrument,
     test that a flagged value in the reference file flags the PIXELDQ array"""
 
     # create raw input data for step
-    dm_ramp = helpers.make_rawramp(
-        instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type
-    )
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
 
     # create a MaskModel for the dq input mask
-    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
+    dq, dq_def = make_dq_arrays(ysize, xsize)
 
     # edit reference file with known bad pixel values
     dq[100, 100] = 2  # Dead pixel
@@ -89,10 +93,8 @@ def test_dq_im_wrong_shape():
     instrument = "MIRI"
     exp_type = "MIR_IMAGE"
 
-    dm_ramp = helpers.make_rawramp(
-        instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type
-    )
-    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
+    dq, dq_def = make_dq_arrays(ysize, xsize)
 
     ref_data = datamodels.MaskModel(dq=dq, dq_def=dq_def)
     ref_data.meta.instrument.name = instrument
@@ -118,10 +120,10 @@ def test_groupdq():
     ystart = 1
 
     # create raw input data for step
-    dm_ramp = helpers.make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart)
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart)
 
     # create a MaskModel for the dq input mask
-    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
+    dq, dq_def = make_dq_arrays(ysize, xsize)
 
     # write mask model
     ref_data = datamodels.MaskModel(dq=dq, dq_def=dq_def)
@@ -179,7 +181,7 @@ def test_dq_subarray():
     im.meta.subarray.ysize = ysize
 
     # create full size mask model
-    dq, dq_def = helpers.make_dq_arrays(fullysize, fullxsize)
+    dq, dq_def = make_dq_arrays(fullysize, fullxsize)
 
     # place dq flags in dq array that would be in subarray
     # MASK1550 file has colstart=1, rowstart=467
@@ -226,10 +228,10 @@ def test_dq_add1_groupdq():
     ysize = 1024
 
     # create raw input data for step
-    dm_ramp = helpers.make_rampmodel(nints, ngroups, ysize, xsize)
+    dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
 
     # create a MaskModel for the dq input mask
-    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
+    dq, dq_def = make_dq_arrays(ysize, xsize)
 
     # write reference file with known bad pixel values
 
@@ -271,9 +273,7 @@ def test_fullstep_default(
     """Test that the full step runs"""
 
     # create raw input data for step
-    dm_ramp = helpers.make_rawramp(
-        instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type
-    )
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
 
     dm_ramp.meta.instrument.name = instrument
     dm_ramp.meta.instrument.detector = detector
@@ -307,9 +307,7 @@ def test_fullstep_userdq(tmp_path):
     detector = "MIRIMAGE"
 
     # create raw input data for step
-    dm_ramp = helpers.make_rawramp(
-        instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type
-    )
+    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
 
     dm_ramp.meta.instrument.name = instrument
     dm_ramp.meta.instrument.detector = detector
@@ -317,7 +315,7 @@ def test_fullstep_userdq(tmp_path):
     dm_ramp.meta.observation.time = "00:00:00"
 
     # create a MaskModel for the dq input mask
-    dq, dq_def = helpers.make_dq_arrays(ysize, xsize)
+    dq, dq_def = make_dq_arrays(ysize, xsize)
 
     # write mask model
     ref_data = datamodels.MaskModel(dq=dq, dq_def=dq_def)
@@ -348,7 +346,7 @@ def test_fullstep_userdq(tmp_path):
 
 def test_output_is_not_input():
     """Test that input data is not modified."""
-    dm_ramp = helpers.make_rampmodel()
+    dm_ramp = make_rampmodel()
     result = DQInitStep.call(dm_ramp)
     assert result is not dm_ramp
     assert result.meta.cal_step.dq_init == "COMPLETE"
@@ -356,7 +354,7 @@ def test_output_is_not_input():
 
 
 def test_missing_mask():
-    dm_ramp = helpers.make_rampmodel()
+    dm_ramp = make_rampmodel()
     result = DQInitStep.call(dm_ramp, override_mask="N/A")
     assert result is not dm_ramp
     assert result.meta.cal_step.dq_init == "SKIPPED"
@@ -365,7 +363,7 @@ def test_missing_mask():
 
 def test_open_bad_model(monkeypatch, caplog):
     # Make a model that is not a RampModel, so the step will attempt to convert it
-    dm_ramp = helpers.make_rampmodel()
+    dm_ramp = make_rampmodel()
     raw_ramp = datamodels.Level1bModel(data=np.zeros(dm_ramp.data.shape, dtype=np.uint16))
     raw_ramp.update(dm_ramp)
 
@@ -376,11 +374,11 @@ def test_open_bad_model(monkeypatch, caplog):
 
 def test_superstripe():
     # NIRISS SOSS model with 10 superstripes
-    model = helpers.make_superstripe_model()
+    model = make_superstripe_model()
     nstripe = model.meta.subarray.num_superstripe
 
     # full frame mask model with the same bad pixels in each stripe
-    mask = helpers.make_superstripe_mask_model()
+    mask = make_superstripe_mask_model()
 
     # run the step
     result = DQInitStep.call(model, override_mask=mask)
@@ -396,7 +394,7 @@ def test_superstripe():
 
     # check that each stripe has the same pixels marked in pixeldq and
     # and DO_NOT_USE is also set in groupdq
-    expected = helpers.one_stripe_mask(result.data.shape[-2:])
+    expected = one_stripe_mask(result.data.shape[-2:])
     for i in range(result.data.shape[0]):
         for j in range(result.data.shape[1]):
             np.testing.assert_equal(result.groupdq[i, j], expected & dqflags.pixel["DO_NOT_USE"])

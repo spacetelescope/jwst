@@ -17,6 +17,5 @@ Pipeline Modules
    calwebb_tso3.rst
    calwebb_dark.rst
    calwebb_guider.rst
-   calwebb_wfs-image2.rst
    calwebb_wfs-image3.rst
    api_ref.rst

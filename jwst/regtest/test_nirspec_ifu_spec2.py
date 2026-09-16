@@ -1,6 +1,9 @@
 """Regression tests for NIRSpec IFU"""
 
+import warnings
+
 import pytest
+from photutils.utils.exceptions import NoDetectionsWarning
 
 from jwst.regtest import regtestdata as rt
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
@@ -139,12 +142,12 @@ def run_extract1d(rtdata):
     step_params = {
         "input_path": cube_path,
         "step": "jwst.extract_1d.Extract1dStep",
-        "args": [
-            "--save_results=True",
-        ],
+        "args": ["--save_results=True"],
     }
 
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", NoDetectionsWarning)
+        rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 

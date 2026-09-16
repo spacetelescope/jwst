@@ -8,7 +8,7 @@ from astropy.modeling import models
 from astropy.table import QTable
 from numpy.testing import assert_allclose
 
-from jwst.source_catalog import SourceCatalogStep
+from jwst.source_catalog import SourceCatalogStep, source_catalog_step
 from jwst.source_catalog.tests.helpers import (
     make_nircam_model,
     make_nircam_model_without_apcorr,
@@ -68,10 +68,45 @@ def test_source_catalog(nircam_model, npixels, nsources):
         if isinstance(ellipticity, u.Quantity):
             ellipticity = ellipticity.value
         assert np.isclose(ellipticity, 0.627, atol=0.001)
-        assert np.isclose(cat["orientation"][1].value, -72.783, atol=0.001) or np.isclose(
-            cat["orientation"][1].value, 287.217, atol=0.001
-        )
+        assert np.isclose(cat["orientation"][1].value, -72.783, atol=0.001)
         assert np.isclose(cat["sky_orientation"][1].value, 77.217, atol=0.001)
+
+
+@pytest.mark.parametrize("offset", [180.0, 360.0])
+def test_orientation_range(nircam_model, monkeypatch, offset):
+    """
+    Regression test that ``orientation`` is always in the (-90, 90] deg range.
+
+    The output ``orientation`` and ``sky_orientation`` must be wrapped to
+    the (-90, 90] deg convention regardless of the angle convention used by
+    the installed photutils version (e.g., an older version that returned
+    ``orientation`` in the [0, 360) range).
+    """
+    real_make_catalog = source_catalog_step.make_tweakreg_catalog
+
+    def shifted_make_catalog(*args, **kwargs):
+        catalog, segment_img = real_make_catalog(*args, **kwargs)
+        # simulate a photutils version that returns orientation using a
+        # different convention (e.g., [0, 360) instead of (-90, 90])
+        catalog["orientation"] = catalog["orientation"] + (offset * u.deg)
+        return catalog, segment_img
+
+    monkeypatch.setattr(source_catalog_step, "make_tweakreg_catalog", shifted_make_catalog)
+
+    step = SourceCatalogStep(
+        snr_threshold=0.5,
+        npixels=5,
+        bkg_boxsize=50,
+        kernel_fwhm=2.0,
+        save_results=False,
+    )
+    cat = step.run(nircam_model)
+
+    for colname in ("orientation", "sky_orientation"):
+        values = cat[colname].to_value(u.deg)
+        finite = values[np.isfinite(values)]
+        assert finite.size > 0
+        assert np.all((finite > -90.0) & (finite <= 90.0))
 
 
 def test_source_catalog_no_sources(nircam_model, monkeypatch):

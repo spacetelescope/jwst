@@ -1,6 +1,7 @@
 import os
 import os.path as op
 import pprint
+import re
 import sys
 from difflib import unified_diff
 from glob import glob as _sys_glob
@@ -18,7 +19,6 @@ from ci_watson.artifactory_helpers import (
 from jwst.associations import load_asn
 from jwst.lib.file_utils import pushdir
 from jwst.lib.suffix import replace_suffix
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
@@ -33,7 +33,7 @@ class RegtestData:
         self,
         env="dev",
         inputs_root="jwst-pipeline",
-        results_root="jwst-pipeline-results",
+        results_root="jwst-pipeline-results/regression-tests/runs",
         docopy=True,
         input=None,
         input_remote=None,
@@ -217,18 +217,16 @@ class RegtestData:
         root = self.bigdata_root
         if op.exists(root):
             root_path = op.join(root, self._inputs_root, self.env)
-            root_len = len(root_path) + 1
             path = op.join(root_path, path)
             file_paths = _data_glob_local(path, glob)
         elif check_url(root):
-            root_len = len(self.env) + 1
-            file_paths = _data_glob_url(self._inputs_root, self.env, path, glob, root=root)
+            root_path = self.env
+            file_paths = _data_glob_url(self._inputs_root, os.path.join(self.env, path), glob, root)
         else:
             raise BigdataError(f"Path cannot be found: {path}")
 
         # Remove the root from the paths
-        file_paths = [file_path[root_len:] for file_path in file_paths]
-        return file_paths
+        return [op.relpath(file_path, root_path) for file_path in file_paths]
 
     def get_truth(self, path=None, docopy=None):
         """
@@ -369,14 +367,8 @@ def run_step_from_dict(rtdata, **step_params):
         else:
             rtdata.get_asn(input_path)
 
-    # Figure out whether we have a config or class
-    step = step_params["step"]
-    if step.endswith((".asdf", ".cfg")):
-        step = os.path.join("config", step)
-
     # Run the step
-    collect_pipeline_cfgs("config")
-    full_args = [step, rtdata.input]
+    full_args = [step_params["step"], rtdata.input]
     full_args.extend(step_params["args"])
 
     Step.from_cmdline(full_args)
@@ -478,14 +470,20 @@ def _data_glob_local(*glob_parts):
     return _sys_glob(str(full_glob))
 
 
-def _data_glob_url(*url_parts, root=None):
+def _data_glob_url(repo, path, glob, root):
     """
     Perform a glob on a URL path.
 
     Parameters
     ----------
-    *url_parts : (str[,...])
-        List of components that will be used to create a URL path
+    repo : str
+        Artifactory repository.
+
+    path : str
+        Path in repository.
+
+    glob : str
+        Filename glob to match.
 
     root : str
         The root server path to the Artifactory server.
@@ -496,9 +494,8 @@ def _data_glob_url(*url_parts, root=None):
     url_paths : [str[, ...]]
         Full URLS that match the glob criterion
     """
-    # Fix root root-ed-ness
-    if root.endswith("/"):
-        root = root[:-1]
+    path = path.rstrip("/")
+    root = root.rstrip("/")
 
     # Access
     try:
@@ -518,21 +515,26 @@ def _data_glob_url(*url_parts, root=None):
         )
         headers = None
 
-    search_url = "/".join([root, "api/search/pattern"])
+    search_url = "/".join([root, "api/search/aql"])
 
-    # Join and re-split the url so that every component is identified.
-    url = "/".join([root] + list(url_parts))
-    all_parts = url.split("/")
+    # check inputs for only valid characters
+    for value in (repo, path, glob):
+        if not re.fullmatch(r"[a-zA-Z0-9\_\-\*\.\/]+", value):
+            raise ValueError(f"{value} contains invalid characters")
 
-    # Pick out "jwst-pipeline", the repo name
-    repo = all_parts[4]
+    aql = f"""items.find({{\
+        "repo": "{repo}", \
+        "type": "file", \
+        "path": {{"$match": "{path}"}}, \
+        "name": {{"$match": "{glob}"}}}}\
+    ).include("repo","path","name")\
+    """
 
-    # Format the pattern
-    pattern = repo + ":" + "/".join(all_parts[5:])
-
-    # Make the query
-    params = {"pattern": pattern}
-    with requests.get(search_url, params=params, headers=headers, timeout=60) as r:
-        url_paths = r.json()["files"]
-
-    return url_paths
+    # 900 is the default aql timeout
+    with requests.post(search_url, data=aql, headers=headers, timeout=900) as r:
+        r_json = r.json()
+        if "results" in r_json:
+            return [os.path.join(r["path"], r["name"]) for r in r_json["results"]]
+        raise KeyError(
+            f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}"
+        )

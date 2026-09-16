@@ -17,7 +17,6 @@ from stcal.alignment.util import (
     wcs_bbox_from_shape,
 )
 from stdatamodels.jwst.datamodels import (
-    ImageModel,
     MiriLRSSpecwcsModel,
     WavelengthrangeModel,
 )
@@ -25,7 +24,7 @@ from stdatamodels.jwst.transforms.models import GrismObject
 from stpipe.exceptions import StpipeExitException
 
 from jwst.lib.catalog_utils import SkyObject, read_source_catalog
-from jwst.lib.stripe_utils import stripe_read
+from jwst.lib.stripe_utils import generate_substripe_ranges
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +37,8 @@ __all__ = [
     "MSAFileError",
     "NoDataOnDetectorError",
     "calc_rotation_matrix",
+    "create_grism_bbox",
+    "get_bounding_box_extents",
     "wrap_ra",
     "update_fits_wcsinfo",
     "is_sky_like",
@@ -150,14 +151,14 @@ def subarray_transform(input_model):
         return subarray2full
 
 
-def substripe_subarray_transforms(input_model, regions_model):
+def substripe_subarray_transforms(input_model, stripe_ids, full_frame=False):
     """
     Return a dictionary of offset models for NIRCam substripe data.
 
-    This method does not yet generalize to arbitrary fastaxis values, only +/- 1.
+    This method assumes fastaxis values are +/- 1.
 
     The dictionary will have key-value pairs of stripe number and astropy
-    CompoundModel or None. Due to the packing of stripes into a condensed,
+    CompoundModel. Due to the packing of stripes into a condensed,
     subarray-like shape, the stripe x and y start values must be calculated
     rather than taken from subarray metadata.
 
@@ -166,73 +167,38 @@ def substripe_subarray_transforms(input_model, regions_model):
     input_model : `~stdatamodels.jwst.datamodels.ImageModel` or
         `~stdatamodels.jwst.datamodels.CubeModel`
         The science model with defined multistripe parameters.
-    regions_model : `~stdatamodels.jwst.datamodels.RegionsModel`
-        The regions reference model that defines stripe labels given pixel position.
+    stripe_ids : list
+        List of stripe labels, from bottom of array to top in detector orientation.
+    full_frame : bool
+        If True, transform into the FULL frame. Otherwise, just remove stripe
+        offsets within the subarray to return relative coordinates within the stripe.
 
     Returns
     -------
     dict
         The dictionary of subarray shift models to apply to each substripe transform.
     """
-    # Start by finding defined stripes in region
-    if "NRCALONG" in input_model.meta.instrument.detector.upper():
-        # Current plan for DHS stripes in nrcalong is to use existing transform
-        # for NRC_TSGRISM, which assumes a fixed 2d extracted region and is not
-        # functional until that extraction occurs. Force a subarray shift that is
-        # useless until extract_2d is called, where we mimic existing behavior for
-        # non-DHS TSGRISM data - existing data places the trace on row 34, and we
-        # have the trace in the midpoint of the 40-row stripe.
-        ystart_offset = -14.0
-        subarray_stripenum = int(input_model.meta.subarray.name.split("STRIPE")[1][0])
-        stripe_ids = np.array(range(subarray_stripenum)) + 1
-        subarray_transforms = {}
-        for stripe in stripe_ids:
-            subarray_transforms[stripe] = astmodels.Identity(1) & astmodels.Shift(ystart_offset)
-        return subarray_transforms
+    # Subarray start values: same for all stripes along the fast axis
+    xstart = input_model.meta.subarray.xstart - 1
 
-    else:
-        stripe_ids = np.unique(regions_model.regions).astype(int)
-        stripe_ids = stripe_ids[stripe_ids != 0]
+    # Find defined stripes in science orientation, along the slow axis
+    stripe_ranges = generate_substripe_ranges(input_model, science_frame=True)
 
     subarray_transforms = {}
-    for stripe in stripe_ids:
-        tr_xstart = astmodels.Identity(1)
-        tr_ystart = astmodels.Identity(1)
-
-        # Find minimum slowaxis index where region label is found in regions array.
-        # This index is the zero-indexed position where that subarray in the regions
-        # model begins, i.e. the "true (x, y)start" position for that stripe.
-        if np.abs(input_model.meta.subarray.fastaxis) == 1:
-            xrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[1])
-            yrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[0])
+    for i, stripe in enumerate(stripe_ids):
+        if full_frame:
+            stripe_offset = stripe_ranges["full"][i][0] - stripe_ranges["subarray"][i][0]
         else:
-            xrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[0])
-            yrefstart = np.min(np.asarray(regions_model.regions == stripe).nonzero()[1])
+            stripe_offset = -stripe_ranges["subarray"][i][0]
 
-        # Now we need to find where in the data array the 0th row of the stripe resides.
-        # We do this by generating a row-index-filled array and send it through the substripe
-        # readout logic, providing a row map from full frame row index to substripe array location.
-        ncols_reg, nrows_reg = regions_model.regions.shape
-        ra = np.arange(nrows_reg)
-        rowarr = np.stack((ra,) * ncols_reg).T
+        xrefstart = xstart
+        yrefstart = stripe_offset
 
-        mock_refmodel = ImageModel(data=rowarr)
-        output = stripe_read(input_model, mock_refmodel, ["data"])
-        yscistart = np.where(output.data == yrefstart)[0]
+        tr_xstart = astmodels.Shift(xrefstart)
+        tr_ystart = astmodels.Shift(yrefstart)
 
-        if xrefstart > 0:
-            tr_xstart = astmodels.Shift(xrefstart)
-
-        if yrefstart > 0 and len(yscistart) > 0:
-            yrefstart = yrefstart - yscistart[0]
-            tr_ystart = astmodels.Shift(yrefstart)
-
-        if isinstance(tr_xstart, astmodels.Identity) and isinstance(tr_ystart, astmodels.Identity):
-            # the case of a full frame observation
-            subarray_transforms[stripe] = None
-        else:
-            log.info(f"Substripe subarray shifts: x: {xrefstart} y: {yrefstart}")
-            subarray_transforms[stripe] = tr_xstart & tr_ystart
+        log.debug(f"Substripe subarray shifts for stripe {stripe}: x: {xrefstart} y: {yrefstart}")
+        subarray_transforms[stripe] = tr_xstart & tr_ystart
 
     return subarray_transforms
 
@@ -442,6 +408,42 @@ def create_grism_bbox(
     )
 
 
+def get_bounding_box_extents(ra_corners, dec_corners, sky_to_grism, wlmin, wlmax, order):
+    """
+    Vectorize the ``sky_to_grism`` transform over many sources at once.
+
+    Parameters
+    ----------
+    ra_corners, dec_corners : ndarray
+        RA/Dec, in degrees, of the four sky bounding box corners for each source.
+        Shape (4, n_sources).
+    sky_to_grism : callable
+        The "world" to "grism_detector" WCS transform.
+    wlmin, wlmax : float
+        Minimum/maximum wavelength at which to evaluate the transform.
+    order : int
+        The spectral order.
+
+    Returns
+    -------
+    xmin, xmax, ymin, ymax : ndarray
+        Per-source grism-frame bounding box extents, shape (n_sources,).
+    """
+    n_sources = np.shape(ra_corners)[-1]
+    ra = np.asarray(ra_corners).reshape(-1)
+    dec = np.asarray(dec_corners).reshape(-1)
+    x1, y1, _, _, _ = sky_to_grism(ra, dec, wlmin, order)
+    x2, y2, _, _, _ = sky_to_grism(ra, dec, wlmax, order)
+
+    xstack = np.vstack([x1.reshape(4, n_sources), x2.reshape(4, n_sources)])
+    ystack = np.vstack([y1.reshape(4, n_sources), y2.reshape(4, n_sources)])
+    xmin = np.nanmin(xstack, axis=0)
+    xmax = np.nanmax(xstack, axis=0)
+    ymin = np.nanmin(ystack, axis=0)
+    ymax = np.nanmax(ystack, axis=0)
+    return xmin, xmax, ymin, ymax
+
+
 def _create_grism_bbox(
     input_model,
     mmag_extract=None,
@@ -462,97 +464,99 @@ def _create_grism_bbox(
     sky_to_detector = input_model.meta.wcs.get_transform("world", "detector")
     sky_to_grism = input_model.meta.wcs.backward_transform
 
-    grism_objects = []  # the return list of GrismObjects
-    for obj in skyobject_list:
-        if obj.isophotal_abmag is None:
-            continue
-        if obj.isophotal_abmag >= mmag_extract:
-            continue
-        if source_ids is not None:
-            if obj.label not in np.atleast_1d(source_ids):
-                continue
-        # could add logic to ignore object if too far off image,
+    # Filter down to the objects of interest first, so that the WCS transforms
+    # below can each be evaluated once across all remaining sources rather than
+    # once per source in a loop.
+    filtered_objects = [
+        obj
+        for obj in skyobject_list
+        if obj.isophotal_abmag is not None
+        and obj.isophotal_abmag < mmag_extract
+        and (source_ids is None or obj.label in np.atleast_1d(source_ids))
+    ]
 
-        # save the image frame center of the object
-        # takes in ra, dec, wavelength, order but wave and order
-        # don't get used until the detector->grism_detector transform
-        xcenter, ycenter, _, _ = sky_to_detector(
-            obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value, 1, 1
+    grism_objects = []  # the return list of GrismObjects
+    if len(filtered_objects) == 0:
+        log.info("Total of 0 grism objects defined")
+        log.warning("No grism objects saved; check catalog or step params")
+        return grism_objects
+
+    # Gather all per-source values needed for the vectorized WCS calls below
+    n_objects = len(filtered_objects)
+    icrs_ra = np.empty(n_objects)
+    icrs_dec = np.empty(n_objects)
+    ra_center = np.empty(n_objects)
+    dec_center = np.empty(n_objects)
+    # Corner rows are ordered (ll, lr, ul, ur) to match get_bounding_box_extents.
+    ra_corners = np.empty((4, n_objects))
+    dec_corners = np.empty((4, n_objects))
+    for i, obj in enumerate(filtered_objects):
+        icrs_ra[i] = obj.sky_centroid.icrs.ra.value
+        icrs_dec[i] = obj.sky_centroid.icrs.dec.value
+        ra_center[i] = obj.sky_centroid.ra.value
+        dec_center[i] = obj.sky_centroid.dec.value
+        ra_corners[:, i] = (
+            obj.sky_bbox_ll.ra.value,
+            obj.sky_bbox_lr.ra.value,
+            obj.sky_bbox_ul.ra.value,
+            obj.sky_bbox_ur.ra.value,
+        )
+        dec_corners[:, i] = (
+            obj.sky_bbox_ll.dec.value,
+            obj.sky_bbox_lr.dec.value,
+            obj.sky_bbox_ul.dec.value,
+            obj.sky_bbox_ur.dec.value,
         )
 
-        order_bounding = {}
-        waverange = {}
-        partial_order = {}
-        for order in wavelength_range:
-            # range_select = [(x[2], x[3]) for x in wavelengthrange \
-            # if (x[0] == order and x[1] == filter_name)]
-            # The orders of the bounding box in the non-dispersed image
-            # drive the extraction extent. The location of the min and
-            # max wavelengths for each order are used to get the
-            # location of the +/- sides of the bounding box in the
-            # grism image
-            lmin, lmax = wavelength_range[order]
-            ra = np.array(
-                [
-                    obj.sky_bbox_ll.ra.value,
-                    obj.sky_bbox_lr.ra.value,
-                    obj.sky_bbox_ul.ra.value,
-                    obj.sky_bbox_ur.ra.value,
-                ]
+    # save the image frame center of each object
+    # takes in ra, dec, wavelength, order but wave and order
+    # don't get used until the detector->grism_detector transform
+    xcenters, ycenters, _, _ = sky_to_detector(icrs_ra, icrs_dec, 1, 1)
+
+    # Per-object accumulators for the per-order results computed below.
+    order_boundings = [{} for _ in filtered_objects]
+    waveranges = [{} for _ in filtered_objects]
+    partial_orders = [{} for _ in filtered_objects]
+
+    for order in wavelength_range:
+        # The orders of the bounding box in the non-dispersed image
+        # drive the extraction extent. The location of the min and
+        # max wavelengths for each order are used to get the
+        # location of the +/- sides of the bounding box in the
+        # grism image
+        lmin, lmax = wavelength_range[order]
+
+        # Subarrays are only allowed in nircam tsgrism mode. The polynomial transforms
+        # only work with the full frame coordinates.
+        # The code here is called during extract_2d,
+        # and is creating bounding boxes which should be in the full frame coordinates,
+        # it just uses the input catalog and the magnitude
+        # to limit the objects that need bounding boxes.
+
+        # Tsgrism is always supposed to have the source object at the same pixel, and that is
+        # hardcoded into the transforms.
+        # At least a while ago, the 2d extraction for tsgrism mode
+        # didn't call this bounding box code. So I think it's safe to leave the subarray
+        # subtraction out, i.e. do not subtract x/ystart.
+        xmins, xmaxs, ymins, ymaxs = get_bounding_box_extents(
+            ra_corners, dec_corners, sky_to_grism, lmin, lmax, order
+        )
+
+        if wfss_extract_half_height is not None:
+            centers_x, centers_y, _, _, _ = sky_to_grism(
+                ra_center, dec_center, (lmin + lmax) / 2, order
             )
-            dec = np.array(
-                [
-                    obj.sky_bbox_ll.dec.value,
-                    obj.sky_bbox_lr.dec.value,
-                    obj.sky_bbox_ul.dec.value,
-                    obj.sky_bbox_ur.dec.value,
-                ]
-            )
-            x1, y1, _, _, _ = sky_to_grism(ra, dec, lmin, order)
-            x2, y2, _, _, _ = sky_to_grism(ra, dec, lmax, order)
 
-            xstack = np.hstack([x1, x2])
-            ystack = np.hstack([y1, y2])
-
-            # Subarrays are only allowed in nircam tsgrism mode. The polynomial transforms
-            # only work with the full frame coordinates.
-            # The code here is called during extract_2d,
-            # and is creating bounding boxes which should be in the full frame coordinates,
-            # it just uses the input catalog and the magnitude
-            # to limit the objects that need bounding boxes.
-
-            # Tsgrism is always supposed to have the source object at the same pixel, and that is
-            # hardcoded into the transforms.
-            # At least a while ago, the 2d extraction for tsgrism mode
-            # didn't call this bounding box code. So I think it's safe to leave the subarray
-            # subtraction out, i.e. do not subtract x/ystart.
-
-            xmin = np.nanmin(xstack)
-            xmax = np.nanmax(xstack)
-            ymin = np.nanmin(ystack)
-            ymax = np.nanmax(ystack)
+        for i, obj in enumerate(filtered_objects):
+            xmin, xmax, ymin, ymax = xmins[i], xmaxs[i], ymins[i], ymaxs[i]
 
             if wfss_extract_half_height is not None and not obj.is_extended:
                 if input_model.meta.wcsinfo.dispersion_direction == 2:
-                    ra_center, dec_center = (
-                        obj.sky_centroid.ra.value,
-                        obj.sky_centroid.dec.value,
-                    )
-                    center, _, _, _, _ = sky_to_grism(
-                        ra_center, dec_center, (lmin + lmax) / 2, order
-                    )
-                    xmin = center - wfss_extract_half_height
-                    xmax = center + wfss_extract_half_height
+                    xmin = centers_x[i] - wfss_extract_half_height
+                    xmax = centers_x[i] + wfss_extract_half_height
                 elif input_model.meta.wcsinfo.dispersion_direction == 1:
-                    ra_center, dec_center = (
-                        obj.sky_centroid.ra.value,
-                        obj.sky_centroid.dec.value,
-                    )
-                    _, center, _, _, _ = sky_to_grism(
-                        ra_center, dec_center, (lmin + lmax) / 2, order
-                    )
-                    ymin = center - wfss_extract_half_height
-                    ymax = center + wfss_extract_half_height
+                    ymin = centers_y[i] - wfss_extract_half_height
+                    ymax = centers_y[i] + wfss_extract_half_height
                 else:
                     raise ValueError("Cannot determine dispersion direction.")
 
@@ -615,29 +619,30 @@ def _create_grism_bbox(
                     log.debug(f"Partial order on detector for obj: {obj.label} order: {order}")
 
             if not exclude:
-                order_bounding[order] = ((ymin, ymax), (xmin, xmax))
-                waverange[order] = (lmin, lmax)
-                partial_order[order] = ispartial
+                order_boundings[i][order] = ((ymin, ymax), (xmin, xmax))
+                waveranges[i][order] = (lmin, lmax)
+                partial_orders[i][order] = ispartial
             if exclude and source_ids is not None:
                 # If source_ids is specified, we want to warn for excluded objects
                 log.warning(
                     f"Excluding requested object: {obj.label}, order {order} (off detector)"
                 )
 
-        if len(order_bounding) > 0:
+    for i, obj in enumerate(filtered_objects):
+        if len(order_boundings[i]) > 0:
             grism_objects.append(
                 GrismObject(
                     sid=obj.label,
-                    order_bounding=order_bounding,
+                    order_bounding=order_boundings[i],
                     sky_centroid=obj.sky_centroid,
-                    partial_order=partial_order,
-                    waverange=waverange,
+                    partial_order=partial_orders[i],
+                    waverange=waveranges[i],
                     sky_bbox_ll=obj.sky_bbox_ll,
                     sky_bbox_lr=obj.sky_bbox_lr,
                     sky_bbox_ul=obj.sky_bbox_ul,
                     sky_bbox_ur=obj.sky_bbox_ur,
-                    xcentroid=xcenter,
-                    ycentroid=ycenter,
+                    xcentroid=xcenters[i],
+                    ycentroid=ycenters[i],
                     is_extended=obj.is_extended,
                     isophotal_abmag=obj.isophotal_abmag,
                 )

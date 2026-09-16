@@ -3,15 +3,17 @@ import types
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.table import QTable
 
 from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs
+from jwst.wfss_contam.observations import SimulatedCutout
 from jwst.wfss_contam.wfss_contam import (
-    SlitOverlapError,
-    UnmatchedSlitIDError,
+    CutoutOverlapError,
+    UnmatchedSourceIDError,
     _apply_magnitude_limit,
-    _build_simulated_image_from_slits,
-    _cut_frame_to_match_slit,
-    _find_matching_simul_slit,
+    _build_simulated_image_from_cutouts,
+    _cut_frame_to_match_cutout,
+    _find_matching_simul_cutout,
     _validate_orders_against_reference,
     contam_corr,
     match_backplane_prefer_first,
@@ -57,22 +59,22 @@ def slit2():
     return slit
 
 
-def test_find_matching_simul_slit(slit0):
+def test_find_matching_simul_cutout(slit0):
     sids = [0, 1, 1]
     orders = [1, 1, 2]
-    idx = _find_matching_simul_slit(slit0, sids, orders)
+    idx = _find_matching_simul_cutout(slit0, sids, orders)
     assert idx == 1
 
 
-def test_find_matching_simul_slit_no_match(slit0):
+def test_find_matching_simul_cutout_no_match(slit0):
     sids = [0, 1, 1]
     orders = [1, 2, 2]
-    with pytest.raises(UnmatchedSlitIDError):
-        _find_matching_simul_slit(slit0, sids, orders)
+    with pytest.raises(UnmatchedSourceIDError):
+        _find_matching_simul_cutout(slit0, sids, orders)
 
 
-def test_cut_frame_to_match_slit(slit0, contam):
-    cut_contam = _cut_frame_to_match_slit(contam, slit0)
+def test_cut_frame_to_match_cutout(slit0, contam):
+    cut_contam = _cut_frame_to_match_cutout(contam, slit0)
     assert cut_contam.shape == (5, 3)
     assert np.all(cut_contam == 0.1)
 
@@ -116,8 +118,8 @@ def test_match_backplane_prefer_first_yoffset():
     assert np.all(slit1_out.data[3, :] == 2.0)
 
 
-def test_common_slit_prefer_expected_raise(slit0, slit2):
-    with pytest.raises(SlitOverlapError):
+def test_common_cutout_prefer_expected_raise(slit0, slit2):
+    with pytest.raises(CutoutOverlapError):
         match_backplane_prefer_first(slit0.copy(), slit2.copy())
 
 
@@ -191,9 +193,8 @@ def test_constrain_orders_warn_subset(log_watcher):
     watcher.assert_seen()
 
 
-def test_build_simulated_image_from_slits():
+def test_build_simulated_image_from_cutouts():
     shape = (10, 10)
-    simulated_slits = dm.MultiSlitModel()
 
     slit_a = dm.SlitModel(data=np.ones((3, 4)) * 2.0)
     slit_a.xstart = 2
@@ -207,25 +208,23 @@ def test_build_simulated_image_from_slits():
     slit_b.xsize = 4
     slit_b.ysize = 3
 
-    simulated_slits.slits.append(slit_a)
-    simulated_slits.slits.append(slit_b)
+    simulated_cutouts = [slit_a, slit_b]
 
-    full_image = _build_simulated_image_from_slits(simulated_slits, shape)
+    full_image = _build_simulated_image_from_cutouts(simulated_cutouts, shape)
 
     assert full_image.shape == shape
     assert np.all(full_image[1:4, 1:3] == 2.0)
     assert np.all(full_image[2:5, 5:7] == 5.0)
     assert np.all(full_image[2:4, 3:5] == 7.0)  # overlap region: values add
-    # pixels not covered by either slit are zero
+    # pixels not covered by either cutout are zero
     covered = np.zeros(shape, dtype=bool)
-    covered[1:5, 1:7] = True  # bounding box enclosing both slits
+    covered[1:5, 1:7] = True  # bounding box enclosing both cutouts
     assert np.all(full_image[~covered] == 0.0)
 
 
-def test_build_simulated_image_from_slits_overflow():
-    """Slit data extending beyond the frame boundary should be clipped without error."""
+def test_build_simulated_image_from_cutouts_overflow():
+    """Cutout data extending beyond the frame boundary should be clipped without error."""
     shape = (5, 5)
-    simulated_slits = dm.MultiSlitModel()
 
     slit = dm.SlitModel(data=np.ones((4, 4)) * 3.0)
     slit.xstart = 4
@@ -233,9 +232,9 @@ def test_build_simulated_image_from_slits_overflow():
     slit.xsize = 4
     slit.ysize = 4
 
-    simulated_slits.slits.append(slit)
+    simulated_cutouts = [slit]
 
-    full_image = _build_simulated_image_from_slits(simulated_slits, shape)
+    full_image = _build_simulated_image_from_cutouts(simulated_cutouts, shape)
 
     assert full_image.shape == shape
     assert np.all(full_image[3:5, 3:5] == 3.0)
@@ -266,11 +265,11 @@ def _iter_geometry():
 @pytest.fixture
 def two_source_input(tmp_cwd, grism_wcs):
     """
-    MultiSlitModel with two slits whose grism traces partially overlap.
+    MultiSlitModel with two cutouts whose grism traces partially overlap.
 
     Source A (ID=1) is placed at (xstart=1, ystart=1) and source B (ID=2) at
     (xstart=1, ystart=21) on the full-frame detector, giving a 20-row overlap.
-    Observed slit data in each slit is contaminated by its neighbor.
+    Observed cutout data in each cutout is contaminated by its neighbor.
 
     Direct image and segmentation map files corresponding to the same scenario
     are written to the ``tmp_cwd``. They must exist with proper file name and type
@@ -311,25 +310,32 @@ def two_source_input(tmp_cwd, grism_wcs):
     seg.save("seg_map.fits")
     direct.close()
     seg.close()
+    srccat = QTable()
+    srccat["label"] = [1, 2]
+    srccat["xcentroid"] = [_ITER_XA, _ITER_XB]
+    srccat["ycentroid"] = [_ITER_YA, _ITER_YB]
+    srccat.write("source_catalog.ecsv", format="ascii.ecsv")
 
     model.meta.direct_image = "direct_image.fits"
     model.meta.segmentation_map = "seg_map.fits"
+    model.meta.source_catalog = "source_catalog.ecsv"
 
     yield model
 
     model.close()
 
 
-def _make_slit(source_id, order, xstart, ystart, data, **fluxmodels):
-    slit = dm.SlitModel()
-    slit.source_id = source_id
-    slit.meta.wcsinfo.spectral_order = order
-    slit.xstart = xstart
-    slit.ystart = ystart
-    slit.data = data.astype(np.float32)
-    slit.dq = np.zeros(data.shape, dtype=np.uint32)
-    slit.xsize = data.shape[1]
-    slit.ysize = data.shape[0]
+def _make_simul_cutout(source_id, order, xstart, ystart, data, **fluxmodels):
+    slit = SimulatedCutout(
+        source_id=source_id,
+        name=None,
+        xstart=xstart,
+        ystart=ystart,
+        xsize=data.shape[1],
+        ysize=data.shape[0],
+        data=data.astype(np.float32),
+        spectral_order=order,
+    )
     for k, v in fluxmodels.items():
         setattr(slit, k, v.astype(np.float32))
     return slit
@@ -357,18 +363,21 @@ def test_iteration_improves_contamination_correction(
     flat, tilt, true_A, true_B = _iter_geometry()
 
     def MockObservation():
-        """Use SimpleNamespace to make a mock Observation object with pre-built simulated slits."""
+        """Use SimpleNamespace to make a mock Observation object with pre-built simulated cutouts."""
         obs = types.SimpleNamespace()
-        simul_A = _make_slit(1, 1, _ITER_XA, _ITER_YA, flat.copy(), fluxmodel_1=tilt.copy())
-        simul_B = _make_slit(2, 1, _ITER_XB, _ITER_YB, flat.copy(), fluxmodel_1=tilt.copy())
-        obs.simulated_slits = dm.MultiSlitModel()
-        obs.simulated_slits.slits.extend([simul_A, simul_B])
+        simul_A = _make_simul_cutout(1, 1, _ITER_XA, _ITER_YA, flat.copy(), fluxmodel_1=tilt.copy())
+        simul_B = _make_simul_cutout(2, 1, _ITER_XB, _ITER_YB, flat.copy(), fluxmodel_1=tilt.copy())
+        obs.simulated_cutouts = [simul_A, simul_B]
         obs.simulated_image = np.zeros(_ITER_FRAME_SHAPE)
         obs.source_ids = {1, 2}
         # disperse() becomes a function that does nothing.
         # Normally it would set the attributes we pre-set above.
         obs.disperse_order = lambda *args, **kwargs: None
         return obs
+
+    def mock_reject_off_detector_bounds(*args, **kwargs):
+        # Always return True for all sources, i.e., all sources are in bounds
+        return np.array([True] * len(args[0]))
 
     # Inject our fake Observation so no real dispersion is performed
     monkeypatch.setattr(
@@ -379,6 +388,11 @@ def test_iteration_improves_contamination_correction(
     monkeypatch.setattr(
         "jwst.wfss_contam.wfss_contam._validate_orders_against_transform",
         lambda _wcs, orders: orders,
+    )
+    # Mock the off-detector bounds check to always return True
+    monkeypatch.setattr(
+        "jwst.wfss_contam.wfss_contam._reject_off_detector_bounds",
+        mock_reject_off_detector_bounds,
     )
 
     def _run(n_iter, polyfit_degree):

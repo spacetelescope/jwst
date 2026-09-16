@@ -130,28 +130,42 @@ class AdaptiveTraceModelStep(Step):
                 )
             else:
                 log.warning(
-                    "The adaptive_trace_model step is not implemented for %s.", str(output_model)
+                    "The adaptive_trace_model step is not implemented for datamodel type <%s>.",
+                    model.meta.model_type,
                 )
-                log.warning("Skipping processing.")
-                model.meta.cal_step.adaptive_trace_model = "SKIPPED"
+
+                # Might be old-style MIRI LRS data, which used to be ImageModel or CubeModel.
+                # Issue a specific warning in this case.
+                if "MIR_LRS" in str(model.meta.exposure.type):
+                    log.warning(
+                        "The adaptive_trace_model step requires MIRI LRS cal files "
+                        "in <SlitModel> format, from jwst v2.0 or later."
+                    )
+                    log.warning(
+                        "Try reprocessing the input exposures with the latest pipeline version."
+                    )
+
+                log.warning("No trace model will be attempted.")
+                model.meta.cal_step.adaptive_trace_model = "FAILED"
                 continue
 
             model.meta.cal_step.adaptive_trace_model = "COMPLETE"
             if self.save_intermediate_results:
                 _, full_spline, used_spline, linear, residual = results
+                basepath = model.meta.filename
 
-                outpath = self.make_output_path(suffix="spline_full")
+                outpath = self.make_output_path(basepath=basepath, suffix="spline_full")
                 full_spline.save(outpath)
                 full_spline.close()
                 log.info(f"Saved full spline model in {outpath}")
 
-                outpath = self.make_output_path(suffix="spline_used")
+                outpath = self.make_output_path(basepath=basepath, suffix="spline_used")
                 used_spline.save(outpath)
                 used_spline.close()
                 log.info(f"Saved spline model for compact sources in {outpath}")
 
                 if linear is not None:
-                    outpath = self.make_output_path(suffix="linear_interp")
+                    outpath = self.make_output_path(basepath=basepath, suffix="linear_interp")
                     linear.save(outpath)
                     linear.close()
                     log.info(f"Saved linearly interpolated data in {outpath}")
@@ -160,7 +174,7 @@ class AdaptiveTraceModelStep(Step):
                         f"No linearly interpolated data to save for oversample={self.oversample}"
                     )
                 if residual is not None:
-                    outpath = self.make_output_path(suffix="spline_residual")
+                    outpath = self.make_output_path(basepath=basepath, suffix="spline_residual")
                     residual.save(outpath)
                     residual.close()
                     log.info(f"Saved spline residuals in {outpath}")

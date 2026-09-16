@@ -10,6 +10,4 @@ Residual Fringe
    main.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.residual_fringe
-   :no-inheritance-diagram:
+   api_ref.rst
