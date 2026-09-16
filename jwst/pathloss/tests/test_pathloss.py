@@ -124,12 +124,18 @@ def test_get_center_lrs_with_offsets():
     datmod.source_xpos = 105.0
     datmod.source_ypos = 53.0
 
+    # Add dither offsets (in arcsecs)
+    nod_1_xoffset = -0.945
+    nod_1_yoffset = 0.1
+    datmod.meta.dither.x_offset = nod_1_xoffset
+    datmod.meta.dither.y_offset = nod_1_yoffset
+
     # Test with offsets=True
     x_pos, y_pos, imx, imy = pl.get_center("MIR_LRS-FIXEDSLIT", datmod, offsets=True)
 
     # Should return source position minus aperture ref, plus the aperture ref separately
-    assert x_pos == 105.0 + offset_1_val
-    assert y_pos == 53.0 + offset_2_val
+    assert x_pos == 105.0 + offset_1_val + nod_1_xoffset
+    assert y_pos == 53.0 + offset_2_val + nod_1_yoffset
     assert imx == -offset_1_val
     assert imy == -offset_2_val
 
