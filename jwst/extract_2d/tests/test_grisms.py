@@ -612,8 +612,7 @@ def test_wfss_extract_custom_height():
 def test_wfss_extract_custom_wavelength_range():
     """Test WFSS extraction with a user supplied wavelength_range."""
     imwcs, refs = setup_image_cat()
-    test_boxes = create_grism_bbox(imwcs, mmag_extract=99.0, wavelength_range={1: (3.01, 4.26)})
-
+    test_boxes = create_grism_bbox(imwcs, mmag_extract=99.0, wavelength_range={1: (3.177, 3.4)})
     for sid in [9, 19]:
         ids = [source for source in test_boxes if source.sid == sid]
         assert len(ids) == 1
