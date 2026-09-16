@@ -91,7 +91,8 @@ and the number of valid data points for each spectrum is recorded in the N_ALONG
     The CONTAM_FLUX and CONTAM_SURF_BRIGHT columns are computed from the input x1d files in
     an identical way to the FLUX and SURF_BRIGHT columns, respectively. As it currently stands,
     the pipeline only combines fluxes from a single orient, and in that case all input spectra
-    should be contaminated in the same way. The columns are NaN-filled if the WfssContamStep was not run.
+    should be contaminated in the same way. The columns are NaN-filled if the WfssContamStep
+    was not run.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200)
 in a `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel`::
