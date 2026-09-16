@@ -8,6 +8,7 @@ from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, TSOMultiSpecModel
 
+from jwst.datamodels.utils.flat_multispec import _idx_from_dtype
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.extract_1d.tests.helpers import simple_wcs_func
@@ -225,6 +226,7 @@ def create_input(
                 tab["FLUX_VAR_FLAT"] = var_f
 
                 mod = datamodels.SpecModel(spec_table=tab)
+                _add_contam_columns(mod)
                 mod.source_id = 1000
                 mod.meta.group_id = "0"
                 mod.spectral_order = k + 1
@@ -326,6 +328,7 @@ def create_input(
                 tab["FLUX_VAR_RNOISE"] = var_r
                 tab["FLUX_VAR_FLAT"] = var_f
                 mod = datamodels.SpecModel(spec_table=tab)
+                _add_contam_columns(mod)
                 mod.source_id = 1000
                 mod.meta.group_id = "0"
                 mod.spectral_order = k + 1
@@ -424,6 +427,35 @@ def create_input(
         input_model.meta.subarray.name = subarray
 
     return input_model
+
+
+def _add_contam_columns(model):
+    """
+    Update SpecModel in place to have contam columns.
+
+    Parameters
+    ----------
+    model : SpecModel
+        Input model.
+    """
+    tab = model.spec_table
+    nelem = len(tab)
+    otab_list = list(zip(*tab.tolist()))
+    contam_flux = np.arange(nelem, dtype=np.float32) / 10.0
+    flux_idx = _idx_from_dtype(tab.dtype, "FLUX")
+    sb_idx = _idx_from_dtype(tab.dtype, "SURF_BRIGHT")
+    otab_list.insert(flux_idx + 1, contam_flux)
+    contam_surf_bright = np.arange(nelem, dtype=np.float32) / 100.0
+    otab_list.insert(sb_idx + 2, contam_surf_bright)
+    # Need to modify the dtype, but it's immutable.
+    # Use descr to get it as a list
+    otab_dtype = tab.dtype
+    descr = otab_dtype.descr
+    descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
+    descr.insert(sb_idx + 2, ("CONTAM_SURF_BRIGHT", float))
+    otab_dtype = np.dtype(descr)
+    new_tab = np.array(list(zip(*otab_list)), dtype=otab_dtype)
+    model.spec_table = new_tab
 
 
 def create_photom_nrs_fs(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
@@ -1542,6 +1574,11 @@ def test_niriss_wfss():
         # Compare the values at the center pixel.
         ratio = output["FLUX"] / input_data["FLUX"]
         result.append(np.allclose(ratio, compare, rtol=1.0e-7))
+        # 0th index of CONTAM_FLUX is 0, so handle this to avoid divide by zero
+        assert np.allclose(output["CONTAM_FLUX"][0][0], 0.0, rtol=1.0e-7)
+        assert np.allclose(input_data["CONTAM_FLUX"][0][0], 0.0, rtol=1.0e-7)
+        contam_ratio = output["CONTAM_FLUX"][0][1:] / input_data["CONTAM_FLUX"][0][1:]
+        result.append(np.allclose(contam_ratio, compare[1:], rtol=1.0e-7, equal_nan=True))
 
     assert np.all(result)
 
