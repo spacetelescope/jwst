@@ -15,7 +15,8 @@ DATASET1_ID = "jw01536028001_03103_00001-seg001_mirimage"
 DATASET2_ID = "jw01536028001_03103_00001-seg002_mirimage"
 # DATASET3_ID = "jw01281001001_04103_00001-seg002_trim_mirimage"
 DATASET3_ID = "jw01281001001_04103_00001-seg002_mirimage_mod"
-ASN3_FILENAME = "jw01536-o028_20221202t215749_tso3_00001_asn.json"
+# ASN3_FILENAME = "jw01536-o028_20221202t215749_tso3_00001_asn.json"
+ASN3_FILENAME = "jw01029-o001_mod_image3_asn.json"
 PRODUCT_NAME = "jw01536-o028_t008_miri_p750l-slitlessprism"
 ASN_ID = "o028"
 # DATASET4_ID = "jw04496004001_03103_00001-seg001_mirimage_truncated"
@@ -40,7 +41,7 @@ INPUT_DATA = {
     ),
     ASN3_FILENAME: RTData(
         file_name=ASN3_FILENAME,
-        path=INPUT_DATA_PATH,
+        path=RTDATA_TESTING_PATH,
         from_mast=False,
         asn_files=[
             "jw01536028001_03103_00001-seg001_mirimage_calints.fits",
