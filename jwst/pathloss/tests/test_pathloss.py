@@ -7,9 +7,14 @@ import gwcs
 import numpy as np
 import pytest
 from astropy.modeling.models import Const1D, Mapping
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel, PathlossModel, SlitModel
 
 from jwst.pathloss import pathloss as pl
+
+TEST_FILES = {
+    "LRS": get_pkg_data_filename("data/test_wcs.asdf", package="jwst.pathloss.tests"),
+}
 
 
 def test_get_center_ifu():
@@ -120,6 +125,7 @@ def test_get_center_lrs_with_dither_offsets():
     datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
 
     # Ingest test WCS
+    wcs_file = TEST_FILES["LRS"]
     asdf_file = asdf.open("data/test_wcs.asdf")
     wcs = asdf_file.tree["wcs"]
     datmod.meta.wcs = wcs
