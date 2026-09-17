@@ -117,12 +117,12 @@ def test_get_center_lrs_from_ra_dec():
 def test_get_center_lrs_with_dither_offsets(monkeypatch):
     """Test MIR_LRS-FIXEDSLIT with dither offsets propagated to source position"""
 
-    # Define mock compute_scale function to handle unexpected behavior from mock WCS
+    # Define mock compute_scale function to handle lack of scaling in mock WCS
     def mock_compute_scale(wcs, location, disp_axis=2):
         # Returns expected LRS pixel scale (in degrees)
         return 0.11056263994239542 / 3600.0
 
-    # Create dummy LRS data model with mock WCS
+    # Create mock LRS data model with simple WCS
     datmod = ImageModel()
     datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
     datmod.meta.wcs = mock_lrs_wcs(
