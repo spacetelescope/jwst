@@ -13,6 +13,7 @@ a spaxel.  We are only dealing with the spatial dimensions in this routine.
 #include <stdio.h>
 #include <Python.h>
 #include <stdbool.h>
+#include "cube_utils.h"
 
 #define CP_LEFT   0
 #define CP_RIGHT  1
