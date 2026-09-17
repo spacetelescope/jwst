@@ -3,7 +3,6 @@ Unit tests for pathloss correction
 """
 
 import os
-from pathlib import Path
 
 import asdf
 import gwcs
@@ -123,7 +122,7 @@ def test_get_center_lrs_with_dither_offsets():
     datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
 
     # Ingest test WCS
-    asdf_file = os.path.join(Path(__file__).resolve().parent, "data/test_wcs.asdf")
+    asdf_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/test_wcs.asdf")
     with asdf.open(asdf_file) as af:
         wcs = af.tree["wcs"]
         datmod.meta.wcs = wcs
