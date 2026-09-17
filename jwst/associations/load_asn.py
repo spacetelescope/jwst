@@ -1,4 +1,4 @@
-"""Load an Association from a file or object."""
+"""Load an `~jwst.associations.association.Association` from a file or object."""
 
 import logging
 from inspect import isclass
@@ -44,18 +44,18 @@ def load_asn(
     validate : bool
         Validate against the class's defined schema, if any.
 
-    registry : `~jwst.associations.AssociationRegistry` or None
-        The `~jwst.associations.AssociationRegistry` to use.
+    registry : `~jwst.associations.registry.AssociationRegistry` or None
+        The association registry to use.
         If None, no registry is used.
         Can be passed just a registry class instead of instance.
 
-    **kwargs : dict
+    **kwargs
         Other arguments to pass to the ``load`` methods defined
-        in the `~jwst.associations.lib.keyvalue_registry.KeyValueRegistry`
+        in the `~jwst.associations.lib.keyvalue_registry.KeyValueRegistry`.
 
     Returns
     -------
-    `~jwst.associations.Association`
+    `~jwst.associations.association.Association`
         The loaded association.
 
     Raises
@@ -70,7 +70,7 @@ def load_asn(
     a file object containing the string.
 
     If no registry is specified, the default
-    :meth:`~jwst.associations.Association.load` method is used.
+    :meth:`~jwst.associations.association.Association.load` method is used.
     """
     fname = getattr(serialized, "name", None)
     if fname is not None:

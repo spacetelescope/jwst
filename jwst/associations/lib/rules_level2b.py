@@ -7,6 +7,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_NotTSO,
     Constraint_TSO,
     Constraint_WFSC,
+    DMSAttrConstraint,
     nissoss_calibrated_filter,
     nrccoron_valid_detector,
     nrsfss_valid_detector,
@@ -33,7 +34,6 @@ from jwst.associations.lib.rules_level2_base import (
     Constraint_Special,
     Constraint_Spectral_Science,
     Constraint_Target,
-    DMSAttrConstraint,
     DMSLevel2bBase,
     Utility,  # noqa: F401
 )
@@ -67,21 +67,23 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-# --------------------------------
+# -----------------------------
 # Start of the User-level rules
-# --------------------------------
+# -----------------------------
+
+
 @RegistryMarker.rule
 class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
     """
     Create normal rate products for some coronographic data.
 
-    Characteristics;
+    Characteristics:
 
-        - Association type: ``image2``
-        - Pipeline: ``calwebb_image2``
-        - NIRCam Coronagraphic
-        - Only subarray=Full exposures
-        - Treat as non-timeseries, producing "rate" products
+    - Association type: ``image2``
+    - Pipeline: ``calwebb_image2``
+    - NIRCam Coronagraphic
+    - Only subarray=Full exposures
+    - Treat as non-timeseries, producing "rate" products
     """
 
     def __init__(self, *args, **kwargs):
@@ -121,15 +123,16 @@ class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
 
     def is_item_coron(self, _item):
         """
-        Override to always return false.
+        Override to always return False.
 
-        The override will force ``make_member`` to create a "rate"
-        product instead of a "rateints" product.
+        The override will force
+        :meth:`~jwst.associations.lib.rules_level2_base.DMSLevel2bBase.make_member`
+        to create a "rate" product instead of "rateints".
 
         Returns
         -------
         bool
-            False.
+            Always `False`.
         """
         return False
 
@@ -141,12 +144,12 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``image2``
-        - Pipeline: ``calwebb_image2``
-        - Image-based science exposures
-        - Single science exposure
-        - Non-TSO
-        - Non-coronagraphic
+    - Association type: ``image2``
+    - Pipeline: ``calwebb_image2``
+    - Image-based science exposures
+    - Single science exposure
+    - Non-TSO
+    - Non-coronagraphic
     """
 
     def __init__(self, *args, **kwargs):
@@ -176,14 +179,14 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
 @RegistryMarker.rule
 class Asn_Lv2ImageNonScience(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bBase):
     """
-    Level2b Non-science Image Association.
+    Level2b Non-Science Image Association.
 
     Characteristics:
 
-        - Association type: ``image2``
-        - Pipeline: ``calwebb_image2``
-        - Image-based non-science exposures, such as target acquisitions
-        - Single science exposure
+    - Association type: ``image2``
+    - Pipeline: ``calwebb_image2``
+    - Image-based non-science exposures, such as target acquisitions
+    - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -207,11 +210,12 @@ class Asn_Lv2ImageSpecial(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bBase
 
     Characteristics:
 
-        - Association type: ``image2``
-        - Pipeline: ``calwebb_image2``
-        - Image-based science exposures that are to be used as background or PSF exposures
-        - Single science exposure
-        - No other exposure can be part of the association
+    - Association type: ``image2``
+    - Pipeline: ``calwebb_image2``
+    - Image-based science exposures that are to be used
+      as background or PSF exposures
+    - Single science exposure
+    - No other exposure can be part of the association
     """
 
     def __init__(self, *args, **kwargs):
@@ -237,10 +241,10 @@ class Asn_Lv2ImageTSO(AsnMixin_Lv2Image, DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``tso-image2``
-        - Pipeline: ``calwebb_tso-image2``
-        - Image-based Time Series exposures
-        - Single science exposure
+    - Association type: ``tso-image2``
+    - Pipeline: ``calwebb_tso-image2``
+    - Image-based Time Series exposures
+    - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -271,10 +275,10 @@ class Asn_Lv2FGS(AsnMixin_Lv2Image, DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``image2``
-        - Pipeline: ``calwebb_image2``
-        - Image-based FGS science exposures
-        - Single science exposure
+    - Association type: ``image2``
+    - Pipeline: ``calwebb_image2``
+    - Image-based FGS science exposures
+    - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -304,12 +308,12 @@ class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - Spectral-based single target science exposures
-        - Single science exposure
-        - Non-TSO
-        - Not part of a background dither observation
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Spectral-based single target science exposures
+    - Single science exposure
+    - Non-TSO
+    - Not part of a background dither observation
     """
 
     def __init__(self, *args, **kwargs):
@@ -384,10 +388,10 @@ class Asn_Lv2SpecImprint(AsnMixin_Lv2Special, AsnMixin_Lv2Spectral, DMSLevel2bBa
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - Only handles Imprint/Leakcal exposures
-        - Single science exposure
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Only handles Imprint/Leakcal exposures
+    - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -420,10 +424,11 @@ class Asn_Lv2SpecSpecial(
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - Spectral-based single target science exposures that are background exposures
-        - Single science exposure
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Spectral-based single target science exposures that
+      are background exposures
+    - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -465,11 +470,11 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``tso-spec2``
-        - Pipeline: ``calwebb_tso-spec2``
-        - Spectral-based single target time series exposures
-        - Single science exposure
-        - No other exposure can be part of the association
+    - Association type: ``tso-spec2``
+    - Pipeline: ``calwebb_tso-spec2``
+    - Spectral-based single target time series exposures
+    - Single science exposure
+    - No other exposure can be part of the association
     """
 
     def __init__(self, *args, **kwargs):
@@ -580,10 +585,10 @@ class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - MIRI Target Acquisition verification exposure
-        - Single science exposure
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - MIRI Target Acquisition verification exposure
+    - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -651,11 +656,11 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - MIRI LRS Fixed slit
-        - Single science exposure
-        - Include slit nods as backgrounds
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - MIRI LRS Fixed slit
+    - Single science exposure
+    - Include slit nods as backgrounds
     """
 
     def __init__(self, *args, **kwargs):
@@ -743,15 +748,16 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
         Modify exposure type depending on dither pointing index.
 
         Behaves as the superclass method. However, if the constraint
-        ``is_current_patt_num`` is True, mark the exposure type as
+        ``is_current_patt_num`` is` True`, mark the exposure type as
         ``background``.
 
         Parameters
         ----------
-        item : member
+        item : `~jwst.associations.lib.member.Member`
             The item to pull exposure type from.
         default : str
-            The default value if no exposure type is present, defaults to "science".
+            The default value if no exposure type is present;
+            defaults to "science".
 
         Returns
         -------
@@ -772,10 +778,10 @@ class Asn_Lv2NRSLAMPImage(AsnMixin_Lv2Image, AsnMixin_Lv2Special, DMSLevel2bBase
 
     Characteristics:
 
-        - Association type: ``image2``
-        - Pipeline: ``calwebb_image2``
-        - Image-based calibration exposures
-        - Single science exposure
+    - Association type: ``image2``
+    - Pipeline: ``calwebb_image2``
+    - Image-based calibration exposures
+    - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -800,10 +806,10 @@ class Asn_Lv2NRSLAMPSpectral(AsnMixin_Lv2Special, DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``nrslamp-spec2``
-        - Pipeline: ``calwebb_nrslamp-spec2``
-        - Spectral-based calibration exposures
-        - Single science exposure
+    - Association type: ``nrslamp-spec2``
+    - Pipeline: ``calwebb_nrslamp-spec2``
+    - Spectral-based calibration exposures
+    - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -872,11 +878,12 @@ class Asn_Lv2WFSSNIS(
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - Multi-object science exposures
-        - Single science exposure
-        - Require a source catalog from processing of the corresponding direct imagery.
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Multi-object science exposures
+    - Single science exposure
+    - Require a source catalog from processing of the
+      corresponding direct imagery.
     """
 
     def __init__(self, *args, **kwargs):
@@ -954,7 +961,8 @@ class Asn_Lv2WFSSNRC(
     - Pipeline: ``calwebb_spec2``
     - Multi-object science exposures
     - Single science exposure
-    - Require a source catalog from processing of the corresponding direct imagery.
+    - Require a source catalog from processing of the
+      corresponding direct imagery.
     """
 
     def __init__(self, *args, **kwargs):
@@ -1024,7 +1032,8 @@ class Asn_Lv2WFSSMIR(
     - Pipeline: ``calwebb_spec2``
     - Multi-object science exposures
     - Single science exposure
-    - Require a source catalog from processing of the corresponding direct imagery.
+    - Require a source catalog from processing of the
+      corresponding direct imagery.
     """
 
     def __init__(self, *args, **kwargs):
@@ -1087,11 +1096,11 @@ class Asn_Lv2NRSMSA(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - Spectral-based NIRSpec MSA multi-object science exposures
-        - Single science exposure
-        - Handle slitlet nodding for background subtraction
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Spectral-based NIRSpec MSA multi-object science exposures
+    - Single science exposure
+    - Handle slitlet nodding for background subtraction
     """
 
     def __init__(self, *args, **kwargs):
@@ -1118,15 +1127,13 @@ class Asn_Lv2NRSFSS(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """
     Level2b NIRSpec Fixed-slit Association.
 
-    Notes
-    -----
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - Spectral-based NIRSpec fixed-slit single target science exposures
-        - Single science exposure
-        - Handle along-the-slit background nodding
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Spectral-based NIRSpec fixed-slit single target science exposures
+    - Single science exposure
+    - Handle along-the-slit background nodding
 
     Association includes both the background and science exposures of the nodding.
     The identified science exposure is fixed by the nod, pattern, and exposure number
@@ -1200,12 +1207,12 @@ class Asn_Lv2NRSIFUNod(AsnMixin_Lv2Imprint, AsnMixin_Lv2Nod, AsnMixin_Lv2Spectra
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - Spectral-based NIRSpec IFU multi-object science exposures
-        - Single science exposure
-        - Handle 2 and 4 point background nodding
-        - Include related imprint exposures
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Spectral-based NIRSpec IFU multi-object science exposures
+    - Single science exposure
+    - Handle 2 and 4 point background nodding
+    - Include related imprint exposures
     """
 
     def __init__(self, *args, **kwargs):
@@ -1244,10 +1251,10 @@ class Asn_Lv2WFSC(DMSLevel2bBase):
 
     Characteristics:
 
-        - Association type: ``image2``
-        - Pipeline: ``calwebb_wfs-image2``
-        - WFS and WFS&C observations
-        - Single science exposure
+    - Association type: ``image2``
+    - Pipeline: ``calwebb_wfs-image2``
+    - WFS and WFS&C observations
+    - Single science exposure
     """
 
     def __init__(self, *args, **kwargs):
@@ -1293,11 +1300,12 @@ class Asn_Lv2WFSSParallel(
 
     Characteristics:
 
-        - Association type: ``spec2``
-        - Pipeline: ``calwebb_spec2``
-        - Multi-object science exposures
-        - Single Science exposure
-        - Require a source catalog from processing of the corresponding direct imagery.
+    - Association type: ``spec2``
+    - Pipeline: ``calwebb_spec2``
+    - Multi-object science exposures
+    - Single Science exposure
+    - Require a source catalog from processing of the
+      corresponding direct imagery.
 
     WFSS is executed differently when taken as part of a pure-parallel proposal than
     when WFSS is done as the primary. The differences are as follows. When primary,
@@ -1370,7 +1378,7 @@ class Asn_Lv2WFSSParallel(
         For NIRCam pure parallel observations, there should
         only be one long-wavelength direct image in a given
         direct_image candidate. Find it by searching for 'long'
-        filenames. All [a|b]long filenames should belong to the
+        filenames. All ``[a|b]long`` filenames should belong to the
         same level 3 product, which will be associated to the
         grism image.
 
@@ -1382,7 +1390,7 @@ class Asn_Lv2WFSSParallel(
         _science : dict
             The science member to compare against; unused.
 
-        directs : [dict[,...]]
+        directs : list of dict
             The available direct members.
 
         Returns
@@ -1400,16 +1408,14 @@ class Asn_Lv2WFSSParallel(
         """
         Stub to always return True.
 
-        For this association, stub this to always return True
-
         Parameters
         ----------
-        _member : member
+        _member : `~jwst.associations.lib.member.Member`
             Member being added; ignored.
 
         Returns
         -------
         bool
-            True.
+            Always `True`.
         """
         return True
