@@ -278,6 +278,13 @@ def test_wfss_multi_input(wfss_multiexposure):
     assert tab.shape == (N_SOURCES,)
     assert result.meta.cal_step.combine_1d == "COMPLETE"
     assert np.allclose(tab["FLUX"], 1.0)
+    assert np.allclose(tab["CONTAM_FLUX"], 0.1)
+    # test contam index is right after flux
+    names = tab.dtype.names
+    flux_idx = names.index("FLUX")
+    assert names[flux_idx + 1] == "CONTAM_FLUX"
+    sb_idx = names.index("SURF_BRIGHT")
+    assert names[sb_idx + 1] == "CONTAM_SURF_BRIGHT"
 
     # check that metadata was passed through correctly
     assert np.allclose(tab["SOURCE_RA"], 0.0)

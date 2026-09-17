@@ -1,9 +1,8 @@
 Step Arguments
 ==============
+The ``combine_1d`` step has the following optional arguments.
 
-The ``combine_1d`` step has two step-specific arguments:
-
-``--exptime_key``
+``--exptime_key`` (string, default="exposure_time")
   This is a case-insensitive string that identifies the metadata element
   (or FITS keyword) for the weight to apply to the input data.  The default
   is "exposure_time".  If the string is "effinttm" or starts with
@@ -14,9 +13,9 @@ The ``combine_1d`` step has two step-specific arguments:
   be used for all input spectra.  If the string is anything else, a warning
   will be logged and unit weight will be used.
 
-``--sigma_clip``
+``--sigma_clip`` (float, default=None)
   Optional factor for sigma clipping outliers when combining spectra. If
   a floating point value is provided for ``sigma_clip``, this value will be
-  used to set an outlier threshold for any pixels in the input spectra that 
+  used to set an outlier threshold for any pixels in the input spectra that
   deviate from the median and median absolute deviation of the inputs.
   Defaults to None (such that no clipping is performed).
