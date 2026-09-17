@@ -126,7 +126,7 @@ def test_get_center_lrs_with_dither_offsets():
 
     # Ingest test WCS
     wcs_file = TEST_FILES["LRS"]
-    asdf_file = asdf.open("data/test_wcs.asdf")
+    asdf_file = asdf.open(wcs_file)
     wcs = asdf_file.tree["wcs"]
     datmod.meta.wcs = wcs
     datmod.meta.wcsinfo.dispersion_direction = 2
