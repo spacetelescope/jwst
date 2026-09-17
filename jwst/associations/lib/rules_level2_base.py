@@ -15,6 +15,7 @@ from jwst.associations.lib.constraint import (
     SimpleConstraint,
 )
 from jwst.associations.lib.dms_base import (
+    _EMPTY,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     IMAGE2_SCIENCE_EXP_TYPES,
     PRODUCT_NAME_DEFAULT,
@@ -26,7 +27,7 @@ from jwst.associations.lib.dms_base import (
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.prune import prune
-from jwst.associations.lib.rules_level3_base import _EMPTY, DMS_Level3_Base
+from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 from jwst.associations.lib.utilities import getattr_from_list, getattr_from_list_nofail
 from jwst.associations.registry import RegistryMarker
@@ -122,15 +123,15 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         Parameters
         ----------
         item : dict
-            The pool entry to determine the exposure type of
+            The pool entry to determine the exposure type of.
         default : str or None
             The default exposure type.
-            If None, routine will raise LookupError.
+            If None, routine will raise `LookupError`.
 
         Returns
         -------
         exposure_type : str
-            Always what is defined as ``default``
+            Always what is defined as ``default``.
         """
         self.original_exposure_type = super(DMSLevel2bBase, self).get_exposure_type(
             item, default=default
@@ -165,7 +166,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         Returns
         -------
         bool
-            True if it does.
+            `True` if it does.
         """
         limit_reached = len(self.members_by_type("science")) >= 1
         return limit_reached
@@ -204,7 +205,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Returns
         -------
-        member : Member
+        `~jwst.associations.lib.member.Member`
             The member
         """
         # Set exposure error status.
@@ -253,7 +254,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         Parameters
         ----------
         item : dict
-            The item to be adding.
+            The item to be added.
         """
         member = self.make_member(item)
         if self.is_member(member):
@@ -271,26 +272,26 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        items : [object[, ...]]
+        items : list of obj
             A list of items to make members of the association.
         meta : dict
             A dict to be merged into the association meta information.
             The following are suggested to be assigned:
 
-                - ``asn_type``
-                    The type of association.
-                - ``asn_rule``
-                    The rule which created this association.
-                - ``asn_pool``
-                    The pool from which the exposures came from
-                - ``program``
-                    Originating observing program
+            - ``asn_type``:
+              The type of association.
+            - ``asn_rule``:
+              The rule which created this association.
+            - ``asn_pool``:
+              The pool from which the exposures came from.
+            - ``program``:
+              Originating observing program.
 
         product_name_func : func
             Used if product name is 'undefined' using
             the class's procedures.
         acid : str
-            The association candidate id to use. Since Level2
+            The association candidate ID to use. Since Level2
             associations require it, one must be specified.
 
         Notes
@@ -299,7 +300,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         to an association. All defined shortcuts and other initializations are
         bypassed, resulting in a potentially unusable association.
 
-        `product_name_func` is used to define the product names instead of
+        ``product_name_func`` is used to define the product names instead of
         the default methods. The call signature is::
 
             product_name_func(item, idx)
@@ -367,14 +368,14 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        _member : Member
+        _member : `~jwst.associations.lib.member.Member`
             Member being added; ignored.
 
         Returns
         -------
         bool
-            True if candidate is OBSERVATION, BACKGROUND and at least one
-            member is background; otherwise false.
+            `True` if candidate is ``OBSERVATION, BACKGROUND`` and at least one
+            member is background; otherwise `False`.
         """
         # If an observation, then we're good.
         if self.acid.type.lower() == "observation":
@@ -400,12 +401,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
     def __str__(self):
         """
-        Create human readable version of the association.
+        Create human-readable version of the association.
 
         Returns
         -------
         str
-            Human-readable string version of association.
+            Human-readable version of the association.
         """
         result = [f"Association {self.asn_name:s}"]
 
@@ -448,12 +449,12 @@ class Utility:
 
         Parameters
         ----------
-        associations : [association[, ...]]
+        associations : list of `~jwst.associations.association.Association`
             List of associations.
 
         Returns
         -------
-        finalized_associations : [association[, ...]]
+        finalized_associations : list of `~jwst.associations.association.Association`
             The validated list of associations.
         """
         finalized_asns = []
@@ -477,16 +478,16 @@ class Utility:
     @staticmethod
     def merge_asns(associations):
         """
-        Merge level2 associations.
+        Merge Level 2 associations.
 
         Parameters
         ----------
-        associations : [asn(, ...)]
+        associations : list of `~jwst.associations.association.Association`
             Associations to search for merging.
 
         Returns
         -------
-        associations : [association(, ...)]
+        associations : list of `~jwst.associations.association.Association`
             List of associations, some of which may be merged.
         """
         others = []
@@ -535,11 +536,11 @@ class Utility:
     @staticmethod
     def resequence(*args, **kwargs):
         """
-        Resequence the numbers to conform to level 3 associations.
+        Resequence the numbers to conform to Level 3 associations.
 
         Returns
         -------
-        list[association, ...] or None
+        list of `~jwst.associations.association.Association` or None
             If associations provided, resequenced order of
             provided associations.
         """
@@ -552,13 +553,13 @@ class Utility:
 
         Parameters
         ----------
-        asns : [Association[,...]]
-            List of associations
+        asns : list of `~jwst.associations.association.Association`
+            List of associations.
 
         Returns
         -------
-        sorted_by_candidate : [Associations[,...]]
-            New list of the associations sorted.
+        sorted_by_candidate : list of `~jwst.associations.association.Association`
+            New list of the associations, sorted.
 
         Notes
         -----
@@ -574,16 +575,16 @@ class Utility:
     @staticmethod
     def _merge_asns(asns):
         """
-        Merge associations by `asn_type` and `asn_id`.
+        Merge associations by ``asn_type`` and ``asn_id``.
 
         Parameters
         ----------
-        asns : [asn(, ...)]
+        asns : list of `~jwst.associations.association.Association`
             Associations to search for merging.
 
         Returns
         -------
-        associations : [association(, ...)]
+        associations : list of `~jwst.associations.association.Association`
             List of associations, some of which may be merged.
         """
         merged = {}
@@ -618,6 +619,8 @@ class Utility:
 
 
 # Basic constraints
+
+
 class Constraint_Base(Constraint):
     """Select on program and instrument."""
 
@@ -652,7 +655,7 @@ class Constraint_ExtCal(Constraint):
     """
     Remove any nis_extcals from the associations.
 
-    They are NOT to receive level-2b or level-3 processing.
+    They are NOT to receive Level 2b or 3 processing.
     """
 
     def __init__(self):
@@ -814,13 +817,13 @@ class Constraint_Single_Science(Constraint):
     ----------
     has_science_fn : func
         Function to determine whether the association has a science member already.
-        No arguments are provided
+        No arguments are provided.
 
     exposure_type_fn : func
         Function to determine the association exposure type of the item.
         Should take a single argument of item.
 
-    **sc_kwargs : dict
+    **sc_kwargs
         Keyword arguments to pass to the parent class
         `~jwst.associations.lib.constraint.Constraint`.
 
@@ -864,7 +867,7 @@ class Constraint_Spectral_Science(Constraint):
 
     Parameters
     ----------
-    exclude_exp_types : [exp_type[, ...]]
+    exclude_exp_types : list of str or None
         List of exposure types to not consider from
         from the general list.
     """
@@ -911,8 +914,10 @@ class Constraint_Target(Constraint):
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
+
+
 class AsnMixin_Lv2Image:
-    """Level 2 Image association base."""
+    """Level 2 image association base."""
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization."""
@@ -1027,7 +1032,7 @@ class AsnMixin_Lv2Imprint:
 
         Returns
         -------
-        associations: [association[, ...]] or None
+        associations: list of `~jwst.associations.association.Association` or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
@@ -1054,30 +1059,31 @@ class AsnMixin_Lv2Nod:
         """
         Check that a candidate background nod will not overlap with science.
 
-        For NIRSpec fixed slit or MOS data, this returns True if the
+        For NIRSpec fixed slit or MOS data, this returns `True` if the
         background candidate shares a primary dither point with the
         science or if the target ID does not match between science
         and background candidate.
 
         In addition, for NIRSpec fixed slit exposures taken with slit
-        S1600A1 in a 5-point nod pattern, this returns True when the
+        S1600A1 in a 5-point nod pattern, this returns `True` when the
         background candidate is in the next closest primary position
         to the science or if the target ID does not match between
         science and background candidate.
 
-        For any other data, this function returns False (no overlap).
+        For any other data, this function returns `False` (no overlap).
 
         Parameters
         ----------
-        science_item : Member
+        science_item : `~jwst.associations.lib.member.Member`
             The science member.
-        background_item : Member
+        background_item : `~jwst.associations.lib.member.Member`
             The background member.
 
         Returns
         -------
         bool
-            True if overlap is present, False otherwise.
+            `True` if overlap is present, `False` otherwise.
+            See description above.
         """
         # Get exp_type, needed for any data:
         # if not present, return False
@@ -1175,7 +1181,7 @@ class AsnMixin_Lv2Nod:
 
     def make_nod_asns(self):
         """
-        Make background nod Associations.
+        Make background nod associations.
 
         For observing modes, such as NIRSpec MSA, exposures can be
         nodded, such that the object is in a different position in the
@@ -1187,7 +1193,7 @@ class AsnMixin_Lv2Nod:
 
         Returns
         -------
-        associations : [association[, ...]]
+        associations : list of `~jwst.associations.association.Association`
             List of new associations to be used in place of
             the current one.
         """
@@ -1242,7 +1248,7 @@ class AsnMixin_Lv2Nod:
 
         Returns
         -------
-        associations : [association[, ...]] or None
+        associations : list of `~jwst.associations.association.Association` or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
@@ -1276,15 +1282,15 @@ class AsnMixin_Lv2Special:
         Parameters
         ----------
         item : dict
-            The pool entry to determine the exposure type of
+            The pool entry to determine the exposure type of.
         default : str or None
             The default exposure type.
-            If None, routine will raise LookupError.
+            If None, routine will raise `LookupError`.
 
         Returns
         -------
         exposure_type : str
-            Always what is defined as ``default``
+            Always what is defined as ``default``.
         """
         self.original_exposure_type = super(AsnMixin_Lv2Special, self).get_exposure_type(
             item, default=default
@@ -1296,7 +1302,7 @@ class AsnMixin_Lv2Special:
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):
-    """Level 2 Spectral association base."""
+    """Level 2 spectral association base."""
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization."""
@@ -1352,7 +1358,7 @@ class AsnMixin_Lv2WFSS:
 
         Returns
         -------
-        associations : [association[, ...]] or None
+        associations : list of `~jwst.associations.association.Association` or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
@@ -1373,7 +1379,7 @@ class AsnMixin_Lv2WFSS:
 
         Parameters
         ----------
-        item : Member
+        item : `~jwst.associations.lib.member.Member`
             The item to pull exposure type from.
         default : str
             The default value if no exposure type is present, defaults to "science".
@@ -1402,7 +1408,7 @@ class AsnMixin_Lv2WFSS:
         science : dict
             The science member to compare against
 
-        directs : [dict[,...]]
+        directs : list of dict
             The available direct members
 
         Returns
@@ -1438,7 +1444,7 @@ class AsnMixin_Lv2WFSS:
         Returns
         -------
         opt_elem : str
-            The Level3 Product name representation
+            The Level 3 product name representation
             of the optical elements.
 
         Notes
@@ -1446,7 +1452,7 @@ class AsnMixin_Lv2WFSS:
         This is an override for the method in
         `~jwst.associations.lib.dms_base.DMSBaseMixin`.
         The optical element is retrieved from the chosen direct image
-        found in ``self.direct_image``, determined in the ``self.finalize``
+        found in ``self.direct_image``, determined in the :meth:`finalize`
         method.
         """
         item = self.direct_image.item

@@ -1,10 +1,4 @@
-"""
-Callback registry.
-
-This registry stores events which may be triggered on
-an AssociationRegistry given some signal; for instance,
-finalization of associations.
-"""
+"""Module to handle association callback registry."""
 
 from jwst.lib.signal_slot import Signal
 
@@ -12,7 +6,13 @@ __all__ = ["CallbackRegistry"]
 
 
 class CallbackRegistry:
-    """Callback registry."""
+    """
+    Callback registry.
+
+    This registry stores events which may be triggered on
+    an `~jwst.associations.registry.AssociationRegistry` given some signal;
+    for instance, finalization of associations.
+    """
 
     def __init__(self):
         self.registry = {}
@@ -28,16 +28,16 @@ class CallbackRegistry:
 
     def reduce(self, event, *args):
         """
-        Perform a reduction on the event args.
+        Perform a reduction on the event arguments.
 
         Parameters
         ----------
-        *args : [arg[,...]]
-            The args to filter
+        *args : tuple
+            The arguments to filter.
 
         Returns
         -------
-        list, dict or None
+        list, dict, or None
             The reduced results; if no results can be determined,
             such as if no callbacks were registered, `None` is returned.
 

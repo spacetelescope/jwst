@@ -1,4 +1,4 @@
-"""Association Candidate Identifier."""
+"""Association Candidate IDentifier (ACID)."""
 
 import re
 from ast import literal_eval
@@ -7,13 +7,13 @@ from jwst.associations.lib.counter import Counter
 
 __all__ = ["ACID", "ACIDMixin"]
 
-# Start of the discovered association ids.
+# Start of the discovered association IDs.
 _DISCOVERED_ID_START = 3001
 
 
 class ACID:
     """
-    Association Candidate Identifier.
+    Association Candidate IDentifier.
 
     Parameters
     ----------
@@ -28,9 +28,11 @@ class ACID:
         The ID number.
 
     type : str
-        The type of candidate. Some, but not all
-        possibilities include 'OBSERVATION',
-        'MOSAIC', 'DISCOVERED'
+        The type of candidate. Some, but not all possibilities include:
+
+        * 'OBSERVATION'
+        * 'MOSAIC'
+        * 'DISCOVERED'
 
     Notes
     -----
