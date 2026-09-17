@@ -5,11 +5,13 @@ from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 INPUT_DATA_PATH = "fgs/image3"
-ASN_FILE = "jw01029-o001_20240716t172128_image3_00001_asn.json"
+# ASN_FILE = "jw01029-o001_20240716t172128_image3_00001_asn.json"
+RTDATA_TESTING_PATH = "rtdata_testing"
+ASN_FILE = "jw01029-o001_mod_image3_asn.json"
 INPUT_DATA = {
     ASN_FILE: RTData(
         file_name=ASN_FILE,
-        path=INPUT_DATA_PATH,
+        path=RTDATA_TESTING_PATH,
         from_mast=True,
         asn_files=[
             "jw01029001001_06201_00001_guider2_cal.fits",
