@@ -120,7 +120,7 @@ def test_get_center_lrs_with_dither_offsets(monkeypatch):
         # Returns expected LRS pixel scale (in degrees)
         return 0.11056263994239542 / 3600.0
 
-    # Create dummy LRS data model with mock WCS
+    # Create mock LRS data model with simple WCS
     datmod = ImageModel()
     datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
     offset_1_val = -100.0
