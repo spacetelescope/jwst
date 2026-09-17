@@ -82,22 +82,10 @@ spaxel_dq : double array
 #include <Python.h>
 #include <stdbool.h>
 #include <numpy/arrayobject.h>
-#include <numpy/npy_math.h>
-
-#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_internal_numpy_api
+#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_build_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
-
-// routines used from cube_utils.c
-extern double
-sh_find_overlap(
-    const double xcenter, const double ycenter, const double xlength, const double ylength,
-    double xPixelCorner[], double yPixelCorner[]);
-
-extern double
-find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]);
-
-extern int
-alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv);
+#include <numpy/arrayobject.h>
+#include "cube_utils.h"
 
 int
 match_detector_cube(
@@ -223,24 +211,6 @@ match_detector_cube(
     *spaxel_iflux = ifluxv;
 
     return 0;
-}
-
-// C extension SETUP
-// This ensures that all the numpy arrays passed to the C routines
-// follow C array rules.
-PyArrayObject *
-ensure_array(PyObject *obj, int *is_copy)
-{
-    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
-        PyArray_TYPE((PyArrayObject *) obj) == NPY_DOUBLE) {
-        *is_copy = 0;
-        return (PyArrayObject *) obj;
-    } else {
-        *is_copy = 1;
-        return (PyArrayObject *) PyArray_FromAny(
-            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
-            NULL);
-    }
 }
 
 // Wrapper code that is called from python code and sets up interface with C code.
@@ -479,8 +449,13 @@ static struct PyModuleDef moduledef = {
 PyMODINIT_FUNC
 PyInit_cube_match_internal(void)
 {
-    PyObject *m;
+    PyObject *m = PyModule_Create(&moduledef);
+    if (m == NULL) {
+        return NULL;
+    }
+
+    // Initialize NumPy API array (crucial before any array utility is called)
     import_array();
-    m = PyModule_Create(&moduledef);
+
     return m;
 }
