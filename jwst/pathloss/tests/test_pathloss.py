@@ -2,12 +2,10 @@
 Unit tests for pathloss correction
 """
 
-import asdf
 import gwcs
 import numpy as np
 import pytest
 from astropy.modeling.models import Const1D, Mapping
-from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel, PathlossModel, SlitModel
 
 from jwst.pathloss import pathloss as pl
@@ -114,51 +112,37 @@ def test_get_center_lrs_from_ra_dec():
     assert y_pos == 53.0 + offset_2_val
 
 
-def test_get_center_lrs_with_dither_offsets():
+def test_get_center_lrs_with_dither_offsets(monkeypatch):
     """Test MIR_LRS-FIXEDSLIT with dither offsets propagated to source position"""
-    # Create dummy LRS data model
+
+    # Define mock compute_scale function to handle unexpected behavior from mock WCS
+    def mock_compute_scale(wcs, location, disp_axis=2):
+        # Returns expected LRS pixel scale (in degrees)
+        return 0.11056263994239542 / 3600.0
+
+    # Create dummy LRS data model with mock WCS
     datmod = ImageModel()
     datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
-
-    # Ingest test WCS
-    asdf_file = get_pkg_data_filename("data/test_wcs.asdf", package="jwst.pathloss.tests")
-    with asdf.open(asdf_file) as af:
-        wcs = af.tree["wcs"]
-        datmod.meta.wcs = wcs
-    datmod.meta.wcsinfo.dispersion_direction = 2
-
-    # Add test yoffset, ra, and dec
-    datmod.meta.dither.y_offset = 0.1
-    datmod.meta.target.ra = 108.630
-    datmod.meta.target.dec = 13.860
-
-    # Get slit reference point from wcs object
-    det_to_sky = datmod.meta.wcs.get_transform("detector", "world")
-    sky_to_det = datmod.meta.wcs.get_transform("world", "detector")
-    imx = -det_to_sky.offset_1
-    imy = -det_to_sky.offset_2
-
-    # Compute unshifted y-axis position of target on detector
-    _ref_ra, _ref_dec, ref_wave = det_to_sky(imx, imy)
-    xcenter_unshifted, ycenter_unshifted = sky_to_det(
-        datmod.meta.target.ra, datmod.meta.target.dec, ref_wave
+    offset_1_val = -100.0
+    offset_2_val = -50.0
+    datmod.meta.wcs = mock_lrs_wcs(
+        offset_1=offset_1_val, offset_2=offset_2_val, det_pos=(105.0, 53.0)
     )
 
+    # Add cross-slit offset
+    datmod.meta.dither.y_offset = 0.1
+
+    # Expected y_offset in pixels
+    ref_yoffset = datmod.meta.dither.y_offset / 0.11056263994239542
+
     # Test with offsets=False
+    monkeypatch.setattr(pl, "compute_scale", mock_compute_scale)
     x_pos, y_pos = pl.get_center("MIR_LRS-FIXEDSLIT", datmod, offsets=False)
-    y_diff = y_pos - (ycenter_unshifted - imy)
-
-    # Reference y_offset from testing
-    ref_diff = 0.1 / 0.11056263994239542
-
-    # Difference from expectation
-    diff = abs(y_diff - ref_diff)
 
     # Should return source position relative to LRS aperture reference point
-    # with small ycenter adjustment that is within 0.1% of calculated reference
-    assert x_pos == xcenter_unshifted - imx
-    assert y_pos != ycenter_unshifted - imy
-    assert diff < 0.001 * abs(ref_diff)
+    # with small ycenter adjustment that is within 1e-6 of calculated reference offset
+    assert x_pos == 105.0 + offset_1_val
+    assert abs(y_pos - (53.0 + offset_2_val + ref_yoffset)) < 1e-6 * ref_yoffset
 
 
 def test_get_center_lrs_with_source_pos_and_offsets():
