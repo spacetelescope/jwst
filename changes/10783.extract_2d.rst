@@ -1,0 +1,2 @@
+For NIRCam TSGRISM cutouts with ``tsgrism_extract_height`` less than the default of 64 pixels, center the cutout on the assumed source position in row 34.
+Also, add ``source_ra`` and ``source_dec`` to the slit metadata for TSGRISM.

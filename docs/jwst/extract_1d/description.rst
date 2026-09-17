@@ -123,7 +123,10 @@ The extension metadata contains a unique exposure ID (FITS keyword EXPGRPID) for
 which combines exposure grouping metadata, the exposure number, and the spectral order.
 The spectral tables for this model contain the same columns as the
 `~stdatamodels.jwst.datamodels.MultiSpecModel`, but
-each row in the table contains the full spectrum for a single source and order. The spectral columns
+each row in the table contains the full spectrum for a single source and order. There are two
+additional columns for WFSS modes, CONTAM_FLUX and CONTAM_SURF_BRIGHT, which hold
+the simulated contamination estimate for each source if the ``wfss_contam`` step was run
+(otherwise those columns are NaN-filled). The spectral columns
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
 These metadata fields include:

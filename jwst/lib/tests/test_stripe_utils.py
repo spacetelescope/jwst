@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.tests.helpers import make_mock_dhs_nrca1_rate
+from jwst.assign_wcs.tests.helpers import make_mock_dhs_nrca1_rate_sub164
 from jwst.lib import stripe_utils
 from jwst.lib.reffile_utils import science_detector_frame_transform
 from jwst.lib.tests.helpers import (
@@ -15,7 +15,7 @@ from jwst.lib.tests.helpers import (
 
 @pytest.fixture(scope="module")
 def substripe_model():
-    return make_mock_dhs_nrca1_rate()
+    return make_mock_dhs_nrca1_rate_sub164()
 
 
 @pytest.fixture(scope="module")

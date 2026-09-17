@@ -1,0 +1,1 @@
+Remove identical repeated calls to the sky-to-direct WCS transform in the disperse code. For one NIRCam dataset tested, runtime was reduced by 25 percent

@@ -17,7 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "asdf>=5.1,<6",
+    "asdf>=5.3.1,<6",
     "astropy>=7.2",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.4,!=13.1.15",
@@ -215,7 +215,7 @@ norecursedirs = [
 ]
 junit_family = "xunit2"
 inputs_root = "jwst-pipeline"
-results_root = "jwst-pipeline-results"
+results_root = "jwst-pipeline-results/regression-tests/runs"
 text_file_format = "rst"
 doctest_plus = "enabled"
 doctest_rst = "enabled"
