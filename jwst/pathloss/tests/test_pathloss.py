@@ -2,6 +2,7 @@
 Unit tests for pathloss correction
 """
 
+import asdf
 import gwcs
 import numpy as np
 import pytest
@@ -113,34 +114,52 @@ def test_get_center_lrs_from_ra_dec():
 
 
 def test_get_center_lrs_with_dither_offsets():
-    """Test MIR_LRS-FIXEDSLIT with offsets=True"""
+    """Test MIR_LRS-FIXEDSLIT with dither offsets propagated to source position"""
+    # Create dummy LRS data model
     datmod = ImageModel()
     datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
 
-    # Create WCS with offsets and detector position
-    offset_1_val = -100.0
-    offset_2_val = -50.0
-    datmod.meta.wcs = mock_lrs_wcs(
-        offset_1=offset_1_val, offset_2=offset_2_val, det_pos=(105.0, 53.0)
+    # Ingest test WCS
+    asdf_file = asdf.open("data/test_wcs.asdf")
+    wcs = asdf_file.tree["wcs"]
+    datmod.meta.wcs = wcs
+    datmod.meta.wcsinfo.dispersion_direction = 2
+
+    # Add test yoffset, ra, and dec
+    datmod.meta.dither.y_offset = 0.1
+    datmod.meta.target.ra = 108.630
+    datmod.meta.target.dec = 13.860
+
+    # Get slit reference point from wcs object
+    det_to_sky = datmod.meta.wcs.get_transform("detector", "world")
+    sky_to_det = datmod.meta.wcs.get_transform("world", "detector")
+    imx = -det_to_sky.offset_1
+    imy = -det_to_sky.offset_2
+
+    # Compute unshifted y-axis position of target on detector
+    _ref_ra, _ref_dec, ref_wave = det_to_sky(imx, imy)
+    xcenter_unshifted, ycenter_unshifted = sky_to_det(
+        datmod.meta.target.ra, datmod.meta.target.dec, ref_wave
     )
 
-    # Add dither offsets (in arcsecs)
-    nod_1_xoffset = -0.945
-    nod_1_yoffset = 0.1
-    datmod.meta.dither.x_offset = nod_1_xoffset
-    datmod.meta.dither.y_offset = nod_1_yoffset
+    # Test with offsets=False
+    x_pos, y_pos = pl.get_center("MIR_LRS-FIXEDSLIT", datmod, offsets=False)
+    y_diff = y_pos - (ycenter_unshifted - imy)
 
-    # Test with offsets=True
-    x_pos, y_pos, imx, imy = pl.get_center("MIR_LRS-FIXEDSLIT", datmod, offsets=True)
+    # Reference y_offset from testing
+    ref_diff = 0.1 / 0.11056263994239542
 
-    # Should return source position minus aperture ref, plus the aperture ref separately
-    assert x_pos == 105.0 + offset_1_val + nod_1_xoffset
-    assert y_pos == 53.0 + offset_2_val + nod_1_yoffset
-    assert imx == -offset_1_val
-    assert imy == -offset_2_val
+    # Difference from expectation
+    diff = abs(y_diff - ref_diff)
+
+    # Should return source position relative to LRS aperture reference point
+    # with small ycenter adjustment that is within 0.1% of calculated reference
+    assert x_pos == xcenter_unshifted - imx
+    assert y_pos != ycenter_unshifted - imy
+    assert diff < 0.001 * abs(ref_diff)
 
 
-def test_get_center_lrs_with_source_position_and_offsets():
+def test_get_center_lrs_with_source_pos_and_offsets():
     """Test MIR_LRS-FIXEDSLIT with offsets=True"""
     datmod = ImageModel()
     datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
