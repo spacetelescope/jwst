@@ -81,7 +81,6 @@ spaxel_dq : double array
 #include <stdio.h>
 #include <Python.h>
 #include <stdbool.h>
-#include <numpy/arrayobject.h>
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_build_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
