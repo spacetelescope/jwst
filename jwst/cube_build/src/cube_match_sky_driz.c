@@ -111,7 +111,6 @@ spaxel_dq : numpy.ndarray
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-#include "cube_utils.h"
 #include <numpy/npy_math.h>
 #include "cube_utils.h"
 

@@ -84,7 +84,6 @@ spaxel_dq : ndarray
 #include <stdio.h>
 #include <Python.h>
 #include <stdbool.h>
-#include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_build_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
@@ -438,7 +437,7 @@ cube_wrapper(PyObject *module, PyObject *args)
         status = 0;
     int free_rois_pixel = 0, free_roiw_pixel = 0, free_scalerad_pixel = 0, free_flux = 0,
         free_err = 0, free_dq = 0, free_zcdelt3 = 0;
-    int free_sliceno = 0, free_softrad_pixel, free_weight_pixel = 0;
+    int free_sliceno = 0, free_softrad_pixel = 0, free_weight_pixel = 0;
 
     PyArrayObject *xc, *yc, *zc, *flux, *err, *dq, *coord1, *coord2, *wave, *rois_pixel,
         *roiw_pixel, *scalerad_pixel;
