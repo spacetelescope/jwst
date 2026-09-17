@@ -2,19 +2,22 @@
 Unit tests for pathloss correction
 """
 
+import os
+
 import asdf
 import gwcs
 import numpy as np
 import pytest
 from astropy.modeling.models import Const1D, Mapping
-from astropy.utils.data import get_pkg_data_filename
+
+# from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel, PathlossModel, SlitModel
 
 from jwst.pathloss import pathloss as pl
 
-TEST_FILES = {
-    "LRS": get_pkg_data_filename("data/test_wcs.asdf", package="jwst.pathloss.tests"),
-}
+# TEST_FILES = {
+#     "LRS": get_pkg_data_filename("data/test_wcs.asdf", package="jwst.pathloss.tests"),
+# }
 
 
 def test_get_center_ifu():
@@ -125,7 +128,7 @@ def test_get_center_lrs_with_dither_offsets():
     datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
 
     # Ingest test WCS
-    wcs_file = TEST_FILES["LRS"]
+    wcs_file = os.path.join(os.getcwd(), "data/test_wcs.asdf")
     asdf_file = asdf.open(wcs_file)
     wcs = asdf_file.tree["wcs"]
     datmod.meta.wcs = wcs
