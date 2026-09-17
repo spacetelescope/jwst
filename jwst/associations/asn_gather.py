@@ -65,7 +65,7 @@ def asn_gather(
     else:
         source_folder = Path(source_folder)
     if destination is None:
-        dest_folder = Path.cwd()
+        dest_folder = Path()
     else:
         dest_folder = Path(destination)
 

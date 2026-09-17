@@ -107,7 +107,6 @@ class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
         super(Asn_Lv3ACQ_Reprocess, self).__init__(*args, **kwargs)
 
 
-# https://github.com/spacetelescope/jwst/issues/310
 @RegistryMarker.rule
 class Asn_Lv3AMI(AsnMixin_Science):
     """
@@ -233,8 +232,6 @@ class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
         super(Asn_Lv3ImageBackground, self)._init_hook(item)
 
 
-# https://github.com/spacetelescope/jwst/issues/311 and
-# https://jira.stsci.edu/browse/JP-3219
 @RegistryMarker.rule
 class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     """
@@ -371,8 +368,6 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
         return dms_product_name_noopt(self)
 
 
-# https://github.com/spacetelescope/jwst/issues/311 and
-# https://jira.stsci.edu/browse/JP-3219
 @RegistryMarker.rule
 class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     """
