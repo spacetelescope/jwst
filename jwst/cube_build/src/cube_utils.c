@@ -10,11 +10,44 @@ a spaxel.  We are only dealing with the spatial dimensions in this routine.
 #include <stdio.h>
 #include <Python.h>
 #include <stdbool.h>
+#include "cube_utils.h"
 
 #define CP_LEFT   0
 #define CP_RIGHT  1
 #define CP_BOTTOM 2
 #define CP_TOP    3
+
+// Common routine that  ensures that all the numpy arrays passed to the C routines
+// follow C array rules.
+PyArrayObject *
+ensure_array(PyObject *obj, int *is_copy)
+{
+    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
+        PyArray_TYPE((PyArrayObject *) obj) == NPY_DOUBLE) {
+        *is_copy = 0;
+        return (PyArrayObject *) obj;
+    } else {
+        *is_copy = 1;
+        return (PyArrayObject *) PyArray_FromAny(
+            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
+    }
+}
+
+PyArrayObject *
+ensure_array_int(PyObject *obj, int *is_copy)
+{
+    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
+        PyArray_TYPE((PyArrayObject *) obj) == NPY_INT) {
+        *is_copy = 0;
+        return (PyArrayObject *) obj;
+    } else {
+        *is_copy = 1;
+        return (PyArrayObject *) PyArray_FromAny(
+            obj, PyArray_DescrFromType(NPY_INT), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
+    }
+}
 
 int
 alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv)

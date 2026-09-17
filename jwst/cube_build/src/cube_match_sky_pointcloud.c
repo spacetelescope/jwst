@@ -86,15 +86,10 @@ spaxel_dq : ndarray
 #include <stdbool.h>
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
-
-#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_pointcloud_numpy_api
+#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_build_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
-
-// routines used from cube_utils.c
-
-extern int
-alloc_flux_dq_arrays(
-    int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv, int **dqv);
+#include <numpy/arrayobject.h>
+#include "cube_utils.h"
 
 // Match point cloud to sky and determine the weighting to assign to each point cloud  member
 // to matched spaxel based on ROI - weighting type is emsm.
@@ -422,36 +417,6 @@ match_point_msm(
     return 0;
 }
 
-PyArrayObject *
-ensure_array(PyObject *obj, int *is_copy)
-{
-    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
-        PyArray_TYPE((PyArrayObject *) obj) == NPY_DOUBLE) {
-        *is_copy = 0;
-        return (PyArrayObject *) obj;
-    } else {
-        *is_copy = 1;
-        return (PyArrayObject *) PyArray_FromAny(
-            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
-            NULL);
-    }
-}
-
-PyArrayObject *
-ensure_array_int(PyObject *obj, int *is_copy)
-{
-    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
-        PyArray_TYPE((PyArrayObject *) obj) == NPY_INT) {
-        *is_copy = 0;
-        return (PyArrayObject *) obj;
-    } else {
-        *is_copy = 1;
-        return (PyArrayObject *) PyArray_FromAny(
-            obj, PyArray_DescrFromType(NPY_INT), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
-            NULL);
-    }
-}
-
 // Wrapper code that is called from python code and sets up interface with C code.
 static PyObject *
 cube_wrapper(PyObject *module, PyObject *args)
@@ -743,8 +708,13 @@ static struct PyModuleDef moduledef = {
 PyMODINIT_FUNC
 PyInit_cube_match_sky_pointcloud(void)
 {
-    PyObject *m;
+    PyObject *m = PyModule_Create(&moduledef);
+    if (m == NULL) {
+        return NULL;
+    }
+
+    // Initialize NumPy API array (crucial before any array utility is called)
     import_array();
-    m = PyModule_Create(&moduledef);
+
     return m;
 }
