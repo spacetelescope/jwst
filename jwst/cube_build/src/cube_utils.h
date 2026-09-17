@@ -8,11 +8,6 @@
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_build_numpy_api
 #endif
 
-// Instruct secondary files (like cube_utils.c) NOT to create duplicate API tables
-// #ifndef NO_IMPORT_ARRAY
-// #define NO_IMPORT_ARRAY
-// #endif
-
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 

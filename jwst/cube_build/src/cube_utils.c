@@ -5,13 +5,14 @@ A clipped polygon is the overlapping polygon of the detector pixel and
 a spaxel.  We are only dealing with the spatial dimensions in this routine.
 */
 
+#define NO_IMPORT_ARRAY
+#include "cube_utils.h"
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include <Python.h>
 #include <stdbool.h>
-#define NO_IMPORT_ARRAY
-#include "cube_utils.h"
 
 #define CP_LEFT   0
 #define CP_RIGHT  1
