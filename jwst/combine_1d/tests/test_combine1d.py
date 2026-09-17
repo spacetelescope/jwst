@@ -7,7 +7,7 @@ import pytest
 
 from jwst import datamodels
 from jwst.combine_1d import Combine1dStep
-from jwst.combine_1d.combine1d import InputSpectrumModel, check_exptime, check_monotonic
+from jwst.combine_1d.combine1d import check_exptime, check_monotonic
 from jwst.datamodels.utils.tests.wfss_helpers import N_SOURCES, wfss_multi
 from jwst.tests.helpers import LogWatcher
 
@@ -149,13 +149,10 @@ def test_exptime_keys(exptime, casing):
         assert np.allclose(result.spec[0].spec_table["FLUX"], 1.5)
 
 
-def test_bad_exptime(two_spectra):
-    # Runtime error if bad key is passed to input model
-    with pytest.raises(RuntimeError):
-        InputSpectrumModel(two_spectra, two_spectra.spec[0], "bad")
-
+def test_bad_exptime(caplog):
     # Bad key is translated to unit_weight if checked
     assert check_exptime("bad") == "unit_weight"
+    assert "Don't understand exptime_key" in caplog.text
 
 
 def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
