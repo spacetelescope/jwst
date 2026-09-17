@@ -13,6 +13,7 @@ a spaxel.  We are only dealing with the spatial dimensions in this routine.
 #include <stdio.h>
 #include <Python.h>
 #include <stdbool.h>
+#define NO_IMPORT_ARRAY
 #include "cube_utils.h"
 
 #define CP_LEFT   0
