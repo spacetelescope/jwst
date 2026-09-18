@@ -440,7 +440,7 @@ class MatchRowError(Exception):
         super().__init__(message)
 
 
-def find_row(ldict, match_keys):
+def find_row(ldict, match_keys, require_one=True):
     """
     Find a row in a FITS table matching fields.
 
@@ -452,6 +452,8 @@ def find_row(ldict, match_keys):
     match_keys : dict
         ``{key: value}`` pairs are matched against all items in ``ldict``
         to find the dict which matches them.
+    require_one : bool, optional
+        If True, an error is raised if more than one row matches.
 
     Returns
     -------
@@ -463,7 +465,7 @@ def find_row(ldict, match_keys):
     Warning
         When a field name is not in the table.
     MatchFitsTableRowError
-        When more than one rows match.
+        When more than one rows match and ``require_one`` is True.
 
     Examples
     --------
@@ -488,7 +490,7 @@ def find_row(ldict, match_keys):
         row = [d[key] == match_keys[key] for key in match_keys]
         if all(row):
             results.append(d)
-    if len(results) > 1:
+    if len(results) > 1 and require_one:
         raise MatchRowError(f"Expected to find one matching row in table, found {len(results)}.")
     if len(results) == 0:
         log.warning("Expected to find one matching row in table, found 0.")
