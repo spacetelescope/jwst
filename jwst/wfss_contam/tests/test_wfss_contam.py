@@ -186,7 +186,7 @@ def test_constrain_orders_warn_subset(log_watcher):
     # only a subset of orders match
     orders = [1, 4]
     watcher = log_watcher(
-        "jwst.wfss_contam.wfss_contam", message="Skipping undefined orders", level="warning"
+        "jwst.assign_wcs.util", message="Skipping undefined orders", level="warning"
     )
     constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array([1]))
