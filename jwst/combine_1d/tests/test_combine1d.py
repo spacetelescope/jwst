@@ -263,14 +263,21 @@ def create_spec_model_nonmonotonic(npoints=10, flux=1e-9, error=1e-10, wave_rang
     return spec_model
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def wfss_multiexposure():
     return wfss_multi()
 
 
-def test_wfss_multi_input(wfss_multiexposure):
+def test_wfss_multi_input(wfss_multiexposure, log_watcher):
     """Smoke test to ensure combine_1d works with WFSSMultiSpecModel"""
+
+    # all input spectra should have valid data, so this log message should not trigger
+    watcher = log_watcher(
+        "jwst.combine_1d.combine1d", message="elements of output had no corresponding input data"
+    )
     result = Combine1dStep.call(wfss_multiexposure)
+    watcher.assert_not_seen()
+
     assert isinstance(result, datamodels.WFSSMultiCombinedSpecModel)
     assert result is not wfss_multiexposure
 
