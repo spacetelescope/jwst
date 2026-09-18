@@ -46,6 +46,7 @@ __all__ = [
     "Asn_Lv2ImageNonScience",
     "Asn_Lv2ImageSpecial",
     "Asn_Lv2ImageTSO",
+    "Asn_MIRLRSTAConfirm",
     "Asn_Lv2MIRLRSFixedSlitNod",
     "Asn_Lv2NRSFSS",
     "Asn_Lv2NRSIFUNod",
