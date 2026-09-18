@@ -446,8 +446,8 @@ def find_row(ldict, match_keys, require_one=True):
 
     Parameters
     ----------
-    ldict : list of dict
-        A list of dictionaries, The dictionaries may have any number
+    ldict : list of dict or `~astropy.io.fits.fitsrec.FITS_rec`
+        A list of dictionaries or a record array. The record may have any number
         of items but must include all keys in ``match_keys``.
     match_keys : dict
         ``{key: value}`` pairs are matched against all items in ``ldict``
@@ -457,15 +457,13 @@ def find_row(ldict, match_keys, require_one=True):
 
     Returns
     -------
-    row : int or None
-        FITS table row index, None if no match.
+    row : dict, or `~astropy.io.fits.fitsrec.FITS_rec`, or None
+        Matching table row. None if no match.
 
     Raises
     ------
-    Warning
-        When a field name is not in the table.
-    MatchFitsTableRowError
-        When more than one rows match and ``require_one`` is True.
+    MatchRowError
+        When more than one row matches and ``require_one`` is True.
 
     Examples
     --------
