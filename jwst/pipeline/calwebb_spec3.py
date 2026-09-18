@@ -21,6 +21,7 @@ from jwst.lib.exposure_types import is_moving_target
 from jwst.master_background import master_background_step
 from jwst.master_background.master_background_step import split_container
 from jwst.outlier_detection import outlier_detection_step
+from jwst.pfpc import pfpc_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
 from jwst.resample import resample_spec_step
@@ -60,6 +61,7 @@ class Spec3Pipeline(Pipeline):
         "outlier_detection": outlier_detection_step.OutlierDetectionStep,
         "adaptive_trace_model": adaptive_trace_model_step.AdaptiveTraceModelStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
+        "pfpc": pfpc_step.PFPCStep,
         "resample_spec": resample_spec_step.ResampleSpecStep,
         "cube_build": cube_build_step.CubeBuildStep,
         "extract_1d": extract_1d_step.Extract1dStep,
@@ -100,6 +102,7 @@ class Spec3Pipeline(Pipeline):
         self.pixel_replace.suffix = "pixel_replace"
         self.pixel_replace.output_use_model = True
         self.adaptive_trace_model.output_use_model = True
+        self.pfpc.save_results = self.save_results
 
         # Overriding the Step.save_model method for the following steps.
         # These steps may save intermediate files, resulting in meta.filename
@@ -246,6 +249,11 @@ class Spec3Pipeline(Pipeline):
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.
                 result = self.pixel_replace.run(result)
+
+                # From the cleaned cal files, create PFPC corrected spectra.
+                # Don't keep the result for further processing - the products are
+                # saved if the step succeeded.
+                self.pfpc.run(result)
 
                 # Resample time. Dependent on whether the data is IFU or not.
                 if exptype in IFU_EXPTYPES:
