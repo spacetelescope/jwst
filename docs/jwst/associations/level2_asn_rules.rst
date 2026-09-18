@@ -239,11 +239,11 @@ through any type of Stage 2 processing, such as
    * - NRC_TSGRISM
      - science
      - N/A
-     - tso-spec2
+     - spec2
    * - NRC_TSIMAGE
      - science
      - N/A
-     - tso-image2
+     - image2
    * - NRC_WFSS
      - science
      - N/A
@@ -303,7 +303,7 @@ through any type of Stage 2 processing, such as
    * - NRS_LAMP [#f1]_
      - science
      - N/A
-     - nrslamp-spec2
+     - spec2
    * - NRS_MIMF
      - science
      - N/A

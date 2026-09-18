@@ -29,7 +29,7 @@ def run_tso_spec2(rtdata_module):
     ]
     Step.from_cmdline(args)
 
-    # Run tso-spec2 pipeline on the second _rateints file, without saving or
+    # Run spec2 pipeline on the second _rateints file, without saving or
     # checking any results (simply create a fresh input for level-3 test)
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg002_nis_short_rateints.fits")
     args = [
@@ -87,7 +87,7 @@ def test_log_tracked_resources_spec3(log_tracked_resources, run_tso_spec3):
 
 @pytest.mark.parametrize("suffix", ["calints", "flat_field", "srctype", "x1dints", "bsubints"])
 def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwargs, suffix):
-    """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
+    """Regression test of spec2 pipeline performed on NIRISS SOSS data."""
     rtdata = rtdata_module
 
     output = f"jw01091002001_03101_00001-seg001_nis_short_{suffix}.fits"
@@ -116,7 +116,7 @@ def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_defau
 
 
 def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_default_kwargs):
-    """Regression test of tso-spec3 pipeline extract_1d results performed on NIRISS SOSS data."""
+    """Regression test of tso3 pipeline extract_1d results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
 
     output = "jw01091-o002_t001_niriss_clear-gr700xd-substrip256_x1dints.fits"
@@ -130,7 +130,7 @@ def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_defau
 
 
 def test_niriss_soss_stage3_whtlt(run_tso_spec3, rtdata_module, diff_astropy_tables):
-    """Regression test of tso-spec3 pipeline white_light results performed on NIRISS SOSS data."""
+    """Regression test of tso3 pipeline white_light results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
 
     output = "jw01091-o002_t001_niriss_clear-gr700xd-substrip256_whtlt.ecsv"
