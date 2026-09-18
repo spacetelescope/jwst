@@ -176,7 +176,7 @@ def wfss_comb():
     _add_multispec_meta(spec)
     spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
     recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
-    spec_table = np.recarray((N_ROWS,), dtype=recarray_dtype)
+    spec_table = np.zeros((N_ROWS,), dtype=recarray_dtype).view(np.recarray)
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)
     spec.spec_table = spec_table
