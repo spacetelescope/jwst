@@ -16,7 +16,7 @@ def run_tso_spec2(rtdata_module):
     """Run stage 2 pipeline on NIRISS SOSS data."""
     rtdata = rtdata_module
 
-    # Run tso-spec2 pipeline on the first _rateints file, saving intermediate products
+    # Run spec2 pipeline on the first _rateints file, saving intermediate products
     rtdata.get_data("niriss/soss/jwst_niriss_soss_bkg_sub256.fits")
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_nis_short_rateints.fits")
     args = [
@@ -222,7 +222,7 @@ def run_spec2_substrip96(rtdata_module):
 
 @pytest.mark.parametrize("suffix", ["calints", "x1dints"])
 def test_spec2_substrip96(rtdata_module, run_spec2_substrip96, fitsdiff_default_kwargs, suffix):
-    """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
+    """Regression test of spec2 pipeline performed on NIRISS SOSS data."""
     rtdata = rtdata_module
 
     output = f"jw03596001001_03102_00001-seg001_nis_ints0-2_{suffix}.fits"
