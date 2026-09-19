@@ -6,6 +6,7 @@ from pathlib import Path
 from stdatamodels.jwst import datamodels
 
 # step imports
+from jwst.associations.lib.dms_base import CORON_EXP_TYPES
 from jwst.coron import align_refs_step, klip_step, stack_refs_step
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.model_blender import ModelBlender
@@ -104,6 +105,9 @@ class Coron3Pipeline(Pipeline):
 
         # Create a DM object using the association table
         input_models = self.prepare_output(user_input, asn_exptypes=asn_exptypes)
+
+        # Validate input before proceeding
+        self.validate_input_exptype(input_models, CORON_EXP_TYPES)
 
         # This asn_id assignment is important as it allows outlier detection
         # to know the asn_id since that step receives the cube as input.

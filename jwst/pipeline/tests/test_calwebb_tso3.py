@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.associations.asn_from_list import asn_from_list
@@ -238,3 +239,10 @@ def test_tso3_model_blender(tmp_path):
         assert result.meta.exposure.integration_start == 1
         assert result.meta.exposure.integration_end == 4
         assert result.meta.exposure.exposure_time == 40.0
+
+
+def test_input_is_not_tso():
+    with niriss_soss_tso() as model1, niriss_soss_tso() as model2:
+        model2.meta.visit.tsovisit = False
+        with pytest.raises(TypeError, match="Input data are not TSO"):
+            Tso3Pipeline.call([model1, model2])

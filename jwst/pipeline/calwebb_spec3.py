@@ -17,7 +17,7 @@ from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
-from jwst.lib.exposure_types import is_moving_target
+from jwst.lib.exposure_types import SPEC_TYPES, is_moving_target
 from jwst.master_background import master_background_step
 from jwst.master_background.master_background_step import split_container
 from jwst.outlier_detection import outlier_detection_step
@@ -115,6 +115,9 @@ class Spec3Pipeline(Pipeline):
         # load input members into models and ModelContainer, or just
         # do a direct open of all members in ASN file, e.g.
         input_models = self.prepare_output(input_data, asn_exptypes=asn_exptypes)
+
+        # Validate input before proceeding
+        self.validate_input_exptype(input_models, SPEC_TYPES)
 
         if hasattr(input_models, "asn_table_name") and input_models.asn_table_name:
             table_name = Path(input_models.asn_table_name).name
