@@ -20,6 +20,9 @@ Complete Developer API
 .. automodapi:: jwst.wfss_contam.sens1d
    :no-inheritance-diagram:
 
+.. automodapi:: jwst.wfss_contam.trace_pdt
+   :no-inheritance-diagram:
+
 .. automodapi:: jwst.wfss_contam.wavefit
    :no-inheritance-diagram:
 
