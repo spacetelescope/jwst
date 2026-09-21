@@ -154,16 +154,15 @@ def process_exposures(models, output_file=None):
         log.debug(f"Calling the extract_1d step to extract spectra with parameters {extract_param}")
         with disable_logging(level=logging.INFO):
             spectra = Extract1dStep.call(cubes, **extract_param)
-
+        cubes.close()
         if not isinstance(spectra, ModelContainer):
             spectra = [spectra]
+
         patt_num = model.meta.dither.position_number
         if patt_num in spec_by_dither:
             spec_by_dither[patt_num].extend(spectra)
         else:
             spec_by_dither[patt_num] = spectra
-
-        # TODO - close intermediate models
 
     # Do spectral leak correction if needed and assemble a list of spectra to return
     output_spectra = []
@@ -196,6 +195,8 @@ def apply_correction(spec_by_exposure, pfpc_table):
     """
     log.info("Applying PFPC correction to each spectrum")
     corrected_spec = []
+
+    # Spectral data to correct. Variances and background not currently used.
     spec_columns = [
         "FLUX",
         "FLUX_ERROR",
@@ -280,7 +281,7 @@ def combine_dithers(corrected_spec):
     log.debug(f"Calling the combine_1d step with parameters {combine_param}")
     combined_spec = []
     for band in spec_by_band:
-        # TODO: combine1d does not propagate variance or background
+        # NOTE: combine1d does not propagate variance or background
         with disable_logging(level=logging.WARNING):
             combined = Combine1dStep.call(spec_by_band[band], **combine_param)
 
@@ -323,5 +324,6 @@ def combine_dithers(corrected_spec):
         multispec.update(spec_by_band[band][0])
 
         combined_spec.append(multispec)
+        combined.close()
 
     return combined_spec
