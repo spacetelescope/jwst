@@ -24,9 +24,9 @@ def test_moving_target_typeerror():
         is_moving_target("not a datamodel or dict")
 
 
-@pytest.mark.parametrize("override", ["POINT", "EXTENDED", None])
+@pytest.mark.parametrize("override", ["POINT", "EXTENDED", "UNKNOWN", None])
 @pytest.mark.parametrize("level", ["top", "meta", None])
-@pytest.mark.parametrize("value", ["POINT", "EXTENDED", None])
+@pytest.mark.parametrize("value", ["POINT", "EXTENDED", "UNKNOWN", None])
 def test_is_point_source(override, level, value):
     model = SlitModel()
     if level == "top":
