@@ -9,6 +9,7 @@ from gwcs import wcstools
 from stcal.alignment.util import compute_scale
 
 from jwst.assign_wcs import nirspec
+from jwst.lib.exposure_types import is_point_source
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
 
@@ -26,7 +27,6 @@ __all__ = [
     "calculate_two_shutter_uniform_pathloss",
     "do_correction",
     "interpolate_onto_grid",
-    "is_pointsource",
     "do_correction_mos",
     "do_correction_fixedslit",
     "do_correction_ifu",
@@ -436,7 +436,7 @@ def do_correction(
         corrections = do_correction_ifu(input_model, pathloss_model, inverse, source_type)
     elif exp_type in ["MIR_LRS-FIXEDSLIT", "MIR_WFSS"]:
         # only apply correction to LRS fixed-slit if target is point source
-        if is_pointsource(input_model.meta.target.source_type):
+        if is_point_source(input_model):
             do_correction_lrs(input_model, pathloss_model, user_slit_loc)
         else:
             log.warning("Not a point source; skipping correction for LRS.")
@@ -518,35 +518,11 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
 
     fraction = numerator / denominator
 
-    pathloss_grid = wavelength_grid * 0.0
-
     pathloss_grid = extended_pathloss_vector[lower_indices] + fraction * (
         extended_pathloss_vector[upper_indices] - extended_pathloss_vector[lower_indices]
     )
 
     return pathloss_grid
-
-
-def is_pointsource(srctype):
-    """
-    Check whether input is a point source.
-
-    Parameters
-    ----------
-    srctype : str
-        Determined type of source.
-
-    Returns
-    -------
-    result : bool
-        `True` if ``srctype`` is "POINT"
-    """
-    if srctype is None:
-        return False
-    elif srctype.upper() == "POINT":
-        return True
-    else:
-        return False
 
 
 def do_correction_mos(data, pathloss, inverse=False, source_type=None):
@@ -994,7 +970,7 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
     )
 
     # Use the appropriate correction for this slit
-    if is_pointsource(source_type or slit.source_type):
+    if is_point_source(slit, override_srctype=source_type):
         pathloss_2d = pathloss_2d_ps
         correction_type = "POINT"
     else:
@@ -1068,7 +1044,7 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
     wavelength_uniformsource *= 1.0e6
 
     # Use the appropriate correction for this slit
-    if is_pointsource(source_type or slit.source_type):
+    if is_point_source(slit, override_srctype=source_type):
         # calculate the point source corrected wavelengths and uncorrected wavelengths
         # for the slit
         wavelength_array_corr = get_wavelengths(slit, use_wavecorr=True)
@@ -1173,7 +1149,7 @@ def _corrections_for_ifu(data, pathloss, source_type):
     )
 
     # Use the appropriate correction for the source type
-    if is_pointsource(source_type or data.meta.target.source_type):
+    if is_point_source(data, override_srctype=source_type):
         pathloss_2d = pathloss_2d_ps
         correction_type = "POINT"
     else:

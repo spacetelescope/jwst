@@ -357,22 +357,6 @@ def test_calculate_pathloss_vector_interpolation_nontrivial():
     assert is_inside_slitlet is True
 
 
-def test_is_pointsource():
-    """Check to see if object it point source"""
-
-    point_source = None
-    result = pl.is_pointsource(point_source)
-    assert result is False
-
-    point_source = "point"
-    result = pl.is_pointsource(point_source)
-    assert result is True
-
-    point_source = "not a point"
-    result = pl.is_pointsource(point_source)
-    assert result is False
-
-
 def test_do_correction_msa_slit_size_eq_0(caplog):
     """If slits have size 0, quit calibration."""
 
