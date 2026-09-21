@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import numpy as np
 from stdatamodels.jwst import datamodels
@@ -19,7 +20,7 @@ __all__ = ["find_correction", "process_exposures", "apply_correction", "combine_
 SUPPORTED_EXPTYPES = ["MIR_MRS", "NRS_IFU"]
 
 
-def find_correction(model, pfpc_table, ignore_keys=None, require_one=True):
+def find_correction(model, pfpc_table, ignore_keys=None, require_one=True, check_reffiles=True):
     """
     Find a matching correction row in the PFPC table.
 
@@ -34,6 +35,9 @@ def find_correction(model, pfpc_table, ignore_keys=None, require_one=True):
     require_one : bool, optional
         If True, an error is raised if more than one row matches the
         input model.
+    check_reffiles : bool, optional
+        If True, log a warning if reference files in the returned table row
+        do not match those recorded by the input model.
 
     Returns
     -------
@@ -53,9 +57,18 @@ def find_correction(model, pfpc_table, ignore_keys=None, require_one=True):
     # Set up a default dictionary with keywords to match,
     # from fields present in the PFPC table
     fields_to_match = {}
+    ref_file_fields = {}
     for col_name in pfpc_table.columns.names:
-        # TODO: add reference file handling
-        if col_name.lower() not in pfpc_ignore:
+        name = col_name.lower()
+        if name in pfpc_ignore:
+            # Skip any keywords specifically ignored
+            continue
+        if name.startswith("r_"):
+            # Reference file keywords starting with 'R_' are handled separately,
+            # to issue warnings only.
+            ref_file_fields[col_name] = "N/A"
+        else:
+            # Otherwise, assume the keyword needs to match.
             fields_to_match[col_name] = "N/A"
 
     # Read model metadata into a flat dict
@@ -69,12 +82,26 @@ def find_correction(model, pfpc_table, ignore_keys=None, require_one=True):
         # Update match values if metadata is present
         if len(meta_field) == 1 and meta_field[0] in model_meta:
             fields_to_match[field] = model_meta[meta_field[0]]
+    for field in ref_file_fields:
+        meta_field = model.find_fits_keyword(field.upper())
+        if len(meta_field) == 1 and meta_field[0] in model_meta:
+            ref_file_fields[field] = Path(model_meta[meta_field[0]]).name
 
-    # Find a matching row in the table from all fields.
+    # Find a matching row in the table from all matchable fields.
     # Allow it to raise an error for multiple rows if require_one is True.
     # Will warn and return None if no match is found.
     table_row = find_row(pfpc_table, fields_to_match, require_one=require_one)
 
+    # Warn if the returned row contains different reference files than the input
+    if check_reffiles and table_row is not None:
+        for field, input_value in ref_file_fields.items():
+            table_value = table_row[field]
+            if table_value != "N/A" and input_value != table_value:
+                log.warning(
+                    f"Reference file {field.upper()} = {table_value} "
+                    f"does not match input value {input_value}"
+                )
+                log.warning("PFPC corrections may be invalid.")
     return table_row
 
 
@@ -157,7 +184,7 @@ def apply_correction(spec_by_exposure, pfpc_table):
 
     Parameters
     ----------
-    spec_by_exposure : list of `~stdatamodels.jwst.datamodels.JwstDataModel`
+    spec_by_exposure : list or `~jwst.datamodels.container.ModelContainer`
         Extracted spectra, one for each exposure and band.
     pfpc_table : `~astropy.io.fits.fitsrec.FITS_rec`
         Record array containing PFPC corrections and columns to match to the data.
@@ -222,7 +249,7 @@ def combine_dithers(corrected_spec):
 
     Parameters
     ----------
-    corrected_spec : list of `~stdatamodels.jwst.datamodels.JwstDataModel`
+    corrected_spec : list or `~jwst.datamodels.container.ModelContainer`
         PFPC corrected spectra from individual exposures and bands.
 
     Returns
