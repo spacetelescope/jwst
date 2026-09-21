@@ -24,7 +24,7 @@ from jwst.extract_1d import extract1d, spec_wcs
 from jwst.extract_1d.apply_apcorr import select_apcorr
 from jwst.extract_1d.psf_profile import psf_profile
 from jwst.extract_1d.source_location import location_from_wcs
-from jwst.lib import pipe_utils
+from jwst.lib import exposure_types, pipe_utils
 from jwst.lib.wcs_utils import get_wavelengths
 
 __all__ = [
@@ -741,7 +741,6 @@ def copy_keyword_info(slit, slitname, spec):
     copy_populated_attributes = [
         "source_name",
         "source_alias",
-        "source_type",
         "stellarity",
         "quadrant",
         "slit_xscale",
@@ -1618,25 +1617,19 @@ def create_extraction(
         if exp_type not in WFSS_EXPTYPES + ["NRC_TSGRISM"]:
             log.warning("The photom step has not been run.")
 
-    # Get the source type for the data
+    # Check the source type for the data
     if slit is not None:
-        source_type = slit.source_type
+        is_point_source = exposure_types.is_point_source(slit)
     else:
-        if isinstance(input_model, datamodels.SlitModel):
-            source_type = input_model.source_type
-            if source_type is None:
-                source_type = input_model.meta.target.source_type
-                input_model.source_type = source_type
-        else:
-            source_type = input_model.meta.target.source_type
+        is_point_source = exposure_types.is_point_source(input_model)
 
     # Turn off use_source_posn if the source is not POINT
-    if source_type != "POINT" or exp_type in WFSS_EXPTYPES:
+    if not is_point_source or exp_type in WFSS_EXPTYPES:
         if kwargs.get("use_source_posn") is None:
             kwargs["use_source_posn"] = False
             log.info(
                 f"Setting use_source_posn to False for exposure type {exp_type}, "
-                f"source type {source_type}"
+                f"point source = {is_point_source}"
             )
 
     if photom_has_been_run:
@@ -1688,7 +1681,7 @@ def create_extraction(
 
     # Set up aperture correction, to be used for every integration
     apcorr_available = False
-    if source_type is not None and source_type.upper() == "POINT" and apcorr_ref_model is not None:
+    if is_point_source and apcorr_ref_model is not None:
         log.info("Creating aperture correction.")
         # NIRSpec needs to use a wavelength in the middle of the
         # range rather than the beginning of the range
@@ -1818,7 +1811,7 @@ def create_extraction(
         # The input units will normally be MJy / sr, but for NIRSpec
         # point-source spectra the units will be MJy.
         input_units_are_megajanskys = (
-            photom_has_been_run and source_type == "POINT" and instrument == "NIRSPEC"
+            photom_has_been_run and is_point_source and instrument == "NIRSPEC"
         )
 
         if photom_has_been_run:
@@ -1935,6 +1928,13 @@ def create_extraction(
             spec.extraction_ystart = left_limit + 1
             spec.extraction_ystop = right_limit + 1
 
+        # Set a standardized source type
+        if is_point_source:
+            spec.source_type = "POINT"
+        else:
+            spec.source_type = "EXTENDED"
+
+        # Copy any relevant keywords from the slit to the spec
         copy_keyword_info(data_model, slitname, spec)
 
         if exp_type in WFSS_EXPTYPES:
