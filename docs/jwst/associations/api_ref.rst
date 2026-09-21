@@ -126,11 +126,6 @@ Complete Developer API
 .. automodapi:: jwst.associations.load_as_asn
    :no-inheritance-diagram:
 
-.. automodapi:: jwst.associations.main
-   :no-inheritance-diagram:
-   :no-main-docstr:
-   :skip: Main
-
 .. automodapi:: jwst.associations.pool
    :no-inheritance-diagram:
    :no-main-docstr:
