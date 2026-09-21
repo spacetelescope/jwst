@@ -78,7 +78,7 @@ class PFPCStep(Step):
         # Check the first input against the PFPC table and skip processing if no match
         ignore_keys = ["channel"]  # channel may not exactly match before extraction
         first_correction = find_correction(
-            models[0], pfpc_table, ignore_keys=ignore_keys, require_one=False
+            models[0], pfpc_table, ignore_keys=ignore_keys, require_one=False, check_reffiles=False
         )
         if first_correction is None:
             log.warning("No matching PFPC correction found for input models.")
