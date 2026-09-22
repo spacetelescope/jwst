@@ -58,19 +58,13 @@ class PFPCStep(Step):
             # Set up output path name to include the ASN ID if available
             self.add_asn_id_to_output_name(models)
 
-        # Make an empty container for output: if no products can be made,
-        # none are returned
-        output_container = ModelContainer()
-
         # Get the reference file from the first model
         try:
             pfpc_file = self.get_reference_file(models[0], "pfpc")
         except CrdsLookupError:
             pfpc_file = "N/A"
         if pfpc_file == "N/A":
-            log.warning("No PFPC reference file found.")
-            record_step_status(output_model, "pfpc", success=False)
-            return output_container
+            return self._step_failed(input_data, output_model, "No PFPC reference file found.")
 
         with datamodels.open(pfpc_file) as pfpc_model:
             pfpc_table = pfpc_model.pfpc_table
@@ -81,33 +75,76 @@ class PFPCStep(Step):
             models[0], pfpc_table, ignore_keys=ignore_keys, require_one=False, check_reffiles=False
         )
         if first_correction is None:
-            log.warning("No matching PFPC correction found for input models.")
-            record_step_status(output_model, "pfpc", success=False)
-            return output_container
-
-        # TODO - Also check that all input models are point sources and did TA
+            return self._step_failed(
+                input_data, output_model, "No matching PFPC correction found for input models."
+            )
 
         # Extract spectra from each exposure
         spec_by_exposure = process_exposures(models, output_file)
+        if len(spec_by_exposure) == 0:
+            return self._step_failed(
+                input_data, output_model, "No correctable spectra were created."
+            )
 
         # Apply the PFPC correction at each dither position
         corrected_spec = apply_correction(spec_by_exposure, pfpc_table)
+        if len(corrected_spec) == 0:
+            return self._step_failed(input_data, output_model, "No corrected spectra were created.")
 
         # Combine spectra across all dithers for each band
-        if len(corrected_spec) > 0:
-            combined_spec = combine_dithers(corrected_spec)
-        else:
-            log.warning("No corrected spectra were created.")
-            record_step_status(output_model, "pfpc", success=False)
-            return output_container
+        combined_spec = combine_dithers(corrected_spec)
+        if len(combined_spec) == 0:
+            return self._step_failed(input_data, output_model, "No valid spectra were created.")
 
-        # Update step status and assemble output
-        for spec in combined_spec:
+        # Step succeeded: update step status and assemble output
+        output_container = ModelContainer(combined_spec)
+        for spec in output_container:
             spec.meta.cal_step.pfpc = "COMPLETE"
-            output_container.append(spec)
 
         # Close the input models if necessary: returned models are newly created
         if output_model is not input_data:
             output_model.close()
 
         return output_container
+
+    @staticmethod
+    def _step_failed(input_data, output_model, message):
+        """
+        Log a message, clean up inputs, and return an empty container on step failure.
+
+        If the `input_data` is the same as the `output_model`, then a failure
+        status for the step is recorded in the output model(s). This is intended for
+        pipeline use, so that the user has an indication that the step was attempted
+        but did not complete.
+
+        If the `input_data` is the same as the `output_model`, then the step was
+        called in standalone context and the output model(s) are just closed.
+
+        Parameters
+        ----------
+        input_data : str or `~stdatamodels.jwst.datamodels.JwstDataModel` \
+                     or `~jwst.datamodels.container.ModelContainer`
+            Input filename or datamodel.
+        output_model : `~stdatamodels.jwst.datamodels.JwstDataModel` \
+                       or `~jwst.datamodels.container.ModelContainer`
+            Opened datamodel(s).
+        message : str
+            Warning message to log.
+
+        Returns
+        -------
+        `~jwst.datamodels.container.ModelContainer`
+             Empty container to be returned as the output for the step.
+        """
+        # Warn for the failure
+        log.warning(message)
+
+        if output_model is not input_data:
+            # Input data was copied: just close the opened models
+            output_model.close()
+        else:
+            # Input data was not copied (i.e. in pipeline context): record the failure
+            record_step_status(output_model, "pfpc", success=False)
+
+        # Return an empty model container: no products are saved or propagated
+        return ModelContainer()

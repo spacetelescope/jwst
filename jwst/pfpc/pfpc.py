@@ -9,6 +9,7 @@ from jwst.cube_build.cube_build_step import CubeBuildStep
 from jwst.datamodels import ModelContainer
 from jwst.extract_1d.extract_1d_step import Extract1dStep
 from jwst.lib.basic_utils import disable_logging
+from jwst.lib.exposure_types import is_point_source
 from jwst.lib.reffile_utils import find_row
 from jwst.residual_fringe.utils import fit_residual_fringes_1d
 from jwst.spectral_leak.spectral_leak_step import SpectralLeakStep
@@ -109,6 +110,9 @@ def process_exposures(models, output_file=None):
     """
     Extract spectra from each exposure and band.
 
+    Check for a point source and TA completion in each model. If not present,
+    no processing is performed.
+
     Currently only IFU modes are supported.  Calls ``cube_build`` then
     ``extract_1d`` with standardized parameters.  For MIRI MRS,
     also calls ``spectral_leak``.
@@ -125,6 +129,11 @@ def process_exposures(models, output_file=None):
     -------
     spectra : list of `~stdatamodels.jwst.datamodels.JwstDataModel`
         Extracted spectra, one for each exposure and band.
+
+    Raises
+    ------
+    TypeError
+        If an unsupported exposure type is encountered.
     """
     log.info("Extracting spectra from each exposure")
     spec_by_dither = {}
@@ -137,6 +146,14 @@ def process_exposures(models, output_file=None):
             is_mrs = True
         if exp_type not in SUPPORTED_EXPTYPES:
             raise TypeError(f"Exposure type {model.meta.exposure.type} is not supported")
+
+        # Check for a point source and TA complete
+        if not is_point_source(model):
+            log.warning("Not a point source. Skipping processing.")
+            continue
+        if not ta_performed(model):
+            log.warning("TA was not performed. Skipping processing.")
+            continue
 
         cube_param = {
             "coord_system": "ifualign",
@@ -327,3 +344,22 @@ def combine_dithers(corrected_spec):
         combined.close()
 
     return combined_spec
+
+
+def ta_performed(model):  # noqa: ARG001
+    """
+    Check that a target acquisition (TA) was performed.
+
+    This function is a placeholder so far. It requires metadata not yet implemented.
+
+    Parameters
+    ----------
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Input datamodel.
+
+    Returns
+    -------
+    bool
+        True if TA was performed.
+    """
+    return True
