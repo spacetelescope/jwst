@@ -322,7 +322,7 @@ def is_point_source(datamodel, override_srctype=None):
     Parameters
     ----------
     datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel` or \
-                `stdatamodels.properties.ObjectNode`
+                `~stdatamodels.properties.ObjectNode`
         Input datamodel, slit, or spectrum to check.
     override_srctype : str or None, optional
         If provided, is used in place of metadata from the model.
