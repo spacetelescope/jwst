@@ -1512,7 +1512,7 @@ class IFUCubeData:
         dq : ndarray
            DQ associated with ``coord1, coord2``
         readvar : ndarray
-           var_rnoise associated with ``coord1 coord2``
+           Var_rnoise associated with ``coord1 coord2``
         rois_det : float
            Spatial ROI size to use
         roiw_det : ndarray
