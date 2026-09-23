@@ -11,4 +11,5 @@ Public Step API
 Complete Developer API
 ======================
 
-TBD
+.. automodapi:: jwst.pfpc.pfpc
+   :no-inheritance-diagram:
