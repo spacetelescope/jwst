@@ -185,13 +185,16 @@ See [`TESTING.md`](./TESTING.md) for instructions on automated testing.
 
 The table below provides information on each release of the `jwst` package and its relationship to software builds used in STScI JWST DMS operations.
 Each `jwst` tag was released on PyPI on the date given in `Released`, and then subsequently installed into operations on the date given in `Ops Install`.
+Generally, new releases take six to eight weeks to be installed on Ops; complete reprocessing of the archive takes an additional four to six weeks.
+
+For more information on builds and timelines, see https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
-| ------------------- | --------- | -------- | ------------ | ---------- | ----------- | --------------------------------------------- |
-| 3.0.0               | B13.0     | 2026.1.0 | 1584         | 2026-06-23 |             | First release candidate for B13.0             |
-| 2.0.1               | B12.3.1   | 2026.1.0 | 1535         | 2026-05-06 |             | First release candidate for B12.3.1           |
+| ------------------- | --------- | -------- | ------------ | ---------- |-------------| --------------------------------------------- |
+| 3.0.0               | B13.0     | 2026.1.0 | 1584         | 2026-06-23 | 2026-09-08  | First release candidate for B13.0             |
+| 2.0.1               | B12.3.1   | 2026.1.0 | 1535         | 2026-05-06 | 2026-05-26  | First release candidate for B12.3.1           |
 | 2.0.0               | B12.3     | 2026.1.0 | 1535         | 2026-04-13 |             | First release candidate for B12.3             |
-| 1.20.2              | B12.1.1   | 2025.4.1 | 1464         | 2025-10-31 |             | Patch release for B12.1.1                     |
+| 1.20.2              | B12.1.1   | 2025.4.1 | 1464         | 2025-10-31 | 2025-11-20  | Patch release for B12.1.1                     |
 | 1.20.1              | B12.1     | 2025.4.0 | 1464         | 2025-10-20 |             | Patch release for B12.1                       |
 | 1.20.0              | B12.1     | 2025.4.0 | 1462         | 2025-10-15 |             | First release candidate for B12.1             |
 | 1.19.2              | B12.0.2   | 2025.3.0 | 1408         | 2025-09-11 | 2025-10-06  | Patch release for B12.0.2                     |
