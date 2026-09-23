@@ -83,6 +83,8 @@ def find_correction(model, pfpc_table, ignore_keys=None, require_one=True, check
         # Update match values if metadata is present
         if len(meta_field) == 1 and meta_field[0] in model_meta:
             fields_to_match[field] = model_meta[meta_field[0]]
+
+    # Do the same for the reference file fields
     for field in ref_file_fields:
         meta_field = model.find_fits_keyword(field.upper())
         if len(meta_field) == 1 and meta_field[0] in model_meta:

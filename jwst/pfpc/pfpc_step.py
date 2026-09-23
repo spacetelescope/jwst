@@ -117,7 +117,7 @@ class PFPCStep(Step):
         pipeline use, so that the user has an indication that the step was attempted
         but did not complete.
 
-        If the `input_data` is the same as the `output_model`, then the step was
+        If the `input_data` is not the same as the `output_model`, then the step was
         called in standalone context and the output model(s) are just closed.
 
         Parameters
