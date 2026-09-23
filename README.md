@@ -190,7 +190,7 @@ Generally, new releases take six to eight weeks to be installed on Ops; complete
 For more information on builds and timelines, see https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
-| ------------------- | --------- | -------- | ------------ | ---------- |-------------| --------------------------------------------- |
+| ------------------- | --------- | -------- | ------------ | ---------- | ----------- | --------------------------------------------- |
 | 3.0.0               | B13.0     | 2026.1.0 | 1584         | 2026-06-23 | 2026-09-08  | First release candidate for B13.0             |
 | 2.0.1               | B12.3.1   | 2026.1.0 | 1535         | 2026-05-06 | 2026-05-26  | First release candidate for B12.3.1           |
 | 2.0.0               | B12.3     | 2026.1.0 | 1535         | 2026-04-13 |             | First release candidate for B12.3             |
