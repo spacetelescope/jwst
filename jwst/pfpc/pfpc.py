@@ -151,7 +151,7 @@ def process_exposures(models, output_file=None):
         if not is_point_source(model):
             log.warning("Not a point source. Skipping processing.")
             continue
-        if not ta_performed(model):
+        if not _ta_performed(model):
             log.warning("TA was not performed. Skipping processing.")
             continue
 
@@ -346,7 +346,7 @@ def combine_dithers(corrected_spec):
     return combined_spec
 
 
-def ta_performed(model):  # noqa: ARG001
+def _ta_performed(model):  # noqa: ARG001
     """
     Check that a target acquisition (TA) was performed.
 
