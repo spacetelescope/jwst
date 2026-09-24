@@ -1,0 +1,1 @@
+Fix a bug where certain spectral orders (e.g. NIRISS order 0) were not being masked for WFSS modes.

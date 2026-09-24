@@ -20,7 +20,12 @@ from stdatamodels.jwst.datamodels import (
     MiriLRSSpecwcsModel,
     WavelengthrangeModel,
 )
-from stdatamodels.jwst.transforms.models import GrismObject
+from stdatamodels.jwst.transforms.models import (
+    GrismObject,
+    MIRIWFSSBackwardDispersion,
+    NIRCAMBackwardGrismDispersion,
+    NIRISSBackwardGrismDispersion,
+)
 from stpipe.exceptions import StpipeExitException
 
 from jwst.lib.catalog_utils import SkyObject, read_source_catalog
@@ -42,6 +47,8 @@ __all__ = [
     "wrap_ra",
     "update_fits_wcsinfo",
     "is_sky_like",
+    "validate_orders_against_transform",
+    "validate_orders_against_reference",
 ]
 
 
@@ -282,6 +289,93 @@ def get_object_info(catalog_name=None):
     return objects
 
 
+def validate_orders_against_reference(orders, spec_orders):
+    """
+    Compare user-requested spectral orders with the orders defined in the reference file.
+
+    Parameters
+    ----------
+    orders : list
+        List of user-requested spectral orders.
+    spec_orders : list
+        List of spectral orders defined in the reference file.
+
+    Returns
+    -------
+    ndarray
+        1-D array spectral orders constrained to the user-specified ones
+        that are also defined in the reference file.
+    """
+    spec_orders = np.array(spec_orders, dtype=int)
+    if orders is None:
+        return spec_orders
+    orders = np.array(orders, dtype=int)
+    good_orders = np.isin(orders, spec_orders, assume_unique=True)
+    if (len(good_orders) == 0) or (not np.any(good_orders)):
+        log.error(
+            f"None of the requested spectral orders {orders} are defined "
+            "in the wavelength range reference file. "
+            f"Expected orders are: {spec_orders}. "
+        )
+        return []
+    if not np.all(good_orders):
+        log.warning(
+            f"Not all requested spectral orders {orders} are defined in the "
+            f"wavelength range reference file. Defined orders are: {spec_orders}. "
+            "Skipping undefined orders."
+        )
+    return orders[good_orders]
+
+
+def validate_orders_against_transform(wcs, spec_orders):
+    """
+    Ensure the requested spectral orders are defined in the WCS transforms.
+
+    Parameters
+    ----------
+    wcs : gwcs.wcs.WCS
+        The input model's WCS object.
+    spec_orders : list
+        The list of requested spectral orders.
+
+    Returns
+    -------
+    list
+        List of spectral orders that are defined in the WCS transform.
+    """
+    sky_to_grism = wcs.backward_transform
+    good_orders = spec_orders.copy()
+    for model in sky_to_grism:
+        if isinstance(
+            model,
+            (
+                NIRCAMBackwardGrismDispersion,
+                NIRISSBackwardGrismDispersion,
+                MIRIWFSSBackwardDispersion,
+            ),
+        ):
+            # Get the orders defined in the transform
+            orders = np.sort(model.orders)
+            is_good_order = [order in orders for order in spec_orders]
+            if not any(is_good_order):
+                log.error(
+                    f"None of the requested spectral orders {spec_orders} are defined "
+                    "in the WCS transform. "
+                    f"Defined orders are: {orders}. "
+                )
+                return []
+            if not all(is_good_order):
+                log.warning(
+                    f"Not all requested spectral orders {spec_orders} are "
+                    f"defined in the WCS transform. Defined orders are: {orders}. "
+                    "Skipping undefined orders."
+                )
+            good_orders = [order for order in spec_orders if order in orders]
+            # There will be only one transform of this type in the wcs
+            break
+    return np.sort(good_orders)
+
+
 def create_grism_bbox(
     input_model,
     reference_files=None,
@@ -385,6 +479,12 @@ def create_grism_bbox(
             if extract_orders is None:
                 # ref_extract_orders = extract_orders
                 extract_orders = [x[1] for x in ref_extract_orders if x[0] == filter_name].pop()
+            else:
+                # need to validate the requested orders actually exist in the transform
+                extract_orders = validate_orders_against_reference(extract_orders, f.order)
+                extract_orders = validate_orders_against_transform(
+                    input_model.meta.wcs, extract_orders
+                )
 
             wavelength_range = f.get_wfss_wavelength_range(filter_name, extract_orders)
     if mmag_extract is None:

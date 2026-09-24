@@ -7,12 +7,12 @@ import types
 import numpy as np
 from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.transforms.models import (
-    NIRCAMBackwardGrismDispersion,
-    NIRISSBackwardGrismDispersion,
-)
 
-from jwst.assign_wcs.util import get_bounding_box_extents
+from jwst.assign_wcs.util import (
+    get_bounding_box_extents,
+    validate_orders_against_reference,
+    validate_orders_against_transform,
+)
 from jwst.lib.catalog_utils import read_source_catalog
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
@@ -178,86 +178,6 @@ def match_backplane_prefer_first(slit0, slit1):
     slit1.ysize = slit0.ysize
 
     return slit1
-
-
-def _validate_orders_against_reference(orders, spec_orders):
-    """
-    Compare user-requested spectral orders with the orders defined in the reference file.
-
-    Parameters
-    ----------
-    orders : list[int]
-        List of user-requested spectral orders.
-    spec_orders : list[int]
-        List of spectral orders defined in the reference file.
-
-    Returns
-    -------
-    np.ndarray[int]
-        List of spectral orders constrained to the user-specified ones
-        that are also defined in the reference file.
-    """
-    spec_orders = np.array(spec_orders, dtype=int)
-    if orders is None:
-        return spec_orders
-    orders = np.array(orders, dtype=int)
-    good_orders = np.isin(orders, spec_orders, assume_unique=True)
-    if (len(good_orders) == 0) or (not np.any(good_orders)):
-        log.error(
-            f"None of the requested spectral orders {orders} are defined "
-            "in the wavelength range reference file. "
-            f"Expected orders are: {spec_orders}. "
-        )
-        return []
-    if not np.all(good_orders):
-        log.warning(
-            f"Not all requested spectral orders {orders} are defined in the "
-            f"wavelength range reference file. Defined orders are: {spec_orders}. "
-            "Skipping undefined orders."
-        )
-    return orders[good_orders]
-
-
-def _validate_orders_against_transform(wcs, spec_orders):
-    """
-    Ensure the requested spectral orders are defined in the WCS transforms.
-
-    Parameters
-    ----------
-    wcs : gwcs.wcs.WCS
-        The input MultiSlitModel's WCS object.
-    spec_orders : list[int]
-        The list of requested spectral orders.
-
-    Returns
-    -------
-    list
-        List of spectral orders that are defined in the WCS transform.
-    """
-    sky_to_grism = wcs.backward_transform
-    good_orders = spec_orders.copy()
-    for model in sky_to_grism:
-        if isinstance(model, (NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion)):
-            # Get the orders defined in the transform
-            orders = np.sort(model.orders)
-            is_good_order = [order in orders for order in spec_orders]
-            if not any(is_good_order):
-                log.error(
-                    f"None of the requested spectral orders {spec_orders} are defined "
-                    "in the WCS transform. "
-                    f"Defined orders are: {orders}. "
-                )
-                return []
-            if not all(is_good_order):
-                log.warning(
-                    f"Not all requested spectral orders {spec_orders} are "
-                    f"defined in the WCS transform. Defined orders are: {orders}. "
-                    "Skipping undefined orders."
-                )
-            good_orders = [order for order in spec_orders if order in orders]
-            # There will be only one transform of this type in the wcs
-            break
-    return np.sort(good_orders)
 
 
 def _find_min_relresp(sens_waves, sens_response):
@@ -694,8 +614,8 @@ def contam_corr(
     # array of order values in the Wavelengthrange ref file,
     # then constrain the orders to the user-specified ones
     spec_orders = np.asarray(waverange.order)
-    spec_orders = _validate_orders_against_reference(orders, spec_orders)
-    spec_orders = _validate_orders_against_transform(grism_wcs, spec_orders)
+    spec_orders = validate_orders_against_reference(orders, spec_orders)
+    spec_orders = validate_orders_against_transform(grism_wcs, spec_orders)
     if len(spec_orders) == 0:
         log.error("No valid spectral orders found. Step will be SKIPPED.")
         return input_model, None
