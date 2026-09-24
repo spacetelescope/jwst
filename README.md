@@ -188,7 +188,7 @@ Each `jwst` tag was released on PyPI on the date given in `Released`, and then s
 Generally, new releases take six to eight weeks to be installed on Ops; complete reprocessing of the archive takes an additional four to six weeks.
 
 For more information on builds and timelines, see the 
-`operations and pipeline build information <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information>`__ page on JDox.
+[operations and pipeline build information](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information) page on JDox.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 | ------------------- | --------- | -------- | ------------ | ---------- | ----------- | --------------------------------------------- |
