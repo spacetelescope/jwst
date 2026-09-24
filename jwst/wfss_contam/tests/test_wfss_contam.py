@@ -14,9 +14,9 @@ from jwst.wfss_contam.wfss_contam import (
     _build_simulated_image_from_cutouts,
     _cut_frame_to_match_cutout,
     _find_matching_simul_cutout,
-    _validate_orders_against_reference,
     contam_corr,
     match_backplane_prefer_first,
+    validate_orders_against_reference,
 )
 
 VALID_ORDERS = [-1, 0, 1, 2, 3]
@@ -152,11 +152,11 @@ def test_apply_magnitude_limit_no_sources(photom_ref_model, source_catalog):
 def test_constrain_orders(log_watcher):
     # normal case
     orders = [1, 2]
-    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
+    constrained_orders = validate_orders_against_reference(orders, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array(orders))
 
     # orders is None
-    constrained_orders = _validate_orders_against_reference(None, VALID_ORDERS)
+    constrained_orders = validate_orders_against_reference(None, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array(VALID_ORDERS))
 
 
@@ -168,7 +168,7 @@ def test_constrain_orders_error_empty(log_watcher):
         message="None of the requested spectral orders ",
         level="error",
     )
-    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
+    constrained_orders = validate_orders_against_reference(orders, VALID_ORDERS)
     assert not constrained_orders
 
     # none of the orders match spec_orders
@@ -178,7 +178,7 @@ def test_constrain_orders_error_empty(log_watcher):
         message="None of the requested spectral orders ",
         level="error",
     )
-    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
+    constrained_orders = validate_orders_against_reference(orders, VALID_ORDERS)
     assert not constrained_orders
 
 
@@ -188,7 +188,7 @@ def test_constrain_orders_warn_subset(log_watcher):
     watcher = log_watcher(
         "jwst.assign_wcs.util", message="Skipping undefined orders", level="warning"
     )
-    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
+    constrained_orders = validate_orders_against_reference(orders, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array([1]))
     watcher.assert_seen()
 
@@ -386,7 +386,7 @@ def test_iteration_improves_contamination_correction(
     )
     # Bypass the grism-WCS order-validity check
     monkeypatch.setattr(
-        "jwst.wfss_contam.wfss_contam._validate_orders_against_transform",
+        "jwst.wfss_contam.wfss_contam.validate_orders_against_transform",
         lambda _wcs, orders: orders,
     )
     # Mock the off-detector bounds check to always return True
