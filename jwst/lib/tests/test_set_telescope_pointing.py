@@ -4,6 +4,9 @@ import pytest
 
 pytest.importorskip("pysiaf")
 
+# Mark all tests in this module as slow due to possible remote DB connection
+pytestmark = pytest.mark.slow
+
 import logging  # noqa: E402
 import warnings  # noqa: E402
 
@@ -21,17 +24,6 @@ from jwst.lib import (
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
 from jwst.lib.basic_utils import LoggingContext  # noqa: E402
 from jwst.tests.helpers import word_precision_check  # noqa: E402
-
-# Mark all tests in this module as slow due to possible remote DB connection
-pytestmark = pytest.mark.slow
-
-# The tests here need MAST DB to be available.
-try:
-    engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
-except RuntimeError as exception:
-    pytest.skip(
-        f"Live MAST Engineering Service not available: {exception}", allow_module_level=True
-    )
 
 # Setup inputs for engineering service
 STARTTIME = Time("2022-06-03T17:25:40", format="isot")
@@ -107,6 +99,17 @@ METAS_ISCLOSE = [
     "meta.pointing.dec_v1",
     "meta.pointing.pa_v3",
 ]
+
+
+def setup_module(module):
+    """Check DB connection only after slow flag is applied."""
+    # The tests here need MAST DB to be available.
+    try:
+        engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
+    except RuntimeError as exception:
+        pytest.skip(
+            f"Live MAST Engineering Service not available: {exception}", allow_module_level=True
+        )
 
 
 @pytest.fixture(params=[("good_model", True), ("bad_model", False), ("fits_nomodel", False)])

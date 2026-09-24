@@ -367,6 +367,15 @@ def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
         output_dir=str(tmp_path),
         suffix="x1d",
     )
+    # test that optional contam column got handled
+    np.testing.assert_allclose(result.spec[0].spec_table["contam_flux"], 150.0)
+    np.testing.assert_allclose(result.spec[0].spec_table["contam_surf_bright"], 3.0)
+    # test that the index of these columns is as expected
+    names = result.spec[0].spec_table.dtype.names
+    flux_idx = names.index("FLUX")
+    sb_idx = names.index("SURF_BRIGHT")
+    assert names[flux_idx + 1] == "CONTAM_FLUX"
+    assert names[sb_idx + 1] == "CONTAM_SURF_BRIGHT"
     result.close()
 
     fname = "test_x1d.fits"
@@ -433,5 +442,20 @@ def test_extract_nircam_dhs(mock_nircam_dhs, simple_wcs):
         # on extraction parameters
         assert np.all(tab["FLUX"] > 0)
         assert np.all(tab["FLUX_ERROR"] > 0)
+
+    result.close()
+
+
+def test_extract_wfss_from_filename(tmp_path, mock_niriss_wfss_l2):
+    """Test that WFSS data is not assumed to be a model on input."""
+    # save the input to a file
+    input_file = str(tmp_path / "test_wfss.fits")
+    mock_niriss_wfss_l2.save(input_file)
+
+    result = Extract1dStep.call(input_file)
+
+    # output is a single spectral model
+    assert isinstance(result, dm.WFSSMultiSpecModel)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
 
     result.close()

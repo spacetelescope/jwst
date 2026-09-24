@@ -28,7 +28,7 @@ extraction may be performed, using a model of the spectral PSF to fit the total 
 at each dispersion element.
 
 For 3D IFU data, the extraction options differ depending on
-whether the target is a point or extended source.  For a point
+whether the target is a point or extended source. For a point
 source, the spectrum is extracted using circular aperture photometry,
 optionally including background subtraction using a circular annulus.
 For an extended source, rectangular aperture photometry is used, with
@@ -50,6 +50,13 @@ include the "flux", "surf_bright", "flux_error", "sb_error", and all flux and
 surface brightness variance columns in the output table).  For optimal extractions,
 aperture correction is not performed, since it is assumed the total flux is
 modeled by the PSF.
+
+.. note::
+
+   For all spectral modes, this step assumes that sources are extended unless they
+   are explicitly marked as point sources (``SRCTYPE = "POINT"``). See the
+   :ref:`srctype <srctype_step>` step for more information on how source types
+   are assigned.
 
 Input
 -----
@@ -123,7 +130,10 @@ The extension metadata contains a unique exposure ID (FITS keyword EXPGRPID) for
 which combines exposure grouping metadata, the exposure number, and the spectral order.
 The spectral tables for this model contain the same columns as the
 `~stdatamodels.jwst.datamodels.MultiSpecModel`, but
-each row in the table contains the full spectrum for a single source and order. The spectral columns
+each row in the table contains the full spectrum for a single source and order. There are two
+additional columns for WFSS modes, CONTAM_FLUX and CONTAM_SURF_BRIGHT, which hold
+the simulated contamination estimate for each source if the ``wfss_contam`` step was run
+(otherwise those columns are NaN-filled). The spectral columns
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
 These metadata fields include:

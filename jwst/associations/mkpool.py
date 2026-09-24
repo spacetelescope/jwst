@@ -43,64 +43,69 @@ def mkpool(
     are created by the automatic ground system process. Users should download
     and modify those pools if need be. If desired, this function can be used to
     create pools from scratch using a list of FITS files. Once created, the
-    :py:func:`~jwst.associations.generate` can be used to create associations
-    from these pools.
+    :func:`~jwst.associations.generator.generate.generate` can be used
+    to create associations from these pools.
 
-    A number of pool columns used by the Association rules cannot be derived
+    A number of pool columns used by the association rules cannot be derived
     from the header keywords. The columns, and typical other values, are as
     follows:
 
-    - asn_candidate
-        The observation candidate is always defined in table
-        creation, based on the observation id of each exposure.
+    - ``asn_candidate``:
+      The observation candidate is always defined in table
+      creation, based on the observation id of each exposure.
+      However, higher level associations can be created by specifying a list
+      of candidate definitions. An example of adding both background and
+      coronographic candidates would be::
 
-        However, higher level associations can be created by specifying a list
-        of candidate definitions. An example of adding both background and
-        coronographic candidates would be: [('c1000', 'background'),
-        ('c1001', 'coronographic')]
+          [("c1000", "background"), ("c1001", "coronographic")]
 
-        The specification can be either as a list of 2-tuples, as presented above, or
-        as a single string representation of the list. Using the previous example, the
-        following is also a valid input:
-        "[('c1000', 'background'), ('c1001', 'coronographic')]"
-    - dms_note
-          Notes from upstream processing of the downlinked data that may be pertinent
-          to the quality of the data. Currently the value "wfsc_los_jitter" is used
-          by the Level 2 wavefront sensing rule, Asn_Lv2WFSC, to ignore exposures.
-    - is_imprt
-          A 't' indicates the exposure is a NIRSpec imprint exposure.
-    - pntgtype
-          The general class of exposure. The default value is "science".
-          For target acquisition, the value is "target_acquisition".
+      The specification can be either as a list of 2-tuples, as presented above, or
+      as a single string representation of the list. Using the previous example, the
+      following is also a valid input::
+
+          "[('c1000', 'background'), ('c1001', 'coronographic')]"
+
+    - ``dms_note``:
+      Notes from upstream processing of the downlinked data that may be pertinent
+      to the quality of the data. Currently the value "wfsc_los_jitter" is used
+      by the Level 2 wavefront sensing rule,
+      `~jwst.associations.lib.rules_level2b.Asn_Lv2WFSC`, to ignore exposures.
+
+    - ``is_imprt``:
+      A 't' indicates the exposure is a NIRSpec imprint exposure.
+
+    - ``pntgtype``:
+      The general class of exposure. The default value is "science".
+      For target acquisition, the value is "target_acquisition".
 
     Parameters
     ----------
-    data : int
+    data : str, `astropy.io.fits.HDUList`, or `astropy.io.fits.ImageHDU`
         The data to get the pool parameters from.
-        Can be pathnames or `astropy.io.fits.HDUList`
-        or `astropy.io.fits.ImageHDU`.
 
-    asn_candidate : [(id, type)[,...]] or None
+    asn_candidate : list of tuple or None
         Association candidates to add to each exposure.
-        These are added to the default ('oXXX', 'observation') candidate
+        These are added to the default ``('oXXX', 'observation')`` candidate
         created from header information.
 
     dms_note : str
-        Value for the dms_note column.
+        Value for the ``dms_note`` column.
 
-    is_imprt : 't' or 'f'
+    is_imprt : str
         Indicator whether exposures are imprint/leakcal exposures.
+        Accepted value is 't' or 'f'.
 
-    pntgtype : 'science', 'target_acquisition'
-        General exposure type.
+    pntgtype : str
+        General exposure type. Accepted value is
+        'science' or 'target_acquisition'.
 
-    **kwargs : dict
-        Other keyword arguments to pass to the
-        `astropy.io.fits.getheader` call.
+    **kwargs
+        Other keyword arguments to pass to
+        :func:`astropy.io.fits.getheader`.
 
     Returns
     -------
-    pool : `jwst.associations.AssociationPool`
+    pool : `~jwst.associations.pool.AssociationPool`
         The association pool.
     """
     params = set()
@@ -164,17 +169,17 @@ def mkpool(
 
 def from_cmdline(args=None):
     """
-    Collect command-line options and run mkpool.
+    Collect command-line options and run `mkpool`.
 
     Parameters
     ----------
-    args : [str[,...]]
+    args : list of str
         List of arguments to parse.
 
     Returns
     -------
     dict
-        Dict of the arguments and their values.
+        Dictionary of the arguments and their values.
     """
     import argparse
 
@@ -231,17 +236,17 @@ def getheader(datum, **kwargs):
 
     Parameters
     ----------
-    datum : str or HDUList or HDU
+    datum : str, `~astropy.io.fits.HDUList`, or `~astropy.io.fits.HDU`
         Source of the header information.
 
-    **kwargs : dict
-        Keyword arguments passed to `astropy.io.fits.getheader`.
-        Relevant ones are `ext`, `extname`, or `extver`
+    **kwargs
+        Keyword arguments passed to :func:`astropy.io.fits.getheader`.
+        Relevant ones are ``ext``, ``extname``, or ``extver``.
 
     Returns
     -------
-    astropy.io.fits.header.Header
-        The header from the data item.
+    `~astropy.io.fits.Header`
+        The FITS header from the data item.
     """
     # Parse out HDU key
     try:

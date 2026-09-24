@@ -1,0 +1,1 @@
+Add CONTAM_FLUX and CONTAM_SURF_BRIGHT columns to x1d products if the wfss_contam step was run

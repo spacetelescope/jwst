@@ -23,25 +23,26 @@ def generate(pool, rules, version_id=None, finalize=True):
 
     Parameters
     ----------
-    pool : AssociationPool
+    pool : `~jwst.associations.pool.AssociationPool`
         The pool to generate from.
 
-    rules : AssociationRegistry
+    rules : `~jwst.associations.registry.AssociationRegistry`
         The association rule set.
 
     version_id : None, True, or str
-        The string to use to tag associations and products.
-        If None, no tagging occurs.
-        If True, use a timestamp
-        If a string, the string.
+        The string to use to tag associations and products:
+
+        * If None, no tagging occurs.
+        * If `True`, use a timestamp.
+        * If a string, the string.
 
     finalize : bool
         Run all rule methods marked as 'finalized'.
 
     Returns
     -------
-    associations : [Association[,...]]
-        List of associations
+    associations : list
+        List of `~jwst.associations.association.Association`.
 
     Notes
     -----
@@ -120,34 +121,33 @@ def generate_from_item(item, version_id, associations, rules, process_list):
     ----------
     item : dict
         The item to match to existing associations
-        or generate new associations from
+        or generate new associations from.
 
     version_id : str or None
         Version id to use with association creation.
         If None, no versioning is used.
 
-    associations : [association, ...]
-        List of already existing associations.
+    associations : list
+        List of already existing `~jwst.associations.association.Association`.
         If the item matches any of these, it will be added
         to them.
 
-    rules : AssociationRegistry or None
-        List of rules to create new associations
+    rules : `~jwst.associations.registry.AssociationRegistry` or None
+        List of rules to create new associations.
 
-    process_list : ProcessList
-        The `ProcessList` from which the current item belongs to.
+    process_list : `~jwst.associations.lib.process_list.ProcessList`
+        The process list from which the current item belongs to.
 
     Returns
     -------
-    tuple
-        A 3-tuple containing:
-            existing_asns : [association,...]
-                List of existing associations item belongs to.
-                Empty if none match
-            new_asns : [association,...]
-                List of new associations item creates. Empty if none match
-            process_list : [ProcessList, ...]
-                List of process events.
+    existing_asns : list
+        List of existing `~jwst.associations.association.Association` item belongs to.
+        Empty if none matched.
+    new_asns : list
+        List of new `~jwst.associations.association.Association` item creates.
+        Empty if none matched.
+    process_list : list
+        List of `~jwst.associations.lib.process_list.ProcessList` process events.
     """
     # Setup the rules allowed to be examined.
     if process_list.rules is None or len(process_list.rules) == 0:
@@ -200,19 +200,18 @@ def match_item(item, associations):
     item : dict
         The item to match to the associations.
 
-    associations : [association, ...]
-        List of already existing associations.
+    associations : list
+        List of already existing `~jwst.associations.association.Association`.
         If the item matches any of these, it will be added
         to them.
 
     Returns
     -------
-    (associations, process_list) : 2-tuple
-        A tuple containing:
-            associations : [association,...]
-                List of associations item belongs to. Empty if none match
-            process_list : [ProcessList, ...]
-                List of process events.
+    associations : list
+        List of `~jwst.associations.association.Association` item belongs to.
+        Empty if none matched.
+    process_list : list
+        List of `~jwst.associations.lib.process_list.ProcessList` process events.
     """
     item_associations = []
     seen_ids = set()
