@@ -22,6 +22,7 @@ from stdatamodels.jwst.datamodels import (
 )
 from stdatamodels.jwst.transforms.models import (
     GrismObject,
+    MIRIBackwardGrismDispersion,
     NIRCAMBackwardGrismDispersion,
     NIRISSBackwardGrismDispersion,
 )
@@ -286,21 +287,21 @@ def get_object_info(catalog_name=None):
     return objects
 
 
-def _validate_orders_against_reference(orders, spec_orders):
+def validate_orders_against_reference(orders, spec_orders):
     """
     Compare user-requested spectral orders with the orders defined in the reference file.
 
     Parameters
     ----------
-    orders : list[int]
+    orders : list
         List of user-requested spectral orders.
-    spec_orders : list[int]
+    spec_orders : list
         List of spectral orders defined in the reference file.
 
     Returns
     -------
-    np.ndarray[int]
-        List of spectral orders constrained to the user-specified ones
+    ndarray
+        1-D array spectral orders constrained to the user-specified ones
         that are also defined in the reference file.
     """
     spec_orders = np.array(spec_orders, dtype=int)
@@ -324,15 +325,15 @@ def _validate_orders_against_reference(orders, spec_orders):
     return orders[good_orders]
 
 
-def _validate_orders_against_transform(wcs, spec_orders):
+def validate_orders_against_transform(wcs, spec_orders):
     """
     Ensure the requested spectral orders are defined in the WCS transforms.
 
     Parameters
     ----------
     wcs : gwcs.wcs.WCS
-        The input MultiSlitModel's WCS object.
-    spec_orders : list[int]
+        The input model's WCS object.
+    spec_orders : list
         The list of requested spectral orders.
 
     Returns
@@ -343,7 +344,14 @@ def _validate_orders_against_transform(wcs, spec_orders):
     sky_to_grism = wcs.backward_transform
     good_orders = spec_orders.copy()
     for model in sky_to_grism:
-        if isinstance(model, (NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion)):
+        if isinstance(
+            model,
+            (
+                NIRCAMBackwardGrismDispersion,
+                NIRISSBackwardGrismDispersion,
+                MIRIBackwardGrismDispersion,
+            ),
+        ):
             # Get the orders defined in the transform
             orders = np.sort(model.orders)
             is_good_order = [order in orders for order in spec_orders]
@@ -471,8 +479,8 @@ def create_grism_bbox(
                 extract_orders = [x[1] for x in ref_extract_orders if x[0] == filter_name].pop()
             else:
                 # need to validate the requested orders actually exist in the transform
-                extract_orders = _validate_orders_against_reference(extract_orders, f.order)
-                extract_orders = _validate_orders_against_transform(
+                extract_orders = validate_orders_against_reference(extract_orders, f.order)
+                extract_orders = validate_orders_against_transform(
                     input_model.meta.wcs, extract_orders
                 )
 

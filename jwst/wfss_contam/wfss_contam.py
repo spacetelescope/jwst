@@ -9,9 +9,9 @@ from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import (
-    _validate_orders_against_reference,
-    _validate_orders_against_transform,
     get_bounding_box_extents,
+    validate_orders_against_reference,
+    validate_orders_against_transform,
 )
 from jwst.lib.catalog_utils import read_source_catalog
 from jwst.wfss_contam.observations import Observation
@@ -614,8 +614,8 @@ def contam_corr(
     # array of order values in the Wavelengthrange ref file,
     # then constrain the orders to the user-specified ones
     spec_orders = np.asarray(waverange.order)
-    spec_orders = _validate_orders_against_reference(orders, spec_orders)
-    spec_orders = _validate_orders_against_transform(grism_wcs, spec_orders)
+    spec_orders = validate_orders_against_reference(orders, spec_orders)
+    spec_orders = validate_orders_against_transform(grism_wcs, spec_orders)
     if len(spec_orders) == 0:
         log.error("No valid spectral orders found. Step will be SKIPPED.")
         return input_model, None
