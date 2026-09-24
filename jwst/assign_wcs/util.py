@@ -22,7 +22,7 @@ from stdatamodels.jwst.datamodels import (
 )
 from stdatamodels.jwst.transforms.models import (
     GrismObject,
-    MIRIBackwardGrismDispersion,
+    MIRIWFSSBackwardDispersion,
     NIRCAMBackwardGrismDispersion,
     NIRISSBackwardGrismDispersion,
 )
@@ -349,7 +349,7 @@ def validate_orders_against_transform(wcs, spec_orders):
             (
                 NIRCAMBackwardGrismDispersion,
                 NIRISSBackwardGrismDispersion,
-                MIRIBackwardGrismDispersion,
+                MIRIWFSSBackwardDispersion,
             ),
         ):
             # Get the orders defined in the transform
