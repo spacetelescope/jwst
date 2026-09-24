@@ -267,7 +267,7 @@ class Extract1dStep(Step):
         `~stdatamodels.jwst.datamodels.JwstDataModel`
             The output spectra.
         """
-        source_type = model.meta.target.source_type
+        source_type = None
         if self.ifu_set_srctype is not None and exp_type == "MIR_MRS":
             source_type = self.ifu_set_srctype
             log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")

@@ -167,20 +167,3 @@ def test_interpolate():
         ]
     )
     assert np.allclose(correction, compare, atol=1.0e-6)
-
-
-def test_has_uniform_source():
-    data = np.zeros((10, 100), dtype=np.float32)
-    slitlet = datamodels.SlitModel(data=data)
-
-    # Since source_type has not been set yet, the barshadow step will
-    # assume that the source is extended.
-    assert bar.has_uniform_source(slitlet)
-
-    slitlet.source_type = "POINT"
-    assert not bar.has_uniform_source(slitlet)  # not extended
-
-    slitlet.source_type = "UNKNOWN"
-    # Since source_type is not 'POINT', the step will assume that the
-    # source is extended.
-    assert bar.has_uniform_source(slitlet)

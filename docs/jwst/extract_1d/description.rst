@@ -28,7 +28,7 @@ extraction may be performed, using a model of the spectral PSF to fit the total 
 at each dispersion element.
 
 For 3D IFU data, the extraction options differ depending on
-whether the target is a point or extended source.  For a point
+whether the target is a point or extended source. For a point
 source, the spectrum is extracted using circular aperture photometry,
 optionally including background subtraction using a circular annulus.
 For an extended source, rectangular aperture photometry is used, with
@@ -50,6 +50,13 @@ include the "flux", "surf_bright", "flux_error", "sb_error", and all flux and
 surface brightness variance columns in the output table).  For optimal extractions,
 aperture correction is not performed, since it is assumed the total flux is
 modeled by the PSF.
+
+.. note::
+
+   For all spectral modes, this step assumes that sources are extended unless they
+   are explicitly marked as point sources (``SRCTYPE = "POINT"``). See the
+   :ref:`srctype <srctype_step>` step for more information on how source types
+   are assigned.
 
 Input
 -----

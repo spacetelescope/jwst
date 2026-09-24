@@ -7,6 +7,8 @@ from gwcs import wcstools
 from scipy import ndimage
 from stdatamodels.jwst import datamodels
 
+from jwst.lib.exposure_types import is_point_source
+
 log = logging.getLogger(__name__)
 
 # Fallback value for ratio of slit spacing to slit height
@@ -20,7 +22,6 @@ __all__ = [
     "add_first_half_shutter",
     "add_next_shutter",
     "add_last_half_shutter",
-    "has_uniform_source",
 ]
 
 
@@ -139,7 +140,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
 
     # Correction only applies to extended/uniform sources
     correction = None
-    if not has_uniform_source(slitlet, source_type):
+    if is_point_source(slitlet, override_srctype=source_type):
         log.info(f"Bar shadow correction skipped for slitlet {slitlet_number} (source not uniform)")
         return correction
 
@@ -392,33 +393,3 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
     last_row = first_row + shadow_element.shape[0] - 1
     shadow[first_row:last_row, :] = shadow_element[1:, :]
     return shadow
-
-
-def has_uniform_source(slitlet, force_type=None):
-    """
-    Determine whether the slitlet contains a uniform source.
-
-    Parameters
-    ----------
-    slitlet : `~stdatamodels.jwst.datamodels.SlitModel`
-        The slitlet being interrogated.
-    force_type : str or None
-        Source type to force to and decide upon.
-
-    Returns
-    -------
-    answer : bool
-        `True` if the slitlet contains a uniform source.
-    """
-    source_type = force_type if force_type else slitlet.source_type
-
-    if source_type:
-        # Assume extended, unless explicitly set to POINT
-        if source_type.upper() == "POINT":
-            return False
-        else:
-            return True
-    else:
-        # If there's no source type info, default to EXTENDED
-        log.info(f"SRCTYPE not set for slitlet {slitlet.slitlet_id}; assuming EXTENDED.")
-        return True
