@@ -515,7 +515,8 @@ def test_bkg_fail(monkeypatch, caplog, make_nrc_wfss_datamodel):
     assert model.meta.cal_step.bkg_subtract is None
     assert result.meta.cal_step.bkg_subtract == "FAILED"
     assert result.meta.background.scaling_factor == 0.0
-    assert "Not enough background pixels" in caplog.text
+
+    assert "did not find enough background pixels" in caplog.text
 
 
 def test_infinite_factor(monkeypatch, caplog, make_nrc_wfss_datamodel):
@@ -639,7 +640,7 @@ def test_no_catalog_no_user_mask(make_nrc_wfss_datamodel, bkg_file, caplog):
 
     # Do the subtraction without user mask and without source catalog
     result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=None)
-    assert "No source_catalog found in input.meta. Setting all pixels as background." in caplog.text
+    assert "No source_catalog found in input.meta, and custom mask not specified." in caplog.text
 
     # Should succeed using all pixels as background
     assert np.isfinite(result.meta.background.scaling_factor)

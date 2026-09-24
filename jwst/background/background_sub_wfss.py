@@ -76,10 +76,11 @@ def subtract_wfss_bkg(
             # Create a mask from the source catalog, True where there are no sources,
             # i.e. in regions we can use as background.
             bkg_mask = _mask_from_source_cat(model, wl_range_name, mmag_extract)
-            log.warning("No source_catalog found in input.meta, and custom mask not specified. ")
-            log.warning("No sources will be masked for background scaling.")
             if not _sufficient_background_pixels(model.dq, bkg_mask, bkg_ref.data):
-                log.warning("Not enough background pixels to work with.")
+                log.warning(
+                    "Mask derived from source catalog did not find enough "
+                    "background pixels to work with."
+                )
                 log.warning("Step will be marked FAILED.")
                 # Save the mask in expected data type for the datamodel and set
                 # other keywords appropriately for this case
@@ -89,7 +90,8 @@ def subtract_wfss_bkg(
                 bkg_ref.close()
                 return model
         else:
-            log.warning("No source_catalog found in input.meta. Setting all pixels as background.")
+            log.warning("No source_catalog found in input.meta, and custom mask not specified. ")
+            log.warning("No sources will be masked for background scaling.")
             bkg_mask = np.ones(model.data.shape, dtype=bool)
     else:
         log.info("Using user-supplied source mask for background scaling.")
