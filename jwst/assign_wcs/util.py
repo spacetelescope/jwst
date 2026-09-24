@@ -47,6 +47,8 @@ __all__ = [
     "wrap_ra",
     "update_fits_wcsinfo",
     "is_sky_like",
+    "validate_orders_against_transform",
+    "validate_orders_against_reference",
 ]
 
 
