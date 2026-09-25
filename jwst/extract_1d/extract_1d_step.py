@@ -267,7 +267,7 @@ class Extract1dStep(Step):
         `~stdatamodels.jwst.datamodels.JwstDataModel`
             The output spectra.
         """
-        source_type = model.meta.target.source_type
+        source_type = None
         if self.ifu_set_srctype is not None and exp_type == "MIR_MRS":
             source_type = self.ifu_set_srctype
             log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
@@ -478,14 +478,14 @@ class Extract1dStep(Step):
             if "WFSS" in exp_type:
                 # WCS needs to be added to x1d files so that the S_REGION can be
                 # computed in the spec3 pipeline for combined x1d and c1d products
-                if isinstance(input_data, SourceModelContainer) and isinstance(
-                    input_data[0], datamodels.SlitModel
+                if isinstance(output_model, SourceModelContainer) and isinstance(
+                    output_model[0], datamodels.SlitModel
                 ):
-                    result.meta.wcs = input_data[0].meta.wcs
-                    result.spec[0].s_region = input_data[0].meta.wcsinfo.s_region
+                    result.meta.wcs = output_model[0].meta.wcs
+                    result.spec[0].s_region = output_model[0].meta.wcsinfo.s_region
                 else:
-                    result.meta.wcs = input_data.slits[0].meta.wcs
-                    result.spec[0].s_region = input_data.slits[0].meta.wcsinfo.s_region
+                    result.meta.wcs = output_model.slits[0].meta.wcs
+                    result.spec[0].s_region = output_model.slits[0].meta.wcsinfo.s_region
             result.meta.cal_step.extract_1d = "COMPLETE"
 
         # The result is a new model, so close the input model if it was opened here.

@@ -444,3 +444,18 @@ def test_extract_nircam_dhs(mock_nircam_dhs, simple_wcs):
         assert np.all(tab["FLUX_ERROR"] > 0)
 
     result.close()
+
+
+def test_extract_wfss_from_filename(tmp_path, mock_niriss_wfss_l2):
+    """Test that WFSS data is not assumed to be a model on input."""
+    # save the input to a file
+    input_file = str(tmp_path / "test_wfss.fits")
+    mock_niriss_wfss_l2.save(input_file)
+
+    result = Extract1dStep.call(input_file)
+
+    # output is a single spectral model
+    assert isinstance(result, dm.WFSSMultiSpecModel)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
+
+    result.close()

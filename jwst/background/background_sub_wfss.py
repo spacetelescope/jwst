@@ -76,10 +76,11 @@ def subtract_wfss_bkg(
             # Create a mask from the source catalog, True where there are no sources,
             # i.e. in regions we can use as background.
             bkg_mask = _mask_from_source_cat(model, wl_range_name, mmag_extract)
-            log.warning("No source_catalog found in input.meta, and custom mask not specified. ")
-            log.warning("No sources will be masked for background scaling.")
             if not _sufficient_background_pixels(model.dq, bkg_mask, bkg_ref.data):
-                log.warning("Not enough background pixels to work with.")
+                log.warning(
+                    "Mask derived from source catalog did not find enough "
+                    "background pixels to work with."
+                )
                 log.warning("Step will be marked FAILED.")
                 # Save the mask in expected data type for the datamodel and set
                 # other keywords appropriately for this case
@@ -89,7 +90,8 @@ def subtract_wfss_bkg(
                 bkg_ref.close()
                 return model
         else:
-            log.warning("No source_catalog found in input.meta. Setting all pixels as background.")
+            log.warning("No source_catalog found in input.meta, and custom mask not specified. ")
+            log.warning("No sources will be masked for background scaling.")
             bkg_mask = np.ones(model.data.shape, dtype=bool)
     else:
         log.info("Using user-supplied source mask for background scaling.")
@@ -382,7 +384,13 @@ def _mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
     bkg_mask = np.ones(shape, dtype=bool)
 
     reference_files = {"wavelengthrange": wl_range_name}
-    grism_obj_list = create_grism_bbox(input_model, reference_files, mmag_extract)
+    with datamodels.open(reference_files["wavelengthrange"]) as f:
+        # can't use default, which is wavelengthrange.extract_orders,
+        # because here we want to mask all sources, not just those that are being extracted
+        extract_orders = f.order
+    grism_obj_list = create_grism_bbox(
+        input_model, reference_files, mmag_extract, extract_orders=extract_orders
+    )
 
     for obj in grism_obj_list:
         order_bounding = obj.order_bounding
