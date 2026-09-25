@@ -4,6 +4,7 @@ from stdatamodels.jwst.datamodels import ImageModel
 
 from jwst.adaptive_trace_model import trace_model as tm
 from jwst.adaptive_trace_model.tests import helpers
+from jwst.tests import spec_cal_helpers
 
 
 @pytest.fixture(scope="module")
@@ -15,7 +16,7 @@ def nrs_slit_model():
 
 @pytest.fixture(scope="module")
 def fit_region_input_no_source_noisy_edge():
-    with helpers.nirspec_slit_model() as model:
+    with spec_cal_helpers.nirspec_slit_cal_model() as model:
         flux = model.slits[0].data
         wcs = model.slits[0].meta.wcs
         region_map = (~np.isnan(model.slits[0].wavelength)).astype(int)
