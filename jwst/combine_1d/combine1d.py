@@ -7,6 +7,7 @@ from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer
 from jwst.datamodels.utils.flat_multispec import expand_flat_spec
 from jwst.extract_1d.spec_wcs import create_spectral_wcs
+from jwst.stpipe import record_step_status
 
 log = logging.getLogger(__name__)
 
@@ -917,7 +918,7 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
 
     if len(input_spectra) == 0:
         log.error("No valid input spectra found for source. Skipping.")
-        input_model.meta.cal_step.combine_1d = "SKIPPED"
+        record_step_status(input_model, "combine_1d", status="SKIPPED")
         return input_model
 
     for order in input_spectra:
