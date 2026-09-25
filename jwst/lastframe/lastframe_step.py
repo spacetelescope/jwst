@@ -1,15 +1,22 @@
+"""Set data quality flag of last group in MIRI data."""
+
+import logging
+
 from stdatamodels.jwst import datamodels
-from ..stpipe import Step
-from . import lastframe_sub
+
+from jwst.lastframe import lastframe_sub
+from jwst.stpipe import Step
 
 __all__ = ["LastFrameStep"]
+
+log = logging.getLogger(__name__)
 
 
 class LastFrameStep(Step):
     """
     Set data quality flags for the last group in MIRI ramps.
 
-    A MIRI specific task.  If the number of groups > 2, the GROUP
+    If the number of groups is greater than 2, the GROUP
     data quality flag for the final group will be set to DO_NOT_USE.
     """
 
@@ -20,33 +27,30 @@ class LastFrameStep(Step):
 
     def process(self, step_input):
         """
-        For MIRI data with more than 2 groups, set final group dq to DO_NOT_USE.
+        For MIRI data with more than 2 groups, set final group DQ to DO_NOT_USE.
 
         Parameters
         ----------
-        step_input : DataModel
-            Input datamodel to be corrected
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            Input filename or datamodel to be corrected.
 
         Returns
         -------
-        output_model : DataModel
-            Lastframe corrected datamodel
+        output_model : `~stdatamodels.jwst.datamodels.RampModel`
+            Last frame corrected datamodel.
         """
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
-            # check the data is MIRI data
-            detector = input_model.meta.instrument.detector
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            if detector[:3] != "MIR":
-                self.log.warning("Last Frame Correction is only for MIRI data")
-                self.log.warning("Last frame step will be skipped")
-                input_model.meta.cal_step.lastframe = "SKIPPED"
-                return input_model
+        # check the data is MIRI data
+        detector = result.meta.instrument.detector
+        if detector[:3] != "MIR":
+            log.warning("Last Frame Correction is only for MIRI data")
+            log.warning("Last frame step will be skipped")
+            result.meta.cal_step.lastframe = "SKIPPED"
+            return result
 
-            # Work on a copy
-            result = input_model.copy()
-
-            # Do the lastframe correction subtraction
-            result = lastframe_sub.do_correction(result)
+        # Do the lastframe correction subtraction
+        result = lastframe_sub.do_correction(result)
 
         return result

@@ -10,5 +10,4 @@ Barshadow Correction
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.barshadow
+   api_ref.rst

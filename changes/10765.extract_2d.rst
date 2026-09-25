@@ -1,0 +1,1 @@
+For WFSS extraction, bypass unnecessary model validation and vectorize WCS calls; improves step runtime by a factor of ~4

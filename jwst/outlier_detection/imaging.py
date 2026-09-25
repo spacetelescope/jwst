@@ -3,18 +3,16 @@
 import logging
 
 from jwst.datamodels import ModelLibrary
+from jwst.outlier_detection.utils import (
+    flag_model_crs,
+    flag_resampled_model_crs,
+    median_with_resampling,
+    median_without_resampling,
+)
 from jwst.resample import resample
 from jwst.stpipe.utilities import record_step_status
 
-from .utils import (
-    flag_model_crs,
-    flag_resampled_model_crs,
-    median_without_resampling,
-    median_with_resampling,
-)
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["detect_outliers"]
@@ -37,16 +35,18 @@ def detect_outliers(
     fillval,
     in_memory,
     make_output_path,
+    pixmap_stepsize=1,
+    pixmap_order=1,
 ):
     """
     Flag outliers in imaging data.
 
     Parameters
     ----------
-    input_models : ModelLibrary
+    input_models : `~jwst.datamodels.library.ModelLibrary`
         The library of datamodels.
     save_intermediate_results : bool
-        If True, save intermediate results.
+        If `True`, save intermediate results.
     good_bits : int
         Bit values indicating good pixels.
     maskpt : float
@@ -61,10 +61,10 @@ def detect_outliers(
         Scale factor used to scale the absolute derivative of the blot model for the second pass.
     backg : float
         Scalar background level to add to the blotted image.
-        Ignored if `input_model.meta.background.level` is not None but
-        `input_model.meta.background.subtracted` is False.
+        Ignored if ``input_model.meta.background.level`` is not None but
+        ``input_model.meta.background.subtracted`` is `False`.
     resample_data : bool
-        If True, resample the data before detecting outliers.
+        If `True`, resample the data before detecting outliers.
     weight_type : str
         The type of weighting kernel to use when resampling.
         Options are 'ivm' or 'exptime'.
@@ -75,15 +75,21 @@ def detect_outliers(
     fillval : str
         The value to use in the output for pixels with no weight or flux
     in_memory : bool
-        If True, keep the input models in memory. Otherwise, store them on disk
+        If `True`, keep the input models in memory. Otherwise, store them on disk
         in temporary files as they are processed to save memory at the expense of runtime.
     make_output_path : function
-        The functools.partial instance to pass to save_blot. Must be
-        specified if save_blot is True.
+        The :py:func:`functools.partial` instance to pass to ``save_blot``. Must be
+        specified if ``save_blot`` is `True`.
+    pixmap_stepsize : float, optional
+        Indicates the spacing in pixels at which the WCS is evaluated when computing the pixel map.
+        Larger step sizes result in faster performance at the cost of accuracy.
+        Interpolation is only performed if ``pixmap_stepsize > 1``. Default is 1.
+    pixmap_order : int, optional
+        Interpolating spline order for pixel map computation. Must be 1 or 3. Default is 1.
 
     Returns
     -------
-    ModelContainer
+    `~jwst.datamodels.container.ModelContainer`
         The input models with outliers flagged.
     """
     if not isinstance(input_models, ModelLibrary):
@@ -107,6 +113,8 @@ def detect_outliers(
             enable_ctx=False,
             enable_var=False,
             compute_err=None,
+            pixmap_order=pixmap_order,
+            pixmap_stepsize=pixmap_stepsize,
         )
         median_data, median_wcs = median_with_resampling(
             input_models,
@@ -141,6 +149,8 @@ def detect_outliers(
                     backg,
                     save_blot=save_intermediate_results,
                     make_output_path=make_output_path,
+                    pixmap_stepsize=pixmap_stepsize,
+                    pixmap_order=pixmap_order,
                 )
             else:
                 flag_model_crs(image, median_data, snr1)

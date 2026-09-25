@@ -1,18 +1,20 @@
-import pytest
 import numpy as np
+import pytest
 
-from .conftest import DATA_SHAPE
 from jwst.extract_1d.soss_extract.soss_boxextract import (
-    get_box_weights, box_extract, estim_error_nearest_data)
-
+    box_extract,
+    estim_error_nearest_data,
+    get_box_weights,
+)
+from jwst.extract_1d.soss_extract.tests.helpers import DATA_SHAPE
 
 WIDTH = 5.1
 
+
 @pytest.fixture()
 def box_weights(trace1d):
-
     weights_list = []
-    for order in [0,1]:
+    for order in [0, 1]:
         tracex, tracey, wavetrace = trace1d[order]
         weights_list.append(get_box_weights(tracey, WIDTH, DATA_SHAPE, tracex))
     return weights_list
@@ -24,8 +26,7 @@ def test_get_box_weights(trace1d, box_weights):
     Order 2 tests the case where they are not equal
     """
 
-    for order in [0,1]:
-
+    for order in [0, 1]:
         tracex, tracey, wavetrace = trace1d[order]
         weights = box_weights[order]
 
@@ -47,11 +48,10 @@ def test_get_box_weights(trace1d, box_weights):
 
 
 def test_box_extract(trace1d, box_weights, imagemodel):
-
     data, err = imagemodel
     mask = np.isnan(data)
 
-    for order in [0,1]:
+    for order in [0, 1]:
         weights = box_weights[order]
         cols, flux, flux_err, npix = box_extract(data, err, mask, weights)
 
@@ -72,7 +72,6 @@ def test_box_extract(trace1d, box_weights, imagemodel):
 
 
 def test_estim_error_nearest_data(imagemodel, mask_trace_profile):
-
     data, err = imagemodel
 
     for order in [0, 1]:

@@ -1,30 +1,38 @@
 """Utilities for outlier detection methods."""
 
 import copy
+import logging
 from functools import partial
-import numpy as np
 
-from jwst.lib.pipe_utils import match_nans_and_flags
-from jwst.resample.resample import compute_image_pixel_area
-from stcal.resample.utils import build_driz_weight
+import numpy as np
+from stcal.outlier_detection.median import MedianComputer, nanmedian3D
 from stcal.outlier_detection.utils import (
     compute_weight_threshold,
-    gwcs_blot,
     flag_crs,
     flag_resampled_crs,
+    gwcs_blot,
 )
-from stcal.outlier_detection.median import MedianComputer, nanmedian3D
+from stcal.resample.utils import build_driz_weight
 from stdatamodels.jwst import datamodels
-from . import _fileio
 
-import logging
+from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.outlier_detection import _fileio
+from jwst.resample.resample import input_jwst_model_to_dict
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
 
 DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]
 OUTLIER = datamodels.dqflags.pixel["OUTLIER"]
+
+__all__ = [
+    "create_cube_median",
+    "median_without_resampling",
+    "median_with_resampling",
+    "flag_crs_in_models",
+    "flag_resampled_model_crs",
+    "flag_crs_in_models_with_resampling",
+    "flag_model_crs",
+]
 
 
 def create_cube_median(cube_model, maskpt):
@@ -33,14 +41,14 @@ def create_cube_median(cube_model, maskpt):
 
     Parameters
     ----------
-    cube_model : ~jwst.datamodels.CubeModel
+    cube_model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input cube model.
     maskpt : float
         The percent threshold for masking bad data.
 
     Returns
     -------
-    np.ndarray
+    ndarray
         The median over the zeroth axis of the input cube.
     """
     log.info("Computing median")
@@ -72,7 +80,7 @@ def median_without_resampling(
 
     Parameters
     ----------
-    input_models : ModelLibrary
+    input_models : `~jwst.datamodels.library.ModelLibrary`
         The input datamodels.
     maskpt : float
         The weight threshold for masking out low weight pixels.
@@ -83,26 +91,27 @@ def median_without_resampling(
         The bit values that are considered good when determining the
         data quality of the input.
     save_intermediate_results : bool
-        If True, save the drizzled models and median model to fits.
-    make_output_path : function
-        The functools.partial instance to pass to save_median. Must be
-        specified if save_intermediate_results is True. Default None.
+        If `True`, save the drizzled models and median model to FITS.
+    make_output_path : function or None
+        The :py:func:`functools.partial` instance to pass to internal
+        function for saving the median image. Must be
+        specified if ``save_intermediate_results`` is `True`. Default is None.
     buffer_size : int
         The size of chunk in bytes that will be read into memory when
         computing the median. This parameter has no effect if the input
-        library has its on_disk attribute set to False.
+        library has its ``on_disk`` attribute set to `False`.
     return_error : bool, optional
-        If True, an approximate median error is computed alongside the
+        If `True`, an approximate median error is computed alongside the
         median science image.
 
     Returns
     -------
-    median_data : np.ndarray
+    median_data : ndarray
         The median data array.
-    median_wcs : gwcs.WCS
+    median_wcs : `~gwcs.wcs.WCS`
         A WCS corresponding to the median data.
-    median_error : np.ndarray, optional
-        A median error estimate, returned only if `return_error` is True.
+    median_error : ndarray, optional
+        A median error estimate, returned only if ``return_error`` is `True`.
     """
     in_memory = not input_models.on_disk
     ngroups = len(input_models)
@@ -119,8 +128,13 @@ def median_without_resampling(
                 drizzled_err = drizzled_model.err.copy()
             else:
                 drizzled_err = None
+
+            im_dict = input_jwst_model_to_dict(
+                drizzled_model, weight_type=weight_type, enable_var=False, compute_err=None
+            )
+
             weight = build_driz_weight(
-                drizzled_model,
+                im_dict,
                 weight_type=weight_type,
                 good_bits=good_bits,
                 flag_name_map=datamodels.dqflags.pixel,
@@ -186,33 +200,34 @@ def median_with_resampling(
 
     Parameters
     ----------
-    input_models : ModelLibrary
+    input_models : `~jwst.datamodels.library.ModelLibrary`
         The input datamodels.
-    resamp : resample.resample.ResampleImage object
+    resamp : `~jwst.resample.resample.ResampleImage`
         The controlling object for the resampling process.
     maskpt : float
         The weight threshold for masking out low weight pixels.
     save_intermediate_results : bool
-        If True, save the drizzled models and median model to fits.
-    make_output_path : function
-        The functools.partial instance to pass to save_median. Must be
-        specified if save_intermediate_results is True. Default None.
+        If `True`, save the drizzled models and median model to FITS.
+    make_output_path : function or None
+        The :py:func:`functools.partial` instance to pass to internal
+        function for saving the median image. Must be
+        specified if ``save_intermediate_results`` is `True`. Default is None.
     buffer_size : int
         The size of chunk in bytes that will be read into memory when
         computing the median. This parameter has no effect if the input
-        library has its on_disk attribute set to False.
+        library has its ``on_disk`` attribute set to `False`.
     return_error : bool, optional
-        If True, an approximate median error is computed alongside the
+        If `True`, an approximate median error is computed alongside the
         median science image.
 
     Returns
     -------
-    median_data : np.ndarray
+    median_data : ndarray
         The median data array.
-    median_wcs : gwcs.WCS
+    median_wcs : `~gwcs.wcs.WCS`
         A WCS corresponding to the median data.
-    median_error : np.ndarray, None, optional
-        A median error estimate, returned only if `return_error` is `True`.
+    median_error : ndarray or None, optional
+        A median error estimate, returned only if ``return_error`` is `True`.
         If ``resamp.compute_err`` is not set to "driz_err", `None` will be
         returned.
     """
@@ -253,9 +268,24 @@ def median_with_resampling(
             else:
                 err_computer = None
             if save_intermediate_results:
-                # update median model's meta with meta from the first model:
+                # Update median model's meta with meta from the first model:
                 median_model.update(drizzled_model)
+
+                # Make sure the full WCS is copied over
                 median_model.meta.wcs = median_wcs
+                if drizzled_model.hasattr("wavetable"):
+                    median_model.add_schema_entry(
+                        "wavetable", drizzled_model.schema["properties"]["wavetable"]
+                    )
+                    median_model.wavetable = drizzled_model.wavetable
+
+                # Certain attributes that represent only one slit get copied over,
+                # but the median model isn't associated with any particular slit.
+                # Delete those.
+                if median_model.hasattr("source_xpos"):
+                    del median_model.source_xpos
+                if median_model.hasattr("source_ypos"):
+                    del median_model.source_ypos
 
         weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
         drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
@@ -291,15 +321,15 @@ def flag_crs_in_models(input_models, median_data, snr1, median_err=None):
 
     Parameters
     ----------
-    input_models : ModelContainer
+    input_models : `~jwst.datamodels.container.ModelContainer`
         The input datamodels.
-    median_data : np.ndarray
+    median_data : ndarray
         The median data array.
     snr1 : float
         The signal-to-noise ratio threshold for flagging outliers.
-    median_err : np.ndarray, optional
+    median_err : ndarray, optional
         The error array corresponding to the median data. If not provided,
-        the error array stored the input model `err` extension will be used.
+        the error array stored the input model ``err`` extension will be used.
     """
     for image in input_models:
         # dq flags will be updated in-place
@@ -318,17 +348,19 @@ def flag_resampled_model_crs(
     median_err=None,
     save_blot=False,
     make_output_path=None,
+    pixmap_stepsize=1,
+    pixmap_order=1,
 ):
     """
     Flag outliers in a resampled model, updating DQ array in place.
 
     Parameters
     ----------
-    input_model : ~jwst.datamodels.DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
-    median_data : np.ndarray
+    median_data : ndarray
         The median data array.
-    median_wcs : gwcs.WCS
+    median_wcs : `~gwcs.wcs.WCS`
         A WCS corresponding to the median data.
     snr1 : float
         The signal-to-noise ratio threshold for first pass flagging, prior to smoothing.
@@ -340,42 +372,42 @@ def flag_resampled_model_crs(
         Scale factor used to scale the absolute derivative of the blot model for the second pass.
     backg : float
         Scalar background level to add to the blotted image.
-        Ignored if `input_model.meta.background.level` is not None but
-        `input_model.meta.background.subtracted` is False.
-    median_err : np.ndarray, optional
+        Ignored if ``input_model.meta.background.level`` is not None but
+        ``input_model.meta.background.subtracted`` is `False`.
+    median_err : ndarray, optional
         The error array corresponding to the median data. If not provided,
-        the error array stored the input model `err` extension will be used.
-    save_blot : bool
-        If True, save the blotted image to fits.
-    make_output_path : function
-        The functools.partial instance to pass to save_blot. Must be
-        specified if save_blot is True.
+        the error array stored the input model ``err`` extension will be used.
+    save_blot : bool, optional
+        If `True`, save the blotted image to FITS.
+    make_output_path : function, optional
+        The :py:func:`functools.partial` instance to pass to ``save_blot``. Must be
+        specified if ``save_blot`` is `True`.
+    pixmap_stepsize : float, optional
+        Indicates the spacing in pixels at which the WCS is evaluated when computing the pixel map.
+        WCS coordinates of the full pixel map is computed by interpolating over
+        this sparse pixel map when ``pixmap_stepsize > 1``. Larger step sizes result in
+        faster performance at the cost of accuracy. Default is 1.
+    pixmap_order : int, optional
+        Interpolating spline order for pixel map computation. Must be 1 or 3. Default is 1.
     """
-    if "SPECTRAL" not in input_model.meta.wcs.output_frame.axes_type:
-        input_pixflux_area = input_model.meta.photometry.pixelarea_steradians
-        # Set array shape, needed to compute image pixel area
-        input_model.meta.wcs.array_shape = input_model.shape
-        input_pixel_area = compute_image_pixel_area(input_model.meta.wcs)
-        pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
-    else:
-        pix_ratio = 1.0
-
     blot = gwcs_blot(
-        median_data,
-        median_wcs,
-        input_model.data.shape,
-        input_model.meta.wcs,
-        pix_ratio,
+        median_data=median_data,
+        median_wcs=median_wcs,
+        blot_shape=input_model.data.shape,
+        blot_wcs=input_model.meta.wcs,
         fillval=np.nan,
+        pixmap_stepsize=pixmap_stepsize,
+        pixmap_order=pixmap_order,
     )
     if median_err is not None:
         blot_err = gwcs_blot(
-            median_err,
-            median_wcs,
-            input_model.data.shape,
-            input_model.meta.wcs,
-            pix_ratio,
+            median_data=median_err,
+            median_wcs=median_wcs,
+            blot_shape=input_model.data.shape,
+            blot_wcs=input_model.meta.wcs,
             fillval=np.nan,
+            pixmap_stepsize=pixmap_stepsize,
+            pixmap_order=pixmap_order,
         )
     else:
         blot_err = None
@@ -401,11 +433,11 @@ def _flag_resampled_model_crs(
 
     Parameters
     ----------
-    input_model : ~jwst.datamodels.DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
-    blot : np.ndarray
+    blot : ndarray
         The blotted data array.
-    blot_err : np.ndarray
+    blot_err : ndarray
         The blotted error array.
     snr1 : float
         The signal-to-noise ratio threshold for first pass flagging, prior to smoothing.
@@ -417,8 +449,8 @@ def _flag_resampled_model_crs(
         Scale factor used to scale the absolute derivative of the blot model for the second pass.
     backg : float
         Scalar background level to add to the blotted image.
-        Ignored if `input_model.meta.background.level` is not None but
-        `input_model.meta.background.subtracted` is False.
+        Ignored if ``input_model.meta.background.level`` is not None but
+        ``input_model.meta.background.subtracted`` is `False`.
     """
     if (
         input_model.meta.background.subtracted is False
@@ -462,11 +494,11 @@ def flag_crs_in_models_with_resampling(
 
     Parameters
     ----------
-    input_models : ~jwst.datamodels.ModelContainer
+    input_models : `~jwst.datamodels.container.ModelContainer`
         The input datamodels.
-    median_data : np.ndarray
+    median_data : ndarray
         The median data array.
-    median_wcs : gwcs.WCS
+    median_wcs : `~gwcs.wcs.WCS`
         A WCS corresponding to the median data.
     snr1 : float
         The signal-to-noise ratio threshold for first pass flagging, prior to smoothing.
@@ -478,16 +510,16 @@ def flag_crs_in_models_with_resampling(
         Scale factor used to scale the absolute derivative of the blot model for the second pass.
     backg : float
         Scalar background level to add to the blotted image.
-        Ignored if `input_model.meta.background.level` is not None but
-        `input_model.meta.background.subtracted` is False.
-    median_err : np.ndarray, optional
+        Ignored if ``input_model.meta.background.level`` is not None but
+        ``input_model.meta.background.subtracted`` is `False`.
+    median_err : ndarray, optional
         The error array corresponding to the median data. If not provided,
-        the error array stored the input model `err` extension will be used.
+        the error array stored the input model ``err`` extension will be used.
     save_blot : bool
-        If True, save the blotted image to fits.
+        If `True`, save the blotted image to FITS.
     make_output_path : function
-        The functools.partial instance to pass to save_blot. Must be
-        specified if save_blot is True.
+        The :py:func:`functools.partial` instance to pass to ``save_blot``. Must be
+        specified if ``save_blot`` is `True`.
     """
     for image in input_models:
         flag_resampled_model_crs(
@@ -502,6 +534,8 @@ def flag_crs_in_models_with_resampling(
             median_err=median_err,
             save_blot=save_blot,
             make_output_path=make_output_path,
+            pixmap_stepsize=1,
+            pixmap_order=1,
         )
 
 
@@ -511,15 +545,15 @@ def flag_model_crs(image, blot, snr, median_err=None):
 
     Parameters
     ----------
-    image : ~jwst.datamodels.DataModel
+    image : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input datamodel.
-    blot : np.ndarray
+    blot : ndarray
         The blotted data array.
     snr : float
         The signal-to-noise ratio threshold for flagging outliers.
-    median_err : np.ndarray, optional
+    median_err : ndarray, optional
         The error array corresponding to the median data. If not provided,
-        the error array stored the input model `err` extension will be used.
+        the error array stored the input model ``err`` extension will be used.
     """
     if median_err is not None:
         error_to_use = median_err
@@ -534,4 +568,4 @@ def flag_model_crs(image, blot, snr, median_err=None):
     # matching NaNs and DQ flags
     match_nans_and_flags(image)
 
-    log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
+    log.info("%d pixels marked as outliers", np.count_nonzero(cr_mask))

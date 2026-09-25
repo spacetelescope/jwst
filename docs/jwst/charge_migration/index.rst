@@ -9,6 +9,4 @@ Charge Migration
 
    description.rst
    arguments.rst
-   reference_files.rst
-
-.. automodapi:: jwst.charge_migration
+   api_ref.rst

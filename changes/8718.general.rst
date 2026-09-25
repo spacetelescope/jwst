@@ -1,1 +1,0 @@
-Relax upper pin on `numpy`, allowing installation with `numpy>=2.0`. 

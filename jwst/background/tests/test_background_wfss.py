@@ -1,21 +1,30 @@
-import pytest
-import numpy as np
+import json
+import logging
+import os
+import shutil
 from pathlib import Path
 
-from stdatamodels.jwst.datamodels.dqflags import pixel
+import numpy as np
+import pytest
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
-from jwst.stpipe import Step
+from stdatamodels.jwst.datamodels.dqflags import pixel
+
 from jwst.assign_wcs import AssignWcsStep
-from jwst.background import BackgroundStep
-from jwst.background.background_sub_wfss import (subtract_wfss_bkg,
-                                            _mask_from_source_cat,
-                                            _sufficient_background_pixels,
-                                            _ScalingFactorComputer)
+from jwst.background import BackgroundStep, background_sub_wfss
+from jwst.background.background_sub_wfss import (
+    ScalingFactorComputer,
+    _mask_from_source_cat,
+    _sufficient_background_pixels,
+    subtract_wfss_bkg,
+)
+from jwst.stpipe import Step
 
 BKG_SCALING = 0.123
 DETECTOR_SHAPE = (2048, 2048)
 INITIAL_NAN_FRACTION = 1e-4
 INITIAL_OUTLIER_FRACTION = 1e-3
+
 
 @pytest.fixture(scope="module")
 def known_bkg():
@@ -23,7 +32,7 @@ def known_bkg():
 
     ny, nx = DETECTOR_SHAPE
     y, x = np.mgrid[:ny, :nx]
-    gradient = x * y / (nx*ny)
+    gradient = x * y / (nx * ny)
     gradient = gradient - np.mean(gradient)
     return gradient + 1
 
@@ -40,7 +49,7 @@ def mock_data(known_bkg):
     rng = np.random.default_rng(seed=42)
     data = rng.normal(0, 1, DETECTOR_SHAPE)
     # ensure all errors are positive and not too close to zero
-    err = err_scaling*(1 + rng.normal(0, 1, DETECTOR_SHAPE)**2)
+    err = err_scaling * (1 + rng.normal(0, 1, DETECTOR_SHAPE) ** 2)
 
     # add NaNs
     num_nans = int(data.size * nan_fraction)
@@ -59,68 +68,64 @@ def mock_data(known_bkg):
 
     # also add a small background to the data with same structure
     # as the known reference background to see if it will get removed
-    data += known_bkg*BKG_SCALING
+    data += known_bkg * BKG_SCALING
 
     return data, err, original_data_mean
 
 
-@pytest.fixture(scope='module')
-def make_wfss_datamodel(data_path, mock_data):
-
+@pytest.fixture(scope="module")
+def make_wfss_datamodel(mock_data):
     """Generate WFSS Observation"""
     wcsinfo = {
-        'dec_ref': -27.79156387419731,
-        'ra_ref': 53.16247756038121,
-        'roll_ref': 0.04254766236781744,
-        'v2_ref': -290.1,
-        'v3_ref': -697.5,
-        'v3yangle': 0.56987,
-        'vparity': -1}
+        "dec_ref": -27.79156387419731,
+        "ra_ref": 53.16247756038121,
+        "roll_ref": 0.04254766236781744,
+        "v2_ref": -290.1,
+        "v3_ref": -697.5,
+        "v3yangle": 0.56987,
+        "vparity": -1,
+    }
 
-    observation = {
-        'date': '2023-01-05',
-        'time': '8:59:37'}
+    observation = {"date": "2023-01-05", "time": "8:59:37"}
 
     exposure = {
-        'duration': 11.805952,
-        'end_time': 58119.85416,
-        'exposure_time': 11.776,
-        'frame_time': 0.11776,
-        'group_time': 0.11776,
-        'groupgap': 0,
-        'integration_time': 11.776,
-        'nframes': 1,
-        'ngroups': 8,
-        'nints': 1,
-        'nresets_between_ints': 0,
-        'nsamples': 1,
-        'sample_time': 10.0,
-        'start_time': 58668.72509857639,
-        'zero_frame': False}
+        "duration": 11.805952,
+        "end_time": 58119.85416,
+        "exposure_time": 11.776,
+        "frame_time": 0.11776,
+        "group_time": 0.11776,
+        "groupgap": 0,
+        "integration_time": 11.776,
+        "nframes": 1,
+        "ngroups": 8,
+        "nints": 1,
+        "nresets_between_ints": 0,
+        "nsamples": 1,
+        "sample_time": 10.0,
+        "start_time": 58668.72509857639,
+        "zero_frame": False,
+    }
 
-    subarray = {'xsize': DETECTOR_SHAPE[0],
-                'ysize': DETECTOR_SHAPE[1],
-                'xstart': 1,
-                'ystart': 1}
+    subarray = {"xsize": DETECTOR_SHAPE[0], "ysize": DETECTOR_SHAPE[1], "xstart": 1, "ystart": 1}
 
-    instrument = {
-        'filter_position': 1,
-        'pupil_position': 1}
+    instrument = {"filter_position": 1, "pupil_position": 1}
 
     image = datamodels.ImageModel(DETECTOR_SHAPE)
 
-    image.meta.wcsinfo._instance.update(wcsinfo)
-    image.meta.instrument._instance.update(instrument)
-    image.meta.observation._instance.update(observation)
-    image.meta.subarray._instance.update(subarray)
-    image.meta.exposure._instance.update(exposure)
+    image.meta.wcsinfo.instance.update(wcsinfo)
+    image.meta.instrument.instance.update(instrument)
+    image.meta.observation.instance.update(observation)
+    image.meta.subarray.instance.update(subarray)
+    image.meta.exposure.instance.update(exposure)
 
     image.data = mock_data[0]
     image.err = mock_data[1]
-    image.original_data_mean = mock_data[2] #just add this here for convenience
+    image.original_data_mean = mock_data[2]  # just add this here for convenience
     image.dq = np.isnan(image.data)
 
-    image.meta.source_catalog = str(data_path / "test_cat.ecsv")
+    image.meta.source_catalog = get_pkg_data_filename(
+        "data/test_cat.ecsv", package="jwst.background.tests"
+    )
 
     return image
 
@@ -129,13 +134,13 @@ def make_wfss_datamodel(data_path, mock_data):
 def make_nrc_wfss_datamodel(make_wfss_datamodel):
     """Make a NIRCAM WFSS datamodel and call AssignWCS to populate its WCS"""
     data = make_wfss_datamodel.copy()
-    data.meta.instrument.filter = 'F250M'
-    data.meta.instrument.pupil = 'GRISMC'
-    data.meta.instrument.detector = 'NRCALONG'
-    data.meta.instrument.channel = 'LONG'
-    data.meta.instrument.name = 'NIRCAM'
-    data.meta.exposure.type = 'NRC_WFSS'
-    data.meta.instrument.module = 'A'
+    data.meta.instrument.filter = "F250M"
+    data.meta.instrument.pupil = "GRISMC"
+    data.meta.instrument.detector = "NRCALONG"
+    data.meta.instrument.channel = "LONG"
+    data.meta.instrument.name = "NIRCAM"
+    data.meta.exposure.type = "NRC_WFSS"
+    data.meta.instrument.module = "A"
     result = AssignWcsStep.call(data)
 
     return result
@@ -145,17 +150,42 @@ def make_nrc_wfss_datamodel(make_wfss_datamodel):
 def make_nis_wfss_datamodel(make_wfss_datamodel):
     """Make a NIRISS WFSS datamodel and call AssignWCS to populate its WCS"""
     data = make_wfss_datamodel.copy()
-    data.meta.instrument.filter = 'GR150C'
-    data.meta.instrument.pupil = 'F090W'
-    data.meta.instrument.detector = 'NIS'
-    data.meta.instrument.name = 'NIRISS'
-    data.meta.exposure.type = 'NIS_WFSS'
+    data.meta.instrument.filter = "GR150C"
+    data.meta.instrument.pupil = "F090W"
+    data.meta.instrument.detector = "NIS"
+    data.meta.instrument.name = "NIRISS"
+    data.meta.exposure.type = "NIS_WFSS"
     result = AssignWcsStep.call(data)
 
     return result
 
 
-@pytest.fixture()
+@pytest.fixture
+def make_nis_wfss_sub64(make_wfss_datamodel):
+    """Make a NIRISS WFSS datamodel with subarray 64x2048"""
+    model = make_wfss_datamodel.copy()
+    model.meta.instrument.filter = "GR150C"
+    model.meta.instrument.pupil = "F090W"
+    model.meta.instrument.detector = "NIS"
+    model.meta.instrument.name = "NIRISS"
+    model.meta.exposure.type = "NIS_WFSS"
+
+    model.meta.subarray.xsize = 2048
+    model.meta.subarray.ysize = 64
+    model.meta.subarray.xstart = 1
+    model.meta.subarray.ystart = 1985
+    model.meta.subarray.name = "WFSS64C"
+
+    model.data = model.data[-64:, :2048]  # simulate subarray by slicing data
+    model.err = model.err[-64:, :2048]
+    model.dq = model.dq[-64:, :2048]
+
+    result = AssignWcsStep.call(model)
+
+    return result
+
+
+@pytest.fixture
 def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     """Mock background reference file"""
 
@@ -167,10 +197,10 @@ def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     return bkg_fname
 
 
-def shared_tests(sci, mask, original_data_mean):
+def shared_tests(sci, mask, original_data_mean, dm):
     """
     Tests that are common to all WFSS modes.
-    
+
     Note that NaN fraction test in test_nrc_wfss_background and test_nis_wfss_background
     cannot be applied to the full run tests because the background reference files contain
     NaNs in some cases (specifically for NIRISS)
@@ -183,9 +213,13 @@ def shared_tests(sci, mask, original_data_mean):
     # the noise in the data. There's probably a first-principles way to determine the tolerance,
     # but this is ok for the purposes of this test.
     # ignore the outliers here too
-    sci[sci>50] = np.nan
-    tol = 0.01*np.nanstd(sci)
+    sci[sci > 50] = np.nan
+    tol = 0.01 * np.nanstd(sci)
     assert np.isclose(np.nanmean(sci), original_data_mean, atol=tol)
+
+    # Verify that the mask extension in the datamodel is populated
+    np.testing.assert_allclose(dm.mask, mask)
+    assert dm.mask.dtype == np.uint32
 
 
 def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
@@ -201,18 +235,22 @@ def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
 
     # ensure NaN fraction did not increase. Rejecting outliers during determination
     # of factor should not have carried over into result.
-    nan_frac = np.sum(np.isnan(sci))/sci.size
+    nan_frac = np.sum(np.isnan(sci)) / sci.size
     assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=1e-2)
 
     # re-compute mask to ignore "real" sources for tests
     mask = _mask_from_source_cat(result, wavelenrange)
 
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
 
 
-def test_nis_wfss_background(make_nis_wfss_datamodel, bkg_file):
+@pytest.mark.parametrize("subarray", [None, "WFSS64C"])
+def test_nis_wfss_background(subarray, make_nis_wfss_datamodel, make_nis_wfss_sub64, bkg_file):
     """Test background subtraction for NIRISS WFSS modes."""
-    data = make_nis_wfss_datamodel.copy()
+    if subarray == "WFSS64C":
+        data = make_nis_wfss_sub64.copy()
+    else:
+        data = make_nis_wfss_datamodel.copy()
 
     # Get References
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
@@ -223,11 +261,11 @@ def test_nis_wfss_background(make_nis_wfss_datamodel, bkg_file):
 
     # ensure NaN fraction did not increase. Rejecting outliers during determination
     # of factor should not have carried over into result.
-    nan_frac = np.sum(np.isnan(sci))/sci.size
+    nan_frac = np.sum(np.isnan(sci)) / sci.size
     assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=1e-2)
 
     mask = _mask_from_source_cat(result, wavelenrange)
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
 
 
 # test both filters because they have opposite dispersion directions
@@ -245,16 +283,17 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
     data.meta.instrument.pupil = pupil
 
     # do the subtraction. set all options to ensure they are at least recognized
-    result = BackgroundStep.call(data, None,
-                                 wfss_maxiter=3,
-                                 wfss_outlier_percent=0.5,
-                                 wfss_rms_stop=0,)
+    result = BackgroundStep.call(
+        data, None, wfss_maxiter=3, wfss_outlier_percent=0.5, wfss_rms_stop=0, save_results=False
+    )
+    assert result is not data
+    assert data.meta.cal_step.bkg_subtract is None
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
     mask = _mask_from_source_cat(result, wavelenrange)
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
     assert isinstance(result.meta.background.scaling_factor, float)
 
 
@@ -272,41 +311,52 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
     data.meta.instrument.filter = filt
 
     # do the subtraction. set all options to ensure they are at least recognized
-    result = BackgroundStep.call(data, None,
-                                 wfss_maxiter=3,
-                                 wfss_outlier_percent=0.5,
-                                 wfss_rms_stop=0,)
+    result = BackgroundStep.call(
+        data, None, wfss_maxiter=3, wfss_outlier_percent=0.5, wfss_rms_stop=0, save_results=False
+    )
+    assert result is not data
+    assert data.meta.cal_step.bkg_subtract is None
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
     mask = _mask_from_source_cat(result, wavelenrange)
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
     assert isinstance(result.meta.background.scaling_factor, float)
 
 
 def test_sufficient_background_pixels():
-    model = datamodels.ImageModel(data=np.zeros((2048, 2048)),
-                                  dq=np.zeros((2048, 2048)))
-    refpix_flags = pixel['DO_NOT_USE'] | pixel['REFERENCE_PIXEL']
+    model = datamodels.ImageModel(data=np.zeros((2048, 2048)), dq=np.zeros((2048, 2048)))
+    refpix_flags = pixel["DO_NOT_USE"] | pixel["REFERENCE_PIXEL"]
     model.dq[:4, :] = refpix_flags
     model.dq[-4:, :] = refpix_flags
     model.dq[:, :4] = refpix_flags
     model.dq[:, -4:] = refpix_flags
 
-    bkg_mask = np.ones((2048, 2048), dtype=bool)
-    # With full array minux refpix available for bkg, should be sufficient
-    assert _sufficient_background_pixels(model.dq, bkg_mask)
+    bkg = np.ones((2048, 2048), dtype=float)
 
-    bkg_mask[4: -4, :] = 0
-    bkg_mask[:, 4: -4] = 0
+    bkg_mask = np.ones((2048, 2048), dtype=bool)
+    # With full array minus refpix available for bkg, should be sufficient
+    assert _sufficient_background_pixels(model.dq, bkg_mask, bkg)
+
+    bkg_mask[4:-4, :] = 0
+    bkg_mask[:, 4:-4] = 0
     # Now mask out entire array, mocking full source coverage of detector -
     # no pixels should be available for bkg
-    assert not _sufficient_background_pixels(model.dq, bkg_mask)
+    assert not _sufficient_background_pixels(model.dq, bkg_mask, bkg)
+
+
+def test_sufficient_background_pixels_nonoverlapping():
+    """Valid pixels in bkg, and valid pixels in bkg_mask, but these do not overlap."""
+    dq = np.zeros((2048, 2048), dtype=int)
+    bkg_mask = np.zeros((2048, 2048), dtype=bool)
+    bkg = np.zeros((2048, 2048), dtype=float)
+    bkg_mask[:1024, :1024] = 1
+    bkg[1024:, 1024:] = 1.0
+    assert not _sufficient_background_pixels(dq, bkg_mask, bkg)
 
 
 def test_weighted_mean(make_wfss_datamodel, bkg_file):
-
     sci = make_wfss_datamodel.data
     var = make_wfss_datamodel.err**2
     with datamodels.open(bkg_file) as bkg_model:
@@ -316,29 +366,31 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     # variances in real data caused factor = 1/np.inf = 0
     rng = np.random.default_rng(seed=42)
     n_bad = int(var.size / 1000)
-    bad_i = rng.choice(var.size-1, n_bad)
+    bad_i = rng.choice(var.size - 1, n_bad)
     var[np.unravel_index(bad_i, var.shape)] = 0.0
 
     # instantiate scaling factor computer
-    rescaler = _ScalingFactorComputer()
+    rescaler = ScalingFactorComputer()
 
     # just get the weighted mean without iteration
     # to check it's as expected, mask outliers
-    sci[sci>50] = np.nan
+    sci[sci > 50] = np.nan
     factor = rescaler.err_weighted_mean(sci, bkg, var)
     original_data_mean = make_wfss_datamodel.original_data_mean
-    expected_factor = BKG_SCALING+original_data_mean
+    expected_factor = BKG_SCALING + original_data_mean
     assert np.isclose(factor, expected_factor, atol=1e-3)
 
     # ensure it still works after iteration
-    for niter in [1,2,5]:
+    for niter in [1, 2, 5]:
         for p in [2, 0.5, 0.1]:
-            rescaler = _ScalingFactorComputer(p=p, maxiter=niter)
-            assert rescaler.delta_rms_thresh == 0 #check rms_thresh=None input sets thresh properly
+            rescaler = ScalingFactorComputer(p=p, maxiter=niter)
+            assert (
+                rescaler.delta_rms_thresh == 0
+            )  # check rms_thresh=None input sets thresh properly
 
             factor, mask_out = rescaler(sci, bkg, var)
-            mask_fraction = np.sum(mask_out)/mask_out.size
-            max_mask_fraction = p*niter*2 + INITIAL_NAN_FRACTION
+            mask_fraction = np.sum(mask_out) / mask_out.size
+            max_mask_fraction = p * niter * 2 + INITIAL_NAN_FRACTION
 
             assert np.isclose(factor, expected_factor, atol=1e-3)
             assert mask_fraction <= max_mask_fraction
@@ -350,23 +402,311 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     # for this test case
     maxiter = 10
     delta_rms_thresh = 1e-4
-    p = 100*INITIAL_OUTLIER_FRACTION/2
-    rescaler = _ScalingFactorComputer(p=p,
-                                      dispersion_axis=1,
-                                      delta_rms_thresh=delta_rms_thresh,
-                                      maxiter=maxiter)
+    p = 100 * INITIAL_OUTLIER_FRACTION / 2
+    rescaler = ScalingFactorComputer(
+        p=p, dispersion_axis=1, delta_rms_thresh=delta_rms_thresh, maxiter=maxiter
+    )
     factor, mask_out = rescaler(sci, bkg, var)
     assert rescaler._iters_run_last_call < maxiter
 
     # test putting mask=None works ok, and that maxiter=0 just gives you err weighted mean
-    rescaler = _ScalingFactorComputer(maxiter=0)
+    rescaler = ScalingFactorComputer(maxiter=0)
     factor, mask_out = rescaler(sci, bkg, var)
     assert np.all(mask_out == 0)
     assert factor == rescaler.err_weighted_mean(sci, bkg, var)
 
     # test invalid inputs
     with pytest.raises(ValueError):
-        rescaler = _ScalingFactorComputer(dispersion_axis=5, delta_rms_thresh=1)
+        rescaler = ScalingFactorComputer(dispersion_axis=5, delta_rms_thresh=1)
 
     with pytest.raises(ValueError):
-        rescaler = _ScalingFactorComputer(dispersion_axis=None, delta_rms_thresh=1)
+        rescaler = ScalingFactorComputer(dispersion_axis=None, delta_rms_thresh=1)
+
+
+@pytest.fixture()
+def mock_asn_and_data(tmp_path_factory, make_nis_wfss_datamodel):
+    # Create temp dir and copy the catalog in there
+    tmp_path = tmp_path_factory.mktemp("asn_input")
+    shutil.copy(
+        get_pkg_data_filename("data/test_cat.ecsv", package="jwst.background.tests"),
+        str(tmp_path / "test_cat.ecsv"),
+    )
+    # Save the datmodel into a rate file but remove the catalog to make sure it is
+    # added back in by the asn_intake module
+    make_nis_wfss_datamodel.meta.source_catalog = None
+    ratefile = tmp_path / "jw01000001001_test_00001_nis_rate.fits"
+    make_nis_wfss_datamodel.save(str(ratefile))
+    # Pretend this is also the direct image, save with a diff name
+    i2dfile = tmp_path / "jw01000-o001_t001_niriss_i2d.fits"
+    make_nis_wfss_datamodel.save(str(i2dfile))
+    # Pretend this is also the segment, save with a diff name
+    segmfile = tmp_path / "jw01000-o001_t001_niriss_segm.fits"
+    make_nis_wfss_datamodel.save(str(segmfile))
+
+    data = {
+        "asn_type": "spec2",
+        "asn_rule": "Asn_Lv2WFSS",
+        "program": "01000",
+        "asn_pool": "jw010000_pool.csv",
+        "products": [
+            {
+                "name": "jw01000001001_test_00001_nis",
+                "members": [
+                    {
+                        "expname": "jw01000001001_test_00001_nis_rate.fits",
+                        "exptype": "science",
+                        "exposerr": "null",
+                    },
+                    {"expname": "jw01000-o001_t001_niriss_i2d.fits", "exptype": "direct_image"},
+                    {"expname": "test_cat.ecsv", "exptype": "sourcecat"},
+                    {"expname": "jw01000-o001_t001_niriss_segm.fits", "exptype": "segmap"},
+                ],
+            }
+        ],
+    }
+
+    asn_name = str(tmp_path / "jw010000-wfss_test_spec2_00001_asn.json")
+    with open(asn_name, "w") as asn:
+        json.dump(data, asn)
+
+    return [asn_name, ratefile, i2dfile, segmfile]
+
+
+def test_wfss_asn_input(mock_asn_and_data):
+    # get the file name of asn and other file objects
+    asn_name, ratefile = mock_asn_and_data[0], mock_asn_and_data[1]
+    i2dfile, segmfile = mock_asn_and_data[2], mock_asn_and_data[3]
+    # change the working directory into the temp dir, so it can find all files
+    cwd = os.getcwd()
+    os.chdir(ratefile.parents[0])
+    result = BackgroundStep.call(asn_name, save_results=False)
+    # return to previous working dir
+    os.chdir(cwd)
+
+    assert result.meta.source_catalog == "test_cat.ecsv"
+    assert result.meta.direct_image == i2dfile.name
+    assert result.meta.segmentation_map == segmfile.name
+    assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+
+
+def test_missing_bkg(monkeypatch, caplog, make_nrc_wfss_datamodel):
+    """Test for missing background file."""
+    model = make_nrc_wfss_datamodel.copy()
+    step = BackgroundStep()
+    monkeypatch.setattr(step, "get_reference_file", lambda *args: "N/A")
+
+    result = step.run(model)
+    assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
+    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert "No BKG reference file" in caplog.text
+
+
+def test_bkg_fail(monkeypatch, caplog, make_nrc_wfss_datamodel):
+    """Test for missing background file."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Mock a failure in the background algorithm, for
+    # insufficient pixels
+    monkeypatch.setattr(background_sub_wfss, "_sufficient_background_pixels", lambda *args: False)
+
+    result = BackgroundStep.call(model, save_results=False)
+    assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
+    assert result.meta.cal_step.bkg_subtract == "FAILED"
+    assert result.meta.background.scaling_factor == 0.0
+
+    assert "did not find enough background pixels" in caplog.text
+
+
+def test_infinite_factor(monkeypatch, caplog, make_nrc_wfss_datamodel):
+    """Test for infinite scaling factor."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Mock an infinite scaling factor
+    monkeypatch.setattr(
+        background_sub_wfss.ScalingFactorComputer, "err_weighted_mean", lambda *args: np.nan
+    )
+
+    result = BackgroundStep.call(model, save_results=False)
+    assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
+    assert result.meta.cal_step.bkg_subtract == "FAILED"
+    assert result.meta.background.scaling_factor == 0.0
+    assert (
+        "Could not determine a finite scaling factor between reference background and data"
+        in caplog.text
+    )
+
+
+@pytest.fixture
+def user_mask(make_nrc_wfss_datamodel):
+    """Create a custom user mask (True for background, False for sources)"""
+    model = make_nrc_wfss_datamodel.copy()
+    user_mask = np.ones(model.data.shape, dtype=bool)
+    # Mask out a rectangular region as if it were a source
+    user_mask[500:600, 800:900] = False
+    return user_mask
+
+
+def test_user_mask(make_nrc_wfss_datamodel, bkg_file, user_mask, caplog):
+    """Test that source catalog is ignored when user mask is provided."""
+    model = make_nrc_wfss_datamodel.copy()
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Do the subtraction with user mask
+    with caplog.at_level(logging.INFO):
+        result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+    assert "Using user-supplied source mask" in caplog.text
+
+    # Verify the user mask is saved in the output model
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+    assert result.mask.dtype == np.uint32
+
+    # Ensure scaling factor is finite and reasonable
+    assert np.isfinite(result.meta.background.scaling_factor)
+    assert result.meta.background.scaling_factor > 0
+
+    # Verify that the mask matches the user mask, not the catalog-derived mask
+    catalog_mask = _mask_from_source_cat(model, wavelenrange)
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+    with pytest.raises(AssertionError):
+        np.testing.assert_allclose(result.mask, catalog_mask.astype(np.uint32))
+
+
+def test_user_mask_no_catalog(make_nrc_wfss_datamodel, bkg_file, user_mask):
+    """Test user mask works even when source catalog is missing."""
+    model = make_nrc_wfss_datamodel.copy()
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Remove the source catalog
+    model.meta.source_catalog = None
+
+    # Do the subtraction with user mask (should work despite missing catalog)
+    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+
+    # Verify the user mask is saved and background subtraction succeeded
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+    assert np.isfinite(result.meta.background.scaling_factor)
+    assert result.meta.background.scaling_factor > 0
+
+
+def test_user_mask_low_pixels(make_nrc_wfss_datamodel, bkg_file):
+    """Test that user mask with few background pixels still succeeds (min_pixfrac=0.0)."""
+    model = make_nrc_wfss_datamodel.copy()
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Create a mask where almost everything is a source (very few background pixels, < 5%)
+    # With user masks, this should still succeed - we are trusting the user
+    user_mask = np.zeros(model.data.shape, dtype=bool)
+    user_mask[:10, :10] = True
+
+    # Do the subtraction with user mask
+    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+
+    # Should succeed with user mask despite having < 5% background pixels
+    assert np.isfinite(result.meta.background.scaling_factor)
+    assert result.meta.background.scaling_factor > 0
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+
+
+def test_user_mask_no_valid_pixels(make_nrc_wfss_datamodel, bkg_file):
+    """Test that user mask fails when DQ flags eliminate all background pixels."""
+    model = make_nrc_wfss_datamodel.copy()
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Create a user mask with some background pixels
+    user_mask = np.zeros(model.data.shape, dtype=bool)
+    user_mask[:100, :100] = True  # Mark a region as background
+
+    # Mark all those same pixels as DO_NOT_USE in the DQ array
+    model.dq[:100, :100] = pixel["DO_NOT_USE"]
+
+    # Do the subtraction with user mask
+    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=user_mask)
+
+    # Should fail because DQ flags eliminate all valid background pixels
+    assert result.meta.cal_step.bkg_subtract == "FAILED"
+    assert result.meta.background.scaling_factor == 0.0
+
+
+def test_no_catalog_no_user_mask(make_nrc_wfss_datamodel, bkg_file, caplog):
+    """Test that background subtraction works when no source catalog or user mask is provided."""
+    model = make_nrc_wfss_datamodel.copy()
+    wavelenrange = Step().get_reference_file(model, "wavelengthrange")
+
+    # Remove the source catalog
+    model.meta.source_catalog = None
+
+    # Do the subtraction without user mask and without source catalog
+    result = subtract_wfss_bkg(model, bkg_file, wavelenrange, user_mask=None)
+    assert "No source_catalog found in input.meta, and custom mask not specified." in caplog.text
+
+    # Should succeed using all pixels as background
+    assert np.isfinite(result.meta.background.scaling_factor)
+    assert result.meta.background.scaling_factor > 0
+
+    # Verify that the mask is all True (all background)
+    expected_mask = np.ones(model.data.shape, dtype=np.uint32)
+    np.testing.assert_allclose(result.mask, expected_mask)
+
+
+def test_user_mask_step(mock_asn_and_data, user_mask, caplog):
+    """Test that BackgroundStep correctly uses user-supplied mask from ASN input."""
+    # get the file name of asn and other file objects
+    asn_name, ratefile = mock_asn_and_data[0], mock_asn_and_data[1]
+    i2dfile, segmfile = mock_asn_and_data[2], mock_asn_and_data[3]
+    # change the working directory into the temp dir, so it can find all files
+    cwd = os.getcwd()
+    os.chdir(ratefile.parents[0])
+
+    # Saveuser mask to file
+    mask_fname = "user_mask.fits"
+    mask_model = datamodels.ImageModel(
+        data=np.zeros(user_mask.shape), mask=user_mask.astype(np.uint32)
+    )
+    mask_model.save(mask_fname)
+    mask_model.close()
+
+    with caplog.at_level(logging.INFO):
+        result = BackgroundStep.call(asn_name, wfss_mask=mask_fname, save_results=False)
+    # return to previous working dir
+    os.chdir(cwd)
+
+    assert "Using user-supplied source mask" in caplog.text
+    np.testing.assert_allclose(result.mask, user_mask.astype(np.uint32))
+    assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+
+
+def test_user_mask_no_mask_attribute(make_nrc_wfss_datamodel, tmp_cwd):
+    """Test that BackgroundStep raises error when mask file has no mask attribute."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Create a mask file without a mask attribute (just data)
+    mask_fname = tmp_cwd / "bad_mask.fits"
+    bad_mask_model = datamodels.ImageModel(data=np.zeros(model.data.shape))
+    bad_mask_model.save(mask_fname)
+    bad_mask_model.close()
+
+    # Should raise AttributeError
+    with pytest.raises(AttributeError, match="No 'mask' attribute found"):
+        BackgroundStep.call(model, wfss_mask=str(mask_fname), save_results=False)
+
+
+def test_user_mask_wrong_shape(make_nrc_wfss_datamodel, tmp_cwd):
+    """Test that BackgroundStep raises error when mask shape doesn't match data."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Create a mask with wrong shape
+    wrong_shape = (100, 100)
+    mask_fname = tmp_cwd / "wrong_shape_mask.fits"
+    wrong_mask = np.ones(wrong_shape, dtype=bool)
+    mask_model = datamodels.ImageModel(
+        data=np.zeros(wrong_shape), mask=wrong_mask.astype(np.uint32)
+    )
+    mask_model.save(mask_fname)
+    mask_model.close()
+
+    # Should raise ValueError
+    with pytest.raises(ValueError, match="WFSS mask shape .* does not match input data shape"):
+        BackgroundStep.call(model, wfss_mask=str(mask_fname), save_results=False)

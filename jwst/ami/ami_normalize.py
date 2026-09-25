@@ -4,10 +4,12 @@
 #
 
 import logging
-from . import oifits
+
+from jwst.ami import oifits
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+
+__all__ = ["normalize_lg"]
 
 
 def normalize_lg(target_model, reference_model):
@@ -16,15 +18,14 @@ def normalize_lg(target_model, reference_model):
 
     Parameters
     ----------
-    target_model : AmiOIModel data model
+    target_model : `~stdatamodels.jwst.datamodels.AmiOIModel`
         The target data to be normalized
-
-    reference_model : AmiOIModel data model
+    reference_model : `~stdatamodels.jwst.datamodels.AmiOIModel`
         The reference data
 
     Returns
     -------
-    output_model : AmiOIModel data model
+    output_model : `~stdatamodels.jwst.datamodels.AmiOIModel`
         Normalized interferometric observables for the target
     """
     # Initialize the calibration (normalization) class and apply the normalizations

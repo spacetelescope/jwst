@@ -1,35 +1,36 @@
 import logging
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["create_background"]
 
 
 def create_background(wavelength, surf_bright):
     """
     Create a 1-D spectrum table as a MultiSpecModel.
 
-    This is the syntax for accessing the data in the columns:
-    wavelength = output_model.spec[0].spec_table['wavelength']
-    background = output_model.spec[0].spec_table['surf_bright']
+    This is the syntax for accessing the data in the columns::
+
+        wavelength = output_model.spec[0].spec_table["wavelength"]
+        background = output_model.spec[0].spec_table["surf_bright"]
 
     Parameters
     ----------
-    wavelength : 1-D ndarray
-        Array of wavelengths, in micrometers.
-    surf_bright : 1-D ndarray
-        Array of background surface brightness values.
+    wavelength : ndarray
+        1-D array of wavelengths, in micrometers.
+    surf_bright : ndarray
+        1-D array of background surface brightness values.
 
     Returns
     -------
-    output_model : `~jwst.datamodels.MultiSpecModel`, or None
-        A data model containing the 1-D background spectrum.  This can be
-        written to disk by calling:
+    output_model : `~stdatamodels.jwst.datamodels.MultiSpecModel` or None
+        A data model containing the 1-D background spectrum. This can be
+        written to disk by calling::
 
-        output_model.save(<filename>)
+            output_model.save(filename)
     """
     wl_shape = wavelength.shape
     sb_shape = surf_bright.shape
@@ -52,34 +53,34 @@ def create_background(wavelength, surf_bright):
         return None
 
     # Create arrays for columns that we won't need.
-    dummy = np.zeros(wl_shape[0], dtype=np.float64)
+    placeholder = np.zeros(wl_shape[0], dtype=np.float64)
     dq = np.zeros(wl_shape[0], dtype=np.int32)
     npixels = np.ones(wl_shape[0], dtype=np.float64)
 
     output_model = datamodels.MultiSpecModel()
 
-    spec_dtype = datamodels.SpecModel().spec_table.dtype
+    spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
 
     otab = np.array(
         list(
             zip(
                 wavelength,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
                 surf_bright,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
                 dq,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
-                dummy,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
+                placeholder,
                 npixels,
                 strict=False,
             )

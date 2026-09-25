@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.skymatch.SkymatchStep`
+:Class: `jwst.skymatch.skymatch_step.SkyMatchStep`
 :Alias: skymatch
 
 Overview
@@ -15,7 +15,7 @@ combining multiple images into a mosaic.
 When running the ``skymatch`` step in a matching mode,
 it compares *total* signal levels in *the overlap regions* of a set of input
 images and computes the signal offsets either for each image *or a set/group of
-images* (see Image Groups section below) that will
+images* (see :ref:`skymatch_img_grp`) that will
 minimize -- in a least squares sense -- the residuals across
 the entire set. This comparison is performed directly on the input images
 without resampling them onto a common grid. The overlap regions are computed
@@ -32,21 +32,21 @@ the true total sky level.
 .. note::
    Throughout this document the term "sky" is used in a generic sense,
    referring to any kind of non-source background signal, which may include
-   actual sky, as well as instrumental (e.g. thermal) background, etc.
+   actual sky, as well as instrumental (e.g., thermal) background, etc.
 
 The step records information in three keywords that are included in the output
 files:
 
 BKGMETH
-  records the sky method that was used to compute sky levels
+  Records the sky method that was used to compute sky levels.
 
 BKGLEVEL
-  the sky level computed for each image
+  The sky level computed for each image.
 
 BKGSUB
-  a boolean indicating whether or not the sky was subtracted from the
+  A boolean indicating whether or not the sky was subtracted from the
   output images. Note that by default the step argument "subtract" is set to
-  ``False``, which means that the sky will *NOT* be subtracted
+  `False`, which means that the sky will *NOT* be subtracted
   (see the :ref:`skymatch step arguments <skymatch_arguments>` for more
   details).
 
@@ -66,13 +66,15 @@ For a detailed discussion of JWST background components, please see
 `Rigby et al. "How Dark the Sky: The JWST Backgrounds", 2023
 <https://doi.org/10.48550/arXiv.2211.09890>`_ and
 `"JWST Background Model" section in the JWST User Documentation
-<https://jwst-docs.stsci.edu/jwst-general-support/jwst-background-model>`_
-Here we just note that some components (e.g., in-field zodiacal light)
+<https://jwst-docs.stsci.edu/jwst-general-support/jwst-background-model>`_.
+Here, we just note that some components (e.g., in-field zodiacal light)
 result in reproducible background structures in all detectors when they are
-exposed simultaneously, while other components (e.g. stray light, thermal
+exposed simultaneously, while other components (e.g., stray light, thermal
 emission) can produce varying background from one exposure to the next
 exposure. The type of background structure that dominates a particular dataset
 affects the optimal way to group images in the skymatch step.
+
+.. _skymatch_img_grp:
 
 Image Groups
 ------------
@@ -82,7 +84,7 @@ either for each input image or for groups of two or more input images.
 
 When background is dominated by zodiacal light, images taken at the same time
 (e.g., NIRCam images from all short-wave detectors) can be sky matched
-together; that is, a single background
+together; i.e., a single background
 level can be computed and applied to all these images because we can assume
 that for the next exposure we will get a similar background structure, albeit
 with an offset level (common to all images in an exposure). Using grouped
@@ -95,10 +97,10 @@ step.
 
 Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
-`jwst.datamodels.ModelContainer`. This grouping is performed automatically
+`~jwst.datamodels.container.ModelContainer`. This grouping is performed automatically
 in the ``skymatch`` step using the
-`jwst.datamodels.ModelContainer.models_grouped` property or
-:py:meth:`jwst.datamodels.ModelLibrary.group_indices`.
+:attr:`~jwst.datamodels.container.ModelContainer.models_grouped` or
+:attr:`~stpipe.library.AbstractModelLibrary.group_indices` attribute.
 
 However, when background across different detectors in a single "exposure"
 (or "group") is dominated by unpredictable background components, we no longer
@@ -107,13 +109,13 @@ it may be desirable to match image backgrounds independently. This can be
 achieved either by setting the ``image_model.meta.group_id`` attribute to a
 unique string or integer value for each image, or by adding the ``group_id``
 attribute to the ``members`` of the input ASN table - see
-`~jwst.datamodels.ModelContainer` for more details.
+`~jwst.datamodels.container.ModelContainer` for more details.
 
 .. note::
-    Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps
+    Group ID (``group_id``) is used by both :ref:`tweakreg <tweakreg_step>` and ``skymatch`` steps
     and so modifying it for one step will affect the results in another step.
     If it is desirable to apply different grouping strategies to the
-    ``tweakreg`` and ``skymatch`` steps, one may need to run each step
+    :ref:`tweakreg <tweakreg_step>` and ``skymatch`` steps, one may need to run each step
     individually and provide a different ASN as input to each step.
 
 Assumptions
@@ -129,7 +131,7 @@ value computations.
 
 The first method, called "local", essentially is an enhanced version of the
 original sky subtraction method used in older versions of
-`astrodrizzle <https://drizzlepac.readthedocs.io/en/latest/astrodrizzle.html>`_.
+`AstroDrizzle <https://drizzlepac.readthedocs.io/en/latest/drizzlepac_api/astrodrizzle.html>`_.
 This method simply computes the mean/median/mode/etc. value of the sky
 separately in each input image. This method was upgraded to be able to use DQ
 flags to remove bad pixels from being used in the computations of sky
@@ -179,7 +181,7 @@ instead provides additive corrections that can be used to equalize the signal
 between overlapping images.
 
 User-Supplied Sky Values
--------------------------
+------------------------
 The ``skymatch`` step can also accept user-supplied sky values for each image.
 This is useful when sky values have been determined based on a custom workflow
 outside the pipeline. To use this feature, the user must provide a list of sky
@@ -196,7 +198,7 @@ below show the results for two hypothetical sets of images. The first example
 is for a set of 6 images that form a 2x3 mosaic, with every image having
 overlap with its immediate neighbors. The first column of the table gives the
 actual (fake) sky signal that was imposed in each image, and the subsequent
-columns show the results computed by each method (i.e. the values of the
+columns show the results computed by each method (i.e., the values of the
 resulting BKGLEVEL keywords).
 All results are for the case where the step argument ``match_down = True``,
 which means matching is done to the image with the lowest sky value.
@@ -329,3 +331,7 @@ the outcome of the matching (sky subtraction in general) algorithm:
    sources). However, arguments such as ``lower`` and ``upper`` will
    apply to all images regardless of the intrinsic differences
    in sky levels (see :ref:`skymatch step arguments <skymatch_arguments>`).
+
+Reference Files
+---------------
+The ``skymatch`` step does not use any reference files.

@@ -1,2 +1,0 @@
-Remove strict constraint on dither position for imprint images in Level 2 spectral associations.
-Instead, prune extra imprint images intended for other targets or dither positions when the association is finalized.

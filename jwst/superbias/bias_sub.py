@@ -1,36 +1,32 @@
-#
-#  Module for subtracting a super-bias image from science data sets
-#
+"""Module for subtracting a super-bias image from science data sets."""
+
+import logging
 
 import numpy as np
-import logging
-from ..lib import reffile_utils
+
+from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["do_correction", "subtract_bias"]
 
 
 def do_correction(input_model, bias_model):
     """
-    Short Summary
-    -------------
-    Execute all tasks for Super-Bias Subtraction
+    Execute all tasks for superbias Subtraction.
 
     Parameters
     ----------
-    input_model: data model object
-        science data to be corrected
-
-    bias_model: super-bias model object
-        bias data
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Science data to be corrected
+    bias_model : `~stdatamodels.jwst.datamodels.SuperBiasModel`
+        Bias data
 
     Returns
     -------
-    output_model: data model object
-        bias-subtracted science data
-
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Bias-subtracted science data
     """
-
     # Check for subarray mode and extract subarray from the
     # bias reference data if necessary
     if not reffile_utils.ref_matches_sci(input_model, bias_model):
@@ -42,47 +38,57 @@ def do_correction(input_model, bias_model):
     # Subtract the bias ref image from the science data
     output_model = subtract_bias(input_model, bias_model)
 
-    output_model.meta.cal_step.superbias = 'COMPLETE'
+    output_model.meta.cal_step.superbias = "COMPLETE"
 
     return output_model
 
 
 def subtract_bias(output, bias):
     """
-    Subtracts a superbias image from a science data set, subtracting the
-    superbias from each group of each integration in the science data.
+    Subtract the superbias image from each group of each integration in the science data.
+
     The DQ flags in the bias reference image are propagated into the science
-    data pixeldq array. The error array is unchanged.
+    data pixel DQ array. The error array is unchanged.
 
     Parameters
     ----------
-    output: data model object
-        the input science data
-
-    bias: superbias model object
-        the superbias image data
+    output : `~stdatamodels.jwst.datamodels.RampModel`
+        Input science data
+    bias : `~stdatamodels.jwst.datamodels.SuperBiasModel`
+        Superbias image data
 
     Returns
     -------
-    output: data model object
-        bias-subtracted science data
-
+    output : `~stdatamodels.jwst.datamodels.RampModel`
+        Bias-subtracted science data
     """
+    # Combine the science and superbias DQ arrays
+    output.pixeldq |= bias.dq
 
-    # combine the science and superbias DQ arrays
-    output.pixeldq = np.bitwise_or(output.pixeldq, bias.dq)
+    # Expand bias data to match science data if needed
+    num_superstripe = getattr(output.meta.subarray, "num_superstripe", None)
+    if num_superstripe is not None and num_superstripe > 0:
+        # Bias data is 3D, (nstripe, ny, nx)
+        nints, ngroups, _, _ = output.data.shape
+        bias_data = bias.data[:, np.newaxis, :, :].repeat(ngroups, axis=1)
+        bias_data = np.tile(bias_data, reps=(nints // num_superstripe, 1, 1, 1))
+    else:
+        # Bias data is 2D, (ny, nx)
+        bias_data = bias.data
 
     # Subtract the superbias image from all groups and integrations
     # of the science data
-    if not isinstance(type(output.data), float):
-        output.data = (output.data).astype(float)
-    output.data -= bias.data
+    output.data -= bias_data
 
     # If ZEROFRAME is present, subtract the super bias.  Zero values
     # indicate bad data, so should be kept zero.
     if output.meta.exposure.zero_frame:
-        wh_zero = np.where(output.zeroframe == 0.)
-        output.zeroframe -= bias.data
-        output.zeroframe[wh_zero] = 0.  # Zero values indicate unusable data
+        wh_zero = np.where(output.zeroframe == 0.0)
+        if bias_data.ndim == 4:
+            # use the first group from the bias data for superstripe
+            output.zeroframe -= bias_data[:, 0, :, :]
+        else:
+            output.zeroframe -= bias_data
+        output.zeroframe[wh_zero] = 0.0  # Zero values indicate unusable data
 
     return output

@@ -1,6 +1,6 @@
 import numpy as np
 
-from jwst.refpix.irs2_subtract_reference import decode_mask, clobber_ref
+from jwst.refpix.irs2_subtract_reference import clobber_ref, decode_mask
 
 
 def test_clobber_ref():
@@ -9,6 +9,7 @@ def test_clobber_ref():
 
     output = np.array([1, 1, 2, 2, 3, 3, 4, 4], dtype=np.int16)
     odd_even = np.array([1, 2, 1, 2, 1, 2, 1, 2], dtype=np.int16)
+    # fmt: off
     mask = np.array([1 + 2**1,
                      2**2 + 2**3,
                      2**30 + 2**31,
@@ -32,39 +33,38 @@ def test_clobber_ref():
 
     # next pixel is bad, no lower value, neighbor is okay:
     # replace with neighbor
-    compare[..., 648: 648+2] = [646, 647]
+    compare[..., 648:650] = [646, 647]
     # lower pixel is bad, replace with upper pixel
-    compare[..., 668: 668+2] = [688, 689]
+    compare[..., 668:670] = [688, 689]
     # upper pixel is bad, replace with lower pixel
-    compare[..., 690: 690+2] = [670, 671]
+    compare[..., 690:692] = [670, 671]
     # lower pixel is bad, replace with upper pixel
-    compare[..., 710: 710+2] = [730, 731]
+    compare[..., 710:712] = [730, 731]
     # upper pixel is bad, replace with lower pixel
-    compare[..., 1890: 1890+2] = [1870, 1871]
+    compare[..., 1890:1892] = [1870, 1871]
     # lower bad, no upper, no good neighbors, replace with 0.0
-    compare[..., 1910: 1910+2] = 0.0
+    compare[..., 1910:1912] = 0.0
     # upper is bad, replace with lower
-    compare[..., 1808: 1808+2] = [1788, 1789]
+    compare[..., 1808:1810] = [1788, 1789]
     # lower is bad, replace with upper
-    compare[..., 1828: 1828+2] = [1848, 1849]
+    compare[..., 1828:1830] = [1848, 1849]
     # both good, replace with average
-    compare[..., 2028: 2028+2] = [2028, 2029]
-    compare[..., 2068: 2068+2] = [2068, 2069]
-    compare[..., 2150: 2150+2] = [2150, 2151]
-    compare[..., 2190: 2190+2] = [2190, 2191]
+    compare[..., 2028:2030] = [2028, 2029]
+    compare[..., 2068:2070] = [2068, 2069]
+    compare[..., 2150:2152] = [2150, 2151]
+    compare[..., 2190:2192] = [2190, 2191]
 
     assert np.allclose(data, compare)
 
 
 def test_decode_mask():
-
     output = np.array([1, 1, 2, 2, 3, 3, 4, 4], dtype=np.int16)
 
-    mask = np.array([1048608, 0, 8464, 8, 16448, 33554944, 9, 32897],
-                    dtype=np.uint32)
+    mask = np.array([1048608, 0, 8464, 8, 16448, 33554944, 9, 32897], dtype=np.uint32)
 
     nrows = len(output)
     check = np.zeros(nrows, dtype=bool)
+    # fmt: off
     compare = [[5, 20],
                [],
                [4, 8, 13],
@@ -74,7 +74,8 @@ def test_decode_mask():
                [0, 3],
                [0, 7, 15]]
     for row in range(nrows):
-        bits = decode_mask(output[row], mask[row])
+        bits = decode_mask(mask[row])
         check[row] = (bits == compare[row])
 
+    # fmt: on
     assert np.all(check)

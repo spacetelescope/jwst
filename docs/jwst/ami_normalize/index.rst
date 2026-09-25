@@ -8,5 +8,4 @@ AMI Normalize
    :maxdepth: 2
 
    description.rst
-
-.. automodapi:: jwst.ami.ami_normalize_step
+   api_ref.rst

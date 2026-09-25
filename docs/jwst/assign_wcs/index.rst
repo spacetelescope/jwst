@@ -5,13 +5,11 @@ Assign WCS
 ==========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    main.rst
    arguments.rst
    reference_files.rst
    asdf-howto.rst
    exp_types.rst
-
-.. automodapi:: jwst.assign_wcs
-
+   api_ref.rst

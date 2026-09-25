@@ -10,5 +10,4 @@ WFSS Contamination Correction
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.wfss_contam
+   api_ref.rst

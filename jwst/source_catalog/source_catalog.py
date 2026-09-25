@@ -3,33 +3,59 @@
 import logging
 import warnings
 
-from astropy.convolution import Gaussian2DKernel
-from astropy.nddata.utils import extract_array, NoOverlapError
-from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
-from astropy.table import QTable
 import astropy.units as u
+import numpy as np
+from astropy.convolution import Gaussian2DKernel
+from astropy.nddata.utils import NoOverlapError, extract_array
+from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
+from astropy.table import QTable
 from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
-import numpy as np
+from photutils.aperture import CircularAnnulus, CircularAperture, aperture_photometry
 from scipy import ndimage
 from scipy.spatial import KDTree
-
-from photutils.segmentation import SourceCatalog
-from photutils.aperture import CircularAperture, CircularAnnulus, aperture_photometry
-
 from stdatamodels.jwst.datamodels import ImageModel
 
 from jwst import __version__ as jwst_version
-
-from ._wcs_helpers import pixel_scale_angle_at_skycoord
+from jwst.source_catalog._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["JWSTSourceCatalog"]
 
 
 class JWSTSourceCatalog:
     """
     Class for the JWST source catalog.
+
+    Parameters
+    ----------
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
+        The input `~stdatamodels.jwst.datamodels.ImageModel`.
+        The data is assumed to be background-subtracted.
+        Units are expected to be Jy.
+    catalog : `~astropy.table.QTable`
+        Source catalog table, e.g., as output from
+        :func:`~jwst.tweakreg.tweakreg_catalog.make_tweakreg_catalog`.
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
+        This is needed to calculate the DAOFind sharpness and roundness
+        properties (DAOFind uses a special kernel that sums to zero).
+    aperture_params : dict
+        A dictionary containing the aperture parameters (radii, aperture
+        corrections, and background annulus inner and outer radii).
+    abvega_offset : float
+        Offset to convert from AB to Vega magnitudes.  The value
+        represents ``m_AB - m_Vega``.
+    ci_star_thresholds : array-like of 2 floats
+        The concentration index thresholds for determining whether
+        a source is a star. The first threshold corresponds to the
+        concentration index calculated from the smallest and middle
+        aperture radii (see ``aperture_params``). The second threshold
+        corresponds to the concentration index calculated from the
+        middle and largest aperture radii. An object is considered
+        extended if both concentration indices are greater than the
+        corresponding thresholds, otherwise it is considered a star.
 
     Notes
     -----
@@ -42,53 +68,17 @@ class JWSTSourceCatalog:
     def __init__(
         self,
         model,
-        segment_img,
-        convolved_data,
+        catalog,
         kernel_fwhm,
         aperture_params,
         abvega_offset,
         ci_star_thresholds,
     ):
-        """
-        Initialize the class.
-
-        Parameters
-        ----------
-        model : `ImageModel`
-            The input `ImageModel`. The data is assumed to be background-subtracted.
-        segment_img : `~photutils.segmentation.SegmentationImage`
-            A 2D segmentation image, with the same shape as the input data,
-            where sources are marked by different positive integer values.
-            A value of zero is reserved for the background.
-        convolved_data : data : 2D `~numpy.ndarray`
-            The 2D array used to calculate the source centroid and
-            morphological properties.
-        kernel_fwhm : float
-            The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-            This is needed to calculate the DAOFind sharpness and roundness
-            properties (DAOFind uses a special kernel that sums to zero).
-        aperture_params : dict
-            A dictionary containing the aperture parameters (radii, aperture
-            corrections, and background annulus inner and outer radii).
-        abvega_offset : float
-            Offset to convert from AB to Vega magnitudes.  The value
-            represents m_AB - m_Vega.
-        ci_star_thresholds : array-like of 2 floats
-            The concentration index thresholds for determining whether
-            a source is a star. The first threshold corresponds to the
-            concentration index calculated from the smallest and middle
-            aperture radii (see ``aperture_params``). The second threshold
-            corresponds to the concentration index calculated from the
-            middle and largest aperture radii. An object is considered
-            extended if both concentration indices are greater than the
-            corresponding thresholds, otherwise it is considered a star.
-        """
         if not isinstance(model, ImageModel):
             raise TypeError("The input model must be a ImageModel.")
         self.model = model  # background was previously subtracted
 
-        self.segment_img = segment_img
-        self.convolved_data = convolved_data
+        self.segm_cat = catalog
         self.kernel_sigma = kernel_fwhm * gaussian_fwhm_to_sigma
         self.aperture_params = aperture_params
         self.abvega_offset = abvega_offset
@@ -97,47 +87,47 @@ class JWSTSourceCatalog:
             raise ValueError("ci_star_thresholds must contain only 2 items")
         self.ci_star_thresholds = ci_star_thresholds
 
-        self.n_sources = len(self.segment_img.labels)
+        self.n_sources = len(self.segm_cat)
         self.aperture_ee = self.aperture_params["aperture_ee"]
         self.n_aper = len(self.aperture_ee)
         self.wcs = self.model.meta.wcs
         self.column_desc = {}
-        self._xpeak = None
-        self._ypeak = None
         self.meta = {}
 
-    def convert_to_jy(self):
-        """Convert data and errors from MJy/sr to Jy, and into `~astropy.unit.Quantity` objects."""
+    @staticmethod
+    def convert_mjysr_to_jy(model):
+        """Convert data and errors from MJy/sr to Jy, and into `~astropy.units.Quantity` objects."""
         in_unit = "MJy/sr"
-        if self.model.meta.bunit_data != in_unit or self.model.meta.bunit_err != in_unit:
+        if model.meta.bunit_data != in_unit or model.meta.bunit_err != in_unit:
             raise ValueError("data and err are expected to be in units of MJy/sr")
 
         unit = u.Jy
-        if self.model.meta.photometry.pixelarea_steradians is None:
+        if model.meta.photometry.pixelarea_steradians is None:
             log.warning("Pixel area is None. Can't convert to Jy.")
         else:
-            to_jy = 1.0e6 * self.model.meta.photometry.pixelarea_steradians
-            self.model.data *= to_jy
-            self.model.err *= to_jy
-            self.model.data <<= unit
-            self.model.err <<= unit
-            self.model.meta.bunit_data = unit.name
-            self.model.meta.bunit_err = unit.name
+            to_jy = 1.0e6 * model.meta.photometry.pixelarea_steradians
+            model.data *= to_jy
+            model.err *= to_jy
+            model.data <<= unit
+            model.err <<= unit
+            model.meta.bunit_data = unit.name
+            model.meta.bunit_err = unit.name
 
-    def convert_from_jy(self):
-        """Convert data and errors from Jy to MJy/sr, and from `Quantity` to `~np.ndarray`."""
-        if self.model.meta.photometry.pixelarea_steradians is None:
+    @staticmethod
+    def convert_jy_to_mjysr(model):
+        """Convert data and errors from Jy to MJy/sr, and from `~astropy.units.Quantity` to ndarray."""  # noqa: E501
+        if model.meta.photometry.pixelarea_steradians is None:
             log.warning("Pixel area is None. Can't convert from Jy.")
         else:
-            to_mjy_sr = 1.0e6 * self.model.meta.photometry.pixelarea_steradians
-            self.model.data /= to_mjy_sr
-            self.model.err /= to_mjy_sr
+            to_mjy_sr = 1.0e6 * model.meta.photometry.pixelarea_steradians
+            model.data /= to_mjy_sr
+            model.err /= to_mjy_sr
 
-            self.model.data = self.model.data.value  # remove units
-            self.model.err = self.model.err.value  # remove units
+            model.data = model.data.value  # remove units
+            model.err = model.err.value  # remove units
 
-            self.model.meta.bunit_data = "MJy/sr"
-            self.model.meta.bunit_err = "MJy/sr"
+            model.meta.bunit_data = "MJy/sr"
+            model.meta.bunit_err = "MJy/sr"
 
     @staticmethod
     def convert_flux_to_abmag(flux, flux_err):
@@ -146,32 +136,36 @@ class JWSTSourceCatalog:
 
         Parameters
         ----------
-        flux, flux_err : `~astropy.unit.Quantity` (array-like of floats with units)
+        flux, flux_err : `~astropy.units.Quantity`
             The input flux and error arrays in units of Jy.
 
         Returns
         -------
-        abmag, abmag_err : `~np.ndarray`
+        abmag, abmag_err : ndarray
             The output AB magnitude and error arrays.
         """
         # ignore RunTimeWarning if flux or flux_err contains NaNs
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-
             abmag = -2.5 * np.log10(flux.value) + 8.9
-            abmag_err = 2.5 * np.log10(1.0 + (flux_err.value / flux.value))
+        if (flux_err is None) or np.all(np.isnan(flux_err)):
+            abmag_err = np.zeros_like(abmag) * np.nan
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                abmag_err = 2.5 * np.log10(1.0 + (flux_err.value / flux.value))
 
-            # handle negative fluxes
-            idx = flux.value < 0
-            abmag[idx] = np.nan
-            abmag_err[idx] = np.nan
+        # handle negative fluxes
+        idx = flux.value < 0
+        abmag[idx] = np.nan
+        abmag_err[idx] = np.nan
 
         return abmag, abmag_err
 
     @lazyproperty
     def segment_colnames(self):
         """
-        Update the column_desc dictionary to include column names and descriptions.
+        Update the ``column_desc`` dictionary to include column names and descriptions.
 
         Returns
         -------
@@ -234,31 +228,38 @@ class JWSTSourceCatalog:
 
         The values are set as dynamic attributes.
         """
-        segm_cat = SourceCatalog(
-            self.model.data,
-            self.segment_img,
-            convolved_data=self.convolved_data << u.Jy,
-            error=self.model.err,
-            wcs=self.wcs,
-        )
-        self._xpeak = segm_cat.maxval_xindex
-        self._ypeak = segm_cat.maxval_yindex
+        self.meta.update(self.segm_cat.meta)
 
-        self.meta.update(segm_cat.meta)
-
-        # rename some columns in the output catalog
-        prop_names = {}
-        prop_names["isophotal_flux"] = "segment_flux"
-        prop_names["isophotal_flux_err"] = "segment_fluxerr"
-        prop_names["isophotal_area"] = "area"
+        # Mapping from JWST column names to the photutils catalog column
+        # names. The catalog from make_tweakreg_catalog always uses
+        # 'xcentroid' and 'ycentroid' (normalized from any photutils
+        # version), but other column names depend on the photutils
+        # version.
+        rename_map = {
+            "label": "id",
+            "isophotal_flux": "flux",
+            "isophotal_area": "area",
+            "semimajor_sigma": "semimajor_axis",
+            "semiminor_sigma": "semiminor_axis",
+            "isophotal_flux_err": "segment_flux_err",
+        }
 
         for column in self.segment_colnames:
-            # define the property name
-            prop_name = prop_names.get(column, column)
-            try:
-                value = getattr(segm_cat, prop_name)
-            except AttributeError:
-                value = getattr(self, prop_name)
+            # Compute 'orientation' with the `orientation` property,
+            # which always wraps the angle to the (-90, 90] deg
+            # convention. This avoids shadowing the `orientation`
+            # property with the raw segmentation-catalog value, which
+            # may be in a different range depending on the photutils
+            # version used to generate the catalog.
+            if column == "orientation":
+                continue
+
+            # Define the property name
+            prop_name = rename_map.get(column, column)
+            if prop_name in self.segm_cat.colnames:
+                value = self.segm_cat[prop_name]
+            else:
+                value = getattr(self, prop_name, np.nan)
             setattr(self, column, value)
 
     @lazyproperty
@@ -268,7 +269,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        xypos : `~numpy.ndarray`
+        xypos : ndarray
             A 2D array of the (x, y) source positions.
         """
         return np.transpose((self.xcentroid, self.ycentroid))
@@ -283,7 +284,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        xypos : `~numpy.ndarray`
+        xypos : ndarray
             A 2D array of the (x, y) source positions.
         """
         xypos = self.xypos.copy()
@@ -298,11 +299,27 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             A 1D boolean mask where `True` values denote sources where
             either the xcentroid or the ycentroid is not finite.
         """
         return ~np.isfinite(self.xypos).all(axis=1)
+
+    @lazyproperty
+    def sky_centroid(self):
+        """
+        Compute the sky coordinate of the source centroid.
+
+        The output coordinate frame is the same as the input ``wcs``.
+
+        Returns
+        -------
+        `~astropy.coordinates.SkyCoord` or `None`
+            The sky coordinate of the source centroid, or `None` if the WCS is not set.
+        """
+        if self.wcs is None:
+            return np.array([None] * self.n_sources)
+        return self.wcs.pixel_to_world(self.xcentroid, self.ycentroid)
 
     @lazyproperty
     def _isophotal_abmag(self):
@@ -311,7 +328,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        (isophotal_abmag, isophotal_abmag_err) : tuple of `np.ndarray`
+        (isophotal_abmag, isophotal_abmag_err) : tuple of ndarray
             The isophotal AB magnitudes and errors.
         """
         return self.convert_flux_to_abmag(self.isophotal_flux, self.isophotal_flux_err)
@@ -323,7 +340,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `np.ndarray`
+        ndarray
             The isophotal AB magnitudes.
         """
         return self._isophotal_abmag[0]
@@ -335,7 +352,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `np.ndarray`
+        ndarray
             The isophotal AB magnitudes.
         """
         return self._isophotal_abmag[1]
@@ -347,7 +364,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `np.ndarray`
+        ndarray
             The isophotal Vega magnitudes.
         """
         return self.isophotal_abmag - self.abvega_offset
@@ -359,10 +376,44 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `np.ndarray`
+        ndarray
             The isophotal Vega magnitude errors.
         """
         return self.isophotal_abmag_err
+
+    @staticmethod
+    def _to_symmetric_orientation(theta):
+        """
+        Convert an orientation angle to the (-90, 90] deg convention.
+
+        Parameters
+        ----------
+        theta : `~astropy.units.Quantity`
+            The input orientation angle.
+
+        Returns
+        -------
+        `~astropy.units.Quantity`
+            The orientation angle in the range (-90, 90] degrees.
+        """
+        theta_deg = theta.to_value(u.deg)
+        return (90.0 - np.mod(90.0 - theta_deg, 180.0)) * u.deg
+
+    @lazyproperty
+    def orientation(self):
+        """
+        Return the orientation of the source major axis.
+
+        Returns
+        -------
+        `~astropy.units.Quantity`
+            The position angle of the source major axis. The angle
+            increases in the counter-clockwise direction and is
+            in the range (-90, 90] degrees.
+        """
+        if "orientation" not in self.segm_cat.colnames:
+            return np.nan
+        return self._to_symmetric_orientation(self.segm_cat["orientation"])
 
     @lazyproperty
     def sky_orientation(self):
@@ -380,7 +431,8 @@ class JWSTSourceCatalog:
         )
         _, _, angle = pixel_scale_angle_at_skycoord(skycoord, self.wcs)
 
-        return (180.0 * u.deg) - angle + self.orientation
+        result = (180.0 * u.deg) - angle + self.orientation
+        return self._to_symmetric_orientation(result)
 
     def _make_aperture_colnames(self, name):
         """
@@ -558,11 +610,11 @@ class JWSTSourceCatalog:
 
         The local background is the sigma-clipped median value in the
         annulus.  The background error is the standard error of the
-        median, sqrt(pi / 2N) * std.
+        median, ``sqrt(pi / 2N) * std``.
 
         Returns
         -------
-        bkg_median, bkg_median_err : tuple of `~astropy.unit.Quantity`
+        bkg_median, bkg_median_err : tuple of `~astropy.units.Quantity`
             The local background and error.
         """
         bkg_aper = CircularAnnulus(
@@ -604,7 +656,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~astropy.unit.Quantity` (array-like of floats with units)
+        `~astropy.units.Quantity`
             The aperture local background fluxes.
         """
         return self._aper_local_background[0]
@@ -616,7 +668,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~astropy.unit.Quantity` (array-like of floats with units)
+        `~astropy.units.Quantity`
             The aperture local background flux errors.
         """
         return self._aper_local_background[1]
@@ -722,12 +774,12 @@ class JWSTSourceCatalog:
 
         These are calculated as the flux ratios of:
 
-            * the middle / smallest aperture radii/EE,
-              e.g., CI_50_30 = aper50_flux / aper30_flux
-            * the largest / middle aperture radii/EE,
-              e.g., CI_70_50 = aper70_flux / aper50_flux
-            * the largest / smallest aperture radii/EE,
-              e.g., CI_70_30 = aper70_flux / aper30_flux
+        * the middle / smallest aperture radii/EE,
+          e.g., ``CI_50_30 = aper50_flux / aper30_flux``
+        * the largest / middle aperture radii/EE,
+          e.g., ``CI_70_50 = aper70_flux / aper50_flux``
+        * the largest / smallest aperture radii/EE,
+          e.g., ``CI_70_30 = aper70_flux / aper30_flux``
 
         Returns
         -------
@@ -738,7 +790,13 @@ class JWSTSourceCatalog:
             (self.aperture_flux_colnames[2 * j], self.aperture_flux_colnames[2 * i])
             for (i, j) in self._ci_ee_indices
         ]
-        return [getattr(self, flux1).value / getattr(self, flux2).value for flux1, flux2 in fluxes]
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+            warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+            concentration = [
+                getattr(self, flux1).value / getattr(self, flux2).value for flux1, flux2 in fluxes
+            ]
+        return concentration
 
     def set_ci_properties(self):
         """Set the concentration indices as dynamic attributes."""
@@ -752,7 +810,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             A boolean array where `True` values denote extended sources.
         """
         mask1 = self.concentration_indices[0] > self.ci_star_thresholds[0]
@@ -790,8 +848,11 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
-            A 2D array containing the DAOFind kernel mask, where 1=good pixels and 0=masked pixels.
+        ndarray
+            A 2D array containing the DAOFind kernel mask, where
+
+            * 1 = good pixels
+            * 0 = masked pixels
         """
         yy, xx = np.mgrid[0 : self._kernel_size, 0 : self._kernel_size]
         radius = np.sqrt((xx - self._kernel_center) ** 2 + (yy - self._kernel_center) ** 2)
@@ -804,7 +865,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             The DAOFind kernel.
         """
         size = self._kernel_size
@@ -824,7 +885,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             The convolved data.
         """
         return ndimage.convolve(
@@ -840,7 +901,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             A 3D array containing 2D cutouts centered on each source from the input data.
         """
         cutout = []
@@ -864,7 +925,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             A 3D array containing 2D cutouts centered on each source from the convolved data.
         """
         cutout = []
@@ -896,7 +957,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             The DAOFind source sharpness statistic.
         """
         npixels = self._kernel_mask.sum() - 1  # exclude the peak pixel
@@ -925,7 +986,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             The DAOFind source roundness statistic.
         """
         # set the central (peak) pixel to zero
@@ -962,9 +1023,9 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        qdist : `~numpy.ndarray`
+        qdist : ndarray
             The distance in pixels to the nearest neighbor.
-        qidx : `~numpy.ndarray`
+        qidx : ndarray
             The label number of the nearest neighbor.
         """
         if self.n_sources == 1:
@@ -985,7 +1046,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             The label number of the nearest neighbor.
         """
         if self.n_sources == 1:
@@ -1006,7 +1067,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~astropy.units.Quantity` (array-like of floats with units)
+        `~astropy.units.Quantity`
             The distances in pixels to the nearest neighbors.
         """
         nn_dist = self._kdtree_query[0]
@@ -1022,11 +1083,11 @@ class JWSTSourceCatalog:
         """
         Return the aperture-corrected total flux for sources.
 
-        Computed based on the flux in largest aperture.Should be used only for unresolved sources.
+        Computed based on the flux in largest aperture. Should be used only for unresolved sources.
 
         Returns
         -------
-        `~astropy.unit.Quantity`
+        `~astropy.units.Quantity`
             The aperture-corrected total flux
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
@@ -1044,7 +1105,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~astropy.unit.Quantity`
+        `~astropy.units.Quantity`
             The aperture-corrected total flux error
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
@@ -1066,7 +1127,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             The aperture-corrected total AB magnitude.
         """
         return self._abmag_total[0]
@@ -1080,7 +1141,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             The aperture-corrected total AB magnitude error.
         """
         return self._abmag_total[1]
@@ -1094,7 +1155,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             The aperture-corrected total Vega magnitude.
         """
         return self.aper_total_abmag - self.abvega_offset
@@ -1108,7 +1169,7 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ndarray
             The aperture-corrected total Vega magnitude error.
         """
         return self.aper_total_abmag_err
@@ -1177,7 +1238,6 @@ class JWSTSourceCatalog:
         catalog : `~astropy.table.Table`
             The final source catalog.
         """
-        self.convert_to_jy()
         self.set_segment_properties()
         self.set_aperture_properties()
         self.set_ci_properties()
@@ -1208,6 +1268,6 @@ class JWSTSourceCatalog:
         catalog.meta.update(self.meta)
 
         # reset units on input model back to MJy/sr
-        self.convert_from_jy()
+        self.convert_jy_to_mjysr(self.model)
 
         return catalog

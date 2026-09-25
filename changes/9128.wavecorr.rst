@@ -1,1 +1,0 @@
-Fixed recording cal_step status for wavecorr for NIRSpec BOTS mode.

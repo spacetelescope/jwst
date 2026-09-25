@@ -1,23 +1,24 @@
-#! /usr/bin/env python
+"""Detect jumps based on science data and reference files."""
 
-from ..stpipe import Step
+import logging
 import time
 
 import numpy as np
-
-from ..lib import reffile_utils
-
+from stcal.jump.jump import detect_jumps_data, flag_large_events
 from stcal.jump.jump_class import JumpData
-from stcal.jump.jump import detect_jumps_data
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
+from jwst.lib import reffile_utils
+from jwst.stpipe import Step
+
 __all__ = ["JumpStep"]
+
+log = logging.getLogger(__name__)
 
 
 class JumpStep(Step):
-    """Step class to perform just detection using two point difference."""
+    """Perform jump detection using two point difference."""
 
     spec = """
         rejection_threshold = float(default=4.0,min=0) # CR sigma rejection threshold
@@ -68,65 +69,67 @@ class JumpStep(Step):
 
         Parameters
         ----------
-        step_input : RampModel
+        step_input : `~stdatamodels.jwst.datamodels.RampModel`
             The ramp model input from the previous step.
 
         Returns
         -------
-        result : RampModel
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             The ramp model with jump step as COMPLETE and jumps detected or
             the jump step is SKIPPED.
         """
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
-            tstart = time.time()
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            # Check for an input model with NGROUPS<=2
-            nints, ngroups, nrows, ncols = input_model.data.shape
-            if ngroups <= 2:
-                self.log.warning("Cannot apply jump detection when NGROUPS<=2;")
-                self.log.warning("Jump step will be skipped")
-                input_model.meta.cal_step.jump = "SKIPPED"
-                return input_model
+        # Start a timer
+        tstart = time.time()
 
-            self.log.info("CR rejection threshold = %g sigma", self.rejection_threshold)
-            if self.maximum_cores != "none":
-                self.log.info("Maximum cores to use = %s", self.maximum_cores)
+        # Check for an input model with NGROUPS<=2
+        nints, ngroups, nrows, ncols = result.data.shape
+        if ngroups <= 2:
+            log.warning("Cannot apply jump detection when NGROUPS<=2;")
+            log.warning("Jump step will be skipped")
+            result.meta.cal_step.jump = "SKIPPED"
+            return result
 
-            # Detect jumps using a copy of the input data model.
-            result = input_model.copy()
-            jump_data = self._setup_jump_data(result)
-            new_gdq, new_pdq, number_crs, number_extended_events, stddev = detect_jumps_data(
-                jump_data
-            )
+        log.info("CR rejection threshold = %g sigma", self.rejection_threshold)
+        if self.maximum_cores != "none":
+            log.info("Maximum cores to use = %s", self.maximum_cores)
 
-            # Update the DQ arrays of the output model with the jump detection results
-            result.groupdq = new_gdq
-            result.pixeldq = new_pdq
+        # Detect jumps using a copy of the input data model.
+        jump_data = self._setup_jump_data(result)
+        new_gdq, new_pdq, number_crs, number_extended_events = detect_jumps_data(jump_data)
 
-            # determine the number of groups with all pixels set to DO_NOT_USE
-            dnu_flag = dqflags.pixel["DO_NOT_USE"]
-            num_flagged_grps = 0
-            for integ in range(nints):
-                for grp in range(ngroups):
-                    if np.all(np.bitwise_and(result.groupdq[integ, grp, :, :], dnu_flag)):
-                        num_flagged_grps += 1
+        # Update the DQ arrays of the output model with the jump detection results
+        result.groupdq = new_gdq
+        result.pixeldq = new_pdq
 
-            total_groups = nints * ngroups - num_flagged_grps - nints
-            if total_groups >= 1:
-                total_time = result.meta.exposure.group_time * total_groups
-                total_pixels = nrows * ncols
+        # If a zeroframe is present, flag snowballs in it too
+        self._flag_zeroframe(result)
 
-                crs = 1000 * number_crs / (total_time * total_pixels)
-                result.meta.exposure.primary_cosmic_rays = crs
+        # determine the number of groups with all pixels set to DO_NOT_USE
+        dnu_flag = dqflags.pixel["DO_NOT_USE"]
+        num_flagged_grps = 0
+        for integ in range(nints):
+            for grp in range(ngroups):
+                if np.all(np.bitwise_and(result.groupdq[integ, grp, :, :], dnu_flag)):
+                    num_flagged_grps += 1
 
-                events = 1e6 * number_extended_events / (total_time * total_pixels)
-                result.meta.exposure.extended_emission_events = events
+        total_groups = nints * ngroups - num_flagged_grps - nints
+        if total_groups >= 1:
+            total_time = result.meta.exposure.group_time * total_groups
+            total_pixels = nrows * ncols
 
-            tstop = time.time()
-            self.log.info("The execution time in seconds: %f", tstop - tstart)
+            crs = 1000 * number_crs / (total_time * total_pixels)
+            result.meta.exposure.primary_cosmic_rays = crs
 
-            result.meta.cal_step.jump = "COMPLETE"
+            events = 1e6 * number_extended_events / (total_time * total_pixels)
+            result.meta.exposure.extended_emission_events = events
+
+        tstop = time.time()
+        log.info("The execution time in seconds: %f", tstop - tstart)
+
+        result.meta.cal_step.jump = "COMPLETE"
 
         return result
 
@@ -136,19 +139,19 @@ class JumpStep(Step):
 
         Parameters
         ----------
-        result : RampModel
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             The ramp model input from the previous step.
 
         Returns
         -------
-        jump_data : JumpData
+        jump_data : `~stcal.jump.jump_class.JumpData`
             The data container to be used to run the STCAL detect_jumps_data.
         """
         # Get the gain and readnoise reference files
         gain_filename = self.get_reference_file(result, "gain")
-        self.log.info("Using GAIN reference file: %s", gain_filename)
+        log.info("Using GAIN reference file: %s", gain_filename)
         readnoise_filename = self.get_reference_file(result, "readnoise")
-        self.log.info("Using READNOISE reference file: %s", readnoise_filename)
+        log.info("Using READNOISE reference file: %s", readnoise_filename)
 
         with (
             datamodels.ReadnoiseModel(readnoise_filename) as rnoise_m,
@@ -158,14 +161,14 @@ class JumpStep(Step):
             if reffile_utils.ref_matches_sci(result, gain_m):
                 gain_2d = gain_m.data
             else:
-                self.log.info("Extracting gain subarray to match science data")
-                gain_2d = reffile_utils.get_subarray_data(result, gain_m)
+                log.info("Extracting gain subarray to match science data")
+                gain_2d = reffile_utils.get_subarray_model(result, gain_m).data
 
             if reffile_utils.ref_matches_sci(result, rnoise_m):
                 rnoise_2d = rnoise_m.data
             else:
-                self.log.info("Extracting readnoise subarray to match science data")
-                rnoise_2d = reffile_utils.get_subarray_data(result, rnoise_m)
+                log.info("Extracting readnoise subarray to match science data")
+                rnoise_2d = reffile_utils.get_subarray_model(result, rnoise_m).data
 
         # Instantiate a JumpData class and populate it based on the input RampModel.
         jump_data = JumpData(result, gain_2d, rnoise_2d, dqflags.pixel)
@@ -227,4 +230,47 @@ class JumpStep(Step):
         jump_data.max_shower_amplitude = jump_data.max_shower_amplitude * gtime
         jump_data.mmflashfrac = self.mmflashfrac
 
+        # Set the read pattern from input read times if available
+        read_times = getattr(result.meta.exposure, "read_times", None)
+        if read_times is not None and len(read_times) > 0:
+            log.debug("Using explicit read times")
+            jump_data.read_pattern = list(read_times)
+
         return jump_data
+
+    def _flag_zeroframe(self, result):
+        """
+        Flag snowballs in a zeroframe array if present.
+
+        Parameters
+        ----------
+        result : `~stdatamodels.jwst.datamodels.RampModel`
+            Datamodel with zeroframe attached. Updated in place.
+        """
+        if result.zeroframe is None or not self.expand_large_events:
+            return
+
+        log.info("Flagging snowballs in zeroframe")
+        sat_flag = dqflags.group["SATURATED"]
+        jump_flag = dqflags.group["JUMP_DET"]
+
+        # Reshape the zeroframe data to be ramp-like with a single group
+        nints, ngroups, nrows, ncols = result.data.shape
+        zframe_data = result.zeroframe.reshape(nints, 1, nrows, ncols)
+        with datamodels.RampModel(zframe_data) as zframe_model:
+            zframe_model.update(result)
+
+            # groupdq and pixeldq are created automatically from the data shape.
+            # The zeroframe doesn't have its own DQ plane, so update groupdq to
+            # have saturation flags where the data is zero.
+            zframe_model.groupdq[zframe_data == 0] = sat_flag
+
+            # Set up a new jump class and run it through snowball flagging only
+            zframe_jump = self._setup_jump_data(zframe_model)
+            zf_gdq, zf_snowballs = flag_large_events(
+                zframe_model.groupdq, jump_flag, sat_flag, zframe_jump
+            )
+
+        # Set the zeroframe data to 0 wherever the updated groupdq has saturated flags
+        is_sat = (zf_gdq[:, 0, :, :] & sat_flag) > 0
+        result.zeroframe[is_sat] = 0.0

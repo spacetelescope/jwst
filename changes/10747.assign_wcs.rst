@@ -1,0 +1,2 @@
+Remove a hard-coded check for NRS2 grating combinations that are not currently calibrated.
+Instead, check for valid bounding box intervals and raise a NoDataOnDetectorError if invalid.

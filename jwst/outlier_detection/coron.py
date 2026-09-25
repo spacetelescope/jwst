@@ -3,16 +3,13 @@
 import logging
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
+from jwst.outlier_detection._fileio import save_median
+from jwst.outlier_detection.utils import create_cube_median, flag_model_crs
 from jwst.resample.resample_utils import build_mask
 
-from .utils import create_cube_median, flag_model_crs
-from ._fileio import save_median
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["detect_outliers"]
@@ -31,10 +28,10 @@ def detect_outliers(
 
     Parameters
     ----------
-    input_model : ~jwst.datamodels.CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input cube model.
     save_intermediate_results : bool
-        If True, save the median model.
+        If `True`, save the median model.
     good_bits : int
         DQ flag bit values indicating good pixels.
     maskpt : float
@@ -46,12 +43,9 @@ def detect_outliers(
 
     Returns
     -------
-    ~jwst.datamodels.CubeModel
+    `~stdatamodels.jwst.datamodels.CubeModel`
         The input model with outliers flagged.
     """
-    if not isinstance(input_model, datamodels.JwstDataModel):
-        input_model = datamodels.open(input_model)
-
     if not isinstance(input_model, datamodels.CubeModel):
         raise TypeError(f"Input must be a CubeModel: {input_model}")
 

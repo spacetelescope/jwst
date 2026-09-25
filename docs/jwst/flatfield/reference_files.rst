@@ -1,19 +1,26 @@
 Reference Files
 ===============
 The ``flat_field`` step uses four different types of reference files, depending on the
-type of data being processed. Most cases just use the FLAT reference file, while NIRSpec
-spectroscopic exposures use the three reference files FFLAT (fore optics),
-SFLAT (spectrograph optics), and DFLAT (detector).
+type of data being processed. Most cases just use the :ref:`flat_reffile`, while NIRSpec
+spectroscopic exposures use the three reference files :ref:`fflat_reffile` (fore optics),
+:ref:`sflat_reffile` (spectrograph optics), and :ref:`dflat_reffile` (detector).
 
 .. include:: ../references_general/flat_reffile.inc
 
+.. _flat_ref_nirspec_spec:
+
 Reference Files for NIRSpec Spectroscopy
-===================================================
+========================================
 For NIRSpec spectroscopic data, the flat-field reference files allow for variations in
 the flat field with wavelength, as well as from pixel to pixel.  There is a
 separate flat-field reference file for each of three sections of the
-instrument:  the fore optics (FFLAT), the spectrograph (SFLAT), and the
-detector (DFLAT).  The contents of the reference files differ from one mode
+instrument:
+
+* the fore optics (:ref:`fflat_reffile`)
+* the spectrograph (:ref:`sflat_reffile`)
+* the detector (:ref:`dflat_reffile`)
+
+The contents of the reference files differ from one mode
 to another (see below), but in general they may contain a flat-field image and
 a 1-D array.  The image provides pixel-to-pixel values for the flat field
 that may vary slowly (or not at all) with wavelength, while the 1-D array
@@ -45,8 +52,8 @@ there are different flat fields for fixed-slit data, IFU data, and for
 multi-object spectroscopic data.  Here is a summary of the contents of these
 files.
 
-For the fore optics (FFLAT), the flat field for fixed-slit data contains just a
-FAST_VARIATION table (i.e. there is no image).  This table has five rows,
+For the fore optics (:ref:`fflat_reffile`), the flat field for fixed-slit data contains just a
+FAST_VARIATION table (i.e., there is no image).  This table has five rows,
 one for each of the fixed slits.  The FFLAT for IFU data also contains
 just a FAST_VARIATION table, but it has only one row with the value "ANY"
 in the "slit_name" column.  For multi-object spectroscopic data, the FFLAT
@@ -57,25 +64,20 @@ than to detector pixels.  The array size is 365 columns by 171 rows,
 and there are multiple planes to handle the slow variation
 of flat field with wavelength.
 
-For the spectrograph optics (SFLAT), the flat-field files have nearly the same
+For the spectrograph optics (:ref:`sflat_reffile`), the flat-field files have nearly the same
 format for fixed-slit data, IFU, and multi-object data.  The difference is
 that for fixed-slit and IFU data, the image is just a single plane,
-i.e. the only variation with wavelength is in the FAST_VARIATION table,
+i.e., the only variation with wavelength is in the FAST_VARIATION table,
 while there are multiple planes in the image for multi-object spectroscopic
 data (and therefore there is also a corresponding WAVELENGTH table, with
 one row for each plane of the image).
 
-For the detector section, the DFLAT file contains a 3-D image
-(i.e. the flat field at multiple wavelengths), a corresponding
+For the detector section, the :ref:`dflat_reffile` contains a 3-D image
+(i.e., the flat field at multiple wavelengths), a corresponding
 WAVELENGTH table, and a FAST_VARIATION table with one row.
-
-As just described, there are 3 types of reference files for NIRSpec (FFLAT,
-SFLAT, and DFLAT), and within each of these types, there are several formats,
-which are now described.
 
 .. include:: ../references_general/fflat_reffile.inc
 
 .. include:: ../references_general/sflat_reffile.inc
 
 .. include:: ../references_general/dflat_reffile.inc
-

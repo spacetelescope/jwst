@@ -1,8 +1,7 @@
-import pytest
 import numpy as np
+import pytest
 from asdf import AsdfFile
-
-from stdatamodels.jwst.datamodels import IFUCubeModel, NrsIfuApcorrModel, MirMrsApcorrModel
+from stdatamodels.jwst.datamodels import IFUCubeModel, MirMrsApcorrModel, NrsIfuApcorrModel
 
 from jwst.extract_1d.apply_apcorr import ApCorrRadial, select_apcorr
 

@@ -4,7 +4,7 @@ FRINGE Reference File
 ---------------------
 
 :REFTYPE: FRINGE
-:Data model: `~jwst.datamodels.FringeModel`
+:Data model: `~stdatamodels.jwst.datamodels.FringeModel`
 
 The FRINGE reference file contains pixel-by-pixel fringing correction
 values.
@@ -48,4 +48,3 @@ Because MIRI MRS exposures are always full-frame, the image dimensions
 should be 1032 x 1024.
 
 .. include:: ../includes/dq_def.inc
-

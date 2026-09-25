@@ -4,14 +4,13 @@ Package Index
 .. toctree::
    :maxdepth: 2
 
+   adaptive_trace_model/index.rst
    align_refs/index.rst
    ami_analyze/index.rst
-   ami_average/index.rst
    ami_normalize/index.rst
    assign_mtwcs/index.rst
    assign_wcs/index.rst
    associations/index.rst
-   background_step/index.rst
    background_subtraction/index.rst
    badpix_selfcal/index.rst
    barshadow/index.rst
@@ -41,13 +40,12 @@ Package Index
    linearity/index.rst
    master_background/index.rst
    model_blender/index.rst
-   mrs_imatch/index.rst
    msaflagopen/index.rst
-   nsclean/index.rst
    outlier_detection/index.rst
    pathloss/index.rst
    persistence/index.rst
    photom/index.rst
+   picture_frame/index.rst
    pipeline/index.rst
    pixel_replace/index.rst
    ramp_fitting/index.rst
@@ -67,6 +65,7 @@ Package Index
    stpipe/index.rst
    straylight/index.rst
    superbias/index.rst
+   targ_centroid/index.rst
    tso_photometry/index.rst
    tweakreg/index.rst
    wavecorr/index.rst

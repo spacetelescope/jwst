@@ -2,13 +2,12 @@
 
 from jwst.lib import signal_slot as ss
 
-
-REFLECT_CALLED = 'reflect: called.'
+REFLECT_CALLED = "reflect: called."
 
 
 def reflect(*args):
     """Handler function that simply reflects the input args"""
-    print(REFLECT_CALLED)
+    print(REFLECT_CALLED)  # noqa: T201
     return args
 
 
@@ -19,7 +18,6 @@ def list_append(inlist, new_item):
 
 
 class AClass:
-
     def __init__(self):
         self.kwargs = None
 
@@ -59,29 +57,31 @@ def test_implicit_emit(capsys):
 
 def test_call():
     """Test calling a signal and getting results"""
+
     def another_reflect(*args):
         return reflect(*args)
 
     signal = ss.Signal()
     signal.connect(reflect)
     signal.connect(another_reflect)
-    result = list(signal.call('hello'))
+    result = list(signal.call("hello"))
     assert len(result) == 2
-    assert result[0] == ('hello',)
-    assert result[1] == ('hello',)
+    assert result[0] == ("hello",)
+    assert result[1] == ("hello",)
 
 
 def test_reduce():
     """Test reducing results to a single result"""
+
     def another_list_append(inlist, new_item):
         return list_append(inlist, new_item)
 
     signal = ss.Signal(list_append, another_list_append)
     a_list = []
-    result = signal.reduce(a_list, 'hello')
+    result = signal.reduce(a_list, "hello")
     assert len(result) == 2
-    assert result[0] == ['hello', 'hello']
-    assert result[1] == 'hello'
+    assert result[0] == ["hello", "hello"]
+    assert result[1] == "hello"
 
 
 def test_disable():
@@ -142,7 +142,7 @@ def test_call_method():
     signal = ss.Signal()
     aclass = AClass()
     signal.connect(aclass.set_and_reflect)
-    results = list(signal.call('hello', akeyword='look a keyword'))
+    results = list(signal.call("hello", akeyword="look a keyword"))
     assert len(results) == 1
-    assert results[0] == ('hello', )
-    assert aclass.kwargs == {'akeyword': 'look a keyword'}
+    assert results[0] == ("hello",)
+    assert aclass.kwargs == {"akeyword": "look a keyword"}

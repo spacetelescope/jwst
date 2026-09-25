@@ -4,7 +4,7 @@ ABVEGAOFFSET Reference File
 ---------------------------
 
 :REFTYPE: ABVEGAOFFSET
-:Data model: `~jwst.datamodels.ABVegaOffsetModel`
+:Data model: `~stdatamodels.jwst.datamodels.ABVegaOffsetModel`
 
 The ABVEGAOFFSET reference file contains data necessary for converting
 from AB to Vega magnitudes.

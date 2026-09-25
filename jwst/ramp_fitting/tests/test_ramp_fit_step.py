@@ -1,21 +1,11 @@
-import pytest
-import logging
 import numpy as np
+import pytest
+from stdatamodels.jwst.datamodels import GainModel, ImageModel, RampModel, ReadnoiseModel, dqflags
 
-from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
-
+from jwst.lib.tests.helpers import make_sub64p_multistripe_model
+from jwst.lib.tests.test_reffile_utils import generate_test_refmodel_metadata
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep, set_groupdq
-from jwst.tests.helpers import LogWatcher
-
-@pytest.fixture
-def log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in RampFitStep
-    watcher = LogWatcher('')
-    logger = logging.getLogger('jwst.ramp_fitting.ramp_fit_step')
-    for level in ['debug', 'info', 'warning', 'error']:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
+from jwst.refpix.refpix_step import RefPixStep
 
 DELIM = "-" * 80
 
@@ -26,12 +16,12 @@ DNU = test_dq_flags["DO_NOT_USE"]
 JUMP = test_dq_flags["JUMP_DET"]
 SAT = test_dq_flags["SATURATED"]
 
-MAXIMUM_CORES = ['2', 'none', 'quarter', 'half', 'all']
+MAXIMUM_CORES = ["2", "none", "quarter", "half", "all"]
 
 GROUP_SELECTION_PARAMETERS = [
     (-10, None, "first group < 0, reset to 0"),
     (3, 20, "Last group number >= #groups (20), reset to 19"),
-    (10, 6, "firstgroup (10) cannot be >= lastgroup (6)")
+    (10, 6, "firstgroup (10) cannot be >= lastgroup (6)"),
 ]
 
 
@@ -48,6 +38,7 @@ def generate_miri_reffiles():
     gain_model.meta.subarray.ystart = 1
     gain_model.meta.subarray.xsize = xsize
     gain_model.meta.subarray.ysize = ysize
+    generate_test_refmodel_metadata(gain_model)
 
     inreadnoise = 5
     rnoise = np.ones(shape=(ysize, xsize), dtype=np.float64) * inreadnoise
@@ -57,15 +48,24 @@ def generate_miri_reffiles():
     readnoise_model.meta.subarray.ystart = 1
     readnoise_model.meta.subarray.xsize = xsize
     readnoise_model.meta.subarray.ysize = ysize
+    generate_test_refmodel_metadata(readnoise_model)
 
     return gain_model, readnoise_model
 
 
 @pytest.fixture
 def setup_inputs():
-
-    def _setup(ngroups=10, readnoise=10, nints=1, nrows=1024, ncols=1032,
-               nframes=1, grouptime=1.0, gain=1, deltatime=1):
+    def _setup(
+        ngroups=10,
+        readnoise=10,
+        nints=1,
+        nrows=1024,
+        ncols=1032,
+        nframes=1,
+        grouptime=1.0,
+        gain=1,
+        deltatime=1,
+    ):
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
         err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
         pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
@@ -75,32 +75,37 @@ def setup_inputs():
 
         rampmodel = RampModel((nints, ngroups, nrows, ncols), int_times=int_times)
 
-        rampmodel.meta.instrument.name = 'MIRI'
-        rampmodel.meta.instrument.detector = 'MIRIMAGE'
-        rampmodel.meta.instrument.filter = 'F480M'
-        rampmodel.meta.observation.date = '2015-10-13'
-        rampmodel.meta.exposure.type = 'MIR_IMAGE'
+        rampmodel.meta.filename = "mock_uncal.fits"
+
+        rampmodel.meta.instrument.name = "MIRI"
+        rampmodel.meta.instrument.detector = "MIRIMAGE"
+        rampmodel.meta.instrument.filter = "F480M"
+
+        rampmodel.meta.observation.date = "2015-10-13"
+
+        rampmodel.meta.exposure.type = "MIR_IMAGE"
         rampmodel.meta.exposure.group_time = deltatime
-        rampmodel.meta.subarray.name = 'FULL'
-        rampmodel.meta.subarray.xstart = 1
-        rampmodel.meta.subarray.ystart = 1
-        rampmodel.meta.subarray.xsize = ncols
-        rampmodel.meta.subarray.ysize = nrows
         rampmodel.meta.exposure.frame_time = deltatime
         rampmodel.meta.exposure.ngroups = ngroups
         rampmodel.meta.exposure.group_time = deltatime
         rampmodel.meta.exposure.nframes = 1
         rampmodel.meta.exposure.groupgap = 0
 
+        rampmodel.meta.subarray.name = "FULL"
+        rampmodel.meta.subarray.xstart = 1
+        rampmodel.meta.subarray.ystart = 1
+        rampmodel.meta.subarray.xsize = ncols
+        rampmodel.meta.subarray.ysize = nrows
+
         gain = GainModel(data=gain)
-        gain.meta.instrument.name = 'MIRI'
+        gain.meta.instrument.name = "MIRI"
         gain.meta.subarray.xstart = 1
         gain.meta.subarray.ystart = 1
         gain.meta.subarray.xsize = ncols
         gain.meta.subarray.ysize = nrows
 
         rnmodel = ReadnoiseModel(data=read_noise)
-        rnmodel.meta.instrument.name = 'MIRI'
+        rnmodel.meta.instrument.name = "MIRI"
         rnmodel.meta.subarray.xstart = 1
         rnmodel.meta.subarray.ystart = 1
         rnmodel.meta.subarray.xsize = ncols
@@ -112,11 +117,20 @@ def setup_inputs():
 
 
 def setup_subarray_inputs(
-        nints=1, ngroups=10, nrows=1032, ncols=1024,
-        subxstart=1, subxsize=1024, subystart=1, subysize=1032,
-        nframes=1, grouptime=1.0, deltatime=1,
-        readnoise=10, gain=1):
-
+    nints=1,
+    ngroups=10,
+    nrows=1032,
+    ncols=1024,
+    subxstart=1,
+    subxsize=1024,
+    subystart=1,
+    subysize=1032,
+    nframes=1,
+    grouptime=1.0,
+    deltatime=1,
+    readnoise=10,
+    gain=1,
+):
     data = np.zeros(shape=(nints, ngroups, subysize, subxsize), dtype=np.float32)
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     pixdq = np.zeros(shape=(subysize, subxsize), dtype=np.uint32)
@@ -126,13 +140,13 @@ def setup_subarray_inputs(
     times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
 
     model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
-    model1.meta.instrument.name = 'MIRI'
-    model1.meta.instrument.detector = 'MIRIMAGE'
-    model1.meta.instrument.filter = 'F480M'
-    model1.meta.observation.date = '2015-10-13'
-    model1.meta.exposure.type = 'MIR_IMAGE'
+    model1.meta.instrument.name = "MIRI"
+    model1.meta.instrument.detector = "MIRIMAGE"
+    model1.meta.instrument.filter = "F480M"
+    model1.meta.observation.date = "2015-10-13"
+    model1.meta.exposure.type = "MIR_IMAGE"
     model1.meta.exposure.group_time = deltatime
-    model1.meta.subarray.name = 'FULL'
+    model1.meta.subarray.name = "FULL"
     model1.meta.subarray.xstart = subxstart
     model1.meta.subarray.ystart = subystart
     model1.meta.subarray.xsize = subxsize
@@ -144,14 +158,14 @@ def setup_subarray_inputs(
     model1.meta.exposure.groupgap = 0
 
     gain = GainModel(data=gain)
-    gain.meta.instrument.name = 'MIRI'
+    gain.meta.instrument.name = "MIRI"
     gain.meta.subarray.xstart = 1
     gain.meta.subarray.ystart = 1
     gain.meta.subarray.xsize = 1024
     gain.meta.subarray.ysize = 1032
 
     rnModel = ReadnoiseModel(data=read_noise)
-    rnModel.meta.instrument.name = 'MIRI'
+    rnModel.meta.instrument.name = "MIRI"
     rnModel.meta.subarray.xstart = 1
     rnModel.meta.subarray.ystart = 1
     rnModel.meta.subarray.xsize = 1024
@@ -171,13 +185,19 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs, max_cores):
     grouptime = 3.0
     nints, ngroups, nrows, ncols = 1, 5, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
-        ncols=ncols, gain=ingain, deltatime=grouptime)
+        ngroups=ngroups,
+        readnoise=inreadnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        deltatime=grouptime,
+    )
 
     # Add basic ramps to each pixel
     pix = [(0, 0), (0, 1), (1, 0), (1, 1)]
     base_ramp = np.array([k + 1 for k in range(ngroups)])
-    ans_slopes = np.zeros(shape=(2,2))
+    ans_slopes = np.zeros(shape=(2, 2))
     for k, p in enumerate(pix):
         ramp = base_ramp * (k + 1)  # A simple linear ramp
         x, y = p
@@ -186,8 +206,11 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs, max_cores):
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model, override_gain=override_gain, override_readnoise=override_readnoise,
-        maximum_cores=max_cores)
+        model,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores=max_cores,
+    )
 
     assert slopes is not None
     assert cube_model is not None
@@ -195,18 +218,29 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs, max_cores):
     # Test to make sure the ramps are as expected and that the step is complete
     np.testing.assert_allclose(slopes.data, ans_slopes, rtol=1e-5)
     assert slopes.meta.cal_step.ramp_fit == "COMPLETE"
+    assert cube_model.meta.cal_step.ramp_fit == "COMPLETE"
+
+    # Input is not modified
+    assert slopes is not model
+    assert cube_model is not model
+    assert model.meta.cal_step.ramp_fit is None
 
 
 def test_subarray_5groups(tmp_path_factory):
     # all pixel values are zero. So slope should be zero
     gainfile = tmp_path_factory.mktemp("data") / "gain.fits"
-    readnoisefile = tmp_path_factory.mktemp("data") / 'readnoise.fits'
+    readnoisefile = tmp_path_factory.mktemp("data") / "readnoise.fits"
+    output_dir = tmp_path_factory.mktemp("output")
 
     model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(
-        ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50)
+        ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50
+    )
+    generate_test_refmodel_metadata(rnModel)
+    generate_test_refmodel_metadata(gain)
     gain.save(gainfile)
     rnModel.save(readnoisefile)
 
+    model1.meta.filename = "test_ramp.fits"
     model1.meta.exposure.ngroups = 11
     model1.data[0, 0, 12, 1] = 10.0
     model1.data[0, 1, 12, 1] = 15.0
@@ -216,11 +250,19 @@ def test_subarray_5groups(tmp_path_factory):
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model1, override_gain=str(gainfile), override_readnoise=str(readnoisefile),
-        maximum_cores="none", save_opt=True)
+        model1,
+        override_gain=str(gainfile),
+        override_readnoise=str(readnoisefile),
+        maximum_cores="none",
+        save_opt=True,
+        output_dir=str(output_dir),
+    )
 
     assert slopes is not None
     assert cube_model is not None
+
+    # optional output is saved to output directory
+    assert (output_dir / "test_fitopt.fits").exists()
 
     xvalues = np.arange(5) * 1.0
     yvalues = np.array([10, 15, 25, 33, 60])
@@ -236,16 +278,25 @@ def test_int_times1(generate_miri_reffiles, setup_inputs):
     grouptime = 3.0
     nints, ngroups, nrows, ncols = 5, 3, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
-        ncols=ncols, gain=ingain, deltatime=grouptime)
+        ngroups=ngroups,
+        readnoise=inreadnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        deltatime=grouptime,
+    )
 
     # Set TSOVISIT false, despite which the int_times table should come back populated
     model.meta.visit.tsovisit = False
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model, override_gain=override_gain, override_readnoise=override_readnoise,
-        maximum_cores="none")
+        model,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores="none",
+    )
 
     assert slopes is not None
     assert cube_model is not None
@@ -260,35 +311,51 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
     grouptime = 3.0
     nints, ngroups, nrows, ncols = 5, 3, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
-        ncols=ncols, gain=ingain, deltatime=grouptime)
+        ngroups=ngroups,
+        readnoise=inreadnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        deltatime=grouptime,
+    )
 
     # Set TSOVISIT true, in which case the int_times table should come back with all content
     model.meta.visit.tsovisit = True
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model, override_gain=override_gain, override_readnoise=override_readnoise,
-        maximum_cores="none")
+        model,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores="none",
+    )
 
     assert slopes is not None
     assert cube_model is not None
 
     assert len(cube_model.int_times) == nints
 
-def test_set_groups(generate_miri_reffiles, setup_inputs, log_watcher):
+
+def test_set_groups(generate_miri_reffiles, setup_inputs):
     # Test results when using the firstgroup and lastgroup options
     ngroups = 20
     rampmodel, gdq, rnmodel, pixdq, err, gain = setup_inputs(ngroups=ngroups)
     # Set up data array as group# squared
     # This has the property that the slope=(firstgroup+lastgroup)
-    squares = np.array([k*k for k in range(ngroups)],dtype=np.float32)
-    rampmodel.data[0,:] = squares[:, np.newaxis, np.newaxis]
+    squares = np.array([k * k for k in range(ngroups)], dtype=np.float32)
+    rampmodel.data[0, :] = squares[:, np.newaxis, np.newaxis]
     firstgroup = 3
     lastgroup = 11
-    slopes, cubemodel = RampFitStep.call(rampmodel, override_gain=gain, override_readnoise=rnmodel,
-                                         firstgroup=firstgroup, lastgroup=lastgroup)
-    np.testing.assert_allclose(slopes.data, firstgroup+lastgroup, rtol=1e-7)
+    slopes, cubemodel = RampFitStep.call(
+        rampmodel,
+        override_gain=gain,
+        override_readnoise=rnmodel,
+        firstgroup=firstgroup,
+        lastgroup=lastgroup,
+    )
+    np.testing.assert_allclose(slopes.data, firstgroup + lastgroup, rtol=1e-7)
+
 
 @pytest.mark.parametrize("firstgroup, lastgroup, message", GROUP_SELECTION_PARAMETERS)
 def test_set_group_warnings(firstgroup, lastgroup, message, log_watcher):
@@ -296,64 +363,79 @@ def test_set_group_warnings(firstgroup, lastgroup, message, log_watcher):
     ngroups = 20
     groupdqflags = dqflags.group
     groupdq = np.zeros((1, ngroups, 1024, 1024), dtype=np.uint16)
-    log_watcher.message = message
+
+    watcher = log_watcher("jwst.ramp_fitting.ramp_fit_step", message=message)
     set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
-def one_group_suppressed(nints, suppress, setup_inputs):
-    """
-    Creates three pixel ramps.
-    The first ramp has no good groups.
-    The second ramp has one good group.
-    The third ramp has all good groups.
 
-    Sets up the models to be used by the tests for the one
-    group suppression flag.
-    """
-    # Define the data.
-    ngroups, nrows, ncols = 5, 1, 3
-    dims = nints, ngroups, nrows, ncols
-    rnoise, gain = 10, 1
-    group_time, frame_time = 5.0, 1
-    rampmodel, gdq, rnModel, pixdq, err, gmodel = setup_inputs(
-        ngroups=ngroups, readnoise=rnoise, nints=nints, nrows=nrows,
-        ncols=ncols, gain=gain, deltatime=group_time)
+def test_likely_output(tmp_path, setup_inputs):
+    """Test the LIKELY algorithm and the chisq output."""
+    ingain, inreadnoise = 6, 7
+    grouptime = 3.0
+    nints, ngroups, nrows, ncols = 1, 5, 1, 2
+    model, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups,
+        readnoise=inreadnoise,
+        nints=nints,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        deltatime=grouptime,
+    )
 
-    rampmodel.meta.exposure.frame_time = frame_time
+    base_arr = np.array([k * 15.75 for k in range(1, ngroups + 1)])
 
-    # Setup the ramp data and DQ.
-    arr = np.array([k + 1 for k in range(ngroups)], dtype=float)
-    sat = dqflags.pixel["SATURATED"]
-    sat_dq = np.array([sat] * ngroups, dtype=rampmodel.groupdq.dtype)
-    zdq = np.array([0] * ngroups, dtype=rampmodel.groupdq.dtype)
-
-    rampmodel.data[0, :, 0, 0] = arr
-    rampmodel.data[0, :, 0, 1] = arr
-    rampmodel.data[0, :, 0, 2] = arr
-
-    rampmodel.groupdq[0, :, 0, 0] = sat_dq  # All groups sat
-    rampmodel.groupdq[0, :, 0, 1] = sat_dq  # 0th good, all others sat
-    rampmodel.groupdq[0, 0, 0, 1] = 0
-    rampmodel.groupdq[0, :, 0, 2] = zdq     # All groups good
-
-    if nints > 1:
-        rampmodel.data[1, :, 0, 0] = arr
-        rampmodel.data[1, :, 0, 1] = arr
-        rampmodel.data[1, :, 0, 2] = arr
-
-        # All good ramps
-        rampmodel.groupdq[1, :, 0, 0] = zdq
-        rampmodel.groupdq[1, :, 0, 1] = zdq
-        rampmodel.groupdq[1, :, 0, 2] = zdq
-
-    rampmodel.suppress_one_group_ramps = suppress
+    rnd1 = np.array([-2.67780363, 2.41978396, 1.11415405, 3.4904681, 2.14907302])
+    rnd2 = np.array([1.44133809, 0.13063589, 0.89151771, 3.14430635, -0.0463224])
+    model.data[0, :, 0, 0] = base_arr + rnd1
+    model.data[0, :, 0, 1] = base_arr + 20 + rnd2
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        rampmodel,
-        override_gain=gmodel,
+        model,
+        algorithm="LIKELY",
+        override_gain=gain,
         override_readnoise=rnModel,
-        suppress_one_group=suppress,
-        maximum_cores="none")
+        save_opt=True,
+        output_dir=str(tmp_path),
+    )
 
-    return slopes, cube_model, dims
+    # Check the output slopes
+    tol = 1e-7
+    check = np.array([[5.609441, 5.2461348]])
+    np.testing.assert_allclose(slopes.data, check, rtol=tol)
+
+    # Check the chisq output array
+    chk_chisq = np.array([[0.43144223, 0.25806388]])
+    fname = tmp_path / "mock_likely_chisq.fits"
+    with ImageModel(fname) as chisq:
+        chisq_data = chisq.data
+    np.testing.assert_allclose(chisq_data, chk_chisq, rtol=tol)
+
+
+def test_uneven_sampling(caplog):
+    caplog.set_level("DEBUG", "stcal")
+
+    # Superstripe ramp model with in-frame reads: readout times are not evenly sampled
+    model = make_sub64p_multistripe_model()
+    model.pixeldq = model.get_default("pixeldq")
+    collated = RefPixStep.call(model)
+    assert len(collated.meta.exposure.read_times) > 0
+
+    # Set the data equal to the read time
+    for group in range(collated.data.shape[1]):
+        collated.data[:, group, :, :] = collated.meta.exposure.read_times[group][0]
+
+    # Call ramp fit with OLS_C: should reset to LIKELY
+    # Don't configure the log, so that caplog picks up the messages correctly.
+    ramp_fit = RampFitStep.call(collated, algorithm="OLS_C", configure_log=False)
+
+    # Log message from the step
+    assert "Setting the algorithm to LIKELY for unevenly sampled exposure" in caplog.text
+    # Log message from stcal
+    assert "Using explicit read times" in caplog.text
+
+    # All slopes should be 1.0, since value matches read time
+    np.testing.assert_allclose(ramp_fit[0].data, 1.0)
+    np.testing.assert_allclose(ramp_fit[1].data, 1.0)

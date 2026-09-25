@@ -5,8 +5,7 @@ This module will create a new metadata instance and table from a
 list of input datamodels or filenames.
 """
 
-from .blender import ModelBlender
-
+from jwst.model_blender.blender import ModelBlender
 
 __all__ = ["blendmodels"]
 
@@ -19,12 +18,12 @@ def blendmodels(product, inputs, ignore=None):
 
     Parameters
     ----------
-    product : JwstDataModel
+    product : `~stdatamodels.jwst.datamodels.JwstDataModel`
         A datamodel that will have its metadata set
         to the blended metadata and have the metadata
         table assigned to the "hdrtab" attribute.
 
-    inputs : list of JwstDataModel
+    inputs : list of `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input datamodels with metadata to blend.
 
     ignore : list of str, optional

@@ -1,23 +1,30 @@
 version: 2
 updates:
 
-  # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directory: ".github/workflows"
     target-branch: "main"
+    labels:
+      - automation
+      - dependencies
+      - no-changelog-entry-needed
     schedule:
-      interval: "weekly"
-    reviewers:
+      interval: "monthly"
+    groups:
+      actions:
+        patterns:
+          - "*"
+    cooldown:
+      default-days: 7
+    assignees:
       - "zacharyburnett"
 
-  # Maintain dependencies for pip
   - package-ecosystem: "pip"
     directory: "/"
     target-branch: "main"
-    ignore:
-      - dependency-name: "requirements-sdp.txt"
     schedule:
-      interval: "weekly"
-    reviewers:
+      interval: "monthly"
+    cooldown:
+      default-days: 7
+    assignees:
       - "zacharyburnett"
-

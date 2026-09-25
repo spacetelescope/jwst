@@ -1,8 +1,8 @@
 """Test the Registry"""
 
-from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
-
 import pytest
+
+from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
 
 
 def test_registry_match(full_pool_rules):
@@ -21,15 +21,16 @@ def test_registry_match(full_pool_rules):
 
 # Tests below for keyvalue_registry
 
+
 def test_dict_like():
     """Test the basic to ensure similar to a dict"""
-    data = {'a': 1, 'b': 2}
+    data = {"a": 1, "b": 2}
     kvr = KeyValueRegistry(data)
     assert data.keys() == kvr.keys()
     assert set(data.values()) == set(kvr.values())
 
-    assert kvr.get('a') == 1
-    assert kvr.get('c', 3) == 3
+    assert kvr.get("a") == 1
+    assert kvr.get("c", 3) == 3
 
     keys, values = zip(*kvr.items())
     assert set(data.keys()) == set(keys)
@@ -38,9 +39,9 @@ def test_dict_like():
     kvr_copy = kvr.copy()
     assert set(kvr_copy) == set(kvr)
 
-    assert kvr.pop('a') == 1
-    assert kvr.pop('a', 3) == 3
-    assert kvr.popitem() == ('b', 2)
+    assert kvr.pop("a") == 1
+    assert kvr.pop("a", 3) == 3
+    assert kvr.popitem() == ("b", 2)
     with pytest.raises(KeyError):
         kvr.popitem()
 
@@ -54,18 +55,18 @@ def test_dict_like():
 
 
 def test_default():
-    kvr = KeyValueRegistry(default={'a': 1})
-    assert kvr.default == 'a'
+    kvr = KeyValueRegistry(default={"a": 1})
+    assert kvr.default == "a"
     assert kvr[None] == 1
 
 
 def test_tuple():
-    data = ('a', 1)
+    data = ("a", 1)
     kvr = KeyValueRegistry(data)
-    assert kvr['a'] == 1
+    assert kvr["a"] == 1
 
     kvr = KeyValueRegistry(default=data)
-    assert kvr['a'] == 1
+    assert kvr["a"] == 1
     assert kvr[None] == 1
 
 

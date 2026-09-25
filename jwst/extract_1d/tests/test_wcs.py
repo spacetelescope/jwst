@@ -1,9 +1,8 @@
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from jwst.extract_1d import spec_wcs
-
-import pytest
 
 
 def test_spec_wcs_monotonic():

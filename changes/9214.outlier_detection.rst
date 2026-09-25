@@ -1,1 +1,0 @@
-Made in-memory processing the default for outlier detection imaging observations

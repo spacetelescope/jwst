@@ -1,14 +1,20 @@
+"""Account for signal loss in the optical path of spectroscopic modes."""
+
+import logging
+
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from . import pathloss
+from jwst.pathloss import pathloss
+from jwst.stpipe import Step
 
 __all__ = ["PathLossStep"]
+
+log = logging.getLogger(__name__)
 
 
 class PathLossStep(Step):
     """
-    PathLossStep: Apply the path loss correction to a science exposure.
+    Apply the path loss correction to a science exposure.
 
     Pathloss depends on the centering of the source in the aperture if the
     source is a point source.
@@ -24,57 +30,51 @@ class PathLossStep(Step):
 
     reference_file_types = ["pathloss"]
 
-    def process(self, model_input):
+    def process(self, input_data):
         """
         Execute the pathloss step.
 
         Parameters
         ----------
-        model_input : DataModel
-            The input datamodel to be corrected.
+        input_data : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The input file name or datamodel to be corrected.
 
         Returns
         -------
-        result : DataModel
-            The result of the pathloss calibration step.
+        output_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The updated datamodel.
         """
         # Open the input data model
-        with datamodels.open(model_input) as input_model:
-            if self.use_correction_pars:
-                correction_pars = self.correction_pars
-                pathloss_model = None
-            else:
-                correction_pars = None
+        output_model = self.prepare_output(input_data)
 
-                # Get the name of the pathloss reference file to use
-                self.pathloss_name = self.get_reference_file(input_model, "pathloss")
-                self.log.info(f"Using PATHLOSS reference file {self.pathloss_name}")
+        # Get the name of the pathloss reference file to use
+        pathloss_name = self.get_reference_file(output_model, "pathloss")
+        log.info(f"Using PATHLOSS reference file {pathloss_name}")
 
-                # Check for a valid reference file
-                if self.pathloss_name == "N/A":
-                    self.log.warning("No PATHLOSS reference file found")
-                    self.log.warning("Pathloss step will be skipped")
-                    result = input_model.copy()
-                    result.meta.cal_step.pathloss = "SKIPPED"
-                    return result
+        # Check for a valid reference file
+        if pathloss_name == "N/A":
+            log.warning("No PATHLOSS reference file found")
+            log.warning("Pathloss step will be skipped")
+            output_model.meta.cal_step.pathloss = "SKIPPED"
+            return output_model
 
-                # Open the pathloss ref file data model
-                if input_model.meta.exposure.type.upper() in ["MIR_LRS-FIXEDSLIT"]:
-                    pathloss_model = datamodels.MirLrsPathlossModel(self.pathloss_name)
-                else:
-                    pathloss_model = datamodels.PathlossModel(self.pathloss_name)
+        # Open the pathloss ref file data model
+        if output_model.meta.exposure.type.upper() in ["MIR_LRS-FIXEDSLIT", "MIR_WFSS"]:
+            pathloss_model = datamodels.MirLrsPathlossModel(pathloss_name)
+        else:
+            pathloss_model = datamodels.PathlossModel(pathloss_name)
 
-            # Do the pathloss correction
-            result, self.correction_pars = pathloss.do_correction(
-                input_model,
-                pathloss_model,
-                inverse=self.inverse,
-                source_type=self.source_type,
-                correction_pars=correction_pars,
-                user_slit_loc=self.user_slit_loc,
-            )
+        # Do the pathloss correction
+        output_model = pathloss.do_correction(
+            output_model,
+            pathloss_model,
+            inverse=self.inverse,
+            source_type=self.source_type,
+            user_slit_loc=self.user_slit_loc,
+            return_corrections=False,
+        )
 
-            if pathloss_model:
-                pathloss_model.close()
+        if pathloss_model:
+            pathloss_model.close()
 
-        return result
+        return output_model

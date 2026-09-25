@@ -5,8 +5,7 @@ Assign Moving Target WCS
 ========================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    main.rst
-
-.. automodapi:: jwst.assign_mtwcs
+   api_ref.rst

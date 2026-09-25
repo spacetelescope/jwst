@@ -1,6 +1,5 @@
 .. _set_telescope_pointing:
 
-============================
 Telescope Pointing Utilities
 ============================
 
@@ -10,12 +9,15 @@ Telescope Pointing Utilities
 .. automodapi:: jwst.lib.v1_calculate
    :no-inheritance-diagram:
 
+.. automodapi:: jwst.lib.siafdb
+   :no-inheritance-diagram:
+
 Commands
 --------
 
 Available commands are as follows. Use the ``-h`` option for more details.
 
-set_telescope_pointing.py
+set_telescope_pointing
     Update basic WCS information in JWST exposures from the engineering
     database.
 

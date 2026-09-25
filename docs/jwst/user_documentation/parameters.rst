@@ -16,12 +16,10 @@ If there is need to reuse a set of parameters often, parameters can be stored
 in **parameter files**. See :ref:`parameter_files` for more information.
 
 To see what parameters are available for any given
-pipeline or step, use the ``-h`` option on ``strun``. Some examples are:
-::
+pipeline or step, use the ``-h`` option on ``strun``. Some examples are::
 
-   $ strun calwebb_detector1 -h
-   $ strun jwst.dq_init.DQInitStep -h
-
+    strun calwebb_detector1 -h
+    strun jwst.dq_init.DQInitStep -h
 
 
 Universal Parameters
@@ -53,12 +51,11 @@ output data model from one step to the input of the next step, without
 saving any intermediate results to disk. If you want to save the results from
 individual steps, you have two options:
 
-#.  Specify ``save_results``.
-    This option will save the results of the step, using a filename
-    created by the step.
-
-#.  Specify a file name using ``output_file=<basename>``.
-    This option will save the step results using the name specified.
+#. Specify ``save_results``.
+   This option will save the results of the step, using a filename
+   created by the step.
+#. Specify a file name using ``output_file=<basename>``.
+   This option will save the step results using the name specified.
 
 To do this using the Python pipeline interface, see :ref:`python_outputs`. To do
 this when using the command line interface, see :ref:`strun_outputs`.
@@ -87,11 +84,9 @@ the correct name, just use the ``-h`` argument to ``strun`` to show you the list
 of available override parameters.
 
 To override the use of the default linearity file selection, for example,
-you would use:
-::
+you would use::
 
-  $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
-          --steps.linearity.override_linearity='my_lin.fits'
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.override_linearity='my_lin.fits'
 
 Skip
 ----
@@ -101,15 +96,12 @@ Another parameter available to all steps in a pipeline is ``skip``. If
 the previous step being automatically passed directly to the input of the step
 following the one that was skipped. For example, if you want to skip the
 linearity correction step, one can specify the ``skip`` parameter for the
-``strun`` command:
-::
+``strun`` command::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
-        --steps.linearity.skip=True
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.skip=True
 
 Alternatively, if using a :ref:`parameter file<parameter_files>`, edit the
-file to add the following snippet:
-::
+file to add the following snippet::
 
   steps:
   - class: jwst.linearity.linearity_step.LinearityStep
@@ -121,27 +113,23 @@ Pipeline/Step Parameters
 
 All pipelines and steps have **parameters** that can be set to change various
 aspects of how they execute. To see what parameters are available for any given
-pipeline or step, use the ``-h`` option on ``strun``. Some examples are:
-::
+pipeline or step, use the ``-h`` option on ``strun``. Some examples are::
 
-   $ strun calwebb_detector1 -h
-   $ strun jwst.dq_init.DQInitStep -h
+    strun calwebb_detector1 -h
+    strun jwst.dq_init.DQInitStep -h
 
 To set a parameter, simply specify it on the command line. For example, to have
 :ref:`calwebb_detector1 <calwebb_detector1>` save the calibrated ramp files, the
-``strun`` command would be as follows:
-::
+``strun`` command would be as follows::
 
-   $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --save_calibrated_ramp=true
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --save_calibrated_ramp=true
 
 To specify parameter values for an individual step when running a pipeline
 use the syntax ``--steps.<step_name>.<parameter>=value``.
 For example, to override the default selection of a dark current reference
-file from CRDS when running a pipeline:
-::
+file from CRDS when running a pipeline::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
-          --steps.dark_current.override_dark='my_dark.fits'
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.override_dark='my_dark.fits'
 
 If there is need to reuse a set of parameters often, parameters can be stored
 in **parameter files**. See :ref:`parameter_files` for more information.

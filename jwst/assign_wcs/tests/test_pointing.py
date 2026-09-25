@@ -1,7 +1,7 @@
 import numpy as np
+from astropy.modeling.models import Identity
 
 from jwst.assign_wcs import pointing
-from astropy.modeling.models import Identity
 
 
 def test_dva_corr_noop_missing_meta_values():

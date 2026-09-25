@@ -1,0 +1,448 @@
+import warnings
+
+import numpy as np
+from astropy.utils.data import get_pkg_data_filename
+from stdatamodels.jwst import datamodels
+
+from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
+from jwst.assign_wcs.tests.test_miri import (
+    create_datamodel_cube,
+    create_hdul,
+    create_hdul_lrs_slitless,
+)
+from jwst.assign_wcs.tests.test_nirspec import (
+    create_nirspec_fs_file,
+    create_nirspec_ifu_file,
+    create_nirspec_mos_file,
+)
+from jwst.extract_2d.extract_2d_step import Extract2dStep
+
+__all__ = [
+    "miri_lrs_slit_model_with_source",
+    "miri_lrs_slitless_model_with_source",
+    "miri_mrs_model",
+    "miri_mrs_model_with_source",
+    "nirspec_ifu_model",
+    "nirspec_ifu_model_with_source",
+    "nirspec_mos_model_with_source",
+    "nirspec_slit_model",
+    "nirspec_slit_model_with_source",
+    "nirspec_slit_model_with_source_and_nod",
+    "profile_1d",
+]
+
+
+def miri_lrs_slit_model_with_source():
+    """
+    Create a mock MIRI LRS FS model with a simple spectral source in the data array.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.SlitModel`
+        The LRS slit datamodel.
+    """
+    hdul = create_hdul("MIRIMAGE", "ANY", "ANY")
+    model = datamodels.ImageModel(hdul)
+    hdul.close()
+
+    shape = (1024, 1032)
+    model.data = np.full(shape, np.nan)
+    model.err = np.zeros(shape)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
+
+    # Add metadata needed for LRS FS
+    model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+    model.meta.wcsinfo.v3yangle = 0.0
+    model.meta.wcsinfo.vparity = -1
+    model.meta.dither.x_offset = 0.0
+    model.meta.dither.y_offset = 0.0
+
+    # Assign WCS
+    model = AssignWcsStep.call(model)
+    model = datamodels.SlitModel(model)
+
+    ysize, xsize = shape[-2:]
+    x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
+    _, _, lam = model.meta.wcs(x, y)
+
+    region_map = (~np.isnan(lam)).astype(int)
+    _add_source(model, region_map, along_x=False)
+    model.err[:] = 0.01
+
+    return model
+
+
+def miri_lrs_slitless_model_with_source():
+    """
+    Create a mock MIRI LRS slitless model with a simple spectral source in the data array.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.SlitModel`
+        The LRS slitless datamodel.
+    """
+    shape = (5, 416, 72)
+    hdul = create_hdul_lrs_slitless()
+    cube_model = create_datamodel_cube(hdul, shape)
+    hdul.close()
+
+    model = datamodels.SlitModel(cube_model)
+    cube_model.close()
+
+    model.data = np.full(shape, np.nan)
+    model.err = np.zeros(shape)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
+
+    ysize, xsize = shape[-2:]
+    x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
+    _, _, lam = model.meta.wcs(x, y)
+
+    region_map = (~np.isnan(lam)).astype(int)
+    _add_source(model, region_map, along_x=False)
+
+    return model
+
+
+def miri_mrs_model(detector="MIRIFUSHORT", channel="12", band="SHORT", shape=(1024, 1032)):
+    """
+    Create a mock MIRI MRS model.
+
+    Data, error, variance, and DQ planes are populated with flat data values.
+
+    Parameters
+    ----------
+    detector : str, optional
+        Detector name.
+    channel : str, optional
+        Channel name.
+    band : str, optional
+        Band name.
+    shape : tuple of int
+        Data shape.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        The MRS datamodel.
+    """
+    hdul = create_hdul(detector=detector, channel=channel, band=band)
+    model = datamodels.IFUImageModel(hdul)
+    hdul.close()
+
+    # Add data before calling AssignWCS: the s_region depends on it existing
+    model.data = np.ones(shape)
+    model = AssignWcsStep.call(model)
+
+    model.err = 0.01 * model.data
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
+    model.var_flat = np.zeros(shape)
+    return model
+
+
+def miri_mrs_model_with_source():
+    """
+    Create a mock MIRI MRS model with a simple spectral source in the data array.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        The MRS datamodel.
+    """
+    model = miri_mrs_model()
+    model.data *= np.nan
+
+    # add a simple source to each slice
+    det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
+    region_map = det2ab_transform.label_mapper.mapper
+    _add_source(model, region_map, along_x=False, bright_factor=10)
+
+    return model
+
+
+def nirspec_ifu_model(wcs_style="coordinates"):
+    """
+    Create a mock NIRSpec IFU model.
+
+    Data, error, variance, and DQ planes are populated with flat data values.
+    Flat variance is not populated. Pathloss point is populated.
+
+    Parameters
+    ----------
+    wcs_style : {"coordinates", "slice"}, optional
+        WCS style to create.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        The IFU datamodel.
+    """
+    shape = (2048, 2048)
+    hdul = create_nirspec_ifu_file(
+        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
+    )
+    model = datamodels.IFUImageModel(hdul)
+    hdul.close()
+
+    # assign a WCS
+    if wcs_style == "coordinates":
+        model = AssignWcsStep.call(model, nrs_ifu_slice_wcs=False)
+    else:
+        model = AssignWcsStep.call(model, nrs_ifu_slice_wcs=True)
+
+    # add flat data
+    model.data = np.ones(shape)
+    model.err = 0.01 * model.data
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
+    model.pathloss_point = np.zeros(shape)
+
+    return model
+
+
+def nirspec_ifu_model_with_source(wcs_style="coordinates"):
+    """
+    Create a mock NIRSpec IFU model with a simple spectral source in the data array.
+
+    Parameters
+    ----------
+    wcs_style : {"coordinates", "slice"}, optional
+        WCS style to create.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        The IFU datamodel.
+    """
+    model = nirspec_ifu_model(wcs_style=wcs_style)
+
+    # add a simple source
+    shape = model.data.shape
+    model.data = np.full(shape, np.nan)
+    region_map = model.regions
+    _add_source(model, region_map, along_x=True, bright_factor=1000)
+    model.err = 0.01 * model.data
+
+    return model
+
+
+def nirspec_mos_model_with_source():
+    """
+    Create a mock NIRSpec MOS model with a simple spectral source in the data array.
+
+    Calls assign_wcs and extract_2d.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        The MOS datamodel.
+    """
+    hdul = create_nirspec_mos_file()
+    model = datamodels.ImageModel(hdul)
+    hdul.close()
+
+    msaconfl = get_pkg_data_filename("data/msa_configuration.fits", package="jwst.assign_wcs.tests")
+    model.meta.instrument.msa_metadata_file = msaconfl
+    model.meta.instrument.msa_metadata_id = 12
+
+    shape = (2048, 2048)
+    model.data = np.zeros(shape)
+    model.err = np.full(shape, 0.01)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
+    model = AssignWcsStep.call(model)
+    model = Extract2dStep.call(model)
+
+    for slit in model.slits:
+        slit.meta.photometry.pixelarea_steradians = 1.0
+        slit.meta.photometry.pixelarea_arcsecsq = 1.0
+        slit.meta.bunit_data = "MJy"
+
+        region_map = (~np.isnan(slit.wavelength)).astype(int)
+        _add_source(slit, region_map)
+
+    return model
+
+
+def nirspec_slit_model():
+    """
+    Create a mock NIRSpec FS model with no source in the data array.
+
+    Calls assign_wcs and extract_2d.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        The FS datamodel.
+    """
+    hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
+    model = datamodels.ImageModel(hdul)
+    hdul.close()
+
+    shape = (2048, 2048)
+    model.data = np.ones(shape)
+    model.err = model.data * 0.01
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.var_poisson = np.zeros(shape)
+    model.var_rnoise = np.zeros(shape)
+    model = AssignWcsStep.call(model)
+    model = Extract2dStep.call(model)
+
+    for slit in model.slits:
+        slit.meta.photometry.pixelarea_steradians = 1.0
+        slit.meta.photometry.pixelarea_arcsecsq = 1.0
+        if slit.name == model.meta.instrument.fixed_slit:
+            slit.meta.bunit_data = "MJy"
+        else:
+            slit.meta.bunit_data = "MJy/sr"
+
+    return model
+
+
+def nirspec_slit_model_with_source():
+    """
+    Create a mock NIRSpec FS model with a simple spectral source in the data array.
+
+    Calls assign_wcs and extract_2d.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        The FS datamodel.
+    """
+    model = nirspec_slit_model()
+    for slit in model.slits:
+        region_map = (~np.isnan(slit.wavelength)).astype(int)
+        slit.data *= 0
+        _add_source(slit, region_map)
+
+    return model
+
+
+def nirspec_slit_model_with_source_and_nod():
+    """
+    Create a mock NIRSpec FS model with a source and a negative nod in the data array.
+
+    Calls assign_wcs and extract_2d.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        The FS datamodel.
+    """
+    model = nirspec_slit_model()
+    for slit in model.slits:
+        region_map = (~np.isnan(slit.wavelength)).astype(int)
+        slit.data *= 0
+        slit.err[:] = 1e-5
+        _add_source(
+            slit,
+            region_map,
+            center_offset=0.3,
+            amplitude=10,
+            bright_factor=1.0,
+            width=1.5,
+            overwrite_data=False,
+        )
+        _add_source(
+            slit,
+            region_map,
+            center_offset=-0.3,
+            amplitude=-10,
+            bright_factor=1.0,
+            width=1.5,
+            overwrite_data=False,
+        )
+
+    return model
+
+
+def profile_1d(xvec, center_offset=0.0, amplitude=0.1, baseline=1.0, width=2.0, along_x=True):
+    """
+    Make a smooth 1D Gaussian profile.
+
+    Parameters
+    ----------
+    xvec : ndarray
+        X-values for the profile.
+    center_offset : float, optional
+        Offset for centering the Gaussian, given as a fraction of the mean ``xvec`` value.
+    amplitude : float, optional
+        Amplitude for the Gaussian.
+    baseline : float, optional
+        Background level to add.
+    width : float, optional
+        Gaussian width in pixels.
+
+    Returns
+    -------
+    yvec : ndarray
+        Gaussian y-values for the profile, centered on the middle of the ``xvec`` array.
+    """
+    if xvec.ndim == 2:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            if along_x:
+                center = np.nanmean(xvec, axis=0)[None, :]
+            else:
+                center = np.nanmean(xvec, axis=1)[:, None]
+    else:
+        center = np.nanmean(xvec)
+    center += center_offset * center
+    peak = amplitude * np.exp(-0.5 * ((xvec - center) / width) ** 2)
+    return peak + baseline
+
+
+def _add_source(
+    model,
+    region_map,
+    along_x=True,
+    bright_factor=10.0,
+    overwrite_data=True,
+    center_offset=0.0,
+    amplitude=1.0,
+    baseline=0.0,
+    width=2.0,
+):
+    ysize, xsize = model.data.shape[-2:]
+    x, y = np.meshgrid(np.arange(xsize), np.arange(ysize))
+    slice_numbers = np.unique(region_map[region_map > 0])
+    for slice_num in slice_numbers:
+        indx = region_map == slice_num
+        if along_x:
+            slice_y = y.astype(float)
+            slice_y[~indx] = np.nan
+            source = profile_1d(
+                slice_y,
+                center_offset=center_offset,
+                amplitude=amplitude,
+                baseline=baseline,
+                width=width,
+                along_x=along_x,
+            )
+        else:
+            slice_x = x.astype(float)
+            slice_x[~indx] = np.nan
+            source = profile_1d(
+                slice_x,
+                center_offset=center_offset,
+                amplitude=amplitude,
+                baseline=baseline,
+                width=width,
+                along_x=along_x,
+            )
+        if overwrite_data:
+            model.data[..., indx] = source[indx]
+        else:
+            model.data[..., indx] += source[indx]
+
+        # Make one slice brighter, for threshold tests
+        if slice_num == slice_numbers[len(slice_numbers) // 2]:
+            model.data[..., indx] *= bright_factor

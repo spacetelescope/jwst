@@ -1,26 +1,40 @@
 """Flag pixels affected by open MSA shutters in NIRSpec exposures."""
 
 import json
-import numpy as np
 import logging
+import warnings
 from pathlib import Path
 
+import numpy as np
 from gwcs.wcs import WCS
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import Slit
 
-from ..assign_wcs.nirspec import slitlets_wcs, _nrs_wcs_set_input_lite, _get_transforms
+from jwst.assign_wcs.nirspec import (
+    generate_compound_bbox,
+    slitlets_wcs,
+)
+from jwst.assign_wcs.nirspec import (
+    log as nirspec_log,
+)
+from jwst.lib.basic_utils import LoggingContext
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
 
 FAILEDOPENFLAG = datamodels.dqflags.pixel["MSA_FAILED_OPEN"]
 SHUTTERS_PER_ROW = 365
 
 # States in the msaoper file that are flagged when set to 'open'
 FLAGGABLE_STATES = ["Internal state", "TA state", "state"]
+
+__all__ = [
+    "do_correction",
+    "flag",
+    "boundingbox_to_indices",
+    "wcs_to_dq",
+    "get_failed_open_shutters",
+    "create_slitlets",
+]
 
 
 def do_correction(input_model, shutter_refname, wcs_refnames):
@@ -29,26 +43,29 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
 
     Parameters
     ----------
-    input_model : DataModel
-        Science data to be corrected.
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
+        Science data to be corrected. Updated in-place.
     shutter_refname : str
         Name of MSAOPER reference file.
     wcs_refnames : dict
-        Dictionary of wcs reference file names.
+        Dictionary of WCS reference file names.
 
     Returns
     -------
-    output_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Science data with DQ array modified.
     """
     # Create a list of failed open slitlets from the msaoper reference file
     failed_slitlets = create_slitlets(shutter_refname)
+    log.info("%d failed open shutters", len(failed_slitlets))
 
     # Flag the stuck open shutters
-    output_model = flag(input_model, failed_slitlets, wcs_refnames)
-    output_model.meta.cal_step.msa_flagging = "COMPLETE"
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="Invalid interval")
+        input_model = flag(input_model, failed_slitlets, wcs_refnames)
+    input_model.meta.cal_step.msa_flagging = "COMPLETE"
 
-    return output_model
+    return input_model
 
 
 def flag(input_datamodel, failed_slitlets, wcs_refnames):
@@ -61,13 +78,13 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     that for the MSA_FAILED_OPEN standard flag.  All other science data
     arrays are unchanged.
 
-    The input datamodel is modified in place.
+    The input datamodel is modified in-place.
 
     Parameters
     ----------
-    input_datamodel : DataModel
-        Input science data.
-    failed_slitlets : list of Slit
+    input_datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Input science data. Updated in-place.
+    failed_slitlets : list of `~stdatamodels.jwst.transforms.Slit`
         Failed open slitlets.
     wcs_refnames : dict
         Reference file names used to calculate the WCS. Keys are reference
@@ -75,40 +92,35 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
 
     Returns
     -------
-    DataModel
+    input_datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data with DQ flags modified.
     """
     # Use the machinery in assign_wcs to create a WCS object for the bad shutters
-    pipeline = slitlets_wcs(input_datamodel, wcs_refnames, failed_slitlets)
+    with LoggingContext(nirspec_log, level=logging.WARNING):
+        pipeline = slitlets_wcs(input_datamodel, wcs_refnames, failed_slitlets)
     wcs = WCS(pipeline)
 
-    # Create output as a copy of the input science data model so we can overwrite
-    # the wcs with the wcs for the failed open shutters
-    # Have to make sure the EXP_TYPE is NRS_MSASPEC so that nrs_wcs_set_input works,
-    # We need to use the slit WCS for this even if the EXP_TYPE is NRS_IFU because we
-    # are calculating where stuck open slits affect the data
-    temporary_copy = input_datamodel.copy()
-    temporary_copy.meta.wcs = wcs
-    temporary_copy.meta.exposure.type = "NRS_MSASPEC"
-
-    s = [slitlet.name for slitlet in failed_slitlets]
-    wcsobj, tr1, tr2, tr3, open_slits = _get_transforms(temporary_copy, s, return_slits=True)
+    # Create a copy of the input model's metadata, so we can overwrite
+    # the wcs with the wcs for the failed open shutters.
+    # We need to use the slit WCS for this even if the input EXP_TYPE is
+    # NRS_IFU because we are calculating where stuck open slits affect the data.
+    meta_model = datamodels.ImageModel()
+    meta_model.meta.wcs = wcs
+    meta_model.meta.wcsinfo = input_datamodel.meta.wcsinfo
+    meta_model.meta.exposure.type = "NRS_MSASPEC"
+    meta_model.meta.wcs.bounding_box = generate_compound_bbox(meta_model, failed_slitlets)
 
     dq_array = input_datamodel.dq
-    for k in range(len(s)):
-        # Pick the WCS for this slitlet from the WCS of the exposure
-        thiswcs = _nrs_wcs_set_input_lite(
-            temporary_copy, wcsobj, s[k], [tr1, tr2[k], tr3[k]], open_slits=open_slits
-        )
-
+    for slitlet in failed_slitlets:
         # Convert the bounding box for this slitlet to a set of indices to use as a slice
-        xmin, xmax, ymin, ymax = boundingbox_to_indices(temporary_copy, thiswcs.bounding_box)
+        bbox = meta_model.meta.wcs.bounding_box[slitlet.name]
+        xmin, xmax, ymin, ymax = boundingbox_to_indices(input_datamodel.data.shape, bbox)
 
         # Make a grid of points within the slice
         y_indices, x_indices = np.mgrid[ymin:ymax, xmin:xmax]
 
         # Calculate the arrays of coordinates for each pixel in the slice
-        coordinate_array = thiswcs(x_indices, y_indices)
+        ra, dec, lam, _ = meta_model.meta.wcs(x_indices, y_indices, slitlet.name)
 
         # The coordinate_array is a tuple of arrays, one for each output coordinate
         # In this case there should be 3 arrays, one each for RA, Dec and Wavelength
@@ -116,7 +128,7 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
 
         # Make a subarray from these coordinate arrays by setting pixels that aren't
         # NaN to FAILEDOPENFLAG, the rest to 0
-        dq_subarray = wcs_to_dq(coordinate_array, FAILEDOPENFLAG)
+        dq_subarray = wcs_to_dq((ra, dec, lam), FAILEDOPENFLAG)
 
         # Bitwise-or this subarray with the slice in the original exposure's DQ array
         dq_array[..., ymin:ymax, xmin:xmax] |= dq_subarray
@@ -126,28 +138,29 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     return input_datamodel
 
 
-def boundingbox_to_indices(data_model, bounding_box):
+def boundingbox_to_indices(data_shape, bounding_box):
     """
     Translate a bounding box to image indices.
 
-    Takes a bounding_box (tuple of tuples: ((x1, x2), (y1, y2)) and
+    Takes a ``bounding_box`` (tuple of tuples: ``((x1, x2), (y1, y2))``) and
     a datamodel and calculates the range of indices in the X and Y dimensions
     of the overlap between the bounding box and the datamodel's data array.
 
     Parameters
     ----------
-    data_model : DataModel
-        The input science datamodel.
+    data_shape : tuple
+        The data shape for the input science datamodel.
     bounding_box : tuple of tuple
-        Bounding box returned from wcs object.
+        Bounding box returned from WCS object.
 
     Returns
     -------
     xmin, xmax, ymin, ymax : int
         Range of indices of overlap between science data array and bounding box.
     """
-    nrows, ncols = data_model.data.shape[-2:]
-    ((x1, x2), (y1, y2)) = bounding_box
+    nrows, ncols = data_shape[-2:]
+    x1, x2 = bounding_box[0]
+    y1, y2 = bounding_box[1]
     xmin = int(min(x1, x2))
     xmin = max(xmin, 0)
     xmax = int(max(x1, x2)) + 1
@@ -163,7 +176,7 @@ def wcs_to_dq(wcs_array, flag):
     """
     Create a DQ subarray corresponding to a failed open slitlet.
 
-    The created array has the value `flag` wherever the WCS coordinates
+    The created array has the value ``flag`` wherever the WCS coordinates
     are valid (non-NaN) and 0 otherwise.
 
     Parameters
@@ -226,7 +239,7 @@ def create_slitlets(shutter_refname):
 
     Returns
     -------
-    slitlets : list of Slit
+    slitlets : list of `~stdatamodels.jwst.transforms.Slit`
         A list of slitlets. Each slitlet is a named tuple with elements
         ("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name", "source_alias",
@@ -242,17 +255,6 @@ def create_slitlets(shutter_refname):
         y = shutter["y"]
         shutter_id = x + (y - 1) * SHUTTERS_PER_ROW
         slitlets.append(
-            Slit(
-                str(counter),
-                shutter_id,
-                0,
-                x,
-                y,
-                -0.5,
-                0.5,
-                shutter["Q"],
-                0,
-                "x",
-            )
+            Slit(counter, shutter_id, 0, x, y, -0.5, 0.5, shutter["Q"], 0, "x", slit_id=counter)
         )
     return slitlets

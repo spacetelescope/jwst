@@ -57,7 +57,7 @@ Charge trap state data: ``trapsfilled``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The :ref:`persistence <persistence_step>` step in the :ref:`calwebb_detector1 <calwebb_detector1>`
 pipeline produces an image containing information on the number of filled charge traps in each
-pixel at the end of an exposure. Internally these data exist as a `~jwst.datamodels.TrapsFilledModel`
+pixel at the end of an exposure. Internally these data exist as a `~stdatamodels.jwst.datamodels.TrapsFilledModel`
 data model, which is saved to a ``trapsfilled`` FITS product. The FITS file has the following
 format:
 
@@ -103,4 +103,3 @@ technique that results in a standard imaging FITS file structure, as shown below
  - ERR: 2-D data array containing uncertainty estimates for each pixel.
  - DQ: 2-D data array containing DQ flags for each pixel.
  - ADSF: The data model meta data.
-

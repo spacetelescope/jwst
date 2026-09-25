@@ -1,34 +1,38 @@
-""" A set of routines to assist in the WCS transforms used in the
-cube_build step
-"""
-import numpy as np
+"""A set of routines to assist in the WCS transforms used in the ``cube_build`` step."""
+
 import math
+
+import numpy as np
+
+__all__ = ["radec2std", "std2radec", "v2v32radec_estimate", "radec2v2v3_estimate"]
+
 # _______________________________________________________________________
 
 
 def radec2std(crval1, crval2, ra, dec, rot_angle=None):
-    """ Compute the tangent projection coordinates (xi,eta) from ra,dec
-    using crval1 and crval2 (the tangent point).
+    """
+    Compute the tangent projection coordinates ``(xi,eta)`` from ``ra,dec`` using ``crval1`` and ``crval2``.
 
     Parameters
-    ____________
+    ----------
     crval1 : float
       RA value of tangent point
     crval2 : float
-      DEC value of tangent point
-    rot_angle: float
-      rotation angle given in degrees
-    ra : numpy.ndarray or float
-      A list (or single value) of ra points to convert
-    dec : numpy.ndarray  or float
-      A list (or single value) of ra points to convert
+      Dec value of tangent point
+    ra : ndarray or float
+      A list (or single value) of RA points to convert
+    dec : ndarray  or float
+      A list (or single value) of Dec points to convert
+    rot_angle : float or None, optional
+      Rotation angle given in degrees
 
-    Return Values
-    _____________
-    xi, eta - rectangular coordinates of tangent plane projected ra,dec
-
-    """
-
+    Returns
+    -------
+    xi : float
+        X-axis tangent plane coordinate of ``ra,dec``
+    eta : float
+        Y-axis tangent plane coordinate of ``ra,dec``
+    """  # noqa: E501
     if np.isscalar(ra):
         ra = np.asarray([ra])
         dec = np.asarray([dec])
@@ -44,8 +48,7 @@ def radec2std(crval1, crval2, ra, dec, rot_angle=None):
     h = np.sin(decr) * math.sin(dec0) + np.cos(decr) * math.cos(dec0) * np.cos(radiff)
 
     xi = np.cos(decr) * np.sin(radiff) / h
-    eta = (np.sin(decr) * math.cos(dec0) -
-           np.cos(decr) * math.sin(dec0) * np.cos(radiff)) / h
+    eta = (np.sin(decr) * math.cos(dec0) - np.cos(decr) * math.sin(dec0) * np.cos(radiff)) / h
 
     xi = -xi
     xi = xi * rad2arcsec
@@ -61,36 +64,38 @@ def radec2std(crval1, crval2, ra, dec, rot_angle=None):
         eta = temp2
 
     return xi, eta
+
+
 # ________________________________________________________________________________
 
 
 def std2radec(crval1, crval2, xi, eta):
-    """ Compute ra,dec from the tangent plane rectangular coordinates
+    """
+    Compute ``ra,dec`` from the tangent plane rectangular coordinates.
 
-    Compute the ra,dec values of  tangent plane rectangular coordinates using
-    crval1, crval2(the tangent point). This routine takes the rectangular
-    plane and projects it to the spherical plane using crval1, crval2 as
+    Compute the ``ra,dec`` values of tangent plane rectangular coordinates using
+    ``crval1, crval2`` (the tangent point). This routine takes the rectangular
+    plane and projects it onto the spherical plane using ``crval1, crval2`` as
     the tangent plane.
 
     Parameters
-    ____________
+    ----------
     crval1 : float
       RA value of tangent point
     crval2 : float
-      DEC value of tangent point
+      Dec value of tangent point
     xi : float
-      xi rectangular coordinates of tangent plane projected ra,dec
-    eta  : float
-      eta rectangular coordinates of tangent plane projected ra,dec
+      Xi rectangular coordinate of tangent plane projected ``ra,dec``
+    eta : float
+      Eta rectangular coordinate of tangent plane projected ``ra,dec``
 
-    Return Values
-    _____________
+    Returns
+    -------
     ra : float
-      list (or single value) of ra computed values
+      List (or single value) of RA computed values
     dec : float
-      list (or single value) of dec computed values
+      List (or single value) of Dec computed values
     """
-
     if np.isscalar(xi):
         eta = np.asarray([eta])
         xi = np.asarray([xi])
@@ -128,47 +133,51 @@ def std2radec(crval1, crval2, xi, eta):
     ra[mask] -= 360.0
     return ra, dec
 
+
 # _______________________________________________________________________
 
 
 def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
-    """ Estimation of ra and dec from the v2, v3 coordinates
+    """
+    Estimation of RA and Dec from the ``v2, v3`` coordinates.
 
     This routine is used for debugging purposes. It is not actually used
-    in the cube_build step for routine IFU cube building.
-    The conversion from V2,V3 to ra,dec is handled more accurately by
-    the transforms provided by assign_wcs.
+    in the ``cube_build`` step for routine IFU cube building.
+    The conversion from V2,V3 to ``ra,dec`` is handled more accurately by
+    the transforms provided by :ref:`assign_wcs <assign_wcs_step>`.
 
     Parameters
     ----------
     ra_ref : float
-       ra of reference point given in arc seconds
+       RA of reference point given in arcseconds
     dec_ref : float
-       dec of reference point given in arc seconds
+       Dec of reference point given in arcseconds
     roll_ref : float
-       roll angle given in degrees
+       Roll angle given in degrees
     v2_ref : float
-       v2 coordinate of reference point given in arc seconds
+       V2 coordinate of reference point given in arcseconds
     v3_ref : float
-       v3 coordinate of reference point given in arc seconds
+       V3 coordinate of reference point given in arcseconds
     v2 : float
-       v2 coordinate given in arc seconds
+       V2 coordinate given in arcseconds
     v3 :  float
-       v3 coordinate given in arc seconds
+       V3 coordinate given in arcseconds
 
     Returns
     -------
     ra : float
+       Calculated RA from ``v2, v3``
     dec : float
+       Calculate Dec from ``v2, v3``
 
     Notes
-    ----
-    it is assumed that the v2,v3 coordinates have the effects of dithering included
+    -----
+    It is assumed that the ``v2,v3`` coordinates have the effects of dithering included.
     """
     d2r = math.pi / 180.0
 
-    v2deg = v2.copy() / 3600.0   # convert to degrees
-    v3deg = v3.copy() / 3600.0   # convert to degrees
+    v2deg = v2.copy() / 3600.0  # convert to degrees
+    v3deg = v3.copy() / 3600.0  # convert to degrees
 
     v2_ref = v2_ref / 3600.0  # convert to degrees
     v3_ref = v3_ref / 3600.0  # convert to degrees
@@ -176,7 +185,7 @@ def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
     roll_ref_rad = roll_ref * d2r
 
     delta_v2 = (v2deg - v2_ref) * math.cos(v3_ref_rad)
-    delta_v3 = (v3deg - v3_ref)
+    delta_v3 = v3deg - v3_ref
     delta_ra = delta_v2 * math.cos(roll_ref_rad) + delta_v3 * math.sin(roll_ref_rad)
     delta_dec = -delta_v2 * math.sin(roll_ref_rad) + delta_v3 * math.cos(roll_ref_rad)
 
@@ -184,47 +193,49 @@ def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
     dec = delta_dec + dec_ref
 
     return ra, dec
+
+
 # _______________________________________________________________________
 
 
 def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
-    """ Convert ra,dec to v2, v3
+    """
+    Convert ``ra,dec`` to ``v2, v3``.
 
     This routine is used for debugging purposes. It is not actually used
-    in the cube_build step for routine IFU cube building.
-    The conversion from Ra,Dec to V2,V3 is handled more accurately by
-    the transforms provided by assign_wcs.
+    in the ``cube_build`` step for routine IFU cube building.
+    The conversion from RA,Dec to V2,V3 is handled more accurately by
+    the transforms provided by :ref:`assign_wcs <assign_wcs_step>`.
 
     Parameters
     ----------
     ra_ref : float
-       ra of reference point given in degrees
+       RA of reference point given in degrees
     dec_ref : float
-       dec of reference point given in degrees
+       Dec of reference point given in degrees
     roll_ref : float
-       roll angle given in degrees
+       Roll angle given in degrees
     v2_ref : float
-       v2 coordinate of reference point given in arc seconds
+       V2 coordinate of reference point given in arcseconds
     v3_ref : float
-       v3 coordinate of reference point given in arc seconds
+       V3 coordinate of reference point given in arcseconds
     ra : float
-       ra coordinate given in degrees
+       RA coordinate given in degrees
     dec :  float
-       dec coordinate given in degrees
+       Dec coordinate given in degrees
 
     Returns
     -------
     v2 : float
-       v2 coordinate in arc seconds
+       V2 coordinate in arcseconds
     v3 : float
-       v2 coordinate in arc seconds
-     """
-
+       V3 coordinate in arcseconds
+    """
     d2r = math.pi / 180.0
     r2d = 180.0 / math.pi
 
-    v3_ref_rad = (v3_ref) / 3600.0 * d2r  # convert from arc seconds to radians
-    v2_ref_rad = (v2_ref) / 3600.0 * d2r  # convert from arc seconds to radians
+    v3_ref_rad = (v3_ref) / 3600.0 * d2r  # convert from arcseconds to radians
+    v2_ref_rad = (v2_ref) / 3600.0 * d2r  # convert from arcseconds to radians
 
     roll_ref_rad = roll_ref * d2r
 
@@ -234,7 +245,7 @@ def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
     this_dec = dec * d2r
 
     delta_ra = (this_ra - ra_ref_rad) * math.cos(dec_ref_rad)
-    delta_dec = (this_dec - dec_ref_rad)
+    delta_dec = this_dec - dec_ref_rad
 
     dv2 = delta_ra * math.cos(roll_ref_rad) - delta_dec * math.sin(roll_ref_rad)
     dv3 = delta_ra * math.sin(roll_ref_rad) + delta_dec * math.cos(roll_ref_rad)
@@ -242,7 +253,7 @@ def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
     v2 = v2_ref_rad + (dv2 / math.cos(v3_ref_rad))
     v3 = v3_ref_rad + dv3
 
-    v2 = v2 * r2d * 3600.0  # convert from radians to arc seconds
-    v3 = v3 * r2d * 3600.0  # convert from radians to arc seconds
+    v2 = v2 * r2d * 3600.0  # convert from radians to arcseconds
+    v3 = v3 * r2d * 3600.0  # convert from radians to arcseconds
 
     return v2, v3

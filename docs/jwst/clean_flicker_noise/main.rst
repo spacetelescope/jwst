@@ -1,14 +1,15 @@
 Description
 ===========
 
-:Class: `jwst.clean_flicker_noise.CleanFlickerNoiseStep`
+:Class: `jwst.clean_flicker_noise.clean_flicker_noise_step.CleanFlickerNoiseStep`
 :Alias: clean_flicker_noise
 
 Overview
 --------
 The ``clean_flicker_noise`` step removes flicker noise from calibrated
-ramp images, after the :ref:`jump <jump_step>` step and prior to
-performing the :ref:`ramp_fitting <ramp_fitting_step>` step.
+ramp images in the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline, after the
+:ref:`jump <jump_step>` step and prior to performing the
+:ref:`ramp_fitting <ramp_fitting_step>` step.
 
 For NIR detectors, the noise addressed by this step is 1/f noise, which
 appears as faint banding along the detector slow axis.  For NIRSpec and
@@ -16,18 +17,28 @@ NIRISS, 1/f noise looks like vertical stripes; for NIRCam, it appears
 as horizontal stripes.
 
 MIRI images also often show a faint vertical banding, similar to 1/f noise
-but from a different physical source.  This type of flicker noise can be
+but caused by a different physical source.  This type of flicker noise can be
 corrected by similar methods, so it is also addressed by this step.
 
 To correct for flicker noise, the algorithm requires that the noise
 generated between one group readout and the next be isolated as much
-as possible from the astronomical signal. The residual noise may then
-be fit in frequency space, via an FFT, or may be characterized by a
+as possible from the astronomical signal.  The step accomplishes this by creating
+a scene mask from a draft rate image and optionally fitting and removing non-noise
+background structures. The residual noise in the identified background
+data may then be fit in frequency space, via an FFT, or may be characterized by a
 median along the rows or columns, as appropriate for the detector.
 The modeled noise is then directly subtracted from each group readout.
 
-The correction is available for any type of NIRSpec, NIRISS, or NIRCam
-exposure. For MIRI, it is available only for imaging exposures.
+The correction is available in the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline
+for ramp data from any type of NIRSpec, NIRISS, or NIRCam exposure. For MIRI, it is available
+only for imaging exposures. Additionally, the step may be called on NIRSpec rate data
+in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, or as a standalone step on
+any supported ramp or rate exposure.  The only difference in processing if the input
+is a rate image or rateints cube instead of a ramp is that a draft rate file is not
+necessary: the scene mask is derived from the input and correction is directly
+applied to the rate image(s).
+
+.. _scene_mask:
 
 Creation of a scene mask
 ------------------------
@@ -36,7 +47,7 @@ be used to fit the background noise.  The step builds a scene mask
 on the fly from a draft rate image, generated from the input ramp data,
 which is used to mark usable and unusable pixels. The mask is a 2D
 Boolean array, having the same size as the image, with
-pixels set to True interpreted as being OK to use.
+pixels set to `True` interpreted as being OK to use.
 
 The process of building the mask varies somewhat depending on the
 observing mode of the image being processed. Some features are common
@@ -44,16 +55,16 @@ to all modes, while others are mode-specific. The following sections
 describe each type of masking that can be applied. At the end, there
 is a summary of the types applied to each instrument mode.
 
-The user-settable step parameter `save_mask` can be used to save the
+The user-settable step parameter ``save_mask`` can be used to save the
 scene mask to a file, if desired (see the
 :ref:`step arguments <clean_flicker_noise_arguments>`).
 
 Note that a user may also supply their own mask image as input to the step,
 in which case the process of creating a mask is skipped. The step parameter
-`user_mask` is used to specify an input mask.  If specified, the input
+``user_mask`` is used to specify an input mask.  If specified, the input
 mask must contain a datamodel matching the shape of a 'rate' or 'rateints'
-file generated for the input science data (either `~jwst.datamodels.ImageModel`
-or `~jwst.datamodels.CubeModel`).  To generate a custom mask, it may be
+file generated for the input science data (either `~stdatamodels.jwst.datamodels.ImageModel`
+or `~stdatamodels.jwst.datamodels.CubeModel`).  To generate a custom mask, it may be
 easiest to save the mask output from a default run of the ``clean_flicker_noise``
 step on the input data, then modify it as needed.
 
@@ -63,22 +74,22 @@ For IFU images, the majority of the mask is based on knowing which
 pixels are contained within the footprints of the IFU slices. To do
 this, the image's World Coordinate System (WCS) object is queried in
 order to determine which pixels are contained within each of the 30
-slices. Pixels within each slice are set to False (do not use) in the
+slices. Pixels within each slice are set to `False` (do not use) in the
 mask.
 
 NIRSpec MOS/FS Slits
 ^^^^^^^^^^^^^^^^^^^^
-The footprints of each open MOS slitlet or fixed slit are flagged in
+The footprints of each open MOS slitlet or fixed slit (FS) are flagged in
 a similar way as IFU slices. For MOS and FS images, the WCS object is
 queried to determine which pixels are contained within each open
-slit/slitlet and they are set to False in the mask.
+slit/slitlet and they are set to `False` in the mask.
 
 NIRSpec MSA Failed Open Shutters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Pixels affected by stuck open MSA shutters are masked, because they
 may contain signal. This is accomplished by setting all pixels flagged by the
 :ref:`msaflagopen <msaflagopen_step>` step with DQ value "MSA_FAILED_OPEN"
-to False in the mask.
+to `False` in the mask.
 
 NIRSpec Fixed-Slit Region Pixels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -86,8 +97,8 @@ Full-frame MOS and IFU images may contain signal from the always open
 fixed slits, which appear in a fixed region in the middle of each image.
 The entire region containing the fixed slits is masked out when
 processing MOS and IFU images. The masked region is currently hardwired
-in the step to image indexes [1:2048, 923:1116], where the indexes are
-in x, y order and in 1-indexed values.
+in the step to image indexes ``[1:2048, 923:1116]``, where the indices are
+in ``x, y`` order and in 1-indexed values.
 
 Note, however, that it is possible to plan one or more fixed slit targets
 alongside MSA slitlets in MOS observations. In this situation, the fixed
@@ -99,13 +110,20 @@ The MIRI imager has a metering structure covering a large part of the
 detector area. These regions must be masked in order to fit and
 remove the background data in the science areas of the detector.
 Regions marked with DQ value "DO_NOT_USE" by the
-:ref:`flat_field <flatfield_step>` step are set to False in the
+:ref:`flat_field <flatfield_step>` step are set to `False` in the
 scene mask.
+
+NIRISS SOSS Traces
+^^^^^^^^^^^^^^^^^^
+For NIRISS SOSS, the PASTASOSS reference file provides predicted trace
+centroids across the array for all spectral orders.  The footprints of the SOSS
+spectral traces are masked by setting to `False` a fixed number of pixels above
+and below the predicted center of each trace.
 
 Missing Data
 ^^^^^^^^^^^^
 Any pixel in the draft rate image that has a value of NaN or exactly zero
-is flagged as False in the mask. This typically includes any reference
+is flagged as `False` in the mask. This typically includes any reference
 pixels that are present in the exposure.
 
 Outliers
@@ -119,11 +137,11 @@ pixels in the unilluminated areas of the region can still contain anomalous
 signal, due to uncaught cosmic rays, hot pixels, etc.
 
 For both modes, a sigma-clipping routine is employed to find such outliers
-within the draft rate image and set them to False in the mask. All pixels with
+within the draft rate image and set them to `False` in the mask. All pixels with
 values greater than :math:`median+n\_sigma*sigma` are assumed to contain
-signal and are set to False in the scene mask. In addition, all pixels
+signal and are set to `False` in the scene mask. In addition, all pixels
 with values less than :math:`median-3.0*sigma` are assumed to be bad pixels,
-and are also set to False in the scene mask.
+and are also set to `False` in the scene mask.
 
 Mode-Specific Masking Steps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -132,29 +150,31 @@ images from each instrument and observing mode.
 
 .. |c| unicode:: U+2713 .. checkmark
 
-+--------------------------+-----+-----+-----+-------+--------+--------+
-|                          |    NIRSpec      | MIRI  | NIRCam | NIRISS |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-|                          | IFU | MOS |  FS | Image | All    | All    |
-+==========================+=====+=====+=====+=======+========+========+
-| IFU Slices\ :sup:`1`     | |c| |     |     |       |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| Slits/Slitlets\ :sup:`1` |     | |c| | |c| |       |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| MSA_FAILED_OPEN\ :sup:`1`| |c| | |c| |     |       |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| Non-science\ :sup:`1`    |     |     |     | |c|   |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| FS Region\ :sup:`1`      | |c| | |c| |     |       |        |        |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| Missing Data             | |c| | |c| | |c| | |c|   | |c|    | |c|    |
-+--------------------------+-----+-----+-----+-------+--------+--------+
-| Outliers                 | |c| | |c| | |c| | |c|   | |c|    | |c|    |
-+--------------------------+-----+-----+-----+-------+--------+--------+
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+|                          |    NIRSpec      | MIRI  | NIRCam |     NIRISS      |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+|                          | IFU | MOS |  FS | Image | All    | SOSS   | Other  |
++==========================+=====+=====+=====+=======+========+========+========+
+| IFU Slices\ :sup:`1`     | |c| |     |     |       |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| Slits/Slitlets\ :sup:`1` |     | |c| | |c| |       |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| MSA_FAILED_OPEN\ :sup:`1`| |c| | |c| |     |       |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| Non-science\ :sup:`1`    |     |     |     | |c|   |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| FS Region\ :sup:`1`      | |c| | |c| |     |       |        |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| SOSS Traces\ :sup:`1`    |     |     |     |       |        | |c|    |        |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| Missing Data             | |c| | |c| | |c| | |c|   | |c|    | |c|    | |c|    |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
+| Outliers                 | |c| | |c| | |c| | |c|   | |c|    | |c|    | |c|    |
++--------------------------+-----+-----+-----+-------+--------+--------+--------+
 
 :sup:`1`\ These steps are only applied if the
 :ref:`step parameter <clean_flicker_noise_arguments>`
-`mask_science_regions` is set to True.
+``mask_science_regions`` is set to `True`.
 
 Correction Algorithm
 --------------------
@@ -163,98 +183,190 @@ The detailed process for fitting and removing flicker noise is as follows.
 See the :ref:`step arguments <clean_flicker_noise_arguments>` for more
 information on all referenced parameters.
 
-#. From the calibrated ramp input, make a draft rate (`single_mask` = True)
-   or rateints (`single_mask` = False) file.
+#. From the calibrated ramp input, make a draft rate (``single_mask=True``)
+   or rateints (``single_mask= False``) file. If the input to the step
+   is already a rate or rateints file, it is used directly for all following
+   steps.
 
 #. Create a scene mask from the rate data.
 
-   #. If `mask_science_regions` is set and the input is NIRSpec data,
-      run :ref:`assign_wcs <assign_wcs_step>` and
-      :ref:`msaflagopen <msaflagopen_step>` on the draft rate data,
-      then mask any known science areas or failed-open MSA shutters.
+   #. If ``mask_science_regions`` is set:
 
-      This will mask out regions that are likely to contain significant
-      astronomical signal.
+      #. If the input is NIRSpec data, run :ref:`assign_wcs <assign_wcs_step>` and
+         :ref:`msaflagopen <msaflagopen_step>` on the draft rate data,
+         then mask any known science areas or failed-open MSA shutters.
 
-   #. If `mask_science_regions` is set and the input is MIRI imaging data,
-      run :ref:`flat_field <flatfield_step>` on the draft rate data,
-      and extract just the DQ plane from the output. Pixels flagged
-      as 'DO_NOT_USE' by the flat fielding process are masked.
+         This will mask out regions that are likely to contain significant
+         astronomical signal.
 
-      This will mask out regions of the detector under the metering
-      structure.
+      #. If the input is MIRI imaging data,
+         run :ref:`flat_field <flatfield_step>` on the draft rate data,
+         and extract just the DQ plane from the output. Pixels flagged
+         as 'DO_NOT_USE' by the flat fielding process are masked.
 
-   #. If `apply_flat_field` is set and a flat file is available, divide the
+         This will mask out regions of the detector under the metering
+         structure.
+
+      #. If the input is NIRISS SOSS data, mask the predicted spectral
+         trace locations.  As for NIRSpec data, this will mask regions likely
+         to contain significant astronomical signal.
+
+   #. If ``apply_flat_field`` is set and a flat file is available, divide the
       draft rate data by the flat image.
 
    #. Iteratively sigma clip the data to get a center value (mean or median)
       and sigma value (standard deviation).
 
-   #. If `fit_histogram` is set, compute a histogram from 4-sigma clipped
+   #. If ``fit_histogram`` is set, compute a histogram from 4-sigma clipped
       values and fit a Gaussian to it to refine the center and sigma values.
 
-   #. Mask data more than 3 * sigma below the center as bad values.
+   #. Mask data more than ``3 * sigma`` below the center as bad values.
 
-   #. Mask data more than `n_sigma` * sigma above the center as signal
+   #. Mask data more than ``n_sigma * sigma`` above the center as signal
       (not background).
+
+#. If ``background_method = "median_image"`` and the input has multiple integrations,
+   create a scaled median image across the integrations.  Subtracting the median image
+   removes much of the source and background structure from the image, leaving only the
+   residual noise to fit.
+
+   To create the median image:
+
+   #. Subtract a reference background level from the input ramp and rate data
+      by running the :ref:`bkg_subtract <background_subtraction>` step
+      (NIRISS SOSS only).
+   #. Compute a representative flux for scaling for each integration
+      from the rate data.
+
+      a. For TSO spectral modes, extract a spectrum from a simple box
+         and compute the whitelight flux for each integration.
+      #. For TSO imaging modes, sum the flux over an aperture at the
+         expected source location for each integration.
+      #. For any other mode, take the median of the flux in each
+         integration.
+
+   #. Median combine all data across integrations to make a median
+      ramp or image.
+   #. Scale the median image by the representative flux for each
+      integration.
+   #. Add the subtracted reference background level back into the median image
+      (NIRISS SOSS only).
 
 #. Iterate over each integration and group in the data, to fit and correct
    for noise.
 
-   #. Make a diff image (current group – previous group) to correct.
+   #. For ramp data, make a diff image (current group – previous group) to correct.
+      For rate data, use the current image directly as the diff image.
 
-   #. If `apply_flat_field` is set and a flat file is available, divide the
+      For either ramp or rate data with ``background_method = "median_image"``,
+      directly subtract the median ramp or image matching the input data.
+
+   #. If ``apply_flat_field`` is set and a flat file is available, divide the
       diff image by the flat image.
 
-   #. Fit and remove a background level, using the scene mask to identify
+   #. Fit and remove a background level or structure, using the scene mask to identify
       background pixels.
 
       #. Clip the background data in the diff image to remove more outliers.
 
-      #. If `background_method` = 'median', the background value is a simple
-         median of the remaining values.
+      #. If needed, fit the background level in the remaining values.
 
-      #. If `background_method` = 'model', the background data is fit with
-         a low-resolution model via the photutils
-         `Background2D <https://photutils.readthedocs.io/en/latest/api/photutils.background.Background2D.html>`_
-         utility. The resolution box size is set by `background_box_size`.
+          #. If ``background_method='median'``, the background level is a simple
+             median of the remaining values.
 
-      #. Subtract the background level from the diff image and clip again
-         to `n_sigma` * sigma, with sigma recomputed from the
+          #. If ``background_method='model'``, the background data is fit with
+             a low-resolution model via the photutils
+             `~photutils.background.Background2D`
+             utility. The resolution box size is set by ``background_box_size``.
+             The 2D model is used as the background level.
+
+          #. For either ``background_method='median_image'`` or ``background_method=None``,
+             no background level is fit at this stage. It is taken to be 0.0.
+
+      #. If non-zero, subtract the background level from the diff image and clip
+         again to ``n_sigma * sigma``, with sigma recomputed from the
          background-subtracted data in the remaining background pixels.
 
    #. Fit and remove the residual noise in the background-subtracted image.
 
-      #. If `fit_method` = 'fft', the ``nsclean`` library is called to fit
-         and remove the noise in frequency space.
+      #. If ``fit_method='fft'``, the `~jwst.clean_flicker_noise.nsclean.NSClean` library is called to fit
+         and remove the noise in frequency space (also see :ref:`nsclean-algo-references`).
 
-      #. If `fit_method` = 'median', the noise is fit with a simple median
+      #. If ``fit_method='median'``, the noise is fit with a simple median
          along the appropriate detector axis and subtracted from the
          background-subtracted image.
 
-         If `fit_by_channel` = True, and the data is a NIR full-frame exposure,
+         If ``fit_by_channel=True``, and the data is a NIR full-frame exposure,
          the median value is computed and subtracted independently for each
          detector channel.
 
-   #. Restore the background level to the cleaned, background-subtracted
+   #. Restore the background level or median image to the cleaned, background-subtracted
       diff image.  Also restore the flat structure if needed by multiplying the
       cleaned diff by the flat image.
 
-   #. Add the cleaned diff back to a cleaned version of the previous
-      group image.
+   #. For ramp data, add the cleaned diff back to a cleaned version of the previous
+      group image. For rate data, use the cleaned diff as the output rate image.
+
+Automatic Parameter Determination
+---------------------------------
+
+Success of the cleaning algorithm is strongly dependent on choosing the
+correct parameters for the input science data.  Users are encouraged to
+experiment with the input parameters to find the combination that best
+suits their data, but it is possible in some cases for the algorithm to
+recommend parameter settings from a statistical analysis of the input
+data.
+
+If the input parameter ``autoparam`` is set to `True`, and if the input
+exposure type is supported, the cleaning algorithm will attempt some pre-processing
+and analysis on the input exposure and override some of the input background
+and fitting parameters according to a heuristic decision tree.
+
+For NIRISS and NIRCam imaging, the auto-parameter process is:
+
+#. Make a draft rate file from the input if necessary.
+
+#. Divide by a flat field image.
+
+#. Make a scene mask and perform a quick median cleaning on the flat-fielded rate image.
+
+#. Fit a 2D background to the cleaned image and replace all non-background pixels
+   flagged in the scene mask with the background level.
+
+#. Gather statistics on the cleaned background image, including the fraction of pixels
+   excluded by the scene mask, the background slopes averaged over rows and columns,
+   and the maximum channel offset.
+
+#. From the computed statistics, use a decision tree to set values for the
+   ``background_method`` and ``fit_by_channel`` parameters.  For both of these
+   imaging modes, ``apply_flat_field`` is also set to `True`, regardless of the
+   computed statistics.
+
+Any parameters that are not explicitly overridden by the auto-parameter determination
+are left at input values.
+
+.. _nsclean-algo-references:
 
 References
-==========
+----------
 
-The FFT cleaning algorithm implementation is based on NSClean,
+The FFT cleaning algorithm implementation is based on ``NSClean``
 developed by Bernard Rauscher. Details on the source of the correlated
 noise and the algorithm used by the ``nsclean`` library to fit and
 remove it can be found in
 `Rauscher 2024 <https://ui.adsabs.harvard.edu/abs/2023arXiv230603250R/abstract>`__.
 
 The background fitting and median cleaning algorithm are based on
-the image1overf algorithm, developed by Chris Willott, and available
+the ``image1overf`` algorithm, developed by Chris Willott, and available
 on GitHub at `chriswillott/jwst <https://github.com/chriswillott/jwst>`__.
-The algorithm was adapted to the `clean_flicker_noise` step and is released
+The algorithm was adapted to the ``clean_flicker_noise`` step and is released
 under the BSD license for the JWST calibration pipeline by permission
 of the author.
+
+Automated parameter decisions for NIRISS and NIRCam imaging are based on
+work by Paul Goudfrooij. The ``clean_flicker_noise`` implementation
+was adapted from an example implementation available on GitHub at
+`goudfroo/1_f_utils <https://github.com/goudfroo/1_f_utils/tree/main/optimize_one_f_params>`__.
+
+TSO-specific processing with ``background_method = "median_image"`` is based on
+work by Rachel Cooper and Aarynn Carter, for the NIRISS team (in prep).

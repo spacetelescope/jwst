@@ -1,46 +1,55 @@
-#! /usr/bin/env python
+"""Correct MIRI MRS data for fringes by applying a fringe reference image."""
+
+import logging
+
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from . import fringe
-
+from jwst.fringe import fringe
+from jwst.stpipe import Step
 
 __all__ = ["FringeStep"]
 
+log = logging.getLogger(__name__)
+
 
 class FringeStep(Step):
-    """
-    FringeStep: Apply fringe correction to a science image using a fringe
-    reference image.
-    """
+    """Apply fringe correction to a science image using a fringe reference image."""
 
     class_alias = "fringe"
 
-    reference_file_types = ['fringe']
+    reference_file_types = ["fringe"]
 
-    def process(self, input):
-        with datamodels.open(input) as input_model:
+    def process(self, input_data):
+        """
+        Apply fringe correction to a science image using a fringe reference image.
 
-            # Open the reference file
-            self.fringe_filename = self.get_reference_file(input_model,
-                                                           'fringe')
-            self.log.info('Using FRINGE reference file: %s',
-                          self.fringe_filename)
+        Parameters
+        ----------
+        input_data : str or `~stdatamodels.jwst.datamodels.IFUImageModel`
+            Input MIRI MRS science file name or datamodel.
 
-            # Check for a valid reference file
-            if self.fringe_filename == 'N/A':
-                self.log.warning('No FRINGE reference file found')
-                self.log.warning('Fringe step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.fringe = 'SKIPPED'
-                return result
+        Returns
+        -------
+        output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+            Fringe corrected MIRI MRS science data.
+        """
+        output_model = self.prepare_output(input_data)
 
-            # Load the fringe reference file
-            fringe_model = datamodels.FringeModel(self.fringe_filename)
+        # Open the reference file
+        fringe_filename = self.get_reference_file(output_model, "fringe")
+        log.info("Using FRINGE reference file: %s", fringe_filename)
 
+        # Check for a valid reference file
+        if fringe_filename == "N/A":
+            log.warning("No FRINGE reference file found")
+            log.warning("Fringe step will be skipped")
+            output_model.meta.cal_step.fringe = "SKIPPED"
+            return output_model
+
+        # Load the fringe reference file
+        with datamodels.FringeModel(fringe_filename) as fringe_model:
             # Do the correction
-            output_model = fringe.do_correction(input_model, fringe_model)
+            output_model = fringe.apply_fringe(output_model, fringe_model)
 
-            fringe_model.close()
-
+        output_model.meta.cal_step.fringe = "COMPLETE"
         return output_model

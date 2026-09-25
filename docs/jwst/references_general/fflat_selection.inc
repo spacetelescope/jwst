@@ -5,8 +5,7 @@ FFLAT is not applicable for instruments not in the table.
 Non-standard keywords used for file selection are *required*.
 
 ========== ==============================================
-Instrument Keywords                                       
+Instrument Keywords
 ========== ==============================================
-NIRSpec    INSTRUME, FILTER, EXP_TYPE, DATE-OBS, TIME-OBS 
+NIRSpec    INSTRUME, FILTER, EXP_TYPE, DATE-OBS, TIME-OBS
 ========== ==============================================
-

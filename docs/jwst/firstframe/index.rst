@@ -4,11 +4,14 @@
 First Frame Correction
 ======================
 
+.. warning::
+    The ``firstframe`` step has been deprecated and will be removed
+    in a future release. Flagging the first group  has been added to
+    the :ref:`RSCD step <rscd_step>`.
+
 .. toctree::
    :maxdepth: 2
 
    description.rst
    arguments.rst
-   reference_files.rst
-
-.. automodapi:: jwst.firstframe
+   api_ref.rst

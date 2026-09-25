@@ -4,7 +4,7 @@ REFPIX Reference File
 ---------------------
 
 :REFTYPE: REFPIX
-:Data model: `~jwst.datamodels.IRS2Model`
+:Data model: `~stdatamodels.jwst.datamodels.IRS2Model`
 
 The REFPIX reference file contains the complex coefficients
 for the correction.
@@ -31,7 +31,7 @@ Reference File Format
 +++++++++++++++++++++
 REFPIX reference files are FITS format, with two BINTABLE extensions.
 The FITS primary HDU does not contain a data array.
-The first BINTABLE extension is labeled with EXTNAME = "IRS2" and has the
+The first BINTABLE extension is labeled with ``EXTNAME="IRS2"`` and has the
 following column characteristics:
 
 =======  =========
@@ -50,16 +50,16 @@ beta_3   float32
 The "alpha" arrays contain correction multipliers to the reference output,
 and the "beta" arrays contain correction multipliers to the interleaved
 reference pixels. Both arrays have 4 components, one for each sector
-(amplifier output).  These are applied to (i.e. multiplied by) the Fourier
+(amplifier output).  These are applied to (i.e., multiplied by) the Fourier
 transform of the interleaved reference pixel data.
 The coefficients are intrinsically complex values, but have their
-real and imaginary parts stored in alternating table rows, i.e. row 1
+real and imaginary parts stored in alternating table rows, i.e., row 1
 contains the real components of all coefficients and row 2 contains
 the corresponding imaginary components for each.
 This storage scheme results in a total of 2916352 (2048 * 712 * 2)
 rows in the table.
 
-The second BINTABLE extension is labeled with EXTNAME = "DQ" and has the
+The second BINTABLE extension is labeled with ``EXTNAME="DQ"`` and has the
 following column characteristics:
 
 ========  =========

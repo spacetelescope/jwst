@@ -14,5 +14,5 @@ the behavior of the processing.
 
 ``--inverse`` (boolean, default=False)
   A flag to indicate whether the math operations used to apply the
-  flat-field should be inverted (i.e. multiply the flat-field into
-  the science data, instead of the usual division).
+  flat-field should be inverted (i.e., multiply the flat-field into
+  the science, error, and variance data, instead of the usual division).

@@ -1,21 +1,19 @@
-from os.path import dirname, join, abspath
+import logging
 import sys
 
 import numpy as np
 import pytest
-
+from astropy.utils.data import get_pkg_data_filename
+from stdatamodels.jwst import datamodels
 from stpipe import crds_client
 
-from stdatamodels.jwst import datamodels
-
-from jwst.stpipe import Step, Pipeline
-
+from jwst.stpipe import Pipeline, Step
 from jwst.stpipe.tests.steps import PipeWithReference, StepWithReference
+
+log = logging.getLogger(__name__)
 
 
 def library_function():
-    import logging
-    log = logging.getLogger(__name__)
     log.info("This is a library function log")
 
 
@@ -23,6 +21,7 @@ class FlatField(Step):
     """
     An example flat-fielding Step.
     """
+
     spec = """
         threshold = float(default=0.0)  # The threshold below which to remove
         multiplier = float(default=1.0) # Multiply by this number
@@ -31,8 +30,8 @@ class FlatField(Step):
     # Load the spec from a file
 
     def process(self, science, flat):
-        self.log.info("Removing flat field")
-        self.log.info("Threshold: {0}".format(self.threshold))
+        log.info("Removing flat field")
+        log.info("Threshold: {0}".format(self.threshold))
         library_function()
 
         output = datamodels.ImageModel(data=science.data - flat.data)
@@ -77,11 +76,7 @@ class MyPipeline(Pipeline):
     A test pipeline.
     """
 
-    step_defs = {
-        'flat_field': FlatField,
-        'combine': Combine,
-        'display': Display
-    }
+    step_defs = {"flat_field": FlatField, "combine": Combine, "display": Display}
 
     spec = """
     science_filename = input_file()  # The input science filename
@@ -91,7 +86,9 @@ class MyPipeline(Pipeline):
     def process(self, *args):
         science = datamodels.open(self.science_filename)
         if self.flat_filename is None:
-            self.flat_filename = join(dirname(__file__), "data", "flat.fits")
+            self.flat_filename = get_pkg_data_filename(
+                "data/flat.fits", package="jwst.stpipe.tests"
+            )
         flat = datamodels.open(self.flat_filename)
         calibrated = []
         calibrated.append(self.flat_field.run(science, flat))
@@ -105,7 +102,9 @@ class MyPipeline(Pipeline):
 
 
 def test_pipeline_from_config_file(tmp_cwd):
-    config_file_path = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
+    config_file_path = get_pkg_data_filename(
+        "steps/python_pipeline.cfg", package="jwst.stpipe.tests"
+    )
     pipe = Pipeline.from_config_file(config_file_path)
 
     assert pipe.flat_field.threshold == 42.0
@@ -115,16 +114,15 @@ def test_pipeline_from_config_file(tmp_cwd):
 
 
 def test_pipeline_python(tmp_cwd):
-    steps = {
-        'flat_field': {'threshold': 42.0}
-    }
+    steps = {"flat_field": {"threshold": 42.0}}
 
     pipe = MyPipeline(
         "MyPipeline",
         steps=steps,
-        science_filename=abspath(join(dirname(__file__), 'data', 'science.fits')),
-        flat_filename=abspath(join(dirname(__file__), 'data', 'flat.fits')),
-        output_file="python.fits")
+        science_filename=get_pkg_data_filename("data/science.fits", package="jwst.stpipe.tests"),
+        flat_filename=get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests"),
+        output_file="python.fits",
+    )
 
     assert pipe.flat_field.threshold == 42.0
     assert pipe.flat_field.multiplier == 1.0
@@ -140,23 +138,22 @@ def test_prefetch(tmp_cwd, monkeypatch):
         called = False
 
         def mock(self, parameters, reference_file_types, observatory):
-            if 'flat' in reference_file_types:
+            if "flat" in reference_file_types:
                 self.called = True
-            result = {
-                reftype: 'N/A'
-                for reftype in reference_file_types
-            }
+            result = {reftype: "N/A" for reftype in reference_file_types}
             return result
+
         __call__ = mock
+
     mock_get_ref = MockGetRef()
-    monkeypatch.setattr(crds_client, 'get_multiple_reference_paths', mock_get_ref)
+    monkeypatch.setattr(crds_client, "get_multiple_reference_paths", mock_get_ref)
 
     # Create some data
     model = datamodels.ImageModel((19, 19))
     model.meta.instrument.name = "NIRCAM"
-    model.meta.instrument.detector = 'NRCA1'
+    model.meta.instrument.detector = "NRCA1"
     model.meta.instrument.filter = "F070W"
-    model.meta.instrument.pupil = 'CLEAR'
+    model.meta.instrument.pupil = "CLEAR"
     model.meta.observation.date = "2019-01-01"
     model.meta.observation.time = "00:00:00"
 
@@ -174,8 +171,8 @@ def test_prefetch(tmp_cwd, monkeypatch):
 
 def test_pipeline_from_cmdline_cfg(tmp_cwd):
     args = [
-        join(dirname(__file__), 'steps', 'python_pipeline.cfg'),
-        '--steps.flat_field.threshold=47',
+        get_pkg_data_filename("steps/python_pipeline.cfg", package="jwst.stpipe.tests"),
+        "--steps.flat_field.threshold=47",
     ]
 
     pipe = Step.from_cmdline(args)
@@ -187,11 +184,12 @@ def test_pipeline_from_cmdline_cfg(tmp_cwd):
 
 
 def test_pipeline_from_cmdline_class(tmp_cwd):
+    science_filename = get_pkg_data_filename("data/science.fits", package="jwst.stpipe.tests")
     args = [
-        'jwst.stpipe.tests.test_pipeline.MyPipeline',
-        f"--science_filename={join(dirname(__file__), 'data', 'science.fits')}",
-        '--output_file=output.fits',
-        '--steps.flat_field.threshold=47'
+        "jwst.stpipe.tests.test_pipeline.MyPipeline",
+        f"--science_filename={science_filename}",
+        "--output_file=output.fits",
+        "--steps.flat_field.threshold=47",
     ]
 
     pipe = Step.from_cmdline(args)
@@ -205,14 +203,14 @@ def test_pipeline_from_cmdline_class(tmp_cwd):
 def test_pipeline_commandline_invalid_args():
     from io import StringIO
 
+    flat_filename = get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests")
     args = [
-        'jwst.stpipe.tests.test_pipeline.MyPipeline',
+        "jwst.stpipe.tests.test_pipeline.MyPipeline",
         # The file_name parameters are *required*, and one of them
         # is missing, so we should get a message to that effect
         # followed by the commandline usage message.
-        '--flat_filename={0}'.format(
-            abspath(join(dirname(__file__), 'data', 'flat.fits'))),
-        '--steps.flat_field.threshold=47'
+        f"--flat_filename={flat_filename}",
+        "--steps.flat_field.threshold=47",
     ]
 
     sys.stdout = buffer = StringIO()

@@ -6,7 +6,7 @@ IFUFORE Reference File (NIRSpec only)
 -------------------------------------
 
 :REFTYPE: IFUFORE
-:Data model: `~jwst.datamodels.IFUFOREModel`
+:Data model: `~stdatamodels.jwst.datamodels.IFUFOREModel`
 
 Reference Selection Keywords for IFUFORE
 ++++++++++++++++++++++++++++++++++++++++
@@ -28,4 +28,3 @@ This file provides the parameters (Paraxial and distortions coefficients)
 for the coordinate transforms from the MSA plane to the plane of the IFU slicer.
 
 :model: Compound model, Polynomials
-

@@ -8,8 +8,5 @@ Gain Scale Correction
    :maxdepth: 2
 
    description.rst
-   arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.gain_scale
-
+   api_ref.rst

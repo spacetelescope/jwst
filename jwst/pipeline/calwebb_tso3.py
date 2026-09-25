@@ -1,48 +1,46 @@
-from pathlib import Path
+import logging
 
 import numpy as np
+from astropy.io.fits import FITS_rec
 from astropy.table import vstack
-
 from stdatamodels.jwst import datamodels
 
-
-from ..stpipe import Pipeline
-
-from ..outlier_detection import outlier_detection_step
-from ..tso_photometry import tso_photometry_step
-from ..extract_1d import extract_1d_step
-from ..white_light import white_light_step
-from ..photom import photom_step
-from ..pixel_replace import pixel_replace_step
-from ..lib.pipe_utils import is_tso
-from astropy.io.fits import FITS_rec
+from jwst.adaptive_trace_model import adaptive_trace_model_step
+from jwst.extract_1d import extract_1d_step
+from jwst.lib.pipe_utils import is_tso
+from jwst.model_blender.blender import ModelBlender
+from jwst.outlier_detection import outlier_detection_step
+from jwst.photom import photom_step
+from jwst.pixel_replace import pixel_replace_step
+from jwst.stpipe import Pipeline
+from jwst.stpipe.utilities import invariant_filename, summary_step_status
+from jwst.tso_photometry import tso_photometry_step
+from jwst.white_light import white_light_step
 
 __all__ = ["Tso3Pipeline"]
+
+log = logging.getLogger(__name__)
 
 
 class Tso3Pipeline(Pipeline):
     """
     Apply level 3 processing to TSO-mode data from any JWST instrument.
 
-    Included steps are:
-
-        * outlier_detection
-        * tso_photometry
-        * pixel_replace
-        * extract_1d
-        * photom
-        * white_light
+    Included steps are: outlier_detection, tso_photometry, adaptive_trace_model,
+    pixel_replace, extract_1d, photom, and white_light.
     """
 
     class_alias = "calwebb_tso3"
 
     spec = """
+        save_results = boolean(default=True)  # Save output products by default
     """  # noqa: E501
 
     # Define alias to steps
     step_defs = {
         "outlier_detection": outlier_detection_step.OutlierDetectionStep,
         "tso_photometry": tso_photometry_step.TSOPhotometryStep,
+        "adaptive_trace_model": adaptive_trace_model_step.AdaptiveTraceModelStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "extract_1d": extract_1d_step.Extract1dStep,
         "photom": photom_step.PhotomStep,
@@ -59,16 +57,26 @@ class Tso3Pipeline(Pipeline):
         input_data : Level3 Association, json format
             The exposures to process.
         """
-        self.log.info("Starting calwebb_tso3...")
+        log.info("Starting calwebb_tso3...")
         asn_exptypes = ["science"]
 
-        input_models = datamodels.open(input_data, asn_exptypes=asn_exptypes)
+        input_models = self.prepare_output(input_data, asn_exptypes=asn_exptypes)
 
         # Sanity check the input data
         input_tsovisit = is_tso(input_models[0])
         if not input_tsovisit:
-            self.log.error("INPUT DATA ARE NOT TSO MODE. ABORTING PROCESSING.")
+            log.error("INPUT DATA ARE NOT TSO MODE. ABORTING PROCESSING.")
             return
+
+        # Overriding the Step.save_model method for the following steps.
+        # These steps may save intermediate files, resulting in meta.filename
+        # being modified. This can affect the filenames of subsequent
+        # steps.
+        self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
+        self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
+        self.adaptive_trace_model.save_model = invariant_filename(
+            self.adaptive_trace_model.save_model
+        )
 
         if self.output_file is None:
             self.output_file = input_models.asn_table["products"][0]["name"]
@@ -86,20 +94,20 @@ class Tso3Pipeline(Pipeline):
 
             # Can't do outlier detection if there isn't a stack of images
             if len(cube.data.shape) < 3:
-                self.log.warning("Input data are 2D; skipping outlier_detection")
+                log.warning("Input data are 2D; skipping outlier_detection")
                 break
 
-            self.log.info("Performing outlier detection on input images ...")
+            log.info("Performing outlier detection on input images ...")
             cube = self.outlier_detection.run(cube)
 
             # Save crfints products
             if cube.meta.cal_step.outlier_detection == "COMPLETE":
-                self.log.info("Saving crfints products with updated DQ arrays ...")
+                log.info("Saving crfints products with updated DQ arrays ...")
                 # preserve output filename
                 original_filename = cube.meta.filename
 
                 # ensure output filename will not have duplicate asn_id
-                if "_" + self.asn_id in original_filename:
+                if self.asn_id is not None and "_" + self.asn_id in original_filename:
                     original_filename = original_filename.replace("_" + self.asn_id, "")
                 self.save_model(
                     cube, output_file=original_filename, suffix="crfints", asn_id=self.asn_id
@@ -127,30 +135,51 @@ class Tso3Pipeline(Pipeline):
 
             # Working with spectroscopic TSO data;
             # define output for x1d (level 3) products
-
-            x1d_result = datamodels.MultiSpecModel()
+            x1d_result = datamodels.TSOMultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
+            nint = input_models[0].meta.exposure.nints
             x1d_result.int_times = FITS_rec.from_columns(
-                input_models[0].int_times.columns, nrows=input_models[0].meta.exposure.nints
+                input_models[0].int_times.columns, nrows=nint
             )
+
+            nstripe = 0
+            stripe_times = getattr(input_models[0], "int_times_stripe", None)
+            if stripe_times is not None and len(stripe_times) > 0:
+                nstripe = np.max(stripe_times["stripe_number"])
+                x1d_result.int_times_stripe = FITS_rec.from_columns(
+                    input_models[0].int_times_stripe.columns, nrows=nint * nstripe
+                )
 
             # Remove source_type from the output model, if it exists, to prevent
             # the creation of an empty SCI extension just for that keyword.
             x1d_result.meta.target.source_type = None
 
             # For each exposure in the TSO...
+            atm_status = []
+            pr_status = []
+            blender = ModelBlender()
             for cube in input_models:
-                # interpolate pixels that have a NaN value or are flagged
-                # as DO_NOT_USE or NON_SCIENCE.
+                # model the spectral trace
+                cube = self.adaptive_trace_model.run(cube)
+                atm_status.append(cube.meta.cal_step.adaptive_trace_model)
+
+                # interpolate pixels that have a NaN value
                 cube = self.pixel_replace.run(cube)
-                state = cube.meta.cal_step.pixel_replace
+                pr_status.append(cube.meta.cal_step.pixel_replace)
+
                 # Process spectroscopic TSO data
                 # extract 1D
-                self.log.info("Extracting 1-D spectra ...")
+                log.info("Extracting 1-D spectra ...")
                 result = self.extract_1d.run(cube)
                 for row in cube.int_times:
                     # Subtract one to assign 1-indexed int_nums to int_times array locations
                     x1d_result.int_times[row[0] - 1] = row
+
+                cube_stripe_times = getattr(cube, "int_times_stripe", None)
+                if nstripe > 0 and cube_stripe_times is not None:
+                    for row in cube_stripe_times:
+                        idx = (row[0] - 1) * nstripe + row[1] - 1
+                        x1d_result.int_times_stripe[idx] = row
 
                 # SOSS F277W may return None - don't bother with that
                 if (result is None) or (result.meta.cal_step.extract_1d == "SKIPPED"):
@@ -162,38 +191,94 @@ class Tso3Pipeline(Pipeline):
                     result = self.photom.run(result)
 
                 x1d_result.spec.extend(result.spec)
+                blender.accumulate(result)
 
-                # perform white-light photometry on 1d extracted data
-                self.log.info("Performing white-light photometry ...")
-                phot_result_list.append(self.white_light.run(result))
-
-            # Update some metadata from the association
-            x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
-            x1d_result.meta.asn.table_name = Path(input_data).name
-
-            # Save the final x1d Multispec model
-            x1d_result.meta.cal_step.pixel_replace = state
+            # Skip remaining processing if no spectra were extracted
             if len(x1d_result.spec) == 0:
-                self.log.warning("extract_1d step could not be completed for any integrations")
-                self.log.warning("x1dints products will not be created.")
+                log.warning("extract_1d step could not be completed for any integrations")
+                log.warning("x1dints products will not be created.")
             else:
+                # perform white-light photometry on all 1d extracted data
+                log.info("Performing white-light photometry")
+                phot_result_list.append(self.white_light.run(x1d_result))
+
+                # Update blended metadata
+                blender.finalize_model(x1d_result)
+
+                # Update some metadata from the association
+                x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
+                x1d_result.meta.asn.table_name = input_models.asn_table_name
+
+                # Update cal step status for optional steps
+                x1d_result.meta.cal_step.adaptive_trace_model = summary_step_status(atm_status)
+                x1d_result.meta.cal_step.pixel_replace = summary_step_status(pr_status)
+
+                # Set S_REGION to allow the x1dints file to show up in MAST spatial queries
+                self._populate_tso_spectral_sregion(x1d_result, input_models)
+
+                # Save the final x1d Multispec model
                 self.save_model(x1d_result, suffix="x1dints")
 
         # Done with all the inputs
-        input_models.close()
+        if input_models is not input_data:
+            input_models.close()
 
         # Check for all null photometry results before saving
         all_none = np.all([(x is None) for x in phot_result_list])
         if all_none:
-            self.log.warning("Could not create a photometric catalog; all results are null")
+            log.warning("Could not create a photometric catalog; all results are null")
         else:
             # Otherwise, save results to a photometry catalog file
             phot_results = vstack(phot_result_list)
             phot_results.meta["number_of_integrations"] = len(phot_results)
             phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext="ecsv")
-            self.log.info(f"Writing Level 3 photometry catalog {phot_tab_name}")
+            log.info(f"Writing Level 3 photometry catalog {phot_tab_name}")
             phot_results.write(phot_tab_name, format="ascii.ecsv", overwrite=True)
 
         # All done. Nothing to return, because all products have
         # been created here.
         return
+
+    def _populate_tso_spectral_sregion(self, model, cal_model_list):
+        """
+        Generate cumulative S_REGION footprint from input images.
+
+        Take the input S_REGION values from all input models, and combine
+        them using a polygon union to create a cumulative footprint for the output
+        TSO spectral product.
+        The union is performed in pixel coordinates to avoid distortion,
+        so the WCS of the first input model is used to convert to and from sky coordinates.
+
+        Parameters
+        ----------
+        model : `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`
+            The newly generated TSOMultiSpecModel made as part of
+            the save operation for spec3 processing of TSO data.
+
+        cal_model_list : `~jwst.datamodels.ModelContainer`
+            The input models provided to Tso3Pipeline by the
+            input association.
+        """
+        if (len(cal_model_list) == 0) or (len(model.spec) == 0):
+            log.warning("No input or output models provided; cannot set S_REGION.")
+            return
+
+        input_sregions = [
+            w.meta.wcsinfo.s_region for w in cal_model_list if w.meta.wcsinfo.hasattr("s_region")
+        ]
+        if len(input_sregions) == 0:
+            log.warning(
+                "No input model(s) have an `s_region` attribute; output S_REGION will not be set."
+            )
+            return
+        if len(input_sregions) < len(cal_model_list):
+            log.warning(
+                "One or more input model(s) are missing an `s_region` attribute; "
+                "output S_REGION will be set to first available value."
+            )
+        if not all(s == input_sregions[0] for s in input_sregions):
+            log.warning(
+                "Input models have different S_REGION values; this is unexpected for tso3 data. "
+                "Setting output S_REGION to the value of the first model."
+            )
+        model.spec[0].s_region = input_sregions[0]

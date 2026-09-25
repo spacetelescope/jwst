@@ -1,1 +1,0 @@
-Remove assignment of DO_NOT_USE to all NON_SCIENCE flagged pixels in the flatfield step for MIRI, NIRCam, and NIRISS.

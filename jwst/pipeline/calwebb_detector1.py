@@ -1,36 +1,32 @@
 #!/usr/bin/env python
 import logging
 
-from stdatamodels.jwst import datamodels
-
-from ..stpipe import Pipeline
-
-# step imports
-from ..group_scale import group_scale_step
-from ..dq_init import dq_init_step
-from ..emicorr import emicorr_step
-from ..saturation import saturation_step
-from ..ipc import ipc_step
-from ..superbias import superbias_step
-from ..refpix import refpix_step
-from ..rscd import rscd_step
-from ..firstframe import firstframe_step
-from ..lastframe import lastframe_step
-from ..linearity import linearity_step
-from ..dark_current import dark_current_step
-from ..reset import reset_step
-from ..persistence import persistence_step
-from ..charge_migration import charge_migration_step
-from ..jump import jump_step
-from ..clean_flicker_noise import clean_flicker_noise_step
-from ..ramp_fitting import ramp_fit_step
-from ..gain_scale import gain_scale_step
+from jwst.charge_migration import charge_migration_step
+from jwst.clean_flicker_noise import clean_flicker_noise_step
+from jwst.dark_current import dark_current_step
+from jwst.dq_init import dq_init_step
+from jwst.emicorr import emicorr_step
+from jwst.firstframe import firstframe_step
+from jwst.gain_scale import gain_scale_step
+from jwst.group_scale import group_scale_step
+from jwst.ipc import ipc_step
+from jwst.jump import jump_step
+from jwst.lastframe import lastframe_step
+from jwst.linearity import linearity_step
+from jwst.persistence import persistence_step
+from jwst.picture_frame import picture_frame_step
+from jwst.ramp_fitting import ramp_fit_step
+from jwst.refpix import refpix_step
+from jwst.reset import reset_step
+from jwst.rscd import rscd_step
+from jwst.saturation import saturation_step
+from jwst.stpipe import Pipeline
+from jwst.superbias import superbias_step
 
 __all__ = ["Detector1Pipeline"]
 
 # Define logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class Detector1Pipeline(Pipeline):
@@ -38,8 +34,9 @@ class Detector1Pipeline(Pipeline):
     Apply all calibration steps to raw JWST ramps to produce a 2-D slope product.
 
     Included steps are:
-    group_scale, dq_init, saturation, ipc, superbias, refpix, rscd,
-    lastframe, linearity, dark_current, persistence, jump detection,
+    group_scale, dq_init, emicorr, saturation, ipc, superbias, refpix, rscd,
+    firstframe, lastframe, linearity, dark_current, reset, persistence,
+    charge_migration, jump detection, picture_frame, clean_flicker_noise,
     ramp_fit, and gain_scale.
     """
 
@@ -67,6 +64,7 @@ class Detector1Pipeline(Pipeline):
         "persistence": persistence_step.PersistenceStep,
         "charge_migration": charge_migration_step.ChargeMigrationStep,
         "jump": jump_step.JumpStep,
+        "picture_frame": picture_frame_step.PictureFrameStep,
         "clean_flicker_noise": clean_flicker_noise_step.CleanFlickerNoiseStep,
         "ramp_fit": ramp_fit_step.RampFitStep,
         "gain_scale": gain_scale_step.GainScaleStep,
@@ -79,18 +77,18 @@ class Detector1Pipeline(Pipeline):
 
         Parameters
         ----------
-        input_data : str or `~jwst.datamodels.RampModel`
+        input_data : str or `~stdatamodels.jwst.datamodels.RampModel`
             The input data to process.
 
         Returns
         -------
-        `~jwst.datamodels.JwstDataModel`
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model.
         """
         log.info("Starting calwebb_detector1 ...")
 
         # open the input data as a RampModel
-        input_data = datamodels.RampModel(input_data)
+        input_data = self.prepare_output(input_data, open_as_ramp=True)
 
         # propagate output_dir to steps that might need it
         self.dark_current.output_dir = self.output_dir
@@ -107,6 +105,12 @@ class Detector1Pipeline(Pipeline):
             input_data = self.emicorr.run(input_data)
             input_data = self.saturation.run(input_data)
             input_data = self.ipc.run(input_data)
+            if not self.firstframe.skip:
+                log.info(
+                    " The firstframe step has been deprecated and will be removed in a"
+                    " future release. "
+                    "Flagging the first groups has been added to the RSCD step"
+                )
             input_data = self.firstframe.run(input_data)
             input_data = self.lastframe.run(input_data)
             input_data = self.reset.run(input_data)
@@ -114,9 +118,6 @@ class Detector1Pipeline(Pipeline):
             input_data = self.rscd.run(input_data)
             input_data = self.dark_current.run(input_data)
             input_data = self.refpix.run(input_data)
-
-            # skip until MIRI team has figured out an algorithm
-            # input_data = self.persistence(input_data)
 
         else:
             # process Near-IR exposures
@@ -129,11 +130,6 @@ class Detector1Pipeline(Pipeline):
             input_data = self.superbias.run(input_data)
             input_data = self.refpix.run(input_data)
             input_data = self.linearity.run(input_data)
-
-            # skip persistence for NIRSpec
-            if instrument != "NIRSPEC":
-                input_data = self.persistence.run(input_data)
-
             input_data = self.dark_current.run(input_data)
 
         # apply the charge_migration step
@@ -142,8 +138,14 @@ class Detector1Pipeline(Pipeline):
         # apply the jump step
         input_data = self.jump.run(input_data)
 
+        # apply the picture_frame step
+        input_data = self.picture_frame.run(input_data)
+
         # apply the clean_flicker_noise step
         input_data = self.clean_flicker_noise.run(input_data)
+
+        # persistence should be between flicker noise and ramp_fit.
+        input_data = self.persistence.run(input_data)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
@@ -187,7 +189,7 @@ class Detector1Pipeline(Pipeline):
 
         Parameters
         ----------
-        input_data : `~jwst.datamodels.JwstDataModel`
+        input_data : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The output data product from the Detector1 pipeline
         """
         if input_data is None:

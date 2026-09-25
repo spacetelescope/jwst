@@ -1,1 +1,0 @@
-Store background scaling factor for WFSS data

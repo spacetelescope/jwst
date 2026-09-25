@@ -8,5 +8,4 @@ Imprint Subtraction
    :maxdepth: 2
 
    description.rst
-
-.. automodapi:: jwst.imprint
+   api_ref.rst

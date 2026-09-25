@@ -1,0 +1,1 @@
+Flip MIRI-LRS_SLITLESS images along the wavelength axis, so that the resampled image matches the orientation in the input image.

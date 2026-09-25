@@ -1,13 +1,12 @@
-#
-#  Module for the lastframe correction for MIRI science data sets
-#
-import numpy as np
+"""Utility functions for the lastframe correction for MIRI science data sets."""
+
 import logging
 
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["do_correction"]
 
 
 def do_correction(output):
@@ -20,12 +19,12 @@ def do_correction(output):
 
     Parameters
     ----------
-    output : DataModel
+    output : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Science data to be corrected
 
     Returns
     -------
-    output : DataModel
+    output : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Lastframe-corrected science data
     """
     # Save some data params for easy use later
@@ -34,9 +33,7 @@ def do_correction(output):
     # Update the step status, and if ngroups > 2, set all of the GROUPDQ in
     # the final group to 'DO_NOT_USE'
     if sci_ngroups > 2:
-        output.groupdq[:, -1, :, :] = np.bitwise_or(
-            output.groupdq[:, -1, :, :], dqflags.group["DO_NOT_USE"]
-        )
+        output.groupdq[:, -1, :, :] |= dqflags.group["DO_NOT_USE"]
         log.debug("LastFrame Sub: resetting GROUPDQ in last frame to DO_NOT_USE")
         output.meta.cal_step.lastframe = "COMPLETE"
     else:  # too few groups

@@ -1,14 +1,15 @@
 import logging
 
 import numpy as np
-from astropy.modeling.models import Mapping, Const1D, Tabular1D
-from astropy import units as u
 from astropy import coordinates as coord
-from gwcs.wcs import WCS
+from astropy import units as u
+from astropy.modeling.models import Const1D, Mapping, Tabular1D
 from gwcs import coordinate_frames as cf
+from gwcs.wcs import WCS
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["create_spectral_wcs"]
 
 
 def create_spectral_wcs(ra, dec, wavelength):
@@ -28,7 +29,7 @@ def create_spectral_wcs(ra, dec, wavelength):
 
     Returns
     -------
-    wcs: a gwcs.wcs.WCS object
+    wcs : `~gwcs.wcs.WCS`
         This takes a float or sequence of float and returns a tuple of
         the right ascension, declination, and wavelength (or sequence of
         wavelengths) at the pixel(s) specified by the input argument.

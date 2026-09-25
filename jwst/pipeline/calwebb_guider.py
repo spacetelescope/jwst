@@ -3,18 +3,16 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Pipeline
-
 # step imports
-from ..dq_init import dq_init_step
-from ..flatfield import flat_field_step
-from ..guider_cds import guider_cds_step
+from jwst.dq_init import dq_init_step
+from jwst.flatfield import flat_field_step
+from jwst.guider_cds import guider_cds_step
+from jwst.stpipe import Pipeline
 
 __all__ = ["GuiderPipeline"]
 
 # Define logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class GuiderPipeline(Pipeline):
@@ -64,9 +62,9 @@ class GuiderPipeline(Pipeline):
                 "dq_init and guider_cds are set to skip; assume they"
                 " were run before and load data as GuiderCalModel"
             )
-            input_data = datamodels.GuiderCalModel(input_data)
+            input_data = self.prepare_output(input_data, open_as_type=datamodels.GuiderCalModel)
         else:
-            input_data = datamodels.GuiderRawModel(input_data)
+            input_data = self.prepare_output(input_data, open_as_type=datamodels.GuiderRawModel)
 
         # Apply the steps
         input_data = self.dq_init.run(input_data)

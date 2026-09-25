@@ -10,6 +10,4 @@ Dark Current Subtraction
    description.rst
    arguments.rst
    reference_files.rst
-
-
-.. automodapi:: jwst.dark_current
+   api_ref.rst

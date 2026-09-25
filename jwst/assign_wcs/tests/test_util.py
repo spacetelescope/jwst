@@ -2,30 +2,28 @@
 Test the utility functions
 """
 
-import os
-
-from astropy.modeling.models import Shift, Identity
+import gwcs
+import numpy as np
+import pytest
+from astropy import coordinates as coord
+from astropy import units as u
+from astropy.modeling import CompoundModel
+from astropy.modeling.models import Identity, Shift
 from astropy.table import QTable
-
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
-from jwst.lib.catalog_utils import SkyObject
-
+from jwst.assign_wcs.tests import helpers
 from jwst.assign_wcs.util import (
-    get_object_info, wcs_bbox_from_shape, subarray_transform,
-    bounding_box_from_subarray, transform_bbox_from_shape
+    bounding_box_from_subarray,
+    get_object_info,
+    is_sky_like,
+    subarray_transform,
+    substripe_subarray_transforms,
+    transform_bbox_from_shape,
+    wcs_bbox_from_shape,
 )
-
-from jwst.assign_wcs.tests import data
-
-data_path = os.path.split(os.path.abspath(data.__file__))[0]
-
-
-def get_file_path(filename):
-    """
-    Construct an absolute path.
-    """
-    return os.path.join(data_path, filename)
+from jwst.lib.catalog_utils import SkyObject
 
 
 def test_transform_bbox_from_shape_2d():
@@ -60,8 +58,10 @@ def read_catalog(catalogname):
     return get_object_info(catalogname)
 
 
-def test_create_grism_objects():
-    source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
+def test_get_object_info():
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.assign_wcs.tests"
+    )
 
     # create from test ascii file
     grism_objects = read_catalog(source_catalog)
@@ -69,10 +69,12 @@ def test_create_grism_objects():
 
     required_fields = list(SkyObject()._fields)
     go_fields = grism_objects[0]._fields
-    assert all([a == b for a, b in zip(required_fields, go_fields)]), "Required fields mismatch for SkyObject and GrismObject"
+    assert all([a == b for a, b in zip(required_fields, go_fields)]), (
+        "Required fields mismatch for SkyObject and GrismObject"
+    )
 
     # create from QTable object
-    tempcat = QTable.read(source_catalog, format='ascii.ecsv')
+    tempcat = QTable.read(source_catalog, format="ascii.ecsv")
     grism_object_from_table = read_catalog(tempcat)
     assert isinstance(grism_object_from_table, list), "return grism objects were not a list"
 
@@ -104,4 +106,43 @@ def test_bounding_box_from_subarray():
     im.meta.subarray.ystart = 6
     im.meta.subarray.xsize = 400
     im.meta.subarray.ysize = 600
-    assert bounding_box_from_subarray(im) == ((-.5, 599.5), (-.5, 399.5))
+    assert bounding_box_from_subarray(im) == ((-0.5, 599.5), (-0.5, 399.5))
+
+
+def test_is_sky_like():
+    frame = "test"
+    assert not is_sky_like(frame)
+
+    frame = gwcs.Frame2D()
+    assert not is_sky_like(frame)
+
+    frame = gwcs.Frame2D(unit=[u.um, u.pix])
+    assert not is_sky_like(frame)
+
+    frame = gwcs.Frame2D(unit=[u.arcsec, u.arcsec])
+    assert is_sky_like(frame)
+
+    frame = gwcs.CelestialFrame(name="icrs", axes_order=(0, 1), reference_frame=coord.ICRS())
+    assert is_sky_like(frame)
+
+
+@pytest.mark.parametrize("full_frame", [True, False])
+def test_substripe_subarray_transforms(full_frame):
+    mock_substripe = helpers.make_mock_dhs_nrca1_rate()
+    stripe_ids = [10, 9, 8, 7]
+
+    # if not full frame, offsets subtract the stripe size to get
+    # relative coordinates
+    expected = np.arange(-1, -260, -65)
+
+    if full_frame:
+        # add in full frame offset but still subtract off stripe size
+        expected = np.array([1515, 1640, 1765, 1890]) + expected
+
+    transforms = substripe_subarray_transforms(mock_substripe, stripe_ids, full_frame=full_frame)
+    for i, stripe in enumerate(stripe_ids):
+        assert isinstance(transforms[stripe], CompoundModel)
+        # x offset is zero for all stripes
+        assert transforms[stripe][0].offset.value == 0
+        # y offset is as expected
+        assert transforms[stripe][1].offset.value == expected[i]

@@ -1,17 +1,15 @@
-#! /usr/bin/env python
-
-
-from stdatamodels.jwst import datamodels
-
-from ..stpipe import Step
-from . import guider_cds
+"""Countrate calculations for all FGS data."""
 
 import logging
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+from stdatamodels.jwst import datamodels
+
+from jwst.guider_cds import guider_cds
+from jwst.stpipe import Step
 
 __all__ = ["GuiderCdsStep"]
+
+log = logging.getLogger(__name__)
 
 
 class GuiderCdsStep(Step):
@@ -19,47 +17,55 @@ class GuiderCdsStep(Step):
 
     class_alias = "guider_cds"
 
+    reference_file_types = ["gain", "readnoise"]
+
     def process(self, input_data):
         """
-        Execute the step.
+        Execute the guider_cds step.
 
         Parameters
         ----------
-        input_data : datamodel, str
-            The input GuiderRawModel or filename containing
-            a GuiderRawModel.
+        input_data : str or `~stdatamodels.jwst.datamodels.GuiderRawModel`
+            The input file name or datamodel.
 
         Returns
         -------
-        JWST GuiderCalModel or GuiderRawModel
-            This will be a GuiderRawModel if the step was skipped; otherwise,
-            it will be a GuiderCalModel containing calibrated count rates.
+        output_model : `~stdatamodels.jwst.datamodels.GuiderRawModel` or \
+                       `~stdatamodels.jwst.datamodels.GuiderCalModel`
+            This will be a `~stdatamodels.jwst.datamodels.GuiderRawModel`
+            if the step was skipped; otherwise,
+            it will be a `~stdatamodels.jwst.datamodels.GuiderCalModel`
+            containing calibrated count rates.
         """
-        with datamodels.GuiderRawModel(input_data) as input_model:
-            # Get the gain reference file
-            gain_filename = self.get_reference_file(input_model, "gain")
-            if gain_filename == "N/A":
-                self.log.warning("No GAIN reference file found!")
-                self.log.warning("guider_cds step will be skipped.")
-                input_model.meta.cal_step.guider_cds = "SKIPPED"
-                return input_model
+        output_model = self.prepare_output(input_data, open_as_type=datamodels.GuiderRawModel)
 
-            self.log.info("Using GAIN reference file: %s", gain_filename)
-            gain_model = datamodels.GainModel(gain_filename)
+        # Get the gain reference file
+        gain_filename = self.get_reference_file(output_model, "gain")
+        if gain_filename == "N/A":
+            log.warning("No GAIN reference file found!")
+            log.warning("guider_cds step will be skipped.")
+            output_model.meta.cal_step.guider_cds = "SKIPPED"
+            return output_model
 
-            # Get the readnoise reference file
-            readnoise_filename = self.get_reference_file(input_model, "readnoise")
-            if readnoise_filename == "N/A":
-                self.log.warning("No READNOISE reference file found!")
-                self.log.warning("guider_cds step will be skipped.")
-                input_model.meta.cal_step.guider_cds = "SKIPPED"
-                return input_model
+        log.info("Using GAIN reference file: %s", gain_filename)
+        gain_model = datamodels.GainModel(gain_filename)
 
-            self.log.info("Using READNOISE reference file: %s", readnoise_filename)
-            readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
+        # Get the readnoise reference file
+        readnoise_filename = self.get_reference_file(output_model, "readnoise")
+        if readnoise_filename == "N/A":
+            log.warning("No READNOISE reference file found!")
+            log.warning("guider_cds step will be skipped.")
+            output_model.meta.cal_step.guider_cds = "SKIPPED"
+            return output_model
 
-            out_model = guider_cds.guider_cds(input_model, gain_model, readnoise_model)
+        log.info("Using READNOISE reference file: %s", readnoise_filename)
+        readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
 
-        out_model.meta.cal_step.guider_cds = "COMPLETE"
+        result = guider_cds.guider_cds(output_model, gain_model, readnoise_model)
+        result.meta.cal_step.guider_cds = "COMPLETE"
 
-        return out_model
+        # Output is a new model, so close the input if it was opened here
+        if output_model is not input_data:
+            output_model.close()
+
+        return result

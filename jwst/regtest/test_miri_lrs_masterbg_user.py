@@ -1,13 +1,13 @@
 import os
+
 import pytest
-from astropy.io.fits.diff import FITSDiff
 
 from jwst.master_background import MasterBackgroundStep
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
-
     rtdata = rtdata_module
 
     # This is the user-supplied background file.
@@ -17,16 +17,25 @@ def run_pipeline(rtdata_module):
     # This is the input file for the master_background step.
     rtdata.get_data("miri/lrs/jw01529003001_03103_00011_mirimage_cal.fits")
 
-    MasterBackgroundStep.call(rtdata.input, user_background=user_bkg,
-                              save_results=True, suffix='user_mbsub',
-                              save_background=True)
+    MasterBackgroundStep.call(
+        rtdata.input,
+        user_background=user_bkg,
+        save_results=True,
+        suffix="user_mbsub",
+        save_background=True,
+    )
 
     return rtdata
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize('output', ['jw01529003001_03103_00011_mirimage_masterbg2d.fits',
-                                    'jw01529003001_03103_00011_mirimage_user_mbsub.fits'])
+@pytest.mark.parametrize(
+    "output",
+    [
+        "jw01529003001_03103_00011_mirimage_masterbg2d.fits",
+        "jw01529003001_03103_00011_mirimage_user_mbsub.fits",
+    ],
+)
 def test_miri_lrs_masterbg_user(run_pipeline, fitsdiff_default_kwargs, output):
     """Run a test for MIRI LRS data with a user-supplied background file."""
 

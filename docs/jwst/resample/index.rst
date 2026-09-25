@@ -9,9 +9,4 @@ Resampling Imaging Data
 
    main.rst
    arguments.rst
-   reference_files.rst
-   resample_step.rst
-   resample.rst
-   resample_utils.rst
-
-.. automodapi:: jwst.resample
+   api_ref.rst

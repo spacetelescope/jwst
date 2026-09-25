@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.jump.JumpStep`
+:Class: `jwst.jump.jump_step.JumpStep`
 :Alias: jump
 
 This step finds and flags outliers (usually caused by cosmic-ray hits) in
@@ -27,6 +27,12 @@ Note that the core algorithms for this step are called from the external package
 ``stcal``, an STScI effort to unify common calibration processing algorithms
 for use by multiple observatories.
 
+The keywords ``PRIMECRS`` and ``EXTNCRS`` are set in this step.  The ``PRIMECRS`` keyword
+is the number of primary cosmic rays found per thousand pixels per second.  The ``EXTNCRS``
+keyword is the number of extended events (snowball and shower) per million pixels per
+second.
+
+
 :ref:`Algorithm <stcal:jump_algorithm>`
 ---------------------------------------
 
@@ -41,7 +47,7 @@ threshold of normal cosmic rays.
 
 To constrain the effect of this halo, the jump step will fit ellipses or circles that
 enclose the large events and expand the ellipses and circles by the input
-`expand_factor` and mark them as jump (see :ref:`jump step arguments <jump_arguments>`
+``expand_factor`` and mark them as jump (see :ref:`jump step arguments <jump_arguments>`
 for details).
 
 The two different types of JWST detectors respond differently. The large events in the near-infrared
@@ -58,18 +64,26 @@ This step has the option of running in multiprocessing mode. In that mode it wil
 split the input data cube into a number of row slices based on the number of available
 cores on the host computer and the value of the ``max_cores`` input parameter. By
 default the step runs on a single processor. At the other extreme, if ``max_cores`` is
-set to "all", it will use all available cores (real and virtual). Testing has shown
-a reduction in the elapsed time for the step proportional to the number of real
-cores used. Using the virtual cores also reduces the elapsed time, but at a slightly
-lower rate than the real cores.
+set to "all", it will use all available cores (real and virtual). It is important to
+note that multiprocessing is used only for the two point difference portion of the jump
+step. The snowball and finding showers calculations do not use multiprocessing even
+when multiprocessing is selected. Testing has shown a reduction in the elapsed time
+for the two point difference portion of the jump  step proportional to the number of
+real cores used. It is possible the snowball and finding showers portion of the jump
+step may take a significant portion of the time for the jump step. In that case, the
+benefits of using multiprocessing will be limited. Using the virtual cores also
+reduces the elapsed time, but at a slightly lower rate than the real cores.
 
 If multiprocessing is requested, the input cube will be divided into a number of
 slices in the row dimension (with the last slice being slightly larger, if needed),
-and sent for processing in parallel.
-In the event the number of cores (and hence slices) selected exceeds the number of
-available image rows, the number of slices will be reduced to match the number of rows.
-After all the slices have finished processing, the output GROUPDQ cube - containing
-the DQ flags for detected jumps - is reassembled from the slices.
+and sent for processing in parallel. In the event the number of cores (and hence
+slices) selected exceeds the number of available image rows, the number of slices
+will be reduced to match the number of rows. After all the slices have finished
+processing, the output GROUPDQ cube - containing the DQ flags for detected
+jumps - is reassembled from the slices.
+
+See :ref:`multiprocessing` for more details and examples of how to run a pipeline step
+with multiprocessing enabled.
 
 Subarrays
 ---------

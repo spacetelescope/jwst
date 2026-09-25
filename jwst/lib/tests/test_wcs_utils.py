@@ -1,20 +1,19 @@
 import numpy as np
-from numpy.testing import assert_allclose
-
-from astropy import units as u
+import pytest
 from astropy import coordinates as coord
-from astropy.modeling.models import Mapping, Identity, Shift, Scale
-from gwcs import wcstools, wcs
+from astropy import units as u
+from astropy.modeling.models import Identity, Mapping, Scale, Shift
 from gwcs import coordinate_frames as cf
-
+from gwcs import wcs, wcstools
+from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import NirissSOSSModel
-from jwst.lib.wcs_utils import get_wavelengths
+
 from jwst.assign_wcs import util
+from jwst.lib.wcs_utils import get_wavelengths
 
 
 def create_model():
-
     det = cf.Frame2D(name="detector", axes_order=(0, 1))
 
     sky = cf.CelestialFrame(name="sky", axes_order=(0, 1), reference_frame=coord.ICRS())
@@ -60,7 +59,6 @@ def create_mock_wl():
 
 
 def test_get_wavelengths():
-
     # create a mock SlitModel
     model = create_model()
 
@@ -83,23 +81,35 @@ def test_get_wavelengths():
     assert_allclose(wl, wl_og)
 
 
-def test_get_wavelengths_soss():
+@pytest.mark.parametrize("arr_init", [np.array([]), np.array(1), np.ones((10))])
+def test_get_wavelengths_bad_shape(arr_init):
+    model = create_model()
 
+    model.data = arr_init
+    with pytest.raises(ValueError, match=".*cannot compute wavelengths"):
+        get_wavelengths(model)
+
+
+def test_get_wavelengths_soss():
     # create a mock SlitModel
     model = create_model()
 
     del model.wavelength
     model.meta.exposure.type = "NIS_SOSS"
 
-    wcs = model.meta.wcs
-    new_wcs = NirissSOSSModel(
+    # mock a SOSS wcs
+    soss_transform = NirissSOSSModel([1], [model.meta.wcs])
+    detector = cf.Frame2D(name="detector")
+    world = cf.CompositeFrame(
         [
-            1,
+            cf.CelestialFrame(name="icrs", axes_order=(0, 1), reference_frame=coord.ICRS()),
+            cf.SpectralFrame(
+                name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+            ),
         ],
-        [
-            wcs,
-        ],
+        name="world",
     )
+    new_wcs = wcs.WCS([(detector, soss_transform), (world, None)])
     model.meta.wcs = new_wcs
 
     # calculate what the wavelength array should be
@@ -110,7 +120,6 @@ def test_get_wavelengths_soss():
 
 
 def test_get_wavelength_wavecorr():
-
     # create a mock SlitModel
     model = create_model()
 

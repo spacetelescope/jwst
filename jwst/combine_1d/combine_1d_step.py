@@ -1,36 +1,21 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from . import combine1d
-
+from jwst.combine_1d import combine1d
+from jwst.datamodels.utils.wfss_multispec import (
+    make_wfss_multicombined,
+    wfss_multiexposure_to_multispec,
+)
+from jwst.stpipe import Step, record_step_status
 
 __all__ = ["Combine1dStep"]
 
+log = logging.getLogger(__name__)
+
 
 class Combine1dStep(Step):
-    """
-    Combine 1D spectra.
-
-    Attributes
-    ----------
-    exptime_key : str
-        A case-insensitive string that identifies the metadata element
-        (or FITS keyword) for the weight to apply to the input data.  The default
-        is "exposure_time".  If the string is "effinttm" or starts with
-        "integration", the integration time (FITS keyword EFFINTTM) is used
-        as the weight.  If the string is "effexptm" or starts with "exposure",
-        the exposure time (FITS keyword EFFEXPTM) is used as the weight.  If
-        the string is "unit_weight" or "unit weight", the same weight (1) will
-        be used for all input spectra.  If the string is anything else, a warning
-        will be logged and unit weight will be used.
-
-    sigma_clip : float or None
-        Optional factor for sigma clipping outliers when combining spectra. If
-        a floating point value is provided for ``sigma_clip``, this value will be
-        used to set an outlier threshold for any pixels in the input spectra that
-        deviate from the median and median absolute deviation of the inputs.
-        Defaults to None (such that no clipping is performed).
-    """
+    """Combine 1D spectra."""
 
     class_alias = "combine_1d"
 
@@ -45,20 +30,61 @@ class Combine1dStep(Step):
 
         Parameters
         ----------
-        input_data : str or ModelContainer or MultiSpecModel
+        input_data : str, `~jwst.datamodels.container.ModelContainer`, \
+                     `~stdatamodels.jwst.datamodels.MultiSpecModel`, \
+                     `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`, \
+                     `~stdatamodels.jwst.datamodels.MRSMultiSpecModel`, or \
+                     `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
             Input is expected to be an association file name, ModelContainer,
-            or MultiSpecModel containing multiple spectra to be combined.
+            or multi-spectrum model containing multiple spectra to be combined.
             Individual members of the association or container are expected
-            to be MultiSpecModel instances.
+            to be multi-spectrum model instances.
 
         Returns
         -------
-        output_spectrum : MultiCombinedSpecModel
+        output_spectrum : `~stdatamodels.jwst.datamodels.MultiCombinedSpecModel`
             A single combined 1D spectrum.
         """
-        with datamodels.open(input_data) as input_model:
+        output_model = self.prepare_output(input_data)
+
+        if isinstance(output_model, datamodels.WFSSMultiSpecModel):
+            input_list = wfss_multiexposure_to_multispec(output_model)
+            if len(input_list) == 1:
+                # Single input: will be combined below
+                output_model = input_list[0]
+            else:
+                # Multiple inputs: combine in a loop, then reconstitute the final model
+                results_list = []
+                for model in input_list:
+                    result = combine1d.combine_1d_spectra(
+                        model, self.exptime_key, sigma_clip=self.sigma_clip
+                    )
+                    if not result.meta.cal_step.combine_1d == "SKIPPED":
+                        results_list.append(result)
+                if not results_list:
+                    log.error("No valid input spectra found in WFSSMultiSpecModel. Skipping.")
+                    output_model.meta.cal_step.combine_1d = "SKIPPED"
+                    return output_model
+                result = make_wfss_multicombined(results_list)
+                result.meta.cal_step.combine_1d = "COMPLETE"
+
+                # Close any input models opened here before returning
+                if output_model is not input_data:
+                    output_model.close()
+
+                return result
+
+        try:
             result = combine1d.combine_1d_spectra(
-                input_model, self.exptime_key, sigma_clip=self.sigma_clip
+                output_model, self.exptime_key, sigma_clip=self.sigma_clip
             )
+        except TypeError:
+            log.error("Invalid input model for combine_1d; skipping.")
+            record_step_status(output_model, "combine_1d", status="SKIPPED")
+            return output_model
+
+        # The result is a new model: close any input models opened here
+        if output_model is not input_data:
+            output_model.close()
 
         return result

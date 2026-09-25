@@ -1,18 +1,19 @@
-import os
+"""Correct effects due to overlapping spectral traces."""
+
+import logging
+from pathlib import Path
 
 from jwst.datamodels import ModelContainer
-
-from ..stpipe import Step
-from . import wfs_combine
+from jwst.stpipe import Step
+from jwst.wfs_combine import wfs_combine
 
 __all__ = ["WfsCombineStep"]
 
+log = logging.getLogger(__name__)
+
 
 class WfsCombineStep(Step):
-
-    """
-    This step combines pairs of dithered PSF images
-    """
+    """Combine pairs of dithered PSF images."""
 
     class_alias = "calwebb_wfs-image3"
 
@@ -23,57 +24,82 @@ class WfsCombineStep(Step):
         blur_size = integer(default=10)
         n_size = integer(default=2)
         suffix = string(default="wfscmb")
-    """ # noqa: E501
+    """  # noqa: E501
 
-    def make_output_path(self, basepath, *args, **kwargs):
-        # bypass all stpipe filename formatting
+    def make_output_path(self, basepath, *args, **kwargs):  # noqa:  ARG002
+        """
+        Filename formatting bypass in stpipe.
+
+        Returns
+        -------
+        basepath : str
+            Basename of the file
+        """
         return basepath
 
     def process(self, input_table):
+        """
+        Combine image pairs.
 
-        self.suffix = 'wfscmb'
+        Returns
+        -------
+        output_container : `~jwst.datamodels.container.ModelContainer`
+            Model container with all combined data
+        """
+        self.suffix = "wfscmb"
         self.output_use_model = True
 
         # Load the input ASN table
         asn_table = self.load_as_level3_asn(input_table)
 
-        self.log.info('Using input table: %s', input_table)
-        self.log.info('The number of pairs of input files: %g', len(asn_table['products']))
+        log.info("Using input table: %s", input_table)
+        log.info("The number of pairs of input files: %g", len(asn_table["products"]))
 
         output_container = ModelContainer()
 
         # Process each pair of input images listed in the association table
-        for which_set in asn_table['products']:
-
+        for which_set in asn_table["products"]:
             # Get the list of science members in this pair
             science_members = [
-                member
-                for member in which_set['members']
-                if member['exptype'].lower() == 'science'
+                member for member in which_set["members"] if member["exptype"].lower() == "science"
             ]
-            infile_1 = science_members[0]['expname']
-            infile_2 = science_members[1]['expname']
-            outfile = which_set['name']
+            model_1 = self.prepare_output(science_members[0]["expname"])
+            model_2 = self.prepare_output(science_members[1]["expname"])
 
             # Create the step instance
             wfs = wfs_combine.DataSet(
-                infile_1, infile_2, outfile, self.do_refine, self.flip_dithers, self.psf_size,
-                self.blur_size, self.n_size
+                model_1,
+                model_2,
+                self.do_refine,
+                self.flip_dithers,
+                self.psf_size,
+                self.blur_size,
+                self.n_size,
             )
 
             # Do the processing
             output_model = wfs.do_all()
 
-            # The DataSet class does not close its resources.  Do that here.
-            wfs.input_1.close()
-            wfs.input_2.close()
+            # Clean up the DataSet class and close the input models
+            del wfs
+            model_1.close()
+            model_2.close()
+
+            if isinstance(input_table, str):
+                table_name = Path(input_table).name
+            elif hasattr(input_table, "filename"):
+                table_name = input_table.filename
+            else:
+                table_name = ""
 
             # Update necessary meta info in the output
-            output_model.meta.cal_step.wfs_combine = 'COMPLETE'
-            output_model.meta.asn.pool_name = asn_table['asn_pool']
-            output_model.meta.asn.table_name = os.path.basename(input_table)
+            output_model.meta.cal_step.wfs_combine = "COMPLETE"
+            output_model.meta.asn.pool_name = asn_table["asn_pool"]
+            output_model.meta.asn.table_name = table_name
             # format the filename here
-            output_model.meta.filename = which_set['name'].format(suffix=self.suffix) + self.output_ext
+            output_model.meta.filename = (
+                which_set["name"].format(suffix=self.suffix) + self.output_ext
+            )
 
             output_container.append(output_model)
 

@@ -1,10 +1,10 @@
 .. _mrsxartcorr_reffile:
 
-MRSXARTCORR reference file
+MRSXARTCORR Reference File
 --------------------------
 
 :REFTYPE: MRSXARTCORR
-:Data models: `~jwst.datamodels.MirMrsXArtCorrModel`
+:Data models: `~stdatamodels.jwst.datamodels.MirMrsXArtCorrModel`
 
 The MRSXARTCORR reference file contains parameter values used to model and subtract
 the cross-artifact in the straylight step.
@@ -20,21 +20,21 @@ the following keywords are *required* in MRSXARTCORR reference files,
 because they are used as CRDS selectors
 (see :ref:`mrsxartcorr_selectors`):
 
-=========  ==============================
+=========  ========================
 Keyword    Data Model Name
-=========  ==============================
+=========  ========================
 EXP_TYPE   model.meta.exposure.type
-=========  ==============================
+=========  ========================
 
 MIRI Reference File Format
 ++++++++++++++++++++++++++
-The MIRI MRSXARTCORR reference files are FITS format, with  12  BINTABLE extensions.
+The MIRI MRSXARTCORR reference files are FITS format, with 12 BINTABLE extensions.
 The FITS primary data array is assumed to be empty.
 The format and content of the MIRI MRSXARTCORR reference file
 
-===================  ========  ===========  
-EXTNAME              XTENSION  Dimensions   
-===================  ========  ===========  
+===================  ========  ===========
+EXTNAME              XTENSION  Dimensions
+===================  ========  ===========
 1A                   BINTABLE  TFIELDS = 7
 1B                   BINTABLE  TFIELDS = 7
 1C                   BINTABLE  TFIELDS = 7
@@ -47,7 +47,7 @@ EXTNAME              XTENSION  Dimensions
 4A                   BINTABLE  TFIELDS = 7
 4B                   BINTABLE  TFIELDS = 7
 4C                   BINTABLE  TFIELDS = 7
-===================  ========  ===========  
+===================  ========  ===========
 
 The formats of the individual table extensions are listed below.
 

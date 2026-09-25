@@ -1,21 +1,24 @@
+import copy
+import logging
+import os.path as op
+import re
 from collections import OrderedDict
 from collections.abc import Sequence
-import copy
-import os.path as op
 from pathlib import Path
-import re
-import logging
+
 from astropy.io import fits
-
-from stdatamodels.jwst.datamodels.model_base import JwstDataModel
-from stdatamodels.jwst.datamodels.util import open as datamodel_open
+from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst.datamodels.util import is_association
+from stdatamodels.jwst.datamodels.util import open as datamodel_open
 
-__doctest_skip__ = ["ModelContainer"]
+from jwst.associations import Association
+from jwst.datamodels.utils import attrs_to_group_id
 
 __all__ = ["ModelContainer"]
 
 RECOGNIZED_MEMBER_FIELDS = ["tweakreg_catalog", "group_id"]
+"""Special metadata handling by `~jwst.datamodels.container.ModelContainer`."""
+
 EMPTY_ASN_TABLE = {
     "asn_id": None,
     "asn_pool": None,
@@ -24,112 +27,122 @@ EMPTY_ASN_TABLE = {
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 class ModelContainer(Sequence):
     """
-    A list-like container for holding DataModels.
+    A list-like container for holding `~stdatamodels.jwst.datamodels.JwstDataModel`.
 
-    This functions like a list for holding DataModel objects.  It can be
-    iterated through like a list, DataModels within the container can be
+    This functions like a list for holding `~stdatamodels.jwst.datamodels.JwstDataModel` objects.
+    It can be iterated through like a list,
+    `~stdatamodels.jwst.datamodels.JwstDataModel` within the container can be
     addressed by index, and the datamodels can be grouped into a list of
     lists for grouped looping, useful for NIRCam where grouping together
     all detectors of a given exposure is useful for some pipeline steps.
 
+    Parameters
+    ----------
+    init : file path, list of `~stdatamodels.jwst.datamodels.JwstDataModel`, or None
+        If a file path, initialize from an association table.
+        If a list, can be a list of `~stdatamodels.jwst.datamodels.JwstDataModel` of any type
+        If None, initializes an empty `~jwst.datamodels.container.ModelContainer`
+        instance, to which `~stdatamodels.jwst.datamodels.JwstDataModel`
+        can be added via the :meth:`append` method.
+
+    asn_exptypes : str or None
+        List of exposure types from the asn file to read
+        into the `~jwst.datamodels.container.ModelContainer`.
+        If None, read all the given files.
+
+    asn_n_members : int
+        Open only the first N qualifying members.
+
+    **kwargs : dict
+        Additional keyword arguments passed to ``datamodel.open()``, such as
+        ``memmap``, ``guess``, ``strict_validation``, etc.
+        See :func:`~stdatamodels.jwst.datamodels.open`
+        for a full list of available keyword arguments.
+
     Notes
     -----
-        When ASN table's members contain attributes listed in
-        :py:data:`RECOGNIZED_MEMBER_FIELDS`, :py:class:`ModelContainer` will
-        read those attribute values and update the corresponding attributes
-        in the ``meta`` of input models.
+    When ASN table's members contain attributes listed in
+    :py:data:`RECOGNIZED_MEMBER_FIELDS`, `~jwst.datamodels.container.ModelContainer` will
+    read those attribute values and update the corresponding attributes
+    in the ``meta`` of input models.
 
-        .. code-block::
-            :caption: Example of ASN table with additional model attributes \
+    .. code-block::
+        :caption: Example of ASN table with additional model attributes \
 to supply custom catalogs.
 
-            "products": [
-                {
-                    "name": "resampled_image",
-                    "members": [
-                        {
-                            "expname": "input_image1_cal.fits",
-                            "exptype": "science",
-                            "tweakreg_catalog": "custom_catalog1.ecsv",
-                            "group_id": "custom_group_id_number_1",
-                        },
-                        {
-                            "expname": "input_image2_cal.fits",
-                            "exptype": "science",
-                            "tweakreg_catalog": "custom_catalog2.ecsv",
-                            "group_id": 2
-                        },
-                        {
-                            "expname": "input_image3_cal.fits",
-                            "exptype": "science",
-                            "tweakreg_catalog": "custom_catalog3.ecsv",
-                            "group_id": Null
-                        },
-                    ]
-                }
-            ]
+        "products": [
+            {
+                "name": "resampled_image",
+                "members": [
+                    {
+                        "expname": "input_image1_cal.fits",
+                        "exptype": "science",
+                        "tweakreg_catalog": "custom_catalog1.ecsv",
+                        "group_id": "custom_group_id_number_1"
+                    },
+                    {
+                        "expname": "input_image2_cal.fits",
+                        "exptype": "science",
+                        "tweakreg_catalog": "custom_catalog2.ecsv",
+                        "group_id": 2
+                    },
+                    {
+                        "expname": "input_image3_cal.fits",
+                        "exptype": "science",
+                        "tweakreg_catalog": "custom_catalog3.ecsv",
+                        "group_id": Null
+                    }
+                ]
+            }
+        ]
 
-        .. warning::
-            Input files will be updated in-place with new ``meta`` attribute
-            values when ASN table's members contain additional attributes.
+    .. warning::
+        Input files will be updated in-place with new ``meta`` attribute
+        values when the ASN table's members contain additional attributes.
 
-        .. warning::
-            Custom ``group_id`` affects how models are grouped **both** for
-            ``tweakreg`` and ``skymatch`` steps. If one wants to group models
-            in one way for the ``tweakreg`` step and in a different way for the
-            ``skymatch`` step, one will need to run each step separately with
-            their own ASN tables.
+    .. warning::
+        Custom ``group_id`` affects how models are grouped **both** for
+        ``tweakreg`` and ``skymatch`` steps. If one wants to group models
+        in one way for the ``tweakreg`` step and in a different way for the
+        ``skymatch`` step, one will need to run each step separately with
+        their own ASN tables.
 
-        .. note::
-            ``group_id`` can be an integer, a string, or Null. When ``group_id``
-            is `Null`, it is converted to `None` in Python and it will be
-            assigned a group ID based on various exposure attributes - see
-            ``models_grouped`` property for more details.
+    .. note::
+        ``group_id`` can be an integer, a string, or Null. When ``group_id``
+        is ``Null``, it is converted to `None` in Python and a group ID will be assigned
+        based on various exposure attributes - see the
+        :attr:`~jwst.datamodels.container.ModelContainer.models_grouped`
+        property for more details.
 
     Examples
     --------
-    >>> container = ModelContainer('example_asn.json')
-    >>> for model in container:
-    ...     print(model.meta.filename)
 
-    Say the association was a NIRCam dithered dataset. The `models_grouped`
+    .. code-block:: python
+
+        container = ModelContainer('example_asn.json')
+        for model in container:
+            print(model.meta.filename)
+
+    Say the association was a NIRCam dithered dataset.
+    The :attr:`~jwst.datamodels.container.ModelContainer.models_grouped`
     attribute is a list of lists, the first index giving the list of exposure
     groups, with the second giving the individual datamodels representing
-    each detector in the exposure (2 or 8 in the case of NIRCam).
+    each detector in the exposure (2 or 8 in the case of NIRCam)::
 
-    >>> total_exposure_time = 0.0
-    >>> for group in container.models_grouped:
-    ...     total_exposure_time += group[0].meta.exposure.exposure_time
+        total_exposure_time = 0.0
+        for group in container.models_grouped:
+            total_exposure_time += group[0].meta.exposure.exposure_time
 
-    >>> c = ModelContainer()
-    >>> m = datamodels.open('myfile.fits')
-    >>> c.append(m)
+        c = ModelContainer()
+        m = datamodels.open('myfile.fits')
+        c.append(m)
     """
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
-        """
-        Initialize the container.
-
-        Parameters
-        ----------
-        init : file path, list of DataModels, or None
-            If a file path, initialize from an association table.
-            If a list, can be a list of DataModels of any type
-            If None, initializes an empty `ModelContainer` instance, to which
-            DataModels can be added via the ``append()`` method.
-
-        asn_exptypes : str
-            List of exposure types from the asn file to read
-            into the ModelContainer, if None read all the given files.
-
-        asn_n_members : int
-            Open only the first N qualifying members.
-        """
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):  # noqa: ARG002
         self._models = []
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
@@ -138,15 +151,13 @@ to supply custom catalogs.
         self.asn_pool_name = None
         self.asn_file_path = None
 
-        self._memmap = kwargs.get("memmap", False)
-
         if init is None:
             # Don't populate the container with models
             pass
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
                 for m in init:
-                    self._models.append(datamodel_open(m, memmap=self._memmap))
+                    self._models.append(datamodel_open(m, **kwargs))
                 # set asn_table_name and product name to first datamodel stem
                 # since they were not provided
                 fname = self._models[0].meta.filename
@@ -163,7 +174,7 @@ to supply custom catalogs.
                 )
         elif isinstance(init, self.__class__):
             for m in init:
-                self._models.append(datamodel_open(m, memmap=self._memmap))
+                self._models.append(datamodel_open(m, **kwargs))
             self.asn_exptypes = init.asn_exptypes
             self.asn_n_members = init.asn_n_members
             self.asn_table = init.asn_table
@@ -172,7 +183,9 @@ to supply custom catalogs.
             self.asn_file_path = init.asn_file_path
         elif is_association(init):
             self.from_asn(init)
-        elif isinstance(init, str):
+        elif isinstance(init, Association):
+            self.from_asn(init.data)
+        elif isinstance(init, (str, Path)):
             init_from_asn = self.read_asn(init)
             self.asn_file_path = init
             self.from_asn(init_from_asn)
@@ -223,12 +236,20 @@ to supply custom catalogs.
 
         Returns
         -------
-        ModelContainer
+        `~jwst.datamodels.container.ModelContainer`
             A deep copy of the container and all the models in it.
         """
         result = self.__class__(init=None)
         for m in self._models:
             result.append(m.copy(memo=memo))
+
+        result.asn_exptypes = copy.deepcopy(self.asn_exptypes, memo=memo)
+        result.asn_table = copy.deepcopy(self.asn_table, memo=memo)
+        result.asn_n_members = self.asn_n_members
+        result.asn_table_name = self.asn_table_name
+        result.asn_pool_name = self.asn_pool_name
+        result.asn_file_path = self.asn_file_path
+
         return result
 
     @staticmethod
@@ -247,7 +268,7 @@ to supply custom catalogs.
             An association dictionary
         """
         # Prevent circular import:
-        from ..associations import AssociationNotValidError, load_asn
+        from jwst.associations import AssociationNotValidError, load_asn
 
         filepath = Path(op.expandvars(filepath)).expanduser().resolve()
         try:
@@ -259,11 +280,11 @@ to supply custom catalogs.
 
     def from_asn(self, asn_data):
         """
-        Load fits files from a JWST association file.
+        Load FITS files from a JWST association file.
 
         Parameters
         ----------
-        asn_data : ~jwst.associations.Association
+        asn_data : `~jwst.associations.association.Association`
             An association dictionary
         """
         # match the asn_exptypes to the exptype in the association and retain
@@ -292,13 +313,13 @@ to supply custom catalogs.
         try:
             for member in sublist:
                 filepath = asn_dir / member["expname"]
-                m = datamodel_open(filepath, memmap=self._memmap)
+                m = datamodel_open(filepath)
                 m.meta.asn.exptype = member["exptype"]
                 for attr, val in member.items():
                     if attr in RECOGNIZED_MEMBER_FIELDS:
                         if attr == "tweakreg_catalog":
                             if val.strip():
-                                val = asn_dir / val
+                                val = str(asn_dir / val)
                             else:
                                 val = None
 
@@ -329,17 +350,19 @@ to supply custom catalogs.
         Parameters
         ----------
         path : str or None
-            - If None, the `meta.filename` is used for each model.
+            Control how output files are written:
+
+            - If None, the ``meta.filename`` is used for each model.
             - If a string, the string is used as a root and an index is
               appended, along with the '.fits' extension.
 
         save_model_func : func or None
             Alternate function to save each model instead of
-            the models `save` method. Takes one argument, the model,
-            and keyword argument `idx` for an index.
+            the models ``save`` method. Takes one argument, the model,
+            and keyword argument ``idx`` for an index.
 
         **kwargs : dict
-            Additional parameters to be passed to the `save` method of each
+            Additional parameters to be passed to the ``save`` method of each
             model.
 
         Returns
@@ -375,13 +398,13 @@ to supply custom catalogs.
         ``skymatch`` steps. The following metadata is used when
         determining grouping:
 
-        meta.observation.program_number
-        meta.observation.observation_number
-        meta.observation.visit_number
-        meta.observation.visit_group
-        meta.observation.sequence_id
-        meta.observation.activity_id
-        meta.observation.exposure_number
+        * meta.observation.program_number
+        * meta.observation.observation_number
+        * meta.observation.visit_number
+        * meta.observation.visit_group
+        * meta.observation.sequence_id
+        * meta.observation.activity_id
+        * meta.observation.exposure_number
 
         If a model already has ``model.meta.group_id`` set, that value will be
         used for grouping.
@@ -391,39 +414,19 @@ to supply custom catalogs.
         list
             A list of lists of datamodels grouped by exposure.
         """
-        unique_exposure_parameters = [
-            "program_number",
-            "observation_number",
-            "visit_number",
-            "visit_group",
-            "sequence_id",
-            "activity_id",
-            "exposure_number",
-        ]
-
         group_dict = OrderedDict()
         for i, model in enumerate(self._models):
-            params = []
-
             if hasattr(model.meta, "group_id") and model.meta.group_id not in [None, ""]:
                 group_id = model.meta.group_id
 
             else:
-                for param in unique_exposure_parameters:
-                    params.append(getattr(model.meta.observation, param))
                 try:
-                    group_id = "jw" + "_".join(
-                        [
-                            "".join(params[:3]),
-                            "".join(params[3:6]),
-                            params[6],
-                        ]
-                    )
-                    model.meta.group_id = group_id
-                except TypeError:
-                    model.meta.group_id = f"exposure{i + 1:04d}"
+                    group_id = attrs_to_group_id(model.meta.observation)
+                except KeyError:
+                    # If the required keys are not present, assign a default group ID
+                    group_id = f"exposure{i + 1:04d}"
 
-                group_id = model.meta.group_id
+                model.meta.group_id = group_id
 
             if group_id in group_dict:
                 group_dict[group_id].append(model)
@@ -471,8 +474,9 @@ to supply custom catalogs.
 
         Notes
         -----
-        stpipe requires ModelContainer to have a crds_observatory attribute in order
-        to pass through step.run(), but it is never accessed.
+        stpipe requires `~jwst.datamodels.container.ModelContainer` to
+        have a ``crds_observatory`` attribute in order
+        to pass through ``step.run()``, but it is never accessed.
         """
         msg = (
             "stpipe uses the get_crds_parameters method from the 0th model in the "
@@ -487,15 +491,17 @@ to supply custom catalogs.
         Parameters
         ----------
         asn_exptype : str
-            Exposure type as defined in an association, e.g. "science".
+            Exposure type as defined in an association, e.g., "science".
 
         Returns
         -------
         ind : list
-            Indices of models in ModelContainer._models matching ``asn_exptype``.
+            Indices of models in the container matching ``asn_exptype``.
         """
         ind = []
         for i, model in enumerate(self._models):
+            if getattr(model.meta.asn, "exptype", None) is None:
+                model.meta.asn.exptype = "science"
             if model.meta.asn.exptype.lower() == asn_exptype:
                 ind.append(i)
         return ind

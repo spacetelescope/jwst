@@ -1,20 +1,18 @@
 """Perform outlier detection on spectra."""
 
-from jwst.datamodels import ModelContainer, ModelLibrary
-from jwst.stpipe.utilities import record_step_status
+import logging
 
-from ..resample import resample_spec
-from .utils import (
+from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.outlier_detection.utils import (
     flag_crs_in_models,
     flag_crs_in_models_with_resampling,
     median_with_resampling,
     median_without_resampling,
 )
-
-import logging
+from jwst.resample import resample_spec
+from jwst.stpipe.utilities import record_step_status
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["detect_outliers"]
@@ -42,10 +40,10 @@ def detect_outliers(
 
     Parameters
     ----------
-    input_models : ModelContainer
+    input_models : `~jwst.datamodels.container.ModelContainer`
         A container of data models.
     save_intermediate_results : bool
-        If True, save intermediate results.
+        If `True`, save intermediate results.
     good_bits : int
         Bit values indicating good pixels.
     maskpt : float
@@ -60,10 +58,10 @@ def detect_outliers(
         Scale factor used to scale the absolute dervative of the blot model for the second pass.
     backg : float
         Scalar background level to add to the blotted image.
-        Ignored if `input_model.meta.background.level` is not None but
-        `input_model.meta.background.subtracted` is False.
+        Ignored if ``input_model.meta.background.level`` is not None but
+        ``input_model.meta.background.subtracted`` is `False`.
     resample_data : bool
-        If True, resample the data before detecting outliers.
+        If `True`, resample the data before detecting outliers.
     weight_type : str
         The type of weighting kernel to use when resampling.
         Options are 'ivm' or 'exptime'.
@@ -72,14 +70,14 @@ def detect_outliers(
     kernel : str
         The flux distribution kernel function to use when resampling.
     fillval : str
-        The value to use in the output for pixels with no weight or flux
+        The value to use in the output for pixels with no weight or flux.
     make_output_path : function
-        The functools.partial instance to pass to save_blot. Must be
-        specified if save_blot is True.
+        The :py:func:`functools.partial` instance to pass to ``save_blot``. Must be
+        specified if ``save_blot`` is `True`.
 
     Returns
     -------
-    ModelContainer
+    `~jwst.datamodels.container.ModelContainer`
         The input models with outliers flagged.
     """
     if not isinstance(input_models, ModelContainer):

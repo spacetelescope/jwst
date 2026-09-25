@@ -1,51 +1,156 @@
-"""Build fixtures for testing pipelines."""
+import numpy as np
+from stdatamodels.jwst import datamodels
 
-import json
-from pathlib import Path
-import pytest
-import tempfile
+from jwst.assign_wcs import AssignWcsStep
 
-# Import from the common helpers module
-# simply to make available from this module.
-from ...tests.helpers import abspath  # noqa: F401
-
-from ...associations import load_asn
-
-SCRIPT_PATH = Path(__file__).parent
-SCRIPT_DATA_PATH = SCRIPT_PATH / "data"
+__all__ = ["make_miri_ramp_model", "make_nircam_rate_model", "make_nirspec_ifu_rate_model"]
 
 
-@pytest.fixture
-def update_asn_basedir(asn_file, root=None):
+def make_miri_ramp_model(nints=1, ngroups=5, ysize=1024, xsize=1032):
     """
-    Create an association with filenames update for a different directory.
+    Make a MIRI image ramp model with minimal metadata.
 
     Parameters
     ----------
-    asn_file : str
-        The original association file
-    root : str
-        The root directory where the data actually resides
+    nints : int, optional
+        Number of integrations.
+    ngroups : int, optional
+        Number of groups.
+    ysize : int, optional
+        Y size.
+    xsize : int, optional
+        X size.
 
     Returns
     -------
-    updated_asn_path : str
-        The updated association file path
+    ramp : `stdatamodels.jwst.datamodels.RampModel`
+        A ramp model with only the data array and minimal metadata set.
     """
-    if root is None:
-        root = Path.cwd()
+    csize = (nints, ngroups, ysize, xsize)
+    data = np.full(csize, 1.0)
 
-    with Path(asn_file).open() as fd:
-        asn = load_asn(fd)
+    ramp = datamodels.RampModel(data=data)
+    ramp.meta.filename = "test_miri.fits"
+    ramp.meta.instrument.name = "MIRI"
+    ramp.meta.instrument.detector = "MIRIMAGE"
+    ramp.meta.exposure.frame_time = 1.0
+    ramp.meta.exposure.groupgap = 0
+    ramp.meta.exposure.start_time = 60728.97621633101
+    ramp.meta.exposure.group_time = 1.0
+    ramp.meta.exposure.integration_time = ngroups * ramp.meta.exposure.group_time
+    ramp.meta.exposure.nframes = 1
+    ramp.meta.exposure.nints = nints
+    ramp.meta.exposure.ngroups = ngroups
+    ramp.meta.exposure.readpatt = "FASTR1"
+    ramp.meta.observation.date = "2024-01-01"
+    ramp.meta.observation.time = "00:00:00"
+    ramp.meta.subarray.name = "FULL"
+    ramp.meta.subarray.xstart = 1
+    ramp.meta.subarray.xsize = xsize
+    ramp.meta.subarray.ystart = 1
+    ramp.meta.subarray.ysize = ysize
 
-    for product in asn["products"]:
-        for member in product["members"]:
-            expname = member["expname"]
-            expname = Path(expname).name
-            member["expname"] = root / expname
+    return ramp
 
-    _, updated_asn_path = tempfile.mkstemp(suffix=".json")
-    with Path(updated_asn_path).open("w") as fd:
-        json.dump(asn, fd)
 
-    return updated_asn_path
+def make_nircam_rate_model():
+    """
+    Make a NIRCam image rate model with minimal metadata.
+
+    Returns
+    -------
+    rate : `stdatamodels.jwst.datamodels.ImageModel`
+        The rate model.
+    """
+    shp = (2048, 2048)
+    image = datamodels.ImageModel(shp)
+    image.data[:, :] = 1
+    image.dq = image.get_default("dq")
+    image.var_rnoise = np.full(shp, 0.01)
+    image.var_poisson = np.full(shp, 0.01)
+    image.meta.instrument.name = "NIRCAM"
+    image.meta.instrument.filter = "F200W"
+    image.meta.instrument.pupil = "CLEAR"
+    image.meta.exposure.type = "NRC_IMAGE"
+    image.meta.exposure.exposure_time = 1.0
+    image.meta.observation.date = "2019-02-27"
+    image.meta.observation.time = "13:37:18.548"
+    image.meta.date = "2019-02-27T13:37:18.548"
+    image.meta.subarray.xstart = 1
+    image.meta.subarray.ystart = 1
+
+    image.meta.subarray.xsize = image.data.shape[-1]
+    image.meta.subarray.ysize = image.data.shape[-2]
+
+    image.meta.instrument.channel = "SHORT"
+    image.meta.instrument.module = "A"
+    image.meta.instrument.detector = "NRCA1"
+
+    # bare minimum wcs info to get assign_wcs and resample to pass
+    image.meta.wcsinfo.crpix1 = 693.5
+    image.meta.wcsinfo.crpix2 = 512.5
+    image.meta.wcsinfo.v2_ref = -453.37849
+    image.meta.wcsinfo.v3_ref = -373.810549
+    image.meta.wcsinfo.roll_ref = 272.3237653262276
+    image.meta.wcsinfo.ra_ref = 80.54724018120017
+    image.meta.wcsinfo.dec_ref = -69.5081101864959
+    image.meta.wcsinfo.v3yangle = 0.0
+    image.meta.wcsinfo.vparity = 1
+
+    return image
+
+
+def make_nirspec_ifu_rate_model():
+    """
+    Make a NIRSpec IFU rate model with minimal metadata.
+
+    Returns
+    -------
+    rate : `stdatamodels.jwst.datamodels.IFUImageModel`
+        The rate model.
+    """
+    image = datamodels.IFUImageModel((2048, 2048))
+    image.data[:, :] = 1
+    image.var_rnoise = np.ones((2048, 2048), dtype=np.float32)
+
+    image.meta.instrument.name = "NIRSPEC"
+    image.meta.instrument.detector = "NRS1"
+    image.meta.instrument.filter = "CLEAR"
+    image.meta.instrument.grating = "PRISM"
+    image.meta.exposure.type = "NRS_IFU"
+    image.meta.observation.date = "2026-02-27"
+    image.meta.observation.time = "13:37:18.548"
+    image.meta.date = "2019-02-27T13:37:18.548"
+    image.meta.subarray.xstart = 1
+    image.meta.subarray.ystart = 1
+    image.meta.subarray.xsize = image.data.shape[-1]
+    image.meta.subarray.ysize = image.data.shape[-2]
+    image.meta.instrument.gwa_tilt = 37.0610
+
+    # bare minimum wcs info to get assign_wcs step to pass
+    image.meta.wcsinfo.crpix1 = 693.5
+    image.meta.wcsinfo.crpix2 = 512.5
+    image.meta.wcsinfo.v2_ref = -453.37849
+    image.meta.wcsinfo.v3_ref = -373.810549
+    image.meta.wcsinfo.roll_ref = 272.3237653262276
+    image.meta.wcsinfo.ra_ref = 80.54724018120017
+    image.meta.wcsinfo.dec_ref = -69.5081101864959
+
+    return image
+
+
+def make_nircam_image_cal_model():
+    """
+    Make a NIRCam image model with a WCS assigned.
+
+    Suitable to mock a cal file, for input to the image3 pipeline.
+
+    Returns
+    -------
+    cal : `stdatamodels.jwst.datamodels.ImageModel`
+        The calibrated model.
+    """
+    image = make_nircam_rate_model()
+    image = AssignWcsStep.call(image)
+
+    return image

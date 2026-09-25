@@ -1,17 +1,17 @@
 __all__ = [
-    'AssociationError',
-    'AssociationNotAConstraint',
-    'AssociationNotValidError',
+    "AssociationError",
+    "AssociationNotAConstraintError",
+    "AssociationNotValidError",
 ]
 
 
 class AssociationError(Exception):
-    """Basic errors related to Associations"""
+    """Basic errors related to Associations."""
 
 
-class AssociationNotAConstraint(AssociationError):
-    """No matching constraint found"""
+class AssociationNotAConstraintError(AssociationError):
+    """No matching constraint found."""
 
 
 class AssociationNotValidError(AssociationError):
-    """Given data structure is not a valid association"""
+    """Given data structure is not a valid association."""

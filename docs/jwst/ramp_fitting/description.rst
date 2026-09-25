@@ -1,12 +1,14 @@
+.. _ramp_fit_description:
+
 Description
 ===========
 
-:Class: `jwst.ramp_fitting.RampFitStep`
+:Class: `jwst.ramp_fitting.ramp_fit_step.RampFitStep`
 :Alias: ramp_fit
 
 This step determines the mean count rate, in units of counts per second, for
 each pixel by performing a linear fit to the "up the ramp" data in the input file.
-All fitting is done using the "ordinary least squares" (OLS) method.
+All fitting is done using the "ordinary least squares" (OLS_C) method.
 The fit is performed independently for each pixel. Bad values flagged via
 DQ flags are rejected from the fits.
 
@@ -14,21 +16,21 @@ The input to the step is assumed to be the fully-corrected and flagged 4-D
 data resulting from applying all previous steps of the
 :ref:`calwebb_detector1 <calwebb_detector1>` pipeline and will nominally be
 the output from the :ref:`jump detection <jump_step>` step. It is in fact
-vital that all anomalies such as saturation, non-linearity, and CR jumps
+vital that all anomalies such as saturation, non-linearity, and cosmic-ray (CR) jumps
 be corrected or appropriately flagged in order to obtain useful results
 from ramp fitting.
 
 The count rate for each pixel is determined by a linear fit to the
 cosmic-ray-free and saturation-free ramp intervals for each pixel, with any
 intervening groups flagged as "DO_NOT_USE" excluded from the fits. Hereafter
-such intervals will be referred to as a ramp "segment." The fitting algorithm uses an 
+such intervals will be referred to as a ramp "segment." The fitting algorithm uses an
 'optimal' weighting scheme, as described by
 `Fixsen et al 2000 <https://ui.adsabs.harvard.edu/abs/2000PASP..112.1350F/abstract>`_.
 
 Segments are determined using the 4-D GROUPDQ array of the input data set,
 under the assumption that the :ref:`saturation detection <saturation_step>`
 and :ref:`jump detection <jump_step>` steps have already been applied, in order
-to flag occurrences of both saturation and cosmic-ray (CR) hits.
+to flag occurrences of both saturation and CR hits.
 A ramp segment is a set of contiguous groups that have no non-zero DQ values
 assigned. The one exception to this rule is the occurrence of a "JUMP_DET"
 (jump detected) flag: a group with this flag will be used as the first group of
@@ -61,15 +63,20 @@ to "COMPLETE".
 There is a new algorithm available for testing in ramp fitting, which is the
 likelihood algorithm.  It is selected by setting ``--ramp_fitting.algorithm=LIKELY``.
 The details are in the ``stcal`` documentation at
-:ref:`Likelihood Algorithm Details <stcal:likelihood_algo>`.
+:ref:`Likelihood Algorithm Details <stcal:likelihood_algo>`. When using this algorithm
+there is an additional ``chisq`` array that is returned from ramp fitting that
+can now be saved, if desired. When using the ``LIKELY`` algorithm, this can be
+saved by setting the step parameter ``save_opt`` to true. The ``chisq`` array
+contains the chi-squared fit quality measure for each pixel. This quantity is
+defined at :ref:`stcal:likelihood_algo`.
 
 Multiprocessing
 ---------------
 This step has the option of running in multiprocessing mode. In that mode it will
 split the input data into a number of slices based on the number of available
-cores on the host computer and the value of the `maximum_cores` step parameter. By
-default the step runs on a single processor. At the other extreme, if `maxiumum_cores` is
-set to 'all', it will use all available cores (real and virtual). Testing has shown
+cores on the host computer and the value of the ``maximum_cores`` step parameter. By
+default the step runs on a single processor. At the other extreme, if ``maximum_cores`` is
+set to ``'all'``, it will use all available cores (real and virtual). Testing has shown
 a reduction in the elapsed time for the step proportional to the number of real
 cores used. Using the virtual cores also reduces the elapsed time, but at a slightly
 lower rate than the real cores.
@@ -78,6 +85,9 @@ of rows, if the number of cores requested for multiprocessing is greater than
 the number of rows, the number of cores actually used will be no more than the
 number of rows.  This prevents any additional cores from operating on empty
 datasets, which would cause errors during ramp fitting.
+
+See :ref:`multiprocessing` for more details and examples of how to run a pipeline step
+with multiprocessing enabled.
 
 :ref:`Output Products <stcal:ramp_output_products>`
 ---------------------------------------------------
@@ -104,7 +114,7 @@ in that integration. This is analogous to the situation in which only the first 
 in an integration is unsaturated and used by itself to compute a slope.
 
 Note that the computation of slopes from either a single group or the single frame
-zero value is disabled when the step parameter ``suppress_one_group`` is set to ``True``.
+zero value is disabled when the step parameter ``suppress_one_group`` is set to `True`.
 In this case the slope value for such a pixel will be set to zero.
 
 :ref:`Detailed Algorithms <stcal:ramp_slopes_and_variances>`

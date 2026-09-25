@@ -1,18 +1,16 @@
-"""Reformat Level2b multi-source data to be source-based."""
+"""Conversion of Stage 2b exposure-based data products to Stage 3 source-based data products."""
 
 import logging
-
 from collections import defaultdict
 
-from stdatamodels.properties import merge_tree
 from stdatamodels.jwst.datamodels import MultiExposureModel
+from stdatamodels.properties import merge_tree
 
 from jwst.datamodels import SourceModelContainer
 
 __all__ = ["exp_to_source", "multislit_to_container"]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def exp_to_source(inputs):
@@ -21,15 +19,16 @@ def exp_to_source(inputs):
 
     Parameters
     ----------
-    inputs : [~jwst.datamodels.MultiSlitModel, ...]
-        List of MultiSlitModel instances to reformat.
+    inputs : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        List of `~stdatamodels.jwst.datamodels.MultiSlitModel` instances to reformat.
 
     Returns
     -------
     multiexposures : dict
-        Returns a dict of MultiExposureModel instances wherein each
+        Returns a dictionary of `~stdatamodels.jwst.datamodels.MultiExposureModel`
+        instances wherein each
         instance contains slits belonging to the same source.
-        The key is the ID of each source, i.e. ``source_id``.
+        The key is the ``source_id`` of each source.
     """
     result = defaultdict(MultiExposureModel)
 
@@ -37,7 +36,7 @@ def exp_to_source(inputs):
         log.info(f"Reorganizing data from exposure {exposure.meta.filename}")
 
         for slit in exposure.slits:
-            if slit.source_name is None:
+            if slit.source_name is None or str(slit.source_name).strip() == "":
                 # All MultiSlit data other than NIRSpec MOS get sorted by
                 # source_id (source_name is not populated)
                 key = slit.source_id
@@ -96,16 +95,19 @@ def multislit_to_container(inputs):
 
     Parameters
     ----------
-    inputs : [~jwst.datamodels.MultiSlitModel, ...]
-        List of MultiSlitModel instances to reformat, or just a
-        ModelContainer full of MultiSlitModels.
+    inputs : list or `~jwst.datamodels.container.ModelContainer` of \
+             `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        List of `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        instances to reformat
 
     Returns
     -------
     containers : dict
-        Returns a dict of ModelContainer instances wherein each
-        instance contains ImageModels of slits belonging to the same source.
-        The key is the ID of each slit, i.e. ``source_id``.
+        Returns a dictionary of `~jwst.datamodels.container.ModelContainer`
+        instances wherein each instance contains
+        `~stdatamodels.jwst.datamodels.ImageModel` of slits belonging
+        to the same source.
+        The key is the ID of each slit, i.e., ``source_id``.
     """
     containers = exp_to_source(inputs)
     for container_id in containers:

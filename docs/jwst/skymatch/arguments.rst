@@ -8,15 +8,15 @@ The ``skymatch`` step uses the following optional arguments:
 
 ``skymethod`` (str, default='match')
   The sky computation algorithm to be used.
-  Allowed values: `local`, `global`, `match`, `global+match`, `user`
+  Allowed values: ``local``, ``global``, ``match``, ``global+match``, ``user``
 
 ``match_down`` (boolean, default=True)
   Specifies whether the sky *differences* should be subtracted from images with
-  higher sky values (``match_down`` = `True`) in order to match the image with the
+  higher sky values (``match_down = True``) in order to match the image with the
   lowest sky, or sky differences should be added to the images with lower sky
   values to match the sky of the image with the highest sky value
-  (``match_down`` = `False`). **NOTE**: this argument only applies when
-  ``skymethod`` is either `match` or `global+match`.
+  (``match_down = False``). **NOTE**: this argument only applies when
+  ``skymethod`` is either ``match`` or ``global+match``.
 
 ``subtract`` (boolean, default=False)
   Specifies whether the computed sky background values are to be subtracted from
@@ -27,7 +27,7 @@ The ``skymatch`` step uses the following optional arguments:
   A filename pointing to a two-column whitespace-delimited list of user-defined
   (filename, skyval) pairs to be used for sky subtraction. The list
   must have the same length as the input images and contain exactly one line per
-  image. This argument is used only when ``skymethod`` is set to `user`.
+  image. This argument is used only when ``skymethod`` is set to ``user``.
 
 **Image bounding polygon parameters:**
 
@@ -40,8 +40,8 @@ The ``skymatch`` step uses the following optional arguments:
 
 ``skystat`` (str, default='mode')
   Statistic to be used for sky background
-  computations. Supported values are: `mean`, `mode`, `midpt`,
-  and `median`.
+  computations. Supported values are: ``mean``, ``mode``, ``midpt``,
+  and ``median``.
 
 ``dqbits`` (str, default='~DO_NOT_USE+NON_SCIENCE')
   The DQ bit values from the input images' DQ arrays that
@@ -72,7 +72,7 @@ The ``skymatch`` step uses the following optional arguments:
 ``binwidth`` (float, default=0.1)
   Bin width, in sigma, used to sample the distribution of pixel
   values in order to compute the sky background using statistics
-  that require binning, such as `mode` and `midpt`.
+  that require binning, such as ``mode`` and ``midpt``.
 
 **Memory management parameters:**
 

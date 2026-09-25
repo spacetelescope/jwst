@@ -3,16 +3,17 @@
 Authors:
     M. Cracraft
 """
-from stdatamodels.jwst.datamodels import dqflags, LinearityModel, RampModel
+
+import numpy as np
+from stdatamodels.jwst.datamodels import LinearityModel, RampModel, dqflags
 
 from jwst.linearity import LinearityStep
 from jwst.linearity.linearity import do_correction as lincorr
-import numpy as np
 
 
 def test_coeff_dq():
     """Test linearity algorithm with random data ramp (does algorithm match expected algorithm)
-    also test a variety of dq flags and expected output """
+    also test a variety of dq flags and expected output"""
 
     # size of integration
     nints = 1
@@ -23,7 +24,6 @@ def test_coeff_dq():
     # create the data and groupdq arrays
     # create a JWST datamodel for MIRI data
     im = make_rampmodel(nints, ngroups, ysize, xsize)
-    im.meta.instrument.detector = 'MIRIMAGE'
 
     # Create reference file
     numcoeffs = 5
@@ -31,8 +31,8 @@ def test_coeff_dq():
     ref_model = LinearityModel((numcoeffs, ysize, xsize))
     ref_model.dq = np.zeros((ysize, xsize), dtype=int)
 
-    ref_model.meta.instrument.name = 'MIRI'
-    ref_model.meta.instrument.detector = 'MIRIMAGE'
+    ref_model.meta.instrument.name = "MIRI"
+    ref_model.meta.instrument.detector = "MIRIMAGE"
     ref_model.meta.subarray.xstart = 1
     ref_model.meta.subarray.ystart = 1
     ref_model.meta.subarray.xsize = xsize
@@ -43,7 +43,7 @@ def test_coeff_dq():
     # DN(i) = signal in pixel, Ln = coefficient from ref file
     # L0 = 0 for all pixels for CDP6
 
-    coeffs = np.asarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16], dtype=float)
+    coeffs = np.asarray([0.0e00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16], dtype=float)
 
     # pixels to test using default coeffs
     ref_model.coeffs[:, 30, 50] = coeffs
@@ -51,9 +51,9 @@ def test_coeff_dq():
     ref_model.coeffs[:, 35, 36] = coeffs
     L0 = 0
     L1 = 0.85
-    L2 = 4.62E-6
-    L3 = -6.16E-11
-    L4 = 7.23E-16
+    L2 = 4.62e-6
+    L3 = -6.16e-11
+    L4 = 7.23e-16
 
     # check behavior with NaN coefficients: should not alter pixel values
     coeffs2 = np.asarray([L0, np.nan, L2, L3, L4], dtype=float)
@@ -76,16 +76,16 @@ def test_coeff_dq():
     im.data[0, 30, 35, 36] = 35  # pixel to check that dq=2 meant no correction was applied
 
     # check if dq flags in pixeldq are correctly populated in output
-    im.pixeldq[50, 40] = dqflags.pixel['DO_NOT_USE']
-    im.pixeldq[50, 41] = dqflags.pixel['SATURATED']
-    im.pixeldq[50, 42] = dqflags.pixel['DEAD']
-    im.pixeldq[50, 43] = dqflags.pixel['HOT']
+    im.pixeldq[50, 40] = dqflags.pixel["DO_NOT_USE"]
+    im.pixeldq[50, 41] = dqflags.pixel["SATURATED"]
+    im.pixeldq[50, 42] = dqflags.pixel["DEAD"]
+    im.pixeldq[50, 43] = dqflags.pixel["HOT"]
 
     # set dq flags in DQ of reference file
-    ref_model.dq[35, 35] = dqflags.pixel['DO_NOT_USE']
-    ref_model.dq[35, 36] = dqflags.pixel['NO_LIN_CORR']
-    ref_model.dq[30, 50] = dqflags.pixel['GOOD']
-    ref_model.dq[25, 25] = dqflags.pixel['GOOD']  # Testing the linerity sets this to NO_LIN_CORR
+    ref_model.dq[35, 35] = dqflags.pixel["DO_NOT_USE"]
+    ref_model.dq[35, 36] = dqflags.pixel["NO_LIN_CORR"]
+    ref_model.dq[30, 50] = dqflags.pixel["GOOD"]
+    ref_model.dq[25, 25] = dqflags.pixel["GOOD"]  # Testing the linerity sets this to NO_LIN_CORR
 
     # run through Linearity pipeline
     outfile = lincorr(im, ref_model)
@@ -95,9 +95,9 @@ def test_coeff_dq():
     assert np.isclose(outfile.data[0, 45, 30, 50], outval, rtol=0.00001)
 
     # check that dq value was handled correctly
-    assert outfile.pixeldq[35, 35] == dqflags.pixel['DO_NOT_USE']
-    assert outfile.pixeldq[35, 36] == dqflags.pixel['NO_LIN_CORR']
-    assert outfile.pixeldq[25, 25] == dqflags.pixel['NO_LIN_CORR']
+    assert outfile.pixeldq[35, 35] == dqflags.pixel["DO_NOT_USE"]
+    assert outfile.pixeldq[35, 36] == dqflags.pixel["NO_LIN_CORR"]
+    assert outfile.pixeldq[25, 25] == dqflags.pixel["NO_LIN_CORR"]
     # NO_LIN_CORR, sci value should not change
     assert outfile.data[0, 30, 35, 36] == 35
     # NaN coefficient should not change data value
@@ -117,10 +117,9 @@ def test_saturation():
 
     # create a JWST datamodel for MIRI data
     im = make_rampmodel(nints, ngroups, ysize, xsize)
-    im.meta.instrument.detector = 'MIRIMAGE'
 
     # set groupdq pixels to saturated
-    im.groupdq[0, 10:, 200, 150] = dqflags.pixel['SATURATED']  # saturated dq flag
+    im.groupdq[0, 10:, 200, 150] = dqflags.pixel["SATURATED"]  # saturated dq flag
     im.data[0, 15, 200, 150] = 1000.0  # value shouldn't change
 
     # run through Linearity pipeline
@@ -142,7 +141,6 @@ def test_nolincorr():
 
     # create a JWST datamodel for MIRI data
     im = make_rampmodel(nints, ngroups, ysize, xsize)
-    im.meta.instrument.detector = 'MIRIMAGE'
 
     # set data value
     im.data[0, 5, 500, 500] = 35
@@ -152,13 +150,13 @@ def test_nolincorr():
     numcoeffs = 3
 
     # set reference file DQ to 'NO_LIN_CORR'
-    dq[500, 500] = dqflags.pixel['NO_LIN_CORR']
+    dq[500, 500] = dqflags.pixel["NO_LIN_CORR"]
 
     ref_model = LinearityModel((numcoeffs, 1024, 1032))
     ref_model.dq = dq
 
-    ref_model.meta.instrument.name = 'MIRI'
-    ref_model.meta.instrument.detector = 'MIRIMAGE'
+    ref_model.meta.instrument.name = "MIRI"
+    ref_model.meta.instrument.detector = "MIRIMAGE"
     ref_model.meta.subarray.xstart = 1
     ref_model.meta.subarray.xsize = xsize
     ref_model.meta.subarray.ystart = 1
@@ -167,7 +165,7 @@ def test_nolincorr():
     # run through pipeline (saturation and linearity steps)
     outfile = lincorr(im, ref_model)
 
-    assert outfile.pixeldq[500, 500] == dqflags.pixel['NO_LIN_CORR']
+    assert outfile.pixeldq[500, 500] == dqflags.pixel["NO_LIN_CORR"]
     assert outfile.data[0, 5, 500, 500] == 35  # NO_LIN_CORR, sci value should not change
 
 
@@ -184,23 +182,22 @@ def test_pixeldqprop():
 
     # create a JWST datamodel for MIRI data
     im = make_rampmodel(nints, ngroups, ysize, xsize)
-    im.meta.instrument.detector = 'MIRIMAGE'
 
     # Create reference file
     dq = np.zeros((ysize, xsize), dtype=int)
     numcoeffs = 5
 
     # set PIXELDQ to 'NO_LIN_CORR'
-    dq[500, 500] = dqflags.pixel['NO_LIN_CORR']
-    dq[550, 550] = dqflags.pixel['DO_NOT_USE']
-    dq[560, 550] = dqflags.pixel['HOT']
-    dq[550, 560] = dqflags.pixel['DEAD']
-    dq[500, 300] = np.bitwise_or(dqflags.pixel['HOT'], dqflags.pixel['DO_NOT_USE'])
+    dq[500, 500] = dqflags.pixel["NO_LIN_CORR"]
+    dq[550, 550] = dqflags.pixel["DO_NOT_USE"]
+    dq[560, 550] = dqflags.pixel["HOT"]
+    dq[550, 560] = dqflags.pixel["DEAD"]
+    dq[500, 300] = np.bitwise_or(dqflags.pixel["HOT"], dqflags.pixel["DO_NOT_USE"])
 
     ref_model = LinearityModel((numcoeffs, ysize, xsize))
     ref_model.dq = dq
 
-    coeffs = np.asarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16], dtype=float)
+    coeffs = np.asarray([0.0e00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16], dtype=float)
 
     # pixels to test using default coeffs.
     ref_model.coeffs[:, 550, 550] = coeffs
@@ -208,8 +205,8 @@ def test_pixeldqprop():
     ref_model.coeffs[:, 550, 560] = coeffs
     ref_model.coeffs[:, 500, 300] = coeffs
 
-    ref_model.meta.instrument.name = 'MIRI'
-    ref_model.meta.instrument.detector = 'MIRIMAGE'
+    ref_model.meta.instrument.name = "MIRI"
+    ref_model.meta.instrument.detector = "MIRIMAGE"
     ref_model.meta.subarray.xstart = 1
     ref_model.meta.subarray.xsize = xsize
     ref_model.meta.subarray.ystart = 1
@@ -218,12 +215,13 @@ def test_pixeldqprop():
     # run through linearity correction
     outfile = lincorr(im, ref_model)
 
-    assert outfile.pixeldq[500, 500] == dqflags.pixel['NO_LIN_CORR']
-    assert outfile.pixeldq[550, 550] == dqflags.pixel['DO_NOT_USE']
-    assert outfile.pixeldq[560, 550] == dqflags.pixel['HOT']
-    assert outfile.pixeldq[550, 560] == dqflags.pixel['DEAD']
+    assert outfile.pixeldq[500, 500] == dqflags.pixel["NO_LIN_CORR"]
+    assert outfile.pixeldq[550, 550] == dqflags.pixel["DO_NOT_USE"]
+    assert outfile.pixeldq[560, 550] == dqflags.pixel["HOT"]
+    assert outfile.pixeldq[550, 560] == dqflags.pixel["DEAD"]
     assert outfile.pixeldq[500, 300] == np.bitwise_or(
-        dqflags.pixel['HOT'], dqflags.pixel['DO_NOT_USE'])
+        dqflags.pixel["HOT"], dqflags.pixel["DO_NOT_USE"]
+    )
 
 
 def test_lin_subarray():
@@ -240,14 +238,14 @@ def test_lin_subarray():
     im = RampModel((1, ngroups, ysize, xsize))
     im.data += 1
 
-    im.meta.instrument.name = 'MIRI'
-    im.meta.instrument.detector = 'MIRIMAGE'
-    im.meta.instrument.filter = 'F1500W'
-    im.meta.instrument.band = 'N/A'
-    im.meta.observation.date = '2016-06-01'
-    im.meta.observation.time = '00:00:00'
-    im.meta.exposure.type = 'MIR_IMAGE'
-    im.meta.subarray.name = 'MASK1550'
+    im.meta.instrument.name = "MIRI"
+    im.meta.instrument.detector = "MIRIMAGE"
+    im.meta.instrument.filter = "F1500W"
+    im.meta.instrument.band = "N/A"
+    im.meta.observation.date = "2016-06-01"
+    im.meta.observation.time = "00:00:00"
+    im.meta.exposure.type = "MIR_IMAGE"
+    im.meta.subarray.name = "MASK1550"
     im.meta.subarray.xstart = 1
     im.meta.subarray.xsize = xsize
     im.meta.subarray.ystart = 467
@@ -265,16 +263,16 @@ def test_lin_subarray():
     ref_model = LinearityModel((numcoeffs, 1024, 1032))
     # set all the linear terms =1, so it does not trip the check if
     # the linear terms = 0, which results in DQ of NO_LIN_CORR
-    ref_model.coeffs[1,:,:] = 1
+    ref_model.coeffs[1, :, :] = 1
     ref_model.dq = dq
 
-    ref_model.meta.instrument.name = 'MIRI'
-    ref_model.meta.instrument.detector = 'MIRIMAGE'
+    ref_model.meta.instrument.name = "MIRI"
+    ref_model.meta.instrument.detector = "MIRIMAGE"
     ref_model.meta.description = "MIRI LINEARITY Correction"
     ref_model.meta.reftype = "LINEARITY"
     ref_model.meta.author = "Monty Pytest"
     ref_model.meta.pedigree = "GROUND"
-    ref_model.meta.useafter = '2015-08-01T00:00:00'
+    ref_model.meta.useafter = "2015-08-01T00:00:00"
     ref_model.meta.subarray.xstart = 1
     ref_model.meta.subarray.xsize = 1032
     ref_model.meta.subarray.ystart = 1
@@ -287,22 +285,97 @@ def test_lin_subarray():
     outpixdq = outfile.pixeldq
 
     # check for dq flag in pixeldq of subarray image
-    assert (outpixdq[76, 100] == 1)
-    assert (outpixdq[76, 104] == 1)
+    assert outpixdq[76, 100] == 1
+    assert outpixdq[76, 104] == 1
 
 
-def make_rampmodel(nints, ngroups, ysize, xsize):
+def test_invlin_corr():
+    # size of integration
+    nints = 1
+    ngroups = 5
+    xsize = 1
+    ysize = 1
+
+    # create the data and groupdq arrays
+    # create a JWST datamodel for MIRI data
+    im = make_rampmodel(nints, ngroups, ysize, xsize)
+
+    # Create reference file
+    numcoeffs = 5
+
+    ref_model = LinearityModel((numcoeffs, ysize, xsize))
+    ref_model.dq = np.zeros((ysize, xsize), dtype=int)
+
+    ref_model.meta.instrument.name = "MIRI"
+    ref_model.meta.instrument.detector = "MIRIMAGE"
+    ref_model.meta.subarray.xstart = 1
+    ref_model.meta.subarray.ystart = 1
+    ref_model.meta.subarray.xsize = xsize
+    ref_model.meta.subarray.ysize = ysize
+
+    # Set coefficient values in reference file to check the algorithm
+    # Equation is DNcorr = L0 + L1*DN(i) + L2*DN(i)^2 + L3*DN(i)^3 + L4*DN(i)^4
+    # DN(i) = signal in pixel, Ln = coefficient from ref file
+    # L0 = 0 for all pixels for CDP6
+
+    coeffs = np.array([0.0e00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16], dtype=float)
+    inv_coeffs = np.array([5.70843e01, 1.14856e00, -4.14988e-06, 2.89205e-11, -2.32875e-16])
+    ref_model.coeffs[:, :, :] = coeffs[:, np.newaxis, np.newaxis]
+
+    im.meta.exposure.nframes = 4
+
+    im.data[0, :, 0, 0] = np.array([11400.0, 19200.0, 26600.0, 34010.0, 41900.0])
+
+    result1 = LinearityStep.call(im, override_linearity=ref_model)
+
+    ref_model.inv_coeffs = np.zeros_like(ref_model.coeffs)
+    ref_model.inv_coeffs = inv_coeffs[:, np.newaxis, np.newaxis]
+    result2 = LinearityStep.call(im, override_linearity=ref_model)
+
+    np.testing.assert_allclose(
+        actual=np.sum(np.abs(result1.data - result2.data)),
+        desired=68.853516,
+        rtol=1e-05,
+    )
+
+
+def test_output_is_not_input():
+    im = make_rampmodel()
+
+    # step completes
+    result = LinearityStep.call(im)
+    assert result.meta.cal_step.linearity == "COMPLETE"
+
+    # input is not modified
+    assert result is not im
+    assert im.meta.cal_step.linearity is None
+
+
+def test_output_is_not_input_when_skipped():
+    im = make_rampmodel()
+
+    # step is skipped when no reference file is found
+    result = LinearityStep.call(im, override_linearity="N/A")
+    assert result.meta.cal_step.linearity == "SKIPPED"
+
+    # input is not modified
+    assert result is not im
+    assert im.meta.cal_step.linearity is None
+
+
+def make_rampmodel(nints=1, ngroups=160, ysize=103, xsize=102):
     """Function to provide ramp model to tests"""
-
     dm_ramp = RampModel((nints, ngroups, ysize, xsize))
     dm_ramp.data += 1
 
-    dm_ramp.meta.instrument.name = 'MIRI'
-    dm_ramp.meta.observation.date = '2018-01-01'
-    dm_ramp.meta.observation.time = '00:00:00'
+    dm_ramp.meta.instrument.name = "MIRI"
+    dm_ramp.meta.instrument.detector = "MIRIMAGE"
+    dm_ramp.meta.observation.date = "2018-01-01"
+    dm_ramp.meta.observation.time = "00:00:00"
     dm_ramp.meta.subarray.xstart = 1
     dm_ramp.meta.subarray.xsize = xsize
     dm_ramp.meta.subarray.ystart = 1
     dm_ramp.meta.subarray.ysize = ysize
+    dm_ramp.meta.exposure.ngroups = ngroups
 
     return dm_ramp

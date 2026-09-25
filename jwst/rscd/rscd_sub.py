@@ -1,85 +1,88 @@
-#
-#  Module for the RSCD correction for MIRI science data
-#
+"""Functions for the RSCD correction for MIRI science data."""
 
-import numpy as np
 import logging
 
+import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = [
+    "do_correction",
+    "correction_skip_groups",
+    "get_rscd_parameters",
+    "flag_rscd",
+    "apply_rscd_flags",
+]
 
 
-def do_correction(output_model, rscd_model, type):
+def do_correction(output_model, rscd_model):
     """
-    Short Summary
-    -------------
-    if type = baseline the correction sets initial groups in the integration
-    to skip
-    if type = enhanced the correction corrects the groups using a decay function
+    Set the initial groups of an integration of MIRI data to 'DO_NOT_USE'.
+
+    The number of initial groups to set to 'DO_NOT_USE' is read in from the RSCD reference
+    file. The number of groups to skip is integration dependent. The first integration has
+    a value defined in the reference file and the second and higher integrations have a
+    separate value in the reference file.
 
     Parameters
     ----------
-    output_model: ~jwst.datamodels.RampModel
-        science data to be corrected
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Input ramp datamodel
 
-    rscd_model: ~jwst.datamodels.RSCDModel
-        rscd reference data
-
-    type: string
-        type of algorithm ['baseline' or 'enhanced']
+    rscd_model : `~stdatamodels.jwst.datamodels.RSCDModel`
+        RSCD reference datamodel
 
     Returns
     -------
-    output_model: ~jwst.datamodels.RampModel
-        RSCD-corrected science data
-
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Ramp datamodel with RSCD affected groups flagged as DO_NOT_USE
     """
-
     # Retrieve the reference parameters for this exposure type
     param = get_rscd_parameters(output_model, rscd_model)
 
     if not bool(param):  # empty dictionary
-        log.warning('READPATT, SUBARRAY combination not found in ref file: RSCD correction will be skipped')
-        output_model.meta.cal_step.rscd = 'SKIPPED'
+        log.warning(
+            "READPATT, SUBARRAY combination not found in ref file: RSCD correction will be skipped"
+        )
+        output_model.meta.cal_step.rscd = "SKIPPED"
         return output_model
 
-    if type == 'baseline':
-        group_skip = param['skip']
-        output_model = correction_skip_groups(output_model, group_skip)
-    else:
-        # enhanced algorithm is not enabled yet (updated code and validation needed)
-        log.warning('Enhanced algorithm not support yet: RSCD correction will be skipped')
-        output_model.meta.cal_step.rscd = 'SKIPPED'
-        return output_model
-        # decay function algorithm update needed
-        # output_model = correction_decay_function(input_model, param)
+    group_skip_int1 = param["skip_int1"]  # integration 1
+    group_skip_int2p = param["skip_int2p"]  # integration 2,  plus higher integrations
 
+    if group_skip_int1 < 0:
+        log.warning("RSCD reference file is of a deprecated model.")
+        log.warning("There are no values for first integration")
+        log.warning("Setting number of groups to skip in first integration to 1")
+        group_skip_int1 = 1
+
+    log.info(f"# groups from RSCD reference file for int 1 to flag: {group_skip_int1}")
+    log.info(f"# groups from RSCD reference file for int 2 and higher to flag: {group_skip_int2p}")
+    output_model = correction_skip_groups(output_model, group_skip_int1, group_skip_int2p)
     return output_model
 
 
-def correction_skip_groups(output, group_skip):
+def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     """
-    Short Summary
-    -------------
-    Set the initial groups in integration to DO_NOT_USE to skip groups
-    affected by RSCD effect
+    Set the initial groups in integration to DO_NOT_USE to skip groups affected by RSCD effect.
 
     Parameters
     ----------
-    output: ~jwst.datamodels.RampModel
-        science data to be corrected
+    output : `~stdatamodels.jwst.datamodels.RampModel`
+        Science data to be flagged
 
-    group_skip: int
-        number of groups to skip at the beginning of the ramp
+    group_skip_int1 : int
+        Number of groups to skip at the beginning of the ramp for integration 1
+
+    group_skip_int2p : int
+        Number of groups to skip at the beginning of the ramp for integration 2 and higher
 
     Returns
     -------
-    output_model: ~jwst.datamodels.RampModel
-        RSCD-corrected science data
+    output: `~stdatamodels.jwst.datamodels.RampModel`
+        Ramp datamodel with RSCD affected groups flagged as DO_NOT_USE
     """
-
     # General exposure parameters
     sci_ngroups = output.meta.exposure.ngroups
     sci_nints = output.meta.exposure.nints
@@ -87,230 +90,297 @@ def correction_skip_groups(output, group_skip):
     # values defined for segmented data
     sci_int_start = output.meta.exposure.integration_start
 
-    if sci_int_start is None:
+    if sci_int_start is None:  # the data is not segmented
         sci_int_start = 1
 
+    log.debug(f"RSCD correction using: nints={sci_nints}, ngroups={sci_ngroups}")
+    log.debug(f"The first integration in the data is integration: {sci_int_start}")
 
-    log.debug("RSCD correction using: nints=%d, ngroups=%d" %
-              (sci_nints, sci_ngroups))
-    log.debug("The first integration in the data is integration: %d" %
-              (sci_int_start))
-    log.info("Number of groups to skip for integrations 2 and higher: %d " %group_skip)
+    # For general RSCD flagging, we have to start with at least 3 groups. The last frame
+    # has been rejected in the last frame correction, leaving us with 2 groups. We have to
+    # have at least 2 valid groups to perform a fit. Therefore the minimum number of groups
+    # to do an rscd flagging is 3 groups. MIRI has a set minimum of 5 groups in APT (so only
+    # in rare special cases will have 3 groups or less).
 
-    # If ngroups <= group_skip+3, skip the flagging
-    # the +3 is to ensure there is a slope to be fit including the flagging for
-    # the last frame correction
-    if sci_ngroups <= (group_skip + 3):
+    if sci_ngroups < 3:
         log.warning("Too few groups to apply RSCD correction")
         log.warning("RSCD step will be skipped")
-        output.meta.cal_step.rscd = 'SKIPPED'
+        output.meta.cal_step.rscd = "SKIPPED"
         return output
 
-    # The RSCD correction is applied to integrations 2 and higher.
-    # For segmented data the first integration in the file may not be the first integration in the
-    # exposure. The value in meta.exposure.integration_start holds the value of the first integration
-    # in the file.
-    # If a correction is to be done and if  ngroups > group_skip+3, then  set all of the GROUPDQ
-    # in 0: group_skip to 'DO_NOT_USE'
+    # Basic global checks:
+    # ___________________
+    # Will we have at least 3 groups. The last frame step has rejected 1 group so we have 2 to
+    # find a slope.
 
-    int_start = 1
-    if sci_int_start !=1: # we have segmented data
-        int_start = 0
+    # check for sci_ngroups <= 5
+    if sci_ngroups <= 5:
+        group_skip_int1 = 1
+        group_skip_int2p = 1
+        log.info(
+            f"Number of groups to skip for integration 1 (for data with <= 5 groups): "
+            f"{group_skip_int1}"
+        )
+        log.info(
+            f"Number of groups to skip for integration 2+ (for data with <= 5 groups): "
+            f"{group_skip_int2p}"
+        )
 
-    output.groupdq[int_start:, 0:group_skip, :, :] = \
-        np.bitwise_or(output.groupdq[int_start:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
-    log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
-    output.meta.cal_step.rscd = 'COMPLETE'
+    # General Checks for RSCD dynamic flagging.
+    # checks for integration 1:
+    if sci_ngroups < (group_skip_int1 + 3):
+        max_groups_skip = max(0, sci_ngroups - 3)
+
+        if max_groups_skip != group_skip_int1:
+            log.info(f"Changing the # of groups to skip in int 1 to {max_groups_skip}")
+            group_skip_int1 = max_groups_skip
+
+    # checks for integration 2
+    if sci_nints > 1 and sci_ngroups < (group_skip_int2p + 3):
+        max_groups_skip = max(0, sci_ngroups - 3)
+
+        if max_groups_skip != group_skip_int2p:
+            group_skip_int2p = max_groups_skip
+            log.info(f"Changing the # of groups to skip in int 2 and higher to {max_groups_skip}")
+
+    # Note For segmented data the first integration in the file may not be the first
+    # integration in the exposure. The value in meta.exposure.integration_start
+    # holds the value of the first integration in the file.
+
+    # Flag RSCD  groups in integration 1
+    # __________________________________
+    if sci_int_start == 1:  # Using sci_int_start to cover segmented data case.
+        rscd_skip_array, num_rscd_lowered, num_only_one_group = flag_rscd(
+            output, sci_int_start - 1, sci_int_start - 1, group_skip_int1
+        )
+
+        output = apply_rscd_flags(output, sci_int_start - 1, sci_int_start - 1, rscd_skip_array)
+        log.info(
+            "Number of usable bright pixels with rscd flag groups "
+            f"not set to DO_NOT_USE: {num_rscd_lowered}"
+        )
+
+        output.meta.rscd.keep_bright_firstgroup_int1 = num_only_one_group
+        output.meta.rscd.keep_groups_saturation_int1 = num_rscd_lowered
+        output.meta.rscd.ngroups_skip_int1 = group_skip_int1
+
+    # Flag RSCD  groups in integration 2 and higher
+    # ______________________________________________
+    int_start = 2
+
+    int_end = output.data.shape[0]
+    # use the data shape instead of sci_ints in case we have segmented data
+    # in segmented data the sci_ints can be much larger than data.shape[0]
+    # depending on which segment number we are on.
+
+    if sci_int_start != 1:  # we have segmented data and we are not on the first integration
+        int_start = 1
+
+    if sci_nints > 1:
+        rscd_skip_array, num_rscd_lowered, num_only_one_group = flag_rscd(
+            output, int_start - 1, int_end - 1, group_skip_int2p
+        )
+
+        output = apply_rscd_flags(output, int_start - 1, int_end - 1, rscd_skip_array)
+        log.info(
+            "Number of usable bright pixels with rscd flag groups "
+            f"not set to DO_NOT_USE: {num_rscd_lowered}"
+        )
+
+        output.meta.rscd.keep_bright_firstgroup_int2p = num_only_one_group
+        output.meta.rscd.keep_groups_saturation_int2p = num_rscd_lowered
+        output.meta.rscd.ngroups_skip_int2p = group_skip_int2p
+    output.meta.cal_step.rscd = "COMPLETE"
 
     return output
 
 
-def correction_decay_function(output, param):
+def flag_rscd(output_model, int_start, int_end, rscd_skip):
     """
-    Short Summary
-    -------------
-    Applies rscd correction to science arrays
-    The last frame value from the previous integration is calculated two ways:
-    1. using second and third to last frames to extrapolated to the last frame
-    2. using the non saturating data, fit the data and extrapolate to last frame
-    Because of the uncertainty of how well effects in th early part of the
-    integration are corrected in the previous integration (reset anomaly, rscd
-    effects, persistence) the lastframe determined from the second and third to
-    last frames is considered a better estimate than that derived from a fit to
-    the ramp.
-    The last frame derived from fitting the non-saturating data is used in the
-    correction if the previous integration saturated. This fit is extrapolated
-    past saturation to estimate what the total number of electrons would have
-    been.
-
-    This correction has different correction parameters depending on whether
-    the pixel is from an even row or odd row. The first row is define as an odd
-    row. This even/odd row effect is likely a result of the reset electronics
-    (MIRI resets in row pairs).
+    Find the initial groups to set to DO_NOT_USE based on RSCD rules.
 
     Parameters
     ----------
-    output: ~jwst.datamodels.RampModel
-        science data to be corrected
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Science data to be flagged.
 
-    param: dict
-        parameters of correction
+    int_start : int
+        Starting integration.
+
+    int_end : int
+        Ending integration.
+
+    rscd_skip : int
+        Number of groups to skip at the beginning of the ramp for integration range.
 
     Returns
     -------
-    output_model: ~jwst.datamodels.RampModel
-        RSCD-corrected science data
-
+    skip_array : ndarray
+        Array containing the number of groups to skip based on pixel location and integration.
+    num_rscd_lowered : int
+        The number of pixels where the number of RSCD groups to flag as DO_NOT_USE was
+        changed because of saturation.
+    num_only_one_group : int
+        The number of pixels where there is only 1 valid group after checking for saturation.
     """
+    n_ints = int_end - int_start + 1
+    x_dim = output_model.groupdq.shape[3]
+    y_dim = output_model.groupdq.shape[2]
+    skip_array = np.full((n_ints, y_dim, x_dim), rscd_skip)
+    # --- If we encounter saturation, we might need to back off the rscd correction.
+    # Ideally we want at least two valid groups, but we need to allow there to only
+    # be 1 valid group. The user can set the ramp_fit parameter suppress_one_group = False
+    # to derive a value for this point.
 
-    # Save some data params for easy use later
-    sci_nints = output.data.shape[0]       # number of integrations
-    sci_ngroups = output.data.shape[1]     # number of groups
+    min_group = rscd_skip + 2
 
-    log.debug("RSCD correction using: nints=%d, ngroups=%d" %
-              (sci_nints, sci_ngroups))
+    # Note: min_groups starts count at 1
 
-    # Check for valid parameters
-    if sci_ngroups < 2:
-        log.warning('RSCD correction requires > 1 group per integration')
-        log.warning('Step will be skipped')
-        output.meta.cal_step.rscd = 'SKIPPED'
-        return output
+    # 1. Identify pixels saturated at the current threshold
+    is_sat_problem = (
+        (
+            output_model.groupdq[int_start : int_end + 1, min_group - 1, :, :]
+            & dqflags.group["SATURATED"]
+        )
+        > 0
+    ).astype(bool)
 
-    if param is None:
-        log.warning('RSCD correction will be skipped')
-        output.meta.cal_step.rscd = 'SKIPPED'
-        return output
+    # New check specifically for Group 1. If it is also saturated then we can not
+    # recover this pixel.
+    is_group_1_sat = (
+        (output_model.groupdq[int_start : int_end + 1, 0, :, :] & dqflags.group["SATURATED"]) > 0
+    ).astype(bool)
 
-    # Determine the parameters that rely only on ngroups
-    ngroups2 = sci_ngroups * sci_ngroups
-    b1_even = param['even']['ascale'] * (
-        param['even']['illum_zp'] +
-        param['even']['illum_slope'] * sci_ngroups +
-        param['even']['illum2'] * ngroups2)
+    # 3. Remove Group 1 saturation from the original problem mask
+    # This keeps saturation flags ONLY if they are NOT saturated in Group 1
+    is_sat_problem &= ~is_group_1_sat
 
-    b1_odd = param['odd']['ascale'] * (
-        param['odd']['illum_zp'] +
-        param['odd']['illum_slope'] * sci_ngroups +
-        param['odd']['illum2'] * ngroups2)
+    num_rscd_lowered = 0
+    num_only_one_group_pixels = 0
+    num_sat = np.sum(is_sat_problem)
+    log.info(
+        f" There are {num_sat} saturated pixels that require the number of "
+        "rscd groups flagged to be lowered"
+    )
 
-    sat_final_slope_even = (
-        param['even']['sat_zp'] + param['even']['sat_slope'] * sci_ngroups +
-        param['even']['sat2'] * ngroups2 + param['even']['sat_rowterm'])
+    # Find the first non-saturating group
+    if num_sat > 0:
+        #  do dynamic rscd flagging - based on saturation group of every pixel
 
-    sat_final_slope_odd = (
-        param['odd']['sat_zp'] + param['odd']['sat_slope'] * sci_ngroups +
-        param['odd']['sat2'] * ngroups2 + param['odd']['sat_rowterm'])
+        while num_sat > 0 and min_group > 1:
+            # subtract 1 from skip_array
+            skip_array[is_sat_problem] = np.maximum(skip_array[is_sat_problem] - 1, 0)
+            min_group = min_group - 1
 
-    b2_even = param['even']['pow'].item()
-    b2_odd = param['odd']['pow'].item()
-    b3_even = param['even']['param3'].item()
-    b3_odd = param['odd']['param3'].item()
-    crossopt_even = param['even']['crossopt'].item()
-    crossopt_odd = param['odd']['crossopt'].item()
-    sat_mzp_even = param['even']['sat_mzp'].item()
-    sat_mzp_odd = param['odd']['sat_mzp'].item()
-    sat_scale_even = param['even']['sat_scale'].item()
-    sat_scale_odd = param['odd']['sat_scale'].item()
-    tau_even = param['even']['tau'].item()
-    tau_odd = param['odd']['tau'].item()
+            # re-evaluate the saturation at the lower group level
+            is_sat_problem = (
+                (
+                    output_model.groupdq[int_start : int_end + 1, min_group - 1, :, :]
+                    & dqflags.group["SATURATED"]
+                )
+                > 0
+            ).astype(bool)
 
-    # loop over all integrations except the first
-    mdelta = int(sci_nints / 10) + 1
-    for i in range(1, sci_nints):
-        if ((i + 1) % mdelta) == 0:
-            log.info(' Working on integration %d', i + 1)
+            # Re-apply the group 1 guard
+            # (Otherwise, if we drop to Group 1, we might process pixels
+            # we already deemed "unrecoverable")
+            is_sat_problem &= ~is_group_1_sat
 
-        sat, dn_last23, dn_lastfit = \
-            get_DNaccumulated_last_int(output, i, sci_ngroups)
+            num_sat = is_sat_problem.sum()
 
-        lastframe_even = dn_last23[1::2, :]
-        lastframe_odd = dn_last23[0::2, :]
+        # 1. Identify where the skip_array is less than the original rscd_skip
+        # This means the logic was forced to "back off" to accommodate saturation.
+        was_backed_off = skip_array < rscd_skip
 
-        factor2_even = lastframe_even.copy() * 0.0
-        factor2_odd = lastframe_odd.copy() * 0.0
-        # these will be created in the loop: correction_even, correction_odd,
-        # a1_even, and a1_odd
+        # 2. Collapse the 3D mask (Integrations, Y, X) to 2D (Y, X)
+        # If a pixel was backed off in ANY integration, we flag it.
+        is_backed_off_2d = np.any(was_backed_off, axis=0)
+        num_rscd_lowered = is_backed_off_2d.sum()
 
-        counts2_even = lastframe_even - crossopt_even
-        counts2_odd = lastframe_odd - crossopt_odd
+        # 3. Apply the FLUX_ESTIMATED flag
+        if np.any(is_backed_off_2d):
+            output_model.pixeldq[is_backed_off_2d] |= dqflags.pixel["FLUX_ESTIMATED"]
+            log.info(
+                f"Flagged {np.sum(is_backed_off_2d)} pixels as FLUX_ESTIMATED due to RSCD back-off."
+            )
 
-        counts2_even[np.where(counts2_even < 0)] = 0.0
-        counts2_odd[np.where(counts2_odd < 0)] = 0.0
+        # 4. Final Safety: Reset negative values (with this logic, 0 is the floor)
+        skip_array = np.maximum(skip_array, 0)
 
-        # Find where counts2 > 0 and is finite
-        good_even = np.where((counts2_even > 0) & np.isfinite(counts2_even))
-        good_odd = np.where((counts2_odd > 0) & np.isfinite(counts2_odd))
-        # __________________________________________________________________
-        # even row values
-        factor2_even[good_even] = 1.0 / \
-            (np.exp(counts2_even[good_even] / b3_even) - 1)
-        a1_even = b1_even * (np.power(counts2_even, b2_even)) * factor2_even
-        # ___________________________________________________________________
-        # odd row values
-        factor2_odd[good_odd] = 1.0 / \
-            (np.exp(counts2_odd[good_odd] / b3_odd) - 1)
-        a1_odd = b1_odd * (np.power(counts2_odd, b2_odd)) * factor2_odd
-        # ___________________________________________________________________
-        # SATURATED DATA
-        counts3_even = dn_lastfit[1::2, :] * sat_scale_even
-        counts3_odd = dn_lastfit[0::2, :] * sat_scale_odd
+        # now record if we have to back off all the way to group 1
+        is_only_one_group = skip_array == 0
+        num_only_one_group_pixels = np.any(is_only_one_group, axis=0).sum()
 
-        a1_sat_even = sat_final_slope_even * counts3_even + sat_mzp_even
-        a1_sat_odd = sat_final_slope_odd * counts3_odd + sat_mzp_odd
+    return skip_array, num_rscd_lowered, num_only_one_group_pixels
 
-        sat_even = sat[1::2, :]
-        sat_odd = sat[0::2, :]
 
-        # loop over groups in input science data:
-        for j in range(sci_ngroups):
+def apply_rscd_flags(output_model, int_start, int_end, skip_array):
+    """
+    Apply flags for RSCD correction setting DO_NOT_USE to the dq values.
 
-            # Compute the correction factors for even and odd rows
-            T = (j + 1)
-            eterm_even = np.exp(-T / tau_even)
-            eterm_odd = np.exp(-T / tau_odd)
+    Parameters
+    ----------
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Science data to be flagged
 
-            # Apply the corrections to even and odd rows:
-            # the first row is defined as odd (python index 0)
-            # the second row is the first even row (python index of 1)
-            correction_odd = lastframe_odd * a1_odd * 0.01 * eterm_odd
-            correction_even = lastframe_even * a1_even * 0.01 * eterm_even
-            correction_sat_odd = lastframe_odd * a1_sat_odd * 0.01 * eterm_odd
-            correction_sat_even = lastframe_even * a1_sat_even * 0.01 * \
-                eterm_even
-            sat_index_even = np.where(sat_even)
-            sat_index_odd = np.where(sat_odd)
-            correction_even[sat_index_even] = \
-                correction_sat_even[sat_index_even]
-            correction_odd[sat_index_odd] = correction_sat_odd[sat_index_odd]
-            output.data[i, j, 0::2, :] += correction_odd
-            output.data[i, j, 1::2, :] += correction_even
+    int_start : int
+        Starting integration
 
-    output.meta.cal_step.rscd = 'COMPLETE'
+    int_end : int
+        Ending integration
 
-    return output
+    skip_array : ndarray
+        Number of groups to skip at the beginning of the ramp for integration range.
+
+    Returns
+    -------
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Ramp datamodel with RSCD affected groups flagged as DO_NOT_USE
+    """
+    # Redefine starting at 0
+    skip_array = skip_array - 1
+    # 1. Extract the relevant region of the groupdq array
+    # Shape: (N_ints, Groups, Y, X)
+    dq = output_model.groupdq[int_start : int_end + 1, :, :, :]
+
+    # 2. Create a grid of group indices
+    # Shape: (Groups,) -> e.g., [0, 1, 2, 3...]
+    num_groups = dq.shape[1]
+    group_indices = np.arange(num_groups)
+
+    # 3. Broadcast for comparison
+    # We want: (1, Groups, 1, 1) < (N_ints, 1, Y, X)
+    # This results in a 4D boolean mask
+
+    mask = group_indices[None, :, None, None] <= skip_array[:, None, :, :]
+
+    # 4. Apply the DO_NOT_USE flag using the mask
+    # This updates only the pixels/groups where the index is below the skip threshold
+    dq[mask] |= dqflags.group["DO_NOT_USE"]
+
+    # Put the modified dq back
+    output_model.groupdq[int_start : int_end + 1, :, :, :] = dq
+
+    return output_model
 
 
 def get_rscd_parameters(input_model, rscd_model):
     """
-    Read in the parameters from the reference file
-    Store the parameters in a param dictionary
+    Read in the parameters from the reference file and store the parameters in a dictionary.
 
     Parameters
     ----------
-    input_model: ~jwst.datamodels.RampModel
-        science data to be corrected
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Science data to be flagged
 
-    rscd_model: ~jwst.datamodels.RSCDModel
-        rscd reference data
+    rscd_model : `~stdatamodels.jwst.datamodels.RSCDModel`
+        RSCD reference file data
 
     Returns
     -------
-    param: dict
-        dictionary of parameters
-
+    param : dict
+        Dictionary of parameters
     """
-
     # Reference file parameters held in dictionary: param
     param = {}
 
@@ -320,201 +390,19 @@ def get_rscd_parameters(input_model, rscd_model):
 
     # Check for old values of the MIRI LRS slitless subarray name
     # in the science data and change to the new
-    if subarray.upper() == 'SUBPRISM':
-        subarray = 'SLITLESSPRISM'
+    if subarray.upper() == "SUBPRISM":
+        subarray = "SLITLESSPRISM"
 
     # read table 1: containing the number of groups to skip
     for tabdata in rscd_model.rscd_group_skip_table:
-        subarray_table = tabdata['subarray']
-        readpatt_table = tabdata['readpatt']
-        group_skip_table = tabdata['group_skip']
+        subarray_table = tabdata["subarray"]
+        readpatt_table = tabdata["readpatt"]
+        group_skip_table_int2p = tabdata["group_skip"]  # integration 2 and higher (+)
+        group_skip_table_int1 = tabdata["group_skip1"]
+
         if subarray_table == subarray and readpatt_table == readpatt:
-            param['skip'] = group_skip_table
-            break
-
-    # read table 2: General RSCD enhanced parameters
-    for tabdata in rscd_model.rscd_gen_table:
-        readpatt_gen = tabdata['readpatt']
-        subarray_gen = tabdata['subarray']
-        lower_cutoff_gen = tabdata['lower_cutoff']
-        alpha_even_gen = tabdata['alpha_even']
-        alpha_odd_gen = tabdata['alpha_even']
-        if subarray_gen == subarray and readpatt_gen == readpatt:
-            param['gen'] = {}
-            param['gen']['lower_cutoff'] = lower_cutoff_gen
-            param['gen']['lower_alpha_odd'] = alpha_odd_gen
-            param['gen']['lower_alpha_even'] = alpha_even_gen
-            break
-
-    # read table 3: Enhanced RSCD integration 1 parameters
-    for tabdata in rscd_model.rscd_int1_table:
-        readpatt_int1 = tabdata['readpatt']
-        subarray_int1 = tabdata['subarray']
-        rows_int1 = tabdata['rows']
-        a0_int1 = tabdata['a0']
-        a1_int1 = tabdata['a1']
-        a2_int1 = tabdata['a2']
-        a3_int1 = tabdata['a3']
-        if subarray_int1 == subarray and readpatt_int1 == readpatt:
-            param['int1'] = {}
-            param['int1']['even'] = {}
-            param['int1']['odd'] = {}
-            if rows_int1 == 'EVEN':
-                param['int1']['even']['a0'] = a0_int1
-                param['int1']['even']['a1'] = a1_int1
-                param['int1']['even']['a2'] = a2_int1
-                param['int1']['even']['a3'] = a3_int1
-            if rows_int1 == 'ODD':
-                param['int1']['odd']['a0'] = a0_int1
-                param['int1']['odd']['a1'] = a1_int1
-                param['int1']['odd']['a2'] = a2_int1
-                param['int1']['odd']['a3'] = a3_int1
-            break
-
-    # read table 4: Enhanced RSCD integration 2 parameters
-    for tabdata in rscd_model.rscd_int2_table:
-        readpatt_int2 = tabdata['readpatt']
-        subarray_int2 = tabdata['subarray']
-        rows_int2 = tabdata['rows']
-        a0_int2 = tabdata['b0']
-        a1_int2 = tabdata['b1']
-        a2_int2 = tabdata['b2']
-        a3_int2 = tabdata['b3']
-        if subarray_int2 == subarray and readpatt_int2 == readpatt:
-            param['int2'] = {}
-            param['int2']['even'] = {}
-            param['int2']['odd'] = {}
-            if rows_int2 == 'EVEN':
-                param['int2']['even']['a0'] = a0_int2
-                param['int2']['even']['a1'] = a1_int2
-                param['int2']['even']['a2'] = a2_int2
-                param['int2']['even']['a3'] = a3_int2
-            if rows_int2 == 'ODD':
-                param['int2']['odd']['a0'] = a0_int2
-                param['int2']['odd']['a1'] = a1_int2
-                param['int2']['odd']['a2'] = a2_int2
-                param['int2']['odd']['a3'] = a3_int2
-            break
-
-    # read table 5: Enhanced RSCD integration 3 parameters
-    for tabdata in rscd_model.rscd_int3_table:
-        readpatt_int3 = tabdata['readpatt']
-        subarray_int3 = tabdata['subarray']
-        rows_int3 = tabdata['rows']
-        a0_int3 = tabdata['c0']
-        a1_int3 = tabdata['c1']
-        a2_int3 = tabdata['c2']
-        a3_int3 = tabdata['c3']
-        if subarray_int3 == subarray and readpatt_int3 == readpatt:
-            param['int3'] = {}
-            param['int3']['even'] = {}
-            param['int3']['odd'] = {}
-            if rows_int3 == 'EVEN':
-                param['int3']['even']['a0'] = a0_int3
-                param['int3']['even']['a1'] = a1_int3
-                param['int3']['even']['a2'] = a2_int3
-                param['int3']['even']['a3'] = a3_int3
-            if rows_int3 == 'ODD':
-                param['int3']['odd']['a0'] = a0_int3
-                param['int3']['odd']['a1'] = a1_int3
-                param['int3']['odd']['a2'] = a2_int3
-                param['int3']['odd']['a3'] = a3_int3
+            param["skip_int1"] = group_skip_table_int1
+            param["skip_int2p"] = group_skip_table_int2p  # integration 2 and higher
             break
 
     return param
-
-
-def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
-    """
-    Find the accumulated DN from the last integration
-    This data should already have the Reset Anomaly correction
-    applied (if not - should we skip frames at the beginning ?)
-
-    a Check has already been made to make sure we have at least
-    4 frames
-
-    Parameters
-    ----------
-    input_model: ~jwst.datamodels.RampModel
-    i: integration #
-    sci_ngroups: number of frames/integration
-
-    return values
-    -------------
-    sat: the previous integration for this pixel saturated: yes/no
-    dn_lastframe_23: extrapolated last frame using 2nd and 3rd to last frames
-    dn_lastframe_fit: extrapolated last frame using the fit to the entire ramp
-    """
-
-    dn_lastframe2 = input_model.data[i - 1][sci_ngroups - 2]
-    dn_lastframe3 = input_model.data[i - 1][sci_ngroups - 3]
-
-    diff = dn_lastframe2 - dn_lastframe3
-    dn_lastframe23 = dn_lastframe2 + diff
-
-    # get saturation and reference pixel DQ flag values
-    sat_flag = dqflags.group['SATURATED']
-    ref_flag = dqflags.pixel['REFERENCE_PIXEL']
-
-    # mark the locations of reference pixels
-    refpix_2d = np.bitwise_and(input_model.pixeldq, ref_flag)
-    dn_lastframe23[np.where(refpix_2d)] = 0.0
-
-    # load the ramp data needed for computing slopes
-    ramp3d = input_model.data[i - 1, 1:sci_ngroups - 1]
-    groupdq3d = input_model.groupdq[i - 1, 1:sci_ngroups - 1]
-    satmask3d = (groupdq3d == sat_flag)
-    saturated = satmask3d.any(axis=0)
-
-    # compute the slopes
-    slope, intercept, ngood = ols_fit(ramp3d, groupdq3d)
-
-    dn_lastframe_fit = slope * sci_ngroups + intercept
-
-    # reset the results for pixels with zero slope
-    slope0 = np.where(slope == 0)
-    dn_lastframe_fit[slope0] = dn_lastframe23[slope0]
-
-    # reset the results for reference pixels
-    dn_lastframe23[np.where(refpix_2d)] = 0.0
-    dn_lastframe_fit[np.where(refpix_2d)] = 0.0
-
-    return saturated, dn_lastframe23, dn_lastframe_fit
-
-
-def ols_fit(y, dq):
-    """
-    An estimation of the lastframe value from the previous integration is
-    needed for the RSCD correction.
-    This routine does a simple ordinary least squares fit to
-    non-saturating data.
-    """
-
-    sat_flag = dqflags.group['SATURATED']
-    shape = y.shape
-
-    # Find ramp values that are saturated
-    x = np.arange(shape[0], dtype=np.float64)[:, np.newaxis, np.newaxis] * \
-        np.ones(shape)
-    good_data = np.bitwise_and(dq, sat_flag) == 0
-    ngood = good_data.sum(axis=0)
-
-    # Compute sums of unsaturated (good) x/y values
-    sumx = (x * good_data).sum(axis=0)
-    sumy = (y * good_data).sum(axis=0)
-    sumxy = (x * y * good_data).sum(axis=0)
-    sumxx = (x * x * good_data).sum(axis=0)
-    nelem = good_data.sum(axis=0)
-
-    # Compute the slopes and intercepts
-    denom = nelem * sumxx - sumx * sumx
-    with np.errstate(invalid='ignore'):  # ignore division warnings
-        slope = (nelem * sumxy - sumx * sumy) / denom
-        intercept = (sumxx * sumy - sumx * sumxy) / denom
-
-    # Reset results to zero for pixels having < 3 unsaturated values
-    bad = np.where(ngood < 3)
-    slope[bad] = 0.0
-    intercept[bad] = 0.0
-
-    return (slope, intercept, ngood)

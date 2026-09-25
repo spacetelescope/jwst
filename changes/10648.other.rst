@@ -1,0 +1,1 @@
+Deprecate the ``HlspStep``, which was originally intended for coronagraphy support, but is currently unused and unmaintained.

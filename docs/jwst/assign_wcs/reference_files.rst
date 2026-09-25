@@ -16,6 +16,7 @@ Reference file types used by ``assign_wcs``
 REFTYPE                                           Description                                           Instruments
 ================================================  ====================================================  =============================
 :ref:`CAMERA <camera_reffile>`                    NIRSpec Camera model                                  NIRSpec
+:ref:`CHROMCORR <chromcorr_reffile>`              NIRSpec IFU chromaticity correction model             NIRSpec
 :ref:`COLLIMATOR <collimator_reffile>`            NIRSpec Collimator Model                              NIRSpec
 :ref:`DISPERSER <disperser_reffile>`              Disperser parameters                                  NIRSpec
 :ref:`DISTORTION <distortion_reffile>`            Spatial distortion model                              FGS, MIRI, NIRCam, NIRISS
@@ -28,6 +29,6 @@ REFTYPE                                           Description                   
 :ref:`MSA <msa_reffile>`                          Transform in the NIRSpec MSA plane                    NIRSpec
 :ref:`OTE <ote_reffile>`                          Transform through the Optical Telescope Element       NIRSpec
 :ref:`SPECWCS <specwcs_reffile>`                  Wavelength calibration models                         MIRI, NIRCam, NIRISS
-:ref:`REGIONS <regions_reffile>`                  Stores location of the regions on the detector        MIRI
+:ref:`REGIONS <regions_reffile>`                  Stores location of the regions on the detector        MIRI, NIRCam
 :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>`  Typical wavelength ranges                             MIRI, NIRCam, NIRISS, NIRSpec
 ================================================  ====================================================  =============================

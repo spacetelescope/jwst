@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 
-"""asn_gather: Copy or Move data that is listed in an association"""
-
 from jwst.associations import asn_gather
 
-if __name__ == '__main__':
+__all__ = []  # type: ignore[var-annotated]
+
+
+def main():
+    """Copy or move data that is listed in an association."""
     kwargs = asn_gather.from_cmdline()
     asn_gather.asn_gather(**kwargs)
+
+
+if __name__ == "__main__":
+    main()

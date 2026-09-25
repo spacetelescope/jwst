@@ -1,0 +1,130 @@
+name: tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release/*.x'
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    branches:
+      - main
+      - 'release/*.x'
+    tags:
+      - '*'
+  schedule:
+    - cron: "0 9 * * 1" # every Monday at 9a
+  workflow_dispatch:
+    inputs:
+      crds_context:
+        description: CRDS context (leave blank for latest)
+        type: string
+        required: false
+        default: ''
+      crds_server:
+        description: CRDS server
+        type: string
+        required: false
+        default: https://jwst-crds.stsci.edu
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.crds_context }}
+  cancel-in-progress: true
+
+permissions: {}
+
+env:
+  PYTHON_VERSIONS: 3.12 3.13 3.14
+  CRDS_PATH: /tmp/data/crds_cache
+  CRDS_OBSERVATORY: jwst
+  CRDS_SERVER_URL: ${{ inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
+  CRDS_CLIENT_RETRY_COUNT: 3
+  CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
+
+jobs:
+  supported-pythons:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3"
+      - run: pip install packaging tomli
+      - name: convert Python version(s) into JSON list
+        id: versions
+        shell: python
+        run: |
+          import os
+          import json
+
+          import tomli
+          from packaging.specifiers import SpecifierSet
+          from packaging.version import Version
+
+          with open("pyproject.toml", "rb") as pyproject_toml_file:
+            version_requirements = SpecifierSet(tomli.load(pyproject_toml_file)["project"]["requires-python"])
+
+          versions = [str(version) for version in sorted([Version(version) for version in os.environ["PYTHON_VERSIONS"].split() if version in version_requirements])]
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as github_output:
+              print(f"json={json.dumps(versions)}", file=github_output)
+              print(f"oldest={versions[0]}", file=github_output)
+              print(f"latest={versions[-1]}", file=github_output)
+    outputs:
+      python-version-json: ${{ steps.versions.outputs.json }}
+      oldest: ${{ steps.versions.outputs.oldest }}
+      latest: ${{ steps.versions.outputs.latest }}
+  crds:
+    runs-on: ubuntu-latest
+    steps:
+      - if: inputs.crds_context == ''
+        id: latest-context
+        run: >
+          echo latest-context=$(
+            curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["${{ env.CRDS_OBSERVATORY }}", "latest"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ --retry 8 --connect-timeout 10 |
+            python -c "import sys, json; print(json.load(sys.stdin)['result'])"
+          ) >> $GITHUB_OUTPUT
+    outputs:
+      path: ${{ env.CRDS_PATH }}
+      server-url: ${{ env.CRDS_SERVER_URL }}
+      context: ${{ inputs.crds_context || steps.latest-context.outputs.latest-context }}
+      client-retry-count: ${{ env.CRDS_CLIENT_RETRY_COUNT }}
+      client-retry-delay-seconds: ${{ env.CRDS_CLIENT_RETRY_DELAY_SECONDS }}
+  test:
+    needs:
+      - supported-pythons
+      - crds
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@22ddf09dfabb443adddfb9f861b7d41a787d6b1a # v3.0.3
+    with:
+      setenv: |
+        CRDS_PATH: ${{ needs.crds.outputs.path }}
+        CRDS_SERVER_URL: ${{ needs.crds.outputs.server-url }}
+        CRDS_CONTEXT: ${{ needs.crds.outputs.context }}
+        CRDS_CLIENT_RETRY_COUNT: ${{ needs.crds.outputs.client-retry-count }}
+        CRDS_CLIENT_RETRY_DELAY_SECONDS: ${{ needs.crds.outputs.client-retry-delay-seconds}}
+      cache-path: ${{ needs.crds.outputs.path }}
+      cache-key: crds-${{ needs.crds.outputs.context }}
+      envs: |
+        - linux: check-dependencies
+          python-version: ${{ needs.supported-pythons.outputs.latest }} 
+        - name: run tests (oldest supported Python, ubuntu-latest)
+          linux: py3-oldestdeps-cov-xdist
+          python-version: ${{ needs.supported-pythons.outputs.oldest }}
+        - linux: py*-xdist
+        - name: run tests with coverage (latest supported Python, ubuntu-latest)
+          linux: py3-cov-xdist
+          python-version: ${{ needs.supported-pythons.outputs.latest }}
+          pytest-results-summary: true
+          coverage: codecov
+        - name: run tests (latest supported Python, macos-latest)
+          macos: py3-xdist
+          python-version: ${{ needs.supported-pythons.outputs.latest }}
+      artifact-path: |
+        results.xml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -1,1 +1,0 @@
-Refactor jump step for memory consumption, readability, and maintenance.

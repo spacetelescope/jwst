@@ -1,9 +1,10 @@
 Reference Files
 ===============
-The ``photom`` step uses :ref:`PHOTOM <photom_reffile>`
-and pixel :ref:`AREA <area_reffile>` reference files.
-The AREA reference file is only used when processing
-imaging and NIRSpec IFU observations.
+The ``photom`` step uses the following reference files:
+
+* :ref:`PHOTOM <photom_reffile>`
+* pixel :ref:`AREA <area_reffile>` (only used when processing
+  imaging and NIRSpec IFU observations)
 
 .. include:: ../references_general/photom_reffile.inc
 

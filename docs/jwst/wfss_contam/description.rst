@@ -1,7 +1,7 @@
 Description
-============
+===========
 
-:Class: `jwst.wfss_contam.WfssContamStep`
+:Class: `~jwst.wfss_contam.wfss_contam_step.WfssContamStep`
 :Alias: wfss_contam
 
 The Wide Field Slitless Spectroscopy (WFSS) contamination correction
@@ -19,80 +19,190 @@ in the following sections.
 
 Inputs
 ------
+
 The method utilized to perform the correction requires several input data
 products, including:
 
- 1) The grism data to be corrected. The step is applied near the end of the
-    :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, after the application of
-    the :ref:`extract_2d <extract_2d_step>` and :ref:`srctype <srctype_step>`
-    steps, but before the :ref:`photom <photom_step>` step. Thus individual
-    2D cutouts exist for each identified source in the grism image, and the
-    data are still in units of countrate.
-
- 2) The resampled direct image (:ref:`i2d <i2d>` product) of the field,
-    usually obtained from the same WFSS observation as the grism image. The
-    name of the direct image to use is retrieved from the "DIRIMAGE" keyword
-    in the input grism image, which should've been populated at the
-    beginning of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline from an
-    entry in the "spec2" input ASN file.
-
- 3) The segmentation map (:ref:`segm <segm>` product) created from the direct image
-    during :ref:`calwebb_image3 <calwebb_image3>` processing. The name of
-    the segmentation map to use is retrieved from the "SEGMFILE" keyword in
-    the input grism image, which should've been populated at the beginning
-    of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline from an entry in
-    the "spec2" input ASN file.
+1. The grism data to be corrected. The step is applied near the end of the
+   :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, after the application of
+   the :ref:`extract_2d <extract_2d_step>` and :ref:`srctype <srctype_step>`
+   steps, but before the :ref:`photom <photom_step>` step. Thus individual
+   2D cutouts exist for each identified source in the grism image, and the
+   data are still in units of countrate.
+2. The resampled direct image (:ref:`i2d <i2d>` product) of the field,
+   usually obtained from the same WFSS observation as the grism image. The
+   name of the direct image to use is retrieved from the "DIRIMAGE" keyword
+   in the input grism image, which should've been populated at the
+   beginning of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline from an
+   entry in the "spec2" input ASN file.
+3. The segmentation map (:ref:`segm <segm>` product) created from the direct image
+   during :ref:`calwebb_image3 <calwebb_image3>` processing. The name of
+   the segmentation map to use is retrieved from the "SEGMFILE" keyword in
+   the input grism image, which should've been populated at the beginning
+   of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline from an entry in
+   the "spec2" input ASN file.
 
 The Method
 ----------
-Here we describe the steps used to perform the contamination correction.
 
- 1) First, a full-frame intermediate image, matching the size and shape of the
-    grism image to be corrected, is created and populated with simulated spectra of
-    all known sources in the field. The simulated spectra are created as follows:
+Here we describe the steps used to perform the contamination correction:
 
-    a) The segmentation (:ref:`segm <segm>`) file is searched for pixels with
-       non-zero values and lists of pixels belonging to each source are created.
-    b) The fluxes of each pixel in the lists are loaded from the direct image
-       (:ref:`i2d <i2d>`), creating a list of per-pixel flux values for each source.
-    c) A list of wavelength values is created for each source, which will be used to
-       create the simulated spectra. The wavelength values span the range given by
-       minimum and maximum wavelengths read from the WAVELENGTHRANGE reference file
-       and are order-dependent.
-    d) The direct image pixel locations and wavelengths for each source are transformed
-       into dispersed pixel locations within the grism image using the WCS transforms
-       of the input grism image.
-    e) The flux of each direct image pixel belonging to each source is
-       "dispersed" into the list of grism image pixel locations, thus creating a
-       simulated spectrum.
-    f) The initial simulated spectra are in flux-calibrated units, so each spectrum
-       is divided by the sensitivity curve from the PHOTOM reference file, to convert
-       the simulated spectra to units of countrates, thus matching the units of the
-       observed grism data.
-    g) The simulated spectrum for each source is stored in the full-frame image.
-    h) Steps c-g are repeated for all spectral orders defined in the WAVELENGTHRANGE
-       reference file.
- 2) 2D cutouts are created from the full-frame simulated grism image, matching the
-    cutouts of each source in the input grism data.
- 3) For each source cutout, the simulated spectrum of the primary source is removed
-    from the simulated cutout, leaving only the simulated spectra of any nearby
-    contaminating sources.
- 4) The simulated contamination cutout is subtracted from the observed source cutout,
-    thereby removing the signal from contaminating spectra.
+1. First, a full-frame intermediate image, matching the size and shape of the
+   grism image to be corrected, is created and populated with simulated spectra of
+   all known sources in the field. The simulated spectra are created as follows:
+
+   a. The segmentation (:ref:`segm <segm>`) file is searched for pixels with
+      non-zero values and lists of pixels belonging to each source are created.
+   b. The fluxes of each pixel in the lists are loaded from the direct image
+      (:ref:`i2d <i2d>`), creating a list of per-pixel flux values for each source.
+   c. A list of wavelength values is created for each source, which will be used to
+      create the simulated spectra. The wavelength values span the range given by
+      minimum and maximum wavelengths read from the WAVELENGTHRANGE reference file
+      and are order-dependent.
+   d. The direct image pixel locations and wavelengths for each source are transformed
+      into dispersed pixel locations within the grism image using the WCS transforms
+      of the input grism image.
+   e. The flux of each direct image pixel belonging to each source is
+      "dispersed" into the list of grism image pixel locations, thus creating a
+      simulated spectrum.
+   f. The initial simulated spectra are in flux-calibrated units, so each spectrum
+      is divided by the sensitivity curve from the PHOTOM reference file, to convert
+      the simulated spectra to units of countrates, thus matching the units of the
+      observed grism data.
+   g. The simulated spectrum for each source is stored in the full-frame image.
+   h. Steps c-g are repeated for all spectral orders defined in the WAVELENGTHRANGE
+      reference file.
+
+2. 2D cutouts are created from the full-frame simulated grism image, matching the
+   cutouts of each source in the input grism data.
+3. For each source cutout, the simulated spectrum of the primary source is removed
+   from the simulated cutout, leaving only the simulated spectra of any nearby
+   contaminating sources.
+4. The simulated contamination cutout is subtracted from the observed source cutout,
+   thereby removing the signal from contaminating spectra. If polynomial fitting is 
+   enabled, see the section on :ref:`polynomial_flux_modeling` below for details
+   on how this modifies steps 3 & 4.
 
 Outputs
 -------
-There is one primary output and two optional outputs from the step:
 
- 1) The primary output is the contamination-corrected grism data, in the form of a
-    `~jwst.datamodels.MultiSlitModel` data model. In the :ref:`calwebb_spec2 <calwebb_spec2>`
-    pipeline flow, this data model is passed along to the :ref:`photom <photom_step>` step
-    for further processing.
+There is one primary output and one optional output from the step:
 
- 2) If the step argument `--save_simulated_image` is set to `True`, the full-frame
-    image containing all simulated spectra (the result of step 1 above) is saved to
-    a file. See :ref:`wfss_contam_step_args`.
+1. The primary output is the contamination-corrected grism data, in the form of a
+   `~stdatamodels.jwst.datamodels.MultiSlitModel` data model. In the :ref:`calwebb_spec2 <calwebb_spec2>`
+   pipeline flow, this data model is passed along to the :ref:`photom <photom_step>` step
+   for further processing. The output datamodel also contains the simulated images
+   (for all sources brighter than the magnitude limit) and the contamination image
+   for each source cutout, as generated by step 3 above. These are available in the
+   ``.simul`` attribute ("SIMUL" FITS extension) and ``.contam`` attribute
+   ("CONTAM" FITS extension).
+2. If the step argument ``--save_simulated_image`` is set to `True`, the full-frame
+   image containing all simulated spectra (the result of step 1 above) is saved to
+   a file. See :ref:`wfss_contam_step_args`.
 
- 3) If the step argument `--save_contam_images` is set to `True`, the simulated
-    contamination cutouts (the result of step 3 above) are saved to a file.
-    See :ref:`wfss_contam_step_args`.
+.. _polynomial_flux_modeling:
+
+Multi-Band Direct Imaging
+-------------------------
+
+By default, each source is simulated with a spectrally flat flux model - that is, the
+flux at every wavelength is taken directly from the pixel values of a single input direct image.
+If desired, e.g. if multiple direct images are available in different filters, one can specify
+fluxes at multiple wavelengths in each direct-image pixel. This is done by replacing the direct
+image (`_i2d`) file in the input association with a `~stdatamodels.jwst.datamodels.WFSSCubeModel`
+file. This file contains a 3-D array in its ``model.data`` attribute, where the last two dimensions
+are the spatial dimensions of the direct image, and the first dimension has the same length as the
+number of direct images provided. The ``model.wavelength`` attribute is a 1-D array
+that specifies the corresponding wavelengths.
+See the `JWST pipeline notebooks <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-pipeline-notebooks>`_
+for examples of how to create a `~stdatamodels.jwst.datamodels.WFSSCubeModel` file from
+multiple direct images, and how to run it through the pipeline.
+
+When the step encounters a `~stdatamodels.jwst.datamodels.WFSSCubeModel` file in place of the direct image,
+it performs a linear interpolation in wavelength for each pixel to determine the flux at the simulated
+dispersed wavelengths. This allows the step to improve its simulation based on known spectral information.
+The utility of this approach is not limited to the case of multiple direct images in a single observation;
+arbitrarily complex spectral information can be encoded by hand-editing the model, e.g. to include stellar
+simulations for certain sources. Any number of wavelengths can be included in the model.
+
+If the dispersed wavelengths extend outside the wavelengths specified in the
+``model.wavelength``, a flat extrapolation is used. If NaNs are encountered in a given pixel at some
+wavelengths but not others, they are filled in as if those pixels did not exist: if the NaN is bounded
+in the wavelength dimension by valid flux values, it is filled in with a linear interpolation in wavelength;
+if the NaN is only bounded on one side by valid flux values, it is filled in with a flat extrapolation
+of the nearest valid value. If the whole wavelength dimension is NaN, that pixel is not modeled at all.
+
+Note that the last two dimensions of the data must match the shape of the segmentation map.
+As normal, nonzero pixels in the segmentation map are the ones that get simulated.
+
+
+Polynomial Flux Modeling
+------------------------
+
+By default, each source is simulated with a spectrally flat flux model - that is, the
+flux at every wavelength is taken directly from the direct image pixel values. 
+When the step argument ``--polyfit_degree`` is set to an integer ``N``, the step
+fits a spectral model to each source, starting with the brightest sources first.
+The procedure is:
+
+1. In addition to the standard flat-spectrum simulation (the constant, degree-0 term),
+   *N* additional grism-frame images are simulated for each source, where for the *i*\ th
+   simulation from *i* = 1 to *i* = *N*, the spectral flux distribution is assumed to follow
+   the *i*\ th order Legendre polynomial. Legendre polynomials were chosen because
+   they form an orthogonal basis set, which makes the fitter prefer smaller coefficients
+   instead of oscillating large positive and negative coefficients.
+   Recall that each dispersed-image pixel represents
+   a linear combination of the contribution of several direct-image pixels at different
+   wavelengths. These basis functions therefore must be computed before the dispersed image
+   is discretized onto a pixel grid, i.e., just after the dispersion calculation.
+
+2. For each source, the observed 2D spectrum is fit as a linear combination of
+   these :math:`N+1` basis images, i.e.
+
+   .. math::
+
+      \text{observed} \approx c_0 \cdot B_0 + c_1 \cdot P_1(\lambda) + \cdots + c_N \cdot P_N(\lambda)
+
+   where :math:`B_0` is the flat-spectrum simulation and :math:`P_k(\lambda)` is the simulation
+   driven by the :math:`k`-th order Legendre polynomial flux model.  The coefficients :math:`c_k` are
+   determined using a linear least-squares fit with L2 regularization, the strength of 
+   which is set by the step argument ``--l2_alpha``. The regularization helps to
+   keep the coefficients small, guarding against physically implausible flux distributions.
+
+3. The fitted coefficients are checked to see if the fitted constant term coefficient,
+   :math:`c_0`, deviates from unity by more than a threshold set by the step argument
+   ``--rejection_threshold``. If it does, the fit is rejected and the contamination estimate
+   for that source is not updated on that iteration. This is used to avoid fits "blowing up"
+   in cases where the polynomial fit has returned an unphysical total flux level,
+   which typically occurs if background subtraction was imperfect or if the source sits
+   in a highly contaminated region.
+
+4. If a good solution was found, the best-fit linear combination replaces the original
+   simulation for that source, and this spectrally corrected simulation is used in the
+   contamination model. The contamination model is updated immediately after each source
+   is fit, so fainter sources fit later in an iteration can benefit from the improved
+   contamination correction from brighter sources fit earlier in the same iteration.
+   If no good solution was found, the original flat-spectrum simulation is not modified.
+
+The ``--n_iterations`` argument controls how many times the polynomial fit is repeated.
+On the first iteration only the flat-spectrum simulated contamination has been subtracted from the
+observed spectrum; on subsequent iterations it is replaced by the updated contamination correction
+based on the spectra from the previous pass.
+In practice, the polynomial fit typically converges for the majority of sources on the first
+iteration, and the second iteration improves fits and allows more fits to be accepted in
+highly-contaminated regions.  ``n_iterations > 2`` typically does not
+provide much additional improvement.
+Iteration has no effect when ``--polyfit_degree`` is not set.
+
+Multiprocessing
+---------------
+The step can make use of multiple CPU cores to speed up the simulation of the
+dispersed spectra. In short, the direct image pixels to be processed are divided into
+chunks that are distributed to the available CPU cores. Each core processes its
+assigned chunk of pixels, and the results are combined into the final full-frame
+simulated grism image.
+The number of cores to use can be set using the step argument ``--maximum_cores``,
+and the maximum number of direct image pixels to be processed at once can be set using the
+step argument ``--max_pixels_per_chunk``; see :ref:`wfss_contam_step_args`.
+See :ref:`multiprocessing` for more details and examples of how to run a pipeline step
+with multiprocessing enabled.

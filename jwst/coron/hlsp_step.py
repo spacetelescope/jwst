@@ -1,17 +1,22 @@
-#! /usr/bin/env python
+import logging
+import warnings
+
 from stdatamodels.jwst import datamodels
 
-from . import hlsp
-from ..stpipe import Step
+from jwst.coron import hlsp
+from jwst.stpipe import Step
 
 __all__ = ["HlspStep"]
 
+log = logging.getLogger(__name__)
+
 
 class HlspStep(Step):
-
     """
-    HlspStep: Make High-Level Science Products (HLSP's) from the results of
-    coronagraphic exposure that's had KLIP processing applied to it.
+    Make High-Level Science Products (HLSP's) after KLIP processing has been applied.
+
+    .. deprecated:: 3.0.0
+       This step has been deprecated and will be removed in a future release.
     """
 
     class_alias = "hlsp"
@@ -19,33 +24,41 @@ class HlspStep(Step):
     spec = """
         annuli_width = integer(default=2, min=1) # Width of contrast annuli
         save_results = boolean(default=true) # Save results
-    """ # noqa: E501
+    """  # noqa: E501
 
     def process(self, target):
+        """Execute the HLSP calibration step."""
+        deprecation_message = (
+            "'HlspStep' has been deprecated since 3.0.0 and will be removed in a future release."
+        )
+        warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+        log.warning(deprecation_message)
 
         width = self.annuli_width
 
         # Open the input target image model
-        with datamodels.ImageModel(target) as target_model:
+        target_model = self.prepare_output(target, open_as_type=datamodels.ImageModel)
 
-            # Create a signal-to-noise ratio image
-            self.log.info('Creating SNR image')
-            snr = hlsp.snr_image(target_model)
+        # Create a signal-to-noise ratio image
+        log.info("Creating SNR image")
+        snr = hlsp.snr_image(target_model)
 
-            # Create a contrast curve
-            self.log.info('Creating contrast curve')
-            contrast = hlsp.contrast_curve(target_model, width)
+        # Create a contrast curve
+        log.info("Creating contrast curve")
+        contrast = hlsp.contrast_curve(target_model, width)
 
         # Save the SNR output file
         if self.output_file is None:
             self.output_file = target_model.meta.filename
-        snr.meta.cal_step.hlsp = 'COMPLETE'
-        self.save_model(snr, suffix='snr')
+        snr.meta.cal_step.hlsp = "COMPLETE"
+        self.save_model(snr, suffix="snr")
         snr.close()
 
         # Save the Contrast curve file
-        contrast.meta.cal_step.hlsp = 'COMPLETE'
-        self.save_model(contrast, 'contrast')
+        contrast.meta.cal_step.hlsp = "COMPLETE"
+        self.save_model(contrast, "contrast")
         contrast.close()
 
-        return
+        # Close the target model if it was opened here
+        if target_model is not target:
+            target_model.close()

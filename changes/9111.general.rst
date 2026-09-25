@@ -1,1 +1,0 @@
-Remove the fits_generator submodule from the repository

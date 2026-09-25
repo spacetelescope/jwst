@@ -1,20 +1,31 @@
+import logging
+
+import astropy.units as u
 import numpy as np
 
 from jwst.photom.photom import find_row
 
-import logging
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["get_photom_data", "create_1d_sens"]
 
 
 def get_photom_data(phot_model, filter_name, pupil, order):
     """
     Retrieve wavelength and response data from photom ref file.
 
+    Wavelengths from the reference file are expected to be in units of microns.
+    Units of the relative response values depend on the instrument:
+
+    - NIRCam: (Angstrom) * (MJy/sr) / (ADU/s)
+    - NIRISS: (micron) * (MJy / sr) / (ADU/s)
+
+    Output units are converted to (micron) * (MJy / sr) / (ADU/s).
+
     Parameters
     ----------
-    phot_model : `jwst.datamodels.NrcWfssPhotomModel` or `jwst.datamodels.NisWfssPhotomModel`
+    phot_model : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel` or \
+                 `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
         Photom ref file data model
     filter_name : str
         Filter value
@@ -26,9 +37,10 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     Returns
     -------
     ref_waves : float array
-        Array of wavelengths from the ref file
+        Wavelengths from the ref file.
     relresps : float array
-        Array of response (flux calibration) values from the ref file
+        Wavelength-dependent response (flux calibration) values from the ref file,
+        same shape as ``ref_waves``, units of (micron) * (MJy / sr) / (ADU/s).
     """
     # Get the appropriate row of data from the reference table
     phot_table = phot_model.phot_table
@@ -37,7 +49,9 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     tabdata = phot_table[row]
 
     # Scalar conversion factor
-    scalar_conversion = tabdata["photmjsr"]  # unit is MJy / sr
+    expected_unit = "MJy micron s / (DN sr)"
+    conversion_factor = u.Unit(phot_model.phot_unit).to(u.Unit(expected_unit))
+    scalar_conversion = conversion_factor * tabdata["photmjsr"]
 
     # Get the length of the relative response arrays in this row
     nelem = tabdata["nelem"]
@@ -51,11 +65,6 @@ def get_photom_data(phot_model, filter_name, pupil, order):
         index = np.argsort(ref_waves)
         ref_waves = ref_waves[index].copy()
         relresps = relresps[index].copy()
-
-    # Convert wavelengths from meters to microns, if necessary
-    microns_100 = 1.0e-4  # 100 microns, in meters
-    if ref_waves.max() > 0.0 and ref_waves.max() < microns_100:
-        ref_waves *= 1.0e6
 
     return ref_waves, relresps
 

@@ -1,36 +1,34 @@
-from collections.abc import MutableMapping
-from datetime import datetime, timezone
 import json
-import jsonschema
 import logging
 import re
-import os
 import warnings
+from collections.abc import MutableMapping
+from datetime import UTC, datetime
+from pathlib import Path
 
-from . import __version__
-from .exceptions import (
-    AssociationNotValidError
-)
-from .lib.constraint import (
-    Constraint,
-    meets_conditions
-)
-from stpipe.format_template import FormatTemplate
-from .lib.ioregistry import IORegistry
+import jsonschema
+from astropy.utils.decorators import deprecated_renamed_argument
+from astropy.utils.exceptions import AstropyDeprecationWarning
 
-__all__ = ['Association']
+from jwst import __version__
+from jwst.associations.association_io import json_asn_dump, json_asn_load
+from jwst.associations.exceptions import AssociationNotValidError
+from jwst.associations.format_template import FormatTemplate
+from jwst.associations.lib.constraint import Constraint, meets_conditions
+
+__all__ = ["Association"]
 
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Timestamp template
-_TIMESTAMP_TEMPLATE = '%Y%m%dt%H%M%S'
+_TIMESTAMP_TEMPLATE = "%Y%m%dt%H%M%S"
 
 
 class Association(MutableMapping):
-    """Association Base Class
+    """
+    Association base class.
 
     Parameters
     ----------
@@ -38,16 +36,11 @@ class Association(MutableMapping):
         Version ID to use in the name of this association.
         If None, nothing is added.
 
-    Raises
-    ------
-    AssociationError
-        If an item doesn't match.
-
     Attributes
     ----------
     instance : dict-like
         The instance is the association data structure.
-        See `data` below
+        See ``data`` below.
 
     meta : dict
         Information about the association.
@@ -60,6 +53,11 @@ class Association(MutableMapping):
     schema_file : str
         The name of the output schema that an association
         must adhere to.
+
+    Raises
+    ------
+    jwst.associations.exceptions.AssociationError
+        If an item doesn't match.
     """
 
     registry = None
@@ -74,36 +72,29 @@ class Association(MutableMapping):
     """
 
     DEFAULT_EVALUATE = False
-    """Default do not evaluate input values"""
+    """Default do not evaluate input values."""
 
     GLOBAL_CONSTRAINT = None
-    """Global constraints"""
+    """Global constraints."""
 
     INVALID_VALUES: tuple | None = None
-    """Attribute values that indicate the
-    attribute is not specified.
-    """
+    """Attribute values that indicate the attribute is not specified."""
 
-    ioregistry: IORegistry = IORegistry()
-    """The association IO registry"""
-
-    def __init__(
-            self,
-            version_id=None,
-    ):
-
-        self.data = dict()
+    def __init__(self, version_id=None):
+        self.data = {}
         self.run_init_hook = True
         self.meta = {}
 
         self.version_id = version_id
 
-        self.data.update({
-            'asn_type': 'None',
-            'asn_rule': self.asn_rule,
-            'version_id': self.version_id,
-            'code_version': __version__,
-        })
+        self.data.update(
+            {
+                "asn_type": "None",
+                "asn_rule": self.asn_rule,
+                "version_id": self.version_id,
+                "code_version": __version__,
+            }
+        )
 
         # Setup constraints
         # These may be predefined by a rule.
@@ -117,7 +108,8 @@ class Association(MutableMapping):
 
     @classmethod
     def create(cls, item, version_id=None):
-        """Create association if item belongs
+        """
+        Create association if item belongs.
 
         Parameters
         ----------
@@ -130,11 +122,11 @@ class Association(MutableMapping):
 
         Returns
         -------
-        (association, reprocess_list)
-            2-tuple consisting of:
-                - association or None: The association or, if the item does not
-                  match this rule, None
-                - [ProcessList[, ...]]: List of items to process again.
+        asn : `~jwst.associations.association.Association` or None
+            The association or, if the item does not match this rule, None.
+
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of items to process again.
         """
         asn = cls(version_id=version_id)
         matches, reprocess = asn.add(item)
@@ -144,47 +136,66 @@ class Association(MutableMapping):
 
     @property
     def asn_name(self):
-        """Suggest filename for the association"""
-        return 'unnamed_association'
+        """
+        Suggest filename for the association.
+
+        Returns
+        -------
+        str
+            Default asn name of 'unnamed_association'.
+        """
+        return "unnamed_association"
 
     @classmethod
-    def _asn_rule(cls):
+    def rule_name(cls):
+        """
+        Return rule name.
+
+        Returns
+        -------
+        str
+            The name of the rule class.
+        """
         return cls.__name__
 
     @property
-    def asn_rule(self):
-        """Name of the rule"""
-        return self._asn_rule()
+    def asn_rule(self):  # numpydoc ignore=RT01
+        """Same as :meth:`rule_name`."""
+        return self.rule_name()
 
     @classmethod
-    def validate(cls, asn):
-        """Validate an association against this rule
+    def validate(cls, asn, error_on_fail=True):
+        """
+        Validate an association against this rule.
 
         Parameters
         ----------
-        asn : Association or association-like
-            The association structure to examine
+        asn : `~jwst.associations.association.Association`
+            The association structure to examine.
+
+        error_on_fail : bool
+            On validation error, throw exception instead of
+            changing return status.
 
         Returns
         -------
         valid : bool
-            True if valid. Otherwise the `AssociationNotValidError` is raised
+            `True` if valid. When invalid, an exception is raised
+            if ``error_on_fail`` is `True`, otherwise `False`.
 
         Raises
         ------
-        AssociationNotValidError
-            If there is some reason validation failed.
+        jwst.associations.exceptions.AssociationNotValidError
+            Validation failed and ``error_on_fail`` is `True`.
 
         Notes
         -----
-        The base method checks against the rule class' schema
+        The base method checks against the rule class' schema (``schema_file``).
         If the rule class does not define a schema, a warning is issued
-        but the routine will return True.
+        in logger but the routine will still return `True`.
         """
-        if not hasattr(cls, 'schema_file'):
-            logger.warning(
-                'Cannot validate: {} has no schema. Presuming OK.'.format(cls)
-            )
+        if not hasattr(cls, "schema_file"):
+            logger.warning("Cannot validate: %s has no schema. Presuming OK.", str(cls))
             return True
 
         if isinstance(asn, cls):
@@ -192,127 +203,139 @@ class Association(MutableMapping):
         else:
             asn_data = asn
 
-        with open(cls.schema_file, 'r') as schema_file:
+        with Path(cls.schema_file).open("r") as schema_file:
             asn_schema = json.load(schema_file)
 
         try:
             jsonschema.validate(asn_data, asn_schema)
         except (AttributeError, jsonschema.ValidationError) as err:
-            logger.debug('Validation failed:')
-            logger.debug(str(err))
-            raise AssociationNotValidError('Validation failed') from err
+            logger.debug("Validation failed:\n%s", str(err))
+            if error_on_fail:
+                raise AssociationNotValidError("Validation failed") from err
+            else:
+                return False
 
-        # Validate no path data for expnames
+        # Warn if path data found for expnames
+        no_path = Path()
         for product in asn_data["products"]:
-            members = product['members']
+            members = product["members"]
             for member in members:
-                fpath, fname = os.path.split(member["expname"])
-                if len(fpath) > 0:
-                    err_str = "Input association file contains path information;"
-                    err_str += " note that this can complicate usage and/or sharing"
-                    err_str += " of such files."
+                fpath = Path(member["expname"]).parent
+                if fpath != no_path:
+                    err_str = (
+                        "Input association file contains path information; "
+                        "note that this can complicate usage and/or sharing "
+                        "of such files."
+                    )
                     logger.debug(err_str)
-                    warnings.warn(err_str, UserWarning)
+                    warnings.warn(err_str, UserWarning, stacklevel=1)
         return True
 
-    def dump(self, format='json', **kwargs):
-        """Serialize the association
+    @deprecated_renamed_argument("fmt", None, since="2.1")
+    def dump(
+        self,
+        fmt=None,  # noqa: ARG002
+        **kwargs,
+    ):
+        """
+        Serialize the association.
 
         Parameters
         ----------
-        format : str
+        fmt : str
             The format to use to dump the association into.
 
-        kwargs : dict
+            .. version-deprecated:: 2.1
+                Only JSON format is supported now.
+
+        **kwargs
             List of arguments to pass to the registered
             routines for the current association type.
 
+            .. version-deprecated:: 2.1
+                This is completely ignored.
+
         Returns
         -------
-        (name, serialized):
-            Tuple where the first item is the suggested
-            base name for the file.
-            Second item is the serialization.
+        asn_filename : str
+            Suggested base name for the JSON file.
+            This is taken from the ``asn_name`` attribute.
+
+        serialized : str
+            JSON serialization of this association.
 
         Raises
         ------
-        AssociationError
-            If the operation cannot be done
-
-        AssociationNotValidError
-            If the given association does not validate.
+        jwst.associations.exceptions.AssociationNotValidError
+            If the association does not validate.
         """
-        if self.is_valid:
-            return self.ioregistry[format].dump(self, **kwargs)
-        else:
-            raise AssociationNotValidError(
-                'Association {} is not valid'.format(self)
+        if kwargs:
+            warnings.warn(
+                "Usage of kwargs was deprecated in version 2.1 and "
+                "will be removed in a future version; it currently "
+                "is completely ignored.",
+                AstropyDeprecationWarning,
+                stacklevel=2,
             )
 
+        if self.is_valid:
+            return json_asn_dump(self)
+
+        raise AssociationNotValidError(f"Association {self} is not valid")
+
     @classmethod
+    @deprecated_renamed_argument("fmt", None, since="2.1")
     def load(
-            cls,
-            serialized,
-            format=None,
-            validate=True,
-            **kwargs
+        cls,
+        serialized,
+        fmt=None,  # noqa: ARG003
+        validate=True,
+        **kwargs,
     ):
-        """Marshall a previously serialized association
+        """
+        Load a serialized association.
 
         Parameters
         ----------
-        serialized : object
+        serialized : str, dict, or file-like
             The serialized form of the association.
 
-        format : str or None
+        fmt : str or None
             The format to force. If None, try all available.
+
+            .. version-deprecated:: 2.1
+                Only JSON format is supported now.
 
         validate : bool
             Validate against the class' defined schema, if any.
 
-        kwargs : dict
-            Other arguments to pass to the `load` method
+        **kwargs : dict
+            Other arguments to pass to the ``load`` method.
+
+            .. version-deprecated:: 2.1
+                This is completely ignored.
 
         Returns
         -------
-        association : Association
+        association : `~jwst.associations.association.Association`
             The association.
 
         Raises
         ------
-        AssociationNotValidError
+        jwst.associations.exceptions.AssociationNotValidError
             Cannot create or validate the association.
-
-        Notes
-        -----
-        The `serialized` object can be in any format
-        supported by the registered I/O routines. For example, for
-        `json` and `yaml` formats, the input can be either a string or
-        a file object containing the string.
         """
-        if format is None:
-            formats = [
-                format_func
-                for format_name, format_func in cls.ioregistry.items()
-            ]
-        else:
-            formats = [cls.ioregistry[format]]
-
-        for format_func in formats:
-            try:
-                asn = format_func.load(
-                    cls, serialized, **kwargs
-                )
-            except AssociationNotValidError:
-                continue
-            else:
-                break
-        else:
-            raise AssociationNotValidError(
-                'Cannot translate "{}" to an association'.format(serialized)
+        if kwargs:
+            warnings.warn(
+                "Usage of kwargs was deprecated in version 2.1 and "
+                "will be removed in a future version; it currently "
+                "is completely ignored.",
+                AstropyDeprecationWarning,
+                stacklevel=2,
             )
 
-        # Validate
+        asn = json_asn_load(serialized)
+
         if validate:
             cls.validate(asn)
 
@@ -320,15 +343,19 @@ class Association(MutableMapping):
 
     @property
     def is_valid(self):
-        """Check if association is valid"""
-        try:
-            self.__class__.validate(self)
-        except AssociationNotValidError:
-            return False
-        return True
+        """
+        Check if association is valid.
+
+        Returns
+        -------
+        bool
+            `True` if association is valid, otherwise `False`.
+        """
+        return self.__class__.validate(self, error_on_fail=False)
 
     def add(self, item, check_constraints=True):
-        """Add the item to the association
+        """
+        Add the item to the association.
 
         Parameters
         ----------
@@ -336,15 +363,18 @@ class Association(MutableMapping):
             The item to add.
 
         check_constraints : bool
-            If True, see if the item should belong to this association.
-            If False, just add it.
+            If `True`, see if the item should belong to this association.
+            If `False`, just add it.
 
         Returns
         -------
-        (match, reprocess_list)
-            2-tuple consisting of:
-                - bool : True if match
-                - [ProcessList[, ...]]: List of items to process again.
+        match : bool
+            `True` if the all constraints are satisfied or skipped.
+            This could also be the value of ``self.constraints['force_match']``
+            when it is set.
+
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of items to process again.
         """
         if self.is_item_member(item):
             return True, []
@@ -362,7 +392,7 @@ class Association(MutableMapping):
         # If a constraint `force_match` exists, set the `match`
         # result to the value of the constraint.
         try:
-            force_match = self.constraints['force_match'].value
+            force_match = self.constraints["force_match"].value
         except (KeyError, TypeError):
             pass
         else:
@@ -372,8 +402,8 @@ class Association(MutableMapping):
         return match, reprocess
 
     def check_and_set_constraints(self, item):
-        """Check whether the given dictionaries match parameters for
-        for this association
+        """
+        Check whether the given dictionaries match parameters for this association.
 
         Parameters
         ----------
@@ -383,11 +413,11 @@ class Association(MutableMapping):
 
         Returns
         -------
-        (match, reprocess)
-            2-tuple consisting of:
-                - bool : Did constraint match?
-                - [ProcessItem[, ...]]: List of items to process again.
+        match : bool
+            `True` if the all constraints are satisfied.
 
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of items to process again.
         """
         self.constraints.preserve()
         match, reprocess = self.constraints.check_and_set(item)
@@ -402,61 +432,56 @@ class Association(MutableMapping):
 
         return match, reprocess
 
-    def match_constraint(self, item, constraint, conditions):
-        """Generic constraint checking
+    def match_constraint(self, item, conditions):
+        """
+        Match against constraints.
 
         Parameters
         ----------
         item : dict
-            The item to retrieve the values from
-
-        constraint : str
-            The name of the constraint
+            The item to retrieve the values from.
 
         conditions : dict
-            The conditions structure
+            The conditions structure.
 
         Returns
         -------
-        (matches, reprocess_list)
-            2-tuple consisting of:
-                - bool : True if the all constraints are satisfied
-                - [ProcessList[, ...]]: List of items to process again.
+        match : bool
+            `True` if the all constraints are satisfied.
+
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of items to process again.
         """
         reprocess = []
-        evaled_str = conditions['inputs'](item)
-        if conditions['value'] is not None:
-            if not meets_conditions(
-                    evaled_str, conditions['value']
-            ):
+        evaled_str = conditions["inputs"](item)
+        if conditions["value"] is not None:
+            if not meets_conditions(evaled_str, conditions["value"]):
                 return False, reprocess
 
         # At this point, the constraint has passed.
         # Fix the conditions.
         escaped_value = re.escape(evaled_str)
-        conditions['found_values'].add(escaped_value)
-        if conditions['value'] is None or \
-           conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-            conditions['value'] = escaped_value
-            conditions['force_unique'] = False
+        conditions["found_values"].add(escaped_value)
+        if conditions["value"] is None or conditions.get("force_unique", self.DEFAULT_FORCE_UNIQUE):
+            conditions["value"] = escaped_value
+            conditions["force_unique"] = False
 
-        # That's all folks
         return True, reprocess
 
     def finalize(self):
-        """Finalize association
+        """
+        Finalize association.
 
-        Finalize or close-off this association. Perform validations,
+        Finalize or close off this association. Perform validations,
         modifications, etc. to ensure that the association is
         complete.
 
         Returns
         -------
-        associations : [association[, ...]] or None
+        associations : list of `~jwst.associations.association.Association` or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
-
         """
         if self.is_valid:
             return [self]
@@ -464,20 +489,21 @@ class Association(MutableMapping):
             return None
 
     def is_item_member(self, item):
-        """Check if item is already a member of this association
+        """
+        Check if item is already a member of this association.
 
         Parameters
         ----------
         item : dict
-            The item to add.
+            The item to check.
 
         Returns
         -------
         is_item_member : bool
-            True if item is a member.
+            `True` if item is a member.
         """
         raise NotImplementedError(
-            'Association.is_item_member must be implemented by a specific association rule.'
+            "Association.is_item_member must be implemented by a specific association rule."
         )
 
     def _init_hook(self, item):
@@ -485,33 +511,36 @@ class Association(MutableMapping):
         pass
 
     def _add(self, item):
-        """Add a item, association-specific"""
+        """Add an item, association-specific."""
         raise NotImplementedError(
-            'Association._add must be implemented by a specific association rule.'
+            "Association._add must be implemented by a specific association rule."
         )
 
-    def _add_items(self, items, **kwargs):
-        """ Force adding items to the association
+    def _add_items(self, items, **kwargs):  # noqa: ARG002
+        """
+        Force adding items to the association.
 
         Parameters
         ----------
-        items : [object[, ...]]
+        items : list
             A list of items to make members of the association.
+
+        **kwargs
+            Added to signature for potentional compatibility elsewhere
+            but not used in base implementation.
 
         Notes
         -----
         This is a low-level shortcut into adding members, such as file names,
         to an association. All defined shortcuts and other initializations are
-        by-passed, resulting in a potentially unusable association.
+        bypassed, resulting in a potentially unusable association.
         """
         try:
-            self['members'].update(items)
+            self["members"].update(items)
         except KeyError:
-            self['members'] = items
+            self["members"] = items
 
-    # #################################################
     # Methods required for implementing MutableMapping
-    # #################################################
     def __getitem__(self, key):
         return self.data[self.__keytransform__(key)]
 
@@ -531,20 +560,55 @@ class Association(MutableMapping):
         return key
 
     def keys(self):
+        """
+        Provide keys of data dictionary.
+
+        Returns
+        -------
+        dict_keys : iter
+            The keys of the data dictionary.
+        """
         return self.data.keys()
 
     def items(self):
+        """
+        Provide items of data dictionary.
+
+        Returns
+        -------
+        dict_items : iter
+            The items of the data dictionary.
+        """
         return self.data.items()
 
     def values(self):
+        """
+        Provide values of data dictionary.
+
+        Returns
+        -------
+        dict_values : iter
+            The values of the data dictionary.
+        """
         return self.data.values()
 
 
-# #########
 # Utilities
-# #########
+
+
 def finalize(asns):
-    """Finalize associations by calling their `finalize_hook` method
+    """
+    Finalize associations by calling their ``finalize_hook`` method.
+
+    Parameters
+    ----------
+    asns : list of `~jwst.associations.association.Association`
+        The list of associations to be finalized.
+
+    Returns
+    -------
+    list of `~jwst.associations.association.Association`
+        The finalized list of associations.
 
     Notes
     -----
@@ -553,22 +617,27 @@ def finalize(asns):
 
     .. code-block:: python
 
-       from jwst.associations.association import finalize as generic_finalize
-       RegistryMarker.callback('finalize')(generic_finalize)
+        from jwst.associations.association import finalize as generic_finalize
+        from jwst.associations.registry import RegistryMarker
+
+        RegistryMarker.callback("finalize")(generic_finalize)
     """
-    finalized_asns = list(filter(
-        lambda asn: asn is not None,
-        map(lambda asn: asn.finalize(), asns)
-    ))
+    finalized_asns = list(filter(lambda asn: asn is not None, [asn.finalize() for asn in asns]))
     return finalized_asns
 
 
 def make_timestamp():
-    timestamp = datetime.now(timezone.utc).strftime(
-        _TIMESTAMP_TEMPLATE
-    )
+    """
+    Timestamp of current time in UTC.
+
+    Returns
+    -------
+    timestamp : str
+        UTC time in pre-determined format.
+    """
+    timestamp = datetime.now(UTC).strftime(_TIMESTAMP_TEMPLATE)
     return timestamp
 
 
-# Define default product name filling
 format_product = FormatTemplate()
+"""Default product name filling."""

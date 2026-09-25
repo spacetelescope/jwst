@@ -1,19 +1,19 @@
-#! /usr/bin/env python
-from stdatamodels.jwst import datamodels
+import logging
 
-from ..stpipe import Step
-from . import klip
-
+from jwst.coron import klip
+from jwst.stpipe import Step
 
 __all__ = ["KlipStep"]
 
+log = logging.getLogger(__name__)
+
 
 class KlipStep(Step):
-
     """
-    KlipStep: Performs KLIP processing on a science target coronagraphic
-    exposure. The input science exposure is assumed to be a fully calibrated
-    level-2b image. The processing is performed using a set of reference PSF
+    Performs KLIP processing on a science target coronagraphic exposure.
+
+    The input science exposure is assumed to be a fully calibrated
+    Level 2b image. The processing is performed using a set of reference PSF
     images observed in the same coronagraphic mode.
     """
 
@@ -21,24 +21,36 @@ class KlipStep(Step):
 
     spec = """
         truncate = integer(default=50,min=0) # The number of KL transform rows to keep
-    """ # noqa: E501
+    """  # noqa: E501
 
     def process(self, target, psfrefs):
+        """
+        Execute the KLIP calibration step.
 
-        with datamodels.open(target) as target_model:
+        Parameters
+        ----------
+        target : str or `~stdatamodels.jwst.datamodels.CubeModel`
+            File or data model containing science target exposure
+        psfrefs : str or `~stdatamodels.jwst.datamodels.CubeModel`
+            File or data model containing PSF reference exposures
 
-            # Retrieve the parameter values
-            truncate = self.truncate
-            self.log.info('KL transform truncation = %d', truncate)
+        Returns
+        -------
+        psf_sub : `~stdatamodels.jwst.datamodels.CubeModel`
+            Science target data model with the PSF subtracted
+        """
+        target_model = self.prepare_output(target)
+        refs_model = self.prepare_output(psfrefs)
 
-            # Get the PSF reference images
-            refs_model = datamodels.open(psfrefs)
+        # Retrieve the parameter values
+        truncate = self.truncate
+        log.info("KL transform truncation = %d", truncate)
 
-            # Call the KLIP routine
-            psf_sub, psf_fit = klip.klip(target_model, refs_model, truncate)
+        # Call the KLIP routine
+        target_model = klip.klip(target_model, refs_model, truncate, return_psf=False)
 
         # Update the step completion status
-        psf_sub.meta.cal_step.klip = 'COMPLETE'
+        target_model.meta.cal_step.klip = "COMPLETE"
 
-        # return psf_sub, psf_fit
-        return psf_sub
+        # Return the target model
+        return target_model

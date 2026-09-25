@@ -2,20 +2,57 @@ import logging
 import warnings
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
-
+from jwst.datamodels.utils.flat_multispec import expand_flat_spec
 from jwst.extract_1d.spec_wcs import create_spectral_wcs
+from jwst.stpipe import record_step_status
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+
+# attributes that we want to copy unmodified from input to output spectra
+SPECMETA_ATTRIBUTES = [
+    "source_id",
+    "dispersion_direction",
+    "source_type",
+    "source_ra",
+    "source_dec",
+]
+
+__all__ = [
+    "InputSpectrumModel",
+    "OutputSpectrumModel",
+    "count_input",
+    "compute_output_wl",
+    "check_exptime",
+    "combine_1d_spectra",
+    "check_monotonic",
+]
 
 
 class InputSpectrumModel:
     """
     Model an input spectrum.
+
+    Parameters
+    ----------
+    ms : `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+         `~stdatamodels.jwst.datamodels.MultiSpecModel`, or \
+         `~stdatamodels.jwst.datamodels.SpecModel`
+        This is used to get the integration time.
+
+    spec : `~stdatamodels.jwst.datamodels.JwstDataModel` or \
+           `~stdatamodels.jwst.datamodels.SpecModel` table
+        The table containing columns "wavelength" and "flux".
+        The ``ms`` object may contain more than one spectrum, but ``spec``
+        should be just one of those.
+
+    exptime_key : str
+        A string identifying which keyword to use to get the exposure
+        time, which is used as a weight; or "unit_weight", which means
+        to use ``weight = 1``.
 
     Attributes
     ----------
@@ -47,45 +84,47 @@ class InputSpectrumModel:
         Source ID for the spectrum.
     source_type : str
         Source type for the spectrum.
+    source_ra : float
+        Right ascension of the source.
+    source_dec : float
+        Declination of the source.
+    dispersion_direction : str
+        Dispersion direction for the spectrum.
     flux_unit : str
         Unit for the flux values.
     sb_unit : str
         Unit for the surface brightness values.
+    has_contam : bool
+        Flag to indicate the contamination columns are present, i.e., this is a WFSS mode.
+    contam_flux : ndarray or None
+        Input contaminating flux, if present.
+    contam_surf_bright : ndarray or None
+        Input contaminating surface brightness, if present.
     """
 
     def __init__(self, ms, spec, exptime_key):
-        """
-        Create an InputSpectrumModel object.
-
-        Parameters
-        ----------
-        ms : `~jwst.datamodels.JwstDataModel`, MultiSpecModel or SpecModel
-            This is used to get the integration time.
-
-        spec : `~jwst.datamodels.JwstDataModel`, SpecModel table
-            The table containing columns "wavelength" and "flux".
-            The `ms` object may contain more than one spectrum, but `spec`
-            should be just one of those.
-
-        exptime_key : str
-            A string identifying which keyword to use to get the exposure
-            time, which is used as a weight; or "unit_weight", which means
-            to use weight = 1.
-        """
-        self.wavelength = spec.spec_table.field("wavelength").copy()
-
-        self.flux = spec.spec_table.field("flux").copy()
-        self.flux_error = spec.spec_table.field("flux_error").copy()
-        self.surf_bright = spec.spec_table.field("surf_bright").copy()
-        self.sb_error = spec.spec_table.field("sb_error").copy()
-        self.dq = spec.spec_table.field("dq").copy()
+        self.wavelength = spec.spec_table.field("wavelength")
+        self.flux = spec.spec_table.field("flux")
+        self.flux_error = spec.spec_table.field("flux_error")
+        self.surf_bright = spec.spec_table.field("surf_bright")
+        self.sb_error = spec.spec_table.field("sb_error")
+        self.dq = spec.spec_table.field("dq")
         self.nelem = self.wavelength.shape[0]
+
+        # contam_flux and contam_surf_bright are present for WFSS modes
+        self.has_contam = "contam_flux" in spec.spec_table.columns
+        if self.has_contam:
+            self.contam_flux = spec.spec_table.field("contam_flux")
+            self.contam_surf_bright = spec.spec_table.field("contam_surf_bright")
+        else:
+            self.contam_flux = None
+            self.contam_surf_bright = None
         self.unit_weight = False  # may be reset below
         self.right_ascension = np.zeros_like(self.wavelength)
         self.declination = np.zeros_like(self.wavelength)
         self.name = spec.name
-        self.source_id = spec.source_id
-        self.source_type = spec.source_type
+        for attr in SPECMETA_ATTRIBUTES:
+            setattr(self, attr, getattr(spec, attr))
         self.flux_unit = spec.spec_table.columns["flux"].unit
         self.sb_unit = spec.spec_table.columns["surf_bright"].unit
 
@@ -104,7 +143,11 @@ class InputSpectrumModel:
         except AttributeError:
             self.right_ascension[:] = ms.meta.target.ra
             self.declination[:] = ms.meta.target.dec
-            log.warning("There is no WCS in the input.")
+            # This exception is hit for NIRISS and NIRCam WFSS data,
+            # for which it doesn't matter anyway, since the RA and Dec are not used
+            # in any meaningful way to combine the spectra. A future refactor should
+            # make it so the WCS is not expected in the input spectra for those modes.
+            log.debug("There is no WCS in the input. Getting RA, Dec from target metadata.")
 
     def close(self):
         """Set data attributes to null values."""
@@ -120,6 +163,9 @@ class InputSpectrumModel:
         self.right_ascension = None
         self.declination = None
         self.source_id = None
+        self.has_contam = False
+        self.contam_flux = None
+        self.contam_surf_bright = None
 
 
 class OutputSpectrumModel:
@@ -144,10 +190,16 @@ class OutputSpectrumModel:
         Weight value for each spectral element.
     count : ndarray
         Input value count for each output spectral element.
-    wcs : gwcs.WCS
+    wcs : gwcs.wcs.WCS
         Output spectral WCS.
     normalized : bool
         Flag to indicate data has been combined (sums are normalized).
+    has_contam : bool
+        Flag to indicate the contamination columns are present, i.e., this is a WFSS mode.
+    contam_flux : ndarray or None
+        Output contaminating flux, if present.
+    contam_surf_bright : ndarray or None
+        Output contaminating surface brightness, if present.
     """
 
     def __init__(self):
@@ -164,17 +216,20 @@ class OutputSpectrumModel:
         self.source_id = None
         self.flux_unit = None
         self.sb_unit = None
+        self.has_contam = False
+        self.contam_flux = None
+        self.contam_surf_bright = None
 
     def assign_wavelengths(self, input_spectra):
         """
         Create an array of wavelengths to use for the output spectrum.
 
-        Take the union of all input wavelengths, then call compute_output_wl
+        Take the union of all input wavelengths, then call :func:`compute_output_wl`
         to bin wavelengths in groups of the number of overlapping spectra.
 
         Parameters
         ----------
-        input_spectra : list of InputSpectrumModel objects
+        input_spectra : list of `~jwst.combine_1d.combine1d.InputSpectrumModel`
             List of input spectra.
         """
         (wl, n_input_spectra) = count_input(input_spectra)
@@ -192,7 +247,7 @@ class OutputSpectrumModel:
         Each pixel of each input spectrum will be added to one pixel of
         the output spectrum.  The wavelength spacing of the input and
         output should be comparable, so each input pixel will usually
-        correspond to one output pixel (i.e. have the same wavelength,
+        correspond to one output pixel (i.e., have the same wavelength,
         to within half a pixel).  However, for any given input spectrum,
         there can be output pixels that are incremented by more than one
         input pixel, and there can be output pixels that are not incremented.
@@ -200,14 +255,14 @@ class OutputSpectrumModel:
         filled in.
 
         Pixels in an input spectrum that are flagged (via the DQ array)
-        as DO_NOT_USE will not be used, i.e. they will simply be ignored
+        as DO_NOT_USE will not be used, i.e., they will simply be ignored
         when incrementing output arrays from an input spectrum.  If an
         input pixel is flagged with a non-zero value other than DO_NOT_USE,
         the value will be propagated to the output DQ array via bitwise OR.
 
         Parameters
         ----------
-        input_spectra : list of InputSpectrumModel objects
+        input_spectra : list of `~jwst.combine_1d.combine1d.InputSpectrumModel`
             List of input spectra.
         sigma_clip : float, optional
             Factor for clipping outliers in spectral combination.
@@ -215,7 +270,7 @@ class OutputSpectrumModel:
         # This is the data type for the output spectrum.  We'll use double
         # precision for accumulating sums for most columns, but for the DQ
         # array, use the correct output data type.
-        cmb_dtype = datamodels.CombinedSpecModel().spec_table.dtype
+        cmb_dtype = datamodels.CombinedSpecModel().get_dtype("spec_table")
         dq_dtype = cmb_dtype.fields["DQ"][0]
 
         nelem = self.wavelength.shape[0]
@@ -229,6 +284,15 @@ class OutputSpectrumModel:
         sb_error = np.zeros((nspec, nelem), dtype=np.float64)
         weight = np.zeros((nspec, nelem), dtype=np.float64)
         count = np.zeros((nspec, nelem), dtype=np.float64)
+
+        # contam_flux and contam_surf_bright are present for WFSS modes
+        self.has_contam = any(in_spec.has_contam for in_spec in input_spectra)
+        if self.has_contam:
+            contam_flux = np.full((nspec, nelem), np.nan, dtype=np.float64)
+            contam_surf_bright = np.full((nspec, nelem), np.nan, dtype=np.float64)
+        else:
+            contam_flux = None
+            contam_surf_bright = None
 
         self.flux_unit = input_spectra[0].flux_unit
         self.sb_unit = input_spectra[0].sb_unit
@@ -270,9 +334,29 @@ class OutputSpectrumModel:
                 sb_error[s, k] = in_spec.sb_error[i]
                 weight[s, k] = in_spec.weight[i]
                 count[s, k] = 1.0
+                if self.has_contam and in_spec.has_contam:
+                    contam_flux[s, k] = in_spec.contam_flux[i]
+                    contam_surf_bright[s, k] = in_spec.contam_surf_bright[i]
 
-        (flux, flux_error, surf_bright, sb_error, weight, count) = self.combine_spectra(
-            flux, flux_error, surf_bright, sb_error, weight, count, sigma_clip=sigma_clip
+        (
+            flux,
+            flux_error,
+            surf_bright,
+            sb_error,
+            weight,
+            count,
+            contam_flux,
+            contam_surf_bright,
+        ) = self.combine_spectra(
+            flux,
+            flux_error,
+            surf_bright,
+            sb_error,
+            weight,
+            count,
+            contam_flux=contam_flux,
+            contam_surf_bright=contam_surf_bright,
+            sigma_clip=sigma_clip,
         )
 
         if n_nan > 0:
@@ -285,6 +369,8 @@ class OutputSpectrumModel:
         self.dq = dq
         self.weight = weight
         self.count = count
+        self.contam_flux = contam_flux
+        self.contam_surf_bright = contam_surf_bright
 
         # Since the output wavelengths will not usually be exactly the same
         # as the input wavelengths, it's possible that there will be output
@@ -305,10 +391,22 @@ class OutputSpectrumModel:
             self.dq = self.dq[index]
             self.weight = self.weight[index]
             self.count = self.count[index]
+            if self.has_contam:
+                self.contam_flux = self.contam_flux[index]
+                self.contam_surf_bright = self.contam_surf_bright[index]
         del index
 
     def combine_spectra(
-        self, flux, flux_error, surf_bright, sb_error, weight, count, sigma_clip=None
+        self,
+        flux,
+        flux_error,
+        surf_bright,
+        sb_error,
+        weight,
+        count,
+        contam_flux=None,
+        contam_surf_bright=None,
+        sigma_clip=None,
     ):
         """
         Combine accumulated spectra.
@@ -317,7 +415,7 @@ class OutputSpectrumModel:
         ----------
         flux : ndarray, 2-D
             Tabulated fluxes for the input spectra in the format
-            [N spectra, M wavelengths].
+            ``[N spectra, M wavelengths]``.
         flux_error : ndarray, 2-D
             Flux errors of input spectra.
         surf_bright : ndarray, 2-D
@@ -328,9 +426,13 @@ class OutputSpectrumModel:
             Pixel weights for input spectra
         count : ndarray, 2-D
             Count of how many values at each index in the input arrays.
+        contam_flux : ndarray, 2-D, optional
+            Contaminating fluxes of input spectra, if present.
+        contam_surf_bright : ndarray, 2-D, optional
+            Contaminating surface brightnesses of input spectra, if present.
         sigma_clip : float, optional
             Factor for clipping outliers.  Compares input spectra to the
-            median and medaian absolute devaition, by default None.
+            median and median absolute deviation, by default None.
 
         Returns
         -------
@@ -346,6 +448,10 @@ class OutputSpectrumModel:
             Total, per wavelength weights.
         count : ndarray, 1-D
             Total count of spectra contributing to each wavelength.
+        contam_flux : ndarray, 1-D, or None
+            Combined 1-D contaminating fluxes, if present.
+        contam_surf_bright : ndarray, 1-D, or None
+            Combined 1-D contaminating surface brightnesses, if present.
         """
         # Catch warnings for all NaN slices in an array.
         with warnings.catch_warnings():
@@ -370,6 +476,10 @@ class OutputSpectrumModel:
                 sb_error[clipped] = np.nan
                 count[clipped] = 0
                 weight[clipped] = 0
+                if contam_flux is not None:
+                    contam_flux[clipped] = np.nan
+                if contam_surf_bright is not None:
+                    contam_surf_bright[clipped] = np.nan
 
             # Perform a weighted sum of the input spectra
             sum_weight = np.nansum(weight, axis=0)
@@ -380,10 +490,25 @@ class OutputSpectrumModel:
             surf_bright = np.nansum(surf_bright * weight, axis=0) / sum_weight_nonzero
             sb_error = np.sqrt(np.nansum((sb_error * weight) ** 2, axis=0)) / sum_weight_nonzero
             count = np.nansum(count, axis=0)
+            if contam_flux is not None:
+                contam_flux = np.nansum(contam_flux * weight, axis=0) / sum_weight_nonzero
+            if contam_surf_bright is not None:
+                contam_surf_bright = (
+                    np.nansum(contam_surf_bright * weight, axis=0) / sum_weight_nonzero
+                )
 
         self.normalized = True
 
-        return flux, flux_error, surf_bright, sb_error, sum_weight, count
+        return (
+            flux,
+            flux_error,
+            surf_bright,
+            sb_error,
+            sum_weight,
+            count,
+            contam_flux,
+            contam_surf_bright,
+        )
 
     def create_output_data(self):
         """
@@ -391,31 +516,39 @@ class OutputSpectrumModel:
 
         Returns
         -------
-        output_model : `~jwst.datamodels.JwstDataModel`, CombinedSpecModel object
+        output_model : `~stdatamodels.jwst.datamodels.CombinedSpecModel`
             A table of combined spectral data.
         """
         if not self.normalized:
             log.warning("Data have not been divided by the sum of the weights.")
 
-        cmb_dtype = datamodels.CombinedSpecModel().spec_table.dtype
+        cmb_dtype = datamodels.CombinedSpecModel().get_dtype("spec_table")
 
         # Note that these arrays have to be in the right order.
-        data = np.array(
-            list(
-                zip(
-                    self.wavelength,
-                    self.flux,
-                    self.flux_error,
-                    self.surf_bright,
-                    self.sb_error,
-                    self.dq,
-                    self.weight,
-                    self.count,
-                    strict=False,
-                )
-            ),
-            dtype=cmb_dtype,
-        )
+        data_list = [
+            self.wavelength,
+            self.flux,
+            self.flux_error,
+            self.surf_bright,
+            self.sb_error,
+            self.dq,
+            self.weight,
+            self.count,
+        ]
+        if self.has_contam:
+            # add contam columns in the same positions used for WFSSCombinedSpecModel
+            descr = cmb_dtype.descr
+            names = [name for name, _ in descr]
+            contam_idx = names.index("FLUX") + 1
+            sb_idx = names.index("SURF_BRIGHT") + 2
+            data_list.insert(contam_idx, self.contam_flux)
+            data_list.insert(sb_idx, self.contam_surf_bright)
+
+            descr.insert(contam_idx, ("CONTAM_FLUX", float))
+            descr.insert(sb_idx, ("CONTAM_SURF_BRIGHT", float))
+            cmb_dtype = np.dtype(descr)
+
+        data = np.array(list(zip(*data_list, strict=False)), dtype=cmb_dtype)
         output_model = datamodels.CombinedSpecModel(spec_table=data)
 
         output_model.spec_table.columns["wavelength"].unit = "um"
@@ -423,6 +556,9 @@ class OutputSpectrumModel:
         output_model.spec_table.columns["error"].unit = self.flux_unit
         output_model.spec_table.columns["surf_bright"].unit = self.sb_unit
         output_model.spec_table.columns["sb_error"].unit = self.sb_unit
+        if self.has_contam:
+            output_model.spec_table.columns["contam_flux"].unit = self.flux_unit
+            output_model.spec_table.columns["contam_surf_bright"].unit = self.sb_unit
 
         return output_model
 
@@ -439,6 +575,9 @@ class OutputSpectrumModel:
         self.wcs = None
         self.normalized = False
         self.source_id = None
+        self.has_contam = False
+        self.contam_flux = None
+        self.contam_surf_bright = None
 
 
 def count_input(input_spectra):
@@ -455,7 +594,7 @@ def count_input(input_spectra):
 
     Parameters
     ----------
-    input_spectra : list of InputSpectrumModel objects
+    input_spectra : list of `~jwst.combine_1d.combine1d.InputSpectrumModel`
         List of input spectra.
 
     Returns
@@ -464,9 +603,9 @@ def count_input(input_spectra):
         Sorted list of all the wavelengths in all the input spectra.
 
     n_input_spectra : ndarray, 1-D
-        For each element of `wl`, the corresponding element of
-        `n_input_spectra` is the number of input spectra that cover the
-        wavelength in `wl`.
+        For each element of ``wl``, the corresponding element of
+        ``n_input_spectra`` is the number of input spectra that cover the
+        wavelength in ``wl``.
     """
     # Create an array with all the input wavelengths (i.e. the union
     # of the input wavelengths).
@@ -524,18 +663,18 @@ def compute_output_wl(wl, n_input_spectra):
 
     In summary, the output wavelengths are computed by binning the
     input wavelengths in groups of the number of overlapping spectra.
-    The merged and sorted input wavelengths are in `wl`.
+    The merged and sorted input wavelengths are in ``wl``.
 
     If the wavelength arrays of the input spectra are nearly all the
     same, the values in wl will be in clumps of N nearly identical
     values (for N input files).  We want to average the wavelengths
     in those clumps to get the output wavelengths.  However, if the
     wavelength scales of the input files differ slightly, the values
-    in wl may clump in some regions but not in others.  The algorithm
+    in ``wl`` may clump in some regions but not in others.  The algorithm
     below tries to find clumps; a clump is identified by having a
-    small standard deviation of all the wavelengths in a slice of wl,
+    small standard deviation of all the wavelengths in a slice of ``wl``,
     compared with neighboring slices.  It is intended that this should
-    not find clumps where they're not present, i.e. in regions where
+    not find clumps where they're not present, i.e., in regions where
     the wavelengths of the input spectra are not well aligned with each
     other.  These regions will be gaps in the initial determination
     of output wavelengths based on clumps.  In such regions, output
@@ -549,9 +688,9 @@ def compute_output_wl(wl, n_input_spectra):
         spectra, sorted in increasing order.
 
     n_input_spectra : 1-D array
-        An integer array of the same length as `wl`.  For a given
-        array index k (for example), n_input_spectra[k] is the number of
-        input spectra that cover wavelength wl[k].
+        An integer array of the same length as ``wl``.  For a given
+        array index ``k`` (for example), ``n_input_spectra[k]`` is the number of
+        input spectra that cover wavelength ``wl[k]``.
 
     Returns
     -------
@@ -637,9 +776,9 @@ def check_exptime(exptime_key):
     """
     Check exptime_key for validity.
 
-    This function checks exptime_key.  If it is valid, the corresponding
+    This function checks ``exptime_key``.  If it is valid, the corresponding
     value used by the metadata interface will be returned.  This will be
-    either "integration_time" or "exposure_time".  If it is not valid,
+    either "integration_time" or "exposure_time".  If it is invalid,
     "unit weight" will be returned (meaning that a weight of 1 will be
     used when averaging spectra), and a warning will be logged.
 
@@ -674,15 +813,86 @@ def check_exptime(exptime_key):
     return exptime_key
 
 
+def _read_input_spectra(input_model, exptime_key, input_spectra):
+    """
+    Read input spectra from a datamodel.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.MultiSpecModel`, \
+                  `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`, or \
+                  `~stdatamodels.jwst.datamodels.MRSSpecModel`
+        A datamodel with a ``spec`` attribute, containing spectra.
+        If `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`,
+        integrations in the spectral table rows
+        are expanded into separate spectra.
+    exptime_key : str
+        Exposure time key to use for weighting.
+    input_spectra : dict
+        Dictionary to hold input spectra, keyed by spectral order;
+        Updated in place.
+
+    Returns
+    -------
+    input_spectra : dict
+        The updated dictionary, holding all spectra in the input model.
+
+    Raises
+    ------
+    TypeError
+        If the input datamodel does not have a ``spec`` attribute.
+    """
+    if not hasattr(input_model, "spec"):
+        raise TypeError(f"Invalid input datamodel: {type(input_model)}")
+    if isinstance(input_model, datamodels.TSOMultiSpecModel):
+        spectra = expand_flat_spec(input_model).spec
+    else:
+        spectra = input_model.spec
+    for in_spec in spectra:
+        if not np.any(np.isfinite(in_spec.spec_table.field("flux"))):
+            if in_spec.meta.hasattr("group_id"):
+                msg = (
+                    f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
+                    f"from group_id {in_spec.meta.group_id} has no valid flux values; skipping."
+                )
+            else:
+                msg = (
+                    f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
+                    "has no valid flux values; skipping."
+                )
+            log.warning(msg)
+            continue
+        wavelength = in_spec.spec_table.field("wavelength")
+        monotonic = check_monotonic(wavelength)
+        if not monotonic:
+            log.warning(
+                f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
+                "has does not have monotonic wavelengths; skipping."
+            )
+            continue
+
+        spectral_order = in_spec.spectral_order
+        if spectral_order not in input_spectra:
+            input_spectra[spectral_order] = []
+        input_spectra[spectral_order].append(InputSpectrumModel(input_model, in_spec, exptime_key))
+    return input_spectra
+
+
 def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     """
     Combine the input spectra.
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
-        The input spectra.  This will likely be a ModelContainer object.
-
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        The input spectra.  This will likely be a
+        `~jwst.datamodels.container.ModelContainer` object,
+        but may also be a multi-spectrum model, such as
+        `~stdatamodels.jwst.datamodels.MultiSpecModel` or
+        `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`.
+        Input spectra may have different spectral orders
+        or wavelengths but should all share the same target.
+        May be updated in place if processing is skipped.
     exptime_key : str
         A string identifying which keyword to use to get the exposure time,
         which is used as a weight when combining spectra.  The value should
@@ -691,8 +901,8 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
 
     Returns
     -------
-    output_model : `~jwst.datamodels.JwstDataModel`
-        A datamodels.CombinedSpecModel object.
+    output_model : `~stdatamodels.jwst.datamodels.MultiCombinedSpecModel`
+        A combined spectra datamodel.
     """
     log.debug(f"Using exptime_key = {exptime_key}.")
 
@@ -702,19 +912,14 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     output_spectra = {}
     if isinstance(input_model, ModelContainer):
         for ms in input_model:
-            for in_spec in ms.spec:
-                spectral_order = in_spec.spectral_order
-                if spectral_order not in input_spectra:
-                    input_spectra[spectral_order] = []
-                input_spectra[spectral_order].append(InputSpectrumModel(ms, in_spec, exptime_key))
+            _read_input_spectra(ms, exptime_key, input_spectra)
     else:
-        for in_spec in input_model.spec:
-            spectral_order = in_spec.spectral_order
-            if spectral_order not in input_spectra:
-                input_spectra[spectral_order] = []
-            input_spectra[spectral_order].append(
-                InputSpectrumModel(input_model, in_spec, exptime_key)
-            )
+        _read_input_spectra(input_model, exptime_key, input_spectra)
+
+    if len(input_spectra) == 0:
+        log.error("No valid input spectra found for source. Skipping.")
+        record_step_status(input_model, "combine_1d", status="SKIPPED")
+        return input_model
 
     for order in input_spectra:
         output_spectra[order] = OutputSpectrumModel()
@@ -726,8 +931,8 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     for order in output_spectra:
         output_order = output_spectra[order].create_output_data()
         output_order.spectral_order = order
-        output_order.source_id = input_spectra[order][0].source_id
-        output_order.source_type = input_spectra[order][0].source_type
+        for attr in SPECMETA_ATTRIBUTES:
+            setattr(output_order, attr, getattr(input_spectra[order][0], attr))
         output_model.spec.append(output_order)
 
     # Copy one of the input headers to output.
@@ -748,3 +953,27 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
         output_spectra[order].close()
 
     return output_model
+
+
+def check_monotonic(wavelength):
+    """
+    Check if wavelength array is strictly monotonic (purely increasing or decreasing).
+
+    Parameters
+    ----------
+    wavelength : list or array
+        An array of wavelengths
+
+    Returns
+    -------
+    bool
+        True if the array is strictly increasing or strictly decreasing,
+        False otherwise. Note that duplicates will return False.
+    """
+    if len(wavelength) < 2:
+        return True
+
+    is_increasing = all(np.diff(wavelength) > 0)
+    is_decreasing = all(np.diff(wavelength) < 0)
+
+    return is_increasing or is_decreasing

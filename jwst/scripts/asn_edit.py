@@ -1,32 +1,31 @@
 #!/usr/bin/env python
 
+"""Edit an association file from the command line."""
+
 import argparse
 
 from jwst.associations import asn_edit
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def main():
-    """
-    Parse command line, read, edit, write association file
-    """
-
+    """Edit Association File."""
     # Parse command line arguments
     description_text = """
-Edit Association File
+    This script adds or removes filenames from an association file. The
+    first argument is the name of the association file. Subsequent
+    arguments are the filenames. Options determine which operation is
+    performed: --add or --remove. If adding files the --type option sets
+    the exposure type for the new files. If removing file, the --ignore
+    option will not use the filename suffix when matching the filenames for
+    removal. Normally the output association file is the same as the input.
+    The --output option allows you to set a different filename. All options
+    can be abbreviated to their first letter.
 
-This script adds or removes filenames from an association file. The
-first argument is the name of the association file. Subsequent
-arguments are the filenames. Options determine which operation is
-performed: --add or --remove. If adding files the --type option sets
-the exposure type for the new files. If removing file, the --ignore
-option will not use the filename suffix when matching the filenames for
-removal. Normally the output association file is the same as the input.
-The --output option allows you to set a different filename. All options
-can be abbreviated to their first letter.
-
-When adding files to an association, the file must exist on the disk.
-When removing files, the filename must be found in the association. If
-not, no change will be made to the file.
+    When adding files to an association, the file must exist on the disk.
+    When removing files, the filename must be found in the association. If
+    not, no change will be made to the file.
     """
     parser = argparse.ArgumentParser(
         description=description_text,
@@ -34,30 +33,24 @@ not, no change will be made to the file.
     )
 
     arg_group = parser.add_mutually_exclusive_group()
+    arg_group.add_argument("-a", "--add", action="store_true", help="Add files to association")
     arg_group.add_argument(
-        '-a', '--add', action='store_true', help='Add files to association'
-    )
-    arg_group.add_argument(
-        '-r', '--remove', action='store_true', help='Remove files to association'
+        "-r", "--remove", action="store_true", help="Remove files to association"
     )
 
+    parser.add_argument("-t", "--type", default="science", help="Exptype, if adding filenames")
     parser.add_argument(
-        '-t', '--type', default='science', help='Exptype, if adding filenames'
-    )
-    parser.add_argument(
-        '-i',
-        '--ignore',
-        action='store_true',
-        help='Ignore suffix on filename when matching',
+        "-i",
+        "--ignore",
+        action="store_true",
+        help="Ignore suffix on filename when matching",
     )
 
-    parser.add_argument(
-        '-o', '--output', help='Output association name if different than input'
-    )
+    parser.add_argument("-o", "--output", help="Output association name if different than input")
 
-    parser.add_argument('association', help='The association file name')
+    parser.add_argument("association", help="The association file name")
 
-    parser.add_argument('filenames', nargs='+', help='The filenames to process')
+    parser.add_argument("filenames", nargs="+", help="The filenames to process")
 
     args = parser.parse_args()
 
@@ -78,5 +71,5 @@ not, no change will be made to the file.
     asn_edit.writer(asn, output_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,0 +1,1 @@
+Allow passing in multi-wavelength information with the direct image, such that the simulated dispersed sources can have spectral shape.

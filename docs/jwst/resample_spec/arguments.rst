@@ -2,7 +2,7 @@
 
 Step Arguments
 ==============
-The `resample_spec` step has the following optional arguments that control
+The ``resample_spec`` step has the following optional arguments that control
 the behavior of the processing and the characteristics of the resampled
 image.
 
@@ -12,7 +12,7 @@ image.
 
 ``--kernel`` (str, default='square')
     The form of the kernel function used to distribute flux onto the output
-    image.  Available kernels for spectral data are `square` and `point`.
+    image.  Available kernels for spectral data are ``square`` and ``point``.
     Other drizzle kernels, available for imaging data, do not conserve
     spectral flux.
 
@@ -38,7 +38,7 @@ image.
         also be modified, since it is specified in pixels.
 
 ``--pixel_scale`` (float, default=None)
-    Absolute pixel scale in ``arcsec``. When provided, overrides
+    Absolute pixel scale in arcsec. When provided, overrides
     ``pixel_scale_ratio``. Ignored when ``output_wcs`` is provided.
 
     If the input data has units of flux density (MJy/pixel), the output flux per
@@ -57,7 +57,7 @@ image.
 
 ``--output_shape`` (tuple of int, default=None)
     Shape of the image (data array) using "standard" ``nx`` first and ``ny``
-    second (opposite to the ``numpy.ndarray`` convention - ``ny`` first and
+    second (opposite to the ``numpy`` convention - ``ny`` first and
     ``nx`` second). This value will be assigned to
     ``pixel_shape`` and ``array_shape`` properties of the returned
     WCS object. When supplied from command line, it should be a comma-separated
@@ -68,11 +68,11 @@ image.
         ``output_wcs`` does not have ``bounding_box`` property set.
 
 ``--output_wcs`` (str, default='')
-    File name of an ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
+    File name of an ASDF file with a GWCS stored under the ``"wcs"`` key
     under the root of the file. The output image size is determined from the
-    bounding box of the WCS (if any). Argument ``output_shape`` overrides
-    computed image size and it is required when output WCS does not have
-    ``bounding_box`` property set or if ``pixel_shape`` or ``array_shape`` keys
+    bounding box of the WCS (if any). The argument ``output_shape`` overrides
+    computed image size and it is required when the output WCS does not have
+    ``bounding_box`` set or if the ``pixel_shape`` or ``array_shape`` keys
     (see below) are not provided.
 
     Additional information may be stored under
@@ -85,10 +85,10 @@ image.
       If ``pixel_area`` is not provided, the code will attempt to estimate
       this value from the WCS.
 
-    - ``pixel_shape``: dimensions of the output image in the order (nx, ny).
+    - ``pixel_shape``: Dimensions of the output image in the order ``(nx, ny)``.
       Overrides the value of ``array_shape`` if provided.
 
-    - ``array_shape``: shape of the output image in ``numpy`` order: (ny, nx).
+    - ``array_shape``: Shape of the output image in ``numpy`` convention: ``(ny, nx)``.
 
     .. note::
         When ``output_wcs`` is specified, WCS-related arguments
@@ -100,23 +100,28 @@ image.
 
 ``--weight_type`` (str, default='ivm')
     The weighting type for each input image.
-    If `weight_type=ivm` (the default), the scaling value
+    If ``weight_type="ivm"`` (the default), the scaling value
     will be determined per-pixel using the inverse of the read noise
     (VAR_RNOISE) array stored in each input image. If the VAR_RNOISE array does
     not exist, the variance is set to 1 for all pixels (equal weighting).
-    If `weight_type=exptime`, the scaling value will be set equal to the
+    If ``weight_type="exptime"``, the scaling value will be set equal to the
     measurement time (TMEASURE) found in the image header if available;
     if unavailable, the scaling will be set equal to the exposure time (EFFEXPTM).
 
-``--single`` (bool, default=False)
+``--single`` (boolean, default=False)
     If set to `True`, resample each input image into a separate output.  If
     `False` (the default), each input is resampled additively (with weights) to
     a common output.
 
-``--blendheaders`` (bool, default=True)
+``--blendheaders`` (boolean, default=True)
     Blend metadata from all input images into the resampled output image.
 
 ``--in_memory`` (boolean, default=True)
-  Specifies whether or not to load and create all images that are used during
-  processing into memory. If ``False``, input files are loaded from disk when
-  needed and all intermediate files are stored on disk, rather than in memory.
+    Specifies whether or not to load and create all images that are used during
+    processing into memory. If `False`, input files are loaded from disk when
+    needed and all intermediate files are stored on disk, rather than in memory.
+
+``--propagate_dq`` (boolean, default=False)
+    Indicates whether to propagate DQ flags from input models to the output
+    model. DQ flags are propagated by ``bitwise-OR`` of all input DQ flags that
+    contribute to a given output pixel.

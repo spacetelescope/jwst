@@ -1,0 +1,1 @@
+Removed deprecated ``save_bsub`` from ``calwebb_image2`` and ``calwebb_spec2``; use the background step's ``save_results`` parameter instead.

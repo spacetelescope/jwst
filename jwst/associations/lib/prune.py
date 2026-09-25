@@ -1,22 +1,30 @@
-"""Utilities to prune JWST DMS associations"""
+"""Utilities to prune JWST DMS associations."""
+
 import logging
 from collections import defaultdict
 
-from . import diff
-from .product_utils import get_product_names, sort_by_candidate
-from .. import config
+from jwst.associations import config
+from jwst.associations.lib import diff
+from jwst.associations.lib.product_utils import get_product_names, sort_by_candidate
 
-__all__ = ['prune']
+__all__ = [
+    "prune",
+    "prune_duplicate_associations",
+    "prune_duplicate_products",
+    "prune_remove",
+    "identify_dups",
+]
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Duplicate association counter
-# Used in function `prune_remove`
+# Used in function prune_remove
 DupCount = 0
 
+
 def prune(asns):
-    """Remove duplicates and subset associations
+    """
+    Remove duplicates and subset associations.
 
     Situations where extraneous associations can occur are:
 
@@ -33,20 +41,22 @@ def prune(asns):
 
     Parameters
     ----------
-    asns : [Association[,...]]
+    asns : list of `~jwst.associations.association.Association`
         Associations to prune
 
     Returns
     -------
-    pruned : [Association[,...]]
+    pruned : list of `~jwst.associations.association.Association`
         Pruned list of associations
     """
     pruned = prune_duplicate_associations(asns)
     pruned = prune_duplicate_products(pruned)
     return pruned
 
+
 def prune_duplicate_associations(asns):
-    """Remove duplicate associations in favor of lower level versions
+    """
+    Remove duplicate associations in favor of lower level versions.
 
     Main use case: For Level 3 associations, multiple associations with the
     same membership, but different levels, can be created. Remove duplicate
@@ -57,29 +67,28 @@ def prune_duplicate_associations(asns):
 
     Parameters
     ----------
-    asns : [Association[,...]]
+    asns : list of `~jwst.associations.association.Association`
         Associations to prune
 
     Returns
     -------
-    pruned : [Association[,...]]
+    pruned : list of `~jwst.associations.association.Association`
         Pruned list of associations
-
     """
     known_dups, valid_asns = identify_dups(asns)
 
     ordered_asns = sort_by_candidate(valid_asns)
-    pruned = list()
+    pruned = []
     while True:
         try:
             original = ordered_asns.pop()
         except IndexError:
             break
         pruned.append(original)
-        to_prune = list()
+        to_prune = []
         for asn in ordered_asns:
             try:
-                diff.compare_product_membership(original['products'][0], asn['products'][0])
+                diff.compare_product_membership(original["products"][0], asn["products"][0])
             except AssertionError:
                 continue
             to_prune.append(asn)
@@ -89,20 +98,21 @@ def prune_duplicate_associations(asns):
 
 
 def prune_duplicate_products(asns):
-    """Remove duplicate products in favor of higher level versions
+    """
+    Remove duplicate products in favor of higher level versions.
 
     The assumption is that there is only one product per association, before
-    merging
+    merging.
 
     Parameters
     ----------
-    asns: [Association[,...]]
+    asns : list of `~jwst.associations.association.Association`
         Associations to prune
 
     Returns
-    pruned: [Association[,...]]
+    -------
+    pruned : list of `~jwst.associations.association.Association`
         Pruned list of associations
-
     """
     known_dups, valid_asns = identify_dups(asns)
 
@@ -113,9 +123,9 @@ def prune_duplicate_products(asns):
     ordered_asns = sort_by_candidate(valid_asns)
     asn_by_product = defaultdict(list)
     for asn in ordered_asns:
-        asn_by_product[asn['products'][0]['name']].append(asn)
+        asn_by_product[asn["products"][0]["name"]].append(asn)
 
-    full_prune = list()
+    full_prune = []
     for product in dups:
         dup_asns = asn_by_product[product]
         to_keep = dup_asns.copy()
@@ -125,32 +135,40 @@ def prune_duplicate_products(asns):
                 continue
 
             # Check against the set of associations to be kept.
-            to_prune = list()
+            to_prune = []
             for entrant in to_keep:
                 if entrant == asn:
                     continue
 
                 # Check for differences. If none, then the associations are exact duplicates.
                 try:
-                    diff.compare_product_membership(asn['products'][0], entrant['products'][0])
+                    diff.compare_product_membership(asn["products"][0], entrant["products"][0])
                 except diff.MultiDiffError as diffs:
                     # If one is a pure subset, remove the smaller association.
-                    if len(diffs) == 1 and isinstance(diffs[0], diff.SubsetError):
-                        if len(entrant['products'][0]['members']) > len(asn['products'][0]['members']):
+                    if diff.SubsetError in diffs.err_types:
+                        if len(entrant["products"][0]["members"]) > len(
+                            asn["products"][0]["members"]
+                        ):
                             asn, entrant = entrant, asn
                         to_prune.append(entrant)
                         continue
 
-                    # If the difference is only in suffix, this is an acceptable duplication of product names.
+                    # If the difference is only in suffix, this is an
+                    # acceptable duplication of product names.
                     # Trap and do not report.
                     try:
-                        diff.compare_product_membership(asn['products'][0], entrant['products'][0], strict_expname=False)
+                        diff.compare_product_membership(
+                            asn["products"][0], entrant["products"][0], strict_expname=False
+                        )
                     except diff.MultiDiffError:
                         # Something is different. Report but do not remove.
-                        logger.warning('Following associations have the same product name but significant differences.')
-                        logger.warning('Association 1: %s', asn)
-                        logger.warning('Association 2: %s', entrant)
-                        logger.warning('Diffs: %s', diffs)
+                        logger.warning(
+                            "Following associations have the same product name "
+                            "but significant differences."
+                        )
+                        logger.warning("Association 1: %s", asn)
+                        logger.warning("Association 2: %s", entrant)
+                        logger.warning("Diffs: %s", diffs)
 
                 else:
                     # Associations are exactly the same. Discard the logically lesser one.
@@ -167,56 +185,76 @@ def prune_duplicate_products(asns):
 
 
 def prune_remove(remove_from, to_remove, known_dups):
-    """Remove or rename associations to be pruned
+    """
+    Remove or rename associations to be pruned.
 
-    Default behavior is to remove associations listed in the `to_remove`
-    list from the `remove_from` list.
+    Default behavior is to remove associations listed in the ``to_remove``
+    list from the ``remove_from`` list.
 
-    However, if `config.DEBUG` is `True`, that association is simply
+    However, if ``jwst.associations.config.DEBUG`` is `True`, that association is simply
     renamed, adding the string "dupXXXXX" as a prefix to the association's
     name.
 
     Parameters
     ----------
-    remove_from : [Association[,...]]
+    remove_from : list of `~jwst.associations.association.Association`
         The list of associations from which associations will be removed.
         List is modified in-place.
 
-    to_remove : [Association[,...]]
-        The list of associations to remove from the `remove_from` list.
+    to_remove : list of `~jwst.associations.association.Association`
+        The list of associations to remove from the ``remove_from`` list.
 
-    known_dups : [Association[,...]]
+    known_dups : list of `~jwst.associations.association.Association`
         Known duplicates. New ones are added by this function
         if debugging is in effect.
     """
     global DupCount
 
     if to_remove:
-        logger.debug('Duplicate associations found: %s', to_remove)
+        logger.debug("Duplicate associations found: %s", to_remove)
     for asn in to_remove:
-        remove_from.remove(asn)
+        # Check for an association in the list that "is" the
+        # intended removal (not "equals" the intended removal).
+        # That is, ``remove_from.remove(asn)`` will not work here because
+        # there may be multiple associations in the list that are
+        # equivalent, but only one of them should be removed. For
+        # example, there may be associations present containing rate and
+        # rateints members from the same source file -- these are considered
+        # "equal", but only one of them is the duplicate.
+        remove_index = None
+        for i, test_asn in enumerate(remove_from):
+            if test_asn is asn:
+                remove_index = i
+                break
+        if remove_index is not None:
+            remove_from.pop(remove_index)
+        else:
+            raise IndexError("Expected duplicate association not found in list")
+
         if config.DEBUG:
             DupCount += 1
-            asn.asn_name = f'dup{DupCount:05d}_{asn.asn_name}'
+            asn.asn_name = f"dup{DupCount:05d}_{asn.asn_name}"
             known_dups.append(asn)
 
 
 def identify_dups(asns):
-    """Separate associations based on whether they have already been identified as dups
+    """
+    Separate associations based on whether they have already been identified as duplicates.
 
     Parameters
     ----------
-    asns: [Association[,...]]
+    asns : list of `~jwst.associations.association.Association`
         Associations to prune
 
     Returns
-    identified, valid : [Association[,...]], [Association[,...]]
-        Dup-identified and valid associations
+    -------
+    identified, valid : list of `~jwst.associations.association.Association`
+        Dup-identified and valid associations, respectively
     """
-    identified = list()
-    valid = list()
+    identified = []
+    valid = []
     for asn in asns:
-        if asn.asn_name.startswith('dup'):
+        if asn.asn_name.startswith("dup"):
             identified.append(asn)
         else:
             valid.append(asn)

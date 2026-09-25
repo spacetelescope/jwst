@@ -1,11 +1,9 @@
-"""Association Generator
+"""
+Association generator and rule definitions.
 
-The Association Generator takes a list of items, an Association Pool, and
-creates sub-lists of those items depending on each item's attributes. How the
-sub-lists are created is defined by Association Rules.
-
-For more, see the :ref:`documentation overview <asn-overview>`.
-
+The association generator takes a list of items and an Association Pool, and it
+creates sub-lists of those items depending on each item's attributes. The
+association rules define how the sub-lists are created.
 """
 
 # Take version from the upstream package
@@ -13,23 +11,27 @@ from jwst import __version__
 
 
 # Utility
-def libpath(filepath):
-    '''Return the full path to the module library.'''
-    from os.path import (
-        abspath,
-        dirname,
-        join
-    )
-    return join(dirname(abspath(__file__)),
-                'lib',
-                filepath)
+def libpath():
+    """
+    Return the full path to the module library.
 
+    Returns
+    -------
+    Path
+        Path to the module library.
+    """
+    from pathlib import Path
+
+    return Path(__file__).parent / "lib"
+
+
+# isort: off
 from .association import *
-from .association_io import *
 from .exceptions import *
 from .generator import *
 from .lib.process_list import *
-from .pool import *
+from .pool import AssociationPool
 from .registry import *
 from .load_asn import load_asn
 from .main import *
+# isort: on

@@ -1,30 +1,31 @@
-"""Pipeline utilities objects"""
+"""Pipeline utilities objects."""
 
 import logging
 
 import numpy as np
+from stdatamodels.jwst.datamodels import JwstDataModel, dqflags
 from stdatamodels.properties import ObjectNode
-from stdatamodels.jwst.datamodels import dqflags, JwstDataModel
 
 from jwst.associations.lib.dms_base import TSO_EXP_TYPES
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["is_tso", "is_irs2", "match_nans_and_flags"]
 
 
 def is_tso(model):
-    """Is data Time Series Observation data?
+    """
+    Check if data is a Time Series Observation (TSO).
 
     Parameters
     ----------
-    model : `~jwst.datamodels.JwstDataModel`
-        Data to check
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        Data to check.
 
     Returns
     -------
     is_tso : bool
-       `True` if the model represents TSO data
+       `True` if the model represents TSO data.
     """
     is_tso = False
 
@@ -52,22 +53,22 @@ def is_tso(model):
 
 
 def is_irs2(model):
-    """Check whether the data are in IRS2 format.
+    """
+    Check whether the data are in IRS2 format.
 
     This currently assumes that only full-frame, near-infrared data can be
     taken using the IRS2 readout pattern.
 
     Parameters
     ----------
-    model : `~jwst.datamodels.JwstDataModel` or ndarray
-        Data to check
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel` or ndarray
+        Data to check.
 
     Returns
     -------
-    bool
-       `True` if the data are in IRS2 format
+    status : bool
+       `True` if the data are in IRS2 format.
     """
-
     if isinstance(model, np.ndarray):
         shape = model.shape
     else:
@@ -87,7 +88,8 @@ def is_irs2(model):
 
 
 def match_nans_and_flags(input_model):
-    """Ensure data, error, variance, and DQ are marked consistently for invalid data.
+    """
+    Ensure data, error, variance, and DQ are marked consistently for invalid data.
 
     Invalid data is assumed to be any pixel set to NaN in any one of the
     data, error, or variance arrays, or else set to the DO_NOT_USE flag
@@ -104,25 +106,26 @@ def match_nans_and_flags(input_model):
         matching dimensions if present.
     """
     # Check for datamodel input or slit instance
-    if (not isinstance(input_model, JwstDataModel)
-            and not isinstance(input_model, ObjectNode)):
-        raise ValueError(f"Input {type(input_model)} is not a datamodel.")
+    if not isinstance(input_model, JwstDataModel) and not isinstance(input_model, ObjectNode):
+        raise TypeError(f"Input {type(input_model)} is not a datamodel.")
 
     # Build up the invalid data flags from each available data extension.
     is_invalid = None
     data_shape = None
-    nan_extensions = ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']
+    nan_extensions = ["data", "err", "var_rnoise", "var_poisson", "var_flat"]
     for extension in nan_extensions:
-        if not hasattr(input_model, extension):
+        data = getattr(input_model, extension, None)
+        if data is None:
             continue
-        data = getattr(input_model, extension)
         if is_invalid is None:
             is_invalid = np.isnan(data)
             data_shape = data.shape
         else:
             if data.shape != data_shape:
-                log.warning(f"Mismatched data shapes; skipping invalid data "
-                            f"updates for extension '{extension}'")
+                log.warning(
+                    "Mismatched data shapes; skipping invalid data updates for extension '%s'",
+                    extension,
+                )
                 continue
             is_invalid |= np.isnan(data)
 
@@ -131,23 +134,26 @@ def match_nans_and_flags(input_model):
         return
 
     # Add in invalid flags from the DQ extension if present
-    if hasattr(input_model, 'dq'):
-        do_not_use = (input_model.dq & dqflags.pixel['DO_NOT_USE']).astype(bool)
-        if input_model.dq.shape != data_shape:
-            log.warning("Mismatched data shapes; skipping invalid data "
-                        "updates for extension 'dq'")
-        else:
+    if getattr(input_model, "dq", None) is not None:
+        # Try to copy do_not_use flags to is_invalid: this should work even for
+        # models with 2D DQ and 3D data
+        do_not_use = (input_model.dq & dqflags.pixel["DO_NOT_USE"]).astype(bool)
+        try:
             is_invalid |= do_not_use
+        except (IndexError, ValueError):
+            pass
+        if input_model.dq.shape != data_shape:
+            # Skip updating the DQ plane: it's not clear how to propagate
+            # invalid data if the shape doesn't match
+            log.warning("Mismatched data shapes; skipping invalid data updates for extension 'dq'")
+        else:
+            input_model.dq[is_invalid] |= dqflags.pixel["DO_NOT_USE"]
 
     # Update all the data extensions
     for extension in nan_extensions:
-        if not hasattr(input_model, extension):
+        data = getattr(input_model, extension, None)
+        if data is None:
             continue
-        data = getattr(input_model, extension)
         if data.shape != data_shape:
             continue
         data[is_invalid] = np.nan
-
-    # Update the DQ extension
-    if input_model.dq.shape == data_shape:
-        input_model.dq[is_invalid] |= dqflags.pixel['DO_NOT_USE']

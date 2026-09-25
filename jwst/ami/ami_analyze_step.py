@@ -1,11 +1,11 @@
+import logging
+
+import asdf
+import numpy as np
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from . import ami_analyze
-from . import utils
-
-import numpy as np
-import asdf
+from jwst.ami import ami_analyze, utils
+from jwst.stpipe import Step
 
 __all__ = ["AmiAnalyzeStep"]
 
@@ -16,6 +16,8 @@ SX_COMM = 6.18605e-03
 SY_COMM = -7.27008e-03
 XO_COMM = 0.0
 YO_COMM = 0.0
+
+log = logging.getLogger(__name__)
 
 
 class BandpassError(Exception):
@@ -50,7 +52,6 @@ class AmiAnalyzeStep(Step):
         ----------
         model : data model
             The model to save
-
         *args, **kwargs : tuple, dict
             Arguments to pass to the stpipe Step.save_model method
 
@@ -84,10 +85,10 @@ class AmiAnalyzeStep(Step):
             # assume it is an array of the correct shape
             wavemin = np.min(bandpass[:, 1])
             wavemax = np.max(bandpass[:, 1])
-            self.log.info("User-defined bandpass provided:")
-            self.log.info("\tOVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES")
-            self.log.info(f"Using {bandpass.shape[0]} wavelengths for fit.")
-            self.log.info(f"Wavelength min: {wavemin:.3e} \t Wavelength max: {wavemax:.3e}")
+            log.info("User-defined bandpass provided:")
+            log.info("\tOVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES")
+            log.info(f"Using {bandpass.shape[0]} wavelengths for fit.")
+            log.info(f"Wavelength min: {wavemin:.3e} \t Wavelength max: {wavemax:.3e}")
 
             # update attribute and return
             self.bandpass = bandpass
@@ -118,8 +119,8 @@ class AmiAnalyzeStep(Step):
 
         Returns
         -------
-        affine2d : Affine2d object
-            User-defined affine transform
+        affine2d : obj
+            User-defined affine transform (``jwst.ami.utils.Affine2d``).
         """
         msg_defaulting = "\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****"
         try:
@@ -133,13 +134,13 @@ class AmiAnalyzeStep(Step):
                     yo=af["yo"],
                     rotradccw=af["rotradccw"],
                 )
-                self.log.info(f"Using affine transform from ASDF file {self.affine2d}")
+                log.info(f"Using affine transform from ASDF file {self.affine2d}")
             # now self.affine2d updated from string to object
             self.affine2d = affine2d
 
         except FileNotFoundError:
-            self.log.info(f"File {self.affine2d} could not be found at the specified location.")
-            self.log.info(msg_defaulting)
+            log.info(f"File {self.affine2d} could not be found at the specified location.")
+            log.info(msg_defaulting)
             affine2d = None
 
         except KeyError:
@@ -148,15 +149,15 @@ class AmiAnalyzeStep(Step):
                 "mx, my, sx, sy ,xo, yo, rotradccw. "
             )
             message2 = "See step documentation for info on creating a custom affine2d ASDF file."
-            self.log.info(message1 + message2)
-            self.log.info(msg_defaulting)
+            log.info(message1 + message2)
+            log.info(msg_defaulting)
             affine2d = None
 
         except (IndexError, TypeError, ValueError):
             message1 = f"Could not use affine2d from {self.affine2d}. "
             message2 = "See documentation for info on creating a custom bandpass ASDF file."
-            self.log.info(message1 + message2)
-            self.log.info(msg_defaulting)
+            log.info(message1 + message2)
+            log.info(msg_defaulting)
             affine2d = None
 
         else:
@@ -171,17 +172,18 @@ class AmiAnalyzeStep(Step):
 
         Parameters
         ----------
-        input_data : str or datamodel
+        input_data : str, `~stdatamodels.jwst.datamodels.ImageModel`, or \
+                     `~stdatamodels.jwst.datamodels.CubeModel`
             Input file name or datamodel
 
         Returns
         -------
-        oifitsmodel : AmiOIModel object
+        oifitsmodel : `~stdatamodels.jwst.datamodels.AmiOIModel`
             AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
-        oifitsmodel_multi : AmiOIModel object
+        oifitsmodel_multi : `~stdatamodels.jwst.datamodels.AmiOIModel`
             AMI tables of observables for each integration
             from LG algorithm fringe fitting in OIFITS format
-        amilgmodel : AmiLGFitModel object
+        amilgmodel : `~stdatamodels.jwst.datamodels.AmiOIModel`
             AMI cropped data, model, and residual data from LG algorithm fringe fitting
         """
         # Retrieve the parameter values
@@ -202,70 +204,73 @@ class AmiAnalyzeStep(Step):
         if str(affine2d).lower() == "none":
             affine2d = None
 
-        self.log.info(f"Oversampling factor = {oversample}")
-        self.log.info(f"Initial rotation guess = {rotate} deg")
-        self.log.info(f"Initial values to use for psf offset = {psf_offset}")
+        log.info(f"Oversampling factor = {oversample}")
+        log.info(f"Initial rotation guess = {rotate} deg")
+        log.info(f"Initial values to use for psf offset = {psf_offset}")
 
         # Make sure oversample is odd
         if oversample % 2 == 0:
             raise ValueError("Oversample value must be an odd integer.")
 
         # Open the input data model. Can be 2D or 3D image
-        with datamodels.open(input_data) as input_model:
-            # Get the name of the filter throughput reference file to use
-            throughput_reffile = self.get_reference_file(input_model, "throughput")
-            self.log.info(f"Using filter throughput reference file {throughput_reffile}")
+        output_model = self.prepare_output(input_data)
 
-            # Check for a valid reference file or user-provided bandpass
-            if (throughput_reffile == "N/A") & (bandpass is None):
-                raise RuntimeError(
-                    "No THROUGHPUT reference file found. ami_analyze cannot continue."
+        # Get the name of the filter throughput reference file to use
+        throughput_reffile = self.get_reference_file(output_model, "throughput")
+        log.info(f"Using filter throughput reference file {throughput_reffile}")
+
+        # Check for a valid reference file or user-provided bandpass
+        if (throughput_reffile == "N/A") & (bandpass is None):
+            raise RuntimeError("No THROUGHPUT reference file found. ami_analyze cannot continue.")
+
+        # If there's a user-defined bandpass or affine, handle it
+        if bandpass is not None:
+            bandpass = self.override_bandpass()
+        if affine2d is not None:
+            if affine2d == "commissioning":
+                affine2d = utils.Affine2d(
+                    mx=MX_COMM,
+                    my=MY_COMM,
+                    sx=SX_COMM,
+                    sy=SY_COMM,
+                    xo=XO_COMM,
+                    yo=YO_COMM,
+                    name="commissioning",
                 )
+                log.info("Using affine parameters from commissioning.")
+            else:
+                affine2d = self.override_affine2d()
 
-            # If there's a user-defined bandpass or affine, handle it
-            if bandpass is not None:
-                bandpass = self.override_bandpass()
-            if affine2d is not None:
-                if affine2d == "commissioning":
-                    affine2d = utils.Affine2d(
-                        mx=MX_COMM,
-                        my=MY_COMM,
-                        sx=SX_COMM,
-                        sy=SY_COMM,
-                        xo=XO_COMM,
-                        yo=YO_COMM,
-                        name="commissioning",
-                    )
-                    self.log.info("Using affine parameters from commissioning.")
-                else:
-                    affine2d = self.override_affine2d()
+        # Get the name of the NRM reference file to use
+        nrm_reffile = self.get_reference_file(output_model, "nrm")
+        log.info(f"Using NRM reference file {nrm_reffile}")
 
-            # Get the name of the NRM reference file to use
-            nrm_reffile = self.get_reference_file(input_model, "nrm")
-            self.log.info(f"Using NRM reference file {nrm_reffile}")
-
-            with (
-                datamodels.ThroughputModel(throughput_reffile) as throughput_model,
-                datamodels.NRMModel(nrm_reffile) as nrm_model,
-            ):
-                # Apply the LG+ methods to the data
-                oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_lg_plus(
-                    input_model,
-                    throughput_model,
-                    nrm_model,
-                    oversample,
-                    psf_offset,
-                    rotsearch_parameters,
-                    bandpass,
-                    usebp,
-                    firstfew,
-                    chooseholes,
-                    affine2d,
-                    run_bpfix,
-                )
+        with (
+            datamodels.ThroughputModel(throughput_reffile) as throughput_model,
+            datamodels.NRMModel(nrm_reffile) as nrm_model,
+        ):
+            # Apply the LG+ methods to the data
+            oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_lg_plus(
+                output_model,
+                throughput_model,
+                nrm_model,
+                oversample,
+                psf_offset,
+                rotsearch_parameters,
+                bandpass,
+                usebp,
+                firstfew,
+                chooseholes,
+                affine2d,
+                run_bpfix,
+            )
 
         amilgmodel.meta.cal_step.ami_analyze = "COMPLETE"
         oifitsmodel.meta.cal_step.ami_analyze = "COMPLETE"
         oifitsmodel_multi.meta.cal_step.ami_analyze = "COMPLETE"
+
+        # Output are all new models, so close the input if it was opened here
+        if output_model is not input_data:
+            output_model.close()
 
         return oifitsmodel, oifitsmodel_multi, amilgmodel

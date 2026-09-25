@@ -1,7 +1,6 @@
-from .container import ModelContainer
-
 from stdatamodels.jwst.datamodels import MultiExposureModel, SlitModel
 
+from jwst.datamodels.container import ModelContainer
 
 __all__ = ["SourceModelContainer"]
 
@@ -12,27 +11,31 @@ VALID_INITS = (MultiExposureModel,)
 
 class SourceModelContainer(ModelContainer):
     """
-    A container to make MultiExposureModel look like ModelContainer.
+    A container to make `~stdatamodels.jwst.datamodels.MultiExposureModel`
+    look like `~jwst.datamodels.container.ModelContainer`.
 
-    The `MultiExposureModel.exposures` list contains the data for each exposure
+    The ``MultiExposureModel.exposures`` list contains the data for each exposure
     from a common slit id. Though the information is the same, the structures
-    are not true `SlitModel` instances. This container creates a `SlitModel`
+    are not true `~stdatamodels.jwst.datamodels.SlitModel` instances. This container creates a
+    `~stdatamodels.jwst.datamodels.SlitModel`
     wrapper around each exposure, such that pipeline code can treat each
-    as a `DataModel`.
-    """
+    as a `~stdatamodels.jwst.datamodels.JwstDataModel`.
+
+    Initialize the container from a `~stdatamodels.jwst.datamodels.MultiExposureModel`
+    or another `~jwst.datamodels.source_container.SourceModelContainer`.
+
+    Parameters
+    ----------
+    init : `~stdatamodels.jwst.datamodels.MultiExposureModel`, \
+           `~jwst.datamodels.source_container.SourceModelContainer`, or \
+           None, optional
+        The models to wrap, by default None
+    **kwargs : dict
+        Additional arguments to pass to the initializer of the parent class,
+        e.g., to ``MultiExpsoureModel.__init__()``.
+    """  # noqa: D205  # numpydoc ignore=SS06
 
     def __init__(self, init=None, **kwargs):
-        """
-        Initialize the container from a MultiExposureModel or another SourceModelContainer.
-
-        Parameters
-        ----------
-        init : MultiExposureModel, SourceModelContainer, or None, optional
-            The models to wrap, by default None
-        **kwargs : dict
-            Additional arguments to pass to the initializer of the parent class,
-            e.g. to `MultiExpsoureModel.__init__()`.
-        """
         if not isinstance(init, (self.__class__,) + VALID_INITS):
             raise TypeError(f"Input {init} cannot initialize a SourceModelContainer")
 
@@ -48,7 +51,7 @@ class SourceModelContainer(ModelContainer):
             models = []
             for exposure in init.exposures:
                 model = SlitModel()
-                model._instance.update(exposure._instance)  # noqa: SLF001
+                model.instance.update(exposure.instance)
                 models.append(model)
             self._models = models
             self._multiexposure = init
@@ -56,22 +59,24 @@ class SourceModelContainer(ModelContainer):
     @property
     def multiexposure(self):
         """
-        Return an updated version of the MultiExposureModel that is being wrapped.
+        Return an updated version of the `~stdatamodels.jwst.datamodels.MultiExposureModel`
+        that is being wrapped.
 
         Returns
         -------
-        MultiExposureModel
-            The MultiExposureModel being wrapped, be updated with any new data in the container.
-        """
+        `~stdatamodels.jwst.datamodels.MultiExposureModel`
+            The `~stdatamodels.jwst.datamodels.MultiExposureModel`
+            being wrapped, be updated with any new data in the container.
+        """  # noqa: D205  # numpydoc ignore=SS06
         # Reapply models back to the exposures
         for exposure, model in zip(self._multiexposure.exposures, self._models, strict=True):
-            exposure._instance.update(model._instance)  # noqa: SLF001
+            exposure.instance.update(model.instance)
 
         return self._multiexposure
 
     def save(self, path=None, dir_path=None, save_model_func=None, *args, **kwargs):
         """
-        Save out the container as a MultiExposureModel.
+        Save out the container as a `~stdatamodels.jwst.datamodels.MultiExposureModel`.
 
         Parameters
         ----------
@@ -88,3 +93,21 @@ class SourceModelContainer(ModelContainer):
             self.multiexposure.save(*args, path=path, dir_path=dir_path, **kwargs)
         else:
             save_model_func(self.multiexposure, output_file=path)
+
+    def copy(self, memo=None):
+        """
+        Make a deep copy of the container.
+
+        Parameters
+        ----------
+        memo : dict
+            Keeps track of elements that have already been copied to avoid infinite recursion.
+
+        Returns
+        -------
+        `~jwst.datamodels.source_container.SourceModelContainer`
+            A deep copy of the container and all the models in it.
+        """
+        multi_exposure = self.multiexposure.copy(memo=memo)
+        result = self.__class__(init=multi_exposure)
+        return result

@@ -1,19 +1,13 @@
-"""
-Unit tests for reset anomaly correction
-"""
+"""Unit tests for reset anomaly correction."""
 
-import pytest
 import numpy as np
+from stdatamodels.jwst.datamodels import dqflags
 
-from stdatamodels.jwst.datamodels import RampModel, ResetModel, dqflags
-
-from jwst.reset.reset_sub import (
-    do_correction as resetcorr
-)
+from jwst.reset.reset_sub import do_correction as resetcorr
 
 
 def test_correction(make_rampmodel, make_resetmodel):
-    '''Check that data is unchanged for science data for groups > number of groups of reset '''
+    """Check that data is unchanged for science data for groups > number of groups of reset"""
 
     # size of integration
     nints = 1
@@ -28,7 +22,7 @@ def test_correction(make_rampmodel, make_resetmodel):
 
     refgroups = 12
     # create reset reference file model with frames less than science data
-    reset = make_resetmodel(nints, refgroups, ysize, xsize)
+    reset = make_resetmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups):
@@ -53,7 +47,7 @@ def test_correction(make_rampmodel, make_resetmodel):
 
 
 def test_nan(make_rampmodel, make_resetmodel):
-    '''Verify that when a reset  has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly'''
+    """Verify that when a reset  has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly"""
 
     # size of integration
     nints = 1
@@ -70,7 +64,7 @@ def test_nan(make_rampmodel, make_resetmodel):
 
     # create reset reference file model with more frames than science data
     refgroups = 15
-    reset = make_resetmodel(nints, refgroups, ysize, xsize)
+    reset = make_resetmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
@@ -88,7 +82,7 @@ def test_nan(make_rampmodel, make_resetmodel):
 
 
 def test_dq_combine(make_rampmodel, make_resetmodel):
-    '''Verify that the DQ array of the reset is correctly combined with the PIXELDQ array of the science data.'''
+    """Verify that the DQ array of the reset is correctly combined with the PIXELDQ array of the science data."""
 
     # size of integration
     nints = 1
@@ -105,12 +99,12 @@ def test_dq_combine(make_rampmodel, make_resetmodel):
 
     # create reset reference file model with more frames than science data
     refgroups = 12
-    reset = make_resetmodel(nints, refgroups, ysize, xsize)
+    reset = make_resetmodel(refgroups, ysize, xsize)
 
-    jump_det = dqflags.pixel['JUMP_DET']
-    saturated = dqflags.pixel['SATURATED']
-    do_not_use = dqflags.pixel['DO_NOT_USE']
-    nonlinear = dqflags.pixel['NONLINEAR']
+    jump_det = dqflags.pixel["JUMP_DET"]
+    saturated = dqflags.pixel["SATURATED"]
+    do_not_use = dqflags.pixel["DO_NOT_USE"]
+    nonlinear = dqflags.pixel["NONLINEAR"]
 
     # populate dq flags of sci pixeldq and reference dq
     dm_ramp.pixeldq[50, 50] = jump_det
@@ -130,7 +124,7 @@ def test_dq_combine(make_rampmodel, make_resetmodel):
 
 
 def test_2_int(make_rampmodel, make_resetmodel):
-    '''Verify the reset correction is done by integration for MIRI observations'''
+    """Verify the reset correction is done by integration for MIRI observations"""
 
     # size of integration
     nints = 2
@@ -147,7 +141,7 @@ def test_2_int(make_rampmodel, make_resetmodel):
 
     # create reset reference file model with more frames than science data
     refgroups = 10
-    reset = make_resetmodel(nints, refgroups, ysize, xsize)
+    reset = make_resetmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
     for i in range(0, refgroups - 1):
@@ -165,56 +159,3 @@ def test_2_int(make_rampmodel, make_resetmodel):
     # test that the output data file is equal to the difference found when subtracting ref file from sci file
     np.testing.assert_array_equal(outfile.data[0], diff)
     np.testing.assert_array_equal(outfile.data[1], diff_int2)
-
-
-@pytest.fixture(scope='function')
-def make_rampmodel():
-    '''Make MIRI Ramp model for testing'''
-    def _ramp(nints, ngroups, ysize, xsize):
-        # create the data and groupdq arrays
-        csize = (nints, ngroups, ysize, xsize)
-        data = np.full(csize, 1.0)  # default = 1.0
-
-        # create a JWST datamodel for MIRI data
-        dm_ramp = RampModel(data=data)
-
-        dm_ramp.meta.instrument.name = 'MIRI'
-        dm_ramp.meta.observation.date = '2018-01-01'
-        dm_ramp.meta.observation.time = '00:00:00'
-        dm_ramp.meta.subarray.xstart = 1
-        dm_ramp.meta.subarray.xsize = xsize
-        dm_ramp.meta.subarray.ystart = 1
-        dm_ramp.meta.subarray.ysize = ysize
-        dm_ramp.meta.exposure.nints = nints
-        dm_ramp.meta.exposure.ngroups = ngroups
-        dm_ramp.meta.description = 'Fake data.'
-
-        return dm_ramp
-
-    return _ramp
-
-
-@pytest.fixture(scope='function')
-def make_resetmodel():
-    '''Make MIRI Reset model for testing'''
-    def _reset(nints, ngroups, ysize, xsize):
-        # create the data and groupdq arrays
-        nints = 2
-        csize = (nints, ngroups, ysize, xsize)
-        data = np.full(csize, 1.0)  # default = 1.0
-
-        # create a JWST datamodel for MIRI data
-        reset = ResetModel(data=data)
-        reset.meta.exposure.nints = nints
-        reset.meta.exposure.ngroups = ngroups
-        reset.meta.instrument.name = 'MIRI'
-        reset.meta.date = '2018-01-01'
-        reset.meta.time = '00:00:00'
-        reset.meta.description = 'Fake data.'
-        reset.meta.reftype = 'ResetModel'
-        reset.meta.author = 'Jane Morrison'
-        reset.meta.pedigree = 'Dummy'
-        reset.meta.useafter = '2015-10-01T00:00:00'
-        return reset
-
-    return _reset

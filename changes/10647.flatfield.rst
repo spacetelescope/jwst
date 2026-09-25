@@ -1,0 +1,2 @@
+For FGS guider data, fix a missing scale factor in the error propagation.
+Also, set science and error values to NaN where the DQ flag is DO_NOT_USE.

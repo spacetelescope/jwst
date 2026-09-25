@@ -27,203 +27,202 @@ Keyword    Data Model Name           Instruments
 EXP_TYPE   model.meta.exposure.type  All
 =========  ========================  ===========
 
-NON-IFU APCORR Reference File Format
+Non-IFU APCORR Reference File Format
 ++++++++++++++++++++++++++++++++++++
 APCORR reference files for non-IFU data are in FITS format.
 The FITS APCORR reference file contains tabular data
-in a BINTABLE extension with EXTNAME = 'APCORR'.
+in a BINTABLE extension with ``EXTNAME='APCORR'``.
 The FITS primary HDU does not contain a data array.
 The contents of the table extension varies for different
 instrument modes, as shown in the tables below.
 
-:Data model: `~jwst.datamodels.FgsImgApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.FgsImgApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | FGS        | Image | eefraction  | float     | scalar     | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | radius      | float     | scalar     | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | scalar     | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | skyin       | float     | scalar     | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | skyout      | float     | scalar     | pixels   |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.MirImgApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.MirImgApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | MIRI       | Image | filter      | string    | 12         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | subarray    | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | eefraction  | float     | scalar     | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | radius      | float     | scalar     | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | scalar     | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | skyin       | float     | scalar     | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | skyout      | float     | scalar     | pixels   |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.MirLrsApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.MirLrsApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | MIRI       | LRS   | subarray    | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | wavelength  | float     | 1D array   | micron   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_wl    | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | size        | integer   | 1D array   | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_size  | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | 2D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-
-:Data model: `~jwst.datamodels.NrcImgApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrcImgApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | NIRCam     | Image | filter      | string    | 12         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | pupil       | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | eefraction  | float     | scalar     | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | radius      | float     | scalar     | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | scalar     | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | skyin       | float     | scalar     | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | skyout      | float     | scalar     | pixels   |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NrcWfssApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrcWfssApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | NIRCam     | WFSS  | filter      | string    | 12         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | pupil       | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | wavelength  | float     | 1D array   | micron   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_wl    | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | size        | integer   | 1D array   | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_size  | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | 2D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NisImgApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NisImgApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | NIRISS     | Image | filter      | string    | 12         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | pupil       | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | eefraction  | float     | scalar     | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | radius      | float     | scalar     | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | scalar     | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | skyin       | float     | scalar     | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | skyout      | float     | scalar     | pixels   |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NisWfssApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NisWfssApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | NIRISS     | WFSS  | filter      | string    | 12         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | pupil       | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | wavelength  | float     | 1D array   | micron   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_wl    | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | size        | integer   | 1D array   | pixels   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_size  | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | 2D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NrsFsApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrsFsApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | NIRSpec    |  FS   | filter      | string    | 12         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | grating     | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | slit        | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | wavelength  | float     | 1D array   | micron   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_wl    | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | size        | integer   | 2D array   | arcsec   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_size  | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | pixphase    | float     | 1D array   | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | 3D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr_err  | float     | 3D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NrsMosApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrsMosApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | NIRSpec    | MOS   | filter      | string    | 12         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | grating     | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | wavelength  | float     | 1D array   | micron   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_wl    | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | size        | integer   | 2D array   | arcsec   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | nelem_size  | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | pixphase    | float     | 1D array   | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | 3D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr_err  | float     | 3D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
@@ -250,11 +249,11 @@ The row selection criteria for each instrument+mode are:
    - MOS: Filter and Grating
    - Fixed Slits: Filter, Grating, and Slit name
 
-Note: Spectroscopic mode reference files contain the "nelem_wl" and "nelem_size"
-entries, which indicate to the pipeline step how many valid elements are contained
-in the "wavelength" and "size" arrays, respectively. Only the first "nelem_wl"
-and "nelem_size" entries are read from each array.
-
+.. note::
+    Spectroscopic mode reference files contain the "nelem_wl" and "nelem_size"
+    entries, which indicate to the pipeline step how many valid elements are contained
+    in the "wavelength" and "size" arrays, respectively. Only the first "nelem_wl"
+    and "nelem_size" entries are read from each array.
 
 IFU APCORR Reference File ASDF Format
 +++++++++++++++++++++++++++++++++++++
@@ -262,36 +261,36 @@ For IFU data the APCORR reference files are in ASDF format. The aperture correct
 varies with wavelength and the contents of the files are shown below. The radius,
 aperture correction and error are all 2D arrays. Currently the 2nd dimension does
 not add information, but in the future it could be used to provide different aperture
-corrections for different radii. 
+corrections for different radii.
 
-:Data model: `~jwst.datamodels.MirMrsApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.MirMrsApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
 | MIRI       | MRS   | wavelength  | float     | 1D array   | micron   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | radius      | float     | 2D array   | arcsec   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | 2D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NRSIFUApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrsIfuApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
-| NIRSpec    | MOS   | filter      | string    | 12         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+| NIRSpec    | IFU   | filter      | string    | 12         | N/A      |
+|            |       +-------------+-----------+------------+----------+
 |            |       | grating     | string    | 15         | N/A      |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | wavelength  | float     | 1D array   | micron   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | radius      | float     | 2D array   | arcsec   |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr      | float     | 2D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
+|            |       +-------------+-----------+------------+----------+
 |            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+

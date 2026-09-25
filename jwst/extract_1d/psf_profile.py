@@ -1,6 +1,6 @@
 import logging
-import numpy as np
 
+import numpy as np
 from scipy import ndimage, optimize
 from stdatamodels.jwst.datamodels import SpecPsfModel
 
@@ -10,7 +10,6 @@ from jwst.extract_1d.source_location import middle_from_wcs, nod_pair_location, 
 __all__ = ["psf_profile"]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 HORIZONTAL = 1
 VERTICAL = 2
@@ -19,40 +18,41 @@ VERTICAL = 2
 NOD_PAIR_PATTERN = ["ALONG-SLIT-NOD", "2-POINT-NOD"]
 
 
-def open_psf(psf_refname, exp_type):
+def open_psf(psf_refname, slit_name):
     """
     Open the PSF reference file.
 
     Parameters
     ----------
     psf_refname : str
-        The name of the psf reference file.
-    exp_type : str
-        The exposure type of the data.
+        The name of the PSF reference file.
+    slit_name : str or None
+        The slit name for the data.
 
     Returns
     -------
-    psf_model : SpecPsfModel
+    psf_model : `~stdatamodels.jwst.datamodels.SpecPsfModel`
         Returns the EPSF model.
     """
-    if exp_type == "MIR_LRS-FIXEDSLIT":
-        # The information we read in from PSF file is:
-        # center_col: psf_model.meta.psf.center_col
-        # super sample factor: psf_model.meta.psf.subpix)
-        # psf : psf_model.data (2d)
-        # wavelength of PSF planes: psf_model.wave
+    try:
         psf_model = SpecPsfModel(psf_refname)
+    except (ValueError, AttributeError):
+        raise TypeError(f"PSF file {psf_refname} could not be read as SpecPsfModel.") from None
 
-    else:
-        # So far, only MIRI LRS has a PSF datamodel defined. For any other
-        # exposure type, try to use the model MIRI LRS uses to open the input model
-        try:
-            psf_model = SpecPsfModel(psf_refname)
-        except (ValueError, AttributeError):
-            raise NotImplementedError(
-                f"PSF file for EXP_TYPE {exp_type} could not be read as SpecPsfModel."
-            ) from None
-    return psf_model
+    # Get the right PSF aperture
+    slit_name = str(slit_name).upper()
+    psf_aperture = None
+    for aperture in psf_model.apertures:
+        aper_name = str(aperture.name).upper()
+        if aper_name in ["NONE", "ANY"] or aper_name == slit_name:
+            psf_aperture = aperture
+            break
+    psf_model.close()
+
+    if psf_aperture is None:
+        raise ValueError(f"No matching aperture found in SpecPsfModel for slit={slit_name}")
+
+    return psf_aperture
 
 
 def _normalize_profile(profile, dispaxis):
@@ -97,7 +97,7 @@ def _make_cutout_profile(
         cross-dispersion indices.
     nod_offset : float, optional
         If not None, a negative trace is added to the spatial profile,
-        with a cross-dispersion shift of `nod_offset`.
+        with a cross-dispersion shift of ``nod_offset``.
 
     Returns
     -------
@@ -137,16 +137,16 @@ def _profile_residual(
     """
     Residual function to minimize for optimizing trace locations.
 
-    Call `_make_cutout_profile` to generate a profile from input parameters.
-    Call `extract1d` to generate a scene model from the data and the new profile.
-    Compute a residual value from the sum of (model - cutout) ** 2 / cutout_var.
+    Call ``_make_cutout_profile`` to generate a profile from input parameters.
+    Call ``extract1d`` to generate a scene model from the data and the new profile.
+    Compute a residual value from the sum of ``(model - cutout) ** 2 / cutout_var``.
 
     Parameters
     ----------
     shifts_to_optimize : list of float
-        The first value is used as the `extra_shift` parameter to
-        `_make_cutout_profile`.  If two are provided, the second value is
-        used as the `nod_offset` parameter to `_make_cutout_profile`.
+        The first value is used as the ``extra_shift`` parameter to
+        ``_make_cutout_profile``.  If two are provided, the second value is
+        used as the ``nod_offset`` parameter to ``_make_cutout_profile``.
         If only one value is provided, no nod offset is applied.
     cutout : ndarray
         Input data array, trimmed to the bounding box.
@@ -164,7 +164,7 @@ def _profile_residual(
     dispaxis : int
         Dispersion axis.
     fit_bkg : bool, optional
-        If True, background subtraction is performed during extraction.
+        If `True`, background subtraction is performed during extraction.
 
     Returns
     -------
@@ -213,15 +213,16 @@ def psf_profile(
     Provides PSF-based profiles for point sources in slit-like data containing
     one positive trace and, optionally, one negative trace resulting from nod
     subtraction.  The location of the positive trace should be provided in the
-    `trace` input parameter; the negative trace location will be guessed from
+    ``trace`` input parameter; the negative trace location will be guessed from
     the input metadata. If a negative trace is modeled, it is recommended that
-    `optimize_shifts` also be set to True, to improve the initial guess for the
+    ``optimize_shifts`` also be set to `True`, to improve the initial guess for the
     trace location.
 
     Parameters
     ----------
-    input_model : data model
-        This can be either the input science file or one SlitModel out of
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        This can be either the input science file or one
+        `~stdatamodels.jwst.datamodels.SlitModel` out of
         a list of slits.
     trace : ndarray or None
         Array of source cross-dispersion position values, one for each
@@ -233,11 +234,11 @@ def psf_profile(
     psf_ref_name : str
         PSF reference filename.
     optimize_shifts : bool, optional
-        If True, the spatial location of the trace will be optimized by
+        If `True`, the spatial location of the trace will be optimized by
         minimizing the residuals in a scene model compared to the data in
-        the first integration of `input_model`.
+        the first integration of ``input_model``.
     model_nod_pair : bool, optional
-        If True, and if background subtraction has taken place, a negative
+        If `True`, and if background subtraction has taken place, a negative
         PSF will be modeled at the mirrored spatial location of the positive
         trace.
 
@@ -254,9 +255,10 @@ def psf_profile(
         For PSF profiles, this is always set to the upper edge of the bounding box,
         since the full array may have non-zero weight.
     """
-    # Read in reference files
+    # Read in reference file
     exp_type = input_model.meta.exposure.type
-    psf_model = open_psf(psf_ref_name, exp_type)
+    slit_name = getattr(input_model, "name", None)
+    psf_model = open_psf(psf_ref_name, slit_name)
 
     # Get the data cutout
     data_shape = input_model.data.shape[-2:]
@@ -319,7 +321,7 @@ def psf_profile(
     # Check if we need to add a negative nod pair trace
     nod_offset = None
     if model_nod_pair:
-        nod_subtracted = str(input_model.meta.cal_step.back_sub) == "COMPLETE"
+        nod_subtracted = str(input_model.meta.cal_step.bkg_subtract) == "COMPLETE"
         pattype_ok = str(input_model.meta.dither.primary_type) in NOD_PAIR_PATTERN
         if not nod_subtracted:
             log.info("Input data was not nod-subtracted. A negative trace will not be modeled.")
@@ -344,14 +346,14 @@ def psf_profile(
 
     # Scale the trace location to the subsampled psf and
     # add the wavelength and spatial shifts to the coordinates to map to
-    psf_subpix = psf_model.meta.psf.subpix
+    psf_subpix = psf_model.subpix
     psf_location = trace - bbox[0][0]
     if dispaxis == HORIZONTAL:
-        psf_shift = psf_model.meta.psf.center_row - (psf_location * psf_subpix)
+        psf_shift = psf_model.center_row - (psf_location * psf_subpix)
         xidx = wave_idx
         yidx = _y * psf_subpix + psf_shift
     else:
-        psf_shift = psf_model.meta.psf.center_col - (psf_location * psf_subpix)
+        psf_shift = psf_model.center_col - (psf_location * psf_subpix)
         xidx = _x * psf_subpix + psf_shift[:, None]
         yidx = wave_idx
 

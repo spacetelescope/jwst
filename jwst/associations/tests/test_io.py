@@ -1,69 +1,83 @@
-from glob import glob
 import os
+from glob import glob
 
 import pytest
 from astropy.table import Table
-
-from jwst.associations.tests.helpers import TemporaryDirectory, combine_pools, t_path
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations import load_asn
+from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.main import Main
+from jwst.associations.tests.helpers import combine_pools
 
 
-# Basic pool
-POOL_PATH = 'pool_018_all_exptypes.csv'
-
-
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def pool():
     """Retrieve pool path"""
-    pool_path = t_path(os.path.join('data', POOL_PATH))
+    pool_path = get_pkg_data_filename(
+        "data/pool_018_all_exptypes.csv", package="jwst.associations.tests"
+    )  # Basic pool
     pool = combine_pools(pool_path)
 
     return pool
 
 
-@pytest.fixture(
-    scope='module',
-    params=['yaml', 'json']
-)
-def make_asns(pool, request):
-    asn_format = request.param
-    with TemporaryDirectory() as path:
-        generated = Main.cli([
-            '-p', path,
-            '-i', 'o001',
-            '--save-orphans',
-            '--format', asn_format
-        ], pool=pool)
-        yield generated, path, asn_format
+@pytest.fixture(scope="module")
+def make_asns(pool, tmp_path_factory):
+    path = str(tmp_path_factory.mktemp("data"))
+    generated = Main.cli(["-p", path, "-i", "o001", "--save-orphans"], pool=pool)
+    return generated, path
 
 
 def test_roundtrip(make_asns):
-    generated, path, asn_format = make_asns
-    asn_files = glob(os.path.join(path, '*.' + asn_format))
+    generated, path = make_asns
+    asn_files = glob(os.path.join(path, "*.json"))
     assert len(asn_files) == len(generated.associations)
 
     for asn_file in asn_files:
-        with open(asn_file, 'r') as asn_fp:
+        with open(asn_file, "r") as asn_fp:
             load_asn(asn_fp)
 
-    orphaned_files = glob(os.path.join(path, '*.csv'))
+    orphaned_files = glob(os.path.join(path, "*.csv"))
     assert len(orphaned_files) == 1
-    orphaned = Table.read(
-        orphaned_files[0],
-        format='ascii',
-        delimiter='|'
-    )
+    orphaned = Table.read(orphaned_files[0], format="ascii", delimiter="|")
     assert len(orphaned) == len(generated.orphaned)
 
 
 def test_load_asn_all(make_asns):
-    generated, path, asn_format = make_asns
-    asn_files = glob(os.path.join(path, '*.' + asn_format))
+    generated, path = make_asns
+    asn_files = glob(os.path.join(path, "*.json"))
     assert len(asn_files) == len(generated.associations)
 
     for asn_file in asn_files:
-        with open(asn_file, 'r') as asn_fp:
+        with open(asn_file, "r") as asn_fp:
             asns = load_asn(asn_fp, first=False)
         assert len(asns) > 1
+
+
+def test_err_invalid_json_trailing_comma(tmp_path):
+    fname = tmp_path / "bad_asn.json"
+    with open(fname, "w") as f:
+        # Trailing comma makes this invalid JSON
+        f.write(
+            '{"asn_rule": "Asn_Lv2Image", "asn_pool": "test", "program": "99999",'
+            ' "asn_type": "image2", "products": [{"name": "test_rate",'
+            ' "members": [{"expname": "test_rate.fits", "exptype": "science"},]}]}'
+        )
+    msg = "Container is not JSON"
+    with open(fname) as f, pytest.raises(AssociationNotValidError, match=msg):
+        load_asn(f)
+
+
+def test_err_invalid_json_suffix(tmp_path):
+    fname = tmp_path / "bad_asn.yaml"
+    with open(fname, "w") as f:
+        # Valid JSON, but we will force YAML suffix
+        f.write(
+            '{"asn_rule": "Asn_Lv2Image", "asn_pool": "test", "program": "99999",'
+            ' "asn_type": "image2", "products": [{"name": "test_rate",'
+            ' "members": [{"expname": "test_rate.fits", "exptype": "science"}]}]}'
+        )
+    msg = "File extension 'yaml' is not recognized as JSON"
+    with open(fname) as f, pytest.raises(AssociationNotValidError, match=msg):
+        load_asn(f)

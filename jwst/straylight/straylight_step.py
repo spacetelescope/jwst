@@ -1,16 +1,19 @@
-#! /usr/bin/env python
+"""Correct MRS data for straylight caused by the cross-artifact effect or residual cosmic rays."""
+
+import logging
+
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from . import straylight
+from jwst.stpipe import Step
+from jwst.straylight import straylight
 
 __all__ = ["StraylightStep"]
 
+log = logging.getLogger(__name__)
 
-class StraylightStep (Step):
-    """
-    StraylightStep: Performs straylight correction image using a Mask file.
-    """
+
+class StraylightStep(Step):
+    """Correct for straylight caused by cross-artifact effect or residual cosmic rays."""
 
     class_alias = "straylight"
 
@@ -21,56 +24,73 @@ class StraylightStep (Step):
         shower_y_stddev = float(default=5) # Y standard deviation for shower model
         shower_low_reject = float(default=0.1) # Low percentile of pixels to reject
         shower_high_reject = float(default=99.9) # High percentile of pixels to reject
+        save_shower_model = boolean(default=False) # Save the shower model
     """  # noqa: E501
 
-    reference_file_types = ['mrsxartcorr', 'regions']
+    reference_file_types = ["mrsxartcorr", "regions"]
 
-    def process(self, input):
+    def process(self, input_data):
+        """
+        Correct MIRI MRS data for the cross-artifact effect or residual cosmic rays.
 
-        with datamodels.open(input) as input_model:
-            # Set up the output result
-            result = input_model.copy()
+        Parameters
+        ----------
+        input_data : str or `~stdatamodels.jwst.datamodels.IFUImageModel`
+            Input file name or datamodel to be corrected.
 
-            # check the data is an IFUImageModel (not TSO)
-            if isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
-                # Check for a valid mrsxartcorr reference file
-                self.straylight_name = self.get_reference_file(input_model, 'mrsxartcorr')
+        Returns
+        -------
+        output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+            Straylight corrected data.
+        """
+        output_model = self.prepare_output(input_data)
 
-                if self.straylight_name == 'N/A':
-                    self.log.warning('No MRSXARTCORR reference file found')
-                    self.log.warning('Straylight step will be skipped')
-                    result.meta.cal_step.straylight = 'SKIPPED'
-                    return result
+        # check the data is an IFUImageModel (not TSO)
+        if isinstance(output_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
+            # Check for a valid mrsxartcorr reference file
+            self.straylight_name = self.get_reference_file(output_model, "mrsxartcorr")
 
-                self.log.info('Using mrsxartcorr reference file %s', self.straylight_name)
+            if self.straylight_name == "N/A":
+                log.warning("No MRSXARTCORR reference file found")
+                log.warning("Straylight step will be skipped")
+                output_model.meta.cal_step.straylight = "SKIPPED"
+                return output_model
 
-                modelpars = datamodels.MirMrsXArtCorrModel(self.straylight_name)
+            log.info("Using mrsxartcorr reference file %s", self.straylight_name)
 
+            with datamodels.MirMrsXArtCorrModel(self.straylight_name) as modelpars:
                 # Apply the cross artifact correction
-                result = straylight.correct_xartifact(result, modelpars)
+                output_model = straylight.correct_xartifact(output_model, modelpars)
 
-                modelpars.close()
+            # Apply the cosmic ray droplets correction if desired
+            if self.clean_showers:
+                self.regions_name = self.get_reference_file(output_model, "regions")
+                with datamodels.RegionsModel(self.regions_name) as f:
+                    allregions = f.regions
+                    output_model, output_shower_model = straylight.clean_showers(
+                        output_model,
+                        allregions,
+                        self.shower_plane,
+                        self.shower_x_stddev,
+                        self.shower_y_stddev,
+                        self.shower_low_reject,
+                        self.shower_high_reject,
+                        self.save_shower_model,
+                    )
+                    if self.save_shower_model and output_shower_model:
+                        shower_path = self.make_output_path(
+                            basepath=output_model.meta.filename, suffix="shower_model"
+                        )
+                        log.info(f"Saving shower model file {shower_path}")
+                        output_shower_model.save(shower_path)
+                        output_shower_model.close()
 
-                # Apply the cosmic ray droplets correction if desired
-                if self.clean_showers:
-                    self.regions_name = self.get_reference_file(input_model, 'regions')
-                    with datamodels.RegionsModel(self.regions_name) as f:
-                        allregions = f.regions
-                        result = straylight.clean_showers(result, allregions, self.shower_plane,
-                                                          self.shower_x_stddev, self.shower_y_stddev,
-                                                          self.shower_low_reject, self.shower_high_reject)
+            output_model.meta.cal_step.straylight = "COMPLETE"
 
-                result.meta.cal_step.straylight = 'COMPLETE'
+        else:
+            if not isinstance(output_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
+                log.warning("Straylight correction not defined for datatype %s", output_model)
+            log.warning("Straylight step will be skipped")
+            output_model.meta.cal_step.straylight = "SKIPPED"
 
-            else:
-                if isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)) is False:
-                    self.log.warning('Straylight correction not defined for datatype %s',
-                                     input_model)
-                self.log.warning('Straylight step will be skipped')
-                result.meta.cal_step.straylight = 'SKIPPED'
-
-        return result
-
-
-class ErrorNoAssignWCS(Exception):
-    pass
+        return output_model

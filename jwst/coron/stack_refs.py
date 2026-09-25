@@ -1,25 +1,32 @@
-"""
-    Stack individual coronagraphic PSF reference images into a cube model.
+"""Stack individual coronagraphic PSF reference images into a cube model."""
 
-:Authors: Howard Bushouse
-
-"""
+import logging
 
 import numpy as np
 from stdatamodels.jwst import datamodels
 
-import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["make_cube"]
 
 
 def make_cube(input_models):
     """
-    make_cube: Stack all of the integrations from multiple PSF
-    reference exposures into a single CubeModel, for use in the
-    coronagraphic alignment and PSF-subtraction steps.
-    """
+    Stack all integrations from multiple PSF reference exposures.
 
+    Result is a single cube model, for use in the
+    coronagraphic alignment and PSF-subtraction steps.
+
+    Parameters
+    ----------
+    input_models : list or `~jwst.datamodels.container.ModelContainer`
+        List or model container containing input data models
+
+    Returns
+    -------
+    output_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        Cube model of stacked PSF images
+    """
     # Get the number of input images
     num_refs = len(input_models)
 
@@ -30,7 +37,7 @@ def make_cube(input_models):
         nints += input_models[i].shape[0]
         nrows, ncols = input_models[i].shape[-2:]
         if nrows != nrows_ref or ncols != ncols_ref:
-            raise ValueError('All PSF exposures must have the same x/y dimensions!')
+            raise ValueError("All PSF exposures must have the same x/y dimensions!")
 
     # Create empty output data arrays of the appropriate dimensions
     outdata = np.zeros((nints, nrows, ncols), dtype=np.float64)
@@ -41,7 +48,7 @@ def make_cube(input_models):
     # into the output arrays
     nint = 0
     for i in range(num_refs):
-        log.info(' Adding psf member %d to output stack', i + 1)
+        log.info(" Adding psf member %d to output stack", i + 1)
         for j in range(input_models[i].shape[0]):
             outdata[nint] = input_models[i].data[j]
             outerr[nint] = input_models[i].err[j]

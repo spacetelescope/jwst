@@ -39,20 +39,6 @@ When running a single step with ``call``, parameter values can be supplied more 
 
  result = JumpStep.call("jw00017001001_01101_00001_nrca1_uncal.fits", rejection_threshold=200)
 
-Running steps and pipelines with ``call`` also allows for the specification of a logging
-configuration file using the keyword ``logcfg``:
-
-::
-
- result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits",
-                                 config_file="calwebb_detector1.asdf",
-                                 logcfg="my-logging-config.cfg")
-
-Note that naming the logging configuration file "stpipe-log.cfg" will configure logging
-without assignment of the ``logcfg`` keyword, as ``stpipe`` searches for this filename
-in the local directory during execution. If the configuration should be used only when
-specified, ensure your file is named something other than "stpipe-log.cfg"!
-
 Where are the results?
 ----------------------
 

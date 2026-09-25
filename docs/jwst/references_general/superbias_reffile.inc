@@ -4,7 +4,7 @@ SUPERBIAS Reference File
 ------------------------
 
 :REFTYPE: SUPERBIAS
-:Data model: `~jwst.datamodels.SuperBiasModel`
+:Data model: `~stdatamodels.jwst.datamodels.SuperBiasModel`
 
 The SUPERBIAS reference file contains a 2-D image of the detector bias
 ("zeroth" read) structure.
@@ -53,4 +53,3 @@ The ``SCI`` array contains the super-bias image of the detector. The
 image.
 
 .. include:: ../includes/dq_def.inc
-

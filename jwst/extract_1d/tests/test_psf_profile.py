@@ -1,36 +1,30 @@
-import logging
-
 import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import SpecPsfModel
 
 from jwst.extract_1d import psf_profile as pp
-from jwst.tests.helpers import LogWatcher
 
 
-@pytest.fixture
-def log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in the extract_1d.psf_profile module
-    watcher = LogWatcher("")
-    logger = logging.getLogger("jwst.extract_1d.psf_profile")
-    for level in ["debug", "info", "warning", "error"]:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
-
-
-@pytest.mark.parametrize("exp_type", ["MIR_LRS-FIXEDSLIT", "NRS_FIXEDSLIT", "UNKNOWN"])
-def test_open_psf(psf_reference_file, exp_type):
-    # for any exptype, a model that can be read
-    # as SpecPsfModel will be, since it's the only
-    # one implemented so far
-    with pp.open_psf(psf_reference_file, exp_type=exp_type) as model:
-        assert isinstance(model, SpecPsfModel)
+@pytest.mark.parametrize("slit_name", [None, "ANY", "UNKNOWN"])
+def test_open_psf(psf_reference_file, slit_name):
+    # for any slit name passed in, the first aperture will be matched,
+    # since there's only one available and it has no specific slit name
+    aperture = pp.open_psf(psf_reference_file, slit_name)
+    assert aperture.data.size != 0
+    assert aperture.wave.size != 0
 
 
 def test_open_psf_fail():
-    with pytest.raises(NotImplementedError, match="could not be read"):
+    with pytest.raises(TypeError, match="could not be read"):
         pp.open_psf("bad_file", "UNKNOWN")
+
+
+def test_open_psf_no_aperture_found(psf_reference_file):
+    # If no PSF aperture matches the slit, an error is raised
+    with SpecPsfModel(psf_reference_file) as psf_model:
+        psf_model.apertures[0].name = "GOOD_SLIT"
+        with pytest.raises(ValueError, match="No matching aperture"):
+            pp.open_psf(psf_model, "BAD_SLIT")
 
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
@@ -56,11 +50,12 @@ def test_normalize_profile_with_nans(nod_profile, dispaxis):
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
 def test_make_cutout_profile_default(psf_reference, dispaxis):
-    data_shape = psf_reference.data.shape
+    psf_aper = psf_reference.apertures[0]
+    data_shape = psf_aper.data.shape
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
 
-    psf_subpix = psf_reference.meta.psf.subpix
-    profiles = pp._make_cutout_profile(xidx, yidx, psf_subpix, psf_reference.data, dispaxis)
+    psf_subpix = psf_aper.subpix
+    profiles = pp._make_cutout_profile(xidx, yidx, psf_subpix, psf_aper.data, dispaxis)
     assert len(profiles) == 1
     assert profiles[0].shape == data_shape
 
@@ -74,12 +69,13 @@ def test_make_cutout_profile_default(psf_reference, dispaxis):
 @pytest.mark.parametrize("dispaxis", [1, 2])
 @pytest.mark.parametrize("extra_shift", [1, 2])
 def test_make_cutout_profile_shift_down(psf_reference, dispaxis, extra_shift):
-    data_shape = psf_reference.data.shape
+    psf_aper = psf_reference.apertures[0]
+    data_shape = psf_aper.data.shape
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     profiles = pp._make_cutout_profile(
-        xidx, yidx, psf_subpix, psf_reference.data, dispaxis, extra_shift=extra_shift
+        xidx, yidx, psf_subpix, psf_aper.data, dispaxis, extra_shift=extra_shift
     )
     assert len(profiles) == 1
     assert profiles[0].shape == data_shape
@@ -98,12 +94,13 @@ def test_make_cutout_profile_shift_down(psf_reference, dispaxis, extra_shift):
 @pytest.mark.parametrize("dispaxis", [1, 2])
 @pytest.mark.parametrize("extra_shift", [-1, -2])
 def test_make_cutout_profile_shift_up(psf_reference, dispaxis, extra_shift):
-    data_shape = psf_reference.data.shape
+    psf_aper = psf_reference.apertures[0]
+    data_shape = psf_aper.data.shape
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     profiles = pp._make_cutout_profile(
-        xidx, yidx, psf_subpix, psf_reference.data, dispaxis, extra_shift=extra_shift
+        xidx, yidx, psf_subpix, psf_aper.data, dispaxis, extra_shift=extra_shift
     )
     assert len(profiles) == 1
     assert profiles[0].shape == data_shape
@@ -121,13 +118,14 @@ def test_make_cutout_profile_shift_up(psf_reference, dispaxis, extra_shift):
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
 def test_make_cutout_profile_with_nod(psf_reference, dispaxis):
-    data_shape = psf_reference.data.shape
+    psf_aper = psf_reference.apertures[0]
+    data_shape = psf_aper.data.shape
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     offset = 2
     profiles = pp._make_cutout_profile(
-        xidx, yidx, psf_subpix, psf_reference.data, dispaxis, nod_offset=offset
+        xidx, yidx, psf_subpix, psf_aper.data, dispaxis, nod_offset=offset
     )
     assert len(profiles) == 2
     source, nod = profiles
@@ -152,9 +150,10 @@ def test_make_cutout_profile_with_nod(psf_reference, dispaxis):
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
 def test_profile_residual(psf_reference, dispaxis):
+    psf_aper = psf_reference.apertures[0]
     data_shape = (50, 50)
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     # Set data to all ones, so residual should be zero
     # when background is not fit
@@ -163,16 +162,17 @@ def test_profile_residual(psf_reference, dispaxis):
 
     param = [0, None]
     residual = pp._profile_residual(
-        param, data, var, xidx, yidx, psf_subpix, psf_reference.data, dispaxis, fit_bkg=False
+        param, data, var, xidx, yidx, psf_subpix, psf_aper.data, dispaxis, fit_bkg=False
     )
     assert np.isclose(residual, 0.0)
 
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
 def test_profile_residual_with_bkg(psf_reference, dispaxis):
+    psf_aper = psf_reference.apertures[0]
     data_shape = (50, 50)
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
-    psf_subpix = psf_reference.meta.psf.subpix
+    psf_subpix = psf_aper.subpix
 
     # Set data to all ones, so it is all background - residual
     # should be all of the data
@@ -181,7 +181,7 @@ def test_profile_residual_with_bkg(psf_reference, dispaxis):
 
     param = [0, None]
     residual = pp._profile_residual(
-        param, data, var, xidx, yidx, psf_subpix, psf_reference.data, dispaxis, fit_bkg=True
+        param, data, var, xidx, yidx, psf_subpix, psf_aper.data, dispaxis, fit_bkg=True
     )
     assert np.isclose(residual, np.sum(data**2 / var))
 
@@ -262,7 +262,7 @@ def test_psf_profile_model_nod(monkeypatch, mock_miri_lrs_fs, psf_reference_file
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
     # mock nod subtraction
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
     model.meta.dither.primary_type = "2-POINT-NOD"
 
     # mock a nod position at the opposite end of the array
@@ -297,11 +297,13 @@ def test_psf_profile_model_nod_no_trace(mock_miri_lrs_fs, psf_reference_file, lo
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "Cannot model a negative nod without position"
+    watcher = log_watcher(
+        "jwst.extract_1d.psf_profile", message="Cannot model a negative nod without position"
+    )
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # does not return nod profile
     assert len(profiles) == 1
@@ -315,11 +317,11 @@ def test_psf_profile_model_nod_not_subtracted(mock_miri_lrs_fs, psf_reference_fi
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "data was not nod-subtracted"
+    watcher = log_watcher("jwst.extract_1d.psf_profile", message="data was not nod-subtracted")
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # does not return nod profile
     assert len(profiles) == 1
@@ -329,16 +331,16 @@ def test_psf_profile_model_nod_wrong_pattern(mock_miri_lrs_fs, psf_reference_fil
     model = mock_miri_lrs_fs
     data_shape = model.data.shape
     trace = np.full(data_shape[0], (data_shape[1] - 1) / 2.0)
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
 
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "data was not a two-point nod"
+    watcher = log_watcher("jwst.extract_1d.psf_profile", message="data was not a two-point nod")
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # does not return nod profile
     assert len(profiles) == 1
@@ -348,17 +350,19 @@ def test_psf_profile_model_nod_bad_position(mock_miri_lrs_fs, psf_reference_file
     model = mock_miri_lrs_fs
     data_shape = model.data.shape
     trace = np.full(data_shape[0], (data_shape[1] - 1) / 2.0)
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
     model.meta.dither.primary_type = "2-POINT-NOD"
 
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "Nod center could not be estimated"
+    watcher = log_watcher(
+        "jwst.extract_1d.psf_profile", message="Nod center could not be estimated"
+    )
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # does not return nod profile
     assert len(profiles) == 1
@@ -381,7 +385,9 @@ def test_psf_profile_optimize(
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "Centering profile on spectrum at 24.5"
+    watcher = log_watcher(
+        "jwst.extract_1d.psf_profile", message="Centering profile on spectrum at 24.5"
+    )
     profiles, lower, upper = pp.psf_profile(
         model,
         trace,
@@ -390,7 +396,7 @@ def test_psf_profile_optimize(
         optimize_shifts=True,
         model_nod_pair=False,
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # profile is centered at 24.5
     profile = profiles[0]
@@ -407,7 +413,7 @@ def test_psf_profile_optimize_with_nod(
     data_shape = model.data.shape
 
     # mock nod subtraction
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
     model.meta.dither.primary_type = "2-POINT-NOD"
 
     # trace at pixel 9.5
@@ -432,7 +438,9 @@ def test_psf_profile_optimize_with_nod(
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "Also modeling a negative trace at 39.50"
+    watcher = log_watcher(
+        "jwst.extract_1d.psf_profile", message="Also modeling a negative trace at 39.50"
+    )
     profiles, lower, upper = pp.psf_profile(
         model,
         trace,
@@ -441,7 +449,7 @@ def test_psf_profile_optimize_with_nod(
         optimize_shifts=True,
         model_nod_pair=True,
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # profile is centered at 10
     source, nod = profiles

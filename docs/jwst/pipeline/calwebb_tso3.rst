@@ -17,17 +17,23 @@ exposures are shown below:
 
 .. checkmark
 
-+---------------------------------------------------+---------+--------------+
-| calwebb_tso3                                      | Imaging | Spectroscopy |
-+===================================================+=========+==============+
-| :ref:`outlier_detection <outlier_detection_step>` | |check| | |check|      |
-+---------------------------------------------------+---------+--------------+
-| :ref:`tso_photometry <tso_photometry_step>`       | |check| |              |
-+---------------------------------------------------+---------+--------------+
-| :ref:`extract_1d <extract_1d_step>`               |         | |check|      |
-+---------------------------------------------------+---------+--------------+
-| :ref:`white_light <white_light_step>`             |         | |check|      |
-+---------------------------------------------------+---------+--------------+
++---------------------------------------------------------+---------+--------------+---------+
+| calwebb_tso3                                            | Imaging | Spectroscopy | SOSS    |
++=========================================================+=========+==============+=========+
+| :ref:`outlier_detection <outlier_detection_step>`       | |check| | |check|      | |check| |
++---------------------------------------------------------+---------+--------------+---------+
+| :ref:`tso_photometry <tso_photometry_step>`             | |check| |              |         |
++---------------------------------------------------------+---------+--------------+---------+
+| :ref:`adaptive_trace_model <adaptive_trace_model_step>` |         | |check|      |         |
++---------------------------------------------------------+---------+--------------+---------+
+| :ref:`pixel_replace <pixel_replace_step>`               |         | |check|      | |check| |
++---------------------------------------------------------+---------+--------------+---------+
+| :ref:`extract_1d <extract_1d_step>`                     |         | |check|      | |check| |
++---------------------------------------------------------+---------+--------------+---------+
+| :ref:`photom <photom_step>`                             |         |              | |check| |
++---------------------------------------------------------+---------+--------------+---------+
+| :ref:`white_light <white_light_step>`                   |         | |check|      | |check| |
++---------------------------------------------------------+---------+--------------+---------+
 
 The logic that decides whether to apply the imaging or spectroscopy steps is based
 on the EXP_TYPE and TSOVISIT keyword values of the input data. Imaging steps are
@@ -44,7 +50,7 @@ Inputs
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _calints
 
 The input to ``calwebb_tso3`` is in the form of an ASN file that lists multiple
@@ -70,7 +76,7 @@ Outputs
 3D CR-flagged images
 ^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _crfints
 
 If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version
@@ -92,7 +98,7 @@ source-based, using the output product name specified in the ASN file, e.g.
 
 1D extracted spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.MultiSpecModel`
+:Data model: `~stdatamodels.jwst.datamodels.MultiSpecModel`
 :File suffix: _x1dints
 
 For spectroscopic TS observations, the :ref:`extract_1d <extract_1d_step>` step is applied to

@@ -8,5 +8,4 @@ Stack PSF References
    :maxdepth: 2
 
    description.rst
-
-.. automodapi:: jwst.coron.stack_refs_step
+   api_ref.rst

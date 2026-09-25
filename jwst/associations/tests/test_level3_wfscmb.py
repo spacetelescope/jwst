@@ -1,11 +1,7 @@
-
-
-from jwst.associations.tests.helpers import (
-    mkstemp_pool_file,
-    t_path,
-)
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations.main import Main
+from jwst.associations.tests.helpers import combine_pools
 
 
 def jitter_name_base(fname):
@@ -25,7 +21,6 @@ def get_jitter_not_jitter(pool_path):
         lines = fd.readlines()
     header = lines[0]
     pool = lines[1:]
-
 
     delim = "|"
     sheader = header.split(delim)
@@ -82,10 +77,12 @@ def test_level3_wfscmb_jitter_suppression(tmp_path):
     Make sure no candidate from the pool with DMS_NOTE equal to
     WFSC_LOS_JITTER is in any association.
     """
-    pfile = "data/pool_033_wfs_jitter.csv"
-    with mkstemp_pool_file(t_path(pfile)) as pool_path:
-        cmd_args = [pool_path, f"--path={tmp_path}"]
-        generated = Main.cli(cmd_args)
-        jitter = get_jitter_not_jitter(pool_path)
-
+    pool_path = str(tmp_path / "pool.csv")
+    pool = combine_pools(
+        get_pkg_data_filename("data/pool_033_wfs_jitter.csv", package="jwst.associations.tests")
+    )
+    pool.write(pool_path, format="ascii", delimiter="|")
+    cmd_args = [pool_path, f"--path={tmp_path}"]
+    generated = Main.cli(cmd_args)
+    jitter = get_jitter_not_jitter(pool_path)
     assert not jitter_present(jitter, generated.associations)

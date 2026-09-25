@@ -1,15 +1,15 @@
-#! /usr/bin/env python
-from stdatamodels.jwst import datamodels
+"""Determine if a spectroscopic source should be considered to be a point or extended object."""
 
-from ..stpipe import Step
-from .srctype import set_source_type
+from jwst.srctype.srctype import set_source_type
+from jwst.stpipe import Step
 
 __all__ = ["SourceTypeStep"]
 
 
 class SourceTypeStep(Step):
     """
-    SourceTypeStep: Selects and sets a source type based on various inputs.
+    Select and set a source type based on various inputs.
+
     The source type is used in later calibrations to determine the appropriate
     methods to use. Input comes from either the SRCTYAPT keyword value, which
     is populated from user info in the APT, or the NIRSpec MSA planning tool.
@@ -21,25 +21,32 @@ class SourceTypeStep(Step):
 
     spec = """
         source_type = option('POINT','EXTENDED', default=None)  # user-supplied source type
-    """ # noqa: E501
+    """
 
-    def process(self, input):
+    def process(self, step_input):
+        """
+        Determine the source type.
 
-        if self.source_type is not None:
-            self.source_type = self.source_type.upper()
+        Parameters
+        ----------
+        step_input : str, `~stdatamodels.jwst.datamodels.IFUImageModel`, \
+                     `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+                     `~stdatamodels.jwst.datamodels.SlitModel`
+            Either the path to the file or the science data model to be corrected.
 
-        source_type = self.source_type  # retrieve command line override
+        Returns
+        -------
+        output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`, \
+                       `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+                       `~stdatamodels.jwst.datamodels.SlitModel`
+            Data model with keyword "SRCTYPE" populated with either "POINT" or "EXTENDED".
+        """
+        output_model = self.prepare_output(step_input)
 
-        input_model = datamodels.open(input)
-
-        # Call the source selection routine
-        result = set_source_type(input_model, source_type)
+        # Call the source selection routine on the output model
+        output_model = set_source_type(output_model, self.source_type)
 
         # Set the step status in the output model
-        if result is None:
-            result = input_model
-            result.meta.cal_step.srctype = 'SKIPPED'
-        else:
-            result.meta.cal_step.srctype = 'COMPLETE'
+        output_model.meta.cal_step.srctype = "COMPLETE"
 
-        return result
+        return output_model

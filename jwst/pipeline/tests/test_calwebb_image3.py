@@ -1,114 +1,106 @@
-import pytest
-import os
 import shutil
+
+import pytest
+from stpipe import _log
+
+from jwst.associations.asn_from_list import asn_from_list
+from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
+from jwst.pipeline import Image3Pipeline
+from jwst.pipeline.tests.helpers import make_nircam_image_cal_model
 from jwst.stpipe import Step
-from jwst.assign_wcs import AssignWcsStep
-from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
 
-
-INPUT_FILE = "dummy_cal.fits"
-INPUT_FILE_2 = "dummy2_cal.fits"
-INPUT_ASN = "dummy_asn.json"
+INPUT_FILE = "mock_cal.fits"
+INPUT_FILE_2 = "mock2_cal.fits"
 OUTPUT_PRODUCT = "custom_name"
 LOGFILE = "run_asn.log"
-LOGCFG = "test_logs.cfg"
-LOGCFG_CONTENT = f"[*] \n \
-        handler = file:{LOGFILE}"
 
 
-@pytest.fixture(scope='module')
-def make_dummy_cal_file(tmp_cwd_module):
-    '''
-    Make and save a dummy cal file in the temporary working directory
-    Partially copied from test_calwebb_image2.py
-    '''
+@pytest.fixture(scope="module")
+def make_mock_cal_model():
+    """Make a mock cal model."""
+    return make_nircam_image_cal_model()
 
-    image = ImageModel((2048, 2048))
-    image.data[:, :] = 1
-    image.meta.instrument.name = 'NIRCAM'
-    image.meta.instrument.filter = 'F210M'
-    image.meta.instrument.pupil = 'CLEAR'
-    image.meta.exposure.type = 'NRC_IMAGE'
-    image.meta.observation.date = '2024-02-27'
-    image.meta.observation.time = '13:37:18.548'
-    image.meta.date = '2024-02-27T13:37:18.548'
-    image.meta.subarray.xstart = 1
-    image.meta.subarray.ystart = 1
 
-    image.meta.subarray.xsize = image.data.shape[-1]
-    image.meta.subarray.ysize = image.data.shape[-2]
-
-    image.meta.instrument.channel = 'SHORT'
-    image.meta.instrument.module = 'A'
-    image.meta.instrument.detector = 'NRCA1'
-
-    # bare minimum wcs info to get assign_wcs step to pass
-    image.meta.wcsinfo.crpix1 = 693.5
-    image.meta.wcsinfo.crpix2 = 512.5
-    image.meta.wcsinfo.v2_ref = -453.37849
-    image.meta.wcsinfo.v3_ref = -373.810549
-    image.meta.wcsinfo.roll_ref = 272.3237653262276
-    image.meta.wcsinfo.ra_ref = 80.54724018120017
-    image.meta.wcsinfo.dec_ref = -69.5081101864959
-
-    image = AssignWcsStep.call(image)
-
-    with image as dm:
+@pytest.fixture(scope="module")
+def make_mock_cal_file(tmp_cwd_module, make_mock_cal_model):
+    """Make and save a mock cal file in the temporary working directory."""
+    with make_mock_cal_model as dm:
         dm.save(INPUT_FILE)
 
 
-@pytest.fixture(scope='module')
-def make_dummy_association(make_dummy_cal_file):
-
+@pytest.fixture(scope="module")
+def make_mock_association(make_mock_cal_file):
     shutil.copy(INPUT_FILE, INPUT_FILE_2)
-    os.system(f"asn_from_list -o {INPUT_ASN} --product-name {OUTPUT_PRODUCT} -r DMS_Level3_Base {INPUT_FILE} {INPUT_FILE_2}")
+    return asn_from_list(
+        [INPUT_FILE, INPUT_FILE_2], product_name=OUTPUT_PRODUCT, rule=DMS_Level3_Base
+    )
 
 
 @pytest.mark.parametrize("in_memory", [True, False])
-def test_run_image3_pipeline(make_dummy_association, in_memory):
-    '''
+def test_run_image3_pipeline(make_mock_association, in_memory):
+    """
     Two-product association passed in, run pipeline, skipping most steps
-    '''
+    """
     # save warnings to logfile so can be checked later
-    with open(LOGCFG, 'w') as f:
-        f.write(LOGCFG_CONTENT)
-
-    args = ["calwebb_image3", INPUT_ASN,
-            f"--logcfg={LOGCFG}",
-            "--steps.tweakreg.skip=true",
-            "--steps.skymatch.skip=true",
-            "--steps.outlier_detection.skip=true",
-            "--steps.resample.skip=true",
-            "--steps.source_catalog.skip=true",
-            f"--in_memory={str(in_memory)}",]
-
-    Step.from_cmdline(args)
+    log_cfg = _log.load_configuration(log_level="INFO", log_file=LOGFILE)
+    log_cfg.set_recording_formatter(Image3Pipeline._log_records_formatter)
+    with log_cfg.context(Image3Pipeline.get_stpipe_loggers()):
+        Image3Pipeline.call(
+            make_mock_association,
+            steps={
+                "tweakreg": {"skip": True},
+                "skymatch": {"skip": True},
+                "outlier_detection": {"skip": True},
+                "resample": {"skip": True},
+                "source_catalog": {"skip": True},
+            },
+            in_memory=in_memory,
+        )
 
     _is_run_complete(LOGFILE)
 
 
-def test_run_image3_single_file(make_dummy_cal_file):
-
-    with open(LOGCFG, 'w') as f:
-        f.write(LOGCFG_CONTENT)
-
-    args = ["calwebb_image3", INPUT_FILE,
-            f"--logcfg={LOGCFG}",
-            "--steps.tweakreg.skip=true",
-            "--steps.skymatch.skip=true",
-            "--steps.outlier_detection.skip=true",
-            "--steps.resample.skip=true",
-            "--steps.source_catalog.skip=true",]
+def test_run_image3_single_file(make_mock_cal_file):
+    args = [
+        "calwebb_image3",
+        INPUT_FILE,
+        "--log-level=INFO",
+        f"--log-file={LOGFILE}",
+        "--steps.tweakreg.skip=true",
+        "--steps.skymatch.skip=true",
+        "--steps.outlier_detection.skip=true",
+        "--steps.resample.skip=true",
+        "--steps.source_catalog.skip=true",
+    ]
 
     Step.from_cmdline(args)
     _is_run_complete(LOGFILE)
+
+
+def test_run_image3_single_model(caplog, make_mock_cal_model):
+    model_copy = make_mock_cal_model.copy()
+    all_steps = Image3Pipeline.step_defs.keys()
+    do_steps = {step_name: {"skip": True} for step_name in all_steps}
+    Image3Pipeline.call(model_copy, steps=do_steps)
+
+    # The pipeline ran, but all steps were skipped
+    assert "Step Image3Pipeline done" in caplog.text
+    for step in do_steps:
+        if step in ["assign_mtwcs", "source_catalog"]:
+            # These steps are not even attempted for the test data
+            assert getattr(model_copy.meta.cal_step, step) is None
+        else:
+            assert getattr(model_copy.meta.cal_step, step) == "SKIPPED"
+
+        # Input is not modified
+        assert getattr(make_mock_cal_model.meta.cal_step, step) is None
 
 
 def _is_run_complete(logfile):
-    '''
+    """
     Check that the pipeline runs to completion
-    '''
+    """
     msg = "Step Image3Pipeline done"
-    with open(LOGFILE, 'r') as f:
+    with open(LOGFILE, "r") as f:
         log = f.read()
     assert msg in log

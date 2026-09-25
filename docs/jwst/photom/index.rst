@@ -10,5 +10,4 @@ Photometric Calibration
    main.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.photom
+   api_ref.rst

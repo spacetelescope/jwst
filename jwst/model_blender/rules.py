@@ -1,6 +1,5 @@
 import numpy as np
 
-
 __all__ = ["RULE_FUNCTIONS", "AttributeBlender", "make_blender"]
 
 
@@ -28,6 +27,28 @@ def _multi(vals):
         return "MULTIPLE"
 
 
+def _wheeltol(vals):
+    """
+    Return 'outside calibration tolerance' if any value in list matches that string.
+
+    Parameters
+    ----------
+    vals : list
+        List of values to check.
+
+    Returns
+    -------
+    value : str or None
+        'outside calibration tolerance' if any value in list matches that string,
+        otherwise 'within commanded tolerance'. Returns None if the input list is empty.
+    """
+    if not vals:
+        return None
+    if any(val == "outside calibration tolerance" for val in vals):
+        return "outside calibration tolerance"
+    return "within commanded tolerance"
+
+
 RULE_FUNCTIONS = {
     "multi": _multi,
     "mean": np.mean,
@@ -43,36 +64,36 @@ RULE_FUNCTIONS = {
     "maxdate": max,
     "mindatetime": min,
     "maxdatetime": max,
+    "wheeltol": _wheeltol,
 }
 """
 Mapping of rule names to functions.
 
-Used for `make_blender`.
+Used for :func:`make_blender`.
 
 The following rules are considered deprecated
-and should not be used for new schemas.
+and should not be used for new schemas:
 
-  - mintime
-  - maxtime
-  - mindate
-  - maxdate
-  - mindatetime
-  - maxdatetime
+- mintime
+- maxtime
+- mindate
+- maxdate
+- mindatetime
+- maxdatetime
 """
 
 
 class AttributeBlender:
-    """Single attribute metadata blender."""
+    """
+    Single attribute metadata blender.
+
+    Parameters
+    ----------
+    blend_function : callable
+        Function to blend accumulated metadata values
+    """
 
     def __init__(self, blend_function):
-        """
-        Create a new metadata attribute blender.
-
-        Parameters
-        ----------
-        blend_function : callable
-            Function to blend accumulated metadata values
-        """
         self.blend_function = blend_function
         self.values = []
 
@@ -93,7 +114,7 @@ class AttributeBlender:
 
         Returns
         -------
-        value :
+        value
             The blended result.
         """
         if not self.values:
@@ -112,7 +133,7 @@ def make_blender(rule):
 
     Returns
     -------
-    attr_blender : `AttrBlender`
+    attr_blender : `AttributeBlender`
         Blender instance using the provided rule.
     """
     return AttributeBlender(RULE_FUNCTIONS[rule])

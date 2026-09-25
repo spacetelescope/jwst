@@ -1,31 +1,47 @@
-import pytest
-from astropy.io.fits.diff import FITSDiff
 import numpy as np
+import pytest
 from gwcs import wcstools
-
-from jwst.stpipe import Step
 from stdatamodels.jwst import datamodels
+
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+from jwst.stpipe import Step
+
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(rtdata_module):
+def run_pipeline(rtdata_module, resource_tracker):
     """Run calwebb_spec3 on NIRSpec MOS data."""
     rtdata = rtdata_module
     rtdata.get_asn("nirspec/mos/jw01345-o066_20230831t181155_spec3_00002_asn.json")
 
     # Run the calwebb_spec3 pipeline on the association
     args = ["calwebb_spec3", rtdata.input]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     return rtdata
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources(log_tracked_resources, run_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d"])
-@pytest.mark.parametrize("source_id", ["b000000030", "b000000031",
-                                       "s000004385", "s000007380",
-                                       "v000000048", "v000000049",
-                                       "v000000053", "v000000056"])
+@pytest.mark.parametrize(
+    "source_id",
+    [
+        "b000000030",
+        "b000000031",
+        "s000004385",
+        "s000007380",
+        "v000000048",
+        "v000000049",
+        "v000000053",
+        "v000000056",
+    ],
+)
 def test_nirspec_mos_spec3(run_pipeline, suffix, source_id, fitsdiff_default_kwargs):
     """Check results of calwebb_spec3"""
     rtdata = run_pipeline

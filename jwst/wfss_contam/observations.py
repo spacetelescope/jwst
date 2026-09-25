@@ -1,31 +1,55 @@
-import time
-import multiprocessing
-import numpy as np
-
-from scipy import sparse
-
-from stdatamodels.jwst import datamodels
-
-from .disperse import dispersed_pixel
-
+import dataclasses
 import logging
+import multiprocessing as mp
+import time
+import warnings
 
-from photutils.background import Background2D, MedianBackground
+import numpy as np
 from astropy.stats import SigmaClip
+from astropy.utils.exceptions import AstropyUserWarning
+from photutils.background import Background2D, MedianBackground
+
+from jwst.wfss_contam.disperse import disperse
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["background_subtract", "Observation", "SimulatedCutout"]
+
+
+@dataclasses.dataclass
+class SimulatedCutout:
+    """
+    Lightweight container for simulated cutout data and attributes.
+
+    This class looks a lot like `~stdatamodels.jwst.datamodels.SlitModel` but avoids the
+    schema-copy and schema-validation overhead of constructing a full SlitModel for
+    every dispersed source in every spectral order. These objects are purely internal
+    bookkeeping and are never added to an output datamodel.
+    """
+
+    source_id: int
+    name: str
+    xstart: int
+    ystart: int
+    xsize: int
+    ysize: int
+    data: np.ndarray
+    spectral_order: int
 
 
 def background_subtract(
-    data, box_size=None, filter_size=(3, 3), sigma=3.0, exclude_percentile=30.0
+    data,
+    box_size=None,
+    filter_size=(3, 3),
+    sigma=3.0,
+    exclude_percentile=30.0,
 ):
     """
     Apply a simple astropy background subtraction.
 
     Parameters
     ----------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values
     box_size : tuple
         Size of box in pixels to use for background estimation.
@@ -39,7 +63,7 @@ def background_subtract(
 
     Returns
     -------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values with background subtracted
 
     Notes
@@ -52,437 +76,451 @@ def background_subtract(
         box_size = (int(data.shape[0] / 5), int(data.shape[1] / 5))
     sigma_clip = SigmaClip(sigma=sigma)
     bkg_estimator = MedianBackground()
-    bkg = Background2D(
-        data,
-        box_size,
-        filter_size=filter_size,
-        sigma_clip=sigma_clip,
-        bkg_estimator=bkg_estimator,
-        exclude_percentile=exclude_percentile,
-    )
+    with warnings.catch_warnings():
+        # there can be multiple different AstropyUserWarning messages here about NaN and Inf values
+        warnings.filterwarnings("ignore", category=AstropyUserWarning)
+        bkg = Background2D(
+            data,
+            box_size,
+            filter_size=filter_size,
+            sigma_clip=sigma_clip,
+            bkg_estimator=bkg_estimator,
+            exclude_percentile=exclude_percentile,
+        )
+        return data - bkg.background
 
-    return data - bkg.background
+
+def _select_ids(source_id, all_ids):
+    """
+    Select the source IDs to be processed based on the input ID parameter.
+
+    Parameters
+    ----------
+    source_id : int or list-like
+        ID(s) of source to process. If None, all sources processed.
+    all_ids : ndarray
+        Array of all source IDs in the segmentation map
+
+    Returns
+    -------
+    selected_IDs : list
+        List of selected source IDs
+    """
+    if source_id is None:
+        log.info(f"Loading all {len(all_ids)} sources from segmentation map")
+        return all_ids
+
+    elif isinstance(source_id, int):
+        log.info(f"Loading single source {source_id} from segmentation map")
+        return [source_id]
+
+    elif isinstance(source_id, list) or isinstance(source_id, np.ndarray):
+        log.info(
+            f"Loading {len(source_id)} of {len(all_ids)} selected sources from segmentation map"
+        )
+        return list(source_id)
+    else:
+        raise ValueError("ID must be an integer or a list of integers")
 
 
 class Observation:
-    """Define an observation leading to a single grism image."""
+    """
+    Define an observation leading to a single grism image.
+
+    The Observation class is responsible for calling the various WCS transforms that convert
+    a direct image and a segmentation image into a simulation of the grism image, making
+    assumptions about the spectral properties of the direct image sources.
+    When the `disperse_order` method is called one or more times, two products are created:
+    the simulated dispersed image (``simulated_image`` attribute) and
+    the simulated source cutouts (``simulated_cutouts`` attribute).
+    """
 
     def __init__(
         self,
-        direct_images,
-        segmap_model,
+        direct_image,
+        segmentation_map,
         grism_wcs,
-        filter_name,
-        source_id=0,
-        sed_file=None,
-        extrapolate_sed=False,
+        direct_image_wcs,
         boundaries=None,
-        offsets=None,
-        renormalize=True,
         max_cpu=1,
+        max_pixels_per_chunk=5e4,
+        oversample_factor=2,
+        band_wavelengths=None,
     ):
         """
         Initialize all data and metadata for a given observation.
 
-        Creates lists of
-        direct image pixel values for selected objects.
-
         Parameters
         ----------
-        direct_images : List of strings
-            List of file name(s) containing direct imaging data
-        segmap_model : `jwst.datamodels.ImageModel`
-            Segmentation map model
-        grism_wcs : gwcs object
+        direct_image : np.ndarray
+            Direct imaging data.  May be 2-D ``(ny, nx)`` for a single-band
+            direct image, or 3-D ``(N, ny, nx)`` for a multi-band cube.
+        segmentation_map : np.ndarray
+            Segmentation map data.
+        grism_wcs : `~gwcs.wcs.WCS`
             WCS object from grism image
-        filter_name : str
-            Filter name
-        source_id : int, optional, default 0
-            ID of source to process. If 0, all sources processed.
-        sed_file : str, optional, default None
-            Name of Spectral Energy Distribution (SED) file containing datasets matching
-            the ID in the segmentation file and each consisting of a [[lambda],[flux]] array.
-        extrapolate_sed : bool, optional, default False
-            Flag indicating whether to extrapolate wavelength range of SED
-        boundaries : list, optional, default []
+        direct_image_wcs : `~gwcs.wcs.WCS`
+            WCS object from direct image
+        boundaries : list, optional
             Start/Stop coordinates of the FOV within the larger seed image.
-        offsets : list, optional, default [0,0]
-            Offset values for x and y axes
-        renormalize : bool, optional, default True
-            Flag indicating whether to renormalize SED's
-        max_cpu : int, optional, default 1
+        max_cpu : int, optional
             Max number of cpu's to use when multiprocessing
+        max_pixels_per_chunk : int, optional
+            Maximum number of pixels per chunk when dispersing sources
+        oversample_factor : int, optional
+            Factor by which to oversample the wavelength grid
+        band_wavelengths : array-like of shape (N,), optional
+            Central wavelengths (in microns) for each plane of a 3-D ``direct_image``.
+            Required when ``direct_image`` is 3-D; ignored when ``direct_image`` is 2-D.
         """
         if boundaries is None:
             boundaries = []
-        if offsets is None:
-            offsets = [0, 0]
         # Load all the info for this grism mode
-        self.seg_wcs = segmap_model.meta.wcs
+        self.direct_image_wcs = direct_image_wcs
         self.grism_wcs = grism_wcs
-        self.source_id = source_id
-        self.source_ids = []
-        self.dir_image_names = direct_images
-        self.seg = segmap_model.data
-        self.filter = filter_name
-        self.sed_file = sed_file  # should always be NONE for baseline pipeline (use flat SED)
-        self.cache = False
-        self.renormalize = renormalize
+        self.seg = segmentation_map
+        all_ids = list(set(np.ravel(self.seg)))
+        all_ids.remove(0)  # Remove the background ID
+        self.source_ids = all_ids
         self.max_cpu = max_cpu
-        self.xoffset = offsets[0]
-        self.yoffset = offsets[1]
+        self.max_pixels_per_chunk = max_pixels_per_chunk
+        self.oversample_factor = oversample_factor
+
+        if direct_image.ndim == 2:
+            # use placeholder value since disperse() is going to see a flat SED and ignore this
+            self.band_wavelengths = np.array([1.0])
+            self.dimage = background_subtract(direct_image)
+        else:
+            # 3-D cube
+            if band_wavelengths is None:
+                raise ValueError("band_wavelengths must be provided when direct_image is 3-D")
+            self.band_wavelengths = np.asarray(band_wavelengths, dtype=float)
+            # apply background subtraction independently to each wavelength plane
+            self.dimage = np.array([background_subtract(plane) for plane in direct_image])
 
         # Set the limits of the dispersed image to be simulated
         if len(boundaries) == 0:
             log.debug("No boundaries passed.")
             self.xstart = 0
-            self.xend = self.xstart + self.dims[0] - 1
+            self.xend = self.xstart + self.seg.shape[0] - 1
             self.ystart = 0
-            self.yend = self.ystart + self.dims[1] - 1
+            self.yend = self.ystart + self.seg.shape[1] - 1
         else:
             self.xstart, self.xend, self.ystart, self.yend = boundaries
         self.dims = (self.yend - self.ystart + 1, self.xend - self.xstart + 1)
-        log.debug(f"Using simulated image size of {self.dims[1]} {self.dims[0]}")
+        log.debug(f"Using simulated image size of ({self.dims[1]}, {self.dims[0]}).")
+        self.naxis = self.dims[::-1]
 
-        # Allow for SED extrapolation
-        self.extrapolate_sed = extrapolate_sed
-        if self.extrapolate_sed:
-            log.warning("SED Extrapolation turned on.")
+        # Create lists of pixels labeled in segmentation map
+        self._create_pixel_list()
 
-        # Create pixel lists for sources labeled in segmentation map
-        self.create_pixel_list()
-
-    def create_pixel_list(self):
-        """Create a list of pixels to be dispersed, grouped per object ID."""
-        if self.source_id == 0:
-            # When source_id=0, all sources in the segmentation map are processed.
-            # This creates a huge list of all x,y pixel indices that have non-zero values
-            # in the seg map, sorted by those indices belonging to a particular source ID.
-            self.xs = []
-            self.ys = []
-            all_ids = np.array(list(set(np.ravel(self.seg))))
-            all_ids = all_ids[all_ids > 0]
-            self.source_ids = all_ids
-            log.info(f"Loading {len(all_ids)} sources from segmentation map")
-            for source_id in all_ids:
-                ys, xs = np.nonzero(self.seg == source_id)
-                if len(xs) > 0 and len(ys) > 0:
-                    self.xs.append(xs)
-                    self.ys.append(ys)
-
-        else:
-            # Process only the given source ID
-            log.info(f"Loading source {self.source_id} from segmentation map")
-            ys, xs = np.nonzero(self.seg == self.source_id)
-            if len(xs) > 0 and len(ys) > 0:
-                self.xs = [xs]
-                self.ys = [ys]
-                self.source_ids = [self.source_id]
-
-        # Populate lists of direct image flux values for the sources.
-        self.fluxes = {}
-        for dir_image_name in self.dir_image_names:
-            log.info(f"Using direct image {dir_image_name}")
-            with datamodels.open(dir_image_name) as model:
-                dimage = model.data
-                dimage = background_subtract(dimage)
-
-                if self.sed_file is None:
-                    # Default pipeline will use sed_file=None, so we need to compute
-                    # photometry values that used to come from HST-style header keywords.
-                    # Set pivlam, in units of microns, based on filter name.
-                    pivlam = float(self.filter[1:4]) / 100.0
-
-                    # Use pixel fluxes from the direct image.
-                    self.fluxes[pivlam] = []
-                    for i in range(len(self.source_ids)):
-                        # This loads lists of pixel flux values for each source
-                        # from the direct image
-                        self.fluxes[pivlam].append(dimage[self.ys[i], self.xs[i]])
-
-                else:
-                    # Use an SED file. Need to normalize the object stamps.
-                    for source_id in self.source_ids:
-                        vg = self.seg == source_id
-                        dnew = dimage
-                        if self.renormalize:
-                            sum_seg = np.sum(dimage[vg])  # But normalize by the whole flux
-                            if sum_seg != 0:
-                                dimage[vg] /= sum_seg
-                        else:
-                            log.debug("not renormalizing sources to unity")
-
-                    self.fluxes["sed"] = []
-                    for i in range(len(self.source_ids)):
-                        self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
-
-    def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, cache=False):
-        """
-        Compute dispersed pixel values for all sources identified in the segmentation map.
-
-        Parameters
-        ----------
-        order : int
-            Spectral order number to process
-        wmin : float
-            Minimum wavelength for dispersed spectra
-        wmax : float
-            Maximum wavelength for dispersed spectra
-        sens_waves : float array
-            Wavelength array from photom reference file
-        sens_resp : float array
-            Response (flux calibration) array from photom reference file
-        """
-        if cache:
-            log.debug("Object caching ON")
-            self.cache = True
-            self.cached_object = {}
+        # Initialize the output list of cutouts
+        self.simulated_cutouts = []
 
         # Initialize the simulated dispersed image
         self.simulated_image = np.zeros(self.dims, float)
 
-        # Loop over all source IDs from segmentation map
-        for i in range(len(self.source_ids)):
-            if self.cache:
-                self.cached_object[i] = {}
-                self.cached_object[i]["x"] = []
-                self.cached_object[i]["y"] = []
-                self.cached_object[i]["f"] = []
-                self.cached_object[i]["w"] = []
-                self.cached_object[i]["minx"] = []
-                self.cached_object[i]["maxx"] = []
-                self.cached_object[i]["miny"] = []
-                self.cached_object[i]["maxy"] = []
+    def _create_pixel_list(self):
+        """Create flat lists of pixels to be dispersed."""
+        self.ys, self.xs = np.nonzero(self.seg)
+        self.source_ids_per_pixel = self.seg[self.ys, self.xs]
+        if self.dimage.ndim == 2:
+            # Give it an extra dimension to make it shape (1, n_pixels)
+            self.fluxes = self.dimage[self.ys, self.xs][np.newaxis, :]
+        else:
+            # Shape (N, n_pixels), where N is the number of input direct image bands
+            self.fluxes = self.dimage[:, self.ys, self.xs]
 
-            self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp)
-
-    def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp):
+    def chunk_sources(
+        self,
+        order,
+        wmin,
+        wmax,
+        sens_waves,
+        sens_response,
+        selected_ids=None,
+        max_pixels=1e5,
+        basis_models=None,
+    ):
         """
-        Compute dispersion for a single source; to be called after create_pixel_list().
+        Chunk the sources into groups of max_pixels.
 
         Parameters
         ----------
-        c : int
-            Chunk (source) number to process
         order : int
-            Spectral order number to process
+            Spectral order to process
         wmin : float
             Minimum wavelength for dispersed spectra
         wmax : float
             Maximum wavelength for dispersed spectra
-        sens_waves : float array
+        sens_waves : ndarray
             Wavelength array from photom reference file
-        sens_resp : float array
+        sens_response : ndarray
             Response (flux calibration) array from photom reference file
+        selected_ids : list, optional
+            List of source IDs to process. If None, all sources are processed.
+        max_pixels : int, optional
+            Maximum number of pixels per chunk.
+        basis_models : list of callables, optional
+            Flux distributions to evaluate at each wavelength. Typically these will be
+            Legendre polynomials from 1st order up to a given max order, e.g.
+            [P1(x), P2(x), ...], the coefficients of which are linearly fit later.
+            If None, no models are included in the output.
 
         Returns
         -------
-        np.ndarray
-            2D dispersed image for this source
+        disperse_args : list[list]
+            Outer list has length number of groups, and each inner list contains
+            the arguments to disperse() for that group
+            in the format that multiprocessing starmap expects.
         """
-        sid = int(self.source_ids[c])
-        self.order = order
-        self.wmin = wmin
-        self.wmax = wmax
-        self.sens_waves = sens_waves
-        self.sens_resp = sens_resp
-        log.info(f"Dispersing source {sid}, order {self.order}")
-        pars = []  # initialize params for this object
+        source_ids = _select_ids(selected_ids, self.source_ids)
+        max_pixels = int(max_pixels)
 
-        # Loop over all pixels in list for object "c"
-        log.debug(f"source contains {len(self.xs[c])} pixels")
-        for i in range(len(self.xs[c])):
-            # Here "i" just indexes the pixel list for the object being processed
+        # Create a mask for selected sources
+        selected_mask = np.isin(self.source_ids_per_pixel, source_ids)
 
-            # xc, yc are the coordinates of the central pixel of the group
-            # of pixels surrounding the direct image pixel index
-            width = 1.0
-            height = 1.0
-            xc = self.xs[c][i] + 0.5 * width
-            yc = self.ys[c][i] + 0.5 * height
+        # Get pixels for selected sources
+        selected_xs = self.xs[selected_mask]
+        selected_ys = self.ys[selected_mask]
+        selected_fluxes = self.fluxes[:, selected_mask]
+        selected_source_ids = self.source_ids_per_pixel[selected_mask]
 
-            # "lams" is the array of wavelengths previously stored in flux list
-            # and correspond to the central wavelengths of the filters used in
-            # the input direct image(s). For the simple case of 1 combined direct image,
-            # this contains a single value (e.g. 4.44 for F444W).
+        # Sort by source ID to keep sources mostly together
+        # This reduces the number of times we have to call build_dispersed_image_of_source
+        # within disperse()
+        sort_indices = np.argsort(selected_source_ids)
+        sorted_xs = selected_xs[sort_indices]
+        sorted_ys = selected_ys[sort_indices]
+        sorted_fluxes = selected_fluxes[:, sort_indices]
+        sorted_source_ids = selected_source_ids[sort_indices]
 
-            # "fluxes" is the array of pixel values from the direct image(s).
-            # For the simple case of 1 combined direct image, this contains a
-            # a single value (just like "lams").
-            fluxes, lams = map(
-                np.array,
-                zip(
-                    *[
-                        (self.fluxes[lm][c][i], lm)
-                        for lm in sorted(self.fluxes.keys())
-                        if self.fluxes[lm][c][i] != 0
-                    ],
-                    strict=True,
-                ),
+        # Split into chunks of max_pixels
+        total_pixels = len(sorted_xs)
+        n_chunks = int(np.ceil(total_pixels / max_pixels))
+
+        log.info(
+            f"Splitting {total_pixels} pixels from {len(source_ids)} sources into {n_chunks} chunks"
+        )
+
+        disperse_args = []
+        for i in range(n_chunks):
+            start_idx = i * max_pixels
+            end_idx = min((i + 1) * max_pixels, total_pixels)
+
+            chunk_xs = sorted_xs[start_idx:end_idx]
+            chunk_ys = sorted_ys[start_idx:end_idx]
+            chunk_fluxes = sorted_fluxes[:, start_idx:end_idx]
+            chunk_source_ids = sorted_source_ids[start_idx:end_idx]
+
+            disperse_args.append(
+                [
+                    chunk_xs,
+                    chunk_ys,
+                    chunk_fluxes,
+                    self.band_wavelengths,
+                    chunk_source_ids,
+                    order,
+                    wmin,
+                    wmax,
+                    sens_waves,
+                    sens_response,
+                    self.direct_image_wcs,
+                    self.grism_wcs,
+                    self.naxis,
+                    self.oversample_factor,
+                    basis_models,
+                ]
             )
 
-            pars_i = (
-                xc,
-                yc,
-                width,
-                height,
-                lams,
-                fluxes,
-                self.order,
-                self.wmin,
-                self.wmax,
-                self.sens_waves,
-                self.sens_resp,
-                self.seg_wcs,
-                self.grism_wcs,
-                i,  # TODO: this is not the source_id as the docstring to dispersed_pixel says
-                self.dims[::-1],
-                2,
-                self.extrapolate_sed,
-                self.xoffset,
-                self.yoffset,
-            )
+        return disperse_args
 
-            pars.append(pars_i)
-            # now have full pars list for all pixels for this object
+    def disperse_order(
+        self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, basis_models=None
+    ):
+        """
+        Disperse the sources for a given spectral order, with multiprocessing.
 
-        time1 = time.time()
+        The ``simulated_cutouts`` and ``simulated_image`` attributes are updated in place.
+
+        Parameters
+        ----------
+        order : int
+            Spectral order to process
+        wmin : float
+            Minimum wavelength for dispersed spectra
+        wmax : float
+            Maximum wavelength for dispersed spectra
+        sens_waves : ndarray
+            Wavelength array from photom reference file
+        sens_response : ndarray
+            Response (flux calibration) array from photom reference file
+        selected_ids : list, optional
+            List of source IDs to process. If None, all sources are processed.
+        basis_models : list of callables, optional
+            Flux distributions to evaluate at each wavelength. Typically these will be single
+            polynomial orders, e.g. [lambda x: x, lambda x: x^2], ...] the coefficients of which
+            are linearly fit later. If None, no models are included in the output.
+        """
+        # generate lists of input parameters for the disperse function
+        # for each chunk of sources
+        disperse_args = self.chunk_sources(
+            order,
+            wmin,
+            wmax,
+            sens_waves,
+            sens_response,
+            selected_ids=selected_ids,
+            max_pixels=self.max_pixels_per_chunk,
+            basis_models=basis_models,
+        )
+        t0 = time.time()
         if self.max_cpu > 1:
-            ctx = multiprocessing.get_context("forkserver")
-            mypool = ctx.Pool(self.max_cpu)  # Create the pool
-            all_res = mypool.imap_unordered(dispersed_pixel, pars)  # Fill the pool
-            mypool.close()  # Drain the pool
+            # Use multiprocessing to disperse the sources
+            log.info(
+                f"Using {self.max_cpu} CPU cores for multiprocessing "
+                f"{len(self.source_ids)} sources in {len(disperse_args)} chunks."
+            )
+            ctx = mp.get_context("spawn")
+            pool = ctx.Pool(self.max_cpu)
+            try:
+                all_res = pool.starmap(disperse, disperse_args)
+            except Exception as e:
+                log.error(f"Error during parallel processing: {e}")
+                raise
+            finally:
+                pool.close()
+                pool.join()
         else:
-            all_res = []
-            for i in range(len(pars)):
-                all_res.append(dispersed_pixel(*pars[i]))
+            all_res = [disperse(*args) for args in disperse_args]
+        t1 = time.time()
+        log.info(f"Wall clock time for disperse_chunk order {order}: {(t1 - t0):.1f} sec")
 
-        # Initialize blank image for this source
-        this_object = np.zeros(self.dims, float)
-
-        nres = 0
-        for pp in all_res:
-            if pp is None:
+        # Combine results from all chunks, aggregating by source ID
+        source_results = {}
+        for results in all_res:
+            if results is None:
+                # None of the sources in this chunk for this order had pixels on the detector
                 continue
+            for sid in results:
+                _aggregate_by_source(results, sid, source_results)
 
-            nres += 1
-            x, y, _, w, f, *_ = pp
+        # Now add the combined results to the simulation
+        for sid in source_results:
+            bounds = source_results[sid]["bounds"]
+            img = source_results[sid]["image"]
+            slitmodel = _construct_simulated_cutout(img, bounds, sid, order)
+            fluxmodels = source_results[sid].get("model_counts", [])
+            for i, fm in enumerate(fluxmodels):
+                # use i+1 indexing because typically the first model will be the linear order
+                # for polynomial fitting. The 0th order is what's already in slitmodel.data
+                setattr(slitmodel, f"fluxmodel_{i + 1}", fm)
+            self.simulated_image[bounds[2] : bounds[3] + 1, bounds[0] : bounds[1] + 1] += img
+            self.simulated_cutouts.append(slitmodel)
 
-            # skip results that don't have pixels in the field
-            if len(x) < 1:
-                continue
 
-            minx = int(min(x))
-            maxx = int(max(x))
-            miny = int(min(y))
-            maxy = int(max(y))
-            a = sparse.coo_matrix(
-                (f, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)
-            ).toarray()
+def _aggregate_by_source(results, sid, source_results):
+    """
+    Combine results from different chunks into a single image and bounds for each source ID.
 
-            # Accumulate results into simulated images
-            self.simulated_image[miny : maxy + 1, minx : maxx + 1] += a
-            this_object[miny : maxy + 1, minx : maxx + 1] += a
+    Parameters
+    ----------
+    results : dict
+        Dictionary containing the results for each source ID in the current chunk, in the format:
+        {source_id: {"bounds": [xmin, xmax, ymin, ymax], "image": 2D array,
+        "model_counts": list of 2D arrays}}
+    sid : int
+        Source ID
+    source_results : dict
+        Dictionary to store simulated image and bounds for each source ID,
+        in the same format as results but with images and bounds aggregated.
+        Updated in place.
+    """
+    if sid not in source_results:
+        source_results[sid] = {
+            "bounds": results[sid]["bounds"],
+            "image": results[sid]["image"],
+            "model_counts": results[sid].get("model_counts", []),
+        }
+        return
 
-            if self.cache:
-                self.cached_object[c]["x"].append(x)
-                self.cached_object[c]["y"].append(y)
-                self.cached_object[c]["f"].append(f)
-                self.cached_object[c]["w"].append(w)
-                self.cached_object[c]["minx"].append(minx)
-                self.cached_object[c]["maxx"].append(maxx)
-                self.cached_object[c]["miny"].append(miny)
-                self.cached_object[c]["maxy"].append(maxy)
+    # Combine bounds
+    old_bounds = source_results[sid]["bounds"]
+    new_bounds = results[sid]["bounds"]
+    combined_bounds = [
+        min(old_bounds[0], new_bounds[0]),
+        max(old_bounds[1], new_bounds[1]),
+        min(old_bounds[2], new_bounds[2]),
+        max(old_bounds[3], new_bounds[3]),
+    ]
 
-        time2 = time.time()
-        log.debug(f"Elapsed time {time2 - time1} sec")
+    combined_shape = (
+        combined_bounds[3] - combined_bounds[2] + 1,
+        combined_bounds[1] - combined_bounds[0] + 1,
+    )
 
-        return this_object
+    # Helper to place an existing sub-image into the combined image
+    def _place(old_arr, old_b):
+        out = np.zeros(combined_shape, dtype=float)
+        y0 = old_b[2] - combined_bounds[2]
+        x0 = old_b[0] - combined_bounds[0]
+        out[y0 : y0 + old_arr.shape[0], x0 : x0 + old_arr.shape[1]] = old_arr
+        return out
 
-    def disperse_all_from_cache(self, trans=None):
-        """
-        Compute dispersed pixel values for all sources identified in the segmentation map.
+    old_img = _place(source_results[sid]["image"], old_bounds)
+    new_img = _place(results[sid]["image"], new_bounds)
+    combined_image = old_img + new_img
 
-        Load data from cache where available. Currently not used.
+    # Sum model_counts across chunks (same as image)
+    old_mcs = source_results[sid].get("model_counts", [])
+    new_mcs = results[sid].get("model_counts", [])
+    combined_mcs = [
+        _place(old_mc, old_bounds) + _place(new_mc, new_bounds)
+        for old_mc, new_mc in zip(old_mcs, new_mcs, strict=True)
+    ]
 
-        Parameters
-        ----------
-        trans : function
-            Transmission function to apply to the flux values
+    source_results[sid] = {
+        "bounds": combined_bounds,
+        "image": combined_image,
+        "model_counts": combined_mcs,
+    }
 
-        Returns
-        -------
-        np.ndarray
-            2D dispersed image for this source
 
-        Notes
-        -----
-        The return value of `this_object` appears to be a bug.
-        However, this is currently not used, and if the INS team wants to re-enable
-        caching, all functions here need updating anyway, so not fixing at this time.
-        """
-        if not self.cache:
-            return
+def _construct_simulated_cutout(
+    img,
+    bounds,
+    sid,
+    order,
+):
+    """
+    Turn an output image from a single source/order into a SimulatedCutout.
 
-        self.simulated_image = np.zeros(self.dims, float)
+    Parameters
+    ----------
+    img : ndarray
+        Dispersed model image of segmentation map source
+    bounds : list
+        The bounds of the object in relation to the full-frame image.
+    sid : int
+        The source ID
+    order : int
+        The spectral order
 
-        for i in range(len(self.source_ids)):
-            this_object = self.disperse_chunk_from_cache(i, trans=trans)
-
-        return this_object
-
-    def disperse_chunk_from_cache(self, c, trans=None):
-        """
-        Compute dispersion for a single source; to be called after create_pixel_list().
-
-        Load data from cache where available. Currently not used.
-
-        Parameters
-        ----------
-        c : int
-            Chunk (source) number to process
-        trans : function
-            Transmission function to apply to the flux values
-
-        Returns
-        -------
-        np.ndarray
-            2D dispersed image for this source
-        """
-        if not self.cache:
-            return
-
-        time1 = time.time()
-
-        # Initialize blank image for this object
-        this_object = np.zeros(self.dims, float)
-
-        if trans is not None:
-            log.debug("Applying a transmission function...")
-
-        for i in range(len(self.cached_object[c]["x"])):
-            x = self.cached_object[c]["x"][i]
-            y = self.cached_object[c]["y"][i]
-            f = self.cached_object[c]["f"][i] * 1.0
-            w = self.cached_object[c]["w"][i]
-
-            if trans is not None:
-                f *= trans(w)
-
-            minx = self.cached_object[c]["minx"][i]
-            maxx = self.cached_object[c]["maxx"][i]
-            miny = self.cached_object[c]["miny"][i]
-            maxy = self.cached_object[c]["maxy"][i]
-
-            a = sparse.coo_matrix(
-                (f, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)
-            ).toarray()
-
-            # Accumulate the results into the simulated images
-            self.simulated_image[miny : maxy + 1, minx : maxx + 1] += a
-            this_object[miny : maxy + 1, minx : maxx + 1] += a
-
-        time2 = time.time()
-        log.debug(f"Elapsed time {time2 - time1} sec")
-
-        return this_object
+    Returns
+    -------
+    SimulatedCutout
+        Simulated source cutout containing the dispersed pixel values
+    """
+    [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy] = bounds
+    return SimulatedCutout(
+        source_id=sid,
+        name=f"{sid}",
+        # FITS pixels are 1-indexed, matching extract_2d convention
+        xstart=thisobj_minx + 1,
+        xsize=thisobj_maxx - thisobj_minx + 1,
+        ystart=thisobj_miny + 1,
+        ysize=thisobj_maxy - thisobj_miny + 1,
+        # Match SlitModel float32 dtype
+        data=img.astype(np.float32, copy=False),
+        spectral_order=order,
+    )

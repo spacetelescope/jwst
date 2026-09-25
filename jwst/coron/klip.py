@@ -1,43 +1,48 @@
-"""
-    Python implementation of the KLIP algorithm based on the
-    Mathematica script from Remi Soummer.
+"""Utility functions for the KLIP algorithm."""
 
-:Authors: Mihai Cara
-
-"""
+import logging
 
 import numpy as np
 
-import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["klip", "karhunen_loeve_transform"]
 
 
-def klip(target_model, refs_model, truncate):
+def klip(target_model, refs_model, truncate, return_psf=True):
     """
+    Apply KLIP algorithm to science data.
+
     Parameters
     ----------
-    target_model : CubeModel (NINTS x NROWS x NCOLS)
-        The input images of the target. Multiple integrations within
-        a single exposure are stacked along the first (NINTS) axis of
-        the data arrays.
-
-    refs_model : CubeModel (NINTS_PSF x NROWS x NCOLS)
-        The input 3D stack of reference images. The first
+    target_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input images of the target (NINTS x NROWS x NCOLS). Multiple integrations
+        within a single exposure are stacked along the first (NINTS) axis of the data arrays.
+        Updated in-place.
+    refs_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input 3D stack of reference images (NINTS_PSF x NROWS x NCOLS). The first
         (NINTS_PSF) axis is the stack of aligned PSF integrations for that
         target image.
-
     truncate : int
         Indicates how many rows to keep in the Karhunen-Loeve transform.
-    """
+    return_psf : bool, optional
+        If `True`, the PSF fit to the target image will be returned as a
+        separate datamodel.
 
-    # Initialize the output models as copies of the input target model
-    output_target = target_model.copy()
-    output_psf = target_model.copy()
+    Returns
+    -------
+    target_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        Science target data model with PSF subtracted.
+    output_psf : `~stdatamodels.jwst.datamodels.CubeModel`, optional
+        Data model of PSF fitted to target image. Returned only if
+        ``return_psf`` is set to `True`.
+    """
+    # If needed, initialize the output PSF model as a copy of the target model
+    if return_psf:
+        output_psf = target_model.copy()
 
     # Loop over the target integrations
     for i in range(target_model.data.shape[0]):
-
         # Load the target data array and flatten it from 2-D to 1-D
         target = target_model.data[i].astype(np.float64)
         tshape = target.shape
@@ -54,7 +59,7 @@ def klip(target_model, refs_model, truncate):
             refs[k] -= np.mean(refs[k], dtype=np.float64)
 
         # Compute Karhunen-Loeve transform of ref images and normalize vectors
-        klvect, eigval, eigvect = KarhunenLoeveTransform(refs, normalize=True)
+        klvect, eigval, eigvect = karhunen_loeve_transform(refs, normalize=True)
 
         # Truncate the Karhunen-Loeve vectors
         klvect = klvect[:truncate]
@@ -68,10 +73,11 @@ def klip(target_model, refs_model, truncate):
 
         # Unflatten the PSF and subtracted target images from 1-D to 2-D
         # and copy them to the output models
-        psfimg = psfimg.reshape(tshape)
-        output_psf.data[i] = psfimg
         outimg = outimg.reshape(tshape)
-        output_target.data[i] = outimg
+        target_model.data[i] = outimg
+        if return_psf:
+            psfimg = psfimg.reshape(tshape)
+            output_psf.data[i] = psfimg
 
         # Compute the ERR for the fitted target image:
         # the ERR is taken as the std-dev of the KLIP results for all of the
@@ -83,16 +89,33 @@ def klip(target_model, refs_model, truncate):
             refs_fit[k] = refs[k] - np.dot(klvect.T, np.dot(refs[k], klvect.T))
 
         # Now take the standard deviation of the results
-        output_target.err[i] = np.std(refs_fit, 0).reshape(tshape)
+        target_model.err[i] = np.std(refs_fit, 0).reshape(tshape)
 
-    return output_target, output_psf
+    if return_psf:
+        return target_model, output_psf
+    else:
+        return target_model
 
 
-def KarhunenLoeveTransform(m, normalize=False):
+def karhunen_loeve_transform(m, normalize=False):
     """
-    Returns Karhunen-Loeve Transform of the input, eigenvalues, and
-    a matrix of eigenvectors.
+    Calculate Karhunen-Loeve Transform of the input.
 
+    Parameters
+    ----------
+    m : ndarray
+        The array of flattened, background subtracted reference arrays
+    normalize : bool
+        If `True`, normalize the returned transform
+
+    Returns
+    -------
+    klvect : ndarray
+        The Karhunen-Loeve Transform of the input arrays
+    eigval : ndarray
+        Array of eigenvalues
+    eigvect : ndarray
+        Matrix of eigenvectors
     """
     eigval, eigvect = np.linalg.eigh(np.cov(m))
 

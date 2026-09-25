@@ -9,6 +9,4 @@ Master Background Subtraction
 
    description.rst
    arguments.rst
-   reference_files.rst
-
-.. automodapi:: jwst.master_background
+   api_ref.rst

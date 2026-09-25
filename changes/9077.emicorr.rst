@@ -1,2 +1,0 @@
-Make several very small changes to in emicorr to substantially improve
-memory consumption and runtime without affecting results. 

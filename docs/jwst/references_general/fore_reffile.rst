@@ -6,7 +6,7 @@ FORE Reference File (NIRSpec only)
 ----------------------------------
 
 :REFTYPE: FORE
-:Data model: `~jwst.datamodels.FOREModel`
+:Data model: `~stdatamodels.jwst.datamodels.FOREModel`
 
 Reference Selection Keywords for FORE
 +++++++++++++++++++++++++++++++++++++
@@ -31,4 +31,3 @@ The compound model takes three inputs - x, y positions and wavelength.
 
 :filter: Filter name.
 :model: Transform through the Filter Wheel Assembly (FWA).
-

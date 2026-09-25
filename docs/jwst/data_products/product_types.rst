@@ -4,7 +4,7 @@ The following tables contain lists of all data product types, as given by their 
 All tables indicate whether the file naming is exposure-based (Exp) or source-based (Src).
 When the product is not created by default, the flag *Optional* is indicated in the
 description. The different stages of the calibration pipeline are as defined in
-the `Algorithms Documentation <https://jwst-docs.stsci.edu/jwst-data-reduction-pipeline/algorithm-documentation>`_.
+the `Algorithms Documentation <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline>`_.
 The product name suffixes are active links to detailed descriptions in the following sections.
 
 Stage 0 and Stage 1 Data Products
@@ -36,8 +36,8 @@ Stage 2 Data Products
 +----------------------------------------+------------------------+--------------------------+------+-----------------------+---------------------------------------+
 | Pipeline                               | Input                  |  Output(s)               | Base | Units                 | Description                           |
 +========================================+========================+==========================+======+=======================+=======================================+
-| :ref:`calwebb_image2 <calwebb_image2>` | :ref:`rate <rate>`     | :ref:`bsub <bsub>`       | Exp  | DN/s                  | | 2-D background-subtracted data,     |
-|                                        |                        |                          |      |                       | | when background step applied        |
+| :ref:`calwebb_image2 <calwebb_image2>` | :ref:`rate <rate>`     | :ref:`bsub <bsub>`       | Exp  | DN/s                  | | *optional* 2-D                      |
+|                                        |                        |                          |      |                       | | background-subtracted data          |
 |                                        |                        +--------------------------+      +-----------------------+---------------------------------------+
 |                                        |                        | :ref:`cal <cal>`         |      | MJy/sr, MJy [#1]_     | | 2-D calibrated data                 |
 |                                        |                        +--------------------------+      |                       +---------------------------------------+
@@ -46,8 +46,8 @@ Stage 2 Data Products
 | :ref:`calwebb_image2 <calwebb_image2>` | :ref:`rateints <rate>` | :ref:`calints <calints>` |      | MJy/sr, MJy [#1]_     | | 3-D calibrated data;                |
 | with TSO data                          |                        |                          |      |                       | | coronagraphy and TSO                |
 +----------------------------------------+------------------------+--------------------------+------+-----------------------+---------------------------------------+
-| :ref:`calwebb_spec2 <calwebb_spec2>`   | :ref:`rate <rate>`     | :ref:`bsub <bsub>`       | Exp  | DN/s                  | | 2-D background-subtracted data,     |
-|                                        |                        |                          |      |                       | | when background step applied        |
+| :ref:`calwebb_spec2 <calwebb_spec2>`   | :ref:`rate <rate>`     | :ref:`bsub <bsub>`       | Exp  | DN/s                  | | *optional* 2-D                      |
+|                                        |                        |                          |      |                       | | background-subtracted data          |
 |                                        |                        +--------------------------+      +-----------------------+---------------------------------------+
 |                                        |                        | :ref:`cal <cal>`         |      | MJy/sr, MJy [#1]_     | | 2-D calibrated data                 |
 |                                        |                        +--------------------------+      |                       +---------------------------------------+

@@ -3,8 +3,9 @@ import os
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.io import fits
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, SourceModelContainer
 from jwst.extract_1d.extract_1d_step import Extract1dStep
 from jwst.extract_1d.soss_extract import soss_extract
 
@@ -52,6 +53,7 @@ def test_extract_nirspec_mos_multi_slit(mock_nirspec_mos, simple_wcs):
 
 def test_extract_nirspec_bots(mock_nirspec_bots, simple_wcs):
     result = Extract1dStep.call(mock_nirspec_bots, apply_apcorr=False, use_source_posn=False)
+    assert isinstance(result, dm.TSOMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
     assert result.spec[0].name == "S1600A1"
 
@@ -87,10 +89,11 @@ def test_extract_miri_ifu(mock_miri_ifu, simple_wcs_ifu, ifu_set_srctype):
     # Source type defaults to extended, results should be the
     # same with and without override
     result = Extract1dStep.call(mock_miri_ifu, ifu_covar_scale=1.0, ifu_set_srctype=ifu_set_srctype)
+    assert isinstance(result, dm.MRSMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
     # output wavelength is the same as input
-    _, _, expected_wave = simple_wcs_ifu(np.arange(50), np.arange(50), np.arange(10))
+    _, _, expected_wave = simple_wcs_ifu(np.arange(10), np.arange(10), np.arange(10))
     assert np.allclose(result.spec[0].spec_table["WAVELENGTH"], expected_wave)
 
     # output flux for extended data is a simple sum over all data
@@ -134,30 +137,30 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
     result = Extract1dStep.call(mock_niriss_wfss_l3)
 
     # output is a single spectral model (not a container)
-    assert isinstance(result, dm.MultiSpecModel)
+    assert isinstance(result, dm.WFSSMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
-    for i, spec in enumerate(result.spec):
-        assert spec.name == str(i + 1)
+    for i, exp in enumerate(result.spec):
+        tab = exp.spec_table[0]
 
         # output wavelength is the same as input
         _, _, expected_wave = simple_wcs(np.arange(50), np.arange(50))
-        assert np.allclose(spec.spec_table["WAVELENGTH"], expected_wave)
+        assert np.allclose(tab["WAVELENGTH"], expected_wave)
 
         # output flux and errors are non-zero, exact values will depend
         # on extraction parameters
-        assert np.all(spec.spec_table["FLUX"] > 0)
-        assert np.all(spec.spec_table["FLUX_ERROR"] > 0)
+        assert np.all(tab["FLUX"] > 0)
+        assert np.all(tab["FLUX_ERROR"] > 0)
 
     result.close()
 
 
-@pytest.mark.slow
 def test_extract_niriss_soss_256(tmp_path, mock_niriss_soss_256):
     result = Extract1dStep.call(
         mock_niriss_soss_256,
         soss_rtol=0.1,
         soss_modelname="soss_model.fits",
+        soss_wave_grid_out=str(tmp_path / "soss_wave_grid.fits"),
         output_dir=str(tmp_path),
     )
     assert result.meta.cal_step.extract_1d == "COMPLETE"
@@ -166,32 +169,79 @@ def test_extract_niriss_soss_256(tmp_path, mock_niriss_soss_256):
     # on extraction parameters
     assert np.all(result.spec[0].spec_table["FLUX"] > 0)
     assert np.all(result.spec[0].spec_table["FLUX_ERROR"] > 0)
-    result.close()
 
     # soss output files are saved
     assert os.path.isfile(tmp_path / "soss_model_SossExtractModel.fits")
     assert os.path.isfile(tmp_path / "soss_model_AtocaSpectra.fits")
 
+    tikfac = result.meta.soss_extract1d.tikhonov_factor
 
-@pytest.mark.slow
+    # rerun call with the same wave grid file and Tikhonov factor,
+    # results should be identical
+    result2 = Extract1dStep.call(
+        mock_niriss_soss_256,
+        soss_rtol=0.1,
+        soss_wave_grid_in=str(tmp_path / "soss_wave_grid.fits"),
+        output_dir=str(tmp_path),
+    )
+    assert result2.meta.cal_step.extract_1d == "COMPLETE"
+    np.testing.assert_allclose(
+        result2.spec[0].spec_table["FLUX"], result.spec[0].spec_table["FLUX"]
+    )
+
+    result.close()
+    result2.close()
+
+
 def test_extract_niriss_soss_96(tmp_path, mock_niriss_soss_96):
     result = Extract1dStep.call(
         mock_niriss_soss_96,
         soss_rtol=0.1,
         soss_modelname="soss_model.fits",
+        save_results=True,
+        output_file="test",
+        suffix="x1dints",
         output_dir=str(tmp_path),
     )
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
     # output flux and errors are non-zero, exact values will depend
     # on extraction parameters
-    assert np.all(result.spec[0].spec_table["FLUX"] > 0)
+    assert (
+        np.count_nonzero(result.spec[0].spec_table["FLUX"] >= 0)
+        / result.spec[0].spec_table["FLUX"].size
+    ) > 0.99
     assert np.all(result.spec[0].spec_table["FLUX_ERROR"] > 0)
     result.close()
 
     # soss output files are saved
-    assert os.path.isfile(tmp_path / "soss_model_SossExtractModel.fits")
-    assert os.path.isfile(tmp_path / "soss_model_AtocaSpectra.fits")
+    assert (tmp_path / "soss_model_SossExtractModel.fits").is_file()
+    assert (tmp_path / "soss_model_AtocaSpectra.fits").is_file()
+    assert (tmp_path / "test_x1dints.fits").is_file()
+
+    # Make sure the output spectrum does not have a SCI or ERR extension
+    # This covers a bug where these were added accidentally in model metadata updates.
+    with fits.open(str(tmp_path / "test_x1dints.fits")) as hdul:
+        ext_names = [hdu.name for hdu in hdul]
+        assert "EXTRACT1D" in ext_names
+        assert "SCI" not in ext_names
+        assert "ERR" not in ext_names
+
+
+def test_extract_niriss_soss_superstripe(mock_niriss_soss_superstripe):
+    result = Extract1dStep.call(mock_niriss_soss_superstripe)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
+
+    # output flux and errors are non-zero, exact values will depend
+    # on extraction parameters
+    assert np.all(result.spec[0].spec_table["FLUX"] > 0)
+    assert np.all(result.spec[0].spec_table["FLUX_ERROR"] > 0)
+
+    # int_times and int_times_stripe are both present, copied from the input
+    assert len(result.int_times) == len(mock_niriss_soss_superstripe.int_times)
+    assert len(result.int_times_stripe) == len(mock_niriss_soss_superstripe.int_times_stripe)
+
+    result.close()
 
 
 def test_extract_niriss_soss_fail(tmp_path, monkeypatch, mock_niriss_soss_96):
@@ -306,3 +356,106 @@ def test_save_output_multiple_multislit(tmp_path, mock_nirspec_mos):
 
     result.close()
     input_container.close()
+
+
+def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
+    """Test output save override for WFSS level 2 data when step called standalone."""
+    mock_niriss_wfss_l2.meta.filename = "test_s2d.fits"
+    result = Extract1dStep.call(
+        mock_niriss_wfss_l2,
+        save_results=True,
+        output_dir=str(tmp_path),
+        suffix="x1d",
+    )
+    # test that optional contam column got handled
+    np.testing.assert_allclose(result.spec[0].spec_table["contam_flux"], 150.0)
+    np.testing.assert_allclose(result.spec[0].spec_table["contam_surf_bright"], 3.0)
+    # test that the index of these columns is as expected
+    names = result.spec[0].spec_table.dtype.names
+    flux_idx = names.index("FLUX")
+    sb_idx = names.index("SURF_BRIGHT")
+    assert names[flux_idx + 1] == "CONTAM_FLUX"
+    assert names[sb_idx + 1] == "CONTAM_SURF_BRIGHT"
+    result.close()
+
+    fname = "test_x1d.fits"
+    output_path = str(tmp_path / fname)
+
+    assert os.path.isfile(output_path)
+
+    with dm.open(output_path) as model:
+        # check that the output file name is not overridden
+        assert isinstance(model, dm.WFSSMultiSpecModel)
+        assert len(model.spec) == 1
+
+
+def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
+    """Test output for WFSS level 3 data when step called standalone."""
+    mock_niriss_wfss_l3[0].meta.filename = "test0_s2d.fits"
+    assert isinstance(mock_niriss_wfss_l3, SourceModelContainer)
+    result = Extract1dStep.call(
+        mock_niriss_wfss_l3,
+        save_results=True,
+        output_dir=str(tmp_path),
+        suffix="x1d",
+    )
+    result.close()
+
+    fname = "test0_x1d.fits"
+    output_path = str(tmp_path / fname)
+
+    assert os.path.isfile(output_path)
+
+    with dm.open(output_path) as model:
+        assert isinstance(model, dm.WFSSMultiSpecModel)
+        assert len(model.spec) == 1
+
+
+@pytest.mark.parametrize(
+    "dataset", ["mock_niriss_soss_256", "mock_nirspec_fs_one_slit", "mock_miri_ifu"]
+)
+def test_output_is_not_input(request, dataset):
+    input_model = request.getfixturevalue(dataset)
+    result = Extract1dStep.call(input_model, soss_rtol=1)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
+
+    assert result is not input_model
+    assert input_model.meta.cal_step.extract_1d is None
+
+
+def test_extract_nircam_dhs(mock_nircam_dhs, simple_wcs):
+    # input is a MultiSlitModel
+    result = Extract1dStep.call(mock_nircam_dhs)
+
+    # output is a single spectral model (not a container)
+    assert isinstance(result, dm.TSOMultiSpecModel)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
+
+    for i, exp in enumerate(result.spec):
+        tab = exp.spec_table[0]
+
+        # output wavelength is the same as input
+        _, _, expected_wave = simple_wcs(np.arange(50), np.arange(50))
+        assert np.allclose(tab["WAVELENGTH"], expected_wave)
+
+        # output flux and errors are non-zero, exact values will depend
+        # on extraction parameters
+        assert np.all(tab["FLUX"] > 0)
+        assert np.all(tab["FLUX_ERROR"] > 0)
+
+    result.close()
+
+
+def test_extract_wfss_from_filename(tmp_path, mock_niriss_wfss_l2):
+    """Test that WFSS data is not assumed to be a model on input."""
+    # save the input to a file
+    input_file = str(tmp_path / "test_wfss.fits")
+    mock_niriss_wfss_l2.save(input_file)
+
+    result = Extract1dStep.call(input_file)
+
+    # output is a single spectral model
+    assert isinstance(result, dm.WFSSMultiSpecModel)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
+
+    result.close()

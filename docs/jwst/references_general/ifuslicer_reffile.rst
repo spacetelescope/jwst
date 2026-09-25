@@ -1,12 +1,12 @@
 :orphan:
 
 .. _ifuslicer_reffile:
-  
+
 IFUSLICER Reference File (NIRSpec only)
 ---------------------------------------
 
 :REFTYPE: IFUSLICER
-:Data model: `~jwst.datamodels.IFUSlicerModel`
+:Data model: `~stdatamodels.jwst.datamodels.IFUSlicerModel`
 
 Reference Selection Keywords for IFUSLICER
 ++++++++++++++++++++++++++++++++++++++++++

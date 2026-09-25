@@ -1,23 +1,32 @@
-from ..stpipe import Step
-from . import firstframe_sub
+"""Set data quality flag of first group in MIRI data."""
+
+import logging
+import warnings
+
 from stdatamodels.jwst import datamodels
 
+from jwst.firstframe import firstframe_sub
+from jwst.stpipe import Step
 
 __all__ = ["FirstFrameStep"]
+
+log = logging.getLogger(__name__)
 
 
 class FirstFrameStep(Step):
     """
     Set data quality flags for the first group in MIRI ramps.
 
-    A MIRI specific task.  If the number of groups is > than 3,
-    the DO_NOT_USE group data quality flag is added to first group.
+    .. deprecated:: 2.0.0
+        The `FirstFrameStep` has been deprecated and will be removed
+        in a future release. Flagging the first group  has been added to the RSCD step.
     """
 
     class_alias = "firstframe"
 
     spec = """
-        bright_use_group1 = boolean(default=False) # do not flag group1 if group3 is saturated
+        bright_use_group1 = boolean(default=True) # do not flag group1 if group3 is saturated
+        skip = boolean(default=True) # Do not run this step.
     """  # noqa: E501
 
     def process(self, step_input):
@@ -26,28 +35,34 @@ class FirstFrameStep(Step):
 
         Parameters
         ----------
-        step_input : DataModel
-            Input datamodel to be corrected
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            Input filename or datamodel to be corrected.
 
         Returns
         -------
-        output_model : DataModel
-            Firstframe corrected datamodel
+        output_model : `~stdatamodels.jwst.datamodels.RampModel`
+            First frame corrected datamodel.
         """
+        deprecation_message = (
+            "'FirstFrameStep' has been deprecated since 2.0.0 and "
+            "will be removed in a future release. Flagging the first group has been"
+            " added to the RSCD step.  "
+        )
+        warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+        log.warning(deprecation_message)
+
         # Open the input data model
-        with datamodels.open(step_input) as input_model:
-            # check the data is MIRI data
-            detector = input_model.meta.instrument.detector.upper()
-            if detector[:3] != "MIR":
-                self.log.warning("First Frame Correction is only for MIRI data")
-                self.log.warning("First frame step will be skipped")
-                input_model.meta.cal_step.firstframe = "SKIPPED"
-                return input_model
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            # Cork on a copy
-            result = input_model.copy()
+        # Check the data is MIRI data
+        detector = result.meta.instrument.detector.upper()
+        if detector[:3] != "MIR":
+            log.warning("First Frame Correction is only for MIRI data")
+            log.warning("First frame step will be skipped")
+            result.meta.cal_step.firstframe = "SKIPPED"
+            return result
 
-            # Do the firstframe correction subtraction
-            result = firstframe_sub.do_correction(result, bright_use_group1=self.bright_use_group1)
+        # Do the firstframe correction subtraction
+        result = firstframe_sub.do_correction(result, bright_use_group1=self.bright_use_group1)
 
         return result

@@ -1,18 +1,20 @@
+"""Reference pixel correction step."""
+
+import logging
+
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from ..lib import pipe_utils
-from . import reference_pixels
-from . import irs2_subtract_reference
-
+from jwst.lib import pipe_utils, stripe_utils
+from jwst.refpix import irs2_subtract_reference, reference_pixels
+from jwst.stpipe import Step
 
 __all__ = ["RefPixStep"]
 
+log = logging.getLogger(__name__)
+
 
 class RefPixStep(Step):
-    """
-    RefPixStep: Use reference pixels to correct bias drifts
-    """
+    """Use reference pixels to correct bias drifts."""
 
     class_alias = "refpix"
 
@@ -29,105 +31,147 @@ class RefPixStep(Step):
         sigreject = float(default=4.0) # Number of sigmas to reject as outliers
         gaussmooth = float(default=1.0) # Width of Gaussian smoothing kernel to use as a low-pass filter
         halfwidth = integer(default=30) # Half-width of convolution kernel to build
-    """ # noqa: E501
+        siglimit = float(default=3.0) # Sigma clipping limit for outlier rejection
+    """  # noqa: E501
 
-    reference_file_types = ['refpix']
+    reference_file_types = ["refpix", "sirskernel"]
 
     def process(self, step_input):
+        """
+        Execute the reference pixel correction step.
 
+        Parameters
+        ----------
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            File name or input datamodel.
+
+        Returns
+        -------
+        result : `~stdatamodels.jwst.datamodels.RampModel`
+            Result of applying the reference pixel correction step.
+        """
         conv_kernel_params = {
-            'refpix_algorithm': self.refpix_algorithm,
-            'sirs_kernel_model': None,
-            'sigreject': self.sigreject,
-            'gaussmooth': self.gaussmooth,
-            'halfwidth': self.halfwidth
+            "refpix_algorithm": self.refpix_algorithm,
+            "sirs_kernel_model": None,
+            "sigreject": self.sigreject,
+            "gaussmooth": self.gaussmooth,
+            "halfwidth": self.halfwidth,
         }
 
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
+        result = self.prepare_output(step_input, open_as_ramp=True)
 
-            # Work on a copy
-            result = input_model.copy()
+        if pipe_utils.is_irs2(result):
+            # Flag bad reference pixels first
+            irs2_subtract_reference.flag_bad_refpix(
+                result, n_sigma=self.ovr_corr_mitigation_ftr, flag_only=True
+            )
 
-            if pipe_utils.is_irs2(result):
+            # If desired, do the normal refpix correction before IRS2, without
+            # side pixel handling
+            if self.irs2_mean_subtraction:
+                if self.use_side_ref_pixels:
+                    log.info("Turning off side pixel correction for IRS2")
+                    self.use_side_ref_pixels = False
+                reference_pixels.correct_model(
+                    result,
+                    self.odd_even_columns,
+                    self.use_side_ref_pixels,
+                    self.side_smoothing_length,
+                    self.side_gain,
+                    self.odd_even_rows,
+                    conv_kernel_params,
+                    self.siglimit,
+                )
 
-                # Flag bad reference pixels first
-                irs2_subtract_reference.flag_bad_refpix(
-                    result, n_sigma=self.ovr_corr_mitigation_ftr, flag_only=True)
+            # Now that values are updated, replace bad reference pixels
+            irs2_subtract_reference.flag_bad_refpix(result, replace_only=True)
 
-                # If desired, do the normal refpix correction before IRS2, without
-                # side pixel handling
-                if self.irs2_mean_subtraction:
-                    if self.use_side_ref_pixels:
-                        self.log.info('Turning off side pixel correction for IRS2')
-                        self.use_side_ref_pixels = False
-                    reference_pixels.correct_model(
-                        result, self.odd_even_columns, self.use_side_ref_pixels,
-                        self.side_smoothing_length, self.side_gain, self.odd_even_rows,
-                        conv_kernel_params)
+            # Get the necessary refpix reference file for IRS2 correction
+            self.irs2_name = self.get_reference_file(result, "refpix")
+            log.info(f"Using refpix reference file: {self.irs2_name}")
 
-                # Now that values are updated, replace bad reference pixels
-                irs2_subtract_reference.flag_bad_refpix(result, replace_only=True)
-
-                # Get the necessary refpix reference file for IRS2 correction
-                self.irs2_name = self.get_reference_file(result, 'refpix')
-                self.log.info(f'Using refpix reference file: {self.irs2_name}')
-
-                # Check for a valid reference file
-                if self.irs2_name == 'N/A':
-                    self.log.warning('No refpix reference file found')
-                    self.log.warning('RefPix step will be skipped')
-                    result.meta.cal_step.refpix = 'SKIPPED'
-                    return result
-
-                # Load the reference file into a datamodel
-                irs2_model = datamodels.IRS2Model(self.irs2_name)
-
-                # Apply the IRS2 correction scheme
-                result = irs2_subtract_reference.correct_model(
-                    result, irs2_model, preserve_refpix=self.preserve_irs2_refpix)
-
-                if result.meta.cal_step.refpix != 'SKIPPED':
-                    result.meta.cal_step.refpix = 'COMPLETE'
-                del irs2_model
+            # Check for a valid reference file
+            if self.irs2_name == "N/A":
+                log.warning("No refpix reference file found")
+                log.warning("RefPix step will be skipped")
+                result.meta.cal_step.refpix = "SKIPPED"
                 return result
 
-            else:
-                # Not an NRS IRS2 exposure. Do the normal refpix correction.
+            # Load the reference file into a datamodel
+            irs2_model = datamodels.IRS2Model(self.irs2_name)
 
-                # Get the reference file from CRDS or use user-supplied one only for NIR full-frame data
-                if self.refpix_algorithm == 'sirs':
-                    if input_model.meta.instrument.name != 'MIRI' and 'FULL' in input_model.meta.subarray.name:
-                        sirs_ref_filename = self.get_reference_file(result, 'sirskernel')
-                        if sirs_ref_filename == 'N/A':
-                            self.log.warning('No reference file found for the optimized convolution kernel.')
-                            self.log.warning('REFPIX step will use the running median algorithm for side pixels.')
-                        else:
-                            self.log.info('Using SIRS reference file: {}'.format(sirs_ref_filename))
-                            sirs_kernel_model = datamodels.SIRSKernelModel(sirs_ref_filename)
-                            conv_kernel_params['sirs_kernel_model'] = sirs_kernel_model
-                    elif input_model.meta.instrument.name == 'MIRI':
-                        self.log.info('Simple Improved Reference Subtraction (SIRS) not applied for MIRI data.')
-                    elif 'FULL' not in input_model.meta.subarray.name:
-                        self.log.info('Simple Improved Reference Subtraction (SIRS) not applied for subarray data.')
+            # Apply the IRS2 correction scheme
+            result = irs2_subtract_reference.correct_model(
+                result, irs2_model, preserve_refpix=self.preserve_irs2_refpix
+            )
 
-                status = reference_pixels.correct_model(result,
-                                                        self.odd_even_columns,
-                                                        self.use_side_ref_pixels,
-                                                        self.side_smoothing_length,
-                                                        self.side_gain,
-                                                        self.odd_even_rows,
-                                                        conv_kernel_params)
+            if result.meta.cal_step.refpix != "SKIPPED":
+                result.meta.cal_step.refpix = "COMPLETE"
+            del irs2_model
+            return result
 
-                if status == reference_pixels.REFPIX_OK:
-                    result.meta.cal_step.refpix = 'COMPLETE'
-                elif status == reference_pixels.SUBARRAY_DOESNTFIT:
-                    self.log.warning("Subarray doesn't fit in full-sized array")
-                    result.meta.cal_step.refpix = 'SKIPPED'
-                elif status == reference_pixels.BAD_REFERENCE_PIXELS:
-                    self.log.warning("No valid reference pixels, refpix step skipped")
-                    result.meta.cal_step.refpix = 'SKIPPED'
-                elif status == reference_pixels.SUBARRAY_SKIPPED:
-                    result.meta.cal_step.refpix = 'SKIPPED'
+        else:
+            # Not an NRS IRS2 exposure. Do the normal refpix correction.
 
-                return result
+            # Get the reference file from CRDS or use user-supplied one
+            # only for NIR full-frame data
+            if self.refpix_algorithm == "sirs":
+                if result.meta.instrument.name != "MIRI" and "FULL" in result.meta.subarray.name:
+                    sirs_ref_filename = self.get_reference_file(result, "sirskernel")
+                    if sirs_ref_filename == "N/A":
+                        log.warning("No reference file found for the optimized convolution kernel.")
+                        log.warning(
+                            "REFPIX step will use the running median algorithm for side pixels."
+                        )
+                    else:
+                        log.info(f"Using SIRS reference file: {sirs_ref_filename}")
+                        sirs_kernel_model = datamodels.SIRSKernelModel(sirs_ref_filename)
+                        conv_kernel_params["sirs_kernel_model"] = sirs_kernel_model
+                elif result.meta.instrument.name == "MIRI":
+                    log.info(
+                        "Simple Improved Reference Subtraction (SIRS) not applied for MIRI data."
+                    )
+                elif "FULL" not in result.meta.subarray.name:
+                    log.info(
+                        "Simple Improved Reference Subtraction (SIRS) "
+                        "not applied for subarray data."
+                    )
+
+            status = reference_pixels.correct_model(
+                result,
+                self.odd_even_columns,
+                self.use_side_ref_pixels,
+                self.side_smoothing_length,
+                self.side_gain,
+                self.odd_even_rows,
+                conv_kernel_params,
+                self.siglimit,
+            )
+
+            if status == reference_pixels.REFPIX_OK:
+                result.meta.cal_step.refpix = "COMPLETE"
+            elif status == reference_pixels.SUBARRAY_DOESNTFIT:
+                log.warning("Subarray doesn't fit in full-sized array")
+                result.meta.cal_step.refpix = "SKIPPED"
+            elif status == reference_pixels.BAD_REFERENCE_PIXELS:
+                log.warning("No valid reference pixels, refpix step skipped")
+                result.meta.cal_step.refpix = "SKIPPED"
+            elif status == reference_pixels.SUBARRAY_SKIPPED:
+                result.meta.cal_step.refpix = "SKIPPED"
+
+            # TODO: determine if substripe exposures with repeats should also be collated here.
+            #   If so, it will impact reference file formats for DHS LW.
+            has_superstripes = (
+                result.meta.subarray.num_superstripe is not None
+                and result.meta.subarray.num_superstripe > 0
+            )
+            # has_repeats = (
+            #     result.meta.subarray.repeat_stripe == 1
+            #     and result.meta.subarray.interleave_reads1 == 0
+            # )
+            if has_superstripes:  # or has_repeats:
+                log.info("Reassembling striped data to standard ramp format")
+                result = stripe_utils.collate_superstripes(result)
+
+            return result

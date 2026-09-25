@@ -1,1 +1,0 @@
-Handle imprint matching separately for science and dedicated background targets.

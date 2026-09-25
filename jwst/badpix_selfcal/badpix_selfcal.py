@@ -1,11 +1,14 @@
 from __future__ import annotations
+
 import warnings
 
 import numpy as np
-
-from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 from stcal.outlier_detection.utils import medfilt
 from stdatamodels.jwst.datamodels.dqflags import pixel
+
+from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
+
+__all__ = ["badpix_selfcal", "apply_flags"]
 
 
 def badpix_selfcal(
@@ -16,11 +19,11 @@ def badpix_selfcal(
     dispaxis=None,
 ) -> np.ndarray:
     """
-    Flag residual artifacts as bad pixels in the DQ array of a JWST exposure.
+    Identify residual artifacts in a combined image.
 
     Parameters
     ----------
-    minimg : np.ndarray
+    minimg : ndarray
         Selfcal data of shape (x, y), i.e., after some operation has
         already been taken to combine multiple exposures,
         typically a MIN operation.
@@ -31,14 +34,14 @@ def badpix_selfcal(
     kernel_size : int
         Size of kernel for median filter
     dispaxis : int
-        Dispersion axis, either 1 or 2. If None, a two-dimensional
+        Dispersion axis, either 1 or 2. If ``None``, a two-dimensional
         median filter is applied.
 
     Returns
     -------
-    flagged_indices : np.ndarray
+    flagged_indices : ndarray
         Indices of the flagged pixels,
-        shaped like output from np.where
+        shaped like output from :func:`numpy.where`.
     """
     if dispaxis not in [1, 2, None]:
         raise ValueError("dispaxis must be either 1 or 2, or None.")
@@ -62,8 +65,7 @@ def badpix_selfcal(
         minimg_hpf, [flagfrac_lower * 100, (1 - flagfrac_upper) * 100]
     )
     bad = (minimg_hpf > flag_high) | (minimg_hpf < flag_low)
-    flagged_indices = np.where(bad)
-    return flagged_indices
+    return np.where(bad)
 
 
 def apply_flags(input_model: IFUImageModel, flagged_indices: np.ndarray) -> IFUImageModel:
@@ -71,27 +73,27 @@ def apply_flags(input_model: IFUImageModel, flagged_indices: np.ndarray) -> IFUI
     Apply the flagged indices to the input model.
 
     Sets the flagged pixels to NaN
-    and the DQ flag to DO_NOT_USE + OTHER_BAD_PIXEL
+    and the DQ flag to ``DO_NOT_USE + OTHER_BAD_PIXEL``.
 
     Parameters
     ----------
-    input_model : IFUImageModel
-        Input science data to be corrected
-    flagged_indices : np.ndarray
+    input_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        Input science data to be corrected; updated in place.
+    flagged_indices : ndarray
         Indices of the flagged pixels,
-        shaped like output from np.where
+        shaped like output from :func:`numpy.where`.
 
     Returns
     -------
-    output_model : IFUImageModel
+    output_model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         Flagged data model
     """
     input_model.dq[flagged_indices] |= pixel["DO_NOT_USE"] + pixel["OTHER_BAD_PIXEL"]
 
-    input_model.data[flagged_indices] = np.nan
-    input_model.err[flagged_indices] = np.nan
-    input_model.var_poisson[flagged_indices] = np.nan
-    input_model.var_rnoise[flagged_indices] = np.nan
-    input_model.var_flat[flagged_indices] = np.nan
+    for attr in ("data", "err", "var_poisson", "var_rnoise", "var_flat"):
+        arr = getattr(input_model, attr)
+        if isinstance(arr, np.ndarray):
+            arr[flagged_indices] = np.nan
+            setattr(input_model, attr, arr)
 
     return input_model

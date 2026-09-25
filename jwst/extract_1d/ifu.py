@@ -1,30 +1,42 @@
 import logging
+import warnings
 
 import numpy as np
 from astropy import stats
 from astropy.stats import sigma_clipped_stats as sigclip
 from photutils.aperture import (
-    CircularAperture,
     CircularAnnulus,
+    CircularAperture,
     RectangularAperture,
     aperture_photometry,
 )
 from photutils.detection import DAOStarFinder
 from scipy.interpolate import interp1d
-
+from stcal.alignment.util import compute_scale
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.assign_wcs.util import compute_scale
 from jwst.extract_1d import spec_wcs
 from jwst.extract_1d.apply_apcorr import select_apcorr
 from jwst.extract_1d.extract import read_apcorr_ref
+from jwst.lib.exposure_types import is_point_source
 from jwst.residual_fringe import utils as rfutils
 
-__all__ = ["ifu_extract1d"]
+__all__ = [
+    "ifu_extract1d",
+    "get_extract_parameters",
+    "extract_ifu",
+    "locn_from_wcs",
+    "celestial_to_cartesian",
+    "get_coordinates",
+    "nans_in_wavelength",
+    "separate_target_and_background",
+    "im_centroid",
+    "shift_ref_image",
+    "sigma_clip_extended_region",
+]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # This is intended to be larger than any possible distance (in pixels)
 # between the target and any point in the image; used by locn_from_wcs().
@@ -49,38 +61,38 @@ def ifu_extract1d(
 
     Parameters
     ----------
-    input_model : JWST data model for an IFU cube (IFUCubeModel)
+    input_model : `~stdatamodels.jwst.datamodels.IFUCubeModel`
         The input model.
     ref_file : str
-        File name for the extract1d reference file, in ASDF format.
-    source_type : str
-        "POINT" or "EXTENDED"
+        File name for the EXTRACT1D reference file, in ASDF format.
+    source_type : str or None
+        Overrides the model value if specified. "POINT" or "EXTENDED".
     subtract_background : bool or None
         User supplied flag indicating whether the background should be subtracted.
-        If None, the value in the extract_1d reference file will be used.
+        If None, the value in the EXTRACT1D reference file will be used.
         If not None, this parameter overrides the value in the
-        extract_1d reference file.
+        EXTRACT1D reference file.
     bkg_sigma_clip : float
-        Background sigma clipping value to use to remove noise/outliers in background
+        Background sigma clipping value to use to remove noise/outliers in background.
     apcorr_ref_file : str or None, optional
         File name for aperture correction reference file.
     center_xy : float or None, optional
         A list of 2 pixel coordinate values at which to place the center
         of the extraction aperture for IFU data, overriding any centering
-        done by the step.  Two values, in x,y order, are used for extraction
+        done by the step.  Two values, in ``x,y`` order, are used for extraction
         from IFU cubes. Default is None.
     ifu_autocen : bool, optional
         Switch to turn on auto-centering for point source spectral extraction
-        in IFU mode.  Default is False.
+        in IFU mode.  Default is `False`.
     ifu_rfcorr : bool, optional
-        Switch to select whether or not to apply a 1d residual fringe correction
-        for MIRI MRS IFU spectra.  Default is False.
+        Switch to select whether or not to apply a 1D residual fringe correction
+        for MIRI MRS IFU spectra.  Default is `False`.
     ifu_rscale : float, optional
         For MRS IFU data, a value for changing the extraction radius. The value
         provided is the number of PSF FWHMs to use for the extraction radius.
         Values accepted are between 0.5 to 3.0. The default extraction size is
-        set to 2 * FWHM. Values below 2 will result in a smaller radius, a value
-        of 2 results in no change to radius and a value above 2 results in a larger
+        set to ``2 * FWHM``. Values below 2 will result in a smaller radius, a value
+        of 2 results in no change to radius, and a value above 2 results in a larger
         extraction radius.
     ifu_covar_scale : float, optional
         Scaling factor by which to multiply the ERR values in extracted spectra to
@@ -88,7 +100,7 @@ def ifu_extract1d(
 
     Returns
     -------
-    output_model : MultiSpecModel
+    output_model : `~stdatamodels.jwst.datamodels.MultiSpecModel`
         This will contain the extracted spectrum.
     """
     if not isinstance(input_model, datamodels.IFUCubeModel):
@@ -98,16 +110,20 @@ def ifu_extract1d(
     instrument = input_model.meta.instrument.name
     if instrument is not None:
         instrument = instrument.upper()
-    if source_type is not None:
-        source_type = source_type.upper()
-    if source_type != "POINT" and source_type != "EXTENDED":
-        default_source_type = "EXTENDED"
-        log.warning(f"Source type was '{source_type}'; setting to '{default_source_type}'.")
-        source_type = default_source_type
-    else:
-        log.info(f"Source type = {source_type}")
 
-    output_model = datamodels.MultiSpecModel()
+    if is_point_source(input_model, override_srctype=source_type):
+        source_type = "POINT"
+    else:
+        source_type = "EXTENDED"
+    log.info(f"Using source type = {source_type}")
+
+    if input_model.meta.instrument.name == "MIRI":
+        output_model = datamodels.MRSMultiSpecModel()
+        spec_dtype = datamodels.MRSSpecModel().get_dtype("spec_table")
+    else:
+        output_model = datamodels.MultiSpecModel()
+        spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
+
     output_model.update(input_model, only="PRIMARY")
 
     slitname = input_model.meta.exposure.type
@@ -179,8 +195,13 @@ def ifu_extract1d(
     del npixels_temp
     del npixels_bkg_temp
 
+    temp_flux_rf = None
+    surf_bright_rf = None
+    background_rf = None
+
     # If selected, apply 1d residual fringe correction to the extracted spectrum
-    if (input_model.meta.instrument.name == "MIRI") & (extract_params["ifu_rfcorr"] is True):
+
+    if (input_model.meta.instrument.name == "MIRI") and (extract_params["ifu_rfcorr"] is True):
         log.info("Applying 1d residual fringe correction.")
         # Determine which MRS channel the spectrum is from
         thischannel = input_model.meta.instrument.channel
@@ -198,27 +219,27 @@ def ifu_extract1d(
 
         # Apply residual fringe to the flux array
         try:
-            temp_flux = rfutils.fit_residual_fringes_1d(
+            temp_flux_rf = rfutils.fit_residual_fringes_1d(
                 temp_flux, wavelength, channel=channel, dichroic_only=False, max_amp=None
             )
         except Exception:
-            log.info("Flux residual fringe correction failed- skipping.")
+            log.warning("Flux residual fringe correction failed- skipping.")
 
         # Apply residual fringe to the surf_bright array
         try:
-            surf_bright = rfutils.fit_residual_fringes_1d(
+            surf_bright_rf = rfutils.fit_residual_fringes_1d(
                 surf_bright, wavelength, channel=channel, dichroic_only=False, max_amp=None
             )
         except Exception:
-            log.info("Surf bright residual fringe correction failed- skipping.")
+            log.warning("Surf bright residual fringe correction failed- skipping.")
 
         # Apply residual fringe to the background array
         try:
-            background = rfutils.fit_residual_fringes_1d(
+            background_rf = rfutils.fit_residual_fringes_1d(
                 background, wavelength, channel=channel, dichroic_only=False, max_amp=None
             )
         except Exception:
-            log.info("Background residual fringe correction failed- skipping.")
+            log.warning("Background residual fringe correction failed- skipping.")
 
     pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
     if pixel_solid_angle is None:
@@ -230,20 +251,21 @@ def ifu_extract1d(
     f_var_poisson *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
     f_var_rnoise *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
     f_var_flat *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
+
     # surf_bright and background were computed above
     del temp_flux
+
     error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
     sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
     berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
-    spec_dtype = datamodels.SpecModel().spec_table.dtype
 
     # If we only used the Poisson variance array as a vehicle to pass through
     # non-differentiated errors, clear it again here so that only the total
     # errors pass out into the 1d spectra files.
     if not hasattr(input_model, "var_poisson"):
-        f_var_poisson *= 0
-        sb_var_poisson *= 0
-        b_var_poisson *= 0
+        f_var_poisson[:] = 0
+        sb_var_poisson[:] = 0
+        b_var_poisson[:] = 0
 
     # Deal with covariance in the IFU cube by multiplying 1d spectra errors by a scaling factor
     if extract_params["ifu_covar_scale"] != 1.0:
@@ -261,35 +283,80 @@ def ifu_extract1d(
         b_var_rnoise *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
         b_var_flat *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
 
-    otab = np.array(
-        list(
-            zip(
-                wavelength,
-                flux,
-                error,
-                f_var_poisson,
-                f_var_rnoise,
-                f_var_flat,
-                surf_bright,
-                sb_error,
-                sb_var_poisson,
-                sb_var_rnoise,
-                sb_var_flat,
-                dq,
-                background,
-                berror,
-                b_var_poisson,
-                b_var_rnoise,
-                b_var_flat,
-                npixels,
-                strict=False,
-            )
-        ),
-        dtype=spec_dtype,
-    )
+    if input_model.meta.instrument.name == "MIRI":
+        if temp_flux_rf is None:
+            flux_rf = np.full_like(flux, np.nan)
+        else:
+            flux_rf = temp_flux_rf * pixel_solid_angle * 1.0e6
+        del temp_flux_rf
 
-    spec = datamodels.SpecModel(spec_table=otab)
+        if background_rf is None:
+            background_rf = np.full_like(background, np.nan)
+        if surf_bright_rf is None:
+            surf_bright_rf = np.full_like(surf_bright, np.nan)
+
+        otab = np.array(
+            list(
+                zip(
+                    wavelength,
+                    flux,
+                    error,
+                    f_var_poisson,
+                    f_var_rnoise,
+                    f_var_flat,
+                    surf_bright,
+                    sb_error,
+                    sb_var_poisson,
+                    sb_var_rnoise,
+                    sb_var_flat,
+                    dq,
+                    background,
+                    berror,
+                    b_var_poisson,
+                    b_var_rnoise,
+                    b_var_flat,
+                    npixels,
+                    flux_rf,
+                    surf_bright_rf,
+                    background_rf,
+                    strict=False,
+                )
+            ),
+            dtype=spec_dtype,
+        )
+        spec = datamodels.MRSSpecModel(spec_table=otab)
+
+    else:  # NIRSPEC
+        otab = np.array(
+            list(
+                zip(
+                    wavelength,
+                    flux,
+                    error,
+                    f_var_poisson,
+                    f_var_rnoise,
+                    f_var_flat,
+                    surf_bright,
+                    sb_error,
+                    sb_var_poisson,
+                    sb_var_rnoise,
+                    sb_var_flat,
+                    dq,
+                    background,
+                    berror,
+                    b_var_poisson,
+                    b_var_rnoise,
+                    b_var_flat,
+                    npixels,
+                    strict=False,
+                )
+            ),
+            dtype=spec_dtype,
+        )
+        spec = datamodels.SpecModel(spec_table=otab)
+
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+
     spec.spec_table.columns["wavelength"].unit = "um"
     spec.spec_table.columns["flux"].unit = "Jy"
     spec.spec_table.columns["flux_error"].unit = "Jy"
@@ -306,14 +373,22 @@ def ifu_extract1d(
     spec.spec_table.columns["bkgd_var_poisson"].unit = "(MJy/sr)^2"
     spec.spec_table.columns["bkgd_var_rnoise"].unit = "(MJy/sr)^2"
     spec.spec_table.columns["bkgd_var_flat"].unit = "(MJy/sr)^2"
+    if input_model.meta.instrument.name == "MIRI":
+        spec.spec_table.columns["rf_flux"].unit = "Jy"
+        spec.spec_table.columns["rf_surf_bright"].unit = "MJy/sr"
+        spec.spec_table.columns["rf_background"].unit = "MJy/sr"
+
     spec.slit_ra = ra
     spec.slit_dec = dec
+
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
+    spec.detector = input_model.meta.instrument.detector
 
     spec.source_type = source_type
     spec.extraction_x = x_center
     spec.extraction_y = y_center
+    spec.position_angle = input_model.meta.aperture.position_angle
 
     if source_type == "POINT" and apcorr_ref_file is not None and apcorr_ref_file != "N/A":
         apcorr_ref_model = read_apcorr_ref(apcorr_ref_file, input_model.meta.exposure.type)
@@ -342,8 +417,6 @@ def ifu_extract1d(
     # See output_model.spec[0].meta.wcs instead.
     output_model.meta.wcs = None
 
-    output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
-
     return output_model
 
 
@@ -354,7 +427,7 @@ def get_extract_parameters(ref_file, bkg_sigma_clip):
     Parameters
     ----------
     ref_file : dict
-        File name for the extract1d reference file, in ASDF format
+        File name for the EXTRACT1D reference file, in ASDF format.
     bkg_sigma_clip : float
         Background sigma clipping value to use to remove noise/outliers in background.
 
@@ -390,16 +463,83 @@ def get_extract_parameters(ref_file, bkg_sigma_clip):
     return extract_params
 
 
+def _apply_bkg_sigma_clip(
+    bkg_data, temp_weightmap, bmask, bkg_sigma_clip, aperture_type, method, subpixels
+):
+    """
+    Apply the background sigma clipping algorithm.
+
+    Parameters
+    ----------
+    bkg_data : ndarray
+        Image at a specific wavelength.
+    temp_weightmap : array
+        Weightmap at a specific wavelength.
+    bmask : array
+        Boolean mask to ignore voxels with no valid data.
+    bkg_sigma_clip : float
+        Background sigma clipping threshold for IFU.
+    aperture_type : array
+        Photutils aperture type array.
+    method : str
+        Extracted parameter from the reference file.
+    subpixels : int
+        Extracted parameter from the reference file.
+
+    Returns
+    -------
+    bkg_table : `~astropy.table.Table`
+        Table of the photometry with the columns as documented in
+        :func:`~photutils.aperture.aperture_photometry`.
+    maskclip : ndarray or None
+        Mask to reject data outside the valid data footprint.
+    """
+    # pull out the data with coverage in IFU cube. We do not want to use
+    # the edge data that is zero to define the statistics on clipping
+    bkg_stat_data = bkg_data[temp_weightmap == 1]
+
+    # If there are good data, work out the statistics
+    # maxiters is the maximum number of sigma-clipping iterations to perform or None
+    # to clip until convergence is achieved (i.e., iterate until the last iteration
+    # clips nothing). If convergence is achieved prior to maxiters iterations, the
+    # clipping iterations will stop. The default value is 5.
+    if len(bkg_stat_data) > 0:
+        bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(
+            bkg_stat_data, sigma=bkg_sigma_clip, maxiters=5
+        )
+        low = bkg_mean - bkg_sigma_clip * bkg_stddev
+        high = bkg_mean + bkg_sigma_clip * bkg_stddev
+
+        # set up the mask to flag data that should not be used in aperture photometry
+        # Reject data outside the sigma-clipped range
+        maskclip = np.logical_or(bkg_data < low, bkg_data > high)
+
+        # Reject data outside the valid data footprint
+        maskclip = np.logical_or(maskclip, bmask)
+
+        bkg_table = aperture_photometry(
+            bkg_data, aperture_type, mask=maskclip, method=method, subpixels=subpixels
+        )
+    else:
+        # skip sigma clipping
+        bkg_table = aperture_photometry(
+            bkg_data, aperture_type, mask=bmask, method=method, subpixels=subpixels
+        )
+        maskclip = None
+
+    return bkg_table, maskclip
+
+
 def extract_ifu(input_model, source_type, extract_params):
     """
     Perform 1D extraction for IFU data.
 
     Parameters
     ----------
-    input_model : IFUCubeModel
+    input_model : `~stdatamodels.jwst.datamodels.IFUCubeModel`
         The input model.
     source_type : str
-        "POINT" or "EXTENDED"
+        "POINT" or "EXTENDED".
     extract_params : dict
         The extraction parameters for aperture photometry.
 
@@ -408,53 +548,53 @@ def extract_ifu(input_model, source_type, extract_params):
     ra, dec : float
         RA and Dec are the right ascension and declination respectively
         at the nominal center of the image.
-    wavelength : ndarray, 1D
-        The wavelength in micrometers at each plane of the IFU cube.
-    temp_flux : ndarray, 1D
-        The sum of the data values in the extraction aperture minus the
+    wavelength : ndarray
+        The 1D wavelength in micrometers at each plane of the IFU cube.
+    temp_flux : ndarray
+        The 1D sum of the data values in the extraction aperture minus the
         sum of the data values in the background region (scaled by the
         ratio of areas), for each plane.
         The data values are in units of surface brightness, so this value
         isn't really the flux, it's an intermediate value.  Dividing by
-        `npixels` (to compute the average) will give the value for the
-        `surf_bright` (surface brightness) column, and multiplying by
+        ``npixels`` (to compute the average) will give the value for the
+        ``surf_bright`` (surface brightness) column, and multiplying by
         the solid angle of a pixel will give the flux for a point source.
-    f_var_poisson : ndarray, 1D
-        The extracted poisson variance values to go along with the
-        temp_flux array.
-    f_var_rnoise : ndarray, 1D
-        The extracted read noise variance values to go along with the
-        temp_flux array.
-    f_var_flat : ndarray, 1D
-        The extracted flat field variance values to go along with the
-        temp_flux array.
-    background : ndarray, 1D
+    f_var_poisson : ndarray
+        The 1D extracted Poisson variance values to go along with the
+        ``temp_flux`` array.
+    f_var_rnoise : ndarray
+        The 1D extracted read noise variance values to go along with the
+        ``temp_flux`` array.
+    f_var_flat : ndarray
+        The 1D extracted flat field variance values to go along with the
+        ``temp_flux`` array.
+    background : ndarray
         For point source data, the background array is the count rate that was subtracted
-        from the total source data values to get `temp_flux`. This background is determined
+        from the total source data values to get ``temp_flux``. This background is determined
         for annulus region. For extended source data, the background array is the sigma clipped
         extracted region.
-    b_var_poisson : ndarray, 1D
-        The extracted poisson variance values to go along with the
+    b_var_poisson : ndarray
+        The 1D extracted Poisson variance values to go along with the
         background array.
-    b_var_rnoise : ndarray, 1D
-        The extracted read noise variance values to go along with the
+    b_var_rnoise : ndarray
+        The 1D extracted read noise variance values to go along with the
         background array.
-    b_var_flat : ndarray, 1D
-        The extracted flat field variance values to go along with the
+    b_var_flat : ndarray
+        The 1D extracted flat field variance values to go along with the
         background array.
-    npixels : ndarray, 1D, float64
+    npixels : ndarray
         For each slice, this is the number of pixels that were added
-        together to get `temp_flux`.
-    dq : ndarray, 1D, uint32
-        The data quality array.
-    npixels_bkg : ndarray, 1D, float64
-        For each slice, for point source data  this is the number of pixels that were added
-        together to get `temp_flux` for an annulus region or for extended source
-        data it is the number of pixels used to determine the background
-    radius_match : ndarray,1D, float64
-        The size of the extract radius in pixels used at each wavelength of the IFU cube
+        together to get ``temp_flux``.
+    dq : ndarray
+        The 1D data quality array.
+    npixels_bkg : ndarray
+        For each slice, for point source data, this is the number of pixels that were added
+        together to get ``temp_flux`` for an annulus region; for extended source
+        data, it is the number of pixels used to determine the background
+    radius_match : ndarray
+        The size of the extract radius in pixels used at each wavelength of the IFU cube.
     x_center, y_center : float
-        The x and y center of the extraction region
+        The x and y center of the extraction region.
     """
     data = input_model.data
     try:
@@ -465,7 +605,10 @@ def extract_ifu(input_model, source_type, extract_params):
         log.info(
             "Input model does not break out variance information. Passing only generalized errors."
         )
-        var_poisson = input_model.err * input_model.err
+        # NIRSpec variances sometimes overflow
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
+            var_poisson = input_model.err * input_model.err
         var_rnoise = np.zeros_like(input_model.data)
         var_flat = np.zeros_like(input_model.data)
     weightmap = input_model.weightmap
@@ -527,7 +670,8 @@ def extract_ifu(input_model, source_type, extract_params):
                 vals = sources["flux"].value
                 # Identify brightest source as the target
                 indx = np.argmax(vals)
-                x_center, y_center = sources[indx]["xcentroid"], sources[indx]["ycentroid"]
+
+                x_center, y_center = sources[indx]["x_centroid"], sources[indx]["y_centroid"]
                 locn = None
                 log.info("Auto source detection success.")
                 log.info("Using x_center = %g, y_center = %g", x_center, y_center)
@@ -619,11 +763,12 @@ def extract_ifu(input_model, source_type, extract_params):
         y_center = height / 2.0 - 0.5
         theta = 0.0
         subtract_background = False
-        bkg_sigma_clip = extract_params["bkg_sigma_clip"]
+    bkg_sigma_clip = extract_params["bkg_sigma_clip"]
 
     log.debug("IFU 1D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
     log.debug("  y_center = %s", str(y_center))
+    log.debug("  sigma clip value for background = %s", str(bkg_sigma_clip))
     if source_type == "POINT":
         log.debug("  method = %s", method)
         if method == "subpixel":
@@ -633,7 +778,6 @@ def extract_ifu(input_model, source_type, extract_params):
         log.debug("  height = %s", str(height))
         log.debug("  theta = %s degrees", str(theta))
         log.debug("  subtract_background = %s", str(subtract_background))
-        log.debug("  sigma clip value for background = %s", str(bkg_sigma_clip))
         log.debug("  method = %s", method)
         if method == "subpixel":
             log.debug("  subpixels = %s", str(subpixels))
@@ -642,7 +786,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
     # get aperture for extended it will not change with wavelength
     if source_type == "EXTENDED":
-        aperture = RectangularAperture(position, width, height, theta)
+        aperture = RectangularAperture(position, width, height, theta=theta)
 
     for k in range(shape[0]):  # looping over wavelength
         inner_bkg = None
@@ -739,12 +883,16 @@ def extract_ifu(input_model, source_type, extract_params):
         )
         f_var_flat[k] = float(var_flat_table["aperture_sum"][0])
 
-        # Point source type of data with defined annulus size
+        # Point source type of data with defined annulus size,
+        # background determined from sigma clipping
         if subtract_background_plane:
-            bkg_table = aperture_photometry(
-                data[k, :, :], annulus, mask=bmask, method=method, subpixels=subpixels
+            bkg_data = data[k, :, :]
+            bkg_table, _ = _apply_bkg_sigma_clip(
+                bkg_data, temp_weightmap, bmask, bkg_sigma_clip, annulus, method, subpixels
             )
+
             background[k] = float(bkg_table["aperture_sum"][0])
+
             temp_flux[k] = temp_flux[k] - background[k] * normalization
 
             var_poisson_table = aperture_photometry(
@@ -770,27 +918,13 @@ def extract_ifu(input_model, source_type, extract_params):
         # Extended source data - background determined from sigma clipping
         if source_type == "EXTENDED":
             bkg_data = data[k, :, :]
-            # pull out the data with coverage in IFU cube. We do not want to use
-            # the edge data that is zero to define the statistics on clipping
-            bkg_stat_data = bkg_data[temp_weightmap == 1]
+
+            bkg_table, maskclip = _apply_bkg_sigma_clip(
+                bkg_data, temp_weightmap, bmask, bkg_sigma_clip, aperture, method, subpixels
+            )
 
             # If there are good data, work out the statistics
-            if len(bkg_stat_data) > 0:
-                bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(
-                    bkg_stat_data, sigma=bkg_sigma_clip, maxiters=5
-                )
-                low = bkg_mean - bkg_sigma_clip * bkg_stddev
-                high = bkg_mean + bkg_sigma_clip * bkg_stddev
-
-                # set up the mask to flag data that should not be used in aperture photometry
-                # Reject data outside the sigma-clipped range
-                maskclip = np.logical_or(bkg_data < low, bkg_data > high)
-                # Reject data outside the valid data footprint
-                maskclip = np.logical_or(maskclip, bmask)
-
-                bkg_table = aperture_photometry(
-                    bkg_data, aperture, mask=maskclip, method=method, subpixels=subpixels
-                )
+            if maskclip is not None:
                 background[k] = float(bkg_table["aperture_sum"][0])
                 phot_table = aperture_photometry(
                     temp_weightmap, aperture, mask=maskclip, method=method, subpixels=subpixels
@@ -861,7 +995,7 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
 
     Parameters
     ----------
-    input_model : JWSTDataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science model.
     ra_targ, dec_targ : float or None
         The right ascension and declination of the target (degrees).
@@ -912,21 +1046,21 @@ def celestial_to_cartesian(ra, dec):
     Parameters
     ----------
     ra, dec : ndarray or float
-        The right ascension and declination (degrees).  Both `ra` and `dec`
+        The right ascension and declination (degrees).  Both ``ra`` and ``dec``
         should be arrays of the same shape, or they should both be float.
 
     Returns
     -------
     cart : ndarray
-        If `ra` and `dec` are float, `cart` with be a 3-element array.
-        If `ra` and `dec` are arrays, `cart` will be an array with shape
-        ra.shape + (3,).
-        For each element of `ra` (or `dec`), the last axis of `cart` will
+        If ``ra`` and ``dec`` are float, this will be a 3-element array.
+        If ``ra`` and ``dec`` are arrays, this will be an array with shape
+        ``ra.shape + (3,)``.
+        For each element of ``ra`` (or ``dec``), the last axis of ``cart`` will
         give the Cartesian coordinates of a unit vector in the direction
-        `ra`, `dec`.  The elements of the vector in Cartesian coordinates
-        are in the order x, y, z, where x is the direction toward the
-        vernal equinox, y is the direction toward right ascension = 90
-        degrees (6 hours) and declination = 0, and z is toward the north
+        ``ra``, ``dec``.  The elements of the vector in Cartesian coordinates
+        are in the order ``x, y, z``, where x is the direction toward the
+        vernal equinox, y is the direction toward right ascension of 90
+        degrees (6 hours) and declination of 0, and z is toward the north
         celestial pole.
     """
     if hasattr(ra, "shape"):
@@ -949,26 +1083,26 @@ def get_coordinates(input_model, x0, y0):
 
     Parameters
     ----------
-    input_model : IFUCubeModel
+    input_model : `~stdatamodels.jwst.datamodels.IFUCubeModel`
         The input model.
     x0, y0 : float
         The pixel number at which the coordinates should be determined.
-        If the extract1d reference file is JSON format, this point will be the
-        nominal center of the image.  For an image extract1d reference file this
+        If the EXTRACT1D reference file is JSON format, this point will be the
+        nominal center of the image.  For an image EXTRACT1D reference file, this
         will be the centroid of the pixels that were flagged as source.
 
     Returns
     -------
     ra, dec : float
-        RA and Dec are the right ascension and declination respectively
-        at pixel (0, y0, x0).
-    wavelength : ndarray, 1D
-        The wavelength in micrometers at each pixel.
+        The right ascension and declination, respectively,
+        at pixel ``(0, y0, x0)``.
+    wavelength : ndarray
+        The 1D wavelength in micrometers at each pixel.
     """
-    if hasattr(input_model.meta, "wcs"):
+    if getattr(input_model.meta, "wcs", None) is not None:
         wcs = input_model.meta.wcs
     else:
-        log.warning("WCS function not found in input.")
+        log.warning("WCS not found in input.")
         wcs = None
 
     nelem = input_model.data.shape[0]
@@ -994,23 +1128,23 @@ def nans_in_wavelength(wavelength, dq):
     """
     Check for NaNs in the wavelength array.
 
-    If NaNs are found in the wavelength array, flag them in the dq array,
+    If NaNs are found in the wavelength array, flag them in the DQ array,
     and truncate the arrays at either or both ends if NaNs are found at
     endpoints (unless the entire array is NaN).
 
     Parameters
     ----------
-    wavelength : ndarray, 1D, float64
-        The wavelength in micrometers at each pixel.
-    dq : ndarray, 1D, uint32
-        The data quality array.
+    wavelength : ndarray
+        The 1D wavelength in micrometers at each pixel.
+    dq : ndarray
+        The 1D data quality array.
 
     Returns
     -------
-    wavelength : ndarray, 1D, float64
-        Truncated wavelength array
-    dq : ndarray, 1D, uint32
-        Truncated DQ array.
+    wavelength : ndarray
+        Truncated 1D wavelength array.
+    dq : ndarray
+        Truncated 1D DQ array.
     slc : slice
         Slice used for truncation.
     """
@@ -1049,8 +1183,8 @@ def separate_target_and_background(ref):
 
     Parameters
     ----------
-    ref : ndarray, 2D or 3D
-        This is the reference image data array.  This should be the same
+    ref : ndarray
+        This is the reference image data array (2D or 3D).  This should be the same
         shape as one plane of the science data (or the same shape as the
         entire 3D science data array).  A value of 1 in a pixel indicates
         that the pixel should be included when computing the target
@@ -1060,17 +1194,17 @@ def separate_target_and_background(ref):
 
     Returns
     -------
-    mask_target : ndarray, 2D or 3D
+    mask_target : ndarray
         This is an array of the same type and shape as the reference
-        image, but with values of only 0 or 1.  A value of 1 indicates
+        image (2D or 3D), but with values of only 0 or 1.  A value of 1 indicates
         that the corresponding pixel of the science data array should be
         included when adding up values to make the 1D spectrum, and a
         value of 0 means that it should not be included.
-    mask_bkg : ndarray, 2D or 3D, or None.
-        This is like `mask_target` (i.e. values are 0 or 1) but for
-        background regions.  A value of -1 in `mask_bkg` indicates a pixel
+    mask_bkg : ndarray or None
+        This is like ``mask_target`` (i.e., values are 0 or 1) but for
+        background regions (2D or 3D).  A value of -1 indicates a pixel
         that should be included as part of the background.  If there is no
-        pixel in the reference image with a value of -1, `mask_bkg` will
+        pixel in the reference image with a value of -1, this will
         be set to None.
     """
     mask_target = np.where(ref == 1.0, 1.0, 0.0)
@@ -1089,17 +1223,17 @@ def im_centroid(data, mask_target):
 
     Parameters
     ----------
-    data : ndarray, 3D
-        This is the science image data array.
-    mask_target : ndarray, 2D or 3D
-        This is an array of the same type and shape as one plane of the
+    data : ndarray
+        This is the 3D science image data array.
+    mask_target : ndarray
+        This is a 2D or 3D array of the same type and shape as one plane of the
         science image (or the same type and shape of the entire 3D science
         image), but with values of 0 or 1, where 1 indicates a pixel within
         the source.
 
     Returns
     -------
-    y0, x0 : tuple of two float
+    y0, x0 : float
         The centroid of pixels flagged as source.
     """
     # Collapse the science data along the dispersion direction to get a
@@ -1136,27 +1270,27 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
 
     Parameters
     ----------
-    mask : ndarray, 2D or 3D
-        This is either the target mask or the background mask, which was
-        created from an image extract1d reference file.
+    mask : ndarray
+        This is either the 2D or 3D target mask or background mask, which was
+        created from an image EXTRACT1D reference file.
         It is assumed that all pixels in the science data are good.  If
-        that is not correct, `shift_ref_image` may be called with a data
+        that is not correct, this function may be called with a data
         quality array as the first argument, in order to obtain a shifted
-        data quality array.  In this case, `fill` should be set to a
-        positive value, e.g. 1.
+        data quality array.  In this case, ``fill`` should be set to a
+        positive value, e.g., 1.
     delta_y, delta_x : int
         These are the shifts to be applied to the vertical and horizontal
         axes respectively.
     fill : int or float
         The output array will be initialized to this value.  This should
-        be 0 (the default) if `mask` is a target or background mask, but
-        it should be set to 1 (or some other positive value) if `mask` is
+        be 0 (the default) if ``mask`` is a target or background mask, but
+        it should be set to 1 (or some other positive value) if ``mask`` is
         a data quality array.
 
     Returns
     -------
-    temp : ndarray, same type and shape as `mask`
-        A copy of `mask`, but shifted by `delta_y` and `delta_x`.
+    temp : ndarray
+        A copy of ``mask``, but shifted by ``delta_y`` and ``delta_x``.
     """
     if delta_x == 0 and delta_y == 0:
         return mask.copy()
@@ -1200,33 +1334,33 @@ def sigma_clip_extended_region(
 
     Parameters
     ----------
-    data : ndarray, 3D
-        Input data array to perform extraction from.
-    var_poisson : ndarray, 2D
-        Poisson noise variance array to be extracted following data extraction method.
-    var_rnoise : ndarray, 2D
-        Read noise variance array to be extracted following data extraction method.
-    var_flat : ndarray, 2D
-        Flat noise variance array to be extracted following data extraction method.
-    mask_targ : ndarray, 2D or 3D
-        Mask of pixels defining the extended source region. A value of 1 indicated
-        pixel is in the extraction region.
-    wmap : ndarray, 3D
-        Weight map for IFU.
+    data : ndarray
+        Input 3D data array to perform extraction from.
+    var_poisson : ndarray
+        Poisson noise variance array (2D) to be extracted following data extraction method.
+    var_rnoise : ndarray
+        Read noise variance array (2D) to be extracted following data extraction method.
+    var_flat : ndarray
+        Flat noise variance array (2D) to be extracted following data extraction method.
+    mask_targ : ndarray
+        Mask of pixels (2D or 3D) defining the extended source region. A value of 1 indicates
+        the pixel is in the extraction region.
+    wmap : ndarray
+        Weight map (3D) for IFU.
     sigma_clip : float
         Outlier sigma clipping parameter.
 
     Returns
     -------
-    sigma_clip_region : ndarray, 1D
-        Summed extracted region with sigma clipping for each wavelength plane.
-    d_var_poisson : ndarray, 1D
-        Sigma-clipped var_poisson array.
-    d_var_rnoise : ndarray, 1D
-        Sigma-clipped var_rnoise array.
-    d_var_flat : ndarray, 1D
-        Sigma-clipped var_flat array.
-    n_bkg : ndarray, 1D
+    sigma_clip_region : ndarray
+        Summed extracted region (1D) with sigma clipping for each wavelength plane.
+    d_var_poisson : ndarray
+        Sigma-clipped Poisson noise variance array (1D).
+    d_var_rnoise : ndarray
+        Sigma-clipped read noise variance array (1D).
+    d_var_flat : ndarray
+        Sigma-clipped flat noise variance array (1D).
+    n_bkg : ndarray
         Sum of pixels used in sigma clipped extracted region.
     """
     shape = data.shape

@@ -4,7 +4,7 @@ BARSHADOW Reference File
 ------------------------
 
 :REFTYPE: BARSHADOW
-:Data model: `~jwst.datamodels.BarshadowModel`
+:Data model: `~stdatamodels.jwst.datamodels.BarshadowModel`
 
 .. include:: ../references_general/barshadow_selection.inc
 
@@ -50,26 +50,25 @@ and wavelength.  The initial version of the reference file has Y varying from
 An example extension header is as follows:
 
 ======== = ==================== = ==========================
-XTENSION = 'IMAGE   '           / Image extension           
-BITPIX   =                  -64 / array data type           
+XTENSION = 'IMAGE   '           / Image extension
+BITPIX   =                  -64 / array data type
 NAXIS    =                    2 / number of array dimensions
-NAXIS1   =                  101                             
-NAXIS2   =                 1001                             
-PCOUNT   =                    0 / number of parameters      
-GCOUNT   =                    1 / number of groups          
-EXTNAME  = 'DATA1x1 '           / extension name            
-BSCALE   =                  1.0                             
-BZERO    =                  0.0                             
-BUNIT    = 'UNITLESS'                                       
-CTYPE1   = 'METER   '                                       
-CTYPE2   = 'UNITLESS'                                       
-CDELT1   =              4.7E-08                             
-CDELT2   =                0.002                             
-CRPIX1   =                  1.0                             
-CRPIX2   =                  1.0                             
-CRVAL1   =                6E-07                             
-CRVAL2   =                 -1.0                             
-APERTURE = 'MOS1x1  '                                       
-HEIGHT   =           0.00020161                             
+NAXIS1   =                  101
+NAXIS2   =                 1001
+PCOUNT   =                    0 / number of parameters
+GCOUNT   =                    1 / number of groups
+EXTNAME  = 'DATA1x1 '           / extension name
+BSCALE   =                  1.0
+BZERO    =                  0.0
+BUNIT    = 'UNITLESS'
+CTYPE1   = 'METER   '
+CTYPE2   = 'UNITLESS'
+CDELT1   =              4.7E-08
+CDELT2   =                0.002
+CRPIX1   =                  1.0
+CRPIX2   =                  1.0
+CRVAL1   =                6E-07
+CRVAL2   =                 -1.0
+APERTURE = 'MOS1x1  '
+HEIGHT   =           0.00020161
 ======== = ==================== = ==========================
-

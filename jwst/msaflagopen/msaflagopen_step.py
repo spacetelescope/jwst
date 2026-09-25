@@ -1,12 +1,16 @@
-from stdatamodels.jwst import datamodels
+"""Flag pixels affected by open MSA shutters in NIRSpec exposures."""
+
+import logging
 
 from stpipe.crds_client import reference_uri_to_cache_path
 
-from jwst.stpipe import Step
 from jwst.assign_wcs import AssignWcsStep
 from jwst.msaflagopen import msaflag_open
+from jwst.stpipe import Step
 
 __all__ = ["MSAFlagOpenStep"]
+
+log = logging.getLogger(__name__)
 
 
 class MSAFlagOpenStep(Step):
@@ -25,37 +29,39 @@ class MSAFlagOpenStep(Step):
 
         Parameters
         ----------
-        input_data : DataModel or str
+        input_data : str or `~stdatamodels.jwst.datamodels.ImageModel`
             Science data to be corrected.
 
         Returns
         -------
-        DataModel
+        `~stdatamodels.jwst.datamodels.ImageModel`
             Science data with DQ array modified.
         """
         # Open the input data model
-        with datamodels.open(input_data) as input_model:
-            self.reference_name = self.get_reference_file(input_model, "msaoper")
-            self.log.info("Using reference file %s", self.reference_name)
+        output_model = self.prepare_output(input_data)
 
-            # Check for a valid reference file
-            if self.reference_name == "N/A":
-                self.log.warning("No reference file found")
-                self.log.warning("Step will be skipped")
-                result = input_model.copy()
-                result.meta.cal_step.msa_flagging = "SKIPPED"
-                return result
+        self.reference_name = self.get_reference_file(output_model, "msaoper")
+        log.info("Using reference file %s", self.reference_name)
 
-            # Get the reference file names for constructing the WCS pipeline
-            wcs_reffile_names = create_reference_filename_dictionary(input_model)
+        # Check for a valid reference file
+        if self.reference_name == "N/A":
+            log.warning("No reference file found")
+            log.warning("Step will be skipped")
+            output_model.meta.cal_step.msa_flagging = "SKIPPED"
+            return output_model
 
-            # Do the DQ flagging
-            result = msaflag_open.do_correction(input_model, self.reference_name, wcs_reffile_names)
+        # Get the reference file names for constructing the WCS pipeline
+        wcs_reffile_names = create_reference_filename_dictionary(output_model)
 
-            # set the step status to complete
-            result.meta.cal_step.msa_flagging = "COMPLETE"
+        # Do the DQ flagging
+        output_model = msaflag_open.do_correction(
+            output_model, self.reference_name, wcs_reffile_names
+        )
 
-        return result
+        # set the step status to complete
+        output_model.meta.cal_step.msa_flagging = "COMPLETE"
+
+        return output_model
 
 
 def create_reference_filename_dictionary(input_model):
@@ -64,7 +70,7 @@ def create_reference_filename_dictionary(input_model):
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input data with WCS assigned.
 
     Returns

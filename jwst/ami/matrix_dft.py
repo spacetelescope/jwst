@@ -2,14 +2,15 @@
 Matrix-based discrete Fourier transforms for computing PSFs.
 
 MatrixDFT: Matrix-based discrete Fourier transforms for computing PSFs.
-The main user interface in this module is a class MatrixFourierTransform.
 Internally this will call one of several subfunctions depending on the
 specified centering type. These have to do with where the (0, 0) element of
-the Fourier transform is located, i.e. where the PSF center ends up.
-- 'FFTSTYLE' centered on one pixel
-- 'SYMMETRIC' centered on crosshairs between middle pixel
-- 'ADJUSTABLE', always centered in output array depending on
-whether it is even or odd
+the Fourier transform is located, i.e., where the PSF center ends up:
+
+* 'FFTSTYLE' centered on one pixel
+* 'SYMMETRIC' centered on crosshairs between middle pixel
+* 'ADJUSTABLE', always centered in output array depending on
+  whether it is even or odd
+
 'ADJUSTABLE' is the default.
 This module was originally called "Slow Fourier Transform", and this
 terminology still appears in some places in the code.  Note that this is
@@ -19,33 +20,26 @@ much more flexibility in choosing array sizes and sampling, and often lets
 you replace "fast calculations on very large arrays" with "relatively slow
 calculations on much smaller ones".
 
-Code originally by A. Sivaramakrishnan
-2010-11-05 Revised normalizations for flux conservation consistent
-with Soummer et al. 2007. Updated documentation.  -- M. Perrin
-2011-2012: Various enhancements, detailed history not kept, sorry.
-2012-05-18: module renamed SFT.py -> matrixDFT.py
-2012-09-26: minor big fixes
-2015-01-21: Eliminate redundant code paths, correct parity flip,
-PEP8 formatting pass (except variable names)-- J. Long
+Notes
+-----
+Code originally by A. Sivaramakrishnan, M. Perrin, and J. Long,
+in accordance with Soummer et al. 2007. [1]_
 
 References
 ----------
-Soummer et al. 2007, Opt. Express  15, 15935-15951 (2007)
-https://doi.org/10.1364/OE.15.015935
+.. [1] Soummer et al. 2007, Opt. Express 15, 15935-15951 (2007)
+   https://doi.org/10.1364/OE.15.015935
 
 Examples
 --------
-mf = matrixDFT.MatrixFourierTransform()
-result = mf.perform(pupilArray, focalplane_size, focalplane_npix)
+::
+
+    result = matrix_dft.matrix_dft(pupilArray, focalplane_size, focalplane_npix)
 """
 
-__all__ = ["MatrixFourierTransform"]
+__all__ = ["matrix_dft", "matrix_idft"]
 
 import numpy as np
-
-import logging
-
-_log = logging.getLogger("poppy")
 
 FFTSTYLE = "FFTSTYLE"
 FFTRECT = "FFTRECT"
@@ -93,6 +87,7 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
         implying a forward transformation.)
     centering : {'FFTSTYLE', 'SYMMETRIC', 'ADJUSTABLE'}, optional
         What type of centering convention should be used for this FFT?
+
         * ADJUSTABLE (the default) For an output array with ODD size n,
           the PSF center will be at the center of pixel (n-1)/2. For an output
           array with EVEN size n, the PSF center will be in the corner between
@@ -103,8 +98,8 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
 
     Returns
     -------
-    norm_coeff * t2; float, ndarray
-        Normalized FT coeffs
+    float, ndarray
+        Normalized FT coeffs, i.e., ``norm_coeff * t2``.
     """
     npup_y, npup_x = plane.shape
 
@@ -157,7 +152,7 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
         else:
             try:
                 offset_y, offset_x = offset
-            except ValueError as e:
+            except (ValueError, TypeError) as e:
                 raise ValueError(
                     "'offset' must be supplied as a 2-tuple with "
                     "(y_offset, x_offset) as floating point values"
@@ -196,150 +191,13 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
 
 
 def matrix_idft(*args, **kwargs):
+    """
+    Perform an inverse matrix discrete Fourier transform.
+
+    Returns
+    -------
+    float, ndarray
+        Inverse of :func:`matrix_dft`.
+    """
     kwargs["inverse"] = True
     return matrix_dft(*args, **kwargs)
-
-
-matrix_idft.__doc__ = matrix_dft.__doc__.replace(  # type: ignore[union-attr]
-    "Perform a matrix discrete Fourier transform",
-    "Perform an inverse matrix discrete Fourier transform",
-)
-
-
-class MatrixFourierTransform:
-    """
-    Implements a discrete matrix Fourier transform for optical propagation.
-
-    Follows the algorithms discussed in Soummer et al. 2007 JOSA 15 24.
-    Code by Sivaramakrishnan based on Soummer et al.
-    2010-01 Documentation updated by Perrin
-    2013-01 'choice' keyword renamed to 'centering' for clarity. 'choice' is
-            retained as an option for back compatibility, however it
-            is deprecated.
-    2015-01-21: Internals updated to use refactored `matrix_dft` function,
-                docstrings made consistent with each other -- J. Long
-    """
-
-    def __init__(self, centering="ADJUSTABLE", verbose=False):
-        """
-        Initialize the MatrixFourierTransform object.
-
-        Parameters
-        ----------
-        centering : {'FFTSTYLE', 'SYMMETRIC', 'ADJUSTABLE'}, optional
-            What type of centering convention should be used for this FFT?
-            * ADJUSTABLE (the default) For an output array with ODD size n,
-            the PSF center will be at the center of pixel (n-1)/2. For an output
-            array with EVEN size n, the PSF center will be in the corner between
-            pixel (n/2-1, n/2-1) and (n/2, n/2)
-            * FFTSTYLE puts the zero-order term in a single pixel.
-            * SYMMETRIC spreads the zero-order term evenly between the center
-            four pixels
-        verbose : bool
-            Deprecated. use poppy.conf.default_logging_level to set DEBUG level
-            logging.
-        """
-        self.verbose = verbose
-        centering = centering.upper()
-        if centering == FFTRECT:  # for backwards compatibility
-            centering = FFTSTYLE
-        if centering not in CENTERING_CHOICES:
-            raise ValueError("'centering' must be one of [ADJUSTABLE, SYMMETRIC, FFTSTYLE]")
-        self.centering = centering
-        _log.debug(f"MatrixFourierTransform initialized using centering type = {centering}")
-
-    def _validate_args(self, nlam_d, npix, offset):
-        if self.centering == SYMMETRIC:
-            if not np.isscalar(nlam_d) or not np.isscalar(npix):
-                raise RuntimeError(
-                    f"The selected centering mode, {self.centering}, does not support "
-                    "rectangular arrays."
-                )
-        if self.centering == FFTSTYLE or self.centering == SYMMETRIC:
-            if offset is not None:
-                raise RuntimeError(
-                    f"The selected centering mode, {self.centering}, does not support "
-                    "position offsets."
-                )
-
-    def perform(self, pupil, nlam_d, npix, offset=None):
-        """
-        Forward matrix discrete Fourier Transform.
-
-        Parameters
-        ----------
-        pupil : 2D ndarray
-            2D array (either real or complex) representing the input pupil
-            plane to transform.
-        nlam_d : float or 2-tuple of floats (nlam_dy, nlam_dx)
-            Size of desired output region in lambda / D units, assuming that
-            the pupil fills the input array (corresponds to 'm' in
-            Soummer et al. 2007 4.2). This is in units of the spatial
-            frequency that is just Nyquist sampled by the input array.) If
-            given as a tuple, interpreted as (nlam_dy, nlam_dx).
-        npix : int or 2-tuple of ints (npix_y, npix_x)
-            Number of pixels per side side of destination plane array
-            (corresponds to 'N_B' in Soummer et al. 2007 4.2). This will be the
-            # of pixels in the image plane for a forward transformation, in the
-            pupil plane for an inverse. If given as a tuple, interpreted as
-            (npix_y, npix_x).
-        offset : 2-tuple of floats (offset_y, offset_x)
-            For ADJUSTABLE-style transforms, an offset in pixels by which the
-            PSF will be displaced from the central pixel (or cross). Given as
-            (offset_y, offset_x).
-
-        Returns
-        -------
-        complex ndarray
-            The Fourier transform of the input
-        """
-        self._validate_args(nlam_d, npix, offset)
-        _log.debug(
-            f"Forward MatrixFourierTransform: array shape {pupil.shape}, "
-            f"centering style {self.centering}, "
-            f"output region size {nlam_d} in lambda / D units, "
-            f"output array size {npix} pixels, "
-            f"offset {offset}"
-        )
-        return matrix_dft(pupil, nlam_d, npix, centering=self.centering, offset=offset)
-
-    def inverse(self, image, nlam_d, npix, offset=None):
-        """
-        Inverse matrix discrete Fourier Transform.
-
-        Parameters
-        ----------
-        image : 2D ndarray
-            2D array (either real or complex) representing the input image
-            plane to transform.
-        nlam_d : float or 2-tuple of floats (nlam_dy, nlam_dx)
-            Size of desired output region in lambda / D units, assuming that
-            the pupil fills the input array (corresponds to 'm' in
-            Soummer et al. 2007 4.2). This is in units of the spatial frequency
-            that is just Nyquist sampled by the input array.) If given as a
-            tuple, interpreted as (nlam_dy, nlam_dx).
-        npix : int or 2-tuple of ints (npix_y, npix_x)
-            Number of pixels per side side of destination plane array
-            (corresponds to 'N_B' in Soummer et al. 2007 4.2). This will be the
-            # of pixels in the image plane for a forward transformation, in the
-            pupil plane for an inverse. If given as a tuple, interpreted as
-            (npix_y, npix_x).
-        offset : 2-tuple of floats (offset_y, offset_x)
-            For ADJUSTABLE-style transforms, an offset in pixels by which the
-            PSF will be displaced from the central pixel (or cross). Given as
-            (offset_y, offset_x).
-
-        Returns
-        -------
-        complex ndarray
-            The Fourier transform of the input
-        """
-        self._validate_args(nlam_d, npix, offset)
-        _log.debug(
-            f"Inverse MatrixFourierTransform: array shape {image.shape}, "
-            f"centering style {self.centering}, "
-            f"output region size {nlam_d} in lambda / D units, "
-            f"output array size {npix} pixels, "
-            f"offset {offset}"
-        )
-        return matrix_idft(image, nlam_d, npix, centering=self.centering, offset=offset)

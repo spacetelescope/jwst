@@ -40,7 +40,7 @@ The FITS primary HDU does not contain a data array.
 Imaging Modes
 ^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.PixelAreaModel`
+:Data model: `~stdatamodels.jwst.datamodels.PixelAreaModel`
 
 The format of imaging mode AREA reference files is as follows:
 
@@ -61,16 +61,16 @@ reference file.
 NIRSpec Fixed-Slit Mode
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.NirspecSlitAreaModel`
+:Data model: `~stdatamodels.jwst.datamodels.NirspecSlitAreaModel`
 
-The BINTABLE extension has EXTNAME='AREA' and has column characteristics
+The BINTABLE extension has ``EXTNAME='AREA'`` and has column characteristics
 shown below. There is one row for each of the 5 fixed slits, with ``slit_id``
 values of "S200A1", "S200A2", "S400A1", "S200B1", and "S1600A1". The pixel
 area values are in units of square arcseconds and represent the nominal
 area of any pixel illuminated by the slit.
 
 ===========  =========
-Column name  Data type 
+Column name  Data type
 ===========  =========
 slit_id      char\*15
 pixarea      float
@@ -79,16 +79,16 @@ pixarea      float
 NIRSpec MOS Mode
 ^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.NirspecMosAreaModel`
+:Data model: `~stdatamodels.jwst.datamodels.NirspecMosAreaModel`
 
-The BINTABLE extension has EXTNAME='AREA' and has column characteristics
+The BINTABLE extension has ``EXTNAME='AREA'`` and has column characteristics
 shown below. There is one row for each shutter in each MSA quadrant. The
 quadrant and shutter values are 1-indexed. The pixel area values are in
 units of square arcseconds and represent the nominal area of any pixel
 illuminated by a given MSA shutter.
 
 ===========  =========
-Column name  Data type 
+Column name  Data type
 ===========  =========
 quadrant     integer
 shutter_x    integer
@@ -99,18 +99,17 @@ pixarea      float
 NIRSpec IFU Mode
 ^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.NirspecIfuAreaModel`
+:Data model: `~stdatamodels.jwst.datamodels.NirspecIfuAreaModel`
 
-The BINTABLE extension has EXTNAME='AREA' and has column characteristics
+The BINTABLE extension has ``EXTNAME='AREA'`` and has column characteristics
 shown below. There is one row for each of the 30 IFU slices, with the
-``slice_id`` values being 0-indexed (i.e. range from 0 to 29). The pixel
+``slice_id`` values being 0-indexed (i.e., range from 0 to 29). The pixel
 area values are in units of square arcseconds and represent the nominal
 area of any pixel illuminated by a given IFU slice.
 
 ===========  =========
-Column name  Data type 
+Column name  Data type
 ===========  =========
 slice_id     integer
 pixarea      float
 ===========  =========
-

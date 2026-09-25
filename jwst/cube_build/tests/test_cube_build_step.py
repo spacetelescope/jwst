@@ -2,71 +2,96 @@
 Unit test for Cube Build testing reading in MIRI cubepars ref file and using it
 """
 
-import numpy as np
 import os
+
+import numpy as np
 import pytest
 from astropy.io import fits
+from astropy.modeling.models import Identity, Shift
+from stdatamodels.jwst.datamodels import IFUImageModel, dqflags
 
-from gwcs import WCS
-from stdatamodels.jwst.datamodels import IFUImageModel
-
-from jwst import assign_wcs
+from jwst.adaptive_trace_model import AdaptiveTraceModelStep
+from jwst.adaptive_trace_model.tests import helpers
 from jwst.cube_build import CubeBuildStep
-from jwst.cube_build.file_table import ErrorNoAssignWCS
-from jwst.cube_build.cube_build import ErrorNoChannels
+from jwst.cube_build.cube_build import NoChannelsError
+from jwst.cube_build.file_table import NoAssignWCSError
 from jwst.datamodels import ModelContainer
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def miri_cube_pars(tmp_path_factory):
-    """ Set up the miri cube pars reference file  """
+    """Set up the miri cube pars reference file"""
 
-    filename = tmp_path_factory.mktemp('cube_pars')
-    filename = filename / 'miri_cube_pars.fits'
+    filename = tmp_path_factory.mktemp("cube_pars")
+    filename = filename / "miri_cube_pars.fits"
     hdu0 = fits.PrimaryHDU()
-    hdu0.header['REFTYPE'] = 'CUBEPAR'
-    hdu0.header['INSTRUME'] = 'MIRI'
-    hdu0.header['MODELNAM'] = 'FM'
-    hdu0.header['DETECTOR'] = 'N/A'
-    hdu0.header['EXP_TYPE'] = 'MIR_MRS'
+    hdu0.header["REFTYPE"] = "CUBEPAR"
+    hdu0.header["INSTRUME"] = "MIRI"
+    hdu0.header["MODELNAM"] = "FM"
+    hdu0.header["DETECTOR"] = "N/A"
+    hdu0.header["EXP_TYPE"] = "MIR_MRS"
 
     # make the first extension
-    channel = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '3', '4', '4', '4'])
-    subchannel = np.array(['SHORT', 'MEDIUM', 'LONG', 'SHORT', 'MEDIUM', 'LONG',
-                           'SHORT', 'MEDIUM', 'LONG', 'SHORT', 'MEDIUM', 'LONG'])
+    channel = np.array(["1", "1", "1", "2", "2", "2", "3", "3", "3", "4", "4", "4"])
+    subchannel = np.array(
+        [
+            "SHORT",
+            "MEDIUM",
+            "LONG",
+            "SHORT",
+            "MEDIUM",
+            "LONG",
+            "SHORT",
+            "MEDIUM",
+            "LONG",
+            "SHORT",
+            "MEDIUM",
+            "LONG",
+        ]
+    )
 
     spsize = np.array([0.13, 0.13, 0.13, 0.17, 0.17, 0.17, 0.2, 0.2, 0.2, 0.35, 0.35, 0.35])
-    wsamp = np.array([0.001, 0.001, 0.001, 0.002, 0.002, 0.002, 0.003, 0.003, 0.003, 0.006, 0.006, 0.006])
+    wsamp = np.array(
+        [0.001, 0.001, 0.001, 0.002, 0.002, 0.002, 0.003, 0.003, 0.003, 0.006, 0.006, 0.006]
+    )
 
     wmin = np.array([4.89, 5.65, 6.52, 7.49, 8.65, 10.00, 11.53, 13.37, 15.44, 17.66, 20.54, 23.95])
     wmax = np.array([5.75, 6.64, 7.66, 8.78, 10.14, 11.7, 13.48, 15.63, 18.05, 20.92, 24.40, 28.45])
 
-    col1 = fits.Column(name='CHANNEL', format='1A', array=channel)
-    col2 = fits.Column(name='BAND', format='6A', array=subchannel)
-    col3 = fits.Column(name='WAVEMIN', format='E', array=wmin, unit='micron')
-    col4 = fits.Column(name='WAVEMAX', format='E', array=wmax, unit='micron')
-    col5 = fits.Column(name='SPAXELSIZE', format='E', array=spsize, unit='arcsec')
-    col6 = fits.Column(name='SPECTRALSTEP', format='D', array=wsamp, unit='micron')
+    col1 = fits.Column(name="CHANNEL", format="1A", array=channel)
+    col2 = fits.Column(name="BAND", format="6A", array=subchannel)
+    col3 = fits.Column(name="WAVEMIN", format="E", array=wmin, unit="micron")
+    col4 = fits.Column(name="WAVEMAX", format="E", array=wmax, unit="micron")
+    col5 = fits.Column(name="SPAXELSIZE", format="E", array=spsize, unit="arcsec")
+    col6 = fits.Column(name="SPECTRALSTEP", format="D", array=wsamp, unit="micron")
 
     hdu1 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5, col6])
-    hdu1.header['EXTNAME'] = 'CUBEPAR'
+    hdu1.header["EXTNAME"] = "CUBEPAR"
 
     # make the second extension
     roispat = np.array([0.1, 0.1, 0.1, 0.15, 0.15, 0.15, 0.20, 0.20, 0.20, 0.40, 0.40, 0.40])
-    roispec = np.array([0.001, 0.001, 0.001, 0.002, 0.002, 0.002, 0.003, 0.003, 0.003, 0.006, 0.006, 0.006])
+    roispec = np.array(
+        [0.001, 0.001, 0.001, 0.002, 0.002, 0.002, 0.003, 0.003, 0.003, 0.006, 0.006, 0.006]
+    )
 
     power = np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
     softrad = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01])
 
-    col1 = fits.Column(name='CHANNEL', format='1A', array=channel)
-    col2 = fits.Column(name='BAND', format='6A', array=subchannel)
-    col3 = fits.Column(name='ROISPATIAL', format='E', array=roispat, unit='arcsec')
-    col4 = fits.Column(name='ROISPECTRAL', format='E', array=roispec, unit='micron')
-    col5 = fits.Column(name='POWER', format='I', array=power)
-    col6 = fits.Column(name='SOFTRAD', format='E', array=softrad, unit='arcsec')
+    col1 = fits.Column(name="CHANNEL", format="1A", array=channel)
+    col2 = fits.Column(name="BAND", format="6A", array=subchannel)
+    col3 = fits.Column(name="ROISPATIAL", format="E", array=roispat, unit="arcsec")
+    col4 = fits.Column(name="ROISPECTRAL", format="E", array=roispec, unit="micron")
+    col5 = fits.Column(name="POWER", format="I", array=power)
+    col6 = fits.Column(name="SOFTRAD", format="E", array=softrad, unit="arcsec")
 
     hdu2 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5, col6])
-    hdu2.header['EXTNAME'] = 'CUBEPAR_MSM'
+    hdu2.header["EXTNAME"] = "CUBEPAR_MSM"
+
+    # need EMSM to be defined for test_invalid_coord_sys because setting to internal_cal
+    # will hard-code weighting to emsm
+    col5 = fits.Column(name="SCALERAD", format="E", array=softrad, unit="arcsec")
+    hdu4 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
+    hdu4.header["EXTNAME"] = "CUBEPAR_EMSM"
 
     # make the third extension
     # Define the multiextension wavelength solution - only use a few number for testing
@@ -76,39 +101,59 @@ def miri_cube_pars(tmp_path_factory):
     power = np.array([1, 2, 3, 4, 5])
     softrad = np.array([0.01, 0.02, 0.03, 0.04, 0.05])
 
-    col1 = fits.Column(name='WAVELENGTH', format='D', array=finalwave, unit='micron')
-    col2 = fits.Column(name='ROISPATIAL', format='E', array=roispat, unit='arcsec')
-    col3 = fits.Column(name='ROISPECTRAL', format='E', array=roispec, unit='micron')
-    col4 = fits.Column(name='POWER', format='I', array=power)
-    col5 = fits.Column(name='SOFTRAD', format='E', array=softrad, unit='arcsec')
+    col1 = fits.Column(name="WAVELENGTH", format="D", array=finalwave, unit="micron")
+    col2 = fits.Column(name="ROISPATIAL", format="E", array=roispat, unit="arcsec")
+    col3 = fits.Column(name="ROISPECTRAL", format="E", array=roispec, unit="micron")
+    col4 = fits.Column(name="POWER", format="I", array=power)
+    col5 = fits.Column(name="SOFTRAD", format="E", array=softrad, unit="arcsec")
 
     hdu3 = fits.BinTableHDU.from_columns([col1, col2, col3, col4, col5])
-    hdu3.header['EXTNAME'] = 'MULTICHANNEL_MSM'
+    hdu3.header["EXTNAME"] = "MULTICHANNEL_MSM"
 
-    hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3])
+    # need EMSM to be defined for test_invalid_coord_sys because setting to internal_cal
+    # will hard-code weighting to emsm
+    col4 = fits.Column(name="SCALERAD", format="E", array=softrad, unit="arcsec")
+    hdu5 = fits.BinTableHDU.from_columns([col1, col2, col3, col4])
+    hdu5.header["EXTNAME"] = "MULTICHANNEL_EMSM"
+
+    hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5])
     hdu.writeto(filename, overwrite=True)
     return filename
 
 
-@pytest.fixture(scope='function')
-def miri_image():
-
+@pytest.fixture(scope="function")
+def miri_image_no_wcs():
     image = IFUImageModel((20, 20))
     image.data = np.random.random((20, 20))
-    image.meta.instrument.name = 'MIRI'
-    image.meta.instrument.detector = 'MIRIFULONG'
-    image.meta.exposure.type = 'MIR_MRS'
-    image.meta.instrument.channel = '12'
-    image.meta.instrument.band = 'SHORT'
-    image.meta.filename = 'test_miri.fits'
+    image.meta.instrument.name = "MIRI"
+    image.meta.instrument.detector = "MIRIFUSHORT"
+    image.meta.exposure.type = "MIR_MRS"
+    image.meta.instrument.channel = "12"
+    image.meta.instrument.band = "SHORT"
+    image.meta.filename = "test_miri.fits"
     return image
 
 
+@pytest.fixture(scope="module")
+def nirspec_data():
+    model = helpers.nirspec_ifu_model()
+    model.meta.filename = "test_nirspec_cal.fits"
+    return model
+
+
+@pytest.fixture(scope="module")
+def miri_data():
+    model = helpers.miri_mrs_model()
+    model.meta.filename = "test_miri_cal.fits"
+    return model
+
+
 @pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filename):
-    """ test defaults of step are set up and user input are defined correctly """
+def test_call_cube_build_errors(tmp_cwd, miri_cube_pars, miri_image_no_wcs, tmp_path, as_filename):
+    """test defaults of step are set up and user input are defined correctly"""
+    miri_image = miri_image_no_wcs
     if as_filename:
-        fn = tmp_path / 'miri.fits'
+        fn = tmp_path / "miri.fits"
         miri_image.save(fn)
         step_input = fn
     else:
@@ -118,108 +163,177 @@ def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filen
     # the image needs to be a full image and this take too much time
     # in a unit test
 
-    # Test ErrorNoAssignWCS is raised
-    with pytest.raises(ErrorNoAssignWCS):
+    # Test NoAssignWCSError is raised
+    with pytest.raises(NoAssignWCSError):
         step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
-        step.channel = '3'
+        step.channel = "3"
         step.run(step_input)
 
     # Test some defaults to step are setup correctly and
-    # is user specifies channel is set up correctly
+    # if user specifies channel it is set up correctly
     step = CubeBuildStep()
     step.override_cubepar = miri_cube_pars
-    step.channel = '1'
+    step.channel = "1"
 
     try:
         step.run(step_input)
-    except ErrorNoAssignWCS:
+    except NoAssignWCSError:
         pass
 
-    assert step.pars_input['channel'] == ['1']
-    assert step.interpolation == 'drizzle'
-    assert step.weighting == 'drizzle'
-    assert step.coord_system == 'skyalign'
+    assert step.pars_input["channel"] == ["1"]
+    assert step.interpolation == "drizzle"
+    assert step.weighting == "drizzle"
+    assert step.coord_system == "skyalign"
 
     # Set Assign WCS has been run but the user input to channels is wrong
-    miri_image.meta.cal_step.assign_wcs = 'COMPLETE'
+    miri_image.meta.cal_step.assign_wcs = "COMPLETE"
     # save file with modifications
     if as_filename:
         miri_image.save(step_input)
-    with pytest.raises(ErrorNoChannels):
+    with pytest.raises(NoChannelsError):
         step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
-        step.channel = '3'
+        step.channel = "3"
         step.run(step_input)
 
 
-@pytest.fixture(scope='function')
-def nirspec_data():
-    image = IFUImageModel((2048, 2048))
-    image.data = np.random.random((2048, 2048))
-    image.meta.instrument.name = 'NIRSPEC'
-    image.meta.instrument.detector = 'NRS1'
-    image.meta.exposure.type = 'NRS_IFU'
-    image.meta.filename = 'test_nirspec_cal.fits'
-    image.meta.observation.date = '2023-10-06'
-    image.meta.observation.time = '00:00:00.000'
-    # below values taken from regtest using file
-    # jw01249005001_03101_00004_nrs1_cal.fits
-    image.meta.instrument.filter = 'F290LP'
-    image.meta.instrument.grating = 'G395H'
-    image.meta.wcsinfo.v2_ref = 299.83548
-    image.meta.wcsinfo.v3_ref = -498.256805
-    image.meta.wcsinfo.ra_ref = 358.0647567841019
-    image.meta.wcsinfo.dec_ref = -2.167207258876695
-    image.meta.cal_step.assign_wcs = 'COMPLETE'
-    step = assign_wcs.assign_wcs_step.AssignWcsStep()
-    refs = {}
-    for reftype in assign_wcs.assign_wcs_step.AssignWcsStep.reference_file_types:
-        refs[reftype] = step.get_reference_file(image, reftype)
-    pipe = assign_wcs.nirspec.create_pipeline(image, refs, slit_y_range=[-.5, .5])
-    image.meta.wcs = WCS(pipe)
-    return image
-
-
 @pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename):
+@pytest.mark.parametrize("coord_system", ["internal_cal", "skyalign"])
+def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename, coord_system):
+    # Add a NaN in the error array, unmatched in data, to
+    # check that the input is not modified by the match_nans_and_flags
+    # call in the beginning of the step
+    step_input = nirspec_data.copy()
+    step_input.err[100, 100] = np.nan
+
     if as_filename:
-        fn = tmp_path / 'test_nirspec_cal.fits'
-        nirspec_data.save(fn)
+        fn = tmp_path / "test_nirspec_cal.fits"
+        step_input.save(fn)
         step_input = fn
-    else:
-        step_input = nirspec_data
+
     step = CubeBuildStep()
-    step.channel = '1'
-    step.coord_system = 'internal_cal'
+    step.coord_system = coord_system
     step.save_results = True
     result = step.run(step_input)
 
     assert isinstance(result, ModelContainer)
     assert len(result) == 1
     model = result[0]
-    assert model.meta.cal_step.cube_build == 'COMPLETE'
-    assert model.meta.filename == 'test_nirspec_g395h-f290lp_internal_s3d.fits'
+    assert model.meta.cal_step.cube_build == "COMPLETE"
+    if coord_system == "internal_cal":
+        assert model.meta.filename == "test_nirspec_prism-clear_internal_s3d.fits"
+    else:
+        assert model.meta.filename == "test_nirspec_prism-clear_s3d.fits"
     assert os.path.isfile(model.meta.filename)
 
+    # make sure input is not modified
+    assert result is not step_input
+    assert result[0] is not step_input
+    if not as_filename:
+        np.testing.assert_allclose(step_input.data, nirspec_data.data)
+        assert step_input.meta.cal_step.cube_build is None
 
-@pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build_nirspec_multi(tmp_cwd, nirspec_data, tmp_path, as_filename):
-    if as_filename:
-        fn = tmp_path / 'test_nirspec_cal.fits'
-        nirspec_data.save(fn)
-        step_input = fn
-    else:
-        step_input = nirspec_data
+
+def test_missing_cubepars(nirspec_data):
+    with pytest.raises(ValueError, match="cubepar reference file is required"):
+        CubeBuildStep.call(nirspec_data, override_cubepar="N/A")
+
+
+def test_invalid_coord_sys(miri_image_no_wcs, miri_cube_pars):
     step = CubeBuildStep()
-    step.channel = '1'
-    step.coord_system = 'internal_cal'
-    step.save_results = True
-    step.output_type = 'multi'
-    result = step.run(step_input)
+    step.override_cubepar = miri_cube_pars
+    step.coord_system = "internal_cal"
+    miri_image_no_wcs.meta.cal_step.assign_wcs = "COMPLETE"
+    with pytest.raises(ValueError, match="coordinate system is not supported for MIRI"):
+        step.run(miri_image_no_wcs)
 
-    assert isinstance(result, ModelContainer)
-    assert len(result) == 1
-    model = result[0]
-    assert model.meta.cal_step.cube_build == 'COMPLETE'
-    assert model.meta.filename == 'test_nirspec_s3d.fits'
+
+@pytest.mark.parametrize("oversample", [1, 2])
+@pytest.mark.parametrize(
+    "dataset,output_shape", [("nirspec_data", (941, 41, 37)), ("miri_data", (850, 41, 41))]
+)
+def test_cube_build_oversampled(request, oversample, dataset, output_shape):
+    model = request.getfixturevalue(dataset)
+
+    # Oversample the input data, or just attach a profile
+    shape = model.data.shape
+    oversampled = AdaptiveTraceModelStep.call(model, oversample=oversample)
+    if dataset.startswith("miri"):
+        assert oversampled.data.shape == (shape[0], shape[1] * oversample)
+    else:
+        assert oversampled.data.shape == (shape[0] * oversample, shape[1])
+    if oversample != 1:
+        assert oversampled.hasattr("regions")
+
+    # In either case, cube build succeeds and output size is the about the same
+    cube = CubeBuildStep.call(oversampled)[0]
+    assert cube.meta.cal_step.cube_build == "COMPLETE"
+    np.testing.assert_allclose(cube.data.shape, output_shape, atol=2)
+
+    # Input data is flat, so output data should have the same mean value
+    np.testing.assert_allclose(np.nanmean(cube.data), np.nanmean(model.data))
+
+
+@pytest.mark.parametrize("shift_ra", [True, False])
+def test_output_crval1_positive(miri_data, shift_ra):
+    model = miri_data.copy()
+
+    expected_ra = 164
+    if shift_ra:
+        # Shift RA by 100 degrees to make it > 180
+        model.meta.wcs.pipeline[-2].transform |= Shift(100) & Identity(2)
+        model.meta.wcsinfo.ra_ref += 100
+        model.meta.wcsinfo.s_region = model.meta.wcsinfo.s_region.replace("164", "264")
+        expected_ra += 100
+
+    result = CubeBuildStep.call(model)
+
+    # Output RA should be between 0 and 360
+    for cube in result:
+        assert np.isclose(cube.meta.wcsinfo.crval1, expected_ra, atol=1)
+
+
+@pytest.mark.parametrize("weighting", ["drizzle", "msm", "emsm"])
+def test_saturated_dq(nirspec_data, weighting):
+    # Add some saturated pixels in the DQ array in one of the valid regions
+    step_input = nirspec_data.copy()
+
+    # A pixel with SAT flag but valid value: appears in cube at x,y,z = 20 22 500
+    step_input.data[675, 750] = 1000
+    step_input.dq[675, 750] = dqflags.pixel["SATURATED"]
+
+    # A pixel with NaN value and SAT + DNU flags: appears in cube at x,y,z = 18 20 500
+    step_input.data[775, 738] = np.nan
+    step_input.dq[775, 738] = dqflags.pixel["SATURATED"] | dqflags.pixel["DO_NOT_USE"]
+
+    # A whole region with NaN value, only contributors to cube at x,y,z = 10 16 500
+    # with drizzle weights. One pixel has a saturated flag.
+    step_input.data[1492:1494, 641:643] = np.nan
+    step_input.data[1542, 634] = np.nan
+    step_input.dq[1492, 641] = dqflags.pixel["SATURATED"] | dqflags.pixel["DO_NOT_USE"]
+
+    result = CubeBuildStep.call(step_input, weighting=weighting)
+    cube = result[0]
+
+    # Check the values at the expected output pixel. There will be some effects
+    # on nearby pixels as well, depending on pixel overlap and weighting scheme.
+
+    # Partially saturated pixel has higher value, SAT flag only
+    assert cube.data[500, 22, 20] > 1
+    assert cube.dq[500, 20, 18] == dqflags.pixel["SATURATED"]
+
+    # NaN pixel has value from another overlapping slice. The flag is SAT only, not DNU.
+    assert np.isclose(cube.data[500, 20, 18], 1.0)
+    assert cube.dq[500, 20, 18] == dqflags.pixel["SATURATED"]
+
+    if weighting == "drizzle":
+        # All-NaN pixel has NaN value, SAT and DNU flag
+        assert np.isnan(cube.data[500, 16, 10])
+        assert cube.dq[500, 16, 10] == (
+            dqflags.pixel["SATURATED"] | dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["NON_SCIENCE"]
+        )
+    else:
+        # Other weighting schemes average more pixels, so output still has a value
+        assert np.isclose(cube.data[500, 16, 10], 1.0)
+        assert cube.dq[500, 16, 10] == dqflags.pixel["SATURATED"]

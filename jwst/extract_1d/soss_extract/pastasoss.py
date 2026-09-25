@@ -1,20 +1,106 @@
-from functools import partial
 import logging
+from datetime import datetime
+from functools import partial
+
 import numpy as np
+import stdatamodels.jwst.datamodels as dm
+from astropy.modeling.polynomial import Polynomial2D
 from scipy.interpolate import interp1d
+from stpipe import crds_client
+
+from jwst.lib.exposure_types import NIS_SOSS_SUPPORTED_SUBARRAYS
 
 log = logging.getLogger(__name__)
 
-SOSS_XDIM = 2048
-SOSS_YDIM = 300
-XTRACE_ORD1_LEN = SOSS_XDIM
-XTRACE_ORD2_LEN = 1783
-WAVEMAP_WLMIN = 0.5
-WAVEMAP_WLMAX = 5.5
-WAVEMAP_NWL = 5001
-SUBARRAY_YMIN = 2048 - 256
+DEFAULT_CRDS_PARAMS = {
+    "meta.instrument.name": "NIRISS",
+    "meta.observation.date": datetime.today().strftime("%Y-%m-%d"),
+    "meta.observation.time": datetime.today().strftime("%H:%M:%S.%f"),
+    "meta.instrument.detector": "NIS",
+    "meta.instrument.filter": "CLEAR",
+    "meta.exposure.type": "NIS_SOSS",
+}
 
-__all__ = ["get_soss_traces", "get_soss_wavemaps"]
+__all__ = ["get_soss_traces", "get_soss_wavemaps", "retrieve_default_pastasoss_model"]
+
+
+def _verify_requested_orders(orders_requested, refmodel_orders):
+    """
+    Verify that the requested orders are valid.
+
+    Parameters
+    ----------
+    orders_requested : list
+        A list of the spectral orders requested for extraction.
+    refmodel_orders : list
+        A list of the spectral orders available in the reference model.
+
+    Returns
+    -------
+    list
+        The validated list of requested orders.
+
+    Raises
+    ------
+    ValueError
+        If any of the requested orders are not available in the reference model.
+    """
+    orders_requested = np.array(orders_requested)
+    refmodel_orders = np.array(refmodel_orders)
+    not_in = np.isin(orders_requested, refmodel_orders, invert=True)
+    if np.all(not_in):
+        raise ValueError(
+            "None of the requested orders are available in the PASTASOSS reference file: "
+            f"{orders_requested}. Defined orders are {refmodel_orders}."
+        )
+    if np.any(not_in):
+        orders_requested = orders_requested[~not_in]
+        log.warning(
+            "Some requested orders were not found in reference model. Skipping those orders "
+            f"and proceeding with orders {orders_requested}."
+        )
+    return orders_requested.tolist()
+
+
+def _convert_refmodel_poly_to_astropy(coefficients):
+    """
+    Reorder reference file 2-D polynomial coefficients to create Astropy polynomial.
+
+    Ordering in reference files is expected to be::
+
+        C00 + C10 * x + C01 * y + C20 * x^2 + C11 * x * y + C02 * y^2 +
+        C30 * x^3 + C21 * x^2 * y + C12 * x * y^2 + C03 * y^3 ...
+
+    Astropy ordering is::
+
+        C00 + C10 * x + C20 * x^2 ...
+        + C01 * y + C02 * y^2 + ...
+        + C11 * x * y + C12 * x^2 * y + C13 * x^3 * y ...
+
+    Parameters
+    ----------
+    coefficients : list
+        A list of polynomial coefficients in the reference file format.
+
+    Returns
+    -------
+    `~astropy.modeling.polynomial.Polynomial2D`
+        The Astropy 2-D polynomial representation of the input coefficients.
+    """
+    # figure out the degree from the length by inverting triangle number formula
+    degree = int(np.sqrt(2 * len(coefficients))) - 1
+    poly = Polynomial2D(degree=degree)
+    coeff_names = poly.param_names
+    for name in coeff_names:
+        # compute index in coefficients corresponding to that order
+        xord, yord = (int(n) for n in name.strip("c").split("_"))
+        ord_sum = xord + yord
+        min_idx_ord_sum = ord_sum * (ord_sum + 1) // 2  # triangle number
+        idx = min_idx_ord_sum + yord
+        coeff = coefficients[idx]
+        setattr(poly, name, coeff)
+
+    return poly
 
 
 def _get_wavelengths(refmodel, x, pwcpos, order):
@@ -23,25 +109,48 @@ def _get_wavelengths(refmodel, x, pwcpos, order):
 
     Parameters
     ----------
-    refmodel : PastasossModel
-        The reference model holding the wavecal models and scale extents
-    x : float or numpy.ndarray
-        The input pixel values for which the function will estimate wavelengths
+    refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`
+        The reference model holding the wavecal models and scale extents.
+    x : float or ndarray
+        The input pixel values for which the function will estimate wavelengths.
     pwcpos : float
         The position of the pupil wheel; used to determine
-        the difference between current and commanded position to rotate the model
+        the difference between current and commanded position to rotate the model.
     order : int
         The spectral order to find trace and wavecal model indices for.
 
     Returns
     -------
-    wavelengths : numpy.ndarray
+    wavelengths : ndarray
         The estimated wavelengths for the given pixel values.
     """
-    if order == 1:
-        wavelengths = wavecal_model_order1_poly(refmodel, x, pwcpos)
-    elif order == 2:
-        wavelengths = wavecal_model_order2_poly(refmodel, x, pwcpos)
+    order_idx = _find_spectral_order_index(refmodel, order)
+    x_scaler = partial(
+        _min_max_scaler,
+        **{
+            "x_min": refmodel.wavecal_models[order_idx].scale_extents[0][0],
+            "x_max": refmodel.wavecal_models[order_idx].scale_extents[1][0],
+        },
+    )
+
+    pwcpos_offset_scaler = partial(
+        _min_max_scaler,
+        **{
+            "x_min": refmodel.wavecal_models[order_idx].scale_extents[0][1],
+            "x_max": refmodel.wavecal_models[order_idx].scale_extents[1][1],
+        },
+    )
+
+    # extract model weights and intercept
+    coef = refmodel.wavecal_models[order_idx].coefficients
+    poly = _convert_refmodel_poly_to_astropy(coef)
+
+    # scale x and pwcpos offset to be between 0 and 1
+    x_scaled = x_scaler(x)
+    offset = np.ones_like(x) * (pwcpos - refmodel.meta.pwcpos_cmd)
+    offset_scaled = pwcpos_offset_scaler(offset)
+
+    wavelengths = poly(x_scaled, offset_scaled)
 
     return wavelengths
 
@@ -52,7 +161,7 @@ def _min_max_scaler(x, x_min, x_max):
 
     Parameters
     ----------
-    x : float or numpy.ndarray
+    x : float or ndarray
         The input value(s) to be scaled.
     x_min : float
         The minimum value in the range to which 'x' will be scaled.
@@ -61,7 +170,7 @@ def _min_max_scaler(x, x_min, x_max):
 
     Returns
     -------
-    float or numpy.ndarray
+    float or ndarray
         The scaled value(s) in the range [0, 1].
 
     Notes
@@ -76,206 +185,24 @@ def _min_max_scaler(x, x_min, x_max):
     return x_scaled
 
 
-def wavecal_model_order1_poly(refmodel, x, pwcpos):
-    """
-    Compute order 1 wavelengths.
-
-    Parameters
-    ----------
-    refmodel : PastasossModel
-        The reference model holding the wavecal models
-        and scale extents
-    x : float or numpy.ndarray
-        The input pixel values for which the function
-        will estimate wavelengths
-    pwcpos : float
-        The position of the pupil wheel; used to determine
-        the difference between current and commanded position
-        to rotate the model
-
-    Returns
-    -------
-    wavelengths : numpy.ndarray
-        The estimated wavelengths for the given pixel values.
-    """
-    x_scaler = partial(
-        _min_max_scaler,
-        **{
-            "x_min": refmodel.wavecal_models[0].scale_extents[0][0],
-            "x_max": refmodel.wavecal_models[0].scale_extents[1][0],
-        },
-    )
-
-    pwcpos_offset_scaler = partial(
-        _min_max_scaler,
-        **{
-            "x_min": refmodel.wavecal_models[0].scale_extents[0][1],
-            "x_max": refmodel.wavecal_models[0].scale_extents[1][1],
-        },
-    )
-
-    def get_poly_features(x, offset):
-        """
-        Polynomial features for the order 1 wavecal model.
-
-        Parameters
-        ----------
-        x : float or numpy.ndarray
-            The input pixel values for which the function will estimate wavelengths
-        offset : float or numpy.ndarray
-            The offset values for the pupil wheel position
-
-        Returns
-        -------
-        numpy.ndarray
-            The polynomial features for the order 1 wavecal model.
-        """
-        poly_features = np.array(
-            [
-                x,
-                offset,
-                x**2,
-                x * offset,
-                offset**2,
-                x**3,
-                x**2 * offset,
-                x * offset**2,
-                offset**3,
-                x**4,
-                x**3 * offset,
-                x**2 * offset**2,
-                x * offset**3,
-                offset**4,
-                x**5,
-                x**4 * offset,
-                x**3 * offset**2,
-                x**2 * offset**3,
-                x * offset**4,
-                offset**5,
-            ]
-        )
-        return poly_features
-
-    # extract model weights and intercept
-    coef = refmodel.wavecal_models[0].coefficients
-
-    # get pixel columns and then scaled
-    x_scaled = x_scaler(x)
-
-    # offset
-    offset = np.ones_like(x) * (pwcpos - refmodel.meta.pwcpos_cmd)
-    offset_scaled = pwcpos_offset_scaler(offset)
-
-    # polynomial features
-    poly_features = get_poly_features(x_scaled, offset_scaled)
-    wavelengths = coef[0] + coef[1:] @ poly_features
-
-    return wavelengths
-
-
-def wavecal_model_order2_poly(refmodel, x, pwcpos):
-    """
-    Compute order 2 wavelengths.
-
-    Parameters
-    ----------
-    refmodel : PastasossModel
-        The reference model holding the wavecal models
-        and scale extents
-    x : float or numpy.ndarray
-        The input pixel values for which the function
-        will estimate wavelengths
-    pwcpos : float
-        The position of the pupil wheel; used to determine
-        the difference between current and commanded position
-        to rotate the model
-
-    Returns
-    -------
-    wavelengths : numpy.ndarray
-        The estimated wavelengths for the given pixel values.
-    """
-    x_scaler = partial(
-        _min_max_scaler,
-        **{
-            "x_min": refmodel.wavecal_models[1].scale_extents[0][0],
-            "x_max": refmodel.wavecal_models[1].scale_extents[1][0],
-        },
-    )
-
-    pwcpos_offset_scaler = partial(
-        _min_max_scaler,
-        **{
-            "x_min": refmodel.wavecal_models[1].scale_extents[0][1],
-            "x_max": refmodel.wavecal_models[1].scale_extents[1][1],
-        },
-    )
-
-    def get_poly_features(x, offset):
-        """
-        Polynomial features for the order 2 wavecal model.
-
-        Parameters
-        ----------
-        x : float or numpy.ndarray
-            The input pixel values for which the function will estimate wavelengths
-        offset : float or numpy.ndarray
-            The offset values for the pupil wheel position
-
-        Returns
-        -------
-        numpy.ndarray
-            The polynomial features for the order 2 wavecal model.
-        """
-        poly_features = np.array(
-            [
-                x,
-                offset,
-                x**2,
-                x * offset,
-                offset**2,
-                x**3,
-                x**2 * offset,
-                x * offset**2,
-                offset**3,
-            ]
-        )
-        return poly_features
-
-    # coef and intercept
-    coef = refmodel.wavecal_models[1].coefficients
-
-    # get pixel columns and then scaled
-    x_scaled = x_scaler(x)
-
-    offset = np.ones_like(x) * pwcpos
-    offset_scaled = pwcpos_offset_scaler(offset)
-
-    # polynomial features
-    poly_features = get_poly_features(x_scaled, offset_scaled)
-    wavelengths = coef[0] + coef[1:] @ poly_features
-
-    return wavelengths
-
-
 def _rotate(x, y, angle, origin=(0, 0)):
     """
     Apply a rotation transformation to a set of 2D points.
 
     Parameters
     ----------
-    x : np.ndarray
+    x : ndarray
         The x-coordinates of the points to be transformed.
-    y : np.ndarray
+    y : ndarray
         The y-coordinates of the points to be transformed.
     angle : float
         The angle (in degrees) by which to rotate the points.
-    origin : Tuple[float, float], optional
+    origin : tuple, optional
         The point about which to rotate the points. Default is (0, 0).
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray]
+    tuple[ndarray, ndarray]
         The x and y coordinates of the rotated points.
 
     Examples
@@ -312,9 +239,9 @@ def _find_spectral_order_index(refmodel, order):
 
     Parameters
     ----------
-    refmodel : datamodel
+    refmodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The reference file holding traces and wavelength calibration
-        models, under `refmodel.traces` and `refmodel.wavecal_models`
+        models, under ``refmodel.traces`` and ``refmodel.wavecal_models``.
     order : int
         The spectral order to find trace and wavecal model indices for.
 
@@ -322,10 +249,10 @@ def _find_spectral_order_index(refmodel, order):
     -------
     int
         The index to provide the reference file lists of traces and wavecal
-        models to retrieve the arrays for the desired spectral order
+        models to retrieve the arrays for the desired spectral order.
     """
-    if order not in [1, 2]:
-        error_message = f"Order {order} is not supported at this time."
+    if order not in [1, 2, 3]:
+        error_message = f"Order {order} is not supported."
         log.error(error_message)
         raise ValueError(error_message)
 
@@ -337,7 +264,64 @@ def _find_spectral_order_index(refmodel, order):
     return -1
 
 
-def get_soss_traces(refmodel, pwcpos, order, subarray):
+def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
+    """
+    Get the SOSS traces for a given input model and spectral order.
+
+    Parameters
+    ----------
+    pwcpos : float
+        The pupil wheel position angle provided in the FITS header under keyword PWCPOS.
+        Values are expected to be within +/- 0.25 degrees of the commanded position
+        (245.76 degrees).
+    order : int
+        The spectral order for which to retrieve the traces.
+    subarray : str
+        Name of subarray in use, typically 'SUBSTRIP96' or 'SUBSTRIP256'.
+    refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`, optional
+        The reference model for the SOSS extraction. If not set, it will be fetched
+        from CRDS.
+
+    Returns
+    -------
+    order : str
+        The spectral order for which a trace is computed.
+    x : ndarray
+        The x coordinates of the rotated points.
+    y : ndarray
+        The y coordinates of the rotated points.
+    wavelengths : ndarray
+        The wavelengths associated with the rotated points.
+    """
+    if refmodel is None:
+        refmodel = retrieve_default_pastasoss_model()
+
+    pwcpos_bounds = refmodel.meta.pwcpos_bounds
+    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos, pwcpos_bounds)
+    if not pwcpos_is_valid:
+        raise ValueError(f"PWC position {pwcpos} is outside bounds ({pwcpos_bounds}).")
+
+    return _get_soss_traces(refmodel, pwcpos, order, subarray)
+
+
+def retrieve_default_pastasoss_model():
+    """
+    Retrieve the default PASTASOSS reference file.
+
+    This function fetches the default PASTASOSS reference file from CRDS.
+    It is used when no specific reference model is provided.
+
+    Returns
+    -------
+    `~stdatamodels.jwst.datamodels.PastasossModel`
+        The default PASTASOSS reference file.
+    """
+    ref_name = crds_client.get_reference_file(DEFAULT_CRDS_PARAMS, "pastasoss", "jwst")
+    ref_file = crds_client.check_reference_open(ref_name)
+    return dm.PastasossModel(ref_file)
+
+
+def _get_soss_traces(refmodel, pwcpos, order, subarray):
     """
     Generate the traces given a pupil wheel position.
 
@@ -351,14 +335,13 @@ def get_soss_traces(refmodel, pwcpos, order, subarray):
 
     Parameters
     ----------
-    refmodel : PastasossModel
+    refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`
         The reference file datamodel.
     pwcpos : float
         The pupil wheel positions angle provided in the FITS header under
         keyword PWCPOS.
     order : str or int
         The spectral order for which a trace is computed.
-        Order 3 is currently unsupported.
     subarray : str
         Name of subarray in use, typically 'SUBSTRIP96' or 'SUBSTRIP256'.
 
@@ -366,18 +349,12 @@ def get_soss_traces(refmodel, pwcpos, order, subarray):
     -------
     order : str
         The spectral order for which a trace is computed.
-    x_new, y_new : Tuple[np.ndarray, np.ndarray]]
-        If `order` is '1', a tuple of the x and y coordinates of the rotated
-        points for the first spectral order.
-        If `order` is '2', a tuple of the x and y coordinates of the rotated
-        points for the second spectral order.
-    wavelengths : np.ndarray
+    x : ndarray
+        The x coordinates of the rotated points.
+    y : ndarray
+        The y coordinates of the rotated points.
+    wavelengths : ndarray
         The wavelengths associated with the rotated points.
-
-    Raises
-    ------
-    ValueError
-        If `order` is not in ['1', '2'].
     """
     spectral_order_index = _find_spectral_order_index(refmodel, int(order))
 
@@ -415,7 +392,7 @@ def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
 
     Returns
     -------
-    Array
+    ndarray
         The interpolated quantities
     """
     sort_i = np.argsort(wavelength)
@@ -440,7 +417,17 @@ def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
     return np.interp(w_grid, w, q)
 
 
-def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, maxiter=5, dtol=1e-2):
+def _calc_2d_wave_map(
+    wave_grid,
+    x_dms,
+    y_dms,
+    tilt,
+    oversample=2,
+    maxiter=5,
+    dtol=1e-2,
+    dimx=2048,
+    dimy=300,
+):
     """
     Compute the 2D wavelength map on the detector.
 
@@ -456,30 +443,29 @@ def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, ma
         The trace tilt angle in degrees.
     oversample : int
         The oversampling factor of the input coordinates.
-    padding : int
-        The native pixel padding around the edge of the detector.
     maxiter : int
         The maximum number of iterations used when solving for the wavelength at each pixel.
     dtol : float
         The tolerance of the iterative solution in pixels.
+    dimx : int
+        The x-dimension of the SOSS detector area of interest.
+    dimy : int
+        The y-dimension of the SOSS detector area of interest.
 
     Returns
     -------
-    Array
+    ndarray
         An array containing the wavelength at each pixel on the detector.
     """
     os = np.copy(oversample)
-    xpad = np.copy(padding)
-    ypad = np.copy(padding)
 
     # No need to compute wavelengths across the entire detector,
     # slightly larger than SUBSTRIP256 will do.
-    dimx, dimy = SOSS_XDIM, SOSS_YDIM
-    y_dms = y_dms + (dimy - SOSS_XDIM)  # Adjust y-coordinate to area of interest.
+    y_dms = y_dms + (dimy - dimx)  # Adjust y-coordinate to area of interest.
 
     # Generate the oversampled grid of pixel coordinates.
-    x_vec = np.arange((dimx + 2 * xpad) * os) / os - (os - 1) / (2 * os) - xpad
-    y_vec = np.arange((dimy + 2 * ypad) * os) / os - (os - 1) / (2 * os) - ypad
+    x_vec = np.arange(dimx * os) / os - (os - 1) / (2 * os)
+    y_vec = np.arange(dimy * os) / os - (os - 1) / (2 * os)
     x_grid, y_grid = np.meshgrid(x_vec, y_vec)
 
     # Iteratively compute the wavelength at each pixel.
@@ -513,114 +499,128 @@ def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, ma
     )
 
     # Extend to full detector size.
-    tmp = np.full((os * (dimx + 2 * xpad), os * (dimx + 2 * xpad)), fill_value=np.nan)
-    tmp[-os * (dimy + 2 * ypad) :] = wave_map_2d
+    tmp = np.full((os * dimx, os * dimx), fill_value=np.nan)
+    tmp[(-os * dimy) :] = wave_map_2d
     wave_map_2d = tmp
 
     return wave_map_2d
 
 
-def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spectraces=False):
+def get_soss_wavemaps(
+    pwcpos,
+    subarray="SUBSTRIP256",
+    refmodel=None,
+    spectraces=False,
+    orders_requested=None,
+):
     """
-    Generate order 1 and 2 2D wavemaps from the rotated SOSS trace positions.
+    Get the SOSS wavelength maps and (optionally) spectraces.
 
     Parameters
     ----------
     pwcpos : float
-        The pupil wheel position
-    subarray : str
-        The subarray name, ['FULL', 'SUBSTRIP256', 'SUBSTRIP96']
-    padding : bool
-        Include padding on map edges (only needed for reference files)
-    padsize : int
-        The size of the padding to include on each side
-    spectraces : bool
-        Return the interpolated spectraces as well
+        The pupil wheel position angle, e.g., as provided in the
+        FITS header under keyword PWCPOS.
+        Values are expected to be within +/- 0.25 degrees of the commanded position
+        (245.76 degrees).
+    subarray : str, optional
+        The subarray name, one of 'SUBSTRIP256', 'SUBSTRIP96', or 'FULL'.
+    refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`, optional
+        The reference model for the SOSS extraction. If not set, it will be fetched
+        from CRDS.
+    spectraces : bool, optional
+        If `True`, return the interpolated spectraces as well.
+    orders_requested : list
+        A list of the spectral orders requested for extraction.
+        If None, all orders in the reference file will be used.
 
     Returns
     -------
-    Array, Array
-        The 2D wavemaps and corresponding 1D spectraces
+    wavemaps : ndarray
+        The 2D wavemaps. Will have shape ``(n_orders, array_x, array_y)``
+        with orders 1, 2, etc. being the elements of the first dimension.
+        Wavemaps for all orders defined in the reference file
+        will be returned.
+    traces : ndarray, optional
+        The corresponding 1D traces (if ``spectraces`` is `True`).
     """
-    _, order1_x, order1_y, order1_wl = get_soss_traces(
-        refmodel, pwcpos, order="1", subarray=subarray
-    )
-    _, order2_x, order2_y, order2_wl = get_soss_traces(
-        refmodel, pwcpos, order="2", subarray=subarray
-    )
+    if refmodel is None:
+        refmodel = retrieve_default_pastasoss_model()
 
-    # Make wavemap from trace center wavelengths, padding to shape (296, 2088)
-    wavemin = WAVEMAP_WLMIN
-    wavemax = WAVEMAP_WLMAX
-    nwave = WAVEMAP_NWL
-    wave_grid = np.linspace(wavemin, wavemax, nwave)
+    refmodel_orders = [int(trace.spectral_order) for trace in refmodel.traces]
+    if orders_requested is None:
+        orders_requested = refmodel_orders
+    else:
+        orders_requested = _verify_requested_orders(orders_requested, refmodel_orders)
 
-    # Extrapolate wavelengths for order 1 trace
-    xtrace_order1 = _extrapolate_to_wavegrid(wave_grid, order1_wl, order1_x)
-    ytrace_order1 = _extrapolate_to_wavegrid(wave_grid, order1_wl, order1_y)
-    spectrace_1 = np.array([xtrace_order1, ytrace_order1, wave_grid])
+    pwcpos_bounds = refmodel.meta.pwcpos_bounds
+    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos, pwcpos_bounds)
+    if not pwcpos_is_valid:
+        raise ValueError(f"PWC position {pwcpos} is outside bounds ({pwcpos_bounds}).")
 
-    # Set cutoff for order 2 where it runs off the detector
-    o2_cutoff = XTRACE_ORD2_LEN
-    w_o2_tmp = order2_wl[:o2_cutoff]
-    # Subtract 8 from FULL width to avoid reference pixels
-    w_o2 = np.zeros(SOSS_XDIM - 8) * np.nan
-    w_o2[:o2_cutoff] = w_o2_tmp
-    y_o2_tmp = order2_y[:o2_cutoff]
-    y_o2 = np.zeros(SOSS_XDIM - 8) * np.nan
-    y_o2[:o2_cutoff] = y_o2_tmp
-    x_o2 = np.copy(order1_x)
-
-    # Fill for column > 1400 with linear extrapolation
-    m = w_o2[o2_cutoff - 1] - w_o2[o2_cutoff - 2]
-    dx = np.arange(SOSS_XDIM - 8 - o2_cutoff) + 1
-    w_o2[o2_cutoff:] = w_o2[o2_cutoff - 1] + m * dx
-    m = y_o2[o2_cutoff - 1] - y_o2[o2_cutoff - 2]
-    dx = np.arange(SOSS_XDIM - 8 - o2_cutoff) + 1
-    y_o2[o2_cutoff:] = y_o2[o2_cutoff - 1] + m * dx
-
-    # Extrapolate wavelengths for order 2 trace
-    xtrace_order2 = _extrapolate_to_wavegrid(wave_grid, w_o2, x_o2)
-    ytrace_order2 = _extrapolate_to_wavegrid(wave_grid, w_o2, y_o2)
-    spectrace_2 = np.array([xtrace_order2, ytrace_order2, wave_grid])
-
-    # Make wavemap from wavelength solution for order 1
-    wavemap_1 = _calc_2d_wave_map(
-        wave_grid,
-        xtrace_order1,
-        ytrace_order1,
-        np.zeros_like(xtrace_order1),
-        oversample=1,
-        padding=padsize,
+    # Make wavemap from trace center wavelengths
+    wave_grid = np.linspace(
+        refmodel.meta.wavemap_wlmin, refmodel.meta.wavemap_wlmax, refmodel.meta.wavemap_nwl
     )
 
-    # Make wavemap from wavelength solution for order 2
-    wavemap_2 = _calc_2d_wave_map(
-        wave_grid,
-        xtrace_order2,
-        ytrace_order2,
-        np.zeros_like(xtrace_order2),
-        oversample=1,
-        padding=padsize,
-    )
+    subarray_ymin = refmodel.meta.subarray_ymin
+    soss_xdim = refmodel.meta.soss_xdim
+    soss_ydim = refmodel.meta.soss_ydim
 
-    # Extrapolate wavemap to FULL frame
-    wavemap_1[: SUBARRAY_YMIN - padsize, :] = wavemap_1[SUBARRAY_YMIN - padsize]
-    wavemap_2[: SUBARRAY_YMIN - padsize, :] = wavemap_2[SUBARRAY_YMIN - padsize]
+    wavemaps = []
+    traces = []
+    for order in orders_requested:
+        _, x, y, wl = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
+        xtrace = _extrapolate_to_wavegrid(wave_grid, wl, x)
+        ytrace = _extrapolate_to_wavegrid(wave_grid, wl, y)
+        spectrace = np.array([xtrace, ytrace, wave_grid])
 
-    # Trim to subarray
-    if subarray == "SUBSTRIP256":
-        wavemap_1 = wavemap_1[SUBARRAY_YMIN - padsize : SOSS_XDIM + padsize, :]
-        wavemap_2 = wavemap_2[SUBARRAY_YMIN - padsize : SOSS_XDIM + padsize, :]
-    if subarray == "SUBSTRIP96":
-        wavemap_1 = wavemap_1[SUBARRAY_YMIN - padsize : SUBARRAY_YMIN + 96 + padsize, :]
-        wavemap_2 = wavemap_2[SUBARRAY_YMIN - padsize : SUBARRAY_YMIN + 96 + padsize, :]
+        # Make wavemap from wavelength solution
+        wavemap = _calc_2d_wave_map(
+            wave_grid,
+            xtrace,
+            ytrace,
+            np.zeros_like(xtrace),
+            oversample=1,
+            dimx=soss_xdim,
+            dimy=soss_ydim,
+        )
+        # Extrapolate wavemap to FULL frame
+        wavemap[:subarray_ymin, :] = wavemap[subarray_ymin]
 
-    # Remove padding if necessary
-    if not padding and padsize != 0:
-        wavemap_1 = wavemap_1[padsize:-padsize, padsize:-padsize]
-        wavemap_2 = wavemap_2[padsize:-padsize, padsize:-padsize]
+        # Trim to subarray
+        if subarray == "SUBSTRIP96":
+            wavemap = wavemap[subarray_ymin : subarray_ymin + 96, :]
+        elif subarray in NIS_SOSS_SUPPORTED_SUBARRAYS:
+            wavemap = wavemap[subarray_ymin:soss_xdim, :]
 
+        wavemaps.append(wavemap)
+        traces.append(spectrace)
+
+    # Combine wavemaps and spectraces into ndarray output
     if spectraces:
-        return np.array([wavemap_1, wavemap_2]), np.array([spectrace_1, spectrace_2])
-    return np.array([wavemap_1, wavemap_2])
+        return np.array(wavemaps), np.array(traces)
+    return np.array(wavemaps)
+
+
+def _check_pwcpos_bounds(pwcpos, bounds):
+    """
+    Check if the provided PWC position is within the bounds.
+
+    Parameters
+    ----------
+    pwcpos : float
+        The pupil wheel position angle.
+    bounds : tuple
+        A tuple containing the lower and upper bounds for the PWC position.
+
+    Returns
+    -------
+    bool
+        `True` if the PWC position is within bounds, `False` otherwise.
+    """
+    if bounds is not None and len(bounds) == 2:
+        return bounds[0] <= pwcpos <= bounds[1]
+
+    # No bounds found: return False
+    return False

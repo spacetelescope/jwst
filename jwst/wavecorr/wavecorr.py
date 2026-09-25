@@ -1,15 +1,24 @@
 import logging
+
 import numpy as np
-from gwcs import wcstools
-from gwcs import coordinate_frames as cf
 from astropy import units as u
 from astropy.modeling import tabular
 from astropy.modeling.mappings import Identity
-
+from gwcs import coordinate_frames as cf
+from gwcs import wcstools
 from stdatamodels.jwst import datamodels
 
+from jwst.lib.exposure_types import is_point_source
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = [
+    "do_correction",
+    "apply_zero_point_correction",
+    "calculate_wavelength_correction_transform",
+    "compute_dispersion",
+    "compute_wavelength",
+]
 
 
 def do_correction(input_model, wavecorr_file):
@@ -18,14 +27,16 @@ def do_correction(input_model, wavecorr_file):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
-        Input data model.
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                  `~stdatamodels.jwst.datamodels.CubeModel`
+        Input data model. It is updated in place.
     wavecorr_file : str
         Wavecorr reference file name.
 
     Returns
     -------
-    output_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+    output_model : `~stdatamodels.jwst.datamodels.ImageModel` or \
+                   `~stdatamodels.jwst.datamodels.CubeModel`
         Corrected data model.
     """
     wavecorr_supported_modes = ["NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_BRIGHTOBJ", "NRS_AUTOFLAT"]
@@ -37,33 +48,31 @@ def do_correction(input_model, wavecorr_file):
         input_model.meta.cal_step.wavecorr = "SKIPPED"
         return input_model
 
-    output_model = input_model.copy()
-
     # For BRIGHTOBJ, operate on the single SlitModel
     corrected = False
     if isinstance(input_model, datamodels.SlitModel):
-        if _is_point_source(input_model):
-            corrected = apply_zero_point_correction(output_model, wavecorr_file)
+        if is_point_source(input_model):
+            corrected = apply_zero_point_correction(input_model, wavecorr_file)
     else:
-        for slit in output_model.slits:
-            if _is_point_source(slit):
+        for slit in input_model.slits:
+            if is_point_source(slit):
                 completed = apply_zero_point_correction(slit, wavecorr_file)
                 if completed:
                     corrected = True
-                    slit.meta.cal_step.wavecorr = "COMPLETE"
+                    slit.wavelength_corrected = True
                 else:  # pragma: no cover
                     log.warning(f"Corrections are not invertible for slit {slit.name}")
                     log.warning("Skipping wavecorr correction")
-                    slit.meta.cal_step.wavecorr = "SKIPPED"
+                    slit.wavelength_corrected = False
             else:
-                slit.meta.cal_step.wavecorr = "SKIPPED"
+                slit.wavelength_corrected = False
 
     if corrected:
-        output_model.meta.cal_step.wavecorr = "COMPLETE"
+        input_model.meta.cal_step.wavecorr = "COMPLETE"
     else:
-        output_model.meta.cal_step.wavecorr = "SKIPPED"
+        input_model.meta.cal_step.wavecorr = "SKIPPED"
 
-    return output_model
+    return input_model
 
 
 def apply_zero_point_correction(slit, reffile):
@@ -72,7 +81,8 @@ def apply_zero_point_correction(slit, reffile):
 
     Parameters
     ----------
-    slit : `~jwst.datamodels.SlitModel`, `~jwst.datamodels.CubeModel`
+    slit : `~stdatamodels.jwst.datamodels.SlitModel` or \
+           `~stdatamodels.jwst.datamodels.CubeModel`
         Slit data to be corrected.
     reffile : str
         The ``wavecorr`` reference file.
@@ -82,7 +92,6 @@ def apply_zero_point_correction(slit, reffile):
     completed : bool
         A flag to report whether the zero-point correction was added or skipped.
     """
-    log.info(f"slit name {slit.name}")
     slit_wcs = slit.meta.wcs
 
     # Retrieve the source position and aperture name from metadata
@@ -134,9 +143,9 @@ def calculate_wavelength_correction_transform(
     Parameters
     ----------
     lam : ndarray
-        Wavelength array [in m].
+        Wavelength array in meters.
     dispersion : ndarray
-        The pixel dispersion [in m].
+        The pixel dispersion in meters.
     freference : str
         ``wavecorr`` reference file name.
     source_xpos : float
@@ -146,7 +155,7 @@ def calculate_wavelength_correction_transform(
 
     Returns
     -------
-    model : `~astropy.modeling.tabular.Tabular1D`or None
+    model : `~astropy.modeling.tabular.Tabular1D` or None
         A model which takes wavelength inputs and returns zero-point
         corrected wavelengths.  Returns None if an invertible model
         cannot be generated.
@@ -205,7 +214,7 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
     """
     Compute the pixel dispersion.
 
-    If `xpix` or `ypix` is not provided, the dispersion is computed on a grid
+    If ``xpix`` or ``ypix`` is not provided, the dispersion is computed on a grid
     based on ``wcs.bounding_box``.
 
     Parameters
@@ -220,7 +229,7 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
     Returns
     -------
     dispersion : ndarray
-        The pixel dispersion [in m].
+        The pixel dispersion in meters.
     """
     if xpix is None or ypix is None:
         xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
@@ -235,7 +244,7 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
     """
     Compute the pixel wavelength.
 
-    If `xpix` or `ypix` is not provided, the dispersion is computed on a grid
+    If ``xpix`` or ``ypix`` is not provided, the dispersion is computed on a grid
     based on ``wcs.bounding_box``.
 
     Parameters
@@ -250,47 +259,10 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
     Returns
     -------
     wavelength : ndarray
-        The wavelength [in microns].
+        The wavelength in microns.
     """
     if xpix is None or ypix is None:
         xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
 
     _, _, lam = wcs(xpix, ypix)
     return lam
-
-
-def _is_point_source(slit):
-    """
-    Determine if a source is a point source.
-
-    Parameters
-    ----------
-    slit : `~stdatamodels.jwst.transforms.models.Slit`
-        A slit object.
-
-    Returns
-    -------
-    bool
-        True if point source; False otherwise.
-    """
-    result = False
-
-    # Get the source type value set by the source_type step (if any)
-    if slit.source_type is not None:
-        src_type = slit.source_type
-    elif slit.meta.target.source_type is not None:
-        src_type = slit.meta.target.source_type
-    else:
-        src_type = None
-
-    if src_type is not None and src_type.upper() in ["POINT", "EXTENDED"]:
-        # Use the supplied value
-        log.info(f"Detected a {src_type} source type in slit {slit.name}")
-        if src_type.strip().upper() == "POINT":
-            result = True
-        else:
-            result = False
-    else:
-        log.info("Unknown source type")
-
-    return result

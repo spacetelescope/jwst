@@ -1,5 +1,5 @@
-Reference File Types
-====================
+Reference Files
+===============
 
 The ``linearity`` step uses a LINEARITY reference file.
 

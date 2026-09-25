@@ -10,5 +10,4 @@ Stray Light Correction
    main.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.straylight
+   api_ref.rst

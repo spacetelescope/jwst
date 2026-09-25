@@ -6,14 +6,17 @@ Generator
 Algorithm
 ---------
 
-The generator conceptual workflow is show below:
+.. _figure-association-gen-flow:
 
 .. figure:: graphics/generator_flow_concept.png
    :scale: 50%
 
    Generator Conceptual Workflow
 
-This workflow is encapsulated in the :py:func:`~jwst.associations.generate`
+The generator conceptual workflow is shown in
+:ref:`Figure 1 <figure-association-gen-flow>`.
+This workflow is encapsulated in the
+:func:`~jwst.associations.generator.generate.generate`
 function. Each member is first checked to see if it belongs to an already
 existing association. If so, it is added to each association it matches with.
 Next, the set of association rules are check to see if a new association, or
@@ -22,67 +25,65 @@ not already been created are checked for. This is to prevent cyclical creation
 of associations.
 
 As discussed in :ref:`design-association`, associations are Python
-classes, often referred to as ``association rules``, and their
-instantiations, referred to as ``associations``. An association is
+classes, often referred to as "association rules," and their
+instantiations, referred to as "associations." An association is
 created by calling the :meth:`Association.create
 <jwst.associations.association.Association.create>` class method for each
 association rule. If the member matches the rule, an association is
-returned. Each defined rule tried. This process of checking whether a
+returned. Each defined rule is tried. This process of checking whether a
 member would create any associations is encapsulated in the
 :meth:`AssociationRegistry.match
-<jwst.associations.registry.AssociationRegistry.match>` method
+<jwst.associations.registry.AssociationRegistry.match>` method.
 
 Conversely, to see if a member belongs to an already existing
 association, an attempt is made to add the member using the
 :meth:`Association.add
 <jwst.associations.association.Association.add>` method. If the
 addition succeeds, the member has been added to the association
-instance. The generator uses :func:`match_member
-<jwst.associations.generate.match_member>` function to loop through
-its list of existing associations.
+instance.
 
 Output
 ------
 
-Before exiting, :py:func:`~jwst.associations.generate` checks the
+Before exiting, :py:func:`~jwst.associations.generator.generate.generate` checks the
 :meth:`Association.is_valid
 <jwst.associations.association.Association.is_valid>` property of each
 association to ensure that an association has all the members it is required to
 have. For example, if a JWST coronagraphic observation was performed, but the
 related PSF observation failed, the coronagraphic association would be marked invalid.
 
-Once validation is complete, :py:func:`~jwst.associations.generate` returns a
-2-tuple. The first item is a list of the associations created. The second item
-is another :py:class:`~jwst.associations.AssociationPool` containing all the
-members that did not get added to any association.
+Once validation is complete, :py:func:`~jwst.associations.generator.generate.generate`
+returns a list of the associations created.
 
 .. _member-with-lists:
 
 Member Attributes that are Lists
 --------------------------------
 
-As mentioned in :ref:`design-pool`, most member attributes are simply
-treated as strings. The exception is when an attribute value looks
+As mentioned in :ref:`design-pool`, most member attributes are
+treated as lowercase strings. The exception is when an attribute value looks
 like a list::
 
-  [element, ...]
+    [element, ...]
 
 When this is the case, a *mini pool* is created. This pool consists of
 duplicates of the original member. However, for each copy of the member, the
 attribute that was the list is now populated with consecutive members of that
 list. This mini pool and the rule or association in which this was found, is
-passed back up to the :py:func:`~jwst.associations.generate` function to be
+passed back up to the
+:py:func:`~jwst.associations.generator.generate.generate` function to be
 reconsidered for membership. Each value of the list is considered separately
 because association membership may depend on what those individual values are.
-The figure below demonstrates the member replication.
+:ref:`Figure 2 <figure-association-mem-list-exp>` below demonstrates
+the member replication.
+
+.. _figure-association-mem-list-exp:
 
 .. figure:: graphics/generator_list_processing.png
    :scale: 50%
 
-   Member list expansion
-
-   Attr.2 is a list of three values which expands into three members
-   in the mini pool.
+   Member list expansion. ``Attr.2`` is a list of three values
+   which expands into three members in the mini pool.
 
 For JWST, this is used to filter through the various types of
 association candidates. Since an exposure can belong to more than one
@@ -94,4 +95,38 @@ associations depending on the candidates.
 Association Candidates
 ----------------------
 
-TBD
+At present, two kinds of association candidates are provided by APT for
+association generation:
+
+* "observation" associations:
+
+  * Indicated by the "oNNN" name identifier.
+  * Combine data from within a given observation.
+
+* "candidate" associations:
+
+  * Indicated by the "c1NNN" name identifier.
+  * Combine data across observations (e.g., by subtracting dedicated
+    background observations linked via an APT special requirement).
+    This candidate is further explained below.
+
+The candidate type "candidate" are association candidates created by APT.
+These are associations defined by APT depending on observing modes and
+templates used. These candidates are suggested candidates.
+It is used for combining data across different observations.
+Type of data included:
+
+* Data that should be combined at stage 3 across observations;
+  e.g., coronagraphic science and PSF reference observations,
+  dedicated background observations for some observing modes.
+* All data for a given configuration that has been taken in a mosaic.
+
+Once the proposal is executed, the generator may or may not create all
+suggested candidates. Some possible reasons a candidate is not used include
+but not limited to having no science value, insufficient exposures taken
+due to observatory issues, or duplicate products.
+
+Also see:
+
+* :ref:`asn-jwst-naming`
+* :ref:`asn-level3-techspecs`

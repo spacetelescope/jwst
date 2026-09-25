@@ -1,0 +1,35 @@
+BasedOnStyle: LLVM
+
+AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveMacros: true
+AlignEscapedNewlines: LeftWithLastLine
+AllowAllArgumentsOnNextLine: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+
+BraceWrapping:
+  AfterControlStatement: false
+  AfterFunction: true
+BreakAfterReturnType: TopLevel
+BreakBeforeBraces: Custom
+
+ColumnLimit: 100
+
+DerivePointerAlignment: false # Right alignment is set below
+
+IndentCaseLabels: true
+IndentWidth: 4
+InsertBraces: true
+
+PointerAlignment: Right
+
+ReflowComments: true
+
+SortIncludes: false
+SpaceAfterCStyleCast: true
+SpaceBeforeParens: ControlStatements
+
+TabWidth: 4
+
+UseTab: Never

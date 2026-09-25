@@ -7,4 +7,7 @@ Background Subtraction
 .. toctree::
    :maxdepth: 2
 
-   main.rst
+   description.rst
+   arguments.rst
+   reference_files.rst
+   api_ref.rst

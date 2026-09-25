@@ -1,114 +1,114 @@
 Description
 ===========
 
-:Class: `jwst.rscd.RscdStep`
+:Class: `jwst.rscd.rscd_step.RscdStep`
 :Alias: rscd
 
 Assumptions
 -----------
-This correction is currently only implemented for MIRI data and is only applied
-to integrations after the first integration (i.e. this step does not correct the
-first integration).
+This Reset Switch Charge Decay (RSCD) correction is currently only implemented for MIRI data.
 It is assumed this step occurs before the dark subtraction, but after linearity
 correction.
 
 Background
-__________
+----------
 
 The MIRI Focal Plane System (FPS) consists of the detectors and the electronics to control them.
 There are a number of non-ideal detector and readout effects that produce reset offsets,
 nonlinearities at the start of an integration, non-linear ramps with increasing signal,
 latent images, and drifts in the slopes.
 
-The manner in which the MIRI readout electronics operate have been
-shown to be the source of the ramp offsets, nonlinearities at the start of the integration, and overall changes in slopes.
-Basically the MIRI reset electronics use field effect transistors (FETs) in their operation.  The FET acts as a switch
-to allow charge to build up and to also initialize (clear) the charge. However, the reset FETS do not instantaneously
-reset the level, instead the exponential adjustment of the  FET after a reset causes the initial frames in an integration
-to be offset from their expected values. Between exposures the MIRI detectors
-are continually reset; however for a multiple integration exposure there is a single reset between integrations.
-The effects of this decay are
-not measurable in the first integration  because a number of resets have occurred from the last exposure and
-the effect has decayed away by the time it takes to read out the last exposure, set up the next exposure and begin
-exposing. There are low level reset effects in the first integration that are related to the strength of the dark
-current and can be removed with an integration-dependent dark.
-
-The Reset Switch Charge Decay (RSCD) step corrects for these effects by simply
-flagging the first N groups as DO_NOT_USE.  An actual correction algorithm allowing for the first N groups to be
-used is under development.
+The MIRI readout electronics use field effect transistors (FETs) in their operation,
+which have been shown to be the source of the ramp offsets, the nonlinearities at the start
+of an integration, and the overall changes in the slopes. The FET acts as a switch to allow
+charge to build up and to also initialize (clear) the charge.
+However, the reset FETs do not instantaneously reset the level. Instead, the exponential
+adjustment of the FET after a reset causes the initial frames in an integration to be offset
+from their expected values. Between exposures, the MIRI detectors are continually reset;
+however, for a multiple integration exposure there is a single reset between integrations.
+The effects of this decay are reduced in the first integration because a number
+of resets have occurred from the last exposure and the effect has partially decayed by the time
+it takes to read out the last exposure, set up the next exposure, and begin exposing.
+Because of these physical transients, the JWST pipeline includes a dedicated RSCD step
+that automatically applies data quality flags to groups that should be skipped to ensure that
+the subsequent Jump Detection (:ref:`jump <jump_step>`)
+and Ramp Fitting (:ref:`ramp_fitting <ramp_fitting_step>`) steps only use the linear portion
+of the integration.
 
 Algorithm
-_________
+---------
 
-This correction is only applied to integrations > 1.
-This step flags the N groups at the beginning of all 2nd and higher integrations
+The RSCD step identifies and flags groups at the beginning of
+MIRI integrations that are affected by non-linear transients. These transients are caused
+by the exponential settling of the detector’s Field Effect Transistor (FET) switches
+immediately following a reset.
+
+This step flags the some of the first groups at the beginning of all integrations
 as bad (the "DO_NOT_USE" bit is set in the
-GROUPDQ flag array), but only if the total number of groups in each
-integration is greater than N+3.
-This results in the data contained in the the first N groups
+GROUPDQ flag array). The number of groups to skip depends on the readout pattern,
+subarray size and integration number. To maintain the statistical viability of the ramp, the step
+only applies flags if the integration contains at least three more groups than the required
+skip number (``groups > n_skip + 3``). If this condition is not met, the step is bypassed to allow
+later pipeline stages enough data points to perform a linear fit.
+
+An additional check **resets the skip threshold to 1** for any integration containing five or fewer groups.
+
+Standard RSCD correction flags the first ``n_skip`` groups as DO_NOT_USE. However, for very bright sources,
+a pixel might saturate immediately after those skipped groups. If the algorithm always skips
+the RSCD groups, it might leave the pixel with zero or one valid group, making it impossible to
+calculate a flux (slope). Instead, the algorithm "backs off" the number of skipped groups for
+specific pixels that are at risk of losing all their unsaturated data.
+Because reducing the ``n_skip`` introduces some non-linear FET transient data back into the fit,
+these pixels are flagged  in the PIXELDQ array as FLUX_ESTIMATED to warn
+the users that the flux value may be slightly biased by the RSCD effect.
+If only one group is left valid, the algorithm records the information header (see more information given
+the table below). This allows the :ref:`ramp_fitting <ramp_fitting_step>` to still derive a flux value (provided the user has enabled ``suppress_one_group=False``).
+
+This step results in the data contained in the the first ``n_skip`` groups
 being excluded from subsequent steps, such as :ref:`jump detection <jump_step>`
 and :ref:`ramp_fitting <ramp_fitting_step>`.
-No flags are added if NGROUPS <= N+3, because doing so would leave too few good
-groups to work with in later steps.
 
-Only the GROUPDQ array is modified. The SCI, ERR, and PIXELDQ arrays are unchanged.
+Only the GROUPDQ array is modified. The SCI and ERR arrays remain unchanged. The PIXELDQ arrays are
+only updated in the case of bright saturating data when the RSCD skip count is lowered
+to preserve valid groups. In this case, the FLUX_ESTIMATED flag is added  to indicate a potential
+bias from the FET transient.
 
-..
-    This text refers to an earlier version of the enhanced RSCD correction.
-    It needs updating to the latest version of this correction once that has been
-    decided and the code updated.
+This table outlines the keywords written to the output header by the RSCD  step, specifically
+focusing on how groups are skipped or retained.
 
-    The step applies an exponential decay correction based on coefficients in the "RSCD"
-    reference file. The reference files are selected based on readout pattern
-    (READPATT=FAST or SLOW) and subarray type (FULL or one of the MIRI defined subarray types).
-    The reference file contains the information necessary to derive the scale factor and decay time
-    to correct for the reset effects. The correction differs for even and odd row numbers.
+* Group skipping:
 
-    The correction to be added to the input data has the form::
+  These keywords track the total number of groups that were discarded at the beginning of an
+  integration to avoid "charge decay" effects.
 
-        corrected data = input data data + dn_accumulated * scale * exp(-T / tau)  (Equation 1)
+  * INT1SKIP: Applies specifically to the first integration.
+  * INT2SKIP: Applies to the second and all subsequent integrations.
 
-    where T is the time since the last group in the previous integration, tau is the exponential time constant and
-    dn_accumulated is the DN level that was accumulated for the pixel from the previous integration.
-    Because of the last frame effect the value of the last group in an integration is not measured accurately. Therefore,
-    the accumulated DN of the pixel from the previous integration (last group value)  is estimated by extrapolating
-    the ramp using the second to last  and third to last groups.
+* Group Retention (UGP):
 
-    In the case where the previous integration does not saturate the :math:`scale` term in Equation 1  is determined as follows:
+  These keywords count the pixels where the very first group was actually kept rather than skipped.
 
-     :math:`scale = b{1}* [Counts{2}^{b{2}} * [1/exp(Counts{2}/b{3}) -1] \; \; Equation \;  2`
+  * INT1UGP1: The count of pixels where Group 1 was retained during the first integration.
+  * INT2UGP1: The count of pixels where Group 1 was retained during integration 2 and higher.
 
-    The terms :math:`b{2}` and :math:`b{3}` are read in from the RSCD reference file.
-    The following two additional equations are needed to calculate the :math:`b{1}` and :math:`Counts{2}` terms:
+* Saturation Adjustments (BORS, Back-Off Reduced Skipping):
 
-    	  :math:`b{1} = ascale * (illum_{zpt} + illum_{slope}*N + illum2* N^2) \; \; (Equation \; 2.1)`
-    	  :math:`Counts{2} = Final \, DN \, in \, the \,  last \, group \, in \; the \, last \, integration
-    	  \, - Crossover \, Point \; \; (Equation \; 2.2)`
+  These keywords track instances where the software intended to skip groups but "backed off" because skipping them would have left too few groups before the pixel hit saturation.
 
+  * INT1BORS: The count of pixels where skipping was reduced for the first integration.
+  * INT2BORS: The count of pixels where skipping was reduced for integrations 2 and higher.
 
-    In equation 2.1, N is the number of groups per integration and :math:`ascale`, :math:`illum_{zpt}`,
-    :math:`illum_{slope}`, and :math:`illum2` are read in from the RSCD reference file. The :math:`Crossover \, Point`
-    in equation 2.2 is also read in from the RSCD reference file.
+==============  ===========================================  ==============================================================================
+RSCD Keywords   Datamodel attributes                         Meaning
+==============  ===========================================  ==============================================================================
+INT1SKIP        meta.rscd.ngroups_skip_int1                  # of groups skipped in int 1
+INT2SKIP        meta.rscd.ngroups_skip_int2p                 # of groups skipped in int 2 and higher
+INT1UGP1        meta.rscd.keep_bright_firstgroup_int1        # of pixels where 1st the group is kept for int 1
+INT2UGP1        meta.rscd.keep_bright_firstgroup_int2p       # of pixels where 1st the group is kept for int 2 and higher
+INT1BORS        meta.rscd.keep_groups_saturation_int1        # of pixels where RSCD reduced the groups skipped due to saturation for int 1
+INT2BORS        meta.rscd.keep_groups_saturation_int2p       # of pixels where RSCD reduced the groups skipped due to saturation for int 2+
+==============  ===========================================  ==============================================================================
 
-    If the previous integration saturates, the  :math:`scale` term in Equation 1 is found in the  following manner:
-
-       :math:`scale_\text{sat} = slope * Counts{3} + sat_\text{mzp} \; \; (Equation \; 3)`
-
-    where :math:`Counts{3}` is an  estimate of what the last group in the previous integration would have been if
-    saturation did not exist. The :math:`slope` in equation 3  is calculated according to the formula:
-
-       :math:`slope = sat_{zp} + sat_{slope} * N + sat_2*N^2 + evenrow_{corrections} \; \; (Equation 3.1)`.
-
-    The terms :math:`sat_\text{mzp}`, :math:`sat_{zp}`, :math:`sat_2`, :math:`evenrow_{corrections}`
-    are read in from the RSCD reference file.
-
-    All fourteen  parameters :math:`tau`, :math:`b{1}`, :math:`b{2}`, :math:`b{3}`, :math:`illum_{zpt}`,
-    :math:`illum_{slope}`, :math:`illum2`, :math:`Crossover Point`, :math:`sat_{zp}`, :math:`sat_{slope}`, :math:`sat_2`,
-    :math:`sat_{scale}`, :math:`sat_\text{mzp}`, and :math:`evenrow_{corrections}` are found in the RSCD reference files.
-    There is a separate set for even and odd rows for each readout (READPATT) mode and subarray type.
-
-    Subarrays
-    ----------
-
-    Currently the RSCD correction for subarray data is the same as it is for full array data. However,
-    we anticipate a separate set of correction coefficients in the future.
+Step Arguments
+--------------
+The ``rscd`` correction has no step-specific arguments.

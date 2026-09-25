@@ -14,9 +14,12 @@ that are somehow related. With respect to JWST and the Data Management
 System (DMS), associations have the following characteristics:
 
 - Relationships between multiple exposures are captured in an association.
-- An association is a means of identifying a set of exposures that belong together and may be dependent upon one another.
-- The association concept permits exposures to be calibrated, archived, retrieved, and reprocessed as a set rather than as individual objects.
-- For each association, DMS will generate the most combined and least combined data products.
+- An association is a means of identifying a set of exposures that belong
+  together and may be dependent upon one another.
+- The association concept permits exposures to be calibrated, archived,
+  retrieved, and reprocessed as a set rather than as individual objects.
+- For each association, DMS will generate the most combined and
+  least combined data products.
 
 .. _asn-associations-and-jwst:
 
@@ -42,8 +45,8 @@ is still in individual exposures.
 
 .. note::
 
-   Older documentation and code may refer to the stages as **levels**. They
-   are synonymous.
+    Older documentation and code may refer to the stages as **levels**. They
+    are synonymous.
 
 To be truly useful, the exposures need to be combined and, in the case
 of multi-object spectrometry, separated, into data that is
@@ -61,9 +64,9 @@ transformation from exposure-based data to source-based, high(er)
 signal-to-noise data.
 
 In short, Stage 2 and Stage 3 associations are created running the
-:ref:`asn-generate` task on an :py:class:`~jwst.associations.AssociationPool`
-using the default :ref:`Level2<asn-level2-techspecs>` and :ref:`Level
-3<asn-level3-techspecs>` association rules to produce Stage 2 and Stage 3
+:ref:`asn-generate` task on an :class:`~jwst.associations.pool.AssociationPool`
+using the default :ref:`Stage 2 <asn-level2-techspecs>` and
+:ref:`Stage 3 <asn-level3-techspecs>` association rules to produce respective
 associations. When retrieving the data from the archive, users will find the
 list of associated data in JSON files that are submitted together with the
 requested Stage 2 or Stage 3 data.
@@ -72,10 +75,10 @@ Association Pools
 -----------------
 
 The information about what data will be associated is constructed with the
-information derived from the Astronomer Proposal Tool and the rules on how data
+information derived from the Astronomer Proposal Tool (APT) and the rules on how data
 should be associated that are defined by the instrument teams. All the
 information from a single proposal is captured in a single file known as the
-:ref:`Association Pool<design-pool>`.
+:ref:`Association Pool <design-pool>`.
 
 .. _asn-usage:
 
@@ -85,57 +88,76 @@ Usage
 Users should not need to run the generator. Instead, it is expected that one
 edits an already existing association that accompanies the user's JWST data.
 
-Care should be taken if editing an association file.  Keep in mind that generally
+Care should be taken if editing an association file. Association files must be
+in valid JSON format, and we encourage use of a JSON linter, for example
+`jsonlint <https://jsonlint.com/>`__, to validate the file. Keep in mind that generally
 all input files listed in the association files are assumed to be in the same
 directory as the association file and no path information is put in ``expname``.
+
+.. note::
+
+    In previous versions of the pipeline, association files with additional trailing commas
+    that rendered them invalid according to the JSON specification were quietly accepted.
+    This violation now throws an exception; please ensure
+    that trailing commas are removed from hand-edited association files.
 
 If need be, an association can be created based on the existing
 :ref:`Stage 2 <asn-level2-example>` or :ref:`Stage 3 <asn-level3-example>` examples,
 or using the command line tool :ref:`asn-from-list`.
-If, however, the user *does* need to run the generator, the :ref:`Association Generator
-<design-generator>` description and :ref:`asn-generate` documentation will be helpful.
+If, however, the user *does* need to run the generator, the
+:ref:`Association Generator <design-generator>` description and
+:ref:`asn-generate` documentation will be helpful.
 
 Once an association is in-hand, one can pass it as input to a pipeline
-routine. For example::
+routine. For example:
 
-  % strun calwebb_image3  jw12345-o001_20210311t170002_image3_001_asn.json
+.. code-block:: shell
 
-Programmatically, to read in an Association, one uses the
-:py:func:`~jwst.associations.load_asn` function:
+    strun calwebb_image3 jw12345-o001_20210311t170002_image3_001_asn.json
+
+Programmatically, to read in an `~jwst.associations.association.Association`,
+one uses the :py:func:`~jwst.associations.load_asn.load_asn` function:
 
 .. code-block:: python
 
-   from jwst.associations import load_asn
+    from jwst.associations import load_asn
 
-   with open('jw12345-o001_20210311t170002_image3_001_asn.json') as fp:
-       asn = load_asn(fp)
+    with open('jw12345-o001_20210311t170002_image3_001_asn.json') as fp:
+        asn = load_asn(fp)
 
 What exactly is returned depends on what the association is. However,
-for all Stage 2 and Stage 3 associations, a Python ``dict`` is returned,
-whose structure matches that of the JSON or YAML file. Continuing
+for all Stage 2 and Stage 3 associations, a Python :py:obj:`dict` is returned
+and its structure matches that of the JSON file. Continuing
 from the above example, the following shows how to access the first
 exposure file name of a Stage 3 associations:
 
 .. code-block:: python
 
-   exposure = asn['products'][0]['members'][0]['expname']
+    exposure = asn['products'][0]['members'][0]['expname']
 
-Since most JWST data are some form of a 
-:ref:`JWST Data Model<jwst-data-models>`
-an association can be opened with
-:ref:`datamodels.open<stdatamodels:datamodels-open>`
-which returns a
-:py:class:`~jwst.datamodels.ModelContainer`. All members of the association that can
-be represented as a ``DataModel``, will be available in the ``ModelContainer``
-as their respective DataModels.
+Since most JWST data are some form of a :ref:`JWST Data Model <jwst-data-models>`
+an association can be opened with :func:`~stdatamodels.jwst.datamodels.open`
+which returns a `~jwst.datamodels.container.ModelContainer`.
+All members of the association that can be represented as a
+`~stdatamodels.jwst.datamodels.JwstDataModel` will be available in the
+`~jwst.datamodels.container.ModelContainer` as their respective data models.
 
 .. code-block:: python
 
-  from stdatamodels.jwst.datamodels import open as dm_open
-  container_model = dm_open('jw12345-o001_20210311t170002_image3_001_asn.json')
+    from stdatamodels.jwst.datamodels import open as dm_open
+   container_model = dm_open('jw12345-o001_20210311t170002_image3_001_asn.json')
 
-Utilities
-=========
+.. _association-commands:
 
-There are a number of utilities to create user-specific associations that are
-documented under :ref:`Association Commands<association-commands>`.
+Association Commands
+====================
+
+There are a number of utilities to create user-specific associations, as follow.
+
+.. toctree::
+   :maxdepth: 1
+
+   asn_generate.rst
+   asn_from_list.rst
+   asn_gather.rst
+   asn_make_pool.rst

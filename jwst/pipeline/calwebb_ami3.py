@@ -2,34 +2,32 @@
 import logging
 from pathlib import Path
 
-from ..stpipe import Pipeline
-
 # step imports
-from ..ami import ami_analyze_step
-from ..ami import ami_normalize_step
+from jwst.ami import ami_analyze_step, ami_normalize_step
+from jwst.stpipe import Pipeline
 
 __all__ = ["Ami3Pipeline"]
 
 # Define logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class Ami3Pipeline(Pipeline):
     """
     Apply all level-3 calibration steps to an association of level-2b AMI exposures.
 
-    Included steps are:
-    ami_analyze (fringe detection)
-    ami_normalize (normalize results by reference target)
+    Included steps are: ami_analyze and ami_normalize.
     """
 
     class_alias = "calwebb_ami3"
 
+    spec = """
+        save_results = boolean(default=True)  # Save output products by default
+    """  # noqa: E501
+
     # Define aliases to steps
     step_defs = {
         "ami_analyze": ami_analyze_step.AmiAnalyzeStep,
-        # 'ami_average': ami_average_step.AmiAverageStep,
         "ami_normalize": ami_normalize_step.AmiNormalizeStep,
     }
 
@@ -47,6 +45,10 @@ class Ami3Pipeline(Pipeline):
 
         # Load the input association table
         asn = self.load_as_level3_asn(input_data)
+        if hasattr(asn, "filename") and asn.filename:
+            table_name = Path(asn.filename).name
+        else:
+            table_name = ""
 
         # We assume there's one final product defined by the association
         asn_id = asn["asn_id"]
@@ -78,11 +80,15 @@ class Ami3Pipeline(Pipeline):
 
             # Save the averaged LG analysis results to a file
             result1.meta.asn.pool_name = asn["asn_pool"]
-            result1.meta.asn.table_name = Path(asn.filename).name
+            result1.meta.asn.table_name = table_name
             self.save_model(result1, output_file=input_file, suffix="ami-oi", asn_id=asn_id)
 
-            # Save the result for use as input to ami_average
+            # Save the result
             targ_lg.append(result1)
+
+            # Close the other models
+            result2.close()
+            result3.close()
 
         # Run ami_analyze on all the psf members
         psf_lg = []
@@ -93,23 +99,28 @@ class Ami3Pipeline(Pipeline):
 
             # Save the LG analysis results to a file
             result1.meta.asn.pool_name = asn["asn_pool"]
-            result1.meta.asn.table_name = Path(asn.filename).name
+            result1.meta.asn.table_name = table_name
             self.save_model(result1, output_file=input_file, suffix="psf-ami-oi", asn_id=asn_id)
 
-            # Save the result for use as input to ami_average
+            # Save the result
             psf_lg.append(result1)
 
-        # Normalize all target results by matching psf results
-        # assuming one ref star exposure per targ exposure
+            # Close the other models
+            result2.close()
+            result3.close()
+
+        # This zip operation matches science exposures to reference star exposures
+        # in a one-to-one fashion, truncating a list if it is longer than the
+        # other. This is not intended behavior and should be fixed by JP-3978.
         if (len(psf_files) > 0) & (len(targ_files) > 0):
-            for targ, psf in zip(targ_lg, psf_lg, strict=True):
+            for targ, psf in zip(targ_lg, psf_lg, strict=False):
                 result = self.ami_normalize.run(targ, psf)
                 # Save the result
                 result.meta.asn.pool_name = asn["asn_pool"]
-                result.meta.asn.table_name = Path(asn.filename).name
+                result.meta.asn.table_name = table_name
 
                 # Perform blending of metadata for all inputs to this output file
-                # self.log.info('Blending metadata for PSF normalized target')
+                # log.info('Blending metadata for PSF normalized target')
                 self.save_model(result, suffix="aminorm-oi")
                 result.close()
             del psf_lg

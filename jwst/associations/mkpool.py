@@ -1,107 +1,112 @@
-"""
-Tools for pool creation
-"""
+"""Tools for pool creation."""
+
 import logging
 from copy import copy
 
 from astropy.io.fits import getheader as fits_getheader
 
-from . import AssociationPool
+from jwst.associations import AssociationPool
 
-__all__ = ['mkpool']
+__all__ = ["mkpool"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
+LOGLEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 # Header keywords to ignore
-IGNORE_KEYS = ('', 'COMMENT', 'HISTORY')
+IGNORE_KEYS = ("", "COMMENT", "HISTORY")
 
 # Non-header columns that need to be defined
 NON_HEADER_COLS = {
-    'asn_candidate': None,
-    'dms_note': '',
-    'is_imprt': 'f',
-    'pntgtype': 'science',
-    'targetid': '1',
-    'mostilno': '1',
-    'dithptin': '1'
+    "asn_candidate": None,
+    "dms_note": "",
+    "is_imprt": "f",
+    "pntgtype": "science",
+    "targetid": "1",
+    "mostilno": "1",
+    "dithptin": "1",
 }
 
 
-def mkpool(data,
-           asn_candidate=NON_HEADER_COLS['asn_candidate'],
-           dms_note=NON_HEADER_COLS['dms_note'],
-           is_imprt=NON_HEADER_COLS['is_imprt'],
-           pntgtype=NON_HEADER_COLS['pntgtype'],
-           **kwargs):
-    """Create an association pool from a list of FITS files.
+def mkpool(
+    data,
+    asn_candidate=NON_HEADER_COLS["asn_candidate"],
+    dms_note=NON_HEADER_COLS["dms_note"],
+    is_imprt=NON_HEADER_COLS["is_imprt"],
+    pntgtype=NON_HEADER_COLS["pntgtype"],
+    **kwargs,
+):
+    """
+    Create an association pool from a list of FITS files.
 
     Normally, association pools and the associations generated from those pools
     are created by the automatic ground system process. Users should download
     and modify those pools if need be. If desired, this function can be used to
     create pools from scratch using a list of FITS files. Once created, the
-    :py:func:`~jwst.associations.generate` can be used to create associations
-    from these pools.
+    :func:`~jwst.associations.generator.generate.generate` can be used
+    to create associations from these pools.
 
-    A number of pool columns used by the Association rules cannot be derived
+    A number of pool columns used by the association rules cannot be derived
     from the header keywords. The columns, and typical other values, are as
     follows:
 
-    - asn_candidate
-        The observation candidate is always defined in table
-        creation, based on the observation id of each exposure.
+    - ``asn_candidate``:
+      The observation candidate is always defined in table
+      creation, based on the observation id of each exposure.
+      However, higher level associations can be created by specifying a list
+      of candidate definitions. An example of adding both background and
+      coronographic candidates would be::
 
-        However, higher level associations can be created by specifying a list
-        of candidate definitions. An example of adding both background and
-        coronographic candidates would be: [('c1000', 'background'),
-        ('c1001', 'coronographic')]
+          [("c1000", "background"), ("c1001", "coronographic")]
 
-        The specification can be either as a list of 2-tuples, as presented above, or
-        as a single string representation of the list. Using the previous example, the
-        following is also a valid input:
-        "[('c1000', 'background'), ('c1001', 'coronographic')]"
-    - dms_note
-          Notes from upstream processing of the downlinked data that may be pertinent
-          to the quality of the data. Currently the value "wfsc_los_jitter" is used
-          by the Level 2 wavefront sensing rule, Asn_Lv2WFSC, to ignore exposures.
-    - is_imprt
-          A 't' indicates the exposure is a NIRSpec imprint exposure.
-    - pntgtype
-          The general class of exposure. The default value is "science".
-          For target acquisition, the value is "target_acquisition".
+      The specification can be either as a list of 2-tuples, as presented above, or
+      as a single string representation of the list. Using the previous example, the
+      following is also a valid input::
+
+          "[('c1000', 'background'), ('c1001', 'coronographic')]"
+
+    - ``dms_note``:
+      Notes from upstream processing of the downlinked data that may be pertinent
+      to the quality of the data. Currently the value "wfsc_los_jitter" is used
+      by the Level 2 wavefront sensing rule,
+      `~jwst.associations.lib.rules_level2b.Asn_Lv2WFSC`, to ignore exposures.
+
+    - ``is_imprt``:
+      A 't' indicates the exposure is a NIRSpec imprint exposure.
+
+    - ``pntgtype``:
+      The general class of exposure. The default value is "science".
+      For target acquisition, the value is "target_acquisition".
 
     Parameters
     ----------
-    data : int
+    data : str, `astropy.io.fits.HDUList`, or `astropy.io.fits.ImageHDU`
         The data to get the pool parameters from.
-        Can be pathnames or `astropy.io.fits.HDUL`
-        or `astropy.io.fits.ImageHDU`.
 
-    asn_candidate : [(id, type)[,...]] or None
+    asn_candidate : list of tuple or None
         Association candidates to add to each exposure.
-        These are added to the default ('oXXX', 'observation') candidate
+        These are added to the default ``('oXXX', 'observation')`` candidate
         created from header information.
 
     dms_note : str
-        Value for the dms_note column.
+        Value for the ``dms_note`` column.
 
-    is_imprt : 't' or 'f'
+    is_imprt : str
         Indicator whether exposures are imprint/leakcal exposures.
+        Accepted value is 't' or 'f'.
 
-    pntgtype : 'science', 'target_acquisition'
-        General exposure type.
+    pntgtype : str
+        General exposure type. Accepted value is
+        'science' or 'target_acquisition'.
 
-    kwargs : dict
-        Other keyword arguments to pass to the
-        `astropy.io.fits.getheader` call.
+    **kwargs
+        Other keyword arguments to pass to
+        :func:`astropy.io.fits.getheader`.
 
     Returns
     -------
-    pool : `jwst.associations.AssociationPool`
+    pool : `~jwst.associations.pool.AssociationPool`
         The association pool.
-
     """
     params = set()
     for datum in data:
@@ -113,17 +118,14 @@ def mkpool(data,
     # Make sure there's no duplicates
     params = list(set(params))
     params.sort()
-    defaults = {param: 'null' for param in params}
+    defaults = dict.fromkeys(params, "null")
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
     # Set non-header values from hard-coded defaults
     non_header_params = NON_HEADER_COLS.copy()
 
     # Update default values for user-settable non-header parameters
-    non_header_params.update(
-        {'dms_note': dms_note,
-         'is_imprt': is_imprt,
-         'pntgtype': pntgtype})
+    non_header_params.update({"dms_note": dms_note, "is_imprt": is_imprt, "pntgtype": pntgtype})
 
     # Setup for target id calculation
     targetid = 0  # Start off with no target id.
@@ -144,18 +146,18 @@ def mkpool(data,
         # Setup association candidates
         combined_asn_candidates = [(f"o{header['observtn']}", "observation")]
         if isinstance(asn_candidate, str):
-            combined_asn_candidates = f'[{combined_asn_candidates[0]}, {asn_candidate[1:]}'
+            combined_asn_candidates = f"[{combined_asn_candidates[0]}, {asn_candidate[1:]}"
         else:
             if asn_candidate is not None:
                 combined_asn_candidates += asn_candidate
             combined_asn_candidates = str(combined_asn_candidates)
-        valid_params['asn_candidate'] = combined_asn_candidates
+        valid_params["asn_candidate"] = combined_asn_candidates
 
         # Calculate target id.
-        if valid_params['targname'] not in target_names:
-            target_names.add(valid_params['targname'])
+        if valid_params["targname"] not in target_names:
+            target_names.add(valid_params["targname"])
             targetid += 1
-        valid_params['targetid'] = str(targetid)
+        valid_params["targetid"] = str(targetid)
 
         # Add the exposure
         final_params = copy(defaults)
@@ -166,83 +168,92 @@ def mkpool(data,
 
 
 def from_cmdline(args=None):
-    """Collect command-line options and run mkpool
+    """
+    Collect command-line options and run `mkpool`.
 
     Parameters
     ----------
-    args : [str[,...]]
-        List of arguments to parse
+    args : list of str
+        List of arguments to parse.
 
-    Returns : dict
-        Dict of the arguments and their values.
+    Returns
+    -------
+    dict
+        Dictionary of the arguments and their values.
     """
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='Create an Association Pool file from a list of exposures'
+        description="Create an Association Pool file from a list of exposures"
+    )
+
+    parser.add_argument("pool", help="Name of the pool file to save to.")
+    parser.add_argument(
+        "data", nargs="+", help="List of exposures to create the Association Pool with."
     )
 
     parser.add_argument(
-        'pool',
-        help='Name of the pool file to save to.'
+        "--asn-candidate",
+        default=NON_HEADER_COLS["asn_candidate"],
+        help="Additional candidate information.",
     )
     parser.add_argument(
-        'data', nargs='+',
-        help='List of exposures to create the Association Pool with.'
-    )
-
-    parser.add_argument(
-        '--asn-candidate', default=NON_HEADER_COLS['asn_candidate'],
-        help='Additional candidate information.'
+        "--dms-note",
+        default=NON_HEADER_COLS["dms_note"],
+        help="Added notes that may be relevant to association creation.",
     )
     parser.add_argument(
-        '--dms-note', default=NON_HEADER_COLS['dms_note'],
-        help='Added notes that may be relevant to association creation.'
+        "--is-imprt",
+        default=NON_HEADER_COLS["is_imprt"],
+        help='A "t" indicates the exposure is an imprint exposure.',
     )
     parser.add_argument(
-        '--is-imprt', default=NON_HEADER_COLS['is_imprt'],
-        help='A "t" indicates the exposure is an imprint exposure.'
+        "--pntgtype", default=NON_HEADER_COLS["pntgtype"], help="The general class of exposure."
     )
     parser.add_argument(
-        '--pntgtype', default=NON_HEADER_COLS['pntgtype'],
-        help='The general class of exposure.'
-    )
-    parser.add_argument(
-        '-v', '--verbose', action='count', default=0,
-        help='Increase verbosity. Specifying multiple times adds more output.'
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase verbosity. Specifying multiple times adds more output.",
     )
 
     parsed = parser.parse_args(args)
 
     # Set output detail.
-    level = LogLevels[min(len(LogLevels) - 1, parsed.verbose)]
+    level = LOGLEVELS[min(len(LOGLEVELS) - 1, parsed.verbose)]
     logger.setLevel(level)
 
     # That's all folks.
     mkpool_args = vars(parsed)
-    del mkpool_args['verbose']
+    del mkpool_args["verbose"]
     return mkpool_args
 
 
 def getheader(datum, **kwargs):
-    """Get header from the data item
+    """
+    Get header from the data item.
 
     Parameters
     ----------
-    datum : str or HDUList or HDU
-        Source of the header information
+    datum : str, `~astropy.io.fits.HDUList`, or `~astropy.io.fits.HDU`
+        Source of the header information.
 
-    kwargs : dict
-        Keyword arguments passed to `astropy.io.fits.getheader`.
-        Relevant ones are `ext`, `extname`, or `extver`
+    **kwargs
+        Keyword arguments passed to :func:`astropy.io.fits.getheader`.
+        Relevant ones are ``ext``, ``extname``, or ``extver``.
+
+    Returns
+    -------
+    `~astropy.io.fits.Header`
+        The FITS header from the data item.
     """
-
     # Parse out HDU key
     try:
-        key = kwargs['ext']
+        key = kwargs["ext"]
     except KeyError:
         try:
-            key = (kwargs['extname'], kwargs.get('extver', 0))
+            key = (kwargs["extname"], kwargs.get("extver", 0))
         except KeyError:
             key = 0
 
@@ -257,9 +268,9 @@ def getheader(datum, **kwargs):
     except AttributeError:
         pass
     else:
-        header['FILENAME'] = hdu.fileinfo()['file'].name
+        header["FILENAME"] = hdu.fileinfo()["file"].name
         return header
 
     header = fits_getheader(datum, **kwargs)
-    header['FILENAME'] = str(datum)
+    header["FILENAME"] = str(datum)
     return header

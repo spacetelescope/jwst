@@ -9,6 +9,4 @@ Bad Pixel Self-Calibration
 
    description.rst
    arguments.rst
-   reference_files.rst
-
-.. automodapi:: jwst.badpix_selfcal
+   api_ref.rst

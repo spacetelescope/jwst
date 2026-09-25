@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.source_catalog.SourceCatalogStep`
+:Class: `jwst.source_catalog.source_catalog_step.SourceCatalogStep`
 :Alias: source_catalog
 
 This step creates a catalog of source photometry and morphologies.
@@ -9,47 +9,33 @@ Both aperture and isophotal (segment-based) photometry are calculated.
 Source morphologies are based on 2D image moments within the source
 segment.
 
-
 Source Detection
 ----------------
-Sources are detected using `image segmentation
-<https://en.wikipedia.org/wiki/Image_segmentation>`_, which is a
-process of assigning a label to every pixel in an image such that
-pixels with the same label are part of the same source.  The
-segmentation procedure used is from `Photutils source extraction
-<https://photutils.readthedocs.io/en/latest/segmentation.html>`_.
-Detected sources must have a minimum number of connected pixels that
-are each greater than a specified threshold value in an image.  The
-threshold level is usually defined at some multiple of the background
-standard deviation above the background.  The image can also be
-filtered before thresholding to smooth the noise and maximize the
-detectability of objects with a shape similar to the filter kernel.
 
-Source Deblending
------------------
-Overlapping sources are detected as single sources.  Separating those
-sources requires a deblending procedure, such as a multi-thresholding
-technique used by `SExtractor
-<https://www.astromatic.net/software/sextractor>`_.  Here we use the
-`Photutils deblender
-<https://photutils.readthedocs.io/en/latest/segmentation.html#source-deblending>`_,
-which is an algorithm that deblends sources using a combination of
-multi-thresholding and `watershed segmentation
-<https://en.wikipedia.org/wiki/Watershed_(image_processing)>`_.  In
-order to deblend sources, they must be separated enough such that
-there is a saddle between them.
+Stars are detected in the input image with one of the following source
+detection algorithms: `photutils.detection.DAOStarFinder`,
+`photutils.detection.IRAFStarFinder`, or `photutils.segmentation.SourceFinder`,
+in conjunction with `photutils.segmentation.SourceCatalog` (default).
+
+.. include:: ../references_general/source_detection.rst
+
+.. note::
+    If any other source detection algorithm other than `~photutils.segmentation.SourceFinder` is used,
+    the output segmentation map will not be created, and the source catalog will
+    be missing column values that are required for use as input to Level 2 spectral
+    associations. Therefore if the direct image is to be used as part of a
+    ``spec2`` association, `~photutils.segmentation.SourceFinder` should be used as the source
+    detection algorithm.
 
 Source Photometry and Properties
 --------------------------------
-After detecting sources using image segmentation, we can measure their
+After detecting sources, we can measure their
 photometry, centroids, and morphological properties.  The aperture
 photometry is measured in three apertures, based on the input
 encircled energy values.  The total aperture-corrected flux and
 magnitudes are also calculated, based on the largest aperture.  Both
 AB and Vega magnitudes are calculated.
 
-The isophotal photometry is based on `photutils segmentation
-<https://photutils.readthedocs.org/en/latest/segmentation.html>`_.
 The properties that are currently calculated for each source include
 source centroids (both in pixel and sky coordinates), isophotal fluxes
 (and errors), AB and Vega magnitudes (and errors), isophotal area,
@@ -61,13 +47,22 @@ Photometric errors are calculated from the resampled total-error
 array contained in the ``ERR`` (``model.err``) array. Note that this
 total-error array includes source Poisson noise.
 
+Source Position
+---------------
+The source centroid is computed as the center of mass of the unmasked pixels
+within the source segment (see `~photutils.segmentation.SourceCatalog`
+for details). As such, the centroid depends on the source morphology,
+the parameters passed to the segmentation algorithm, and the local background
+noise properties. This also makes the uncertainty in the centroid position
+difficult to estimate, and a formal error estimate is not provided by the step.
+
 Output Products
 ---------------
 
 Source Catalog Table
 ^^^^^^^^^^^^^^^^^^^^
-The output source catalog table is saved in `ECSV format
-<https://docs.astropy.org/en/stable/io/ascii/ecsv.html>`_.
+The output source catalog table is saved in
+:ref:`ECSV format <astropy:ecsv_format>`.
 
 The table contains a row for each source, with the following default
 columns (assuming the default encircled energies of 30, 50, and 70):

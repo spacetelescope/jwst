@@ -1,16 +1,14 @@
-import numpy as np
-from jwst.resample.resample_utils import build_mask
-
-from jwst import datamodels as dm
-
-from stcal.outlier_detection.utils import compute_weight_threshold
-from .utils import flag_model_crs, nanmedian3D
-from ._fileio import save_median
-
 import logging
 
+import numpy as np
+from stcal.outlier_detection.utils import compute_weight_threshold
+
+from jwst import datamodels as dm
+from jwst.outlier_detection._fileio import save_median
+from jwst.outlier_detection.utils import flag_model_crs, nanmedian3D
+from jwst.resample.resample_utils import build_mask
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["detect_outliers"]
@@ -30,10 +28,11 @@ def detect_outliers(
 
     Parameters
     ----------
-    input_model : ~jwst.datamodels.CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input cube model.
     save_intermediate_results : bool
-        If True, save the rolling median model as a CubeModel.
+        If `True`, save the rolling median model as a
+        `~stdatamodels.jwst.datamodels.CubeModel`.
     good_bits : int
         DQ flag bit values indicating good pixels.
     maskpt : float
@@ -47,11 +46,9 @@ def detect_outliers(
 
     Returns
     -------
-    ~jwst.datamodels.CubeModel
+    `~stdatamodels.jwst.datamodels.CubeModel`
         The input model with outliers flagged.
     """
-    if not isinstance(input_model, dm.JwstDataModel):
-        input_model = dm.open(input_model)
     if isinstance(input_model, dm.ModelContainer):
         raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
     weighted_cube = weight_no_resample(input_model, good_bits)
@@ -93,29 +90,29 @@ def weight_no_resample(input_model, good_bits):
 
     Parameters
     ----------
-    input_model : ~jwst.datamodels.CubeModel
+    input_model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input cube model.
     good_bits : int
         DQ flag bit values indicating good pixels.
 
     Returns
     -------
-    ~jwst.datamodels.CubeModel
-        A copy of the input cube model with weights assigned in the `wht` extension.
-
-    Notes
-    -----
-    Prior to PR #8473, the `build_driz_weight` function was used to
-    create the weights for the input models for TSO data. However, that
-    function was simply returning a copy of the DQ array because the
-    var_noise was not being passed in by calwebb_tso3. As of PR #8473,
-    a cube model that includes the var_noise is passed into TSO
-    outlier detection, so `build_driz_weight` would weight the cube model
-    by the variance. Therefore `build_driz_weight` was removed in order to
-    preserve the original behavior. If it is determined later that exposure
-    time or inverse variance weighting should be used here, build_driz_weight
-    should be re-implemented.
+    `~stdatamodels.jwst.datamodels.CubeModel`
+        A copy of the input cube model with weights assigned in the ``wht`` extension.
     """
+    # Notes
+    # -----
+    # Prior to PR #8473, the `build_driz_weight` function was used to
+    # create the weights for the input models for TSO data. However, that
+    # function was simply returning a copy of the DQ array because the
+    # var_noise was not being passed in by calwebb_tso3. As of PR #8473,
+    # a cube model that includes the var_noise is passed into TSO
+    # outlier detection, so `build_driz_weight` would weight the cube model
+    # by the variance. Therefore `build_driz_weight` was removed in order to
+    # preserve the original behavior. If it is determined later that exposure
+    # time or inverse variance weighting should be used here, build_driz_weight
+    # should be re-implemented.
+
     weighted_cube = input_model.copy()
     dqmask = build_mask(input_model.dq, good_bits)
     weighted_cube.wht = dqmask.astype(np.float32)
@@ -132,10 +129,10 @@ def compute_rolling_median(
 
     Parameters
     ----------
-    model : ~jwst.datamodels.CubeModel
-        The input cube model
+    model : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input cube model.
 
-    weight_threshold : np.ndarray
+    weight_threshold : ndarray
         The weight thresholds for each integration.
 
     w : int
@@ -143,7 +140,7 @@ def compute_rolling_median(
 
     Returns
     -------
-    np.ndarray
+    ndarray
         The rolling median of the input data. Same dimensions as input.
     """
     sci = model.data
@@ -167,37 +164,38 @@ def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
     """
     Calculate the median of a moving window over the zeroth axis of an N-d array.
 
-    Algorithm works by expanding the array into an additional dimension
-    where the new axis has the same length as the window size. Each entry in that
-    axis is a copy of the original array shifted by 1 with respect to the previous
-    entry, such that the rolling median is simply the median over the new axis.
-    modified from https://stackoverflow.com/a/71154394, see link for more details.
+    Slide a window of size ``w`` over the array along axis 0, and for each position,
+    calculate the median of the values inside that window (across axis 0 only).
+    The result at each step is stored in the center position of the window,
+    producing an output array with the same shape as the input.
+
+    Because the window cannot fully overlap the data at the beginning and end,
+    those edge positions are filled with the nearest computed median value to
+    avoid missing data.
 
     Parameters
     ----------
-    x : np.ndarray
+    x : ndarray
         The input array.
     w : int
         The window size.
 
     Returns
     -------
-    np.ndarray
+    ndarray
         The rolling median of the input array. Same dimensions as input.
     """
     if w <= 1:
         raise ValueError("Rolling median window size must be greater than 1.")
-    shifted = np.zeros((x.shape[0] + w - 1, w, *x.shape[1:])) * np.nan
-    for idx in range(w - 1):
-        shifted[idx : -w + idx + 1, idx] = x
-    shifted[idx + 1 :, idx + 1] = x
-    medians: np.ndarray = np.median(shifted, axis=1)
-    for idx in range(w - 1):
-        medians[idx] = np.median(shifted[idx, : idx + 1])
-        medians[-idx - 1] = np.median(shifted[-idx - 1, -idx - 1 :])
-    medians = medians[(w - 1) // 2 : -(w - 1) // 2]
-
+    out = np.full(x.shape, np.nan)
+    hw, odd_window = divmod(w, 2)
+    for start_index in range(x.shape[0] - w + 1):
+        end_index = start_index + w
+        np.median(x[start_index:end_index], axis=0, out=out[start_index + hw])
     # Fill in the edges with the nearest valid value
-    medians[: w // 2] = medians[w // 2]
-    medians[-w // 2 :] = medians[-w // 2]
-    return medians
+    out[:hw] = out[hw]
+    if odd_window:
+        out[-hw:] = out[-hw - 1]
+    else:
+        out[-hw + 1 :] = out[-hw]
+    return out

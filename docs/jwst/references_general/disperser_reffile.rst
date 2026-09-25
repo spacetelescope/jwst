@@ -6,7 +6,7 @@ DISPERSER Reference File (NIRSpec only)
 ---------------------------------------
 
 :REFTYPE: DISPERSER
-:Data model: `~jwst.datamodels.DisperserModel`
+:Data model: `~stdatamodels.jwst.datamodels.DisperserModel`
 
 Reference Selection Keywords for DISPERSER
 ++++++++++++++++++++++++++++++++++++++++++
@@ -56,4 +56,3 @@ The prism reference file has in addition the following fields:
 :tref: Temperature (in K), used to compute the change in temperature relative to the reference temperature of the glass
 :pref: Reference pressure (in ATM)
 :wbound: Min and Max wavelength (in meters) for which the model is valid
-

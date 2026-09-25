@@ -1,207 +1,229 @@
-"""Treat various objects as Associations"""
+"""Treat various objects as `~jwst.associations.association.Association`."""
 
 from functools import partial
-from os import path as os_path
+from pathlib import Path
 
-from jwst.associations import (
-    Association,
-    AssociationRegistry,
-    libpath
-)
-
+from jwst.associations import Association, AssociationRegistry, libpath
+from jwst.associations.asn_from_list import asn_from_list
+from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.associations.load_asn import load_asn
-from ..associations.asn_from_list import asn_from_list
-from ..associations.lib.rules_level2_base import DMSLevel2bBase
 
 __all__ = [
-    'LoadAsAssociation',
-    'LoadAsLevel2Asn',
+    "LoadAsAssociation",
+    "LoadAsLevel2Asn",
 ]
 
 
-DEFAULT_NAME = 'singleton'
-DEFAULT_ASN_META = {
-    'program': DEFAULT_NAME,
-    'target': DEFAULT_NAME,
-    'asn_pool': DEFAULT_NAME
-}
+DEFAULT_NAME = "singleton"
+DEFAULT_ASN_META = {"program": DEFAULT_NAME, "target": DEFAULT_NAME, "asn_pool": DEFAULT_NAME}
+
+
+def _blind_asn_load(obj, meta=DEFAULT_ASN_META, rule=Association, product_name_func=None):
+    if not isinstance(obj, list):
+        obj = [obj]
+    asn = asn_from_list(obj, rule=rule, meta=meta, product_name_func=product_name_func)
+    asn.filename = DEFAULT_NAME
+    return asn
 
 
 class LoadAsAssociation(dict):
-    """Read in or create an association
-
-    Parameters
-    ----------
-    asn : dict or Association
-        An already existing association
+    """
+    Read in or create an association.
 
     Notes
     -----
     This class is normally not instantiated.
-    the `load` method should be used as the factory
+    The :meth:`load` method should be used as the factory
     method to read an association or create one from
-    a string or `Datamodel` object, or a list of such
-    objects.
+    a string or `~stdatamodels.jwst.datamodels.JwstDataModel` object,
+    or a list of such objects.
     """
 
     @classmethod
-    def load(cls, obj,
-             meta=DEFAULT_ASN_META,
-             registry=AssociationRegistry,
-             rule=Association,
-             product_name_func=None):
-        """ Load object and return an association of it
+    def load(
+        cls,
+        obj,
+        meta=None,
+        registry=AssociationRegistry,
+        rule=Association,
+        product_name_func=None,
+    ):
+        """
+        Load object and return an association of it.
 
         Parameters
         ----------
-        obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
-            The obj to return as an association
+        obj : `~jwst.associations.association.Association`, str, dict, \
+              `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+              list of str, or \
+              list of `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The object to return as an association.
 
-        registry : AssociationRegistry
-            The registry to use to load an association file with
+        meta : dict or None
+            Metadata to attach to the association. If not given,
+            a built-in default is used.
 
-        rule : Association
-            The rule to use if an association needs to be created
+        registry : `~jwst.associations.registry.AssociationRegistry`
+            The registry to use to load an association file with.
+
+        rule : `~jwst.associations.association.Association`
+            The rule to use if an association needs to be created.
 
         product_name_func : func
-            A function, when given the argument of `obj`, or
-            if `obj` is a list, each item in `obj`, returns
+            A function, when given the argument of ``obj``, or
+            if ``obj`` is a list, each item in ``obj``, returns
             a string that will be used as the product name in
             the association.
 
-        Attributes
-        ----------
-        Along with the attributes belonging to an association, the
-        following are added:
-
-        filename : str
-            The name of the association file, if such a file
-            where passed in. Otherwise a default value is given.
-
         Returns
         -------
-        association : Association
-            An association created using given obj
+        association : `~jwst.associations.association.Association`
+            An association created using given object.
+
+        Notes
+        -----
+        Along with the attributes belonging to a Level 2 association, the
+        filename is added here, if such a file was passed in. Otherwise
+        a default value is given.
         """
-        try:
-            with open(obj) as fp:
-                pure_asn = load_asn(fp, registry=registry)
-        except Exception:
-            if not isinstance(obj, list):
-                obj = [obj]
-            asn = asn_from_list(
-                obj,
-                rule=rule,
-                meta=DEFAULT_ASN_META,
-                product_name_func=product_name_func
-            )
-            asn.filename = DEFAULT_NAME
+        # This is to avoid Sphinx build from throwing warning.
+        if meta is None:
+            meta = DEFAULT_ASN_META
+
+        if isinstance(obj, (str, Path)):
+            try:
+                with Path(obj).open() as fp:
+                    pure_asn = load_asn(fp, registry=registry)
+            except Exception:
+                asn = _blind_asn_load(
+                    obj, rule=rule, meta=meta, product_name_func=product_name_func
+                )
+            else:
+                asn = rule()
+                asn.update(pure_asn)
+                asn.filename = obj
+        elif isinstance(obj, Association):  # No-op
+            asn = obj
+        elif isinstance(obj, dict):
+            asn = Association()
+            asn.data = obj
         else:
-            asn = rule()
-            asn.update(pure_asn)
-            asn.filename = obj
+            asn = _blind_asn_load(obj, rule=rule, meta=meta, product_name_func=product_name_func)
 
         return asn
 
 
 class LoadAsLevel2Asn(LoadAsAssociation):
-    """Read in or create a Level2 association
-    """
+    """Read in or create a Level 2 association."""
 
     @classmethod
     def load(cls, obj, basename=None):
-        """ Open object and return a Level2 association of it
+        """
+        Open object and return a Level 2 association of it.
 
         Parameters
         ----------
-        obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
-            The obj to return as an association
+        obj : `~jwst.associations.association.Association`, str, dict, \
+              `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+              list of str, or \
+              list of `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The object to return as an association.
 
         basename : str
             If specified, use as the basename, with an index appended.
 
-        Attributes
-        ----------
-        Along with the attributes belonging to a Level2 association, the
-        following are added:
-
-        filename : str
-            The name of the association file, if such a file
-            where passed in. Otherwise a default value is given.
-
         Returns
         -------
-        association : DMSLevel2bBase
-            An association created using given obj
+        association : `~jwst.associations.lib.rules_level2_base.DMSLevel2bBase`
+            An association created using given object.
+
+        Notes
+        -----
+        Along with the attributes belonging to a Level 2 association, the
+        filename is added here, if such a file was passed in. Otherwise
+        a default value is given.
         """
+        if isinstance(obj, Association):  # No-op
+            return obj
+
+        if isinstance(obj, dict):
+            asn = Association()
+            asn.data = obj
+            return asn
+
         product_name_func = cls.model_product_name
         if basename is not None:
             product_name_func = partial(cls.name_with_index, basename)
 
         # if the input string is a FITS file create an asn and return
-        if isinstance(obj, str):
-            file_name, file_ext = os_path.splitext(obj)
+        if isinstance(obj, (str, Path)):
+            file_name = Path(obj).name
+            file_ext = Path(obj).suffix
 
-            if file_ext == '.fits':
-                items = [(obj, 'science')]
-                asn = asn_from_list(items, product_name=file_name,
-                                    rule=DMSLevel2bBase, with_exptype=True,
-                                    meta={"asn_pool":"singleton"})
+            if file_ext == ".fits":
+                items = [(obj, "science")]
+                asn = asn_from_list(
+                    items,
+                    product_name=file_name,
+                    rule=DMSLevel2bBase,
+                    with_exptype=True,
+                    meta={"asn_pool": "singleton"},
+                )
                 return asn
 
         asn = super(LoadAsLevel2Asn, cls).load(
             obj,
             registry=AssociationRegistry(
-                definition_files=[libpath('rules_level2b.py')],
-                include_default=False
+                definition_files=[libpath() / "rules_level2b.py"], include_default=False
             ),
             rule=DMSLevel2bBase,
-            product_name_func=product_name_func
+            product_name_func=product_name_func,
         )
         return asn
 
     @staticmethod
-    def model_product_name(model, *args, **kwargs):
-        """Product a model product name based on the model.
+    def model_product_name(model, _idx):
+        """
+        Produce a model product name based on the model.
 
         Parameters
         ----------
-        model : DataModel
-            The model to get the name from
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The model to get the name from.
+        _idx : int
+            The parent method is sometimes passed an index,
+            which this method ignores.
 
         Returns
         -------
         product_name : str
-            The basename of filename from the model
+            The basename of filename from the model.
         """
-        product_name, ext = os_path.splitext(model.meta.filename)
-        return product_name
+        return Path(model.meta.filename).stem
 
     @staticmethod
-    def name_with_index(basename, obj, idx, *args, **kwargs):
-        """Produce a name with the basename and index appended
+    def name_with_index(basename, idx):
+        """
+        Produce a name with the basename and index appended.
 
         Parameters
         ----------
         basename : str
-            The base of the file name
-
-        obj : object
-            The object being added to the association _(unused)_
-
+            The base of the file name.
         idx : int
             The current index of the added item.
 
         Returns
         -------
         product_name : str
-            The concatenation of basename, '_', idx
+            The concatenation of ``basename``, '_', and ``idx``.
 
         Notes
         -----
         If the index is less than or equal to 1, no appending is done.
         """
-        basename, extension = os_path.splitext(os_path.basename(basename))
+        basename = Path(basename).stem
+
         if idx > 1:
-            basename = basename + '_' + str(idx)
+            basename = basename + "_" + str(idx)
         return basename

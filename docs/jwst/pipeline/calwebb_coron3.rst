@@ -50,7 +50,7 @@ Inputs
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _calints
 
 The input to ``calwebb_coron3`` must be in the form of an ASN file that lists
@@ -94,7 +94,7 @@ Outputs
 CR-flagged images
 ^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _crfints
 
 If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version of
@@ -106,7 +106,7 @@ product type suffix and include the association candidate ID, e.g.
 3D stacked PSF images
 ^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _psfstack
 
 The data from each input PSF reference exposure are concatenated into a single
@@ -118,7 +118,7 @@ ASN file, e.g. "jw86073-a3001_t001_nircam_f140m-maskbar_psfstack.fits."
 3D aligned PSF images
 ^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _psfalign
 
 All of the reference PSF images in the
@@ -134,7 +134,7 @@ target integration as was done in the pre-flight pipeline.
 3D PSF-subtracted images
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _psfsub
 
 For each science target exposure, the :ref:`klip <klip_step>` step applies PSF fitting and
@@ -146,7 +146,7 @@ product, using exposure-based file names, e.g.
 2D resampled image
 ^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _i2d
 
 The :ref:`resample <resample_step>` step is applied to the CR-flagged products to create a

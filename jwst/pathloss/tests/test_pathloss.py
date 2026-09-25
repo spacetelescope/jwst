@@ -2,23 +2,25 @@
 Unit tests for pathloss correction
 """
 
-from stdatamodels.jwst.datamodels import MultiSlitModel, PathlossModel
-
-from jwst.pathloss.pathloss import (calculate_pathloss_vector,
-                                    get_aperture_from_model,
-                                    get_center,
-                                    interpolate_onto_grid,
-                                    is_pointsource,
-                                    shutter_below_is_closed,
-                                    shutter_above_is_closed)
-from jwst.pathloss.pathloss import do_correction
+import gwcs
 import numpy as np
+import pytest
+from astropy.modeling.models import Const1D, Mapping
+from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel, PathlossModel, SlitModel
+
+from jwst.pathloss import pathloss as pl
+
+# Define default LRS target position and offset
+DET_XPOS = 105.0
+DET_YPOS = 53.0
+OFFSET_1 = -100.0
+OFFSET_2 = -50.0
 
 
 def test_get_center_ifu():
     """get_center assumes IFU targets are centered @ (0.0, 0.0)"""
 
-    x_pos, y_pos = get_center("NRS_IFU", None)
+    x_pos, y_pos = pl.get_center("NRS_IFU", None)
 
     assert x_pos == y_pos == 0.0
 
@@ -28,7 +30,7 @@ def test_get_center_attr_err():
     center is assigned to (0.0, 0.0)"""
 
     datmod = MultiSlitModel()
-    x_pos, y_pos = get_center("NRS_MSASPEC", datmod)
+    x_pos, y_pos = pl.get_center("NRS_MSASPEC", datmod)
 
     assert x_pos == y_pos == 0.0
 
@@ -36,23 +38,131 @@ def test_get_center_attr_err():
 def test_get_center_exp_type():
     """if exp_type is not in NRS, center is returned (0.0,0.0)"""
     datmod = MultiSlitModel()
-    x_pos, y_pos = get_center("NRC_IMAGE", datmod)
+    x_pos, y_pos = pl.get_center("NRC_IMAGE", datmod)
 
     assert x_pos == y_pos == 0.0
 
 
 def test_get_center_exptype():
-    """ If exptype is "NRS_MSASPEC" | "NRS_FIXEDSLIT" | "NRS_BRIGHTOBJ" and
+    """If exptype is "NRS_MSASPEC" | "NRS_FIXEDSLIT" | "NRS_BRIGHTOBJ" and
     source_xpos and source_ypos exist in datamod.slits, make sure it's returned"""
 
     datmod = MultiSlitModel()
-    datmod.slits.append({'source_xpos': 1, 'source_ypos': 2})
+    datmod.slits.append({"source_xpos": 1, "source_ypos": 2})
 
     for exptype in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
-        x_pos, y_pos = get_center(exptype, datmod.slits[0])
+        x_pos, y_pos = pl.get_center(exptype, datmod.slits[0])
 
         assert x_pos == 1
         assert y_pos == 2
+
+
+def mock_lrs_wcs(offset_1=OFFSET_1, offset_2=OFFSET_2, det_pos=(DET_XPOS, DET_YPOS)):
+    # Mock RA, Dec, wavelength
+    det2sky = Mapping((0, 0, 1), n_inputs=2) | Const1D(149.5) & Const1D(2.0) & Const1D(10.0)
+
+    # Mock detector x, y
+    det2sky.inverse = Mapping((0, 0), n_inputs=3) | Const1D(det_pos[0]) & Const1D(det_pos[1])
+
+    # Store offsets
+    det2sky.offset_1 = offset_1
+    det2sky.offset_2 = offset_2
+
+    input_frame = gwcs.Frame2D(name="detector")
+    output_frame = gwcs.Frame2D(name="world")
+    wcs = gwcs.WCS([(input_frame, det2sky), (output_frame, None)])
+    return wcs
+
+
+def test_get_center_lrs_with_source_pos():
+    """Test MIR_LRS-FIXEDSLIT with source_xpos and source_ypos provided"""
+    # Create a mock LRS model with WCS
+    datmod = ImageModel()
+    datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+
+    # Create WCS with offsets
+    datmod.meta.wcs = mock_lrs_wcs(offset_1=OFFSET_1, offset_2=OFFSET_2)
+    datmod.source_xpos = 99.0
+    datmod.source_ypos = 51.0
+
+    # Test without offsets
+    x_pos, y_pos = pl.get_center("MIR_LRS-FIXEDSLIT", datmod, offsets=False)
+
+    # Should return source position minus the aperture reference point
+    assert x_pos == 99.0 + OFFSET_1
+    assert y_pos == 51.0 + OFFSET_2
+
+
+def test_get_center_lrs_from_ra_dec():
+    """Test MIR_LRS-FIXEDSLIT computing center from RA/Dec"""
+    # Create a mock LRS model with WCS
+    datmod = ImageModel()
+    datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+    datmod.meta.target.ra = 150.0
+    datmod.meta.target.dec = 2.5
+
+    # Create WCS with offsets and detector position
+    datmod.meta.wcs = mock_lrs_wcs(
+        offset_1=OFFSET_1, offset_2=OFFSET_2, det_pos=(DET_XPOS, DET_YPOS)
+    )
+
+    # Test without offsets
+    x_pos, y_pos = pl.get_center("MIR_LRS-FIXEDSLIT", datmod, offsets=False)
+
+    # Should return detector position minus the aperture reference point
+    assert x_pos == DET_XPOS + OFFSET_1
+    assert y_pos == DET_YPOS + OFFSET_2
+
+
+def test_get_center_lrs_with_dither_offsets(monkeypatch):
+    """Test MIR_LRS-FIXEDSLIT with dither offsets propagated to source position"""
+
+    # Define mock compute_scale function to handle lack of scaling in mock WCS
+    def mock_compute_scale(wcs, location, disp_axis=2):
+        # Returns expected LRS pixel scale (in degrees)
+        return 0.11056263994239542 / 3600.0
+
+    # Create mock LRS data model with simple WCS
+    datmod = ImageModel()
+    datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+    datmod.meta.wcs = mock_lrs_wcs(
+        offset_1=OFFSET_1, offset_2=OFFSET_2, det_pos=(DET_XPOS, DET_YPOS)
+    )
+
+    # Add cross-slit offset
+    datmod.meta.dither.y_offset = 0.1
+
+    # Expected y_offset in pixels
+    ref_yoffset = datmod.meta.dither.y_offset / 0.11056263994239542
+
+    # Test with offsets=False
+    monkeypatch.setattr(pl, "compute_scale", mock_compute_scale)
+    x_pos, y_pos = pl.get_center("MIR_LRS-FIXEDSLIT", datmod, offsets=False)
+
+    # Should return source position relative to LRS aperture reference point
+    # with small ycenter adjustment that is within 1e-6 of calculated reference offset
+    assert x_pos == DET_XPOS + OFFSET_1
+    assert abs(y_pos - (DET_YPOS + OFFSET_2 + ref_yoffset)) < 1e-6 * ref_yoffset
+
+
+def test_get_center_lrs_with_source_pos_and_offsets():
+    """Test MIR_LRS-FIXEDSLIT with offsets=True"""
+    datmod = ImageModel()
+    datmod.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+
+    # Create WCS with offsets
+    datmod.meta.wcs = mock_lrs_wcs(offset_1=OFFSET_1, offset_2=OFFSET_2)
+    datmod.source_xpos = DET_XPOS
+    datmod.source_ypos = DET_YPOS
+
+    # Test with offsets=True
+    x_pos, y_pos, imx, imy = pl.get_center("MIR_LRS-FIXEDSLIT", datmod, offsets=True)
+
+    # Should return source position minus aperture ref, plus the aperture ref separately
+    assert x_pos == DET_XPOS + OFFSET_1
+    assert y_pos == DET_YPOS + OFFSET_2
+    assert imx == -OFFSET_1
+    assert imy == -OFFSET_2
 
 
 # Begin get_aperture_from_model tests
@@ -61,9 +171,9 @@ def test_get_app_from_model_null():
     routine returns None"""
 
     datmod = MultiSlitModel()
-    datmod.meta.exposure.type = 'NRC_IMAGE'
+    datmod.meta.exposure.type = "NRC_IMAGE"
 
-    result = get_aperture_from_model(datmod, None)
+    result = pl.get_aperture_from_model(datmod, None)
 
     assert result is None
 
@@ -73,10 +183,10 @@ def test_get_aper_from_model_fixedslit():
     aperture reference data is returned for fixedslit mode"""
 
     datmod = PathlossModel()
-    datmod.apertures.append({'name': 'S200A1'})
-    datmod.meta.exposure.type = 'NRS_FIXEDSLIT'
+    datmod.apertures.append({"name": "S200A1"})
+    datmod.meta.exposure.type = "NRS_FIXEDSLIT"
 
-    result = get_aperture_from_model(datmod, 'S200A1')
+    result = pl.get_aperture_from_model(datmod, "S200A1")
 
     assert result == datmod.apertures[0]
 
@@ -86,12 +196,26 @@ def test_get_aper_from_model_msa():
     aperture reference data is returned for MSA mode"""
 
     datmod = PathlossModel()
-    datmod.apertures.append({'shutters': 3})
-    datmod.meta.exposure.type = 'NRS_MSASPEC'
+    datmod.apertures.append({"shutters": 3})
+    datmod.apertures.append({"shutters": 1})
+    datmod.meta.exposure.type = "NRS_MSASPEC"
 
-    result = get_aperture_from_model(datmod, '11x11')
+    result = pl.get_aperture_from_model(datmod, "11x11")
 
     assert result == datmod.apertures[0]
+
+
+def test_get_aper_from_model_msa_one_shutter():
+    """The 1x1 data is returned for one shutter open."""
+
+    datmod = PathlossModel()
+    datmod.apertures.append({"shutters": 3})
+    datmod.apertures.append({"shutters": 1})
+    datmod.meta.exposure.type = "NRS_MSASPEC"
+
+    result = pl.get_aperture_from_model(datmod, "x")
+
+    assert result == datmod.apertures[1]
 
 
 # Begin calculate_pathloss_vector tests.
@@ -100,16 +224,26 @@ def test_calculate_pathloss_vector_pointsource_data():
 
     datmod = PathlossModel()
 
-    ref_data = {'pointsource_data': np.ones((10, 10, 10), dtype=np.float32),
-                'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.05,
-                                    'cdelt3': 1, 'crval1': -0.5, 'crpix1': 1.0,
-                                    'crpix3': 1.0, 'crval3': 1, 'cdelt1': 0.05}}
+    ref_data = {
+        "pointsource_data": np.ones((10, 10, 10), dtype=np.float32),
+        "pointsource_wcs": {
+            "crval2": -0.5,
+            "crpix2": 1.0,
+            "cdelt2": 0.05,
+            "cdelt3": 1,
+            "crval1": -0.5,
+            "crpix1": 1.0,
+            "crpix3": 1.0,
+            "crval3": 1,
+            "cdelt1": 0.05,
+        },
+    }
 
     datmod.apertures.append(ref_data)
 
-    wavelength, pathloss, is_inside_slitlet = calculate_pathloss_vector(datmod.apertures[0].pointsource_data,
-                                                                        datmod.apertures[0].pointsource_wcs,
-                                                                        0.0, 0.0)
+    wavelength, pathloss, is_inside_slitlet = pl.calculate_pathloss_vector(
+        datmod.apertures[0].pointsource_data, datmod.apertures[0].pointsource_wcs, 0.0, 0.0
+    )
 
     # Wavelength array is calculated with this: crval3 +(float(i+1) - crpix3)*cdelt3
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
@@ -131,14 +265,16 @@ def test_calculate_pathloss_vector_uniform_data():
 
     datmod = PathlossModel()
 
-    ref_data = {'uniform_data': np.ones((10,), dtype=np.float32),
-                'uniform_wcs': {'crpix1': 1.0, 'cdelt1': 1, 'crval1': 1}}
+    ref_data = {
+        "uniform_data": np.ones((10,), dtype=np.float32),
+        "uniform_wcs": {"crpix1": 1.0, "cdelt1": 1, "crval1": 1},
+    }
 
     datmod.apertures.append(ref_data)
 
-    wavelength, pathloss, _ = calculate_pathloss_vector(datmod.apertures[0].uniform_data,
-                                                        datmod.apertures[0].uniform_wcs,
-                                                        0.0, 0.0)
+    wavelength, pathloss, _ = pl.calculate_pathloss_vector(
+        datmod.apertures[0].uniform_data, datmod.apertures[0].uniform_wcs, 0.0, 0.0
+    )
 
     # Wavelength array is calculated with this: crval1 +(float(i+1) - crpix1)*cdelt1
     # Where i is the iteration of np.arange(wavesize) which is the shape of the uniform
@@ -155,16 +291,26 @@ def test_calculate_pathloss_vector_interpolation():
 
     datmod = PathlossModel()
 
-    ref_data = {'pointsource_data': np.ones((10, 10, 10), dtype=np.float32),
-                'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.5,
-                                    'cdelt3': 1.0, 'crval1': -0.5, 'crpix1': 1.0,
-                                    'crpix3': 1.0, 'crval3': 1.0, 'cdelt1': 0.5}}
+    ref_data = {
+        "pointsource_data": np.ones((10, 10, 10), dtype=np.float32),
+        "pointsource_wcs": {
+            "crval2": -0.5,
+            "crpix2": 1.0,
+            "cdelt2": 0.5,
+            "cdelt3": 1.0,
+            "crval1": -0.5,
+            "crpix1": 1.0,
+            "crpix3": 1.0,
+            "crval3": 1.0,
+            "cdelt1": 0.5,
+        },
+    }
 
     datmod.apertures.append(ref_data)
 
-    wavelength, pathloss, is_inside_slitlet = calculate_pathloss_vector(datmod.apertures[0].pointsource_data,
-                                                                        datmod.apertures[0].pointsource_wcs,
-                                                                        0.0, 0.0)
+    wavelength, pathloss, is_inside_slitlet = pl.calculate_pathloss_vector(
+        datmod.apertures[0].pointsource_data, datmod.apertures[0].pointsource_wcs, 0.0, 0.0
+    )
 
     # Wavelength array is calculated with this: crval3 +(float(i+1) - crpix3)*cdelt3
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
@@ -194,16 +340,26 @@ def test_calculate_pathloss_vector_interpolation_nontrivial():
 
     datmod = PathlossModel()
 
-    ref_data = {'pointsource_data': np.arange(10 * 10 * 10, dtype=np.float32).reshape((10, 10, 10)),
-                'pointsource_wcs': {'crpix1': 1.75, 'crval1': -0.5, 'cdelt1': 0.5,
-                                    'crpix2': 1.25, 'crval2': -0.5, 'cdelt2': 0.5,
-                                    'crpix3': 1.0, 'crval3': 1.0, 'cdelt3': 1.0}}
+    ref_data = {
+        "pointsource_data": np.arange(10 * 10 * 10, dtype=np.float32).reshape((10, 10, 10)),
+        "pointsource_wcs": {
+            "crpix1": 1.75,
+            "crval1": -0.5,
+            "cdelt1": 0.5,
+            "crpix2": 1.25,
+            "crval2": -0.5,
+            "cdelt2": 0.5,
+            "crpix3": 1.0,
+            "crval3": 1.0,
+            "cdelt3": 1.0,
+        },
+    }
 
     datmod.apertures.append(ref_data)
 
-    wavelength, pathloss, is_inside_slitlet = calculate_pathloss_vector(datmod.apertures[0].pointsource_data,
-                                                                        datmod.apertures[0].pointsource_wcs,
-                                                                        0.0, 0.0)
+    wavelength, pathloss, is_inside_slitlet = pl.calculate_pathloss_vector(
+        datmod.apertures[0].pointsource_data, datmod.apertures[0].pointsource_wcs, 0.0, 0.0
+    )
 
     # Wavelength array is calculated with this: crval3 +(float(i+1) - crpix3)*cdelt3
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
@@ -216,10 +372,15 @@ def test_calculate_pathloss_vector_interpolation_nontrivial():
     # closer to 2 in x, closer to 1 in y
     # (remember that y comes first for numpy)
     ps_data = datmod.apertures[0].pointsource_data
-    pathloss_comparison = np.sum([0.75 * 0.25 * ps_data[:, 1, 1],
-                                  0.75 * 0.75 * ps_data[:, 1, 2],
-                                  0.25 * 0.25 * ps_data[:, 2, 1],
-                                  0.25 * 0.75 * ps_data[:, 2, 2]], axis=0)
+    pathloss_comparison = np.sum(
+        [
+            0.75 * 0.25 * ps_data[:, 1, 1],
+            0.75 * 0.75 * ps_data[:, 1, 2],
+            0.25 * 0.25 * ps_data[:, 2, 1],
+            0.25 * 0.75 * ps_data[:, 2, 2],
+        ],
+        axis=0,
+    )
 
     assert np.all(pathloss == pathloss_comparison)
 
@@ -227,46 +388,45 @@ def test_calculate_pathloss_vector_interpolation_nontrivial():
     assert is_inside_slitlet is True
 
 
-def test_is_pointsource():
-    """Check to see if object it point source"""
-
-    point_source = None
-    result = is_pointsource(point_source)
-    assert result is False
-
-    point_source = 'point'
-    result = is_pointsource(point_source)
-    assert result is True
-
-    point_source = 'not a point'
-    result = is_pointsource(point_source)
-    assert result is False
-
-
-def test_do_correction_msa_slit_size_eq_0():
+def test_do_correction_msa_slit_size_eq_0(caplog):
     """If slits have size 0, quit calibration."""
 
     datmod = MultiSlitModel()
-    datmod.slits.append({'data': np.array([])})
+    datmod.slits.append({"data": np.array([])})
     pathlossmod = PathlossModel()
-    datmod.meta.exposure.type = 'NRS_MSASPEC'
+    datmod.meta.exposure.type = "NRS_MSASPEC"
 
-    result, _ = do_correction(datmod, pathlossmod)
-    assert result.meta.cal_step.pathloss == 'COMPLETE'
+    result, _ = pl.do_correction(datmod, pathlossmod)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+    assert "Slit has data size = 0" in caplog.text
 
 
-def test_do_correction_fixed_slit_exception():
+def test_do_correction_fixed_slit_aperture_not_found(caplog):
     """If no matching aperture name found, exit."""
 
     datmod = MultiSlitModel()
     # Give input_model aperture name
-    datmod.slits.append({'data': np.array([]), 'name': 'S200A1'})
+    datmod.slits.append({"data": np.array([]), "name": "S200A1"})
     # Do assign pathloss model aperture with similar name.
     pathlossmod = PathlossModel()
-    datmod.meta.exposure.type = 'NRS_FIXEDSLIT'
+    datmod.meta.exposure.type = "NRS_FIXEDSLIT"
 
-    result, _ = do_correction(datmod, pathlossmod)
-    assert result.meta.cal_step.pathloss == 'COMPLETE'
+    result, _ = pl.do_correction(datmod, pathlossmod)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+    assert "Cannot find matching" in caplog.text
+
+
+def test_do_correction_mos_aperture_not_found(caplog):
+    """If no matching aperture name found, exit."""
+    datmod = MultiSlitModel()
+    datmod.slits.append({"data": np.zeros((10, 10)), "shutter_state": ""})
+
+    pathlossmod = PathlossModel()
+    datmod.meta.exposure.type = "NRS_MSASPEC"
+
+    result, _ = pl.do_correction(datmod, pathlossmod)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+    assert "Cannot find matching" in caplog.text
 
 
 def test_do_correction_nis_soss_tso():
@@ -274,11 +434,11 @@ def test_do_correction_nis_soss_tso():
 
     datmod = MultiSlitModel()
     pathlossmod = PathlossModel()
-    datmod.meta.exposure.type = 'NIS_SOSS'
+    datmod.meta.exposure.type = "NIS_SOSS"
     datmod.meta.visit.tsovisit = True
 
-    result, _ = do_correction(datmod, pathlossmod)
-    assert result.meta.cal_step.pathloss == 'SKIPPED'
+    result, _ = pl.do_correction(datmod, pathlossmod)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
 
 
 def test_do_correction_nis_soss_pupil_position_is_none():
@@ -286,12 +446,12 @@ def test_do_correction_nis_soss_pupil_position_is_none():
 
     datmod = MultiSlitModel()
     pathlossmod = PathlossModel()
-    datmod.meta.exposure.type = 'NIS_SOSS'
+    datmod.meta.exposure.type = "NIS_SOSS"
     datmod.meta.visit.tsovisit = False
     datmod.meta.instrument.pupil_position = None
 
-    result, _ = do_correction(datmod, pathlossmod)
-    assert result.meta.cal_step.pathloss == 'SKIPPED'
+    result, _ = pl.do_correction(datmod, pathlossmod)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
 
 
 def test_do_correction_nis_soss_aperture_is_none():
@@ -300,27 +460,47 @@ def test_do_correction_nis_soss_aperture_is_none():
     datmod = MultiSlitModel()
     # Is FULL an option for NIRISS?
     # The test doesn't care but something to remember.
-    datmod.slits.append({'data': np.array([]), 'name': 'FULL'})
+    datmod.slits.append({"data": np.array([]), "name": "FULL"})
     # Don't assign pathloss model aperture with similar name
     pathlossmod = PathlossModel()
-    datmod.meta.exposure.type = 'NIS_SOSS'
+    datmod.meta.exposure.type = "NIS_SOSS"
     datmod.meta.visit.tsovisit = False
     datmod.meta.instrument.pupil_position = 1
 
-    result, _ = do_correction(datmod, pathlossmod)
-    assert result.meta.cal_step.pathloss == 'SKIPPED'
+    result, _ = pl.do_correction(datmod, pathlossmod)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+
+
+@pytest.mark.parametrize("param,value", [("inverse", True), ("source_type", "POINT")])
+def test_do_correction_nis_soss_unexpected_pars(caplog, param, value):
+    """Skip correction for SOSS if unexpected parameters are provided."""
+
+    datmod = MultiSlitModel()
+    pathlossmod = PathlossModel()
+    datmod.meta.exposure.type = "NIS_SOSS"
+
+    kwargs = {param: value}
+    result, _ = pl.do_correction(datmod, pathlossmod, **kwargs)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+
+    assert "not implemented" in caplog.text
+
+
+def test_do_correction_no_pathloss():
+    model = ImageModel()
+    msg = "A PathlossModel must be specified"
+    with pytest.raises(RuntimeError, match=msg):
+        pl.do_correction(model)
 
 
 def test_interpolate_onto_grid():
     # Mock wavelength vector, grid and pathloss vector.
     wavelength_grid = np.arange(1, 101).reshape(10, 10) * 1.1
-    wavelength_vector = np.arange(1, 11, dtype='float64')
-    pathloss_vector = np.arange(1, 11, dtype='float64')
+    wavelength_vector = np.arange(1, 11, dtype="float64")
+    pathloss_vector = np.arange(1, 11, dtype="float64")
 
     # Call interpolate onto grid
-    result = interpolate_onto_grid(wavelength_grid,
-                                   wavelength_vector,
-                                   pathloss_vector)
+    result = pl.interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector)
 
     # Before interpolation is done in interpolate_onto_grid, the vectors are padded
     # so interpolation that happens outside of the grid are NaN.
@@ -334,24 +514,186 @@ def test_interpolate_onto_grid():
     extended_wavelength_vector[-1] = wavelength_vector[-1] + 0.1
 
     # Call numpy interpolation to get truth.
-    result_comparison = np.interp(wavelength_grid, extended_wavelength_vector, extended_pathloss_vector)
+    result_comparison = np.interp(
+        wavelength_grid, extended_wavelength_vector, extended_pathloss_vector
+    )
 
     np.testing.assert_array_equal(result, result_comparison)
 
 
 def test_shutter_below_is_closed():
-    shutter_below_closed = ['x111', 'x', '10x11']
-    shutter_below_open = ['11x11', '111x', '11x01']
+    shutter_below_closed = ["x111", "x", "10x11"]
+    shutter_below_open = ["11x11", "111x", "11x01"]
     for shutter_state in shutter_below_closed:
-        assert shutter_below_is_closed(shutter_state)
+        assert pl.shutter_below_is_closed(shutter_state)
     for shutter_state in shutter_below_open:
-        assert not shutter_below_is_closed(shutter_state)
+        assert not pl.shutter_below_is_closed(shutter_state)
 
 
 def test_shutter_above_is_closed():
-    shutter_above_closed = ['111x', 'x', '1x011']
-    shutter_above_open = ['11x11', 'x111', '110x1']
+    shutter_above_closed = ["111x", "x", "1x011"]
+    shutter_above_open = ["11x11", "x111", "110x1"]
     for shutter_state in shutter_above_closed:
-        assert shutter_above_is_closed(shutter_state)
+        assert pl.shutter_above_is_closed(shutter_state)
     for shutter_state in shutter_above_open:
-        assert not shutter_above_is_closed(shutter_state)
+        assert not pl.shutter_above_is_closed(shutter_state)
+
+
+def _mos_pathloss():
+    """
+    Make a simple pathloss model for MOS.
+
+    Returns
+    -------
+    pathloss_model : PathlossModel
+        The pathloss model with point and uniform data for apertures
+        MOS1x1 and MOS1x3
+    """
+    pathloss_model = PathlossModel()
+
+    u_data_1x1 = np.arange(100, dtype=np.float32)
+    u_data_1x3 = u_data_1x1 + 10
+    u_wcs_1x1 = {
+        "crpix1": 1.0,
+        "crval1": 1e-6,
+        "cdelt1": 1e-6,
+    }
+    u_wcs_1x3 = u_wcs_1x1.copy()
+
+    p_data_1x1 = np.arange(10 * 10 * 10, dtype=np.float32).reshape((10, 10, 10))
+    p_data_1x3 = p_data_1x1 + 10
+    p_wcs_1x1 = {
+        "crpix1": 1.75,
+        "crval1": -0.5,
+        "cdelt1": 0.5,
+        "crpix2": 1.25,
+        "crval2": -0.5,
+        "cdelt2": 0.5,
+        "crpix3": 1.0,
+        "crval3": 1e-6,
+        "cdelt3": 1e-6,
+    }
+    p_wcs_1x3 = p_wcs_1x1.copy()
+
+    pathloss_model.apertures.append(
+        {
+            "name": "MOS1x1",
+            "shutters": 1,
+            "uniform_data": u_data_1x1,
+            "uniform_wcs": u_wcs_1x1,
+            "pointsource_data": p_data_1x1,
+            "pointsource_wcs": p_wcs_1x1,
+        }
+    )
+    pathloss_model.apertures.append(
+        {
+            "name": "MOS1x3",
+            "shutters": 3,
+            "uniform_data": u_data_1x3,
+            "uniform_wcs": u_wcs_1x3,
+            "pointsource_data": p_data_1x3,
+            "pointsource_wcs": p_wcs_1x3,
+        }
+    )
+    pathloss_model.meta.exposure.type = "NRS_MSASPEC"
+
+    return pathloss_model
+
+
+def test_two_shutter_pathloss_missing_apertures(caplog):
+    pathloss_model = PathlossModel()
+    wlen, vector = pl.calculate_two_shutter_uniform_pathloss(pathloss_model)
+    assert wlen is None
+    assert vector is None
+    assert "Expected 2 apertures in pathloss reference file, found 0" in caplog.text
+
+
+def test_two_shutter_pathloss_unexpected_apertures(caplog):
+    pathloss_model = PathlossModel()
+    pathloss_model.apertures.append({"name": "1x1"})
+    pathloss_model.apertures.append({"name": "1x3"})
+    pathloss_model.meta.exposure.type = "NRS_MSASPEC"
+    wlen, vector = pl.calculate_two_shutter_uniform_pathloss(pathloss_model)
+    assert wlen is None
+    assert vector is None
+    assert "Unexpected aperture name '1X1'" in caplog.text
+
+
+def test_two_shutter_pathloss_unexpected_data_size(caplog):
+    pathloss_model = PathlossModel()
+    pathloss_model.apertures.append({"name": "MOS1x1", "uniform_data": np.arange(10)})
+    pathloss_model.apertures.append({"name": "MOS1x3", "uniform_data": np.arange(20)})
+    pathloss_model.meta.exposure.type = "NRS_MSASPEC"
+    wlen, vector = pl.calculate_two_shutter_uniform_pathloss(pathloss_model)
+    assert wlen is None
+    assert vector is None
+    assert "1x1 and 1x3 arrays have different sizes" in caplog.text
+
+
+def test_two_shutter_pathloss_unexpected_data_shape(caplog):
+    pathloss_model = PathlossModel()
+    pathloss_model.apertures.append({"name": "MOS1x1", "uniform_data": np.ones((10, 10))})
+    pathloss_model.apertures.append({"name": "MOS1x3", "uniform_data": np.ones((10, 10))})
+    pathloss_model.meta.exposure.type = "NRS_MSASPEC"
+    wlen, vector = pl.calculate_two_shutter_uniform_pathloss(pathloss_model)
+    assert wlen is None
+    assert vector is None
+    assert "arrays have unexpected shape" in caplog.text
+
+
+def test_two_shutter_pathloss_mismatched_wcs(caplog):
+    pathloss_model = _mos_pathloss()
+    pathloss_model.apertures[0].uniform_wcs.crpix1 += 1
+    wlen, vector = pl.calculate_two_shutter_uniform_pathloss(pathloss_model)
+    assert wlen is None
+    assert vector is None
+    assert "1x1 and 1x3 apertures have different WCS" in caplog.text
+
+
+def test_two_shutter_pathloss(caplog):
+    caplog.set_level("INFO", "jwst.pathloss.pathloss")
+    pathloss_model = _mos_pathloss()
+    data_1x1 = pathloss_model.apertures[0].uniform_data
+    data_1x3 = pathloss_model.apertures[1].uniform_data
+    wlen, vector = pl.calculate_two_shutter_uniform_pathloss(pathloss_model)
+
+    np.testing.assert_allclose(wlen, np.arange(1, 101) * 1e-6)
+    np.testing.assert_allclose(vector, np.mean([data_1x1, data_1x3], axis=0))
+    assert "Uniform correction averages corrections" in caplog.text
+
+
+@pytest.mark.parametrize("shutter_state", ["x1", "1x"])
+def test_corrections_for_mos_two_shutter(shutter_state):
+    slit = SlitModel(data=np.ones((10, 10)))
+    slit.shutter_state = shutter_state
+    slit.source_xpos = 0.5
+    slit.source_ypos = 0.5
+    slit.wavelength = np.arange(1, 101).reshape((10, 10))
+
+    pathloss_model = _mos_pathloss()
+
+    correction = pl._corrections_for_mos(slit, pathloss_model, "NRS_MSASPEC")
+    assert isinstance(correction, SlitModel)
+    assert correction.pathloss_correction_type == "UNIFORM"
+    assert np.nanmean(correction.pathloss_uniform) > 1
+    assert np.nanmean(correction.pathloss_point) > 1
+
+
+def test_corrections_for_mos_two_shutter_failure(caplog):
+    slit = SlitModel(data=np.ones((10, 10)))
+    slit.shutter_state = "1x"
+    slit.source_xpos = 0.5
+    slit.source_ypos = 0.5
+    slit.wavelength = np.arange(1, 101).reshape((10, 10))
+
+    pathloss_model = _mos_pathloss()
+    pathloss_model.apertures[0].uniform_wcs.crpix1 += 1
+
+    correction = pl._corrections_for_mos(slit, pathloss_model, "NRS_MSASPEC")
+    assert isinstance(correction, SlitModel)
+    assert correction.pathloss_correction_type == "UNIFORM"
+    assert np.nanmean(correction.pathloss_uniform) > 1
+    assert np.nanmean(correction.pathloss_point) > 1
+
+    assert "Unable to calculate 2 shutter uniform pathloss" in caplog.text
+    assert "Using 3 shutter aperture" in caplog.text

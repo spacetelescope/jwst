@@ -1,21 +1,26 @@
 import logging
 
 import numpy as np
-
 from gwcs.wcstools import grid_from_bounding_box
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
+from jwst.assign_wcs import nirspec  # For NIRSpec IFU data
 from jwst.datamodels import ModelContainer
-
-from ..assign_wcs import nirspec  # For NIRSpec IFU data
-from ..lib.wcs_utils import get_wavelengths
+from jwst.lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM", "NRC_TSGRISM"]
+
+__all__ = [
+    "expand_to_2d",
+    "bkg_for_container",
+    "create_bkg",
+    "bkg_for_multislit",
+    "bkg_for_image",
+    "bkg_for_ifu_image",
+]
 
 
 def expand_to_2d(input_data, m_bkg_spec, allow_mos=False):
@@ -24,29 +29,29 @@ def expand_to_2d(input_data, m_bkg_spec, allow_mos=False):
 
     Parameters
     ----------
-    input_data : `~jwst.datamodels.JwstDataModel`
+    input_data : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science data.
-    m_bkg_spec : str or `~jwst.datamodels.JwstDataModel`
+    m_bkg_spec : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
         Either the name of a file containing a 1-D background spectrum,
         or a data model containing such a spectrum.
     allow_mos : bool
-        If True, NIRSpec MOS data is supported. If False,
+        If `True`, NIRSpec MOS data is supported. If `False`,
         background is set to 0.0 for any slit marked as exposure
-        type NRS_MSASPEC.  This parameter should be set to True only
-        for the master_background_mos step in the spec2 pipeline;
-        MOS data is not supported via the master_background step
-        in the spec3 pipeline.
+        type NRS_MSASPEC.  This parameter should be set to `True` only
+        for the ``master_background_mos`` step in the ``spec2`` pipeline;
+        MOS data is not supported via the ``master_background step``
+        in the ``spec3`` pipeline.
 
     Returns
     -------
-    background : `~jwst.datamodels.JwstDataModel`
-        A copy of `input_data` but with the data replaced by the background,
+    background : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        A copy of ``input_data`` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
     with datamodels.open(m_bkg_spec) as bkg:
         if hasattr(bkg, "spec"):  # MultiSpecModel
             if len(bkg.spec) > 1:
-                log.warning("The input 1-D spectrum contains multiple spectra")
+                log.warning("The input 1-D spectrum contains multiple spectra. Using the first.")
             spec_table = bkg.spec[0].spec_table
         else:  # CombinedSpecModel
             spec_table = bkg.spec_table
@@ -78,24 +83,25 @@ def bkg_for_container(input_data, tab_wavelength, tab_background, allow_mos=Fals
 
     Parameters
     ----------
-    input_data : JWST association or `~jwst.datamodels.ModelContainer`
+    input_data : `~jwst.associations.association.Association` or \
+                 `~jwst.datamodels.container.ModelContainer`
         The input science data.
-    tab_wavelength : 1-D ndarray
-        The wavelength column read from the 1-D background table.
-    tab_background : 1-D ndarray
-        The surf_bright column read from the 1-D background table.
+    tab_wavelength : ndarray
+        The ``wavelength`` column read from the 1-D background table.
+    tab_background : ndarray
+        The ``surf_bright`` column read from the 1-D background table.
     allow_mos : bool
-        If True, NIRSpec MOS data is supported. If False,
+        If `True`, NIRSpec MOS data is supported. If `False`,
         background is set to 0.0 for any slit marked as exposure
-        type NRS_MSASPEC.  This parameter should be set to True only
-        for the master_background_mos step in the spec2 pipeline;
-        MOS data is not supported via the master_background step
-        in the spec3 pipeline.
+        type NRS_MSASPEC.  This parameter should be set to `True` only
+        for the ``master_background_mos`` step in the ``spec2`` pipeline;
+        MOS data is not supported via the ``master_background step``
+        in the ``spec3`` pipeline.
 
     Returns
     -------
-    background : `~jwst.datamodels.ModelContainer`
-        A copy of `input_data` but with the data replaced by the background,
+    background : `~jwst.datamodels.container.ModelContainer`
+        A copy of ``input_data`` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
     background = ModelContainer()
@@ -112,24 +118,24 @@ def create_bkg(input_data, tab_wavelength, tab_background, allow_mos=False):
 
     Parameters
     ----------
-    input_data : `~jwst.datamodels.JwstDataModel`
+    input_data : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science data.
-    tab_wavelength : 1-D ndarray
-        The wavelength column read from the 1-D background table.
-    tab_background : 1-D ndarray
-        The surf_bright column read from the 1-D background table.
+    tab_wavelength : ndarray
+        The ``wavelength`` column read from the 1-D background table.
+    tab_background : ndarray
+        The ``surf_bright`` column read from the 1-D background table.
     allow_mos : bool
-        If True, NIRSpec MOS data is supported. If False,
+        If `True`, NIRSpec MOS data is supported. If `False`,
         background is set to 0.0 for any slit marked as exposure
-        type NRS_MSASPEC.  This parameter should be set to True only
-        for the master_background_mos step in the spec2 pipeline;
-        MOS data is not supported via the master_background step
-        in the spec3 pipeline.
+        type NRS_MSASPEC.  This parameter should be set to `True` only
+        for the ``master_background_mos`` step in the ``spec2`` pipeline;
+        MOS data is not supported via the ``master_background step``
+        in the ``spec3`` pipeline.
 
     Returns
     -------
-    background : `~jwst.datamodels.JwstDataModel`
-        A copy of `input_data` but with the data replaced by the background,
+    background : `~stdatamodels.jwst.datamodels.JwstDataModel`
+        A copy of ``input_data`` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
     # Handle individual NIRSpec FS, NIRSpec MOS
@@ -139,7 +145,7 @@ def create_bkg(input_data, tab_wavelength, tab_background, allow_mos=False):
         )
 
     # Handle MIRI LRS
-    elif isinstance(input_data, datamodels.ImageModel):
+    elif isinstance(input_data, (datamodels.ImageModel, datamodels.SlitModel)):
         background = bkg_for_image(input_data, tab_wavelength, tab_background)
 
     # Handle MIRI MRS and NIRSpec IFU
@@ -159,27 +165,27 @@ def bkg_for_multislit(input_data, tab_wavelength, tab_background, allow_mos=Fals
 
     Parameters
     ----------
-    input_data : `~jwst.datamodels.MultiSlitModel`
+    input_data : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The input science data.
-    tab_wavelength : 1-D ndarray
-        The wavelength column read from the 1-D background table.
-    tab_background : 1-D ndarray
-        The surf_bright column read from the 1-D background table.
+    tab_wavelength : ndarray
+        The ``wavelength`` column read from the 1-D background table.
+    tab_background : ndarray
+        The ``surf_bright`` column read from the 1-D background table.
     allow_mos : bool
-        If True, NIRSpec MOS data is supported. If False,
+        If `True`, NIRSpec MOS data is supported. If `False`,
         background is set to 0.0 for any slit marked as exposure
-        type NRS_MSASPEC.  This parameter should be set to True only
-        for the master_background_mos step in the spec2 pipeline;
-        MOS data is not supported via the master_background step
-        in the spec3 pipeline.
+        type NRS_MSASPEC.  This parameter should be set to `True` only
+        for the ``master_background_mos step`` in the ``spec2`` pipeline;
+        MOS data is not supported via the ``master_background step``
+        in the ``spec3`` pipeline.
 
     Returns
     -------
-    background : `~jwst.datamodels.MultiSlitModel`
-        A copy of `input_data` but with the data replaced by the background,
+    background : `~stdatamodels.jwst.datamodels.MultiSlitModel`
+        A copy of ``input_data`` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
-    from .nirspec_utils import correct_nrs_fs_bkg
+    from jwst.master_background.nirspec_utils import correct_nrs_fs_bkg
 
     background = input_data.copy()
     min_wave = np.amin(tab_wavelength)
@@ -242,17 +248,17 @@ def bkg_for_image(input_data, tab_wavelength, tab_background):
 
     Parameters
     ----------
-    input_data : `~jwst.datamodels.ImageModel`
+    input_data : `~stdatamodels.jwst.datamodels.ImageModel`
         The input science data.
-    tab_wavelength : 1-D ndarray
-        The wavelength column read from the 1-D background table.
-    tab_background : 1-D ndarray
-        The surf_bright column read from the 1-D background table.
+    tab_wavelength : ndarray
+        The ``wavelength`` column read from the 1-D background table.
+    tab_background : ndarray
+        The ``surf_bright`` column read from the 1-D background table.
 
     Returns
     -------
-    background : `~jwst.datamodels.ImageModel`
-        A copy of `input_data` but with the data replaced by the background,
+    background : `~stdatamodels.jwst.datamodels.ImageModel`
+        A copy of ``input_data`` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
     background = input_data.copy()
@@ -283,33 +289,29 @@ def bkg_for_ifu_image(input_data, tab_wavelength, tab_background):
 
     Parameters
     ----------
-    input_data : `~jwst.datamodels.IFUImageModel`
+    input_data : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The input science data.
-    tab_wavelength : 1-D ndarray
-        The wavelength column read from the 1-D background table.
-    tab_background : 1-D ndarray
-        The surf_bright column read from the 1-D background table.
+    tab_wavelength : ndarray
+        The ``wavelength`` column read from the 1-D background table.
+    tab_background : ndarray
+        The ``surf_bright`` column read from the 1-D background table.
 
     Returns
     -------
-    background : `~jwst.datamodels.IFUImageModel`
-        A copy of `input_data` but with the data replaced by the background,
-        "expanded" from 1-D to 2-D. The dq flags are set to DO_NOT_USE
+    background : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        A copy of ``input_data`` but with the data replaced by the background,
+        "expanded" from 1-D to 2-D. The DQ flags are set to DO_NOT_USE
         for the pixels outside the region provided in the X1D background
         wavelength table.
     """
-    from .nirspec_utils import correct_nrs_ifu_bkg
+    from jwst.master_background.nirspec_utils import correct_nrs_ifu_bkg
 
     background = input_data.copy()
     background.data[:, :] = 0.0
 
     if input_data.meta.instrument.name.upper() == "NIRSPEC":
-        # Note: the 30 was hardcoded in nirpsec.nrs_ifu_wcs, which the line
-        # below replaces.
-        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input_data, np.arange(30))  # noqa: SLF001
-        for k in range(len(tr2)):
-            ifu_wcs = nirspec._nrs_wcs_set_input_lite(input_data, wcsobj, k, [tr1, tr2[k], tr3[k]])  # noqa: SLF001
-
+        list_of_wcs = nirspec.nrs_ifu_wcs(input_data)
+        for ifu_wcs in list_of_wcs:
             x, y = grid_from_bounding_box(ifu_wcs.bounding_box)
             wl_array = ifu_wcs(x, y)[2]
             wl_array[np.isnan(wl_array)] = -1.0

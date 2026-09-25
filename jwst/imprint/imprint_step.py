@@ -1,9 +1,14 @@
+"""Remove NIRSpec MSA imprint structure from an exposure."""
+
+import logging
+
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from ..background import subtract_images
+from jwst.stpipe import Step
 
 __all__ = ["ImprintStep"]
+
+log = logging.getLogger(__name__)
 
 
 class ImprintStep(Step):
@@ -14,7 +19,7 @@ class ImprintStep(Step):
     imprint (a.k.a. leakcal) exposure.
     """
 
-    class_alias = "imprint"
+    class_alias = "imprint_subtract"
 
     spec = """
     """  # noqa: E501
@@ -27,36 +32,36 @@ class ImprintStep(Step):
         without further checks.
 
         If multiple imprint images are provided, the background target
-        flag (`meta.dither.observation.bkgdtarg`) is checked for a match to
+        flag (``meta.dither.observation.bkgdtarg``) is checked for a match to
         the input data.  If there is a single imprint image matching the
         input data's background flag, then it is directly subtracted without
         further checks.
 
         If there are multiple imprint images that match the input data's
         background flag, then the imprint is checked for an
-        observation ID (`meta.observation.observation_number`) and
-        dither position index (`meta.dither.position_number`).  If there is
+        observation ID (``meta.observation.observation_number``) and
+        dither position index (``meta.dither.position_number``).  If there is
         a match, then the matching imprint image is subtracted from the
         input data.  If there is no match, then the step is skipped for the
         input data.
 
         Parameters
         ----------
-        input_data : DataModel or str
+        input_data : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
             Input exposure to be corrected.
-        imprint : list of str or DataModel
+        imprint : list of str or `~stdatamodels.jwst.datamodels.JwstDataModel`
             Imprint exposures associated with the input.
 
         Returns
         -------
-        DataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The imprint subtracted exposure.
         """
         # Open the input science image and get its dither pattern position number
-        input_model = datamodels.open(input_data)
-        pos_no = input_model.meta.dither.position_number
-        obs_no = input_model.meta.observation.observation_number
-        is_bkgd = input_model.meta.observation.bkgdtarg
+        output_model = self.prepare_output(input_data)
+        pos_no = output_model.meta.dither.position_number
+        obs_no = output_model.meta.observation.observation_number
+        is_bkgd = output_model.meta.observation.bkgdtarg
 
         # Check all the imprints to see if there is a direct match for the input
         imprint_models = []
@@ -90,28 +95,24 @@ class ImprintStep(Step):
             # No direct match found - use the only one available.
             match_model = imprint_models[0]
 
-        # Copy the input image to the output
-        result = input_model.copy()
-
         if match_model is not None:
             # Subtract the matching imprint image
-            self.log.info(
+            log.info(
                 f"Subtracting imprint image {match_model.meta.filename} "
-                f"from {input_model.meta.filename}"
+                f"from {output_model.meta.filename}"
             )
-            result = subtract_images.subtract(input_model, match_model)
+            output_model.data -= match_model.data
+            output_model.dq |= match_model.dq
 
             # Update the step status and close the imprint model
-            result.meta.cal_step.imprint = "COMPLETE"
+            output_model.meta.cal_step.imprint_subtract = "COMPLETE"
         else:
-            self.log.warning(f"No matching imprint image found for {input_model.meta.filename}")
-            self.log.warning("Step will be skipped")
-            result.meta.cal_step.imprint = "SKIPPED"
+            log.warning(f"No matching imprint image found for {output_model.meta.filename}")
+            log.warning("Step will be skipped")
+            output_model.meta.cal_step.imprint_subtract = "SKIPPED"
 
         # Close any open imprint models
         for model in imprint_models:
             model.close()
 
-        # Close the input model
-        input_model.close()
-        return result
+        return output_model

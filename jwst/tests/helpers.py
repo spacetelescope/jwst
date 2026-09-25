@@ -1,5 +1,7 @@
 """Handy helpful pytest helpers helping pytest test."""
 
+import contextlib
+import logging
 from os import path as op
 from pathlib import Path
 
@@ -82,7 +84,7 @@ class LogWatcher:
             The message of interest
         """
         self.seen = False
-        self.message = message
+        self._message = message
 
     def __call__(self, *args):
         """Watch the logs for a specific message."""
@@ -91,8 +93,23 @@ class LogWatcher:
         if self.message in args[0]:
             self.seen = True
 
+    @property
+    def message(self):
+        """
+        str: The message to watch for.
+
+        When the message is set, the `seen` flag is set to False.
+        """
+        return self._message
+
+    @message.setter
+    def message(self, new_message):
+        self.seen = False
+        self._message = new_message
+
     def assert_seen(self):
-        """Check if message has been seen.
+        """
+        Check if message has been seen.
 
         After calling, the `seen` attribute is reset to False.
         """
@@ -102,7 +119,8 @@ class LogWatcher:
         self.seen = False
 
     def assert_not_seen(self):
-        """Check if message has not been seen.
+        """
+        Check if message has not been seen.
 
         After calling, the `seen` attribute is reset to False.
         """
@@ -110,3 +128,26 @@ class LogWatcher:
 
         # reset flag after check
         self.seen = False
+
+
+@contextlib.contextmanager
+def _help_pytest_warns():
+    """
+    Help pytest.warns.
+
+    Helper context to deal with a limitation with using warnings and logging.
+
+    This should be used for any pytest.warns context that contains a Step.call
+    (where logging.captureWarnings will be enabled) due to an incompatibility
+    between what python logging does to capture warnings and what python
+    warnings does to catch_warnings (and by extension what pytest.warns does).
+
+    This context works around the incompatibility by calling logging.captureWarnings
+    prior to the catch_warnings call. This allows the warnings module to
+    do the internal patching that is required to record warnings.
+
+    For minimal examples see the tests in test_helpers.
+    """
+    logging.captureWarnings(True)
+    yield
+    logging.captureWarnings(False)

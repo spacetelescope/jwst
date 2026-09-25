@@ -30,7 +30,7 @@ Inputs
 4D raw data
 ^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.GuiderRawModel`
+:Data model: `~stdatamodels.jwst.datamodels.GuiderRawModel`
 :File suffix: _uncal
 
 The input to ``calwebb_guider`` is a single raw guide-mode data file, which contains
@@ -44,13 +44,12 @@ Outputs
 3D calibrated data
 ^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.GuiderCalModel`
+:Data model: `~stdatamodels.jwst.datamodels.GuiderCalModel`
 :File suffix: _cal
 
 The output is a 3D (ncols x nrows x nints) countrate product that has been flat-fielded
 and has bad pixels flagged. For ID mode data, there is only 1
 countrate image produced by the :ref:`guider_cds <guider_cds_step>` step, therefore the
-length of the 3rd array axis is 1. For all other modes, there will be a stack of 
+length of the 3rd array axis is 1. For all other modes, there will be a stack of
 multiple countrate images, one per integration. See the :ref:`guider_cds <guider_cds_step>`
 step information for details on how the countrate images are produced for each mode.
-

@@ -6,7 +6,7 @@ FPA Reference File (NIRSpec only)
 ---------------------------------
 
 :REFTYPE: FPA
-:Data model: `~jwst.datamodels.FPAModel`
+:Data model: `~stdatamodels.jwst.datamodels.FPAModel`
 
 Reference Selection Keywords for FPA
 ++++++++++++++++++++++++++++++++++++
@@ -33,4 +33,3 @@ from the FPA to the respective SCA. The output units are in pixels.
 
 :nrs1_model: Transform for the NRS1 detector.
 :nrs2_model: Transform for the NRS2 detector.
-
