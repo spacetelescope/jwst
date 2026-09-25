@@ -172,6 +172,7 @@ include = ["jwst*"]
 ]
 "jwst.cube_build.src" = [
     "*.c",
+    "*.h",
 ]
 "jwst.straylight.src" = [
     "*.c",

@@ -58,6 +58,7 @@ __all__ = [
     "is_nrs_msaspec_flatlamp",
     "is_nrs_autoflat",
     "is_moving_target",
+    "is_point_source",
     "FGS_GUIDE_EXP_TYPES",
     "IMAGING_TYPES",
     "SPEC_TYPES",
@@ -306,3 +307,47 @@ def is_moving_target(datamodel):
         return False
     else:
         raise TypeError(f"Expected JwstDataModel or dict, got {type(datamodel)} instead.")
+
+
+def is_point_source(datamodel, override_srctype=None):
+    """
+    Determine if a source is a point source.
+
+    Priority order for determining source type:
+
+    1. input ``override_srctype`` value
+    2. ``datamodel.source_type`` if present and not None
+    3. ``datamodel.meta.target.source_type`` if present and not None
+
+    Parameters
+    ----------
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel` or \
+                `~stdatamodels.properties.ObjectNode`
+        Input datamodel, slit, or spectrum to check.
+    override_srctype : str or None, optional
+        If provided, is used in place of metadata from the model.
+
+    Returns
+    -------
+    bool
+        `True` if point source; `False` otherwise.
+    """
+    result = False
+
+    # Get the source type value from input or as set by the srctype step
+    if override_srctype is not None:
+        src_type = override_srctype
+    elif getattr(datamodel, "source_type", None) is not None:
+        src_type = datamodel.source_type
+    elif (
+        getattr(datamodel.meta, "target", None) is not None
+        and getattr(datamodel.meta.target, "source_type", None) is not None
+    ):
+        src_type = datamodel.meta.target.source_type
+    else:
+        src_type = None
+
+    if str(src_type).upper() == "POINT":
+        result = True
+
+    return result
