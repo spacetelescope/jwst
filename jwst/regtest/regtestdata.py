@@ -660,7 +660,7 @@ class RTData:
         if self.mod_code != "N/A" and self.from_mast:
             if "mod" not in self.file_name:
                 raise ValueError("Modified file does not have the 'mod' suffix.")
-            else:
+            elif "fits" in self.file_name:
                 original_fname = self.file_name.replace("_mod", "")
                 if self.file_name != mk_mod_name(original_fname):
                     raise ValueError(
