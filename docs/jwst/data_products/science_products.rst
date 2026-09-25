@@ -721,6 +721,15 @@ The structure of the "COMBINE1D" table extension is as follows:
 The table is constructed using a simple 2-D layout, using one row per extracted spectral
 element in the dispersion direction of the data (i.e. one row per wavelength bin).
 
+PFPC 1-D spectroscopic data: ``pfpc``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _pfpc:
+
+Extracted spectral data, with point fixed pattern corrections (PFPC) applied,
+produced by the :ref:`pfpc <pfpc_step>` step are stored in binary table extensions
+of FITS files.  The format is identical to the :ref:`x1d <x1d>` products.
+
 .. _cat:
 
 Source catalog: ``cat``

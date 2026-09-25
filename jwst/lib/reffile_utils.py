@@ -440,30 +440,30 @@ class MatchRowError(Exception):
         super().__init__(message)
 
 
-def find_row(ldict, match_keys):
+def find_row(ldict, match_keys, require_one=True):
     """
     Find a row in a FITS table matching fields.
 
     Parameters
     ----------
-    ldict : list of dict
-        A list of dictionaries, The dictionaries may have any number
+    ldict : list of dict or `~astropy.io.fits.fitsrec.FITS_rec`
+        A list of dictionaries or a record array. The record may have any number
         of items but must include all keys in ``match_keys``.
     match_keys : dict
         ``{key: value}`` pairs are matched against all items in ``ldict``
         to find the dict which matches them.
+    require_one : bool, optional
+        If True, an error is raised if more than one row matches.
 
     Returns
     -------
-    row : int or None
-        FITS table row index, None if no match.
+    row : dict, or `~astropy.io.fits.fitsrec.FITS_rec`, or None
+        Matching table row. None if no match.
 
     Raises
     ------
-    Warning
-        When a field name is not in the table.
-    MatchFitsTableRowError
-        When more than one rows match.
+    MatchRowError
+        When more than one row matches and ``require_one`` is True.
 
     Examples
     --------
@@ -488,7 +488,7 @@ def find_row(ldict, match_keys):
         row = [d[key] == match_keys[key] for key in match_keys]
         if all(row):
             results.append(d)
-    if len(results) > 1:
+    if len(results) > 1 and require_one:
         raise MatchRowError(f"Expected to find one matching row in table, found {len(results)}.")
     if len(results) == 0:
         log.warning("Expected to find one matching row in table, found 0.")
