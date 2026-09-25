@@ -1948,3 +1948,27 @@ def test_spec_fits_wcs(tmp_path, nirspec_cal, use_source_location):
     np.testing.assert_allclose(gwcs_diff, slit.meta.wcsinfo.cdelt2)
 
     im.close()
+
+
+@pytest.mark.parametrize("blendheaders", [True, False])
+def test_hdrtab(tmp_cwd, nircam_rate, blendheaders):
+    """Test that resample generates an HDRTAB extension."""
+    # Create a temporary file with the input data
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im.meta.filename = "test_input.fits"
+
+    output_filename = tmp_cwd / "test_resamplestep.fits"
+
+    ResampleStep.call(
+        [im, im],  # need to provide 2 models as otherwise resample disables blendheaders
+        blendheaders=blendheaders,
+        output_file=output_filename,
+        save_results=True,
+    )
+    with fits.open(output_filename) as ff:
+        if not blendheaders:
+            assert "HDRTAB" not in ff
+            return  # nothing more to check
+        assert "HDRTAB" in ff
+        tbl = ff["HDRTAB"].data
+        assert tbl["FILENAME"].size == 2
