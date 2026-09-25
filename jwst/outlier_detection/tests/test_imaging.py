@@ -244,7 +244,14 @@ def test_outlier_step_with_outliers(
     # Put the square source in all three exposures. Add the CR to one exposure.
     with container:
         for i, ccont in enumerate(container):
+            # set the error for the hot pixel in all images to background value
+            # for simpler results interpretation with resampling
+            ccont.err[7, 7] = helpers.SIGMA
+
+            # add the source
             ccont.data[src_sl] += src
+
+            # add the outlier
             if i == idx:
                 ccont.data[sl] += cr
 
