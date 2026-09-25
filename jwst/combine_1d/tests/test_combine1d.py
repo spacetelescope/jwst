@@ -440,3 +440,66 @@ def test_combine1d_wavelength_merging_test():
     # 6. Test only 1 spectra was used to make the final combined spectra
     n_input = result.spec[0].spec_table["n_input"]
     assert np.all(n_input == 1)
+
+
+def test_container_with_valid_spectra():
+    """Test that input spectra in a container can be combined."""
+    spec1 = create_spec_model(flux=1.0)
+    spec2 = create_spec_model(flux=2.0)
+    spec3 = create_spec_model(flux=3.0)
+    spec4 = create_spec_model(flux=4.0)
+    ms1 = datamodels.MultiSpecModel()
+    ms1.spec.append(spec1)
+    ms1.spec.append(spec2)
+    ms1.meta.exposure.exposure_time = 1
+    ms2 = datamodels.MultiSpecModel()
+    ms2.spec.append(spec3)
+    ms2.spec.append(spec4)
+    ms2.meta.exposure.exposure_time = 1
+
+    container = datamodels.ModelContainer([ms1, ms2])
+
+    result = Combine1dStep.call(container)
+    assert isinstance(result, datamodels.MultiCombinedSpecModel)
+    assert result.meta.cal_step.combine_1d == "COMPLETE"
+    assert len(result.spec) == 1
+    assert np.allclose(result.spec[0].spec_table["FLUX"], 2.5)
+
+
+def test_container_with_invalid_model():
+    """Test that invalid spectra in a container are skipped."""
+    spec1 = create_spec_model(flux=1.0)
+    spec2 = create_spec_model(flux=2.0)
+    container = datamodels.ModelContainer([spec1, spec2])
+
+    result = Combine1dStep.call(container)
+    assert isinstance(result, datamodels.ModelContainer)
+    assert result is not container
+    assert result[0] is not spec1
+    assert result[1] is not spec2
+    assert result[0].meta.cal_step.combine_1d == "SKIPPED"
+    assert result[1].meta.cal_step.combine_1d == "SKIPPED"
+    assert np.allclose(result[0].spec_table["FLUX"], 1.0)
+    assert np.allclose(result[1].spec_table["FLUX"], 2.0)
+
+
+def test_container_no_valid_data():
+    """Test that invalid data in a container are skipped."""
+    spec1 = create_spec_model(flux=np.nan)
+    ms1 = datamodels.MultiSpecModel()
+    ms1.spec.append(spec1)
+    ms1.meta.exposure.exposure_time = 1
+    ms2 = datamodels.MultiSpecModel()
+    ms2.spec.append(spec1)
+    ms2.meta.exposure.exposure_time = 1
+
+    container = datamodels.ModelContainer([ms1, ms2])
+
+    result = Combine1dStep.call(container)
+    assert isinstance(result, datamodels.ModelContainer)
+    assert result is not container
+    assert result[0] is not ms1
+    assert result[1] is not ms2
+    assert result[0].meta.cal_step.combine_1d == "SKIPPED"
+    assert result[1].meta.cal_step.combine_1d == "SKIPPED"
+    assert np.all(np.isnan(result[0].spec[0].spec_table["FLUX"]))

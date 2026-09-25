@@ -7,7 +7,7 @@ from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
     wfss_multiexposure_to_multispec,
 )
-from jwst.stpipe import Step
+from jwst.stpipe import Step, record_step_status
 
 __all__ = ["Combine1dStep"]
 
@@ -80,7 +80,7 @@ class Combine1dStep(Step):
             )
         except TypeError:
             log.error("Invalid input model for combine_1d; skipping.")
-            output_model.meta.cal_step.combine_1d = "SKIPPED"
+            record_step_status(output_model, "combine_1d", status="SKIPPED")
             return output_model
 
         # The result is a new model: close any input models opened here

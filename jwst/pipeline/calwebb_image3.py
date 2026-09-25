@@ -31,7 +31,8 @@ class Image3Pipeline(Pipeline):
     class_alias = "calwebb_image3"
 
     spec = """
-    in_memory = boolean(default=True)  # If False, preserve memory using temporary files at the expense of runtime
+        in_memory = boolean(default=True)  # If False, preserve memory using temporary files at the expense of runtime
+        save_results = boolean(default=True)  # Save output products by default
     """  # noqa: E501
 
     # Define alias to steps
