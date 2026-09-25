@@ -1,7 +1,9 @@
 import logging
+import warnings
 from pathlib import Path
 
 import numpy as np
+from photutils.utils.exceptions import NoDetectionsWarning
 from stdatamodels.jwst import datamodels
 
 from jwst.combine_1d.combine_1d_step import Combine1dStep
@@ -172,7 +174,9 @@ def process_exposures(models, output_file=None):
         }
         log.debug(f"Calling the extract_1d step to extract spectra with parameters {extract_param}")
         with disable_logging(level=logging.INFO):
-            spectra = Extract1dStep.call(cubes, **extract_param)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", NoDetectionsWarning)
+                spectra = Extract1dStep.call(cubes, **extract_param)
         cubes.close()
         if not isinstance(spectra, ModelContainer):
             spectra = [spectra]
@@ -301,7 +305,7 @@ def combine_dithers(corrected_spec):
     combined_spec = []
     for band in spec_by_band:
         # NOTE: combine1d does not propagate variance or background
-        with disable_logging(level=logging.WARNING):
+        with disable_logging(level=logging.DEBUG):
             combined = Combine1dStep.call(spec_by_band[band], **combine_param)
 
         if not isinstance(combined, datamodels.MultiCombinedSpecModel):
@@ -316,10 +320,18 @@ def combine_dithers(corrected_spec):
         defringe_flux, defringe_sb = None, None
         if is_mrs:
             channel = int(combined.meta.instrument.channel)
-            log.debug("Calling fit_residual_fringes_1d to defringe")
-            with disable_logging(level=logging.WARNING):
-                defringe_flux = fit_residual_fringes_1d(flux, wave, channel=channel)
-                defringe_sb = fit_residual_fringes_1d(sb, wave, channel=channel)
+            log.info(f"Defringing combined spectrum for channel {channel}")
+            with disable_logging(level=logging.INFO):
+                try:
+                    defringe_flux = fit_residual_fringes_1d(flux, wave, channel=channel)
+                except Exception:
+                    log.warning("Defringe failed for flux; skipping")
+                    defringe_flux = np.full_like(flux, np.nan)
+                try:
+                    defringe_sb = fit_residual_fringes_1d(sb, wave, channel=channel)
+                except Exception:
+                    log.warning("Defringe failed for surface brightness; skipping")
+                    defringe_sb = np.full_like(flux, np.nan)
 
         # Reassemble combined spectrum into a multispecmodel
         if is_mrs:
