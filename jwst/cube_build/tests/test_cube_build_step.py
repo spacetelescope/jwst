@@ -11,11 +11,11 @@ from astropy.modeling.models import Identity, Shift
 from stdatamodels.jwst.datamodels import IFUImageModel, dqflags
 
 from jwst.adaptive_trace_model import AdaptiveTraceModelStep
-from jwst.adaptive_trace_model.tests import helpers
 from jwst.cube_build import CubeBuildStep
 from jwst.cube_build.cube_build import NoChannelsError
 from jwst.cube_build.file_table import NoAssignWCSError
 from jwst.datamodels import ModelContainer
+from jwst.tests import spec_cal_helpers as helpers
 
 
 @pytest.fixture(scope="module")
@@ -136,14 +136,14 @@ def miri_image_no_wcs():
 
 @pytest.fixture(scope="module")
 def nirspec_data():
-    model = helpers.nirspec_ifu_model()
+    model = helpers.nirspec_ifu_cal_model()
     model.meta.filename = "test_nirspec_cal.fits"
     return model
 
 
 @pytest.fixture(scope="module")
 def miri_data():
-    model = helpers.miri_mrs_model()
+    model = helpers.miri_mrs_cal_model()
     model.meta.filename = "test_miri_cal.fits"
     return model
 
