@@ -1,0 +1,1 @@
+Add input exposure type validation to stage 2 and 3 pipelines. A TypeError will be raised for unexpected exposure types.
