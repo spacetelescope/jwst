@@ -134,6 +134,7 @@ class IFUCubeData:
         self.wavemax = pars_cube.get("wavemax")
         self.weighting = pars_cube.get("weighting")
         self.weight_power = pars_cube.get("weight_power")
+        self.readnoise_weight = pars_cube.get("readnoise_weight")
         self.suffix = pars_cube.get("suffix")
         self.num_bands = 0
         self.output_name = None
@@ -699,6 +700,7 @@ class IFUCubeData:
                         flux,
                         err,
                         dq,
+                        readvar,
                         slice_no,
                         rois_pixel,
                         roiw_pixel,
@@ -716,14 +718,6 @@ class IFUCubeData:
                         log.warning(f"No valid data found on file {input_model.meta.filename}")
                         build_cube = False
 
-                    # C extension setup
-                    start_region = 0
-                    end_region = 0
-
-                    if self.instrument == "MIRI":
-                        start_region = self.instrument_info.get_start_slice(this_par1)
-                        end_region = self.instrument_info.get_end_slice(this_par1)
-
                     result = None
                     weight_type = 0  # default to emsm instead of msm
 
@@ -734,8 +728,6 @@ class IFUCubeData:
                         roiw_ave = np.mean(roiw_pixel)
                         result = cube_wrapper(
                             weight_type,
-                            start_region,
-                            end_region,
                             self.xcoord,
                             self.ycoord,
                             self.zcoord,
@@ -769,6 +761,10 @@ class IFUCubeData:
                         result = None
                         del result
                         del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq
+
+                    rn_weight = 0
+                    if self.readnoise_weight:
+                        rn_weight = 1
                     if self.weighting == "drizzle" and build_cube:
                         cdelt3_mean = np.nanmean(self.cdelt3_normal)
                         xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
@@ -779,8 +775,7 @@ class IFUCubeData:
                         if debug_cube_index >= 0:
                             log.info(f"Input filename: {input_model.meta.filename}")
                         result = cube_wrapper_driz(
-                            start_region,
-                            end_region,
+                            rn_weight,
                             self.xcoord,
                             self.ycoord,
                             self.zcoord,
@@ -790,6 +785,7 @@ class IFUCubeData:
                             flux,
                             err,
                             dq,
+                            readvar,
                             slice_no,
                             xi1,
                             eta1,
@@ -1515,6 +1511,8 @@ class IFUCubeData:
            Error associated with ``coord1, coord2``
         dq : ndarray
            DQ associated with ``coord1, coord2``
+        readvar : ndarray
+           Var_rnoise associated with ``coord1 coord2``
         rois_det : float
            Spatial ROI size to use
         roiw_det : ndarray
@@ -1541,6 +1539,7 @@ class IFUCubeData:
         flux = None
         err = None
         dq = None
+        readvar = None
         slice_no = None
         rois_det = None
         roiw_det = None
@@ -1565,6 +1564,7 @@ class IFUCubeData:
         flux_all = input_model.data[y, x]
         err_all = input_model.err[y, x]
         dq_all = input_model.dq[y, x]
+        readvar_all = input_model.var_rnoise[y, x]
 
         x_all = x
         y_all = y
@@ -1633,6 +1633,7 @@ class IFUCubeData:
                 flux,
                 err,
                 dq,
+                readvar,
                 slice_no,
                 rois_det,
                 roiw_det,
@@ -1650,6 +1651,7 @@ class IFUCubeData:
         flux = np.zeros(good_shape, dtype=np.float64)
         dq = np.zeros(good_shape, dtype=np.int32)
         err = np.zeros(good_shape, dtype=np.float64)
+        readvar = np.zeros(good_shape, dtype=np.float64)
         coord1 = np.zeros(good_shape, dtype=np.float64)
         coord2 = np.zeros(good_shape, dtype=np.float64)
         wave = np.zeros(good_shape, dtype=np.float64)
@@ -1657,6 +1659,7 @@ class IFUCubeData:
 
         flux[:] = flux_all_good
         dq[:] = dq_all[good_data]
+        readvar[:] = readvar_all[good_data]
         err[:] = err_all[good_data]
         wave[:] = wave_all[good_data]
         slice_no[:] = slice_no_all[good_data]
@@ -1744,6 +1747,7 @@ class IFUCubeData:
             flux,
             err,
             dq,
+            readvar,
             slice_no,
             rois_det,
             roiw_det,
