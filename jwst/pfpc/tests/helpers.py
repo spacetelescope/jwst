@@ -116,7 +116,7 @@ def miri_mrs_pfpc_model():
             new_tab["wavelength"] = [np.linspace(4, 30, 1000)] * ndither
 
             # Set the correction to the value of the channel + dither number, for testing
-            new_tab["correction"] = [np.full(1000, channel) + i for i in range(ndither)]
+            new_tab["correction"] = [np.full(1000, channel) + i for i in range(1, ndither + 1)]
 
             if pfpc_tab is None:
                 pfpc_tab = new_tab
@@ -166,3 +166,32 @@ def nirspec_ifu_pfpc_model():
     pfpc_model = datamodels.MirMrsPFPCModel()
     pfpc_model.pfpc_table = pfpc_tab.as_array()
     return pfpc_model
+
+
+def miri_mrs_x1d(detector="MIRIFUSHORT", channel="1", band="LONG", patt_num=1):
+    nw = 100
+    spec = datamodels.MRSSpecModel((nw,))
+    spec.spec_table["WAVELENGTH"] = np.linspace(5.65, 6.65, 100)
+    spec.spec_table["FLUX"] = np.full(nw, 1.0)
+    spec.spec_table["FLUX_ERROR"] = np.full(nw, 0.01)
+    spec.spec_table["SURF_BRIGHT"] = np.full(nw, 2.0)
+    spec.spec_table["SB_ERROR"] = np.full(nw, 0.02)
+
+    multispec = datamodels.MRSMultiSpecModel()
+    multispec.spec.append(spec)
+
+    # Set to match PFPC file
+    multispec.meta.dither.primary_type = "4-POINT"
+    multispec.meta.dither.direction = "NEGATIVE"
+    multispec.meta.dither.optimized_for = "POINT-SOURCE"
+    multispec.meta.dither.primary_channel = "ALL_MRS"
+
+    multispec.meta.dither.position_number = patt_num
+    multispec.meta.instrument.detector = detector
+    multispec.meta.instrument.channel = channel
+    multispec.meta.instrument.band = band
+
+    # Set a test filename
+    multispec.meta.filename = "test_mrs_x1d.fits"
+
+    return multispec

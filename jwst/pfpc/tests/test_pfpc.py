@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
@@ -88,3 +89,24 @@ def test_process_unsupported_exptype():
     model.meta.exposure.type = "NRC_IMAGE"
     with pytest.raises(TypeError, match="Exposure type NRC_IMAGE is not supported"):
         pf.process_exposures([model])
+
+
+def test_apply_correction(caplog, mrs_dith1_ch1_medium_x1d, mrs_pfpc_model):
+    spec_by_exposure = [mrs_dith1_ch1_medium_x1d.copy()]
+    pfpc_table = mrs_pfpc_model.pfpc_table
+    corrected = pf.apply_correction(spec_by_exposure, pfpc_table)
+
+    assert len(corrected) == 1
+    assert len(corrected[0].spec) == 1
+    input_spec = mrs_dith1_ch1_medium_x1d.spec[0].spec_table
+    corrected_spec = corrected[0].spec[0].spec_table
+
+    # wavelength should be unmodified
+    assert np.allclose(corrected_spec["WAVELENGTH"], input_spec["WAVELENGTH"])
+
+    # expected correction in mock table is channel + dither = 2.0
+    correction = 2.0
+    assert np.allclose(corrected_spec["FLUX"], input_spec["FLUX"] / correction)
+    assert np.allclose(corrected_spec["FLUX_ERROR"], input_spec["FLUX_ERROR"] / correction)
+    assert np.allclose(corrected_spec["SURF_BRIGHT"], input_spec["SURF_BRIGHT"] / correction)
+    assert np.allclose(corrected_spec["SB_ERROR"], input_spec["SB_ERROR"] / correction)
