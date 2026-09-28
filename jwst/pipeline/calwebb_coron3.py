@@ -76,6 +76,7 @@ class Coron3Pipeline(Pipeline):
 
     spec = """
         suffix = string(default='i2d')
+        save_results = boolean(default=True)  # Save output products by default
     """  # noqa: E501
 
     # Define aliases to steps

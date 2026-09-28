@@ -50,6 +50,7 @@ class Spec3Pipeline(Pipeline):
     class_alias = "calwebb_spec3"
 
     spec = """
+        save_results = boolean(default=True)  # Save output products by default
     """  # noqa: E501
 
     # Define aliases to steps

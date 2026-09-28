@@ -1,0 +1,1 @@
+Fix a crash related to setting a SKIPPED status for input model containers with no valid spectral data.
