@@ -305,7 +305,7 @@ def combine_dithers(corrected_spec):
     combined_spec = []
     for band in spec_by_band:
         # NOTE: combine1d does not propagate variance or background
-        with disable_logging(level=logging.DEBUG):
+        with disable_logging(level=logging.WARNING):
             combined = Combine1dStep.call(spec_by_band[band], **combine_param)
 
         if not isinstance(combined, datamodels.MultiCombinedSpecModel):
