@@ -570,7 +570,7 @@ def find_suffix(fname):
     """
     suffix = None
     for sfx in SUFFIXES_TO_ADD:
-        if sfx in fname:
+        if sfx + ".fits" in fname:
             if fname.split(sfx)[0].endswith("_"):
                 suffix = sfx
                 break
@@ -582,26 +582,8 @@ def find_suffix(fname):
                     break
     if suffix is None:
         raise ValueError(f"Known suffix not found in file name: {fname}")
-    return suffix
-
-
-def mk_mod_name(file_basename):
-    """
-    Make the modified file name.
-
-    Parameters
-    ----------
-    file_basename : str
-        File name to modify.
-
-    Returns
-    -------
-    modfname : str
-        File name with 'mod' suffix.
-    """
-    suffix = find_suffix(file_basename)
-    modfname = file_basename.replace(suffix, "mod_" + suffix)
-    return modfname
+    root = fname.replace(".fits", "")
+    return root, suffix
 
 
 def trim_tso_data(file, ints_to_keep, intstart, ints_offset):
@@ -633,7 +615,8 @@ def trim_tso_data(file, ints_to_keep, intstart, ints_offset):
             trimmed_data = hdulist[ext].data[ints_offset : ints_offset + ints_to_keep, ...]
             hdulist[ext].data = trimmed_data
     file_path = Path(file)
-    modfname = mk_mod_name(file_path.name)
+    root, suffix = find_suffix(file_path.name)
+    modfname = replace_suffix(root, "mod_" + suffix) + ".fits"
     trimmed_file = file_path.parent / modfname
     hdulist.writeto(trimmed_file, overwrite=True)
     hdulist.close()
@@ -661,9 +644,8 @@ class RTData:
             if "mod" not in self.file_name:
                 raise ValueError("Modified file does not have the 'mod' suffix.")
             elif "fits" in self.file_name:
-                original_fname = self.file_name.replace("_mod", "")
-                if self.file_name != mk_mod_name(original_fname):
-                    raise ValueError(
-                        "Suffix 'mod' should be right before pipeline suffix. "
-                        "Use function mk_mod_name."
-                    )
+                original_fname = Path(self.file_name.replace("_mod", ""))
+                root, suffix = find_suffix(original_fname.name)
+                modfname = replace_suffix(root, "mod_" + suffix) + ".fits"
+                if self.file_name != modfname:
+                    raise ValueError("Suffix 'mod' should be right before pipeline suffix. ")

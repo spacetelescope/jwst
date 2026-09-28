@@ -13,12 +13,12 @@ INPUT_DATA_PATH = "miri/lrs"
 RTDATA_TESTING_PATH = "rtdata_testing"
 DATASET1_ID = "jw01536028001_03103_00001-seg001_mirimage"
 DATASET2_ID = "jw01536028001_03103_00001-seg002_mirimage"
-# DATASET3_ID = "jw01281001001_04103_00001-seg002_trim_mirimage"
+DATASET3_ID_truth = "jw01281001001_04103_00001-seg002_trim_mirimage"
 DATASET3_ID = "jw01281001001_04103_00001-seg002_mirimage_mod"
 ASN3_FILENAME = "jw01536-o028_20221202t215749_tso3_00001_asn.json"
 PRODUCT_NAME = "jw01536-o028_t008_miri_p750l-slitlessprism"
 ASN_ID = "o028"
-# DATASET4_ID = "jw04496004001_03103_00001-seg001_mirimage_truncated"
+DATASET4_ID_truth = "jw04496004001_03103_00001-seg001_mirimage_truncated"
 DATASET4_ID = "jw04496004001_03103_00001-seg001_mirimage_mod"
 TARG_DATASET4 = "jw04496004001_03102_00001-seg001_mirimage_rate.fits"
 
@@ -229,7 +229,8 @@ def test_miri_lrs_slitless_detector1(
     output_filename = f"{DATASET3_ID}_{step_suffix}.fits"
     rtdata.output = output_filename
 
-    rtdata.get_truth(f"truth/test_miri_lrs_slitless_detector1/{output_filename}")
+    truth_outname = f"{DATASET3_ID_truth}_{step_suffix}.fits"
+    rtdata.get_truth(f"truth/test_miri_lrs_slitless_detector1/{truth_outname}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -244,7 +245,8 @@ def test_miri_lrs_slitless_detector1_emicorr_joint(
     output_filename = f"{DATASET3_ID}_emijoint_{step_suffix}.fits"
     rtdata.output = output_filename
 
-    rtdata.get_truth(f"truth/test_miri_lrs_slitless_detector1_emicorr_joint/{output_filename}")
+    truth_outname = f"{DATASET3_ID_truth}_{step_suffix}.fits"
+    rtdata.get_truth(f"truth/test_miri_lrs_slitless_detector1_emicorr_joint/{truth_outname}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -358,7 +360,8 @@ def test_miri_lrs_slitless_spec2_targ_centroid(
 
     output_filename = f"{DATASET4_ID}_{step_suffix}.fits"
     rtdata.output = output_filename
-    rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso_spec2/{output_filename}")
+    truth_outname = f"{DATASET4_ID_truth}_{step_suffix}.fits"
+    rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso_spec2/{truth_outname}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
