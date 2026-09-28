@@ -214,6 +214,7 @@ def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename, c
 
     step = CubeBuildStep()
     step.coord_system = coord_system
+    step.readnoise_weighting = 0
     step.save_results = True
     result = step.run(step_input)
 
