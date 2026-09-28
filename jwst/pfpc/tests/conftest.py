@@ -93,3 +93,18 @@ def nrs_ifu_pfpc_model():
     pfpc = helpers.nirspec_ifu_pfpc_model()
     yield pfpc
     pfpc.close()
+
+
+@pytest.fixture(scope="module")
+def mrs_dith1_ch1_medium_x1d():
+    """
+    Make a MIRI MRS x1d model with channel 1,2 and band MEDIUM, dither index 1.
+
+    Yields
+    ------
+    `~stdatamodels.jwst.datamodels.IFUImageModel`
+        The MRS model.
+    """
+    model = helpers.miri_mrs_x1d(detector="MIRIFUSHORT", channel="1", band="MEDIUM")
+    yield model
+    model.close()
