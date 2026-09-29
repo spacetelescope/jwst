@@ -180,6 +180,7 @@ match_driz(
 
     // find max of cdelt3, dwave to be used to estimate which wavelength plane the
     // pixel falls on
+    rn_tolerance = 0.000001;
     zreg = 0;
     max_cdelt3 = cdelt3[0];
     max_dwave = dwave[0];
@@ -310,6 +311,7 @@ match_driz(
                             // total_weight contols the flux accumulation
 
                             area_weight = area * zoverlap;
+
                             total_weight = area_weight;
                             if (rn_weight == 1) {
                                 // Readnoise variance is valid value
