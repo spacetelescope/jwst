@@ -80,7 +80,7 @@ class PFPCStep(Step):
             )
 
         # Extract spectra from each exposure
-        spec_by_exposure = process_exposures(models, output_file)
+        spec_by_exposure = process_exposures(models)
         if len(spec_by_exposure) == 0:
             return self._step_failed(
                 input_data, output_model, "No correctable spectra were created."
@@ -100,6 +100,14 @@ class PFPCStep(Step):
         output_container = ModelContainer(combined_spec)
         for spec in output_container:
             spec.meta.cal_step.pfpc = "COMPLETE"
+
+            # Update the output name to contain the band, set by the cube_build step.
+            # Since cube_build ran without knowing the output_file, we need to recompose
+            # the output basename here.
+            # NOTE: other modes will likely need different handling in the future.
+            if output_file is not None:
+                band_suffix = spec.meta.filename.split("_")[-1]
+                spec.meta.filename = f"{output_file}_{band_suffix}"
 
         # Close the input models if necessary: returned models are newly created
         if output_model is not input_data:
