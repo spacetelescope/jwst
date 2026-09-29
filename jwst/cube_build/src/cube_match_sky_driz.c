@@ -168,6 +168,7 @@ match_driz(
     double ptmin, ptmax, spxmin, spxmax, zoverlap, z1, z2, z3;
     double cdelt1_half, cdelt2_half;
     double xleft, xright, ybot, ytop;
+    double rn_tolerance;
 
     // initialize them to the passed references:
     double *fluxv = *spaxel_flux;
@@ -178,6 +179,7 @@ match_driz(
 
     // find max of cdelt3, dwave to be used to estimate which wavelength plane the
     // pixel falls on
+    rn_tolerance = 0.000001;
     zreg = 0;
     max_cdelt3 = cdelt3[0];
     max_dwave = dwave[0];
@@ -305,7 +307,9 @@ match_driz(
 
                             // area_weight = area of overlap * wavelength overlap
                             area_weight = area * zoverlap;
-                            if (rn_weight == 1 && !npy_isnan(readvar[k])) {
+
+                            if (rn_weight == 1 && !npy_isnan(readvar[k]) &&
+                                readvar[k] > rn_tolerance) {
                                 area_weight = area_weight / readvar[k];
                             }
                             if (area_weight > 0) {
@@ -324,8 +328,10 @@ match_driz(
                             // Keep print statement in code - used for debugging
                             if (index_cube == debug_cube_index && area_weight > 0) {
                                 printf(
-                                    "spaxel, flux, x, y [count starting at 0]  %i %f %f %f  \n ",
-                                    index_cube, flux[k], x_det[k], y_det[k]);
+                                    "spaxel index, flux, x, y, area_weight [count starting at 0]  "
+                                    "%i %f %f %f %.10f  \n ",
+                                    index_cube, flux[k], x_det[k], y_det[k], area_weight);
+                                printf("readnoiose %f \n ", readvar[k]);
                             }
 
                             // end of print statements
