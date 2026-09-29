@@ -829,9 +829,9 @@ def _inputspectra_from_multispec(ms, exptime_key, input_spectra):
         monotonic = check_monotonic(wavelength)
         if not monotonic:
             log.warning(
-                "Input spectrum %d order %d has does not have monotonic wavelengths; skipping.",
-                source_id,
-                spectral_order,
+                "Input spectrum %s order %s has does not have monotonic wavelengths; skipping.",
+                str(source_id),
+                str(spectral_order),
             )
             continue
 
@@ -839,17 +839,17 @@ def _inputspectra_from_multispec(ms, exptime_key, input_spectra):
         if not np.any(np.isfinite(flux)):
             if spec.meta.hasattr("group_id"):
                 log.warning(
-                    "Input spectrum %d order %d from group_id %s has "
+                    "Input spectrum %s order %s from group_id %s has "
                     "no valid flux values; skipping.",
-                    source_id,
-                    spectral_order,
+                    str(source_id),
+                    str(spectral_order),
                     spec.meta.group_id,
                 )
             else:
                 log.warning(
-                    "Input spectrum %d order %d has no valid flux values; skipping.",
-                    source_id,
-                    spectral_order,
+                    "Input spectrum %s order %s has no valid flux values; skipping.",
+                    str(source_id),
+                    str(spectral_order),
                 )
             continue
 
@@ -968,18 +968,18 @@ def _inputspectra_from_tso(ms, exptime_key, input_spectra):
             monotonic = check_monotonic(wavelength)
             if not monotonic:
                 log.warning(
-                    "Input spectrum %d order %d has does not have monotonic wavelengths; skipping.",
-                    int_num,
-                    spectral_order,
+                    "Input spectrum %s order %s has does not have monotonic wavelengths; skipping.",
+                    str(int_num),
+                    str(spectral_order),
                 )
                 continue
 
             flux = spec_row["flux"][:n]
             if not np.any(np.isfinite(flux)):
                 log.warning(
-                    "Input spectrum %d order %d has no valid flux values; skipping.",
-                    int_num,
-                    spectral_order,
+                    "Input spectrum %s order %s has no valid flux values; skipping.",
+                    str(int_num),
+                    str(spectral_order),
                 )
                 continue
 
