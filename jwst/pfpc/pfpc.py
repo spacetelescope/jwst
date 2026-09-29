@@ -110,7 +110,7 @@ def find_correction(model, pfpc_table, ignore_keys=None, require_one=True, check
     return table_row
 
 
-def process_exposures(models, output_file=None):
+def process_exposures(models):
     """
     Extract spectra from each exposure and band.
 
@@ -125,9 +125,6 @@ def process_exposures(models, output_file=None):
     ----------
     models : list or `~jwst.datamodels.container.ModelContainer`
         Input datamodels.
-    output_file : str or None, optional
-        Output file name, from the step or parent parameters. Passed
-        to cube_build to compose the output name.
 
     Returns
     -------
@@ -162,7 +159,6 @@ def process_exposures(models, output_file=None):
         cube_param = {
             "coord_system": "ifualign",
             "output_type": "band",
-            "output_file": output_file,
         }
         log.debug(f"Calling the cube_build step with parameters {cube_param}")
         with disable_logging(level=logging.INFO):
