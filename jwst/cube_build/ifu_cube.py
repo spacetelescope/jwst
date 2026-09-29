@@ -2207,6 +2207,7 @@ class IFUCubeData:
 
             # Normalize the weighted sum of pixel fluxes by the sum of the weights
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
+
             # Normalize the variance by the square of the weights
             self.spaxel_var[good] = self.spaxel_var[good] / (
                 self.spaxel_weight[good] * self.spaxel_weight[good]
