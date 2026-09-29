@@ -439,22 +439,3 @@ def test_slitmodel(source_type, nrs_slit_model):
 
     slit.close()
     result.close()
-
-
-@pytest.mark.parametrize("level", ["top", "meta", None])
-@pytest.mark.parametrize("value", ["POINT", "EXTENDED", None])
-def test_is_point_source(level, value):
-    model = datamodels.SlitModel()
-    if level == "top":
-        model.source_type = value
-        model.meta.target.source_type = None
-    elif level == "meta":
-        model.source_type = None
-        model.meta.target.source_type = value
-    else:
-        model.source_type = None
-        model.meta.target.source_type = None
-    if level is not None and value == "POINT":
-        assert wavecorr._is_point_source(model) is True
-    else:
-        assert wavecorr._is_point_source(model) is False

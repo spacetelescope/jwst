@@ -8,6 +8,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.lib.dispaxis import get_dispersion_direction
+from jwst.lib.exposure_types import is_point_source
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
 from jwst.photom import time_dependence
@@ -145,28 +146,9 @@ class DataSet:
         self.specnum = -1
         self.integ_row = -1
         self.inverse = inverse
-        self.source_type = None
+        self.source_type = source_type
         self.apply_time_correction = apply_time_correction
         self.sb_conversion = None
-
-        # For MultiSlitModels, only set a generic source_type value for the
-        # entire datamodel if the user has set the source_type parameter.
-        # Otherwise leave the generic source_type set to None, which will
-        # force the use of per-slit source_types later in processing.
-        if isinstance(model, datamodels.MultiSlitModel):
-            if source_type is not None:
-                self.source_type = source_type
-
-        # For non-MultiSlitModel inputs, where there's only 1 target and
-        # one source_type, use the user-provided source_type value, if it
-        # exists. Otherwise, use the generic source_type value provided in
-        # the input model (if it exists).
-        else:
-            if source_type is not None:
-                self.source_type = source_type
-            else:
-                if model.meta.target.source_type is not None:
-                    self.source_type = model.meta.target.source_type.upper()
 
         # Store the input model for updating
         self.input = model
@@ -773,10 +755,10 @@ class DataSet:
             if isinstance(self.input, datamodels.MultiSlitModel):
                 slit = self.input.slits[self.slitnum]
                 if self.exptype in ["NRS_MSASPEC", "NRS_FIXEDSLIT"]:
-                    srctype = self.source_type if self.source_type else slit.source_type
+                    is_point = is_point_source(slit, override_srctype=self.source_type)
                 else:
-                    srctype = self.source_type
-                if srctype is None or srctype.upper() != "POINT":
+                    is_point = is_point_source(self.input, override_srctype=self.source_type)
+                if not is_point:
                     if slit.meta.photometry.pixelarea_steradians is None:
                         log.warning(
                             "Pixel area is None, so can't convert flux to surface brightness!"
@@ -793,7 +775,7 @@ class DataSet:
                 # output from extract1d should not require this area conversion
                 unit_is_surface_brightness = False
             else:
-                if self.source_type is None or self.source_type != "POINT":
+                if not is_point_source(self.input, override_srctype=self.source_type):
                     if self.input.meta.photometry.pixelarea_steradians is None:
                         log.warning(
                             "Pixel area is None, so can't convert flux to surface brightness!"
@@ -889,7 +871,7 @@ class DataSet:
                 slit = self.input.slits[self.slitnum]
                 # The NIRSpec fixed-slit primary slit needs special handling if
                 # it contains a point source
-                if self.exptype.upper() == "NRS_FIXEDSLIT" and slit.source_type.upper() == "POINT":
+                if self.exptype.upper() == "NRS_FIXEDSLIT" and is_point_source(slit):
                     # First, compute 2D array of photom correction values using
                     # uncorrected wavelengths, which is appropriate for a uniform source
                     conversion_2d_uniform, no_cal = self.create_2d_conversion(

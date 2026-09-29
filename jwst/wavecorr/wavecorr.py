@@ -8,6 +8,8 @@ from gwcs import coordinate_frames as cf
 from gwcs import wcstools
 from stdatamodels.jwst import datamodels
 
+from jwst.lib.exposure_types import is_point_source
+
 log = logging.getLogger(__name__)
 
 __all__ = [
@@ -49,11 +51,11 @@ def do_correction(input_model, wavecorr_file):
     # For BRIGHTOBJ, operate on the single SlitModel
     corrected = False
     if isinstance(input_model, datamodels.SlitModel):
-        if _is_point_source(input_model):
+        if is_point_source(input_model):
             corrected = apply_zero_point_correction(input_model, wavecorr_file)
     else:
         for slit in input_model.slits:
-            if _is_point_source(slit):
+            if is_point_source(slit):
                 completed = apply_zero_point_correction(slit, wavecorr_file)
                 if completed:
                     corrected = True
@@ -264,40 +266,3 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
 
     _, _, lam = wcs(xpix, ypix)
     return lam
-
-
-def _is_point_source(slit):
-    """
-    Determine if a source is a point source.
-
-    Parameters
-    ----------
-    slit : `~stdatamodels.jwst.transforms.models.Slit`
-        A slit object.
-
-    Returns
-    -------
-    bool
-        `True` if point source; `False` otherwise.
-    """
-    result = False
-
-    # Get the source type value set by the source_type step (if any)
-    if slit.source_type is not None:
-        src_type = slit.source_type
-    elif slit.meta.target.source_type is not None:
-        src_type = slit.meta.target.source_type
-    else:
-        src_type = None
-
-    if src_type is not None and src_type.upper() in ["POINT", "EXTENDED"]:
-        # Use the supplied value
-        log.info(f"Detected a {src_type} source type in slit {slit.name}")
-        if src_type.strip().upper() == "POINT":
-            result = True
-        else:
-            result = False
-    else:
-        log.info("Unknown source type")
-
-    return result

@@ -460,7 +460,6 @@ def test_copy_keyword_info(mock_nirspec_fs_one_slit, mock_one_spec):
         "source_id": 3,
         "source_name": "4",
         "source_alias": "5",
-        "source_type": "POINT",
         "stellarity": 0.5,
         "source_xpos": -0.5,
         "source_ypos": -0.5,
@@ -1455,15 +1454,19 @@ def test_create_extraction_without_photom(create_extraction_inputs):
     assert output_model.spec[0].spec_table.columns["flux"].unit == "DN/s"
 
 
-def test_create_extraction_missing_src_type(create_extraction_inputs):
+@pytest.mark.parametrize("input_srctype", ["POINT", "EXTENDED", "UNKNOWN", None])
+def test_create_extraction_missing_src_type(create_extraction_inputs, input_srctype):
     model = create_extraction_inputs[0]
     model.source_type = None
-    model.meta.target.source_type = "EXTENDED"
+    model.meta.target.source_type = input_srctype
 
     ex.create_extraction(*create_extraction_inputs)
 
     output_model = create_extraction_inputs[2]
-    assert output_model.spec[0].source_type == "EXTENDED"
+    if input_srctype == "POINT":
+        assert output_model.spec[0].source_type == "POINT"
+    else:
+        assert output_model.spec[0].source_type == "EXTENDED"
 
 
 def test_create_extraction_no_match(create_extraction_inputs):

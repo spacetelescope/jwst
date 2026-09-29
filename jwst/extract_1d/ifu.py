@@ -19,6 +19,7 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst.extract_1d import spec_wcs
 from jwst.extract_1d.apply_apcorr import select_apcorr
 from jwst.extract_1d.extract import read_apcorr_ref
+from jwst.lib.exposure_types import is_point_source
 from jwst.residual_fringe import utils as rfutils
 
 __all__ = [
@@ -64,8 +65,8 @@ def ifu_extract1d(
         The input model.
     ref_file : str
         File name for the EXTRACT1D reference file, in ASDF format.
-    source_type : str
-        "POINT" or "EXTENDED".
+    source_type : str or None
+        Overrides the model value if specified. "POINT" or "EXTENDED".
     subtract_background : bool or None
         User supplied flag indicating whether the background should be subtracted.
         If None, the value in the EXTRACT1D reference file will be used.
@@ -109,14 +110,12 @@ def ifu_extract1d(
     instrument = input_model.meta.instrument.name
     if instrument is not None:
         instrument = instrument.upper()
-    if source_type is not None:
-        source_type = source_type.upper()
-    if source_type != "POINT" and source_type != "EXTENDED":
-        default_source_type = "EXTENDED"
-        log.warning(f"Source type was '{source_type}'; setting to '{default_source_type}'.")
-        source_type = default_source_type
+
+    if is_point_source(input_model, override_srctype=source_type):
+        source_type = "POINT"
     else:
-        log.info(f"Source type = {source_type}")
+        source_type = "EXTENDED"
+    log.info(f"Using source type = {source_type}")
 
     if input_model.meta.instrument.name == "MIRI":
         output_model = datamodels.MRSMultiSpecModel()

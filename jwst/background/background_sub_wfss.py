@@ -384,7 +384,13 @@ def _mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
     bkg_mask = np.ones(shape, dtype=bool)
 
     reference_files = {"wavelengthrange": wl_range_name}
-    grism_obj_list = create_grism_bbox(input_model, reference_files, mmag_extract)
+    with datamodels.open(reference_files["wavelengthrange"]) as f:
+        # can't use default, which is wavelengthrange.extract_orders,
+        # because here we want to mask all sources, not just those that are being extracted
+        extract_orders = f.order
+    grism_obj_list = create_grism_bbox(
+        input_model, reference_files, mmag_extract, extract_orders=extract_orders
+    )
 
     for obj in grism_obj_list:
         order_bounding = obj.order_bounding
