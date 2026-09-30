@@ -1,0 +1,1 @@
+Fix rare IndexError in dispersion calculation when pixels passed initial bounds checks but were out-of-bounds according to winclip
