@@ -470,6 +470,10 @@ def disperse(
     padding = 1
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     del x0s, y0s
+    if len(xs) == 0:
+        # in rare cases there can be input x,y values that pass the check against naxis above
+        # but still end up with no valid clipped pixels within the image frame.
+        return
 
     # get_clipped_pixels treats its (nlam, n_pixels) inputs as flattened in C order,
     # so `index` decomposes into a (wavelength, pixel) pair. Use that to gather
