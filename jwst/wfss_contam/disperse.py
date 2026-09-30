@@ -460,7 +460,8 @@ def disperse(
 
     # If none of the dispersed pixel indexes are within the image frame,
     # return a null result without wasting time doing other computations
-    if x0s.min() >= naxis[0] or x0s.max() < 0 or y0s.min() >= naxis[1] or y0s.max() < 0:
+    possible = (x0s > -0.5) & (x0s < naxis[0] + 0.5) & (y0s > -0.5) & (y0s < naxis[1] + 0.5)
+    if not possible.any():
         return
 
     # Discretize x and y coordinates to integer pixel values, keeping track of the fractional area
@@ -470,10 +471,6 @@ def disperse(
     padding = 1
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     del x0s, y0s
-    if len(xs) == 0:
-        # in rare cases there can be input x,y values that pass the check against naxis above
-        # but still end up with no valid clipped pixels within the image frame.
-        return
 
     # get_clipped_pixels treats its (nlam, n_pixels) inputs as flattened in C order,
     # so `index` decomposes into a (wavelength, pixel) pair. Use that to gather
