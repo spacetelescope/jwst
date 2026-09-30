@@ -65,10 +65,13 @@ def nrs_ifu_dith1():
     model.close()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def mrs_pfpc_model():
     """
     Make a PFPC reference model for MIRI MRS.
+
+    Note: this fixture must be function-scoped because ``model.copy()``
+    does not perform a deepcopy on the FITS table.
 
     Yields
     ------
@@ -80,10 +83,13 @@ def mrs_pfpc_model():
     pfpc.close()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def nrs_ifu_pfpc_model():
     """
     Make a PFPC reference model for NIRSpec IFU.
+
+    Note: this fixture must be function-scoped because ``model.copy()``
+    does not perform a deepcopy on the FITS table.
 
     Yields
     ------
