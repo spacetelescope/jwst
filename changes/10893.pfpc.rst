@@ -1,0 +1,1 @@
+Add a new ``pfpc`` step to the spec3 pipeline to apply a point fixed pattern correction (PFPC) to point source spectra.  Initial support includes MIRI MRS only.
