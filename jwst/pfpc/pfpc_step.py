@@ -120,7 +120,7 @@ class PFPCStep(Step):
         """
         Log a message, clean up inputs, and return an empty container on step failure.
 
-        If the `input_data` is the same as the `output_model`, then a failure
+        If the ``input_data`` is the same as the ``output_model``, then a failure
         status for the step is recorded in the output model(s). This is intended for
         pipeline use, so that the user has an indication that the step was attempted
         but did not complete.

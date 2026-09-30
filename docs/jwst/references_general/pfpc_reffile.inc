@@ -1,7 +1,7 @@
 .. _pfpc_reffile:
 
 PFPC Reference File
----------------------------
+-------------------
 
 :REFTYPE: PFPC
 
@@ -12,7 +12,7 @@ pattern correction to dithered spectral data.
 
 
 PFPC Reference File Format
-++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++
 
 PFPC reference files are in FITS format with one table extension with ``EXTNAME = 'PFPC'``.
 The primary HDU does not contain a data array.  The contents of the table vary for
