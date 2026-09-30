@@ -56,17 +56,14 @@ separated using ``output_dir``.
 Output Suffix
 -------------
 
-There are three ways a step's results can be written to a file:
+There are two ways a step's results can be written to a file:
 
 1. Implicitly when a step is run from the command line or with
    ``Step.from_cmdline``
 
 2. Explicitly by specifying the parameter ``save_results``
 
-3. Explicitly by specifying a file name with the parameter
-   ``output_file``
-
-In all cases, the file, or files, is/are created with an added suffix
+In both cases, the file, or files, is/are created with an added suffix
 at the end of the base file name. By default this suffix is the class
 name of the step that produced the results. Use the ``suffix`` parameter
 to explicitly change the suffix.

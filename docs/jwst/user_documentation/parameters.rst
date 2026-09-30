@@ -49,13 +49,10 @@ Output File
 When running a pipeline, the ``stpipe`` infrastructure automatically passes the
 output data model from one step to the input of the next step, without
 saving any intermediate results to disk. If you want to save the results from
-individual steps, you have two options:
-
-#. Specify ``save_results``.
-   This option will save the results of the step, using a filename
-   created by the step.
-#. Specify a file name using ``output_file=<basename>``.
-   This option will save the step results using the name specified.
+individual steps, you may specify ``save_results`` for the step.
+This option will save the results of the step, using a filename created by the step.
+To specify the base filename for the output directly, you may additionally set
+``output_file`` to the desired base name for the step.
 
 To do this using the Python pipeline interface, see :ref:`python_outputs`. To do
 this when using the command line interface, see :ref:`strun_outputs`.

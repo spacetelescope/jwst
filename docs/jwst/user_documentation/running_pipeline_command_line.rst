@@ -241,13 +241,11 @@ Saving Intermediate Pipeline Results to a File
 
 The ``stpipe`` infrastructure automatically passes the output data model from
 one step to the input of the next step, without saving any intermediate results
-to disk.  If you want to save the results from individual steps, you have two options:
-
-* Specify ``save_results`` on an individual step within the pipeline.
-  This option will save the results of the step, using a filename
-  created by the step.
-* Specify a file name using ``output_file <basename>`` for an individual step.
-  This option indicated that results should be saved, and to use the name specified.
+to disk.  If you want to save the results from individual steps, you may
+set ``save_results`` to True on an individual step within the pipeline.
+This option will save the results of the step, using a filename created by the step.
+To specify the base filename for the output directly, you may additionally set
+``output_file <basename>`` for the step.
 
 For example, to save the result from the dark current step of ``Detector1Pipeline``
 (using the :ref:`alias <pipelines>` name ``calwebb_detector1``)::
@@ -257,22 +255,28 @@ For example, to save the result from the dark current step of ``Detector1Pipelin
 This will create the file ``jw00017001001_01101_00001_dark_current.fits`` in the
 current working directory.
 
+Similarly, to save the result with a different file name::
+
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.save_results=true --steps.dark_current.output_file='intermediate_result'
+
+This will create the file ``intermediate_result_dark_current.fits`` in the current working
+directory. Note that the name of the step will be appended as the file name suffix.
+
 Setting Output File Name
 ------------------------
 
 As demonstrated in the :ref:`section above <strun_intermediate_outputs>`, the ``output_file``
 parameter is used to specify the desired name for output files. When done at the
-step-level as shown in those examples, the intermediate output files from steps
-within a pipeline are saved with the specified name.
+step-level as shown in those examples, along with the ``save_results`` parameter,
+the intermediate output files from steps within a pipeline are saved with the specified name.
 
 You can also specify a particular file name for saving the end result of
 the entire pipeline using the ``--output_file`` parameter::
 
     strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --output_file='stage1_processed'
 
-In this situation, using the default configuration, three files are created:
+In this situation, using the default configuration, two files are created:
 
-* ``stage1_processed_trapsfilled.fits``
 * ``stage1_processed_rate.fits``
 * ``stage1_processed_rateints.fits``
 
@@ -281,14 +285,6 @@ will determine the name of the final output product for that step, overriding
 the default based on input name::
 
     strun linearity jw00017001001_01101_00001_nrca1_uncal.fits --output_file='intermediate_linearity'
-
-Similarly, to save the result from a step within a pipeline (for example,
-the dark current step of ``calwebb_detector1``) with a different file name::
-
-    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.output_file='intermediate_result'
-
-A file, ``intermediate_result_dark_current.fits``, will then be created. Note
-that the name of the step will be appended as the file name suffix
 
 
 Setting Output File Directory

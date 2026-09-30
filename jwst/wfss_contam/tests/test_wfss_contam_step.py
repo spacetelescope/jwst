@@ -66,6 +66,7 @@ def test_wfss_contam_step(tmp_cwd, multicutoutmodel):
     result = WfssContamStep.call(
         multicutoutmodel,
         output_file="multicutout_model",
+        save_results=True,
         save_simulated_image=True,
         magnitude_limit=25,
         orders=[1],
