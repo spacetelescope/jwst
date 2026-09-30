@@ -41,6 +41,7 @@ def test_cal_logs_step_in_pipeline(tmp_cwd):
     # Set the log level to INFO, since it is not directly configured in `run`
     with LoggingContext(logging.getLogger("jwst"), level=logging.INFO):
         pipe = CalLogsPipeline()
+        pipe.save_results = True
         pipe.output_file = "passenger_side"
         pipe.a_step.save_results = True
         m = pipe.run("scrub")
