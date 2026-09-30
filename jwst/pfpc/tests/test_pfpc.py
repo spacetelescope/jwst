@@ -55,8 +55,7 @@ def test_find_correction_match_reference(caplog, mrs_dith1_ch12_medium, mrs_pfpc
     input_copy.meta.ref_file.photom.name = "crds://test_photom_1.fits"
 
     # Table value matches input
-    pfpc_copy = mrs_pfpc_model.copy()
-    pfpc_copy.pfpc_table["r_photom"] = "test_photom_1.fits"
+    mrs_pfpc_model.pfpc_table["r_photom"] = "test_photom_1.fits"
 
     # A matching row is returned
     row = pf.find_correction(input_copy, mrs_pfpc_model.pfpc_table)
@@ -72,8 +71,7 @@ def test_find_correction_mismatched_reference(caplog, mrs_dith1_ch12_medium, mrs
     input_copy.meta.ref_file.photom.name = "crds://test_photom_1.fits"
 
     # Table value does not match input
-    pfpc_copy = mrs_pfpc_model.copy()
-    pfpc_copy.pfpc_table["r_photom"] = "test_photom_2.fits"
+    mrs_pfpc_model.pfpc_table["r_photom"] = "test_photom_2.fits"
 
     # A matching row is still returned
     row = pf.find_correction(input_copy, mrs_pfpc_model.pfpc_table)
