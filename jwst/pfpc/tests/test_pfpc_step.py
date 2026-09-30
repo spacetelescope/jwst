@@ -154,16 +154,15 @@ def test_step_no_ta(caplog, monkeypatch, mrs_dith1_ch12_medium, mrs_pfpc_model):
 
 def test_step_correction_invalid(caplog, mrs_dith1_ch12_medium, mrs_pfpc_model):
     # modify the PFPC file to trigger failure in correction application
-    pfpc_copy = mrs_pfpc_model.copy()
 
     # no matching correction for channel 1
-    idx = pfpc_copy.pfpc_table["channel"] == "1"
-    pfpc_copy.pfpc_table["channel"][idx] = "5"
+    idx = mrs_pfpc_model.pfpc_table["channel"] == "1"
+    mrs_pfpc_model.pfpc_table["channel"][idx] = "5"
 
     # all corrections are NaN
-    pfpc_copy.pfpc_table["correction"] *= np.nan
+    mrs_pfpc_model.pfpc_table["correction"] *= np.nan
 
-    result = PFPCStep.call(mrs_dith1_ch12_medium, override_pfpc=pfpc_copy)
+    result = PFPCStep.call(mrs_dith1_ch12_medium, override_pfpc=mrs_pfpc_model)
 
     assert "No matching correction found for test_mrs_ch1" in caplog.text
     assert "No valid correction for test_mrs_ch2" in caplog.text
@@ -205,6 +204,21 @@ def test_fail_in_pipeline_context(caplog, mrs_dith1_ch12_medium):
 
     # input has failed status
     assert input_copy.meta.cal_step.pfpc == "FAILED"
+
+
+def test_output_file(tmp_path, caplog, mrs_dith1_ch12_medium, mrs_pfpc_model):
+    result = PFPCStep.call(
+        mrs_dith1_ch12_medium,
+        override_pfpc=mrs_pfpc_model,
+        save_results=True,
+        output_file="test_output_file",
+        output_dir=str(tmp_path),
+    )
+    assert len(result) == 2
+    for i, spec in enumerate(result):
+        expected = f"test_output_file_ch{i + 1}-medium_pfpc.fits"
+        assert spec.meta.filename == expected
+        assert (tmp_path / expected).exists()
 
 
 def test_nirspec_ifu_one_file(caplog, nrs_ifu_dith1, nrs_ifu_pfpc_model):
