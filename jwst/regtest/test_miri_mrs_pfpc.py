@@ -32,9 +32,7 @@ ASN_DESCRIPTOR = {
         "jw01206001001_02105_00004_mirifulong_cal.fits",
     ],
 }
-
-# When RTData changes are merged (#10729), set INPUT_DATA:
-# INPUT_DATA = {ASN_FILE: RTData(**ASN_DESCRIPTOR)}
+OVERRIDE_PFPC = "jwst_miri_pfpc_sep2026.fits"
 
 
 @pytest.fixture(scope="module")
@@ -42,13 +40,7 @@ def run_spec3_pfpc(rtdata_module):
     """Run the Spec3Pipeline on association with PFPC."""
     rtdata = rtdata_module
 
-    # todo: should this override reference file be noted in input data?
-    rtdata.get_data(f"{INPUT_DATA_PATH}/jwst_miri_pfpc_0000.fits")
-
-    # When RTData changes are merged (#10729), get_asn can use INPUT_DATA directly:
-    # rtdata.get_asn(INPUT_DATA[ASN_FILE])
-
-    # For now, get ASN from the filename
+    rtdata.get_data(f"{INPUT_DATA_PATH}/{OVERRIDE_PFPC}")
     rtdata.get_asn(f"{INPUT_DATA_PATH}/{ASN_FILE}")
 
     args = [
@@ -56,7 +48,7 @@ def run_spec3_pfpc(rtdata_module):
         rtdata.input,
         "--steps.pfpc.skip=false",
         "--steps.pfpc.save_results=true",
-        "--steps.pfpc.override_pfpc=jwst_miri_pfpc_0000.fits",
+        f"--steps.pfpc.override_pfpc={OVERRIDE_PFPC}",
     ]
     Step.from_cmdline(args)
     return rtdata
