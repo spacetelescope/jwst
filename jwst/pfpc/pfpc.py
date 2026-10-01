@@ -372,4 +372,6 @@ def _ta_performed(model):  # noqa: ARG001
     bool
         True if TA was performed.
     """
+    log.warning("Cannot determine if target acquisition was performed for this observation.")
+    log.warning("Processing will continue but results should be used with caution.")
     return True
