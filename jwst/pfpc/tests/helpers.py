@@ -2,7 +2,7 @@ import numpy as np
 from astropy.table import Table, vstack
 from stdatamodels.jwst import datamodels
 
-from jwst.adaptive_trace_model.tests.helpers import miri_mrs_model, nirspec_ifu_model
+from jwst.tests.spec_cal_helpers import miri_mrs_cal_model, nirspec_ifu_cal_model
 
 __all__ = ["dithered_miri_mrs_model", "miri_mrs_pfpc_model", "nirspec_ifu_pfpc_model"]
 
@@ -27,7 +27,7 @@ def dithered_miri_mrs_model(detector="MIRIFUSHORT", channel="12", band="LONG", p
     model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The MRS datamodel.
     """
-    model = miri_mrs_model(detector=detector, channel=channel, band=band)
+    model = miri_mrs_cal_model(detector=detector, channel=channel, band=band)
 
     # May vary for input
     model.meta.dither.position_number = patt_num
@@ -64,7 +64,7 @@ def dithered_nirspec_ifu_model(patt_num=1):
     model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The MRS datamodel.
     """
-    model = nirspec_ifu_model()
+    model = nirspec_ifu_cal_model()
 
     # May vary for input
     model.meta.dither.position_number = patt_num
