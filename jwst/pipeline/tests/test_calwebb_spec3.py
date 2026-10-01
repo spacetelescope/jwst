@@ -225,3 +225,10 @@ def test_spec3_miri_lrs_slitless(tmp_cwd):
     # it is explicitly avoided for this mode
     with dm.open(x1d_file) as output_model:
         assert output_model.meta.cal_step.resample is None
+
+
+def test_invalid_exptype():
+    with mock_miri_lrs_fs_func() as input_model:
+        input_model.meta.exposure.type = "MIR_IMAGE"
+        with pytest.raises(TypeError, match="not supported by calwebb_spec3"):
+            Spec3Pipeline.call(input_model)
