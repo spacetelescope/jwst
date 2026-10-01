@@ -45,7 +45,7 @@ def test_log_tracked_resources_spec2(log_tracked_resources, run_spec2):
     "suffix", ["assign_wcs", "calints", "flat_field", "fringe", "photom", "srctype"]
 )
 def test_spec2(rtdata_module, run_spec2, fitsdiff_default_kwargs, suffix):
-    """Test ensuring the calwebb_tso-spec2 is operating appropriately for MIRI MRS TSO data"""
+    """Test ensuring the calwebb_spec2 is operating appropriately for MIRI MRS TSO data"""
     rtdata = rtdata_module
     output = f"jw01556001001_04102_00001-seg001_mirifushort_{suffix}.fits"
     rtdata.output = output
