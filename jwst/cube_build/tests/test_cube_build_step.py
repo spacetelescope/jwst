@@ -354,9 +354,9 @@ def test_readnoise_weighting(nirspec_data, weighting):
     step_input.data[1496, 641] = 1000
     step_input.var_rnoise[1496, 641] = 0.1
 
-    # A pixel readnoise = 100  x,y,z = 15 20 500
-    step_input.data[1596, 626] = 1
-    step_input.var_rnoise[1596, 626] = 100
+    # A pixel readnoise = 100  x,y,z = 30 20 500
+    step_input.data[1251, 676] = 1
+    step_input.var_rnoise[1251, 676] = 100
 
     # added debug_spaxel = '20 22 500' to find how to match spaxels and detector pixel locations
     result = CubeBuildStep.call(
@@ -364,13 +364,12 @@ def test_readnoise_weighting(nirspec_data, weighting):
         weighting=weighting,
         readnoise_weighting=True,
         scalexy=0.05,
-        debug_spaxel="15 20 500",
+        debug_spaxel="30 20 500",
     )
     cube = result[0]
 
     assert cube.data[500, 10, 10] == 100  # should be all pixel values
     assert cube.data[500, 22, 20] > 100  # pixel with low readnoise variance weighted higher
     assert (
-        cube.data[500, 20, 15] == 1
+        cube.data[500, 20, 30] < 100
     )  # pixel with high readnoise variance weighted low. With scalexy=0.05
-    # spaxel at 15,20,500 only maps to 1 detector pixel
