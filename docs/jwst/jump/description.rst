@@ -39,11 +39,10 @@ to the STCAL documentation for the jump step.
 Large Events (Snowballs and Showers)
 ------------------------------------
 
-:ref:`Snoball Algorithm STCAL Documentation (link) <stcal:jump_snowball>`
----------------------------------------
-The JWST jump step makes use of the STCAL module. Detailed documentation for the snowball
-detection algorithm are in the STCAL documentation. The link above links to the STCAL
-documentation for the snowball detection algorithm.
+
+The JWST jump step makes use of the STCAL module. Detailed documentation for the snowball detection
+algorithm are in the  :ref:`Snoball Algorithm STCAL Documentation (link) <stcal:jump_snowball>`. The
+link above links to the STCAL documentation for the snowball detection algorithm.
 
 All the detectors on JWST are affected by large cosmic ray
 events. While these events, in general, affect a large number of
