@@ -208,10 +208,6 @@ through any type of Stage 2 processing, such as
      - dark
      - N/A
      - N/A
-   * - NRC_FLAT
-     - flat
-     - N/A
-     - N/A
    * - NRC_FOCUS
      - science
      - N/A/
