@@ -21,6 +21,10 @@ class Ami3Pipeline(Pipeline):
 
     class_alias = "calwebb_ami3"
 
+    spec = """
+        save_results = boolean(default=True)  # Save output products by default
+    """  # noqa: E501
+
     # Define aliases to steps
     step_defs = {
         "ami_analyze": ami_analyze_step.AmiAnalyzeStep,

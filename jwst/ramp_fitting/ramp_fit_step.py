@@ -273,13 +273,14 @@ class RampFitStep(Step):
         )
 
         # Save the OLS_C optional fit product, if it exists.
+        # It is created only if self.save_opt is True and the algorithm is OLS_C.
         if opt_info is not None:
             opt_model = create_optional_results_model(result, opt_info)
             if self.opt_name:
                 filename = self.opt_name
             else:
                 filename = result.meta.filename
-            self.save_model(opt_model, "fitopt", output_file=filename)
+            self.save_model(opt_model, "fitopt", output_file=filename, force=True)
 
         # For the LIKELY algorithm, save chi-square array.
         if self.save_opt and self.algorithm.lower() == "likely" and "chisq" in image_info:
@@ -291,7 +292,7 @@ class RampFitStep(Step):
                 filename = self.opt_name
             else:
                 filename = result.meta.filename
-            self.save_model(chisq_model, "likely_chisq", output_file=filename)
+            self.save_model(chisq_model, "likely_chisq", output_file=filename, force=True)
 
         # Create models from possibly updated info
         out_model, int_model = None, None
