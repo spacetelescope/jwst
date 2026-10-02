@@ -214,6 +214,7 @@ def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename, c
 
     step = CubeBuildStep()
     step.coord_system = coord_system
+    step.readnoise_weighting = 0
     step.save_results = True
     result = step.run(step_input)
 
@@ -337,3 +338,38 @@ def test_saturated_dq(nirspec_data, weighting):
         # Other weighting schemes average more pixels, so output still has a value
         assert np.isclose(cube.data[500, 16, 10], 1.0)
         assert cube.dq[500, 16, 10] == dqflags.pixel["SATURATED"]
+
+
+@pytest.mark.parametrize("weighting", ["drizzle"])
+def test_readnoise_weighting(nirspec_data, weighting):
+    # Add a low/high var_rnoise pixels and check the input pixels are weighted more/less.
+    # This also tests the debug_pixel feature.
+    step_input = nirspec_data.copy()
+
+    # set all rnoise to 1
+    step_input.var_rnoise[:, :] = 1
+    step_input.data[:, :] = 100
+
+    # A pixel with readnoise  = 1 and appears in cube at x,y,z = 20 22 500
+    step_input.data[1496, 641] = 1000
+    step_input.var_rnoise[1496, 641] = 0.1
+
+    # A pixel readnoise = 100  x,y,z = 30 20 500
+    step_input.data[1251, 676] = 1
+    step_input.var_rnoise[1251, 676] = 100
+
+    # added debug_spaxel = '20 22 500' to find how to match spaxels and detector pixel locations
+    result = CubeBuildStep.call(
+        step_input,
+        weighting=weighting,
+        readnoise_weighting=True,
+        scalexy=0.05,
+        debug_spaxel="30 20 500",
+    )
+    cube = result[0]
+
+    assert cube.data[500, 10, 10] == 100  # should be all pixel values
+    assert cube.data[500, 22, 20] > 100  # pixel with low readnoise variance weighted higher
+    assert (
+        cube.data[500, 20, 30] < 100
+    )  # pixel with high readnoise variance weighted low. With scalexy=0.05
