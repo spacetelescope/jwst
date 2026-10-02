@@ -6,7 +6,7 @@ from jwst.regtest import regtestdata as rt
 from jwst.stpipe import Step
 
 EXP_TYPES = ["fgs_acq1", "fgs_fineguide", "fgs_id-image", "fgs_id-stack"]
-INPUT_DATA_PATH = "fgs/level1b"
+INPUT_DATA_PATH = "rtdata/fgs/level1b"
 INPUT_DATA = {
     "jw01029001001_gs-acq1_2022142180746_uncal.fits": rt.RTData(
         file_name="jw01029001001_gs-acq1_2022142180746_uncal.fits",
@@ -53,6 +53,6 @@ def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
         run_guider_pipelines,
         fitsdiff_default_kwargs,
         suffix,
-        "truth/test_fgs_guider",
+        "rtdata/truth/test_fgs_guider",
         is_suffix=True,
     )

@@ -291,6 +291,7 @@ class RegtestData:
         rtdata_obj = None
         if not isinstance(path, str):
             rtdata_obj = path
+            rtdata_obj.validate_file_name()
             path = rtdata_obj.path + "/" + rtdata_obj.file_name
         if path is None:
             path = self.input_remote
@@ -634,7 +635,8 @@ class RTData:
     asn_files: list = field(default_factory=list)
     asn_files_from_mast: bool = True
 
-    def __post_init__(self):
+    def validate_file_name(self):
+        """Validate that the file name."""
         if ".json" in self.file_name:
             if len(self.asn_files) == 0:
                 raise ValueError(
@@ -649,3 +651,22 @@ class RTData:
                 modfname = replace_suffix(root, "mod_" + suffix) + ".fits"
                 if self.file_name != modfname:
                     raise ValueError("Suffix 'mod' should be right before pipeline suffix. ")
+
+    @property
+    def root_name(self):  # numpydoc ignore=RT01
+        """
+        Return the root name of the regression test data file.
+
+        Example of return value jw01281001001_04103_00001-seg002_mirimage
+        """
+        root, suffix = find_suffix(self.file_name)
+        return root.replace("_" + suffix, "")
+
+    @property
+    def full_path(self):  # numpydoc ignore=RT01
+        """
+        Return the full path to the regression test data file.
+
+        Example of return value would be fgs/image2/jw01029001001_04201_00001_guider2_rate.fits
+        """
+        return self.path + "/" + self.file_name

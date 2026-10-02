@@ -8,7 +8,7 @@ from astropy.table import Table
 
 from jwst.regtest.regtestdata import RTData, text_diff
 
-INPUT_DATA_PATH = "infrastructure/test_regtestdata"
+INPUT_DATA_PATH = "rtdata/infrastructure/test_regtestdata"
 FILE1 = "file1_rate.fits"
 ASN_FILE = "my_asn.json"
 

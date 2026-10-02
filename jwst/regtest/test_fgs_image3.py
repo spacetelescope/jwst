@@ -5,8 +5,7 @@ from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 INPUT_DATA_PATH = "fgs/image3"
-# ASN_FILE = "jw01029-o001_20240716t172128_image3_00001_asn.json"
-RTDATA_TESTING_PATH = "rtdata_testing"
+RTDATA_TESTING_PATH = "rtdata/fgs/image3/"
 ASN_FILE = "jw01029-o001_mod_image3_asn.json"
 INPUT_DATA = {
     ASN_FILE: RTData(
@@ -40,7 +39,7 @@ def test_fgs_image3(run_fgs_image3, rtdata_module, fitsdiff_default_kwargs, suff
     rtdata = rtdata_module
     output = f"jw01029-o001_t009_fgs_clear_{suffix}.fits"
     rtdata.output = output
-    rtdata.get_truth(f"truth/test_fgs_image3/{output}")
+    rtdata.get_truth(f"rtdata/truth/test_fgs_image3/{output}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -50,6 +49,6 @@ def test_fgs_image3(run_fgs_image3, rtdata_module, fitsdiff_default_kwargs, suff
 def test_fgs_image3_catalog(run_fgs_image3, rtdata_module, diff_astropy_tables):
     rtdata = rtdata_module
     rtdata.output = "jw01029-o001_t009_fgs_clear_cat.ecsv"
-    rtdata.get_truth("truth/test_fgs_image3/jw01029-o001_t009_fgs_clear_cat.ecsv")
+    rtdata.get_truth("rtdata/truth/test_fgs_image3/jw01029-o001_t009_fgs_clear_cat.ecsv")
 
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-3, atol=1e-4)
