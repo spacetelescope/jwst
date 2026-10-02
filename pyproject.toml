@@ -29,7 +29,8 @@ dependencies = [
     "scikit-image>=0.23.1",
     "scipy>=1.18.0",
     # "stdatamodels>=6.0.0,<6.1",
-    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
+    # "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
+    "stdatamodels @ git+https://github.com/melanieclarke/stdatamodels.git@jp-4304",
     #"stcal>=1.19.1,<2",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     # "stpipe>=1.0.0,<2",
@@ -543,6 +544,11 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "persistence"
 name = 'persistence (detector1 NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "pfpc"
+name = "pfpc (spec3)"
 showcontent = true
 
 [[tool.towncrier.type]]
