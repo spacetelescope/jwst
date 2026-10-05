@@ -13,7 +13,6 @@ from jwst.datamodels.utils.flat_multispec import (
     populate_recarray,
     set_schema_units,
 )
-from jwst.datamodels.utils.tests.wfss_helpers import mock_wcs
 from jwst.tests.helpers import LogWatcher
 
 
@@ -66,41 +65,6 @@ def output_spec():
     spec = dm.MRSSpecModel()
     spec.spec_table = np.zeros((5,), dtype=spec.get_dtype("spec_table"))
     return spec
-
-
-@pytest.fixture()
-def tso_multi_spec():
-    """Make a populated TSOMultiSpecModel with default spectral values and some metadata."""
-    tso_spec = dm.TSOSpecModel()
-    input_schema = dm.SpecModel().schema
-    in_cols = input_schema["properties"]["spec_table"]["datatype"]
-    out_cols = tso_spec.schema["properties"]["spec_table"]["datatype"]
-    all_cols, is_vector = determine_vector_and_meta_columns(in_cols, out_cols)
-
-    # Make an empty table to populate
-    n_rows = 10
-    n_spectra = 5
-    defaults = tso_spec.schema["properties"]["spec_table"]["default"]
-    spec_table = make_empty_recarray(n_rows, n_spectra, all_cols, is_vector, defaults=defaults)
-    spec_table["N_ALONGDISP"] = 10
-    tso_spec.spec_table = spec_table
-    for column in tso_spec.spec_table.columns:
-        column.unit = "s"
-
-    # Add spectra to a multispec model
-    tso_multi = dm.TSOMultiSpecModel()
-    for i in range(3):
-        spec = tso_spec.copy()
-
-        # Add some metadata
-        spec.source_id = i + 1
-        spec.name = f"test {i + 1}"
-        spec.meta.wcs = mock_wcs()
-        spec.meta.wcs.pipeline[0].transform.name = "test"
-        spec.spec_table["INT_NUM"] = i + 1
-
-        tso_multi.spec.append(spec)
-    return tso_multi
 
 
 def test_determine_vector_and_meta_columns():

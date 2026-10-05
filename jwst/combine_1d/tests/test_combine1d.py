@@ -2,18 +2,24 @@
 
 import numpy as np
 import pytest
+import stdatamodels.jwst.datamodels as dm
 
-from jwst import datamodels
 from jwst.combine_1d import Combine1dStep
 from jwst.combine_1d.combine1d import check_exptime, check_monotonic
+from jwst.datamodels.container import ModelContainer
+from jwst.datamodels.utils.flat_multispec import (
+    determine_vector_and_meta_columns,
+    make_empty_recarray,
+)
 from jwst.datamodels.utils.tests.wfss_helpers import N_SOURCES, wfss_multi
+from jwst.extract_1d import spec_wcs
 
 
 @pytest.fixture
 def two_spectra():
     spec1 = create_spec_model(flux=1e-9)
     spec2 = create_spec_model(flux=1e-9)
-    ms = datamodels.MultiSpecModel()
+    ms = dm.MultiSpecModel()
     ms.meta.exposure.exposure_time = 1.0
     ms.meta.exposure.integration_time = 2.0
     ms.spec.append(spec1)
@@ -24,7 +30,7 @@ def two_spectra():
 
 @pytest.fixture
 def three_spectra():
-    ms = datamodels.MultiSpecModel()
+    ms = dm.MultiSpecModel()
     ms.meta.exposure.exposure_time = 1
     for _ in range(3):
         spec = create_spec_model(flux=1e-9)
@@ -50,7 +56,7 @@ def test_dq(two_spectra):
 
     # Now mark that pixel bad.
     # Result should not just contain the second spectrum value.
-    spec1.spec_table["DQ"][bad_pix] = datamodels.dqflags.pixel["DO_NOT_USE"]
+    spec1.spec_table["DQ"][bad_pix] = dm.dqflags.pixel["DO_NOT_USE"]
     result_dq = Combine1dStep.call(ms)
     assert np.isclose(
         result_dq.spec[0].spec_table["FLUX"][bad_pix], spec2.spec_table["FLUX"][bad_pix]
@@ -61,7 +67,7 @@ def test_err():
     """Test error propagation."""
     spec1 = create_spec_model(flux=1.0, error=0.1)
     spec2 = create_spec_model(flux=1.0, error=0.2)
-    ms = datamodels.MultiSpecModel()
+    ms = dm.MultiSpecModel()
     ms.meta.exposure.exposure_time = 1
     ms.spec.append(spec1)
     ms.spec.append(spec2)
@@ -124,17 +130,17 @@ def test_exptime_keys(exptime, casing):
     spec1 = create_spec_model(flux=1.0, error=0.1)
     spec2 = create_spec_model(flux=2.0, error=0.2)
 
-    ms1 = datamodels.MultiSpecModel()
+    ms1 = dm.MultiSpecModel()
     ms1.meta.exposure.exposure_time = 1.0
     ms1.meta.exposure.integration_time = 2.0
     ms1.spec.append(spec1)
 
-    ms2 = datamodels.MultiSpecModel()
+    ms2 = dm.MultiSpecModel()
     ms2.meta.exposure.exposure_time = 2.0
     ms2.meta.exposure.integration_time = 1.0
     ms2.spec.append(spec2)
 
-    result = Combine1dStep.call(datamodels.ModelContainer([ms1, ms2]), exptime_key=exptime)
+    result = Combine1dStep.call(ModelContainer([ms1, ms2]), exptime_key=exptime)
     if "exp" in exptime.lower():
         # closer to 2
         assert np.allclose(result.spec[0].spec_table["FLUX"], 1 + 2 / 3)
@@ -168,7 +174,7 @@ def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
     npixels = np.zeros(npoints)
 
     # This data type is used for creating an output table.
-    spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
+    spec_dtype = dm.SpecModel().get_dtype("spec_table")
 
     otab = np.array(
         list(
@@ -197,7 +203,7 @@ def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
         dtype=spec_dtype,
     )
 
-    spec_model = datamodels.SpecModel(spec_table=otab)
+    spec_model = dm.SpecModel(spec_table=otab)
 
     return spec_model
 
@@ -223,7 +229,7 @@ def create_spec_model_nonmonotonic(npoints=10, flux=1e-9, error=1e-10, wave_rang
     npixels = np.zeros(npoints)
 
     # This data type is used for creating an output table.
-    spec_dtype = datamodels.SpecModel().get_dtype("spec_table")
+    spec_dtype = dm.SpecModel().get_dtype("spec_table")
 
     otab = np.array(
         list(
@@ -252,7 +258,7 @@ def create_spec_model_nonmonotonic(npoints=10, flux=1e-9, error=1e-10, wave_rang
         dtype=spec_dtype,
     )
 
-    spec_model = datamodels.SpecModel(spec_table=otab)
+    spec_model = dm.SpecModel(spec_table=otab)
 
     return spec_model
 
@@ -272,7 +278,7 @@ def test_wfss_multi_input(wfss_multiexposure, log_watcher):
     result = Combine1dStep.call(wfss_multiexposure)
     watcher.assert_not_seen()
 
-    assert isinstance(result, datamodels.WFSSMultiCombinedSpecModel)
+    assert isinstance(result, dm.WFSSMultiCombinedSpecModel)
     assert result is not wfss_multiexposure
 
     tab = result.spec[0].spec_table
@@ -293,6 +299,58 @@ def test_wfss_multi_input(wfss_multiexposure, log_watcher):
     assert np.all(tab["SOURCE_TYPE"] == "POINT")
 
     assert result.spec[0].dispersion_direction == 3
+
+
+@pytest.fixture()
+def tso_multi_spec():
+    """Make a populated TSOMultiSpecModel with default spectral values and some metadata."""
+    tso_spec = dm.TSOSpecModel()
+    input_schema = dm.SpecModel().schema
+    in_cols = input_schema["properties"]["spec_table"]["datatype"]
+    out_cols = tso_spec.schema["properties"]["spec_table"]["datatype"]
+    all_cols, is_vector = determine_vector_and_meta_columns(in_cols, out_cols)
+
+    # Make an empty table to populate
+    n_rows = 10
+    n_spectra = 5
+    wave = np.array([1.2, 2.1, 3.4, 3.9, 4.5, 5.6, 6.9, 7.1, 7.8, 8.8])
+    flux = np.ones(10)
+    dq = np.zeros(10, dtype=np.uint32)
+    defaults = tso_spec.schema["properties"]["spec_table"]["default"]
+    spec_table = make_empty_recarray(n_rows, n_spectra, all_cols, is_vector, defaults=defaults)
+    spec_table["WAVELENGTH"] = wave
+    spec_table["FLUX"] = flux
+    spec_table["DQ"] = dq
+    spec_table["N_ALONGDISP"] = 10
+    tso_spec.spec_table = spec_table
+    for column in tso_spec.spec_table.columns:
+        column.unit = "s"
+
+    # Make a fake WCS
+    ra, dec = 5.6, -72.3
+    wcsobj = spec_wcs.create_spectral_wcs(ra, dec, wave)
+
+    # Add spectra to a multispec model
+    tso_multi = dm.TSOMultiSpecModel()
+    tso_multi.meta.exposure.exposure_time = 2.0
+    for i in range(3):
+        spec = tso_spec.copy()
+
+        # Add some metadata
+        spec.source_id = i + 1
+        spec.name = f"test {i + 1}"
+        spec.meta.wcs = wcsobj
+        spec.meta.wcs.pipeline[0].transform.name = "test"
+        spec.spec_table["INT_NUM"] = i + 1
+
+        tso_multi.spec.append(spec)
+    return tso_multi
+
+
+def test_tso_multi_input(tso_multi_spec):
+    """Smoke test to ensure combine_1d works with TSOMultiSpecModel"""
+    result = Combine1dStep.call(tso_multi_spec)
+    assert result.meta.cal_step.combine_1d == "COMPLETE"
 
 
 def test_allnan_skip(wfss_multiexposure, caplog):
@@ -353,7 +411,7 @@ def test_output_is_not_input(two_spectra):
 
 def test_combination_error(caplog):
     """Test an error in combination."""
-    bad_model = datamodels.ImageModel()
+    bad_model = dm.ImageModel()
     result = Combine1dStep.call(bad_model)
 
     # Step is skipped
@@ -400,7 +458,7 @@ def test_combine1d_wavelength_merging_test():
     # 2. Set up non-monotonuc wavelength
     spec2 = create_spec_model_nonmonotonic(flux=1e-9, wave_range=(5, 12))
 
-    ms = datamodels.MultiSpecModel()
+    ms = dm.MultiSpecModel()
     ms.meta.exposure.exposure_time = 1.0
     ms.meta.exposure.integration_time = 2.0
     ms.spec.append(spec1)
@@ -431,19 +489,19 @@ def test_container_with_valid_spectra():
     spec2 = create_spec_model(flux=2.0)
     spec3 = create_spec_model(flux=3.0)
     spec4 = create_spec_model(flux=4.0)
-    ms1 = datamodels.MultiSpecModel()
+    ms1 = dm.MultiSpecModel()
     ms1.spec.append(spec1)
     ms1.spec.append(spec2)
     ms1.meta.exposure.exposure_time = 1
-    ms2 = datamodels.MultiSpecModel()
+    ms2 = dm.MultiSpecModel()
     ms2.spec.append(spec3)
     ms2.spec.append(spec4)
     ms2.meta.exposure.exposure_time = 1
 
-    container = datamodels.ModelContainer([ms1, ms2])
+    container = ModelContainer([ms1, ms2])
 
     result = Combine1dStep.call(container)
-    assert isinstance(result, datamodels.MultiCombinedSpecModel)
+    assert isinstance(result, dm.MultiCombinedSpecModel)
     assert result.meta.cal_step.combine_1d == "COMPLETE"
     assert len(result.spec) == 1
     assert np.allclose(result.spec[0].spec_table["FLUX"], 2.5)
@@ -453,10 +511,10 @@ def test_container_with_invalid_model():
     """Test that invalid spectra in a container are skipped."""
     spec1 = create_spec_model(flux=1.0)
     spec2 = create_spec_model(flux=2.0)
-    container = datamodels.ModelContainer([spec1, spec2])
+    container = ModelContainer([spec1, spec2])
 
     result = Combine1dStep.call(container)
-    assert isinstance(result, datamodels.ModelContainer)
+    assert isinstance(result, ModelContainer)
     assert result is not container
     assert result[0] is not spec1
     assert result[1] is not spec2
@@ -469,17 +527,17 @@ def test_container_with_invalid_model():
 def test_container_no_valid_data():
     """Test that invalid data in a container are skipped."""
     spec1 = create_spec_model(flux=np.nan)
-    ms1 = datamodels.MultiSpecModel()
+    ms1 = dm.MultiSpecModel()
     ms1.spec.append(spec1)
     ms1.meta.exposure.exposure_time = 1
-    ms2 = datamodels.MultiSpecModel()
+    ms2 = dm.MultiSpecModel()
     ms2.spec.append(spec1)
     ms2.meta.exposure.exposure_time = 1
 
-    container = datamodels.ModelContainer([ms1, ms2])
+    container = ModelContainer([ms1, ms2])
 
     result = Combine1dStep.call(container)
-    assert isinstance(result, datamodels.ModelContainer)
+    assert isinstance(result, ModelContainer)
     assert result is not container
     assert result[0] is not ms1
     assert result[1] is not ms2
