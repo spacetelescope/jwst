@@ -114,29 +114,6 @@ class InputSpectrumModel:
         self.contam_flux = contam_flux
         self.contam_surf_bright = contam_surf_bright
 
-    def close(self):
-        """Set data attributes to null values."""
-        self.wavelength = None
-        self.flux = None
-        self.flux_error = None
-        self.flux_unit = ""
-        self.surf_bright = None
-        self.sb_error = None
-        self.sb_unit = ""
-        self.dq = None
-        self.weight = 1.0
-        self.unit_weight = True
-        self.right_ascension = None
-        self.declination = None
-        self.name = ""
-        self.source_id = 0
-        self.source_type = ""
-        self.source_ra = None
-        self.source_dec = None
-        self.dispersion_direction = 0
-        self.contam_flux = None
-        self.contam_surf_bright = None
-
 
 class OutputSpectrumModel:
     """
@@ -529,22 +506,6 @@ class OutputSpectrumModel:
             output_model.spec_table.columns["contam_surf_bright"].unit = self.sb_unit
 
         return output_model
-
-    def close(self):
-        """Set data attributes to null values."""
-        self.wavelength = None
-        self.flux = None
-        self.flux_error = None
-        self.surf_bright = None
-        self.sb_error = None
-        self.dq = None
-        self.weight = None
-        self.count = None
-        self.wcs = None
-        self.normalized = False
-        self.source_id = None
-        self.contam_flux = None
-        self.contam_surf_bright = None
 
 
 def count_input(input_spectra):
@@ -1136,13 +1097,6 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     # Looks clunky, but need an output_spec instance to copy wcs
     output_model.meta.wcs = output_spectra[list(output_spectra)[0]].wcs
     output_model.meta.cal_step.combine_1d = "COMPLETE"
-
-    for order in input_spectra:
-        for in_spec in input_spectra[order]:
-            in_spec.close()
-
-    for order in output_spectra:
-        output_spectra[order].close()
 
     return output_model
 
