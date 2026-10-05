@@ -13,7 +13,6 @@ from jwst.assign_wcs import pointing
 from jwst.assign_wcs.util import compute_footprint_nrs_slit, wrap_ra
 from jwst.cube_build import coord
 from jwst.cube_build.cube_match_sky_driz import cube_wrapper_driz  # c extension
-from jwst.cube_build.msa_cube_overlap import find_area_quad, find_volume, sh_find_overlap
 
 log = logging.getLogger(__name__)
 
@@ -26,9 +25,7 @@ class MSACubeData:
 
     Parameters
     ----------
-    input_models : `~jwst.datamodels.MultiExposureModel`
-
-    **pars: dict
+    **pars
         Dictionary of parameters controlling how the cube is built.
     """
 
@@ -94,7 +91,16 @@ class MSACubeData:
 
         Returns
         -------
-        None
+        corner_a : list
+            List of corner ra values of slit
+        corner_b : list
+            List of corner dec values of slit
+        final_lam_min : float
+            Minimum wavelength
+        final_lam_max : float
+            Maximum wavelength
+        rot_angle : float
+            Rotation angle
 
         Notes
         -----
@@ -190,13 +196,8 @@ class MSACubeData:
                 lambda_min.append(lmin)
                 lambda_max.append(lmax)
 
-        # final_a_min = min(corner_a)  #TODO check that we do not need these values
-        # final_a_max = max(corner_a)
-        # final_b_min = min(corner_b)
-        # final_b_max = max(corner_b)
         final_lam_min = min(lambda_min)
         final_lam_max = max(lambda_max)
-        # dec_ave = (final_b_min + final_b_max) / 2
 
         return (corner_a, corner_b, final_lam_min, final_lam_max, rot_angle)
 
@@ -221,10 +222,6 @@ class MSACubeData:
             Maximum wavelength threshold for the spectral axis.
         rot_angle : float
             Position or rotation angle for the sky-to-tangent plane transformation, in degrees.
-
-        Returns
-        -------
-        None
 
         Notes
         -----
@@ -290,8 +287,6 @@ class MSACubeData:
         # xi, eta is set by  by crval1, crval2.
         # number min
 
-        # na = math.ceil(xilimit[0] / self.cdelt1) + 1
-        # nb = math.ceil(etalimit[0] / self.cdelt2) + 1
         na = math.ceil(xilimit / self.cdelt1) + 1
         nb = math.ceil(etalimit / self.cdelt2) + 1
 
@@ -437,9 +432,8 @@ class MSACubeData:
         1. Loop through all target slits (`self.source['slit_models']`).
         2. Map detector pixels to output coordinates via
         `map_source_pixels_to_output_frame`.
-        3. Drizzle pixel fluxes onto the output cube grid using either:
-        - Accelerated C extension (`cube_wrapper_driz`) if `self.weighting == 'volume'`.
-        - Pure-Python implementation (`match_driz_msa`) if weighting by read noise.
+        3. Drizzle pixel fluxes onto the output cube grid using:
+        - Accelerated C extension (`cube_wrapper_driz`)
         4. Compute final spaxel fluxes using `find_spaxel_flux`.
         5. Package flux, variance, weight, and DQ maps into an IFUCubeModel
         via `setup_final_model`.
@@ -452,9 +446,6 @@ class MSACubeData:
 
         Notes
         -----
-        - The C extension drizzling path (`cube_wrapper_driz`) currently does not support
-        readnoise-based weighting. Setting `self.weighting` to anything other than
-        `'volume'` automatically falls back to `match_driz_msa`.
         - Spaxel debugging log outputs can be triggered by setting `self.spaxel_x`,
         `self.spaxel_y`, and `self.spaxel_z` prior to calling this method.
         """
@@ -465,10 +456,8 @@ class MSACubeData:
         self.spaxel_var = np.zeros(total_num, dtype=np.float64)
         self.spaxel_iflux = np.zeros(total_num, dtype=np.float64)
         self.spaxel_dq = np.zeros(total_num, dtype=np.uint32)
+        self.spaxel_exposure_counter = np.zeros(total_num, dtype=np.uint32)
 
-        spaxel_exposure_counter = np.zeros(
-            total_num, dtype=np.uint32
-        )  # TODO add this to slit datamodel
         # we need bunit in the out header - is there another way to do this ? #TODO
         bunit_data = self.source["bunit"]
         bunit_err = self.source["bunit_err"]
@@ -489,13 +478,12 @@ class MSACubeData:
             log.info(
                 f"Printing debug information for cube spaxel:  {spaxel_x} {spaxel_y} {spaxel_z}"
             )
+            log.info(f"Debug spaxel {debug_spaxel_index}")
 
         num = self.source["number_slits"]
 
+        # start looping over the slits for the source
         for i in range(num):
-            print(
-                f"\rworking on slit {i} out of {num}", end="", flush=True
-            )  # TODO Remove after testing
             slit = self.source["slit_models"][i]
             results = self.map_source_pixels_to_output_frame(slit)
 
@@ -521,114 +509,74 @@ class MSACubeData:
                 cdelt3_mean = np.nanmean(self.cdelt3_normal)
                 xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner
 
-            # Current C drizzle code does not weight on readnoise - need to use python code for now
-            # to weight on readnoise.
-            # TODO python code remove after adding readnoise weighting to cube_build c routines
-            if self.weighting == "volume":
-                linear = 1
-                instrument = 1
-                flag_dq_plane = 0
-                start_region = 0
-                end_region = 0
-                overlap_partial = 0
-                overlap_full = 0
-                dummy = x_array.copy()
+            if self.weighting == "readnoise":
+                weight_type = 1
+            else:
+                weight_type = 0
 
-                result = cube_wrapper_driz(
-                    instrument,
-                    flag_dq_plane,
-                    start_region,
-                    end_region,
-                    overlap_partial,
-                    overlap_full,
-                    self.xcoord,
-                    self.ycoord,
-                    self.zcoord,
-                    xi_array,
-                    eta_array,
-                    wave,
-                    flux,
-                    err,
-                    dummy,
-                    xi1,
-                    eta1,
-                    xi2,
-                    eta2,
-                    xi3,
-                    eta3,
-                    xi4,
-                    eta4,
-                    dwave,
-                    self.cdelt3_normal,
-                    self.cdelt1,
-                    self.cdelt2,
-                    cdelt3_mean,
-                    linear,
-                    x_array,
-                    y_array,
-                    debug_spaxel_index,
-                )
+            linear = 1
+            dummy = x_array.copy()  # place holder needed for cube_build - valid for IFU data
 
-                (
-                    this_spaxel_flux,
-                    this_spaxel_weight,
-                    this_spaxel_var,
-                    this_spaxel_iflux,
-                    this_spaxel_dq,
-                ) = result
-                self.spaxel_flux = self.spaxel_flux + np.asarray(this_spaxel_flux, np.float64)
-                self.spaxel_weight = self.spaxel_weight + np.asarray(this_spaxel_weight, np.float64)
-                self.spaxel_var = self.spaxel_var + np.asarray(this_spaxel_var, np.float64)
-                self.spaxel_iflux = self.spaxel_iflux + np.asarray(this_spaxel_iflux, np.float64)
-                self.spaxel_dq.astype(np.uint)
-                self.spaxel_dq = np.bitwise_or(self.spaxel_dq, this_spaxel_dq)
-                result = None
-                del result
-                del (
-                    this_spaxel_flux,
-                    this_spaxel_weight,
-                    this_spaxel_var,
-                    this_spaxel_iflux,
-                    this_spaxel_dq,
-                )
+            result = cube_wrapper_driz(
+                weight_type,
+                self.xcoord,
+                self.ycoord,
+                self.zcoord,
+                xi_array,
+                eta_array,
+                wave,
+                flux,
+                err,
+                dq,
+                var_rnoise,
+                dummy,
+                xi1,
+                eta1,
+                xi2,
+                eta2,
+                xi3,
+                eta3,
+                xi4,
+                eta4,
+                dwave,
+                self.cdelt3_normal,
+                self.cdelt1,
+                self.cdelt2,
+                cdelt3_mean,
+                linear,
+                x_array,
+                y_array,
+                debug_spaxel_index,
+            )
 
-            else:  # weighting on readnoise #TODO remove after C code has readnoise. Kept to check c code.
-                self.match_driz_msa(
-                    i,
-                    self.xcoord,
-                    self.ycoord,
-                    self.zcoord,
-                    x_array,
-                    y_array,
-                    wave,
-                    flux,
-                    err,
-                    dq,
-                    var_rnoise,
-                    xi1,
-                    eta1,
-                    xi2,
-                    eta2,
-                    xi3,
-                    eta3,
-                    xi4,
-                    eta4,
-                    dwave,
-                    self.cdelt3_normal,
-                    self.cdelt1,
-                    self.cdelt2,
-                    self.naxis1,
-                    self.naxis2,
-                    self.naxis3,
-                    npt,
-                    self.spaxel_flux,
-                    self.spaxel_weight,
-                    self.spaxel_var,
-                    self.spaxel_iflux,
-                    spaxel_exposure_counter,
-                    self.weighting,
-                    debug_spaxel_index,
-                )
+            (
+                this_spaxel_flux,
+                this_spaxel_weight,
+                this_spaxel_var,
+                this_spaxel_iflux,
+                this_spaxel_dq,
+                this_spaxel_exp_counter,
+            ) = result
+            self.spaxel_flux = self.spaxel_flux + np.asarray(this_spaxel_flux, np.float64)
+            self.spaxel_weight = self.spaxel_weight + np.asarray(this_spaxel_weight, np.float64)
+            self.spaxel_var = self.spaxel_var + np.asarray(this_spaxel_var, np.float64)
+            self.spaxel_iflux = self.spaxel_iflux + np.asarray(this_spaxel_iflux, np.float64)
+            self.spaxel_dq.astype(np.uint)
+            self.spaxel_dq = np.bitwise_or(self.spaxel_dq, this_spaxel_dq)
+            self.spaxel_exposure_counter = self.spaxel_exposure_counter + np.asarray(
+                this_spaxel_exp_counter, np.int32
+            )
+            result = None
+            del result
+            del (
+                this_spaxel_flux,
+                this_spaxel_weight,
+                this_spaxel_var,
+                this_spaxel_iflux,
+                this_spaxel_dq,
+                this_spaxel_exp_counter,
+            )
+            # end looping over the slits for the source
 
         self.find_spaxel_flux(
             self.spaxel_iflux, self.spaxel_flux, self.spaxel_weight, self.spaxel_var
@@ -657,7 +605,7 @@ class MSACubeData:
             self.spaxel_iflux,
             self.spaxel_var,
             self.spaxel_dq,
-            spaxel_exposure_counter,
+            self.spaxel_exposure_counter,
             bunit_data,
             bunit_err,
         )
@@ -912,346 +860,6 @@ class MSACubeData:
             dwave_pixel,
         )
 
-    def match_driz_msa(
-        self,
-        iexp,
-        xc,
-        yc,
-        zc,
-        x,
-        y,
-        wave,
-        flux,
-        err,
-        dq,
-        var_rnoise,
-        xi1,
-        eta1,
-        xi2,
-        eta2,
-        xi3,
-        eta3,
-        xi4,
-        eta4,
-        dwave,
-        cdelt3_normal,
-        cdelt1,
-        cdelt2,
-        nx,
-        ny,
-        nwave,
-        npt,
-        spaxel_flux,
-        spaxel_weight,
-        spaxel_var,
-        spaxel_iflux,
-        spaxel_exposure_counter,
-        weight_type,
-        debug_spaxel,
-    ):
-        """
-        Map input detector pixels onto 3D output cube spaxels using area-weighted overlap.
-
-        Calculates spatial and spectral intersections between quadrilateral detector pixel
-        projections and output cube spaxel boundaries. Accumulates weighted flux,
-        variance, fractional pixel coverage, and unique exposure counts directly into
-        the output spaxel arrays.
-
-        Parameters
-        ----------
-        iexp : int
-             Index of the current exposure being processed.
-        xc : numpy.ndarray
-            1D array of spatial x-coordinates (tangent projection) for output spaxel centers.
-        yc : numpy.ndarray
-            1D array of spatial y-coordinates (tangent projection) for output spaxel centers.
-        zc : numpy.ndarray
-            1D array of central wavelengths for each output cube spectral plane.
-        x : numpy.ndarray
-            1D array of x-pixel detector coordinates for input source pixels.
-        y : numpy.ndarray
-            1D array of y-pixel detector coordinates for input source pixels.
-        wave : numpy.ndarray
-            1D array of central wavelengths corresponding to input detector pixels.
-        flux : numpy.ndarray
-            1D array of flux values for input detector pixels.
-        err : numpy.ndarray
-            1D array of flux uncertainties (errors) for input detector pixels.
-        dq : numpy.ndarray
-            1D array of Data Quality flags for input detector pixels.
-        var_rnoise : numpy.ndarray
-            1D array of read-noise variance values for input detector pixels.
-        xi1, xi2, xi3, xi4 : numpy.ndarray
-            1D arrays of x-tangent sky coordinates for the four corners of
-            input pixel quadrilaterals.
-        eta1, eta2, eta3, eta4 : numpy.ndarray
-            1D arrays of y-tangent sky coordinates for the four corners of
-            input pixel quadrilaterals.
-        dwave : numpy.ndarray
-            1D array of spectral widths (dispersion sizes) for input detector pixels.
-        cdelt3_normal : numpy.ndarray
-            1D array of spectral bin step sizes across wavelength planes in the output cube.
-        cdelt1 : float
-            Output cube spatial spaxel width along the X-axis.
-        cdelt2 : float
-            Output cube spatial spaxel width along the Y-axis.
-        nx : int
-            Number of spatial spaxels along the output cube X-axis.
-        ny : int
-            Number of spatial spaxels along the output cube Y-axis.
-        nwave : int
-            Number of spectral planes along the output cube Z-axis.
-        npt : int
-            Total number of input detector pixels to map.
-        spaxel_flux : numpy.ndarray
-            1D output array storing accumulated weighted flux values per spaxel. Modified in-place.
-        spaxel_weight : numpy.ndarray
-            1D output array storing accumulated drizzle weights per spaxel. Modified in-place.
-        spaxel_var : numpy.ndarray
-            1D output array storing accumulated weighted variance values per spaxel.
-            Modified in-place.
-        spaxel_iflux : numpy.ndarray
-            1D output array storing accumulated fractional pixel coverage per spaxel.
-            Modified in-place.
-        spaxel_exposure_counter : numpy.ndarray
-            1D output array tracking unique exposure counts per spaxel. Modified in-place.
-        weight_type : int
-             Drizzle weighting scheme selection
-             0 for uniform area weighting, 2 for variance-weighted.
-        debug_spaxel : int or None
-             Index of a specific spaxel target to print diagnostic logs for, or `None` to disable
-             debugging.
-
-        Notes
-        -----
-        * The function modifies `spaxel_flux`, `spaxel_weight`, `spaxel_var`, `spaxel_iflux`, and
-        `spaxel_exposure_counter` in-place.
-        * Spatial overlaps are calculated using Sutherland-Hodgman polygon clipping
-          via `sh_find_overlap`.
-        """
-        # python core drizzle type combining code.
-        # We have mapped the x,y detector pixels of a source to the sky (tangent projection)
-        # Match_driz finds the overlap between these mapped values and 3D cube on the sky
-        # The cube flux, weight, variance and number of overlap arrays are filled in
-
-        # find max of cdelt3, dwave to be used to estimate which wavelength plane the pixel falls on
-        zreg = 0
-        max_cdelt3 = np.max(cdelt3_normal)
-        max_dwave = np.max(dwave)
-
-        # loop over each detector pixel and find which spaxels it overlaps with
-        nxy = nx * ny
-        not_found = 0
-
-        exposure_already_counted = np.zeros_like(spaxel_exposure_counter, dtype=int)
-        for k in range(npt):
-            ifound = 0
-            xpixel = np.zeros(5)
-            ypixel = np.zeros(5)
-            xpixel[0] = xi1[k]
-            xpixel[1] = xi2[k]
-            xpixel[2] = xi3[k]
-            xpixel[3] = xi4[k]
-            xpixel[4] = xi1[k]
-
-            ypixel[0] = eta1[k]
-            ypixel[1] = eta2[k]
-            ypixel[2] = eta3[k]
-            ypixel[3] = eta4[k]
-            ypixel[4] = eta1[k]
-
-            xmin = np.min(xpixel)
-            xmax = np.max(xpixel)
-            ymin = np.min(ypixel)
-            ymax = np.max(ypixel)
-
-            cdelt1_half = self.cdelt1 / 2.0
-            cdelt2_half = self.cdelt2 / 2.0
-
-            # find the area of the pixel (quadrilateral) not needed now - keeping if needed later
-            area_quad = find_area_quad(xmin, ymin, xpixel, ypixel)
-            vol_poly = find_volume(area_quad, dwave[k])
-
-            # convert to integer values to get the approximate region to search
-            # cdelt1_half and cdelt2_half - may not be needed.
-            ix1 = int(np.abs((xmin - cdelt1_half - xc[0]) / cdelt1) - 1)
-            ix2 = int(np.abs((xmax + cdelt1_half - xc[0]) / cdelt1) + 1)
-
-            iy1 = int(np.abs((ymin - cdelt2_half - yc[0]) / cdelt2) - 1)
-            iy2 = int(np.abs((ymax + cdelt2_half - yc[0]) / cdelt2) + 1)
-
-            if ix1 < 0:
-                ix1 = 0
-            if iy1 < 0:
-                iy1 = 0
-            if ix2 > nx:
-                ix2 = nx
-            if iy2 > ny:
-                iy2 = ny
-
-            # estimate the wavelength overlapping region using max_cdelt3 and max_dwave
-            # estimating wavelength range works if we have a linear wavelength
-
-            w1 = wave[k] - (max_cdelt3 + max_dwave) - zc[0]
-
-            if w1 < 0:
-                iw1 = 0
-            else:
-                iw1 = np.abs((w1) / (max_cdelt3 + max_dwave))
-            iw2 = np.ceil(np.abs((wave[k] + (max_cdelt3 + max_dwave) - zc[0]) / max_cdelt3))
-            iw1 = int(iw1)
-            iw2 = int(iw2)
-
-            if iw2 > nwave:
-                iw2 = nwave
-
-            for iw in range(iw1, iw2):
-                zreg = np.abs(dwave[k] + cdelt3_normal[iw])
-                wdiff = zc[iw] - wave[k]
-
-                if np.abs(wdiff) < zreg:
-                    # Fractional wavelength overlaps to use for weighting
-                    ptmin = wave[k] - dwave[k] / 2
-                    ptmax = wave[k] + dwave[k] / 2
-                    spxmin = zc[iw] - cdelt3_normal[iw] / 2
-                    spxmax = zc[iw] + cdelt3_normal[iw] / 2
-                    z1 = spxmax - ptmin
-                    z2 = spxmax - ptmax
-                    z3 = spxmin - ptmin
-                    if z1 < 0:
-                        z1 = 0
-                    if z2 < 0:
-                        z2 = 0
-                    if z3 < 0:
-                        z3 = 0
-                    zoverlap = z1 - z2 - z3
-
-                    if zoverlap < 0:
-                        zoverlap = 0
-
-                    # find match in spatial dimension using approximate locations based on
-                    # ix1, ix2, iy1, iy2
-                    for ix in range(ix1, ix2):
-                        for iy in range(iy1, iy2):
-                            # narrow down the spatial region
-                            xleft = xc[ix] - self.cdelt1 * 0.5
-                            xright = xc[ix] + self.cdelt1 * 0.5
-
-                            ybot = yc[iy] - self.cdelt2 * 0.5
-                            ytop = yc[iy] + self.cdelt2 * 0.5
-                            index_xy = iy * nx + ix
-
-                            if xleft < xmax and xright > xmin and ybot < ymax and ytop > ymin:
-                                index_xy = iy * nx + ix
-                                index_cube = iw * nxy + index_xy
-                                # Spatial overlap between detector pixel and cube spaxel
-                                area = sh_find_overlap(
-                                    xc[ix], yc[iy], self.cdelt1, self.cdelt2, xpixel, ypixel
-                                )
-
-                                # area_weight = area of overlap * wavelength overlap
-                                area_weight = area * zoverlap
-
-                                if weight_type == 2:
-                                    area_weight = area_weight / (var_rnoise[k])
-
-                                if area_weight > 0:
-                                    debug_spaxel = -1
-                                    if debug_spaxel is not None:
-                                        if (
-                                            debug_spaxel == index_cube
-                                            or np.abs(flux[k] - 100.0) < 0.0001
-                                        ):
-                                            print(
-                                                "*************************************************"
-                                            )
-                                            print(
-                                                "iw, ix, iy, index, iexp, flux, error, area_weight, area*zoverlap"
-                                            )
-
-                                            print(
-                                                "Debug Full:",
-                                                iw,
-                                                ix,
-                                                iy,
-                                                index_cube,
-                                                iexp,
-                                                flux[k],
-                                                err[k],
-                                                area_weight,
-                                                area * zoverlap,
-                                                x[k],
-                                                y[k],
-                                                dq[k],
-                                            )
-                                            print(
-                                                "Wavelength info",
-                                                wave[k],
-                                                dwave[k] / 2,
-                                                zc[iw],
-                                                cdelt3_normal[iw] / 2,
-                                                z1,
-                                                z2,
-                                                z3,
-                                                zoverlap,
-                                            )
-                                            print(
-                                                "ptmin, ptmax, ptmax - ptmin",
-                                                ptmin,
-                                                ptmax,
-                                                ptmax - ptmin,
-                                            )
-                                            print(
-                                                "spxmin, spxmax, spxmax - spxmin",
-                                                spxmin,
-                                                spxmax,
-                                                spxmax - spxmin,
-                                            )
-                                            print(
-                                                "*************************************************"
-                                            )
-
-                                        ifound = ifound + 1
-                                        weighted_flux = flux[k] * area_weight
-                                        weighted_var = (err[k] * area_weight) * (
-                                            err[k] * area_weight
-                                        )
-                                        spaxel_flux[index_cube] = (
-                                            spaxel_flux[index_cube] + weighted_flux
-                                        )
-                                        spaxel_weight[index_cube] = (
-                                            spaxel_weight[index_cube] + area_weight
-                                        )
-                                        spaxel_var[index_cube] = (
-                                            spaxel_var[index_cube] + weighted_var
-                                        )
-                                        # find the fractional area of overlap
-                                        frac_pixel = (area * zoverlap) / vol_poly
-
-                                        spaxel_iflux[index_cube] = (
-                                            spaxel_iflux[index_cube] + frac_pixel
-                                        )  # Testing
-
-                                        # Check and log unique exposure hit
-                                        if exposure_already_counted[index_cube] == 0:
-                                            spaxel_exposure_counter[index_cube] += (
-                                                1  # Increment master counter
-                                            )
-                                            exposure_already_counted[index_cube] = (
-                                                1  # Mark as counted for this exposure
-                                            )
-
-            if ifound == 0:
-                if weight_type == 2 and var_rnoise[k] < 1e12:
-                    print("Detector pixel not mapped to sky", k)
-                    not_found = not_found + 1
-                if weight_type == 0:
-                    print("Detector pixel not mapped to sky", k)
-                    not_found = not_found + 1
-
-        if not_found > 0:
-            print("Number not found", not_found, npt)
-
     def find_spaxel_flux(self, spaxel_iflux, spaxel_flux, spaxel_weight, spaxel_var):
         """
         Calculate the final normalized flux and variance for each spaxel.
@@ -1271,10 +879,6 @@ class MSACubeData:
         spaxel_var : numpy.ndarray
              Array of cumulative variance values. Modified in-place.
 
-        Returns
-        -------
-        None
-
         Notes
         -----
             Modifies `spaxel_flux` and `spaxel_var` in-place.
@@ -1286,7 +890,6 @@ class MSACubeData:
         # (i.e., don't divide by zero)
 
         good = spaxel_iflux > 0
-        # bad = spaxel_iflux == 0
 
         # Normalize the weighted sum of pixel fluxes by the sum of the weights
         spaxel_flux[good] = spaxel_flux[good] / spaxel_weight[good]
@@ -1306,7 +909,8 @@ class MSACubeData:
         bunit,
         bunit_err,
     ):
-        """Reshape 1D spaxel arrays into a 3D spectral cube and populate the IFUCubeModel.
+        """
+        Reshape 1D spaxel arrays into a 3D spectral cube and populate the IFUCubeModel.
 
         Takes 1D flattened arrays resulting from the spatial and spectral mapping stage,
         reshapes them into 3D (wave, dec, ra) data arrays, applies quality masking,
@@ -1339,11 +943,11 @@ class MSACubeData:
         Returns
         -------
         cube_model : jwst.datamodels.IFUCubeModel
-        Fully initialized 3D IFU Data Model with populated WCS metadata,
-        photometry info, wavetable, and AST-based WCS object.
+            Fully initialized 3D IFU Data Model with populated WCS metadata,
+            photometry info, wavetable, and AST-based WCS object.
 
-        Note
-        ----
+        Notes
+        -----
         Output data is an IFUCube model - we may want to define MSACubeModel - but this model will
         work for now.
         """
@@ -1371,17 +975,12 @@ class MSACubeData:
         flux = spaxel_flux.reshape((naxis3, naxis2, naxis1))
         wmap = spaxel_iflux.reshape((naxis3, naxis2, naxis1))
         var = spaxel_var.reshape((naxis3, naxis2, naxis1))
-        dq = spaxel_dq.reshape(
-            (naxis3, naxis2, naxis1)
-        )  # Set np.nan values wherever the DO_NOT_USE flag is set
+        dq = spaxel_dq.reshape((naxis3, naxis2, naxis1))
+        exp_count = spaxel_exposure_counter.reshape((naxis3, naxis2, naxis1))
         dnu = np.where((dq & dqflags.pixel["DO_NOT_USE"]) != 0)
         flux[dnu] = np.nan
         var[dnu] = np.nan
         err = np.sqrt(var)
-        # define DQ
-        dq = spaxel_exposure_counter.reshape(
-            (naxis3, naxis2, naxis1)
-        )  # Set np.nan values wherever the DO_NOT_USE flag is set
 
         if self.linear_wave:
             pixels = np.arange(naxis3)
@@ -1394,15 +993,16 @@ class MSACubeData:
             alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
             # always write the wavetable
             cube_model = datamodels.IFUCubeModel(
-                data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
+                data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata, expcount=exp_count
             )
+
         else:
             wave = np.asarray(self.wavelength_table, dtype=np.float32)
             num = len(wave)
             alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
 
             cube_model = datamodels.IFUCubeModel(
-                data=flux, dq=dq, err=err, weightmap=wmap, wavetable=alldata
+                data=flux, dq=dq, err=err, weightmap=wmap, wavetable=alldata, expcount=exp_count
             )
 
         # Write the information in header we want to keep track of.
@@ -1458,14 +1058,13 @@ class MSACubeData:
         cube_model.meta.ifu.error_extension = "ERR"
         cube_model.meta.ifu.error_type = "ERR"
         cube_model.meta.ifu.dq_extension = "DQ"
-        # cube_model.meta.ifu.etime_extension = 'ETIME' # TODO add this datamodel
-        cube_model.meta.ifu.weighting = "drizzle"  # TODO do we keep this - drizzle is only option
-        # cube_model.meta.ifu.weight_type = self.weighting  # TODO  do we add this or set above parameter
-        # to this value
+        cube_model.meta.ifu.exp_count_extension = "EXPCOUNT"
+        cube_model.meta.ifu.weighting = self.weighting
 
         cube_model.meta.bunit_data = bunit
         cube_model.meta.bunit_err = bunit_err
 
+        cube_model.meta.ifu.slit_frac = self.slit_frac
         # stick in values of 0, otherwise it is NaN and
         # fits file can not be written because these
         # values are defined in ifucube.schema.yaml
@@ -1473,8 +1072,6 @@ class MSACubeData:
         cube_model.meta.ifu.roi_wave = 0
         cube_model.meta.ifu.roi_spatial = 0
 
-        # cube_model.meta.msa.slit_frac = self.slit_frac #TODO add this to new datamodel
-        # setattr(cube_model,'name',sname)
         # set WCS information
         wcsobj = pointing.create_fitswcs(cube_model)
         cube_model.meta.wcs = wcsobj
