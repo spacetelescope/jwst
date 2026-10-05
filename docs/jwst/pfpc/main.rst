@@ -7,19 +7,28 @@ Description
 
 Overview
 --------
-The ``pfpc`` step applies point fixed pattern corrections (PFPC) to dithered spectral data.
-These corrections are intended to account for residual instrumental signatures from flat
-field or flux calibration uncertainties, sampling artifacts, and residual fringes.
-These signatures are stable for a fixed instrument configuration, detector location, and
-calibration context.  Corrections for them are derived from observations of
-stars or asteroids at standard dither positions in each instrument configuration of interest.
+The ``pfpc`` (point-fixed pattern correction) step is an alternative method of spectral extraction that
+combines spectra derived from individual dithered observations rather than extracting a single spectrum
+from a dither-combined resampled data product.  During this process, corrections are applied to account
+for known and stable fixed-pattern noise at each dither position caused by flat field uncertainties,
+sampling artifacts, and (in the case of MIRI MRS) residual fringes.
+
+Programs that observe bright point sources can sometimes
+obtain higher signal-to-noise ratio spectra using the PFPC approach compared to the regular
+:ref:`x1d <x1d>` data products.  The PFPC method can be particularly helpful for MIRI MRS,
+which is affected by large spectral fringes caused by multiple reflections within the MIRI detectors
+and optical elements (see discussion on
+`JDox <https://jwst-docs.stsci.edu/known-issues/miri-known-issues/miri-mrs-known-issues>`__).
+
+
+Wavelength-dependent correction vectors for each supported mode and dither position are derived from
+observations of stars or asteroids at standard dither positions in each instrument configuration of interest
+and stored in a :ref:`PFPC reference file <pfpc_reffile>`.
 The derived corrections can be applied to point source observations taken at the same dither
 positions and configurations, as long as a target acquisition was performed to accurately
-center the source.  Applying these corrections can significantly improve the signal-to-noise
-ratio for extracted point source spectra.
+center the source.
 
-Wavelength-dependent correction vectors for each supported mode and dither position
-are stored in a :ref:`PFPC reference file <pfpc_reffile>`.
+
 
 This step is currently available for MIRI MRS exposures only.
 It is incorporated into the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, after
@@ -34,20 +43,23 @@ Algorithm
 
 PFPC corrections must be applied to each dither position separately, so they require
 an extracted spectrum for each exposure.  The input for the step is a set of cleaned
-:ref:`cal <cal>` exposures for a single source. Each exposure is processed with a
-set of standard pipeline steps, configured with default recommended parameters.
+:ref:`cal <cal>` exposures for a single source. Each exposure must be processed with a
+set of standard pipeline steps, and configured with default recommended parameters for
+which the PFPC corrections are appropriate.
 
 For each input exposure, the correction process is:
 
 1. Check that the exposure can be corrected. If any of the following conditions
    are not met, no further processing is performed:
 
-   - The :ref:`PFPC reference file <pfpc_reffile>` must contain a matching correction.
+   - The :ref:`PFPC reference file <pfpc_reffile>` must contain a correction matching the observed spectral band and dither pattern.
    - The exposure must be a point source (``SRCTYPE = "POINT"``).
-   - The exposure must have an associated target acquisition.
+   - The exposure must have been obtained using target acquisition to ensure accurate source positioning.
 
-   It is also recommended that the input exposure is reduced in the same calibration
-   context used to create the reference file. If the calibration file names stored in the
+   It is also recommended that the input exposure has been processed through the :ref:`calwebb_spec2 <calwebb_spec2>`
+   pipeline using the same CRDS context as used for the ``pfpc`` step to ensure consistent application
+   of the flatfield, photom, fringe, and fixed pattern corrections.
+   If the calibration file names stored in the
    reference file table do not match the input, a warning is issued, but processing
    will proceed.
 
@@ -66,12 +78,12 @@ For each input exposure, the correction process is:
 #. Divide the spectral flux and surface brightness and their associated errors by the
    correction vector.
 
-After all spectra are corrected, they are averaged across all dither positions to
-create one final spectrum for each band. Residual fringes are corrected with the
+After all spectra are corrected, they are averaged with sigma clipping across all dither positions to
+create one final spectrum for each band. Residual fringes are further corrected with the
 :func:`~jwst.residual_fringe.utils.fit_residual_fringes_1d` function. The output spectra are
-stored in a format identical to the :ref:`x1d <x1d>` product, with the flux, surface brightness,
-residual fringe corrected flux, and residual fringe corrected surface brightness stored in
-separate columns in a binary table.
+stored in a format identical to the :ref:`x1d <x1d>` product, with the PFPC-corrected flux
+and surface brightness respectively stored in ``FLUX`` and ``SURF_BRIGHT`` columns in a binary table,
+and the PFPC+residual fringe corrected spectra stored in ``RF_FLUX`` and ``RF_SURF_BRIGHT`` columns.
 
 
 References
