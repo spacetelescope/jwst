@@ -20,7 +20,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.associations import load_asn
 from jwst.lib.file_utils import pushdir
-from jwst.lib.suffix import SUFFIXES_TO_ADD, _calculated_suffixes, replace_suffix
+from jwst.lib.suffix import KNOW_SUFFIXES, replace_suffix
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
@@ -569,17 +569,11 @@ def find_suffix(fname):
         Pipeline suffix found.
     """
     suffix = None
-    for sfx in SUFFIXES_TO_ADD:
-        if sfx + ".fits" in fname:
+    for sfx in KNOW_SUFFIXES:
+        if sfx in fname:
             if fname.split(sfx)[0].endswith("_"):
                 suffix = sfx
                 break
-    if suffix is None:
-        for sfx in _calculated_suffixes:
-            if sfx in fname:
-                if fname.split(sfx)[0].endswith("_"):
-                    suffix = sfx
-                    break
     if suffix is None:
         raise ValueError(f"Known suffix not found in file name: {fname}")
     root = fname.replace(".fits", "")
