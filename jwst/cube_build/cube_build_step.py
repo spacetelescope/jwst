@@ -536,42 +536,42 @@ class CubeBuildStep(Step):
                     "Offset file is not correct. Offset file needs to have three lists: "
                     "filename, raoffset and decoffset all of the same length."
                 ) from None
-            with af:  # to ensure af is closed
-                offset_filename = af["filename"]
-                offset_ra = af["raoffset"]
-                offset_dec = af["decoffset"]
-                # Note:
-                # af['units'] is checked by the schema validation.
-                # It must be arcsec or a validation error occurs.
+        with af:  # to ensure af is closed
+            offset_filename = af["filename"]
+            offset_ra = af["raoffset"]
+            offset_dec = af["decoffset"]
+            # Note:
+            # af['units'] is checked by the schema validation.
+            # It must be arcsec or a validation error occurs.
 
-                # check that all the file names in input_model are in the offset filename
-                for model in input_models:
-                    file_check = model.meta.filename
-                    if file_check in offset_filename:
-                        continue
-                    else:
-                        raise ValueError(
-                            "Error in offset file. A file in the association is not found in "
-                            f"offset list {file_check}"
-                        )
+        # check that all the file names in input_model are in the offset filename
+        for model in input_models:
+            file_check = model.meta.filename
+            if file_check in offset_filename:
+                continue
+            else:
+                raise ValueError(
+                    "Error in offset file. A file in the association is not found in "
+                    f"offset list {file_check}"
+                )
 
-                # check that all the lists have the same length
-                len_file = len(offset_filename)
-                len_ra = len(offset_ra)
-                len_dec = len(offset_dec)
-                if len_file != len_ra or len_ra != len_dec or len_file != len_dec:
-                    raise ValueError(
-                        "The offset file does not have the same number of values for "
-                        " filename, raoffset, decoffset"
-                    )
+        # check that all the lists have the same length
+        len_file = len(offset_filename)
+        len_ra = len(offset_ra)
+        len_dec = len(offset_dec)
+        if len_file != len_ra or len_ra != len_dec or len_file != len_dec:
+            raise ValueError(
+                "The offset file does not have the same number of values for "
+                " filename, raoffset, decoffset"
+            )
 
-                offset_ra = offset_ra * units.arcsec
-                offset_dec = offset_dec * units.arcsec
+        offset_ra = offset_ra * units.arcsec
+        offset_dec = offset_dec * units.arcsec
 
-                # The offset file has passed tests so set the offset dictionary
-                offsets = {}
-                offsets["filename"] = offset_filename
-                offsets["raoffset"] = offset_ra
-                offsets["decoffset"] = offset_dec
+        # The offset file has passed tests so set the offset dictionary
+        offsets = {}
+        offsets["filename"] = offset_filename
+        offsets["raoffset"] = offset_ra
+        offsets["decoffset"] = offset_dec
 
-                return offsets
+        return offsets
