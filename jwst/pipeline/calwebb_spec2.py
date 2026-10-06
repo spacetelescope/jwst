@@ -649,10 +649,6 @@ class Spec2Pipeline(Pipeline):
         # DN/sec image
         calibrated = self.extract_2d.run(calibrated)
         calibrated = self.srctype.run(calibrated)
-        calibrated = self.straylight.run(calibrated)
-        calibrated = self.fringe.run(calibrated)
-        calibrated = self.pathloss.run(calibrated)
-        calibrated = self.barshadow.run(calibrated)
         calibrated = self.wfss_contam.run(calibrated)
         return calibrated
 
