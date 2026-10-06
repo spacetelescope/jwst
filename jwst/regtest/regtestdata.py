@@ -9,15 +9,14 @@ from glob import glob as _sys_glob
 from pathlib import Path
 
 import asdf
-import numpy as np
 import requests
-from astropy.io import fits
 from ci_watson.artifactory_helpers import (
     BigdataError,
     check_url,
     get_bigdata,
     get_bigdata_root,
 )
+from stdatamodels.jwst import datamodels
 
 from jwst.associations import load_asn
 from jwst.lib.file_utils import pushdir
@@ -602,25 +601,17 @@ def trim_tso_data(file, ints_to_keep, intstart, ints_offset):
     ints_offset : int
         Offset of integration number to start the trim in the array.
     """
-    hdulist = fits.open(file)
-    hdu_count = len(hdulist)
-    # Trim the desired extensions and set the keywords
-    hdulist[0].header["INTSTART"] = intstart
-    hdulist[0].header["INTEND"] = intstart + ints_to_keep
-    for ext in range(hdu_count):
-        if hdulist[ext].name == "INT_TIMES":
-            trimmed_tab = hdulist[ext].data[ints_offset : ints_offset + ints_to_keep]
-            hdulist[ext].data = trimmed_tab
-        data = hdulist[ext].data
-        if len(np.shape(data)) > 2:
-            trimmed_data = hdulist[ext].data[ints_offset : ints_offset + ints_to_keep, ...]
-            hdulist[ext].data = trimmed_data
     file_path = Path(file)
     root, suffix = find_suffix(file_path.name)
     modfname = replace_suffix(root, "mod_" + suffix) + ".fits"
-    trimmed_file = file_path.parent / modfname
-    hdulist.writeto(trimmed_file, overwrite=True)
-    hdulist.close()
+    with datamodels.open(file) as dm:
+        dm.meta.filename = modfname
+        dm.meta.exposure.integration_start = intstart
+        dm.meta.exposure.integration_end = intstart + ints_to_keep
+        dm.data = dm.data[ints_offset : ints_offset + ints_to_keep, ...]
+        dm.refout = dm.refout[ints_offset : ints_offset + ints_to_keep, ...]
+        dm.int_times = dm.int_times[ints_offset : ints_offset + ints_to_keep]
+        dm.save(modfname)
 
 
 @dataclass
@@ -655,9 +646,11 @@ class RTData:
     @property
     def root_name(self):  # numpydoc ignore=RT01
         """
-        Return the root name of the regression test data file.
+        Return string of the root name of the regression test data file.
 
         Example of return value jw01281001001_04103_00001-seg002_mirimage
+        and if mod is in the name the return value will include it, e.g.
+        jw01281001001_04103_00001-seg002_mirimage_mod
         """
         root, suffix = find_suffix(self.file_name)
         return root.replace("_" + suffix, "")
@@ -665,7 +658,7 @@ class RTData:
     @property
     def full_path(self):  # numpydoc ignore=RT01
         """
-        Return the full path to the regression test data file.
+        Return string of the full path to the regression test data file.
 
         Example of return value would be fgs/image2/jw01029001001_04201_00001_guider2_rate.fits
         """

@@ -15,21 +15,21 @@ ASN_ID = "o028"
 
 
 INPUT_DATA = {
-    "jw01536028001_03103_00001-seg001_mirimage_uncal.fits": RTData(
+    "jw01536028001_03103_00001-seg001_mirimage": RTData(
         file_name="jw01536028001_03103_00001-seg001_mirimage_uncal.fits",
         path=INPUT_DATA_PATH,
     ),
-    "jw01536028001_03103_00001-seg002_mirimage_calints.fits": RTData(
+    "jw01536028001_03103_00001-seg002_mirimage": RTData(
         file_name="jw01536028001_03103_00001-seg002_mirimage_calints.fits",
         path=INPUT_DATA_PATH,
     ),
-    "jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits": RTData(
+    "jw01281001001_04103_00001-seg002_mirimage_mod": RTData(
         file_name="jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits",
         path=INPUT_DATA_PATH,
         from_mast=True,
         mod_code="trim_tso",
     ),
-    "jw01536-o028_mod_tso3_00001_asn.json": RTData(
+    "jw01536-o028_mod_tso3_00001_asn": RTData(
         file_name="jw01536-o028_mod_tso3_00001_asn.json",
         path=INPUT_DATA_PATH,
         from_mast=False,
@@ -41,13 +41,13 @@ INPUT_DATA = {
         mod_code="N/A",
         comment="N/A",
     ),
-    "jw04496004001_03103_00001-seg001_mirimage_mod_rateints.fits": RTData(
+    "jw04496004001_03103_00001-seg001_mirimage_mod": RTData(
         file_name="jw04496004001_03103_00001-seg001_mirimage_mod_rateints.fits",
         path=INPUT_DATA_PATH,
         from_mast=True,
         mod_code="trim_tso",
     ),
-    "jw04496004001_03102_00001-seg001_mirimage_rate.fits": RTData(
+    "jw04496004001_03102_00001-seg001_mirimage": RTData(
         file_name="jw04496004001_03102_00001-seg001_mirimage_rate.fits",
         path=INPUT_DATA_PATH,
         from_mast=True,
@@ -60,12 +60,12 @@ pytestmark = [pytest.mark.bigdata]
 
 def trim_tso():
     input_data = {
-        INPUT_DATA["jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits"].file_name: {
+        INPUT_DATA["jw01281001001_04103_00001-seg002_mirimage_mod"].file_name: {
             "ints_to_keep": 20,
             "intstart": 133,
             "ints_offset": 14,
         },
-        INPUT_DATA["jw04496004001_03103_00001-seg001_mirimage_mod_rateints.fits"].file_name: {
+        INPUT_DATA["jw04496004001_03103_00001-seg001_mirimage_mod"].file_name: {
             "ints_to_keep": 10,
             "intstart": 1,
             "ints_offset": 0,
@@ -80,7 +80,7 @@ def trim_tso():
 def run_tso1_pipeline(rtdata_module):
     """Run the calwebb_detector1 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
-    rtdata.get_data(INPUT_DATA["jw01536028001_03103_00001-seg001_mirimage_uncal.fits"].full_path)
+    rtdata.get_data(INPUT_DATA["jw01536028001_03103_00001-seg001_mirimage"].full_path)
 
     args = [
         "calwebb_detector1",
@@ -101,9 +101,7 @@ def run_detector1_pipeline(rtdata_module):
     Focusing on the steps that depend on integration # and not covered by run_tso1_pipeline.
     Also test running RSC step"""
     rtdata = rtdata_module
-    rtdata.get_data(
-        INPUT_DATA["jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits"].full_path
-    )
+    rtdata.get_data(INPUT_DATA["jw01281001001_04103_00001-seg002_mirimage_mod"].full_path)
 
     args = [
         "calwebb_detector1",
@@ -121,14 +119,12 @@ def run_detector1_pipeline(rtdata_module):
 def run_detector1_pipeline_emicorr_joint(rtdata_module):
     """Run detector1 with an alternate emicorr algorithm."""
     rtdata = rtdata_module
-    rtdata.get_data(
-        INPUT_DATA["jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits"].full_path
-    )
+    rtdata.get_data(INPUT_DATA["jw01281001001_04103_00001-seg002_mirimage_mod"].full_path)
 
     args = [
         "calwebb_detector1",
         rtdata.input,
-        f"--output_file={INPUT_DATA['jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits'].root_name}_emijoint",
+        f"--output_file={INPUT_DATA['jw01281001001_04103_00001-seg002_mirimage_mod'].root_name}_emijoint",
         "--steps.emicorr.algorithm=joint",
         "--steps.emicorr.save_results=True",
     ]
@@ -140,7 +136,9 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module, resource_tracker):
     """Run the calwebb_tso-spec2 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
 
-    rtdata.input = f"{INPUT_DATA['jw01536028001_03103_00001-seg001_mirimage_uncal.fits'].root_name}_rateints.fits"
+    rtdata.input = (
+        f"{INPUT_DATA['jw01536028001_03103_00001-seg001_mirimage'].root_name}_rateints.fits"
+    )
 
     args = [
         "calwebb_spec2",
@@ -159,12 +157,12 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module, resource_tracker):
 def run_tso3_pipeline(run_tso_spec2_pipeline, rtdata_module, resource_tracker):
     """Run the calwebb_tso3 pipeline on the output of run_spec2_pipeline."""
     rtdata = rtdata_module
-    rtdata.get_data(INPUT_DATA["jw01536028001_03103_00001-seg002_mirimage_calints.fits"].full_path)
-    rtdata.get_data(INPUT_DATA["jw01536-o028_mod_tso3_00001_asn.json"].full_path)
+    rtdata.get_data(INPUT_DATA["jw01536028001_03103_00001-seg002_mirimage"].full_path)
+    rtdata.get_data(INPUT_DATA["jw01536-o028_mod_tso3_00001_asn"].full_path)
 
     args = [
         "calwebb_tso3",
-        INPUT_DATA["jw01536-o028_mod_tso3_00001_asn.json"].file_name,
+        INPUT_DATA["jw01536-o028_mod_tso3_00001_asn"].file_name,
         "--steps.outlier_detection.save_results=true",
         "--steps.outlier_detection.save_intermediate_results=true",
     ]
@@ -199,7 +197,9 @@ def test_miri_lrs_slitless_tso1(
 ):
     """Regression test of tso1 pipeline performed on MIRI LRS slitless TSO data."""
     rtdata = rtdata_module
-    output_filename = f"{INPUT_DATA['jw01536028001_03103_00001-seg001_mirimage_uncal.fits'].root_name}_{step_suffix}.fits"
+    output_filename = (
+        f"{INPUT_DATA['jw01536028001_03103_00001-seg001_mirimage'].root_name}_{step_suffix}.fits"
+    )
     rtdata.output = output_filename
 
     rtdata.get_truth(f"rtdata/truth/test_miri_lrs_slitless_tso1/{output_filename}")
@@ -221,11 +221,11 @@ def test_miri_lrs_slitless_detector1(
     Testing segment 2 data for RSCD, emicorr and dark_current.
     """
     rtdata = rtdata_module
-    output_filename = f"{INPUT_DATA['jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits'].root_name}_{step_suffix}.fits"
+    file_root = INPUT_DATA["jw01281001001_04103_00001-seg002_mirimage_mod"].root_name
+    output_filename = f"{file_root}_{step_suffix}.fits"
     rtdata.output = output_filename
 
-    truth_outname = f"{INPUT_DATA['jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits'].root_name}_{step_suffix}.fits"
-    rtdata.get_truth(f"rtdata/truth/test_miri_lrs_slitless_detector1/{truth_outname}")
+    rtdata.get_truth(f"rtdata/truth/test_miri_lrs_slitless_detector1/{output_filename}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -237,11 +237,13 @@ def test_miri_lrs_slitless_detector1_emicorr_joint(
 ):
     """Regression test of  detector1 pipeline with an alternate emicorr algorithm."""
     rtdata = rtdata_module
-    output_filename = f"{INPUT_DATA['jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits'].root_name}_emijoint_{step_suffix}.fits"
+    file_root = INPUT_DATA["jw01281001001_04103_00001-seg002_mirimage_mod"].root_name
+    output_filename = f"{file_root}_emijoint_{step_suffix}.fits"
     rtdata.output = output_filename
 
-    truth_outname = f"{INPUT_DATA['jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits'].root_name}_{step_suffix}.fits"
-    rtdata.get_truth(f"rtdata/truth/test_miri_lrs_slitless_detector1_emicorr_joint/{truth_outname}")
+    rtdata.get_truth(
+        f"rtdata/truth/test_miri_lrs_slitless_detector1_emicorr_joint/{output_filename}"
+    )
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -256,7 +258,7 @@ def test_miri_lrs_slitless_tso_spec2(
     """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 pipeline."""
     rtdata = rtdata_module
 
-    file_root = INPUT_DATA["jw01536028001_03103_00001-seg001_mirimage_uncal.fits"].root_name
+    file_root = INPUT_DATA["jw01536028001_03103_00001-seg001_mirimage"].root_name
     output_filename = f"{file_root}_{step_suffix}.fits"
     rtdata.output = output_filename
     rtdata.get_truth(f"rtdata/truth/test_miri_lrs_slitless_tso_spec2/{output_filename}")
@@ -272,7 +274,7 @@ def test_miri_lrs_slitless_tso3(
     """Compare the output of a MIRI LRS slitless calwebb_tso3 pipeline."""
     rtdata = rtdata_module
 
-    file_root = INPUT_DATA["jw01536028001_03103_00001-seg001_mirimage_uncal.fits"].root_name
+    file_root = INPUT_DATA["jw01536028001_03103_00001-seg001_mirimage"].root_name
     median_filename = f"{file_root}_{ASN_ID}_median.fits"
     assert os.path.isfile(median_filename)
 
@@ -310,7 +312,7 @@ def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline, rtdata_module, diff_ast
 def test_miri_lrs_slitless_wcs(run_tso_spec2_pipeline, fitsdiff_default_kwargs, rtdata_module):
     """Compare the assign_wcs output of a MIRI LRS slitless calwebb_tso3 pipeline."""
     rtdata = rtdata_module
-    output = f"{INPUT_DATA['jw01536028001_03103_00001-seg001_mirimage_uncal.fits'].root_name}_assign_wcs.fits"
+    output = f"{INPUT_DATA['jw01536028001_03103_00001-seg001_mirimage'].root_name}_assign_wcs.fits"
     # get input assign_wcs and truth file
     rtdata.output = output
     rtdata.get_truth("rtdata/truth/test_miri_lrs_slitless_tso_spec2/" + output)
@@ -331,14 +333,10 @@ def run_spec2_slitless_targ_centroid(rtdata_module):
     rtdata = rtdata_module
 
     # science exposure
-    sci = rtdata.get_data(
-        INPUT_DATA["jw04496004001_03103_00001-seg001_mirimage_mod_rateints.fits"].full_path
-    )
+    sci = rtdata.get_data(INPUT_DATA["jw04496004001_03103_00001-seg001_mirimage_mod"].full_path)
 
     # target acquisition verification image
-    taq = rtdata.get_data(
-        INPUT_DATA["jw04496004001_03102_00001-seg001_mirimage_rate.fits"].full_path
-    )
+    taq = rtdata.get_data(INPUT_DATA["jw04496004001_03102_00001-seg001_mirimage"].full_path)
 
     args = [
         "calwebb_spec2",
@@ -357,11 +355,10 @@ def test_miri_lrs_slitless_spec2_targ_centroid(
     """Compare the output of a MIRI LRS slitless calwebb_spec2 pipeline including targ_centroid step."""
     rtdata = rtdata_module
 
-    file_root = INPUT_DATA["jw04496004001_03103_00001-seg001_mirimage_mod_rateints.fits"].root_name
+    file_root = INPUT_DATA["jw04496004001_03103_00001-seg001_mirimage_mod"].root_name
     output_filename = f"{file_root}_{step_suffix}.fits"
     rtdata.output = output_filename
-    truth_outname = f"{file_root}_{step_suffix}.fits"
-    rtdata.get_truth(f"rtdata/truth/test_miri_lrs_slitless_tso_spec2/{truth_outname}")
+    rtdata.get_truth(f"rtdata/truth/test_miri_lrs_slitless_tso_spec2/{output_filename}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
