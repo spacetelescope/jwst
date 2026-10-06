@@ -535,8 +535,9 @@ def contam_corr(
         make a copy before calling this function, if needed.
     waverange : `~stdatamodels.jwst.datamodels.WavelengthrangeModel`
         Wavelength range reference file model
-    photom : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel` or \
-             `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
+    photom : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`, \
+             `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`,
+             or `~stdatamodels.jwst.datamodels.MirWfssPhotomModel`
         Photom (flux cal) reference file model
     max_cores : str or int
         Number of cores to use for multiprocessing. If set to 'none'
