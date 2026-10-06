@@ -258,6 +258,7 @@ class IFUCubeData:
     def set_wcs_slicer(
         self, corner_a, corner_b, lambda_min, lambda_max, cdelt1, cdelt2, cdelt3, linear_wave
     ):
+
         """
         Set up the size of the cube in the internal IFU plane.
 

@@ -13,6 +13,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import update_s_region_keyword
 from jwst.cube_build import msa_cube
+from jwst.cube_build.cube_lib import check_cube_size
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe import Step, record_step_status
 
@@ -79,6 +80,9 @@ class SlitCubeBuildStep(Step):
         log.info("Starting MSA Cube Building Step")
 
         t0 = time.time()
+
+        # limit on the maximum size of cube
+        limit_size = 1e8
 
         # For all parameters convert to a standard format
         # Report read in values to screen
@@ -223,7 +227,8 @@ class SlitCubeBuildStep(Step):
         # user set wavemax use this values.
         if self.wavemax is not None:
             final_lam_max = self.wavemax
-        # If the user has not set a wavemin value,  then check that the one determined from the datsa
+        # If the user has not set a wavemin value,
+        # then check that the one determined from the data
         # is not larger than the value given in the reference file.
         else:
             if final_lam_max > self.wavemax_ref:
@@ -234,6 +239,9 @@ class SlitCubeBuildStep(Step):
         msacube.set_slit_wcs(corner_ra, corner_dec, final_lam_min, final_lam_max, rot_angle)
 
         msacube.print_geometry()
+
+        # check the size of the cube if too large raise an exception
+        check_cube_size(msacube.naxis1, msacube.naxis2, msacube.naxis3, limit_size)
 
         slit_cube = msacube.build_msacube()
 
