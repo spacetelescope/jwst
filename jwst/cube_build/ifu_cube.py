@@ -275,7 +275,7 @@ class IFUCubeData:
         return cb_suffix
 
     # _______________________________________________________________________
-    def set_geometry(self, corner_a, corner_b, lambda_min, lambda_max):
+    def set_xgeometry(self, corner_a, corner_b, lambda_min, lambda_max):
         """
         Set up the WCS of the cube in the tangent plane.
 
