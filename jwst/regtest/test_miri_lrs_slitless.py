@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pytest
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
@@ -74,6 +75,47 @@ def trim_tso():
 
     for file, fdict in input_data.items():
         trim_tso_data(file, fdict["ints_to_keep"], fdict["intstart"], fdict["ints_offset"])
+
+
+def test_trim_tso_data(tmp_cwd):
+    """Test trim_tso_data function."""
+    # mock uncal tso data
+    n_integrations = 10
+    n_groups = 10
+    rows = 20
+    cols = 20
+    data = np.ones([n_integrations, n_groups, rows, cols])
+    cols, table = [], []
+    headers = [
+        "integration_number",
+        "int_start_MJD_UTC",
+        "int_mid_MJD_UTC",
+        "int_end_MJD_UTC",
+        "int_start_BJD_TDB",
+        "int_mid_BJD_TDB",
+        "int_end_BJD_TDB",
+    ]
+    for i in range(10):
+        if i == 0:
+            cols.append(headers)
+        row = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        cols.append(row)
+    mock_file = tmp_cwd / "mock_file_uncal.fits"
+    dm = datamodels.Level1bModel(data=data, refout=data, int_times=table)
+    dm.meta.exposure.integration_start = 30
+    dm.meta.exposure.integration_end = 40
+    dm.save(mock_file)
+    dm.close()
+
+    os.chdir(tmp_cwd)
+    expected_file = tmp_cwd / "mock_file_mod_uncal.fits"
+    trim_tso_data(str(mock_file), 5, 33, 3)
+    with datamodels.open(expected_file) as dm:
+        assert dm.meta.filename == expected_file.name
+        assert dm.meta.exposure.integration_start == 33
+        assert dm.meta.exposure.integration_end == 38
+        assert np.shape(dm.data) == (5, 10, 20, 20)
+        assert np.shape(dm.refout) == (5, 10, 20, 20)
 
 
 @pytest.fixture(scope="module")
