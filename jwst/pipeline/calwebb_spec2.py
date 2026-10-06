@@ -350,12 +350,12 @@ class Spec2Pipeline(Pipeline):
         # WFSS/Grism data need flat_field before extract_2d, but other modes
         # need extract_2d first. Furthermore, NIRSpec MOS and FS need
         # srctype and wavecorr before flat_field.
-        if exp_type in GRISM_TYPES:
+        if exp_type in GRISM_TYPES + ["MIR_WFSS"]:
             calibrated = self._process_grism(calibrated)
         elif exp_type == "NRS_MSASPEC":
             calibrated = self._process_nirspec_msa_slits(calibrated)
-        elif exp_type == "MIR_WFSS":
-            calibrated = self._process_miri_wfss(calibrated)
+        # elif exp_type == "MIR_WFSS":
+        #     calibrated = self._process_miri_wfss(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
         elif exp_type == "NIS_SOSS":
