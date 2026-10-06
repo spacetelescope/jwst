@@ -47,7 +47,7 @@ NRS_SLIT_TYPES = [
     "NRS_AUTOFLAT",
 ]
 
-GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS", "MIR_WFSS"]
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 TA_TYPES = ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]
@@ -350,7 +350,7 @@ class Spec2Pipeline(Pipeline):
         # WFSS/Grism data need flat_field before extract_2d, but other modes
         # need extract_2d first. Furthermore, NIRSpec MOS and FS need
         # srctype and wavecorr before flat_field.
-        if exp_type in GRISM_TYPES + ["MIR_WFSS"]:
+        if exp_type in GRISM_TYPES:
             calibrated = self._process_grism(calibrated)
         elif exp_type == "NRS_MSASPEC":
             calibrated = self._process_nirspec_msa_slits(calibrated)
@@ -395,7 +395,7 @@ class Spec2Pipeline(Pipeline):
 
         # SOSS and WFSS/grism data need to run photom on x1d products and optionally save the photom
         # output, while all other exptypes simply run extract_1d.
-        if exp_type in ["NIS_SOSS", "MIR_WFSS"] + GRISM_TYPES:
+        if exp_type in ["NIS_SOSS"] + GRISM_TYPES:
             if multi_int:
                 self.photom.suffix = "x1dints"
             else:
