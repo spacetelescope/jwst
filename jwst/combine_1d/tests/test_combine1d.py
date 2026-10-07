@@ -351,6 +351,17 @@ def test_tso_multi_input(tso_multi_spec):
     """Smoke test to ensure combine_1d works with TSOMultiSpecModel"""
     result = Combine1dStep.call(tso_multi_spec)
     assert result.meta.cal_step.combine_1d == "COMPLETE"
+    assert len(result.spec) == 1
+
+    tbl = result.spec[0].spec_table
+    assert tbl["FLUX"].shape == (10,)  # N_ALONGDISP
+    np.testing.assert_allclose(
+        tbl["WAVELENGTH"], [1.2, 2.1, 3.4, 3.9, 4.5, 5.6, 6.9, 7.1, 7.8, 8.8]
+    )
+    np.testing.assert_allclose(tbl["FLUX"], 1)
+    np.testing.assert_allclose(tbl["DQ"], 0)
+    np.testing.assert_allclose(tbl["WEIGHT"], 30)  # N_INPUT x EXPTIME
+    np.testing.assert_allclose(tbl["N_INPUT"], 15)  # 5 x 3
 
 
 def test_allnan_skip(wfss_multiexposure, caplog):
