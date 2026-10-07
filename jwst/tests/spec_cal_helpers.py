@@ -5,17 +5,17 @@ from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
-from jwst.assign_wcs.tests.test_miri import (
-    create_datamodel_cube,
-    create_hdul,
-    create_hdul_lrs_slitless,
-)
 from jwst.assign_wcs.tests.test_nirspec import (
     create_nirspec_fs_file,
     create_nirspec_ifu_file,
     create_nirspec_mos_file,
 )
 from jwst.extract_2d.extract_2d_step import Extract2dStep
+from jwst.tests.miri_rate_helpers import (
+    miri_lrs_slit_rate_model,
+    miri_lrs_slitless_rate_model,
+    miri_mrs_rate_model,
+)
 
 __all__ = [
     "miri_lrs_slit_cal_model",
@@ -38,26 +38,15 @@ def miri_lrs_slit_cal_model():
     model : `~stdatamodels.jwst.datamodels.SlitModel`
         The LRS slit datamodel.
     """
-    hdul = create_hdul("MIRIMAGE", "ANY", "ANY")
-    model = datamodels.ImageModel(hdul)
-    hdul.close()
+    model = miri_lrs_slit_rate_model()
 
-    shape = (1024, 1032)
-    model.data = np.zeros(shape)
+    shape = model.data.shape
     model.err = np.zeros(shape)
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.var_poisson = np.zeros(shape)
     model.var_rnoise = np.zeros(shape)
 
-    # Add metadata needed for LRS FS
-    model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
-    model.meta.wcsinfo.v3yangle = 0.0
-    model.meta.wcsinfo.vparity = -1
-    model.meta.dither.x_offset = 0.0
-    model.meta.dither.y_offset = 0.0
-
-    # Assign WCS
-    model = AssignWcsStep.call(model)
+    # Reassign model type
     model = datamodels.SlitModel(model)
 
     return model
@@ -74,15 +63,12 @@ def miri_lrs_slitless_cal_model():
     model : `~stdatamodels.jwst.datamodels.SlitModel`
         The LRS slitless datamodel.
     """
-    shape = (5, 416, 72)
-    hdul = create_hdul_lrs_slitless()
-    cube_model = create_datamodel_cube(hdul, shape)
-    hdul.close()
+    model = miri_lrs_slitless_rate_model()
 
-    model = datamodels.SlitModel(cube_model)
-    cube_model.close()
+    # Reassign model type
+    model = datamodels.SlitModel(model)
 
-    model.data = np.zeros(shape)
+    shape = model.data.shape
     model.err = np.zeros(shape)
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.var_poisson = np.zeros(shape)
@@ -114,19 +100,21 @@ def miri_mrs_cal_model(detector="MIRIFUSHORT", channel="12", band="SHORT", shape
     model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The MRS datamodel.
     """
-    hdul = create_hdul(detector=detector, channel=channel, band=band)
-    model = datamodels.IFUImageModel(hdul)
-    hdul.close()
+    # Make a rate model, but don't assign a WCS object
+    model = miri_mrs_rate_model(
+        detector=detector, channel=channel, band=band, shape=shape, with_wcs=False
+    )
 
-    # Add data before calling AssignWCS: the s_region depends on it existing
-    model.data = np.ones(shape)
+    # Run assign_wcs directly: some tests need the full step processing
     model = AssignWcsStep.call(model)
 
+    model.data[:] = 1.0
     model.err = 0.01 * model.data
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.var_poisson = np.zeros(shape)
     model.var_rnoise = np.zeros(shape)
     model.var_flat = np.zeros(shape)
+
     return model
 
 
