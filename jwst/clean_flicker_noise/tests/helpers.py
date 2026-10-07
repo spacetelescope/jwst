@@ -2,9 +2,9 @@ import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_nirspec_ifu_file
 from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
 from jwst.tests.miri_rate_helpers import DEFAULT_WCS_KW
+from jwst.tests.nirspec_rate_helpers import nirspec_fs_rate_model, nirspec_ifu_rate_model
 
 __all__ = [
     "make_small_ramp_model",
@@ -190,12 +190,9 @@ def make_nirspec_ifu_model(shape=(2048, 2048)):
     IFUImageModel
         The IFU image model.
     """
-    hdul = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    hdul["SCI"].data = np.ones(shape, dtype=float)
-    rate_model = datamodels.IFUImageModel(hdul)
-    hdul.close()
+    rate_model = nirspec_ifu_rate_model(with_wcs=False)
+    rate_model.data = np.ones(shape, dtype=float)
+    rate_model.dq = rate_model.get_default("dq")
     return rate_model
 
 
@@ -228,10 +225,8 @@ def make_nirspec_fs_model():
     ImageModel
         The MOS/FS image model.
     """
-    hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
-    hdul["SCI"].data = np.ones((2048, 2048), dtype=float)
-    rate_model = datamodels.ImageModel(hdul)
-    hdul.close()
+    rate_model = nirspec_fs_rate_model(with_wcs=False)
+    rate_model.data = np.ones((2048, 2048), dtype=float)
     rate_model.dq = rate_model.get_default("dq")
 
     # add the slow axis and subarray information
