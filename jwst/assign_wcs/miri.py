@@ -381,12 +381,16 @@ def lrs_xytoabl(input_model, reference_files):
         )
 
     # If in slitless mode, define the bounding box X locations using the subarray x boundaries
-    # and the y locations using the corner locations in the CDP reference file.  Make sure to
-    # omit the 4 reference pixels on the left edge of slitless subarray.
+    # and the y locations using the corner locations in the CDP reference file.  If within 4
+    # pixels of the left edge of the detector then make sure to omit the 4 reference pixels.
     if input_model.meta.exposure.type.lower() == "mir_lrs-slitless":
+        xstart = 1 # This is in subarray coordinates (1-indexed) and thus always 1 initially
+        # Reference pixel padding; ensure we don't use left-most 4 pixels in full frame
+        xpad = np.nanmax([0, 4 + 1 - input_model.meta.subarray.xstart])
+        xstart += xpad
         bb_sub = (
             (
-                input_model.meta.subarray.xstart - 1 + 4 - 0.5,
+                xstart - 1 - 0.5,
                 input_model.meta.subarray.xsize - 1 + 0.5,
             ),
             (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5),
