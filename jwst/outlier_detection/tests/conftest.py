@@ -6,11 +6,11 @@ from scipy.ndimage import gaussian_filter
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.tests.test_miri import create_hdul
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.datamodels import ModelContainer
 from jwst.outlier_detection.tests import helpers
 from jwst.tests.helpers import _help_pytest_warns
+from jwst.tests.spec_cal_helpers import miri_mrs_cal_model
 
 
 @pytest.fixture()
@@ -268,21 +268,15 @@ def miri_ifu_rate():
     IFUImageModel
         A MIRI IFU model with a wcs assigned.
     """
-    # metadata for assign_wcs
-    hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="SHORT")
-
     # mock data for processing
     shape = (100, 100)
-    model = datamodels.IFUImageModel(hdul)
+    model = miri_mrs_cal_model(detector="MIRIFUSHORT", channel="12", band="SHORT", shape=shape)
     model.data = np.arange(shape[0] * shape[1], dtype=np.float32).reshape(shape)
     model.err = np.full(shape, 1.0)
     model.dq = np.full(shape, 0)
 
-    model_wcs = AssignWcsStep.call(model)
-    hdul.close()
+    yield model
     model.close()
-    yield model_wcs
-    model_wcs.close()
 
 
 @pytest.fixture(scope="module")
