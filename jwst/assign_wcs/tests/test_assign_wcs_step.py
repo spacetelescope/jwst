@@ -4,14 +4,15 @@ import asdf
 import numpy as np
 import pytest
 from gwcs import coordinate_frames as cf
+from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_miri import create_hdul as create_miri
-from jwst.assign_wcs.tests.test_nircam import create_hdul as create_nircam
 from jwst.assign_wcs.tests.test_niriss import create_hdul as create_niriss
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.assign_wcs.util import NoDataOnDetectorError
+from jwst.tests.nircam_rate_helpers import nircam_wfss_rate_model
 
 
 def test_assign_wcs_step_miri_ifu():
@@ -34,13 +35,13 @@ def test_assign_wcs_step_nis_wfss():
 
 
 def test_assign_wcs_step_nrc_wfss():
-    hdul = create_nircam(exptype="NRC_WFSS", filtername="F444W", pupil="GRISMR")
-    model = datamodels.ImageModel(hdul)
-    model.data = np.zeros((10, 10))
+    model = nircam_wfss_rate_model(with_wcs=False)
     result = AssignWcsStep.call(model)
     assert result is not model
     assert result.meta.cal_step.assign_wcs == "COMPLETE"
+    assert isinstance(result.meta.wcs, WCS)
     assert model.meta.cal_step.assign_wcs is None
+    assert model.meta.wcs is None
 
 
 def test_unsupported_input(caplog):

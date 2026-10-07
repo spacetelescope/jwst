@@ -13,7 +13,6 @@ from astropy.table import QTable
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.tests import helpers
 from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
     get_object_info,
@@ -24,6 +23,7 @@ from jwst.assign_wcs.util import (
     wcs_bbox_from_shape,
 )
 from jwst.lib.catalog_utils import SkyObject
+from jwst.tests.nircam_rate_helpers import nircam_dhs_nrca1_sub260_rate_model
 
 
 def test_transform_bbox_from_shape_2d():
@@ -128,7 +128,7 @@ def test_is_sky_like():
 
 @pytest.mark.parametrize("full_frame", [True, False])
 def test_substripe_subarray_transforms(full_frame):
-    mock_substripe = helpers.make_mock_dhs_nrca1_rate()
+    mock_substripe = nircam_dhs_nrca1_sub260_rate_model(with_wcs=False)
     stripe_ids = [10, 9, 8, 7]
 
     # if not full frame, offsets subtract the stripe size to get

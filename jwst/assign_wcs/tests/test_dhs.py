@@ -1,22 +1,20 @@
 import numpy as np
 import pytest
-from gwcs import wcs
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs import AssignWcsStep, nircam
-from jwst.assign_wcs.tests.helpers import (
-    make_mock_dhs_nrca1_rate,
-    make_mock_dhs_nrca1_regions,
-    make_mock_dhs_nrcalong_rate,
+from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.tests.helpers import make_mock_dhs_nrca1_regions
+from jwst.tests.nircam_rate_helpers import (
+    nircam_dhs_nrca1_sub260_rate_model,
+    nircam_dhs_nrcalong_sub260_rate_model,
 )
-from jwst.assign_wcs.tests.test_nircam import get_reference_files
 
 
 @pytest.fixture
 def mock_dhs_nrca1_rate():
     """Create a mock DHS NRCA1 rate file."""
-    return make_mock_dhs_nrca1_rate()
+    return nircam_dhs_nrca1_sub260_rate_model(with_wcs=False)
 
 
 @pytest.fixture
@@ -26,14 +24,21 @@ def mock_dhs_nrca1_regions(mock_dhs_nrca1_rate, tmp_path):
 
 
 @pytest.fixture
-def create_dhs_nrca1_wcs(mock_dhs_nrca1_rate):
+def create_dhs_nrca1_wcs():
     """Create a WCS for the mock NRCA1 DHS mode."""
-    im = mock_dhs_nrca1_rate
+    return nircam_dhs_nrca1_sub260_rate_model().meta.wcs
 
-    ref = get_reference_files(im)
-    pipeline = nircam.dhs(im, ref)
-    wcsobj = wcs.WCS(pipeline)
-    return wcsobj
+
+@pytest.fixture
+def mock_dhs_nrcalong_rate():
+    """Create a mock DHS NRCALONG rate file."""
+    return nircam_dhs_nrcalong_sub260_rate_model(with_wcs=False)
+
+
+@pytest.fixture
+def create_dhs_nrcalong_wcs():
+    """Create a WCS for the mock NRCALONG DHS mode."""
+    return nircam_dhs_nrcalong_sub260_rate_model().meta.wcs
 
 
 def test_dhs_nrca1_roundtrip(create_dhs_nrca1_wcs):
@@ -84,25 +89,6 @@ def test_dhs_nrca1_roundtrip(create_dhs_nrca1_wcs):
     # Check expected order and stripe values
     assert_allclose(order_rec, order_in)
     assert_allclose(stripe_out, [10, 9, 8, 7])
-
-
-@pytest.fixture
-def mock_dhs_nrcalong_rate():
-    """Create a mock DHS NRCALONG rate file."""
-    return make_mock_dhs_nrcalong_rate()
-
-
-@pytest.fixture
-def create_dhs_nrcalong_wcs(mock_dhs_nrcalong_rate):
-    """
-    Create a WCS for the mock NRCALONG DHS mode.
-    """
-    im = mock_dhs_nrcalong_rate
-    ref = get_reference_files(im)
-
-    pipeline = nircam.dhs(im, ref)
-    wcsobj = wcs.WCS(pipeline)
-    return wcsobj
 
 
 def test_dhs_nrcalong_roundtrip(create_dhs_nrcalong_wcs):
