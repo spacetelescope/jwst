@@ -609,7 +609,7 @@ def trim_tso_data(file, ints_to_keep, intstart, ints_offset):
 
 
 @dataclass
-class RTData:
+class RTFile:
     """Class to contain all information about a regression test data file."""
 
     file_name: str

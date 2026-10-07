@@ -7,7 +7,7 @@ from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
-from jwst.regtest.regtestdata import RTData, trim_tso_data
+from jwst.regtest.regtestdata import RTFile, trim_tso_data
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
@@ -17,21 +17,21 @@ ASN_ID = "o028"
 
 
 INPUT_DATA = {
-    "jw01536028001_03103_00001-seg001_mirimage": RTData(
+    "jw01536028001_03103_00001-seg001_mirimage": RTFile(
         file_name="jw01536028001_03103_00001-seg001_mirimage_uncal.fits",
         path=INPUT_DATA_PATH,
     ),
-    "jw01536028001_03103_00001-seg002_mirimage": RTData(
+    "jw01536028001_03103_00001-seg002_mirimage": RTFile(
         file_name="jw01536028001_03103_00001-seg002_mirimage_calints.fits",
         path=INPUT_DATA_PATH,
     ),
-    "jw01281001001_04103_00001-seg002_mirimage_mod": RTData(
+    "jw01281001001_04103_00001-seg002_mirimage_mod": RTFile(
         file_name="jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits",
         path=INPUT_DATA_PATH,
         from_mast=True,
         mod_code="trim_tso",
     ),
-    "jw01536-o028_mod_tso3_00001_asn": RTData(
+    "jw01536-o028_mod_tso3_00001_asn": RTFile(
         file_name="jw01536-o028_mod_tso3_00001_asn.json",
         path=INPUT_DATA_PATH,
         from_mast=False,
@@ -43,13 +43,13 @@ INPUT_DATA = {
         mod_code="N/A",
         comment="N/A",
     ),
-    "jw04496004001_03103_00001-seg001_mirimage_mod": RTData(
+    "jw04496004001_03103_00001-seg001_mirimage_mod": RTFile(
         file_name="jw04496004001_03103_00001-seg001_mirimage_mod_rateints.fits",
         path=INPUT_DATA_PATH,
         from_mast=True,
         mod_code="trim_tso",
     ),
-    "jw04496004001_03102_00001-seg001_mirimage": RTData(
+    "jw04496004001_03102_00001-seg001_mirimage": RTFile(
         file_name="jw04496004001_03102_00001-seg001_mirimage_rate.fits",
         path=INPUT_DATA_PATH,
         from_mast=True,

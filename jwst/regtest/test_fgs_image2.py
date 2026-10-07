@@ -1,13 +1,13 @@
 import pytest
 
-from jwst.regtest.regtestdata import RTData
+from jwst.regtest.regtestdata import RTFile
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 INPUT_DATA_PATH = "rtdata/fgs/image2"
 rate_file = "jw01029001001_04201_00001_guider2_rate.fits"
 INPUT_DATA = {
-    rate_file: RTData(
+    rate_file: RTFile(
         file_name=rate_file,
         path=INPUT_DATA_PATH,
     )

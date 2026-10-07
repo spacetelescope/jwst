@@ -1,6 +1,6 @@
 import pytest
 
-from jwst.regtest.regtestdata import RTData
+from jwst.regtest.regtestdata import RTFile
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
@@ -8,7 +8,7 @@ INPUT_DATA_PATH = "fgs/image3"
 RTDATA_TESTING_PATH = "rtdata/fgs/image3/"
 ASN_FILE = "jw01029-o001_mod_image3_asn.json"
 INPUT_DATA = {
-    ASN_FILE: RTData(
+    ASN_FILE: RTFile(
         file_name=ASN_FILE,
         path=RTDATA_TESTING_PATH,
         from_mast=True,

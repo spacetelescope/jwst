@@ -6,14 +6,14 @@ import numpy as np
 import pytest
 from astropy.table import Table
 
-from jwst.regtest.regtestdata import RTData, text_diff
+from jwst.regtest.regtestdata import RTFile, text_diff
 
 INPUT_DATA_PATH = "rtdata/infrastructure/test_regtestdata"
 FILE1 = "file1_rate.fits"
 ASN_FILE = "my_asn.json"
 
 INPUT_DATA = {
-    ASN_FILE: RTData(
+    ASN_FILE: RTFile(
         file_name=ASN_FILE,
         path=INPUT_DATA_PATH,
         from_mast=False,
