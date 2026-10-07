@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import pytest
+from astropy.table import Table
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
@@ -85,23 +86,17 @@ def test_trim_tso_data(tmp_cwd):
     rows = 20
     cols = 20
     data = np.ones([n_integrations, n_groups, rows, cols])
-    cols, table = [], []
-    headers = [
-        "integration_number",
-        "int_start_MJD_UTC",
-        "int_mid_MJD_UTC",
-        "int_end_MJD_UTC",
-        "int_start_BJD_TDB",
-        "int_mid_BJD_TDB",
-        "int_end_BJD_TDB",
-    ]
-    for i in range(10):
-        if i == 0:
-            cols.append(headers)
-        row = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-        cols.append(row)
+    table = Table()
+    fake_mjd = np.arange(6000.0, 6010.0).tolist()
+    table["integration_number"] = list(range(n_integrations))
+    table["int_start_MJD_UTC"] = fake_mjd
+    table["int_mid_MJD_UTC"] = fake_mjd
+    table["int_end_MJD_UTC"] = fake_mjd
+    table["int_start_BJD_TDB"] = fake_mjd
+    table["int_mid_BJD_TDB"] = fake_mjd
+    table["int_end_BJD_TDB"] = fake_mjd
     mock_file = tmp_cwd / "mock_file_uncal.fits"
-    dm = datamodels.Level1bModel(data=data, refout=data, int_times=table)
+    dm = datamodels.Level1bModel(data=data, refout=data, int_times=table.as_array())
     dm.meta.exposure.integration_start = 30
     dm.meta.exposure.integration_end = 40
     dm.save(mock_file)
@@ -116,6 +111,7 @@ def test_trim_tso_data(tmp_cwd):
         assert dm.meta.exposure.integration_end == 38
         assert np.shape(dm.data) == (5, 10, 20, 20)
         assert np.shape(dm.refout) == (5, 10, 20, 20)
+        assert len(dm.int_times) == 5
 
 
 @pytest.fixture(scope="module")
