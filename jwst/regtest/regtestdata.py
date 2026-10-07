@@ -571,7 +571,7 @@ def find_suffix(fname):
     suffix = None
     for sfx in KNOW_SUFFIXES:
         if sfx in fname:
-            if fname.split(sfx)[0].endswith("_"):
+            if fname.replace(sfx, "").endswith("_.fits"):
                 suffix = sfx
                 break
     if suffix is None:
