@@ -17,7 +17,7 @@ class WfssContamStep(Step):
     class_alias = "wfss_contam"
 
     spec = """
-        save_simulated_image = boolean(default=False)  # Save full-frame simulated image
+        save_simulated_image = boolean(default=True)  # Save full-frame simulated image
         save_contam_images = boolean(default=None)  # Deprecated; has no effect
         maximum_cores = string(default='1')
         skip = boolean(default=True)
