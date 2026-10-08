@@ -17,6 +17,7 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 from jwst.assign_wcs import util as assign_wcs_util
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels import ModelLibrary
+from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
 
@@ -440,9 +441,18 @@ class ResampleImage(Resample):
             del model.meta.bunit_err
 
         if self._enable_var and self._report_var:
-            model.var_rnoise = info_dict["var_rnoise"]
-            model.var_flat = info_dict["var_flat"]
-            model.var_poisson = info_dict["var_poisson"]
+            # Only attach a variance array if it's non-empty.
+            # This allows inputs to have missing flat variance, for example,
+            # without setting all data to NaN.
+            if ~np.all(np.isnan(info_dict["var_rnoise"])):
+                model.var_rnoise = info_dict["var_rnoise"]
+            if ~np.all(np.isnan(info_dict["var_flat"])):
+                model.var_flat = info_dict["var_flat"]
+            if ~np.all(np.isnan(info_dict["var_poisson"])):
+                model.var_poisson = info_dict["var_poisson"]
+
+        # Make sure output model has consistent NaN and DO_NOT_USE values
+        match_nans_and_flags(model)
 
         model.meta.wcs = info_dict["wcs"]
         model.meta.photometry.pixelarea_steradians = info_dict["pixelarea_steradians"]

@@ -528,9 +528,21 @@ def test_single_image_file_input(nircam_rate, tmp_cwd, propagate_dq):
     assert result_from_memory.meta.cal_step.resample == "COMPLETE"
     assert result_from_file.meta.cal_step.resample == "COMPLETE"
     assert_allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
+
+    # There are some valid and some not valid pixels
+    valid = np.isfinite(result_from_memory.data)
+    assert np.sum(valid) > 0
+    assert np.sum(~valid) > 0
+
     if propagate_dq:
         assert np.all(result_from_file.dq == result_from_memory.dq)
-        assert np.bitwise_or.reduce(result_from_memory.dq, axis=(0, 1)) == good_bits
+        # good bits are propagated
+        assert np.bitwise_or.reduce(result_from_memory.dq[valid]) == good_bits
+        # invalid data is marked do not use
+        assert np.all(result_from_memory.dq[~valid] & 1 == 1)
+    else:
+        assert result_from_file.dq is None
+        assert result_from_memory.dq is None
 
     # Check that input model was not modified
     assert im is not result_from_memory
@@ -578,9 +590,18 @@ def test_single_spec_file_input(miri_cal, tmp_cwd, propagate_dq):
     assert result_from_memory.meta.cal_step.resample == "COMPLETE"
     assert result_from_file.meta.cal_step.resample == "COMPLETE"
     assert_allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
+
+    # There are some valid and some not valid pixels
+    valid = np.isfinite(result_from_memory.data)
+    assert np.sum(valid) > 0
+    assert np.sum(~valid) > 0
+
     if propagate_dq:
         assert np.all(result_from_file.dq == result_from_memory.dq)
-        assert np.bitwise_or.reduce(result_from_memory.dq, axis=(0, 1)) == good_bits
+        # good bits are propagated
+        assert np.bitwise_or.reduce(result_from_memory.dq[valid]) == good_bits
+        # invalid data is marked do not use
+        assert np.all(result_from_memory.dq[~valid] & 1 == 1)
     else:
         assert result_from_file.dq is None
         assert result_from_memory.dq is None
@@ -1147,8 +1168,9 @@ def test_resample_variance_context_disable(
             assert "ERR" not in hdul
 
 
+@pytest.mark.parametrize("enable_err", [True, False])
 @pytest.mark.parametrize("shape", [(0,), (10, 1)])
-def test_resample_undefined_variance(caplog, nircam_rate, shape):
+def test_resample_undefined_variance(caplog, nircam_rate, shape, enable_err):
     """Test that resampled variance and error arrays are computed properly"""
     im = AssignWcsStep.call(nircam_rate)
     im.var_rnoise = np.ones(shape, dtype=im.get_dtype("var_rnoise"))
@@ -1157,14 +1179,22 @@ def test_resample_undefined_variance(caplog, nircam_rate, shape):
     im.meta.filename = "foo.fits"
     c = ModelLibrary([im])
 
-    result = ResampleStep.call(c, blendheaders=False)
-    assert "'var_rnoise' array not available" in caplog.text
+    result = ResampleStep.call(c, blendheaders=False, enable_err=enable_err)
 
-    # no valid variance - output error and variance are all NaN
-    assert_allclose(result.err, np.nan)
-    assert_allclose(result.var_rnoise, np.nan)
-    assert_allclose(result.var_poisson, np.nan)
-    assert_allclose(result.var_flat, np.nan)
+    if enable_err:
+        # no valid errors - output data and error are all NaN
+        assert_allclose(result.data, np.nan)
+        assert_allclose(result.err, np.nan)
+    else:
+        # at least some valid data
+        assert np.sum(np.isfinite(result.data)) > 0
+        assert result.err is None
+
+    # variances are not attached because they are all NaN
+    assert "'var_rnoise' array not available" in caplog.text
+    assert result.var_rnoise is None
+    assert result.var_poisson is None
+    assert result.var_flat is None
 
     im.close()
     result.close()
