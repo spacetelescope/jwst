@@ -1,0 +1,1 @@
+Fix rare IndexError in dispersion calculation due to improper detector bounds check.
