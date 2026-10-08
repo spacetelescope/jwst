@@ -61,7 +61,6 @@ EXPTYPE_MAP = {
     "nis_tacq": "target_acquisition",
     "nis_taconfirm": "target_acquisition",
     "nrc_dark": "dark",
-    "nrc_flat": "flat",
     "nrc_focus": "engineering",
     "nrc_led": "engineering",
     "nrc_tacq": "target_acquisition",
