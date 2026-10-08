@@ -1,0 +1,1 @@
+If DQ flags are propagated, set DQ to DO_NOT_USE for output pixels with NaN values. Also, do not propagate variance arrays to the output if they have no valid values.
