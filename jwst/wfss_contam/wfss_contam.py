@@ -625,8 +625,10 @@ def contam_corr(
     # Get the FILTER and PUPIL wheel positions, for use later
     filter_kwd = input_model.meta.instrument.filter
     pupil_kwd = input_model.meta.instrument.pupil
-    # subarray is used for MIRI photom ref file selection
+    # subarray is used for MIRI photom ref file selection and model size
     subarray_kwd = input_model.meta.subarray.name
+    subarray_xsize = input_model.meta.subarray.xsize
+    subarray_ysize = input_model.meta.subarray.ysize
 
     # NOTE: The NIRCam WFSS mode uses filters that are in the FILTER wheel
     # with gratings in the PUPIL wheel. NIRISS WFSS mode, however, is just
@@ -654,7 +656,7 @@ def contam_corr(
             seg_model.data,
             grism_wcs,
             direct_image_wcs,
-            boundaries=[0, 2047, 0, 2047],
+            boundaries=[0, subarray_xsize - 1, 0, subarray_ysize - 1],
             max_cpu=ncpus,
             max_pixels_per_chunk=max_pixels_per_chunk,
             oversample_factor=oversample_factor,
