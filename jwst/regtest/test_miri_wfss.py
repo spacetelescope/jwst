@@ -41,6 +41,8 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
         "--steps.flat_field.save_results=true",
         "--steps.bkg_subtract.save_results=true",
         "--steps.extract_1d.save_results=true",
+        "--steps.wfss_contam.skip=False",
+        "--steps.wfss_contam.save_simulated_image=True",
     ]
 
     Step.from_cmdline(args)
