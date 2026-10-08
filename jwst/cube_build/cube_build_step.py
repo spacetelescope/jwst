@@ -519,28 +519,30 @@ class CubeBuildStep(Step):
         """
         # validate the offset file using the schema file
         data_path = Path(__file__).parent
+        with asdf.config_context() as cfg:
+            cfg.validate_on_read = True
 
-        try:
-            af = asdf.open(self.offset_file, custom_schema=data_path / "ifuoffset.schema.yaml")
-        except ValueError:
-            log.error(
-                "Validation Error for offset file. Fix the offset file. "
-                " The offset file needs to have the same number of elements "
-                " in the three lists: filename, raoffset and decoffset."
-                " The units need to provided and only arcsec is allowed."
-            )
+            try:
+                af = asdf.open(self.offset_file, custom_schema=data_path / "ifuoffset.schema.yaml")
+            except asdf.exceptions.ValidationError:
+                log.error(
+                    "Validation Error for offset file. Fix the offset file. "
+                    " The offset file needs to have the same number of elements "
+                    " in the three lists: filename, raoffset and decoffset."
+                    " The units need to provided and only arcsec is allowed."
+                )
 
-            raise ValueError(
-                "Offset file is not correct. Offset file needs to have three lists: "
-                "filename, raoffset and decoffset all of the same length."
-            ) from None
-
-        offset_filename = af["filename"]
-        offset_ra = af["raoffset"]
-        offset_dec = af["decoffset"]
-        # Note:
-        # af['units'] is checked by the schema validation.
-        # It must be arcsec or a validation error occurs.
+                raise ValueError(
+                    "Offset file is not correct. Offset file needs to have three lists: "
+                    "filename, raoffset and decoffset all of the same length."
+                ) from None
+        with af:  # to ensure af is closed
+            offset_filename = af["filename"]
+            offset_ra = af["raoffset"]
+            offset_dec = af["decoffset"]
+            # Note:
+            # af['units'] is checked by the schema validation.
+            # It must be arcsec or a validation error occurs.
 
         # check that all the file names in input_model are in the offset filename
         for model in input_models:
@@ -548,10 +550,9 @@ class CubeBuildStep(Step):
             if file_check in offset_filename:
                 continue
             else:
-                af.close()
                 raise ValueError(
-                    "Error in offset file. A file in the association is not found in offset "
-                    f" list {file_check}"
+                    "Error in offset file. A file in the association is not found in "
+                    f"offset list {file_check}"
                 )
 
         # check that all the lists have the same length
@@ -559,7 +560,6 @@ class CubeBuildStep(Step):
         len_ra = len(offset_ra)
         len_dec = len(offset_dec)
         if len_file != len_ra or len_ra != len_dec or len_file != len_dec:
-            af.close()
             raise ValueError(
                 "The offset file does not have the same number of values for "
                 " filename, raoffset, decoffset"
@@ -574,5 +574,4 @@ class CubeBuildStep(Step):
         offsets["raoffset"] = offset_ra
         offsets["decoffset"] = offset_dec
 
-        af.close()
         return offsets
