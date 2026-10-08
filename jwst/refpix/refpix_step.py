@@ -166,11 +166,11 @@ class RefPixStep(Step):
                 result.meta.subarray.num_superstripe is not None
                 and result.meta.subarray.num_superstripe > 0
             )
-            # has_repeats = (
-            #     result.meta.subarray.repeat_stripe == 1
-            #     and result.meta.subarray.interleave_reads1 == 0
-            # )
-            if has_superstripes:  # or has_repeats:
+            has_repeats = (
+                result.meta.subarray.repeat_stripe == 1
+                and result.meta.subarray.interleave_reads1 == 0
+            )
+            if has_superstripes or has_repeats:
                 log.info("Reassembling striped data to standard ramp format")
                 result = stripe_utils.collate_superstripes(result)
 
