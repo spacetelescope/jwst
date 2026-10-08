@@ -360,7 +360,10 @@ def tsgrism(input_model, reference_files):
     if input_model.meta.instrument.module != "A":
         raise ValueError("NRC_TSGRISM mode only supports module A")
 
-    if "DHS" in input_model.meta.subarray.name:
+    if (
+        "DHS" in input_model.meta.subarray.name
+        and "LONG" not in input_model.meta.instrument.detector
+    ):
         log.info("Building WCS for DHS data.")
         return dhs(input_model, reference_files)
     elif "GRISMR" not in input_model.meta.instrument.pupil:

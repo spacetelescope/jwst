@@ -238,7 +238,10 @@ def extract_tso_object(
         raise ValueError("XREF_SCI and YREF_SCI are required for TSO mode.")
 
     # Split the logic on DHS vs. non-DHS data
-    if "DHS" in input_model.meta.subarray.name.upper():
+    if (
+        "DHS" in input_model.meta.subarray.name.upper()
+        and "LONG" not in input_model.meta.instrument.detector
+    ):
         output_model = _extract_tso_dhs_object(
             input_model, wavelengthrange, available_orders, compute_wavelength
         )
