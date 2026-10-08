@@ -33,16 +33,10 @@ keyword is the number of extended events (snowball and shower) per million pixel
 second.
 
 The JWST jump step makes use of the STCAL module. Detailed documentation for the jump step
-are in the :ref:`STCAL documentation (link) <stcal:jump_algorithm>`. The link above links
-to the STCAL documentation for the jump step.
+are in the :ref:`STCAL documentation (link) <stcal:jump_algorithm>`.
 
 Large Events (Snowballs and Showers)
 ------------------------------------
-
-
-The JWST jump step makes use of the STCAL module. Detailed documentation for the snowball detection
-algorithm are in the  :ref:`Snoball Algorithm STCAL Documentation (link) <stcal:jump_snowball>`. The
-link above links to the STCAL documentation for the snowball detection algorithm.
 
 All the detectors on JWST are affected by large cosmic ray
 events. While these events, in general, affect a large number of
@@ -64,6 +58,8 @@ Thus, we fit the minimum enclosing ellipse and do not require that there are sat
 within the ellipse.  Likewise, MIRI showers are only flagged when detected features are consistent
 with the maximum known amplitude (in DN/s) of shower artifacts.
 
+The large event detection algorithm is located in the STCAL module; further details
+are available in the STCAL documentation at this :ref:`(link) <stcal:jump_snowball>`.
 
 
 Multiprocessing
