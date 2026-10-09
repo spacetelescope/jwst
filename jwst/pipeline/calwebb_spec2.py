@@ -47,7 +47,7 @@ NRS_SLIT_TYPES = [
     "NRS_AUTOFLAT",
 ]
 
-GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS", "MIR_WFSS"]
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 TA_TYPES = ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]
@@ -354,8 +354,6 @@ class Spec2Pipeline(Pipeline):
             calibrated = self._process_grism(calibrated)
         elif exp_type == "NRS_MSASPEC":
             calibrated = self._process_nirspec_msa_slits(calibrated)
-        elif exp_type == "MIR_WFSS":
-            calibrated = self._process_miri_wfss(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
         elif exp_type == "NIS_SOSS":
@@ -397,7 +395,7 @@ class Spec2Pipeline(Pipeline):
 
         # SOSS and WFSS/grism data need to run photom on x1d products and optionally save the photom
         # output, while all other exptypes simply run extract_1d.
-        if exp_type in ["NIS_SOSS", "MIR_WFSS"] + GRISM_TYPES:
+        if exp_type in ["NIS_SOSS"] + GRISM_TYPES:
             if multi_int:
                 self.photom.suffix = "x1dints"
             else:
@@ -651,47 +649,7 @@ class Spec2Pipeline(Pipeline):
         # DN/sec image
         calibrated = self.extract_2d.run(calibrated)
         calibrated = self.srctype.run(calibrated)
-        calibrated = self.straylight.run(calibrated)
-        calibrated = self.fringe.run(calibrated)
-        calibrated = self.pathloss.run(calibrated)
-        calibrated = self.barshadow.run(calibrated)
         calibrated = self.wfss_contam.run(calibrated)
-        return calibrated
-
-    def _process_miri_wfss(self, data):
-        """
-        Calibrate MIRI WFSS  data.
-
-        Determine the order of the steps
-
-        Parameters
-        ----------
-        data : JWSTDataModel
-            The input science data model.
-
-        Returns
-        -------
-        JWSTDataModel
-            The calibrated data model.
-        """
-        calibrated = data.copy()
-        # Create and save a WFSS e-/sec image, if requested
-        if self.save_wfss_esec:
-            log.info("Creating WFSS e-/sec product")
-            wfss_esec = self._determine_e_per_sec_image(calibrated)
-            # Save the WFSS e-/sec image
-            self.save_model(wfss_esec, suffix="esec", force=True)
-            del wfss_esec
-
-        # More study required on the best approach for flat fielding with MIRI WFSS
-        # For now we are allowing flat fielding. This may change in the future.
-
-        # Continue with remaining calibration steps, using the original
-        # DN/sec image
-        calibrated = self.flat_field.run(calibrated)
-        calibrated = self.extract_2d.run(calibrated)
-        calibrated = self.srctype.run(calibrated)
-        calibrated = self.pathloss.run(calibrated)
         return calibrated
 
     def _process_nirspec_slits(self, data):

@@ -1,0 +1,1 @@
+Remove already-skipped straylight, fringe, pathloss, and barshadow from WFSS and TSGRISM spec2 processing flow, as these steps are not implemented for those modes and couldn't be meaningfully turned on anyway

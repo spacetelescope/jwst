@@ -286,6 +286,8 @@ def two_source_input(tmp_cwd, grism_wcs):
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.filter = "GR150C"
     model.meta.instrument.pupil = "F200W"
+    model.meta.subarray.xsize = _ITER_FRAME_SHAPE[1]
+    model.meta.subarray.ysize = _ITER_FRAME_SHAPE[0]
 
     for sid, xstart, ystart, data in [
         (1, _ITER_XA, _ITER_YA, obs_A_data),
