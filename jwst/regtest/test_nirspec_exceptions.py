@@ -29,7 +29,7 @@ def test_nirspec_missing_msa_fail(rtdata, fitsdiff_default_kwargs, monkeypatch):
     watcher = LogWatcher("Missing MSA meta (MSAMETFL) file")
     monkeypatch.setattr(logging.getLogger("jwst.assign_wcs.nirspec"), "error", watcher)
 
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError):
         Step.from_cmdline(args)
 
     watcher.assert_seen()
