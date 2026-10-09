@@ -104,6 +104,7 @@ def miri_rate_model():
     im.dq = im.get_default("dq")
     im.err = im.get_default("err")
     im.var_rnoise = np.ones(shape)
+    im.var_poisson = np.ones(shape)
     im.meta.wcsinfo = {
         "dec_ref": 40,
         "ra_ref": 100,
@@ -183,6 +184,7 @@ def miri_rate_zero_crossing():
     im = ImageModel(shape)
     im.dq = im.get_default("dq")
     im.var_rnoise = np.random.random(shape)
+    im.var_poisson = np.ones(shape)
     im.meta.wcsinfo = {
         "dec_ref": 2.16444343946559e-05,
         "ra_ref": -0.00026031780056776,
@@ -255,6 +257,7 @@ def nircam_rate():
     im = ImageModel(shape)
     im.err = im.get_default("err")
     im.var_rnoise = np.ones(shape)
+    im.var_poisson = np.ones(shape)
     rng = np.random.default_rng(seed=1)
     im.dq = 2 ** rng.integers(10, 22, size=shape).astype(np.uint32)
     im.meta.wcsinfo = {
@@ -1180,20 +1183,25 @@ def test_resample_undefined_variance(caplog, nircam_rate, shape, enable_err):
     c = ModelLibrary([im])
 
     result = ResampleStep.call(c, blendheaders=False, enable_err=enable_err)
+    assert "'var_rnoise' array not available" in caplog.text
 
     if enable_err:
         # no valid errors - output data and error are all NaN
         assert_allclose(result.data, np.nan)
         assert_allclose(result.err, np.nan)
+        # read noise and poisson variances are attached but all NaN
+        assert result.var_rnoise.shape == result.data.shape
+        assert_allclose(result.var_rnoise, np.nan)
+        assert result.var_poisson.shape == result.data.shape
+        assert_allclose(result.var_poisson, np.nan)
     else:
         # at least some valid data
         assert np.sum(np.isfinite(result.data)) > 0
         assert result.err is None
+        assert result.var_rnoise is None
+        assert result.var_poisson is None
 
-    # variances are not attached because they are all NaN
-    assert "'var_rnoise' array not available" in caplog.text
-    assert result.var_rnoise is None
-    assert result.var_poisson is None
+    # flat variance is not attached in either case because it is all NaN
     assert result.var_flat is None
 
     im.close()
