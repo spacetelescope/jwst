@@ -50,7 +50,7 @@ def test_log_tracked_resources_miri_image_tso(log_tracked_resources, run_pipelin
 @pytest.mark.parametrize("segment", ["seg001", "seg002"])
 @pytest.mark.parametrize("suffix", ["calints", "o007_crfints"])
 def test_miri_image_tso_exposure_data(run_pipelines, fitsdiff_default_kwargs, segment, suffix):
-    """Regression test of tso-image2 pipeline performed on MIRI image TSO data."""
+    """Regression test of image2 pipeline performed on MIRI image TSO data."""
     rtdata = run_pipelines
     rtdata.input = f"jw01177007001_03101_00001-{segment}_mirimage_rateints.fits"
     output = f"jw01177007001_03101_00001-{segment}_mirimage_{suffix}.fits"
