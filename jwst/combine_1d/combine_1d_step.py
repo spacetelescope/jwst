@@ -5,7 +5,6 @@ from stdatamodels.jwst import datamodels
 from jwst.combine_1d import combine1d
 from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
-    wfss_multiexposure_to_multispec,
 )
 from jwst.stpipe import Step, record_step_status
 
@@ -47,39 +46,18 @@ class Combine1dStep(Step):
         """
         output_model = self.prepare_output(input_data)
 
-        if isinstance(output_model, datamodels.WFSSMultiSpecModel):
-            input_list = wfss_multiexposure_to_multispec(output_model)
-            if len(input_list) == 1:
-                # Single input: will be combined below
-                output_model = input_list[0]
-            else:
-                # Multiple inputs: combine in a loop, then reconstitute the final model
-                results_list = []
-                for model in input_list:
-                    result = combine1d.combine_1d_spectra(
-                        model, self.exptime_key, sigma_clip=self.sigma_clip
-                    )
-                    if not result.meta.cal_step.combine_1d == "SKIPPED":
-                        results_list.append(result)
-                if not results_list:
-                    log.error("No valid input spectra found in WFSSMultiSpecModel. Skipping.")
-                    output_model.meta.cal_step.combine_1d = "SKIPPED"
-                    return output_model
-                result = make_wfss_multicombined(results_list)
-                result.meta.cal_step.combine_1d = "COMPLETE"
-
-                # Close any input models opened here before returning
-                if output_model is not input_data:
-                    output_model.close()
-
-                return result
-
         try:
             result = combine1d.combine_1d_spectra(
                 output_model, self.exptime_key, sigma_clip=self.sigma_clip
             )
-        except TypeError:
-            log.error("Invalid input model for combine_1d; skipping.")
+
+            # FIXME: Absorb this into combine1d natively.
+            if isinstance(output_model, datamodels.WFSSMultiSpecModel):
+                result = make_wfss_multicombined([result])
+                result.meta.cal_step.combine_1d = "COMPLETE"
+
+        except TypeError as err:
+            log.error("%s; skipping.", str(err))
             record_step_status(output_model, "combine_1d", status="SKIPPED")
             return output_model
 
