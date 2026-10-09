@@ -29,7 +29,7 @@ class WfssContamStep(Step):
         n_iterations = integer(default=1)  # Number of contamination-correction iterations
         l2_alpha = float(default=0.1)  # L2 regularization strength for polynomial spectral fit
         rejection_threshold = float(default=0.1)  # Threshold for rejecting polynomial fits based on fitted constant term coefficient
-        pdt_spacing = integer(default=20)  # Spacing of grid points per spatial axis for the trace lookup table; None disables it
+        pdt_spacing = integer(default=None)  # Spacing of grid points per spatial axis for the trace lookup table; None disables spatial interpolation and uses the full transform at every pixel
         pdt_wl_oversample = float(default=None)  # Oversampling factor for the trace lookup table's wavelength grid; None matches the grid specified by wl_oversample
     """  # noqa: E501
 
