@@ -62,7 +62,7 @@ class TestDupNames:
         c = Constraint(constraints)
         dups = c.dup_names
         assert set(dups.keys()) == set(expected.keys())
-        for name, constraints in dups.items():
+        for name, _constraints in dups.items():
             assert set(dups[name]) == set(expected[name])
 
 
@@ -271,11 +271,8 @@ def test_name_index():
     assert c2["sc3"].value
     assert c2["sc4"].value
 
-    with pytest.raises(KeyError):
-        c2["nonexistent"].value
-
-    with pytest.raises(AttributeError):
-        c2["sc1"].nonexistent
+    assert "nonexistent" not in c2
+    assert not hasattr(c2["sc1"], "nonexistent")
 
 
 def test_copy():

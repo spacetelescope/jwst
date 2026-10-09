@@ -369,7 +369,6 @@ def test_multichip_alignment_step_rel(monkeypatch):
     mr.meta.wcs.bounding_box = ((x.min() - 0.5, x.max() + 0.5), (y.min() - 0.5, y.max() + 0.5))
 
     mc = ModelContainer([mr, m1, m2])
-    mc.models_grouped
 
     step = tweakreg_step.TweakRegStep()
     step.fitgeometry = "general"
@@ -447,7 +446,6 @@ def test_multichip_alignment_step_abs(monkeypatch):
     mr.meta.wcs.bounding_box = ((x.min() - 0.5, x.max() + 0.5), (y.min() - 0.5, y.max() + 0.5))
 
     mc = ModelContainer([mr])
-    mc.models_grouped
 
     step = tweakreg_step.TweakRegStep()
     step.fitgeometry = "general"

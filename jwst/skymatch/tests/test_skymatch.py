@@ -415,7 +415,7 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     sub_levels = np.subtract(levels, ref_levels)
 
     with result:
-        for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
+        for im, _lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
             # check that meta was set correctly:
             assert im.meta.background.method == "match"
             assert im.meta.background.subtracted is True

@@ -509,7 +509,7 @@ def test_generate_stripe_reference_super_sub_stripe():
     # reference pixels are interleaved between 4 50 pixel stripes
     start = 206
     expected = []
-    for i in range(4):
+    for _i in range(4):
         expected.append(np.arange(start, start - 50, -1))
         expected.append(np.arange(3, -1, -1))
         start -= 51
@@ -532,7 +532,7 @@ def test_generate_stripe_reference_super_sub_stripe():
     # reference pixels are interleaved between 4 50 pixel stripes,
     # all reading the same detector pixels
     expected = []
-    for i in range(4):
+    for _i in range(4):
         expected.append(np.arange(53, -1, -1))
     expected = np.hstack(expected)
     np.testing.assert_allclose(stripe_array[0, 0], expected)
@@ -567,7 +567,7 @@ def test_generate_stripe_reference_super_sub_stripe_repeat_0():
     # followed by 4 reference pixels at the end
     start = 206
     expected = []
-    for i in range(4):
+    for _i in range(4):
         expected.append(np.arange(start, start - 50, -1))
         start -= 51
     expected.append(np.arange(3, -1, -1))

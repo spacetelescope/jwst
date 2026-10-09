@@ -162,7 +162,7 @@ def test_shape(cube_models, array):
 @pytest.mark.parametrize("array", ["zeroframe", "area", "con", "wht"])
 def test_nonexistent_arrays(cube_models, array):
     """Test for non-existent arrays"""
-    for cube, model in cube_models:
+    for _cube, model in cube_models:
         with pytest.raises(AttributeError):
             model.getarray_noinit(array)
 

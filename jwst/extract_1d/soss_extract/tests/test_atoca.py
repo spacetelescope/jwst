@@ -134,7 +134,7 @@ def test_extraction_engine_init(
     # test assignment of empty attributes
     for att in ["w_t_wave_c", "tikho_mat", "_tikho_mat"]:
         assert hasattr(engine, att)
-    assert getattr(engine, "pixel_mapping") == [None, None, None]
+    assert engine.pixel_mapping == [None, None, None]
 
 
 def test_extraction_engine_bad_inputs(
@@ -202,7 +202,7 @@ def test_update_throughput(engine, throughput):
     # test callable input
     new_thru = [throughput[1], throughput[1]]
     engine.update_throughput(new_thru)
-    for i, thru in enumerate(engine.throughput):
+    for _i, thru in enumerate(engine.throughput):
         assert isinstance(thru, np.ndarray)
         assert thru.shape == engine.wave_grid.shape
     assert np.allclose(engine.throughput[0], engine.throughput[1])
