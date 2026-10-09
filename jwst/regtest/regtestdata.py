@@ -3,6 +3,7 @@ import os.path as op
 import pprint
 import re
 import sys
+from dataclasses import dataclass, field
 from difflib import unified_diff
 from glob import glob as _sys_glob
 from pathlib import Path
@@ -18,7 +19,7 @@ from ci_watson.artifactory_helpers import (
 
 from jwst.associations import load_asn
 from jwst.lib.file_utils import pushdir
-from jwst.lib.suffix import replace_suffix
+from jwst.lib.suffix import KNOW_SUFFIXES, replace_suffix
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
@@ -271,8 +272,8 @@ class RegtestData:
 
         Parameters
         ----------
-        path : str
-            The remote path
+        path : str or RTData
+            The remote path or the ad hoc RT data class
 
         docopy : bool
             Switch to control whether or not to copy a file
@@ -285,6 +286,11 @@ class RegtestData:
             If an association is the input, retrieve the members.
             Otherwise, do not.
         """
+        rtdata_obj = None
+        if not isinstance(path, str):
+            rtdata_obj = path
+            rtdata_obj.validate_file_name()
+            path = rtdata_obj.path + "/" + rtdata_obj.file_name
         if path is None:
             path = self.input_remote
         else:
@@ -304,6 +310,13 @@ class RegtestData:
                 for member in product["members"]:
                     fullpath = os.path.join(os.path.dirname(self.input_remote), member["expname"])
                     get_bigdata(self._inputs_root, self.env, fullpath, docopy=self.docopy)
+
+                    # verify that manually written input data matches the files in the asn file
+                    if rtdata_obj is not None:
+                        if member["expname"] not in rtdata_obj.asn_files:
+                            raise ValueError(
+                                f"File {member['expname']} missing in list of RTData.asn_members!"
+                            )
 
     def to_asdf(self, path):
         """Write the RegtestData object to an ASDF file."""
@@ -538,3 +551,80 @@ def _data_glob_url(repo, path, glob, root):
         raise KeyError(
             f"URL data glob failed\n    status_code: {r.status_code}\n    JSON:\n{r_json}"
         )
+
+
+def find_suffix(fname):
+    """
+    Find the suffix of a file name.
+
+    Parameters
+    ----------
+    fname : str
+        File name to search.
+
+    Returns
+    -------
+    suffix : str
+        Pipeline suffix found.
+    """
+    suffix = None
+    for sfx in KNOW_SUFFIXES:
+        if sfx in fname:
+            if fname.replace(sfx, "").endswith("_.fits"):
+                suffix = sfx
+                break
+    if suffix is None:
+        raise ValueError(f"Known suffix not found in file name: {fname}")
+    root = fname.replace(".fits", "")
+    return root, suffix
+
+
+@dataclass
+class RTFile:
+    """Class to contain all information about a regression test data file."""
+
+    file_name: str
+    path: str
+    from_mast: bool = True
+    mod_code: str = "N/A"
+    comment: str = "N/A"
+    asn_files: list = field(default_factory=list)
+    asn_files_from_mast: bool = True
+
+    def validate_file_name(self):
+        """Validate that the file name."""
+        if ".json" in self.file_name:
+            if len(self.asn_files) == 0:
+                raise ValueError(
+                    "Association files expected to be listed in the RTData.asn_files attribute."
+                )
+        if self.mod_code != "N/A" and self.from_mast:
+            if "mod" not in self.file_name:
+                raise ValueError("Modified file does not have the 'mod' suffix.")
+            elif "fits" in self.file_name:
+                original_fname = Path(self.file_name.replace("_mod", ""))
+                root, suffix = find_suffix(original_fname.name)
+                modfname = replace_suffix(root, "mod_" + suffix) + ".fits"
+                if self.file_name != modfname:
+                    raise ValueError("Suffix 'mod' should be right before pipeline suffix. ")
+
+    @property
+    def root_name(self):  # numpydoc ignore=RT01
+        """
+        Return string of the root name of the regression test data file.
+
+        Example of return value jw01281001001_04103_00001-seg002_mirimage
+        and if mod is in the name the return value will include it, e.g.
+        jw01281001001_04103_00001-seg002_mirimage_mod
+        """
+        root, suffix = find_suffix(self.file_name)
+        return root.replace("_" + suffix, "")
+
+    @property
+    def full_path(self):  # numpydoc ignore=RT01
+        """
+        Return string of the full path to the regression test data file.
+
+        Example of return value would be fgs/image2/jw01029001001_04201_00001_guider2_rate.fits
+        """
+        return self.path + "/" + self.file_name
