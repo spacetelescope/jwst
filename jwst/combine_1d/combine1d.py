@@ -985,6 +985,28 @@ def _inputspectra_from_tso(ms, exptime_key, input_spectra):
             )
 
 
+def _inputspectra_from_wfss(ms, exptime_key, input_spectra):
+    """
+    Build input spectra from WFSS multispec model.
+
+    Parameters
+    ----------
+    ms : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
+        Data model to read. This can contain multiple spectra.
+
+    exptime_key : str
+        A string identifying which keyword to use to get the exposure
+        time, which is used as a weight; or "unit_weight", which means
+        to use ``weight = 1``.
+
+    input_spectra : defaultdict
+        Dictionary to hold input spectra, keyed by spectral order
+        and values are stored in one list per key;
+        Updated in-place.
+    """
+    raise NotImplementedError
+
+
 def _read_input_spectra(input_model, exptime_key, input_spectra):
     """
     Read input spectra from a datamodel.
@@ -995,11 +1017,11 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
     Parameters
     ----------
     input_model : `~stdatamodels.jwst.datamodels.MultiSpecModel`, \
+                  `~stdatamodels.jwst.datamodels.MRSMultiSpecModel`, \
                   `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`, or \
-                  `~stdatamodels.jwst.datamodels.MRSMultiSpecModel`
+                  `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
         A datamodel with a ``spec`` attribute, containing spectra.
-        If `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`,
-        integrations in the spectral table rows
+        If TSO or WFSS, integrations in the spectral table rows
         are expanded into separate spectra.
     exptime_key : str
         Exposure time key to use for weighting.
@@ -1014,10 +1036,12 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
         If the input datamodel does not have a ``spec`` attribute.
     """
     if not hasattr(input_model, "spec"):
-        raise TypeError(f"Invalid input datamodel: {type(input_model)}")
+        raise TypeError(f"Invalid input model for combine_1d: {type(input_model)}")
 
     if isinstance(input_model, datamodels.TSOMultiSpecModel):
         _inputspectra_from_tso(input_model, exptime_key, input_spectra)
+    elif isinstance(input_model, datamodels.WFSSMultiSpecModel):
+        _inputspectra_from_wfss(input_model, exptime_key, input_spectra)
     else:
         _inputspectra_from_multispec(input_model, exptime_key, input_spectra)
 
@@ -1028,15 +1052,14 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
 
     Parameters
     ----------
-    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
-        The input spectra.  This will likely be a
-        `~jwst.datamodels.container.ModelContainer` object,
-        but may also be a multi-spectrum model, such as
-        `~stdatamodels.jwst.datamodels.MultiSpecModel` or
-        `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`.
-        Input spectra may have different spectral orders
+    input_model : `~jwst.datamodels.container.ModelContainer`, \
+                  `~stdatamodels.jwst.datamodels.MultiSpecModel`, \
+                  `~stdatamodels.jwst.datamodels.MRSMultiSpecModel`, \
+                  `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`, or \
+                  `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
+        The input spectra, which may have different spectral orders
         or wavelengths but should all share the same target.
-        May be updated in place if processing is skipped.
+        May be updated in-place if processing is skipped.
     exptime_key : str
         A string identifying which keyword to use to get the exposure time,
         which is used as a weight when combining spectra.  The value should
