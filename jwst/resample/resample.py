@@ -441,15 +441,14 @@ class ResampleImage(Resample):
             del model.meta.bunit_err
 
         if self._enable_var and self._report_var:
-            # Only attach a variance array if it's non-empty.
-            # This allows inputs to have missing flat variance, for example,
-            # without setting all data to NaN.
-            if ~np.all(np.isnan(info_dict["var_rnoise"])):
-                model.var_rnoise = info_dict["var_rnoise"]
+            model.var_rnoise = info_dict["var_rnoise"]
+            model.var_poisson = info_dict["var_poisson"]
+
+            # Only attach a flat variance array if it's non-empty.
+            # This allows inputs to have skipped flat correction without
+            # setting all data to NaN.
             if ~np.all(np.isnan(info_dict["var_flat"])):
                 model.var_flat = info_dict["var_flat"]
-            if ~np.all(np.isnan(info_dict["var_poisson"])):
-                model.var_poisson = info_dict["var_poisson"]
 
         # Make sure output model has consistent NaN and DO_NOT_USE values
         match_nans_and_flags(model)
