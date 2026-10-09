@@ -10,7 +10,7 @@ from stpipe import _log
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
-from jwst.pipeline.tests.helpers import make_nirspec_ifu_rate_model
+from jwst.pipeline.tests.helpers import make_nircam_rate_model, make_nirspec_ifu_rate_model
 from jwst.stpipe import Step
 from jwst.targ_centroid.tests.helpers import (
     make_empty_lrs_model,
@@ -192,3 +192,11 @@ def test_spec2_nirspec_ifu_model(make_test_rate_file):
 
     input_model.close()
     input_model_copy.close()
+
+
+def test_invalid_exptype():
+    with make_nircam_rate_model() as input_model:
+        # spec2 redirects the TypeError raised to a RuntimeError,
+        # issued at the end of processing
+        with pytest.raises(RuntimeError, match="not supported by calwebb_spec2"):
+            Spec2Pipeline.call(input_model)
