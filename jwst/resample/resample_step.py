@@ -102,19 +102,26 @@ class ResampleStep(Step):
             # TODO: figure out why and make sure asn_table is carried along
             output = None
 
-        # Check that input models are 2D images
+        # Check input models
+        propagate_var_flat = False
         with input_models:
             example_model = input_models.borrow(0)
             data_shape = example_model.data.shape
             input_models.shelve(example_model, 0, modify=False)
+
+            # Make sure input models are 2D images, not 3D cubes, etc
             if len(data_shape) != 2:
-                # resample can only handle 2D images, not 3D cubes, etc
                 raise RuntimeError(f"Input {example_model} is not a 2D image.")
             del example_model
 
-            # Make sure all input models have consistent NaN and DO_NOT_USE values
             for model in input_models:
+                # Make sure all input models have consistent NaN and DO_NOT_USE values
                 match_nans_and_flags(model)
+
+                # Check if var_flat is present in any input
+                if model.var_flat is not None:
+                    propagate_var_flat = True
+
                 input_models.shelve(model)
             del model
 
@@ -129,11 +136,14 @@ class ResampleStep(Step):
             result = resamp.resample_many_to_many(in_memory=self.in_memory)
 
         else:
+            variances = None
             if self.enable_err:
                 # If error is enabled, we compute the error from the variance
                 compute_err = "from_var"
                 enable_var = True
                 report_var = self.report_var
+                if not propagate_var_flat:
+                    variances = ["var_rnoise", "var_poisson"]
             else:
                 # otherwise do not compute the error arrays at all
                 enable_var = False
@@ -146,6 +156,7 @@ class ResampleStep(Step):
                 enable_var=enable_var,
                 report_var=report_var,
                 compute_err=compute_err,
+                variance_array_names=variances,
                 **kwargs,
             )
             result = resamp.resample_many_to_one()
