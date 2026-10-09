@@ -445,9 +445,8 @@ class Spec3Pipeline(Pipeline):
                 wcs = mosaic_model.meta.wcs
         except FileNotFoundError:
             log.info("Direct image mosaic not available.")
-            wcs = None
+            wcs = cal_model_list[0].meta.wcs
 
-        # Modify the det2world transform to ignore extra inputs/outputs (wavelength and order)
         if "moving_target" in wcs.available_frames:
             # This should never be hit for WFSS data but is here just in case
             det2world = wcs.get_transform("detector", "moving_target")
