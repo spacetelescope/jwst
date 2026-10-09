@@ -125,7 +125,7 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
     else:
         # Match the astropy report
         streport, pixelreport = [], []
-        for idx, line in enumerate(report):
+        for _idx, line in enumerate(report):
             # Ignore the ST added legends
             if "These values are calculated" in line:
                 continue

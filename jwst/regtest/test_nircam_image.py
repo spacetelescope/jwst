@@ -230,8 +230,7 @@ def test_nircam_image_stage3_tweakreg(run_image3pipeline):
     for filename in files:
         with datamodels.open(filename) as model:
             # Makes sure the catalog is not attached
-            with pytest.raises(AttributeError):
-                model.catalog
+            assert not hasattr(model, "catalog")
 
             # Check that all but the first exposure in the association
             # has a WCS correction applied

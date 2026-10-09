@@ -24,6 +24,5 @@ def test_pusdir_fail():
     current = os.getcwd()
     with pytest.raises(FileNotFoundError):
         with pushdir("Really_doesNOT-exist"):
-            # Nothing should happen here. The assert should never be checked.
-            assert False
+            pass
     assert current == os.getcwd()

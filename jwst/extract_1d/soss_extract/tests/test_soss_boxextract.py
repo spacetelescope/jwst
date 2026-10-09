@@ -60,7 +60,7 @@ def test_box_extract(trace1d, box_weights, imagemodel):
 
         # test flux and flux_err are NaN where order 2 is cut off, but have good values elsewhere
         xtrace = trace1d[order][0]
-        for f in [flux, flux_err]:
+        for _f in [flux, flux_err]:
             assert np.sum(~np.isnan(flux)) == xtrace.size
         # test npix is zero there too
         assert np.count_nonzero(npix) == xtrace.size

@@ -28,7 +28,7 @@ def source_folder(tmp_path_factory):
     source_folder = tmp_path_factory.mktemp("asn_gather_source")
     with pushdir(source_folder):
         # Create all the files
-        for expname, exptype in primary_members:
+        for expname, _exptype in primary_members:
             with open(expname, "w") as fh:
                 fh.write(expname)
 
