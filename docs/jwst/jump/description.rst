@@ -38,6 +38,9 @@ are in the :ref:`STCAL documentation (link) <stcal:jump_algorithm>`.
 Large Events (Snowballs and Showers)
 ------------------------------------
 
+:ref:`Snoball Algorithm STCAL Documentation (link) <stcal:jump_snowball>`
+------------------------------------------------------------------------
+
 All the detectors on JWST are affected by large cosmic ray
 events. While these events, in general, affect a large number of
 pixels, the more distinguishing characteristic is that they are
