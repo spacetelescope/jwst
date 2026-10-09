@@ -43,406 +43,406 @@ testing:
 associations:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**associations**"
-          - "jwst/**asn**"
+          - "**/associations/**/*"
+          - "**/scripts/asn_*.py"
 
 datamodels:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**datamodels**"
+          - "**/datamodels/**/*"
 
 model_blender:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**model_blender**"
+          - "**/model_blender/**/*"
 
 pipeline:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**pipeline**"
+          - "**/pipeline/**/*"
 
 stpipe:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**stpipe**"
+          - "**/stpipe/**/*"
 
 # --------------------------------------- step changes ---------------------------------------
 
 adaptive_trace_model:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**adaptive_trace_model**"
+          - "**/adaptive_trace_model/**/*"
 
 align_refs:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**align_refs**"
+          - "**/coron/align_refs*.py"
 
 ami:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**ami**"
+          - "**/ami/**/*"
 
 assign_mtwcs:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**assign_mtwcs**"
+          - "**/assign_mtwcs/**/*"
 
 assign_wcs:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**assign_wcs**"
+          - "**/assign_wcs/**/*"
 
 background:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**background**"
+          - "**/background/**/*"
 
 badpix_selfcal:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**badpix_selfcal**"
+          - "**/badpix_selfcal/**/*"
 
 barshadow:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**barshadow**"
+          - "**/barshadow/**/*"
 
 charge_migration:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**charge_migration**"
+          - "**/charge_migration/**/*"
 
 clean_flicker_noise:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**clean_flicker_noise**"
+          - "**/clean_flicker_noise/**/*"
 
 combine_1d:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**combine_1d**"
+          - "**/combine_1d/**/*"
 
 cube_build:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**cube_build**"
+          - "**/cube_build/**/*"
 
 dark_current:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**dark_current**"
+          - "**/dark_current/**/*"
 
 dq_init:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**dq_init**"
+          - "**/dq_init/**/*"
 
 emicorr:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**emicorr**"
+          - "**/emicorr/**/*"
 
 engdb_tools:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**libengdb_*"
+          - "**/lib/engdb_*.py"
 
 exp_to_source:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**exp_to_source**"
+          - "**/exp_to_source/**/*"
 
 extract_1d:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**extract_1d**"
+          - "**/extract_1d/**/*"
 
 extract_2d:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**extract_2d**"
+          - "**/extract_2d/**/*"
 
 firstframe:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**firstframe**"
+          - "**/firstframe/**/*"
 
 flatfield:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**flatfield**"
+          - "**/flatfield/**/*"
 
 fringe:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**fringe**"
+          - "**/fringe/**/*"
 
 gain_scale:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**gain_scale**"
+          - "**/gain_scale/**/*"
 
 group_scale:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**group_scale**"
+          - "**/group_scale/**/*"
 
 guider_cds:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**guider_cds**"
+          - "**/guider_cds/**/*"
 
 imprint:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**imprint**"
+          - "**/imprint/**/*"
 
 ipc:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**ipc**"
+          - "**/ipc/**/*"
 
 jump:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**jump**"
+          - "**/jump/**/*"
 
 lastframe:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**lastframe**"
+          - "**/lastframe/**/*"
 
 linearity:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**linearity**"
+          - "**/linearity/**/*"
 
 master_background:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**master_background**"
+          - "**/master_background/**/*"
 
 msaflagopen:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**msaflagopen**"
-
-nsclean:
-  - changed-files:
-      - any-glob-to-any-file:
-          - "jwst/**nsclean**"
+          - "**/msaflagopen/**/*"
 
 outlier_detection:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**outlier_detection**"
+          - "**/outlier_detection/**/*"
 
 pathloss:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**pathloss**"
+          - "**/pathloss/**/*"
 
 persistence:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**persistence**"
+          - "**/persistence/**/*"
 
 photom:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**photom**"
+          - "**/photom/**/*"
 
 picture_frame:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**picture_frame**"
+          - "**/picture_frame/**/*"
 
 pixel_replace:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**pixel_replace**"
+          - "**/pixel_replace/**/*"
 
 ramp_fitting:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**ramp_fitting**"
+          - "**/ramp_fitting/**/*"
 
 refpix:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**refpix**"
+          - "**/refpix/**/*"
 
 resample:
   - changed-files:
-      - any-glob-to-any-file:
-          - "jwst/**resample**"
+      - all-globs-to-any-file:
+          - "**/resample/**/*"
+          - "!**/resample/resample_spec*.py"
 
 resample_spec:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**resample_spec**"
+          - "**/resample/resample_spec*.py"
 
 reset:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**reset**"
+          - "**/reset/**/*"
 
 residual_fringe:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**residual_fringe**"
+          - "**/residual_fringe/**/*"
 
 rscd:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**rscd**"
+          - "**/rscd/**/*"
 
 saturation:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**saturation**"
+          - "**/saturation/**/*"
 
 skymatch:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**skymatch**"
+          - "**/skymatch/**/*"
 
 source_catalog:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**source_catalog**"
+          - "**/source_catalog/**/*"
 
 spectral_leak:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**spectral_leak**"
+          - "**/spectral_leak/**/*"
 
 srctype:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**srctype**"
+          - "**/srctype/**/*"
 
 stack_refs:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**stack_refs**"
+          - "**/coron/stack_refs*.py"
 
 straylight:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**straylight**"
+          - "**/straylight/**/*"
 
 superbias:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**superbias**"
+          - "**/superbias/**/*"
 
 targ_centroid:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**targ_centroid**"
+          - "**/targ_centroid/**/*"
 
 tso_photometry:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**tso_photometry**"
+          - "**/tso_photometry/**/*"
 
 tweakreg:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**tweakreg**"
+          - "**/tweakreg/**/*"
 
 wavecorr:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**wavecorr**"
+          - "**/wavecorr/**/*"
 
 wfs_combine:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**wfs_combine**"
+          - "**/wfs_combine/**/*"
 
 wfss_contam:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**wfss_contam**"
+          - "**/wfss_contam/**/*"
 
 white_light:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**white_light**"
+          - "**/white_light/**/*"
 
 # --------------------------------------- pipelines ---------------------------------------
 
 detector1 pipeline:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**detector1**"
+          - "**/pipeline/*detector1.py"
 
 coron3 pipeline:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**coron**"
+          - "**/pipeline/*coron3.py"
 
 image2 pipeline:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**image2**"
+          - "**/pipeline/*image2.py"
 
 image3 pipeline:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**image3**"
+          - "**/pipeline/*image3.py"
 
 spec2 pipeline:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**spec2**"
+          - "**/pipeline/*spec2.py"
 
 spec3 pipeline:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**spec3**"
+          - "**/pipeline/*spec3.py"
 
 ami3 pipeline:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**ami3**"
+          - "**/pipeline/*ami3.py"
 
 tso3 pipeline:
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**tso3**"
+          - "**/pipeline/*tso3.py"
 
 # --------------------------------------- instruments ---------------------------------------
 
 Fine Guidance Sensor (FGS):
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**fgs**"
+          - "**/assign_wcs/fgs.py"
 
 Mid Infrared Instrument (MIRI):
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**miri**"
+          - "**/assign_wcs/miri.py"
 
 Near Infrared Spectrograph (NIRSpec):
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**nirspec**"
+          - "**/assign_wcs/nirspec.py"
+          - "**/extract_2d/nirspec.py"
+          - "**/master_background/nirspec_utils.py"
 
 Near Infrared Camera (NIRCam):
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**nircam**"
+          - "**/assign_wcs/nircam.py"
 
 Near Infrared Imager and Slitless Spectrograph (NIRISS):
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**niriss**"
+          - "**/assign_wcs/niriss.py"
 
 Wide Field Slitless Spec (WFSS):
   - changed-files:
       - any-glob-to-any-file:
-          - "jwst/**wfss**"
+          - "**/background/background_sub_wfss.py"
+          - "**/datamodels/utils/wfss_multispec.py"
+          - "**/wfss_contam/**/*"
