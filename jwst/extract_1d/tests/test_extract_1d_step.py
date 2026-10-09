@@ -140,7 +140,7 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
     assert isinstance(result, dm.WFSSMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
-    for i, exp in enumerate(result.spec):
+    for _i, exp in enumerate(result.spec):
         tab = exp.spec_table[0]
 
         # output wavelength is the same as input
@@ -431,7 +431,7 @@ def test_extract_nircam_dhs(mock_nircam_dhs, simple_wcs):
     assert isinstance(result, dm.TSOMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
-    for i, exp in enumerate(result.spec):
+    for _i, exp in enumerate(result.spec):
         tab = exp.spec_table[0]
 
         # output wavelength is the same as input

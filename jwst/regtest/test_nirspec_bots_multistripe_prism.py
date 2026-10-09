@@ -88,7 +88,7 @@ def create_multistripe(base_datamodel, format="SUB256M2_PRISM"):
     output_integration = 0
     for i in range(nints):
         input_current_row = 0
-        for stripe in range(nstripes):
+        for _stripe in range(nstripes):
             # Add the reference pixels, made up values
             output_detector[output_integration, :, 0:4] = output_integration * 0.1
             # Copy the science data

@@ -81,7 +81,9 @@ ban-relative-imports = "all"  # Disallow all relative imports.
     "N",      # pep8-naming (naming conventions)
     "A",      # flake8-builtins (prevent shadowing of builtins)
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
-    "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
+    "B006",   # Do not use mutable data structures for argument defaults
+    "B028",   # No explicit stacklevel keyword argument found
+    "B905",   # zip() without an explicit strict= parameter
     "C4",     # flake8-comprehensions (best practices for comprehensions)
     "F841",   # Local variable `result` is assigned to but never used
     "ICN",    # flake8-import-conventions (enforce import conventions)
@@ -105,7 +107,7 @@ ban-relative-imports = "all"  # Disallow all relative imports.
     "N",      # pep8-naming (naming conventions)
     "A",      # flake8-builtins (prevent shadowing of builtins)
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
-    "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
+    "B905",   # zip() without an explicit strict= parameter
     "C4",     # flake8-comprehensions (best practices for comprehensions)
     "ICN",    # flake8-import-conventions (enforce import conventions)
     "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
