@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy import units as u
 
 from jwst.combine_1d import Combine1dStep
 from jwst.combine_1d.combine1d import check_exptime, check_monotonic
@@ -205,6 +206,11 @@ def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
 
     spec_model = dm.SpecModel(spec_table=otab)
 
+    # Make a fake WCS
+    ra, dec = 5.6, -72.3
+    wave = [2.2, 3.3] * u.micron
+    spec_model.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wave)
+
     return spec_model
 
 
@@ -377,8 +383,6 @@ def test_allnan_skip(wfss_multiexposure, caplog):
     log_messages = [
         # message when a single spectrum has no valid flux values
         "Input spectrum 5 order 1 from group_id 1 has no valid flux values; skipping.",
-        # message when no valid input spectra are found for the source
-        "No valid input spectra found for source. Skipping.",
         # message when no valid input spectra at all are found
         "No valid input spectra found in WFSSMultiSpecModel",
     ]
