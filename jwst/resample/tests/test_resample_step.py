@@ -105,6 +105,7 @@ def miri_rate_model():
     im.err = im.get_default("err")
     im.var_rnoise = np.ones(shape)
     im.var_poisson = np.ones(shape)
+    im.var_flat = np.ones(shape)
     im.meta.wcsinfo = {
         "dec_ref": 40,
         "ra_ref": 100,
@@ -1171,14 +1172,16 @@ def test_resample_variance_context_disable(
             assert "ERR" not in hdul
 
 
+@pytest.mark.parametrize("propagate_var_flat", [True, False])
 @pytest.mark.parametrize("enable_err", [True, False])
 @pytest.mark.parametrize("shape", [(0,), (10, 1)])
-def test_resample_undefined_variance(caplog, nircam_rate, shape, enable_err):
-    """Test that resampled variance and error arrays are computed properly"""
+def test_resample_undefined_variance(caplog, nircam_rate, shape, enable_err, propagate_var_flat):
+    """Test handling for missing or incorrectly shaped variance arrays."""
     im = AssignWcsStep.call(nircam_rate)
     im.var_rnoise = np.ones(shape, dtype=im.get_dtype("var_rnoise"))
     im.var_poisson = np.ones(shape, dtype=im.get_dtype("var_poisson"))
-    im.var_flat = np.ones(shape, dtype=im.get_dtype("var_flat"))
+    if propagate_var_flat:
+        im.var_flat = np.ones(shape, dtype=im.get_dtype("var_flat"))
     im.meta.filename = "foo.fits"
     c = ModelLibrary([im])
 
@@ -1197,12 +1200,20 @@ def test_resample_undefined_variance(caplog, nircam_rate, shape, enable_err):
     else:
         # at least some valid data
         assert np.sum(np.isfinite(result.data)) > 0
+
+        # errors and variances are not attached
         assert result.err is None
         assert result.var_rnoise is None
         assert result.var_poisson is None
 
-    # flat variance is not attached in either case because it is all NaN
-    assert result.var_flat is None
+    # check separately for the optional var_flat
+    if propagate_var_flat and enable_err:
+        # present, all-NaN
+        assert result.var_flat.shape == result.data.shape
+        assert_allclose(result.var_flat, np.nan)
+    else:
+        # not attached
+        assert result.var_flat is None
 
     im.close()
     result.close()
