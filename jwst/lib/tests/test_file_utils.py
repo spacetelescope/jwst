@@ -22,7 +22,7 @@ def test_pushdir(tmp_path):
 def test_pusdir_fail():
     """Test for failing changing."""
     current = os.getcwd()
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         with pushdir("Really_doesNOT-exist"):
             # Nothing should happen here. The assert should never be checked.
             assert False
