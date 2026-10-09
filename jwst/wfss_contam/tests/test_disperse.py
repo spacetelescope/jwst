@@ -1,12 +1,36 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from jwst.wfss_contam.disperse import _build_dispersed_image_of_source, _replace_nans, disperse
+from jwst.wfss_contam.disperse import (
+    _build_dispersed_image_of_source,
+    _replace_nans,
+    disperse,
+)
+from jwst.wfss_contam.trace_pdt import (
+    build_trace_pdt,
+    get_grism_detector_transform,
+    native_wavelength_grid,
+)
 
 _SENS_WAVES = np.linspace(1.708, 2.28, 100)
 _WMIN, _WMAX = _SENS_WAVES[0], _SENS_WAVES[-1]
 _NAXIS = (300, 500)
 _SOURCE_ID = 50
+
+
+def _default_lambdas(grism_wcs, order=1, oversample_factor=2):
+    """Compute the wavelength grid disperse() would use for the default test parameters."""
+    imgxy_to_grismxy = get_grism_detector_transform(grism_wcs)
+    nx, ny = _NAXIS
+    return native_wavelength_grid(
+        imgxy_to_grismxy,
+        order,
+        _WMIN,
+        _WMAX,
+        (nx - 1) / 2.0,
+        (ny - 1) / 2.0,
+        oversample_factor=oversample_factor,
+    )
 
 
 def test_disperse_oversample_same_result(grism_wcs, direct_image_with_gradient):
@@ -22,9 +46,20 @@ def test_disperse_oversample_same_result(grism_wcs, direct_image_with_gradient):
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_resp = np.ones(100)
     direct_image_wcs = direct_image_with_gradient.meta.wcs
+    imgxy_to_grismxy = get_grism_detector_transform(grism_wcs)
+    nx, ny = naxis
 
     output_images = []
     for os in [2, 3]:
+        lambdas = native_wavelength_grid(
+            imgxy_to_grismxy,
+            order,
+            wmin,
+            wmax,
+            (nx - 1) / 2.0,
+            (ny - 1) / 2.0,
+            oversample_factor=os,
+        )
         src = disperse(
             x0,
             y0,
@@ -32,14 +67,12 @@ def test_disperse_oversample_same_result(grism_wcs, direct_image_with_gradient):
             band_wave,
             source_id,
             order,
-            wmin,
-            wmax,
+            lambdas,
             sens_waves,
             sens_resp,
             direct_image_wcs,
             grism_wcs,
             naxis,
-            oversample_factor=os,
         )
         output_images.append(src[source_id[0]]["image"])
 
@@ -56,9 +89,9 @@ def _disperse_one_pixel(fluxes, band_wavelengths, grism_wcs, direct_image_wcs, s
     source_id = np.array([50])
     naxis = (300, 500)
     sens_waves = np.linspace(1.708, 2.28, 100)
-    wmin, wmax = float(sens_waves[0]), float(sens_waves[-1])
     if sens_resp is None:
         sens_resp = np.ones(100)
+    lambdas = _default_lambdas(grism_wcs)
     src = disperse(
         x0,
         y0,
@@ -66,8 +99,7 @@ def _disperse_one_pixel(fluxes, band_wavelengths, grism_wcs, direct_image_wcs, s
         band_wavelengths,
         source_id,
         order=1,
-        wmin=wmin,
-        wmax=wmax,
+        lambdas=lambdas,
         sens_waves=sens_waves,
         sens_resp=sens_resp,
         direct_image_wcs=direct_image_wcs,
@@ -163,6 +195,7 @@ def _disperse_one_pixel_with_basis(grism_wcs, direct_image_wcs, basis_models=Non
     band_wavelengths = np.array([2.0])
     source_ids = np.array([_SOURCE_ID])
     sens_resp = np.ones_like(_SENS_WAVES)
+    lambdas = _default_lambdas(grism_wcs)
     return disperse(
         xs,
         ys,
@@ -170,8 +203,7 @@ def _disperse_one_pixel_with_basis(grism_wcs, direct_image_wcs, basis_models=Non
         band_wavelengths,
         source_ids,
         1,
-        _WMIN,
-        _WMAX,
+        lambdas,
         _SENS_WAVES,
         sens_resp,
         direct_image_wcs,
@@ -244,3 +276,37 @@ def test_replace_nans_no_nans():
     arr = np.array([[1.0, 2.0, 3.0]]).T
     filled = _replace_nans(arr)
     assert filled is arr
+
+
+def test_disperse_with_trace_pdt_matches_exact(grism_wcs, direct_image_with_gradient):
+    """Dispersing with a trace_pdt should match the exact per-pixel transform."""
+    x0 = np.array([200.5])
+    y0 = np.array([200.5])
+    order = 1
+    flxs = np.array([[1.0]])
+    band_wave = np.array([2.0])
+    source_id = np.array([50])
+    direct_image_wcs = direct_image_with_gradient.meta.wcs
+
+    trace_pdt = build_trace_pdt(grism_wcs, order, _WMIN, _WMAX, _NAXIS, spacing=20)
+    lambdas = _default_lambdas(grism_wcs, order=order)
+
+    common_kwargs = {
+        "fluxes": flxs,
+        "band_wavelengths": band_wave,
+        "source_ids_per_pixel": source_id,
+        "order": order,
+        "lambdas": lambdas,
+        "sens_waves": _SENS_WAVES,
+        "sens_resp": np.ones(100),
+        "direct_image_wcs": direct_image_wcs,
+        "grism_wcs": grism_wcs,
+        "naxis": _NAXIS,
+    }
+    exact = disperse(x0, y0, trace_pdt=None, **common_kwargs)
+    approx = disperse(x0, y0, trace_pdt=trace_pdt, **common_kwargs)
+
+    img_exact = exact[_SOURCE_ID]["image"]
+    img_approx = approx[_SOURCE_ID]["image"]
+    assert img_exact.shape == img_approx.shape
+    assert_allclose(img_approx, img_exact, rtol=0.1)

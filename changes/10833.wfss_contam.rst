@@ -1,0 +1,1 @@
+Use interpolation of exact direct-to-grism transform solutions to speed up forward modeling. Two new step-level parameters, pdt_spacing and pdt_wl_oversample, allow turning on/off the interpolation and tuning its accuracy-vs-speed tradeoff.
