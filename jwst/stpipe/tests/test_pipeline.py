@@ -1,5 +1,6 @@
 import logging
 import sys
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -122,6 +123,7 @@ def test_pipeline_python(tmp_cwd):
         science_filename=get_pkg_data_filename("data/science.fits", package="jwst.stpipe.tests"),
         flat_filename=get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests"),
         output_file="python.fits",
+        save_results=True,
     )
 
     assert pipe.flat_field.threshold == 42.0
@@ -190,6 +192,10 @@ def test_pipeline_from_cmdline_class(tmp_cwd):
         f"--science_filename={science_filename}",
         "--output_file=output.fits",
         "--steps.flat_field.threshold=47",
+        # NOTE: save_results normally defaults to True for command line use, but only
+        # if there are positional parameters present, and this atypical pipeline does
+        # not use them. Explicitly set it here to make sure the output file is saved.
+        "--save_results=True",
     ]
 
     pipe = Step.from_cmdline(args)
@@ -198,6 +204,8 @@ def test_pipeline_from_cmdline_class(tmp_cwd):
     assert pipe.flat_field.multiplier == 1.0
 
     pipe.run()
+
+    assert Path("output_mypipeline.fits").exists()
 
 
 def test_pipeline_commandline_invalid_args():
