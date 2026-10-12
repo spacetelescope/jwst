@@ -277,7 +277,14 @@ def get_grism_detector_transform(grism_wcs):
 
 
 def build_trace_pdt(
-    grism_wcs, order, wmin, wmax, direct_shape, spacing, wave_oversample_factor=1, lam_grid=None
+    grism_wcs,
+    order,
+    wmin,
+    wmax,
+    coord_limits,
+    spacing=30,
+    wave_oversample_factor=1,
+    lam_grid=None,
 ):
     """
     Build a TracePDT for one spectral order by sampling the exact transform on a coarse grid.
@@ -292,10 +299,14 @@ def build_trace_pdt(
     wmin, wmax : float
         Minimum, maximum wavelength for the dispersed spectra of this spectral order.
         Unused if ``lam_grid`` is provided.
-    direct_shape : tuple of int
-        ``(nx, ny)`` dimensions of the direct image.
-    spacing : int
-        Spacing of grid points to sample along each of the x and y axes.
+    coord_limits : tuple of float
+        ``(xmin, xmax, ymin, ymax)`` coordinate bounds in the undispersed
+        frame of the WFSS exposure (the ``"detector"`` frame of ``grism_wcs``,
+        not to be confused with the pixel frame of the direct image mosaic or
+        the dispersed ``"grism_detector"`` frame). Spans the locations of all
+        direct image sources to be dispersed.
+    spacing : int, optional
+        Spacing of grid points to sample along each of the x and y axes, by default 30.
     wave_oversample_factor : float, optional
         Factor by which to oversample the native wavelength spacing
         when building the wavelength axis of the grid. Unused if ``lam_grid`` is provided.
@@ -315,11 +326,12 @@ def build_trace_pdt(
     """
     imgxy_to_grismxy = get_grism_detector_transform(grism_wcs)
 
-    nx, ny = direct_shape
-    n_grid_x = int(np.ceil(nx / spacing))
-    n_grid_y = int(np.ceil(ny / spacing))
-    x0_grid = np.linspace(0, nx - 1, n_grid_x)
-    y0_grid = np.linspace(0, ny - 1, n_grid_y)
+    xmin, xmax, ymin, ymax = coord_limits
+
+    n_grid_x = max(int(np.ceil((xmax - xmin) / spacing)) + 1, 2)
+    n_grid_y = max(int(np.ceil((ymax - ymin) / spacing)) + 1, 2)
+    x0_grid = np.linspace(xmin, xmax, n_grid_x)
+    y0_grid = np.linspace(ymin, ymax, n_grid_y)
 
     exact_wavelength_grid = lam_grid is not None
     if exact_wavelength_grid:
@@ -330,8 +342,8 @@ def build_trace_pdt(
             order,
             wmin,
             wmax,
-            (nx - 1) / 2.0,
-            (ny - 1) / 2.0,
+            (xmin + xmax) / 2.0,
+            (ymin + ymax) / 2.0,
             oversample_factor=wave_oversample_factor,
         )
 

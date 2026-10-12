@@ -10,6 +10,7 @@ from jwst.wfss_contam.trace_pdt import TracePDT, build_trace_pdt
 _ORDER = 1
 _WMIN, _WMAX = 1.708, 2.28
 _NAXIS = (2048, 2048)
+_COORD_LIMITS = (0, _NAXIS[0] - 1, 0, _NAXIS[1] - 1)
 
 
 def _exact_transform(grism_wcs):
@@ -21,7 +22,7 @@ def _exact_transform(grism_wcs):
 
 def test_trace_pdt_matches_exact_transform(grism_wcs):
     """Interpolated trace positions should closely match the exact transform off-grid."""
-    trace_pdt = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, _NAXIS, spacing=100)
+    trace_pdt = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, _COORD_LIMITS, spacing=100)
     assert isinstance(trace_pdt, TracePDT)
 
     # Sample random points strictly inside the grid bounds, away from grid nodes.
@@ -41,7 +42,7 @@ def test_trace_pdt_matches_exact_transform(grism_wcs):
 
 def test_trace_pdt_preserves_shape(grism_wcs):
     """The TracePDT should return outputs with the same shape as the inputs."""
-    trace_pdt = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, _NAXIS, spacing=100)
+    trace_pdt = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, _COORD_LIMITS, spacing=100)
 
     x0 = np.full((5, 7), 500.0)
     y0 = np.full((5, 7), 600.0)
@@ -53,7 +54,7 @@ def test_trace_pdt_preserves_shape(grism_wcs):
 
 def test_evaluate_grid_matches_call(grism_wcs):
     """evaluate_grid should agree with the generic __call__ on the same query points."""
-    trace_pdt = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, _NAXIS, spacing=100)
+    trace_pdt = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, _COORD_LIMITS, spacing=100)
 
     rng = np.random.default_rng(0)
     n_pixels = 37
@@ -80,9 +81,9 @@ def test_exact_wavelength_grid_matches_coarse_grid(grism_wcs):
     """Passing lam_grid should skip wavelength interpolation but agree with the coarse grid."""
     lam_grid = np.linspace(_WMIN, _WMAX, 50)
     trace_pdt_exact = build_trace_pdt(
-        grism_wcs, _ORDER, _WMIN, _WMAX, _NAXIS, spacing=100, lam_grid=lam_grid
+        grism_wcs, _ORDER, _WMIN, _WMAX, _COORD_LIMITS, spacing=100, lam_grid=lam_grid
     )
-    trace_pdt_coarse = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, _NAXIS, spacing=100)
+    trace_pdt_coarse = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, _COORD_LIMITS, spacing=100)
     assert trace_pdt_exact._exact_wavelength_grid is True
     assert trace_pdt_coarse._exact_wavelength_grid is False
 
@@ -100,7 +101,7 @@ def test_evaluate_grid_exact_wavelength_grid_raises_on_mismatch(grism_wcs):
     """evaluate_grid must not silently interpolate a wavelength array it wasn't built for."""
     lam_grid = np.linspace(_WMIN, _WMAX, 50)
     trace_pdt = build_trace_pdt(
-        grism_wcs, _ORDER, _WMIN, _WMAX, _NAXIS, spacing=100, lam_grid=lam_grid
+        grism_wcs, _ORDER, _WMIN, _WMAX, _COORD_LIMITS, spacing=100, lam_grid=lam_grid
     )
 
     x0 = np.array([500.0])
@@ -108,3 +109,22 @@ def test_evaluate_grid_exact_wavelength_grid_raises_on_mismatch(grism_wcs):
     wrong_lam = np.linspace(_WMIN, _WMAX, 30)
     with pytest.raises(ValueError, match="exact_wavelength_grid"):
         trace_pdt.evaluate_grid(x0, y0, wrong_lam)
+
+
+def test_trace_pdt_handles_extended_coord_limits(grism_wcs):
+    """TracePDT built with extended/negative coord_limits should accurately match exact transform."""
+    extended_limits = (-100.0, 3100.0, -600.0, 2600.0)
+    trace_pdt = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, extended_limits, spacing=100)
+
+    rng = np.random.default_rng(123)
+    n_pts = 100
+    x0 = rng.uniform(-80.0, 3000.0, n_pts)
+    y0 = rng.uniform(-500.0, 2500.0, n_pts)
+    wavelength = rng.uniform(_WMIN, _WMAX, n_pts)
+
+    exact_transform = _exact_transform(grism_wcs)
+    x_exact, y_exact = exact_transform(x0, y0, wavelength, _ORDER)
+    x_interp, y_interp = trace_pdt(x0, y0, wavelength)
+
+    assert_allclose(x_interp, x_exact, atol=0.05)
+    assert_allclose(y_interp, y_exact, atol=0.05)

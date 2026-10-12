@@ -405,9 +405,42 @@ class Observation:
 
         trace_pdt_obj = None
         if pdt_spacing is not None:
+            # Determine the spatial bounding box of sources in the WFSS un-dispersed detector frame.
+            # Note this is different from the direct image frame.
+            if selected_ids is not None:
+                source_ids = _select_ids(selected_ids, self.source_ids)
+                mask = np.isin(self.source_ids_per_pixel, source_ids)
+                xs_to_bound = self.xs[mask]
+                ys_to_bound = self.ys[mask]
+            else:
+                xs_to_bound = self.xs
+                ys_to_bound = self.ys
+
+            if len(xs_to_bound) > 0:
+                x0_sky, y0_sky = self.direct_image_wcs(
+                    xs_to_bound + 0.5, ys_to_bound + 0.5, with_bounding_box=False
+                )
+                sky_to_imgxy = self.grism_wcs.get_transform("world", "detector")
+                x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
+                coord_limits = (
+                    min(0.0, float(np.floor(np.min(x0_xy)))),
+                    max(float(self.naxis[0] - 1), float(np.ceil(np.max(x0_xy)))),
+                    min(0.0, float(np.floor(np.min(y0_xy)))),
+                    max(float(self.naxis[1] - 1), float(np.ceil(np.max(y0_xy)))),
+                )
+                del x0_sky, y0_sky, x0_xy, y0_xy
+            else:
+                coord_limits = (0.0, float(self.naxis[0] - 1), 0.0, float(self.naxis[1] - 1))
+
             if pdt_wl_oversample is None:
                 trace_pdt_obj = build_trace_pdt(
-                    self.grism_wcs, order, wmin, wmax, self.naxis, pdt_spacing, lam_grid=lambdas
+                    self.grism_wcs,
+                    order,
+                    wmin,
+                    wmax,
+                    coord_limits,
+                    spacing=pdt_spacing,
+                    lam_grid=lambdas,
                 )
             else:
                 trace_pdt_obj = build_trace_pdt(
@@ -415,8 +448,8 @@ class Observation:
                     order,
                     wmin,
                     wmax,
-                    self.naxis,
-                    pdt_spacing,
+                    coord_limits,
+                    spacing=pdt_spacing,
                     wave_oversample_factor=pdt_wl_oversample,
                 )
 

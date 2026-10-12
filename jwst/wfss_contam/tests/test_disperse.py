@@ -15,6 +15,7 @@ from jwst.wfss_contam.trace_pdt import (
 _SENS_WAVES = np.linspace(1.708, 2.28, 100)
 _WMIN, _WMAX = _SENS_WAVES[0], _SENS_WAVES[-1]
 _NAXIS = (300, 500)
+_COORD_LIMITS = (0, _NAXIS[0] - 1, 0, _NAXIS[1] - 1)
 _SOURCE_ID = 50
 
 
@@ -288,7 +289,7 @@ def test_disperse_with_trace_pdt_matches_exact(grism_wcs, direct_image_with_grad
     source_id = np.array([50])
     direct_image_wcs = direct_image_with_gradient.meta.wcs
 
-    trace_pdt = build_trace_pdt(grism_wcs, order, _WMIN, _WMAX, _NAXIS, spacing=20)
+    trace_pdt = build_trace_pdt(grism_wcs, order, _WMIN, _WMAX, _COORD_LIMITS, spacing=20)
     lambdas = _default_lambdas(grism_wcs, order=order)
 
     common_kwargs = {
