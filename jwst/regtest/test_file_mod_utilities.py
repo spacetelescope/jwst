@@ -36,6 +36,7 @@ def test_trim_tso_data(tmp_cwd):
     os.chdir(tmp_cwd)
     expected_file = tmp_cwd / "mock_file_mod_uncal.fits"
     fmod.trim_tso_data(str(mock_file), 5, 33, 3)
+    assert expected_file.exists()
     with datamodels.open(expected_file) as dm:
         assert dm.meta.filename == expected_file.name
         assert dm.meta.exposure.integration_start == 33
@@ -43,3 +44,25 @@ def test_trim_tso_data(tmp_cwd):
         assert np.shape(dm.data) == (5, 10, 20, 20)
         assert np.shape(dm.refout) == (5, 10, 20, 20)
         assert len(dm.int_times) == 5
+
+
+def test_bad_input_trim_tso_data(tmp_cwd):
+    """Test trim_tso_data function."""
+    # mock uncal tso data
+    data = np.ones([10, 10, 20, 20])
+    mock_file = tmp_cwd / "mock_bad_file_rateints.fits"
+    dm = datamodels.RampModel(data=data)
+    dm.meta.exposure.integration_start = 30
+    dm.meta.exposure.integration_end = 40
+    dm.save(mock_file)
+    dm.close()
+
+    os.chdir(tmp_cwd)
+    fmod.trim_tso_data(str(mock_file), 5, 33, 3)
+    expected_file = tmp_cwd / "mock_bad_file_mod_rateints.fits"
+    assert expected_file.exists()
+    with datamodels.open(expected_file) as dm:
+        assert dm.meta.filename == expected_file.name
+        assert dm.meta.exposure.integration_start == 33
+        assert dm.meta.exposure.integration_end == 38
+        assert np.shape(dm.data) == (5, 10, 20, 20)

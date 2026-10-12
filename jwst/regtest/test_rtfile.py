@@ -50,3 +50,4 @@ def test_bad_asn_input_rtfile():
         mod_code="fake_function",
     )
     pytest.raises(ValueError, lambda: rtobj.validate_file_name())
+    pytest.raises(ValueError, lambda: rtobj.root_name)

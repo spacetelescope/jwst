@@ -33,10 +33,10 @@ def trim_tso_data(file, ints_to_keep, intstart, ints_offset):
         dm.data = dm.data[ints_offset : ints_offset + ints_to_keep, ...]
         try:
             dm.refout = dm.refout[ints_offset : ints_offset + ints_to_keep, ...]
-        except AttributeError:
+        except (AttributeError, TypeError):
             pass
         try:
             dm.int_times = dm.int_times[ints_offset : ints_offset + ints_to_keep]
-        except AttributeError:
+        except (AttributeError, TypeError):
             pass
         dm.save(modfname)
