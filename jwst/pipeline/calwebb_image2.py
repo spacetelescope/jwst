@@ -11,6 +11,7 @@ from jwst.associations.load_as_asn import LoadAsLevel2Asn
 # calwebb IMAGE2 step imports
 from jwst.background import background_step
 from jwst.flatfield import flat_field_step
+from jwst.lib.exposure_types import IMAGING_TYPES
 from jwst.photom import photom_step
 from jwst.resample import resample_step
 from jwst.stpipe import Pipeline
@@ -131,6 +132,9 @@ class Image2Pipeline(Pipeline):
 
         log.info("Working on input %s ...", science)
         input_data = self.prepare_output(science)
+
+        # Validate the input before proceeding
+        self.validate_input_exptype(input_data, IMAGING_TYPES)
 
         # Record ASN pool and table names in output
         input_data.meta.asn.pool_name = pool_name
