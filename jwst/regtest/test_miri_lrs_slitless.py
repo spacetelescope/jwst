@@ -124,7 +124,7 @@ def run_detector1_pipeline_emicorr_joint(rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module, resource_tracker):
-    """Run the calwebb_tso-spec2 pipeline on a MIRI LRS slitless exposure."""
+    """Run the calwebb_spec2 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
 
     rtdata.input = (
@@ -246,7 +246,7 @@ def test_miri_lrs_slitless_detector1_emicorr_joint(
 def test_miri_lrs_slitless_tso_spec2(
     run_tso_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs, step_suffix
 ):
-    """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 pipeline."""
+    """Compare the output of a MIRI LRS slitless calwebb_spec2 pipeline."""
     rtdata = rtdata_module
 
     file_root = INPUT_DATA["jw01536028001_03103_00001-seg001_mirimage"].root_name
