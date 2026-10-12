@@ -444,13 +444,14 @@ def print_cube_geometry(coord_system, wcs):
     if not wcs.linear_wave:
         log.info("Non-linear wavelength dimension; CDELT3 variable")
         log.info("axis#  Naxis  CRPIX    CRVAL     Min & Max (microns)")
+        wave_array = wcs.wavelength_table  # if wcs.wavelength_table is not None else wcs.zcoord
         log.info(
             "Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f",
             wcs.naxis3,
             wcs.crpix3,
             wcs.crval3,
-            wcs.wavelength_table[0],
-            wcs.wavelength_table[wcs.naxis3 - 1],
+            wave_array[0],
+            wave_array[wcs.naxis3 - 1],
         )
 
     if wcs.rot_angle is not None:
@@ -507,6 +508,31 @@ def set_final_dq_flags(spaxel_dq, spaxel_flux, spaxel_var, spaxel_weight):
     * Good data (0)
     * NON_SCIENCE
     * DO_NOT_USE.
+
+    Spaxels with zero total weight received no valid detector data — typically
+    because all contributing pixels were saturated. For these spaxels,
+    DO_NOT_USE and NON_SCIENCE flags are added to the DQ array, and the
+    corresponding flux and variance values are set to NaN.
+
+    Parameters
+    ----------
+    spaxel_dq : numpy.ndarray
+        1D array of DQ flags for each spaxel. Modified in-place.
+    spaxel_flux : numpy.ndarray
+        1D array of flux values for each spaxel. Modified in-place.
+    spaxel_var : numpy.ndarray
+        1D array of variance values for each spaxel. Modified in-place.
+    spaxel_weight : numpy.ndarray
+        1D array of accumulated weights for each spaxel. Used read-only.
+
+    Returns
+    -------
+    spaxel_flux : numpy.ndarray
+        Flux array with zero-weight spaxels set to NaN.
+    spaxel_var : numpy.ndarray
+        Variance array with zero-weight spaxels set to NaN.
+    spaxel_dq : numpy.ndarray
+        DQ array with DO_NOT_USE and NON_SCIENCE bits set for zero-weight spaxels.
     """
     # convert all remaining spaxel_weight = 0 to DO_NOT_USE
     weight_is_zero = spaxel_weight == 0
@@ -520,6 +546,7 @@ def set_final_dq_flags(spaxel_dq, spaxel_flux, spaxel_var, spaxel_weight):
 
     spaxel_flux[weight_is_zero] = np.nan
     spaxel_var[weight_is_zero] = np.nan
+    return (spaxel_flux, spaxel_var, spaxel_dq)
 
 
 def setup_final_model(
