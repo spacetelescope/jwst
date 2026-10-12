@@ -52,7 +52,7 @@ ensure_array_int(PyObject *obj, int *is_copy)
 }
 
 int
-alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv)
+alloc_flux_arrays(long nelem, double **fluxv, double **weightv, double **varv, double **ifluxv)
 {
 
     /*
@@ -111,7 +111,7 @@ failed_mem_alloc1:
 
 int
 alloc_flux_dq_arrays(
-    int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv, int **dqv)
+    long nelem, double **fluxv, double **weightv, double **varv, double **ifluxv, int **dqv)
 {
 
     /*
@@ -179,6 +179,30 @@ failed_weightv:
     *fluxv = NULL;
 
     return 1;
+}
+
+int
+alloc_counter_array(long nelem, int **exp_counterv)
+{
+
+    /*
+      Allocate memory for the spaxel output vectors to be of size nelem.
+
+     nelem : int
+         Number of elements to allocate memory
+     exp_counterv : int ndarray
+        Exposure Counter
+    */
+
+    const char *msg = "Couldn't allocate memory for counter array.";
+
+    // exp_counterv
+    if (!(*exp_counterv = (int *) calloc(nelem, sizeof(int)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        return 1;
+    }
+
+    return 0;
 }
 
 void

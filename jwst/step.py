@@ -14,6 +14,7 @@ from jwst.coron.hlsp_step import HlspStep
 from jwst.coron.klip_step import KlipStep
 from jwst.coron.stack_refs_step import StackRefsStep
 from jwst.cube_build.cube_build_step import CubeBuildStep
+from jwst.cube_build.slit_cube_build_step import SlitCubeBuildStep
 from jwst.dark_current.dark_current_step import DarkCurrentStep
 from jwst.dq_init.dq_init_step import DQInitStep
 from jwst.emicorr.emicorr_step import EmiCorrStep
@@ -77,6 +78,7 @@ __all__ = [
     "HlspStep",
     "CleanFlickerNoiseStep",
     "CubeBuildStep",
+    "SlitCubeBuildStep",
     "DarkCurrentStep",
     "DQInitStep",
     "EmiCorrStep",
