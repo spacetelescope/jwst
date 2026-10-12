@@ -14,7 +14,7 @@ def run_pipelines(rtdata_module, resource_tracker):
 
     rtdata = rtdata_module
 
-    # Run the calwebb_tso-image2 pipeline on each of the 2 inputs
+    # Run the calwebb_image2 pipeline on each of the 2 inputs
     rate_files = [
         "nircam/tsimg/jw01068006001_03103_00001-seg001_nrcb1_rateints.fits",
     ]
@@ -55,7 +55,7 @@ def test_log_tracked_resources_tsimg(log_tracked_resources, run_pipelines):
 
 @pytest.mark.parametrize("suffix", ["calints", "o006_crfints"])
 def test_nircam_tsimg_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
-    """Regression test of tso-image2 pipeline performed on NIRCam TSIMG data."""
+    """Regression test of image2 pipeline performed on NIRCam TSIMG data."""
     rtdata = run_pipelines
     rtdata.input = "jw01068006001_03103_00001-seg001_nrcb1_rateints.fits"
     output = "jw01068006001_03103_00001-seg001_nrcb1_" + suffix + ".fits"
