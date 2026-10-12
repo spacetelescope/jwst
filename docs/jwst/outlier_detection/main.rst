@@ -242,6 +242,8 @@ processing performed by this step. This routine performs the following operation
    rolling-median algorithm, in order to flag outliers integration-by-integration but
    preserve real time variability. The ``rolling_window_width`` parameter specifies the
    number of integrations over which to compute the median.
+   Also compute a median error estimate by combining the corresponding error cube in the
+   same way.
 
 #. If the ``save_intermediate_results`` parameter is set to `True`, write the rolling-median
    `~stdatamodels.jwst.datamodels.CubeModel` to disk with the suffix ``_median.fits``.
@@ -250,7 +252,7 @@ processing performed by this step. This routine performs the following operation
    the input data. The formula used is the same as for imaging data without resampling:
 
    .. math::
-      | image\_input - image\_median | > SNR \times input\_err
+      | image\_input - image\_median | > SNR \times median\_err
 
 #. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.
@@ -328,12 +330,15 @@ for all processing performed by this step. This routine performs the following o
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad".
 
+   * A median error estimate is also computed, by combining the corresponding error arrays
+     in the same way.
+
 #. Perform statistical comparison between median image and original image to identify outliers.
 
    The core detection algorithm uses the following to generate an outlier mask:
 
    .. math::
-      | image\_input - image\_median | > SNR \times input\_err
+      | image\_input - image\_median | > SNR \times median\_err
 
 #. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.

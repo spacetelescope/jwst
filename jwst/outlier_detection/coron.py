@@ -56,11 +56,11 @@ def detect_outliers(
     input_model.wht = build_mask(input_model.dq, good_bits).astype(np.float32)
 
     # Perform median combination on set of drizzled mosaics
-    median_data = create_cube_median(input_model, maskpt)
+    median_data, median_err = create_cube_median(input_model, maskpt, return_error=True)
 
     if save_intermediate_results:
         # make a median model
-        median_model = datamodels.ImageModel(median_data)
+        median_model = datamodels.ImageModel(data=median_data, err=median_err)
         median_model.update(input_model)
         median_model.meta.wcs = input_model.meta.wcs
 
@@ -69,9 +69,5 @@ def detect_outliers(
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
-    flag_model_crs(
-        input_model,
-        median_data,
-        snr,
-    )
+    flag_model_crs(input_model, median_data, snr, median_err=median_err)
     return input_model
