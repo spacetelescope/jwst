@@ -168,7 +168,7 @@ match_driz(
     double ptmin, ptmax, spxmin, spxmax, zoverlap, z1, z2, z3;
     double cdelt1_half, cdelt2_half;
     double xleft, xright, ybot, ytop;
-    double rn_tolerance = 0.000001; // Need a more realistic value
+    double rn_tolerance = 1.0e-7; // Estimation from Mike R looking at GARDEN data.
 
     // initialize them to the passed references:
     double *fluxv = *spaxel_flux;
