@@ -75,7 +75,7 @@ def miri_cube_pars(tmp_path_factory):
     )
 
     power = np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
-    softrad = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01])
+    softrad = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01])
 
     col1 = fits.Column(name="CHANNEL", format="1A", array=channel)
     col2 = fits.Column(name="BAND", format="6A", array=subchannel)
@@ -265,7 +265,8 @@ def test_cube_build_oversampled(request, oversample, dataset, output_shape):
     else:
         assert oversampled.data.shape == (shape[0] * oversample, shape[1])
     if oversample != 1:
-        assert oversampled.hasattr("regions")
+        # assert oversampled.hasattr("regions") Not sure why this does not work - MELANIE ??
+        assert hasattr(oversampled, "regions")
 
     # In either case, cube build succeeds and output size is the about the same
     cube = CubeBuildStep.call(oversampled)[0]
@@ -322,7 +323,7 @@ def test_saturated_dq(nirspec_data, weighting):
 
     # Partially saturated pixel has higher value, SAT flag only
     assert cube.data[500, 22, 20] > 1
-    assert cube.dq[500, 20, 18] == dqflags.pixel["SATURATED"]
+    assert cube.dq[500, 22, 20] == dqflags.pixel["SATURATED"]
 
     # NaN pixel has value from another overlapping slice. The flag is SAT only, not DNU.
     assert np.isclose(cube.data[500, 20, 18], 1.0)
