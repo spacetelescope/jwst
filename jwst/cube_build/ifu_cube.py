@@ -457,7 +457,8 @@ class IFUCubeData:
             crval1=crval1,
             crval2=crval2,
             crval3=crval3,
-            cdelt3_normal=None,  # not used in slicer mode
+            cdelt3_normal=None,  # not used in internal mode
+            rot_angle=None,  # not used in internal mode
             xcoord=xcoord,
             ycoord=ycoord,
             zcoord=zcoord,
@@ -467,11 +468,11 @@ class IFUCubeData:
             b_max=b_max,
             lambda_min=lambda_min,
             lambda_max=lambda_max,
-            linear_wave=False,
+            linear_wave=True,
         )
 
     # ________________________________________________________________________________
-    def build_ifucube(self):
+    def build_ifucube(self, cube_wcs):
         """
         Create an IFU cube.
 
@@ -506,6 +507,7 @@ class IFUCubeData:
 
         total_num = self.cube_wcs.naxis1 * self.cube_wcs.naxis2 * self.cube_wcs.naxis3
 
+        self.cube_wcs = cube_wcs
         self.spaxel_flux = np.zeros(total_num, dtype=np.float64)
         self.spaxel_weight = np.zeros(total_num, dtype=np.float64)
         self.spaxel_var = np.zeros(total_num, dtype=np.float64)
@@ -525,7 +527,7 @@ class IFUCubeData:
             spaxel_z = self.spaxel_z
             spaxel_x = self.spaxel_x
             spaxel_y = self.spaxel_y
-            debug_cube_index = spaxel_z * (nxyplane) + spaxel_y * self.naxis1 + spaxel_x
+            debug_cube_index = spaxel_z * (nxyplane) + spaxel_y * self.cube_wcs.naxis1 + spaxel_x
             log.info(
                 f"Printing debug information for cube spaxel:  {spaxel_x} {spaxel_y} {spaxel_z}"
             )
@@ -696,8 +698,8 @@ class IFUCubeData:
 
                         for i in regions:
                             log.info("Working on Slice # %d", i)
-                            if input_model.hasattr("regions"):
-                                # expected for oversampled data
+                            # if input_model.hasattr("regions"):
+                            if hasattr(input_model, "regions"):
                                 slice_det = input_model.regions
                             else:
                                 slice_det = det2ab_transform.label_mapper.mapper
@@ -787,7 +789,7 @@ class IFUCubeData:
         self.spaxel_flux, self.spaxel_var = cube_lib.find_spaxel_flux(
             self.spaxel_iflux, self.spaxel_flux, self.spaxel_weight, self.spaxel_var
         )
-        cube_lib.set_final_dq_flags(
+        self.spaxel_flux, self.spaxel_var, self.spaxel_dq = cube_lib.set_final_dq_flags(
             self.spaxel_dq, self.spaxel_flux, self.spaxel_var, self.spaxel_weight
         )
 
@@ -1527,8 +1529,8 @@ class IFUCubeData:
                 min_wave_tolerance = self.cube_wcs.zcoord[0] - (self.cube_wcs.cdelt3 + dmax)
                 max_wave_tolerance = self.cube_wcs.zcoord[-1] + (self.cube_wcs.cdelt3 + dmax)
             else:
-                min_wave_tolerance = self.cube_wcs.zcoord[0] - self.cubbe_wcs.cdelt3_normal[0]
-                max_wave_tolerance = self.cube.wcs.zcoord[-1] + self.cube_wcs.cdelt3_normal[-1]
+                min_wave_tolerance = self.cube_wcs.zcoord[0] - self.cube_wcs.cdelt3_normal[0]
+                max_wave_tolerance = self.cube_wcs.zcoord[-1] + self.cube_wcs.cdelt3_normal[-1]
         valid_min = np.where(wave_all >= min_wave_tolerance)
         not_mapped_low = wave_all.size - len(valid_min[0])
         valid_max = np.where(wave_all <= max_wave_tolerance)
@@ -1762,7 +1764,8 @@ class IFUCubeData:
 
         # find the slice number of each pixel and fill in slice_det
         ysize, xsize = input_model.data.shape
-        if input_model.hasattr("regions"):
+        # if input_model.hasattr("regions"):
+        if hasattr(input_model, "regions") and input_model.regions is not None:
             # expected for oversampled data
             slice_det = input_model.regions
         else:

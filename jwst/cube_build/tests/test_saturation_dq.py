@@ -5,7 +5,7 @@ from astropy.modeling.models import Mapping
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.cube_build import ifu_cube
+from jwst.cube_build import cube_lib, ifu_cube
 
 SHAPE = (1, 1)
 
@@ -85,6 +85,34 @@ def drizzle_cube_instance(mock_miri_image_model):
     cube.zcoord = np.array([1.0])
     cube.cdelt3_normal = np.array([0.1])
 
+    cube.cube_wcs = cube_lib.CubeWCS(
+        naxis1=1,
+        naxis2=1,
+        naxis3=1,
+        cdelt1=0.1,
+        cdelt2=0.1,
+        cdelt3=0.1,
+        crpix1=1.0,
+        crpix2=1.0,
+        crpix3=1.0,
+        crval1=0.0,
+        crval2=0.0,
+        crval3=1.0,
+        cdelt3_normal=np.array([0.1]),
+        rot_angle=0.0,
+        xcoord=np.array([0.0]),
+        ycoord=np.array([0.0]),
+        zcoord=np.array([1.0]),
+        a_min=-0.05,
+        a_max=0.05,
+        b_min=-0.05,
+        b_max=0.05,
+        lambda_min=0.95,
+        lambda_max=1.05,
+        linear_wave=True,
+        wavelength_table=None,
+    )
+
     # Pre-allocate output arrays
     total_num = cube.naxis1 * cube.naxis2 * cube.naxis3
     cube.spaxel_flux = np.zeros(total_num, dtype=np.float64)
@@ -141,10 +169,14 @@ def test_drizzle_saturated_pixel_dq_propagation(drizzle_cube_instance, mock_miri
     cube.spaxel_weight[0] = 0.85
     cube.spaxel_flux[0] = 425.0
     cube.spaxel_iflux[0] = 1.0
+    cube.spaxel_var[0] = 1.0
 
-    cube.find_spaxel_flux()
-    cube.set_final_dq_flags()
-
+    cube.spaxel_flux, cube.spaxel_var = cube_lib.find_spaxel_flux(
+        cube.spaxel_iflux, cube.spaxel_flux, cube.spaxel_weight, cube.spaxel_var
+    )
+    cube.spaxel_flux, cube.spaxel_var, cube.spaxel_dq = cube_lib.set_final_dq_flags(
+        cube.spaxel_dq, cube.spaxel_flux, cube.spaxel_var, cube.spaxel_weight
+    )
     assert cube.spaxel_flux[0] == pytest.approx(500.0)
     assert (cube.spaxel_dq[0] & sat_flag) == sat_flag
 
@@ -170,8 +202,12 @@ def test_drizzle_saturated_nan_flux_sets_dq(drizzle_cube_instance):
     cube.spaxel_iflux[0] = 0.0
 
     # Run flux processing to catch NaN fluxes and append DO_NOT_USE
-    cube.find_spaxel_flux()
-    cube.set_final_dq_flags()
+    cube.spaxel_flux, cube.spaxel_var = cube_lib.find_spaxel_flux(
+        cube.spaxel_iflux, cube.spaxel_flux, cube.spaxel_weight, cube.spaxel_var
+    )
+    cube.spaxel_flux, cube.spaxel_var, cube.spaxel_dq = cube_lib.set_final_dq_flags(
+        cube.spaxel_dq, cube.spaxel_flux, cube.spaxel_var, cube.spaxel_weight
+    )
 
     # 3. Construct final output model
     dq_cube = cube.spaxel_dq.reshape((cube.naxis3, cube.naxis2, cube.naxis1))
@@ -183,7 +219,7 @@ def test_drizzle_saturated_nan_flux_sets_dq(drizzle_cube_instance):
         data=data_cube,
         err=err_cube,
         dq=dq_cube,
-        weight=weight_cube,
+        weightmap=weight_cube,
     )
 
     final_dq = final_model.dq[0, 0, 0]
