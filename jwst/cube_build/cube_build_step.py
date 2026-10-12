@@ -365,7 +365,7 @@ class CubeBuildStep(Step):
             # build the IFU Cube
 
             status = 0
-            result, status = thiscube.build_ifucube()
+            result, status = thiscube.build_ifucube(thiscube.cube_wcs)
 
             # check if cube_build failed
             if status == 1:

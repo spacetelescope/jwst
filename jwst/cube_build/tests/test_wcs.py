@@ -11,7 +11,7 @@ from astropy import units as u
 from astropy.modeling.models import Const1D, Identity, Mapping, Scale, Shift
 from stdatamodels.jwst import datamodels
 
-from jwst.cube_build import coord, cube_build_wcs_util, ifu_cube, instrument_defaults
+from jwst.cube_build import cube_build_wcs_util, cube_lib, ifu_cube, instrument_defaults
 
 SHAPE = (101, 101)
 XCENTER = 50
@@ -86,7 +86,7 @@ def test_coord_trans1():
     # declination near 90 yields xi values close to 0
     # and an eta close to diff_dec
 
-    xi, eta = coord.radec2std(crval1, crval2, ra, dec)
+    xi, eta = cube_lib.radec2std(crval1, crval2, ra, dec)
     assert math.isclose(xi.item(), 0.0, abs_tol=0.001)
     assert math.isclose(eta.item(), diff_ra, abs_tol=0.001)
 
@@ -103,7 +103,7 @@ def test_coord_trans2():
     # both crval1 and crval2 = 45, gives h in equation = 1
     # and an eta close to diff_dec
 
-    xi, eta = coord.radec2std(crval1, crval2, ra, dec)
+    xi, eta = cube_lib.radec2std(crval1, crval2, ra, dec)
     assert math.isclose(xi.item(), -3.535, abs_tol=0.001)
     assert math.isclose(eta.item(), diff_ra, abs_tol=0.001)
 
@@ -121,8 +121,8 @@ def test_coord_trans3():
     # both crval1 and crval2 = 45, gives h in equation = 1
     # and an eta close to diff_dec
 
-    xi, eta = coord.radec2std(crval1, crval2, ra, dec)
-    ra_test, dec_test = coord.std2radec(crval1, crval2, xi, eta)
+    xi, eta = cube_lib.radec2std(crval1, crval2, ra, dec)
+    ra_test, dec_test = cube_lib.std2radec(crval1, crval2, xi, eta)
     assert math.isclose(ra, ra_test.item(), abs_tol=0.00001)
     assert math.isclose(dec, dec_test.item(), abs_tol=0.00001)
 
@@ -227,11 +227,28 @@ def test_setup_wcs():
     thiscube.cdelt2 = 0.13
     thiscube.cdelt3 = 0.001
     thiscube.linear_wave = True
-    thiscube.set_geometry(corner_a, corner_b, lambda_min, lambda_max)
 
-    assert thiscube.naxis1 == 41
-    assert thiscube.naxis2 == 41
-    assert thiscube.naxis3 == 1092
+    cube_wcs = cube_lib.set_wcs(
+        corner_a,
+        corner_b,
+        lambda_min,
+        lambda_max,
+        ra_center=None,
+        dec_center=None,
+        rot_angle=None,
+        nspax_x=None,
+        nspax_y=None,
+        cdelt1=thiscube.cdelt1,
+        cdelt2=thiscube.cdelt2,
+        cdelt3=thiscube.cdelt3,
+        linear_wave=thiscube.linear_wave,
+        wavelength_table=None,
+    )
+
+    thiscube.cube_wcs = cube_wcs
+    assert thiscube.cube_wcs.naxis1 == 41
+    assert thiscube.cube_wcs.naxis2 == 41
+    assert thiscube.cube_wcs.naxis3 == 1092
 
 
 def test_footprint_miri():
