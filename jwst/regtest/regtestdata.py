@@ -555,7 +555,7 @@ def _data_glob_url(repo, path, glob, root):
 
 def find_suffix(fname):
     """
-    Find the suffix of a file name.
+    Find the suffix of a fits file name.
 
     Parameters
     ----------
@@ -601,7 +601,7 @@ class RTFile:
         if self.mod_code != "N/A" and self.from_mast:
             if "mod" not in self.file_name:
                 raise ValueError("Modified file does not have the 'mod' suffix.")
-            elif "fits" in self.file_name:
+            if "fits" in self.file_name:
                 original_fname = Path(self.file_name.replace("_mod", ""))
                 root, suffix = find_suffix(original_fname.name)
                 modfname = replace_suffix(root, "mod_" + suffix) + ".fits"
@@ -611,7 +611,7 @@ class RTFile:
     @property
     def root_name(self):  # numpydoc ignore=RT01
         """
-        Return string of the root name of the regression test data file.
+        Return string of the root name of the regression test data fits file.
 
         Example of return value jw01281001001_04103_00001-seg002_mirimage
         and if mod is in the name the return value will include it, e.g.
