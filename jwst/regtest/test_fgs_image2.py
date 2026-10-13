@@ -5,10 +5,9 @@ from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 INPUT_DATA_PATH = "rtdata/fgs/image2"
-rate_file = "jw01029001001_04201_00001_guider2_rate.fits"
 INPUT_DATA = {
-    rate_file: RTFile(
-        file_name=rate_file,
+    "image2_rate": RTFile(
+        file_name="jw01029001001_04201_00001_guider2_rate.fits",
         path=INPUT_DATA_PATH,
     )
 }
@@ -17,7 +16,7 @@ INPUT_DATA = {
 @pytest.fixture(scope="module")
 def run_fgs_image2(rtdata_module):
     rtdata = rtdata_module
-    rtdata.get_data(INPUT_DATA_PATH + "/" + rate_file)
+    rtdata.get_data(INPUT_DATA["image2_rate"].full_path)
 
     args = [
         "calwebb_image2",

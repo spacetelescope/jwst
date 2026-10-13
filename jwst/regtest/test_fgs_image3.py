@@ -5,10 +5,9 @@ from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 INPUT_DATA_PATH = "rtdata/fgs/image3"
-ASN_FILE = "jw01029-o001_mod_image3_asn.json"
 INPUT_DATA = {
-    ASN_FILE: RTFile(
-        file_name=ASN_FILE,
+    "image3_asn": RTFile(
+        file_name="jw01029-o001_mod_image3_asn.json",
         path=INPUT_DATA_PATH,
         from_mast=True,
         asn_files=[
@@ -25,7 +24,7 @@ INPUT_DATA = {
 @pytest.fixture(scope="module")
 def run_fgs_image3(rtdata_module):
     rtdata = rtdata_module
-    rtdata.get_asn(INPUT_DATA[ASN_FILE])
+    rtdata.get_asn(INPUT_DATA["image3_asn"])
 
     args = ["calwebb_image3", rtdata.input]
     Step.from_cmdline(args)
