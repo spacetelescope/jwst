@@ -535,8 +535,9 @@ def contam_corr(
         make a copy before calling this function, if needed.
     waverange : `~stdatamodels.jwst.datamodels.WavelengthrangeModel`
         Wavelength range reference file model
-    photom : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel` or \
-             `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
+    photom : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`, \
+             `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`, \
+             or `~stdatamodels.jwst.datamodels.MirWfssPhotomModel`
         Photom (flux cal) reference file model
     max_cores : str or int
         Number of cores to use for multiprocessing. If set to 'none'
@@ -624,6 +625,10 @@ def contam_corr(
     # Get the FILTER and PUPIL wheel positions, for use later
     filter_kwd = input_model.meta.instrument.filter
     pupil_kwd = input_model.meta.instrument.pupil
+    # subarray is used for MIRI photom ref file selection and model size
+    subarray_kwd = input_model.meta.subarray.name
+    subarray_xsize = input_model.meta.subarray.xsize
+    subarray_ysize = input_model.meta.subarray.ysize
 
     # NOTE: The NIRCam WFSS mode uses filters that are in the FILTER wheel
     # with gratings in the PUPIL wheel. NIRISS WFSS mode, however, is just
@@ -640,7 +645,7 @@ def contam_corr(
     source_catalog = read_source_catalog(input_model.meta.source_catalog)
     if magnitude_limit is not None:
         order1_wave_response, order1_sens_response = get_photom_data(
-            photom, filter_kwd, pupil_kwd, order=1
+            photom, filter_kwd, pupil_kwd, subarray_kwd, order=1
         )
         min_relresp_order1 = _find_min_relresp(order1_wave_response, order1_sens_response)
 
@@ -651,7 +656,7 @@ def contam_corr(
             seg_model.data,
             grism_wcs,
             direct_image_wcs,
-            boundaries=[0, 2047, 0, 2047],
+            boundaries=[0, subarray_xsize - 1, 0, subarray_ysize - 1],
             max_cpu=ncpus,
             max_pixels_per_chunk=max_pixels_per_chunk,
             oversample_factor=oversample_factor,
@@ -665,7 +670,9 @@ def contam_corr(
         wmin = wavelength_range[order][0]
         wmax = wavelength_range[order][1]
         log.debug(f"wmin={wmin}, wmax={wmax} for order {order}")
-        sens_waves, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
+        sens_waves, sens_response = get_photom_data(
+            photom, filter_kwd, pupil_kwd, subarray_kwd, order
+        )
 
         # Build Legendre basis flux models for disperse() if polynomial fitting is requested.
         # wmin/wmax are order-specific, so construction must happen inside the order loop.
