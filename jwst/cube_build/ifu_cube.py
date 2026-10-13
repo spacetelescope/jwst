@@ -8,10 +8,9 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 from gwcs import wcstools
 from gwcs.utils import to_index
-from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.assign_wcs import nirspec, pointing
+from jwst.assign_wcs import nirspec
 from jwst.assign_wcs.util import wrap_ra
 from jwst.cube_build import cube_build_wcs_util, cube_internal_cal, cube_lib
 from jwst.cube_build.cube_lib import CubeWCS
@@ -793,6 +792,33 @@ class IFUCubeData:
             self.spaxel_dq, self.spaxel_flux, self.spaxel_var, self.spaxel_weight
         )
 
+        # For MIRI MRS, apply a quality cut to help fix spectral tearing at the ends of
+        # each band. This is largely taken care of by the WCS regions file, but there
+        # will still be 1-2 possibly problematic planes at the end of each band in
+        # multi-band cubes. Do this by looking for how many good spaxels there are at
+        # each wavelength and finding outliers from the trend.
+        if self.instrument == "MIRI":
+            nxy = self.cube_wcs.naxis1 * self.cube_wcs.naxis2
+            nz = self.cube_wcs.naxis3
+            dq_3d = self.spaxel_dq.reshape((nz, nxy))
+            ngood = np.zeros(nz)
+            for zz in range(nz):
+                ngood[zz] = np.sum(dq_3d[zz, :] == 0)
+            good = np.where(ngood > 0)
+            if len(good[0]) > 0:
+                pctile = np.percentile(ngood[good], 3)
+                lowcov = (np.where((ngood > 0) & (ngood < 0.75 * pctile)))[0]
+                nlowcov = len(lowcov)
+                log.info("Number of spectral tear planes adjusted: %i", nlowcov)
+                for zz in lowcov:
+                    plane = slice(zz * nxy, (zz + 1) * nxy)
+                    self.spaxel_flux[plane] = np.nan
+                    self.spaxel_iflux[plane] = 0
+                    self.spaxel_var[plane] = np.nan
+                    self.spaxel_dq[plane] = (
+                        dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["NON_SCIENCE"]
+                    )
+
         # shove Flux and iflux in the  final IFU cube
         result = cube_lib.setup_final_model(
             input_model_ref,
@@ -814,6 +840,13 @@ class IFUCubeData:
         )
 
         cube_model, status = result
+
+        # Call model_blender if there are multiple inputs
+        if len(self.input_models) > 1:
+            saved_model_type = cube_model.meta.model_type
+            self.blend_output_metadata(cube_model)
+            # Reset to original
+            cube_model.meta.model_type = saved_model_type
         # fill in Channel for MIRI
         if self.instrument == "MIRI":
             # fill in Channel output meta data
@@ -826,12 +859,6 @@ class IFUCubeData:
             outchannel = "".join(sorted(outchannel))
             cube_model.meta.instrument.channel = outchannel
 
-        # Call model_blender if there are multiple inputs
-        if len(self.input_models) > 1:
-            saved_model_type = cube_model.meta.model_type
-            self.blend_output_metadata(cube_model)
-            # Reset to original
-            cube_model.meta.model_type = saved_model_type
         result = (cube_model, status)
         return result
 
@@ -2141,237 +2168,6 @@ class IFUCubeData:
         softrad_det[iw] = softrad_table[ifound]
         weight_det[iw] = weight_power_table[ifound]
         scalerad_det[iw] = scalerad_table[ifound]
-
-    # ________________________________________________________________________________
-    def setup_final_ifucube_model2(self, model_ref):
-        """
-        Set up the final meta WCS info of IFU cube along with other FITS keywords.
-
-        Parameters
-        ----------
-        model_ref : `~stdatamodels.jwst.datamodels.IFUImageModel`
-            The first IFU image model to use to fill in basic header values.
-
-        Returns
-        -------
-        result : `~stdatamodels.jwst.datamodels.IFUCubeModel`
-            IFU cube datamodel with data arrays filled in.
-        """
-        status = 0
-        # loop over the wavelength planes to confirm each plane has some data
-        # for initial or final planes that do not have any data - eliminated them
-        # from the IFUcube
-        # Rearrange values from 1d vectors into 3d cubes
-
-        flux = self.spaxel_flux.reshape((self.naxis3, self.naxis2, self.naxis1))
-        wmap = self.spaxel_iflux.reshape((self.naxis3, self.naxis2, self.naxis1))
-
-        var = self.spaxel_var.reshape((self.naxis3, self.naxis2, self.naxis1))
-        dq = self.spaxel_dq.reshape((self.naxis3, self.naxis2, self.naxis1))
-
-        # For MIRI MRS, apply a quality cut to help fix spectral tearing at the ends of
-        # each band. This is largely taken care of by the WCS regions file, but there
-        # will still be 1-2 possibly problematic planes at the end of each band in
-        # multi-band cubes. Do this by looking for how many good spaxels there are at
-        # each wavelength and finding outliers from the trend.
-        if self.instrument == "MIRI":
-            nz = flux.shape[0]
-            # Create a vector of the number of good spaxels at each wavelength
-            ngood = np.zeros(nz)
-            for zz in range(0, nz):
-                dqvec = dq[zz, :, :].ravel()
-                good = np.where(dqvec == 0)
-                ngood[zz] = len(good[0])
-            # Find where this vector is non-zero, and compute 1% threshold of those good values
-            good = np.where(ngood > 0)
-            if len(good[0]) > 0:
-                pctile = np.percentile(ngood[good], 3)
-                # Figure out where the number of good values were less than 75% of threshold,
-                # and zero out those arrays.
-                lowcov = (np.where((ngood > 0) & (ngood < 0.75 * pctile)))[0]
-                nlowcov = len(lowcov)
-                log.info("Number of spectral tear planes adjusted: %i", nlowcov)
-                for zz in range(0, nlowcov):
-                    flux[lowcov[zz], :, :] = np.nan
-                    wmap[lowcov[zz], :, :] = 0
-                    var[lowcov[zz], :, :] = np.nan
-                    dq[lowcov[zz], :, :] = (
-                        dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NON_SCIENCE"]
-                    )
-
-        # fluxes can be Nan if all the input data was from saturated data.
-        nan_flux = np.where(np.isnan(flux))
-        dq[nan_flux] |= dqflags.pixel["DO_NOT_USE"]
-
-        var = np.sqrt(var)
-        if self.linear_wave:
-            crval3 = self.crval3
-            cdelt3 = self.cdelt3
-            crpix3 = self.crpix3
-            pixels = np.arange(self.naxis3)
-
-            # Calculate wavelengths
-            # We add 1 to 'pixels' to convert 0-based Python indexing to 1-based FITS indexing
-            wavelength_table = crval3 + (pixels + 1 - crpix3) * cdelt3
-            wave = np.asarray(wavelength_table, dtype=np.float32)
-            num = len(wave)
-            alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
-            # always write the wavetable
-            ifucube_model = datamodels.IFUCubeModel(
-                data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
-            )
-        else:
-            wave = np.asarray(self.wavelength_table, dtype=np.float32)
-            num = len(wave)
-            alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
-
-            ifucube_model = datamodels.IFUCubeModel(
-                data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
-            )
-
-        ifucube_model.update(model_ref)
-        if self.output_name is not None:
-            ifucube_model.meta.filename = self.output_name
-
-        # Call model_blender if there are multiple inputs
-        if len(self.input_models) > 1:
-            saved_model_type = ifucube_model.meta.model_type
-            self.blend_output_metadata(ifucube_model)
-            # Reset to original
-            ifucube_model.meta.model_type = saved_model_type
-        # ______________________________________________________________________
-        # fill in Channel for MIRI
-        if self.instrument == "MIRI":
-            # fill in Channel output meta data
-            num_ch = len(self.list_par1)
-            outchannel = self.list_par1[0]
-            for m in range(1, num_ch):
-                outchannel = outchannel + str(self.list_par1[m])
-
-            outchannel = "".join(set(outchannel))
-            outchannel = "".join(sorted(outchannel))
-            ifucube_model.meta.instrument.channel = outchannel
-
-        ifucube_model.meta.wcsinfo.crval1 = self.crval1
-        ifucube_model.meta.wcsinfo.crval2 = self.crval2
-        ifucube_model.meta.wcsinfo.crpix1 = self.crpix1
-        ifucube_model.meta.wcsinfo.crpix2 = self.crpix2
-
-        ifucube_model.meta.wcsinfo.cdelt1 = self.cdelt1 / 3600.0
-        ifucube_model.meta.wcsinfo.cdelt2 = self.cdelt2 / 3600.0
-        # Now that we've got a pixel scale, set photometric area keywords
-        ifucube_model.meta.photometry.pixelarea_arcsecsq = self.cdelt1 * self.cdelt2
-        ifucube_model.meta.photometry.pixelarea_steradians = (
-            ifucube_model.meta.photometry.pixelarea_arcsecsq * 2.3504e-11
-        )
-        if self.linear_wave:
-            ifucube_model.meta.wcsinfo.crval3 = self.crval3
-            ifucube_model.meta.wcsinfo.cdelt3 = self.cdelt3
-            ifucube_model.meta.wcsinfo.ctype3 = "WAVE"
-            ifucube_model.meta.wcsinfo.crpix3 = self.crpix3
-            ifucube_model.meta.ifu.roi_spatial = float(self.rois)
-            ifucube_model.meta.ifu.roi_wave = float(self.roiw)
-            # even though we are writing a WAVE-TAB we
-            # do not want to set these parameters:
-            #   ctype3="WAVE-TAB",
-            #   ps3_0 = 'WCS-TABLE'
-            #   ps3_1 = 'wavelength'
-            # because some viewers (e.g. DS9) report an incorrect wavelength range
-        else:
-            ifucube_model.meta.wcsinfo.ctype3 = "WAVE-TAB"
-            ifucube_model.meta.wcsinfo.ps3_0 = "WCS-TABLE"
-            ifucube_model.meta.wcsinfo.ps3_1 = "wavelength"
-            ifucube_model.meta.wcsinfo.crval3 = 1.0
-            ifucube_model.meta.wcsinfo.crpix3 = 1.0
-            ifucube_model.meta.wcsinfo.cdelt3 = None
-            ifucube_model.meta.ifu.roi_wave = np.mean(self.roiw_table)
-            ifucube_model.wavedim = f"(1,{num:d})"
-
-        ifucube_model.meta.wcsinfo.ctype1 = "RA---TAN"
-        ifucube_model.meta.wcsinfo.ctype2 = "DEC--TAN"
-        ifucube_model.meta.wcsinfo.cunit1 = "deg"
-        ifucube_model.meta.wcsinfo.cunit2 = "deg"
-
-        ifucube_model.meta.wcsinfo.cunit3 = "um"
-        ifucube_model.meta.wcsinfo.wcsaxes = 3
-        ifucube_model.meta.wcsinfo.pc1_1 = -1
-        ifucube_model.meta.wcsinfo.pc1_2 = 0
-        ifucube_model.meta.wcsinfo.pc1_3 = 0
-
-        ifucube_model.meta.wcsinfo.pc2_1 = 0
-        ifucube_model.meta.wcsinfo.pc2_2 = 1
-        ifucube_model.meta.wcsinfo.pc2_3 = 0
-
-        ifucube_model.meta.wcsinfo.pc3_1 = 0
-        ifucube_model.meta.wcsinfo.pc3_2 = 0
-        ifucube_model.meta.wcsinfo.pc3_3 = 1
-
-        if self.rot_angle is None:
-            self.rot_angle = 0.0
-        ifucube_model.meta.wcsinfo.pc1_1 = -np.cos(self.rot_angle * np.pi / 180.0)
-        ifucube_model.meta.wcsinfo.pc1_2 = np.sin(self.rot_angle * np.pi / 180.0)
-        ifucube_model.meta.wcsinfo.pc2_1 = np.sin(self.rot_angle * np.pi / 180.0)
-        ifucube_model.meta.wcsinfo.pc2_2 = np.cos(self.rot_angle * np.pi / 180.0)
-
-        ifucube_model.meta.ifu.flux_extension = "SCI"
-        ifucube_model.meta.ifu.error_extension = "ERR"
-        ifucube_model.meta.ifu.error_type = "ERR"
-        ifucube_model.meta.ifu.dq_extension = "DQ"
-        ifucube_model.meta.ifu.weighting = str(self.weighting)
-        ifucube_model.meta.ifu.weight_power = self.weight_power
-
-        if self.interpolation == "drizzle":
-            # stick in values of 0, otherwise it is NaN and
-            # fits file can not be written because these
-            # values are defined in ifucube.schema.yaml
-            ifucube_model.meta.ifu.weight_power = 0
-            ifucube_model.meta.ifu.roi_wave = 0
-            ifucube_model.meta.ifu.roi_spatial = 0
-            ifucube_model.meta.ifu.weighting = str(self.interpolation)
-
-        if self.coord_system == "internal_cal":
-            # stick in values of 0, otherwise it is NaN and
-            # fits file can not be written because these
-            # values are defined in ifucube.schema.yaml
-            ifucube_model.meta.ifu.weight_power = 0
-            ifucube_model.meta.ifu.roi_wave = 0
-            ifucube_model.meta.ifu.roi_spatial = 0
-
-            # un-correct cdelt for degree conversion
-            ifucube_model.meta.wcsinfo.cdelt1 *= 3600.0
-            ifucube_model.meta.wcsinfo.cdelt2 *= 3600.0
-
-            # correct "RA" axis orientation
-            ifucube_model.meta.wcsinfo.pc1_1 *= -1.0
-
-            if self.instrument == "MIRI":
-                ifucube_model.meta.wcsinfo.cunit1 = "arcsec"
-                ifucube_model.meta.wcsinfo.cunit2 = "arcsec"
-                ifucube_model.meta.wcsinfo.ctype1 = "MRSALPHA"
-                ifucube_model.meta.wcsinfo.ctype2 = "MRSBETA"
-
-            if self.instrument == "NIRSPEC":
-                ifucube_model.meta.wcsinfo.cunit1 = "meter"
-                ifucube_model.meta.wcsinfo.cunit2 = "meter"
-                ifucube_model.meta.wcsinfo.ctype1 = "NRSSLICERX"
-                ifucube_model.meta.wcsinfo.ctype2 = "NRSSLICERY"
-
-        # set WCS information
-        wcsobj = pointing.create_fitswcs(ifucube_model)
-        ifucube_model.meta.wcs = wcsobj
-        ifucube_model.meta.wcs.bounding_box = (
-            (0, self.naxis1 - 1),
-            (0, self.naxis2 - 1),
-            (0, self.naxis3 - 1),
-        )
-
-        ifucube_model.meta.cal_step.cube_build = "COMPLETE"
-        # problem with cube_build - contains only 0 data
-        if status == 1:
-            ifucube_model.meta.cal_step.cube_build = "SKIPPED"
-
-        result = (ifucube_model, status)
-        return result
 
     # ________________________________________________________________________________
     def blend_output_metadata(self, ifu_cube):
