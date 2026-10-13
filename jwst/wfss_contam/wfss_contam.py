@@ -501,13 +501,16 @@ def _reject_off_detector_bounds(
     xmin, xmax, ymin, ymax = get_bounding_box_extents(
         ra_corners, dec_corners, sky_to_grism, wlmin, wlmax, order
     )
+    all_non_finite = (
+        ~np.isfinite(xmin) | ~np.isfinite(xmax) | ~np.isfinite(ymin) | ~np.isfinite(ymax)
+    )
 
     # check against bounds
     xmin_too_big = xmin > subarray_xsize - 1
     xmax_too_small = xmax < 0
     ymin_too_big = ymin > subarray_ysize - 1
     ymax_too_small = ymax < 0
-    bad = xmin_too_big | xmax_too_small | ymin_too_big | ymax_too_small
+    bad = xmin_too_big | xmax_too_small | ymin_too_big | ymax_too_small | all_non_finite
     return ~bad
 
 
