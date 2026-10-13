@@ -2,6 +2,7 @@ import logging
 
 import astropy.units as u
 import numpy as np
+from stdatamodels.jwst.datamodels import MirWfssPhotomModel
 
 from jwst.photom.photom import find_row
 
@@ -10,7 +11,7 @@ log = logging.getLogger(__name__)
 __all__ = ["get_photom_data", "create_1d_sens"]
 
 
-def get_photom_data(phot_model, filter_name, pupil, order):
+def get_photom_data(phot_model, filter_name, pupil, subarray, order):
     """
     Retrieve wavelength and response data from photom ref file.
 
@@ -24,13 +25,16 @@ def get_photom_data(phot_model, filter_name, pupil, order):
 
     Parameters
     ----------
-    phot_model : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel` or \
-                 `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
+    phot_model : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`, \
+                 `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`, \
+                 or `~stdatamodels.jwst.datamodels.MirWfssPhotomModel`
         Photom ref file data model
     filter_name : str
         Filter value
     pupil : str
         Pupil value
+    subarray : str
+        Subarray value
     order : int
         Spectral order number
 
@@ -44,7 +48,10 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     """
     # Get the appropriate row of data from the reference table
     phot_table = phot_model.phot_table
-    fields_to_match = {"filter": filter_name, "pupil": pupil, "order": order}
+    if isinstance(phot_model, MirWfssPhotomModel):
+        fields_to_match = {"filter": filter_name, "subarray": subarray}
+    else:
+        fields_to_match = {"filter": filter_name, "pupil": pupil, "order": order}
     row = find_row(phot_table, fields_to_match)
     tabdata = phot_table[row]
 
