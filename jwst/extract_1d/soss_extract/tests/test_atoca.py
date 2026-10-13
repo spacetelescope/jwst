@@ -202,7 +202,7 @@ def test_update_throughput(engine, throughput):
     # test callable input
     new_thru = [throughput[1], throughput[1]]
     engine.update_throughput(new_thru)
-    for _i, thru in enumerate(engine.throughput):
+    for thru in engine.throughput:
         assert isinstance(thru, np.ndarray)
         assert thru.shape == engine.wave_grid.shape
     assert np.allclose(engine.throughput[0], engine.throughput[1])
