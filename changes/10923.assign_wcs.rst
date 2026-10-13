@@ -1,0 +1,1 @@
+Fix an issue with WCS bounding box assignment for MIRI LRS SLITLESSPRISM_IP and SLITLESSPRISM_IPS subarray data.
