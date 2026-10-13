@@ -38,7 +38,7 @@ are in the :ref:`STCAL documentation (link) <stcal:jump_algorithm>`.
 Large Events (Snowballs and Showers)
 ------------------------------------
 
-:ref:`Snoball Algorithm STCAL Documentation (link) <stcal:jump_snowball>`
+:ref:`Snowball Algorithm STCAL Documentation (link) <stcal:jump_snowball>`
 ------------------------------------------------------------------------
 
 All the detectors on JWST are affected by large cosmic ray
