@@ -300,11 +300,10 @@ def build_trace_pdt(
         Minimum, maximum wavelength for the dispersed spectra of this spectral order.
         Unused if ``lam_grid`` is provided.
     coord_limits : tuple of float
-        ``(xmin, xmax, ymin, ymax)`` coordinate bounds in the undispersed
-        frame of the WFSS exposure (the ``"detector"`` frame of ``grism_wcs``,
-        not to be confused with the pixel frame of the direct image mosaic or
-        the dispersed ``"grism_detector"`` frame). Spans the locations of all
-        direct image sources to be dispersed.
+        ``(xmin, xmax, ymin, ymax)`` coordinate bounds in the un-dispersed
+        frame of the WFSS exposure (the "detector" frame of ``grism_wcs``).
+        In a typical case this corresponds to the corners of the i2d image mosaic
+        transformed into the "detector" frame.
     spacing : int, optional
         Spacing of grid points to sample along each of the x and y axes, by default 30.
     wave_oversample_factor : float, optional
@@ -325,7 +324,6 @@ def build_trace_pdt(
         to approximate the exact "detector" to "grism_detector" transform.
     """
     imgxy_to_grismxy = get_grism_detector_transform(grism_wcs)
-
     xmin, xmax, ymin, ymax = coord_limits
 
     n_grid_x = max(int(np.ceil((xmax - xmin) / spacing)) + 1, 2)

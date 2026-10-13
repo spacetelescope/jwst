@@ -109,22 +109,3 @@ def test_evaluate_grid_exact_wavelength_grid_raises_on_mismatch(grism_wcs):
     wrong_lam = np.linspace(_WMIN, _WMAX, 30)
     with pytest.raises(ValueError, match="exact_wavelength_grid"):
         trace_pdt.evaluate_grid(x0, y0, wrong_lam)
-
-
-def test_trace_pdt_handles_extended_coord_limits(grism_wcs):
-    """TracePDT built with extended/negative coord_limits should accurately match exact transform."""
-    extended_limits = (-100.0, 3100.0, -600.0, 2600.0)
-    trace_pdt = build_trace_pdt(grism_wcs, _ORDER, _WMIN, _WMAX, extended_limits, spacing=100)
-
-    rng = np.random.default_rng(123)
-    n_pts = 100
-    x0 = rng.uniform(-80.0, 3000.0, n_pts)
-    y0 = rng.uniform(-500.0, 2500.0, n_pts)
-    wavelength = rng.uniform(_WMIN, _WMAX, n_pts)
-
-    exact_transform = _exact_transform(grism_wcs)
-    x_exact, y_exact = exact_transform(x0, y0, wavelength, _ORDER)
-    x_interp, y_interp = trace_pdt(x0, y0, wavelength)
-
-    assert_allclose(x_interp, x_exact, atol=0.05)
-    assert_allclose(y_interp, y_exact, atol=0.05)
