@@ -89,7 +89,7 @@ def create_hdu_wfss():
     return hdul
 
 
-def create_hdul_lrs_slitless():
+def create_hdul_lrs_slitless(subarray="SLITLESSPRISM"):
     hdul = fits.HDUList()
     phdu = fits.PrimaryHDU()
     phdu.header["telescop"] = "JWST"
@@ -99,11 +99,17 @@ def create_hdul_lrs_slitless():
     phdu.header["time-obs"] = "8:59:37"
     phdu.header["date-obs"] = "2017-09-05"
     phdu.header["exp_type"] = "MIR_LRS-SLITLESS"
-    phdu.header["subarray"] = "SLITLESSPRISM"
-    phdu.header["substrt1"] = 1
-    phdu.header["substrt2"] = 529
-    phdu.header["subsize1"] = 72
-    phdu.header["subsize2"] = 416
+    phdu.header["subarray"] = subarray
+    if subarray == "SLITLESSPRISM_IPS":
+        phdu.header["substrt1"] = 13
+        phdu.header["substrt2"] = 753
+        phdu.header["subsize1"] = 52
+        phdu.header["subsize2"] = 256
+    else:
+        phdu.header["substrt1"] = 1
+        phdu.header["substrt2"] = 529
+        phdu.header["subsize1"] = 72
+        phdu.header["subsize2"] = 416
     scihdu = fits.ImageHDU()
     scihdu.header["EXTNAME"] = "SCI"
     scihdu.header.update(wcs_kw)
@@ -382,3 +388,24 @@ mrs_ref_data = {
         "v3": np.array([-321.57006077329663, -317.7252303132135]),
     },
 }
+
+
+@pytest.mark.parametrize("subarray", ["SLITLESSPRISM", "SLITLESSPRISM_IPS"])
+def test_lrs_slitless_bbox(subarray):
+    hdul = create_hdul_lrs_slitless(subarray=subarray)
+    shape = (5, hdul[0].header["SUBSIZE2"], hdul[0].header["SUBSIZE1"])
+    cube_model = create_datamodel_cube(hdul, shape)
+
+    bbox = cube_model.meta.wcs.bounding_box
+    bbox_tuple = [tuple(bbox[name]) for name in bbox.named_intervals]
+
+    if subarray == "SLITLESSPRISM":
+        # For the slitlessprism array, left edge is always 3.5:
+        # just past the initial 4 reference pixels.
+        assert bbox_tuple[0][0] == 3.5
+    else:
+        # For the slitlessprism_ips array, left edge is set by the shape
+        assert bbox_tuple[0][0] == -0.5
+
+    # For both, right edge is set by the shape
+    assert bbox_tuple[0][1] == shape[2] - 0.5
