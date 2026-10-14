@@ -19,11 +19,10 @@ def test_pushdir(tmp_path):
     assert current == os.getcwd(), "Directory was not restored"
 
 
-def test_pusdir_fail():
+def test_pushdir_fail():
     """Test for failing changing."""
     current = os.getcwd()
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         with pushdir("Really_doesNOT-exist"):
-            # Nothing should happen here. The assert should never be checked.
-            assert False
+            pass
     assert current == os.getcwd()

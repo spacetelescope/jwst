@@ -9,12 +9,10 @@ from jwst.datamodels.utils.flat_multispec import (
     copy_column_units,
     copy_spec_metadata,
     determine_vector_and_meta_columns,
-    expand_flat_spec,
     make_empty_recarray,
     populate_recarray,
     set_schema_units,
 )
-from jwst.datamodels.utils.tests.wfss_helpers import mock_wcs
 from jwst.tests.helpers import LogWatcher
 
 
@@ -67,41 +65,6 @@ def output_spec():
     spec = dm.MRSSpecModel()
     spec.spec_table = np.zeros((5,), dtype=spec.get_dtype("spec_table"))
     return spec
-
-
-@pytest.fixture()
-def tso_multi_spec():
-    """Make a populated TSOMultiSpecModel with default spectral values and some metadata."""
-    tso_spec = dm.TSOSpecModel()
-    input_schema = dm.SpecModel().schema
-    in_cols = input_schema["properties"]["spec_table"]["datatype"]
-    out_cols = tso_spec.schema["properties"]["spec_table"]["datatype"]
-    all_cols, is_vector = determine_vector_and_meta_columns(in_cols, out_cols)
-
-    # Make an empty table to populate
-    n_rows = 10
-    n_spectra = 5
-    defaults = tso_spec.schema["properties"]["spec_table"]["default"]
-    spec_table = make_empty_recarray(n_rows, n_spectra, all_cols, is_vector, defaults=defaults)
-    spec_table["N_ALONGDISP"] = 10
-    tso_spec.spec_table = spec_table
-    for column in tso_spec.spec_table.columns:
-        column.unit = "s"
-
-    # Add spectra to a multispec model
-    tso_multi = dm.TSOMultiSpecModel()
-    for i in range(3):
-        spec = tso_spec.copy()
-
-        # Add some metadata
-        spec.source_id = i + 1
-        spec.name = f"test {i + 1}"
-        spec.meta.wcs = mock_wcs()
-        spec.meta.wcs.pipeline[0].transform.name = "test"
-        spec.spec_table["INT_NUM"] = i + 1
-
-        tso_multi.spec.append(spec)
-    return tso_multi
 
 
 def test_determine_vector_and_meta_columns():
@@ -279,31 +242,3 @@ def test_copy_spec_metadata(input_spec, output_spec):
     # After copying, metadata is filled in
     assert output_spec.name == "test_slit"
     assert output_spec.source_id == 1
-
-
-def test_expand_flat_spec(tso_multi_spec):
-    expanded_spec = expand_flat_spec(tso_multi_spec)
-    assert isinstance(expanded_spec, dm.MultiSpecModel)
-
-    # expected output has extensions for each spec * each int
-    n_spec = 3
-    n_int = 5
-    assert len(expanded_spec.spec) == n_spec * n_int
-
-    # each spectrum has rows corresponding to input n_elements,
-    # with metadata copied from the input
-    n_elements = 10
-    for i, spec in enumerate(expanded_spec.spec):
-        assert len(spec.spec_table) == n_elements
-
-        input_spec_num = i // n_int + 1
-        assert spec.source_id == input_spec_num
-        assert spec.name == f"test {input_spec_num}"
-        assert spec.int_num == input_spec_num
-
-        assert spec.meta.wcs.pipeline[0].transform.name == "test"
-        spec.meta.wcs.pipeline[0].transform.name = "copy"
-        assert spec.meta.wcs.pipeline[0].transform.name == "copy"
-        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs.pipeline[0].transform.name == "test"
-
-        assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)

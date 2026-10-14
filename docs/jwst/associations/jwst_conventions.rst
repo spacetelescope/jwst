@@ -48,21 +48,23 @@ keyword of the association itself (see :ref:`asn-level3-meta-keywords`).
 The pipeline uses this type as the key to indicate which Stage 2 or
 Stage 3 pipeline module to use to process this association:
 
-================= ==============================================
-Association type  Intended for processing in
-================= ==============================================
-``ami3``          :ref:`calwebb_ami3 <calwebb_ami3>`
-``coron3``        :ref:`calwebb_coron3 <calwebb_coron3>`
-``image2``        :ref:`calwebb_image2 <calwebb_image2>`
-``image3``        :ref:`calwebb_image3 <calwebb_image3>`
-``nrslamp-spec2`` :ref:`calwebb_spec2 <calwebb_spec2>`
-``spec2``         :ref:`calwebb_spec2 <calwebb_spec2>`
-``spec3``         :ref:`calwebb_spec3 <calwebb_spec3>`
-``tso3``          :ref:`calwebb_tso3 <calwebb_tso3>`
-``tso-image2``    :ref:`calwebb_image2 <calwebb_image2>`
-``tso-spec2``     :ref:`calwebb_spec2 <calwebb_spec2>`
-``wfs-image3``    :ref:`calwebb_wfs-image3 <calwebb_wfs-image3>`
-================= ==============================================
+======================== ==============================================
+Association type         Intended for processing in
+======================== ==============================================
+``ami3``                 :ref:`calwebb_ami3 <calwebb_ami3>`
+``coron3``               :ref:`calwebb_coron3 <calwebb_coron3>`
+``image2``               :ref:`calwebb_image2 <calwebb_image2>`
+``image3``               :ref:`calwebb_image3 <calwebb_image3>`
+``nrslamp-spec2`` [#f1]_ :ref:`calwebb_spec2 <calwebb_spec2>`
+``spec2``                :ref:`calwebb_spec2 <calwebb_spec2>`
+``spec3``                :ref:`calwebb_spec3 <calwebb_spec3>`
+``tso3``                 :ref:`calwebb_tso3 <calwebb_tso3>`
+``tso-image2`` [#f1]_    :ref:`calwebb_image2 <calwebb_image2>`
+``tso-spec2`` [#f1]_     :ref:`calwebb_spec2 <calwebb_spec2>`
+``wfs-image3``           :ref:`calwebb_wfs-image3 <calwebb_wfs-image3>`
+======================== ==============================================
+
+.. [#f1] These association types are deprecated, and will no longer be generated as of ``jwst==4.0.0``. New associations will point to ``image2`` or ``spec2`` instead.
 
 Field Guide to File Names
 =========================

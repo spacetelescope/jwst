@@ -113,7 +113,12 @@ def _make_cutout_profile(
     else:
         xmap = xidx + extra_shift * psf_subpix
         ymap = yidx
-    sprofile = ndimage.map_coordinates(psf_data, [ymap, xmap], order=1)
+
+    sprofile = np.full(ymap.shape, np.nan)
+    is_finite = np.isfinite(ymap) & np.isfinite(xmap)
+    sprofile[is_finite] = ndimage.map_coordinates(
+        psf_data, [ymap[is_finite], xmap[is_finite]], order=1
+    )
     _normalize_profile(sprofile, dispaxis)
 
     if nod_offset is None:
@@ -125,7 +130,10 @@ def _make_cutout_profile(
     else:
         xmap += psf_subpix * nod_offset
 
-    nod_profile = ndimage.map_coordinates(psf_data, [ymap, xmap], order=1)
+    nod_profile = np.full(ymap.shape, np.nan)
+    nod_profile[is_finite] = ndimage.map_coordinates(
+        psf_data, [ymap[is_finite], xmap[is_finite]], order=1
+    )
     _normalize_profile(nod_profile, dispaxis)
 
     return [sprofile, nod_profile * -1]

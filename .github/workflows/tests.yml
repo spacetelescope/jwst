@@ -100,6 +100,8 @@ jobs:
       - supported-pythons
       - crds
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@22ddf09dfabb443adddfb9f861b7d41a787d6b1a # v3.0.3
+    permissions:
+      id-token: write
     with:
       setenv: |
         CRDS_PATH: ${{ needs.crds.outputs.path }}
@@ -120,7 +122,7 @@ jobs:
           linux: py3-cov-xdist
           python-version: ${{ needs.supported-pythons.outputs.latest }}
           pytest-results-summary: true
-          coverage: codecov
+          coverage: codecov-oidc
         - name: run tests (latest supported Python, macos-latest)
           macos: py3-xdist
           python-version: ${{ needs.supported-pythons.outputs.latest }}

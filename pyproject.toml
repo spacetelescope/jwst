@@ -372,7 +372,7 @@ showcontent = true
 
 [[tool.towncrier.type]]
 directory = "ami"
-name = 'ami_analyze / ami_normalize / ami_average (ami3)'
+name = 'ami_analyze / ami_normalize (ami3)'
 showcontent = true
 
 [[tool.towncrier.type]]
@@ -523,11 +523,6 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "msaflagopen"
 name = 'msaflagopen (spec2 IFU, spec2 MOS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "nsclean"
-name = "nsclean (spec2 IFU, spec2 MOS)"
 showcontent = true
 
 [[tool.towncrier.type]]
