@@ -35,9 +35,8 @@ second.
 Algorithm
 ---------
 
-The JWST jump step makes use of an algorithm stored in the STCAL module. Detailed
-documentation for the algorithm can be found in the 
-:ref:`STCAL documentation (link) <stcal:jump_algorithm>`.
+The jump step utilizes an algorithm stored in ``stcal``. Detailed documentation for
+the algorithm can be found in the stcal documentation at :ref:`Jump Algorithm <stcal:jump_algorithm>`.
 
 Large Events (Snowballs and Showers)
 ------------------------------------
@@ -62,8 +61,8 @@ Thus, we fit the minimum enclosing ellipse and do not require that there are sat
 within the ellipse.  Likewise, MIRI showers are only flagged when detected features are consistent
 with the maximum known amplitude (in DN/s) of shower artifacts.
 
-The large event detection algorithm is located in the STCAL module; further details
-are available in the STCAL documentation at this :ref:`(link) <stcal:jump_snowball>`.
+The large event detection algorithm is located in ``stcal``; further details
+are available in the documentation at :ref:`Snowball Detection <stcal:jump_snowball>`.
 
 
 Multiprocessing
