@@ -684,14 +684,11 @@ def _create_grism_bbox(
                     raise ValueError("Cannot determine dispersion direction.")
 
             # Convert floating-point corner values to whole pixel indexes
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore", category=RuntimeWarning, message="invalid value encountered in cast"
-                )
-                xmin = gwutils.to_index(xmin)
-                xmax = gwutils.to_index(xmax)
-                ymin = gwutils.to_index(ymin)
-                ymax = gwutils.to_index(ymax)
+            for var in [xmin, xmax, ymin, ymax]:
+                if np.isfinite(var):
+                    var = gwutils.to_index(var)
+                else:
+                    var = np.nan
 
             # Don't add objects and orders that are entirely off the detector.
             # "partial_order" marks objects that are near enough to the detector
@@ -787,7 +784,6 @@ def _create_grism_bbox(
         # Create a final grism object list containing only the N brightest objects
         final_objects = grism_objects[:nbright]
     del grism_objects
-
     log.info(f"Total of {len(final_objects)} grism objects defined")
     if len(final_objects) == 0:
         log.warning("No grism objects saved; check catalog or step params")
