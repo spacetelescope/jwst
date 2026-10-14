@@ -541,7 +541,7 @@ def get_bounding_box_extents(ra_corners, dec_corners, sky_to_grism, wlmin, wlmax
         # near the grism-frame detector, and in fact the computation of these bounds are used
         # to reject sources that fall completely off the detector.
         warnings.filterwarnings(
-            "ignore", category=UserWarning, message=".*the trace polynomial is not monotonic"
+            "ignore", category=RuntimeWarning, message=".*the trace polynomial is not monotonic"
         )
         x1, y1, _, _, _ = sky_to_grism(ra, dec, wlmin, order)
         x2, y2, _, _, _ = sky_to_grism(ra, dec, wlmax, order)
@@ -626,7 +626,7 @@ def _create_grism_bbox(
     # don't get used until the detector->grism_detector transform
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            "ignore", category=UserWarning, message=".*the trace polynomial is not monotonic"
+            "ignore", category=RuntimeWarning, message=".*the trace polynomial is not monotonic"
         )
         xcenters, ycenters, _, _ = sky_to_detector(icrs_ra, icrs_dec, 1, 1)
 
@@ -663,7 +663,7 @@ def _create_grism_bbox(
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     "ignore",
-                    category=UserWarning,
+                    category=RuntimeWarning,
                     message=".*the trace polynomial is not monotonic",
                 )
                 centers_x, centers_y, _, _, _ = sky_to_grism(
