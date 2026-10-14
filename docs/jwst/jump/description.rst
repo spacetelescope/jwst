@@ -32,14 +32,15 @@ is the number of primary cosmic rays found per thousand pixels per second.  The 
 keyword is the number of extended events (snowball and shower) per million pixels per
 second.
 
-The JWST jump step makes use of the STCAL module. Detailed documentation for the jump step
-are in the :ref:`STCAL documentation (link) <stcal:jump_algorithm>`.
+Algorithm
+---------
+
+The JWST jump step makes use of an algorithm stored in the STCAL module. Detailed
+documentation for the algorithm can be found in the 
+:ref:`STCAL documentation (link) <stcal:jump_algorithm>`.
 
 Large Events (Snowballs and Showers)
 ------------------------------------
-
-:ref:`Snowball Algorithm STCAL Documentation (link) <stcal:jump_snowball>`
-------------------------------------------------------------------------
 
 All the detectors on JWST are affected by large cosmic ray
 events. While these events, in general, affect a large number of
