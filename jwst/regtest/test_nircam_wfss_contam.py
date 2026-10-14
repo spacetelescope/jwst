@@ -13,13 +13,7 @@ pytestmark = [pytest.mark.bigdata]
 def run_spec2_with_contam(rtdata_module, resource_tracker):
     """Run the Spec2Pipeline with the wfss_contam step turned on."""
     rtdata = rtdata_module
-
-    # Get input data files
-    rtdata.get_data("nircam/wfss/jw01076-o107_t001_nircam_clear-f322w2_i2d.fits")
-    rtdata.get_data("nircam/wfss/jw01076-o107_t001_nircam_clear-f322w2_segm.fits")
-    rtdata.get_data("nircam/wfss/jw01076-o107_t001_nircam_clear-f322w2_cat.ecsv")
-    rtdata.get_data("nircam/wfss/jw01076107001_02101_00002_nrcalong_rate.fits")
-    rtdata.get_data("nircam/wfss/jw01076-o107_20260704t223417_spec2_00006_asn.json")
+    rtdata.get_asn("nircam/wfss/jw01076-o107_20260704t223417_spec2_00006_asn.json")
 
     # Run the step
     step_params = {
@@ -68,13 +62,7 @@ def run_spec2_with_contam_f356w(rtdata_module):
     We also exercise the multiprocessing capability of the wfss_contam step here.
     """
     rtdata = rtdata_module
-
-    # Get input data files
-    rtdata.get_data("nircam/wfss/jw01345-o012_t026_nircam_clear-f356w_i2d.fits")
-    rtdata.get_data("nircam/wfss/jw01345-o012_t026_nircam_clear-f356w_segm.fits")
-    rtdata.get_data("nircam/wfss/jw01345-o012_t026_nircam_clear-f356w_cat.ecsv")
-    rtdata.get_data("nircam/wfss/jw01345012001_07101_00004_nrcblong_rate.fits")
-    rtdata.get_data("nircam/wfss/jw01345012001_07101_00004_nrcblong_spec2_asn.json")
+    rtdata.get_asn("nircam/wfss/jw01345012001_07101_00004_nrcblong_spec2_asn.json")
 
     # Run the step
     step_params = {
