@@ -86,7 +86,7 @@ This routine performs the following operations:
    with the suffix ``_outlier_i2d.fits``. These are not saved if ``resample_data`` is set to `False` because
    they would be copies of the input models.
 
-#. If resampling is turned off, use the input data and error in place of the resampled data
+#. If resampling is turned off, use the input data and error in place of the resampled data and error
    for subsequent processing.
 
 #. Construct and apply a bad pixel mask to the resampled data based on the drizzled weights.
@@ -94,8 +94,9 @@ This routine performs the following operations:
    The ``maskpt`` parameter sets the threshold weight value such that any pixel
    with a weight below this value gets flagged as bad.
 
-#. Create a median image from all grouped observation mosaics pixel-by-pixel, i.e., averaging over groups.
-   Also compute a median error estimate by combining the corresponding error images in the same way.
+#. Create a median image (:math:`image\_median`, below) from all grouped observation mosaics
+   pixel-by-pixel, i.e., averaging over groups. Also compute a median error estimate
+   (:math:`median\_err`, below) by combining the corresponding error images in the same way.
    If ``save_intermediate_results`` is set to `True`, the median image and error are written out to disk
    with the suffix ``_median.fits``.
 
