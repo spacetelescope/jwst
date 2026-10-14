@@ -202,13 +202,14 @@ class ApCorrBase(abc.ABC):
             "sb_var_flat",
         )
 
-        for row in spec_table:
-            correction = self.apcorr_func(row["npixels"], row["wavelength"])
+        # Evaluate the spline once for all rows and touch each column once;
+        # per-row FITS_rec access is far slower than this.
+        correction = self.apcorr_func(spec_table["npixels"], spec_table["wavelength"], grid=False)
 
-            for col in flux_cols_to_correct:
-                row[col] *= correction.item()
-            for col in var_cols_to_correct:
-                row[col] *= correction.item() * correction.item()
+        for col in flux_cols_to_correct:
+            spec_table[col] *= correction
+        for col in var_cols_to_correct:
+            spec_table[col] *= correction * correction
 
 
 class ApCorrPhase(ApCorrBase):
