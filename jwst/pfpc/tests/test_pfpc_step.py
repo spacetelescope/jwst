@@ -20,6 +20,7 @@ def test_step_one_file(mrs_dith1_ch12_medium, mrs_pfpc_model):
         assert isinstance(spec, datamodels.MRSMultiSpecModel)
         assert len(spec.spec) == 1
         assert spec.meta.cal_step.pfpc == "COMPLETE"
+        assert spec.meta.ref_file.pfpc.name is not None
 
         # Spectra were extracted from channel 1 and 2 respectively
         assert spec.meta.instrument.channel == str(i + 1)
