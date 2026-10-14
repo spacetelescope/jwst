@@ -11,6 +11,7 @@ from jwst.wfss_contam.sens1d import create_1d_sens, get_photom_data
 def test_get_photom_data(photom_ref_model):
     filter_name = "GR150C"
     pupil = "F200W"
+    subarray = "FULL"
     order = 1
     refmodel = photom_ref_model.copy()  # we are going to modify this in-place
 
@@ -26,7 +27,7 @@ def test_get_photom_data(photom_ref_model):
     relresp[0] = 99
     refmodel.phot_table["relresponse"] = [relresp] * n
 
-    ref_waves, ref_relresp = get_photom_data(refmodel, filter_name, pupil, order)
+    ref_waves, ref_relresp = get_photom_data(refmodel, filter_name, pupil, subarray, order)
 
     np.testing.assert_array_equal(ref_waves, waves)
     assert ref_relresp.shape == waves.shape
@@ -45,8 +46,9 @@ def test_get_photom_data(photom_ref_model):
 def test_create_1d_sens(photom_ref_model):
     filter_name = "GR150C"
     pupil = "F200W"
+    subarray = "FULL"
     order = 1
-    ref_waves, ref_relresp = get_photom_data(photom_ref_model, filter_name, pupil, order)
+    ref_waves, ref_relresp = get_photom_data(photom_ref_model, filter_name, pupil, subarray, order)
 
     # create a set of wavelengths to interpolate the response onto
     # make it wider than the reference wavelengths to test zero-filling and no_cal mask

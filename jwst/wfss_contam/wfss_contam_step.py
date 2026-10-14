@@ -109,4 +109,5 @@ class WfssContamStep(Step):
         if output_model is not input_data:
             output_model.close()
 
+        result.update(output_model)
         return result
