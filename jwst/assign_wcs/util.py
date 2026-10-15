@@ -683,12 +683,12 @@ def _create_grism_bbox(
                 else:
                     raise ValueError("Cannot determine dispersion direction.")
 
-            # Convert floating-point corner values to whole pixel indexes
-            for var in [xmin, xmax, ymin, ymax]:
-                if np.isfinite(var):
-                    var = gwutils.to_index(var)
-                else:
-                    var = np.nan
+            # Convert floating-point corner values to whole pixel indexes,
+            # avoiding NaNs because gwutils.to_index has undefined behavior with NaNs
+            xmin, xmax, ymin, ymax = (
+                gwutils.to_index(var) if np.isfinite(var) else np.nan
+                for var in (xmin, xmax, ymin, ymax)
+            )
 
             # Don't add objects and orders that are entirely off the detector.
             # "partial_order" marks objects that are near enough to the detector
