@@ -237,13 +237,13 @@ processing performed by this step. This routine performs the following operation
 #. Apply a bad pixel mask to the input data based on the input DQ arrays and the ``good_bits``
    parameter.
 
-#. Compute a median cube by combining all planes in the
+#. Compute a median cube (:math:`image\_median`, below) by combining all planes in the
    `~stdatamodels.jwst.datamodels.CubeModel` pixel-by-pixel using a
    rolling-median algorithm, in order to flag outliers integration-by-integration but
    preserve real time variability. The ``rolling_window_width`` parameter specifies the
    number of integrations over which to compute the median.
-   Also compute a median error estimate by combining the corresponding error cube in the
-   same way.
+   Also compute a rolling-median error estimate (:math:`median\_err`, below) by
+   combining the corresponding error cube with the same window width as the science data.
 
 #. If the ``save_intermediate_results`` parameter is set to `True`, write the rolling-median
    `~stdatamodels.jwst.datamodels.CubeModel` to disk with the suffix ``_median.fits``.
