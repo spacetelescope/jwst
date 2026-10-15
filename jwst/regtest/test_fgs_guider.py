@@ -28,12 +28,14 @@ GUIDER_SUFFIXES = ["cal", "dq_init", "guider_cds"]
 
 
 @pytest.fixture(
-    scope="module", params=[rtobj.file_name for rtobj in INPUT_DATA.values()], ids=INPUT_DATA.keys()
+    scope="module",
+    params=[rtobj.full_path for rtobj in INPUT_DATA.values()],
+    ids=[k for k in INPUT_DATA.keys()],
 )
 def run_guider_pipelines(rtdata_module, request):
     """Run pipeline for guider data"""
     rtdata = rtdata_module
-    rtdata.get_data(INPUT_DATA_PATH + "/" + request.param)
+    rtdata.get_data(request.param)
 
     args = [
         "calwebb_guider",
