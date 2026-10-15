@@ -1231,7 +1231,7 @@ class Asn_Lv3WFSSNRC(AsnMixin_Lv3WFSS):
 
 
 @RegistryMarker.rule
-class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
+class Asn_Lv3WFSSNIS(AsnMixin_Lv3WFSS):
     """
     Level 3 NIRISS WFSS/Grism Association.
 
@@ -1271,7 +1271,11 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
                     sources=["exp_type"],
                     value="nis_image",
                 ),
-                DMSAttrConstraint(name="dir_opt_elem", sources=["filter"], value="clear"),
+                DMSAttrConstraint(
+                    name="dir_opt_elem",
+                    sources=["filter"],
+                    value="clear",
+                ),
                 DMSAttrConstraint(
                     name="dir_opt_elem2",
                     sources=["pupil"],
@@ -1335,7 +1339,7 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_Lv3WFSSMIR(AsnMixin_Spectrum):
+class Asn_Lv3WFSSMIR(AsnMixin_Lv3WFSS):
     """
     Level 3 MIRI WFSS/PRISM Association.
 
