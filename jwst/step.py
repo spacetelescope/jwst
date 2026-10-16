@@ -36,6 +36,7 @@ from jwst.msaflagopen.msaflagopen_step import MSAFlagOpenStep
 from jwst.outlier_detection.outlier_detection_step import OutlierDetectionStep
 from jwst.pathloss.pathloss_step import PathLossStep
 from jwst.persistence.persistence_step import PersistenceStep
+from jwst.pfpc.pfpc_step import PFPCStep
 from jwst.photom.photom_step import PhotomStep
 from jwst.picture_frame.picture_frame_step import PictureFrameStep
 from jwst.pixel_replace.pixel_replace_step import PixelReplaceStep
@@ -99,6 +100,7 @@ __all__ = [
     "OutlierDetectionStep",
     "PathLossStep",
     "PersistenceStep",
+    "PFPCStep",
     "PhotomStep",
     "PictureFrameStep",
     "PixelReplaceStep",
