@@ -709,8 +709,8 @@ def setup_final_model(
         cube_model.meta.ifu.roi_spatial = 0
 
         # un-correct cdelt for degree conversion
-        cube_model.meta.wcsinfo.cdelt1 = cube_wcs.crpix1
-        cube_model.meta.wcsinfo.cdelt2 = cube_wcs.crpix2
+        cube_model.meta.wcsinfo.cdelt1 = cube_wcs.cdelt1
+        cube_model.meta.wcsinfo.cdelt2 = cube_wcs.cdelt2
 
         # correct "RA" axis orientation
         cube_model.meta.wcsinfo.pc1_1 *= -1.0
