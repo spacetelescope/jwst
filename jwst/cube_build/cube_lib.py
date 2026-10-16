@@ -628,7 +628,7 @@ def setup_final_model(
     cube_model.meta.wcsinfo.crpix1 = cube_wcs.crpix1
     cube_model.meta.wcsinfo.crpix2 = cube_wcs.crpix2
 
-    cube_model.meta.wcsinfo.cdelt1 = cube_wcs.cdelt1 / 3600.0
+    cube_model.meta.wcsinfo.cdelt1 = cube_wcs.cdelt1 / 3600.0  # convert to degrees
     cube_model.meta.wcsinfo.cdelt2 = cube_wcs.cdelt2 / 3600.0
     # Now that we've got a pixel scale, set photometric area keywords
     cube_model.meta.photometry.pixelarea_arcsecsq = cube_wcs.cdelt1 * cube_wcs.cdelt2
@@ -709,8 +709,8 @@ def setup_final_model(
         cube_model.meta.ifu.roi_spatial = 0
 
         # un-correct cdelt for degree conversion
-        cube_model.meta.wcsinfo.cdelt1 *= 3600.0
-        cube_model.meta.wcsinfo.cdelt2 *= 3600.0
+        cube_model.meta.wcsinfo.cdelt1 = cube_wcs.crpix1
+        cube_model.meta.wcsinfo.cdelt2 = cube_wcs.crpix2
 
         # correct "RA" axis orientation
         cube_model.meta.wcsinfo.pc1_1 *= -1.0
