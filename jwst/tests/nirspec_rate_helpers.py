@@ -1,5 +1,4 @@
 import numpy as np
-from astropy.io import fits
 from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcs
 from stdatamodels.jwst import datamodels
@@ -36,29 +35,28 @@ DEFAULT_WCS_KW = {
 SLIT_Y_RANGE = [-0.5, 0.5]
 
 
-def _nirspec_rate_hdul(
+def _nirspec_rate_base(
     detector="NRS1", exptype="NRS_MSASPEC", filter_name="F170LP", grating="G235M", lamp="NONE"
 ):
-    """Create a fits HDUList instance."""
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header["instrume"] = "NIRSPEC"
-    phdu.header["detector"] = detector
-    phdu.header["time-obs"] = "8:59:37"
-    phdu.header["date-obs"] = "2016-09-05"
-    phdu.header["program"] = "1234"
-    phdu.header["exp_type"] = exptype
-    phdu.header["filter"] = filter_name
-    phdu.header["grating"] = grating
-    phdu.header["lamp"] = lamp
-    phdu.header["PATT_NUM"] = 1
+    model = datamodels.ImageModel()
 
-    scihdu = fits.ImageHDU()
-    scihdu.header["EXTNAME"] = "SCI"
-    scihdu.header.update(DEFAULT_WCS_KW)
-    hdul.append(phdu)
-    hdul.append(scihdu)
-    return hdul
+    model.meta.instrument.name = "NIRSPEC"
+    model.meta.instrument.detector = detector
+    model.meta.instrument.filter = filter_name
+    model.meta.instrument.grating = grating
+    model.meta.instrument.lamp_state = lamp
+
+    model.meta.observation.time = "8:59:37"
+    model.meta.observation.date = "2016-09-05"
+    model.meta.observation.program_number = "1234"
+
+    model.meta.exposure.type = exptype
+
+    model.meta.dither.position_number = 1
+
+    model.meta.wcsinfo.instance.update(DEFAULT_WCS_KW)
+
+    return model
 
 
 def nirspec_image_rate_model(filter_name="F290LP", exptype="NRS_IMAGE", with_wcs=True):
@@ -81,8 +79,7 @@ def nirspec_image_rate_model(filter_name="F290LP", exptype="NRS_IMAGE", with_wcs
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         The NIRSpec image datamodel.
     """
-    hdul = _nirspec_rate_hdul(filter_name=filter_name, exptype=exptype, grating="MIRROR")
-    model = datamodels.ImageModel(hdul)
+    model = _nirspec_rate_base(filter_name=filter_name, exptype=exptype, grating="MIRROR")
     model.data = np.zeros((10, 10), dtype=np.float32)
 
     if with_wcs:
@@ -113,8 +110,7 @@ def nirspec_mos_rate_model(filter_name="F170LP", grating="G235M", with_wcs=True)
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         The NIRSpec MOS datamodel.
     """
-    hdul = _nirspec_rate_hdul(filter_name=filter_name, grating=grating, exptype="NRS_MSASPEC")
-    model = datamodels.ImageModel(hdul)
+    model = _nirspec_rate_base(filter_name=filter_name, grating=grating, exptype="NRS_MSASPEC")
     model.data = np.zeros((10, 10), dtype=np.float32)
 
     msaconfl = get_pkg_data_filename("data/msa_configuration.fits", package="jwst.assign_wcs.tests")
@@ -151,20 +147,19 @@ def nirspec_fs_rate_model(filter_name="F100LP", grating="G140M", lamp="N/A", wit
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         The NIRSpec FS datamodel.
     """
-    image = _nirspec_rate_hdul(
+    model = _nirspec_rate_base(
         filter_name=filter_name, grating=grating, lamp=lamp, exptype="NRS_FIXEDSLIT"
     )
 
     # Add some more metadata needed for FS
-    image[1].header["crval3"] = 0
-    image[1].header["wcsaxes"] = 3
-    image[1].header["ctype3"] = "WAVE"
-    image[0].header["GWA_XTIL"] = 0.3316612243652344
-    image[0].header["GWA_YTIL"] = 0.1260581910610199
-    image[0].header["SUBARRAY"] = "FULL"
-    image[0].header["FXD_SLIT"] = "S200A1"
+    model.meta.wcsinfo.crval3 = 0
+    model.meta.wcsinfo.wcsaxes = 3
+    model.meta.wcsinfo.ctype3 = "WAVE"
+    model.meta.instrument.gwa_xtilt = 0.3316612243652344
+    model.meta.instrument.gwa_ytilt = 0.1260581910610199
+    model.meta.instrument.fixed_slit = "S200A1"
+    model.meta.subarray.name = "FULL"
 
-    model = datamodels.ImageModel(image)
     model.data = np.zeros((10, 10), dtype=np.float32)
 
     if with_wcs:
@@ -211,21 +206,21 @@ def nirspec_ifu_rate_model(
     model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The NIRSpec IFU datamodel.
     """
-    image = _nirspec_rate_hdul(
+    base_model = _nirspec_rate_base(
         detector=detector, filter_name=filter_name, grating=grating, exptype="NRS_IFU"
     )
+    model = datamodels.IFUImageModel(base_model)
 
     # Add some more metadata needed for IFU
-    image[0].header["date-obs"] = "2026-01-01"  # chromcorr CRDS selector requires date > launch
-    image[1].header["crval3"] = 0
-    image[1].header["wcsaxes"] = 3
-    image[1].header["ctype3"] = "WAVE"
-    image[0].header["GWA_XTIL"] = gwa_xtil
-    image[0].header["GWA_YTIL"] = gwa_ytil
+    model.meta.observation.date = "2026-01-01"  # chromcorr CRDS selector requires date > launch
+    model.meta.wcsinfo.crval3 = 0
+    model.meta.wcsinfo.wcsaxes = 3
+    model.meta.wcsinfo.ctype3 = "WAVE"
+    model.meta.instrument.gwa_xtilt = gwa_xtil
+    model.meta.instrument.gwa_ytilt = gwa_ytil
     if gwa_tilt is not None:
-        image[0].header["GWA_TILT"] = gwa_tilt
+        model.meta.instrument.gwa_tilt = gwa_tilt
 
-    model = datamodels.IFUImageModel(image)
     model.data = np.zeros((10, 10), dtype=np.float32)
 
     if with_wcs:
