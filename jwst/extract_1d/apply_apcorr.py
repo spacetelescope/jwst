@@ -429,12 +429,11 @@ class ApCorrRadial(ApCorrBase):
             "sb_var_flat",
         )
 
-        for i, row in enumerate(spec_table):
-            correction = self.apcorr_correction[i]
-            for col in flux_cols_to_correct:
-                row[col] *= correction
-            for col in var_cols_to_correct:
-                row[col] *= correction * correction
+        correction = np.asarray(self.apcorr_correction[: len(spec_table)], dtype=float)
+        for col in flux_cols_to_correct:
+            spec_table[col] *= correction
+        for col in var_cols_to_correct:
+            spec_table[col] *= correction * correction
 
     def match_wavelengths(self, wavelength_ifu):
         """
