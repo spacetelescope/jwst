@@ -66,7 +66,7 @@ jobs:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
     needs:
       - crds
-    uses: zacharyburnett/github-actions-workflows/.github/workflows/tox.yml@py3_latest_supported_python
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v3.1.1
     with:
       setenv: |
         CRDS_PATH: ${{ needs.crds.outputs.path }}
