@@ -32,7 +32,7 @@ class CubeBuildStep(Step):
          scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
-         readnoise_weighting = option('readnoise', default=None)  # In the drizzle routine also weight by readnoise
+         variance_weighting = option('readnoise', default=None)  # In the drizzle routine also weight by readnoise
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          ra_center = float(default=None) # RA center of the IFU cube
          dec_center = float(default=None) # Declination center of the IFU cube
@@ -162,11 +162,11 @@ class CubeBuildStep(Step):
             self.interpolation = "drizzle"
 
         if self.weighting != "drizzle":
-            self.readnoise_weighting = None
+            self.variance_weighting = None
 
-        if self.readnoise_weighting == "readnoise":
+        if self.variance_weighting == "readnoise":
             readnoise_weight = 1
-            log.info(" Also weighting by readnoise in drizzle method")
+            log.info("Also weighting by readnoise in drizzle method")
         else:
             readnoise_weight = 0
 
