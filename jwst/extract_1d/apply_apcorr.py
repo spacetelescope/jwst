@@ -555,7 +555,9 @@ class ApCorr(ApCorrBase):
             "sb_var_rnoise",
             "sb_var_flat",
         )
-
+        # Here apcorr_func is a RectBivariateSpline instance, and grid=False
+        # specifies that we want to evaluate the function at the given points rather than on a grid
+        # spanned by the input arrays, which is the default behavior of RectBivariateSpline.
         correction = self.apcorr_func(spec_table["npixels"], spec_table["wavelength"], grid=False)
 
         for col in flux_cols_to_correct:
