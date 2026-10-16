@@ -532,15 +532,28 @@ def get_bounding_box_extents(ra_corners, dec_corners, sky_to_grism, wlmin, wlmax
     n_sources = np.shape(ra_corners)[-1]
     ra = np.asarray(ra_corners).reshape(-1)
     dec = np.asarray(dec_corners).reshape(-1)
-    x1, y1, _, _, _ = sky_to_grism(ra, dec, wlmin, order)
-    x2, y2, _, _, _ = sky_to_grism(ra, dec, wlmax, order)
+    with warnings.catch_warnings():
+        # For some filters/orients, the trace polynomial is quadratic.
+        # This case is solved analytically by the transform, finding two roots.
+        # The polynomial is not well-defined far from the actual grism detector region, so sometimes
+        # both roots are in the "valid" 0 < t < 1 region. This is expected here, because this code
+        # block can see any pixel on the i2d image, not just those that would be expected to land
+        # near the grism-frame detector, and in fact the computation of these bounds are used
+        # to reject sources that fall completely off the detector.
+        warnings.filterwarnings(
+            "ignore", category=RuntimeWarning, message=".*the trace polynomial is not monotonic"
+        )
+        x1, y1, _, _, _ = sky_to_grism(ra, dec, wlmin, order)
+        x2, y2, _, _, _ = sky_to_grism(ra, dec, wlmax, order)
 
     xstack = np.vstack([x1.reshape(4, n_sources), x2.reshape(4, n_sources)])
     ystack = np.vstack([y1.reshape(4, n_sources), y2.reshape(4, n_sources)])
-    xmin = np.nanmin(xstack, axis=0)
-    xmax = np.nanmax(xstack, axis=0)
-    ymin = np.nanmin(ystack, axis=0)
-    ymax = np.nanmax(ystack, axis=0)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN slice")
+        xmin = np.nanmin(xstack, axis=0)
+        xmax = np.nanmax(xstack, axis=0)
+        ymin = np.nanmin(ystack, axis=0)
+        ymax = np.nanmax(ystack, axis=0)
     return xmin, xmax, ymin, ymax
 
 
@@ -611,7 +624,11 @@ def _create_grism_bbox(
     # save the image frame center of each object
     # takes in ra, dec, wavelength, order but wave and order
     # don't get used until the detector->grism_detector transform
-    xcenters, ycenters, _, _ = sky_to_detector(icrs_ra, icrs_dec, 1, 1)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=RuntimeWarning, message=".*the trace polynomial is not monotonic"
+        )
+        xcenters, ycenters, _, _ = sky_to_detector(icrs_ra, icrs_dec, 1, 1)
 
     # Per-object accumulators for the per-order results computed below.
     order_boundings = [{} for _ in filtered_objects]
@@ -643,9 +660,15 @@ def _create_grism_bbox(
         )
 
         if wfss_extract_half_height is not None:
-            centers_x, centers_y, _, _, _ = sky_to_grism(
-                ra_center, dec_center, (lmin + lmax) / 2, order
-            )
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    category=RuntimeWarning,
+                    message=".*the trace polynomial is not monotonic",
+                )
+                centers_x, centers_y, _, _, _ = sky_to_grism(
+                    ra_center, dec_center, (lmin + lmax) / 2, order
+                )
 
         for i, obj in enumerate(filtered_objects):
             xmin, xmax, ymin, ymax = xmins[i], xmaxs[i], ymins[i], ymaxs[i]
@@ -660,11 +683,12 @@ def _create_grism_bbox(
                 else:
                     raise ValueError("Cannot determine dispersion direction.")
 
-            # Convert floating-point corner values to whole pixel indexes
-            xmin = gwutils.to_index(xmin)
-            xmax = gwutils.to_index(xmax)
-            ymin = gwutils.to_index(ymin)
-            ymax = gwutils.to_index(ymax)
+            # Convert floating-point corner values to whole pixel indexes,
+            # avoiding NaNs because gwutils.to_index has undefined behavior with NaNs
+            xmin, xmax, ymin, ymax = (
+                gwutils.to_index(var) if np.isfinite(var) else np.nan
+                for var in (xmin, xmax, ymin, ymax)
+            )
 
             # Don't add objects and orders that are entirely off the detector.
             # "partial_order" marks objects that are near enough to the detector
@@ -760,7 +784,6 @@ def _create_grism_bbox(
         # Create a final grism object list containing only the N brightest objects
         final_objects = grism_objects[:nbright]
     del grism_objects
-
     log.info(f"Total of {len(final_objects)} grism objects defined")
     if len(final_objects) == 0:
         log.warning("No grism objects saved; check catalog or step params")

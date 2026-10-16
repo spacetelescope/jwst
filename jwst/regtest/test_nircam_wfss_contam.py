@@ -13,13 +13,7 @@ pytestmark = [pytest.mark.bigdata]
 def run_spec2_with_contam(rtdata_module, resource_tracker):
     """Run the Spec2Pipeline with the wfss_contam step turned on."""
     rtdata = rtdata_module
-
-    # Get input data files
-    rtdata.get_data("nircam/wfss/jw01076-o107_t001_nircam_clear-f322w2_i2d.fits")
-    rtdata.get_data("nircam/wfss/jw01076-o107_t001_nircam_clear-f322w2_segm.fits")
-    rtdata.get_data("nircam/wfss/jw01076-o107_t001_nircam_clear-f322w2_cat.ecsv")
-    rtdata.get_data("nircam/wfss/jw01076107001_02101_00002_nrcalong_rate.fits")
-    rtdata.get_data("nircam/wfss/jw01076-o107_20260704t223417_spec2_00006_asn.json")
+    rtdata.get_asn("nircam/wfss/jw01076-o107_20260704t223417_spec2_00006_asn.json")
 
     # Run the step
     step_params = {
@@ -48,6 +42,48 @@ def test_nrc_wfss_contam(run_spec2_with_contam, fitsdiff_default_kwargs, suffix)
     """Regression test for wfss_contam applied to NIRCam WFSS data"""
     rtdata = run_spec2_with_contam
     output = f"jw01076107001_02101_00002_nrcalong_{suffix}.fits"
+    rtdata.output = output
+
+    # Get the truth files
+    rtdata.get_truth("truth/test_nircam_wfss_contam/" + output)
+
+    # Compare the results
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.fixture(scope="module")
+def run_spec2_with_contam_f356w(rtdata_module):
+    """
+    Similar to the run_spec2_with_contam fixture, but for the F356W filter.
+
+    This case is different because the transforms are quadratic, which leads them
+    down a different logic path that can return NaN values. This regtest ensures
+    this case is handled appropriately downstream.
+    We also exercise the multiprocessing capability of the wfss_contam step here.
+    """
+    rtdata = rtdata_module
+    rtdata.get_asn("nircam/wfss/jw01345012001_07101_00004_nrcblong_spec2_asn.json")
+
+    # Run the step
+    step_params = {
+        "step": "jwst.pipeline.Spec2Pipeline",
+        "args": [
+            "--steps.wfss_contam.magnitude_limit=20",
+            "--steps.wfss_contam.save_simulated_image=True",
+            "--steps.wfss_contam.save_results=true",
+            "--steps.wfss_contam.skip=False",
+            "--steps.wfss_contam.maximum_cores=2",
+        ],
+    }
+    return rt.run_step_from_dict(rtdata, **step_params)
+
+
+@pytest.mark.parametrize("suffix", ["simul", "wfss_contam"])
+def test_nrc_wfss_contam_f356w(run_spec2_with_contam_f356w, fitsdiff_default_kwargs, suffix):
+    """Regression test for wfss_contam applied to NIRCam WFSS data"""
+    rtdata = run_spec2_with_contam_f356w
+    output = f"jw01345012001_07101_00004_nrcblong_{suffix}.fits"
     rtdata.output = output
 
     # Get the truth files
