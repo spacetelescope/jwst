@@ -10,8 +10,8 @@ from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_niriss import create_hdul as create_niriss
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.assign_wcs.util import NoDataOnDetectorError
-from jwst.tests.nircam_rate_helpers import nircam_wfss_rate_model
 from jwst.tests.miri_rate_helpers import miri_image_rate_model, miri_mrs_rate_model
+from jwst.tests.nircam_rate_helpers import nircam_wfss_rate_model
 
 
 def test_assign_wcs_step_miri_ifu():
