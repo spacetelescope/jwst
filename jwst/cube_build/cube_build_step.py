@@ -32,12 +32,13 @@ class CubeBuildStep(Step):
          scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
+         variance_weighting = option('readnoise', default=None)  # In the drizzle routine also weight by readnoise
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          ra_center = float(default=None) # RA center of the IFU cube
          dec_center = float(default=None) # Declination center of the IFU cube
          cube_pa = float(default=None) # The position angle of the desired cube in decimal degrees E from N
          nspax_x = integer(default=None) # The odd integer number of spaxels to use in the x dimension of cube tangent plane.
-         nspax_y = integer(default=None) # The odd integer number of spaxels to use in the y dimension of cube tangent plane.
+         nspax_y = integer(default=None) # The odd integer number of spaxels to use in the y dimension of cube tangent pane.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
@@ -46,7 +47,7 @@ class CubeBuildStep(Step):
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
          offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files.
-         debug_spaxel = string(default='-1 -1 -1') # Default not used
+         debug_spaxel = string(default='-1 -1 -1') # Default not used. Order x,y,z
        """  # noqa: E501
 
     reference_file_types = ["cubepar"]
@@ -160,6 +161,15 @@ class CubeBuildStep(Step):
         if self.weighting == "drizzle":
             self.interpolation = "drizzle"
 
+        if self.weighting != "drizzle":
+            self.variance_weighting = None
+
+        if self.variance_weighting == "readnoise":
+            readnoise_weight = 1
+            log.info("Also weighting by readnoise in drizzle method")
+        else:
+            readnoise_weight = 0
+
         log.info(f"Input interpolation: {self.interpolation}")
         log.info(f"Coordinate system to use: {self.coord_system}")
         if self.interpolation == "pointcloud":
@@ -250,6 +260,7 @@ class CubeBuildStep(Step):
             "interpolation": self.interpolation,
             "weighting": self.weighting,
             "weight_power": self.weight_power,
+            "readnoise_weight": readnoise_weight,
             "coord_system": self.pars_input["coord_system"],
             "ra_center": self.ra_center,
             "dec_center": self.dec_center,
