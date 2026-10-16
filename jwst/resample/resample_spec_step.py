@@ -151,8 +151,12 @@ class ResampleSpecStep(Step):
         wave_cols = {}
         for container in containers.values():
             # Make sure all input models have consistent NaN and DO_NOT_USE values
+            # Also check if var_flat is present.
+            propagate_var_flat = False
             for model in container:
                 match_nans_and_flags(model)
+                if model.var_flat is not None:
+                    propagate_var_flat = True
 
             # Call the resampling routine
             if self.single:
@@ -161,8 +165,17 @@ class ResampleSpecStep(Step):
                 )
                 drizzled_library = resamp.resample_many_to_many(in_memory=self.in_memory)
             else:
+                if propagate_var_flat:
+                    variances = None
+                else:
+                    variances = ["var_rnoise", "var_poisson"]
+
                 resamp = resample_spec.ResampleSpec(
-                    container, enable_var=True, compute_err="from_var", **self.drizpars
+                    container,
+                    enable_var=True,
+                    compute_err="from_var",
+                    variance_array_names=variances,
+                    **self.drizpars,
                 )
                 drizzled_library = resamp.resample_many_to_one()
                 drizzled_library = ModelLibrary(
@@ -271,8 +284,12 @@ class ResampleSpecStep(Step):
             The resampled output
         """
         # Make sure all input models have consistent NaN and DO_NOT_USE values
+        # Also check if var_flat is present.
+        propagate_var_flat = False
         for model in input_models:
             match_nans_and_flags(model)
+            if model.var_flat is not None:
+                propagate_var_flat = True
 
         # Call the resampling routine
         if self.single:
@@ -286,8 +303,16 @@ class ResampleSpecStep(Step):
             del drizzled_library
 
         else:
+            if propagate_var_flat:
+                variances = None
+            else:
+                variances = ["var_rnoise", "var_poisson"]
             resamp = resample_spec.ResampleSpec(
-                input_models, enable_var=True, compute_err="from_var", **self.drizpars
+                input_models,
+                enable_var=True,
+                compute_err="from_var",
+                variance_array_names=variances,
+                **self.drizpars,
             )
             result = resamp.resample_many_to_one()
 
