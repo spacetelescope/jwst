@@ -189,8 +189,8 @@ def mirimage_50_sci(scimodel_base):
     all_sci = [scimodel_base]
     for i in range(49):
         tsci = scimodel_base.copy()
-        data, err = helpers.mock_data()
-        # Add a source in the center
+        # Add independent random noise to data and error arrays
+        data, err = helpers.mock_data(seed=100 + i)
         tsci.data = data
         tsci.err = err
         tsci.meta.filename = f"foo{i + 2}_cal.fits"
