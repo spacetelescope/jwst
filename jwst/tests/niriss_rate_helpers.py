@@ -1,5 +1,4 @@
 import numpy as np
-from astropy.io import fits
 from gwcs import wcs
 from stdatamodels.jwst import datamodels
 
@@ -34,26 +33,27 @@ DEFAULT_WCS_KW = {
 }
 
 
-def _niriss_rate_hdul(detector="NIS", filter_name="CLEAR", exptype="NIS_IMAGE", pupil="F200W"):
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header["telescop"] = "JWST"
-    phdu.header["filename"] = "test+" + filter_name
-    phdu.header["instrume"] = "NIRISS"
-    phdu.header["detector"] = detector
-    phdu.header["FILTER"] = filter_name
-    phdu.header["PUPIL"] = pupil
-    phdu.header["time-obs"] = "8:59:37"
-    phdu.header["date-obs"] = "2022-09-05"
-    phdu.header["exp_type"] = exptype
-    phdu.header["FWCPOS"] = 354.2111
-    scihdu = fits.ImageHDU()
-    scihdu.header["EXTNAME"] = "SCI"
-    scihdu.header.update(DEFAULT_WCS_KW)
-    scihdu.data = np.zeros((2048, 2048))
-    hdul.append(phdu)
-    hdul.append(scihdu)
-    return hdul
+def _niriss_rate_base(detector="NIS", filter_name="CLEAR", exptype="NIS_IMAGE", pupil="F200W"):
+    model = datamodels.ImageModel()
+    model.meta.telescope = "JWST"
+    model.meta.filename = "test+" + filter_name
+
+    model.meta.instrument.name = "NIRISS"
+    model.meta.instrument.detector = detector
+    model.meta.instrument.filter = filter_name
+    model.meta.instrument.pupil = pupil
+    model.meta.instrument.filter_position = 354.2111
+
+    model.meta.observation.time = "8:59:37"
+    model.meta.observation.date = "2022-09-05"
+
+    model.meta.exposure.type = exptype
+
+    model.meta.wcsinfo.instance.update(DEFAULT_WCS_KW)
+
+    model.data = np.zeros((2048, 2048))
+
+    return model
 
 
 def niriss_image_rate_model(with_wcs=True):
@@ -72,7 +72,7 @@ def niriss_image_rate_model(with_wcs=True):
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         The NIRISS image datamodel.
     """
-    model = datamodels.ImageModel(_niriss_rate_hdul(filter_name="F200W", pupil="CLEAR"))
+    model = _niriss_rate_base(filter_name="F200W", pupil="CLEAR")
 
     if with_wcs:
         ref = get_reference_files(model)
@@ -100,8 +100,7 @@ def niriss_wfss_rate_model(filter_name="GR150R", with_wcs=True):
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         The NIRISS WFSS datamodel.
     """
-    hdul = _niriss_rate_hdul(filter_name=filter_name, pupil="F200W", exptype="NIS_WFSS")
-    model = datamodels.ImageModel(hdul)
+    model = _niriss_rate_base(filter_name=filter_name, pupil="F200W", exptype="NIS_WFSS")
 
     if with_wcs:
         ref = get_reference_files(model)
