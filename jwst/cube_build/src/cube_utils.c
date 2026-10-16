@@ -5,6 +5,9 @@ A clipped polygon is the overlapping polygon of the detector pixel and
 a spaxel.  We are only dealing with the spatial dimensions in this routine.
 */
 
+#define NO_IMPORT_ARRAY
+#include "cube_utils.h"
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -15,6 +18,38 @@ a spaxel.  We are only dealing with the spatial dimensions in this routine.
 #define CP_RIGHT  1
 #define CP_BOTTOM 2
 #define CP_TOP    3
+
+// Common routine that  ensures that all the numpy arrays passed to the C routines
+// follow C array rules.
+PyArrayObject *
+ensure_array(PyObject *obj, int *is_copy)
+{
+    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
+        PyArray_TYPE((PyArrayObject *) obj) == NPY_DOUBLE) {
+        *is_copy = 0;
+        return (PyArrayObject *) obj;
+    } else {
+        *is_copy = 1;
+        return (PyArrayObject *) PyArray_FromAny(
+            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
+    }
+}
+
+PyArrayObject *
+ensure_array_int(PyObject *obj, int *is_copy)
+{
+    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
+        PyArray_TYPE((PyArrayObject *) obj) == NPY_INT) {
+        *is_copy = 0;
+        return (PyArrayObject *) obj;
+    } else {
+        *is_copy = 1;
+        return (PyArrayObject *) PyArray_FromAny(
+            obj, PyArray_DescrFromType(NPY_INT), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
+    }
+}
 
 int
 alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv)
@@ -71,6 +106,78 @@ failed_mem_alloc2:
     free(*weightv);
 failed_mem_alloc1:
     free(*fluxv);
+    return 1;
+}
+
+int
+alloc_flux_dq_arrays(
+    int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv, int **dqv)
+{
+
+    /*
+      Allocate memory for the spaxel output vectors to be of size nelem.
+
+     nelem : int
+         Number of elements to allocate memory
+     fluxv : double ndarray
+        Flux vector
+     weightv : double ndarray
+        Weight vector
+     varv : double ndarray
+        Variance vector
+     iflux : double ndarray
+        Counter index vector
+     dqv : int ndarray
+        Dq vector
+    */
+
+    const char *msg = "Couldn't allocate memory for output arrays.";
+
+    // flux:
+    if (!(*fluxv = (double *) calloc(nelem, sizeof(double)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        return 1; // Nothing was allocated yet, just return
+    }
+
+    // weight
+    if (!(*weightv = (double *) calloc(nelem, sizeof(double)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        goto failed_weightv;
+    }
+
+    // variance
+    if (!(*varv = (double *) calloc(nelem, sizeof(double)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        goto failed_varv;
+    }
+
+    // iflux
+    if (!(*ifluxv = (double *) calloc(nelem, sizeof(double)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        goto failed_ifluxv;
+    }
+
+    // dq
+    if (!(*dqv = (int *) calloc(nelem, sizeof(int)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        goto failed_dqv;
+    }
+
+    return 0;
+
+failed_dqv:
+    free(*ifluxv);
+    *ifluxv = NULL;
+failed_ifluxv:
+    free(*varv);
+    *varv = NULL;
+failed_varv:
+    free(*weightv);
+    *weightv = NULL;
+failed_weightv:
+    free(*fluxv);
+    *fluxv = NULL;
+
     return 1;
 }
 
@@ -373,7 +480,6 @@ sh_find_overlap(
 
     int nVertices = 4; // input detector pixel vertices
 
-    int MaxVertices = 9;
     double xPixel[9] = {0.0};
     double yPixel[9] = {0.0};
     double xnew[9] = {0.0};

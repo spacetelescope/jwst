@@ -43,10 +43,19 @@ def example_spec():
     spec = dm.SpecModel()
     spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
     recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
+    # add contam columns right after flux and sb columns
+    names = [d[0] for d in recarray_dtype]
+    flux_idx = names.index("FLUX")
+    sb_idx = names.index("SURF_BRIGHT")
+    recarray_dtype.insert(flux_idx + 1, ("CONTAM_FLUX", "f4"))
+    recarray_dtype.insert(sb_idx + 2, ("CONTAM_SURF_BRIGHT", "f4"))
     spec.meta.wcs = mock_wcs()
-    spec_table = np.recarray((N_ROWS,), dtype=recarray_dtype)
+    # initializing directly with np.recarray() gives garbage values in unset columns
+    # which sometimes makes DQ nonzero and drops rows from the table in combine_1d
+    spec_table = np.zeros((N_ROWS,), dtype=recarray_dtype).view(np.recarray)
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)
+    spec_table["CONTAM_FLUX"] = np.ones(N_ROWS, dtype=np.float32) / 10.0
     spec.spec_table = spec_table
     spec.spec_table.columns["wavelength"].unit = "um"
     return spec
@@ -167,7 +176,7 @@ def wfss_comb():
     _add_multispec_meta(spec)
     spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
     recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
-    spec_table = np.recarray((N_ROWS,), dtype=recarray_dtype)
+    spec_table = np.zeros((N_ROWS,), dtype=recarray_dtype).view(np.recarray)
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)
     spec.spec_table = spec_table

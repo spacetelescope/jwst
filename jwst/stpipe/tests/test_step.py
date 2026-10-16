@@ -337,11 +337,6 @@ def test_search_attr(tmp_path):
     assert pipeline.stepwithmodel.search_attr("junk") is None
 
 
-def test_print_configspec():
-    step = Step()
-    step.print_configspec()
-
-
 def test_call_with_config(caplog, tmp_cwd):
     """Test call using a config file with substeps
 

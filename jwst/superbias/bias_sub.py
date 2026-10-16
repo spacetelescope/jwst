@@ -13,18 +13,18 @@ __all__ = ["do_correction", "subtract_bias"]
 
 def do_correction(input_model, bias_model):
     """
-    Execute all tasks for Super-Bias Subtraction.
+    Execute all tasks for superbias Subtraction.
 
     Parameters
     ----------
-    input_model : RampModel
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
         Science data to be corrected
-    bias_model : SuperBiasModel
+    bias_model : `~stdatamodels.jwst.datamodels.SuperBiasModel`
         Bias data
 
     Returns
     -------
-    output_model : stdatamodels.jwst.datamodels.ramp.RampModel
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Bias-subtracted science data
     """
     # Check for subarray mode and extract subarray from the
@@ -52,14 +52,14 @@ def subtract_bias(output, bias):
 
     Parameters
     ----------
-    output : stdatamodels.jwst.datamodels.ramp.RampModel
+    output : `~stdatamodels.jwst.datamodels.RampModel`
         Input science data
-    bias : stdatamodels.jwst.datamodels.superbias.SuperBiasModel
+    bias : `~stdatamodels.jwst.datamodels.SuperBiasModel`
         Superbias image data
 
     Returns
     -------
-    output : stdatamodels.jwst.datamodels.ramp.RampModel
+    output : `~stdatamodels.jwst.datamodels.RampModel`
         Bias-subtracted science data
     """
     # Combine the science and superbias DQ arrays

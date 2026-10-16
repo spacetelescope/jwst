@@ -1,6 +1,5 @@
 import logging
 import traceback
-import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -48,7 +47,7 @@ NRS_SLIT_TYPES = [
     "NRS_AUTOFLAT",
 ]
 
-GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS", "MIR_WFSS"]
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 TA_TYPES = ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]
@@ -71,7 +70,6 @@ class Spec2Pipeline(Pipeline):
     class_alias = "calwebb_spec2"
 
     spec = """
-        save_bsub = boolean(default=False) # Deprecated; use the background step's save_results parameter instead.
         fail_on_exception = boolean(default=True) # Fail if any product fails.
         save_wfss_esec = boolean(default=False)   # Save WFSS e-/sec image
     """  # noqa: E501
@@ -121,15 +119,6 @@ class Spec2Pipeline(Pipeline):
             The calibrated data models.
         """
         log.info("Starting calwebb_spec2 ...")
-
-        if self.save_bsub:
-            deprecation_message = (
-                "The --save_bsub parameter is deprecated and will be removed in a future release. "
-                "To toggle saving background-subtracted data, use the background step's "
-                "--save_results parameter instead."
-            )
-            warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
-            log.warning(deprecation_message)
 
         # Setup step parameters required by the pipeline.
         self.resample_spec.save_results = self.save_results
@@ -365,8 +354,6 @@ class Spec2Pipeline(Pipeline):
             calibrated = self._process_grism(calibrated)
         elif exp_type == "NRS_MSASPEC":
             calibrated = self._process_nirspec_msa_slits(calibrated)
-        elif exp_type == "MIR_WFSS":
-            calibrated = self._process_miri_wfss(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
         elif exp_type == "NIS_SOSS":
@@ -406,9 +393,9 @@ class Spec2Pipeline(Pipeline):
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
 
-        # SOSS data need to run photom on x1d products and optionally save the photom
+        # SOSS and WFSS/grism data need to run photom on x1d products and optionally save the photom
         # output, while all other exptypes simply run extract_1d.
-        if exp_type == "NIS_SOSS":
+        if exp_type in ["NIS_SOSS"] + GRISM_TYPES:
             if multi_int:
                 self.photom.suffix = "x1dints"
             else:
@@ -423,6 +410,14 @@ class Spec2Pipeline(Pipeline):
             else:
                 self.photom.save_results = self.save_results
                 x1d = self.photom.run(x1d)
+                # at this stage if photom was skipped we still want the x1d to save
+                if x1d.meta.cal_step.photom == "SKIPPED" and self.save_results:
+                    log.info(
+                        "Photom step was skipped for this x1d product. "
+                        "Saving uncalibrated x1d instead."
+                    )
+                    self.save_model(x1d, suffix=self.photom.suffix)
+
         elif exp_type == "NRS_MSASPEC":
             # Special handling for MSA spectra, to handle mixed-in
             # fixed slits separately
@@ -497,10 +492,6 @@ class Spec2Pipeline(Pipeline):
                 self.bkg_subtract.suffix = "bsub"
                 if multi_int:
                     self.bkg_subtract.suffix = "bsubints"
-
-                # Backwards compatibility
-                if self.save_bsub:
-                    self.bkg_subtract.save_results = True
             else:
                 log.debug(
                     "Science data does not allow direct background subtraction. "
@@ -658,49 +649,7 @@ class Spec2Pipeline(Pipeline):
         # DN/sec image
         calibrated = self.extract_2d.run(calibrated)
         calibrated = self.srctype.run(calibrated)
-        calibrated = self.straylight.run(calibrated)
-        calibrated = self.fringe.run(calibrated)
-        calibrated = self.pathloss.run(calibrated)
-        calibrated = self.barshadow.run(calibrated)
         calibrated = self.wfss_contam.run(calibrated)
-        calibrated = self.photom.run(calibrated)
-        return calibrated
-
-    def _process_miri_wfss(self, data):
-        """
-        Calibrate MIRI WFSS  data.
-
-        Determine the order of the steps
-
-        Parameters
-        ----------
-        data : JWSTDataModel
-            The input science data model.
-
-        Returns
-        -------
-        JWSTDataModel
-            The calibrated data model.
-        """
-        calibrated = data.copy()
-        # Create and save a WFSS e-/sec image, if requested
-        if self.save_wfss_esec:
-            log.info("Creating WFSS e-/sec product")
-            wfss_esec = self._determine_e_per_sec_image(calibrated)
-            # Save the WFSS e-/sec image
-            self.save_model(wfss_esec, suffix="esec", force=True)
-            del wfss_esec
-
-        # More study required on the best approach for flat fielding with MIRI WFSS
-        # For now we are allowing flat fielding. This may change in the future.
-
-        # Continue with remaining calibration steps, using the original
-        # DN/sec image
-        calibrated = self.flat_field.run(calibrated)
-        calibrated = self.extract_2d.run(calibrated)
-        calibrated = self.srctype.run(calibrated)
-        calibrated = self.pathloss.run(calibrated)
-        calibrated = self.photom.run(calibrated)
         return calibrated
 
     def _process_nirspec_slits(self, data):

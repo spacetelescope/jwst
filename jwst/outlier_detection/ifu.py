@@ -8,23 +8,25 @@ a pixel has with its neighbor across all the input cal files.
 
 Notes
 -----
-This routine performs the following operations::
+This routine performs the following operations:
 
-  1. Extracts parameter settings from input ModelContainer and merges
-     them with any user-provided values
-  2. Loop over cal files
-     a. read in science data
-     b. Store computed neighbor differences for all the pixels.
-        The neighbor pixel  differences are defined by the dispersion axis.
-        For MIRI, with the dispersion axis along the y axis, the neighbors that are used to
-        to find the differences are to the left and right of each pixel being examined.
-        For NIRSpec, with the dispersion along the x axis, the neighbors that are used to
-        find the differences are above and below the pixel being examined.
-  3. For each input file store the  minimum of the pixel neighbor differences
-  4. Comparing all the differences from all the input data find the minimum neighbor difference
-  5. Normalize minimum difference to local median of difference array
-  6. Select outliers by flagging those normalized minimum values > threshold_percent
-  7. Updates input ImageModel DQ arrays with mask of detected outliers.
+1. Extracts parameter settings from input `~jwst.datamodels.container.ModelContainer`
+   and merges them with any user-provided values.
+2. Loop over cal files:
+
+   a. Read in science data.
+   b. Store computed neighbor differences for all the pixels.
+      The neighbor pixel  differences are defined by the dispersion axis.
+      For MIRI, with the dispersion axis along the y axis, the neighbors that are used to
+      to find the differences are to the left and right of each pixel being examined.
+      For NIRSpec, with the dispersion along the x axis, the neighbors that are used to
+      find the differences are above and below the pixel being examined.
+
+3. For each input file store the  minimum of the pixel neighbor differences.
+4. Comparing all the differences from all the input data find the minimum neighbor difference.
+5. Normalize minimum difference to local median of difference array.
+6. Select outliers by flagging those normalized minimum values > threshold_percent.
+7. Updates input ImageModel DQ arrays with mask of detected outliers.
 """
 
 import logging
@@ -54,20 +56,20 @@ def detect_outliers(
     make_output_path,
 ):
     """
-    Flag outliers in ifu data.
+    Flag outliers in IFU data.
 
     Parameters
     ----------
-    input_models : ModelContainer
+    input_models : `~jwst.datamodels.container.ModelContainer`
         A container of data models or an association file readable into a ModelContainer.
     save_intermediate_results : bool
-        If True, save intermediate results.
+        If `True`, save intermediate results.
     kernel_size : str
         The size of the kernel to use to normalize the pixel differences.
         Must only contain odd values. Valid values are a pair of ints in a single string
-        (for example “7 7”, the step default).
+        (for example '7 7', the step default).
     ifu_second_check : bool
-        If True, perform a secondary check for outliers. This will set outliers
+        If `True`, perform a secondary check for outliers. This will set outliers
         wherever the difference array of adjacent pixels is a NaN.
     threshold_percent : float
         The threshold (in percent) of the normalized minimum pixel difference
@@ -76,7 +78,7 @@ def detect_outliers(
 
     Returns
     -------
-    input_models : ModelContainer
+    input_models : `~jwst.datamodels.container.ModelContainer`
         The input data with DQ flags set for detected outliers.
     """
     if not isinstance(input_models, ModelContainer):
@@ -161,37 +163,37 @@ def flag_outliers(
     In general we are searching for pixels that
     are a form of a bad pixel but not in bad pixel mask, because the bad pixels vary with
     time. This program will flag the DQ of input images as DO_NOT_USE and OUTLIER and set
-    the associated science pixel to a Nan. This routine only works on data from one detector.
+    the associated science pixel to a NaN. This routine only works on data from one detector.
 
     Parameters
     ----------
     idet : int
-        Integer indicating which detector we are working with
-    uq_det : np.array[str]
-        Array of (unique) detector names found input data
+        Integer indicating which detector we are working with.
+    uq_det : ndarray
+        Array of (unique) detector names (str) found in input data.
     ndet_files : int
-        Number of files for the detector we are working on
+        Number of files for the detector we are working on.
     diffaxis : int
-        The axis to form the adjacent pixel differences
+        The axis to form the adjacent pixel differences.
     nx : int
-        Size of input data on x axis
+        Size of input data on x axis.
     ny : int
-        Since of input data on y axis
+        Since of input data on y axis.
     kern_size : tuple
-        Size of the kernel to use for median filtering
+        Size of the kernel to use for median filtering.
     threshold_percent : float
         Percent for flagging outliers. Flags pixels where the minimum difference between
         adjacent pixels for all the input data for a detector is above this percentage. The
         percentage is based on using all the pixels except a 4 X 4 row and column region around
         the detector that is often noisy.
     save_intermediate_results : bool
-        If True then save intermediate output data
+        If `True` then save intermediate output data.
     ifu_second_check : bool
-        If True then perform a secondary check searching for outliers. This will set outliers
-        where ever the difference array of adjacent pixels is a Nan.
+        If `True` then perform a secondary check searching for outliers. This will set outliers
+        where ever the difference array of adjacent pixels is a NaN.
     make_output_path : function
-        The functools.partial instance to pass to save_median. Has no effect if
-        save_intermediate_results is False.
+        The :py:func:`functools.partial` instance to pass to ``save_median``. Has no effect if
+        ``save_intermediate_results`` is `False`.
     """
     # set up array to hold group differences
     diffarr = np.zeros([ndet_files, ny, nx])
@@ -341,7 +343,7 @@ def _find_detector_parameters(input_models):
 
     Parameters
     ----------
-    input_models : ModelContainer
+    input_models : ~jwst.datamodels.container.ModelContainer`
         The input data models.
 
     Returns
@@ -368,12 +370,14 @@ def create_optional_results_model(opt_info):
     Parameters
     ----------
     opt_info : tuple
-        The output arrays needed for the OutlierOutputModel.
+        The output arrays needed for the
+        `~stdatamodels.jwst.datamodels.OutlierOutputModel`.
 
     Returns
     -------
-    opt_model : OutlierIFUOutputModel
-        The optional OutlierIFUOutputModel to be returned from the outlier_detection_ifu step.
+    opt_model : `~stdatamodels.jwst.datamodels.OutlierIFUOutputModel`
+        The optional OutlierIFUOutputModel to be returned from the
+        ``outlier_detection_ifu`` step.
     """
     (kernsize_x, kernsize_y, threshold_percent, diffarr, minarr, normarr, minnorm) = opt_info
     opt_model = datamodels.OutlierIFUOutputModel(

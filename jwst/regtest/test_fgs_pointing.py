@@ -7,6 +7,9 @@ import pytest
 # Only run if `pysiaf` is installed.
 pytest.importorskip("pysiaf")
 
+# Mark all tests in this module as slow due to possible remote DB connection
+pytestmark = pytest.mark.slow
+
 from astropy.utils.data import get_pkg_data_filenames  # noqa: E402
 from numpy import ones  # noqa: E402
 from numpy.testing import assert_allclose  # noqa: E402
@@ -14,17 +17,6 @@ from numpy.testing import assert_allclose  # noqa: E402
 from jwst.datamodels import Level1bModel  # type: ignore[attr-defined] # noqa: E402
 from jwst.lib import engdb_mast, siafdb  # noqa: E402
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
-
-# Mark all tests in this module as slow due to possible remote DB connection
-pytestmark = pytest.mark.slow
-
-# The tests here need MAST DB to be available.
-try:
-    engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
-except RuntimeError as exception:
-    pytest.skip(
-        f"Live MAST Engineering Service not available: {exception}", allow_module_level=True
-    )
 
 # All the FGS GUIDER examples. Generated from proposal JW01029
 FGS_PATHS = sorted(
@@ -253,6 +245,17 @@ META_FGS2 = {
         "crval2": -45.1234,
     },
 }
+
+
+def setup_module(module):
+    """Check DB connection only after slow flag is applied."""
+    # The tests here need MAST DB to be available.
+    try:
+        engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
+    except RuntimeError as exception:
+        pytest.skip(
+            f"Live MAST Engineering Service not available: {exception}", allow_module_level=True
+        )
 
 
 @pytest.mark.parametrize("attr", WCS_ATTRIBUTES)

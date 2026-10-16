@@ -1,4 +1,4 @@
-"""Constraints - use these to define the rules governing association candidate types."""
+"""Constraints in this module are used to define the rules governing association candidate types."""
 
 import abc
 import collections
@@ -25,31 +25,31 @@ logger = logging.getLogger(__name__)
 
 class SimpleConstraintABC(abc.ABC):
     """
-    Simple Constraint ABC.
+    Simple constraint abstract base class.
 
     Parameters
     ----------
     init : dict
         Dictionary where the key-value pairs define
-        the following parameters
+        the following parameters.
 
     value : object or None
-        Value that must be matched
+        Value that must be matched.
 
     name : str or None
-        Option name for constraint
+        Option name for constraint.
 
-    **kwargs : dict
-        Other initialization parameters
+    **kwargs
+        Other initialization parameters.
 
     Attributes
     ----------
-    found_values : set(str[,...])
+    found_values : set of str
         Set of actual found values for this condition. True SimpleConstraints
         do not normally set this; the value is not different than ``value``.
 
     matched : bool
-        Last call to :meth:`~jwst.associations.lib.constraint.SimpleConstraintABC.check_and_set`
+        Last call to :meth:`~jwst.associations.lib.constraint.SimpleConstraintABC.check_and_set`.
     """
 
     # Attributes to show in the string representation.
@@ -111,9 +111,9 @@ class SimpleConstraintABC(abc.ABC):
         Returns
         -------
         success : bool
-            True if check is successful.
+            `True` if check is successful.
 
-        reprocess : list of `~jwst.associations.ProcessList`
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
             Empty list unless overrode by subclass implementation.
         """
         self.matched = True
@@ -130,9 +130,10 @@ class SimpleConstraintABC(abc.ABC):
 
         Returns
         -------
-        dups : {str: [constraint[,...]][,...]}
+        dups : dict
             Returns a mapping between the duplicated name
-            and all the constraints that define that name.
+            and all the constraints that define that name,
+            in the format of ``{str: [constraint[,...]][,...]}``.
         """
         return {}
 
@@ -154,7 +155,7 @@ class SimpleConstraintABC(abc.ABC):
 
         Returns
         -------
-        object
+        `~jwst.associations.lib.constraint.SimpleConstraintABC`
             Deepcopy of self.
         """
         return deepcopy(self)
@@ -170,7 +171,7 @@ class SimpleConstraintABC(abc.ABC):
         Parameters
         ----------
         attribute : str
-            The attribute to retrieve
+            The attribute to retrieve.
 
         name : str or None
             Only return attribute if the name of the current constraint
@@ -180,7 +181,7 @@ class SimpleConstraintABC(abc.ABC):
         Returns
         -------
         list of tuple
-            [(self, value)] : [(SimpleConstraint, object)]
+            ``[(self, value)] : [(SimpleConstraint, object)]``:
             The value of the attribute in the form of ``[(self, value)]``,
             where the types are ``[(SimpleConstraint, object)]``.
             If there is no attribute, an empty list is returned.
@@ -227,12 +228,12 @@ class ConstraintTrue(SimpleConstraintABC):
 
     def check_and_set(self, item):
         """
-        Empty method to return True from parent abstract method.
+        Empty method to return `True` from parent abstract method.
 
         Returns
         -------
         bool
-            True from parent abstract method.
+            `True` from parent abstract method.
         """
         return super(ConstraintTrue, self).check_and_set(item)
 
@@ -247,7 +248,7 @@ class SimpleConstraint(SimpleConstraintABC):
         Dictionary where the key-value pairs define
         the following parameters.
 
-    sources : func(item) or None
+    sources : function or None
         Function taking ``item`` as argument used to
         retrieve a value to check against.
         If None, the item itself is used as the value.
@@ -272,13 +273,15 @@ class SimpleConstraint(SimpleConstraintABC):
     reprocess_on_fail : bool
         Reprocess the item if the constraint is not satisfied.
 
-    work_over : ListCategory.[BOTH, EXISTING, RULES]
+    work_over : `~enum.Enum`
         The condition on which this constraint should operate.
+        This is one of the options in
+        `~jwst.associations.lib.process_list.ListCategory`.
 
-    reprocess_rules : [rule[,..]] or None
+    reprocess_rules : list or None
         List of rules to be applied to.
         If None, calling function will determine the ruleset.
-        If empty, [], all rules will be used.
+        If list is empty, all rules will be used.
 
     Examples
     --------
@@ -364,10 +367,10 @@ class SimpleConstraint(SimpleConstraintABC):
         Returns
         -------
         success : bool
-            True if check is successful.
+            `True` if check is successful.
 
-        reprocess : list of `~jwst.associations.ProcessList`
-            List of ProcessLists.
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of process lists.
         """
         source_value = self.sources(item)
 
@@ -399,7 +402,7 @@ class SimpleConstraint(SimpleConstraintABC):
 
     def eq(self, value1, value2):
         """
-        Check if constraint.value and item are equal.
+        Check if given values are equal.
 
         Parameters
         ----------
@@ -411,7 +414,7 @@ class SimpleConstraint(SimpleConstraintABC):
         Returns
         -------
         bool
-            True if the two values are deemed equal.
+            `True` if the two values are deemed equal.
         """
         return value1 == value2
 
@@ -422,17 +425,18 @@ class AttrConstraint(SimpleConstraintABC):
 
     Parameters
     ----------
-    sources : [str[,...]]
-        List of attributes to query
+    sources : list of str
+        List of attributes to query.
     evaluate : bool
         Evaluate the item's value before checking condition.
-    force_reprocess : ListCategory.state or False
+    force_reprocess : `~enum.Enum` or `False`
         Add item back onto the reprocess list using
-        the specified `~jwst.associations.ProcessList` work over state.
+        the specified `~jwst.associations.lib.process_list.ProcessList` work over state
+        that is defined by `~jwst.associations.lib.process_list.ListCategory`.
     force_unique : bool
         If the initial value is `None` or a list of possible values,
         the constraint will be modified to be the value first matched.
-    invalid_values : [str[,...]]
+    invalid_values : list of str
         List of values that are invalid in an item.
         Will cause a non-match.
     only_on_match : bool
@@ -440,7 +444,7 @@ class AttrConstraint(SimpleConstraintABC):
         if the entire constraint is satisfied.
     onlyif : function
         Boolean function that takes ``item`` as argument.
-        If True, the rest of the condition is checked. Otherwise
+        If `True`, the rest of the condition is checked. Otherwise
         return as a matched condition.
     required : bool
         One of the sources must exist. Otherwise,
@@ -448,7 +452,7 @@ class AttrConstraint(SimpleConstraintABC):
 
     Attributes
     ----------
-    found_values : set(str[,...])
+    found_values : set of str
         Set of actual found values for this condition.
     matched : bool
         Last result of :meth:`check_and_set`.
@@ -505,10 +509,10 @@ class AttrConstraint(SimpleConstraintABC):
         Returns
         -------
         success : bool
-            True if check is successful.
+            `True` if check is successful.
 
-        reprocess : list of `~jwst.associations.ProcessList`
-            List of ProcessLists.
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of process lists.
         """
         reprocess = []
 
@@ -608,11 +612,11 @@ class AttrConstraint(SimpleConstraintABC):
 
 class Constraint:
     """
-    Constraint that is made up of multiple ``SimpleConstraint``.
+    Constraint that is made up of multiple `SimpleConstraint`.
 
     Parameters
     ----------
-    init : object or [object[,...]]
+    init : object or list of object
         A single object or list of objects where the
         objects are as follows:
 
@@ -634,17 +638,19 @@ class Constraint:
     reprocess_on_fail : bool
         Reprocess the item if the constraint is not satisfied.
 
-    work_over : ListCategory.[BOTH, EXISTING, RULES]
+    work_over : `~enum.Enum`
         The condition on which this constraint should operate.
+        This is one of the options in
+        `~jwst.associations.lib.process_list.ListCategory`.
 
-    reprocess_rules : [rule[,..]] or None
+    reprocess_rules : list of rule or None
         List of rules to be applied to.
         If None, calling function will determine the ruleset.
-        If empty, [], all rules will be used.
+        If empty list, all rules will be used.
 
     Attributes
     ----------
-    constraints : [Constraint[,...]]
+    constraints : list
         List of `~jwst.associations.lib.constraint.Constraint` or
         `~jwst.associations.lib.constraint.SimpleConstraint` that
         make this constraint.
@@ -658,16 +664,16 @@ class Constraint:
         boolean indicating state of the components.
         Predefined functions are:
 
-        - :meth:`~jwst.associations.lib.constraint.Constraint.all`: True
-          if all components return True
-        - :meth:`~jwst.associations.lib.constraint.Constraint.any`: True
-          if any component returns True
+        - :meth:`~jwst.associations.lib.constraint.Constraint.all`: `True`
+          if all components return `True`
+        - :meth:`~jwst.associations.lib.constraint.Constraint.any`: `True`
+          if any component returns `True`
 
     Examples
     --------
     Named constraints can be accessed directly through indexing:
 
-    >>> from jwst.associations.lib.constraint import Constraint
+    >>> from jwst.associations.lib.constraint import Constraint, SimpleConstraint
     >>> c = Constraint(SimpleConstraint(name="simple", value="a_value"))
     >>> c["simple"]  # doctest: +IGNORE_OUTPUT
     SimpleConstraint({'sources': <function SimpleConstraint.__init__.<locals>.<lambda>,
@@ -739,9 +745,10 @@ class Constraint:
 
         Returns
         -------
-        dups : {str: [constraint[,...]][,...]}
+        dups : dict
             Returns a mapping between the duplicated name
-            and all the constraints that define that name.
+            and all the constraints that define that name,
+            in the format of ``{str: [constraint[,...]][,...]}``.
         """
         attrs = self.get_all_attr("name")
         constraints, names = zip(*attrs, strict=True)
@@ -778,10 +785,10 @@ class Constraint:
         Returns
         -------
         success : bool
-            True if check is successful.
+            `True` if check is successful.
 
-        reprocess : list of `~jwst.associations.ProcessList`
-            List of ProcessLists.
+        reprocess : list of `~jwst.associations.lib.process_list.ProcessList`
+            List of process lists.
         """
         if work_over not in (self.work_over, ListCategory.BOTH):
             return False, []
@@ -808,11 +815,11 @@ class Constraint:
 
     def copy(self):
         """
-        Copy ourselves.
+        Copy self.
 
         Returns
         -------
-        object
+        `Constraint`
             Deepcopy of self.
         """
         return deepcopy(self)
@@ -824,7 +831,7 @@ class Constraint:
         Parameters
         ----------
         attribute : str
-            The attribute to retrieve
+            The attribute to retrieve.
 
         name : str or None
             Only return attribute if the name of the current constraint
@@ -833,9 +840,10 @@ class Constraint:
 
         Returns
         -------
-        result : [(SimpleConstraint or Constraint, object)[,...]]
-            The list of values of the attribute in a tuple. If there is no attribute,
-            an empty tuple is returned.
+        result : list of tuple
+            The list of values of the attribute in a tuple,
+            in the format of ``[(SimpleConstraint or Constraint, object)[,...]]``.
+            If there is no attribute, an empty tuple is returned.
 
         Raises
         ------
@@ -869,17 +877,21 @@ class Constraint:
 
         Parameters
         ----------
-        item : ACID
+        item : `~jwst.associations.lib.acid.ACID`
             The candidate.
-        constraints : list[Constraint, ...]
+        constraints : list of `Constraint`
             The list of constraints to check.
 
         Returns
         -------
-        bool, list(Constraint, ...) or None
-            True if all constraints positive, with empty list.
-            If no constraints, False and empty list. Otherwise
-            False with list of constraints to reprocess.
+        all_match : bool
+            `True` if all constraints are positive;
+            `False` otherwise.
+
+        to_reprocess : list of `Constraint` or None
+            List is empty if all constraints are positive or
+            there are no constraints. Otherwise, the list
+            contains constraints to reprocess.
         """
         # If there are no constraints, there is nothing to match.
         # Result is false.
@@ -926,17 +938,19 @@ class Constraint:
 
         Parameters
         ----------
-        item : ACID
+        item : `~jwst.associations.lib.acid.ACID`
             The candidate.
-        constraints : list[Constraint, ...]
+        constraints : list of `Constraint`
             The list of constraints to check.
 
         Returns
         -------
-        bool, list(Constraint, ...) or None
-            False, [] if no match or constraints to reprocess.
-            True, list(Constraints) if match found, and any constraints
-            to reprocess listed.
+        match : bool
+            `False` if no match. `True` if match found.
+
+        to_reprocess : list of `Constraint` or None
+            List is empty if there is no match. Otherwise,
+            it contains any constraints to reprocess.
         """
         # If there are no constraints, there is nothing to match.
         # Result is false.
@@ -955,19 +969,19 @@ class Constraint:
     @staticmethod
     def notany(item, constraints):
         """
-        Check if none of the constraints match; true if none do.
+        Check if none of the constraints matches; True if none does.
 
         Parameters
         ----------
-        item : ACID
+        item : `~jwst.associations.lib.acid.ACID`
             The candidate.
-        constraints : list[Constraint, ...]
+        constraints : list of `Constraint`
             The list of constraints to check.
 
         Returns
         -------
         bool
-            True if none of the constraints match.
+            `True` if none of the constraints matches.
         """
         match, to_reprocess = Constraint.any(item, constraints)
         return not match, to_reprocess
@@ -975,19 +989,19 @@ class Constraint:
     @staticmethod
     def notall(item, constraints):
         """
-        Check if not all of the constraints match; true if not all do.
+        Check if not all of the constraints match; True if not all do.
 
         Parameters
         ----------
-        item : ACID
+        item : `~jwst.associations.lib.acid.ACID`
             The candidate.
-        constraints : list[Constraint, ...]
+        constraints : list of `Constraint`
             The list of constraints to check.
 
         Returns
         -------
         bool
-            True if not all constraints match.
+            `True` if not all constraints match.
         """
         match, to_reprocess = Constraint.all(item, constraints)
         return not match, to_reprocess
@@ -1046,6 +1060,8 @@ class Constraint:
 
 
 # Utilities
+
+
 def meets_conditions(value, conditions):
     """
     Check whether value meets any of the provided conditions.
@@ -1060,7 +1076,7 @@ def meets_conditions(value, conditions):
     Returns
     -------
     bool
-        True if any condition is meant.
+        `True` if any condition is met.
     """
     if not is_iterable(conditions):
         conditions = [conditions]
@@ -1089,7 +1105,7 @@ def reprocess_multivalue(item, source, values, constraint):
 
     Returns
     -------
-    process_list : `~jwst.associations.ProcessList`
+    process_list : `~jwst.associations.lib.process_list.ProcessList`
         The process list to put on the reprocess queue
     """
     reprocess_items = []

@@ -1,0 +1,1 @@
+Fix ``CubeBuildStep.check_offset_file`` to catch any ``asdf.exceptions.ValidationError`` produced by invalid offset files and convert them to an expected ``ValueError``.

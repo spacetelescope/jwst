@@ -1,9 +1,4 @@
-"""
-Association Registry and Markers.
-
-The Registry object holds a set of rules used to generate association
-candidates from a list of PoolRow entries.
-"""
+"""Module to handle association registry and markers."""
 
 import importlib.util
 import logging
@@ -13,6 +8,8 @@ from os.path import (
     expandvars,
 )
 from pathlib import Path
+
+from astropy.utils.decorators import deprecated_renamed_argument
 
 from jwst.associations import libpath
 from jwst.associations.exceptions import AssociationError, AssociationNotValidError
@@ -31,23 +28,44 @@ class AssociationRegistry(dict):
     """
     The available association rules to match against.
 
+    This class holds a set of rules used to generate association
+    candidates from a list of `~jwst.associations.pool.PoolRow` entries.
+
+    Parameters
+    ----------
+    definition_files : list of str or None
+        The files to find the association definitions in.
+    include_default : bool
+        `True` to include the default definitions.
+    global_constraints : `~jwst.associations.lib.constraint.Constraint` or None
+        Constraints to be added to each rule.
+    name : str or None
+        An identifying string, used to prefix rule names.
+    include_bases : bool
+        If `True`, include base classes not considered rules.
+
     Notes
     -----
     The general workflow is as follows:
 
-        * Create the registry
-            >>> from jwst.associations.registry import AssociationRegistry
-            >>> registry = AssociationRegistry()
+    1. Create the registry::
 
-        * Create associations from an item
-            >>> associations, reprocess = registry.match(item)  # doctest: +SKIP
+        from jwst.associations.registry import AssociationRegistry
 
-        * Finalize the associations
-            >>> final_asns = registry.callback.reduce("finalize", associations)  # doctest: +SKIP
+        registry = AssociationRegistry()
+
+    2. Create associations from an item::
+
+        associations, reprocess = registry.match(item)
+
+    3. Finalize the associations::
+
+        final_asns = registry.callback.reduce("finalize", associations)
 
     In practice, this is one step in a larger loop over all items to
     be associated. This does not account for adding items to already
-    existing associations. See :py:func:`~jwst.associations.generate` for more information.
+    existing associations. See :func:`~jwst.associations.generator.generate.generate`
+    for more information.
     """
 
     def __init__(
@@ -58,23 +76,6 @@ class AssociationRegistry(dict):
         name=None,
         include_bases=False,
     ):
-        """
-        Initialize a new registry.
-
-        Parameters
-        ----------
-        definition_files : [str,] or None
-            The files to find the association definitions in.
-        include_default : bool
-            True to include the default definitions.
-        global_constraints : Constraint or None
-            Constraints to be added to each rule.
-        name : str or None
-            An identifying string, used to prefix rule names.
-        include_bases : bool
-            If True, include base classes not considered
-            rules.
-        """
         super().__init__()
 
         # Generate a UUID for this instance. Used to modify rule
@@ -121,23 +122,24 @@ class AssociationRegistry(dict):
         Parameters
         ----------
         item : dict
-            An item, like from a Pool, to find associations for.
+            An item, like from an `~jwst.associations.pool.AssociationPool`,
+            to find associations for.
         version_id : str
             If specified, a string appended to association names.
             If None, nothing is used.
-        allow : [type(Association), ...]
+        allow : list of `~jwst.associations.association.Association`
             List of rules to allow to be matched. If None, all
             available rules will be used.
-        ignore : list
+        ignore : list of `~jwst.associations.association.Association`
             A list of associations to ignore when looking for a match.
             Intended to ensure that already created associations
             are not re-created.
 
         Returns
         -------
-        associations : [association,...]
+        associations : list of `~jwst.associations.association.Association`
             List of associations item belongs to, empty if none match.
-        reprocess_list : [AssociationReprocess, ...]
+        reprocess_list : list of `~jwst.associations.lib.process_list.ProcessList`
             List of reprocess events.
         """
         if allow is None:
@@ -160,7 +162,7 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        association : association-like
+        association : `~jwst.associations.association.Association`
             The data to validate.
 
         Returns
@@ -170,27 +172,26 @@ class AssociationRegistry(dict):
 
         Raises
         ------
-        AssociationNotValidError
+        jwst.associations.exceptions.AssociationNotValidError
             Association did not validate.
         """
-
-        # Change rule validation from an exception
-        # to a boolean
-        def is_valid(rule, association):
-            try:
-                rule.validate(association)
-            except AssociationNotValidError:
-                return False
-            else:
-                return True
-
-        results = [rule for rule_name, rule in self.items() if is_valid(rule, association)]
+        results = [
+            rule for rule in self.values() if rule.validate(association, error_on_fail=False)
+        ]
 
         if len(results) == 0:
             raise AssociationNotValidError(f'Structure did not validate: "{association}"')
         return results
 
-    def load(self, serialized, fmt=None, validate=True, first=True, **kwargs):
+    @deprecated_renamed_argument("fmt", None, since="2.1")
+    def load(
+        self,
+        serialized,
+        fmt=None,  # noqa: ARG002
+        validate=True,
+        first=True,
+        **kwargs,
+    ):
         """
         Load a previously serialized association.
 
@@ -198,30 +199,38 @@ class AssociationRegistry(dict):
         ----------
         serialized : object
             The serialized form of the association.
+
         fmt : str or None
             The format to force. If None, try all available.
+
+            .. version-deprecated:: 2.1
+                Only JSON format is supported now.
+
         validate : bool
             Validate against the class's defined schema, if any.
+
         first : bool
             A serialization potentially matches many rules.
             Only return the first successful load.
-        **kwargs : dict
-            Other arguments to pass to the `load` method.
+
+        **kwargs
+            Other arguments to pass to the :meth:`load` method.
 
         Returns
         -------
-        association or [association, ...]
-            The Association object, or the list of association objects.
+        `~jwst.associations.association.Association` or \
+        list of `~jwst.associations.association.Association`
+            The association or a list of them.
 
         Raises
         ------
-        AssociationError
+        jwst.associations.exceptions.AssociationError
             Cannot create or validate the association.
         """
         results = []
         for _rule_name, rule in self.items():
             try:
-                results.append(rule.load(serialized, format=fmt, validate=validate, **kwargs))
+                results.append(rule.load(serialized, validate=validate, **kwargs))
             except (AssociationError, AttributeError) as err:
                 lasterr = err
                 continue
@@ -311,8 +320,8 @@ class RegistryMarker:
 
             Returns
             -------
-            pathlib.PosixPath
-                The path to the AssociationRegistry schema.
+            `~pathlib.PosixPath`
+                The path to the `AssociationRegistry` schema.
             """
             return self.asnreg_schema
 
@@ -336,11 +345,11 @@ class RegistryMarker:
         -----
         The following attributes are added to the object:
 
-        - asnreg_mark : True
-              Attribute added to object and is set to True.
-        - asnreg_role : str or None
-              If not already assigned, the role is left
-              unspecified using None.
+        - ``asnreg_mark`` (bool):
+          Always `True`.
+        - ``asnreg_role`` (str or None):
+          If not already assigned, the role is left
+          unspecified using None.
         """
         obj.asnreg_marked = True
         obj.asnreg_role = getattr(obj, "asnreg_role", None)
@@ -365,10 +374,10 @@ class RegistryMarker:
         -----
         The following attributes are added to the object:
 
-        - asnreg_role : 'rule'
-              Attributed added to object and set to `rule`.
-        - asnreg_mark : True
-              Attributed added to object and set to True.
+        - ``asnreg_role`` (str):
+          Always "rule".
+        - ``asnreg_mark`` (bool):
+          Always `True`.
         """
         obj.asnreg_role = "rule"
         RegistryMarker.mark(obj)
@@ -393,12 +402,12 @@ class RegistryMarker:
         -----
         The following attributes are added to the object:
 
-        - asnreg_role : 'callback'
-              The role the object as been assigned.
-        - asnreg_events : [event[, ...]]
-              The events this callable object is a callback for.
-        - asnreg_mark : True
-              Indicated that the object has been marked.
+        - ``asnreg_role`` (str):
+          The role the object as been assigned; always "callback".
+        - ``asnreg_events`` (list):
+          The events this callable object is a callback for.
+        - ``asnreg_mark`` (bool):
+          Indicate that the object has been marked; always `True`.
         """
 
         def decorator(func):
@@ -422,7 +431,7 @@ class RegistryMarker:
         Returns
         -------
         schema
-            The schema object.
+            The schema instance.
         """
         schema = RegistryMarker.Schema(filename)
         return schema
@@ -430,7 +439,7 @@ class RegistryMarker:
     @staticmethod
     def utility(class_obj):
         """
-        Mark the class as a Utility class.
+        Mark the class as a utility class.
 
         Returns
         -------
@@ -455,6 +464,8 @@ class RegistryMarker:
 
 
 # Utilities
+
+
 def import_from_file(filename):
     """
     Import a file as a module.
@@ -466,7 +477,7 @@ def import_from_file(filename):
 
     Returns
     -------
-    module : python module
+    module
         The imported module
     """
     path = expandvars(str(Path(filename).expanduser()))
@@ -483,20 +494,20 @@ def get_marked(module, predicate=None, include_bases=False):
 
     Parameters
     ----------
-    module : python module
-        The module to examine
+    module : module
+        The module to examine.
 
-    predicate : bool func(object)
+    predicate : func or None
         Determinant of what gets returned.
-        If None, all object types are examined
+        If None, all object types are examined.
 
     include_bases : bool
-        If True, include base classes not considered
+        If `True`, include base classes not considered
         rules.
 
     Returns
     -------
-    class object : generator
+    generator
         A generator that will yield all class members in the module.
     """
 
@@ -531,7 +542,7 @@ def valid_class(obj):
     Returns
     -------
     is_valid : bool
-        True if the object could be considered a rule class
+        `True` if the object could be considered a rule class
     """
     is_valid = type(obj) is not EnumMeta and isclass(obj)
     return is_valid

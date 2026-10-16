@@ -329,7 +329,7 @@ associations is::
 Some pipelines, such as :ref:`calwebb_spec3 <calwebb_spec3>`, call steps which
 are supposed to save their results, but whose basenames should not be based on
 the association product name. An example is the
-`~jwst.outlier_detection.OutlierDetectionStep` step. For such steps, one can
+`~jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` step. For such steps, one can
 prevent using the ``Pipeline.output_file`` specification by setting the parameter
 ``search_output_file=False``. When such steps then save their output, they will go
 through the standard basename search. If nothing else is specified, the basename

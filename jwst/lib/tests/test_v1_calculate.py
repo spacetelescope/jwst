@@ -4,6 +4,9 @@ import pytest
 
 pytest.importorskip("pysiaf")
 
+# Mark all tests in this module as slow due to possible remote DB connection
+pytestmark = pytest.mark.slow
+
 import numpy as np  # noqa: E402
 from astropy.table import Table  # noqa: E402
 from astropy.time import Time  # noqa: E402
@@ -14,16 +17,17 @@ import jwst.lib.set_telescope_pointing as stp  # noqa: E402
 import jwst.lib.v1_calculate as v1c  # noqa: E402
 from jwst.lib import engdb_mast  # noqa: E402
 
-# Mark all tests in this module as slow due to possible remote DB connection
-pytestmark = pytest.mark.slow
 
-# The tests here need MAST DB to be available.
-try:
-    engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
-except RuntimeError as exception:
-    pytest.skip(
-        f"Live MAST Engineering Service not available: {exception}", allow_module_level=True
-    )
+def setup_module(module):
+    """Check DB connection only after slow flag is applied."""
+    # The tests here need MAST DB to be available.
+    try:
+        engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
+    except RuntimeError as exception:
+        pytest.skip(
+            f"Live MAST Engineering Service not available: {exception}", allow_module_level=True
+        )
+
 
 # Engineering parameters
 # Time range corresponds to OTE-1 exposure jw01134001037_03107_00001_nrcb1_uncal.fits

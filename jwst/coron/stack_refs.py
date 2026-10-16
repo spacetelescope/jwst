@@ -14,18 +14,18 @@ def make_cube(input_models):
     """
     Stack all integrations from multiple PSF reference exposures.
 
-    Result is a single CubeModel, for use in the
+    Result is a single cube model, for use in the
     coronagraphic alignment and PSF-subtraction steps.
 
     Parameters
     ----------
-    input_models : list or ModelContainer
-        List or ModelContainer containing input DataModels
+    input_models : list or `~jwst.datamodels.container.ModelContainer`
+        List or model container containing input data models
 
     Returns
     -------
-    output_model : CubeModel
-        CubeModel of stacked PSF images
+    output_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        Cube model of stacked PSF images
     """
     # Get the number of input images
     num_refs = len(input_models)

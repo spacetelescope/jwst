@@ -1,0 +1,1 @@
+Allow snowball flagging in the first group and the NIRCam zeroframe if present.

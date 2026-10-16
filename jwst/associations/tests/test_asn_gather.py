@@ -28,7 +28,7 @@ def source_folder(tmp_path_factory):
     source_folder = tmp_path_factory.mktemp("asn_gather_source")
     with pushdir(source_folder):
         # Create all the files
-        for expname, exptype in primary_members:
+        for expname, _exptype in primary_members:
             with open(expname, "w") as fh:
                 fh.write(expname)
 
@@ -104,6 +104,12 @@ def test_all_members(gather):
 
     source_asn = LoadAsAssociation.load(source_folder / PRIMARY_NAME)
     asn = LoadAsAssociation.load(asn_path)
+
+    asn2 = LoadAsAssociation.load(asn)
+    assert asn2 is asn
+
+    asn3 = LoadAsAssociation.load(asn.data)
+    assert asn3.data is asn.data
 
     excludes = [] if excludes is None else excludes
     if exptypes is None:

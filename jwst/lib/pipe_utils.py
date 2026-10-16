@@ -135,11 +135,18 @@ def match_nans_and_flags(input_model):
 
     # Add in invalid flags from the DQ extension if present
     if getattr(input_model, "dq", None) is not None:
+        # Try to copy do_not_use flags to is_invalid: this should work even for
+        # models with 2D DQ and 3D data
         do_not_use = (input_model.dq & dqflags.pixel["DO_NOT_USE"]).astype(bool)
+        try:
+            is_invalid |= do_not_use
+        except (IndexError, ValueError):
+            pass
         if input_model.dq.shape != data_shape:
+            # Skip updating the DQ plane: it's not clear how to propagate
+            # invalid data if the shape doesn't match
             log.warning("Mismatched data shapes; skipping invalid data updates for extension 'dq'")
         else:
-            is_invalid |= do_not_use
             input_model.dq[is_invalid] |= dqflags.pixel["DO_NOT_USE"]
 
     # Update all the data extensions

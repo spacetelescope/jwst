@@ -7,12 +7,18 @@ from jwst.associations import config
 from jwst.associations.lib import diff
 from jwst.associations.lib.product_utils import get_product_names, sort_by_candidate
 
-__all__ = ["prune"]
+__all__ = [
+    "prune",
+    "prune_duplicate_associations",
+    "prune_duplicate_products",
+    "prune_remove",
+    "identify_dups",
+]
 
 logger = logging.getLogger(__name__)
 
 # Duplicate association counter
-# Used in function `prune_remove`
+# Used in function prune_remove
 DupCount = 0
 
 
@@ -35,12 +41,12 @@ def prune(asns):
 
     Parameters
     ----------
-    asns : [Association[,...]]
+    asns : list of `~jwst.associations.association.Association`
         Associations to prune
 
     Returns
     -------
-    pruned : [Association[,...]]
+    pruned : list of `~jwst.associations.association.Association`
         Pruned list of associations
     """
     pruned = prune_duplicate_associations(asns)
@@ -61,12 +67,12 @@ def prune_duplicate_associations(asns):
 
     Parameters
     ----------
-    asns : [Association[,...]]
+    asns : list of `~jwst.associations.association.Association`
         Associations to prune
 
     Returns
     -------
-    pruned : [Association[,...]]
+    pruned : list of `~jwst.associations.association.Association`
         Pruned list of associations
     """
     known_dups, valid_asns = identify_dups(asns)
@@ -96,16 +102,16 @@ def prune_duplicate_products(asns):
     Remove duplicate products in favor of higher level versions.
 
     The assumption is that there is only one product per association, before
-    merging
+    merging.
 
     Parameters
     ----------
-    asns : [Association[,...]]
+    asns : list of `~jwst.associations.association.Association`
         Associations to prune
 
     Returns
     -------
-    pruned : [Association[,...]]
+    pruned : list of `~jwst.associations.association.Association`
         Pruned list of associations
     """
     known_dups, valid_asns = identify_dups(asns)
@@ -182,23 +188,23 @@ def prune_remove(remove_from, to_remove, known_dups):
     """
     Remove or rename associations to be pruned.
 
-    Default behavior is to remove associations listed in the `to_remove`
-    list from the `remove_from` list.
+    Default behavior is to remove associations listed in the ``to_remove``
+    list from the ``remove_from`` list.
 
-    However, if `config.DEBUG` is `True`, that association is simply
+    However, if ``jwst.associations.config.DEBUG`` is `True`, that association is simply
     renamed, adding the string "dupXXXXX" as a prefix to the association's
     name.
 
     Parameters
     ----------
-    remove_from : [Association[,...]]
+    remove_from : list of `~jwst.associations.association.Association`
         The list of associations from which associations will be removed.
         List is modified in-place.
 
-    to_remove : [Association[,...]]
-        The list of associations to remove from the `remove_from` list.
+    to_remove : list of `~jwst.associations.association.Association`
+        The list of associations to remove from the ``remove_from`` list.
 
-    known_dups : [Association[,...]]
+    known_dups : list of `~jwst.associations.association.Association`
         Known duplicates. New ones are added by this function
         if debugging is in effect.
     """
@@ -237,13 +243,13 @@ def identify_dups(asns):
 
     Parameters
     ----------
-    asns : [Association[,...]]
+    asns : list of `~jwst.associations.association.Association`
         Associations to prune
 
     Returns
     -------
-    identified, valid : [Association[,...]], [Association[,...]]
-        Dup-identified and valid associations
+    identified, valid : list of `~jwst.associations.association.Association`
+        Dup-identified and valid associations, respectively
     """
     identified = []
     valid = []

@@ -26,7 +26,6 @@ from jwst.assign_wcs import AssignWcsStep, nircam
 from jwst.assign_wcs.util import create_grism_bbox
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.grisms import (
-    compute_tso_offset_center,
     extract_grism_objects,
     extract_tso_object,
     radec_to_source_ids,
@@ -182,6 +181,8 @@ def create_tso_wcsimage(filtername="F277W", subarray=False):
     im = CubeModel(hdul)
     im.meta.wcsinfo.siaf_xref_sci = 887.0
     im.meta.wcsinfo.siaf_yref_sci = 35.0
+    im.meta.dither.x_offset = 0
+    im.meta.dither.y_offset = 1.45
     aswcs = AssignWcsStep()
     return aswcs.process(im)
 
@@ -335,6 +336,16 @@ def test_create_specific_orders():
         assert [1] == list(ids[0].order_bounding.keys())
 
 
+def test_create_grism_bbox_none_defined(log_watcher):
+    imwcs, refs = setup_image_cat()
+
+    watcher = log_watcher("jwst.assign_wcs.util", message="No grism objects saved", level="warning")
+    grism_objects = create_grism_bbox(imwcs, refs, mmag_extract=-100.0)
+    watcher.assert_seen()
+    assert isinstance(grism_objects, list)
+    assert len(grism_objects) == 0
+
+
 @pytest.mark.parametrize("subarray", [True, False])
 def test_extract_tso_subarray(subarray):
     """Test extraction of a TSO object.
@@ -377,20 +388,24 @@ def test_extract_tso_subarray(subarray):
 
 
 def test_extract_tso_height():
-    """Test extraction of a TSO object with given height.
+    """
+    Test extraction of a TSO object with given height.
 
     NRC_TSGRISM mode doesn't use the catalog since
     objects are always in the same place on the
     detector. This does an actual test of the
     extraction with a small CubeModel
     """
-
     wcsimage = create_tso_wcsimage(subarray=False)
     refs = get_reference_files(wcsimage)
     outmodel = extract_tso_object(wcsimage, tsgrism_extract_height=50, reference_files=refs)
+
     assert isinstance(outmodel, SlitModel)
+
+    original_source_y = 34
+    shifted_source_y = 25
     assert outmodel.source_xpos == (outmodel.meta.wcsinfo.siaf_xref_sci - 1)
-    assert outmodel.source_ypos == 34
+    assert outmodel.source_ypos == shifted_source_y
     assert outmodel.source_id == 1
     assert outmodel.xstart > 0
     assert outmodel.ystart > 0
@@ -406,15 +421,27 @@ def test_extract_tso_height():
     assert num == wcsimage.data.shape[0]
     assert ysize == 50
     assert xsize == NIRCAM_TSO_WIDTH
+
+    # check the cutout WCS is shifted appropriately
+    xin, order = 5, 1
+    orig_ra, orig_dec, orig_lam, _ = wcsimage.meta.wcs(xin, original_source_y, order)
+    ra, dec, lam, _ = outmodel.meta.wcs(xin, shifted_source_y)
+    assert np.allclose([ra, dec, lam], [orig_ra, orig_dec, orig_lam])
+
+    orig_xout, orig_yout, _ = wcsimage.meta.wcs.backward_transform(
+        orig_ra, orig_dec, orig_lam, order
+    )
+    xout, yout = outmodel.meta.wcs.backward_transform(ra, dec, lam, order)
+
+    # X should round trip within a few hundredths of a pixel
+    assert np.allclose([orig_xout, xout], xin, atol=0.02)
+
+    # Y should round trip within a few tenths -- the source position is close
+    # to the trace at x0 but not exactly on top of it
+    assert np.isclose(orig_yout, original_source_y, atol=0.2)
+    assert np.isclose(yout, shifted_source_y, atol=0.2)
+
     del outmodel
-
-
-def test_compute_tso_offset_center():
-    image_model = create_tso_wcsimage(filtername="F444W", subarray=False)
-    distortion = image_model.meta.wcs.get_transform("v2v3", "direct_image")
-    xc, yc = compute_tso_offset_center(image_model, distortion)
-    assert np.isclose(yc, 59.929, atol=1e-3)
-    assert np.isclose(xc, 961.355, atol=1e-3)
 
 
 @pytest.mark.parametrize("source_ids", [None, 9, [19, 25]])
@@ -585,8 +612,7 @@ def test_wfss_extract_custom_height():
 def test_wfss_extract_custom_wavelength_range():
     """Test WFSS extraction with a user supplied wavelength_range."""
     imwcs, refs = setup_image_cat()
-    test_boxes = create_grism_bbox(imwcs, mmag_extract=99.0, wavelength_range={1: (3.01, 4.26)})
-
+    test_boxes = create_grism_bbox(imwcs, mmag_extract=99.0, wavelength_range={1: (3.177, 3.4)})
     for sid in [9, 19]:
         ids = [source for source in test_boxes if source.sid == sid]
         assert len(ids) == 1

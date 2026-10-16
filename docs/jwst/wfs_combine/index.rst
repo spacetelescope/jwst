@@ -9,5 +9,4 @@ WFS Combine
 
    main.rst
    arguments.rst
-
-.. automodapi:: jwst.wfs_combine
+   api_ref.rst

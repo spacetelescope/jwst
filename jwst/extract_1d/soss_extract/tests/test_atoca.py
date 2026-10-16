@@ -2,7 +2,7 @@ from functools import partial
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_array
 
 from jwst.extract_1d.soss_extract import atoca
 from jwst.extract_1d.soss_extract.tests.helpers import (
@@ -134,7 +134,7 @@ def test_extraction_engine_init(
     # test assignment of empty attributes
     for att in ["w_t_wave_c", "tikho_mat", "_tikho_mat"]:
         assert hasattr(engine, att)
-    assert getattr(engine, "pixel_mapping") == [None, None, None]
+    assert engine.pixel_mapping == [None, None, None]
 
 
 def test_extraction_engine_bad_inputs(
@@ -202,7 +202,7 @@ def test_update_throughput(engine, throughput):
     # test callable input
     new_thru = [throughput[1], throughput[1]]
     engine.update_throughput(new_thru)
-    for i, thru in enumerate(engine.throughput):
+    for thru in engine.throughput:
         assert isinstance(thru, np.ndarray)
         assert thru.shape == engine.wave_grid.shape
     assert np.allclose(engine.throughput[0], engine.throughput[1])
@@ -240,7 +240,7 @@ def test_create_kernels(webb_kernels, engine):
         assert len(kernel_list) == 2
         for order in [0, 1]:
             kern = kernel_list[order]
-            assert isinstance(kern, csr_matrix)
+            assert isinstance(kern, csr_array)
             assert kern.dtype == np.float64
 
 

@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.12,<3.15"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -12,31 +12,30 @@ classifiers = [
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "asdf>=5.1,<6",
+    "asdf>=5.3.1,<6",
     "astropy>=7.2",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.4,!=13.1.15",
     "gwcs>=1.0.3,<2",
     "numpy>=2.0",
     "photutils>=3.0,<4",
-    "pyyaml>=6",
+    "pyyaml>=6.0.1",
     "requests>=2.32",
-    "scikit-image>=0.23.0",
-    "scipy>=1.15.3",
-    "stdatamodels>=6.0.0,<6.1",
-    # "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
-    "stcal>=1.19.1,<2",
-    # "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
-    "stpipe>=1.0.0,<2",
-    # "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
+    "scikit-image>=0.23.1",
+    "scipy>=1.18.0",
+    # "stdatamodels>=6.0.0,<6.1",
+    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
+    #"stcal>=1.19.1,<2",
+    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
+    # "stpipe>=1.0.0,<2",
+    "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
     "synphot>=1.6",
-    "tweakwcs>=0.9.1,<0.10",
+    "tweakwcs>=0.9.2,<0.10",
     "packaging>=23.0",
     "importlib-metadata>=4.11.4",
     "jsonschema>=4.8",
@@ -63,7 +62,6 @@ asn_from_list = "jwst.associations.asn_from_list:main"
 asn_gather = "jwst.scripts.asn_gather:main"
 asn_generate = "jwst.associations.main:main"
 asn_make_pool = "jwst.scripts.asn_make_pool:main"
-collect_pipeline_cfgs = "jwst.scripts.collect_pipeline_cfgs:main"
 pointing_summary = "jwst.scripts.pointing_summary:main"
 set_telescope_pointing = "jwst.scripts.set_telescope_pointing:main"
 "set_telescope_pointing.py" = "jwst.scripts.set_telescope_pointing:deprecated_name"
@@ -115,7 +113,10 @@ build-backend = "setuptools.build_meta"
 [tool.cibuildwheel]
 build = "cp311-*"  # build for CPython 3.11 Stable API
 skip = ["cp3*t-*"]  # explicitly skip free-threaded builds
-test-command = "python -c 'from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart'"
+test-command = 'python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"'
+
+[tool.cibuildwheel.macos]
+archs = ["arm64", "x86_64"]
 
 [tool.setuptools]
 zip-safe = false
@@ -171,6 +172,7 @@ include = ["jwst*"]
 ]
 "jwst.cube_build.src" = [
     "*.c",
+    "*.h",
 ]
 "jwst.straylight.src" = [
     "*.c",
@@ -214,7 +216,7 @@ norecursedirs = [
 ]
 junit_family = "xunit2"
 inputs_root = "jwst-pipeline"
-results_root = "jwst-pipeline-results"
+results_root = "jwst-pipeline-results/regression-tests/runs"
 text_file_format = "rst"
 doctest_plus = "enabled"
 doctest_rst = "enabled"
@@ -292,7 +294,7 @@ warn_return_any = true
 warn_unused_configs = true
 disable_error_code = "import-untyped" # do not check imports
 exclude = ["build"]
-python_version = "3.11"
+python_version = "3.13"
 
 [[tool.mypy.overrides]]
 # don't complain about the installed c parts of this library
@@ -370,7 +372,7 @@ showcontent = true
 
 [[tool.towncrier.type]]
 directory = "ami"
-name = 'ami_analyze / ami_normalize / ami_average (ami3)'
+name = 'ami_analyze / ami_normalize (ami3)'
 showcontent = true
 
 [[tool.towncrier.type]]
@@ -521,11 +523,6 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "msaflagopen"
 name = 'msaflagopen (spec2 IFU, spec2 MOS)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "nsclean"
-name = "nsclean (spec2 IFU, spec2 MOS)"
 showcontent = true
 
 [[tool.towncrier.type]]

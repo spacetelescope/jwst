@@ -1,7 +1,7 @@
 .. _psf_reffile:
 
 PSF Reference File
-^^^^^^^^^^^^^^^^^^
+------------------
 
 :REFTYPE: PSF
 :Data model: `~stdatamodels.jwst.datamodels.SpecPsfModel`
@@ -9,19 +9,18 @@ PSF Reference File
 The PSF reference file contains a model of the 1-D point spread function
 by wavelength, intended to support spectral modeling and extraction.
 
-
 Reference Selection Keywords for PSF
 ++++++++++++++++++++++++++++++++++++
 CRDS selects appropriate PSF references based on the following keywords.
 PSF is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
-========== =========================================================================
+========== ====================================
 Instrument Keywords
-========== =========================================================================
+========== ====================================
 MIRI       INSTRUME, DETECTOR, FILTER, EXP_TYPE
 NIRSpec    INSTRUME, DETECTOR, FILTER, EXP_TYPE
-========== =========================================================================
+========== ====================================
 
 .. include:: ../includes/standard_keywords.inc
 

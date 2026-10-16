@@ -1,0 +1,1 @@
+Explicitly avoid the ``resample_spec`` step for MIRI-LRS_SLITLESS data in the spec3 pipeline, to match handling in the spec2 pipeline.

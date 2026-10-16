@@ -7,11 +7,10 @@ SUPERBIAS is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
 ========== ==================================================================================================
-Instrument Keywords                                                                                           
+Instrument Keywords
 ========== ==================================================================================================
-FGS        INSTRUME, DETECTOR, READPATT, SUBARRAY, DATE-OBS, TIME-OBS                                         
-NIRCam     INSTRUME, DETECTOR, READPATT, SUBARRAY, DATE-OBS, TIME-OBS                                         
-NIRISS     INSTRUME, DETECTOR, READPATT, SUBARRAY, DATE-OBS, TIME-OBS                                         
-NIRSpec    INSTRUME, DETECTOR, READPATT, SUBARRAY, SUBSTRT1, SUBSTRT2, SUBSIZE1, SUBSIZE2, DATE-OBS, TIME-OBS 
+FGS        INSTRUME, DETECTOR, READPATT, SUBARRAY, DATE-OBS, TIME-OBS
+NIRCam     INSTRUME, DETECTOR, READPATT, SUBARRAY, DATE-OBS, TIME-OBS
+NIRISS     INSTRUME, DETECTOR, READPATT, SUBARRAY, DATE-OBS, TIME-OBS
+NIRSpec    INSTRUME, DETECTOR, READPATT, SUBARRAY, SUBSTRT1, SUBSTRT2, SUBSIZE1, SUBSIZE2, DATE-OBS, TIME-OBS
 ========== ==================================================================================================
-

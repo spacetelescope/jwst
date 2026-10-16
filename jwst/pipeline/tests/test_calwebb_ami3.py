@@ -1,26 +1,24 @@
-import json
+from pathlib import Path
 
-import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.ami.tests.helpers import example_model
 from jwst.pipeline import Ami3Pipeline
 
 
-@pytest.fixture()
-def ami3_asn(tmp_path):
+def test_niriss_ami3(tmp_cwd):
+    """Smoke test for ami3 for NIRISS."""
     input_model = example_model()
     input_name = "test_sci_cal.fits"
-    input_model.save(str(tmp_path / input_name))
+    input_model.save(input_name)
     input_model.close()
 
     psf_model = example_model()
     psf_name = "test_psf_cal.fits"
-    psf_model.save(str(tmp_path / psf_name))
+    psf_model.save(psf_name)
     psf_model.close()
 
-    asn_path = tmp_path / "test_ami3_asn.json"
-    asn = {
+    ami3_asn = {
         "asn_id": "c1000",
         "asn_pool": "test_pool.csv",
         "products": [
@@ -34,15 +32,7 @@ def ami3_asn(tmp_path):
         ],
     }
 
-    with asn_path.open("w") as asn_file:
-        json.dump(asn, asn_file)
-
-    return str(asn_path)
-
-
-def test_niriss_ami3(tmp_path, ami3_asn):
-    """Smoke test for ami3 for NIRISS."""
-    Ami3Pipeline.call(ami3_asn, output_dir=str(tmp_path))
+    Ami3Pipeline.call(ami3_asn)
 
     # Check for expected output files
     expected = [
@@ -51,8 +41,8 @@ def test_niriss_ami3(tmp_path, ami3_asn):
         "test_ami3_aminorm-oi.fits",
     ]
     for filename in expected:
-        assert (tmp_path / filename).exists()
-        with datamodels.open(str(tmp_path / filename)) as model:
+        assert Path(filename).exists()
+        with datamodels.open(filename) as model:
             assert model.meta.cal_step.ami_analyze == "COMPLETE"
             if "norm" in filename:
                 assert model.meta.cal_step.ami_normalize == "COMPLETE"

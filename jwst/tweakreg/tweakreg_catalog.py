@@ -6,16 +6,16 @@ import warnings
 
 import astropy.units as u
 import numpy as np
+import photutils
 from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import QTable
-from astropy.utils import lazyproperty
+from astropy.utils import lazyproperty, minversion
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils import use_future_column_names
 from photutils.background import Background2D, MedianBackground
 from photutils.detection import DAOStarFinder, IRAFStarFinder
 from photutils.segmentation import SourceCatalog, SourceFinder
-from photutils.segmentation.catalog import DEFAULT_COLUMNS
 from photutils.utils import NoDetectionsWarning
 from stdatamodels.jwst.datamodels import ImageModel, dqflags
 
@@ -23,14 +23,6 @@ log = logging.getLogger(__name__)
 
 
 __all__ = ["make_tweakreg_catalog"]
-
-SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
-    "ellipticity",
-    "sky_bbox_ll",
-    "sky_bbox_ul",
-    "sky_bbox_lr",
-    "sky_bbox_ur",
-]
 
 
 class JWSTBackground:
@@ -220,8 +212,13 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     """
     default_kwargs = {
         "n_pixels": 10,
-        "progress_bar": False,
     }
+
+    # The progress_bar parameter is deprecated for photutils v3.1:
+    # add it here only if the installed version is 3.0 or earlier.
+    if not minversion(photutils, "3.0.1.dev"):
+        default_kwargs["progress_bar"] = False
+
     kwargs = {**default_kwargs, **kwargs}
 
     # convolve the data with a Gaussian kernel
@@ -246,13 +243,21 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     if segment_map is None:
         return None, None
     with use_future_column_names():  # remove when photutils 4.0+ is required
-        sources = SourceCatalog(
+        cat = SourceCatalog(
             data,
             segment_map,
             mask=mask,
             convolved_data=conv_data,
             **catalog_dict,
-        ).to_table(columns=SOURCECAT_COLUMNS)
+        )
+        columns = cat.default_columns + [
+            "ellipticity",
+            "sky_bbox_ll",
+            "sky_bbox_ul",
+            "sky_bbox_lr",
+            "sky_bbox_ur",
+        ]
+        sources = cat.to_table(columns=columns)
 
     return sources, segment_map
 

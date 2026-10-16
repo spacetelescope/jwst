@@ -1,3 +1,5 @@
+"""Subtract superbias reference data from the input science data model."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -11,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class SuperBiasStep(Step):
-    """Subtract super-bias reference data from the input science data model."""
+    """Subtract superbias reference data from the input science data model."""
 
     class_alias = "superbias"
 

@@ -33,6 +33,7 @@ class Tso3Pipeline(Pipeline):
     class_alias = "calwebb_tso3"
 
     spec = """
+        save_results = boolean(default=True)  # Save output products by default
     """  # noqa: E501
 
     # Define alias to steps

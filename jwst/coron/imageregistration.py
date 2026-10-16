@@ -16,23 +16,23 @@ def align_fourier_lsq(reference, target, mask=None):
 
     Parameters
     ----------
-    reference : numpy.ndarray
-        A 2D (``NxK``) image to be aligned to
+    reference : ndarray
+        A 2D (``NxK``) image to be aligned to.
 
-    target : numpy.ndarray
-        A 2D (``NxK``) image to align to reference
+    target : ndarray
+        A 2D (``NxK``) image to align to reference.
 
-    mask : numpy.ndarray, None
+    mask : ndarray or None
         A 2D (``NxK``) image indicating pixels to ignore when
         performing the minimization. The masks acts as
         a weighting function in performing the fit.
 
     Returns
     -------
-    results : numpy.ndarray
-        A 1D vector containing (`xshift`, `yshift`, `beta`) values from
-        LSQ optimization, where `xshift` and `yshift` are the misalignment
-        of target from reference and `beta` is the fraction by which the
+    results : ndarray
+        A 1D vector containing (``xshift``, ``yshift``, ``beta``) values from
+        LSQ optimization, where ``xshift`` and ``yshift`` are the misalignment
+        of target from reference and ``beta`` is the fraction by which the
         target intensity must be reduced to match the intensity
         of the reference.
     """
@@ -54,21 +54,21 @@ def shift_subtract(params, reference, target, mask=None):
     Parameters
     ----------
     params : tuple
-        Tuple of xshift, yshift, beta
+        Tuple of ``xshift, yshift, beta``.
 
-    reference : numpy.ndarray
-        See :py:func:`align_fourier_lsq`
+    reference : ndarray
+        See :py:func:`align_fourier_lsq`.
 
-    target : numpy.ndarray
-        See :py:func:`align_fourier_lsq`
+    target : ndarray
+        See :py:func:`align_fourier_lsq`.
 
-    mask : numpy.ndarray, None
-        See :py:func:`align_fourier_lsq`
+    mask : ndarray or None
+        See :py:func:`align_fourier_lsq`.
 
     Returns
     -------
-    residual : numpy.ndarray
-        1D numpy.ndarray of target-reference residual after
+    residual : ndarray
+        1D ndarray of target-reference residual after
         applying shift and intensity fraction.
     """
     shift = params[:2]
@@ -88,17 +88,17 @@ def fourier_imshift(image, shift):
 
     Parameters
     ----------
-    image : numpy.ndarray
+    image : ndarray
         A 2D (``NxK``) or 3D (``LxNxK``) image.
 
-    shift : numpy.ndarray
+    shift : ndarray
         A 1D or 2D array of shape ``Lx2`` containing pixel values by which
         to shift image slices in the X and Y directions.
 
     Returns
     -------
-    offset : numpy.ndarray
-        Shifted image
+    offset : ndarray
+        Shifted image.
     """
     ndim = len(image.shape)
 
@@ -135,29 +135,31 @@ def align_array(reference, target, mask=None, return_aligned=True):
 
     Parameters
     ----------
-    reference : numpy.ndarray
+    reference : ndarray
         A 2D (``NxK``) reference image to which input images will be aligned.
 
-    target : numpy.ndarray
+    target : ndarray
         A 2D (``NxK``) or 3D (``MxNxK`` first index used to select slices)
         image(s) that need to be aligned to the reference image.
 
-    mask : numpy.ndarray, None
+    mask : ndarray or None
         A 2D (``NxK``) image indicating pixels to ignore when performing the
         minimization. The masks acts as a weighting function in performing
         the fit.
+
     return_aligned : bool
-        Boolean that indicates whether the aligned image is returned
+        Boolean that indicates whether the aligned image is returned.
 
     Returns
     -------
-    aligned : numpy.ndarray
+    aligned : ndarray
         The aligned image (2D or 3D image of the same shape as input target image).  This
-        is only returned if the input keyword `returned_aligned` is True.
-    shifts : numpy.ndarray
-        1D vector of three elements in the case of 2D input `target` image of
-        (xshift, yshift, beta) values from LSQ optimization (see :py:func:`align_fourier_lsq`
-        for details) for each slice in the `target` array.
+        is only returned if the input keyword ``returned_aligned`` is `True`.
+    shifts : ndarray
+        1D vector of three elements in the case of 2D input ``target`` image of
+        (``xshift``, ``yshift``, ``beta``) values from LSQ optimization
+        (see :py:func:`align_fourier_lsq` for details)
+        for each slice in the ``target`` array.
     """
     if len(target.shape) == 2:
         shifts = align_fourier_lsq(reference, target, mask=mask)
@@ -190,21 +192,21 @@ def align_models(reference, target, mask):
 
     Parameters
     ----------
-    reference : CubeModel
+    reference : `~stdatamodels.jwst.datamodels.CubeModel`
         3D (``LxNxK`` first index used to select 2D slices)
         reference image to which target images will be aligned.
-    target : CubeModel
+    target : `~stdatamodels.jwst.datamodels.CubeModel`
         3D (``MxNxK`` first index used to select 2D slices)
         image(s) that need to be aligned to the reference image.
-    mask : ImageModel, None
+    mask : `~stdatamodels.jwst.datamodels.ImageModel` or None
         A 2D (``NxK``) image indicating pixels to ignore when performing the
         minimization. Mask acts as a weighting function in performing
         the fit.
 
     Returns
     -------
-    output_model : CubeModel
-        A CubeModel containing aligned copies of the input ``target``
+    output_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        A cube model containing aligned copies of the input ``target``
         cubes aligned to the first slice in the input ``reference`` cube.
     """
     # Create output CubeModel of required dimensions. Since all science integrations

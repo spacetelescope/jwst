@@ -1,5 +1,5 @@
 Description
------------
+===========
 
 :Class: `jwst.coron.align_refs_step.AlignRefsStep`
 :Alias: align_refs
@@ -22,37 +22,26 @@ shows that there are minimal drifts during an observation in line-of-sight point
 properties.
 
 Shifts between each PSF and target image are computed using the
-``scipy.optimize.leastsq`` function. A 2D mask, supplied via a PSFMASK reference file,
-is used to indicate pixels to ignore when performing the minimization in the
-``leastsq`` routine. The mask acts as a weighting function in performing the fit.
-Alignment of a PSF image is performed using the ``scipy.ndimage.fourier_shift``
-function and the computed sub-pixel offsets.
-
-Arguments
----------
-The ``align_refs`` step  has two optional arguments:
-
-``--median_box_length`` (integer, default=3)
-  The box size to use when replacing bad pixels with the median in a surrounding box.
-
-``--bad_bits`` (string, default="DO_NOT_USE")
-  The DQ bit values from the input image DQ arrays that should be considered bad
-  and replaced with the median in a surrounding box. For example, setting to
-  ``"OUTLIER, SATURATED"`` (or equivalently ``"16, 2"`` or ``"18"``) will treat
-  all pixels flagged as OUTLIER or SATURATED as bad, while setting to ``""`` or
-  ``None`` will treat all pixels as good and omit any bad pixel replacement.
+:func:`scipy.optimize.leastsq`. A 2D mask, supplied via a :ref:`psfmask_reffile`,
+is used to indicate pixels to ignore when performing the minimization in
+:func:`scipy.optimize.leastsq`. The mask acts as a weighting function in performing the fit.
+Alignment of a PSF image is performed using :func:`scipy.ndimage.fourier_shift`
+and the computed sub-pixel offsets.
 
 Inputs
 ------
+The ``align_refs`` step takes 2 inputs:
 
-The ``align_refs`` step takes 2 inputs: a science target exposure containing a 3D
-stack of calibrated per-integration images and a "_psfstack" product containing a 3D
-stack of reference PSF images. If the target or PSF images have any of the
+* a science target exposure containing a 3D
+  stack of calibrated per-integration images and
+* a "_psfstack" product containing a 3D
+  stack of reference PSF images.
+
+If the target or PSF images have any of the
 data quality flags set to those specified by the ``bad_bits`` argument, these pixels
 are replaced with the median value of a region around the flagged data. The size of the
 box region to use for the replacement can also be specified. These corrected images are
-used in the :ref:`align_refs <align_refs_step>` step and passed along for subsequent
-processing.
+used in this step and passed along for subsequent processing.
 
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
@@ -80,15 +69,9 @@ Outputs
 :Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _psfalign
 
-The output is a CubeModel, where the 0th axis has length equal to the total number of
-integrations (nints x ncols x nrows).
-Each Image[n] in the 3D data is the n :sup:`th` PSF image aligned to the first science
+The output is a cube model, where the 0th axis has length equal to the total number of
+integrations (``nints x ncols x nrows``).
+Each ``image[n]`` in the 3D data is the n :sup:`th` PSF image aligned to the first science
 target integration. The file name is exposure-based, using the input science target exposure
 name as the root, with the addition of the association candidate ID and the "_psfalign"
-product type suffix, e.g. "jw8607342001_02102_00001_nrcb3_a3001_psfalign.fits."
-
-Reference Files
----------------
-The ``align_refs`` step uses a PSFMASK reference file.
-
-.. include:: ../references_general/psfmask_reffile.inc
+product type suffix, e.g., ``jw8607342001_02102_00001_nrcb3_a3001_psfalign.fits``.

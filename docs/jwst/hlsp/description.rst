@@ -4,6 +4,9 @@ Description
 :Class: `jwst.coron.hlsp_step.HlspStep`
 :Alias: hlsp
 
+.. warning::
+    The ``hlsp`` step has been deprecated and will be removed in a future release.
+
 The ``hlsp`` step is one of the coronagraphic-specific steps in the ``coron``
 sub-package. It produces high-level science products for KLIP-processed
 (PSF-subtracted) coronagraphic images. The step is currently a prototype and
@@ -17,15 +20,6 @@ nearest whole pixel; no sub-pixel calculations are performed.
 
 .. Note:: This step is not currently included in the :ref:`calwebb_coron3 <calwebb_coron3>`
    pipeline, but can be run standalone.
-
-Arguments
----------
-The ``hlsp`` step has one optional argument:
-
-``--annuli_width``
-  which is an integer parameter with a default value of 2 and is used to
-  specify the width, in pixels, of the annuli to use when computing the contrast
-  curve data.
 
 Inputs
 ------

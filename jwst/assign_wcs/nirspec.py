@@ -269,9 +269,6 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     pipeline : list
         The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
-    detector = input_model.meta.instrument.detector
-    grating = input_model.meta.instrument.grating
-    filt = input_model.meta.instrument.filter
     # Check for ifu reference files
     if (
         reference_files["ifufore"] is None
@@ -282,16 +279,6 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
         log_message = "No ifufore, ifuslicer or ifupost reference files"
         log.critical(log_message)
         raise RuntimeError(log_message)
-    # Check for data actually being present on NRS2
-    log_message = f"No IFU slices fall on detector {detector}"
-    if detector == "NRS2" and grating.endswith("M"):
-        # Mid-resolution gratings do not project on NRS2.
-        log.critical(log_message)
-        raise NoDataOnDetectorError(log_message)
-    if detector == "NRS2" and grating == "G140H" and filt == "F070LP":
-        # This combination of grating and filter does not project on NRS2.
-        log.critical(log_message)
-        raise NoDataOnDetectorError(log_message)
 
     slits = np.arange(30)
     # Get the corrected disperser model

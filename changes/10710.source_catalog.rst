@@ -1,0 +1,1 @@
+Always return orientation and sky_orientation values in the range (-90, 90] deg.

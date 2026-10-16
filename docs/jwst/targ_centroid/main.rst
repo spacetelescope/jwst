@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.targ_centroid.TargCentroidStep`
+:Class: `jwst.targ_centroid.targ_centroid_step.TargCentroidStep`
 :Alias: targ_centroid
 
 The ``targ_centroid`` step determines the location of a point source in the detector
@@ -26,14 +26,14 @@ necessary filter offset, is stored in the model's
 When run as part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, the
 step is executed after the :ref:`srctype <srctype_step>` step.
 
-Step Inputs
------------
+Inputs
+------
 
 The ``targ_centroid`` step can accept either:
 
-* A single science exposure (ImageModel) along with a separate TA verification
+* a single science exposure (`~stdatamodels.jwst.datamodels.ImageModel`) along with a separate TA verification
   image file specified via the ``ta_file`` parameter, or
-* An association file that includes both the science exposure and the TA
+* an association file that includes both the science exposure and the TA
   verification image as separate members.
 
 If no TA verification image is found in either location, the step will be skipped.
@@ -45,9 +45,8 @@ Algorithm
 
 The ``targ_centroid`` step performs the following operations:
 
-#. **Load reference files**: The step retrieves the following reference files from CRDS:
-
-   * FILTEROFFSET: Provides column and row offsets specific to the observation filter
+#. **Load reference files**: The step retrieves the :ref:`filteroffset_reffile` from CRDS
+   to provide column and row offsets specific to the observation filter.
 
 #. **Assign WCS to TA verification image**: If the TA verification image does not already have
    a WCS assigned, the step invokes the :ref:`assign_wcs <assign_wcs_step>` step
@@ -60,7 +59,7 @@ The ``targ_centroid`` step performs the following operations:
    centered on the expected source position.
 
 #. **Find the centroid**: The centroid of the source within the cutout is determined
-   using the :func:`~photutils.centroids.centroid_2dg` method,
+   using the :func:`~photutils.centroids.centroid_2dg` function,
    which fits the source with a 2D Gaussian.
    This yields the fitted x and y coordinates of the source in
    cutout pixel coordinates.
@@ -73,24 +72,24 @@ The ``targ_centroid`` step performs the following operations:
    coordinates to science image coordinates, accounting for any subarray
    offsets and/or dither offsets.
 
-#. **Apply filter offsets**: The FILTEROFFSET reference file corrections are
+#. **Apply filter offsets**: The :ref:`filteroffset_reffile` corrections are
    applied to the final x and y position.
 
 #. **Store source position**: The corrected source position is stored in the output
    data model's ``source_xpos`` and ``source_ypos`` attributes for use by
    subsequent calibration steps.
 
-Step Outputs
-------------
+Outputs
+-------
 
 The input science exposure is returned unmodified, except with new metadata attributes:
 
 * ``ta_xpos``: The measured x-coordinate of the source
-  in the TA verification image (0-indexed pixels)
+  in the TA verification image (0-indexed pixels).
 * ``ta_ypos``: The measured y-coordinate of the source
-  in the TA verification image (0-indexed pixels)
+  in the TA verification image (0-indexed pixels).
 * ``source_xpos``: The x-coordinate of the source in the science detector
   coordinate system (0-indexed pixels).
 * ``source_ypos``: The y-coordinate of the source in the science detector
   coordinate system (0-indexed pixels).
-* ``meta.cal_step.targ_centroid`` keyword set to "COMPLETE"
+* ``meta.cal_step.targ_centroid``: This keyword is set to "COMPLETE".

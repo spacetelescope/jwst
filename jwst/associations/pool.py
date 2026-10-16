@@ -1,11 +1,11 @@
-"""Association pools and pool row class definitions."""
+"""Module to handle association pools."""
 
 from collections import UserDict
 
 from astropy.io.ascii import convert_numpy
 from astropy.table import Table
 
-__all__ = ["AssociationPool"]
+__all__ = ["AssociationPool", "PoolRow"]
 
 DEFAULT_DELIMITER = "|"
 DEFAULT_FORMAT = "ascii"
@@ -13,13 +13,13 @@ DEFAULT_FORMAT = "ascii"
 
 class AssociationPool(Table):
     """
-    Association Pool - built off an astropy table.
+    Association pool that is built off an astropy table.
 
-    An ``AssociationPool`` is essentially an astropy Table with the
-    following default behaviors:
+    This class is essentially a `~astropy.table.Table` with the
+    following modified behaviors:
 
-    - ASCII tables with a default delimiter of ``|``
-    - All values are read in as strings
+    - ASCII tables with a default delimiter of ``|``.
+    - All values are read in as strings.
     """
 
     def __init__(self, *args, **kwargs):
@@ -29,7 +29,7 @@ class AssociationPool(Table):
     @classmethod
     def read(cls, filename, delimiter=DEFAULT_DELIMITER, fmt=DEFAULT_FORMAT, **kwargs):
         """
-        Read in a Pool file.
+        Read in an association pool file.
 
         Parameters
         ----------
@@ -42,8 +42,8 @@ class AssociationPool(Table):
 
         Returns
         -------
-        AssociationPool
-            The ``AssociationPool`` representation of the file.
+        `AssociationPool`
+            The association pool representation of the file.
         """
         table = super(AssociationPool, cls).read(
             filename, delimiter=delimiter, format=fmt, converters=convert_to_str, **kwargs
@@ -64,14 +64,12 @@ class AssociationPool(Table):
 
     def write(self, *args, **kwargs):
         """
-        Write the pool to a file.
+        Write the association pool to a file.
 
         Parameters
         ----------
-        *args : dict
-            Dictionary of arguments that ``astropy.io.ascii.write`` can accept.
-        **kwargs : dict
-            Dictionary of keywords that ``astropy.io.ascii.write`` can accept.
+        *args, **kwargs
+            Arguments and keywords that :func:`astropy.io.ascii.write` can accept.
         """
         delimiter = kwargs.pop("delimiter", DEFAULT_DELIMITER)
         fmt = kwargs.pop("fmt", None)
@@ -89,10 +87,10 @@ class AssociationPool(Table):
 
 class PoolRow(UserDict):
     """
-    A row from an AssociationPool.
+    A row from an association pool.
 
-    Class to create a copy of an AssociationPool row without copying
-    all of the astropy.Table.Row private attributes.
+    Class to create a copy of an `AssociationPool` row without copying
+    all of the `astropy.table.Row` private attributes.
     """
 
     def __init__(self, init=None):
@@ -113,12 +111,12 @@ def _convert_to_str():
 
         Parameters
         ----------
-        vals : [str, ...]
+        vals : list of str
             The list of strings to lowercase.
 
         Returns
         -------
-        [str, ...]
+        list of str
             The lowercase strings.
         """
         results = func(vals)

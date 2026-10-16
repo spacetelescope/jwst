@@ -1,0 +1,1 @@
+Create a utility to check for point source targets (``jwst.lib.exposure_types.is_point_source``) and use it to standardize such checks in several pipeline steps.

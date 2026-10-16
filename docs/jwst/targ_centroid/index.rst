@@ -5,10 +5,9 @@ Target Centroiding Step
 =======================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    main.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.targ_centroid
+   api_ref.rst

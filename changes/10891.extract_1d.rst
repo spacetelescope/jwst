@@ -1,0 +1,1 @@
+Fix a crash for filename input for WFSS modes, when the step is called standalone.

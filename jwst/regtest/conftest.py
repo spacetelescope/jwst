@@ -33,7 +33,8 @@ def artifactory_repos(pytestconfig):
     inputs_root : str
         The Artifactory inputs root, set to "jwst-pipeline" unless found in the config.
     results_root : str
-        The Artifactory results root, set to "jwst-pipeline-results" unless found in the config.
+        The Artifactory results root, set to "jwst-pipeline-results/regression-tests/runs"
+        unless found in the config.
     """
     inputs_root = pytestconfig.getini("inputs_root")
     # in pytest 8 inputs_root will be None
@@ -48,7 +49,7 @@ def artifactory_repos(pytestconfig):
     results_root = pytestconfig.getini("results_root")
     # see not above about inputs_root
     if not results_root:
-        results_root = "jwst-pipeline-results"
+        results_root = "jwst-pipeline-results/regression-tests/runs"
     else:
         results_root = results_root[0]
     return inputs_root, results_root

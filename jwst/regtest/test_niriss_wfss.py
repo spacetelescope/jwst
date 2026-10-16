@@ -54,7 +54,7 @@ def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module, resource_tracker):
     rtdata = rtdata_module
 
     # Get the level3 association file and run the spec3 pipeline on it.
-    # We don't need to retrieve any of the cal members of the association,
+    # We don't need to retrieve any of the x1d members of the association,
     # because they were all just created by the preceding spec2 test.
     rtdata.get_data("niriss/wfss/jw01324-o001_spec3_00005_asn.json")
     args = ["calwebb_spec3", rtdata.input]
@@ -72,7 +72,7 @@ def test_log_tracked_resources_spec3(log_tracked_resources, run_nis_wfss_spec3):
 
 @pytest.mark.parametrize(
     "suffix",
-    ["assign_wcs", "bsub", "cal", "esec", "extract_2d", "flat_field", "photom", "srctype", "x1d"],
+    ["assign_wcs", "bsub", "cal", "esec", "extract_2d", "flat_field", "srctype", "x1d"],
 )
 def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 applied to NIRISS WFSS data"""

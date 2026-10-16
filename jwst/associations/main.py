@@ -28,20 +28,20 @@ class Main:
         The command line arguments. Can be one of:
 
         - `None`: Command line arguments are then used.
-        - List of str: A list of strings which create the command line
-          with the similar structure as ``sys.argv``
+        - A list of strings which create the command line
+          with the similar structure as ``sys.argv``.
 
-    pool : None or `~jwst.associations.AssociationPool`
+    pool : None or `~jwst.associations.pool.AssociationPool`
         If `None`, a pool file must be specified in the ``args``.
-        Otherwise, an `~jwst.associations.AssociationPool`.
+        Otherwise, an `~jwst.associations.pool.AssociationPool`.
 
     Attributes
     ----------
-    pool : `~jwst.associations.AssociationPool`
+    pool : `~jwst.associations.pool.AssociationPool`
         The pool read in, or passed in through the parameter ``pool``.
-    rules : `~jwst.associations.AssociationRegistry`
+    rules : `~jwst.associations.registry.AssociationRegistry`
         The rules used for association creation.
-    associations : list of `~jwst.associations.Association`
+    associations : list of `~jwst.associations.association.Association`
         The list of generated associations.
 
     Notes
@@ -64,16 +64,16 @@ class Main:
             The command line arguments. Can be one of:
 
             - `None`: Command line arguments are then used.
-            - List of str: A list of strings which create the command line
-              with the similar structure as ``sys.argv``
+            - A list of strings which create the command line
+              with the similar structure as ``sys.argv``.
 
-        pool : None or `~jwst.associations.AssociationPool`
+        pool : None or `~jwst.associations.pool.AssociationPool`
             If `None`, a pool file must be specified in the ``args``.
-            Otherwise, an `~jwst.associations.AssociationPool`.
+            Otherwise, an `~jwst.associations.pool.AssociationPool`.
 
         Returns
         -------
-        generator : Main
+        generator : `Main`
             A fully executed association generator.
         """
         generator_cli = cls(args=args, pool=pool)
@@ -88,7 +88,7 @@ class Main:
 
         Returns
         -------
-        pool : `~jwst.associations.AssociationPool`
+        pool : `~jwst.associations.pool.AssociationPool`
             The pool of orphaned exposures.
         """
         not_in_asn = np.ones((len(self.pool),), dtype=bool)
@@ -112,12 +112,12 @@ class Main:
             The command line arguments. Can be one of:
 
             - `None`: Command line arguments are then used.
-            - List of str: A list of strings which create the command line
-              with the similar structure as ``sys.argv``
+            - A list of strings which create the command line
+              with the similar structure as ``sys.argv``.
 
-        pool : None or `~jwst.associations.AssociationPool`
+        pool : None or `~jwst.associations.pool.AssociationPool`
             If `None`, a pool file must be specified in the ``args``.
-            Otherwise, an `~jwst.associations.AssociationPool`.
+            Otherwise, an `~jwst.associations.pool.AssociationPool`.
         """
         self.parse_args(args, has_pool=pool)
         parsed = self.parsed
@@ -205,7 +205,7 @@ class Main:
             If a string, spaces separate the arguments.
             If None, ``sys.argv`` is used.
 
-        has_pool : bool-like
+        has_pool : bool
             Do not require ``pool`` from the command line if a pool is already in hand.
         """
         if args is None:
@@ -321,8 +321,8 @@ class Main:
         )
         parser.add_argument(
             "--format",
-            default="json",
-            help='Format of the association files. Default: "%(default)s"',
+            action=DeprecateFormat,
+            help="Deprecated: Only JSON format is supported for association files.",
         )
         parser.add_argument(
             "--version",
@@ -341,11 +341,6 @@ class Main:
             help="Merge associations into single associations with multiple products",
         )
         parser.add_argument(
-            "--no-merge",
-            action=DeprecateNoMerge,
-            help='Deprecated: Default is to not merge. See "--merge".',
-        )
-        parser.add_argument(
             "--per-pool-algorithm",
             action="store_true",
             help="Use the original, per-pool, algorithm that does not "
@@ -361,7 +356,7 @@ class Main:
 
         for asn in self.associations:
             try:
-                (fname, serialized) = asn.dump(format=self.parsed.format)
+                (fname, serialized) = asn.dump()
             except AssociationError as exception:
                 logger.warning("Cannot serialize association %s", asn)
                 logger.warning("Reason:", exc_info=exception)
@@ -391,9 +386,9 @@ class Main:
 
 def main(args=None, pool=None):
     """
-    Command-line entrypoint for the association generator.
+    Command-line entry-point for the association generator.
 
-    Wrapper around `Main.cli` so that the return is either True or an exception.
+    Wrapper around :meth:`Main.cli` so that the return is either `True` or an exception.
 
     Parameters
     ----------
@@ -401,12 +396,12 @@ def main(args=None, pool=None):
         The command line arguments. Can be one of:
 
         - `None`: ``sys.argv`` is then used.
-        - List of str: A list of strings which create the command line
-          with the similar structure as ``sys.argv``
+        - A list of strings which create the command line
+          with the similar structure as ``sys.argv``.
 
-    pool : None or `~jwst.associations.AssociationPool`
+    pool : None or `~jwst.associations.pool.AssociationPool`
         If `None`, a pool file must be specified in the ``args``.
-        Otherwise, an `~jwst.associations.AssociationPool`.
+        Otherwise, an `~jwst.associations.pool.AssociationPool`.
     """
     Main.cli(args, pool)
 
@@ -414,18 +409,11 @@ def main(args=None, pool=None):
 # #########
 # Utilities
 # #########
-class DeprecateNoMerge(argparse.Action):
-    """Deprecate the ``--no-merge`` option."""
-
-    def __init__(self, option_strings, dest, **kwargs):
-        super(DeprecateNoMerge, self).__init__(option_strings, dest, const=True, nargs=0, **kwargs)
+class DeprecateFormat(argparse.Action):
+    """Deprecate the ``--format`` option."""
 
     def __call__(self, parser, namespace, values, option_string=None):  # noqa: ARG002
-        logger.warning(
-            'The "--no-merge" option is now the default and deprecated.'
-            ' Use "--merge" to force merging.'
-        )
-        setattr(namespace, self.dest, values)
+        logger.warning('The "--format" option is now deprecated. Only JSON is supported.')
 
 
 if __name__ == "__main__":

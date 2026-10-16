@@ -14,7 +14,7 @@ def run_pipelines(rtdata_module, resource_tracker):
 
     rtdata = rtdata_module
 
-    # Run the calwebb_tso-image2 pipeline on each of the 2 inputs
+    # Run the calwebb_image2 pipeline on each of the 2 inputs
     rate_files = [
         "nircam/tsimg/jw01068006001_03103_00001-seg001_nrcb1_rateints.fits",
     ]
@@ -33,13 +33,29 @@ def run_pipelines(rtdata_module, resource_tracker):
     return rtdata
 
 
+@pytest.fixture(scope="module")
+def run_tsgrism_sw_img_pipeline(rtdata_module, resource_tracker):
+    rtdata = rtdata_module
+
+    rtdata.get_asn("nircam/tsimg/jw01442-o003_tso3_00002_asn.json")
+    args = ["calwebb_tso3", rtdata.input]
+    with resource_tracker.track():
+        Step.from_cmdline(args)
+
+    return rtdata
+
+
+def test_log_tracked_resources_tsgrism_img(log_tracked_resources, run_tsgrism_sw_img_pipeline):
+    log_tracked_resources()
+
+
 def test_log_tracked_resources_tsimg(log_tracked_resources, run_pipelines):
     log_tracked_resources()
 
 
 @pytest.mark.parametrize("suffix", ["calints", "o006_crfints"])
 def test_nircam_tsimg_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
-    """Regression test of tso-image2 pipeline performed on NIRCam TSIMG data."""
+    """Regression test of image2 pipeline performed on NIRCam TSIMG data."""
     rtdata = run_pipelines
     rtdata.input = "jw01068006001_03103_00001-seg001_nrcb1_rateints.fits"
     output = "jw01068006001_03103_00001-seg001_nrcb1_" + suffix + ".fits"
@@ -82,3 +98,14 @@ def test_nircam_setpointing_tsimg(rtdata, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["rtol"] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+def test_nircam_tsgrism_swimage_stage3_phot(run_tsgrism_sw_img_pipeline, diff_astropy_tables):
+    rtdata = run_tsgrism_sw_img_pipeline
+    rtdata.input = "nircam/tsimg/jw01442-o003_tso3_00002_asn.json"
+    rtdata.output = "jw01442-o003_t001_nircam_clear-wlp4-subgrism256_phot.ecsv"
+    rtdata.get_truth(
+        "truth/test_nircam_tsimg_stage23/jw01442-o003_t001_nircam_clear-wlp4-subgrism256_phot.ecsv"
+    )
+
+    assert diff_astropy_tables(rtdata.output, rtdata.truth)

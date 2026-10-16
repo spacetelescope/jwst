@@ -63,9 +63,9 @@ def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
     """
     inputs_root = pytestconfig.getini("inputs_root")[0]
     env = request.config.getoption("env")
-    path = os.path.join(inputs_root, env, "infrastructure/test_data_glob")
+    path = os.path.join(env, "infrastructure/test_data_glob")
 
-    files = _data_glob_url(path, glob_filter, root=get_bigdata_root())
+    files = _data_glob_url(inputs_root, path, glob_filter, get_bigdata_root())
     assert len(files) == nfiles
 
 

@@ -1,4 +1,4 @@
-"""Key/Value Registry."""
+"""Key/value registry."""
 
 from collections import UserDict
 
@@ -25,7 +25,7 @@ class KeyValueRegistry(UserDict):
 
     Parameters
     ----------
-    items : object or (str, object) or dict
+    items : object, (str, object), or dict
         Initializing items.
 
     default : str or object
@@ -61,12 +61,12 @@ class KeyValueRegistry(UserDict):
 
         Parameters
         ----------
-        item : object or (str, object) or dict
+        item : object, (str, object), or dict
             Item used for decoration.
 
         Returns
         -------
-        item : object or (str, object) or dict
+        item : object, (str, object), or dict
             The item used to update self.
         """
         self.update(item)
@@ -74,6 +74,8 @@ class KeyValueRegistry(UserDict):
 
 
 # Errors
+
+
 class KeyValueRegistryError(Exception):
     """Exception class for key value in registry."""
 
@@ -84,31 +86,33 @@ class KeyValueRegistryError(Exception):
 
 
 class KeyValueRegistryNotSingleItemError(KeyValueRegistryError):
-    """Exception class for when passed item is a list and not a single item."""
+    """Passed item is a list and not a single item."""
 
     msg = "Item cannot be a list"
 
 
 class KeyValueRegistryNoKeyFoundError(KeyValueRegistryError):
-    """Exception class for no key in registry."""
+    """No key in registry."""
 
     msg = "Cannot deduce key from given value"
 
 
 # Utilities
+
+
 def make_dict(item):
     """
     Create a dict from an item.
 
-    Items may be a dict, a 2-tuple or an object. Objects are most
+    Items may be a dict, a 2-tuple, or an object. Objects are most
     often a JSON file format class from `~jwst.associations.association_io`.
 
     Parameters
     ----------
-    item : object or (name, object) or dict
-        If dict, just return dict.
-        If 2-tuple, return dict with the key/value pair
-        If just object, use ``__name__`` as key
+    item : object, (name, object), or dict
+        If dictionary, just return it.
+        If 2-tuple, return dictionary with the key/value pair.
+        If just object, use ``__name__`` as key.
 
     Returns
     -------

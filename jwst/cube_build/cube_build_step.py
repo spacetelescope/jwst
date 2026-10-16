@@ -43,7 +43,6 @@ class CubeBuildStep(Step):
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
-         skip_dqflagging = boolean(default=false) # skip setting the DQ plane of the IFU
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
          offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files.
@@ -262,7 +261,6 @@ class CubeBuildStep(Step):
             "wavemin": self.wavemin,
             "wavemax": self.wavemax,
             "offsets": self.offsets,
-            "skip_dqflagging": self.skip_dqflagging,
             "suffix": self.suffix,
             "debug_spaxel": self.debug_spaxel,
         }
@@ -521,28 +519,30 @@ class CubeBuildStep(Step):
         """
         # validate the offset file using the schema file
         data_path = Path(__file__).parent
+        with asdf.config_context() as cfg:
+            cfg.validate_on_read = True
 
-        try:
-            af = asdf.open(self.offset_file, custom_schema=data_path / "ifuoffset.schema.yaml")
-        except ValueError:
-            log.error(
-                "Validation Error for offset file. Fix the offset file. "
-                " The offset file needs to have the same number of elements "
-                " in the three lists: filename, raoffset and decoffset."
-                " The units need to provided and only arcsec is allowed."
-            )
+            try:
+                af = asdf.open(self.offset_file, custom_schema=data_path / "ifuoffset.schema.yaml")
+            except asdf.exceptions.ValidationError:
+                log.error(
+                    "Validation Error for offset file. Fix the offset file. "
+                    " The offset file needs to have the same number of elements "
+                    " in the three lists: filename, raoffset and decoffset."
+                    " The units need to provided and only arcsec is allowed."
+                )
 
-            raise ValueError(
-                "Offset file is not correct. Offset file needs to have three lists: "
-                "filename, raoffset and decoffset all of the same length."
-            ) from None
-
-        offset_filename = af["filename"]
-        offset_ra = af["raoffset"]
-        offset_dec = af["decoffset"]
-        # Note:
-        # af['units'] is checked by the schema validation.
-        # It must be arcsec or a validation error occurs.
+                raise ValueError(
+                    "Offset file is not correct. Offset file needs to have three lists: "
+                    "filename, raoffset and decoffset all of the same length."
+                ) from None
+        with af:  # to ensure af is closed
+            offset_filename = af["filename"]
+            offset_ra = af["raoffset"]
+            offset_dec = af["decoffset"]
+            # Note:
+            # af['units'] is checked by the schema validation.
+            # It must be arcsec or a validation error occurs.
 
         # check that all the file names in input_model are in the offset filename
         for model in input_models:
@@ -550,10 +550,9 @@ class CubeBuildStep(Step):
             if file_check in offset_filename:
                 continue
             else:
-                af.close()
                 raise ValueError(
-                    "Error in offset file. A file in the association is not found in offset "
-                    f" list {file_check}"
+                    "Error in offset file. A file in the association is not found in "
+                    f"offset list {file_check}"
                 )
 
         # check that all the lists have the same length
@@ -561,7 +560,6 @@ class CubeBuildStep(Step):
         len_ra = len(offset_ra)
         len_dec = len(offset_dec)
         if len_file != len_ra or len_ra != len_dec or len_file != len_dec:
-            af.close()
             raise ValueError(
                 "The offset file does not have the same number of values for "
                 " filename, raoffset, decoffset"
@@ -576,5 +574,4 @@ class CubeBuildStep(Step):
         offsets["raoffset"] = offset_ra
         offsets["decoffset"] = offset_dec
 
-        af.close()
         return offsets

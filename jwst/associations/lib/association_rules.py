@@ -1,9 +1,9 @@
 """
 Association Definitions: DMS-specific.
 
-Notes
------
-These associations are specifically defined for use in DMS.
+.. note::
+    This module exposes associations objects defined elsewhere
+    for use in DMS only.
 """
 
 from jwst.associations import Association  # noqa: F401

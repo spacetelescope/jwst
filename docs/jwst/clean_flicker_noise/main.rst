@@ -348,7 +348,7 @@ are left at input values.
 .. _nsclean-algo-references:
 
 References
-==========
+----------
 
 The FFT cleaning algorithm implementation is based on ``NSClean``
 developed by Bernard Rauscher. Details on the source of the correlated

@@ -76,6 +76,7 @@ class Coron3Pipeline(Pipeline):
 
     spec = """
         suffix = string(default='i2d')
+        save_results = boolean(default=True)  # Save output products by default
     """  # noqa: E501
 
     # Define aliases to steps
@@ -209,9 +210,19 @@ class Coron3Pipeline(Pipeline):
             log.debug(f"Blending metadata for {result}")
             model_blender.finalize_model(result)
 
+        if isinstance(user_input, str):
+            table_name = Path(user_input).name
+        else:
+            table_name = ""
+
+        if hasattr(input_models, "asn_pool_name") and input_models.asn_pool_name:
+            pool_name = input_models.asn_pool_name
+        else:
+            pool_name = input_models.asn_table["asn_pool"]
+
         try:
-            result.meta.asn.pool_name = input_models.asn_pool_name
-            result.meta.asn.table_name = Path(user_input).name
+            result.meta.asn.pool_name = pool_name
+            result.meta.asn.table_name = table_name
         except AttributeError:
             log.debug("Cannot set association information on final")
             log.debug(f"result {result}")

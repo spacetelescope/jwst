@@ -10,5 +10,4 @@ Public Pipeline API
 Complete Developer API
 ======================
 
-.. automodapi:: jwst.pipeline.collect_pipeline_cfgs
-   :no-inheritance-diagram:
+N/A

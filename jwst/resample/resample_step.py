@@ -1,3 +1,5 @@
+"""Apply resampling to JWST data."""
+
 import logging
 
 from stdatamodels import filetype
@@ -53,16 +55,15 @@ class ResampleStep(Step):
 
         Parameters
         ----------
-        input_data : str, `~stdatamodels.jwst.datamodels.ImageModel`, \
-                     or any asn-type input loadable into \
-                     `~jwst.datamodels.library.ModelLibrary`
-            Filename pointing to an `~stdatamodels.jwst.datamodels.ImageModel`
-            or an association, or the object itself.
+        input_data : str, `~jwst.datamodels.library.ModelLibrary`, or \
+                     `~stdatamodels.jwst.datamodels.ImageModel`
+            Filename pointing to an `~stdatamodels.jwst.datamodels.ImageModel`,
+            an association, or the object itself.
 
         Returns
         -------
-        `~jwst.datamodels.library.ModelLibrary` or `~stdatamodels.jwst.datamodels.ImageModel`
-            The final output data. If the ``single`` parameter is set to True, then this
+        `~jwst.datamodels.library.ModelLibrary`
+            The final output data. If the ``single`` parameter is set to `True`, then this
             is a single `~jwst.datamodels.library.ModelLibrary`; otherwise, it is a
             `~jwst.datamodels.library.ModelLibrary`.
 

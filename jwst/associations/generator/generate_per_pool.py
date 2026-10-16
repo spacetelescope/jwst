@@ -33,26 +33,27 @@ def generate_per_pool(
 
     Parameters
     ----------
-    pool : AssociationPool
+    pool : `~jwst.associations.pool.AssociationPool`
         The pool to generate from.
 
-    rule_defs : [File-like[,...] or None
-        List of rule definitions to use. None to use the defaults if `ignore_default` is False.
+    rule_defs : list of file-like or None
+        List of rule definitions to use. None to use the defaults if ``ignore_default`` is `False`.
 
-    candidate_ids : [str,[...]] or None
+    candidate_ids : list of str or None
         List of candidates to produce for.
 
     all_candidates : bool
-        Find associations for all possible candidates
+        Find associations for all possible candidates.
 
     discover : bool
         Find associations that are not candidate-based.
 
     version_id : None, True, or str
-        The string to use to tag associations and products.
-        If None, no tagging occurs.
-        If True, use a timestamp
-        If a string, the string.
+        The string to use to tag associations and products:
+
+        * If None, no tagging occurs.
+        * If `True`, use a timestamp.
+        * If a string, the string.
 
     finalize : bool
         Run all rule methods marked as 'finalized'.
@@ -65,8 +66,8 @@ def generate_per_pool(
 
     Returns
     -------
-    associations : [Association[,...]]
-        List of associations
+    associations : list
+        List of `~jwst.associations.association.Association`.
 
     Notes
     -----
@@ -118,5 +119,4 @@ def generate_per_pool(
         except AttributeError:
             pass
 
-    # That's all folks
     return associations

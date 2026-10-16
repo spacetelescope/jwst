@@ -1,3 +1,5 @@
+"""Apply wavelength corrections to off-center NIRSpec point sources."""
+
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -28,14 +30,14 @@ class WavecorrStep(Step):
         and FS data.
 
         The algorithm uses a reference file which is a look-up table of
-        wavelength_correction as a function of slit_x_position and wavelength.
-        The x direction is the one parallel to dispersion/wavelength for
+        wavelength correction as a function of slit's x-position and wavelength.
+        The x-direction is the one parallel to dispersion/wavelength for
         both MOS and FS slits.
 
-        The slit_x_position is read from the ``source_xpos`` attribute in the input
-        slit metadata.  For MOS data, the x position is read from the msa_metadata_file
-        in the assign_wcs step.  For FS data, the x position is calculated from
-        the dither ``x_offset`` value in the extract_2d step.
+        The slit's x-position is read from the ``source_xpos`` attribute in the input
+        slit metadata.  For MOS data, the x-position is read from the ``msa_metadata_file``
+        in the ``assign_wcs`` step.  For FS data, the x-position is calculated from
+        the dither ``x_offset`` value in the ``extract_2d`` step.
 
         The wavelength value used to look up the wavelength correction at each dispersion
         element is an average of the wavelength values in the cross-dispersion direction
@@ -49,7 +51,7 @@ class WavecorrStep(Step):
 
         Returns
         -------
-        output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`, or \
+        output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel` or \
                        `~stdatamodels.jwst.datamodels.SlitModel`
             The corrected datamodel.
         """

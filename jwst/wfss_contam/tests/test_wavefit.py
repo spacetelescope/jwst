@@ -4,9 +4,9 @@ from numpy.testing import assert_allclose
 from stdatamodels.jwst.datamodels import SlitModel
 
 from jwst.wfss_contam.wavefit import (
-    SlitFitError,
+    SpectralFitError,
     apply_basis_coeffs,
-    fit_slit_by_basis_images,
+    fit_cutout_by_basis_images,
 )
 
 
@@ -83,7 +83,7 @@ def test_more_basis_images_reduces_residuals(make_slits):
         for k in range(1, n_terms):
             setattr(test_simul, f"fluxmodel_{k}", sim_data * dlam**k)
 
-        coeffs = fit_slit_by_basis_images(observed_slit, test_simul)
+        coeffs = fit_cutout_by_basis_images(observed_slit, test_simul)
         fitted = apply_basis_coeffs(test_simul, coeffs)
         rms = np.sqrt(np.mean((fitted[inside] - obs_data[inside]) ** 2))
         rms_values.append(rms)
@@ -105,7 +105,7 @@ def _make_basis_slit(sim_data, wavelength, max_order=1):
 
 
 def test_fit_recovers_exact_coefficients(make_slits):
-    """Test that fit_slit_by_basis_images recovers known coefficients exactly for noise-free case."""
+    """Test that fit_cutout_by_basis_images recovers known coefficients exactly for noise-free case."""
     _, simul_slit, wavelength = make_slits
     sim_data = simul_slit.data
 
@@ -118,7 +118,7 @@ def test_fit_recovers_exact_coefficients(make_slits):
     observed_slit.data = obs_data
     observed_slit.dq = np.zeros(obs_data.shape, dtype=np.uint32)
 
-    coeffs = fit_slit_by_basis_images(observed_slit, simul)
+    coeffs = fit_cutout_by_basis_images(observed_slit, simul)
     assert coeffs is not None
     assert_allclose(coeffs, [c0_true, c1_true], rtol=1e-6)
 
@@ -137,7 +137,7 @@ def test_fit_flat_only_no_fluxmodel(make_slits):
     simul = SlitModel()
     simul.data = sim_data.copy()
 
-    coeffs = fit_slit_by_basis_images(observed_slit, simul)
+    coeffs = fit_cutout_by_basis_images(observed_slit, simul)
     assert coeffs is not None
     assert coeffs.shape == (1,)
     assert_allclose(coeffs[0], scale, rtol=1e-6)
@@ -162,7 +162,7 @@ def test_fit_dq_mask_excludes_bad_pixels(make_slits):
     observed_masked.data = corrupted
     observed_masked.dq = dq
 
-    coeffs = fit_slit_by_basis_images(observed_masked, simul)
+    coeffs = fit_cutout_by_basis_images(observed_masked, simul)
     assert coeffs is not None
     assert_allclose(coeffs, [c0_true, c1_true], rtol=1e-6)
 
@@ -187,13 +187,13 @@ def test_large_errors_downweight_bad_pixels(make_slits):
     observed.dq = observed.get_default("dq")
     observed.err = err
 
-    coeffs = fit_slit_by_basis_images(observed, simul)
+    coeffs = fit_cutout_by_basis_images(observed, simul)
     assert coeffs is not None
     assert_allclose(coeffs, [c0_true, c1_true], rtol=1e-6)
 
 
 def test_fit_raises_when_all_errors_nonfinite(make_slits):
-    """Test SlitFitError raised when the err array contains no finite positive values."""
+    """Test SpectralFitError raised when the err array contains no finite positive values."""
     _, simul_slit, wavelength = make_slits
     sim_data = simul_slit.data
 
@@ -205,12 +205,12 @@ def test_fit_raises_when_all_errors_nonfinite(make_slits):
     observed.dq = np.zeros(obs_data.shape, dtype=np.uint32)
     observed.err = np.full(obs_data.shape, np.nan)
 
-    with pytest.raises(SlitFitError, match="finite positive error"):
-        fit_slit_by_basis_images(observed, simul)
+    with pytest.raises(SpectralFitError, match="finite positive error"):
+        fit_cutout_by_basis_images(observed, simul)
 
 
 def test_fit_raises_too_few_valid_pixels():
-    """Test SlitFitError raised when valid pixels < number of basis terms."""
+    """Test SpectralFitError raised when valid pixels < number of basis terms."""
     shape = (5, 5)
     sim_data = np.zeros(shape)
     sim_data[2, 2] = 1.0  # only 1 valid pixel
@@ -223,13 +223,13 @@ def test_fit_raises_too_few_valid_pixels():
     observed.data = sim_data.copy()
     observed.dq = np.zeros(shape, dtype=np.uint32)
 
-    with pytest.raises(SlitFitError, match="valid pixel"):
-        fit_slit_by_basis_images(observed, simul)
+    with pytest.raises(SpectralFitError, match="valid pixel"):
+        fit_cutout_by_basis_images(observed, simul)
 
 
 def test_fit_returns_none_when_c0_far_from_unity(make_slits):
     """
-    Test that fit_slit_by_basis_images returns None when c_0 is far from 1.
+    Test that fit_cutout_by_basis_images returns None when c_0 is far from 1.
 
     For now this is a hard-coded 'bad fit' criterion.
     """
@@ -242,7 +242,7 @@ def test_fit_returns_none_when_c0_far_from_unity(make_slits):
     observed_slit.data = obs_data
     observed_slit.dq = np.zeros(obs_data.shape, dtype=np.uint32)
 
-    result = fit_slit_by_basis_images(observed_slit, simul)
+    result = fit_cutout_by_basis_images(observed_slit, simul)
     assert result is None
 
 

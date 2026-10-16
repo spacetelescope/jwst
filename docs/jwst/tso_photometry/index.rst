@@ -10,5 +10,4 @@ TSO Aperture Photometry
    description.rst
    arguments.rst
    reference_files.rst
-
-.. automodapi:: jwst.tso_photometry
+   api_ref.rst

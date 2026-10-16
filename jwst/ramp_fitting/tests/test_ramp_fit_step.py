@@ -230,6 +230,7 @@ def test_subarray_5groups(tmp_path_factory):
     # all pixel values are zero. So slope should be zero
     gainfile = tmp_path_factory.mktemp("data") / "gain.fits"
     readnoisefile = tmp_path_factory.mktemp("data") / "readnoise.fits"
+    output_dir = tmp_path_factory.mktemp("output")
 
     model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(
         ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50
@@ -239,6 +240,7 @@ def test_subarray_5groups(tmp_path_factory):
     gain.save(gainfile)
     rnModel.save(readnoisefile)
 
+    model1.meta.filename = "test_ramp.fits"
     model1.meta.exposure.ngroups = 11
     model1.data[0, 0, 12, 1] = 10.0
     model1.data[0, 1, 12, 1] = 15.0
@@ -253,10 +255,14 @@ def test_subarray_5groups(tmp_path_factory):
         override_readnoise=str(readnoisefile),
         maximum_cores="none",
         save_opt=True,
+        output_dir=str(output_dir),
     )
 
     assert slopes is not None
     assert cube_model is not None
+
+    # optional output is saved to output directory
+    assert (output_dir / "test_fitopt.fits").exists()
 
     xvalues = np.arange(5) * 1.0
     yvalues = np.array([10, 15, 25, 33, 60])

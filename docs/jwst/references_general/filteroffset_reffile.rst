@@ -1,8 +1,3 @@
-:orphan:
-
-.. _filteroffset_reffile:
-
-
 FILTEROFFSET Reference File
 ---------------------------
 
@@ -27,7 +22,7 @@ NIRISS     INSTRUME, EXP_TYPE, DATE-OBS, TIME-OBS
 
 Reference File Format
 +++++++++++++++++++++
-The filteroffset reference file is an ASDF file that contains a list
+The FILTEROFFSET reference file is an ASDF file that contains a list
 called ``filters``. Every item in the list contains one or more entries that
 are used as selectors, as well as the column and row offset values to be applied.
 For the MIRI instrument, there is one selector "filter", which is the name of
@@ -38,8 +33,16 @@ The offsets, in units of pixels, are *added* to positions in images that use
 the reference filter/pupil, in order to align images to the reference filter/pupil
 frame.
 
-:filters:
-    :filter: Filter name
-    :pupil: Pupil name (NIRCam and NIRISS only)
-    :column_offset: Offset in x (in pixels)
-    :row_offset: Offset in y (in pixels)
+Items in the ``filters`` list:
+
+``filter``
+  Filter name
+
+``pupil``
+  Pupil name (NIRCam and NIRISS only)
+
+``column_offset``
+  Offset in x (in pixels)
+
+``row_offset``
+  Offset in y (in pixels)

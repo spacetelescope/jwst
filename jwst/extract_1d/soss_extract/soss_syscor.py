@@ -10,24 +10,24 @@ __all__ = ["soss_background", "make_background_mask"]
 
 def soss_background(scidata, scimask, bkg_mask):
     """
-    Compute a columnwise background for a SOSS observation.
+    Compute a column-wise background for a SOSS observation.
 
     Parameters
     ----------
-    scidata : array[float]
+    scidata : ndarray
         The image of the SOSS trace.
-    scimask : array[bool]
+    scimask : ndarray
         Boolean mask of pixels to be excluded.
-    bkg_mask : array[bool]
+    bkg_mask : ndarray
         Boolean mask of pixels to be excluded because they are in
-        the trace, typically constructed with make_background_mask.
+        the trace, typically constructed with :func:`make_background_mask`.
 
     Returns
     -------
-    scidata_bkg : array[float]
-        Background-subtracted image
-    col_bkg : array[float]
-        Column-wise background values
+    scidata_bkg : ndarray
+        Background-subtracted image.
+    col_bkg : ndarray
+        Column-wise background values.
     """
     # Check the validity of the input.
     data_shape = scidata.shape
@@ -63,17 +63,17 @@ def make_background_mask(deepstack, width):
 
     Parameters
     ----------
-    deepstack : array[float]
+    deepstack : ndarray
         Deep image of the trace constructed by combining
         individual integrations of the observation.
     width : int
         Width, in pixels, of the trace to exclude with the mask
-        (i.e. width/256 for a SUBSTRIP256 observation).
+        (i.e., ``width/256`` for a SUBSTRIP256 observation).
 
     Returns
     -------
-    bkg_mask : array[bool]
-        Pixel mask in the trace based on the deepstack or
+    bkg_mask : ndarray
+        Pixel mask (boolean) in the trace based on the deepstack or
         non-finite in the image.
     """
     # Get the dimensions of the input image.

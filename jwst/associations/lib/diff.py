@@ -1,4 +1,4 @@
-"""Diff and compare associations."""
+"""Tools to diff and compare associations."""
 
 import logging
 import re
@@ -13,27 +13,49 @@ from jwst.lib.suffix import remove_suffix
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "DiffError",
+    "CandidateLevelError",
+    "DuplicateMembersError",
+    "DuplicateProductError",
+    "DifferentProductSetsError",
+    "MemberLengthDifferenceError",
+    "MemberMismatchError",
+    "SubsetError",
+    "TypeMismatchError",
+    "UnaccountedMembersError",
+    "MultiDiffError",
     "compare_asn_files",
     "compare_asn_lists",
     "compare_asns",
     "compare_membership",
     "compare_product_membership",
+    "check_duplicate_members",
+    "check_duplicate_products",
+    "components",
+    "exposure_name",
+    "get_product_names",
+    "separate_products",
 ]
 
 
-# #########################
-# Define the types of diffs
-# #########################
 class DiffError(AssertionError):
     """
-    Base Class for difference errors.
+    Base class for difference errors.
+
+    Parameters
+    ----------
+    *args : tuple
+        Standard exception arguments.
+
+    asns : list of `~jwst.associations.association.Association`
+        List of associations that generated the exception.
+
+    **kwargs
+        Other options for parent exception class.
 
     Attributes
     ----------
-    args : tuple
-        Standard exception arguments.
-
-    asns : [Association[,...]]
+    asns : list of `~jwst.associations.association.Association`
         List of associations that generated the exception.
     """
 
@@ -127,16 +149,14 @@ def compare_asn_files(left_paths, right_paths, strict_expname=False):
 
     Parameters
     ----------
-    left_paths : [Path or str[, ...]]
-        Set of association files.
-    right_paths : [Path or str[, ...]]
-        Set of association files to compare against.
+    left_paths, right_paths : list of Path or str
+        List of association files to compare against.
     strict_expname : bool
         Option for :func:`compare_membership`.
 
     Raises
     ------
-    MultiDiffError
+    jwst.associations.lib.diff.MultiDiffError
         If there are differences. The message will contain
         all the differences.
     """
@@ -169,21 +189,21 @@ def compare_asn_lists(left_asns, right_asns, strict_expname=False):
     Compare to lists of associations.
 
     Both association lists must contain associations that only have
-    single products. Use ``separate_products`` prior to calling this
+    single products. Use :func:`separate_products` prior to calling this
     function.
 
     Parameters
     ----------
-    left_asns : [`Association`[, ...]]
+    left_asns : list of `~jwst.associations.association.Association`
         Group of associations.
-    right_asns : [`Association`[, ...]]
+    right_asns : list of `~jwst.associations.association.Association`
         Group of associations to compare.
     strict_expname : bool
         Option for :func:`compare_membership`.
 
     Raises
     ------
-    MultiDiffError
+    jwst.associations.lib.diff.MultiDiffError
         If there are differences. The message will contain
         all the differences.
     """
@@ -270,7 +290,7 @@ def compare_asns(left, right, skip_top_level_checks=False, strict_expname=False)
 
     Raises
     ------
-    MultiDiffError
+    jwst.associations.lib.diff.MultiDiffError
         If there are differences, the message will contain
         all the differences.
 
@@ -279,19 +299,19 @@ def compare_asns(left, right, skip_top_level_checks=False, strict_expname=False)
     This comparison is dependent on the associations being JWST-like associations.
     The attributes that are compared are as follows:
 
-    - key ``asn_type``
+    - The key ``asn_type``
 
-    - key ``products``. Specifically the following are compared:
+    - The key ``products``, specifically the following are compared:
 
         - Length of the list
-        - key ``name`` for each product
-        - key ``members`` for each product
+        - The key ``name`` for each product
+        - The key ``members`` for each product
 
     - For the member lists of each product, the following are compared:
 
         - Length of the list
-        - key ``expname`` for each member
-        - key ``exptype`` for each member
+        - The key ``expname`` for each member
+        - The key ``exptype`` for each member
     """
     diffs = MultiDiffError()
 
@@ -334,7 +354,7 @@ def compare_membership(left, right, strict_expname=False):
 
     Raises
     ------
-    MultiDiffError
+    jwst.associations.lib.diff.MultiDiffError
         If there are differences. The message will contain
         all the differences.
     """
@@ -381,19 +401,19 @@ def compare_product_membership(left, right, strict_expname=True):
 
     Otherwise, the following errors will be raised:
 
-    - DuplicateMemberError
+    - `~jwst.associations.lib.diff.DuplicateMembersError`:
       A member exists multiple times in the member list.
 
-    - MemberLengthDifferenceError
+    - `~jwst.associations.lib.diff.MemberLengthDifferenceError`:
       Number of members in the two products differ.
 
-    - MemberMismatchError
+    - `~jwst.associations.lib.diff.MemberMismatchError`:
       Members with the same ``expname`` do not share the other attributes.
 
-    - SubsetError
+    - `~jwst.associations.lib.diff.SubsetError`:
       A member list is a subset of another member list.
 
-    - UnaccountedMembersError
+    - `~jwst.associations.lib.diff.UnaccountedMembersError`:
       Members exist in one association that do not exist in the other.
 
     Parameters
@@ -403,15 +423,15 @@ def compare_product_membership(left, right, strict_expname=True):
         these are not associations, just products from associations.
 
     strict_expname : bool
-        Compare ``expname`` exactly. If False, ``expname`` munging
-        will occur. See ``exposure_name`` for further details.
-        Generally False for when comparing unrelated association lists.
-        Generally True when comparing related associations;
-        those associations generated together.
+        Compare ``expname`` exactly. If `False`, ``expname`` munging
+        will occur. See :func:`exposure_name` for further details.
+        Generally, `False` for when comparing unrelated association lists,
+        and `True` when comparing related associations
+        (those associations were generated together).
 
     Raises
     ------
-    MultiDiffError
+    jwst.associations.lib.diff.MultiDiffError
         If there are differences. The message will contain
         all the differences.
     """
@@ -539,7 +559,7 @@ def check_duplicate_members(product):
 
     Raises
     ------
-    MultiDiffError
+    jwst.associations.lib.diff.MultiDiffError
         If the product has duplicate members.
     """
     prod_count = Counter([member["expname"] for member in product["members"]])
@@ -556,15 +576,16 @@ def check_duplicate_products(asns, product_names=None, dup_names=None, pfx=""):
     Check for duplicate products in a list of associations.
 
     Duplicate products are defined as any products that share the same name.
-    If no ``MultiDiffError`` is raised, there are no duplicate products.
+    If no `~jwst.associations.lib.diff.MultiDiffError` is raised,
+    there are no duplicate products.
 
     If there are duplicate products, the possible errors that can be flagged are:
 
-    - DuplicateProductError
+    - `~jwst.associations.lib.diff.DuplicateProductError`:
       The general error for two products that share name and otherwise do
-      not fall into any other category
+      not fall into any other category.
 
-    - SubsetError
+    - `~jwst.associations.lib.diff.SubsetError`:
       When one or more products are full subsets of another.
 
     There is a special case where products may have the same name. For Level 2
@@ -577,24 +598,24 @@ def check_duplicate_products(asns, product_names=None, dup_names=None, pfx=""):
 
     Parameters
     ----------
-    asns : [Associations[,...]]
+    asns : list of `jwst.associations.association.Association`
         The associations to compare. Each association should only have one
-        product. Use `separate_products` prior to calling if necessary.
+        product. Use :func:`separate_products` prior to calling if necessary.
 
-    product_names : [str[,...]]
+    product_names : list of str or None
         Product names in given associations.
-        If None, will be generated internally.
+        If None, they will be generated internally.
 
-    dup_names : [str[,...]]
+    dup_names : list of str or None
         Duplicate product names in the given associations.
-        If None, will be generated internally.
+        If None, they will be generated internally.
 
     pfx : str
         Prefix to error message. Particularly useful during left/right diff.
 
     Raises
     ------
-    MultiDiffError
+    jwst.associations.lib.diff.MultiDiffError
     """
     if product_names is None or dup_names is None:
         product_names, dup_names = get_product_names(asns)
@@ -642,6 +663,8 @@ def check_duplicate_products(asns, product_names=None, dup_names=None, pfx=""):
 # #########
 # Utilities
 # #########
+
+
 def components(s):
     """
     Split string into its components.
@@ -653,7 +676,7 @@ def components(s):
 
     Returns
     -------
-    components_set : set(str)
+    components_set : set
         The string components set.
     """
     return set(re.split("[_-]", s))
@@ -684,13 +707,16 @@ def get_product_names(asns):
 
     Parameters
     ----------
-    asns : [Association[, ...]]
+    asns : list of `~jwst.associations.association.Association`
         List of associations.
 
     Returns
     -------
-    product_names, duplicates : set(str[, ...]), [str[,...]]
-        2-tuple consisting of the set of product names and the list of duplicates.
+    product_names : set
+        The set of product names.
+
+    duplicates : list
+        The list of duplicates.
     """
     product_names = [asn["products"][0]["name"] for asn in asns]
 
@@ -707,12 +733,12 @@ def separate_products(asn):
 
     Parameters
     ----------
-    asn : Association
+    asn : `~jwst.associations.association.Association`
         The association to split.
 
     Returns
     -------
-    separated : [Association[, ...]]
+    separated : list of `~jwst.associations.association.Association`
         The list of separated associations.
     """
     if len(asn["products"]) == 1:  # noop

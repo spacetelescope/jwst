@@ -1,0 +1,1 @@
+The save_contam_images parameter is now deprecated and has no effect. Intermediate files with extension _simul_slits and _contam are no longer generated. Instead, the same information is added to the default output MultiSlitModel as model.slits[i].simul and model.slits[i].contam, with associated FITS extensions SIMUL and CONTAM, respectively.

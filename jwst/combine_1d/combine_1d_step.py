@@ -7,7 +7,7 @@ from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
     wfss_multiexposure_to_multispec,
 )
-from jwst.stpipe import Step
+from jwst.stpipe import Step, record_step_status
 
 __all__ = ["Combine1dStep"]
 
@@ -32,8 +32,9 @@ class Combine1dStep(Step):
         ----------
         input_data : str, `~jwst.datamodels.container.ModelContainer`, \
                      `~stdatamodels.jwst.datamodels.MultiSpecModel`, \
-                     `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`, or \
-                     `~stdatamodels.jwst.datamodels.MRSMultiSpecModel`
+                     `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`, \
+                     `~stdatamodels.jwst.datamodels.MRSMultiSpecModel`, or \
+                     `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
             Input is expected to be an association file name, ModelContainer,
             or multi-spectrum model containing multiple spectra to be combined.
             Individual members of the association or container are expected
@@ -79,7 +80,7 @@ class Combine1dStep(Step):
             )
         except TypeError:
             log.error("Invalid input model for combine_1d; skipping.")
-            output_model.meta.cal_step.combine_1d = "SKIPPED"
+            record_step_status(output_model, "combine_1d", status="SKIPPED")
             return output_model
 
         # The result is a new model: close any input models opened here

@@ -66,14 +66,16 @@ def _convert_refmodel_poly_to_astropy(coefficients):
     """
     Reorder reference file 2-D polynomial coefficients to create Astropy polynomial.
 
-    Ordering in reference files is expected to be
-    C00 + C10 * x + C01 * y + C20 * x^2 + C11 * x * y + C02 * y^2 +
-    C30 * x^3 + C21 * x^2 * y + C12 * x * y^2 + C03 * y^3 ...
+    Ordering in reference files is expected to be::
 
-    Astropy ordering is
-    C00 + C10 * x + C20 * x^2 ...
-    + C01 * y + C02 * y^2 + ...
-    + C11 * x * y + C12 * x^2 * y + C13 * x^3 * y ...
+        C00 + C10 * x + C01 * y + C20 * x^2 + C11 * x * y + C02 * y^2 +
+        C30 * x^3 + C21 * x^2 * y + C12 * x * y^2 + C03 * y^3 ...
+
+    Astropy ordering is::
+
+        C00 + C10 * x + C20 * x^2 ...
+        + C01 * y + C02 * y^2 + ...
+        + C11 * x * y + C12 * x^2 * y + C13 * x^3 * y ...
 
     Parameters
     ----------
@@ -82,7 +84,7 @@ def _convert_refmodel_poly_to_astropy(coefficients):
 
     Returns
     -------
-    Polynomial2D
+    `~astropy.modeling.polynomial.Polynomial2D`
         The Astropy 2-D polynomial representation of the input coefficients.
     """
     # figure out the degree from the length by inverting triangle number formula
@@ -107,19 +109,19 @@ def _get_wavelengths(refmodel, x, pwcpos, order):
 
     Parameters
     ----------
-    refmodel : PastasossModel
-        The reference model holding the wavecal models and scale extents
-    x : float or numpy.ndarray
-        The input pixel values for which the function will estimate wavelengths
+    refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`
+        The reference model holding the wavecal models and scale extents.
+    x : float or ndarray
+        The input pixel values for which the function will estimate wavelengths.
     pwcpos : float
         The position of the pupil wheel; used to determine
-        the difference between current and commanded position to rotate the model
+        the difference between current and commanded position to rotate the model.
     order : int
         The spectral order to find trace and wavecal model indices for.
 
     Returns
     -------
-    wavelengths : numpy.ndarray
+    wavelengths : ndarray
         The estimated wavelengths for the given pixel values.
     """
     order_idx = _find_spectral_order_index(refmodel, order)
@@ -159,7 +161,7 @@ def _min_max_scaler(x, x_min, x_max):
 
     Parameters
     ----------
-    x : float or numpy.ndarray
+    x : float or ndarray
         The input value(s) to be scaled.
     x_min : float
         The minimum value in the range to which 'x' will be scaled.
@@ -168,7 +170,7 @@ def _min_max_scaler(x, x_min, x_max):
 
     Returns
     -------
-    float or numpy.ndarray
+    float or ndarray
         The scaled value(s) in the range [0, 1].
 
     Notes
@@ -195,7 +197,7 @@ def _rotate(x, y, angle, origin=(0, 0)):
         The y-coordinates of the points to be transformed.
     angle : float
         The angle (in degrees) by which to rotate the points.
-    origin : Tuple[float, float], optional
+    origin : tuple, optional
         The point about which to rotate the points. Default is (0, 0).
 
     Returns
@@ -237,9 +239,9 @@ def _find_spectral_order_index(refmodel, order):
 
     Parameters
     ----------
-    refmodel : datamodel
+    refmodel : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The reference file holding traces and wavelength calibration
-        models, under `refmodel.traces` and `refmodel.wavecal_models`
+        models, under ``refmodel.traces`` and ``refmodel.wavecal_models``.
     order : int
         The spectral order to find trace and wavecal model indices for.
 
@@ -247,7 +249,7 @@ def _find_spectral_order_index(refmodel, order):
     -------
     int
         The index to provide the reference file lists of traces and wavecal
-        models to retrieve the arrays for the desired spectral order
+        models to retrieve the arrays for the desired spectral order.
     """
     if order not in [1, 2, 3]:
         error_message = f"Order {order} is not supported."
@@ -276,7 +278,7 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
         The spectral order for which to retrieve the traces.
     subarray : str
         Name of subarray in use, typically 'SUBSTRIP96' or 'SUBSTRIP256'.
-    refmodel : PastasossModel, optional
+    refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`, optional
         The reference model for the SOSS extraction. If not set, it will be fetched
         from CRDS.
 
@@ -304,15 +306,15 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
 
 def retrieve_default_pastasoss_model():
     """
-    Retrieve the default PastasossModel reference file.
+    Retrieve the default PASTASOSS reference file.
 
-    This function fetches the default PastasossModel reference file from CRDS.
+    This function fetches the default PASTASOSS reference file from CRDS.
     It is used when no specific reference model is provided.
 
     Returns
     -------
-    PastasossModel
-        The default PastasossModel reference file.
+    `~stdatamodels.jwst.datamodels.PastasossModel`
+        The default PASTASOSS reference file.
     """
     ref_name = crds_client.get_reference_file(DEFAULT_CRDS_PARAMS, "pastasoss", "jwst")
     ref_file = crds_client.check_reference_open(ref_name)
@@ -333,7 +335,7 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
 
     Parameters
     ----------
-    refmodel : PastasossModel
+    refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`
         The reference file datamodel.
     pwcpos : float
         The pupil wheel positions angle provided in the FITS header under
@@ -390,7 +392,7 @@ def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
 
     Returns
     -------
-    Array
+    ndarray
         The interpolated quantities
     """
     sort_i = np.argsort(wavelength)
@@ -452,7 +454,7 @@ def _calc_2d_wave_map(
 
     Returns
     -------
-    Array
+    ndarray
         An array containing the wavelength at each pixel on the detector.
     """
     os = np.copy(oversample)
@@ -517,16 +519,17 @@ def get_soss_wavemaps(
     Parameters
     ----------
     pwcpos : float
-        The pupil wheel position angle, e.g. as provided in the FITS header under keyword PWCPOS.
+        The pupil wheel position angle, e.g., as provided in the
+        FITS header under keyword PWCPOS.
         Values are expected to be within +/- 0.25 degrees of the commanded position
         (245.76 degrees).
     subarray : str, optional
         The subarray name, one of 'SUBSTRIP256', 'SUBSTRIP96', or 'FULL'.
-    refmodel : PastasossModel, optional
+    refmodel : `~stdatamodels.jwst.datamodels.PastasossModel`, optional
         The reference model for the SOSS extraction. If not set, it will be fetched
         from CRDS.
     spectraces : bool, optional
-        If True, return the interpolated spectraces as well.
+        If `True`, return the interpolated spectraces as well.
     orders_requested : list
         A list of the spectral orders requested for extraction.
         If None, all orders in the reference file will be used.
@@ -534,11 +537,12 @@ def get_soss_wavemaps(
     Returns
     -------
     wavemaps : ndarray
-        The 2D wavemaps. Will have shape (n_orders, array_x, array_y) with orders 1, 2, etc. being
-        the elements of the first dimension. Wavemaps for all orders defined in the reference file
+        The 2D wavemaps. Will have shape ``(n_orders, array_x, array_y)``
+        with orders 1, 2, etc. being the elements of the first dimension.
+        Wavemaps for all orders defined in the reference file
         will be returned.
     traces : ndarray, optional
-        The corresponding 1D traces (if ``spectraces`` is True).
+        The corresponding 1D traces (if ``spectraces`` is `True`).
     """
     if refmodel is None:
         refmodel = retrieve_default_pastasoss_model()
@@ -613,7 +617,7 @@ def _check_pwcpos_bounds(pwcpos, bounds):
     Returns
     -------
     bool
-        True if the PWC position is within bounds, False otherwise.
+        `True` if the PWC position is within bounds, `False` otherwise.
     """
     if bounds is not None and len(bounds) == 2:
         return bounds[0] <= pwcpos <= bounds[1]

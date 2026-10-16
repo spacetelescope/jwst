@@ -212,3 +212,42 @@ def test_match_nans_and_flags_shape_mismatch():
 
     model.close()
     model_copy.close()
+
+
+def test_match_nans_and_flags_2d_dq_3d_sci(caplog):
+    # Set up a model with a DQ plane that doesn't exactly match science
+    dnu = datamodels.dqflags.pixel["DO_NOT_USE"]
+    model = datamodels.GuiderCalModel()
+
+    sci_shape = (5, 10, 10)
+    dq_shape = (10, 10)
+    invalid = np.full(sci_shape, False)
+    extensions = ["data", "err", "dq"]
+    for i, extname in enumerate(extensions):
+        if extname == "dq":
+            data = np.zeros(dq_shape, dtype=np.uint32)
+            data[2, 2] = dnu
+            invalid[:, 2, 2] = True
+        else:
+            data = np.ones(sci_shape)
+            data.flat[i] = np.nan
+            invalid.flat[i] = True
+        setattr(model, extname, data)
+
+    # Match flags and NaNs across all extensions:
+    # will warn for data mismatch in DQ, but still use its flags
+    model_copy = model.copy()
+    pipe_utils.match_nans_and_flags(model)
+    assert "Mismatched data shapes; skipping invalid data updates for extension 'dq'" in caplog.text
+
+    # Only data and err are updated, including the DQ flag
+    for extname in extensions:
+        data = getattr(model, extname)
+        if extname == "data" or extname == "err":
+            assert np.all(np.isnan(data[invalid]))
+            assert np.all(data[~invalid] == 1)
+        else:
+            assert np.allclose(data, getattr(model_copy, extname))
+
+    model.close()
+    model_copy.close()

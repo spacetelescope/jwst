@@ -8,6 +8,5 @@ KLIP Processing
    :maxdepth: 2
 
    description.rst
-
-.. automodapi:: jwst.coron.klip_step
-   :no-inheritance-diagram:
+   arguments.rst
+   api_ref.rst

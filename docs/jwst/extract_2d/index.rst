@@ -10,5 +10,4 @@ Extract 2D Spectra
    main.rst
    arguments.rst
    reference_files.rst
-   
-.. automodapi:: jwst.extract_2d
+   api_ref.rst

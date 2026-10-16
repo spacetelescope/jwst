@@ -218,6 +218,10 @@ For WFSS modes (``NIS_WFSS``, ``NRC_WFSS``, and ``MIR_WFSS``), an approximation 
 associated with a direct image with the same instrument configuration as the grism/prism image
 is saved as FITS WCS in the headers of grism/prism images.
 
+For TSGRISM, since only one source position is expected, the ``x0, y0`` coordinate is derived
+from the SIAF reference position (FITS keywords ``XREF_SCI`` and ``YREF_SCI``), corrected by
+offsets from the TA image to the grism pupil (FITS keywords ``XOFFSET`` and ``YOFFSET``).
+
 WCS of substripe (DHS) exposures
 --------------------------------
 

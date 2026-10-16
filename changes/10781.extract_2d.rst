@@ -1,0 +1,1 @@
+For WFSS modes, make the internal representation of slit WCS objects more efficient. This improves file I/O performance of cal files and other MultiSlitModel-type files, especially if wfss_nbright is set to a large value.

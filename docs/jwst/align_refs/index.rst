@@ -8,6 +8,6 @@ Align PSF References
    :maxdepth: 2
 
    description.rst
-
-.. automodapi:: jwst.coron.align_refs_step
-   :no-inheritance-diagram:
+   arguments.rst
+   reference_files.rst
+   api_ref.rst

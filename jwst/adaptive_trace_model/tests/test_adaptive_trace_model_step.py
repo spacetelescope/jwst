@@ -7,6 +7,7 @@ from stdatamodels.jwst import datamodels
 from jwst.adaptive_trace_model.adaptive_trace_model_step import AdaptiveTraceModelStep
 from jwst.adaptive_trace_model.tests import helpers
 from jwst.datamodels import ModelContainer
+from jwst.tests import spec_cal_helpers
 
 
 @pytest.fixture(scope="module")
@@ -39,7 +40,7 @@ def miri_lrs_slitless_model_with_source():
 
 @pytest.fixture(scope="module")
 def miri_mrs_model():
-    model = helpers.miri_mrs_model()
+    model = spec_cal_helpers.miri_mrs_cal_model()
     yield model
     model.close()
 
@@ -74,7 +75,7 @@ def nirspec_mos_model_with_source():
 
 @pytest.fixture(scope="module")
 def nirspec_slit_model():
-    model = helpers.nirspec_slit_model()
+    model = spec_cal_helpers.nirspec_slit_cal_model()
     yield model
     model.close()
 

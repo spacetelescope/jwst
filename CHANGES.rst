@@ -5155,7 +5155,7 @@ master_background
 outlier_detection
 -----------------
 
-- Improved memory usage during `outlier_detection` by adding ability to work with
+- Improved memory usage during ``outlier_detection`` by adding ability to work with
   input ``ImageModels`` that are saved to disk instead of keeping them in memory.
   New parameters were aded to the step to control this functionality. [#6904]
 
@@ -5676,7 +5676,7 @@ documentation
 extract_1d
 ----------
 
-- Clean the logging statements made by `extract_1d` to make the log
+- Clean the logging statements made by ``extract_1d`` to make the log
   more useful [#6696]
 
 - Check for non-zero array size before computing sigma-clipped

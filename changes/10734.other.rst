@@ -1,0 +1,1 @@
+Drop support for Python 3.11; bump minimum supported versions of scipy to 1.18.0 and pyyaml to 6.0.1.

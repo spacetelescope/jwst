@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 import gwcs.coordinate_frames as cf
 import numpy as np
@@ -382,12 +381,16 @@ def lrs_xytoabl(input_model, reference_files):
         )
 
     # If in slitless mode, define the bounding box X locations using the subarray x boundaries
-    # and the y locations using the corner locations in the CDP reference file.  Make sure to
-    # omit the 4 reference pixels on the left edge of slitless subarray.
+    # and the y locations using the corner locations in the CDP reference file.  If within 4
+    # pixels of the left edge of the detector then make sure to omit the 4 reference pixels.
     if input_model.meta.exposure.type.lower() == "mir_lrs-slitless":
+        xstart = 1  # This is in subarray coordinates (1-indexed) and thus always 1 initially
+        # Reference pixel padding; ensure we don't use left-most 4 pixels in full frame
+        xpad = np.nanmax([0, 4 + 1 - input_model.meta.subarray.xstart])
+        xstart += xpad
         bb_sub = (
             (
-                input_model.meta.subarray.xstart - 1 + 4 - 0.5,
+                xstart - 1 - 0.5,
                 input_model.meta.subarray.xsize - 1 + 0.5,
             ),
             (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5),
@@ -958,43 +961,6 @@ exp_type2transform = {
     "mir_dark": not_implemented_mode,
     "mir_taconfirm": imaging,
 }
-
-
-def get_wavelength_range(input_model, path=None):
-    """
-    Return the wavelength range used for computing the WCS.
-
-    Needs access to the reference file used to construct the WCS object.
-
-    Parameters
-    ----------
-    input_model : ImageModel
-        Data model after assign_wcs has been run.
-    path : str
-        Directory where the reference file is. (optional)
-
-    Returns
-    -------
-    wave_range : set
-        A set of tuples containing the channel and wavelength
-        range for each channel used in the WCS.
-    """
-    fname = Path(input_model.meta.ref_file.wavelengthrange.name.split("/")[-1])
-    if path is None and not fname.exists():
-        raise OSError(f"Reference file {fname} not found. Please specify a path.")
-    else:
-        fname = Path(path) / fname
-        f = WavelengthrangeModel(fname)
-
-    wave_range = f.tree["wavelengthrange"].copy()
-    wave_channels = f.tree["channels"]
-    f.close()
-
-    wr = dict(zip(wave_channels, wave_range, strict=True))
-    channel = input_model.meta.instrument.channel
-    band = input_model.meta.instrument.band
-
-    return {(ch + band, wr[ch + band]) for ch in channel}
 
 
 def store_dithered_position(input_model):

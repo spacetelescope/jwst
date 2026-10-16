@@ -1,0 +1,1 @@
+Update the class alias for ImprintStep to "imprint_subtract", to match the name of the step in the spec2 pipeline.

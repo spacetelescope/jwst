@@ -4,7 +4,7 @@ import logging
 import time
 
 import numpy as np
-from stcal.jump.jump import detect_jumps_data
+from stcal.jump.jump import detect_jumps_data, flag_large_events
 from stcal.jump.jump_class import JumpData
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
@@ -102,6 +102,9 @@ class JumpStep(Step):
         # Update the DQ arrays of the output model with the jump detection results
         result.groupdq = new_gdq
         result.pixeldq = new_pdq
+
+        # If a zeroframe is present, flag snowballs in it too
+        self._flag_zeroframe(result)
 
         # determine the number of groups with all pixels set to DO_NOT_USE
         dnu_flag = dqflags.pixel["DO_NOT_USE"]
@@ -232,3 +235,40 @@ class JumpStep(Step):
             jump_data.read_pattern = list(read_times)
 
         return jump_data
+
+    def _flag_zeroframe(self, result):
+        """
+        Flag snowballs in a zeroframe array if present.
+
+        Parameters
+        ----------
+        result : `~stdatamodels.jwst.datamodels.RampModel`
+            Datamodel with zeroframe attached. Updated in place.
+        """
+        if result.zeroframe is None or not self.expand_large_events:
+            return
+
+        log.info("Flagging snowballs in zeroframe")
+        sat_flag = dqflags.group["SATURATED"]
+        jump_flag = dqflags.group["JUMP_DET"]
+
+        # Reshape the zeroframe data to be ramp-like with a single group
+        nints, ngroups, nrows, ncols = result.data.shape
+        zframe_data = result.zeroframe.reshape(nints, 1, nrows, ncols)
+        with datamodels.RampModel(zframe_data) as zframe_model:
+            zframe_model.update(result)
+
+            # groupdq and pixeldq are created automatically from the data shape.
+            # The zeroframe doesn't have its own DQ plane, so update groupdq to
+            # have saturation flags where the data is zero.
+            zframe_model.groupdq[zframe_data == 0] = sat_flag
+
+            # Set up a new jump class and run it through snowball flagging only
+            zframe_jump = self._setup_jump_data(zframe_model)
+            zf_gdq, zf_snowballs = flag_large_events(
+                zframe_model.groupdq, jump_flag, sat_flag, zframe_jump
+            )
+
+        # Set the zeroframe data to 0 wherever the updated groupdq has saturated flags
+        is_sat = (zf_gdq[:, 0, :, :] & sat_flag) > 0
+        result.zeroframe[is_sat] = 0.0

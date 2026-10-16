@@ -135,10 +135,7 @@ class MasterBackgroundStep(Step):
                 if (
                     model.meta.exposure.type == "NRS_IFU"
                     and model.spec[0].source_type == "EXTENDED"
-                ):
-                    this_is_ifu_extended = True
-                if model.meta.exposure.type == "MIR_MRS":
-                    # always treat as extended for MIRI MRS
+                ) or model.meta.exposure.type == "MIR_MRS":
                     this_is_ifu_extended = True
 
                 # Use "bkgdtarg is False" so we don't also get None cases
@@ -336,40 +333,25 @@ def subtract_2d_background(source, background):
 
     Parameters
     ----------
-    source : `~stdatamodels.jwst.datamodels.JwstDataModel` or \
-             `~jwst.datamodels.container.ModelContainer`
+    source : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input science data, updated in place.
     background : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input background data.  Must be the same datamodel type as ``source``.
-        For a `~jwst.datamodels.container.ModelContainer`,
-        the source and background
-        models in the input containers must match one-to-one.
 
     Returns
     -------
     source : `~stdatamodels.jwst.datamodels.JwstDataModel`
         Input data with background subtracted.
     """
+    # Handle individual NIRSpec FS, NIRSpec MOS
+    if isinstance(source, datamodels.MultiSlitModel):
+        for slit, slitbg in zip(source.slits, background.slits, strict=False):
+            slit.data -= slitbg.data
+            slit.dq |= slitbg.dq
 
-    def _subtract_2d_background(model, background):
-        # Handle individual NIRSpec FS, NIRSpec MOS
-        if isinstance(model, datamodels.MultiSlitModel):
-            for slit, slitbg in zip(model.slits, background.slits, strict=False):
-                slit.data -= slitbg.data
-                slit.dq |= slitbg.dq
-
-        # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
-        else:
-            model.data -= background.data
-            model.dq |= background.dq
-
-    if isinstance(source, ModelContainer):
-        # Handle containers of many datamodels
-        for model, bg in zip(source, background, strict=False):
-            _subtract_2d_background(model, bg)
-
+    # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
     else:
-        # Handle single datamodels
-        _subtract_2d_background(source, background)
+        source.data -= background.data
+        source.dq |= background.dq
 
     return source

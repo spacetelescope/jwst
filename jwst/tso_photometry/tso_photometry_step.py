@@ -1,3 +1,5 @@
+"""Perform aperture photometry for a time-series observation."""
+
 import logging
 
 import numpy as np
@@ -47,7 +49,7 @@ class TSOPhotometryStep(Step):
         Returns
         -------
         catalog : `~astropy.table.QTable`
-            Astropy QTable (Quantity Table) containing the source photometry.
+            Astropy Quantity Table containing the source photometry.
         """
         # Open the input as a CubeModel
         output_model = self.prepare_output(input_data, open_as_type=CubeModel)

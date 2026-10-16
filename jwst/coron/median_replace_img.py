@@ -16,29 +16,29 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     Parameters
     ----------
-    input_array : numpy.ndarray
-        Input array to filter
+    input_array : ndarray
+        Input array to filter.
 
-    input_dq_array : numpy.ndarray
-        Input data quality array
+    input_dq_array : ndarray
+        Input data quality array.
 
     bsize : scalar
-        Box size of the data to extract
+        Box size of the data to extract.
 
     bad_bitvalue : int
         The sum of all of the DQ bit values to consider bad. Setting to 0
         will treat all pixels as good.
 
     xc : scalar
-        X position of the data extraction
+        X position of the data extraction.
 
     yc : scalar
-        Y position of the data extraction
+        Y position of the data extraction.
 
     Returns
     -------
     median_value : float
-        The calculated median value
+        The calculated median value.
     """
     # Set the half box size
     hbox = int(bsize / 2)
@@ -65,11 +65,11 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
     Parameters
     ----------
-    img_model : CubeModel
-        The input model
+    img_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input model.
 
     box_size : scalar
-        Box size for the median filter
+        Box size for the median filter.
 
     bad_bitvalue : int
         The sum of all of the DQ bit values to consider bad. Setting to 0
@@ -77,8 +77,8 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
     Returns
     -------
-    img_model : CubeModel
-        The updated image model with the bad pixels replaced
+    img_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        The updated image model with the bad pixels replaced.
     """
     n_ints, _, _ = img_model.data.shape
     for nimage in range(n_ints):
@@ -126,17 +126,17 @@ def separate_non_science_pixels(img_dq, bad_locations):
 
     Parameters
     ----------
-    img_dq : numpy.ndarray
+    img_dq : ndarray
         Input data quality array.
-    bad_locations : numpy.ndarray of bool
-        Flagged bad pixels.
+    bad_locations : ndarray
+        Flagged bad pixels (bool).
 
     Returns
     -------
-    science_pixels : numpy.ndarray of bool
-        Flagged science pixels.
-    non_science_pixels : numpy.ndarray of bool
-        Flagged non-science pixels.
+    science_pixels : ndarray
+        Flagged science pixels (bool).
+    non_science_pixels : ndarray
+        Flagged non-science pixels (bool).
     """
     is_non_science = img_dq & dqflags.pixel["NON_SCIENCE"] > 0
     science_pixels = bad_locations & ~is_non_science

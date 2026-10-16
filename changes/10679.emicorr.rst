@@ -1,0 +1,1 @@
+Removed deprecated ``user_supplied_reffile`` from ``EmiCorrStep``; use ``override_emicorr`` instead.

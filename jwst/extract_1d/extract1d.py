@@ -443,7 +443,7 @@ def extract1d(
         column in the dispersion direction.  These arrays should be the
         same shape as image, with one array for each object to extract.
         Box extraction only works if exactly one profile is supplied
-        (i.e. this is a one-element list).
+        (i.e., this is a one-element list).
     variance_rn : ndarray
         2D read noise component of the variance.
     variance_phnoise : ndarray
@@ -460,9 +460,9 @@ def extract1d(
         Type of spectral extraction.
     bg_smooth_length : int, optional
         Smoothing length for box smoothing of the background along the
-        dispersion direction.  Should be odd, >=1.
+        dispersion direction.  Should be odd and ``>=1``.
     fit_bkg : bool, optional
-        Fit a background?  Default False
+        Fit a background?  Default is `False`.
     bkg_fit_type : str, optional
         Type of fitting to apply to background values in each column (or
         row, if the dispersion is vertical).
@@ -475,33 +475,34 @@ def extract1d(
 
     Returns
     -------
-    fluxes : ndarray of float64
+    fluxes : ndarray
         The extracted spectrum/spectra.  Units are currently arbitrary.
-        The first dimension is the same as the length of profiles_2d.
-    var_rn : ndarray of float64
+        The first dimension is the same as the length of ``profiles_2d``.
+    var_rn : ndarray
         The variances of the extracted spectrum/spectra due to read noise.
         Units are the same as flux^2, shape is the same as flux.
-    var_phnoise : ndarray of float64
+    var_phnoise : ndarray
         The variances of the extracted spectrum/spectra due to photon noise.
         Units are the same as flux^2, shape is the same as flux.
-    var_flat : ndarray of float64
+    var_flat : ndarray
         The variances of the extracted spectrum/spectra due to flatfield
         uncertainty. Units are the same as flux^2, shape is the same as flux.
-    bkg : ndarray of float64
+    bkg : ndarray
         Background level that would be obtained for each source if performing
         a 1-D extraction on the 2D background.
-    var_bkg_rn : ndarray of float64
-        As above, for read noise.  Nonzero because read noise adds an error term
+    var_bkg_rn : ndarray
+        As above, for read noise.  Non-zero because read noise adds an error term
         to the derived background level.
-    var_bkg_phnoise : ndarray of float64
+    var_bkg_phnoise : ndarray
         The variances of the extracted spectrum/spectra due to background photon
         noise. Units are the same as flux^2, shape is the same as flux.  This
-        background contribution is already included in var_phnoise.
-    var_bkg_flat : ndarray of float64
+        background contribution is already included in ``var_phnoise``.
+    var_bkg_flat : ndarray
         As above, for the flatfield.
-    npixels : ndarray of int64
-        Number of pixels that contribute to the flux measurement for each source
-    model : ndarray of float64
+    npixels : ndarray
+        Number of pixels (int) that contribute to the flux measurement
+        for each source.
+    model : ndarray
         The model of the scene, the same shape as the input image (and
         hopefully also similar in value).
     """

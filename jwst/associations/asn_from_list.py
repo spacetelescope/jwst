@@ -2,7 +2,10 @@
 
 import argparse
 import sys
+import warnings
 from pathlib import Path
+
+from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from jwst.associations import AssociationRegistry
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
@@ -16,17 +19,18 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
 
     Parameters
     ----------
-    items : [object [, ...]]
+    items : list
         List of items to add.
-    rule : `~jwst.associations.Association` rule
-        The association rule to use.
-    **kwargs : dict
+    rule : `~jwst.associations.association.Association`
+        The association rule to use. Default is
+        `~jwst.associations.lib.rules_level3_base.DMS_Level3_Base`.
+    **kwargs
         Other named parameters required or pertinent to adding
         the items to the association.
 
     Returns
     -------
-    association : `~jwst.associations.Association`-based instance
+    association : `~jwst.associations.association.Association`
         The association with the items added.
 
     Notes
@@ -51,7 +55,7 @@ class Main:
 
         - `None`: Command line arguments are then used.
         - List of str: A list of strings which create the command line
-          with the similar structure as ``sys.argv``
+          with the similar structure as ``sys.argv``.
     """
 
     def __init__(self, args=None):
@@ -76,11 +80,11 @@ class Main:
 
             - `None`: Command line arguments are then used.
             - List of str: A list of strings which create the command line
-              with the similar structure as ``sys.argv``
+              with the similar structure as ``sys.argv``.
 
         Returns
         -------
-        `~jwst.associations.Association`
+        `~jwst.associations.association.Association`
             The association created from the list.
         """
         association = cls(args=args)
@@ -99,7 +103,7 @@ class Main:
 
             - `None`: Command line arguments are then used.
             - List of str: A list of strings which create the command line
-              with the similar structure as ``sys.argv``
+              with the similar structure as ``sys.argv``.
         """
         if args is None:
             args = sys.argv[1:]
@@ -118,9 +122,8 @@ class Main:
         parser.add_argument(
             "-f",
             "--format",
-            type=str,
-            default="json",
-            help='Format of the association files. Default: "%(default)s"',
+            action=DeprecateFormat,
+            help="Deprecated: Only JSON format is supported for association files.",
         )
 
         parser.add_argument(
@@ -164,15 +167,26 @@ class Main:
         """Save association."""
         parsed = self.parsed
         with Path(parsed.output_file).open("w") as outfile:
-            name, serialized = self.asn.dump(format=parsed.format)
+            name, serialized = self.asn.dump()
             outfile.write(serialized)
+
+
+class DeprecateFormat(argparse.Action):
+    """Deprecate the ``--format`` option."""
+
+    def __call__(self, parser, namespace, values, option_string=None):  # noqa: ARG002
+        warnings.warn(
+            'The "--format" option is now deprecated. Only JSON is supported.',
+            AstropyDeprecationWarning,
+            stacklevel=2,
+        )
 
 
 def main(args=None):
     """
     Command-line entrypoint for asn_from_list.
 
-    Wrapper around `Main.cli` so that the return is either True or an exception
+    Wrapper around `Main.cli` so that the return is either `True` or an exception.
 
     Parameters
     ----------
@@ -181,6 +195,6 @@ def main(args=None):
 
         - `None`: Command line arguments are then used.
         - List of str: A list of strings which create the command line
-          with the similar structure as ``sys.argv``
+          with the similar structure as ``sys.argv``.
     """
     Main.cli(args=args)

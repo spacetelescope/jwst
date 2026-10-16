@@ -1,4 +1,4 @@
-"""Python implementation of the KLIP algorithm."""
+"""Utility functions for the KLIP algorithm."""
 
 import logging
 
@@ -15,27 +15,27 @@ def klip(target_model, refs_model, truncate, return_psf=True):
 
     Parameters
     ----------
-    target_model : CubeModel
+    target_model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input images of the target (NINTS x NROWS x NCOLS). Multiple integrations
         within a single exposure are stacked along the first (NINTS) axis of the data arrays.
-        Updated in place.
-    refs_model : CubeModel
+        Updated in-place.
+    refs_model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input 3D stack of reference images (NINTS_PSF x NROWS x NCOLS). The first
         (NINTS_PSF) axis is the stack of aligned PSF integrations for that
         target image.
     truncate : int
         Indicates how many rows to keep in the Karhunen-Loeve transform.
     return_psf : bool, optional
-        If True, the PSF fit to the target image will be returned as a
+        If `True`, the PSF fit to the target image will be returned as a
         separate datamodel.
 
     Returns
     -------
-    target_model : CubeModel
-        Science target Cubemodel with PSF subtracted
-    output_psf : CubeModel, optional
-        CubeModel of PSF fitted to target image. Returned only if
-        ``return_psf`` is set to True.
+    target_model : `~stdatamodels.jwst.datamodels.CubeModel`
+        Science target data model with PSF subtracted.
+    output_psf : `~stdatamodels.jwst.datamodels.CubeModel`, optional
+        Data model of PSF fitted to target image. Returned only if
+        ``return_psf`` is set to `True`.
     """
     # If needed, initialize the output PSF model as a copy of the target model
     if return_psf:
@@ -103,18 +103,18 @@ def karhunen_loeve_transform(m, normalize=False):
 
     Parameters
     ----------
-    m : numpy.ndarray
+    m : ndarray
         The array of flattened, background subtracted reference arrays
     normalize : bool
-        If True, normalize the returned transform
+        If `True`, normalize the returned transform
 
     Returns
     -------
-    klvect : numpy.ndarray
+    klvect : ndarray
         The Karhunen-Loeve Transform of the input arrays
-    eigval : numpy.ndarray
+    eigval : ndarray
         Array of eigenvalues
-    eigvect : numpy.ndarray
+    eigvect : ndarray
         Matrix of eigenvectors
     """
     eigval, eigvect = np.linalg.eigh(np.cov(m))

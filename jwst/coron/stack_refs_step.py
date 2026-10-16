@@ -20,12 +20,12 @@ class StackRefsStep(Step):
         ----------
         input_files : str, `~jwst.datamodels.container.ModelContainer`, or \
                       list of `~stdatamodels.jwst.datamodels.CubeModel`
-            Association file or ModelContainer containing input science exposures.
+            Association file or model container containing input science exposures.
 
         Returns
         -------
         output_model : `~stdatamodels.jwst.datamodels.CubeModel`
-            PSF reference exposures stacked into a CubeModel
+            PSF reference exposures stacked into a cube model.
         """
         # Open the inputs
         input_models = self.prepare_output(input_files)
