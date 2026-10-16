@@ -1,5 +1,4 @@
 import numpy as np
-from astropy.io import fits
 from gwcs import wcs
 from stdatamodels.jwst import datamodels
 
@@ -47,23 +46,23 @@ DEFAULT_WCS_KW = {
 }
 
 
-def _miri_rate_hdul(detector="MIRIMAGE", channel="ANY", band="ANY", exptype="MIR_IMAGE"):
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header["telescop"] = "JWST"
-    phdu.header["instrume"] = "MIRI"
-    phdu.header["detector"] = detector
-    phdu.header["CHANNEL"] = channel
-    phdu.header["BAND"] = band
-    phdu.header["time-obs"] = "8:59:37"
-    phdu.header["date-obs"] = "2017-09-05"
-    phdu.header["exp_type"] = exptype
-    scihdu = fits.ImageHDU()
-    scihdu.header["EXTNAME"] = "SCI"
-    scihdu.header.update(DEFAULT_WCS_KW)
-    hdul.append(phdu)
-    hdul.append(scihdu)
-    return hdul
+def _miri_rate_base(detector="MIRIMAGE", channel="ANY", band="ANY", exptype="MIR_IMAGE"):
+    model = datamodels.ImageModel()
+    model.meta.telescope = "JWST"
+
+    model.meta.instrument.name = "MIRI"
+    model.meta.instrument.detector = detector
+    model.meta.instrument.channel = channel
+    model.meta.instrument.band = band
+
+    model.meta.observation.time = "8:59:37"
+    model.meta.observation.date = "2017-09-05"
+
+    model.meta.exposure.type = exptype
+
+    model.meta.wcsinfo.instance.update(DEFAULT_WCS_KW)
+
+    return model
 
 
 def miri_image_rate_model(with_wcs=True):
@@ -82,7 +81,7 @@ def miri_image_rate_model(with_wcs=True):
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         The MIRI image datamodel.
     """
-    model = datamodels.ImageModel(_miri_rate_hdul(exptype="MIR_IMAGE"))
+    model = _miri_rate_base(exptype="MIR_IMAGE")
     model.data = np.zeros((10, 10), dtype=np.float32)
 
     if with_wcs:
@@ -120,11 +119,11 @@ def miri_mrs_rate_model(
             `~stdatamodels.jwst.datamodels.CubeModel`
         The MIRI datamodel. Image model if data shape is 2D; cube model if 3D.
     """
-    hdul = _miri_rate_hdul(detector=detector, channel=channel, band=band, exptype="MIR_MRS")
+    base_model = _miri_rate_base(detector=detector, channel=channel, band=band, exptype="MIR_MRS")
     if len(shape) == 3:
-        model = datamodels.CubeModel(hdul)
+        model = datamodels.CubeModel(base_model)
     else:
-        model = datamodels.IFUImageModel(hdul)
+        model = datamodels.IFUImageModel(base_model)
     model.data = np.zeros(shape, dtype=np.float32)
     model.meta.filename = f"test{channel}{band}"
 
@@ -152,8 +151,7 @@ def miri_wfss_rate_model(with_wcs=True):
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         The MIRI image datamodel.
     """
-    hdul = _miri_rate_hdul(exptype="MIR_WFSS")
-    model = datamodels.ImageModel(hdul)
+    model = _miri_rate_base(exptype="MIR_WFSS")
     model.data = np.zeros((10, 10), dtype=np.float32)
     model.meta.filename = "test_miri_wfss"
     model.meta.instrument.filter = "P750L"
@@ -184,8 +182,8 @@ def miri_lrs_slitless_rate_model(with_wcs=True, subarray="SLITLESSPRISM"):
     model : `~stdatamodels.jwst.datamodels.CubeModel`
         The MIRI LRS slitless datamodel.
     """
-    hdul = _miri_rate_hdul(exptype="MIR_LRS-SLITLESS")
-    model = datamodels.CubeModel(hdul)
+    base_model = _miri_rate_base(exptype="MIR_LRS-SLITLESS")
+    model = datamodels.CubeModel(base_model)
     model.meta.subarray.name = subarray
     if subarray == "SLITLESSPRISM_IPS":
         model.meta.subarray.xstart = 13
@@ -226,8 +224,7 @@ def miri_lrs_slit_rate_model(with_wcs=True):
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         The MIRI LRS slit datamodel.
     """
-    hdul = _miri_rate_hdul(exptype="MIR_LRS-FIXEDSLIT")
-    model = datamodels.ImageModel(hdul)
+    model = _miri_rate_base(exptype="MIR_LRS-FIXEDSLIT")
     model.data = np.zeros((1024, 1032), dtype=np.float32)
 
     # Add metadata needed for LRS FS
