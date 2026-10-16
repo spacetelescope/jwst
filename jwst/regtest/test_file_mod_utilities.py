@@ -40,7 +40,7 @@ def test_trim_tso_data(tmp_cwd):
     with datamodels.open(expected_file) as dm:
         assert dm.meta.filename == expected_file.name
         assert dm.meta.exposure.integration_start == 33
-        assert dm.meta.exposure.integration_end == 38
+        assert dm.meta.exposure.integration_end == 37
         assert np.shape(dm.data) == (5, 10, 20, 20)
         assert np.shape(dm.refout) == (5, 10, 20, 20)
         assert len(dm.int_times) == 5
@@ -64,5 +64,5 @@ def test_bad_input_trim_tso_data(tmp_cwd):
     with datamodels.open(expected_file) as dm:
         assert dm.meta.filename == expected_file.name
         assert dm.meta.exposure.integration_start == 33
-        assert dm.meta.exposure.integration_end == 38
+        assert dm.meta.exposure.integration_end == 37
         assert np.shape(dm.data) == (5, 10, 20, 20)
