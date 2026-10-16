@@ -1886,7 +1886,7 @@ def create_extraction(
 
         otab = np.array(list(zip(*otab_list, strict=True)), dtype=otab_dtype)
 
-        spec = datamodels.SpecModel(spec_table=otab)
+        spec = datamodels.SpecModel(spec_table=otab, validate_on_assignment=False)
         spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
         spec.spec_table.columns["wavelength"].unit = "um"
         spec.spec_table.columns["flux"].unit = flux_units
