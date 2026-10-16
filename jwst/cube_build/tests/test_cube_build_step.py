@@ -214,7 +214,7 @@ def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename, c
 
     step = CubeBuildStep()
     step.coord_system = coord_system
-    step.readnoise_weighting = 0
+    step.readnoise_weighting = None
     step.save_results = True
     result = step.run(step_input)
 
@@ -362,7 +362,7 @@ def test_readnoise_weighting(nirspec_data, weighting):
     result = CubeBuildStep.call(
         step_input,
         weighting=weighting,
-        readnoise_weighting=True,
+        readnoise_weighting="readnoise",
         scalexy=0.05,
         debug_spaxel="30 20 500",
     )
