@@ -105,10 +105,10 @@ def test_traverse_tso_grism():
     x, y, orderdet = detector_to_grism(x0, y0, lam, order)
 
     # Check returned reference positions
-    assert np.isclose(x0, helpers.TSO_WCS_KW["xref_sci"] - 1, atol=0.5)
+    assert np.isclose(x0, helpers.TSO_WCS_KW["siaf_xref_sci"] - 1, atol=0.5)
     # y reference includes a ~22.5 pixel shift from TA to science position,
     # from the dither offset
-    assert np.isclose(y0, helpers.TSO_WCS_KW["yref_sci"] - 1 + 22.5, atol=0.5)
+    assert np.isclose(y0, helpers.TSO_WCS_KW["siaf_yref_sci"] - 1 + 22.5, atol=0.5)
     assert order == orderdet
 
     # Check round trip

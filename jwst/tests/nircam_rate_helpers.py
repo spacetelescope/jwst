@@ -1,7 +1,6 @@
 """Mock NIRCam data in rate format."""
 
 import numpy as np
-from astropy.io import fits
 from gwcs import wcs
 from stdatamodels.jwst import datamodels
 
@@ -43,11 +42,11 @@ TSO_WCS_KW = {
     "dec_ref": -3.444360390029802,
     "v2_ref": 73.106857,
     "v3_ref": -551.643196,
-    "v3i_yang": 0.24336066,
+    "v3yangle": 0.24336066,
     "vparity": -1,
     "roll_ref": 110.12344444842617,
-    "xref_sci": 1581.0,
-    "yref_sci": 35.0,
+    "siaf_xref_sci": 1581.0,
+    "siaf_yref_sci": 35.0,
     "cdelt1": 1.76686111111111e-05,
     "cdelt2": 1.78527777777777e-05,
     "ctype1": "RA---TAN",
@@ -67,7 +66,7 @@ TSO_WCS_KW = {
 NRCA1_DHS_STRIPE_IDS = [10, 9, 8, 7]
 
 
-def _nircam_rate_hdul(
+def _nircam_rate_base(
     detector="NRCALONG",
     channel="LONG",
     module="A",
@@ -80,26 +79,26 @@ def _nircam_rate_hdul(
     if wcskeys is None:
         wcskeys = DEFAULT_WCS_KW
 
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header["TELESCOP"] = "JWST"
-    phdu.header["FILENAME"] = "test+" + filter_name
-    phdu.header["INSTRUME"] = "NIRCAM"
-    phdu.header["CHANNEL"] = channel
-    phdu.header["DETECTOR"] = detector
-    phdu.header["FILTER"] = filter_name
-    phdu.header["PUPIL"] = pupil
-    phdu.header["MODULE"] = module
-    phdu.header["TIME-OBS"] = "8:59:37"
-    phdu.header["DATE-OBS"] = "2023-01-01"
-    phdu.header["EXP_TYPE"] = exptype
-    phdu.header["SUBARRAY"] = subarray
-    scihdu = fits.ImageHDU()
-    scihdu.header["EXTNAME"] = "SCI"
-    scihdu.header.update(wcskeys)
-    hdul.append(phdu)
-    hdul.append(scihdu)
-    return hdul
+    model = datamodels.ImageModel()
+    model.meta.telescope = "JWST"
+    model.meta.filename = "test+" + filter_name
+
+    model.meta.instrument.name = "NIRCAM"
+    model.meta.instrument.channel = channel
+    model.meta.instrument.detector = detector
+    model.meta.instrument.filter = filter_name
+    model.meta.instrument.pupil = pupil
+    model.meta.instrument.module = module
+
+    model.meta.observation.time = "8:59:37"
+    model.meta.observation.date = "2023-01-01"
+
+    model.meta.exposure.type = exptype
+    model.meta.subarray.name = subarray
+
+    model.meta.wcsinfo.instance.update(wcskeys)
+
+    return model
 
 
 def nircam_image_rate_model(with_wcs=True):
@@ -118,7 +117,7 @@ def nircam_image_rate_model(with_wcs=True):
     model : `~stdatamodels.jwst.datamodels.ImageModel`
         The NIRCam image datamodel.
     """
-    model = datamodels.ImageModel(_nircam_rate_hdul())
+    model = _nircam_rate_base()
     model.data = np.zeros((10, 10))
 
     if with_wcs:
@@ -147,7 +146,7 @@ def nircam_tsgrism_rate_model(filter_name="F322W2", with_wcs=True):
     model : `~stdatamodels.jwst.datamodels.CubeModel`
         The NIRCam TSGRISM datamodel.
     """
-    hdul = _nircam_rate_hdul(
+    base_model = _nircam_rate_base(
         exptype="NRC_TSGRISM",
         pupil="GRISMR",
         filter_name=filter_name,
@@ -155,7 +154,7 @@ def nircam_tsgrism_rate_model(filter_name="F322W2", with_wcs=True):
         subarray="SUBGRISM256",
         wcskeys=TSO_WCS_KW,
     )
-    model = datamodels.CubeModel(hdul)
+    model = datamodels.CubeModel(base_model)
     model.data = np.zeros((10, 10, 10))
     model.meta.dither.x_offset = 0.0
     model.meta.dither.y_offset = 1.4485  # example from jw01366002001_04103_00001
@@ -186,8 +185,7 @@ def nircam_wfss_rate_model(pupil="GRISMR", with_wcs=True):
     model : `~stdatamodels.jwst.datamodels.CubeModel`
         The NIRCam WFSS datamodel.
     """
-    hdul = _nircam_rate_hdul(exptype="NRC_WFSS", filter_name="F444W", pupil=pupil)
-    model = datamodels.ImageModel(hdul)
+    model = _nircam_rate_base(exptype="NRC_WFSS", filter_name="F444W", pupil=pupil)
     model.data = np.zeros((10, 10))
 
     if with_wcs:
