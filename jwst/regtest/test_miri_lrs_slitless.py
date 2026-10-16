@@ -33,7 +33,7 @@ INPUT_DATA = {
     "tso3_asn": RTFile(
         file_name="jw01536-o028_mod_tso3_00001_asn.json",
         path=INPUT_DATA_PATH,
-        from_mast=False,
+        from_mast=True,
         asn_files=[
             "jw01536028001_03103_00001-seg001_mirimage_calints.fits",
             "jw01536028001_03103_00001-seg002_mirimage_calints.fits",

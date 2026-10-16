@@ -29,14 +29,27 @@ def trim_tso_data(file, ints_to_keep, intstart, ints_offset):
     with datamodels.open(file) as dm:
         dm.meta.filename = modfname
         dm.meta.exposure.integration_start = intstart
-        dm.meta.exposure.integration_end = intstart + ints_to_keep
+        dm.meta.exposure.integration_end = intstart + ints_to_keep - 1
         dm.data = dm.data[ints_offset : ints_offset + ints_to_keep, ...]
+        accepted_exceptions = (AttributeError, TypeError)
         try:
             dm.refout = dm.refout[ints_offset : ints_offset + ints_to_keep, ...]
-        except (AttributeError, TypeError):
+        except accepted_exceptions:
+            pass
+        try:
+            dm.error = dm.error[ints_offset : ints_offset + ints_to_keep, ...]
+        except accepted_exceptions:
+            pass
+        try:
+            dm.var_poisson = dm.var_poisson[ints_offset : ints_offset + ints_to_keep, ...]
+        except accepted_exceptions:
+            pass
+        try:
+            dm.var_rnoise = dm.var_rnoise[ints_offset : ints_offset + ints_to_keep, ...]
+        except accepted_exceptions:
             pass
         try:
             dm.int_times = dm.int_times[ints_offset : ints_offset + ints_to_keep]
-        except (AttributeError, TypeError):
+        except accepted_exceptions:
             pass
         dm.save(modfname)
