@@ -762,9 +762,6 @@ class IFUCubeData:
                         del result
                         del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq
 
-                    rn_weight = 0
-                    if self.readnoise_weight:
-                        rn_weight = 1
                     if self.weighting == "drizzle" and build_cube:
                         cdelt3_mean = np.nanmean(self.cdelt3_normal)
                         xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
@@ -775,7 +772,7 @@ class IFUCubeData:
                         if debug_cube_index >= 0:
                             log.info(f"Input filename: {input_model.meta.filename}")
                         result = cube_wrapper_driz(
-                            rn_weight,
+                            self.readnoise_weight,
                             self.xcoord,
                             self.ycoord,
                             self.zcoord,
