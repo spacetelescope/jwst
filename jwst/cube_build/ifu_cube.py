@@ -274,7 +274,9 @@ class IFUCubeData:
         return cb_suffix
 
     # _______________________________________________________________________
-    def set_wcs_slicer(self, corner_a, corner_b, lambda_min, lambda_max, cdelt1, cdelt2, cdelt3):
+    def set_wcs_slicer(
+        self, corner_a, corner_b, lambda_min, lambda_max, cdelt1, cdelt2, cdelt3, linear_wave
+    ):
         """
         Set up the size of the cube in the internal IFU plane.
 
@@ -291,6 +293,9 @@ class IFUCubeData:
             Minimum wavelength value of the data.
         lambda_max : float
             Maximum wavelength value of the data.
+        linear_wave : bool
+            Boolean that holds if the output wavelength plane is linear (True)
+            or non-linear (False).
 
         Returns
         -------
@@ -467,7 +472,7 @@ class IFUCubeData:
             b_max=b_max,
             lambda_min=lambda_min,
             lambda_max=lambda_max,
-            linear_wave=True,
+            linear_wave=linear_wave,
         )
 
     # ________________________________________________________________________________
@@ -1430,6 +1435,7 @@ class IFUCubeData:
                 self.cdelt1,
                 self.cdelt2,
                 self.cdelt3,
+                self.linear_wave,
             )
 
         cube_lib.print_cube_geometry(self.coord_system, self.cube_wcs)
