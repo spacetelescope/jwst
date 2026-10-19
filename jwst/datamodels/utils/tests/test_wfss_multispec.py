@@ -13,7 +13,6 @@ from jwst.datamodels.utils.tests.wfss_helpers import (
     wfss_spec3_multi,
 )
 from jwst.datamodels.utils.wfss_multispec import (
-    make_wfss_multicombined,
     make_wfss_multiexposure,
     wfss_multiexposure_to_multispec,
 )
@@ -182,24 +181,3 @@ def comb1d_list(multi_combined):
             spec.source_id = N_SOURCES - i
         results_list.append(multi)
     return results_list
-
-
-def test_make_wfss_combined(comb1d_list):
-    """Test restructuring of a list of combine_1d output models into a WFSSMultiCombinedSpecModel."""
-    output_model = make_wfss_multicombined(comb1d_list)
-    assert isinstance(output_model, dm.WFSSMultiCombinedSpecModel)
-    assert len(output_model.spec) == 2  # 2 spectral orders
-
-    for i, spec in enumerate(output_model.spec):
-        assert spec.spec_table.shape == (N_SOURCES,)
-
-        # test units
-        to_check = ["WAVELENGTH", "SOURCE_RA"]
-        expected_units = ["um", "deg"]
-        for col in to_check:
-            assert col in spec.spec_table.columns.names
-            assert spec.spec_table.columns[col].unit == expected_units[to_check.index(col)]
-
-        # check metadata
-        assert spec.dispersion_direction == 3
-        assert spec.spectral_order == i + 1

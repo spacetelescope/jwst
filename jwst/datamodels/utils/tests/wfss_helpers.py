@@ -73,6 +73,8 @@ def _add_multispec_meta(spec):
     spec.source_type = "POINT"
     spec.source_ra = 0.0
     spec.source_dec = 0.0
+    spec.source_xpos = 0.0
+    spec.source_ypos = 0.0
     spec.extract2d_xstart = 0.0
     spec.extract2d_ystart = 0.0
     spec.extract2d_xstop = 0.0

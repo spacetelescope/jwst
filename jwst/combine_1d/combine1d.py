@@ -7,7 +7,6 @@ import numpy as np
 from stdatamodels.jwst import datamodels as dm
 
 from jwst.datamodels.container import ModelContainer
-from jwst.datamodels.utils.wfss_multispec import make_wfss_multicombined
 from jwst.extract_1d.spec_wcs import create_spectral_wcs
 from jwst.stpipe import record_step_status
 
@@ -429,7 +428,7 @@ class OutputSpectrumModel:
 
     def create_output_data(self):
         """
-        Create the output data.
+        Create the non-WFSS output data.
 
         Returns
         -------
@@ -452,18 +451,6 @@ class OutputSpectrumModel:
             self.weight,
             self.count,
         ]
-        if self.contam_flux is not None:
-            # add contam columns in the same positions used for WFSSCombinedSpecModel
-            descr = cmb_dtype.descr
-            names = [name for name, _ in descr]
-            contam_idx = names.index("FLUX") + 1
-            sb_idx = names.index("SURF_BRIGHT") + 2
-            data_list.insert(contam_idx, self.contam_flux)
-            data_list.insert(sb_idx, self.contam_surf_bright)
-
-            descr.insert(contam_idx, ("CONTAM_FLUX", float))
-            descr.insert(sb_idx, ("CONTAM_SURF_BRIGHT", float))
-            cmb_dtype = np.dtype(descr)
 
         data = np.array(list(zip(*data_list, strict=False)), dtype=cmb_dtype)
         output_model = dm.CombinedSpecModel(spec_table=data)
@@ -473,9 +460,6 @@ class OutputSpectrumModel:
         output_model.spec_table.columns["error"].unit = self.flux_unit
         output_model.spec_table.columns["surf_bright"].unit = self.sb_unit
         output_model.spec_table.columns["sb_error"].unit = self.sb_unit
-        if self.contam_flux is not None:
-            output_model.spec_table.columns["contam_flux"].unit = self.flux_unit
-            output_model.spec_table.columns["contam_surf_bright"].unit = self.sb_unit
 
         return output_model
 
@@ -935,7 +919,7 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
 
     input_spectra_by_sid : defaultdict of defaultdict
         Dictionary of dictionary to hold input spectra,
-        keyed by source ID and then by spectral order,
+        keyed by spectral order and then by source ID,
         and values are stored in one list per inner key;
         Updated in-place.
     """
@@ -1001,7 +985,7 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
             if not unit_weight:
                 weight *= weight_factor
 
-            input_spectra_by_sid[source_id][spectral_order].append(
+            input_spectra_by_sid[spectral_order][source_id].append(
                 InputSpectrumModel(
                     wavelength,
                     flux,
@@ -1104,22 +1088,9 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     exptime_key = check_exptime(exptime_key)
 
     if isinstance(input_model, dm.WFSSMultiSpecModel):
-        input_spectra_by_sid = defaultdict(lambda: defaultdict(list))
-        _inputspectra_from_wfss(input_model, exptime_key, input_spectra_by_sid)
-
-        # One output model per source ID.
-        results_list = []
-        for input_spectra in input_spectra_by_sid.values():
-            result = _combine_one(input_model, input_spectra, sigma_clip)
-            if not result.meta.cal_step.combine_1d == "SKIPPED":
-                results_list.append(result)
-        if results_list:
-            output_model = make_wfss_multicombined(results_list)
-            output_model.meta.cal_step.combine_1d = "COMPLETE"
-        else:
-            log.error("No valid input spectra found in WFSSMultiSpecModel. Skipping.")
-            record_step_status(input_model, "combine_1d", status="SKIPPED")
-            output_model = input_model
+        input_spectra = defaultdict(lambda: defaultdict(list))
+        _inputspectra_from_wfss(input_model, exptime_key, input_spectra)
+        output_model = _combine_wfss(input_model, input_spectra, sigma_clip)
 
     else:
         input_spectra = defaultdict(list)
@@ -1135,6 +1106,115 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
             output_model = input_model
         else:
             output_model = _combine_one(input_model, input_spectra, sigma_clip)
+
+    return output_model
+
+
+def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT01
+    """Produce a single WFSSMultiCombinedSpecModel for given model and spectra."""
+    output_model = dm.WFSSMultiCombinedSpecModel()
+    output_wcs = None
+
+    for order, sid_dict in input_spectra.items():
+        dispersion_direction = None
+        flux_unit = None
+        sb_unit = None
+
+        # For building recarray
+        data_list = []
+        max_wlen = 0
+        n_spec = len(sid_dict)
+
+        for source_id, input_spec in sid_dict.items():
+            inspec0 = input_spec[0]
+            if dispersion_direction is None:
+                dispersion_direction = inspec0.dispersion_direction
+
+            output_spec = OutputSpectrumModel()
+            output_spec.assign_wavelengths(input_spec)
+            output_spec.accumulate_sums(input_spec, sigma_clip=sigma_clip)
+
+            if not output_spec.normalized:
+                log.warning("Data have not been divided by the sum of the weights.")
+
+            nalongdisp = output_spec.wavelength.shape[0]
+            if nalongdisp > max_wlen:
+                max_wlen = nalongdisp
+
+            # Note that these arrays have to be in the right order.
+            data_list.append(
+                (
+                    source_id,
+                    output_spec.wavelength,
+                    output_spec.flux,
+                    output_spec.contam_flux,
+                    output_spec.flux_error,
+                    output_spec.surf_bright,
+                    output_spec.contam_surf_bright,
+                    output_spec.sb_error,
+                    output_spec.dq,
+                    output_spec.weight,
+                    output_spec.count,
+                    nalongdisp,
+                    inspec0.source_type,
+                    inspec0.source_ra,
+                    inspec0.source_dec,
+                )
+            )
+
+            if flux_unit is None:
+                flux_unit = output_spec.flux_unit
+            if sb_unit is None:
+                sb_unit = output_spec.sb_unit
+
+            # Looks clunky, but need an output_spec instance to copy WCS
+            if output_wcs is None:
+                output_wcs = output_spec.wcs
+
+        fltdtype = [
+            ("SOURCE_ID", "<i4"),
+            ("WAVELENGTH", "<f8", max_wlen),
+            ("FLUX", "<f8", max_wlen),
+            ("CONTAM_FLUX", "<f8", max_wlen),
+            ("ERROR", "<f8", max_wlen),
+            ("SURF_BRIGHT", "<f8", max_wlen),
+            ("CONTAM_SURF_BRIGHT", "<f8", max_wlen),
+            ("SB_ERROR", "<f8", max_wlen),
+            ("DQ", "<u4", max_wlen),
+            ("WEIGHT", "<f8", max_wlen),
+            ("N_INPUT", "<f8", max_wlen),
+            ("N_ALONGDISP", "<u4"),
+            ("SOURCE_TYPE", "S20"),
+            ("SOURCE_RA", "<f8"),
+            ("SOURCE_DEC", "<f8"),
+        ]
+        data = np.rec.array(data_list, shape=n_spec, dtype=fltdtype)
+        output_order = dm.WFSSCombinedSpecModel(spec_table=data)
+        output_order.spec_table.columns["wavelength"].unit = "um"
+        output_order.spec_table.columns["flux"].unit = flux_unit
+        output_order.spec_table.columns["contam_flux"].unit = flux_unit
+        output_order.spec_table.columns["error"].unit = flux_unit
+        output_order.spec_table.columns["surf_bright"].unit = sb_unit
+        output_order.spec_table.columns["contam_surf_bright"].unit = sb_unit
+        output_order.spec_table.columns["sb_error"].unit = sb_unit
+
+        # Attributes that we want to copy unmodified from input to output spectra
+        output_order.spectral_order = order
+        output_order.dispersion_direction = dispersion_direction
+
+        output_model.spec.append(output_order)
+
+    # Combine failed.
+    if len(output_model.spec) == 0:
+        log.error("No valid input spectra found in WFSSMultiSpecModel. Skipping.")
+        record_step_status(input_model, "combine_1d", status="SKIPPED")
+        return input_model
+
+    # Copy one of the input headers to output.
+    output_model.update(input_model, only="PRIMARY")
+
+    output_model.meta.wcs = output_wcs
+    output_model.meta.cal_step.combine_1d = "COMPLETE"
 
     return output_model
 

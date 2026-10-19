@@ -378,6 +378,7 @@ def test_allnan_skip(wfss_multiexposure, caplog):
         spec.spectral_order = 1
 
     result = Combine1dStep.call(wfss_multiexposure)
+    assert isinstance(result, wfss_multiexposure.__class__)
     assert result.meta.cal_step.combine_1d == "SKIPPED"
 
     log_messages = [
