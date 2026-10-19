@@ -7,7 +7,6 @@ import numpy as np
 from stdatamodels.jwst import datamodels as dm
 
 from jwst.datamodels.container import ModelContainer
-from jwst.datamodels.utils.wfss_multispec import make_wfss_multicombined
 from jwst.extract_1d.spec_wcs import create_spectral_wcs
 from jwst.stpipe import record_step_status
 
@@ -1106,20 +1105,7 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     if isinstance(input_model, dm.WFSSMultiSpecModel):
         input_spectra_by_sid = defaultdict(lambda: defaultdict(list))
         _inputspectra_from_wfss(input_model, exptime_key, input_spectra_by_sid)
-
-        # One output model per source ID.
-        results_list = []
-        for input_spectra in input_spectra_by_sid.values():
-            result = _combine_one(input_model, input_spectra, sigma_clip)
-            if not result.meta.cal_step.combine_1d == "SKIPPED":
-                results_list.append(result)
-        if results_list:
-            output_model = make_wfss_multicombined(results_list)
-            output_model.meta.cal_step.combine_1d = "COMPLETE"
-        else:
-            log.error("No valid input spectra found in WFSSMultiSpecModel. Skipping.")
-            record_step_status(input_model, "combine_1d", status="SKIPPED")
-            output_model = input_model
+        output_model = _combine_wfss(input_model, input_spectra_by_sid, sigma_clip)
 
     else:
         input_spectra = defaultdict(list)
@@ -1137,6 +1123,33 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
             output_model = _combine_one(input_model, input_spectra, sigma_clip)
 
     return output_model
+
+
+def _combine_wfss(input_model, input_spectra_by_sid, sigma_clip):  # numpydoc ignore=RT01
+    """Produce a single WFSSMultiCombinedSpecModel for given model and spectra."""
+    output_model = dm.WFSSMultiCombinedSpecModel()
+    output_wcs = None
+    # FIXME: What is validate_on_assignment=False and do I need it?
+    # FIXME: One model.spec, in spec_table, 1 row per SOURCE_ID
+    # FIXME: Also see if we can delete make_wfss_multicombined
+    raise NotImplementedError
+
+
+"""
+        # One output model per source ID.
+        results_list = []
+        for input_spectra in input_spectra_by_sid.values():
+            result = _combine_one(input_model, input_spectra, sigma_clip)
+            if not result.meta.cal_step.combine_1d == "SKIPPED":
+                results_list.append(result)
+        if results_list:
+            output_model = make_wfss_multicombined(results_list)
+            output_model.meta.cal_step.combine_1d = "COMPLETE"
+        else:
+            log.error("No valid input spectra found in WFSSMultiSpecModel. Skipping.")
+            record_step_status(input_model, "combine_1d", status="SKIPPED")
+            output_model = input_model
+"""
 
 
 def _combine_one(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT01
