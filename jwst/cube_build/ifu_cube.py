@@ -852,6 +852,12 @@ class IFUCubeData:
             self.blend_output_metadata(cube_model)
             # Reset to original
             cube_model.meta.model_type = saved_model_type
+
+        # set pixelarea after BLENDING so it is not overwritten
+        cube_model.meta.photometry.pixelarea_arcsecsq = self.cube_wcs.cdelt1 * self.cube_wcs.cdelt2
+        cube_model.meta.photometry.pixelarea_steradians = (
+            cube_model.meta.photometry.pixelarea_arcsecsq * 2.3504e-11
+        )
         # fill in Channel for MIRI
         if self.instrument == "MIRI":
             # fill in Channel output meta data
