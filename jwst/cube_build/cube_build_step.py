@@ -38,7 +38,7 @@ class CubeBuildStep(Step):
          dec_center = float(default=None) # Declination center of the IFU cube
          cube_pa = float(default=None) # The position angle of the desired cube in decimal degrees E from N
          nspax_x = integer(default=None) # The odd integer number of spaxels to use in the x dimension of cube tangent plane.
-         nspax_y = integer(default=None) # The odd integer number of spaxels to use in the y dimension of cube tangent pane.
+         nspax_y = integer(default=None) # The odd integer number of spaxels to use in the y dimension of cube tangent plane.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
