@@ -112,25 +112,27 @@ def detect_outliers(
             good_bits=good_bits,
             enable_ctx=False,
             enable_var=False,
-            compute_err=None,
+            compute_err="driz_err",
             pixmap_order=pixmap_order,
             pixmap_stepsize=pixmap_stepsize,
         )
-        median_data, median_wcs = median_with_resampling(
+        median_data, median_wcs, median_err = median_with_resampling(
             input_models,
             resamp,
             maskpt,
             save_intermediate_results=save_intermediate_results,
             make_output_path=make_output_path,
+            return_error=True,
         )
     else:
-        median_data, median_wcs = median_without_resampling(
+        median_data, median_wcs, median_err = median_without_resampling(
             input_models,
             maskpt,
             weight_type,
             good_bits,
             save_intermediate_results=save_intermediate_results,
             make_output_path=make_output_path,
+            return_error=True,
         )
 
     # Perform outlier detection using statistical comparisons between
@@ -147,13 +149,14 @@ def detect_outliers(
                     scale1,
                     scale2,
                     backg,
+                    median_err=median_err,
                     save_blot=save_intermediate_results,
                     make_output_path=make_output_path,
                     pixmap_stepsize=pixmap_stepsize,
                     pixmap_order=pixmap_order,
                 )
             else:
-                flag_model_crs(image, median_data, snr1)
+                flag_model_crs(image, median_data, snr1, median_err=median_err)
             input_models.shelve(image, modify=True)
 
     return input_models
