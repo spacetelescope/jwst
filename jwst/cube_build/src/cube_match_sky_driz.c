@@ -334,10 +334,11 @@ match_driz(
                             // Keep print statement in code - used for debugging
                             if (index_cube == debug_cube_index && area_weight > 0) {
                                 printf(
-                                    "spaxel index, flux, x, y, area_weight [count starting at 0]  "
-                                    "%i %f %f %f %.10f  \n ",
-                                    index_cube, flux[k], x_det[k], y_det[k], area_weight);
-                                printf("readnoiose %f \n ", readvar[k]);
+                                    "spaxel index, flux, x, y, area_weight [count starting at 0], "
+                                    "readnoise var  "
+                                    "%i %f %f %f %.10f %f \n ",
+                                    index_cube, flux[k], x_det[k], y_det[k], area_weight,
+                                    readvar[k]);
                             }
 
                             // end of print statements
