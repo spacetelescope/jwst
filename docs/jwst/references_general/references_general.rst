@@ -417,7 +417,7 @@ EXP_TYPE  MIR_MRS             Exposure type.
                               MIR_LRS-SLITLESS, MIR_MRS, MIR_DARK, MIR_FLATIMAGE, MIR_FLATMRS, MIR_CORONCAL, MIR_WFSS
 
                               NIRCam allowed values: NRC_IMAGE, NRC_GRISM, NRC_TACQ, NRC_TACONFIRM, NRC_CORON,
-                              NRC_TSIMAGE, NRC_TSGRISM, NRC_FOCUS, NRC_DARK, NRC_FLAT, NRC_LED
+                              NRC_TSIMAGE, NRC_TSGRISM, NRC_FOCUS, NRC_DARK, NRC_LED
 
                               NIRISS allowed values: NIS_IMAGE, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS, NIS_SOSS, NIS_AMI,
                               NIS_FOCUS, NIS_DARK, NIS_LAMP
