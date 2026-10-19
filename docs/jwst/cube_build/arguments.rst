@@ -124,6 +124,12 @@ The arguments related to region of interest and how the fluxes are combined toge
   For more details on how the weighting of the detector pixel fluxes are used in determining the final spaxel flux see
   the :ref:`weighting` section.
 
+ ``variance_weighting [string]``
+  This weighting is only used with the ``drizzle`` method and applies an
+  additional weighting to the detector pixel fluxes based on the readnoise
+  variance of the pixel. It uses an inverse weighting scheme. This is an
+  experimental weighting scheme using the current values of ``readnoise``.
+
 A parameter only used for investigating which detector pixels contributed to a cube spaxel is ``debug_spaxel``. This option is only valid if the ``weighting`` parameter is set to ``drizzle`` (default).
 
 ``debug_spaxel [string]``
