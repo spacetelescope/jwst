@@ -10,7 +10,7 @@ def test_good_fits_input_rtfile():
         file_name="jw_mock1_mod_uncal.fits",
         path="rtdata/fgs/image3",
         from_mast=True,
-        mod_code="N/A",
+        callback_function="N/A",
     )
     rtobj.validate_file_name()
     assert rtobj.root_name == "jw_mock1_mod"
@@ -22,7 +22,7 @@ def test_good_asn_input_rtfile():
         file_name="jw_mock_mod_asn.json",
         path="rtdata/fgs/image3",
         from_mast=False,
-        mod_code="fake_function",
+        callback_function="fake_function",
         asn_files=["jw_mock_file2.fits", "jw_mock_file3.fits"],
         asn_files_from_mast=True,
     )
@@ -36,7 +36,7 @@ def test_bad_fits_input_rtfile():
         file_name="jw_mod_mock1_uncal.fits",
         path="rtdata/fgs/image3",
         from_mast=True,
-        mod_code="fake_function",
+        callback_function="fake_function",
     )
     pytest.raises(ValueError, lambda: rtobj.validate_file_name())
 
@@ -47,7 +47,7 @@ def test_bad_asn_input_rtfile():
         file_name="jw_mock_asn.json",
         path="rtdata/fgs/image3",
         from_mast=True,
-        mod_code="fake_function",
+        callback_function="fake_function",
     )
     pytest.raises(ValueError, lambda: rtobj.validate_file_name())
     pytest.raises(ValueError, lambda: rtobj.root_name)
