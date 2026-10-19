@@ -498,8 +498,9 @@ class IFUCubeData:
               the overlap of between the detector pixel and spaxel. This method is simplified
               to determine the overlap in the along slice-wavelength plane.
 
-        4. :meth:`find_spaxel_flux`: find the final flux associated with each spaxel
-        5. :meth:`setup_final_model`
+        4. :func:`jwst.cube_build.cube_lib.find_spaxel_flux`: find the final flux associated with
+              each spaxel
+        5. :func:`jwst.cube_build.cube_lib.setup_final_model`
 
         Returns
         -------
