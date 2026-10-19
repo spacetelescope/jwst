@@ -183,32 +183,10 @@ class ApCorrBase(abc.ABC):
         """Generate an approximate aperture correction function based on input data."""
         pass
 
-    def apply(self, spec_table):
-        """
-        Apply interpolated aperture correction to extraction results in-place.
-
-        Parameters
-        ----------
-        spec_table : `~astropy.io.fits.FITS_rec`
-            Table of aperture corrections values from apcorr reference file.
-        """
-        flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
-        var_cols_to_correct = (
-            "flux_var_poisson",
-            "flux_var_rnoise",
-            "flux_var_flat",
-            "sb_var_poisson",
-            "sb_var_rnoise",
-            "sb_var_flat",
-        )
-
-        for row in spec_table:
-            correction = self.apcorr_func(row["npixels"], row["wavelength"])
-
-            for col in flux_cols_to_correct:
-                row[col] *= correction.item()
-            for col in var_cols_to_correct:
-                row[col] *= correction.item() * correction.item()
+    @abc.abstractmethod
+    def apply(self):
+        """Apply interpolated aperture correction to extraction results in-place."""
+        pass
 
 
 class ApCorrPhase(ApCorrBase):
@@ -451,12 +429,11 @@ class ApCorrRadial(ApCorrBase):
             "sb_var_flat",
         )
 
-        for i, row in enumerate(spec_table):
-            correction = self.apcorr_correction[i]
-            for col in flux_cols_to_correct:
-                row[col] *= correction
-            for col in var_cols_to_correct:
-                row[col] *= correction * correction
+        correction = np.asarray(self.apcorr_correction[: len(spec_table)], dtype=float)
+        for col in flux_cols_to_correct:
+            spec_table[col] *= correction
+        for col in var_cols_to_correct:
+            spec_table[col] *= correction * correction
 
     def match_wavelengths(self, wavelength_ifu):
         """
@@ -559,6 +536,34 @@ class ApCorr(ApCorrBase):
         wavelength = wavelength[wl_sortidx]
 
         return RectBivariateSpline(size, wavelength, apcorr.T, ky=1, kx=1)
+
+    def apply(self, spec_table):
+        """
+        Apply interpolated aperture correction to extraction results in-place.
+
+        Parameters
+        ----------
+        spec_table : `~astropy.io.fits.FITS_rec`
+            Table of aperture corrections values from apcorr reference file.
+        """
+        flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
+        var_cols_to_correct = (
+            "flux_var_poisson",
+            "flux_var_rnoise",
+            "flux_var_flat",
+            "sb_var_poisson",
+            "sb_var_rnoise",
+            "sb_var_flat",
+        )
+        # Here apcorr_func is a RectBivariateSpline instance, and grid=False
+        # specifies that we want to evaluate the function at the given points rather than on a grid
+        # spanned by the input arrays, which is the default behavior of RectBivariateSpline.
+        correction = self.apcorr_func(spec_table["npixels"], spec_table["wavelength"], grid=False)
+
+        for col in flux_cols_to_correct:
+            spec_table[col] *= correction
+        for col in var_cols_to_correct:
+            spec_table[col] *= correction * correction
 
 
 def select_apcorr(input_model):
