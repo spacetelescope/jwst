@@ -8,18 +8,14 @@ from astropy.table import Table
 
 from jwst.regtest.regtestdata import RTFile, text_diff
 
-INPUT_DATA_PATH = "rtdata/infrastructure/test_regtestdata"
-FILE1 = "file1_rate.fits"
-ASN_FILE = "my_asn.json"
-
 INPUT_DATA = {
-    ASN_FILE: RTFile(
-        file_name=ASN_FILE,
-        path=INPUT_DATA_PATH,
+    "mock_asn": RTFile(
+        file_name="my_asn.json",
+        path="rtdata/infrastructure/test_regtestdata",
         from_mast=False,
-        asn_files=[FILE1, "file2_rate.fits", "file3_rate.fits"],
+        asn_files=["file1_rate.fits", "file2_rate.fits", "file3_rate.fits"],
         asn_files_from_mast=False,
-        mod_code="mk_empty_files",
+        callback_function="mk_empty_files",
         comment="This code was used to create the files in the association.",
     )
 }
@@ -35,27 +31,31 @@ def mk_empty_files():
 
 @pytest.mark.bigdata
 def test_regtestdata_get_data(rtdata, tmp_cwd):
-    rtdata.get_data(INPUT_DATA_PATH + "/" + FILE1)
-    rtdata.output = FILE1.replace("rate", "cal")
+    rate_file_path = INPUT_DATA["mock_asn"].path + "/" + INPUT_DATA["mock_asn"].asn_files[0]
+    rtdata.get_data(rate_file_path)
+    rate_file = INPUT_DATA["mock_asn"].asn_files[0]
+    rtdata.output = rate_file
 
-    assert rtdata.input == str(tmp_cwd / FILE1)
+    assert rtdata.input == str(tmp_cwd / rate_file)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_truth(rtdata, tmp_cwd):
-    rtdata.get_truth(INPUT_DATA_PATH + "/" + FILE1)
-    rtdata.output = FILE1
+    rate_file_path = INPUT_DATA["mock_asn"].path + "/" + INPUT_DATA["mock_asn"].asn_files[0]
+    rtdata.get_truth(rate_file_path)
+    rate_file = INPUT_DATA["mock_asn"].asn_files[0]
+    rtdata.output = rate_file
 
-    assert rtdata.truth == str(tmp_cwd / "truth" / FILE1)
+    assert rtdata.truth == str(tmp_cwd / "truth" / rate_file)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_asn(rtdata):
-    rtdata.get_asn(INPUT_DATA[ASN_FILE])
+    rtdata.get_asn(INPUT_DATA["mock_asn"])
     files = glob("*.fits")
-    rtdata.output = FILE1
+    rtdata.output = INPUT_DATA["mock_asn"].asn_files[0]
 
-    assert os.path.isfile(ASN_FILE)
+    assert os.path.isfile(INPUT_DATA["mock_asn"].file_name)
     assert len(files) == 3
 
 

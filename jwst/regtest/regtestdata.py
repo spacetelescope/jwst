@@ -586,7 +586,7 @@ class RTFile:
     file_name: str
     path: str
     from_mast: bool = True
-    mod_code: str = "N/A"
+    callback_function: str = "N/A"
     comment: str = "N/A"
     asn_files: list = field(default_factory=list)
     asn_files_from_mast: bool = True
@@ -598,7 +598,7 @@ class RTFile:
                 raise ValueError(
                     "Association files expected to be listed in the RTData.asn_files attribute."
                 )
-        if self.mod_code != "N/A" and self.from_mast:
+        if self.callback_function != "N/A" and self.from_mast:
             if "mod" not in self.file_name:
                 raise ValueError("Modified file does not have the 'mod' suffix.")
             if "fits" in self.file_name:

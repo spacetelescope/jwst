@@ -28,7 +28,7 @@ INPUT_DATA = {
         file_name="jw01281001001_04103_00001-seg002_mirimage_mod_uncal.fits",
         path=INPUT_DATA_PATH,
         from_mast=True,
-        mod_code="trim_uncal",
+        callback_function="trim_uncal",
     ),
     "tso3_asn": RTFile(
         file_name="jw01536-o028_mod_tso3_00001_asn.json",
@@ -39,14 +39,14 @@ INPUT_DATA = {
             "jw01536028001_03103_00001-seg002_mirimage_calints.fits",
         ],
         asn_files_from_mast=True,
-        mod_code="N/A",
+        callback_function="N/A",
         comment="N/A",
     ),
     "spec2_ta_rateints": RTFile(
         file_name="jw04496004001_03103_00001-seg001_mirimage_mod_rateints.fits",
         path=INPUT_DATA_PATH,
         from_mast=True,
-        mod_code="trim_rate",
+        callback_function="trim_rate",
     ),
     "spec2_ta_verification_img": RTFile(
         file_name="jw04496004001_03102_00001-seg001_mirimage_rate.fits",
