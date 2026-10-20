@@ -20,3 +20,6 @@ STScI software maintainers welcome contributions, including those developed with
    4. All pull requests must be reviewed by a human other than the contributor.
 5. Consistency with repository conventions and existing style
    1. In the context of Generative AI, this particularly means adhering to any linting standards as well as conveying information (comments, documentation, etc.) in a style the repository uses, and that is appropriate and to the point.
+
+> [!NOTE]
+> This policy extends the [STScI AI policy](https://github.com/spacetelescope/.github/blob/main/AI_POLICY.md).
