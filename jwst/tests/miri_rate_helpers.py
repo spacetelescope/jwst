@@ -152,6 +152,11 @@ def miri_wfss_rate_model(with_wcs=True):
         The MIRI image datamodel.
     """
     model = _miri_rate_base(exptype="MIR_WFSS")
+
+    # Give the model a subarray and newer date to pick up appropriate reference files
+    model.meta.subarray.name = "FULL"
+    model.meta.observation.date = "2026-09-05"
+
     model.data = np.zeros((10, 10), dtype=np.float32)
     model.meta.filename = "test_miri_wfss"
     model.meta.instrument.filter = "P750L"

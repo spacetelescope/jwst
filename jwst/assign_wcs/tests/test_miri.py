@@ -198,7 +198,6 @@ def test_mrs_tso_bounding_box():
 
 
 # Invoke this test when the reference files for MIRI WFSS are in CRDS
-@pytest.mark.xfail(reason="Reference files for MIRI WFSS mode are not in CRDS yet.")
 def test_traverse_wfss():
     """Make sure the trace polynomials roundtrip."""
     wcsobj = miri_wfss_rate_model().meta.wcs
