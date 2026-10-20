@@ -4,7 +4,7 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-from jwst.charge_migration import charge_migration
+from jwst.charge_migration.charge_migration import correct_charge_migration, flag_charge_migration
 from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
@@ -13,14 +13,18 @@ __all__ = ["ChargeMigrationStep"]
 
 
 class ChargeMigrationStep(Step):
-    """Set the CHARGELOSS flag for groups exhibiting significant charge migration."""
+    """Flag or correct groups exhibiting significant charge migration."""
 
     class_alias = "charge_migration"
 
     spec = """
-        signal_threshold = float(default=25000)
-        skip = boolean(default=True)
+        signal_threshold = float(default=10000)  # Threshold value for flagging charge loss.
+        mask_pad = integer(default=2)  # Number of pixels to mask on either side of a pixel with charge loss.
+        apply_correction = boolean(default=False)  # Fit and correct for charge migration.
+        skip = boolean(default=True)  # By default, skip the step.
     """  # noqa: E501
+
+    reference_file_types = ["readnoise"]
 
     def process(self, step_input):
         """
@@ -45,10 +49,21 @@ class ChargeMigrationStep(Step):
             result.meta.cal_step.charge_migration = "SKIPPED"
             return result
 
-        # Retrieve the parameter value(s)
-        signal_threshold = self.signal_threshold
+        if self.apply_correction:
+            readnoise_filename = self.get_reference_file(result, "readnoise")
+            log.info("Using READNOISE reference file: %s", readnoise_filename)
 
-        result = charge_migration.charge_migration(result, signal_threshold)
+            with datamodels.ReadnoiseModel(readnoise_filename) as rnoise:
+                result = correct_charge_migration(
+                    result,
+                    rnoise,
+                    signal_threshold=self.signal_threshold,
+                    mask_pad=self.mask_pad,
+                )
+
+        else:
+            result = flag_charge_migration(result, self.signal_threshold)
+
         result.meta.cal_step.charge_migration = "COMPLETE"
 
         return result
