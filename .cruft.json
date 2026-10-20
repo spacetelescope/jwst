@@ -1,0 +1,24 @@
+{
+  "template": "https://github.com/spacetelescope/stsci-package-template",
+  "commit": "9d1515679d243805f399ca9c085d8b9d67281435",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "jwst",
+      "package_name": "jwst",
+      "repository_url": "https://github.com/spacetelescope/jwst",
+      "git_username": "spacetelescope/jwst-pipeline-maintainers",
+      "project_description": "Library for calibration of science observations from the James Webb Space Telescope",
+      "manage_changelog_with_towncrier": true,
+      "publish_docs_to": "readthedocs.io",
+      "task_runner": "tox",
+      "python_version": ">=3.12",
+      "python_c_extensions": true,
+      "python_build_backend": "setuptools",
+      "crds_observatory": "jwst",
+      "_template": "https://github.com/spacetelescope/stsci-package-template",
+      "_commit": "9d1515679d243805f399ca9c085d8b9d67281435"
+    }
+  },
+  "directory": "python-package"
+}
