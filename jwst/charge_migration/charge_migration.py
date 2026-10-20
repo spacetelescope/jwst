@@ -3,6 +3,7 @@ import warnings
 
 import numpy as np
 from astropy.stats import sigma_clipped_stats
+from scipy.ndimage import binary_dilation
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
@@ -89,75 +90,62 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
         Data model with correction applied and CHARGELOSS flags added to
         groups exceeding ``signal_threshold``.
     """
-    from matplotlib import pyplot as plt
-
-    plotfits = False  # Plot all cases where we tried to fit a model and succeeded
-    plotfails = False  # Plot all cases where we tried to fit a model but rejected the fit
-
+    # Input science and DQ data
     sci = output_model.data
     gdq = output_model.groupdq
+    nints, ngroups, ny, nx = sci.shape
 
-    # What's the xy array size?
-    nx, ny = sci.shape[3], sci.shape[2]
-
-    # Readnoise ref file
+    # Readnoise reference file data
     rnvals = readnoise_model.data
 
-    nints, ngroups, _, _ = sci.shape
-    bit_dnu = dqflags.pixel["DO_NOT_USE"]
-    bit_sat = dqflags.pixel["SATURATED"]
-
     # Identify anywhere that the DO_NOT_USE or SATURATED bits are set
-    badindx = np.where(((gdq & bit_dnu) != 0) | ((gdq & bit_sat) != 0))
+    bad = dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["SATURATED"]
+    badindx = (gdq & bad) != 0
+
     # Make a copy of the ramp where we NaN everything that's bad
-    workramp = sci.copy()
-    workramp[badindx] = np.nan
+    masked_ramp = sci.copy()
+    masked_ramp[badindx] = np.nan
 
     # Group by group differences in the original and working ramps
-    rampdiff = np.diff(sci, axis=1)
-    workrampdiff = np.diff(workramp, axis=1)
+    ramp_diff = np.diff(sci, axis=1)
+    masked_ramp_diff = np.diff(masked_ramp, axis=1)
 
-    # Median across integrations
+    # Median across integrations, with loop over first dimension to save memory
     with warnings.catch_warnings():
+        med_masked_ramp_diff = np.empty(masked_ramp_diff.shape[1:], dtype=masked_ramp_diff.dtype)
         warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
-        medrampdiff = np.nanmedian(rampdiff, axis=0)
-        medworkrampdiff = np.nanmedian(workrampdiff, axis=0)
-
-    # Vector of group numbers
-    gvec = np.arange(medrampdiff.shape[0])
-    # Array of corrected group differences
-    newdiff = rampdiff.copy()
+        for i in range(med_masked_ramp_diff.shape[0]):
+            np.nanmedian(
+                masked_ramp_diff[:, i, ...],
+                axis=0,
+                overwrite_input=True,
+                out=med_masked_ramp_diff[i, ...],
+            )
 
     # Find the maximum DN value reached anywhere on the ramps across groups and ints
     # (Generally this is the last pixel, but not always given linearity
     # corrections, saturation flagging, etc)
-    maxvals = np.nanmax(np.nanmax(sci, axis=0), axis=0)
-    triggerpix = np.where(maxvals > signal_threshold)
-    # We'll make a mask of such pixels
-    mask = np.zeros_like(maxvals, dtype=int)
-    mask[triggerpix] = 1
-    # Loop over all triggering pixels growing the mask
-    triggerx = triggerpix[1]
-    triggery = triggerpix[0]
-    for ii in range(0, len(triggerx)):
-        x1 = np.nanmax([triggerx[ii] - mask_pad, 0])
-        x2 = np.nanmin([triggerx[ii] + mask_pad + 1, nx])
-        y1 = np.nanmax([triggery[ii] - mask_pad, 0])
-        y2 = np.nanmin([triggery[ii] + mask_pad + 1, ny])
-        mask[y1:y2, x1:x2] = 1
+    maxvals = np.nanmax(sci, axis=(0, 1))
+
+    # Identify pixels where max is greater than threshold
+    mask = maxvals > signal_threshold
+
+    # Grow the mask with the specified padding
+    box_size = 2 * mask_pad + 1
+    structure = np.full((box_size, box_size), True)
+    mask = binary_dilation(mask, structure)
 
     # Fit all pixels in this mask
-    tofit = np.where(mask == 1)
-    yfit = tofit[0]
-    xfit = tofit[1]
+    yfit, xfit = np.where(mask)
     nfit = len(xfit)
-    log.info("Identified " + str(nfit) + " pixels to fit for BFE")
+    log.info("Identified %s pixels to fit for BFE", str(nfit))
 
-    for ii in range(0, nfit):
+    gvec = np.arange(ngroups - 1)  # group diff index
+    for ii in range(nfit):
         xx = xfit[ii]
         yy = yfit[ii]
 
-        thisdiff = medworkrampdiff[:, yy, xx]
+        thisdiff = med_masked_ramp_diff[:, yy, xx]
         indx = np.where(np.isfinite(thisdiff))
 
         # Only proceed if at least 2 good differences
@@ -166,6 +154,7 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
             # If fewer than 5 good differences don't do rejection
             if ndiffs < 5:
                 indx = np.where(np.isfinite(thisdiff))
+
             # If more than 5 good differences sigma clip bad values
             else:
                 _, themed, thesigma = sigma_clipped_stats(thisdiff[indx])
@@ -186,9 +175,6 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
             else:
                 model = np.poly1d([0, 0])  # Otherwise use a zero model
 
-            # Default values for sigma if we don't need to calculate them
-            sigmaorig, sigmanew = 0, 0
-
             # Second quality cut on the polynomial fit; if ndiffs > 5 and the
             # model isn't zero everywhere already, require that rms improves significantly
             # This deals with some strange cases with poorly conditioned ramps,
@@ -203,44 +189,21 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
                 # (dialed based on visual inspection of thousands of MRS ramps)
                 # Otherwise set the model to zero
                 if sigmanew > 0.45 * sigmaorig:
-                    model = np.poly1d([0, 0])  # Otherwise use a zero model
+                    # Otherwise use a zero model
+                    model = np.poly1d([0, 0])
 
-            # Plot cases where a model was fit successfully
-            if plotfits & (model(10) != 0):
-                log.info(
-                    "(xx,yy) = ",
-                    xx,
-                    yy,
-                )
-                log.info("Value change in multiples of RN: ", ndiffs * coeff[0] / rnvals[yy, xx])
-                log.info("Sigma_orig, sigma_new = ", sigmaorig, sigmanew)
-                plt.plot(gvec[indx], thisdiff[indx], "x")
-                plt.plot(gvec, fullmodel(gvec))
-                plt.show()
-
-            # Plot cases where a model was fit but rejected
-            if plotfails & (model(10) == 0):
-                log.info(
-                    "(xx,yy) = ",
-                    xx,
-                    yy,
-                )
-                log.info("Value change in multiples of RN: ", ndiffs * coeff[0] / rnvals[yy, xx])
-                log.info("Sigma_orig, sigma_new = ", sigmaorig, sigmanew)
-                plt.plot(gvec[indx], thisdiff[indx], "x")
-                plt.plot(gvec, fullmodel(gvec))
-                plt.show()
+            # Save fit data for inspection
+            # xx, yy, gvec, thisdiff[indx], fullmodel(gvec), sigmaorig, sigmanew
+            # value change: ndiffs * coeff[0] / rnvals[yy, xx]
+            # pass/fail: model(10) != 0
 
             # Subtract off the slope term from the original group differences
-            for ii in range(0, nints):
-                newdiff[ii, :, yy, xx] = rampdiff[ii, :, yy, xx] - model(gvec)
+            ramp_diff[:, :, yy, xx] -= model(gvec)
 
-                # Now reconstruct ramps from the modified differences
+    # Now reconstruct ramps from the modified differences:
+    # each group builds on the previous corrected one.
     for gg in range(1, ngroups):
-        for ii in range(0, nints):
-            sci[ii, gg, :, :] = sci[ii, gg - 1, :, :] + newdiff[ii, gg - 1, :, :]
+        sci[:, gg, :, :] = sci[:, gg - 1, :, :] + ramp_diff[:, gg - 1, :, :]
 
-    # Clean up
     output_model.data = sci
-
     return output_model
