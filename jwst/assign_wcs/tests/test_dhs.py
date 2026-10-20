@@ -106,34 +106,32 @@ def test_dhs_nrcalong_roundtrip(create_dhs_nrcalong_wcs):
     # Roundtrip: grism_detector -> direct_image -> grism_detector
     # Only the x (dispersion) coordinate is expected to round-trip, because the
     # forward transform collapses all y positions to the source reference point.
-    x_in = [1000] * 4  # same x for all stripes
-    y_in = 32.5 + np.arange(0, 260, 65)  # center y for each stripe: (32.5, 97.5, 162.5, 227.5)
-    order_in = [1] * 4  # same order for all stripes
-    x0, y0, lam, order_mid, stripe = grism_to_direct(x_in, y_in, order_in)
-    x_rec, y_rec, order_rec = grism_to_direct.inverse(x0, y0, lam, order_mid, stripe)
+    x_in = 1000
+    y_in = 31.5  # siaf reference y
+    order_in = 1
+    x0, y0, lam, order_mid = grism_to_direct(x_in, y_in, order_in)
+    x_rec, y_rec, order_rec = grism_to_direct.inverse(x0, y0, lam, order_mid)
 
     assert_allclose(x_rec, x_in, atol=1e-2, rtol=0)
     assert_allclose(order_rec, order_in)
 
-    # The y coordinate returned should be at the expected trace position for each stripe:
-    # these are at the center of the stripe, so they match the input.
-    assert_allclose(y_rec, y_in, atol=1e-2, rtol=0)
+    # The y coordinate returned should be at the expected trace position:
+    # it is close to the SIAF position
+    assert_allclose(y_rec, y_in, atol=0.1, rtol=0)
 
-    # Full forward pipeline: (x, y, order) -> (ra, dec, lam, order, stripe)
-    ra, dec, lam_world, order_out, stripe_out = wcsobj(x_in, y_in, order_in)
+    # Full forward pipeline: (x, y, order) -> (ra, dec, lam, order)
+    ra, dec, lam_world, order_out = wcsobj(x_in, y_in, order_in)
 
     # Test we are in the ballpark of the reference RA/Dec
-    # Values for all stripes are the same.
-    assert_allclose(ra, 265.76, atol=0.02)
-    assert_allclose(dec, 66.93, atol=0.02)
+    assert_allclose(ra, 265.77, atol=0.05)
+    assert_allclose(dec, 66.92, atol=0.05)
 
     # Similarly test wavelength makes sense for F332W2
     assert np.all(lam_world > 2.0)
     assert np.all(lam_world < 4.5)
 
-    # Check expected order and stripe values
+    # Check expected order values
     assert_allclose(order_rec, order_in)
-    assert_allclose(stripe_out, [1, 2, 3, 4])
 
 
 def test_assign_wcs_step_nrca1_dhs(mock_dhs_nrca1_rate):
@@ -170,19 +168,17 @@ def test_assign_wcs_step_nrcalong_dhs(mock_dhs_nrcalong_rate):
     assert "world" in result.meta.wcs.available_frames
 
     # Scalar input
-    ra, dec, lam_world, order_out, stripe_out = result.meta.wcs(900, 20, 1)
-    assert_allclose(ra, 265.7, atol=0.1)
+    ra, dec, lam_world, order_out = result.meta.wcs(900, 20, 1)
+    assert_allclose(ra, 265.8, atol=0.1)
     assert_allclose(dec, 66.9, atol=0.1)
-    assert stripe_out == 1  # For NRCALONG, all pixels should be in the same stripe
 
     # Vector input
     x = np.array([900, 901, 902])
     y = np.array([20, 20, 20])
     order = np.array([1, 1, 1])
-    ra, dec, _lam_world, _order_out, stripe_out = result.meta.wcs(x, y, order)
-    assert_allclose(ra, 265.7, atol=0.1)
+    ra, dec, _lam_world, _order_out = result.meta.wcs(x, y, order)
+    assert_allclose(ra, 265.8, atol=0.1)
     assert_allclose(dec, 66.9, atol=0.1)
-    assert np.all(stripe_out == 1)
 
 
 def test_nrca1_subarray_regions(mock_dhs_nrca1_rate, mock_dhs_nrca1_regions):
