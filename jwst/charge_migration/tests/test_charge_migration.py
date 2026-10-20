@@ -2,7 +2,7 @@ import numpy as np
 import numpy.testing as npt
 from stdatamodels.jwst.datamodels import RampModel, dqflags
 
-from jwst.charge_migration.charge_migration import charge_migration
+from jwst.charge_migration.charge_migration import flag_charge_migration
 from jwst.charge_migration.charge_migration_step import ChargeMigrationStep
 
 test_dq_flags = dqflags.pixel
@@ -32,7 +32,7 @@ def test_pix_0():
     in_data = ramp_model.data
     in_gdq = ramp_model.groupdq
 
-    out_model = charge_migration(ramp_model, signal_threshold)
+    out_model = flag_charge_migration(ramp_model, signal_threshold)
     out_data = out_model.data
     out_gdq = out_model.groupdq
 
@@ -72,7 +72,7 @@ def test_pix_1():
     true_out_gdq[0, 3, 0, 0] = DNU
     true_out_gdq[0, 4:, 0, 0] = CHLO_DNU
 
-    out_model = charge_migration(ramp_model, signal_threshold)
+    out_model = flag_charge_migration(ramp_model, signal_threshold)
 
     out_data = out_model.data
     out_gdq = out_model.groupdq
@@ -95,7 +95,7 @@ def test_pix_2():
     arr = [0, DNU, 0, 0, 0, 0, 0, 0, 0, 0]
     ramp_model.groupdq[0, :, 0, 0] = np.array(arr, dtype=np.uint8)
 
-    out_model = charge_migration(ramp_model, signal_threshold)
+    out_model = flag_charge_migration(ramp_model, signal_threshold)
 
     truth_arr = [
         0,
@@ -147,7 +147,7 @@ def test_nearest_neighbor_1():
     gdq_check = ramp_model.groupdq.copy()
     ngroups = gdq_check.shape[1]
 
-    out_model = charge_migration(ramp_model, chg_thresh)
+    out_model = flag_charge_migration(ramp_model, chg_thresh)
 
     check_pattern = [
         [GOOD, GOOD, GOOD, GOOD, GOOD],
@@ -175,7 +175,7 @@ def test_nearest_neighbor_2():
     gdq_check = ramp_model.groupdq.copy()
     ngroups = gdq_check.shape[1]
 
-    out_model = charge_migration(ramp_model, chg_thresh)
+    out_model = flag_charge_migration(ramp_model, chg_thresh)
 
     check_pattern = [
         [CHLO_DNU, CHLO_DNU, GOOD, GOOD, GOOD],
@@ -203,7 +203,7 @@ def test_nearest_neighbor_3():
     gdq_check = ramp_model.groupdq.copy()
     ngroups = gdq_check.shape[1]
 
-    out_model = charge_migration(ramp_model, chg_thresh)
+    out_model = flag_charge_migration(ramp_model, chg_thresh)
 
     check_pattern = [
         [GOOD, GOOD, GOOD, GOOD, GOOD],
