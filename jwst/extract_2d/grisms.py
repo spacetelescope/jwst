@@ -345,7 +345,7 @@ def _extract_tso_dhs_object(
     compute_wavelength=True,
 ):
     """
-    Extract the spectra for a NIRCam DHS TSO observation.
+    Extract the spectra for a NIRCam SW DHS TSO observation.
 
     Parameters
     ----------
