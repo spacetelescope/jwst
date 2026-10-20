@@ -197,9 +197,8 @@ def test_mrs_tso_bounding_box():
     assert_allclose(cube.meta.wcs.bounding_box, ((-0.5, 49.5), (-0.5, 39.5)))
 
 
-# Invoke this test when the reference files for MIRI WFSS are in CRDS
 def test_traverse_wfss():
-    """Make sure the trace polynomials roundtrip."""
+    """Make sure the trace polynomials roundtrip for MIRI WFSS."""
     wcsobj = miri_wfss_rate_model().meta.wcs
     detector_to_dispersed = wcsobj.get_transform("detector", "grism_detector")
     dispersed_to_detector = wcsobj.get_transform("grism_detector", "detector")
