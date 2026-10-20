@@ -2,9 +2,9 @@ import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.tests.test_miri import wcs_kw
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_nirspec_ifu_file
 from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
+from jwst.tests.miri_rate_helpers import DEFAULT_WCS_KW
 
 __all__ = [
     "make_small_ramp_model",
@@ -435,7 +435,7 @@ def make_miri_image_tso_rateints():
     """
     model = make_small_rateints_model()
     model.meta.visit.tsovisit = True
-    model.meta.wcsinfo = wcs_kw.copy()
+    model.meta.wcsinfo = DEFAULT_WCS_KW.copy()
     model.meta.wcsinfo.siaf_xref_sci = 0.0
     model.meta.wcsinfo.siaf_yref_sci = 0.0
     model.meta.bunit_data = "DN/s"
