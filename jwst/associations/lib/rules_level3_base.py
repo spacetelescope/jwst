@@ -2,7 +2,7 @@
 
 import logging
 import re
-from collections import defaultdict
+from collections import defaultdict, deque
 from os.path import split
 from pathlib import Path
 
@@ -38,6 +38,7 @@ __all__ = [
     "AsnMixin_Coronagraphy",
     "AsnMixin_Science",
     "AsnMixin_Spectrum",
+    "AsnMixin_Lv3WFSS",
     "Constraint",
     "Constraint_Base",
     "Constraint_IFU",
@@ -1030,3 +1031,174 @@ class AsnMixin_Spectrum(AsnMixin_Science):
         """Post-check and pre-add initialization."""
         self.data["asn_type"] = "spec3"
         super(AsnMixin_Spectrum, self)._init_hook(item)
+
+
+class AsnMixin_Lv3WFSS(AsnMixin_Spectrum):
+    """Utility and overrides for Level 3 WFSS associations."""
+
+    def add_catalog_members(self):
+        """Add catalog and direct image member based on direct image members."""
+        directs = self.members_by_type("direct_image")
+        if not directs:
+            raise AssociationNotValidError(
+                f"{self.__class__.__name__} has no required direct image exposures"
+            )
+
+        sciences = self.members_by_type("science")
+        if not sciences:
+            raise AssociationNotValidError(
+                f"{self.__class__.__name__} has no required science exposure"
+            )
+        science = sciences[0]
+
+        # Find direct image basename
+        self.direct_image = self.find_closest_direct(science, directs)
+        lv3_direct_image_root = self._dms_dir_product_name(self)  # noqa: SLF001
+
+        # Remove all direct images from the association.
+        members = self.current_product["members"]
+        direct_idxs = [
+            idx for idx, member in enumerate(members) if member["exptype"] == "direct_image"
+        ]
+        deque(list.pop(members, idx) for idx in sorted(direct_idxs, reverse=True))
+
+        members.append(
+            Member({"expname": lv3_direct_image_root + "_i2d.fits", "exptype": "direct_image"})
+        )
+
+    def members_by_type(self, member_type):
+        """
+        Get list of members by their exposure type.
+
+        Returns
+        -------
+        list of str
+            List of members.
+        """
+        member_type = member_type.lower()
+        try:
+            members = self.current_product["members"]
+        except KeyError:
+            result = []
+        else:
+            result = [member for member in members if member_type == member["exptype"].lower()]
+
+        return result
+
+    def finalize(self):
+        """
+        Finalize the association.
+
+        For WFSS, this involves taking all the direct image exposures,
+        determine which one is first after last science exposure,
+        and creating the catalog name from that image.
+
+        Returns
+        -------
+        associations : list of `~jwst.associations.association.Association` or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+        """
+        try:
+            self.add_catalog_members()
+        except AssociationNotValidError as err:
+            logger.debug("%s: %s", self.__class__.__name__, str(err))
+            return None
+        return super(AsnMixin_Lv3WFSS, self).finalize()
+
+    def get_exposure_type(self, item, default="science"):
+        """
+        Modify exposure type depending on dither pointing index.
+
+        If an imaging exposure has been found, treat it as a direct image.
+
+        Parameters
+        ----------
+        item : `~jwst.associations.lib.member.Member`
+            The item to pull exposure type from.
+        default : str
+            The default value if no exposure type is present, defaults to "science".
+
+        Returns
+        -------
+        str
+            The exposure type of the item.
+        """
+        exp_type = super(AsnMixin_Lv3WFSS, self).get_exposure_type(item, default)
+        if exp_type == "science" and item["exp_type"] in ["nis_image", "nrc_image", "mir_image"]:
+            exp_type = "direct_image"
+
+        return exp_type
+
+    def find_closest_direct(self, directs):
+        """
+        Find the direct image that is closest to the science.
+
+        For NIRCam observations, there should only be one long-wavelength
+        direct image mosaic in a given direct_image candidate. Find it
+        by searching for 'long' filenames. All ``[a|b]long`` filenames
+        should belong to the same level 3 product, which will be
+        associated to the grism image.
+
+        For NIRISS, only one direct image optical path should
+        be associated with a given grism image.
+
+        Parameters
+        ----------
+        directs : list of dict
+            The available direct members.
+
+        Returns
+        -------
+        closest : dict
+            The direct image that is the "closest".
+        """
+        long_directs = [d for d in directs if "long" in d["expname"]]
+        if len(long_directs) == 0:
+            long_directs.append(directs[0])  # If the search fails, just use the first.
+        if len(long_directs) > 1:
+            long_directs.sort(key=lambda x: x["expname"])
+        return long_directs[0]
+
+    @staticmethod
+    def _dms_dir_product_name(association):
+        """
+        Define product name.
+
+        Parameters
+        ----------
+        association : `~jwst.associations.association.Association`
+            Association to get the name from.
+
+        Returns
+        -------
+        product_name : str
+            The product name.
+        """
+        target = association.get_target()
+
+        instrument = association.get_instrument()
+
+        opt_elem = association.get_dir_opt_element()
+
+        exposure = association.get_exposure()
+        if exposure:
+            exposure = "-" + exposure
+
+        subarray = association.get_subarray()
+        if subarray:
+            subarray = "-" + subarray
+
+        product_name = "jw{program}-{acid}_{target}_{instrument}_{opt_elem}{subarray}"
+        product_name = product_name.format(
+            program=association.data["program"],
+            acid=association.acid.id,
+            target=target,
+            instrument=instrument,
+            opt_elem=opt_elem,
+            subarray=subarray,
+            exposure=exposure,
+        )
+
+        return product_name.lower()

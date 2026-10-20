@@ -4,7 +4,6 @@ from collections import defaultdict
 from pathlib import Path
 
 import stdatamodels.jwst.datamodels as dm
-from astropy.modeling.models import Mapping
 from stcal.alignment import combine_sregions
 
 # step imports
@@ -441,19 +440,18 @@ class Spec3Pipeline(Pipeline):
 
         # WCS of any slit should be ok - internally this does a round-trip, so any offsets
         # introduced for a specific slit won't matter
-        wcs = cal_model_list[0].meta.wcs
+        try:
+            with dm.open(cal_model_list[0].meta.direct_image) as mosaic_model:
+                wcs = mosaic_model.meta.wcs
+        except FileNotFoundError:
+            log.info("Direct image mosaic not available.")
+            wcs = cal_model_list[0].meta.wcs
 
-        # Modify the det2world transform to ignore extra inputs/outputs (wavelength and order)
         if "moving_target" in wcs.available_frames:
             # This should never be hit for WFSS data but is here just in case
             det2world = wcs.get_transform("detector", "moving_target")
         else:
             det2world = wcs.get_transform("detector", "world")
-        mapping1 = Mapping((0, 1, 0, 1))  # last two are placeholders and don't do anything
-        mapping1.inverse = Mapping((0, 1), n_inputs=4)
-        mapping2 = Mapping((0, 1), n_inputs=4)
-        mapping2.inverse = Mapping((0, 1, 0, 1))
-        det2world = mapping1 | det2world | mapping2
 
         try:
             sregion = combine_sregions(input_sregions, det2world)
