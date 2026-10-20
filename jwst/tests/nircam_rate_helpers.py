@@ -361,7 +361,7 @@ def nircam_dhs_nrcalong_sub260_rate_model(with_wcs=True):
     model : `~stdatamodels.jwst.datamodels.CubeModel`
         Mock NRCALONG DHS rate model.
     """
-    model = datamodels.CubeModel((5, 260, 2048))
+    model = datamodels.CubeModel((5, 64, 2048))
     _populate_dhs_shared_metadata(model)
 
     model.meta.instrument.name = "NIRCAM"
@@ -371,21 +371,23 @@ def nircam_dhs_nrcalong_sub260_rate_model(with_wcs=True):
     model.meta.instrument.pupil = "GRISMR"
     model.meta.instrument.module = "A"
 
-    model.meta.subarray.interleave_reads1 = 0
-    model.meta.subarray.multistripe_reads1 = 1
-    model.meta.subarray.multistripe_reads2 = 64
-    model.meta.subarray.multistripe_skips1 = 959
-    model.meta.subarray.multistripe_skips2 = 0
+    # Stripe keywords are removed in detector1
+    model.meta.subarray.num_superstripe = None
+    model.meta.subarray.repeat_stripe = None
 
+    # Update some WCS keys for example jw04453025001_03103_00001-seg001_nrcalong
     model.meta.wcsinfo.siaf_xref_sci = 1584.0
     model.meta.wcsinfo.siaf_yref_sci = 32.5
+    model.meta.wcsinfo.ra_ref = 265.76961214371636
+    model.meta.wcsinfo.dec_ref = 66.9172654785103
+    model.meta.wcsinfo.v2_ref = 50.749336
+    model.meta.wcsinfo.v3_ref = -495.444931
+    model.meta.wcsinfo.roll_ref = 245.1673336184057
+    model.meta.wcsinfo.v3yangle = 0.30766958
+    model.meta.wcsinfo.vparity = -1
 
-    # Fill each packed stripe row range with the same pattern
-    # since for NRCALONG all readouts should be from the same physical detector region
-    sub_ranges = generate_substripe_ranges(model, science_frame=True)["subarray"]
-    for sub_range in sub_ranges.values():
-        y0, y1 = sub_range
-        model.data[:, y0 + 5 : y1 - 5, :] = 1.0
+    # Fill the array with flat data outside the reference region
+    model.data[:, :, 4:-4] = 1.0
 
     if with_wcs:
         ref = get_reference_files(model)

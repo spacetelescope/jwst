@@ -304,7 +304,7 @@ to the output cutout.
 NIRCam DHS TSGRISM
 ++++++++++++++++++
 
-Similarly to non-DHS TSGRISM, for DHS modes the source location is determined from the
+Similarly to non-DHS TSGRISM, for DHS short-wave modes the source location is determined from the
 aperture reference point, and those values are used to set the source location
 for all computations involving the extent of the spectral trace and pixel wavelength
 assignments.  The major difference is that each stripe is extracted separately;
