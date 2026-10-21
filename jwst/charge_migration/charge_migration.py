@@ -3,6 +3,7 @@ import warnings
 
 import numpy as np
 from astropy.stats import sigma_clipped_stats
+from numpy.polynomial.polynomial import Polynomial, polyfit
 from scipy.ndimage import binary_dilation
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -112,8 +113,8 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
 
     # Median across integrations, with loop over first dimension to save memory
     with warnings.catch_warnings():
-        med_masked_ramp_diff = np.empty(masked_ramp_diff.shape[1:], dtype=masked_ramp_diff.dtype)
         warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
+        med_masked_ramp_diff = np.empty(masked_ramp_diff.shape[1:], dtype=masked_ramp_diff.dtype)
         for i in range(med_masked_ramp_diff.shape[0]):
             np.nanmedian(
                 masked_ramp_diff[:, i, ...],
@@ -145,60 +146,59 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
         xx = xfit[ii]
         yy = yfit[ii]
 
-        thisdiff = med_masked_ramp_diff[:, yy, xx]
-        indx = np.where(np.isfinite(thisdiff))
+        one_diff = med_masked_ramp_diff[:, yy, xx]
+        indx = np.where(np.isfinite(one_diff))
 
         # Only proceed if at least 2 good differences
         ndiffs = len(indx[0])
-        if ndiffs >= 2:
+        if ndiffs < 2:
+            continue
+
+        if ndiffs <= 5:
             # If fewer than 5 good differences don't do rejection
-            if ndiffs < 5:
-                indx = np.where(np.isfinite(thisdiff))
-
+            sigma = 0.0
+            indx = np.where(np.isfinite(one_diff))
+        else:
             # If more than 5 good differences sigma clip bad values
-            else:
-                _, themed, thesigma = sigma_clipped_stats(thisdiff[indx])
-                indx = np.where(
-                    (np.isfinite(thisdiff)) & (np.abs(thisdiff - themed) < 5 * thesigma)
-                )
+            _, clipped_med, sigma = sigma_clipped_stats(one_diff[indx])
+            indx = np.where((np.isfinite(one_diff)) & (np.abs(one_diff - clipped_med) < 5 * sigma))
 
-            # Fit a polynomial to the group differences; only a constant term and a slope
-            coeff = np.polyfit(gvec[indx], thisdiff[indx], 1, cov=False)
-            fullmodel = np.poly1d(coeff)
+        # Fit a polynomial to the group differences; only a constant term and a slope
+        coeff = polyfit(gvec[indx], one_diff[indx], 1)
+        fullmodel = Polynomial(coeff)
 
-            # First quality cuts on the polynomial fit; require that value
-            # change due to slope over the range of fit values is greater than 3x the read noise
-            # and that the fullmodel value at 0 group difference is positive
-            if (np.abs(ndiffs * coeff[0]) > np.abs(3 * rnvals[yy, xx])) & (fullmodel(0) > 0):
-                # Make a model that uses only the slope term
-                model = np.poly1d([coeff[0], 0])
-            else:
-                model = np.poly1d([0, 0])  # Otherwise use a zero model
+        # First quality cuts on the polynomial fit; require that value
+        # change due to slope over the range of fit values is greater than 3x the read noise
+        # and that the fullmodel value at 0 group difference is positive
+        if (np.abs(ndiffs * coeff[1]) > np.abs(3 * rnvals[yy, xx])) & (fullmodel(0) > 0):
+            # Make a model that uses only the slope term
+            model = Polynomial([0, coeff[1]])
+        else:
+            model = Polynomial([0, 0])  # Otherwise use a zero model
 
-            # Second quality cut on the polynomial fit; if ndiffs > 5 and the
-            # model isn't zero everywhere already, require that rms improves significantly
-            # This deals with some strange cases with poorly conditioned ramps,
-            # e.g. pixel (291,481) in jw04829001001_07101_00001_mirifushort
-            if (ndiffs > 5) & (model(10) != 0):
-                # model(10) is arbitrary, it's just evaluating the model
-                # somewhere other than the origin
-                _, _, sigmaorig = sigma_clipped_stats(thisdiff[indx])
-                _, _, sigmanew = sigma_clipped_stats((thisdiff - model(gvec))[indx])
+        # Second quality cut on the polynomial fit; if ndiffs > 5 and the
+        # model isn't zero everywhere already, require that rms improves significantly
+        # This deals with some strange cases with poorly conditioned ramps,
+        # e.g. pixel (291,481) in jw04829001001_07101_00001_mirifushort
+        if (ndiffs > 5) & (model(10) != 0):
+            # model(10) is arbitrary, it's just evaluating the model
+            # somewhere other than the origin
+            _, _, sigma_new = sigma_clipped_stats((one_diff - model(gvec))[indx])
 
-                # RMS of corrected data must be < 45% the rms of the original
-                # (dialed based on visual inspection of thousands of MRS ramps)
-                # Otherwise set the model to zero
-                if sigmanew > 0.45 * sigmaorig:
-                    # Otherwise use a zero model
-                    model = np.poly1d([0, 0])
+            # RMS of corrected data must be < 45% the rms of the original
+            # (dialed based on visual inspection of thousands of MRS ramps)
+            # Otherwise set the model to zero
+            if sigma_new > 0.45 * sigma:
+                # Otherwise use a zero model
+                model = Polynomial([0, 0])
 
-            # Save fit data for inspection
-            # xx, yy, gvec, thisdiff[indx], fullmodel(gvec), sigmaorig, sigmanew
-            # value change: ndiffs * coeff[0] / rnvals[yy, xx]
-            # pass/fail: model(10) != 0
+        # Save fit data for inspection
+        # xx, yy, gvec, one_diff[indx], fullmodel(gvec), sigma, sigma_new
+        # value change: ndiffs * coeff[1] / rnvals[yy, xx]
+        # pass/fail: model(10) != 0
 
-            # Subtract off the slope term from the original group differences
-            ramp_diff[:, :, yy, xx] -= model(gvec)
+        # Subtract off the slope term from the original group differences
+        ramp_diff[:, :, yy, xx] -= model(gvec)
 
     # Now reconstruct ramps from the modified differences:
     # each group builds on the previous corrected one.
