@@ -59,9 +59,8 @@ def test_extract_tso_dhs_nrcalong(dhs_nrcalong_wcs_model):
     result = extract_tso_object(dhs_nrcalong_wcs_model, reference_files=refs)
 
     assert isinstance(result, datamodels.SlitModel)
-    full_width = dhs_nrcalong_wcs_model.meta.subarray.xsize
-    assert result.xsize == full_width
-    assert result.ysize > 0
+    assert result.xsize == dhs_nrcalong_wcs_model.meta.subarray.xsize
+    assert result.ysize == dhs_nrcalong_wcs_model.meta.subarray.ysize
 
 
 def test_extract_2d_step_dhs_nrca1(dhs_nrca1_wcs_model):
