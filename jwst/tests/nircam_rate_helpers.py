@@ -374,6 +374,8 @@ def nircam_dhs_nrcalong_sub260_rate_model(with_wcs=True):
     # Stripe keywords are removed in detector1
     model.meta.subarray.num_superstripe = None
     model.meta.subarray.repeat_stripe = None
+    model.meta.subarray.ystart = 961
+    model.meta.subarray.ysize = 64
 
     # Update some WCS keys for example jw04453025001_03103_00001-seg001_nrcalong
     model.meta.wcsinfo.siaf_xref_sci = 1584.0
