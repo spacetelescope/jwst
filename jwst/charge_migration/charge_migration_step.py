@@ -21,6 +21,7 @@ class ChargeMigrationStep(Step):
         signal_threshold = float(default=10000)  # Threshold value for flagging charge loss.
         mask_pad = integer(default=2)  # Number of pixels to mask on either side of a pixel with charge loss.
         apply_correction = boolean(default=False)  # Fit and correct for charge migration.
+        save_fit_info = boolean(default=False)  # Save a table of information about fit corrections
         skip = boolean(default=True)  # By default, skip the step.
     """  # noqa: E501
 
@@ -50,18 +51,29 @@ class ChargeMigrationStep(Step):
             return result
 
         if self.apply_correction:
+            log.info("Fitting and correcting for the brighter-fatter effect (BFE)")
+            log.warning("This process is currently a prototype: its use is not yet recommended.")
             readnoise_filename = self.get_reference_file(result, "readnoise")
             log.info("Using READNOISE reference file: %s", readnoise_filename)
 
             with datamodels.ReadnoiseModel(readnoise_filename) as rnoise:
-                result = correct_charge_migration(
+                output = correct_charge_migration(
                     result,
                     rnoise,
                     signal_threshold=self.signal_threshold,
                     mask_pad=self.mask_pad,
+                    fit_info=self.save_fit_info,
                 )
+                if self.save_fit_info:
+                    result, fit_info = output
+                    table_filepath = self.make_output_path(ext=".ecsv", suffix="bfe_fit")
+                    fit_info.write(table_filepath, format="ascii.ecsv", overwrite=True)
+                    log.info(f"Saved fit info table in {table_filepath}")
+                else:
+                    result = output
 
         else:
+            log.info("Flagging pixels with significant charge loss")
             result = flag_charge_migration(result, self.signal_threshold)
 
         result.meta.cal_step.charge_migration = "COMPLETE"
