@@ -70,7 +70,9 @@ def flag_charge_migration(output_model, signal_threshold):
     return output_model
 
 
-def correct_charge_migration(output_model, readnoise_model, signal_threshold=10000.0, mask_pad=2):
+def correct_charge_migration(
+    output_model, readnoise_model, signal_threshold=10000.0, mask_pad=2, fit_info=False
+):
     """
     Correct for charge migration.
 
@@ -84,6 +86,8 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
         Science value above which the correction is triggered.
     mask_pad : int, optional
         Number of pixels to mask on either side of a pixel with charge loss.
+    fit_info : bool, optional
+        If True, return a diagnostic table of the ramp fits performed.
 
     Returns
     -------
@@ -103,13 +107,11 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
     bad = dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["SATURATED"]
     badindx = (gdq & bad) != 0
 
-    # Make a copy of the ramp where we NaN everything that's bad
-    masked_ramp = sci.copy()
-    masked_ramp[badindx] = np.nan
-
-    # Group by group differences in the original and working ramps
-    ramp_diff = np.diff(sci, axis=1)
-    masked_ramp_diff = np.diff(masked_ramp, axis=1)
+    # Group by group differences in the ramp, masking bad pixels
+    masked_ramp_diff = np.diff(sci, axis=1)
+    masked_ramp_diff[badindx[:, 1:, :, :]] = np.nan
+    masked_ramp_diff[badindx[:, :-1, :, :]] = np.nan
+    del badindx
 
     # Median the diffs across integrations, with loop over first dimension to save memory
     with warnings.catch_warnings():
@@ -157,13 +159,15 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
     nfit = len(xfit)
     log.info("Identified %s pixels to fit for BFE", str(nfit))
 
+    ramp_diff = np.diff(sci, axis=1)
     gvec = np.arange(ngroups - 1)  # group diff index
+    fit_info_table = []
     for ii in range(nfit):
         xx = xfit[ii]
         yy = yfit[ii]
 
         one_diff = med_masked_ramp_diff[:, yy, xx]
-        indx = np.where(valid_for_fit[:, yy, xx])
+        indx = valid_for_fit[:, yy, xx]
 
         # Only proceed if at least 2 good differences
         if n_diffs[yy, xx] < 2:
@@ -174,13 +178,13 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
         full_model = Polynomial(coeff)
         slope = coeff[1]
 
-        # First quality cuts on the polynomial fit; require that value
+        # First quality cuts on the polynomial fit: require that value
         # change due to slope over the range of fit values is greater than 3x the read noise
         # and that the full_model value at 0 group difference is positive
-        test_positive = (np.abs(n_diffs[yy, xx] * slope) > np.abs(3 * rnvals[yy, xx])) & (
+        good_slope = (np.abs(n_diffs[yy, xx] * slope) > np.abs(3 * rnvals[yy, xx])) & (
             full_model(0) > 0
         )
-        if not test_positive:
+        if not good_slope:
             continue
 
         # Otherwise, good fit: make a model that uses only the slope term
@@ -189,22 +193,26 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
         # Second quality cut on the polynomial fit; if ndiffs > 5,
         # require that rms improves significantly
         # This deals with some strange cases with poorly conditioned ramps,
-        # e.g. pixel (291,481) in jw04829001001_07101_00001_mirifushort
+        # e.g. pixel (291,489) in jw04829001001_07101_00001_mirifushort
         if n_diffs[yy, xx] > 5:
-            # model(10) is arbitrary, it's just evaluating the model
-            # somewhere other than the origin
-            stats = SigmaClippedStats(one_diff[indx] - model(gvec[indx]))
-            sigma_new = stats.std()
+            sigma_orig = SigmaClippedStats(one_diff[indx]).std()
+            sigma_new = SigmaClippedStats(one_diff[indx] - model(gvec[indx])).std()
 
             # RMS of corrected data must be < 45% the rms of the original
             # (dialed based on visual inspection of thousands of MRS ramps)
-            if sigma_new > 0.45 * sigma[yy, xx]:
+            if sigma_new > 0.45 * sigma_orig:
                 continue
 
         # Save fit data for inspection
         # xx, yy, gvec, one_diff[indx], full_model(gvec), sigma, sigma_new
         # value change: ndiffs * slope / rnvals[yy, xx]
         # pass/fail: model(10) != 0
+        if fit_info:
+            one_diff[~indx] = np.nan
+            value_change = n_diffs[yy, xx] * slope / rnvals[yy, xx]
+            fit_info_table.append(
+                (xx, yy, one_diff, full_model(gvec), sigma[yy, xx], value_change, True)
+            )
 
         # Subtract off the slope term from the original group differences
         ramp_diff[:, :, yy, xx] -= model(gvec)
