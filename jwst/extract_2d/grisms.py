@@ -238,7 +238,10 @@ def extract_tso_object(
         raise ValueError("XREF_SCI and YREF_SCI are required for TSO mode.")
 
     # Split the logic on DHS vs. non-DHS data
-    if "DHS" in input_model.meta.subarray.name.upper():
+    if (
+        "DHS" in input_model.meta.subarray.name.upper()
+        and "LONG" not in input_model.meta.instrument.detector
+    ):
         output_model = _extract_tso_dhs_object(
             input_model, wavelengthrange, available_orders, compute_wavelength
         )
@@ -265,14 +268,13 @@ def _extract_tso_tsgrism_object(
 
     subwcs = copy.deepcopy(input_model.meta.wcs)
 
-    # TODO: Moved this from above to segment DHS vs. non-DHS data - check compat
     # If an extraction height is not supplied, default to entire
     # cross-dispersion size of the data array
     if tsgrism_extract_height is None:
         tsgrism_extract_height = input_model.meta.subarray.ysize
-    log.info(f"Setting extraction height to {tsgrism_extract_height}")
 
     # Loop over spectral orders
+    is_lw_dhs = "DHS" in input_model.meta.subarray.name.upper()
     for order in available_orders:
         _, _, _, lmin, lmax = [
             x
@@ -283,19 +285,30 @@ def _extract_tso_tsgrism_object(
         # Source xpos can be taken as the reference x position
         source_xpos = input_model.meta.wcsinfo.siaf_xref_sci - 1
 
-        # Take the input source position to be row 34, always
-        input_ypos = 34.0
-
-        if tsgrism_extract_height >= 64:
-            # For the default 64-pixel cutout or larger, start at 0 so
-            # that source position stays at row 34
+        if is_lw_dhs:
+            # For LW DHS, extract the full array
             extract_y_min = 0
+            extract_y_max = input_model.meta.subarray.ysize - 1
+
+            # Take the source y position from reference y
+            input_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1
         else:
-            # Otherwise, center the extraction on the source position
-            # This may require a custom extract1d reference file to center
-            # the spectrum correctly.
-            extract_y_min = input_ypos - tsgrism_extract_height / 2
-        extract_y_max = extract_y_min + tsgrism_extract_height - 1
+            # For regular TSGRISM, take the input source position to be row 34, always
+            input_ypos = 34.0
+
+            # Allow user to set extraction height
+            log.info(f"Setting extraction height to {tsgrism_extract_height}")
+            if tsgrism_extract_height >= 64:
+                # For the default 64-pixel cutout or larger, start at 0 so
+                # that source position stays at row 34
+                extract_y_min = 0
+            else:
+                # Otherwise, center the extraction on the source position
+                # This may require a custom extract1d reference file to center
+                # the spectrum correctly.
+                extract_y_min = input_ypos - tsgrism_extract_height / 2
+
+            extract_y_max = extract_y_min + tsgrism_extract_height - 1
 
         # Limit the bounding box to the detector edges
         # Note: in contrast to WFSS modes, the instrument team requested that the
@@ -307,8 +320,12 @@ def _extract_tso_tsgrism_object(
         xmin = 0
         xmax = nx - 1
 
-        # Output source position may be shifted
-        source_ypos = input_ypos - ymin
+        if is_lw_dhs:
+            # TODO: source y position not yet reliable for DHS modes; set to None.
+            source_ypos = None
+        else:
+            # Output source position may be shifted
+            source_ypos = input_ypos - ymin
 
         # The order and source position are put directly into the new WCS of the subarray
         # for the forward transform.
@@ -342,7 +359,7 @@ def _extract_tso_dhs_object(
     compute_wavelength=True,
 ):
     """
-    Extract the spectra for a NIRCam DHS TSO observation.
+    Extract the spectra for a NIRCam SW DHS TSO observation.
 
     Parameters
     ----------
