@@ -2,7 +2,7 @@ import logging
 import warnings
 
 import numpy as np
-from astropy.stats import sigma_clipped_stats
+from astropy.stats import SigmaClippedStats
 from numpy.polynomial.polynomial import Polynomial, polyfit
 from scipy.ndimage import binary_dilation
 from stdatamodels.jwst.datamodels import dqflags
@@ -160,7 +160,9 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
             indx = np.where(np.isfinite(one_diff))
         else:
             # If more than 5 good differences sigma clip bad values
-            _, clipped_med, sigma = sigma_clipped_stats(one_diff[indx])
+            stats = SigmaClippedStats(one_diff[indx], cenfunc=np.median, stdfunc=np.std)
+            clipped_med = stats.median()
+            sigma = stats.std()
             indx = np.where((np.isfinite(one_diff)) & (np.abs(one_diff - clipped_med) < 5 * sigma))
 
         # Fit a polynomial to the group differences; only a constant term and a slope
@@ -183,7 +185,10 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
         if (ndiffs > 5) & (model(10) != 0):
             # model(10) is arbitrary, it's just evaluating the model
             # somewhere other than the origin
-            _, _, sigma_new = sigma_clipped_stats((one_diff - model(gvec))[indx])
+            stats = SigmaClippedStats(
+                one_diff[indx] - model(gvec[indx]), cenfunc=np.median, stdfunc=np.std
+            )
+            sigma_new = stats.std()
 
             # RMS of corrected data must be < 45% the rms of the original
             # (dialed based on visual inspection of thousands of MRS ramps)
