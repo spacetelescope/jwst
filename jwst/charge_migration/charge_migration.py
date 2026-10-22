@@ -3,6 +3,7 @@ import warnings
 
 import numpy as np
 from astropy.stats import SigmaClippedStats
+from astropy.table import Table
 from numpy.polynomial.polynomial import Polynomial, polyfit
 from scipy.ndimage import binary_dilation
 from stdatamodels.jwst.datamodels import dqflags
@@ -92,8 +93,11 @@ def correct_charge_migration(
     Returns
     -------
     output_model : `~stdatamodels.jwst.datamodels.RampModel`
-        Data model with correction applied and CHARGELOSS flags added to
-        groups exceeding ``signal_threshold``.
+        Data model with correction applied.
+    fit_info_table : `~astropy.table.Table`, optional
+        Table containing information about all fits attempted. Columns are:
+        ``x, y, fit_success, value_change, sigma_orig, sigma_new, diff, model``.
+        Returned only if ``fit_info`` is True.
     """
     # Input science and DQ data
     sci = output_model.data
@@ -146,13 +150,21 @@ def correct_charge_migration(
         warnings.filterwarnings("ignore", "Degrees of freedom", RuntimeWarning)
         stats = SigmaClippedStats(med_masked_ramp_diff, axis=0, mask=~valid_for_fit)
         clipped_med = stats.median()
-        sigma = stats.std()
+        clipped_sigma = stats.std()
 
     # Clip values where n_diffs > 5
     n_diffs = np.sum(valid_for_fit, axis=0)
-    sigma[n_diffs <= 5] = 0.0
-    clip_mask = np.abs(med_masked_ramp_diff - clipped_med) < 5 * sigma
+    clipped_sigma[n_diffs <= 5] = 0.0
+    clip_mask = np.abs(med_masked_ramp_diff - clipped_med) < 5 * clipped_sigma
     valid_for_fit[:, n_diffs > 5] &= clip_mask[:, n_diffs > 5]
+    del clipped_med, clip_mask, clipped_sigma
+
+    # Clip again for a good measure of sigma
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
+        warnings.filterwarnings("ignore", "Degrees of freedom", RuntimeWarning)
+        stats = SigmaClippedStats(med_masked_ramp_diff, axis=0, mask=~valid_for_fit)
+        sigma = stats.std()
 
     # Fit clipped pixels in the thresholded mask
     yfit, xfit = np.where(mask)
@@ -184,43 +196,69 @@ def correct_charge_migration(
         good_slope = (np.abs(n_diffs[yy, xx] * slope) > np.abs(3 * rnvals[yy, xx])) & (
             full_model(0) > 0
         )
-        if not good_slope:
-            continue
-
-        # Otherwise, good fit: make a model that uses only the slope term
-        model = Polynomial([0, slope])
+        if good_slope:
+            # Good fit: make a model that uses only the slope term
+            model = Polynomial([0, slope])
+        else:
+            model = None
 
         # Second quality cut on the polynomial fit; if ndiffs > 5,
         # require that rms improves significantly
         # This deals with some strange cases with poorly conditioned ramps,
         # e.g. pixel (291,489) in jw04829001001_07101_00001_mirifushort
-        if n_diffs[yy, xx] > 5:
-            sigma_orig = SigmaClippedStats(one_diff[indx]).std()
+        sigma_new = np.nan
+        if n_diffs[yy, xx] > 5 and model is not None:
             sigma_new = SigmaClippedStats(one_diff[indx] - model(gvec[indx])).std()
 
             # RMS of corrected data must be < 45% the rms of the original
             # (dialed based on visual inspection of thousands of MRS ramps)
-            if sigma_new > 0.45 * sigma_orig:
-                continue
+            if sigma_new > 0.45 * sigma[yy, xx]:
+                model = None
 
         # Save fit data for inspection
-        # xx, yy, gvec, one_diff[indx], full_model(gvec), sigma, sigma_new
-        # value change: ndiffs * slope / rnvals[yy, xx]
-        # pass/fail: model(10) != 0
         if fit_info:
+            # median diff for this pixel is not needed anymore: fill clipped values with NaN
             one_diff[~indx] = np.nan
             value_change = n_diffs[yy, xx] * slope / rnvals[yy, xx]
-            fit_info_table.append(
-                (xx, yy, one_diff, full_model(gvec), sigma[yy, xx], value_change, True)
+            success = model is not None
+            row = (
+                xx,
+                yy,
+                success,
+                value_change,
+                sigma[yy, xx],
+                sigma_new,
+                one_diff,
+                full_model(gvec),
             )
+            fit_info_table.append(row)
 
-        # Subtract off the slope term from the original group differences
-        ramp_diff[:, :, yy, xx] -= model(gvec)
+        if model is not None:
+            # Subtract off the slope term from the original group differences
+            ramp_diff[:, :, yy, xx] -= model(gvec)
 
     # Now reconstruct ramps from the modified differences:
     # each group builds on the previous corrected one.
     for gg in range(1, ngroups):
         sci[:, gg, :, :] = sci[:, gg - 1, :, :] + ramp_diff[:, gg - 1, :, :]
-
     output_model.data = sci
-    return output_model
+
+    if fit_info:
+        # Return a diagnostic table along with the corrected output
+        fit_info_table = Table(
+            rows=fit_info_table,
+            names=[
+                "x",
+                "y",
+                "fit_success",
+                "value_change",
+                "sigma_orig",
+                "sigma_new",
+                "diff",
+                "model",
+            ],
+        )
+        return output_model, fit_info_table
+    else:
+        # Just return the model
+        return output_model
