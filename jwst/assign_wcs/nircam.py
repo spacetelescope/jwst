@@ -360,12 +360,14 @@ def tsgrism(input_model, reference_files):
     if input_model.meta.instrument.module != "A":
         raise ValueError("NRC_TSGRISM mode only supports module A")
 
-    if (
-        "DHS" in input_model.meta.subarray.name
-        and "LONG" not in input_model.meta.instrument.detector
-    ):
-        log.info("Building WCS for DHS data.")
-        return dhs(input_model, reference_files)
+    dhs_long = False
+    if "DHS" in input_model.meta.subarray.name:
+        if "LONG" in input_model.meta.instrument.detector:
+            dhs_long = True
+        else:
+            # DHS SW needs special handling to add a label mapper for the stripes
+            log.info("Building WCS for DHS data.")
+            return dhs(input_model, reference_files)
     elif "GRISMR" not in input_model.meta.instrument.pupil:
         raise ValueError("NRC_TSGRISM mode only supports GRISMR and DHS pupil values.")
 
@@ -411,25 +413,50 @@ def tsgrism(input_model, reference_files):
     input_model.meta.wcsinfo.siaf_xref_sci += x_off
     input_model.meta.wcsinfo.siaf_yref_sci += y_off
 
-    xcenter = Const1D(xc)
-    xcenter.inverse = Const1D(xc)
-    ycenter = Const1D(yc)
-    ycenter.inverse = Const1D(yc)
-
     # x, y, order in goes to transform to full array location and order
-    # get the shift to full frame coordinates
-    sub_trans = subarray_transform(input_model)
-    if sub_trans is not None:
+    if dhs_long:
+        # For long wavelength DHS, existing tsgrism calibration is used,
+        # so relative y-coordinates within the stripe should be used.
+        # Set the y reference to yc, the center of the first stripe in
+        # subarray coordinates, corrected for the dither offset.
+        xform_refx = Const1D(xc)
+        xform_refx.inverse = Const1D(xc)
+        xform_refy = Const1D(yc)
+        xform_refy.inverse = Const1D(yc)
+
+        # After the specwcs models, return the reference position in full frame coordinates
+        # for this exposure to pass to the sky models. Set the inverse for y to the
+        # relative value to pass through the transform in the other direction.
+        xcenter = Const1D(xc)
+        xcenter.inverse = Const1D(xc)
+        ycenter = Const1D(yc + input_model.meta.subarray.ystart - 1)
+        ycenter.inverse = Const1D(yc)
+
         sub2direct = (
-            sub_trans & Identity(1)
-            | Mapping((0, 1, 0, 1, 2))
-            | (Identity(2) & xcenter & ycenter & Identity(1))
+            Mapping((0, 1, 0, 1, 2))
+            | (Identity(2) & xform_refx & xform_refy & Identity(1))
             | det2det
+            | (xcenter & ycenter & Identity(2))
         )
     else:
-        sub2direct = (
-            Mapping((0, 1, 0, 1, 2)) | (Identity(2) & xcenter & ycenter & Identity(1)) | det2det
-        )
+        xcenter = Const1D(xc)
+        xcenter.inverse = Const1D(xc)
+        ycenter = Const1D(yc)
+        ycenter.inverse = Const1D(yc)
+
+        # get the shift to full frame coordinates
+        sub_trans = subarray_transform(input_model)
+        if sub_trans is not None:
+            sub2direct = (
+                sub_trans & Identity(1)
+                | Mapping((0, 1, 0, 1, 2))
+                | (Identity(2) & xcenter & ycenter & Identity(1))
+                | det2det
+            )
+        else:
+            sub2direct = (
+                Mapping((0, 1, 0, 1, 2)) | (Identity(2) & xcenter & ycenter & Identity(1)) | det2det
+            )
 
     pipeline = [
         (frames["grism_detector"], sub2direct),
