@@ -111,7 +111,7 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
     ramp_diff = np.diff(sci, axis=1)
     masked_ramp_diff = np.diff(masked_ramp, axis=1)
 
-    # Median across integrations, with loop over first dimension to save memory
+    # Median the diffs across integrations, with loop over first dimension to save memory
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
         med_masked_ramp_diff = np.empty(masked_ramp_diff.shape[1:], dtype=masked_ramp_diff.dtype)
@@ -122,6 +122,7 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
                 overwrite_input=True,
                 out=med_masked_ramp_diff[i, ...],
             )
+    del masked_ramp_diff
 
     # Find the maximum DN value reached anywhere on the ramps across groups and ints
     # (Generally this is the last pixel, but not always given linearity
@@ -136,7 +137,22 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
     structure = np.full((box_size, box_size), True)
     mask = binary_dilation(mask, structure)
 
-    # Fit all pixels in this mask
+    # Get clipped stats for the median diff array
+    valid_for_fit = np.isfinite(med_masked_ramp_diff) & mask
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
+        warnings.filterwarnings("ignore", "Degrees of freedom", RuntimeWarning)
+        stats = SigmaClippedStats(med_masked_ramp_diff, axis=0, mask=~valid_for_fit)
+        clipped_med = stats.median()
+        sigma = stats.std()
+
+    # Clip values where n_diffs > 5
+    n_diffs = np.sum(valid_for_fit, axis=0)
+    sigma[n_diffs <= 5] = 0.0
+    clip_mask = np.abs(med_masked_ramp_diff - clipped_med) < 5 * sigma
+    valid_for_fit[:, n_diffs > 5] &= clip_mask[:, n_diffs > 5]
+
+    # Fit clipped pixels in the thresholded mask
     yfit, xfit = np.where(mask)
     nfit = len(xfit)
     log.info("Identified %s pixels to fit for BFE", str(nfit))
@@ -147,59 +163,47 @@ def correct_charge_migration(output_model, readnoise_model, signal_threshold=100
         yy = yfit[ii]
 
         one_diff = med_masked_ramp_diff[:, yy, xx]
-        indx = np.where(np.isfinite(one_diff))
+        indx = np.where(valid_for_fit[:, yy, xx])
 
         # Only proceed if at least 2 good differences
-        ndiffs = len(indx[0])
-        if ndiffs < 2:
+        if n_diffs[yy, xx] < 2:
             continue
-
-        if ndiffs <= 5:
-            # If fewer than 5 good differences don't do rejection
-            sigma = 0.0
-            indx = np.where(np.isfinite(one_diff))
-        else:
-            # If more than 5 good differences sigma clip bad values
-            stats = SigmaClippedStats(one_diff[indx], cenfunc=np.median, stdfunc=np.std)
-            clipped_med = stats.median()
-            sigma = stats.std()
-            indx = np.where((np.isfinite(one_diff)) & (np.abs(one_diff - clipped_med) < 5 * sigma))
 
         # Fit a polynomial to the group differences; only a constant term and a slope
         coeff = polyfit(gvec[indx], one_diff[indx], 1)
-        fullmodel = Polynomial(coeff)
+        full_model = Polynomial(coeff)
+        slope = coeff[1]
 
         # First quality cuts on the polynomial fit; require that value
         # change due to slope over the range of fit values is greater than 3x the read noise
-        # and that the fullmodel value at 0 group difference is positive
-        if (np.abs(ndiffs * coeff[1]) > np.abs(3 * rnvals[yy, xx])) & (fullmodel(0) > 0):
-            # Make a model that uses only the slope term
-            model = Polynomial([0, coeff[1]])
-        else:
-            model = Polynomial([0, 0])  # Otherwise use a zero model
+        # and that the full_model value at 0 group difference is positive
+        test_positive = (np.abs(n_diffs[yy, xx] * slope) > np.abs(3 * rnvals[yy, xx])) & (
+            full_model(0) > 0
+        )
+        if not test_positive:
+            continue
 
-        # Second quality cut on the polynomial fit; if ndiffs > 5 and the
-        # model isn't zero everywhere already, require that rms improves significantly
+        # Otherwise, good fit: make a model that uses only the slope term
+        model = Polynomial([0, slope])
+
+        # Second quality cut on the polynomial fit; if ndiffs > 5,
+        # require that rms improves significantly
         # This deals with some strange cases with poorly conditioned ramps,
         # e.g. pixel (291,481) in jw04829001001_07101_00001_mirifushort
-        if (ndiffs > 5) & (model(10) != 0):
+        if n_diffs[yy, xx] > 5:
             # model(10) is arbitrary, it's just evaluating the model
             # somewhere other than the origin
-            stats = SigmaClippedStats(
-                one_diff[indx] - model(gvec[indx]), cenfunc=np.median, stdfunc=np.std
-            )
+            stats = SigmaClippedStats(one_diff[indx] - model(gvec[indx]))
             sigma_new = stats.std()
 
             # RMS of corrected data must be < 45% the rms of the original
             # (dialed based on visual inspection of thousands of MRS ramps)
-            # Otherwise set the model to zero
-            if sigma_new > 0.45 * sigma:
-                # Otherwise use a zero model
-                model = Polynomial([0, 0])
+            if sigma_new > 0.45 * sigma[yy, xx]:
+                continue
 
         # Save fit data for inspection
-        # xx, yy, gvec, one_diff[indx], fullmodel(gvec), sigma, sigma_new
-        # value change: ndiffs * coeff[1] / rnvals[yy, xx]
+        # xx, yy, gvec, one_diff[indx], full_model(gvec), sigma, sigma_new
+        # value change: ndiffs * slope / rnvals[yy, xx]
         # pass/fail: model(10) != 0
 
         # Subtract off the slope term from the original group differences
