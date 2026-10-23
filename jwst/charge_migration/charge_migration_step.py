@@ -19,8 +19,8 @@ class ChargeMigrationStep(Step):
 
     spec = """
         signal_threshold = float(default=10000)  # Threshold value for flagging charge loss.
-        mask_pad = integer(default=2)  # Number of pixels to mask on either side of a pixel with charge loss.
         apply_correction = boolean(default=False)  # Fit and correct for charge migration.
+        mask_pad = integer(default=2)  # Number of pixels to fit on either side of a pixel with charge loss.
         save_fit_info = boolean(default=False)  # Save a table of information about fit corrections
         skip = boolean(default=True)  # By default, skip the step.
     """  # noqa: E501
@@ -29,7 +29,7 @@ class ChargeMigrationStep(Step):
 
     def process(self, step_input):
         """
-        Detect jumps based on signal threshold.
+        Flag or correct for charge migration effects.
 
         Parameters
         ----------
@@ -52,7 +52,9 @@ class ChargeMigrationStep(Step):
 
         if self.apply_correction:
             log.info("Fitting and correcting for the brighter-fatter effect (BFE)")
-            log.warning("This process is currently a prototype: its use is not yet recommended.")
+            log.warning(
+                "This process is currently a prototype: it is not yet recommended for general use."
+            )
             readnoise_filename = self.get_reference_file(result, "readnoise")
             log.info("Using READNOISE reference file: %s", readnoise_filename)
 
