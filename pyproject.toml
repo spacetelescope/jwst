@@ -111,7 +111,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-build = "cp3*"
+build = "cp311-*"  # build for CPython 3.11 Stable API
 skip = ["cp3*t-*"]  # explicitly skip free-threaded builds
 test-command = 'python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"'
 
