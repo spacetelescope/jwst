@@ -6,7 +6,7 @@ import asdf
 from astropy import units
 
 from jwst.assign_wcs.util import update_s_region_keyword
-from jwst.cube_build import cube_build, data_types, ifu_cube
+from jwst.cube_build import cube_build, cube_lib, data_types, ifu_cube
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe import Step, record_step_status
@@ -32,6 +32,7 @@ class CubeBuildStep(Step):
          scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','drizzle',default = 'drizzle') # Type of weighting function
+         readnoise_weighting = boolean(default=False) # In the drizzle routine also weight by readnoise
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          ra_center = float(default=None) # RA center of the IFU cube
          dec_center = float(default=None) # Declination center of the IFU cube
@@ -46,7 +47,7 @@ class CubeBuildStep(Step):
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
          offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files.
-         debug_spaxel = string(default='-1 -1 -1') # Default not used
+         debug_spaxel = string(default='-1 -1 -1') # Default not used. Order x,y,z
        """  # noqa: E501
 
     reference_file_types = ["cubepar"]
@@ -84,6 +85,8 @@ class CubeBuildStep(Step):
            Container (list) of `~stdatamodels.jwst.datamodels.IFUCubeModel`.
         """
         log.info("Starting IFU Cube Building Step")
+
+        cube_limit = 1.0e8  # limit on the maximum cube size (number of voxels)
 
         t0 = time.time()
         # ________________________________________________________________________________
@@ -159,6 +162,13 @@ class CubeBuildStep(Step):
 
         if self.weighting == "drizzle":
             self.interpolation = "drizzle"
+
+        if self.weighting != "drizzle" and self.readnoise_weighting:
+            log.warning("Readnoise weighting is only allowed in the drizzle method")
+            self.readnoise_weighting = False
+
+        if self.readnoise_weighting:
+            log.info(" Also weighting by readnoise in drizzle method")
 
         log.info(f"Input interpolation: {self.interpolation}")
         log.info(f"Coordinate system to use: {self.coord_system}")
@@ -250,6 +260,7 @@ class CubeBuildStep(Step):
             "interpolation": self.interpolation,
             "weighting": self.weighting,
             "weight_power": self.weight_power,
+            "readnoise_weight": self.readnoise_weighting,
             "coord_system": self.pars_input["coord_system"],
             "ra_center": self.ra_center,
             "dec_center": self.dec_center,
@@ -339,12 +350,22 @@ class CubeBuildStep(Step):
                 thiscube.determine_cube_parameters_internal()
             else:
                 thiscube.determine_cube_parameters()
+
             thiscube.setup_ifucube_wcs()
 
+            # Check that the IFU cube is not over the size limit. Cubes above the size
+            # limit will lead to a memory failure and usually result trying to combine too
+            # much data together.
+            cube_lib.check_cube_size(
+                thiscube.cube_wcs.naxis1,
+                thiscube.cube_wcs.naxis2,
+                thiscube.cube_wcs.naxis3,
+                cube_limit,
+            )
             # build the IFU Cube
 
             status = 0
-            result, status = thiscube.build_ifucube()
+            result, status = thiscube.build_ifucube(thiscube.cube_wcs)
 
             # check if cube_build failed
             if status == 1:
