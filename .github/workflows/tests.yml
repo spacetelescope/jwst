@@ -115,8 +115,7 @@ jobs:
         - linux: check-dependencies
           python-version: ${{ needs.supported-pythons.outputs.latest }} 
         - name: run tests (oldest supported Python, ubuntu-latest)
-          linux: py3-oldestdeps-cov-xdist
-          python-version: ${{ needs.supported-pythons.outputs.oldest }}
+          linux: py312-oldestdeps-cov-xdist
         - linux: py*-xdist
         - name: run tests with coverage (latest supported Python, ubuntu-latest)
           linux: py3-cov-xdist
