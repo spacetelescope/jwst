@@ -6,32 +6,56 @@ import numpy as np
 import pytest
 from astropy.table import Table
 
-from jwst.regtest.regtestdata import text_diff
+from jwst.regtest.regtestdata import RTFile, text_diff
+
+INPUT_DATA = {
+    "mock_asn": RTFile(
+        file_name="my_asn.json",
+        path="rtdata/infrastructure/test_regtestdata",
+        from_mast=False,
+        asn_files=["file1_rate.fits", "file2_rate.fits", "file3_rate.fits"],
+        asn_files_from_mast=False,
+        callback_function="mk_empty_files",
+        comment="This code was used to create the files in the association.",
+    )
+}
+
+
+def mk_empty_files():
+    """Create empty FITS files for the test."""
+    for i in range(3):
+        file = "file" + str(i + 1) + "_rate.fits"
+        with open(file, "w") as f:
+            f.write("")
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_data(rtdata, tmp_cwd):
-    rtdata.get_data("infrastructure/test_regtestdata/file1_rate.fits")
-    rtdata.output = "file1_cal.fits"
+    rate_file_path = INPUT_DATA["mock_asn"].path + "/" + INPUT_DATA["mock_asn"].asn_files[0]
+    rtdata.get_data(rate_file_path)
+    rate_file = INPUT_DATA["mock_asn"].asn_files[0]
+    rtdata.output = rate_file
 
-    assert rtdata.input == str(tmp_cwd / "file1_rate.fits")
+    assert rtdata.input == str(tmp_cwd / rate_file)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_truth(rtdata, tmp_cwd):
-    rtdata.get_truth("infrastructure/test_regtestdata/file1_rate.fits")
-    rtdata.output = "file1_rate.fits"
+    rate_file_path = INPUT_DATA["mock_asn"].path + "/" + INPUT_DATA["mock_asn"].asn_files[0]
+    rtdata.get_truth(rate_file_path)
+    rate_file = INPUT_DATA["mock_asn"].asn_files[0]
+    rtdata.output = rate_file
 
-    assert rtdata.truth == str(tmp_cwd / "truth" / "file1_rate.fits")
+    assert rtdata.truth == str(tmp_cwd / "truth" / rate_file)
 
 
 @pytest.mark.bigdata
 def test_regtestdata_get_asn(rtdata):
-    rtdata.get_asn("infrastructure/test_regtestdata/my_asn.json")
+    rtdata.get_asn(INPUT_DATA["mock_asn"])
     files = glob("*.fits")
-    rtdata.output = "file1_rate.fits"
+    rtdata.output = INPUT_DATA["mock_asn"].asn_files[0]
 
-    assert os.path.isfile("my_asn.json")
+    assert os.path.isfile(INPUT_DATA["mock_asn"].file_name)
     assert len(files) == 3
 
 
