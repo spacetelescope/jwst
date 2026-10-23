@@ -1,20 +1,19 @@
 """Mock spectral data in cal format."""
 
 import numpy as np
-from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
-from jwst.assign_wcs.tests.test_nirspec import (
-    create_nirspec_fs_file,
-    create_nirspec_ifu_file,
-    create_nirspec_mos_file,
-)
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.tests.miri_rate_helpers import (
     miri_lrs_slit_rate_model,
     miri_lrs_slitless_rate_model,
     miri_mrs_rate_model,
+)
+from jwst.tests.nirspec_rate_helpers import (
+    nirspec_fs_rate_model,
+    nirspec_ifu_rate_model,
+    nirspec_mos_rate_model,
 )
 
 __all__ = [
@@ -138,11 +137,7 @@ def nirspec_ifu_cal_model(wcs_style="coordinates"):
         The IFU datamodel.
     """
     shape = (2048, 2048)
-    hdul = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    model = datamodels.IFUImageModel(hdul)
-    hdul.close()
+    model = nirspec_ifu_rate_model(with_wcs=False)
 
     # assign a WCS
     if wcs_style == "coordinates":
@@ -174,13 +169,7 @@ def nirspec_mos_cal_model():
     model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The MOS datamodel.
     """
-    hdul = create_nirspec_mos_file()
-    model = datamodels.ImageModel(hdul)
-    hdul.close()
-
-    msaconfl = get_pkg_data_filename("data/msa_configuration.fits", package="jwst.assign_wcs.tests")
-    model.meta.instrument.msa_metadata_file = msaconfl
-    model.meta.instrument.msa_metadata_id = 12
+    model = nirspec_mos_rate_model(with_wcs=False)
 
     shape = (2048, 2048)
     model.data = np.zeros(shape)
@@ -212,9 +201,7 @@ def nirspec_slit_cal_model():
     model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The FS datamodel.
     """
-    hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
-    model = datamodels.ImageModel(hdul)
-    hdul.close()
+    model = nirspec_fs_rate_model(with_wcs=False)
 
     shape = (2048, 2048)
     model.data = np.ones(shape)
