@@ -1,26 +1,17 @@
-import os
 from copy import deepcopy
 
 import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
-import jwst
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_mos_file
 from jwst.barshadow import BarShadowStep
 from jwst.extract_2d import Extract2dStep
+from jwst.tests.nirspec_rate_helpers import nirspec_mos_rate_model
 
 
 def create_nirspec_mos_model():
-    hdul = create_nirspec_mos_file()
-    msa_meta = os.path.join(
-        jwst.__path__[0], *["assign_wcs", "tests", "data", "msa_configuration.fits"]
-    )
-    hdul[0].header["MSAMETFL"] = msa_meta
-    hdul[0].header["MSAMETID"] = 12
-    im = datamodels.ImageModel(hdul)
-    hdul.close()
+    im = nirspec_mos_rate_model(with_wcs=False)
 
     im.data = np.full((2048, 2048), 1.0)
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)

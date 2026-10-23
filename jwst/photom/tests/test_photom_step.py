@@ -2,10 +2,9 @@ import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.photom.photom_step import PhotomStep
 from jwst.photom.tests.test_photom import create_input
+from jwst.tests.nirspec_rate_helpers import nirspec_ifu_rate_model
 
 
 @pytest.fixture()
@@ -121,21 +120,16 @@ def test_photom_nrs_ifu():
     ``test_photom``.
     """
     # Make a model with reasonable metadata
-    shape = (2048, 2048)
-    hdul = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    model = datamodels.IFUImageModel(hdul)
-    hdul.close()
+    model = nirspec_ifu_rate_model(with_wcs=True)
 
-    # Assign some flat data and a WCS
+    # Assign some flat data
+    shape = (2048, 2048)
     model.data = np.ones(shape, dtype=np.float32)
     model.err = np.full(shape, 0.1, dtype=np.float32)
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.var_poisson = model.get_default("var_poisson")
     model.var_rnoise = model.get_default("var_rnoise")
     model.var_flat = model.get_default("var_flat")
-    model = AssignWcsStep.call(model)
 
     # Make one data pixel NaN, not matched with NaNs in the err/dq/var
     bad_idx = (1414, 690)
