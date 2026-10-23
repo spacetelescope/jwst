@@ -22,7 +22,7 @@ dependencies = [
     "BayesicFitting>=3.2.2",
     "crds>=12.0.4,!=13.1.15",
     "gwcs>=1.0.3,<2",
-    "numpy>=2.0",
+    "numpy>=2.4.1",
     "photutils>=3.0,<4",
     "pyyaml>=6.0.1",
     "requests>=2.32",
@@ -106,7 +106,7 @@ requires = [
     "setuptools>=61.2",
     "setuptools_scm[toml]>=3.4",
     "wheel",
-    "numpy>=2.0",
+    "numpy>=2.4.1",
 ]
 build-backend = "setuptools.build_meta"
 
