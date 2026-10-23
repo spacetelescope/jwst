@@ -4,7 +4,7 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-from jwst.charge_migration import charge_migration
+from jwst.charge_migration.charge_migration import correct_charge_migration, flag_charge_migration
 from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
@@ -13,18 +13,23 @@ __all__ = ["ChargeMigrationStep"]
 
 
 class ChargeMigrationStep(Step):
-    """Set the CHARGELOSS flag for groups exhibiting significant charge migration."""
+    """Flag or correct groups exhibiting significant charge migration."""
 
     class_alias = "charge_migration"
 
     spec = """
-        signal_threshold = float(default=25000)
-        skip = boolean(default=True)
+        signal_threshold = float(default=10000)  # Threshold value for flagging charge loss.
+        apply_correction = boolean(default=False)  # Fit and correct for charge migration.
+        mask_pad = integer(default=2)  # Number of pixels to fit on either side of a pixel with charge loss.
+        save_fit_info = boolean(default=False)  # Save a table of information about fit corrections
+        skip = boolean(default=True)  # By default, skip the step.
     """  # noqa: E501
+
+    reference_file_types = ["readnoise"]
 
     def process(self, step_input):
         """
-        Detect jumps based on signal threshold.
+        Flag or correct for charge migration effects.
 
         Parameters
         ----------
@@ -45,10 +50,37 @@ class ChargeMigrationStep(Step):
             result.meta.cal_step.charge_migration = "SKIPPED"
             return result
 
-        # Retrieve the parameter value(s)
-        signal_threshold = self.signal_threshold
+        if self.apply_correction:
+            log.info("Fitting and correcting for the brighter-fatter effect (BFE)")
+            log.warning(
+                "This process is currently a prototype: it is not yet recommended for general use."
+            )
+            readnoise_filename = self.get_reference_file(result, "readnoise")
+            log.info("Using READNOISE reference file: %s", readnoise_filename)
 
-        result = charge_migration.charge_migration(result, signal_threshold)
+            with datamodels.ReadnoiseModel(readnoise_filename) as rnoise:
+                output = correct_charge_migration(
+                    result,
+                    rnoise,
+                    signal_threshold=self.signal_threshold,
+                    mask_pad=self.mask_pad,
+                    fit_info=self.save_fit_info,
+                )
+                if self.save_fit_info:
+                    result, fit_info = output
+                    if fit_info is None:
+                        log.info("No fit info to save; not creating output table.")
+                    else:
+                        table_filepath = self.make_output_path(ext=".ecsv", suffix="bfe_fit")
+                        fit_info.write(table_filepath, format="ascii.ecsv", overwrite=True)
+                        log.info(f"Saved fit info table in {table_filepath}")
+                else:
+                    result = output
+
+        else:
+            log.info("Flagging pixels with significant charge loss")
+            result = flag_charge_migration(result, self.signal_threshold)
+
         result.meta.cal_step.charge_migration = "COMPLETE"
 
         return result
