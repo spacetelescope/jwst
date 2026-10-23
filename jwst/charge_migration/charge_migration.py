@@ -75,7 +75,28 @@ def correct_charge_migration(
     output_model, readnoise_model, signal_threshold=10000.0, mask_pad=2, fit_info=False
 ):
     """
-    Correct for charge migration.
+    Correct for the brighter-fatter effect (BFE).
+
+    The process is:
+
+    1. Identify pixels with maximum counts over the signal threshold, along with
+       neighbors within the specified padding window.
+    2. Compute diffs of all groups in the ramp, masking any bad pixels, and
+       median-combine across all integrations.
+    3. If more than 5 diffs are available, reject outliers with sigma clipping.
+    4. For each identified pixel, fit a line to the clipped diffs.
+    5. Reject the fit if it does not meet these criteria:
+
+       a. The value change due to the slope over the range of the fit values is
+          greater than 3 times the read noise.
+       b. The fit value for the first group difference is positive.
+       c. If there are more than 5 diffs, the RMS of the corrected data is less
+          than 45% of the original RMS.
+
+    6. For pixels with valid corrections, subtract the fit slope from the group
+       differences.
+    7. Reconstruct the ramps from the modified differences, adding each new diff
+       into the previous corrected group.
 
     Parameters
     ----------
@@ -86,7 +107,7 @@ def correct_charge_migration(
     signal_threshold : float, optional
         Science value above which the correction is triggered.
     mask_pad : int, optional
-        Number of pixels to mask on either side of a pixel with charge loss.
+        Number of pixels to correct on either side of a pixel exceeding the threshold.
     fit_info : bool, optional
         If True, return a diagnostic table of the ramp fits performed.
 
@@ -94,10 +115,11 @@ def correct_charge_migration(
     -------
     output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Data model with correction applied.
-    fit_info_table : `~astropy.table.Table`, optional
+    fit_info_table : `~astropy.table.Table` or None, optional
         Table containing information about all fits attempted. Columns are:
         ``x, y, fit_success, value_change, sigma_orig, sigma_new, diff, model``.
-        Returned only if ``fit_info`` is True.
+        Returned only if ``fit_info`` is True. If there were no pixels to correct,
+        the return value is None.
     """
     # Input science and DQ data
     sci = output_model.data
@@ -106,6 +128,27 @@ def correct_charge_migration(
 
     # Readnoise reference file data
     rnvals = readnoise_model.data
+
+    # Find the maximum DN value reached anywhere on the ramps across groups and ints
+    # (Generally this is the last pixel, but not always given linearity
+    # corrections, saturation flagging, etc)
+    maxvals = np.nanmax(sci, axis=(0, 1))
+
+    # Identify pixels where max is greater than threshold
+    mask = maxvals > signal_threshold
+
+    # Check if there is anything to do
+    if not np.any(mask):
+        log.info("No pixels to correct.")
+        if fit_info:
+            return output_model, None
+        else:
+            return output_model
+
+    # Grow the mask with the specified padding
+    box_size = 2 * mask_pad + 1
+    structure = np.full((box_size, box_size), True)
+    mask = binary_dilation(mask, structure)
 
     # Identify anywhere that the DO_NOT_USE or SATURATED bits are set
     bad = dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["SATURATED"]
@@ -129,19 +172,6 @@ def correct_charge_migration(
                 out=med_masked_ramp_diff[i, ...],
             )
     del masked_ramp_diff
-
-    # Find the maximum DN value reached anywhere on the ramps across groups and ints
-    # (Generally this is the last pixel, but not always given linearity
-    # corrections, saturation flagging, etc)
-    maxvals = np.nanmax(sci, axis=(0, 1))
-
-    # Identify pixels where max is greater than threshold
-    mask = maxvals > signal_threshold
-
-    # Grow the mask with the specified padding
-    box_size = 2 * mask_pad + 1
-    structure = np.full((box_size, box_size), True)
-    mask = binary_dilation(mask, structure)
 
     # Get clipped stats for the median diff array
     valid_for_fit = np.isfinite(med_masked_ramp_diff) & mask
