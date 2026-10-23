@@ -38,7 +38,7 @@ Parameters
 ----------
 rn_weight : int
      1: weight by readnoise
-     0: Do not weight by readnoise
+     0: Do not weight by additional variances
 xcoord : ndarray of float
    size of naxis1. This array holds the center x axis values of the ifu cube
 ycoord : ndarray of float
@@ -127,7 +127,7 @@ match_driz(
     double **spaxel_var, double **spaxel_iflux, int **spaxel_dq)
 {
 
-    // rn_weight: 1 = weight by readnoise, 0 = do not weight by readnoise
+    // rn_weight: 1 = weight by readnoise, 0 = do not weight by variances 
     // xc : IFU grid point values along x-axis
     // yc : IFU grid point values along y-axis
     // zc : IFU grid point values along the z-axis
