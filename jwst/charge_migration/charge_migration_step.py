@@ -68,9 +68,12 @@ class ChargeMigrationStep(Step):
                 )
                 if self.save_fit_info:
                     result, fit_info = output
-                    table_filepath = self.make_output_path(ext=".ecsv", suffix="bfe_fit")
-                    fit_info.write(table_filepath, format="ascii.ecsv", overwrite=True)
-                    log.info(f"Saved fit info table in {table_filepath}")
+                    if fit_info is None:
+                        log.info("No fit info to save; not creating output table.")
+                    else:
+                        table_filepath = self.make_output_path(ext=".ecsv", suffix="bfe_fit")
+                        fit_info.write(table_filepath, format="ascii.ecsv", overwrite=True)
+                        log.info(f"Saved fit info table in {table_filepath}")
                 else:
                     result = output
 
