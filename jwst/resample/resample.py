@@ -17,6 +17,7 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 from jwst.assign_wcs import util as assign_wcs_util
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels import ModelLibrary
+from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
 
@@ -249,6 +250,11 @@ class ResampleImage(Resample):
             At this time, output error array is not equivalent to
             error propagation results.
 
+    variance_array_names : list or None, optional
+        List of variance array names to propagate when ``enable_var`` is
+        True. If not specified, the default list of
+        ``['var_rnoise', 'var_flat', and 'var_poisson']`` will be used.
+
     propagate_dq : bool, optional
         If `True`, propagate DQ during resampling. DQ flags are propagated
         by bitwise OR of all input DQ flags that contribute to a given
@@ -283,6 +289,7 @@ class ResampleImage(Resample):
         enable_var=True,
         report_var=True,
         compute_err=None,
+        variance_array_names=None,
         propagate_dq=False,
         pixmap_stepsize=1,
         pixmap_order=1,
@@ -357,6 +364,7 @@ class ResampleImage(Resample):
             enable_ctx=enable_ctx,
             enable_var=enable_var,
             compute_err=compute_err,
+            variance_array_names=variance_array_names,
             propagate_dq=propagate_dq,
             pixmap_stepsize=pixmap_stepsize,
             pixmap_order=pixmap_order,
@@ -440,9 +448,11 @@ class ResampleImage(Resample):
             del model.meta.bunit_err
 
         if self._enable_var and self._report_var:
-            model.var_rnoise = info_dict["var_rnoise"]
-            model.var_flat = info_dict["var_flat"]
-            model.var_poisson = info_dict["var_poisson"]
+            for var_name in self._variance_array_names:
+                setattr(model, var_name, info_dict[var_name])
+
+        # Make sure output model has consistent NaN and DO_NOT_USE values
+        match_nans_and_flags(model)
 
         model.meta.wcs = info_dict["wcs"]
         model.meta.photometry.pixelarea_steradians = info_dict["pixelarea_steradians"]
