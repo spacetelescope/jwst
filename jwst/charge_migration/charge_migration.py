@@ -184,7 +184,6 @@ def correct_charge_migration(
 
     # Clip values where n_diffs > 5
     n_diffs = np.sum(valid_for_fit, axis=0)
-    clipped_sigma[n_diffs <= 5] = 0.0
     clip_mask = np.abs(med_masked_ramp_diff - clipped_med) < 5 * clipped_sigma
     valid_for_fit[:, n_diffs > 5] &= clip_mask[:, n_diffs > 5]
     del clipped_med, clip_mask, clipped_sigma
