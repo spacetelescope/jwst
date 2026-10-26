@@ -1,1 +1,1 @@
-Adding weighting by readnoise cube_build 3D drizzling
+Add an experimental option to weight by readnoise for building cubes with the 3D drizzle method.

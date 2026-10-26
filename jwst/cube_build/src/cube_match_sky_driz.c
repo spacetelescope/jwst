@@ -305,36 +305,42 @@ match_driz(
                             area = sh_find_overlap(xc[ix], yc[iy], cdelt1, cdelt2, xpixel, ypixel);
 
                             // area_weight = area of overlap * wavelength overlap
-                            area_weight = area * zoverlap;
+                            // area_weight controls the DQ flagging
+                            // total_weight contols the flux accumulation
 
+                            area_weight = area * zoverlap;
+                            total_weight = area_weight;
                             if (rn_weight == 1) {
                                 // Readnoise variance is valid value
                                 if (!npy_isnan(readvar[k]) && readvar[k] > rn_tolerance) {
-                                    area_weight = area_weight / readvar[k];
+                                    total_weight = area_weight / readvar[k];
                                 }
                                 // Readnoise variance is either NAN or unrealistically small
                                 // This pixel fails test so we will not using it in the weighting
                                 else {
-                                    area_weight = 0;
+                                    total_weight = 0;
                                 }
                             }
-                            if (area_weight > 0) {
+
+                            if (total_weight > 0) {
                                 if (!npy_isnan(flux[k]) && !npy_isnan(err[k])) {
-                                    weighted_flux = flux[k] * area_weight;
-                                    weighted_var = (err[k] * area_weight) * (err[k] * area_weight);
+                                    weighted_flux = flux[k] * total_weight;
+                                    weighted_var =
+                                        (err[k] * total_weight) * (err[k] * total_weight);
                                     fluxv[index_cube] = fluxv[index_cube] + weighted_flux;
-                                    weightv[index_cube] = weightv[index_cube] + area_weight;
+                                    weightv[index_cube] = weightv[index_cube] + total_weight;
                                     varv[index_cube] = varv[index_cube] + weighted_var;
                                     ifluxv[index_cube] = ifluxv[index_cube] + 1.0;
                                 }
-
+                            }
+                            if (area_weight > 0) {
                                 dqv[index_cube] = dqv[index_cube] | dq[k];
                             }
 
                             // Keep print statement in code - used for debugging
                             if (index_cube == debug_cube_index && area_weight > 0) {
                                 printf(
-                                    "spaxel index, flux, x, y, area_weight [count starting at 0], "
+                                    "spaxel index, flux, x, y [count starting at 0], area_weight, "
                                     "readnoise var  "
                                     "%i %f %f %f %.10f %f \n ",
                                     index_cube, flux[k], x_det[k], y_det[k], area_weight,
