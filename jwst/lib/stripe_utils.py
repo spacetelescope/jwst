@@ -626,14 +626,21 @@ def collate_superstripes(input_model):
 
     # Transform old data to detector frame for indexing
     olddata = science_detector_frame_transform(input_model.data, fastaxis, slowaxis)
+
     if input_model.groupdq is None or input_model.groupdq.shape != (nints, ngroups, ny, nx):
         oldgdq = None
     else:
         oldgdq = science_detector_frame_transform(input_model.groupdq, fastaxis, slowaxis)
-    if input_model.pixeldq is None or input_model.pixeldq.shape != (n_stripe, ny, nx):
-        oldpdq = None
-    else:
-        oldpdq = science_detector_frame_transform(input_model.pixeldq, fastaxis, slowaxis)
+
+    oldpdq = None
+    if input_model.pixeldq is not None:
+        pdq_shape = input_model.pixeldq.shape
+        if pdq_shape == (n_stripe, ny, nx):
+            oldpdq = science_detector_frame_transform(input_model.pixeldq, fastaxis, slowaxis)
+        elif n_stripe == 1 and pdq_shape == (ny, nx):
+            oldpdq = science_detector_frame_transform(
+                input_model.pixeldq.reshape(1, ny, nx), fastaxis, slowaxis
+            )
     if (
         newzf is None
         or input_model.zeroframe is None
