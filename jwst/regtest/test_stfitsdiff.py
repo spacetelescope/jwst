@@ -271,6 +271,31 @@ def test_rm_sci(mock_rampfiles, fitsdiff_default_kwargs):
     assert report == expected_report
 
 
+def test_hdu_diff_order(mock_rampfiles, fitsdiff_default_kwargs):
+    truth = mock_rampfiles[0]
+    tmp_dir = mock_rampfiles[6]
+    reordered_file = tmp_dir / "reordered.fits"
+    with fits.open(truth) as hdu:
+        reorder = hdu.copy()
+        reorder[1] = hdu[2]
+        reorder[2] = hdu[1]
+        reorder.writeto(reordered_file)
+    diff = STFITSDiff(reordered_file, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    expected_report = [
+        "Files contain differences in HDUs:",
+        "a: 5 HDUs: ['PRIMARY', 'PIXELDQ', 'SCI', 'GROUPDQ', 'ASDF']",
+        "b: 5 HDUs: ['PRIMARY', 'SCI', 'PIXELDQ', 'GROUPDQ', 'ASDF']",
+        "Common HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
+        "HDUs in a but not b: []",
+        "HDUs in b but not a: []",
+        "No differences found between common HDUs.",
+    ]
+    assert result is False
+    assert report == expected_report
+
+
 def test_keyword_change(mock_rampfiles, fitsdiff_default_kwargs):
     truth = mock_rampfiles[0]
     keyword_mod = mock_rampfiles[1]
