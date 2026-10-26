@@ -1,0 +1,1 @@
+Update NIRCam DHS LW handling to expect a single stripe in the input rate files.
