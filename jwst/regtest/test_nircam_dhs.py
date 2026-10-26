@@ -38,6 +38,13 @@ def test_log_tracked_resources_swdet1(log_tracked_resources, run_sw_det1pipeline
 def run_lw_det1pipeline(rtdata_module, resource_tracker):
     """Run calwebb_detector1 on NIRCam DHS long-wave data"""
     rtdata = rtdata_module
+
+    # get override dark and readnoise, assembled to a single stripe
+    dark = "sub164stripe4_dhs_single_stripe_dark.fits"
+    readnoise = "sub164stripe4_dhs_single_stripe_readnoise.fits"
+    rtdata.get_data(f"nircam/dhs/{dark}")
+    rtdata.get_data(f"nircam/dhs/{readnoise}")
+
     rtdata.get_data("nircam/dhs/jw04453010001_02106_00001_nrcalong_genheader_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
@@ -50,8 +57,11 @@ def run_lw_det1pipeline(rtdata_module, resource_tracker):
         "--steps.refpix.save_results=True",
         "--steps.linearity.save_results=True",
         "--steps.dark_current.save_results=True",
+        f"--steps.dark_current.override_dark={dark}",
         "--steps.jump.save_results=True",
         "--steps.jump.rejection_threshold=50.0",
+        f"--steps.jump.override_readnoise={readnoise}",
+        f"--steps.ramp_fit.override_readnoise={readnoise}",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)
@@ -176,6 +186,10 @@ def test_nircam_dhs_lw_det1(run_lw_det1pipeline, rtdata_module, fitsdiff_default
     output = "jw04453010001_02106_00001_nrcalong_genheader_" + suffix + ".fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_dhs/{output}")
+
+    # ignore custom dark and readnoise
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_DARK")
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_READNO")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
