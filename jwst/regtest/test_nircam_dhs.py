@@ -258,5 +258,9 @@ def test_nircam_dhs_lw_spec2(run_lw_spec2pipeline, rtdata_module, fitsdiff_defau
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_dhs/{output}")
 
+    # ignore custom dark and readnoise
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_DARK")
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_READNO")
+
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
