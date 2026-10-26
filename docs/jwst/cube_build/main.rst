@@ -365,7 +365,7 @@ The spatial extent of each detector pixel
 volume is determined from the combination of the along-slice pixel size and the IFU slice width, both of which will be rotated at some angle with respect
 to the output voxel grid of the final data cube. The spectral extent of each detector pixel volume is determined by the wavelength range across
 the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect
-to the detector pixel grid). When the variance_weighting option is enabled with the drizzle method, an additional inverse weighting based on
+to the detector pixel grid). When the variance weighting option is enabled with the drizzle method, an additional inverse weighting based on
 the readnoise variance of each detector pixel is applied to this product, downweighting pixels with higher readnoise relative to those with
 lower readnoise. This is an experimental option, not yet recommended for general use.
 

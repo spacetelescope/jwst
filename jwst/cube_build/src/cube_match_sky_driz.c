@@ -169,6 +169,7 @@ match_driz(
     double cdelt1_half, cdelt2_half;
     double xleft, xright, ybot, ytop;
     double rn_tolerance = 1.0e-13; // Estimation from Mike R looking at GARDEN data.
+    double total_weight = 0;
 
     // initialize them to the passed references:
     double *fluxv = *spaxel_flux;
