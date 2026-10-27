@@ -448,7 +448,7 @@ class ResampleImage(Resample):
             del model.meta.bunit_err
 
         if self._enable_var and self._report_var:
-            for var_name in self._variance_array_names:
+            for var_name in self.propagated_variance_names:
                 setattr(model, var_name, info_dict[var_name])
 
         # Make sure output model has consistent NaN and DO_NOT_USE values
