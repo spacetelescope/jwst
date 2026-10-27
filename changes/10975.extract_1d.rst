@@ -1,0 +1,1 @@
+Apply aperture correction to contam columns in extract1d for WFSS data, fixing a bug where adding the contam-corrected data to the contamination estimate did not equal the contam-uncorrected data.

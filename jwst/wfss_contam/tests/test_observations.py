@@ -11,6 +11,7 @@ from jwst.wfss_contam.observations import (
     _select_ids,
     background_subtract,
 )
+from jwst.wfss_contam.trace_pdt import get_grism_detector_transform, native_wavelength_grid
 
 
 @pytest.fixture
@@ -56,6 +57,12 @@ def test_chunk_sources(observation, segmentation_map):
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_response = np.ones(100)
 
+    imgxy_to_grismxy = get_grism_detector_transform(obs.grism_wcs)
+    nx, ny = obs.naxis
+    lambdas = native_wavelength_grid(
+        imgxy_to_grismxy, order, wmin, wmax, (nx - 1) / 2.0, (ny - 1) / 2.0
+    )
+
     seg = segmentation_map.data
     all_ids = np.array(list(set(np.ravel(seg))))
     source_ids = all_ids[50:60]
@@ -67,8 +74,7 @@ def test_chunk_sources(observation, segmentation_map):
 
     disperse_args = obs.chunk_sources(
         order,
-        wmin,
-        wmax,
+        lambdas,
         sens_waves,
         sens_response,
         selected_ids=source_ids,
@@ -120,6 +126,29 @@ def test_disperse_order(observation, segmentation_map, chunk_size):
     # There are numerical differences due to arbitrary choice of reference
     # wavelength from which to compute the native spacing, but these are
     # understood and are inconsequential for science.
+    assert np.isclose(cutout.data[5, 60], 0.09994397, rtol=0.005)
+
+
+def test_disperse_order_with_trace_pdt(observation, segmentation_map):
+    """Using trace_pdt should give results close to the exact per-pixel transform."""
+    obs = copy.deepcopy(observation)
+    order = 1
+    sens_waves = np.linspace(1.708, 2.28, 100)
+    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+    sens_resp = np.ones_like(sens_waves)
+
+    seg = segmentation_map.data
+    all_ids = np.array(list(set(np.ravel(seg))))
+    source_ids = all_ids[50:60]
+
+    obs.disperse_order(
+        order, wmin, wmax, sens_waves, sens_resp, selected_ids=source_ids, pdt_spacing=20
+    )
+
+    assert not np.allclose(obs.simulated_image, 0.0)
+    assert len(obs.simulated_cutouts) == 8
+    cutout = obs.simulated_cutouts[1]
+    assert cutout.name == "51"
     assert np.isclose(cutout.data[5, 60], 0.09994397, rtol=0.005)
 
 
