@@ -19,6 +19,7 @@ def run_spec2_with_contam_f322w2(rtdata_module, resource_tracker):
     step_params = {
         "step": "jwst.pipeline.Spec2Pipeline",
         "args": [
+            "--steps.extract_2d.wfss_nbright=40",
             "--steps.wfss_contam.magnitude_limit=20",
             "--steps.wfss_contam.save_simulated_image=True",
             "--steps.wfss_contam.save_results=true",
@@ -70,6 +71,7 @@ def run_spec2_with_contam_f356w(rtdata_module):
     step_params = {
         "step": "jwst.pipeline.Spec2Pipeline",
         "args": [
+            "--steps.extract_2d.wfss_nbright=40",
             "--steps.wfss_contam.magnitude_limit=20",
             "--steps.wfss_contam.save_simulated_image=True",
             "--steps.wfss_contam.save_results=true",
