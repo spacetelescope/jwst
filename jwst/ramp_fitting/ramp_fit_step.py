@@ -167,12 +167,13 @@ class RampFitStep(Step):
 
     spec = """
         algorithm = option('OLS_C', 'LIKELY', default='OLS_C')
-        int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
-        opt_name = string(default='')
-        suppress_one_group = boolean(default=True)  # Suppress saturated ramps with good 0th group
+        opt_name = string(default='')  # Override the default name for the optional output
+        int_name = string(default='')  # Override the default name for the per-integration product.
         firstgroup = integer(default=None)   # Ignore groups before this one (zero indexed)
         lastgroup = integer(default=None)   # Ignore groups after this one (zero indexed)
+        suppress_one_group = boolean(default=True)  # Suppress saturated ramps with good 0th group
+        skip_jump_detect = boolean(default=False)  # Skip likelihood-based jump detection
         maximum_cores = string(default='1') # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
     """  # noqa: E501
 
@@ -270,6 +271,7 @@ class RampFitStep(Step):
             max_cores,
             dqflags.pixel,
             suppress_one_group=self.suppress_one_group,
+            skip_jump_detect=self.skip_jump_detect,
         )
 
         # Save the OLS_C optional fit product, if it exists.
