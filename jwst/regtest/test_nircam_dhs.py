@@ -59,8 +59,9 @@ def run_lw_det1pipeline(rtdata_module, resource_tracker):
         "--steps.dark_current.save_results=True",
         f"--steps.dark_current.override_dark={dark}",
         "--steps.jump.save_results=True",
-        "--steps.jump.rejection_threshold=50.0",
+        "--steps.jump.only_use_ints=False",
         f"--steps.jump.override_readnoise={readnoise}",
+        "--steps.ramp_fit.skip_jump_detect=True",
         f"--steps.ramp_fit.override_readnoise={readnoise}",
     ]
     with resource_tracker.track():
