@@ -89,12 +89,6 @@ jobs:
             curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["${{ env.CRDS_OBSERVATORY }}", "latest"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ --retry 8 --connect-timeout 10 |
             python -c "import sys, json; print(json.load(sys.stdin)['result'])"
           ) >> $GITHUB_OUTPUT
-      - if: always()
-        name: uhoh space
-        run: |
-          df -h -l
-          echo
-          free -m
     outputs:
       path: ${{ env.CRDS_PATH }}
       server-url: ${{ env.CRDS_SERVER_URL }}
@@ -105,7 +99,7 @@ jobs:
     needs:
       - supported-pythons
       - crds
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@8d5ad7efc8e84a051639373f6ea0d10441eafee1 # v3.2.1
+    uses: pllim/github-actions-workflows/.github/workflows/tox.yml@the-space-between # your heart and mind
     permissions:
       id-token: write
     with:
