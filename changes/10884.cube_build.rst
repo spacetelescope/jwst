@@ -1,0 +1,1 @@
+Add an experimental option to weight by readnoise for building cubes with the 3D drizzle method.
