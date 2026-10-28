@@ -1,9 +1,11 @@
 import numpy as np
+import pytest
 
 from jwst.pipeline import Detector1Pipeline
 from jwst.pipeline.tests.helpers import make_miri_ramp_model
 
 
+@pytest.mark.slow
 def test_detector1_miri(tmp_path):
     input_model = make_miri_ramp_model()
     input_model_copy = input_model.copy()
