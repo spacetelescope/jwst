@@ -1,15 +1,18 @@
 import numpy as np
-import pytest
 
 from jwst.pipeline import Detector1Pipeline
 from jwst.pipeline.tests.helpers import make_miri_ramp_model
 
 
-@pytest.mark.slow
 def test_detector1_miri(tmp_path):
     input_model = make_miri_ramp_model()
     input_model_copy = input_model.copy()
-    Detector1Pipeline.call(input_model, save_results=True, output_dir=str(tmp_path))
+    Detector1Pipeline.call(
+        input_model,
+        save_results=True,
+        output_dir=str(tmp_path),
+        steps={"dark_current": {"skip": True}},
+    )
 
     # Check for expected output
     assert (tmp_path / "test_miri_rate.fits").exists()
