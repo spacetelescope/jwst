@@ -914,6 +914,38 @@ class Asn_Lv3TSO(AsnMixin_Science):
                 ),
                 Constraint(
                     [
+                        DMSAttrConstraint(
+                            name="subarray", sources=["subarray"], value="SUB17STRIPE_SOSS"
+                        ),
+                        DMSAttrConstraint(name="nints", sources=["nints"], value="120"),
+                    ]
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="subarray", sources=["subarray"], value="SUB60STRIPE_SOSS"
+                        ),
+                        DMSAttrConstraint(name="nints", sources=["nints"], value="34"),
+                    ]
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="subarray", sources=["subarray"], value="SUB204STRIPE_SOSS"
+                        ),
+                        DMSAttrConstraint(name="nints", sources=["nints"], value="10"),
+                    ]
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="subarray", sources=["subarray"], value="SUB680STRIPE_SOSS"
+                        ),
+                        DMSAttrConstraint(name="nints", sources=["nints"], value="3"),
+                    ]
+                ),
+                Constraint(
+                    [
                         DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="nis_soss"),
                         SimpleConstraint(
                             value=False,
