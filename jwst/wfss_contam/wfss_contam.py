@@ -501,13 +501,15 @@ def _reject_off_detector_bounds(
     xmin, xmax, ymin, ymax = get_bounding_box_extents(
         ra_corners, dec_corners, sky_to_grism, wlmin, wlmax, order
     )
+    infinite = ~np.isfinite(np.asarray([xmin, xmax, ymin, ymax]))
+    any_non_finite = np.sum(infinite, axis=0) > 0
 
     # check against bounds
     xmin_too_big = xmin > subarray_xsize - 1
     xmax_too_small = xmax < 0
     ymin_too_big = ymin > subarray_ysize - 1
     ymax_too_small = ymax < 0
-    bad = xmin_too_big | xmax_too_small | ymin_too_big | ymax_too_small
+    bad = xmin_too_big | xmax_too_small | ymin_too_big | ymax_too_small | any_non_finite
     return ~bad
 
 
@@ -524,6 +526,8 @@ def contam_corr(
     n_iterations=1,
     l2_alpha=0.1,
     rejection_threshold=0.1,
+    pdt_spacing=None,
+    pdt_wl_oversample=1,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -575,6 +579,16 @@ def contam_corr(
     rejection_threshold : float, optional
         Threshold for rejecting fits based on the fitted constant term coefficient, passed to
         `~jwst.wfss_contam.wavefit.fit_cutout_by_basis_images`.
+    pdt_spacing : int, optional
+        Pixel spacing along each of the x, y, and wavelength axes when
+        building the PDT. If None, the exact grism-to-detector transform
+        will be evaluated at every pixel.
+    pdt_wl_oversample : float, optional
+        Oversampling factor for the pixel dispersion table wavelength grid, relative to the
+        native dispersion scale. If None, the lookup table's wavelength grid
+        exactly matches the dispersal wavelength grid, allowing wavelength-axis
+        interpolation to be skipped entirely when evaluating the PDT. Only
+        used if ``pdt_spacing`` is not None.
 
     Returns
     -------
@@ -737,6 +751,8 @@ def contam_corr(
             sens_response,
             selected_ids,
             basis_models=basis_models,
+            pdt_spacing=pdt_spacing,
+            pdt_wl_oversample=pdt_wl_oversample,
         )
 
     if no_sources:

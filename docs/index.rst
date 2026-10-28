@@ -37,6 +37,13 @@ the recommended method for reading and writing JWST data files in Python.
 
 Detailed explanations of specific calibration stages, reference files, and pipeline builds can be found on `JDox <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline>`_.
 
+.. attention::
+
+	Starting December 1st 2026,	STScI will no longer test macOS x86 versions of software (Intel processors, including all Mac machines earlier than 2020).
+	macOS x86 builds will still be available on PyPI and installable with ``pip install``, but will not be tested for numerical accuracy.
+
+	Going forward, software testing for macOS will only be ARM64 (`Apple Silicon <https://support.apple.com/en-us/116943>`_).
+
 ============
 Contributing
 ============

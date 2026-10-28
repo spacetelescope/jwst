@@ -1,0 +1,1 @@
+Gracefully handle NaN values coming out of WFSS backward transforms in some edge cases
