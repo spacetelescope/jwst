@@ -38,7 +38,7 @@ permissions: {}
 
 env:
   PYTHON_VERSIONS: 3.12 3.13 3.14 3.15
-  CRDS_PATH: ${{ github.workspace }}/.crds_cache
+  CRDS_PATH: .crds_cache
   CRDS_OBSERVATORY: jwst
   CRDS_SERVER_URL: ${{ inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
   CRDS_CLIENT_RETRY_COUNT: 3
