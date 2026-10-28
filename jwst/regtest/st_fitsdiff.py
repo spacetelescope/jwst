@@ -218,22 +218,28 @@ class STFITSDiff(FITSDiff):
         #    either with name or number.
 
         # Check if the files contain the same extension names and in the same order
-        ext_namesa = [ext.name for ext in self.a]
-        ext_namesb = [ext.name for ext in self.b]
-        ext_not_in_both = set(ext_namesa).symmetric_difference(set(ext_namesb))
-        ext_intersection = set.intersection(set(ext_namesa), set(ext_namesb))
+        extensions_a = [ext.name for ext in self.a]
+        extensions_b = [ext.name for ext in self.b]
+        # if the same extension name appears more than once, use versions as well
+        if len(extensions_a) != len(set(extensions_a)) or (
+            len(extensions_b) != len(set(extensions_b))
+        ):
+            extensions_a = [ext.name + "-" + str(ext.ver) for ext in self.a]
+            extensions_b = [ext.name + "-" + str(ext.ver) for ext in self.b]
+        ext_not_in_both = set(extensions_a).symmetric_difference(set(extensions_b))
+        ext_intersection = set.intersection(set(extensions_a), set(extensions_b))
 
         self.extnames_different = False
-        if ext_namesa != ext_namesb:
+        if extensions_a != extensions_b:
             self.extnames_different = True
-            self.a_not_b = sorted(set(ext_namesa) - set(ext_namesb))
-            self.b_not_a = sorted(set(ext_namesb) - set(ext_namesa))
+            self.a_not_b = sorted(set(extensions_a) - set(extensions_b))
+            self.b_not_a = sorted(set(extensions_b) - set(extensions_a))
             self.diff_hdu_count = (len(self.a), len(self.b))
 
         if self.diff_hdu_count or self.extnames_different:
             self.diff_extnames = (
-                ext_namesa,
-                ext_namesb,
+                extensions_a,
+                extensions_b,
                 sorted(ext_intersection),
                 sorted(ext_not_in_both),
             )
@@ -244,6 +250,9 @@ class STFITSDiff(FITSDiff):
             self.header_tolerances["atol"] = self.expected_extension_tolerances["HEADERS"]["atol"]
 
         # Make sure to compare the same extensions
+        # Create a list of names only, then check versions
+        ext_namesa = [ext.name for ext in self.a]
+        ext_namesb = [ext.name for ext in self.b]
         for idxa, extname in enumerate(ext_namesa):
             extver = self.a[idxa].ver
             same_version = False

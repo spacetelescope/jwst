@@ -247,6 +247,31 @@ def test_diff_exts(mock_rampfiles, fitsdiff_default_kwargs):
     assert report == expected_report
 
 
+def test_add_sci(mock_rampfiles, fitsdiff_default_kwargs):
+    truth = mock_rampfiles[0]
+    tmp_dir = mock_rampfiles[6]
+    new_file = tmp_dir / "new_file.fits"
+    with fits.open(truth) as hdu:
+        sci = hdu[1].copy()
+        sci.ver = 2
+        hdu.append(sci)
+        hdu.writeto(new_file)
+    diff = STFITSDiff(new_file, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    expected_report = [
+        "Files contain differences in HDUs:",
+        "a: 6 HDUs: ['PRIMARY-1', 'SCI-1', 'PIXELDQ-1', 'GROUPDQ-1', 'ASDF-1', 'SCI-2']",
+        "b: 5 HDUs: ['PRIMARY-1', 'SCI-1', 'PIXELDQ-1', 'GROUPDQ-1', 'ASDF-1']",
+        "Common HDUs: ['ASDF-1', 'GROUPDQ-1', 'PIXELDQ-1', 'PRIMARY-1', 'SCI-1']",
+        "HDUs in a but not b: ['SCI-2']",
+        "HDUs in b but not a: []",
+        "No differences found between common HDUs.",
+    ]
+    assert result is False
+    assert report == expected_report
+
+
 def test_rm_sci(mock_rampfiles, fitsdiff_default_kwargs):
     truth = mock_rampfiles[0]
     tmp_dir = mock_rampfiles[6]
