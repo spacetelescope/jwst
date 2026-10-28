@@ -1175,8 +1175,8 @@ def test_resample_variance_context_disable(
 @pytest.mark.parametrize("propagate_var_flat", [True, False])
 @pytest.mark.parametrize("enable_err", [True, False])
 @pytest.mark.parametrize("shape", [(0,), (10, 1)])
-def test_resample_undefined_variance(caplog, nircam_rate, shape, enable_err, propagate_var_flat):
-    """Test handling for missing or incorrectly shaped variance arrays."""
+def test_resample_bad_variance(caplog, nircam_rate, shape, enable_err, propagate_var_flat):
+    """Test handling for incorrectly shaped variance arrays."""
     im = AssignWcsStep.call(nircam_rate)
     im.var_rnoise = np.ones(shape, dtype=im.get_dtype("var_rnoise"))
     im.var_poisson = np.ones(shape, dtype=im.get_dtype("var_poisson"))
@@ -1217,6 +1217,103 @@ def test_resample_undefined_variance(caplog, nircam_rate, shape, enable_err, pro
 
     im.close()
     result.close()
+
+
+@pytest.mark.parametrize("enable_err", [True, False])
+@pytest.mark.parametrize(
+    "missing",
+    [["var_rnoise"], ["var_poisson", "var_flat"], ["var_rnoise", "var_poisson", "var_flat"]],
+)
+def test_resample_missing_variance(caplog, nircam_rate, enable_err, missing):
+    """Test handling for missing variance arrays."""
+    im = AssignWcsStep.call(nircam_rate)
+    all_var = ["var_rnoise", "var_poisson", "var_flat"]
+    for var_name in all_var:
+        if var_name in missing:
+            setattr(im, var_name, None)
+        else:
+            setattr(im, var_name, np.ones_like(im.data))
+    im.meta.filename = "foo.fits"
+    c = ModelLibrary([im])
+
+    if enable_err and len(missing) == 3:
+        with pytest.raises(ValueError, match="no variance arrays are present"):
+            ResampleStep.call(c, blendheaders=False, enable_err=enable_err, weight_type="exptime")
+    else:
+        result = ResampleStep.call(
+            c, blendheaders=False, enable_err=enable_err, weight_type="exptime"
+        )
+
+        # at least some valid data
+        assert not np.all(np.isnan(result.data))
+        if enable_err:
+            assert not np.all(np.isnan(result.err))
+            # non-missing variances are present, missing ones are None
+            for var_name in all_var:
+                var = getattr(result, var_name)
+                if var_name in missing:
+                    assert var is None
+                else:
+                    assert var.shape == result.data.shape
+                    assert not np.all(np.isnan(var))
+        else:
+            # errors and variances are not attached
+            assert result.err is None
+            for var_name in all_var:
+                assert getattr(result, var_name) is None
+
+        result.close()
+
+    im.close()
+
+
+@pytest.mark.parametrize(
+    "missing",
+    [["var_rnoise"], ["var_poisson", "var_flat"], ["var_rnoise", "var_poisson", "var_flat"]],
+)
+@pytest.mark.parametrize("dataset", ["miri_cal", "nirspec_cal"])
+def test_resample_missing_variance_spec_step(caplog, missing, request, dataset):
+    """Test handling for missing variance arrays in spectral resampling."""
+    im = request.getfixturevalue(dataset)
+
+    all_var = ["var_rnoise", "var_poisson", "var_flat"]
+    for var_name in all_var:
+        if "nirspec" in dataset:
+            slit = im.slits[0]
+        else:
+            slit = im
+        if var_name in missing:
+            setattr(slit, var_name, None)
+        else:
+            setattr(slit, var_name, np.ones_like(slit.data))
+
+    if len(missing) == 3:
+        with pytest.raises(ValueError, match="No variance arrays are present"):
+            ResampleSpecStep.call(im, blendheaders=False, weight_type="exptime")
+    else:
+        result = ResampleSpecStep.call(im, blendheaders=False, weight_type="exptime")
+
+        if "nirspec" in dataset:
+            slit = result.slits[0]
+        else:
+            slit = result
+
+        # at least some valid data
+        assert not np.all(np.isnan(slit.data))
+        assert not np.all(np.isnan(slit.err))
+
+        # non-missing variances are present, missing ones are None
+        for var_name in all_var:
+            var = getattr(slit, var_name)
+            if var_name in missing:
+                assert var is None
+            else:
+                assert var.shape == slit.data.shape
+                assert not np.all(np.isnan(var))
+
+        result.close()
+
+    im.close()
 
 
 @pytest.mark.parametrize("ratio", [0.7, 1.2])

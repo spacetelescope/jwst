@@ -103,7 +103,7 @@ class ResampleStep(Step):
             output = None
 
         # Check input models
-        propagate_var_flat = False
+        propagate_variances = {"var_rnoise": False, "var_poisson": False, "var_flat": False}
         with input_models:
             example_model = input_models.borrow(0)
             data_shape = example_model.data.shape
@@ -118,9 +118,10 @@ class ResampleStep(Step):
                 # Make sure all input models have consistent NaN and DO_NOT_USE values
                 match_nans_and_flags(model)
 
-                # Check if var_flat is present in any input
-                if model.var_flat is not None:
-                    propagate_var_flat = True
+                # Check if variances are present in any input
+                for var_name in propagate_variances:
+                    if getattr(model, var_name) is not None:
+                        propagate_variances[var_name] = True
 
                 input_models.shelve(model)
             del model
@@ -142,8 +143,11 @@ class ResampleStep(Step):
                 compute_err = "from_var"
                 enable_var = True
                 report_var = self.report_var
-                if not propagate_var_flat:
-                    variances = ["var_rnoise", "var_poisson"]
+                variances = [v for v in propagate_variances if propagate_variances[v]]
+                if len(variances) == 0:
+                    raise ValueError(
+                        "'enable_err' is True but no variance arrays are present in input"
+                    )
             else:
                 # otherwise do not compute the error arrays at all
                 enable_var = False

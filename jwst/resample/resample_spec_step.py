@@ -151,12 +151,13 @@ class ResampleSpecStep(Step):
         wave_cols = {}
         for container in containers.values():
             # Make sure all input models have consistent NaN and DO_NOT_USE values
-            # Also check if var_flat is present.
-            propagate_var_flat = False
+            # Also check if variances are present.
+            propagate_variances = {"var_rnoise": False, "var_poisson": False, "var_flat": False}
             for model in container:
                 match_nans_and_flags(model)
-                if model.var_flat is not None:
-                    propagate_var_flat = True
+                for var_name in propagate_variances:
+                    if getattr(model, var_name) is not None:
+                        propagate_variances[var_name] = True
 
             # Call the resampling routine
             if self.single:
@@ -165,11 +166,9 @@ class ResampleSpecStep(Step):
                 )
                 drizzled_library = resamp.resample_many_to_many(in_memory=self.in_memory)
             else:
-                if propagate_var_flat:
-                    variances = None
-                else:
-                    variances = ["var_rnoise", "var_poisson"]
-
+                variances = [v for v in propagate_variances if propagate_variances[v]]
+                if len(variances) == 0:
+                    raise ValueError("No variance arrays are present in input")
                 resamp = resample_spec.ResampleSpec(
                     container,
                     enable_var=True,
@@ -284,12 +283,13 @@ class ResampleSpecStep(Step):
             The resampled output
         """
         # Make sure all input models have consistent NaN and DO_NOT_USE values
-        # Also check if var_flat is present.
-        propagate_var_flat = False
+        # Also check if variances are present.
+        propagate_variances = {"var_rnoise": False, "var_poisson": False, "var_flat": False}
         for model in input_models:
             match_nans_and_flags(model)
-            if model.var_flat is not None:
-                propagate_var_flat = True
+            for var_name in propagate_variances:
+                if getattr(model, var_name) is not None:
+                    propagate_variances[var_name] = True
 
         # Call the resampling routine
         if self.single:
@@ -303,10 +303,9 @@ class ResampleSpecStep(Step):
             del drizzled_library
 
         else:
-            if propagate_var_flat:
-                variances = None
-            else:
-                variances = ["var_rnoise", "var_poisson"]
+            variances = [v for v in propagate_variances if propagate_variances[v]]
+            if len(variances) == 0:
+                raise ValueError("No variance arrays are present in input")
             resamp = resample_spec.ResampleSpec(
                 input_models,
                 enable_var=True,
