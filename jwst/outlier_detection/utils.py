@@ -35,7 +35,7 @@ __all__ = [
 ]
 
 
-def create_cube_median(cube_model, maskpt):
+def create_cube_median(cube_model, maskpt, return_error=False):
     """
     Compute the median over a cube of data.
 
@@ -45,21 +45,33 @@ def create_cube_median(cube_model, maskpt):
         The input cube model.
     maskpt : float
         The percent threshold for masking bad data.
+    return_error : bool, optional
+        If `True`, an approximate median error is computed alongside the
+        median science cube.
 
     Returns
     -------
-    ndarray
-        The median over the zeroth axis of the input cube.
+    median_data : ndarray
+        The median over the zeroth axis of the input cube data.
+    median_err : ndarray, optional
+        The median over the zeroth axis of the input cube error. Returned only
+        if ``return_error`` is True.
     """
     log.info("Computing median")
 
     weight_threshold = compute_weight_threshold(cube_model.wht, maskpt)
-    masked_cube = np.ma.masked_array(
-        cube_model.data, np.less(cube_model.wht, weight_threshold)
-    ).filled(np.nan)
+    mask = np.less(cube_model.wht, weight_threshold)
+    masked_cube = np.ma.masked_array(cube_model.data, mask).filled(np.nan)
 
     # not safe to use overwrite_input=True here because we are operating on model.data directly
-    return nanmedian3D(masked_cube, overwrite_input=False)
+    median_data = nanmedian3D(masked_cube, overwrite_input=False)
+
+    if return_error:
+        masked_err = np.ma.masked_array(cube_model.err, mask).filled(np.nan)
+        median_err = nanmedian3D(masked_err, overwrite_input=False)
+        return median_data, median_err
+
+    return median_data
 
 
 def median_without_resampling(

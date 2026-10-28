@@ -1,0 +1,2 @@
+For coronagraphic data, threshold outliers with a median error across exposures instead of input error from the exposure itself.
+For TSO data, threshold outliers with a rolling median of the error across integrations instead of input error from each integration.
