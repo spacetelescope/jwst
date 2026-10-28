@@ -9,6 +9,7 @@ from itertools import islice
 
 import numpy as np
 from astropy import __version__ as astropy_version
+from astropy.io.fits.card import BLANK_CARD, Card
 from astropy.io.fits.diff import (
     _COL_ATTRS,
     FITSDiff,
@@ -16,6 +17,7 @@ from astropy.io.fits.diff import (
     HeaderDiff,
     ImageDataDiff,
     TableDataDiff,
+    report_diff_keyword_attr,
 )
 from astropy.io.fits.hdu.table import _TableLikeHDU
 from astropy.table import Table
@@ -24,7 +26,7 @@ from astropy.utils.diff import diff_values, report_diff_values
 __all__ = [
     "STFITSDiff",
     "STHDUDiff",
-    "HeaderDiff",
+    "STHeaderDiff",
     "STImageDataDiff",
     "STRawDataDiff",
     "STTableDataDiff",
@@ -513,7 +515,7 @@ class STHDUDiff(HDUDiff):
             self.rtol, self.atol = self.header_tolerances["rtol"], self.header_tolerances["atol"]
 
         # Get the header differences
-        self.diff_headers = HeaderDiff.fromdiff(self, self.a.header.copy(), self.b.header.copy())
+        self.diff_headers = STHeaderDiff.fromdiff(self, self.a.header.copy(), self.b.header.copy())
         # Reset the object tolerances
         if self.header_tolerances:
             self.rtol, self.atol = rtol, atol
@@ -727,6 +729,239 @@ class STHDUDiff(HDUDiff):
             if [self.nans, self.percentages, self.stats] != [None, None, None]:
                 report_data_diff()
             self.diff_data.report(self._fileobj, indent=self._indent + 1)
+
+
+class STHeaderDiff(HeaderDiff):
+    """
+    HeaderDiff class with STScI ad hoc changes for STScI regression test reports.
+
+    STScI changes include keyword value comparison, empty or not.
+
+    Full documentation of the class is provided at:
+    https://docs.astropy.org/en/stable/io/fits/api/diff.html
+    """
+
+    def __init__(
+        self,
+        a,
+        b,
+        ignore_keywords=None,
+        ignore_comments=None,
+        rtol=0.0,
+        atol=0.0,
+        ignore_blanks=True,
+        ignore_blank_cards=True,
+    ):
+        """
+        For full documentation on variables, see original astropy code.
+
+        Parameters
+        ----------
+        a : BaseHDU
+            An HDU object.
+
+        b : BaseHDU
+            An HDU object to compare to the first HDU object.
+
+        ignore_keywords : sequence, optional
+            Header keywords to ignore when comparing two headers.
+
+        ignore_comments : sequence, optional
+            A list of header keywords whose comments should be ignored in the
+            comparison.
+
+        rtol : float, optional
+            Relative difference to allow when comparing two float values.
+
+        atol : float, optional
+            Allowed absolute difference when comparing two float values.
+
+        ignore_blanks : bool, optional
+            Ignore extra whitespace at the end of string values either in
+            headers or data.
+
+        ignore_blank_cards : bool, optional
+            Ignore all cards that are blank, i.e. they only contain whitespace.
+        """
+        super().__init__(
+            a,
+            b,
+            ignore_keywords=set_variable_to_empty_list(ignore_keywords),
+            ignore_comments=set_variable_to_empty_list(ignore_comments),
+            rtol=rtol,
+            atol=atol,
+            ignore_blanks=ignore_blanks,
+            ignore_blank_cards=ignore_blank_cards,
+        )
+
+    def _diff(self):
+        # Same code as astropy
+
+        if self.ignore_blank_cards:
+            cardsa = [c for c in self.a.cards if str(c) != BLANK_CARD]
+            cardsb = [c for c in self.b.cards if str(c) != BLANK_CARD]
+        else:
+            cardsa = list(self.a.cards)
+            cardsb = list(self.b.cards)
+
+        # build dictionaries of keyword values and comments
+        def get_header_values_comments(cards):
+            values = {}
+            comments = {}
+            for card in cards:
+                value = card.value
+                if card.keyword in self.ignore_keywords:
+                    continue
+                if self.ignore_blanks and isinstance(value, str):
+                    value = value.rstrip()
+                values.setdefault(card.keyword, []).append(value)
+                comments.setdefault(card.keyword, []).append(card.comment)
+            return values, comments
+
+        valuesa, commentsa = get_header_values_comments(cardsa)
+        valuesb, commentsb = get_header_values_comments(cardsb)
+
+        # STScI changes to report differences in order and/or value
+        self.diff_key_order = None
+        if valuesa != valuesb:
+            keysa = list(valuesa.keys())
+            keysb = list(valuesb.keys())
+
+            for idx, keya in enumerate(keysa):
+                if keya not in keysb:
+                    self.diff_keyword_values[keya].append((valuesa[keya], "NOT FOUND"))
+                if keya != keysb[idx]:
+                    # Not in the same order! Exit loop and report
+                    self.diff_key_order = (
+                        f" Keyword order difference starting at: a>{keya} b>{keysb[idx]}"
+                    )
+                    break
+            for keyb in keysb:
+                if keyb not in keysa:
+                    self.diff_keyword_values[keyb].append(("NOT FOUND", valuesb[keyb]))
+
+        # Same code as astropy
+
+        keywordsa = set(valuesa)
+        keywordsb = set(valuesb)
+
+        self.common_keywords = sorted(keywordsa.intersection(keywordsb))
+        if len(cardsa) != len(cardsb):
+            self.diff_keyword_count = (len(cardsa), len(cardsb))
+
+        # Any other diff attributes should exclude ignored keywords
+        keywordsa = keywordsa.difference(self.ignore_keywords)
+        keywordsb = keywordsb.difference(self.ignore_keywords)
+        if self.ignore_keyword_patterns:
+            for pattern in self.ignore_keyword_patterns:
+                keywordsa = keywordsa.difference(fnmatch.filter(keywordsa, pattern))
+                keywordsb = keywordsb.difference(fnmatch.filter(keywordsb, pattern))
+
+        if "*" in self.ignore_keywords:
+            # Any other differences between keywords are to be ignored
+            return
+
+        left_only_keywords = sorted(keywordsa.difference(keywordsb))
+        right_only_keywords = sorted(keywordsb.difference(keywordsa))
+
+        if left_only_keywords or right_only_keywords:
+            self.diff_keywords = (left_only_keywords, right_only_keywords)
+
+        # Compare count of each common keyword
+        for keyword in self.common_keywords:
+            if keyword in self.ignore_keywords:
+                continue
+            if self.ignore_keyword_patterns:
+                skip = False
+                for pattern in self.ignore_keyword_patterns:
+                    if fnmatch.fnmatch(keyword, pattern):
+                        skip = True
+                        break
+                if skip:
+                    continue
+
+            counta = len(valuesa[keyword])
+            countb = len(valuesb[keyword])
+            if counta != countb:
+                self.diff_duplicate_keywords[keyword] = (counta, countb)
+
+            # Compare keywords' values and comments
+            for a, b in zip(valuesa[keyword], valuesb[keyword]):  # noqa: B905
+                if diff_values(a, b, rtol=self.rtol, atol=self.atol):
+                    self.diff_keyword_values[keyword].append((a, b))
+                else:
+                    # If there are duplicate keywords we need to be able to
+                    # index each duplicate; if the values of a duplicate
+                    # are identical use None here
+                    self.diff_keyword_values[keyword].append(None)
+
+            if not any(self.diff_keyword_values[keyword]):
+                # No differences found; delete the array of Nones
+                del self.diff_keyword_values[keyword]
+
+            if "*" in self.ignore_comments or keyword in self.ignore_comments:
+                continue
+            if self.ignore_comment_patterns:
+                skip = False
+                for pattern in self.ignore_comment_patterns:
+                    if fnmatch.fnmatch(keyword, pattern):
+                        skip = True
+                        break
+                if skip:
+                    continue
+
+            for a, b in zip(commentsa[keyword], commentsb[keyword]):  # noqa: B905
+                if diff_values(a, b):
+                    self.diff_keyword_comments[keyword].append((a, b))
+                else:
+                    self.diff_keyword_comments[keyword].append(None)
+
+            if not any(self.diff_keyword_comments[keyword]):
+                del self.diff_keyword_comments[keyword]
+
+    def _report(self):
+        if self.diff_keyword_count:
+            self._writeln(" Headers have different number of cards:")
+            self._writeln(f"  a: {self.diff_keyword_count[0]}")
+            self._writeln(f"  b: {self.diff_keyword_count[1]}")
+        if self.diff_keywords:
+            for keyword in self.diff_keywords[0]:
+                if keyword in Card._commentary_keywords:  # noqa: SLF001
+                    val = self.a[keyword][0]
+                else:
+                    val = self.a[keyword]
+                self._writeln(f" Extra keyword {keyword!r:8} in a: {val!r}")
+            for keyword in self.diff_keywords[1]:
+                if keyword in Card._commentary_keywords:  # noqa: SLF001
+                    val = self.b[keyword][0]
+                else:
+                    val = self.b[keyword]
+                self._writeln(f" Extra keyword {keyword!r:8} in b: {val!r}")
+
+        if self.diff_duplicate_keywords:
+            for keyword, count in sorted(self.diff_duplicate_keywords.items()):
+                self._writeln(f" Inconsistent duplicates of keyword {keyword!r:8}:")
+                self._writeln("  Occurs {} time(s) in a, {} times in (b)".format(*count))
+
+        if self.diff_keyword_values or self.diff_keyword_comments:
+            for keyword in self.common_keywords:
+                report_diff_keyword_attr(
+                    self._fileobj,
+                    "values",
+                    self.diff_keyword_values,
+                    keyword,
+                    ind=self._indent,
+                )
+                report_diff_keyword_attr(
+                    self._fileobj,
+                    "comments",
+                    self.diff_keyword_comments,
+                    keyword,
+                    ind=self._indent,
+                )
+
+        if self.diff_key_order is not None:
+            self._writeln(self.diff_key_order)
 
 
 class STImageDataDiff(ImageDataDiff):
