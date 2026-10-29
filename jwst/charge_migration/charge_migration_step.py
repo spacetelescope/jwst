@@ -2,6 +2,7 @@
 
 import logging
 
+import asdf
 from stdatamodels.jwst import datamodels
 
 from jwst.charge_migration.charge_migration import correct_charge_migration, flag_charge_migration
@@ -83,8 +84,9 @@ class ChargeMigrationStep(Step):
                     if fit_info is None:
                         log.info("No fit info to save; not creating output table.")
                     else:
-                        table_filepath = self.make_output_path(ext=".ecsv", suffix="bfe_fit")
-                        fit_info.write(table_filepath, format="ascii.ecsv", overwrite=True)
+                        table_filepath = self.make_output_path(ext=".asdf", suffix="bfe_fit")
+                        tree = {"data": fit_info}
+                        asdf.dump(tree, table_filepath)
                         log.info(f"Saved fit info table in {table_filepath}")
                 else:
                     result = output
