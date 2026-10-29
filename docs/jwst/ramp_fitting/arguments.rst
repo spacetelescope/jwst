@@ -43,6 +43,9 @@ The ramp fitting step has the following optional arguments that can be set by th
   which will compute all values for the ramp the same as if the entire ramp were
   saturated.
 
+``--skip_jump_detect``
+  If True, skip additional likelihood-based jump detection, when ``algorithm="LIKELY"``.
+
 ``--maximum_cores``
   The number of available cores that will be
   used for multi-processing in this step. The default value is ``'1'``, which results in no

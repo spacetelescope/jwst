@@ -1,0 +1,1 @@
+Add a parameter to the ``ramp_fit`` step to allow additional jump detection in the likelihood algorithm to be skipped.
