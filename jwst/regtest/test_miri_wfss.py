@@ -15,33 +15,22 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
     rtdata = rtdata_module
     # These are the WFSS exposures we'll be processing
 
-    photom_file = "drlphotom.fits"
-    flat_file = "jwst_miri_flat_0850.fits"
-    filteroffset_file = "jwst_miri_filteroffset_0019.asdf"
-    specwcs_file = "MIRI_WFSS_specwcs_20260316.asdf"
-    rtdata.get_data(f"miri/wfss/{photom_file}")
-    rtdata.get_data(f"miri/wfss/{flat_file}")
-    rtdata.get_data(f"miri/wfss/{filteroffset_file}")
-    rtdata.get_data(f"miri/wfss/{specwcs_file}")
-
     rtdata.get_asn("miri/wfss/jw09505-o001_spec2_00001_asn.json")
     args = [
         "calwebb_spec2",
         rtdata.input,
-        f"--steps.photom.override_photom={photom_file}",
-        f"--steps.flat_field.override_flat={flat_file}",
-        f"--steps.assign_wcs.override_specwcs={specwcs_file}",
-        f"--steps.assign_wcs.override_filteroffset={filteroffset_file}",
         "--steps.bkg_subtract.skip=false",
         "--steps.flat_field.skip=false",
         "--steps.assign_wcs.save_results=true",
         "--steps.extract_2d.save_results=true",
+        "--steps.extract_2d.wfss_nbright=40",
         "--steps.srctype.save_results=true",
         "--steps.photom.save_results=true",
         "--steps.flat_field.save_results=true",
         "--steps.bkg_subtract.save_results=true",
         "--steps.extract_1d.save_results=true",
         "--steps.wfss_contam.skip=False",
+        "--steps.wfss_contam.magnitude_limit=19",
         "--steps.wfss_contam.save_results=true",
         "--steps.wfss_contam.save_simulated_image=True",
     ]
