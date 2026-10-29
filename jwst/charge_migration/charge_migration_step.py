@@ -21,6 +21,8 @@ class ChargeMigrationStep(Step):
         signal_threshold = float(default=-1)  # Threshold value for flagging excessive charge loss.
         correction_threshold = float(default=-1)  # Threshold value to correct for charge migration.
         mask_pad = integer(default=2)  # Number of pixels to fit on either side of a pixel with charge loss.
+        snr_limit = float(default=3.0)  # Correction fit significance limit, as a factor of the read noise
+        rms_limit = float(default=0.45)  # Correction fit quality limit, as a fraction of the initial RMS
         save_fit_info = boolean(default=False)  # Save a table of information about fit corrections
         skip = boolean(default=True)  # By default, skip the step.
     """  # noqa: E501
@@ -72,6 +74,8 @@ class ChargeMigrationStep(Step):
                     rnoise,
                     correction_threshold=self.correction_threshold,
                     mask_pad=self.mask_pad,
+                    snr_limit=self.snr_limit,
+                    rms_limit=self.rms_limit,
                     fit_info=self.save_fit_info,
                 )
                 if self.save_fit_info:
