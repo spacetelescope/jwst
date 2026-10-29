@@ -18,8 +18,8 @@ class ChargeMigrationStep(Step):
     class_alias = "charge_migration"
 
     spec = """
-        signal_threshold = float(default=10000)  # Threshold value for flagging charge loss.
-        apply_correction = boolean(default=False)  # Fit and correct for charge migration.
+        signal_threshold = float(default=-1)  # Threshold value for flagging excessive charge loss.
+        correction_threshold = float(default=-1)  # Threshold value to correct for charge migration.
         mask_pad = integer(default=2)  # Number of pixels to fit on either side of a pixel with charge loss.
         save_fit_info = boolean(default=False)  # Save a table of information about fit corrections
         skip = boolean(default=True)  # By default, skip the step.
@@ -46,11 +46,19 @@ class ChargeMigrationStep(Step):
 
         if result.data.shape[1] < 3:  # skip step if only 1 or 2 groups/integration
             log.info("Too few groups per integration; skipping charge_migration")
-
             result.meta.cal_step.charge_migration = "SKIPPED"
             return result
 
-        if self.apply_correction:
+        if self.signal_threshold < 0 and self.correction_threshold < 0:
+            log.info("All thresholds negative; skipping charge_migration")
+            result.meta.cal_step.charge_migration = "SKIPPED"
+            return result
+
+        if self.signal_threshold >= 0:
+            log.info("Flagging pixels with significant charge loss")
+            result = flag_charge_migration(result, self.signal_threshold)
+
+        if self.correction_threshold >= 0:
             log.info("Fitting and correcting for the brighter-fatter effect (BFE)")
             log.warning(
                 "This process is currently a prototype: it is not yet recommended for general use."
@@ -62,7 +70,7 @@ class ChargeMigrationStep(Step):
                 output = correct_charge_migration(
                     result,
                     rnoise,
-                    signal_threshold=self.signal_threshold,
+                    correction_threshold=self.correction_threshold,
                     mask_pad=self.mask_pad,
                     fit_info=self.save_fit_info,
                 )
@@ -76,10 +84,6 @@ class ChargeMigrationStep(Step):
                         log.info(f"Saved fit info table in {table_filepath}")
                 else:
                     result = output
-
-        else:
-            log.info("Flagging pixels with significant charge loss")
-            result = flag_charge_migration(result, self.signal_threshold)
 
         result.meta.cal_step.charge_migration = "COMPLETE"
 
