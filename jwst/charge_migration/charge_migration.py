@@ -72,7 +72,7 @@ def flag_charge_migration(output_model, signal_threshold):
 
 
 def correct_charge_migration(
-    output_model, readnoise_model, signal_threshold=10000.0, mask_pad=2, fit_info=False
+    output_model, readnoise_model, correction_threshold=10000.0, mask_pad=2, fit_info=False
 ):
     """
     Correct for the brighter-fatter effect (BFE).
@@ -104,7 +104,7 @@ def correct_charge_migration(
         The data model to correct. Updated in place.
     readnoise_model : `~stdatamodels.jwst.datamodels.ReadnoiseModel`
         Read noise reference data associated with ``output_model``.
-    signal_threshold : float, optional
+    correction_threshold : float, optional
         Science value above which the correction is triggered.
     mask_pad : int, optional
         Number of pixels to correct on either side of a pixel exceeding the threshold.
@@ -135,7 +135,7 @@ def correct_charge_migration(
     maxvals = np.nanmax(sci, axis=(0, 1))
 
     # Identify pixels where max is greater than threshold
-    mask = maxvals > signal_threshold
+    mask = maxvals > correction_threshold
 
     # Check if there is anything to do
     if not np.any(mask):
