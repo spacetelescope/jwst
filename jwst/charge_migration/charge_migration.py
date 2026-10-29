@@ -45,29 +45,14 @@ def flag_charge_migration(output_model, signal_threshold):
 
     log.info("Using signal_threshold: %.2f", signal_threshold)
 
+    chargeloss_pix = (data > signal_threshold) & (gdq != DNU)
+    chargeloss_pix = binary_dilation(chargeloss_pix, axes=(2, 3))
+
     n_ints, n_grps, n_rows, n_cols = gdq.shape
-    chargeloss_pix = np.where((data > signal_threshold) & (gdq != DNU))
-
-    for k in range(len(chargeloss_pix[0])):
-        integ, group = chargeloss_pix[0][k], chargeloss_pix[1][k]
-        row, col = chargeloss_pix[2][k], chargeloss_pix[3][k]
-        gdq[integ, group:, row, col] |= CHLO_DNU
-
-        # North
-        if row > 0:
-            gdq[integ, group:, row - 1, col] |= CHLO_DNU
-
-        # South
-        if row < (n_rows - 1):
-            gdq[integ, group:, row + 1, col] |= CHLO_DNU
-
-        # East
-        if col < (n_cols - 1):
-            gdq[integ, group:, row, col + 1] |= CHLO_DNU
-
-        # West
-        if col > 0:
-            gdq[integ, group:, row, col - 1] |= CHLO_DNU
+    for ii in range(n_ints):
+        for gg in range(n_grps):
+            mask = chargeloss_pix[ii, gg, :, :]
+            gdq[ii, gg:, mask] |= CHLO_DNU
 
     return output_model
 
