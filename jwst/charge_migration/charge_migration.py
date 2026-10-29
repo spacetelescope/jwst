@@ -252,8 +252,8 @@ def correct_charge_migration(
                 value_change,
                 sigma[yfit, xfit],
                 sigma_new,
-                med_masked_ramp_diff[:, yfit, xfit].T,
-                modeled_diff,
+                med_masked_ramp_diff[:, yfit, xfit].T.astype(np.float32),
+                modeled_diff.astype(np.float32),
             ),
             names=[
                 "x",
