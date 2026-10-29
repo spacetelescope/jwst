@@ -72,7 +72,13 @@ def flag_charge_migration(output_model, signal_threshold):
 
 
 def correct_charge_migration(
-    output_model, readnoise_model, correction_threshold=10000.0, mask_pad=2, fit_info=False
+    output_model,
+    readnoise_model,
+    correction_threshold=10000.0,
+    mask_pad=2,
+    snr_limit=3.0,
+    rms_limit=0.45,
+    fit_info=False,
 ):
     """
     Correct for the brighter-fatter effect (BFE).
@@ -220,9 +226,10 @@ def correct_charge_migration(
         slope = coeff[1]
 
         # First quality cuts on the polynomial fit: require that value
-        # change due to slope over the range of fit values is greater than 3x the read noise
-        # and that the full_model value at 0 group difference is positive
-        good_slope = (np.abs(n_diffs[yy, xx] * slope) > np.abs(3 * rnvals[yy, xx])) & (
+        # change due to slope over the range of fit values is greater than
+        # snr_limit times the read noise and that the full_model value at
+        # 0 group difference is positive
+        good_slope = (np.abs(n_diffs[yy, xx] * slope) > np.abs(snr_limit * rnvals[yy, xx])) & (
             full_model(0) > 0
         )
         if good_slope:
@@ -239,9 +246,9 @@ def correct_charge_migration(
         if n_diffs[yy, xx] > 5 and model is not None:
             sigma_new = SigmaClippedStats(one_diff[indx] - model(gvec[indx])).std()
 
-            # RMS of corrected data must be < 45% the rms of the original
+            # RMS of corrected data must be < rms_limit times the RMS of the original
             # (dialed based on visual inspection of thousands of MRS ramps)
-            if sigma_new > 0.45 * sigma[yy, xx]:
+            if sigma_new > rms_limit * sigma[yy, xx]:
                 model = None
 
         # Save fit data for inspection
