@@ -225,7 +225,7 @@ def test_output_is_not_input():
     ngroups, nints, nrows, ncols = 4, 1, 1, 1
     ramp_model, pixdq, groupdq, err = create_mod_arrays(ngroups, nints, nrows, ncols)
 
-    result = ChargeMigrationStep.call(ramp_model)
+    result = ChargeMigrationStep.call(ramp_model, signal_threshold=0)
 
     # Successful completion
     status = result.meta.cal_step.charge_migration
