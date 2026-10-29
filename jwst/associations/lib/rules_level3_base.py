@@ -789,6 +789,19 @@ class Constraint_IFU(DMSAttrConstraint):
         )
 
 
+class Constraint_EngineeringTemplate(SimpleConstraint):
+    """Constrataint for engineering imaging templated data."""
+
+    def check_and_set(self, item):
+        exp_type = item.get("exp_type")
+        disperser = item.get("grating")
+
+        if exp_type.lower() == "nrc_image" and disperser not in (None, "", "NONE", "NULL"):
+            return False, []
+
+        return True, []
+
+
 class Constraint_Image(DMSAttrConstraint):
     """Select on exposure type."""
 

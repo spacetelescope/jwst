@@ -22,6 +22,7 @@ from jwst.associations.lib.rules_level3_base import (
     AsnMixin_Coronagraphy,
     AsnMixin_Science,
     AsnMixin_Spectrum,
+    Constraint_EngineeringTemplate,
     Constraint_IFU,
     Constraint_Image,
     Constraint_MSA,
@@ -158,6 +159,7 @@ class Asn_Lv3AMI(AsnMixin_Science):
         super(Asn_Lv3AMI, self)._init_hook(item)
 
 
+# XXX JP-4459
 @RegistryMarker.rule
 class Asn_Lv3Image(AsnMixin_Science):
     """
@@ -175,6 +177,7 @@ class Asn_Lv3Image(AsnMixin_Science):
         self.constraints = Constraint(
             [
                 Constraint_Optical_Path(),
+                Constraint_EngineeringTemplate(),  # XXX JP-4459
                 Constraint_Target(association=self),
                 Constraint_Image(),
                 DMSAttrConstraint(
