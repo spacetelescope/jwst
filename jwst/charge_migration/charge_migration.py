@@ -4,7 +4,8 @@ import warnings
 import numpy as np
 from astropy.stats import SigmaClippedStats
 from astropy.table import Table
-from numpy.polynomial.polynomial import Polynomial, polyfit
+from astropy.utils.exceptions import AstropyUserWarning
+from numpy.polynomial.polynomial import polyfit
 from scipy.ndimage import binary_dilation
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -201,14 +202,14 @@ def correct_charge_migration(
         stats = SigmaClippedStats(med_masked_ramp_diff, axis=0, mask=~valid_for_fit)
         sigma = stats.std()
 
-    # Fit clipped pixels in the thresholded mask
-    yfit, xfit = np.where(mask)
+    # Fit clipped pixels in the thresholded mask, skipping pixels with n_diffs < 2
+    yfit, xfit = np.where(mask & (n_diffs >= 2))
     nfit = len(xfit)
     log.info("Identified %s pixels to fit for BFE", str(nfit))
 
     ramp_diff = np.diff(sci, axis=1)
     gvec = np.arange(ngroups - 1)  # group diff index
-    fit_info_table = []
+    coeffs = np.full((2, nfit), np.nan)
     for ii in range(nfit):
         xx = xfit[ii]
         yy = yfit[ii]
@@ -216,73 +217,59 @@ def correct_charge_migration(
         one_diff = med_masked_ramp_diff[:, yy, xx]
         indx = valid_for_fit[:, yy, xx]
 
-        # Only proceed if at least 2 good differences
-        if n_diffs[yy, xx] < 2:
-            continue
-
         # Fit a polynomial to the group differences; only a constant term and a slope
         coeff = polyfit(gvec[indx], one_diff[indx], 1)
-        full_model = Polynomial(coeff)
-        slope = coeff[1]
+        coeffs[:, ii] = coeff
 
-        # First quality cuts on the polynomial fit: require that value
-        # change due to slope over the range of fit values is greater than
-        # snr_limit times the read noise and that the full_model value at
-        # 0 group difference is positive
-        good_slope = (np.abs(n_diffs[yy, xx] * slope) > np.abs(snr_limit * rnvals[yy, xx])) & (
-            full_model(0) > 0
-        )
-        if good_slope:
-            # Good fit: make a model that uses only the slope term
-            model = Polynomial([0, slope])
-        else:
-            model = None
+    # First quality cuts on the polynomial fit: require that value
+    # change due to slope over the range of fit values is greater than
+    # snr_limit times the read noise and that the full model value at
+    # 0 group difference is positive (i.e. intercept > 0)
+    intercept, slope = coeffs.copy()
+    good_snr = (np.abs(n_diffs[yfit, xfit] * slope) > np.abs(snr_limit * rnvals[yfit, xfit])) & (
+        intercept > 0
+    )
+    coeffs[:, ~good_snr] = np.nan
 
-        # Second quality cut on the polynomial fit; if ndiffs > 5,
-        # require that rms improves significantly
-        # This deals with some strange cases with poorly conditioned ramps,
-        # e.g. pixel (291,489) in jw04829001001_07101_00001_mirifushort
-        sigma_new = np.nan
-        if n_diffs[yy, xx] > 5 and model is not None:
-            sigma_new = SigmaClippedStats(one_diff[indx] - model(gvec[indx])).std()
+    # Second quality cut on the polynomial fit: if ndiffs > 5,
+    # require that rms improves significantly when the slope term is subtracted.
+    # This deals with some strange cases with poorly conditioned ramps,
+    # e.g. pixel (291,489) in jw04829001001_07101_00001_mirifushort
+    corrected_diff = med_masked_ramp_diff[:, yfit, xfit] - coeffs[1] * gvec[:, None]
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "Input data contains invalid values", AstropyUserWarning)
+        stats = SigmaClippedStats(corrected_diff, axis=0, mask=~valid_for_fit[:, yfit, xfit])
+        sigma_new = stats.std()
+    del corrected_diff
 
-            # RMS of corrected data must be < rms_limit times the RMS of the original
-            # (dialed based on visual inspection of thousands of MRS ramps)
-            if sigma_new > rms_limit * sigma[yy, xx]:
-                model = None
+    bad_rms = (n_diffs[yfit, xfit] > 5) & (sigma_new > rms_limit * sigma[yfit, xfit])
+    coeffs[:, bad_rms] = np.nan
 
-        # Save fit data for inspection
-        if fit_info:
-            # median diff for this pixel is not needed anymore: fill clipped values with NaN
-            one_diff[~indx] = np.nan
-            value_change = n_diffs[yy, xx] * slope / rnvals[yy, xx]
-            success = model is not None
-            row = (
-                xx,
-                yy,
-                success,
-                value_change,
-                sigma[yy, xx],
-                sigma_new,
-                one_diff,
-                full_model(gvec),
-            )
-            fit_info_table.append(row)
-
-        if model is not None:
-            # Subtract off the slope term from the original group differences
-            ramp_diff[:, :, yy, xx] -= model(gvec)
+    # For any remaining good fits, subtract off the slope term from the original group differences
+    good_fits = np.isfinite(coeffs[1])
+    ramp_diff[:, :, yfit[good_fits], xfit[good_fits]] -= coeffs[1][good_fits] * gvec[:, None]
 
     # Now reconstruct ramps from the modified differences:
     # each group builds on the previous corrected one.
     for gg in range(1, ngroups):
         sci[:, gg, :, :] = sci[:, gg - 1, :, :] + ramp_diff[:, gg - 1, :, :]
-    output_model.data = sci
 
     if fit_info:
-        # Return a diagnostic table along with the corrected output
+        # Save fit data for inspection
+        med_masked_ramp_diff[~valid_for_fit] = np.nan
+        value_change = n_diffs[yfit, xfit] * slope / rnvals[yfit, xfit]
+        modeled_diff = slope[:, None] * gvec + intercept[:, None]
         fit_info_table = Table(
-            rows=fit_info_table,
+            (
+                xfit,
+                yfit,
+                good_fits,
+                value_change,
+                sigma[yfit, xfit],
+                sigma_new,
+                med_masked_ramp_diff[:, yfit, xfit].T,
+                modeled_diff,
+            ),
             names=[
                 "x",
                 "y",
@@ -294,6 +281,7 @@ def correct_charge_migration(
                 "model",
             ],
         )
+
         return output_model, fit_info_table
     else:
         # Just return the model
