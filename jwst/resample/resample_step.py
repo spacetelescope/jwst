@@ -102,19 +102,27 @@ class ResampleStep(Step):
             # TODO: figure out why and make sure asn_table is carried along
             output = None
 
-        # Check that input models are 2D images
+        # Check input models
+        propagate_variances = {"var_rnoise": False, "var_poisson": False, "var_flat": False}
         with input_models:
             example_model = input_models.borrow(0)
             data_shape = example_model.data.shape
             input_models.shelve(example_model, 0, modify=False)
+
+            # Make sure input models are 2D images, not 3D cubes, etc
             if len(data_shape) != 2:
-                # resample can only handle 2D images, not 3D cubes, etc
                 raise RuntimeError(f"Input {example_model} is not a 2D image.")
             del example_model
 
-            # Make sure all input models have consistent NaN and DO_NOT_USE values
             for model in input_models:
+                # Make sure all input models have consistent NaN and DO_NOT_USE values
                 match_nans_and_flags(model)
+
+                # Check if variances are present in any input
+                for var_name in propagate_variances:
+                    if getattr(model, var_name) is not None:
+                        propagate_variances[var_name] = True
+
                 input_models.shelve(model)
             del model
 
@@ -129,11 +137,17 @@ class ResampleStep(Step):
             result = resamp.resample_many_to_many(in_memory=self.in_memory)
 
         else:
+            variances = None
             if self.enable_err:
                 # If error is enabled, we compute the error from the variance
                 compute_err = "from_var"
                 enable_var = True
                 report_var = self.report_var
+                variances = [v for v in propagate_variances if propagate_variances[v]]
+                if len(variances) == 0:
+                    raise ValueError(
+                        "'enable_err' is True but no variance arrays are present in input"
+                    )
             else:
                 # otherwise do not compute the error arrays at all
                 enable_var = False
@@ -146,6 +160,7 @@ class ResampleStep(Step):
                 enable_var=enable_var,
                 report_var=report_var,
                 compute_err=compute_err,
+                variance_array_names=variances,
                 **kwargs,
             )
             result = resamp.resample_many_to_one()

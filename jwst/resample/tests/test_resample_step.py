@@ -104,6 +104,8 @@ def miri_rate_model():
     im.dq = im.get_default("dq")
     im.err = im.get_default("err")
     im.var_rnoise = np.ones(shape)
+    im.var_poisson = np.ones(shape)
+    im.var_flat = np.ones(shape)
     im.meta.wcsinfo = {
         "dec_ref": 40,
         "ra_ref": 100,
@@ -183,6 +185,7 @@ def miri_rate_zero_crossing():
     im = ImageModel(shape)
     im.dq = im.get_default("dq")
     im.var_rnoise = np.random.random(shape)
+    im.var_poisson = np.ones(shape)
     im.meta.wcsinfo = {
         "dec_ref": 2.16444343946559e-05,
         "ra_ref": -0.00026031780056776,
@@ -255,6 +258,7 @@ def nircam_rate():
     im = ImageModel(shape)
     im.err = im.get_default("err")
     im.var_rnoise = np.ones(shape)
+    im.var_poisson = np.ones(shape)
     rng = np.random.default_rng(seed=1)
     im.dq = 2 ** rng.integers(10, 22, size=shape).astype(np.uint32)
     im.meta.wcsinfo = {
@@ -528,9 +532,21 @@ def test_single_image_file_input(nircam_rate, tmp_cwd, propagate_dq):
     assert result_from_memory.meta.cal_step.resample == "COMPLETE"
     assert result_from_file.meta.cal_step.resample == "COMPLETE"
     assert_allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
+
+    # There are some valid and some not valid pixels
+    valid = np.isfinite(result_from_memory.data)
+    assert np.sum(valid) > 0
+    assert np.sum(~valid) > 0
+
     if propagate_dq:
         assert np.all(result_from_file.dq == result_from_memory.dq)
-        assert np.bitwise_or.reduce(result_from_memory.dq, axis=(0, 1)) == good_bits
+        # good bits are propagated
+        assert np.bitwise_or.reduce(result_from_memory.dq[valid]) == good_bits
+        # invalid data is marked do not use
+        assert np.all(result_from_memory.dq[~valid] & 1 == 1)
+    else:
+        assert result_from_file.dq is None
+        assert result_from_memory.dq is None
 
     # Check that input model was not modified
     assert im is not result_from_memory
@@ -578,9 +594,18 @@ def test_single_spec_file_input(miri_cal, tmp_cwd, propagate_dq):
     assert result_from_memory.meta.cal_step.resample == "COMPLETE"
     assert result_from_file.meta.cal_step.resample == "COMPLETE"
     assert_allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
+
+    # There are some valid and some not valid pixels
+    valid = np.isfinite(result_from_memory.data)
+    assert np.sum(valid) > 0
+    assert np.sum(~valid) > 0
+
     if propagate_dq:
         assert np.all(result_from_file.dq == result_from_memory.dq)
-        assert np.bitwise_or.reduce(result_from_memory.dq, axis=(0, 1)) == good_bits
+        # good bits are propagated
+        assert np.bitwise_or.reduce(result_from_memory.dq[valid]) == good_bits
+        # invalid data is marked do not use
+        assert np.all(result_from_memory.dq[~valid] & 1 == 1)
     else:
         assert result_from_file.dq is None
         assert result_from_memory.dq is None
@@ -1147,27 +1172,148 @@ def test_resample_variance_context_disable(
             assert "ERR" not in hdul
 
 
+@pytest.mark.parametrize("propagate_var_flat", [True, False])
+@pytest.mark.parametrize("enable_err", [True, False])
 @pytest.mark.parametrize("shape", [(0,), (10, 1)])
-def test_resample_undefined_variance(caplog, nircam_rate, shape):
-    """Test that resampled variance and error arrays are computed properly"""
+def test_resample_bad_variance(caplog, nircam_rate, shape, enable_err, propagate_var_flat):
+    """Test handling for incorrectly shaped variance arrays."""
     im = AssignWcsStep.call(nircam_rate)
     im.var_rnoise = np.ones(shape, dtype=im.get_dtype("var_rnoise"))
     im.var_poisson = np.ones(shape, dtype=im.get_dtype("var_poisson"))
-    im.var_flat = np.ones(shape, dtype=im.get_dtype("var_flat"))
+    if propagate_var_flat:
+        im.var_flat = np.ones(shape, dtype=im.get_dtype("var_flat"))
     im.meta.filename = "foo.fits"
     c = ModelLibrary([im])
 
-    result = ResampleStep.call(c, blendheaders=False)
+    result = ResampleStep.call(c, blendheaders=False, enable_err=enable_err)
     assert "'var_rnoise' array not available" in caplog.text
 
-    # no valid variance - output error and variance are all NaN
-    assert_allclose(result.err, np.nan)
-    assert_allclose(result.var_rnoise, np.nan)
-    assert_allclose(result.var_poisson, np.nan)
-    assert_allclose(result.var_flat, np.nan)
+    if enable_err:
+        # no valid errors - output data and error are all NaN
+        assert_allclose(result.data, np.nan)
+        assert_allclose(result.err, np.nan)
+        # read noise and poisson variances are attached but all NaN
+        assert result.var_rnoise.shape == result.data.shape
+        assert_allclose(result.var_rnoise, np.nan)
+        assert result.var_poisson.shape == result.data.shape
+        assert_allclose(result.var_poisson, np.nan)
+    else:
+        # at least some valid data
+        assert np.sum(np.isfinite(result.data)) > 0
+
+        # errors and variances are not attached
+        assert result.err is None
+        assert result.var_rnoise is None
+        assert result.var_poisson is None
+
+    # check separately for the optional var_flat
+    if propagate_var_flat and enable_err:
+        # present, all-NaN
+        assert result.var_flat.shape == result.data.shape
+        assert_allclose(result.var_flat, np.nan)
+    else:
+        # not attached
+        assert result.var_flat is None
 
     im.close()
     result.close()
+
+
+@pytest.mark.parametrize("enable_err", [True, False])
+@pytest.mark.parametrize(
+    "missing",
+    [["var_rnoise"], ["var_poisson", "var_flat"], ["var_rnoise", "var_poisson", "var_flat"]],
+)
+def test_resample_missing_variance(caplog, nircam_rate, enable_err, missing):
+    """Test handling for missing variance arrays."""
+    im = AssignWcsStep.call(nircam_rate)
+    all_var = ["var_rnoise", "var_poisson", "var_flat"]
+    for var_name in all_var:
+        if var_name in missing:
+            setattr(im, var_name, None)
+        else:
+            setattr(im, var_name, np.ones_like(im.data))
+    im.meta.filename = "foo.fits"
+    c = ModelLibrary([im])
+
+    if enable_err and len(missing) == 3:
+        with pytest.raises(ValueError, match="no variance arrays are present"):
+            ResampleStep.call(c, blendheaders=False, enable_err=enable_err, weight_type="exptime")
+    else:
+        result = ResampleStep.call(
+            c, blendheaders=False, enable_err=enable_err, weight_type="exptime"
+        )
+
+        # at least some valid data
+        assert not np.all(np.isnan(result.data))
+        if enable_err:
+            assert not np.all(np.isnan(result.err))
+            # non-missing variances are present, missing ones are None
+            for var_name in all_var:
+                var = getattr(result, var_name)
+                if var_name in missing:
+                    assert var is None
+                else:
+                    assert var.shape == result.data.shape
+                    assert not np.all(np.isnan(var))
+        else:
+            # errors and variances are not attached
+            assert result.err is None
+            for var_name in all_var:
+                assert getattr(result, var_name) is None
+
+        result.close()
+
+    im.close()
+
+
+@pytest.mark.parametrize(
+    "missing",
+    [["var_rnoise"], ["var_poisson", "var_flat"], ["var_rnoise", "var_poisson", "var_flat"]],
+)
+@pytest.mark.parametrize("dataset", ["miri_cal", "nirspec_cal"])
+def test_resample_missing_variance_spec_step(caplog, missing, request, dataset):
+    """Test handling for missing variance arrays in spectral resampling."""
+    im = request.getfixturevalue(dataset)
+
+    all_var = ["var_rnoise", "var_poisson", "var_flat"]
+    for var_name in all_var:
+        if "nirspec" in dataset:
+            slit = im.slits[0]
+        else:
+            slit = im
+        if var_name in missing:
+            setattr(slit, var_name, None)
+        else:
+            setattr(slit, var_name, np.ones_like(slit.data))
+
+    if len(missing) == 3:
+        with pytest.raises(ValueError, match="No variance arrays are present"):
+            ResampleSpecStep.call(im, blendheaders=False, weight_type="exptime")
+    else:
+        result = ResampleSpecStep.call(im, blendheaders=False, weight_type="exptime")
+
+        if "nirspec" in dataset:
+            slit = result.slits[0]
+        else:
+            slit = result
+
+        # at least some valid data
+        assert not np.all(np.isnan(slit.data))
+        assert not np.all(np.isnan(slit.err))
+
+        # non-missing variances are present, missing ones are None
+        for var_name in all_var:
+            var = getattr(slit, var_name)
+            if var_name in missing:
+                assert var is None
+            else:
+                assert var.shape == slit.data.shape
+                assert not np.all(np.isnan(var))
+
+        result.close()
+
+    im.close()
 
 
 @pytest.mark.parametrize("ratio", [0.7, 1.2])
