@@ -225,9 +225,9 @@ offsets from the TA image to the grism pupil (FITS keywords ``XOFFSET`` and ``YO
 WCS of substripe (DHS) exposures
 --------------------------------
 
-``NRC_TSGRISM`` exposures in substripe (DHS) modes have a similar WCS to that of normal ``NRC_TSGRISM``
-exposures, except that each stripe has its own dispersion transform model, and
-the grism-to-direct transform therefore includes a selector to determine the DHS stripe
+``NRC_TSGRISM`` exposures in substripe (DHS, short-wave only) modes have a similar WCS to
+that of normal ``NRC_TSGRISM`` exposures, except that each stripe has its own dispersion transform model,
+and the grism-to-direct transform therefore includes a selector to determine the DHS stripe
 at each pixel. The forward transform takes inputs ``x``, ``y`` and ``order`` in
 the dispersed image frame, transforms to ``x0``, ``y0``, ``wavelength``, ``order`` and ``stripe`` in the direct
 image frame, and then transforms to ``ra``, ``dec``, ``wavelength``, ``order``, and ``stripe`` in the world frame.
