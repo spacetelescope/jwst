@@ -1,0 +1,1 @@
+Vectorize aperture correction application across spectral data tables, addressing a runtime bottleneck in extract1d mostly relevant to WFSS modes. For one NIRISS WFSS dataset tested with wfss_nbright=1000, step runtime went from 197s to 73s.
