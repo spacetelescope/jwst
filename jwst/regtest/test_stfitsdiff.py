@@ -261,10 +261,10 @@ def test_add_sci(mock_rampfiles, fitsdiff_default_kwargs):
     report = report_to_list(diff.report())
     expected_report = [
         "Files contain differences in HDUs:",
-        "a: 6 HDUs: ['PRIMARY-1', 'SCI-1', 'PIXELDQ-1', 'GROUPDQ-1', 'ASDF-1', 'SCI-2']",
-        "b: 5 HDUs: ['PRIMARY-1', 'SCI-1', 'PIXELDQ-1', 'GROUPDQ-1', 'ASDF-1']",
-        "Common HDUs: ['ASDF-1', 'GROUPDQ-1', 'PIXELDQ-1', 'PRIMARY-1', 'SCI-1']",
-        "HDUs in a but not b: ['SCI-2']",
+        "a: 6 HDUs: [('PRIMARY', 1), ('SCI', 1), ('PIXELDQ', 1), ('GROUPDQ', 1), ('ASDF', 1), ('SCI', 2)]",
+        "b: 5 HDUs: [('PRIMARY', 1), ('SCI', 1), ('PIXELDQ', 1), ('GROUPDQ', 1), ('ASDF', 1)]",
+        "Common HDUs: [('ASDF', 1), ('GROUPDQ', 1), ('PIXELDQ', 1), ('PRIMARY', 1), ('SCI', 1)]",
+        "HDUs in a but not b: [('SCI', 2)]",
         "HDUs in b but not a: []",
         "No differences found between common HDUs.",
     ]
