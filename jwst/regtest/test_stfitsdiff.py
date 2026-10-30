@@ -1,5 +1,7 @@
 """Tests for STFitsDiff."""
 
+from copy import deepcopy
+
 import numpy as np
 import pytest
 from astropy.io import fits
@@ -180,6 +182,7 @@ def test_filename(mock_rampfiles, fitsdiff_default_kwargs):
         "a: 10",
         "b: 11",
         "Extra keyword 'FILENAME' in b: 'truth_ramp.fits'",
+        "Keyword order difference starting at: a>DATAMODL b>FILENAME",
     ]
     assert result is False
     assert report == expected_report
@@ -199,6 +202,7 @@ def test_filename_reversed(mock_rampfiles, fitsdiff_default_kwargs):
         "a: 11",
         "b: 10",
         "Extra keyword 'FILENAME' in a: 'truth_ramp.fits'",
+        "Keyword order difference starting at: a>DATAMODL b>",
     ]
     assert result is False
     assert report == expected_report2
@@ -266,6 +270,35 @@ def test_rm_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "HDUs in a but not b: []",
         "HDUs in b but not a: ['SCI']",
         "No differences found between common HDUs.",
+    ]
+    assert result is False
+    assert report == expected_report
+
+
+def test_keyword_order(mock_rampfiles, fitsdiff_default_kwargs):
+    truth = mock_rampfiles[0]
+    tmp_dir = mock_rampfiles[6]
+    new_truth = tmp_dir / "new_truth.fits"
+    new_file = tmp_dir / "new_file.fits"
+    with fits.open(truth) as hdu:
+        mod = deepcopy(hdu)
+        hdu[0].header.extend(((" ", "FOO"), (" ", "BAR"), ("AA", "1"), ("BB", "2")), end=True)
+        hdu.writeto(new_truth)
+        mod[0].header.extend(((" ", "BAR"), (" ", "FOO"), ("BB", "2"), ("AA", "1")), end=True)
+        mod.writeto(new_file)
+    diff = STFITSDiff(new_file, new_truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    expected_report = [
+        "Primary HDU:",
+        "Headers contain differences:",
+        "Keyword         [3] has different values:",
+        "a> BAR",
+        "b> FOO",
+        "Keyword         [4] has different values:",
+        "a> FOO",
+        "b> BAR",
+        "Keyword order difference starting at: a>BB b>AA",
     ]
     assert result is False
     assert report == expected_report
