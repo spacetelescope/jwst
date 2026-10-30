@@ -76,14 +76,14 @@ def correct_charge_migration(
     2. Compute diffs of all groups in the ramp, masking any bad pixels, and
        median-combine across all integrations.
     3. If more than 5 diffs are available, reject outliers with sigma clipping.
-    4. For each identified pixel, fit a line to the clipped diffs.
+    4. For each identified pixel, fit a line to the clipped median diffs.
     5. Reject the fit if it does not meet these criteria:
 
        a. The value change due to the slope over the range of the fit values is
-          greater than 3 times the read noise.
+          less than ``snr_limit`` times the read noise.
        b. The fit value for the first group difference is positive.
        c. If there are more than 5 diffs, the RMS of the corrected data is less
-          than 45% of the original RMS.
+          than ``rms_limit`` of the original RMS.
 
     6. For pixels with valid corrections, subtract the fit slope from the group
        differences.
@@ -100,6 +100,12 @@ def correct_charge_migration(
         Science value above which the correction is triggered.
     mask_pad : int, optional
         Number of pixels to correct on either side of a pixel exceeding the threshold.
+    snr_limit : float, optional
+        Minimum signal-to-noise ratio for a fit correction to consider the fit successful.
+        Specified as a factor of the read noise value.
+    rms_limit : float, optional
+        Minimum RMS improvement from a fit correction to consider the fit successful.
+        Specified as a fraction of the initial RMS.
     fit_info : bool, optional
         If True, return a diagnostic table of the ramp fits performed.
 
