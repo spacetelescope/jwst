@@ -1,16 +1,15 @@
 import numpy as np
 import numpy.testing as npt
-from stdatamodels.jwst.datamodels import RampModel, dqflags
+from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.charge_migration.charge_migration import flag_charge_migration
-from jwst.charge_migration.charge_migration_step import ChargeMigrationStep
+from jwst.charge_migration.tests import helpers
 
-test_dq_flags = dqflags.pixel
-GOOD = test_dq_flags["GOOD"]
-DNU = test_dq_flags["DO_NOT_USE"]
-CHLO = test_dq_flags["CHARGELOSS"]
+GOOD = dqflags.pixel["GOOD"]
+DNU = dqflags.pixel["DO_NOT_USE"]
+CHLO = dqflags.pixel["CHARGELOSS"]
 
-DROU = test_dq_flags["DROPOUT"]
+DROU = dqflags.pixel["DROPOUT"]
 CHLO_DNU = CHLO + DNU
 
 
@@ -19,8 +18,8 @@ def test_pix_0():
     Having all data in ramp below the signal threshold, the only non-GOOD
     groups in the output GROUPDQ should be those DNU propagated from the input.
     """
-    ngroups, nints, nrows, ncols = 10, 1, 1, 1
-    ramp_model, pixdq, groupdq, err = create_mod_arrays(ngroups, nints, nrows, ncols)
+    shape = (1, 10, 1, 1)
+    ramp_model = helpers.niriss_ramp_model(shape)
 
     signal_threshold = 30000.0
 
@@ -49,8 +48,8 @@ def test_pix_1():
     step, and 1 is GOOD. All data beyond the first exceedance are also
     flagged as CHARGELOSS and DNU.
     """
-    ngroups, nints, nrows, ncols = 10, 1, 1, 1
-    ramp_model, pixdq, groupdq, err = create_mod_arrays(ngroups, nints, nrows, ncols)
+    shape = (1, 10, 1, 1)
+    ramp_model = helpers.niriss_ramp_model(shape)
 
     signal_threshold = 20000.0
 
@@ -85,8 +84,8 @@ def test_pix_2():
     """
     Test a later group being below the threshold.
     """
-    ngroups, nints, nrows, ncols = 10, 1, 1, 1
-    ramp_model, pixdq, groupdq, err = create_mod_arrays(ngroups, nints, nrows, ncols)
+    shape = (1, 10, 1, 1)
+    ramp_model = helpers.niriss_ramp_model(shape)
 
     signal_threshold = 4000.0
 
@@ -114,28 +113,6 @@ def test_pix_2():
     npt.assert_array_equal(truth_gdq, out_model.groupdq[0, :, 0, 0])
 
 
-def nearest_neighbor_base(chg_thresh, pixel):
-    """
-    Set up ramp array that is 5, 5 with 10 groups.
-    The flagging starts in group 3 (zero based) in the pixel tested.
-    """
-    nints, ngroups, nrows, ncols = 1, 10, 5, 5
-    ramp_model, pixdq, groupdq, err = create_mod_arrays(ngroups, nints, nrows, ncols)
-
-    # Set up dummy data
-    base = chg_thresh * 0.05
-    base_arr = [float(k + 1) * base for k in range(ngroups)]
-    for row in range(nrows):
-        for col in range(ncols):
-            ramp_model.data[0, :, row, col] = np.array(base_arr, dtype=np.float32)
-
-    # Make CHARGELOSS threshold starting at group 3
-    in_row, in_col = pixel
-    ramp_model.data[0, 3:, in_row, in_col] += chg_thresh
-
-    return ramp_model, pixdq, groupdq, err
-
-
 def test_nearest_neighbor_1():
     """
     CHARGELOSS center
@@ -143,7 +120,7 @@ def test_nearest_neighbor_1():
     """
     chg_thresh = 4000.0
     pixel = (2, 2)
-    ramp_model, pixdq, groupdq, err = nearest_neighbor_base(chg_thresh, pixel)
+    ramp_model = helpers.niriss_ramp_model_with_signal(chg_thresh, pixel)
     gdq_check = ramp_model.groupdq.copy()
     ngroups = gdq_check.shape[1]
 
@@ -171,7 +148,7 @@ def test_nearest_neighbor_2():
     """
     chg_thresh = 4000.0
     pixel = (0, 0)
-    ramp_model, pixdq, groupdq, err = nearest_neighbor_base(chg_thresh, pixel)
+    ramp_model = helpers.niriss_ramp_model_with_signal(chg_thresh, pixel)
     gdq_check = ramp_model.groupdq.copy()
     ngroups = gdq_check.shape[1]
 
@@ -199,7 +176,7 @@ def test_nearest_neighbor_3():
     """
     chg_thresh = 4000.0
     pixel = (2, 4)
-    ramp_model, pixdq, groupdq, err = nearest_neighbor_base(chg_thresh, pixel)
+    ramp_model = helpers.niriss_ramp_model_with_signal(chg_thresh, pixel)
     gdq_check = ramp_model.groupdq.copy()
     ngroups = gdq_check.shape[1]
 
@@ -218,71 +195,3 @@ def test_nearest_neighbor_3():
 
     npt.assert_array_equal(out_model.data, ramp_model.data)
     npt.assert_array_equal(out_model.groupdq, gdq_check)
-
-
-def test_output_is_not_input():
-    """Test that input is not modified."""
-    ngroups, nints, nrows, ncols = 4, 1, 1, 1
-    ramp_model, pixdq, groupdq, err = create_mod_arrays(ngroups, nints, nrows, ncols)
-
-    result = ChargeMigrationStep.call(ramp_model, signal_threshold=0)
-
-    # Successful completion
-    status = result.meta.cal_step.charge_migration
-    npt.assert_string_equal(status, "COMPLETE")
-
-    # Output is not input
-    assert result is not ramp_model
-    assert ramp_model.meta.cal_step.charge_migration is None
-
-
-def test_too_few_groups():
-    """
-    Test that processing for datasets having too few (<3) groups per integration
-    are skipped.
-    """
-    ngroups, nints, nrows, ncols = 2, 1, 1, 1
-    ramp_model, pixdq, groupdq, err = create_mod_arrays(ngroups, nints, nrows, ncols)
-
-    ramp_model.data[0, :, 0, 0] = 20000.0
-    sig_thresh = 100.0
-
-    result = ChargeMigrationStep.call(ramp_model, skip=False, signal_threshold=sig_thresh)
-
-    status = result.meta.cal_step.charge_migration
-    npt.assert_string_equal(status, "SKIPPED")
-
-    assert result is not ramp_model
-    assert ramp_model.meta.cal_step.charge_migration is None
-
-
-def create_mod_arrays(ngroups, nints, nrows, ncols):
-    """
-    For an input datacube (NIRISS), create arrays having
-    the specified dimensions for the pixel DQ, the group DQ, and the
-    ERR extensions, and create datamodels for the ramp. All groups
-    in all arrays have initial values set to 0.
-    """
-    err = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
-    data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
-    pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
-    gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
-
-    # Create and populate ramp model
-    ramp_model = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq)
-    ramp_model.meta.instrument.name = "NIRISS"
-    ramp_model.meta.instrument.detector = "NIS"
-
-    ramp_model.meta.subarray.name = "FULL"
-    ramp_model.meta.subarray.xstart = 1
-    ramp_model.meta.subarray.ystart = 1
-    ramp_model.meta.subarray.xsize = ncols
-    ramp_model.meta.subarray.ysize = nrows
-
-    ramp_model.meta.exposure.ngroups = ngroups
-    ramp_model.meta.exposure.nframes = 1
-    ramp_model.meta.exposure.groupgap = 0
-    ramp_model.meta.exposure.drop_frames1 = 0
-    ramp_model.meta.exposure.type = "NIS_IMAGE"
-
-    return ramp_model, pixdq, gdq, err
