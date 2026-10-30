@@ -310,6 +310,7 @@ def test_hdu_diff_order(mock_rampfiles, fitsdiff_default_kwargs):
     report = report_to_list(diff.report())
     expected_report = [
         "Files contain differences in HDUs:",
+        "-> HDU order is different.",
         "a: 5 HDUs: ['PRIMARY', 'PIXELDQ', 'SCI', 'GROUPDQ', 'ASDF']",
         "b: 5 HDUs: ['PRIMARY', 'SCI', 'PIXELDQ', 'GROUPDQ', 'ASDF']",
         "Common HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
