@@ -1,0 +1,1 @@
+For NIRISS SOSS observations utilizing stripe subarrys, exclude single-integration exposures from level 3 association membership.
