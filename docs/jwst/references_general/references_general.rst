@@ -88,6 +88,8 @@ documentation on each reference file.
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`barshadow <barshadow_step>`                     | :ref:`BARSHADOW <barshadow_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
+| :ref:`charge_migration <charge_migration_step>`       | :ref:`READNOISE <readnoise_reffile>`             |
++-------------------------------------------------------+--------------------------------------------------+
 | :ref:`clean_flicker_noise <clean_flicker_noise_step>` | :ref:`FLAT <flat_reffile>`                       |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`cube_build <cube_build_step>`                   | :ref:`CUBEPAR <cubepar_reffile>`                 |
@@ -282,7 +284,9 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PSFMASK <psfmask_reffile>`                 | :ref:`align_refs <align_refs_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
-| :ref:`READNOISE <readnoise_reffile>`             | :ref:`jump <jump_step>`                               |
+| :ref:`READNOISE <readnoise_reffile>`             | :ref:`charge_migration <charge_migration_step>`       |
++                                                  +-------------------------------------------------------+
+|                                                  | :ref:`jump <jump_step>`                               |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`ramp_fitting <ramp_fitting_step>`               |
 +--------------------------------------------------+-------------------------------------------------------+
