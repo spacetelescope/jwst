@@ -168,7 +168,7 @@ match_driz(
     double ptmin, ptmax, spxmin, spxmax, zoverlap, z1, z2, z3;
     double cdelt1_half, cdelt2_half;
     double xleft, xright, ybot, ytop;
-    double rn_tolerance = 1.0e-13; // Estimation from Mike R looking at GARDEN data.
+    double rn_tolerance = 1.0e-13; // Estimation from Mike Regan looking at GARDEN data.
     double total_weight = 0;
 
     // initialize them to the passed references:

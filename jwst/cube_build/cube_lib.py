@@ -177,7 +177,24 @@ def std2radec(crval1, crval2, xi, eta):
 
 
 def check_cube_size(naxis1, naxis2, naxis3, limit):
-    """Check the size of cube and throw an exception if too large."""
+    """
+    Check the size of cube and throw an exception if too large.
+
+    Parameters
+    ----------
+    naxis1 : int
+        Cube pixel dimension along x.
+    naxis2 : int
+        Cube pixel dimension along y.
+    naxis3 : int
+        Cube pixel dimension along wavelength.
+    limit : int
+        Limit on the number of elements of the cube.
+
+    Raises
+    ------
+        ValueError: If naxis1 * naxis2 * naxis3 exceeds the specified limit.
+    """
     total = naxis1 * naxis2 * naxis3
     if total > limit:
         msg = f"naxis1 * naxis2 * naxis3 = {total} exceeds limit of {limit}"
@@ -413,7 +430,29 @@ def set_wcs(
 
 
 def print_cube_geometry(coord_system, wcs):
-    """Print to log the general properties of the size of the IFU cube."""
+    """
+    Print to log the general properties of the size of the IFU cube.
+
+    Parameters
+    ----------
+    coord_system : str
+        Coordinate system type. If ``'internal_cal'``, axis labels are
+        printed in along-slice/across-slice format; otherwise xi/eta
+        (arcsec) labels are used.
+    wcs : object
+        WCS object containing the cube geometry. Expected attributes:
+
+        - ``naxis1``, ``naxis2``, ``naxis3`` : int — axis dimensions
+        - ``crpix1``, ``crpix2``, ``crpix3`` : float — reference pixels
+        - ``crval1``, ``crval2``, ``crval3`` : float — reference values
+        - ``cdelt1``, ``cdelt2``, ``cdelt3`` : float — pixel scales (arcsec)
+        - ``a_min``, ``a_max`` : float — axis 1 min/max extent
+        - ``b_min``, ``b_max`` : float — axis 2 min/max extent
+        - ``lambda_min``, ``lambda_max`` : float — wavelength range (microns)
+        - ``linear_wave`` : bool — whether wavelength axis is linear
+        - ``wavelength_table`` : array-like — wavelength values for non-linear axis
+        - ``rot_angle`` : float or None — rotation angle between RA-Dec and slicer plane (degrees)
+    """
     log.info("Cube Geometry:")
     if coord_system == "internal_cal":
         log.info(
@@ -584,12 +623,61 @@ def setup_final_model(
     Parameters
     ----------
     model_ref : `~stdatamodels.jwst.datamodels.IFUImageModel`
-        The first IFU image model to use to fill in basic header values.
+        The first IFU image model used to fill in basic header values.
+    cube_wcs : object
+        WCS object containing the cube geometry and wavelength solution.
+        Expected attributes: ``naxis1``, ``naxis2``, ``naxis3``, ``crpix1``,
+        ``crpix2``, ``crpix3``, ``crval1``, ``crval2``, ``crval3``, ``cdelt1``,
+        ``cdelt2``, ``cdelt3``, ``linear_wave``, ``wavelength_table``.
+    spaxel_flux : ndarray
+        1-D array of flux values for each spaxel, reshaped into the 3-D cube.
+    spaxel_iflux : ndarray
+        1-D array of inverse flux (weight map) values for each spaxel.
+    spaxel_var : ndarray
+        1-D array of variance values for each spaxel. Taken as square root
+        before storing in the error extension.
+    spaxel_dq : ndarray
+        1-D array of data quality flags for each spaxel.
+    instrument : str
+        Instrument name. Either ``'MIRI'`` or ``'NIRSPEC'``. Controls the
+        coordinate type and units set for the internal calibration system.
+    rot_angle : float or None
+        Rotation angle in degrees between RA-Dec and the slicer plane.
+        If ``None``, defaults to 0.0.
+    coord_system : str
+        Coordinate system type. If ``'internal_cal'``, axis units and types
+        are set to instrument-specific slicer coordinates instead of RA-Dec.
+    interpolation : str
+        Interpolation method used to build the cube (e.g. ``'drizzle'``).
+        If ``'drizzle'``, ROI and weighting metadata are set to zero.
+    weighting : str
+        Weighting scheme used during cube building, stored in
+        ``cube_model.meta.ifu.weighting``.
+    weight_power : float
+        Power of the weighting function, stored in
+        ``cube_model.meta.ifu.weight_power``.
+    rois : float
+        Spatial region of interest radius in arcsec, stored in
+        ``cube_model.meta.ifu.roi_spatial``.
+    roiw : float
+        Wavelength region of interest width in microns for linear wavelength
+        axes, stored in ``cube_model.meta.ifu.roi_wave``.
+    roiw_table : array-like
+        Wavelength region of interest values for non-linear wavelength axes.
+        The mean is stored in ``cube_model.meta.ifu.roi_wave``.
+    output_name : str or None
+        Output filename to set in ``cube_model.meta.filename``.
+        If ``None``, the filename from ``model_ref`` is retained.
 
     Returns
     -------
-    result : `~stdatamodels.jwst.datamodels.IFUCubeModel`
-        IFU cube datamodel with data arrays filled in.
+    result : tuple
+        A two-element tuple of:
+
+        - ``cube_model`` (`~stdatamodels.jwst.datamodels.IFUCubeModel`):
+           IFU cube datamodel with data arrays and WCS metadata filled in.
+        - ``status`` (int): 0 if cube build completed successfully,
+          1 if the cube contains only zero data and the step is marked SKIPPED.
     """
     status = 0
     # loop over the wavelength planes to confirm each plane has some data

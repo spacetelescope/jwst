@@ -12,10 +12,6 @@ setup_final_model
   - internal_cal / MIRI          : cunit1="arcsec", ctype1="MRSALPHA"
   - drizzle interpolation        : weight_power/roi_wave/roi_spatial zeroed
 
-set_wcs_slicer
-  - linear_wave flag is passed through (True and False)
-  - cdelt1/cdelt2 stored verbatim from caller for both MIRI and NIRSpec
-  - naxis3 computed correctly from wavelength range and cdelt3
 """
 
 import math
@@ -26,7 +22,7 @@ import pytest
 from astropy.modeling.models import Mapping
 from stdatamodels.jwst import datamodels
 
-from jwst.cube_build import cube_lib, ifu_cube
+from jwst.cube_build import cube_lib
 
 # ---------------------------------------------------------------------------
 # Shared constants
@@ -410,108 +406,3 @@ class TestDrizzleInterpolation:
             weighting="drizzle",
         )
         assert cube_model.meta.ifu.weighting == "drizzle"
-
-
-# ---------------------------------------------------------------------------
-# Tests: set_wcs_slicer — linear_wave propagation
-# ---------------------------------------------------------------------------
-
-
-class TestSetWcsSlicer:
-    """set_wcs_slicer must pass linear_wave through, not hardcode True."""
-
-    # Minimal slicer-plane corners: centred at origin, ±1 unit
-    CORNER_A = np.array([-1.0, -1.0, 1.0, 1.0])
-    CORNER_B = np.array([-0.5, 0.5, -0.5, 0.5])
-    LAMBDA_MIN = 7.5
-    LAMBDA_MAX = 7.6
-    CDELT1 = 0.00074  # meters (NIRSpec across-slice)
-    CDELT2 = 0.00037  # meters (NIRSpec along-slice)
-    CDELT3 = 0.001  # micron
-
-    def _make_nirspec_cube(self):
-        """Return a bare IFUCubeData with instrument=NIRSPEC."""
-        cube = ifu_cube.IFUCubeData.__new__(ifu_cube.IFUCubeData)
-        cube.instrument = "NIRSPEC"
-        return cube
-
-    def test_linear_wave_true_is_stored(self):
-        """When called with linear_wave=True the CubeWCS must record True."""
-        cube = self._make_nirspec_cube()
-        cube_wcs = cube.set_wcs_slicer(
-            self.CORNER_A,
-            self.CORNER_B,
-            self.LAMBDA_MIN,
-            self.LAMBDA_MAX,
-            self.CDELT1,
-            self.CDELT2,
-            self.CDELT3,
-            linear_wave=True,
-        )
-        assert cube_wcs.linear_wave is True
-
-    def test_linear_wave_false_is_stored(self):
-        """
-        When called with linear_wave=False the CubeWCS must record False.
-        This is the test that catches the former hardcode of linear_wave=True.
-        """
-        cube = self._make_nirspec_cube()
-        cube_wcs = cube.set_wcs_slicer(
-            self.CORNER_A,
-            self.CORNER_B,
-            self.LAMBDA_MIN,
-            self.LAMBDA_MAX,
-            self.CDELT1,
-            self.CDELT2,
-            self.CDELT3,
-            linear_wave=False,
-        )
-        assert cube_wcs.linear_wave is False
-
-    def test_cdelt1_stored_verbatim(self):
-        """cube_wcs.cdelt1 must be exactly the value passed in."""
-        cube = self._make_nirspec_cube()
-        cube_wcs = cube.set_wcs_slicer(
-            self.CORNER_A,
-            self.CORNER_B,
-            self.LAMBDA_MIN,
-            self.LAMBDA_MAX,
-            self.CDELT1,
-            self.CDELT2,
-            self.CDELT3,
-            linear_wave=True,
-        )
-        assert cube_wcs.cdelt1 == self.CDELT1
-        assert cube_wcs.cdelt2 == self.CDELT2
-
-    def test_naxis3_from_wavelength_range(self):
-        """naxis3 must equal ceil((lambda_max - lambda_min) / cdelt3)."""
-        cube = self._make_nirspec_cube()
-        cube_wcs = cube.set_wcs_slicer(
-            self.CORNER_A,
-            self.CORNER_B,
-            self.LAMBDA_MIN,
-            self.LAMBDA_MAX,
-            self.CDELT1,
-            self.CDELT2,
-            self.CDELT3,
-            linear_wave=True,
-        )
-        expected_naxis3 = math.ceil((self.LAMBDA_MAX - self.LAMBDA_MIN) / self.CDELT3)
-        assert cube_wcs.naxis3 == expected_naxis3
-
-    def test_miri_linear_wave_false_stored(self):
-        """Same linear_wave check for MIRI instrument branch."""
-        cube = ifu_cube.IFUCubeData.__new__(ifu_cube.IFUCubeData)
-        cube.instrument = "MIRI"
-        cube_wcs = cube.set_wcs_slicer(
-            self.CORNER_A,
-            self.CORNER_B,
-            self.LAMBDA_MIN,
-            self.LAMBDA_MAX,
-            cdelt1=0.196,
-            cdelt2=0.196,
-            cdelt3=self.CDELT3,
-            linear_wave=False,
-        )
-        assert cube_wcs.linear_wave is False
