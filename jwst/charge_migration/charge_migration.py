@@ -237,6 +237,8 @@ def correct_charge_migration(
     corrected_diff = med_masked_ramp_diff[:, yfit, xfit] - coeffs[1] * gvec[:, None]
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "Input data contains invalid values", AstropyUserWarning)
+        warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
+        warnings.filterwarnings("ignore", "Degrees of freedom", RuntimeWarning)
         stats = SigmaClippedStats(corrected_diff, axis=0, mask=~valid_for_fit[:, yfit, xfit])
         sigma_new = stats.std()
     del corrected_diff
