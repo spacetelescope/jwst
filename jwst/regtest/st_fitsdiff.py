@@ -830,6 +830,7 @@ class STHeaderDiff(HeaderDiff):
             for idx, keya in enumerate(keysa):
                 if keya not in keysb:
                     self.diff_keyword_values[keya].append((valuesa[keya], "NOT FOUND"))
+                    continue
                 if keya != keysb[idx]:
                     # Not in the same order! Exit loop and report
                     self.diff_key_order = (
