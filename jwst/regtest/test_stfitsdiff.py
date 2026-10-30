@@ -227,9 +227,9 @@ def test_diff_exts(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
     ]
     expected_report = [
-        "Files contain different HDUs:",
-        "a: 2 HDUs: ['ASDF', 'PRIMARY']",
-        "b: 5 HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
+        "Files contain differences in HDUs:",
+        "a: 2 HDUs: ['PRIMARY', 'ASDF']",
+        "b: 5 HDUs: ['PRIMARY', 'SCI', 'PIXELDQ', 'GROUPDQ', 'ASDF']",
         "Common HDUs: ['ASDF', 'PRIMARY']",
         "HDUs in a but not b: []",
         "HDUs in b but not a: ['GROUPDQ', 'PIXELDQ', 'SCI']",
@@ -247,6 +247,31 @@ def test_diff_exts(mock_rampfiles, fitsdiff_default_kwargs):
     assert report == expected_report
 
 
+def test_add_sci(mock_rampfiles, fitsdiff_default_kwargs):
+    truth = mock_rampfiles[0]
+    tmp_dir = mock_rampfiles[6]
+    new_file = tmp_dir / "new_file.fits"
+    with fits.open(truth) as hdu:
+        sci = hdu[1].copy()
+        sci.ver = 2
+        hdu.append(sci)
+        hdu.writeto(new_file)
+    diff = STFITSDiff(new_file, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    expected_report = [
+        "Files contain differences in HDUs:",
+        "a: 6 HDUs: [('PRIMARY', 1), ('SCI', 1), ('PIXELDQ', 1), ('GROUPDQ', 1), ('ASDF', 1), ('SCI', 2)]",
+        "b: 5 HDUs: [('PRIMARY', 1), ('SCI', 1), ('PIXELDQ', 1), ('GROUPDQ', 1), ('ASDF', 1)]",
+        "Common HDUs: [('ASDF', 1), ('GROUPDQ', 1), ('PIXELDQ', 1), ('PRIMARY', 1), ('SCI', 1)]",
+        "HDUs in a but not b: [('SCI', 2)]",
+        "HDUs in b but not a: []",
+        "No differences found between common HDUs.",
+    ]
+    assert result is False
+    assert report == expected_report
+
+
 def test_rm_sci(mock_rampfiles, fitsdiff_default_kwargs):
     truth = mock_rampfiles[0]
     tmp_dir = mock_rampfiles[6]
@@ -259,12 +284,38 @@ def test_rm_sci(mock_rampfiles, fitsdiff_default_kwargs):
     result = diff.identical
     report = report_to_list(diff.report())
     expected_report = [
-        "Files contain different HDUs:",
-        "a: 4 HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY']",
-        "b: 5 HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
+        "Files contain differences in HDUs:",
+        "a: 4 HDUs: ['PRIMARY', 'PIXELDQ', 'GROUPDQ', 'ASDF']",
+        "b: 5 HDUs: ['PRIMARY', 'SCI', 'PIXELDQ', 'GROUPDQ', 'ASDF']",
         "Common HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY']",
         "HDUs in a but not b: []",
         "HDUs in b but not a: ['SCI']",
+        "No differences found between common HDUs.",
+    ]
+    assert result is False
+    assert report == expected_report
+
+
+def test_hdu_diff_order(mock_rampfiles, fitsdiff_default_kwargs):
+    truth = mock_rampfiles[0]
+    tmp_dir = mock_rampfiles[6]
+    reordered_file = tmp_dir / "reordered.fits"
+    with fits.open(truth) as hdu:
+        reorder = hdu.copy()
+        reorder[1] = hdu[2]
+        reorder[2] = hdu[1]
+        reorder.writeto(reordered_file)
+    diff = STFITSDiff(reordered_file, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    expected_report = [
+        "Files contain differences in HDUs:",
+        "-> HDU order is different.",
+        "a: 5 HDUs: ['PRIMARY', 'PIXELDQ', 'SCI', 'GROUPDQ', 'ASDF']",
+        "b: 5 HDUs: ['PRIMARY', 'SCI', 'PIXELDQ', 'GROUPDQ', 'ASDF']",
+        "Common HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
+        "HDUs in a but not b: []",
+        "HDUs in b but not a: []",
         "No differences found between common HDUs.",
     ]
     assert result is False

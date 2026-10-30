@@ -217,25 +217,30 @@ class STFITSDiff(FITSDiff):
         # 2. Option to provide a relative and/or absolute tolerance per extension,
         #    either with name or number.
 
-        # Check if the files contain the same extension names and find the intersection
+        # Check if the files contain the same extension names and in the same order
         ext_namesa = [ext.name for ext in self.a]
         ext_namesb = [ext.name for ext in self.b]
+        # if the same extension name appears more than once, use versions as well
+        if len(ext_namesa) != len(set(ext_namesa)) or (len(ext_namesb) != len(set(ext_namesb))):
+            ext_namesa = [(ext.name, ext.ver) for ext in self.a]
+            ext_namesb = [(ext.name, ext.ver) for ext in self.b]
         ext_not_in_both = set(ext_namesa).symmetric_difference(set(ext_namesb))
         ext_intersection = set.intersection(set(ext_namesa), set(ext_namesb))
 
         self.extnames_different = False
-        a_not_b = set(ext_namesa) - set(ext_namesb)
-        b_not_a = set(ext_namesb) - set(ext_namesa)
-        if a_not_b or b_not_a:
+        self.diff_hdu_order = False
+        if ext_namesa != ext_namesb:
             self.extnames_different = True
-            self.a_not_b = sorted(a_not_b)
-            self.b_not_a = sorted(b_not_a)
+            if len(ext_namesa) == len(ext_namesb):
+                self.diff_hdu_order = True
+            self.a_not_b = sorted(set(ext_namesa) - set(ext_namesb))
+            self.b_not_a = sorted(set(ext_namesb) - set(ext_namesa))
             self.diff_hdu_count = (len(self.a), len(self.b))
 
         if self.diff_hdu_count or self.extnames_different:
             self.diff_extnames = (
-                sorted(ext_namesa),
-                sorted(ext_namesb),
+                ext_namesa,
+                ext_namesb,
                 sorted(ext_intersection),
                 sorted(ext_not_in_both),
             )
@@ -247,6 +252,8 @@ class STFITSDiff(FITSDiff):
 
         # Make sure to compare the same extensions
         for idxa, extname in enumerate(ext_namesa):
+            if isinstance(extname, tuple):
+                extname = extname[0]
             extver = self.a[idxa].ver
             same_version = False
             if extname not in ext_intersection:
@@ -325,7 +332,9 @@ class STFITSDiff(FITSDiff):
 
         if self.diff_hdu_count:
             self._fileobj.write("\n")
-            self._writeln("Files contain different HDUs:")
+            self._writeln("Files contain differences in HDUs:")
+            if self.diff_hdu_order:
+                self._writeln(" -> HDU order is different.")
             self._writeln(f" a: {self.diff_hdu_count[0]} HDUs: {self.diff_extnames[0]}")
             self._writeln(f" b: {self.diff_hdu_count[1]} HDUs: {self.diff_extnames[1]}")
             self._writeln(f" Common HDUs: {list(self.diff_extnames[2])}")
