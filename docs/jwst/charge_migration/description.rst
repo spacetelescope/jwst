@@ -85,8 +85,8 @@ The process is:
       less than a specified factor times the read noise.  The factor is set by the
       ``snr_limit`` parameter.
    b. The fit value for the first group difference is positive.
-   c. If there are more than 5 diffs, the RMS of the corrected data is less
-      than a specified fraction of the original RMS.  The fraction is set
+   c. If there are more than 5 diffs, the RMS of the corrected data is reduced
+      by at least a specified factor of the original RMS. The factor is set
       by the ``rms_limit`` parameter.
 
 6. For pixels with valid corrections, subtract the fit slope from the group
