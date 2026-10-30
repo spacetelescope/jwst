@@ -663,12 +663,10 @@ def test_miri_all_sat():
 
     model1.groupdq[:, :, :, :] = SATURATED
 
-    image_info, integ_info, opt_info = ramp_fit(
-        model1, True, rnoise, gain, DEFAULT_OLS, "optimal", "none", dqflags.pixel
-    )
-
-    assert image_info is None
-    assert integ_info is None
+    with pytest.raises(ValueError):
+        image_info, integ_info, opt_info = ramp_fit(
+            model1, True, rnoise, gain, DEFAULT_OLS, "optimal", "none", dqflags.pixel
+        )
 
 
 def test_miri_first_last():
