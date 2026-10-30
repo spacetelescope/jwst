@@ -9,4 +9,5 @@ Charge Migration
 
    description.rst
    arguments.rst
+   reference_files.rst
    api_ref.rst
