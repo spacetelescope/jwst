@@ -222,8 +222,8 @@ class STFITSDiff(FITSDiff):
         ext_namesb = [ext.name for ext in self.b]
         # if the same extension name appears more than once, use versions as well
         if len(ext_namesa) != len(set(ext_namesa)) or (len(ext_namesb) != len(set(ext_namesb))):
-            ext_namesa = [ext.name + "-" + str(ext.ver) for ext in self.a]
-            ext_namesb = [ext.name + "-" + str(ext.ver) for ext in self.b]
+            ext_namesa = [(ext.name, ext.ver) for ext in self.a]
+            ext_namesb = [(ext.name, ext.ver) for ext in self.b]
         ext_not_in_both = set(ext_namesa).symmetric_difference(set(ext_namesb))
         ext_intersection = set.intersection(set(ext_namesa), set(ext_namesb))
 
@@ -252,6 +252,8 @@ class STFITSDiff(FITSDiff):
 
         # Make sure to compare the same extensions
         for idxa, extname in enumerate(ext_namesa):
+            if isinstance(extname, tuple):
+                extname = extname[0]
             extver = self.a[idxa].ver
             same_version = False
             if extname not in ext_intersection:
@@ -283,7 +285,7 @@ class STFITSDiff(FITSDiff):
                     ):
                         hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
                         if not hdu_diff.identical:
-                            self.diff_hdus.append((idxa, hdu_diff, extname.split("-")[0], extver))
+                            self.diff_hdus.append((idxa, hdu_diff, extname, extver))
                             self.original_hdu_order.append(idxa)
 
     def _report(self):
