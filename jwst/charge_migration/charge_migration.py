@@ -63,7 +63,7 @@ def correct_charge_migration(
     correction_threshold=10000.0,
     mask_pad=2,
     snr_limit=3.0,
-    rms_limit=0.45,
+    rms_limit=2.2,
     fit_info=False,
 ):
     """
@@ -82,8 +82,8 @@ def correct_charge_migration(
        a. The value change due to the slope over the range of the fit values is
           less than ``snr_limit`` times the read noise.
        b. The fit value for the first group difference is positive.
-       c. If there are more than 5 diffs, the RMS of the corrected data is less
-          than ``rms_limit`` of the original RMS.
+       c. If there are more than 5 diffs, the RMS of the corrected data is
+          reduced by at least ``rms_limit``, compared to the original RMS.
 
     6. For pixels with valid corrections, subtract the fit slope from the group
        differences.
@@ -105,7 +105,7 @@ def correct_charge_migration(
         Specified as a factor of the read noise value.
     rms_limit : float, optional
         Minimum RMS improvement from a fit correction to consider the fit successful.
-        Specified as a fraction of the initial RMS.
+        Specified as a reduction factor, compared to the initial RMS.
     fit_info : bool, optional
         If True, return a diagnostic table of the ramp fits performed.
 
@@ -250,8 +250,9 @@ def correct_charge_migration(
         sigma_new = stats.std()
     del corrected_diff
 
-    bad_rms = (n_diffs[yfit, xfit] > 5) & (sigma_new >= rms_limit * sigma[yfit, xfit])
-    coeffs[:, bad_rms] = np.nan
+    if rms_limit > 0:
+        bad_rms = (n_diffs[yfit, xfit] > 5) & (sigma_new >= sigma[yfit, xfit] / rms_limit)
+        coeffs[:, bad_rms] = np.nan
 
     # For any remaining good fits, subtract off the slope term from the original group differences
     good_fits = np.isfinite(coeffs[1])

@@ -18,11 +18,13 @@ The ``charge_migration`` step has the following optional arguments:
 
 ``--snr_limit`` (float, default=3.0)
     Minimum signal-to-noise ratio for a fit correction to consider the fit successful.
-    Specified as a factor of the read noise value. Ignored if ``correction_threshold`` is negative.
+    Specified as a factor of the read noise value. Set to zero to skip the SNR check
+    for the fits. Ignored if ``correction_threshold`` is negative.
 
-``--rms_limit`` (float, default=0.45)
+``--rms_limit`` (float, default=2.2)
     Minimum RMS improvement from a fit correction to consider the fit successful.
-    Specified as a fraction of the initial RMS. Ignored if ``correction_threshold`` is negative.
+    Specified as a reduction factor for the initial RMS. Set to zero to skip the RMS check
+    for the fits. Ignored if ``correction_threshold`` is negative.
 
 ``--save_fit_info`` (boolean, default=False)
     If True, save a table of information about fit corrections.  The table is stored as
