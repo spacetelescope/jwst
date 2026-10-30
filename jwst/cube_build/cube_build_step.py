@@ -6,7 +6,7 @@ import asdf
 from astropy import units
 
 from jwst.assign_wcs.util import update_s_region_keyword
-from jwst.cube_build import cube_build, data_types, ifu_cube
+from jwst.cube_build import cube_build, cube_lib, data_types, ifu_cube
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe import Step, record_step_status
@@ -85,6 +85,8 @@ class CubeBuildStep(Step):
            Container (list) of `~stdatamodels.jwst.datamodels.IFUCubeModel`.
         """
         log.info("Starting IFU Cube Building Step")
+
+        cube_limit = 1.0e8  # limit on the maximum cube size (number of voxels)
 
         t0 = time.time()
         # ________________________________________________________________________________
@@ -350,12 +352,22 @@ class CubeBuildStep(Step):
                 thiscube.determine_cube_parameters_internal()
             else:
                 thiscube.determine_cube_parameters()
+
             thiscube.setup_ifucube_wcs()
 
+            # Check that the IFU cube is not over the size limit. Cubes above the size
+            # limit will lead to a memory failure and usually result trying to combine too
+            # much data together.
+            cube_lib.check_cube_size(
+                thiscube.cube_wcs.naxis1,
+                thiscube.cube_wcs.naxis2,
+                thiscube.cube_wcs.naxis3,
+                cube_limit,
+            )
             # build the IFU Cube
 
             status = 0
-            result, status = thiscube.build_ifucube()
+            result, status = thiscube.build_ifucube(thiscube.cube_wcs)
 
             # check if cube_build failed
             if status == 1:
