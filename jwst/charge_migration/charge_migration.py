@@ -176,10 +176,15 @@ def correct_charge_migration(
 
     # Get clipped stats for the median diff array
     valid_for_fit = np.isfinite(med_masked_ramp_diff) & mask
+    n_diffs = np.sum(valid_for_fit, axis=0)
+
+    # Fit pixels identified by threshold, skipping pixels with n_diffs < 2
+    yfit, xfit = np.where(mask & (n_diffs >= 2))
+    nfit = len(xfit)
 
     # Check again if there is anything to do
-    if not np.any(valid_for_fit):
-        log.info("No finite pixels to correct.")
+    if nfit == 0:
+        log.info("No valid pixels to correct.")
         return return_val
 
     with warnings.catch_warnings():
@@ -190,12 +195,11 @@ def correct_charge_migration(
         clipped_sigma = stats.std()
 
     # Clip values where n_diffs >= 5
-    n_diffs = np.sum(valid_for_fit, axis=0)
     clip_mask = np.abs(med_masked_ramp_diff - clipped_med) < 5 * clipped_sigma
     valid_for_fit[:, n_diffs >= 5] &= clip_mask[:, n_diffs >= 5]
     del clipped_med, clip_mask, clipped_sigma
 
-    # Check again if there is anything to do
+    # Check again if there is anything to do, after clipping
     if not np.any(valid_for_fit):
         log.info("No pixels to correct after sigma clipping.")
         return return_val
@@ -207,9 +211,6 @@ def correct_charge_migration(
         stats = SigmaClippedStats(med_masked_ramp_diff, axis=0, mask=~valid_for_fit)
         sigma = stats.std()
 
-    # Fit clipped pixels in the thresholded mask, skipping pixels with n_diffs < 2
-    yfit, xfit = np.where(mask & (n_diffs >= 2))
-    nfit = len(xfit)
     log.info("Identified %s pixels to fit for BFE", str(nfit))
 
     ramp_diff = np.diff(sci, axis=1)
