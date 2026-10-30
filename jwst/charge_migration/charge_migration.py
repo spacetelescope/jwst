@@ -130,12 +130,13 @@ def correct_charge_migration(
     mask = maxvals > correction_threshold
 
     # Check if there is anything to do
+    if fit_info:
+        return_val = output_model, None
+    else:
+        return_val = output_model
     if not np.any(mask):
-        log.info("No pixels to correct.")
-        if fit_info:
-            return output_model, None
-        else:
-            return output_model
+        log.info("No pixels over threshold to correct.")
+        return return_val
 
     # Grow the mask with the specified padding
     box_size = 2 * mask_pad + 1
@@ -147,7 +148,9 @@ def correct_charge_migration(
     badindx = (gdq & bad) != 0
 
     # Group by group differences in the ramp, masking bad pixels
-    masked_ramp_diff = np.diff(sci, axis=1)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+        masked_ramp_diff = np.diff(sci, axis=1)
     masked_ramp_diff[badindx[:, 1:, :, :]] = np.nan
     masked_ramp_diff[badindx[:, :-1, :, :]] = np.nan
     del badindx
@@ -167,6 +170,12 @@ def correct_charge_migration(
 
     # Get clipped stats for the median diff array
     valid_for_fit = np.isfinite(med_masked_ramp_diff) & mask
+
+    # Check again if there is anything to do
+    if not np.any(valid_for_fit):
+        log.info("No finite pixels to correct.")
+        return return_val
+
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
         warnings.filterwarnings("ignore", "Degrees of freedom", RuntimeWarning)
@@ -179,6 +188,11 @@ def correct_charge_migration(
     clip_mask = np.abs(med_masked_ramp_diff - clipped_med) < 5 * clipped_sigma
     valid_for_fit[:, n_diffs >= 5] &= clip_mask[:, n_diffs >= 5]
     del clipped_med, clip_mask, clipped_sigma
+
+    # Check again if there is anything to do
+    if not np.any(valid_for_fit):
+        log.info("No pixels to correct after sigma clipping.")
+        return return_val
 
     # Clip again for a good measure of sigma
     with warnings.catch_warnings():
@@ -211,7 +225,7 @@ def correct_charge_migration(
     # snr_limit times the read noise and that the full model value at
     # 0 group difference is positive (i.e. intercept > 0)
     intercept, slope = coeffs.copy()
-    good_snr = (np.abs(n_diffs[yfit, xfit] * slope) > np.abs(snr_limit * rnvals[yfit, xfit])) & (
+    good_snr = (np.abs(n_diffs[yfit, xfit] * slope) >= np.abs(snr_limit * rnvals[yfit, xfit])) & (
         intercept > 0
     )
     coeffs[:, ~good_snr] = np.nan
@@ -227,7 +241,7 @@ def correct_charge_migration(
         sigma_new = stats.std()
     del corrected_diff
 
-    bad_rms = (n_diffs[yfit, xfit] > 5) & (sigma_new > rms_limit * sigma[yfit, xfit])
+    bad_rms = (n_diffs[yfit, xfit] > 5) & (sigma_new >= rms_limit * sigma[yfit, xfit])
     coeffs[:, bad_rms] = np.nan
 
     # For any remaining good fits, subtract off the slope term from the original group differences
