@@ -1188,7 +1188,44 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
             ("SOURCE_RA", "<f8"),
             ("SOURCE_DEC", "<f8"),
         ]
-        data = np.rec.array(data_list, shape=n_spec, dtype=fltdtype)
+        data = np.empty(n_spec, dtype=fltdtype)
+
+        # Set default for these because not all elements will be filled.
+        data["DQ"][...] = 1
+        for col in (
+            "WAVELENGTH",
+            "FLUX",
+            "CONTAM_FLUX",
+            "ERROR",
+            "SURF_BRIGHT",
+            "CONTAM_SURF_BRIGHT",
+            "SB_ERROR",
+            "WEIGHT",
+            "N_INPUT",
+        ):
+            data[col][...] = np.nan
+
+        # Fill the recarray shamefully due to VLA, sorted by source ID.
+        i_sid = np.argsort([dd[0] for dd in data_list])
+        for k, i in enumerate(i_sid):
+            dd = data_list[i]
+            nalongdisp = dd[11]
+            data[k]["SOURCE_ID"] = dd[0]
+            data[k]["WAVELENGTH"][:nalongdisp] = dd[1]
+            data[k]["FLUX"][:nalongdisp] = dd[2]
+            data[k]["CONTAM_FLUX"][:nalongdisp] = dd[3]
+            data[k]["ERROR"][:nalongdisp] = dd[4]
+            data[k]["SURF_BRIGHT"][:nalongdisp] = dd[5]
+            data[k]["CONTAM_SURF_BRIGHT"][:nalongdisp] = dd[6]
+            data[k]["SB_ERROR"][:nalongdisp] = dd[7]
+            data[k]["DQ"][:nalongdisp] = dd[8]
+            data[k]["WEIGHT"][:nalongdisp] = dd[9]
+            data[k]["N_INPUT"][:nalongdisp] = dd[10]
+            data[k]["N_ALONGDISP"] = nalongdisp
+            data[k]["SOURCE_TYPE"] = dd[12]
+            data[k]["SOURCE_RA"] = dd[13]
+            data[k]["SOURCE_DEC"] = dd[14]
+
         output_order = dm.WFSSCombinedSpecModel(spec_table=data)
         output_order.spec_table.columns["wavelength"].unit = "um"
         output_order.spec_table.columns["flux"].unit = flux_unit
@@ -1197,6 +1234,8 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
         output_order.spec_table.columns["surf_bright"].unit = sb_unit
         output_order.spec_table.columns["contam_surf_bright"].unit = sb_unit
         output_order.spec_table.columns["sb_error"].unit = sb_unit
+        output_order.spec_table.columns["source_ra"].unit = "deg"
+        output_order.spec_table.columns["source_dec"].unit = "deg"
 
         # Attributes that we want to copy unmodified from input to output spectra
         output_order.spectral_order = order
