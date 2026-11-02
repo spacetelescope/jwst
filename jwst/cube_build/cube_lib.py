@@ -241,44 +241,45 @@ def set_wcs(
 
     Returns
     -------
-    crval1 : float
-        Reference point RA coordinate.
-    crval2 : float
-        Reference point Dec coordinate.
-    crval3 : float
-        Reference point wavelength coordinate.
-    crpix1 : float
-        Reference point pixel index along x-axis (1-indexed).
-    crpix2 : float
-        Reference point pixel index along y-axis (1-indexed).
-    crpix3 : float
-        Reference point pixel index along wavelength axis (1-indexed).
-    naxis1 : int
-        Cube pixel dimension along x.
-    naxis2 : int
-        Cube pixel dimension along y.
-    naxis3 : int
-        Cube pixel dimension along wavelength.
-    a_min : float
-        Minimum spatial bound in standard coordinates.
-    a_max : float
-        Maximum spatial bound in standard coordinates.
-    b_min : float
-        Minimum spatial bound in standard coordinates.
-    b_max : float
-        Maximum spatial bound in standard coordinates.
-    xcoord : ndarray
-        1D array of spaxel center positions along x.
-    ycoord : ndarray
-        1D array of spaxel center positions along y.
-    zcoord : ndarray
-        1D array of spaxel center positions along wavelength.
-    lambda_min : float
-        Adjusted minimum bound for linear wavelength axis.
-    lambda_max : float
-        Adjusted maximum bound for linear wavelength axis.
-    cdelt3_normal : ndarray
-        Array of wavelength bin step sizes used for flux normalization.
+    CubeWCS : class holding WCS information
+        crval1 : float
+            Reference point RA coordinate.
+        crval2 : float
+            Reference point Dec coordinate.
+        crval3 : float
+            Reference point wavelength coordinate.
+        crpix1 : float
+            Reference point pixel index along x-axis (1-indexed).
+        crpix2 : float
+            Reference point pixel index along y-axis (1-indexed).
+        crpix3 : float
+            Reference point pixel index along wavelength axis (1-indexed).
+        naxis1 : int
+            Cube pixel dimension along x.
+        naxis2 : int
+            Cube pixel dimension along y.
+        naxis3 : int
+            Cube pixel dimension along wavelength.
+        a_min : float
+            Minimum spatial bound in standard coordinates.
+        a_max : float
+            Maximum spatial bound in standard coordinates.
+        b_min : float
+            Minimum spatial bound in standard coordinates.
+        b_max : float
+            Maximum spatial bound in standard coordinates.
+        xcoord : ndarray
+            1D array of spaxel center positions along x.
+        ycoord : ndarray
+            1D array of spaxel center positions along y.
+        zcoord : ndarray
+            1D array of spaxel center positions along wavelength.
+        lambda_min : float
+            Adjusted minimum bound for linear wavelength axis.
+        lambda_max : float
+            Adjusted maximum bound for linear wavelength axis.
+        cdelt3_normal : ndarray
+            Array of wavelength bin step sizes used for flux normalization.
     """
     ra_min = np.min(corner_ra)
     ra_max = np.max(corner_ra)

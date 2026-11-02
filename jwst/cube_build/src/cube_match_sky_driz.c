@@ -180,7 +180,7 @@ match_driz(
 
     // find max of cdelt3, dwave to be used to estimate which wavelength plane the
     // pixel falls on
-    rn_tolerance = 0.000001;
+
     zreg = 0;
     max_cdelt3 = cdelt3[0];
     max_dwave = dwave[0];
