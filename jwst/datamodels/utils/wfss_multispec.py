@@ -65,7 +65,7 @@ def make_wfss_multiexposure(input_list):
             if i == 0:
                 # get the input datatype, and give it the same format as a schema
                 # to be compatible with determine_vector_and_meta_columns
-                # while retaining any extra columns (i.e. contam_flux, contam_surf_bright)
+                # while retaining any extra columns (e.g. contam_flux, contam_surf_bright)
                 dt = spec.spec_table.dtype.descr
                 input_datatype = [{"name": name, "datatype": str(dtype)} for name, dtype in dt]
             fname = getattr(spec.meta, "filename", None)
@@ -250,7 +250,7 @@ def make_wfss_multicombined(results_list):
 
     # figure out column names and dtypes
     # use the actual input dtype instead of the schema
-    # so we retain any extra columns (i.e. contam_flux, contam_surf_bright)
+    # so we retain any extra columns (e.g. contam_flux, contam_surf_bright)
     dt = results_list[0].spec[0].spec_table.dtype.descr
     input_datatype = [{"name": name, "datatype": str(dtype)} for name, dtype in dt]
     output_schema = dm.WFSSMultiCombinedSpecModel().schema

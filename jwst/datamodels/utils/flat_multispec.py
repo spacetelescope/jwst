@@ -297,9 +297,12 @@ def expand_table(spec):
         sb_idx = _idx_from_dtype(out_dtype, "SURF_BRIGHT")
         columns_to_copy.insert(flux_idx + 1, "CONTAM_FLUX")
         descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
-        # surface brightness needs a +2 because the CONTAM_FLUX column was inserted before it
-        columns_to_copy.insert(sb_idx + 2, "CONTAM_SURF_BRIGHT")
-        descr.insert(sb_idx + 2, ("CONTAM_SURF_BRIGHT", float))
+        descr.insert(flux_idx + 2, ("CORR_FLUX", float))
+        # surface brightness needs a +3 because two columns were inserted before it
+        columns_to_copy.insert(sb_idx + 3, "CONTAM_SURF_BRIGHT")
+        descr.insert(sb_idx + 3, ("CONTAM_SURF_BRIGHT", float))
+        columns_to_copy.insert(sb_idx + 4, "CORR_SURF_BRIGHT")
+        descr.insert(sb_idx + 4, ("CORR_SURF_BRIGHT", float))
         out_dtype = np.dtype(descr)
     columns_to_copy = np.array(columns_to_copy)
 
