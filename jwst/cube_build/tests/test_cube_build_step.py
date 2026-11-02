@@ -365,7 +365,7 @@ def test_readnoise_weighting(nirspec_data, weighting):
         weighting=weighting,
         variance_weighting="readnoise",
         scalexy=0.05,
-        debug_spaxel="30 20 500",
+        #   debug_spaxel="30 20 500",
     )
     cube = result[0]
 

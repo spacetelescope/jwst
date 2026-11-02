@@ -195,6 +195,7 @@ match_driz(
 
     // loop over each detector pixel and find which spaxels it overlaps with
     nxy = nx * ny;
+
     for (k = 0; k < npt; k++) {
         xpixel[0] = xi1[k];
         xpixel[1] = xi2[k];
@@ -261,7 +262,6 @@ match_driz(
             zreg = fabs(dwave[k] + cdelt3[iw]);
             // zreg = 0.0025; (roiw size for testing- usually larger than zreg)
             wdiff = zc[iw] - wave[k];
-
             if (fabs(wdiff) < zreg) {
                 // Fractional wavelength overlaps to use for weighting
                 ptmin = wave[k] - dwave[k] / 2;
@@ -298,7 +298,6 @@ match_driz(
                         ytop = yc[iy] + cdelt2 * 0.5;
 
                         index_xy = iy * nx + ix;
-
                         if (xleft < xmax && xright > xmin && ybot < ymax && ytop > ymin) {
 
                             index_xy = iy * nx + ix;

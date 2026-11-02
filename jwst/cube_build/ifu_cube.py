@@ -151,27 +151,8 @@ class IFUCubeData:
         self.cdelt1 = None
         self.cdelt2 = None
         self.cdelt3 = None
-        self.crpix1 = None
-        self.crpix2 = None
-        self.crpix3 = None
-        self.crval1 = None
-        self.crval2 = None
-        self.crval3 = None
-        self.naxis1 = None
-        self.naxis2 = None
-        self.naxis3 = None
-        self.cdelt3_normal = None
-        self.rot_angle = None  # rotation angle between Ra-Dec and IFU local instrument plane
 
-        self.a_min = 0
-        self.a_max = 0
-        self.b_min = 0
-        self.b_max = 0
-        self.lambda_min = 0
-        self.lambda_max = 0
-        self.xcoord = None
-        self.ycoord = None
-        self.zcoord = None
+        self.rot_angle = None  # rotation angle between Ra-Dec and IFU local instrument plane
 
     def check_ifucube(self):
         """
@@ -510,9 +491,9 @@ class IFUCubeData:
         cb_suffix = self.define_cubename_suffix()
         self.output_name = self.output_name_base + cb_suffix
 
+        self.cube_wcs = cube_wcs
         total_num = self.cube_wcs.naxis1 * self.cube_wcs.naxis2 * self.cube_wcs.naxis3
 
-        self.cube_wcs = cube_wcs
         self.spaxel_flux = np.zeros(total_num, dtype=np.float64)
         self.spaxel_weight = np.zeros(total_num, dtype=np.float64)
         self.spaxel_var = np.zeros(total_num, dtype=np.float64)
@@ -640,11 +621,12 @@ class IFUCubeData:
 
                         if debug_cube_index >= 0:
                             log.info(f"Input filename: {input_model.meta.filename}")
+
                         result = cube_wrapper_driz(
                             self.readnoise_weight,
-                            self.xcoord,
-                            self.ycoord,
-                            self.zcoord,
+                            self.cube_wcs.xcoord,
+                            self.cube_wcs.ycoord,
+                            self.cube_wcs.zcoord,
                             coord1,
                             coord2,
                             wave,
