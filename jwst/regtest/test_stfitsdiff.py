@@ -322,6 +322,34 @@ def test_hdu_diff_order(mock_rampfiles, fitsdiff_default_kwargs):
     assert report == expected_report
 
 
+def test_same_len_diff_hdus(mock_rampfiles, fitsdiff_default_kwargs):
+    tmp_dir = mock_rampfiles[6]
+    truth = tmp_dir / "dataerr.fits"
+    new_file = tmp_dir / "foobar.fits"
+    with datamodels.ImageModel() as m:
+        m.data = m.get_default("data")
+        m.err = m.get_default("err")
+        m.save(truth)
+    with fits.open(truth) as hdu:
+        hdu[1].name = "foo"
+        hdu[2].name = "bar"
+        hdu.writeto(new_file)
+    diff = STFITSDiff(new_file, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    expected_report = [
+        "Files contain differences in HDUs:",
+        "a: 4 HDUs: ['PRIMARY', 'FOO', 'BAR', 'ASDF']",
+        "b: 4 HDUs: ['PRIMARY', 'SCI', 'ERR', 'ASDF']",
+        "Common HDUs: ['ASDF', 'PRIMARY']",
+        "HDUs in a but not b: ['BAR', 'FOO']",
+        "HDUs in b but not a: ['ERR', 'SCI']",
+        "No differences found between common HDUs.",
+    ]
+    assert result is False
+    assert report == expected_report
+
+
 def test_keyword_change(mock_rampfiles, fitsdiff_default_kwargs):
     truth = mock_rampfiles[0]
     keyword_mod = mock_rampfiles[1]

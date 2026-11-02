@@ -231,7 +231,7 @@ class STFITSDiff(FITSDiff):
         self.diff_hdu_order = False
         if ext_namesa != ext_namesb:
             self.extnames_different = True
-            if len(ext_namesa) == len(ext_namesb):
+            if sorted(ext_namesa) == sorted(ext_namesb):
                 self.diff_hdu_order = True
             self.a_not_b = sorted(set(ext_namesa) - set(ext_namesb))
             self.b_not_a = sorted(set(ext_namesb) - set(ext_namesa))
