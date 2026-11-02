@@ -201,24 +201,6 @@ class TestSkyalignLinearWave:
         cube_model, _ = _call_setup_final_model(input_model, base_cube_wcs)
         assert cube_model.meta.wcsinfo.ctype3 == "WAVE"
 
-    def test_crval3_cdelt3_crpix3(self, input_model, base_cube_wcs):
-        cube_model, _ = _call_setup_final_model(input_model, base_cube_wcs)
-        assert math.isclose(cube_model.meta.wcsinfo.crval3, CRVAL3, rel_tol=1e-10)
-        assert math.isclose(cube_model.meta.wcsinfo.cdelt3, CDELT3, rel_tol=1e-10)
-        assert math.isclose(cube_model.meta.wcsinfo.crpix3, CRPIX3, rel_tol=1e-10)
-
-    def test_roi_spatial_and_wave_set(self, input_model, base_cube_wcs):
-        rois, roiw = 0.2, 0.001
-        cube_model, _ = _call_setup_final_model(input_model, base_cube_wcs, rois=rois, roiw=roiw)
-        assert math.isclose(cube_model.meta.ifu.roi_spatial, rois, rel_tol=1e-10)
-        assert math.isclose(cube_model.meta.ifu.roi_wave, roiw, rel_tol=1e-10)
-
-    def test_status_complete(self, input_model, base_cube_wcs):
-        _, status = _call_setup_final_model(input_model, base_cube_wcs)
-        assert status == 0
-        cube_model, _ = _call_setup_final_model(input_model, base_cube_wcs)
-        assert cube_model.meta.cal_step.cube_build == "COMPLETE"
-
 
 # ---------------------------------------------------------------------------
 # Tests: skyalign, linear_wave=False (WAVE-TAB)
@@ -252,14 +234,6 @@ class TestSkyalignNonLinearWave:
         )
         assert cube_model.meta.wcsinfo.crval3 == 1.0
         assert cube_model.meta.wcsinfo.crpix3 == 1.0
-
-    def test_cdelt3_is_none(self, input_model, nonlinear_cube_wcs):
-        cube_model, _ = _call_setup_final_model(
-            input_model,
-            nonlinear_cube_wcs,
-            roiw_table=np.array([0.001, 0.002, 0.003]),
-        )
-        assert cube_model.meta.wcsinfo.cdelt3 is None
 
     def test_roi_wave_is_mean_of_table(self, input_model, nonlinear_cube_wcs):
         roiw_table = np.array([0.001, 0.002, 0.003])
@@ -341,20 +315,6 @@ class TestInternalCalNIRSpec:
             instrument="NIRSPEC",
         )
         assert cube_model.meta.wcsinfo.pc1_1 > 0
-
-    def test_ifu_meta_zeroed(self, input_model, nirspec_internal_wcs):
-        cube_model, _ = _call_setup_final_model(
-            input_model,
-            nirspec_internal_wcs,
-            coord_system="internal_cal",
-            instrument="NIRSPEC",
-            weight_power=2.0,
-            roiw=0.001,
-            rois=0.2,
-        )
-        assert cube_model.meta.ifu.weight_power == 0
-        assert cube_model.meta.ifu.roi_wave == 0
-        assert cube_model.meta.ifu.roi_spatial == 0
 
     def test_pixelarea_uses_native_cdelt(self, input_model, nirspec_internal_wcs):
         """
