@@ -48,7 +48,6 @@ DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 NON_SCIENCE = dqflags.pixel["NON_SCIENCE"]
 SATURATED = dqflags.pixel["SATURATED"]
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
