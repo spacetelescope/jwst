@@ -152,9 +152,9 @@ def test_tweakreg_step(example_input, with_shift):
         example_input[1].data[:-9] = example_input[1].data[9:]
         example_input[1].data[-9:] = BKG_LEVEL
 
-    # assign images to different groups (so they are aligned to each other)
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "b"
+    # assign images to different visits (so they are aligned to each other)
+    example_input[0].meta.observation.visit_id = "a"
+    example_input[1].meta.observation.visit_id = "b"
 
     # make the step with default arguments
     step = tweakreg_step.TweakRegStep()
@@ -189,8 +189,8 @@ def test_tweakreg_step(example_input, with_shift):
 @pytest.mark.parametrize("alignment_type", ["", "abs_"])
 def test_src_confusion_pars(example_input, alignment_type):
     # assign images to different groups (so they are aligned to each other)
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "b"
+    example_input[0].meta.observation.visit_id = "a"
+    example_input[1].meta.observation.visit_id = "b"
 
     # make the step with arguments that may cause source confusion in match
     pars = {
@@ -214,12 +214,12 @@ def test_src_confusion_pars(example_input, alignment_type):
 
 
 def test_ngroup_1(caplog, example_input):
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "a"
+    example_input[0].meta.observation.visit_id = "a"
+    example_input[1].meta.observation.visit_id = "a"
 
     # Input has the same group, so processing should be skipped
     result = tweakreg_step.TweakRegStep.call(example_input)
-    assert "At least two exposures are required" in caplog.text
+    assert "At least two visits are required" in caplog.text
 
     # check that step was failed
     with result:
@@ -278,8 +278,8 @@ def test_custom_catalog(
         - a "valid" file passed as `catfile`
     """
 
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "b"
+    example_input[0].meta.observation.visit_id = "a"
+    example_input[1].meta.observation.visit_id = "b"
     name2group = {
         example_input[0].meta.filename.split(".")[0]: "a",
         example_input[1].meta.filename.split(".")[0]: "b",
@@ -392,8 +392,8 @@ def test_sip_approx(example_input, with_shift):
         example_input[1].data[-9:] = BKG_LEVEL
 
     # assign images to different groups (so they are aligned to each other)
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "b"
+    example_input[0].meta.observation.visit_id = "a"
+    example_input[1].meta.observation.visit_id = "b"
 
     # call th step with override SIP approximation parameters
     step = tweakreg_step.TweakRegStep()
