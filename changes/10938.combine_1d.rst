@@ -1,0 +1,1 @@
+WFSS handling within Combine1dStep has been simplified to avoid unnecessary translation layers.

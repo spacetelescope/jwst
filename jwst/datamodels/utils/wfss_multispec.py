@@ -5,7 +5,6 @@ import stdatamodels.jwst.datamodels as dm
 
 from jwst.datamodels.utils.flat_multispec import (
     copy_column_units,
-    copy_spec_metadata,
     determine_vector_and_meta_columns,
     expand_table,
     make_empty_recarray,
@@ -13,7 +12,7 @@ from jwst.datamodels.utils.flat_multispec import (
     set_schema_units,
 )
 
-__all__ = ["make_wfss_multiexposure", "wfss_multiexposure_to_multispec", "make_wfss_multicombined"]
+__all__ = ["make_wfss_multiexposure", "wfss_multiexposure_to_multispec"]
 
 
 def make_wfss_multiexposure(input_list):
@@ -224,92 +223,3 @@ def wfss_multiexposure_to_multispec(input_model):
         output_list.append(multispec)
 
     return output_list
-
-
-def make_wfss_multicombined(results_list):
-    """
-    Compile a list of exposure-averaged extracted sources into a single binary table.
-
-    The output model will contain a single spec_table,
-    which will end up in extension index 1 of the FITS file on save.
-
-    Parameters
-    ----------
-    results_list : list[MultiCombinedSpecModel]
-        List of `~stdatamodels.jwst.datamodels.MultiSpecModel` objects
-        to be combined.
-
-    Returns
-    -------
-    output_c1d : `~stdatamodels.jwst.datamodels.WFSSMultiCombinedSpecModel`
-        The combined c1d product for WFSS modes.
-    """
-    # determine shape of output table.
-    # Each input model should have one spec table per spectral order
-    n_sources = len(results_list)
-
-    # figure out column names and dtypes
-    # use the actual input dtype instead of the schema
-    # so we retain any extra columns (i.e. contam_flux, contam_surf_bright)
-    dt = results_list[0].spec[0].spec_table.dtype.descr
-    input_datatype = [{"name": name, "datatype": str(dtype)} for name, dtype in dt]
-    output_schema = dm.WFSSMultiCombinedSpecModel().schema
-    output_table_schema = output_schema["properties"]["spec"]["items"]["properties"]["spec_table"]
-    output_datatype = output_table_schema["datatype"]
-    all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
-    defaults = output_table_schema["default"]
-
-    # first loop over models and spec to figure out orders present, and number of rows per order
-    order_rows = {}
-    for model in results_list:
-        for spec in model.spec:
-            order = spec.spectral_order
-            if order not in order_rows:
-                order_rows[order] = spec.spec_table.shape[0]
-            else:
-                order_rows[order] = max(order_rows[order], spec.spec_table.shape[0])
-
-    order_data = {}
-    for j, model in enumerate(results_list):
-        for spec in model.spec:
-            # ensure data goes to the correct order
-            order = spec.spectral_order
-            n_rows = order_rows[order]
-            if order not in order_data:
-                order_data[order] = make_empty_recarray(
-                    n_rows, n_sources, all_columns, is_vector, defaults=defaults
-                )
-            fltdata = order_data[order]
-
-            # populate the table with data from the input spectrum
-            populate_recarray(
-                fltdata[j],
-                spec,
-                all_columns,
-                is_vector,
-                ignore_columns=["N_ALONGDISP"],
-            )
-            # special handling for N_ALONGDISP because not defined in specmeta schema
-            fltdata[j]["N_ALONGDISP"] = spec.spec_table.shape[0]
-
-    # Create a new model to hold the combined data table
-    output_c1d = dm.WFSSMultiCombinedSpecModel()
-
-    example_spec = results_list[0].spec[0]
-    for order in order_data.keys():
-        spec = dm.WFSSCombinedSpecModel()
-        fltdata = order_data[order]
-        fltdata.sort(order=["SOURCE_ID"])
-        spec.spec_table = fltdata
-
-        # Set default units from the model schema
-        set_schema_units(spec)
-        # copy units from any of the SpecModels (they should all be the same)
-        copy_column_units(example_spec, spec)
-        copy_spec_metadata(example_spec, spec)
-        spec.spectral_order = order
-
-        output_c1d.spec.append(spec)
-
-    output_c1d.update(results_list[0], only="PRIMARY")
-    return output_c1d
