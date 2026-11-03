@@ -367,15 +367,29 @@ def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
         output_dir=str(tmp_path),
         suffix="x1d",
     )
-    # test that optional contam column got handled
-    np.testing.assert_allclose(result.spec[0].spec_table["contam_flux"], 150.0)
-    np.testing.assert_allclose(result.spec[0].spec_table["contam_surf_bright"], 3.0)
+    # test that optional contam columns got handled
+    flux = result.spec[0].spec_table["flux"]
+    contam = result.spec[0].spec_table["contam_flux"]
+    corr = result.spec[0].spec_table["corr_flux"]
+    np.testing.assert_allclose(contam, 150.0)
+    # ensure that the sum of contam and corr equals the un-contamintated flux.
+    np.testing.assert_allclose(contam + corr, flux, rtol=1e-6)
+
+    sb = result.spec[0].spec_table["surf_bright"]
+    corr_sb = result.spec[0].spec_table["corr_surf_bright"]
+    contam_sb = result.spec[0].spec_table["contam_surf_bright"]
+    np.testing.assert_allclose(contam_sb, 3.0)
+    # ensure that the sum of contam and corr equals the un-contamintated flux.
+    np.testing.assert_allclose(contam_sb + corr_sb, sb, rtol=1e-6)
+
     # test that the index of these columns is as expected
     names = result.spec[0].spec_table.dtype.names
     flux_idx = names.index("FLUX")
     sb_idx = names.index("SURF_BRIGHT")
     assert names[flux_idx + 1] == "CONTAM_FLUX"
+    assert names[flux_idx + 2] == "CORR_FLUX"
     assert names[sb_idx + 1] == "CONTAM_SURF_BRIGHT"
+    assert names[sb_idx + 2] == "CORR_SURF_BRIGHT"
     result.close()
 
     fname = "test_x1d.fits"
