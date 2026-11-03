@@ -9,7 +9,19 @@
 #endif
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#endif
+
 #include <numpy/arrayobject.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 // Array utility declarations
 PyArrayObject *

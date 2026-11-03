@@ -55,29 +55,45 @@ xart_flux : numpy.ndarray
   1d cross-artifact detector model
 */
 
+#include <Python.h>
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <Python.h>
 #include <stdbool.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#endif
+
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_xart_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+
+PyMODINIT_FUNC
+PyInit_calc_xart(void);
 
 //_______________________________________________________________________
 // Allocate the memory for the output array, nelem elements long
 //_______________________________________________________________________
 
-int
+static int
 alloc_xart_arrays(int nelem, double **fluxv)
 {
 
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
-    if (!(*fluxv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*fluxv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         return 1;
     }
@@ -87,7 +103,7 @@ alloc_xart_arrays(int nelem, double **fluxv)
 
 // Do the computation of the cross-artifact values.
 // return values: xart_flux
-int
+static int
 xart_model(
     int imin, int imax, int xsize_det, int ysize_det, double *xvec, double *fimg, double *gamma,
     double *lor_amp, double *g_std, double *g_dx, double *g1_amp, double *g2_amp,
@@ -99,7 +115,6 @@ xart_model(
 
     // This is how big the output vector needs to be
     int npt = xsize_det * ysize_det;
-
     // allocate memory to hold output
     if (alloc_xart_arrays(npt, &fluxv)) {
         return 1;
@@ -138,7 +153,7 @@ xart_model(
 }
 
 //  set up the C extension
-PyArrayObject *
+static PyArrayObject *
 ensure_array(PyObject *obj, int *is_copy)
 {
     if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
@@ -230,7 +245,7 @@ xart_wrapper(PyObject *module, PyObject *args)
     }
 
 fail:
-    Py_XDECREF(xart_flux_arr);
+    Py_XDECREF((PyObject *) xart_flux_arr);
 
     free(xart_flux);
 
@@ -240,28 +255,28 @@ fail:
 
 cleanup:
     if (free_xvec) {
-        Py_XDECREF(xvec);
+        Py_XDECREF((PyObject *) xvec);
     }
     if (free_fimg) {
-        Py_XDECREF(fimg);
+        Py_XDECREF((PyObject *) fimg);
     }
     if (free_gamma) {
-        Py_XDECREF(gamma);
+        Py_XDECREF((PyObject *) gamma);
     }
     if (free_loramp) {
-        Py_XDECREF(lor_amp);
+        Py_XDECREF((PyObject *) lor_amp);
     }
     if (free_gstd) {
-        Py_XDECREF(g_std);
+        Py_XDECREF((PyObject *) g_std);
     }
     if (free_gdx) {
-        Py_XDECREF(g_dx);
+        Py_XDECREF((PyObject *) g_dx);
     }
     if (free_g1amp) {
-        Py_XDECREF(g1_amp);
+        Py_XDECREF((PyObject *) g1_amp);
     }
     if (free_g2amp) {
-        Py_XDECREF(g2_amp);
+        Py_XDECREF((PyObject *) g2_amp);
     }
 
     return result;

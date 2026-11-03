@@ -60,20 +60,34 @@ idx_arr : numpy.ndarray
     (in the x_arr and y_arr arrays) belongs.
 
 */
+#include <Python.h>
 
 #include <stdlib.h>
 #include <math.h>
 
-#include <Python.h>
-
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_winclip_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#endif
+
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 typedef double dbl_type;
 static const int npy_dbl = NPY_DOUBLE;
 static const double full_pixel_area = 1.0;
+
+PyMODINIT_FUNC
+PyInit_winclip(void);
 
 // if float32 accuracy is enough, use the following types instead:
 /*
@@ -88,7 +102,7 @@ dbl_min(dbl_type x, dbl_type y)
     return (x < y) ? x : y;
 }
 
-int
+static int
 mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx)
 {
     int *x, *y, *i;
@@ -108,7 +122,7 @@ mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx)
     }
 
     // x-array:
-    x = (int *) realloc(*xv, nelem * sizeof(int));
+    x = (int *) realloc(*xv, (size_t) nelem * sizeof(int));
     if (x) {
         *xv = x;
     } else {
@@ -117,7 +131,7 @@ mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx)
     }
 
     // y-array:
-    y = (int *) realloc(*yv, nelem * sizeof(int));
+    y = (int *) realloc(*yv, (size_t) nelem * sizeof(int));
     if (y) {
         *yv = y;
     } else {
@@ -126,7 +140,7 @@ mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx)
     }
 
     // area-array:
-    a = (dbl_type *) realloc(*av, nelem * sizeof(dbl_type));
+    a = (dbl_type *) realloc(*av, (size_t) nelem * sizeof(dbl_type));
     if (a) {
         *av = a;
     } else {
@@ -135,7 +149,7 @@ mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx)
     }
 
     // idx-array:
-    i = (int *) realloc(*idx, nelem * sizeof(int));
+    i = (int *) realloc(*idx, (size_t) nelem * sizeof(int));
     if (i) {
         *idx = i;
     } else {
@@ -150,7 +164,7 @@ mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx)
 Caller is responsible for de-allocating memory for the
 return values: x, y, areas, idx
 */
-int
+static int
 clip_pixels(
     int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, double w, double h, int *npix,
     int **x, int **y, dbl_type **areas, int **idx)
@@ -385,7 +399,12 @@ clip_pixels(
     return 0;
 }
 
-PyArrayObject *
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
+static PyArrayObject *
 ensure_array(PyObject *obj, int *is_copy)
 {
     if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
@@ -399,6 +418,16 @@ ensure_array(PyObject *obj, int *is_copy)
             NULL);
     }
 }
+
+static PyArrayObject *
+create_empty_array(int nd, npy_intp *dims, int type_num)
+{
+    return (PyArrayObject *) PyArray_Empty(nd, dims, PyArray_DescrFromType(type_num), 0);
+}
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 static PyObject *
 get_clipped_pixels(PyObject *module, PyObject *args)
@@ -449,21 +478,22 @@ get_clipped_pixels(PyObject *module, PyObject *args)
     if (!n) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
         x_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
+        x_arr = create_empty_array(1, &npy_npix, NPY_INT);
         if (!x_arr) {
             goto fail;
         }
 
-        y_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
+        y_arr = create_empty_array(1, &npy_npix, NPY_INT);
         if (!y_arr) {
             goto fail;
         }
 
-        areas_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_npix, npy_dbl, 0);
+        areas_arr = create_empty_array(1, &npy_npix, npy_dbl);
         if (!areas_arr) {
             goto fail;
         }
 
-        idx_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
+        idx_arr = create_empty_array(1, &npy_npix, NPY_INT);
         if (!idx_arr) {
             goto fail;
         }
@@ -516,10 +546,10 @@ get_clipped_pixels(PyObject *module, PyObject *args)
     }
 
 fail:
-    Py_XDECREF(x_arr);
-    Py_XDECREF(y_arr);
-    Py_XDECREF(areas_arr);
-    Py_XDECREF(idx_arr);
+    Py_XDECREF((PyObject *) x_arr);
+    Py_XDECREF((PyObject *) y_arr);
+    Py_XDECREF((PyObject *) areas_arr);
+    Py_XDECREF((PyObject *) idx_arr);
     free(x);
     free(y);
     free(areas);
@@ -531,10 +561,10 @@ fail:
 
 cleanup:
     if (free_xc) {
-        Py_XDECREF(xc);
+        Py_XDECREF((PyObject *) xc);
     }
     if (free_yc) {
-        Py_XDECREF(yc);
+        Py_XDECREF((PyObject *) yc);
     }
 
     return result;
@@ -543,7 +573,7 @@ cleanup:
 static PyMethodDef winclip_methods[] = {
     {"get_clipped_pixels", get_clipped_pixels, METH_VARARGS,
      "get_clipped_pixels(xc, yc, padding, nx, ny, width, height)"},
-    {0, 0} /* sentinel */
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
 
 static struct PyModuleDef moduledef = {

@@ -55,36 +55,51 @@ blot_flux : numpy.ndarray
 blot_weight : numpy.ndarray
   IFU spaxel weight
 */
+#include <Python.h>
 
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <Python.h>
 #include <stdbool.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#endif
+
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_blot_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+
+PyMODINIT_FUNC
+PyInit_blot_median(void);
 
 //_______________________________________________________________________
 // Allocate the memory to for the blotted arrays
 //_______________________________________________________________________
 
-int
+static int
 alloc_blot_arrays(int nelem, double **fluxv, double **weightv)
 {
 
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
-    if (!(*fluxv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*fluxv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc;
     }
 
     // weight
-    if (!(*weightv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*weightv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc;
     }
@@ -93,6 +108,7 @@ alloc_blot_arrays(int nelem, double **fluxv, double **weightv)
 failed_mem_alloc:
     free(*fluxv);
     free(*weightv);
+    return 1;
 }
 
 // Match the median cube mapped to detector space with detector pixels
@@ -102,7 +118,7 @@ failed_mem_alloc:
 
 // return values: blot_flux, blot_weight
 
-int
+static int
 blot_overlap(
     double roi, int xsize_det, int ysize_det, int xstart, int xsize2, int ncube, double *xcenter,
     double *ycenter, double *x_cube, double *y_cube, double *flux_cube, double **blot_flux,
@@ -149,7 +165,7 @@ blot_overlap(
 
 //  set up the C extension
 
-PyArrayObject *
+static PyArrayObject *
 ensure_array(PyObject *obj, int *is_copy)
 {
     if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
@@ -257,8 +273,8 @@ blot_wrapper(PyObject *module, PyObject *args)
     }
 
 fail:
-    Py_XDECREF(blot_flux_arr);
-    Py_XDECREF(blot_weight_arr);
+    Py_XDECREF((PyObject *) blot_flux_arr);
+    Py_XDECREF((PyObject *) blot_weight_arr);
 
     free(blot_flux);
     free(blot_weight);
@@ -269,19 +285,19 @@ fail:
 
 cleanup:
     if (free_xcenter) {
-        Py_XDECREF(xcenter);
+        Py_XDECREF((PyObject *) xcenter);
     }
     if (free_ycenter) {
-        Py_XDECREF(ycenter);
+        Py_XDECREF((PyObject *) ycenter);
     }
     if (free_xcube) {
-        Py_XDECREF(x_cube);
+        Py_XDECREF((PyObject *) x_cube);
     }
     if (free_ycube) {
-        Py_XDECREF(y_cube);
+        Py_XDECREF((PyObject *) y_cube);
     }
     if (free_flux) {
-        Py_XDECREF(flux_cube);
+        Py_XDECREF((PyObject *) flux_cube);
     }
 
     return result;

@@ -4,6 +4,7 @@ algorithm finds the clipped polygon that falls inside the cube spaxel.
 A clipped polygon is the overlapping polygon of the detector pixel and
 a spaxel.  We are only dealing with the spatial dimensions in this routine.
 */
+#include <Python.h>
 
 #define NO_IMPORT_ARRAY
 #include "cube_utils.h"
@@ -11,7 +12,6 @@ a spaxel.  We are only dealing with the spatial dimensions in this routine.
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <Python.h>
 #include <stdbool.h>
 
 #define CP_LEFT   0
@@ -73,25 +73,25 @@ alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv, do
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
-    if (!(*fluxv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*fluxv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc1;
     }
 
     // weight
-    if (!(*weightv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*weightv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc2;
     }
 
     // variance
-    if (!(*varv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*varv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc3;
     }
 
     // iflux
-    if (!(*ifluxv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*ifluxv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc4;
     }
@@ -134,31 +134,31 @@ alloc_flux_dq_arrays(
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
-    if (!(*fluxv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*fluxv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         return 1; // Nothing was allocated yet, just return
     }
 
     // weight
-    if (!(*weightv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*weightv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_weightv;
     }
 
     // variance
-    if (!(*varv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*varv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_varv;
     }
 
     // iflux
-    if (!(*ifluxv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*ifluxv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_ifluxv;
     }
 
     // dq
-    if (!(*dqv = (int *) calloc(nelem, sizeof(int)))) {
+    if (!(*dqv = (int *) calloc((size_t) nelem, sizeof(int)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_dqv;
     }
@@ -181,7 +181,7 @@ failed_weightv:
     return 1;
 }
 
-void
+static void
 addpoint(double x, double y, double xnew[], double ynew[], int *nVertices2)
 {
 
@@ -203,7 +203,7 @@ addpoint(double x, double y, double xnew[], double ynew[], int *nVertices2)
     *nVertices2 = *nVertices2 + 1;
 }
 
-int
+static int
 insideWindow(int edge, double x, double y, double left, double right, double top, double bottom)
 {
     /*
@@ -239,7 +239,7 @@ insideWindow(int edge, double x, double y, double left, double right, double top
     return 0;
 }
 
-int
+static int
 calcCondition(
     int edge, double x1, double y1, double x2, double y2, double left, double right, double top,
     double bottom)
@@ -288,7 +288,7 @@ calcCondition(
     return 0; // never executed
 }
 
-void
+static void
 solveIntersection(
     int edge, double x1, double y1, double x2, double y2, double *x, double *y, double left,
     double right, double top, double bottom)
@@ -323,9 +323,9 @@ solveIntersection(
          Value defining the bottom edge of the clipped polygon
 
      */
-    float m = 0;
+    float m = 0; // TODO: Consider using double for more precision in intersection calculations
     if (x2 != x1) {
-        m = ((double) (y2 - y1) / (double) (x2 - x1));
+        m = (float) ((y2 - y1) / (x2 - x1));
     }
     switch (edge) {
         case CP_LEFT:

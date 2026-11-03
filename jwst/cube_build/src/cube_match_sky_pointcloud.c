@@ -74,17 +74,34 @@ spaxel_var : ndarray
 spaxel_dq : ndarray
   IFU spaxel dq
 */
+#include <Python.h>
 
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <Python.h>
 #include <stdbool.h>
-#include <numpy/npy_math.h>
+
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_build_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#endif
+
 #include <numpy/arrayobject.h>
+#include <numpy/npy_math.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 #include "cube_utils.h"
+
+PyMODINIT_FUNC
+PyInit_cube_match_sky_pointcloud(void);
 
 // Match point cloud to sky and determine the weighting to assign to each point cloud  member
 // to matched spaxel based on ROI - weighting type is emsm.
@@ -93,7 +110,7 @@ spaxel_dq : ndarray
 
 // returns : 0 success, 1 failure
 
-int
+static int
 match_point_emsm(
     double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *flux,
     double *err, int *dq, double *rois_pixel, double *roiw_pixel, double *scalerad_pixel,
@@ -253,7 +270,7 @@ match_point_emsm(
 // set values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux.
 // returns: 0 = success, 1 = failure.
 
-int
+static int
 match_point_msm(
     double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *flux,
     double *err, int *dq, double *rois_pixel, double *roiw_pixel, double *weight_pixel,
@@ -614,11 +631,11 @@ cube_wrapper(PyObject *module, PyObject *args)
     }
 
 fail:
-    Py_XDECREF(spaxel_flux_arr);
-    Py_XDECREF(spaxel_weight_arr);
-    Py_XDECREF(spaxel_var_arr);
-    Py_XDECREF(spaxel_iflux_arr);
-    Py_XDECREF(spaxel_dq_arr);
+    Py_XDECREF((PyObject *) spaxel_flux_arr);
+    Py_XDECREF((PyObject *) spaxel_weight_arr);
+    Py_XDECREF((PyObject *) spaxel_var_arr);
+    Py_XDECREF((PyObject *) spaxel_iflux_arr);
+    Py_XDECREF((PyObject *) spaxel_dq_arr);
 
     free(spaxel_flux);
     free(spaxel_weight);
@@ -632,52 +649,52 @@ fail:
 
 cleanup:
     if (free_xc) {
-        Py_XDECREF(xc);
+        Py_XDECREF((PyObject *) xc);
     }
     if (free_yc) {
-        Py_XDECREF(yc);
+        Py_XDECREF((PyObject *) yc);
     }
     if (free_zc) {
-        Py_XDECREF(zc);
+        Py_XDECREF((PyObject *) zc);
     }
     if (free_coord1) {
-        Py_XDECREF(coord1);
+        Py_XDECREF((PyObject *) coord1);
     }
     if (free_coord2) {
-        Py_XDECREF(coord2);
+        Py_XDECREF((PyObject *) coord2);
     }
     if (free_wave) {
-        Py_XDECREF(wave);
+        Py_XDECREF((PyObject *) wave);
     }
     if (free_flux) {
-        Py_XDECREF(flux);
+        Py_XDECREF((PyObject *) flux);
     }
     if (free_err) {
-        Py_XDECREF(err);
+        Py_XDECREF((PyObject *) err);
     }
     if (free_dq) {
-        Py_XDECREF(dq);
+        Py_XDECREF((PyObject *) dq);
     }
     if (free_rois_pixel) {
-        Py_XDECREF(rois_pixel);
+        Py_XDECREF((PyObject *) rois_pixel);
     }
     if (free_roiw_pixel) {
-        Py_XDECREF(roiw_pixel);
+        Py_XDECREF((PyObject *) roiw_pixel);
     }
     if (free_scalerad_pixel) {
-        Py_XDECREF(scalerad_pixel);
+        Py_XDECREF((PyObject *) scalerad_pixel);
     }
     if (free_softrad_pixel) {
-        Py_XDECREF(softrad_pixel);
+        Py_XDECREF((PyObject *) softrad_pixel);
     }
     if (free_weight_pixel) {
-        Py_XDECREF(weight_pixel);
+        Py_XDECREF((PyObject *) weight_pixel);
     }
     if (free_zcdelt3) {
-        Py_XDECREF(zcdelt3);
+        Py_XDECREF((PyObject *) zcdelt3);
     }
     if (free_sliceno) {
-        Py_XDECREF(sliceno);
+        Py_XDECREF((PyObject *) sliceno);
     }
 
     return result;
