@@ -168,8 +168,9 @@ xart_model(
 static PyObject *
 xart_wrapper(PyObject *module, PyObject *args)
 {
-    PyObject *result = NULL, *xveco, *fimgo, *gammao, *lor_ampo, *g_stdo, *g_dxo, *g1_ampo,
-             *g2_ampo;
+    PyObject *result = NULL, *xveco = NULL, *fimgo = NULL, *gammao = NULL;
+    PyObject *lor_ampo = NULL, *g_stdo = NULL, *g_dxo = NULL, *g1_ampo = NULL;
+    PyObject *g2_ampo = NULL;
 
     int imin, imax;
     int xsize_det, ysize_det;
@@ -178,7 +179,8 @@ xart_wrapper(PyObject *module, PyObject *args)
     int free_fimg = 0, free_gamma = 0, free_loramp = 0, free_gstd = 0, free_gdx = 0, free_g1amp = 0,
         free_g2amp = 0;
 
-    PyArrayObject *xvec, *fimg, *gamma, *lor_amp, *g_std, *g_dx, *g1_amp, *g2_amp;
+    PyArrayObject *xvec = NULL, *fimg = NULL, *gamma = NULL, *lor_amp = NULL;
+    PyArrayObject *g_std = NULL, *g_dx = NULL, *g1_amp = NULL, *g2_amp = NULL;
     PyArrayObject *xart_flux_arr = NULL;
 
     npy_intp npt = 0;
