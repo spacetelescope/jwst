@@ -90,8 +90,8 @@ attributes to the catalog file names provided in either in the ASN file or
 
 Alignment
 ---------
-The source catalogs for each input image are compared to each other
-and linear (affine) coordinate transformations that align these
+For relative alignment, the source catalogs for each input image are compared
+to each other and linear (affine) coordinate transformations that align these
 catalogs are derived.  This fit ensures that all the input images
 are aligned relative to each other.  This step produces a combined
 source catalog for the entire set of input images as if they were
@@ -129,25 +129,12 @@ detectors) can be aligned together; that is, a single correction
 can be computed and applied to all these images because any error in
 telescope pointing will be identical in all these images and it is assumed
 that the relative positions of (e.g., NIRCam) detectors do not change.
-Identification of images that belong to the same "exposure" and therefore
-can be grouped together is based on several attributes described in
-`~jwst.datamodels.library.ModelLibrary`. This grouping is performed automatically
-in the ``tweakreg`` step. The groups are accessible through the ``group_names``
-attribute of the library.
+In addition, within a single visit with a shared guide star, the relative
+astrometry is usually better by default than can be determined with this step.
 
-However, when detector calibrations are not accurate, alignment of groups
-of images may fail (or result in poor alignment). In this case, it may be
-desirable to align each image independently. This can be achieved either by
-setting the ``image_model.meta.group_id`` attribute to a unique string or integer
-value for each image, or by adding the ``group_id`` attribute to the ``members`` of the input ASN
-table - see `~jwst.datamodels.library.ModelLibrary` for more details.
-
-.. note::
-    Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps
-    and so modifying it for one step will affect the results in another step.
-    If it is desirable to apply different grouping strategies to the ``tweakreg``
-    and ``skymatch`` steps, one may need to run each step individually and
-    provide a different ASN as input to each step.
+Identification of images that belong to the same visit and exposure, and therefore
+can be grouped together, is based on the visit ID. This grouping is performed
+automatically in the ``tweakreg`` step.
 
 WCS Correction
 --------------
@@ -271,7 +258,7 @@ The ``tweakreg`` step has the following optional arguments:
 
 * ``expand_refcat``: A boolean indicating whether or not to expand reference
   catalog with new sources from other input images that have been already
-  aligned to the reference image. (Default=False)
+  aligned to the reference image. Ignored if ``abs_refcat`` is set. (Default=False)
 
 **Object matching parameters:**
 
