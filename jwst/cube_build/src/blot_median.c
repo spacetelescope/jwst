@@ -55,12 +55,26 @@ blot_flux : numpy.ndarray
 blot_weight : numpy.ndarray
   IFU spaxel weight
 */
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wundef"
+#endif
+
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
+
+#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_blot_numpy_api
+#define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
@@ -76,8 +90,7 @@ blot_weight : numpy.ndarray
 #pragma GCC diagnostic pop
 #endif
 
-#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_blot_numpy_api
-#define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+#include "numpy_utils.h"
 
 PyMODINIT_FUNC
 PyInit_blot_median(void);
@@ -163,23 +176,6 @@ blot_overlap(
     return 0;
 }
 
-//  set up the C extension
-
-static PyArrayObject *
-ensure_array(PyObject *obj, int *is_copy)
-{
-    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
-        PyArray_TYPE((PyArrayObject *) obj) == NPY_DOUBLE) {
-        *is_copy = 0;
-        return (PyArrayObject *) obj;
-    } else {
-        *is_copy = 1;
-        return (PyArrayObject *) PyArray_FromAny(
-            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
-            NULL);
-    }
-}
-
 static PyObject *
 blot_wrapper(PyObject *module, PyObject *args)
 {
@@ -213,9 +209,9 @@ blot_wrapper(PyObject *module, PyObject *args)
         goto cleanup;
     }
 
-    nx = (int) PyArray_Size((PyObject *) x_cube);
-    ny = (int) PyArray_Size((PyObject *) y_cube);
-    nz = (int) PyArray_Size((PyObject *) flux_cube);
+    nx = get_array_size(x_cube);
+    ny = get_array_size(y_cube);
+    nz = get_array_size(flux_cube);
     if (ny != nz || nz != nx) {
         PyErr_SetString(PyExc_ValueError, "Input coordinate arrays of unequal size.");
         goto cleanup;
@@ -224,12 +220,12 @@ blot_wrapper(PyObject *module, PyObject *args)
     npt = (npy_intp) (xsize_det * ysize_det);
     if (npt == 0) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
-        blot_flux_arr = (PyArrayObject *) PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
+        blot_flux_arr = create_empty_array(1, &npt, NPY_DOUBLE);
         if (!blot_flux_arr) {
             goto fail;
         }
 
-        blot_weight_arr = (PyArrayObject *) PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
+        blot_weight_arr = create_empty_array(1, &npt, NPY_DOUBLE);
         if (!blot_weight_arr) {
             goto fail;
         }
@@ -252,21 +248,17 @@ blot_wrapper(PyObject *module, PyObject *args)
     } else {
         // create return tuple:
 
-        blot_flux_arr = (PyArrayObject *) PyArray_SimpleNewFromData(1, &npt, NPY_DOUBLE, blot_flux);
+        blot_flux_arr = array_from_vector1d(npt, NPY_DOUBLE, blot_flux);
         if (!blot_flux_arr) {
             goto fail;
         }
         blot_flux = NULL;
 
-        blot_weight_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npt, NPY_DOUBLE, blot_weight);
+        blot_weight_arr = array_from_vector1d(npt, NPY_DOUBLE, blot_weight);
         if (!blot_weight_arr) {
             goto fail;
         }
         blot_weight = NULL;
-
-        PyArray_ENABLEFLAGS(blot_flux_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(blot_weight_arr, NPY_ARRAY_OWNDATA);
 
         result = Py_BuildValue("(NN)", blot_flux_arr, blot_weight_arr);
         goto cleanup;

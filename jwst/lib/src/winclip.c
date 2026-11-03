@@ -60,7 +60,17 @@ idx_arr : numpy.ndarray
     (in the x_arr and y_arr arrays) belongs.
 
 */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wundef"
+#endif
+
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <stdlib.h>
 #include <math.h>
@@ -81,6 +91,8 @@ idx_arr : numpy.ndarray
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
+
+#include "numpy_utils.h"
 
 typedef double dbl_type;
 static const int npy_dbl = NPY_DOUBLE;
@@ -399,36 +411,6 @@ clip_pixels(
     return 0;
 }
 
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-#endif
-
-static PyArrayObject *
-ensure_array(PyObject *obj, int *is_copy)
-{
-    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
-        PyArray_TYPE((PyArrayObject *) obj) == npy_dbl) {
-        *is_copy = 0;
-        return (PyArrayObject *) obj;
-    } else {
-        *is_copy = 1;
-        return (PyArrayObject *) PyArray_FromAny(
-            obj, PyArray_DescrFromType(npy_dbl), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
-            NULL);
-    }
-}
-
-static PyArrayObject *
-create_empty_array(int nd, npy_intp *dims, int type_num)
-{
-    return (PyArrayObject *) PyArray_Empty(nd, dims, PyArray_DescrFromType(type_num), 0);
-}
-
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-
 static PyObject *
 get_clipped_pixels(PyObject *module, PyObject *args)
 {
@@ -470,14 +452,13 @@ get_clipped_pixels(PyObject *module, PyObject *args)
         goto cleanup;
     }
 
-    n = (int) PyArray_Size((PyObject *) xc);
-    if (n != PyArray_Size((PyObject *) yc)) {
+    n = get_array_size(xc);
+    if (n != get_array_size(yc)) {
         PyErr_SetString(PyExc_ValueError, "Input coordinate arrays of unequal size.");
         goto cleanup;
     }
     if (!n) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
-        x_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
         x_arr = create_empty_array(1, &npy_npix, NPY_INT);
         if (!x_arr) {
             goto fail;
@@ -506,40 +487,32 @@ get_clipped_pixels(PyObject *module, PyObject *args)
         n, (dbl_type *) PyArray_DATA(xc), (dbl_type *) PyArray_DATA(yc), padding, nx, ny, w, h,
         &npix, &x, &y, &areas, &idx);
 
-    if (status) {
-        goto fail;
-
-    } else {
+    if (!status) {
         // create return tuple:
         npy_npix = (npy_intp) npix;
-        x_arr = (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_npix, NPY_INT, x);
+        x_arr = array_from_vector1d(npy_npix, NPY_INT, x);
         if (!x_arr) {
             goto fail;
         }
         x = NULL;
 
-        y_arr = (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_npix, NPY_INT, y);
+        y_arr = array_from_vector1d(npy_npix, NPY_INT, y);
         if (!y_arr) {
             goto fail;
         }
         y = NULL;
 
-        areas_arr = (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_npix, npy_dbl, areas);
+        areas_arr = array_from_vector1d(npy_npix, npy_dbl, areas);
         if (!areas_arr) {
             goto fail;
         }
         areas = NULL;
 
-        idx_arr = (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_npix, NPY_INT, idx);
+        idx_arr = array_from_vector1d(npy_npix, NPY_INT, idx);
         if (!idx_arr) {
             goto fail;
         }
         idx = NULL;
-
-        PyArray_ENABLEFLAGS(x_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(y_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(areas_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(idx_arr, NPY_ARRAY_OWNDATA);
 
         result = Py_BuildValue("(NNNN)", x_arr, y_arr, areas_arr, idx_arr);
         goto cleanup;

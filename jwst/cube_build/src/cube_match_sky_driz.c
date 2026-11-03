@@ -102,12 +102,24 @@ spaxel_var : numpy.ndarray
 spaxel_dq : numpy.ndarray
   IFU spaxel dq
 */
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wundef"
+#endif
+
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
+
 // Define the unique symbol for this specific extension module
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_build_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
@@ -126,6 +138,7 @@ spaxel_dq : numpy.ndarray
 #pragma GCC diagnostic pop
 #endif
 
+#include "numpy_utils.h"
 #include "cube_utils.h"
 
 PyMODINIT_FUNC
@@ -460,43 +473,43 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         goto cleanup;
     }
 
-    npt = (long) PyArray_Size((PyObject *) coord1);
-    ny = (int) PyArray_Size((PyObject *) coord2);
-    nz = (int) PyArray_Size((PyObject *) wave);
+    npt = (long) get_array_size(coord1);
+    ny = (int) get_array_size(coord2);
+    nz = (int) get_array_size(wave);
 
     if (ny != npt || nz != npt) {
         PyErr_SetString(PyExc_ValueError, "Input coordinate arrays of unequal size.");
         goto cleanup;
     }
 
-    nxx = (int) PyArray_Size((PyObject *) xc);
-    nyy = (int) PyArray_Size((PyObject *) yc);
-    nwave = (int) PyArray_Size((PyObject *) zc);
+    nxx = (int) get_array_size(xc);
+    nyy = (int) get_array_size(yc);
+    nwave = (int) get_array_size(zc);
 
     ncube = nxx * nyy * nwave;
     if (ncube == 0) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
-        spaxel_flux_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
+        spaxel_flux_arr = create_empty_array(1, &npy_ncube, NPY_DOUBLE);
         if (!spaxel_flux_arr) {
             goto fail;
         }
 
-        spaxel_weight_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
+        spaxel_weight_arr = create_empty_array(1, &npy_ncube, NPY_DOUBLE);
         if (!spaxel_weight_arr) {
             goto fail;
         }
 
-        spaxel_var_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
+        spaxel_var_arr = create_empty_array(1, &npy_ncube, NPY_DOUBLE);
         if (!spaxel_var_arr) {
             goto fail;
         }
 
-        spaxel_iflux_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
+        spaxel_iflux_arr = create_empty_array(1, &npy_ncube, NPY_DOUBLE);
         if (!spaxel_iflux_arr) {
             goto fail;
         }
 
-        spaxel_dq_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_INT, 0);
+        spaxel_dq_arr = create_empty_array(1, &npy_ncube, NPY_INT);
         if (!spaxel_dq_arr) {
             goto fail;
         }
@@ -533,46 +546,36 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         // create return tuple:
         npy_ncube = (npy_intp) ncube;
 
-        spaxel_flux_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_flux);
+        spaxel_flux_arr = array_from_vector1d(npy_ncube, NPY_DOUBLE, spaxel_flux);
         if (!spaxel_flux_arr) {
             goto fail;
         }
         spaxel_flux = NULL;
 
-        spaxel_weight_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_weight);
+        spaxel_weight_arr = array_from_vector1d(npy_ncube, NPY_DOUBLE, spaxel_weight);
         if (!spaxel_weight_arr) {
             goto fail;
         }
         spaxel_weight = NULL;
 
-        spaxel_var_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_var);
+        spaxel_var_arr = array_from_vector1d(npy_ncube, NPY_DOUBLE, spaxel_var);
         if (!spaxel_var_arr) {
             goto fail;
         }
         spaxel_var = NULL;
 
-        spaxel_iflux_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_iflux);
+        spaxel_iflux_arr = array_from_vector1d(npy_ncube, NPY_DOUBLE, spaxel_iflux);
         if (!spaxel_iflux_arr) {
             goto fail;
         }
         spaxel_iflux = NULL;
 
-        spaxel_dq_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_INT, spaxel_dq);
+        spaxel_dq_arr = array_from_vector1d(npy_ncube, NPY_INT, spaxel_dq);
         if (!spaxel_dq_arr) {
             goto fail;
         }
         spaxel_dq = NULL;
 
-        PyArray_ENABLEFLAGS(spaxel_flux_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(spaxel_weight_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(spaxel_var_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(spaxel_iflux_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(spaxel_dq_arr, NPY_ARRAY_OWNDATA);
         result = Py_BuildValue(
             "(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
             spaxel_dq_arr);

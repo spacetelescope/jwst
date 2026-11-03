@@ -55,12 +55,25 @@ xart_flux : numpy.ndarray
   1d cross-artifact detector model
 */
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wundef"
+#endif
+
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
+
+#define PY_ARRAY_UNIQUE_SYMBOL _jwst_xart_numpy_api
+#define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
@@ -76,8 +89,7 @@ xart_flux : numpy.ndarray
 #pragma GCC diagnostic pop
 #endif
 
-#define PY_ARRAY_UNIQUE_SYMBOL _jwst_xart_numpy_api
-#define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+#include "numpy_utils.h"
 
 PyMODINIT_FUNC
 PyInit_calc_xart(void);
@@ -152,22 +164,6 @@ xart_model(
     return 0;
 }
 
-//  set up the C extension
-static PyArrayObject *
-ensure_array(PyObject *obj, int *is_copy)
-{
-    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
-        PyArray_TYPE((PyArrayObject *) obj) == NPY_DOUBLE) {
-        *is_copy = 0;
-        return (PyArrayObject *) obj;
-    } else {
-        *is_copy = 1;
-        return (PyArrayObject *) PyArray_FromAny(
-            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
-            NULL);
-    }
-}
-
 //  Main wrapper function interface to Python code
 static PyObject *
 xart_wrapper(PyObject *module, PyObject *args)
@@ -210,7 +206,7 @@ xart_wrapper(PyObject *module, PyObject *args)
     npt = (npy_intp) (xsize_det * ysize_det);
     if (npt == 0) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
-        xart_flux_arr = (PyArrayObject *) PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
+        xart_flux_arr = create_empty_array(1, &npt, NPY_DOUBLE);
         if (!xart_flux_arr) {
             goto fail;
         }
@@ -232,13 +228,11 @@ xart_wrapper(PyObject *module, PyObject *args)
 
     } else {
         // create return tuple:
-        xart_flux_arr = (PyArrayObject *) PyArray_SimpleNewFromData(1, &npt, NPY_DOUBLE, xart_flux);
+        xart_flux_arr = array_from_vector1d(npt, NPY_DOUBLE, xart_flux);
         if (!xart_flux_arr) {
             goto fail;
         }
         xart_flux = NULL;
-
-        PyArray_ENABLEFLAGS(xart_flux_arr, NPY_ARRAY_OWNDATA);
 
         result = Py_BuildValue("(N)", xart_flux_arr);
         goto cleanup;

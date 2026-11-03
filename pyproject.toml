@@ -287,7 +287,7 @@ checks = [
 ]
 
 [tool.codespell]
-skip = "*.c, *.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
+skip = "*.c, *.h, *.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
 ignore-words-list = "indx, delt, Shepard, tread, usig"
 
 [tool.mypy]

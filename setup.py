@@ -19,7 +19,7 @@ class CompilerOptions(TypedDict):
 
 
 cfg: CompilerOptions = {
-    "include_dirs": [np.get_include()],
+    "include_dirs": [np.get_include(), "jwst/lib/src"],
     "define_macros": [
         ("NUMPY", "1"),
     ],
