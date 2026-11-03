@@ -241,7 +241,9 @@ def set_wcs(
 
     Returns
     -------
-    CubeWCS : Class holding WCS information
+    CubeWCS : object
+        Class holding WCS information, with the following attributes:
+
         crval1 : float
             Reference point RA coordinate.
         crval2 : float
