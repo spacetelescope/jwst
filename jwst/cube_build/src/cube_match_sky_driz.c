@@ -424,9 +424,11 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         free_xi4 = 0, free_eta4 = 0;
     int free_dwave = 0;
 
-    PyArrayObject *xc, *yc, *zc, *flux, *err, *dq, *readvar, *coord1, *coord2, *wave;
-    PyArrayObject *xi1, *eta1, *xi2, *eta2, *xi3, *eta3, *xi4, *eta4, *dwave;
-    PyArrayObject *cdelt3, *sliceno, *x_det, *y_det;
+    PyArrayObject *xc = NULL, *yc = NULL, *zc = NULL, *flux = NULL, *err = NULL, *dq = NULL;
+    PyArrayObject *readvar = NULL, *coord1 = NULL, *coord2 = NULL, *wave = NULL;
+    PyArrayObject *xi1 = NULL, *eta1 = NULL, *xi2 = NULL, *eta2 = NULL, *xi3 = NULL;
+    PyArrayObject *eta3 = NULL, *xi4 = NULL, *eta4 = NULL, *dwave = NULL;
+    PyArrayObject *cdelt3 = NULL, *sliceno = NULL, *x_det = NULL, *y_det = NULL;
     PyArrayObject *spaxel_flux_arr = NULL, *spaxel_weight_arr = NULL, *spaxel_var_arr = NULL;
     PyArrayObject *spaxel_iflux_arr = NULL, *spaxel_dq_arr = NULL;
     npy_intp npy_ncube = 0;
