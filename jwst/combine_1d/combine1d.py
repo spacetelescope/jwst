@@ -57,10 +57,10 @@ class InputSpectrumModel:
     unit_weight: bool
     """Flag to indicate uniform weights are used."""
 
-    right_ascension: np.ndarray
+    right_ascension: float
     """RA value for each spectral element."""
 
-    declination: np.ndarray
+    declination: float
     """Dec value for each spectral element."""
 
     name: str
@@ -154,7 +154,7 @@ class OutputSpectrumModel:
         self.wavelength = np.sort(compute_output_wl(wl, n_input_spectra))
 
         self.wcs = create_spectral_wcs(
-            input_spectra[0].right_ascension[0], input_spectra[0].declination[0], self.wavelength
+            input_spectra[0].right_ascension, input_spectra[0].declination, self.wavelength
         )
 
     def accumulate_sums(self, input_spectra, sigma_clip=None):
@@ -771,9 +771,7 @@ def _inputspectra_from_multispec(ms, exptime_key, input_spectra):
         sb_error = spec.spec_table.field("sb_error")
         dq = spec.spec_table.field("dq")
 
-        right_ascension = np.zeros_like(wavelength)
-        declination = np.zeros_like(wavelength)
-        right_ascension[:], declination[:] = spec.meta.wcs(0.0)[:2]
+        right_ascension, declination = spec.meta.wcs(0.0)[:2]
 
         weight = np.ones_like(wavelength)
         if not unit_weight:
@@ -869,12 +867,6 @@ def _inputspectra_from_tso(ms, exptime_key, input_spectra):
             sb_error = spec_row["sb_error"][:n]
             dq = spec_row["dq"][:n]
 
-            right_ascension = np.zeros_like(wavelength)
-            right_ascension[:] = spec_ra
-
-            declination = np.zeros_like(wavelength)
-            declination[:] = spec_dec
-
             weight = np.ones_like(wavelength)
             if not unit_weight:
                 weight *= weight_factor
@@ -891,8 +883,8 @@ def _inputspectra_from_tso(ms, exptime_key, input_spectra):
                     dq,
                     weight,
                     unit_weight,
-                    right_ascension,
-                    declination,
+                    spec_ra,
+                    spec_dec,
                     name,
                     source_id,
                     source_type,
@@ -926,8 +918,8 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
     unit_weight, weight_factor = _weight_from_ms(ms, exptime_key)
 
     # WFSS schema stores WCS at model level, not spec level.
-    spec_ra = ms.meta.target.ra
-    spec_dec = ms.meta.target.dec
+    spec_ra = ms.meta.target.ra or np.nan
+    spec_dec = ms.meta.target.dec or np.nan
 
     for spec in ms.spec:
         name = spec.group_id
@@ -975,12 +967,6 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
             contam_flux = row["contam_flux"][:n]
             contam_surf_bright = row["contam_surf_bright"][:n]
 
-            right_ascension = np.zeros_like(wavelength)
-            right_ascension[:] = spec_ra
-
-            declination = np.zeros_like(wavelength)
-            declination[:] = spec_dec
-
             weight = np.ones_like(wavelength)
             if not unit_weight:
                 weight *= weight_factor
@@ -997,8 +983,8 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
                     dq,
                     weight,
                     unit_weight,
-                    right_ascension,
-                    declination,
+                    spec_ra,
+                    spec_dec,
                     name,
                     source_id,
                     source_type,
