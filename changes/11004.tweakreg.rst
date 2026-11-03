@@ -1,1 +1,1 @@
-Group WCS tweaks by visit ID, so that relative alignment occurs only between visits, not between exposures.
+Group WCS tweaks by visit ID by default, so that relative alignment occurs only between visits, not between exposures.

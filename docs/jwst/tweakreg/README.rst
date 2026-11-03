@@ -133,8 +133,27 @@ In addition, within a single visit with a shared guide star, the relative
 astrometry is usually better by default than can be determined with this step.
 
 Identification of images that belong to the same visit and exposure, and therefore
-can be grouped together, is based on the visit ID. This grouping is performed
-automatically in the ``tweakreg`` step.
+can be grouped together, is based on the visit ID by default.
+
+However, if alignment of all images in a visit fails (or results in poor alignment), it may
+be useful to group images by group ID instead of visit ID, by setting the parameter
+``group_by_visit`` to False.  In this case, identification of images that belong to the
+same "exposure" and therefore can be grouped together is based on several attributes described
+in `~jwst.datamodels.library.ModelLibrary`. The groups are accessible through the ``group_names``
+attribute of the library.
+
+It is also possible to align each image independently, by directly modifying the group ID in
+the input models. This can be achieved either by setting the ``image_model.meta.group_id``
+attribute to a unique string or integer value for each image, or by adding the ``group_id``
+attribute to the ``members`` of the input ASN table - see `~jwst.datamodels.library.ModelLibrary`
+for more details.
+
+.. note::
+    Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps
+    and so modifying it for one step will affect the results in another step.
+    If it is desirable to apply different grouping strategies to the ``tweakreg``
+    and ``skymatch`` steps, one may need to run each step individually and
+    provide a different ASN as input to each step.
 
 WCS Correction
 --------------
@@ -247,7 +266,10 @@ The ``tweakreg`` step has the following optional arguments:
   parameters defining Kron aperture. If None,
   the parameters ``(2.5, 1.4, 0.0)`` are used. (Default=None)
 
-**Optimize alignment order:**
+**Optimize alignment grouping:**
+
+* ``group_by_visit``: a boolean value indicating whether to group relative alignment
+  by visit instead of exposure. (Default=True)
 
 * ``enforce_user_order``: a boolean value indicating whether or not take the
   first image as a reference image and then align the rest of the images
