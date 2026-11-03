@@ -265,8 +265,7 @@ def test_cube_build_oversampled(request, oversample, dataset, output_shape):
     else:
         assert oversampled.data.shape == (shape[0] * oversample, shape[1])
     if oversample != 1:
-        # assert oversampled.hasattr("regions") Not sure why this does not work - MELANIE ??
-        assert hasattr(oversampled, "regions")
+        assert oversampled.hasattr("regions")
 
     # In either case, cube build succeeds and output size is the about the same
     cube = CubeBuildStep.call(oversampled)[0]
