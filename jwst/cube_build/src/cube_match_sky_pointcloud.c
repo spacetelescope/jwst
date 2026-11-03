@@ -464,9 +464,10 @@ cube_wrapper(PyObject *module, PyObject *args)
         free_err = 0, free_dq = 0, free_zcdelt3 = 0;
     int free_sliceno = 0, free_softrad_pixel = 0, free_weight_pixel = 0;
 
-    PyArrayObject *xc, *yc, *zc, *flux, *err, *dq, *coord1, *coord2, *wave, *rois_pixel,
-        *roiw_pixel, *scalerad_pixel;
-    PyArrayObject *zcdelt3, *sliceno, *softrad_pixel, *weight_pixel;
+    PyArrayObject *xc = NULL, *yc = NULL, *zc = NULL, *flux = NULL, *err = NULL, *dq = NULL,
+                  *coord1 = NULL, *coord2 = NULL, *wave = NULL, *rois_pixel = NULL,
+                  *roiw_pixel = NULL, *scalerad_pixel = NULL;
+    PyArrayObject *zcdelt3 = NULL, *sliceno = NULL, *softrad_pixel = NULL, *weight_pixel = NULL;
     PyArrayObject *spaxel_flux_arr = NULL, *spaxel_weight_arr = NULL, *spaxel_var_arr = NULL;
     PyArrayObject *spaxel_iflux_arr = NULL, *spaxel_dq_arr = NULL;
     npy_intp npy_ncube = 0;
