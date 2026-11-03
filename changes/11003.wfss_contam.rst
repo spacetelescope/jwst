@@ -1,0 +1,1 @@
+Output contamination-corrected observed data now resides in a new attribute corr_data (FITS extension CORR_SCI) instead of directly modifying the input data.
