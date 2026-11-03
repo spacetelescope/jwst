@@ -188,7 +188,7 @@ blot_wrapper(PyObject *module, PyObject *args)
     int free_xcenter = 0, free_ycenter = 0, free_xcube = 0, free_ycube = 0, free_flux = 0,
         status = 0;
 
-    PyArrayObject *xcenter, *ycenter, *x_cube, *y_cube, *flux_cube;
+    PyArrayObject *xcenter, *ycenter = NULL, *x_cube = NULL, *y_cube = NULL, *flux_cube = NULL;
     PyArrayObject *blot_flux_arr = NULL, *blot_weight_arr = NULL;
 
     npy_intp npt = 0;
