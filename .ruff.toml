@@ -50,6 +50,7 @@ ignore = [
     "D100", # missing docstring in public module
     "D105", # missing docstring in magic method
     "E741", # ambiguous variable name (O/0, l/I, etc.)
+    "ICN001", # datetime should be imported as dt
     "UP008", # use super() instead of super(class, self). no harm being explicit
     "UP015", # unnecessary open(file, "r"). no harm being explicit
     "TRY003", # prevents custom exception messages not defined in exception itself.
