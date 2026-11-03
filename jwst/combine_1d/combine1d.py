@@ -66,8 +66,12 @@ class InputSpectrumModel:
         Dispersion direction for the spectrum.
     contam_flux : ndarray or None
         Input contaminating flux, if present. WFSS mode only.
+    corr_flux : ndarray or None
+        Contamination-corrected flux, if present. WFSS mode only.
     contam_surf_bright : ndarray or None
         Input contaminating surface brightness, if present. WFSS mode only.
+    corr_surf_bright : ndarray or None
+        Contamination-corrected surface brightness, if present. WFSS mode only.
     """
 
     def __init__(
@@ -91,7 +95,9 @@ class InputSpectrumModel:
         source_dec,
         dispersion_direction,
         contam_flux=None,
+        corr_flux=None,
         contam_surf_bright=None,
+        corr_surf_bright=None,
     ):
         self.wavelength = wavelength
         self.flux = flux
@@ -113,6 +119,8 @@ class InputSpectrumModel:
         self.dispersion_direction = dispersion_direction
         self.contam_flux = contam_flux
         self.contam_surf_bright = contam_surf_bright
+        self.corr_flux = corr_flux
+        self.corr_surf_bright = corr_surf_bright
 
 
 class OutputSpectrumModel:
@@ -143,8 +151,12 @@ class OutputSpectrumModel:
         Flag to indicate data has been combined (sums are normalized).
     contam_flux : ndarray or None
         Output contaminating flux, if present. WFSS mode only.
+    corr_flux : ndarray or None
+        Output contamination-corrected flux, if present. WFSS mode only.
     contam_surf_bright : ndarray or None
         Output contaminating surface brightness, if present. WFSS mode only.
+    corr_surf_bright : ndarray or None
+        Output contamination-corrected surface brightness, if present. WFSS mode only.
     """
 
     def __init__(self):
@@ -163,6 +175,8 @@ class OutputSpectrumModel:
         self.sb_unit = None
         self.contam_flux = None
         self.contam_surf_bright = None
+        self.corr_flux = None
+        self.corr_surf_bright = None
 
     def assign_wavelengths(self, input_spectra):
         """
@@ -233,10 +247,14 @@ class OutputSpectrumModel:
         has_contam = any(in_spec.contam_flux is not None for in_spec in input_spectra)
         if has_contam:
             contam_flux = np.full((nspec, nelem), np.nan, dtype=np.float64)
+            corr_flux = np.full((nspec, nelem), np.nan, dtype=np.float64)
             contam_surf_bright = np.full((nspec, nelem), np.nan, dtype=np.float64)
+            corr_surf_bright = np.full((nspec, nelem), np.nan, dtype=np.float64)
         else:
             contam_flux = None
+            corr_flux = None
             contam_surf_bright = None
+            corr_surf_bright = None
 
         self.flux_unit = input_spectra[0].flux_unit
         self.sb_unit = input_spectra[0].sb_unit
@@ -280,7 +298,9 @@ class OutputSpectrumModel:
                 count[s, k] = 1.0
                 if has_contam and (in_spec.contam_flux is not None):
                     contam_flux[s, k] = in_spec.contam_flux[i]
+                    corr_flux[s, k] = in_spec.corr_flux[i]
                     contam_surf_bright[s, k] = in_spec.contam_surf_bright[i]
+                    corr_surf_bright[s, k] = in_spec.corr_surf_bright[i]
 
         (
             flux,
@@ -290,7 +310,9 @@ class OutputSpectrumModel:
             weight,
             count,
             contam_flux,
+            corr_flux,
             contam_surf_bright,
+            corr_surf_bright,
         ) = self.combine_spectra(
             flux,
             flux_error,
@@ -299,7 +321,9 @@ class OutputSpectrumModel:
             weight,
             count,
             contam_flux=contam_flux,
+            corr_flux=corr_flux,
             contam_surf_bright=contam_surf_bright,
+            corr_surf_bright=corr_surf_bright,
             sigma_clip=sigma_clip,
         )
 
@@ -314,7 +338,9 @@ class OutputSpectrumModel:
         self.weight = weight
         self.count = count
         self.contam_flux = contam_flux
+        self.corr_flux = corr_flux
         self.contam_surf_bright = contam_surf_bright
+        self.corr_surf_bright = corr_surf_bright
 
         # Since the output wavelengths will not usually be exactly the same
         # as the input wavelengths, it's possible that there will be output
@@ -338,7 +364,9 @@ class OutputSpectrumModel:
             self.count = self.count[index]
             if self.contam_flux is not None:
                 self.contam_flux = self.contam_flux[index]
+                self.corr_flux = self.corr_flux[index]
                 self.contam_surf_bright = self.contam_surf_bright[index]
+                self.corr_surf_bright = self.corr_surf_bright[index]
         del index
 
     def combine_spectra(
@@ -350,7 +378,9 @@ class OutputSpectrumModel:
         weight,
         count,
         contam_flux=None,
+        corr_flux=None,
         contam_surf_bright=None,
+        corr_surf_bright=None,
         sigma_clip=None,
     ):
         """
@@ -373,8 +403,12 @@ class OutputSpectrumModel:
             Count of how many values at each index in the input arrays.
         contam_flux : ndarray, 2-D, optional
             Contaminating fluxes of input spectra, if present.
+        corr_flux : ndarray, 2-D, optional
+            Contamination-corrected fluxes of input spectra, if present.
         contam_surf_bright : ndarray, 2-D, optional
             Contaminating surface brightnesses of input spectra, if present.
+        corr_surf_bright : ndarray, 2-D, optional
+            Contamination-corrected surface brightnesses of input spectra, if present.
         sigma_clip : float, optional
             Factor for clipping outliers.  Compares input spectra to the
             median and median absolute deviation, by default None.
@@ -395,8 +429,12 @@ class OutputSpectrumModel:
             Total count of spectra contributing to each wavelength.
         contam_flux : ndarray, 1-D, or None
             Combined 1-D contaminating fluxes, if present.
+        corr_flux : ndarray, 1-D, or None
+            Combined 1-D contamination-corrected fluxes, if present.
         contam_surf_bright : ndarray, 1-D, or None
             Combined 1-D contaminating surface brightnesses, if present.
+        corr_surf_bright : ndarray, 1-D, or None
+            Combined 1-D contamination-corrected surface brightnesses, if present.
         """
         # Catch warnings for all NaN slices in an array.
         with warnings.catch_warnings():
@@ -423,8 +461,10 @@ class OutputSpectrumModel:
                 weight[clipped] = 0
                 if contam_flux is not None:
                     contam_flux[clipped] = np.nan
+                    corr_flux[clipped] = np.nan
                 if contam_surf_bright is not None:
                     contam_surf_bright[clipped] = np.nan
+                    corr_surf_bright[clipped] = np.nan
 
             # Perform a weighted sum of the input spectra
             sum_weight = np.nansum(weight, axis=0)
@@ -437,10 +477,12 @@ class OutputSpectrumModel:
             count = np.nansum(count, axis=0)
             if contam_flux is not None:
                 contam_flux = np.nansum(contam_flux * weight, axis=0) / sum_weight_nonzero
+                corr_flux = np.nansum(corr_flux * weight, axis=0) / sum_weight_nonzero
             if contam_surf_bright is not None:
                 contam_surf_bright = (
                     np.nansum(contam_surf_bright * weight, axis=0) / sum_weight_nonzero
                 )
+                corr_surf_bright = np.nansum(corr_surf_bright * weight, axis=0) / sum_weight_nonzero
 
         self.normalized = True
 
@@ -452,7 +494,9 @@ class OutputSpectrumModel:
             sum_weight,
             count,
             contam_flux,
+            corr_flux,
             contam_surf_bright,
+            corr_surf_bright,
         )
 
     def create_output_data(self):
@@ -485,12 +529,16 @@ class OutputSpectrumModel:
             descr = cmb_dtype.descr
             names = [name for name, _ in descr]
             contam_idx = names.index("FLUX") + 1
-            sb_idx = names.index("SURF_BRIGHT") + 2
+            sb_idx = names.index("SURF_BRIGHT") + 3
             data_list.insert(contam_idx, self.contam_flux)
+            data_list.insert(contam_idx + 1, self.corr_flux)
             data_list.insert(sb_idx, self.contam_surf_bright)
+            data_list.insert(sb_idx + 1, self.corr_surf_bright)
 
             descr.insert(contam_idx, ("CONTAM_FLUX", float))
+            descr.insert(contam_idx + 1, ("CORR_FLUX", float))
             descr.insert(sb_idx, ("CONTAM_SURF_BRIGHT", float))
+            descr.insert(sb_idx + 1, ("CORR_SURF_BRIGHT", float))
             cmb_dtype = np.dtype(descr)
 
         data = np.array(list(zip(*data_list, strict=False)), dtype=cmb_dtype)
@@ -504,6 +552,8 @@ class OutputSpectrumModel:
         if self.contam_flux is not None:
             output_model.spec_table.columns["contam_flux"].unit = self.flux_unit
             output_model.spec_table.columns["contam_surf_bright"].unit = self.sb_unit
+            output_model.spec_table.columns["corr_flux"].unit = self.flux_unit
+            output_model.spec_table.columns["corr_surf_bright"].unit = self.sb_unit
 
         return output_model
 
@@ -839,10 +889,14 @@ def _inputspectra_from_multispec(ms, exptime_key, input_spectra):
         has_contam = "contam_flux" in spec.spec_table.columns
         if has_contam:
             contam_flux = spec.spec_table.field("contam_flux")
+            corr_flux = spec.spec_table.field("corr_flux")
             contam_surf_bright = spec.spec_table.field("contam_surf_bright")
+            corr_surf_bright = spec.spec_table.field("corr_surf_bright")
         else:
             contam_flux = None
+            corr_flux = None
             contam_surf_bright = None
+            corr_surf_bright = None
 
         weight = np.ones_like(wavelength)
         if not unit_weight:
@@ -869,7 +923,9 @@ def _inputspectra_from_multispec(ms, exptime_key, input_spectra):
                 source_dec,
                 dispersion_direction,
                 contam_flux=contam_flux,
+                corr_flux=corr_flux,
                 contam_surf_bright=contam_surf_bright,
+                corr_surf_bright=corr_surf_bright,
             )
         )
 
@@ -912,9 +968,6 @@ def _inputspectra_from_tso(ms, exptime_key, input_spectra):
 
         flux_unit = spec.spec_table.columns["flux"].unit
         sb_unit = spec.spec_table.columns["surf_bright"].unit
-
-        contam_flux = None
-        contam_surf_bright = None
 
         spec_ra, spec_dec = spec.meta.wcs(0.0)[:2]
 
@@ -979,8 +1032,6 @@ def _inputspectra_from_tso(ms, exptime_key, input_spectra):
                     source_ra,
                     source_dec,
                     dispersion_direction,
-                    contam_flux=contam_flux,
-                    contam_surf_bright=contam_surf_bright,
                 )
             )
 
