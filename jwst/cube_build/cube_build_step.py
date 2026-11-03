@@ -318,7 +318,6 @@ class CubeBuildStep(Step):
 
         # ModelContainer of ifucubes
         cube_container = ModelContainer()
-        status_cube = 0
 
         for i in range(num_cubes):
             icube = str(i + 1)
@@ -366,12 +365,7 @@ class CubeBuildStep(Step):
             )
             # build the IFU Cube
 
-            status = 0
-            result, status = thiscube.build_ifucube(thiscube.cube_wcs)
-
-            # check if cube_build failed
-            if status == 1:
-                status_cube = 1
+            result = thiscube.build_ifucube(thiscube.cube_wcs)
 
             cube_container.append(result)
             del result
@@ -388,10 +382,10 @@ class CubeBuildStep(Step):
             for key in rm_keys:
                 if key in cube.meta.wcsinfo.instance:
                     del cube.meta.wcsinfo.instance[key]
-        if status_cube == 1:
-            record_step_status(cube_container, "cube_build", success=False)
-        else:
-            record_step_status(cube_container, "cube_build", success=True)
+        # if status_cube == 1:
+        #    record_step_status(cube_container, "cube_build", success=False)
+        # else:
+        record_step_status(cube_container, "cube_build", success=True)
 
         t1 = time.time()
         log.debug(f"Time to build all cubes {t1 - t0}")

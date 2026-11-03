@@ -25,7 +25,50 @@ __all__ = [
 
 @dataclass
 class CubeWCS:
-    """A class for the WCS information of 3D spectral cubes."""
+    """
+    A class for the WCS information of 3D spectral cubes.
+
+    CubeWCS has the following attributes:
+
+        crval1 : float
+            Reference point RA coordinate.
+        crval2 : float
+            Reference point Dec coordinate.
+        crval3 : float
+            Reference point wavelength coordinate.
+        crpix1 : float
+            Reference point pixel index along x-axis (1-indexed).
+        crpix2 : float
+            Reference point pixel index along y-axis (1-indexed).
+        crpix3 : float
+            Reference point pixel index along wavelength axis (1-indexed).
+        naxis1 : int
+            Cube pixel dimension along x.
+        naxis2 : int
+            Cube pixel dimension along y.
+        naxis3 : int
+            Cube pixel dimension along wavelength.
+        a_min : float
+            Minimum spatial bound in standard coordinates.
+        a_max : float
+            Maximum spatial bound in standard coordinates.
+        b_min : float
+            Minimum spatial bound in standard coordinates.
+        b_max : float
+            Maximum spatial bound in standard coordinates.
+        xcoord : ndarray
+            1D array of spaxel center positions along x.
+        ycoord : ndarray
+            1D array of spaxel center positions along y.
+        zcoord : ndarray
+            1D array of spaxel center positions along wavelength.
+        lambda_min : float
+            Adjusted minimum bound for linear wavelength axis.
+        lambda_max : float
+            Adjusted maximum bound for linear wavelength axis.
+        cdelt3_normal : ndarray
+            Array of wavelength bin step sizes used for flux normalization.
+    """
 
     naxis1: int
     naxis2: int
@@ -193,7 +236,8 @@ def check_cube_size(naxis1, naxis2, naxis3, limit):
 
     Raises
     ------
-        ValueError: If naxis1 * naxis2 * naxis3 exceeds the specified limit.
+    ValueError
+       If naxis1 * naxis2 * naxis3 exceeds the specified limit.
     """
     total = naxis1 * naxis2 * naxis3
     if total > limit:
@@ -237,51 +281,44 @@ def set_wcs(
     lambda_max : float
       Maximum wavelength threshold for the spectral axis.
     rot_angle : float
-      Position or rotation angle for the sky-to-tangent plane transformation, in degrees.
+      Position or rotation angle for the sky-to-tangent plane transformation,
+      in degrees.Applied during the RA/Dec to tangent-plane (xi, eta) coordinate
+      transformation to align the cube axes with the desired orientation.
+    nspax_x : int or None
+        User-specified number of spaxels along the x (RA) axis. Must be an odd
+        integer so that the tangent point falls at the central pixel. If None,
+        the number of spaxels is computed automatically from the corner footprint
+        and cdelt1.
+    nspax_y : int or None
+        User-specified number of spaxels along the y (Dec) axis. Must be an odd
+        integer so that the tangent point falls at the central pixel. If None,
+        the number of spaxels is computed automatically from the corner footprint
+        and cdelt2.
+    cdelt1 : float
+        Spaxel size along the x axis, in degrees. Sets the spatial
+        sampling scale and determines the number of x spaxels when nspax_x
+        is None.
+    cdelt2 : float
+        Spaxel size along the y axis, in degrees. Sets the spatial
+        sampling scale and determines the number of y spaxels when nspax_y
+        is None.
+    cdelt3 : float
+        Wavelength bin size along the spectral axis, in the same units as
+        lambda_min and lambda_max (typically microns). Used only when
+        linear_wave is True; ignored otherwise.
+    linear_wave : bool
+        If True, construct a uniform (linear) wavelength grid from lambda_min
+        to lambda_max with step cdelt3. If False, use the wavelength_table
+        array directly as the non-uniform spectral coordinates.
+    wavelength_table : array-like of float or None
+        Explicit array of wavelength values (typically microns) defining the
+        spectral axis when linear_wave is False. Each entry is the centre
+        wavelength of one spectral bin. Ignored when linear_wave is True.
 
     Returns
     -------
-    CubeWCS : object
-        Class holding WCS information, with the following attributes:
-
-        crval1 : float
-            Reference point RA coordinate.
-        crval2 : float
-            Reference point Dec coordinate.
-        crval3 : float
-            Reference point wavelength coordinate.
-        crpix1 : float
-            Reference point pixel index along x-axis (1-indexed).
-        crpix2 : float
-            Reference point pixel index along y-axis (1-indexed).
-        crpix3 : float
-            Reference point pixel index along wavelength axis (1-indexed).
-        naxis1 : int
-            Cube pixel dimension along x.
-        naxis2 : int
-            Cube pixel dimension along y.
-        naxis3 : int
-            Cube pixel dimension along wavelength.
-        a_min : float
-            Minimum spatial bound in standard coordinates.
-        a_max : float
-            Maximum spatial bound in standard coordinates.
-        b_min : float
-            Minimum spatial bound in standard coordinates.
-        b_max : float
-            Maximum spatial bound in standard coordinates.
-        xcoord : ndarray
-            1D array of spaxel center positions along x.
-        ycoord : ndarray
-            1D array of spaxel center positions along y.
-        zcoord : ndarray
-            1D array of spaxel center positions along wavelength.
-        lambda_min : float
-            Adjusted minimum bound for linear wavelength axis.
-        lambda_max : float
-            Adjusted maximum bound for linear wavelength axis.
-        cdelt3_normal : ndarray
-            Array of wavelength bin step sizes used for flux normalization.
+    `CubeWCS`
+        Dataclass holding WCS information.
     """
     ra_min = np.min(corner_ra)
     ra_max = np.max(corner_ra)
@@ -442,8 +479,8 @@ def print_cube_geometry(coord_system, wcs):
         Coordinate system type. If ``'internal_cal'``, axis labels are
         printed in along-slice/across-slice format; otherwise xi/eta
         (arcsec) labels are used.
-    wcs : object
-        WCS object containing the cube geometry. Expected attributes:
+    wcs : CubeWCS
+        Dataclass containing the cube geometry. Expected attributes:
 
         - ``naxis1``, ``naxis2``, ``naxis3`` : int — axis dimensions
         - ``crpix1``, ``crpix2``, ``crpix3`` : float — reference pixels
@@ -627,8 +664,8 @@ def setup_final_model(
     ----------
     model_ref : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The first IFU image model used to fill in basic header values.
-    cube_wcs : object
-        WCS object containing the cube geometry and wavelength solution.
+    cube_wcs : CubeWCS
+        Data class containing the cube geometry and wavelength solution.
         Expected attributes: ``naxis1``, ``naxis2``, ``naxis3``, ``crpix1``,
         ``crpix2``, ``crpix3``, ``crval1``, ``crval2``, ``crval3``, ``cdelt1``,
         ``cdelt2``, ``cdelt3``, ``linear_wave``, ``wavelength_table``.
@@ -674,15 +711,9 @@ def setup_final_model(
 
     Returns
     -------
-    result : tuple
-        A two-element tuple of:
-
-        - ``cube_model`` (`~stdatamodels.jwst.datamodels.IFUCubeModel`):
-           IFU cube datamodel with data arrays and WCS metadata filled in.
-        - ``status`` (int): 0 if cube build completed successfully,
-          1 if the cube contains only zero data and the step is marked SKIPPED.
+    cube_model: `~stdatamodels.jwst.datamodels.IFUCubeModel`:
+        IFU cube datamodel with data arrays and WCS metadata filled in.
     """
-    status = 0
     # loop over the wavelength planes to confirm each plane has some data
     # for initial or final planes that do not have any data - eliminated them
     # from the IFUcube
@@ -840,8 +871,7 @@ def setup_final_model(
 
     cube_model.meta.cal_step.cube_build = "COMPLETE"
     # problem with cube_build - contains only 0 data
-    if status == 1:
-        cube_model.meta.cal_step.cube_build = "SKIPPED"
+    # if status == 1:
+    #    cube_model.meta.cal_step.cube_build = "SKIPPED"
 
-    result = (cube_model, status)
-    return result
+    return cube_model

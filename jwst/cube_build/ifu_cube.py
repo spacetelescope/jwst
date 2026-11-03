@@ -280,8 +280,8 @@ class IFUCubeData:
 
         Returns
         -------
-        CubeWCS : dataclass
-            A CubeWCS object with all WCS parameters set for the internal IFU
+        CubeWCS : `~jwst.cube_build.cube_lib.CubeWCS`
+            Data class with all WCS parameters set for the internal IFU
             slicer plane, containing the following attributes:
 
         naxis1 : int
@@ -290,7 +290,7 @@ class IFUCubeData:
         naxis2 : int
             Cube pixel dimension along y (along slice for MIRI,
             along slice for NIRSpec).
-        naxis3 L: int
+        naxis3 : int
             Cube pixel dimension along wavelength.
         cdelt1 : float
             Pixel scale along x-axis.
@@ -405,7 +405,7 @@ class IFUCubeData:
             ycoord = acoord
             xcoord = across_coord
             crval1 = b_min
-        # _______________________________________________________________________
+
         # common to both MIRI and NIRSPEC
         crpix1 = 0.5
         crpix2 = 0.5
@@ -456,7 +456,6 @@ class IFUCubeData:
             linear_wave=linear_wave,
         )
 
-    # ________________________________________________________________________________
     def build_ifucube(self, cube_wcs):
         """
         Create an IFU cube.
@@ -483,9 +482,14 @@ class IFUCubeData:
               each spaxel
         5. :func:`jwst.cube_build.cube_lib.setup_final_model`
 
+        Parameters
+        ----------
+        cube_wcs : `~jwst.cube_build.cube_lib.CubeWCS`
+            Data class containing the wcs information of the IFU cube.
+
         Returns
         -------
-        result : `~stdatamodels.jwst.datamodels.IFUCubeModel`
+        cube_model : `~stdatamodels.jwst.datamodels.IFUCubeModel`
             An IFU cube of combined IFU image data.
         """
         cb_suffix = self.define_cubename_suffix()
@@ -568,7 +572,7 @@ class IFUCubeData:
                         log.warning(f"No valid data found on file {input_model.meta.filename}")
                         build_cube = False
 
-                    result = None
+                    result_c = None
                     weight_type = 0  # default to emsm instead of msm
 
                     if self.weighting == "msm":
@@ -576,7 +580,7 @@ class IFUCubeData:
 
                     if self.interpolation == "pointcloud" and build_cube:
                         roiw_ave = np.mean(roiw_pixel)
-                        result = cube_wrapper(
+                        result_c = cube_wrapper(
                             weight_type,
                             self.cube_wcs.xcoord,
                             self.cube_wcs.ycoord,
@@ -599,7 +603,7 @@ class IFUCubeData:
                             self.cube_wcs.cdelt2,
                         )
 
-                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
+                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result_c
                         self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
                         self.spaxel_weight = self.spaxel_weight + np.asarray(
                             spaxel_weight, np.float64
@@ -608,8 +612,8 @@ class IFUCubeData:
                         self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
                         spaxel_dq.astype(np.uint)
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
-                        result = None
-                        del result
+                        result_c = None
+                        del result_c
                         del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq
 
                     if self.weighting == "drizzle" and build_cube:
@@ -622,7 +626,7 @@ class IFUCubeData:
                         if debug_cube_index >= 0:
                             log.info(f"Input filename: {input_model.meta.filename}")
 
-                        result = cube_wrapper_driz(
+                        result_c = cube_wrapper_driz(
                             self.readnoise_weight,
                             self.cube_wcs.xcoord,
                             self.cube_wcs.ycoord,
@@ -654,7 +658,7 @@ class IFUCubeData:
                             debug_cube_index,
                         )
 
-                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
+                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result_c
 
                         self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
                         self.spaxel_weight = self.spaxel_weight + np.asarray(
@@ -667,7 +671,7 @@ class IFUCubeData:
                         spaxel_dq = np.asarray(spaxel_dq, dtype=self.spaxel_dq.dtype)
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
 
-                        del result
+                        del result_c
                         del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq
 
                 #  AREA - 2d method only works for single files local slicer plane (internal_cal)
@@ -685,7 +689,6 @@ class IFUCubeData:
 
                         for i in regions:
                             log.info("Working on Slice # %d", i)
-                            # if input_model.hasattr("regions"):
                             if hasattr(input_model, "regions"):
                                 slice_det = input_model.regions
                             else:
@@ -697,7 +700,7 @@ class IFUCubeData:
                             y = y[index]
                             x = x[index]
                             slice_ifu = i - start_region
-                            result = cube_internal_cal.match_det2cube(
+                            result_c = cube_internal_cal.match_det2cube(
                                 self.instrument,
                                 x,
                                 y,
@@ -713,7 +716,7 @@ class IFUCubeData:
                                 self.cube_wcs.naxis1,
                                 self.cube_wcs.naxis2,
                             )
-                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
+                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result_c
                             self.spaxel_flux = self.spaxel_flux + np.asarray(
                                 spaxel_flux, np.float64
                             )
@@ -724,8 +727,8 @@ class IFUCubeData:
                             self.spaxel_iflux = self.spaxel_iflux + np.asarray(
                                 spaxel_iflux, np.float64
                             )
-                            result = None
-                            del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, result
+                            result_c = None
+                            del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, result_c
                     # ----------------------------------------------------------------------------
                     # NIRSPEC
                     # ----------------------------------------------------------------------------
@@ -741,7 +744,7 @@ class IFUCubeData:
                             )
                             detector2slicer = slice_wcs.get_transform(input_frame, "slicer")
 
-                            result = cube_internal_cal.match_det2cube(
+                            result_c = cube_internal_cal.match_det2cube(
                                 self.instrument,
                                 x,
                                 y,
@@ -757,7 +760,7 @@ class IFUCubeData:
                                 self.cube_wcs.naxis1,
                                 self.cube_wcs.naxis2,
                             )
-                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
+                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result_c
                             self.spaxel_flux = self.spaxel_flux + np.asarray(
                                 spaxel_flux, np.float64
                             )
@@ -768,8 +771,8 @@ class IFUCubeData:
                             self.spaxel_iflux = self.spaxel_iflux + np.asarray(
                                 spaxel_iflux, np.float64
                             )
-                            result = None
-                            del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, result
+                            result_c = None
+                            del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, result_c
                 k = k + 1
             # done looping over files
 
@@ -808,7 +811,7 @@ class IFUCubeData:
                     )
 
         # shove Flux and iflux in the  final IFU cube
-        result = cube_lib.setup_final_model(
+        cube_model = cube_lib.setup_final_model(
             input_model_ref,
             self.cube_wcs,
             self.spaxel_flux,
@@ -826,8 +829,6 @@ class IFUCubeData:
             self.roiw_table,
             self.output_name,
         )
-
-        cube_model, status = result
 
         # Call model_blender if there are multiple inputs
         if len(self.input_models) > 1:
@@ -853,8 +854,7 @@ class IFUCubeData:
             outchannel = "".join(sorted(outchannel))
             cube_model.meta.instrument.channel = outchannel
 
-        result = (cube_model, status)
-        return result
+        return cube_model
 
     # ________________________________________________________________________________
     def determine_cube_parameters_internal(self):

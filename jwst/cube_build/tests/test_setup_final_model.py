@@ -129,7 +129,7 @@ def _call_setup_final_model(
     if roiw_table is None:
         roiw_table = np.array([roiw])
 
-    cube_model, status = cube_lib.setup_final_model(
+    cube_model = cube_lib.setup_final_model(
         model_ref=input_model,
         cube_wcs=cube_wcs,
         spaxel_flux=flux,
@@ -147,7 +147,7 @@ def _call_setup_final_model(
         roiw_table=roiw_table,
         output_name=None,
     )
-    return cube_model, status
+    return cube_model
 
 
 # ---------------------------------------------------------------------------
@@ -160,13 +160,13 @@ class TestPixelArea:
 
     def test_pixelarea_arcsecsq(self, input_model, base_cube_wcs):
         """pixelarea_arcsecsq == cdelt1 * cdelt2."""
-        cube_model, _ = _call_setup_final_model(input_model, base_cube_wcs)
+        cube_model = _call_setup_final_model(input_model, base_cube_wcs)
         expected = CDELT1 * CDELT2
         assert math.isclose(cube_model.meta.photometry.pixelarea_arcsecsq, expected, rel_tol=1e-10)
 
     def test_pixelarea_steradians(self, input_model, base_cube_wcs):
         """pixelarea_steradians == pixelarea_arcsecsq * 2.3504e-11."""
-        cube_model, _ = _call_setup_final_model(input_model, base_cube_wcs)
+        cube_model = _call_setup_final_model(input_model, base_cube_wcs)
         expected = CDELT1 * CDELT2 * ARCSEC2_TO_SR
         assert math.isclose(
             cube_model.meta.photometry.pixelarea_steradians, expected, rel_tol=1e-10
@@ -178,7 +178,7 @@ class TestPixelArea:
         # Only occurs for 'internal' type cubes
         base_cube_wcs.cdelt1 = 0.10
         base_cube_wcs.cdelt2 = 0.13
-        cube_model, _ = _call_setup_final_model(input_model, base_cube_wcs)
+        cube_model = _call_setup_final_model(input_model, base_cube_wcs)
         expected = 0.10 * 0.13
         assert math.isclose(cube_model.meta.photometry.pixelarea_arcsecsq, expected, rel_tol=1e-10)
 
@@ -193,12 +193,12 @@ class TestSkyalignLinearWave:
 
     def test_cdelt_stored_in_degrees(self, input_model, base_cube_wcs):
         """meta.wcsinfo.cdelt1/2 must be in degrees (arcsec / 3600)."""
-        cube_model, _ = _call_setup_final_model(input_model, base_cube_wcs)
+        cube_model = _call_setup_final_model(input_model, base_cube_wcs)
         assert math.isclose(cube_model.meta.wcsinfo.cdelt1, CDELT1 / 3600.0, rel_tol=1e-10)
         assert math.isclose(cube_model.meta.wcsinfo.cdelt2, CDELT2 / 3600.0, rel_tol=1e-10)
 
     def test_ctype3_is_wave(self, input_model, base_cube_wcs):
-        cube_model, _ = _call_setup_final_model(input_model, base_cube_wcs)
+        cube_model = _call_setup_final_model(input_model, base_cube_wcs)
         assert cube_model.meta.wcsinfo.ctype3 == "WAVE"
 
 
@@ -219,7 +219,7 @@ class TestSkyalignNonLinearWave:
         return base_cube_wcs
 
     def test_ctype3_is_wave_tab(self, input_model, nonlinear_cube_wcs):
-        cube_model, _ = _call_setup_final_model(
+        cube_model = _call_setup_final_model(
             input_model,
             nonlinear_cube_wcs,
             roiw_table=np.array([0.001, 0.002, 0.003]),
@@ -227,7 +227,7 @@ class TestSkyalignNonLinearWave:
         assert cube_model.meta.wcsinfo.ctype3 == "WAVE-TAB"
 
     def test_crval3_and_crpix3_fixed(self, input_model, nonlinear_cube_wcs):
-        cube_model, _ = _call_setup_final_model(
+        cube_model = _call_setup_final_model(
             input_model,
             nonlinear_cube_wcs,
             roiw_table=np.array([0.001, 0.002, 0.003]),
@@ -237,9 +237,7 @@ class TestSkyalignNonLinearWave:
 
     def test_roi_wave_is_mean_of_table(self, input_model, nonlinear_cube_wcs):
         roiw_table = np.array([0.001, 0.002, 0.003])
-        cube_model, _ = _call_setup_final_model(
-            input_model, nonlinear_cube_wcs, roiw_table=roiw_table
-        )
+        cube_model = _call_setup_final_model(input_model, nonlinear_cube_wcs, roiw_table=roiw_table)
         assert math.isclose(cube_model.meta.ifu.roi_wave, np.mean(roiw_table), rel_tol=1e-10)
 
 
@@ -264,7 +262,7 @@ class TestInternalCalNIRSpec:
         For internal_cal the cdelt values must NOT be divided by 3600.
         They should equal cube_wcs.cdelt1 and cube_wcs.cdelt2 exactly.
         """
-        cube_model, _ = _call_setup_final_model(
+        cube_model = _call_setup_final_model(
             input_model,
             nirspec_internal_wcs,
             coord_system="internal_cal",
@@ -285,7 +283,7 @@ class TestInternalCalNIRSpec:
         )
 
     def test_cunit_is_meter(self, input_model, nirspec_internal_wcs):
-        cube_model, _ = _call_setup_final_model(
+        cube_model = _call_setup_final_model(
             input_model,
             nirspec_internal_wcs,
             coord_system="internal_cal",
@@ -295,7 +293,7 @@ class TestInternalCalNIRSpec:
         assert cube_model.meta.wcsinfo.cunit2 == "meter"
 
     def test_ctype_is_nrsslicerxy(self, input_model, nirspec_internal_wcs):
-        cube_model, _ = _call_setup_final_model(
+        cube_model = _call_setup_final_model(
             input_model,
             nirspec_internal_wcs,
             coord_system="internal_cal",
@@ -308,7 +306,7 @@ class TestInternalCalNIRSpec:
         """pc1_1 must be negated relative to the skyalign value."""
         # For rot_angle=0, skyalign sets pc1_1 = -cos(0) = -1.
         # internal_cal then negates it: pc1_1 *= -1 -> +1.
-        cube_model, _ = _call_setup_final_model(
+        cube_model = _call_setup_final_model(
             input_model,
             nirspec_internal_wcs,
             coord_system="internal_cal",
@@ -322,7 +320,7 @@ class TestInternalCalNIRSpec:
         cube_wcs (in meters for NIRSpec internal_cal), not (cdelt/3600)^2.
         This test would catch the crpix1/crpix2 typo introduced in cube_lib_1.py.
         """
-        cube_model, _ = _call_setup_final_model(
+        cube_model = _call_setup_final_model(
             input_model,
             nirspec_internal_wcs,
             coord_system="internal_cal",
@@ -345,7 +343,7 @@ class TestDrizzleInterpolation:
     """drizzle path: weight_power, roi_wave, roi_spatial must be zeroed."""
 
     def test_drizzle_zeros_roi_and_weight(self, input_model, base_cube_wcs):
-        cube_model, _ = _call_setup_final_model(
+        cube_model = _call_setup_final_model(
             input_model,
             base_cube_wcs,
             interpolation="drizzle",
@@ -359,7 +357,7 @@ class TestDrizzleInterpolation:
         assert cube_model.meta.ifu.roi_spatial == 0
 
     def test_drizzle_sets_weighting_label(self, input_model, base_cube_wcs):
-        cube_model, _ = _call_setup_final_model(
+        cube_model = _call_setup_final_model(
             input_model,
             base_cube_wcs,
             interpolation="drizzle",
