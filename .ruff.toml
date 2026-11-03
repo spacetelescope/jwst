@@ -50,7 +50,6 @@ ignore = [
     "D100", # missing docstring in public module
     "D105", # missing docstring in magic method
     "E741", # ambiguous variable name (O/0, l/I, etc.)
-    "ICN001", # datetime should be imported as dt
     "UP008", # use super() instead of super(class, self). no harm being explicit
     "UP015", # unnecessary open(file, "r"). no harm being explicit
     "TRY003", # prevents custom exception messages not defined in exception itself.
@@ -66,6 +65,14 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 
 [lint.flake8-tidy-imports]
 ban-relative-imports = "all"  # Disallow all relative imports.
+
+[lint.flake8-import-conventions.aliases]
+# Declare the default aliases.
+matplotlib = "mpl"
+"matplotlib.pyplot" = "plt"
+numpy = "np"
+"numpy.typing" = "npt"
+pandas = "pd"
 
 [lint.per-file-ignores]
 "jwst/**/__init__.py" = [
