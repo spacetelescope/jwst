@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope="module")
-def run_spec2_with_contam(rtdata_module, resource_tracker):
+def run_spec2_with_contam_f322w2(rtdata_module, resource_tracker):
     """Run the Spec2Pipeline with the wfss_contam step turned on."""
     rtdata = rtdata_module
     rtdata.get_asn("nircam/wfss/jw01076-o107_20260704t223417_spec2_00006_asn.json")
@@ -19,7 +19,7 @@ def run_spec2_with_contam(rtdata_module, resource_tracker):
     step_params = {
         "step": "jwst.pipeline.Spec2Pipeline",
         "args": [
-            "--steps.extract_2d.wfss_nbright=10",
+            "--steps.extract_2d.wfss_nbright=40",
             "--steps.wfss_contam.magnitude_limit=20",
             "--steps.wfss_contam.save_simulated_image=True",
             "--steps.wfss_contam.save_results=true",
@@ -33,14 +33,16 @@ def run_spec2_with_contam(rtdata_module, resource_tracker):
     return rtdata
 
 
-def test_log_tracked_resources_nircam_wfss_contam(log_tracked_resources, run_spec2_with_contam):
+def test_log_tracked_resources_nircam_wfss_contam(
+    log_tracked_resources, run_spec2_with_contam_f322w2
+):
     log_tracked_resources()
 
 
-@pytest.mark.parametrize("suffix", ["simul", "wfss_contam"])
-def test_nrc_wfss_contam(run_spec2_with_contam, fitsdiff_default_kwargs, suffix):
+@pytest.mark.parametrize("suffix", ["simul", "wfss_contam", "x1d"])
+def test_nrc_wfss_contam_f322w2(run_spec2_with_contam_f322w2, fitsdiff_default_kwargs, suffix):
     """Regression test for wfss_contam applied to NIRCam WFSS data"""
-    rtdata = run_spec2_with_contam
+    rtdata = run_spec2_with_contam_f322w2
     output = f"jw01076107001_02101_00002_nrcalong_{suffix}.fits"
     rtdata.output = output
 
@@ -69,6 +71,7 @@ def run_spec2_with_contam_f356w(rtdata_module):
     step_params = {
         "step": "jwst.pipeline.Spec2Pipeline",
         "args": [
+            "--steps.extract_2d.wfss_nbright=40",
             "--steps.wfss_contam.magnitude_limit=20",
             "--steps.wfss_contam.save_simulated_image=True",
             "--steps.wfss_contam.save_results=true",

@@ -66,6 +66,14 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 [lint.flake8-tidy-imports]
 ban-relative-imports = "all"  # Disallow all relative imports.
 
+[lint.flake8-import-conventions.aliases]
+# Declare the default aliases.
+matplotlib = "mpl"
+"matplotlib.pyplot" = "plt"
+numpy = "np"
+"numpy.typing" = "npt"
+pandas = "pd"
+
 [lint.per-file-ignores]
 "jwst/**/__init__.py" = [
     "E402", # module-level import not at top of file
