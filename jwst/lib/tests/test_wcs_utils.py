@@ -6,10 +6,10 @@ from astropy.modeling.models import Identity, Mapping, Scale, Shift
 from gwcs import coordinate_frames as cf
 from gwcs import wcs, wcstools
 from numpy.testing import assert_allclose
+from stcal.alignment import wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import NirissSOSSModel
 
-from jwst.assign_wcs import util
 from jwst.lib.wcs_utils import get_wavelengths
 
 
@@ -39,7 +39,7 @@ def create_model():
 
     data = np.full((10, 10), fill_value=5.0)
 
-    bounding_box = util.wcs_bbox_from_shape(data.shape)
+    bounding_box = wcs_bbox_from_shape(data.shape)
 
     x, y = wcstools.grid_from_bounding_box(bounding_box, step=(1, 1))
     _, _, lam = slit_wcs(x, y)
@@ -151,7 +151,7 @@ def test_get_wavelength_wavecorr():
     wave2wavecorr = Identity(2) & Shift(0.1)
     model.meta.wcs.insert_frame("slit_frame", wave2wavecorr, wcorr_frame)
 
-    bounding_box = util.wcs_bbox_from_shape(model.data.shape)
+    bounding_box = wcs_bbox_from_shape(model.data.shape)
     x, y = wcstools.grid_from_bounding_box(bounding_box, step=(1, 1))
     _, _, lam = model.meta.wcs(x, y)
     model.wavelength = lam
