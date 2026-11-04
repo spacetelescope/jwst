@@ -182,6 +182,21 @@ def test_wrap_ra():
     ra_test = wrap_ra(ra)
     assert np.all(ra_compare == ra_test)
 
+    # test 4, this would do the wrong thing with the old version of wrap_ra
+    ra4 = np.zeros(4, dtype=float)
+    ra4[0] = 359.4
+    ra4[1] = 359.99
+    ra4[2] = 0.2
+    ra4[3] = 0.3
+
+    ra_compare = ra4.copy()
+    ra_compare[0] = ra4[0] - 360.0
+    ra_compare[1] = ra4[1] - 360.0
+    ra_test = wrap_ra(ra4)
+    assert np.all(ra_compare == ra_test)
+    # The old version of wrap_ra would return [359.4, -0.01, 0.2, 0.3]
+    # instead of [-0.6, -0.01, 0.2, 0.3]
+
     # test that it works with a list
     ra_list = ra.tolist()
     ra_test = wrap_ra(ra_list)
