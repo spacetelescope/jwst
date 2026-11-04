@@ -53,22 +53,14 @@ def test_extract_tso_dhs_nrcalong(dhs_nrcalong_wcs_model):
     """
     Extract NRCALONG DHS data.
 
-    Output is a MultiSlitModel with four slits (one per readout)
-    representing the same physical location on the detector.
+    Output is a SlitModel, since stripes are merged in detector1.
     """
     refs = get_reference_files(dhs_nrcalong_wcs_model)
     result = extract_tso_object(dhs_nrcalong_wcs_model, reference_files=refs)
 
-    assert isinstance(result, datamodels.MultiSlitModel)
-    assert len(result.slits) == 4
-    full_width = dhs_nrcalong_wcs_model.meta.subarray.xsize
-    ref_data = result.slits[0].data
-    for slit in result.slits:
-        assert slit.xsize == full_width
-        assert slit.ysize > 0
-        # All NRCALONG stripes read from the same physical detector band
-        # ensure they are all identical
-        assert np.all(slit.data == ref_data)
+    assert isinstance(result, datamodels.SlitModel)
+    assert result.xsize == dhs_nrcalong_wcs_model.meta.subarray.xsize
+    assert result.ysize == dhs_nrcalong_wcs_model.meta.subarray.ysize
 
 
 def test_extract_2d_step_dhs_nrca1(dhs_nrca1_wcs_model):
@@ -87,7 +79,6 @@ def test_extract_2d_step_dhs_nrcalong(dhs_nrcalong_wcs_model):
     result = Extract2dStep.call(dhs_nrcalong_wcs_model)
 
     assert result.meta.cal_step.extract_2d == "COMPLETE"
-    assert isinstance(result, datamodels.MultiSlitModel)
-    assert len(result.slits) == len(helpers.NRCA1_DHS_STRIPE_IDS)
+    assert isinstance(result, datamodels.SlitModel)
     assert result is not dhs_nrcalong_wcs_model
     assert dhs_nrcalong_wcs_model.meta.cal_step.extract_2d is None
