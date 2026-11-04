@@ -9,7 +9,7 @@ The ``charge_migration`` step has the following optional arguments:
   If the value is less than zero, no flagging will be applied.
 
 ``--correction_threshold`` (float, default=-1)
-  Threshold value in ADU for attempting to fit and correct for
+  Threshold value in ADU above which to attempt to fit and correct for
   the brighter-fatter effect (BFE). If the value is less than zero,
   no correction will be applied.
 
@@ -17,13 +17,15 @@ The ``charge_migration`` step has the following optional arguments:
   Number of pixels to fit on either side of a pixel above the ``correction_threshold``.
 
 ``--snr_limit`` (float, default=3.0)
-  Minimum signal-to-noise ratio for a fit correction to consider the fit successful.
-  Specified as a factor of the read noise value. Set to zero to skip the SNR check
+  Minimum value change due to the slope for a fit correction to consider the fit successful.
+  Specified as a multiple of the read noise value, such that a value of 2 means that the group differences
+  must change by at least twice the pixel read noise over the length of the ramp. Set to zero to skip the SNR check
   for the fits. Ignored if ``correction_threshold`` is negative.
 
 ``--rms_limit`` (float, default=2.2)
   Minimum RMS improvement from a fit correction to consider the fit successful.
-  Specified as a reduction factor for the initial RMS. Set to zero to skip the RMS check
+  Specified as a reduction factor for the initial RMS, such that a value of 2 means that the RMS of the
+  corrected group differences must be less than half of the original RMS. Set to zero to skip the RMS check
   for the fits. Ignored if ``correction_threshold`` is negative.
 
 ``--save_fit_info`` (boolean, default=False)
@@ -33,6 +35,7 @@ The ``charge_migration`` step has the following optional arguments:
   * ``x``: x index for the pixel, zero-indexed
   * ``y``: y index for the pixel, zero-indexed
   * ``fit_success``: True if the fit was successful and the correction was applied to the pixel, False otherwise
+  * ``value_change``: Change in group differences from start to end of the ramp, in multiples of the read noise
   * ``sigma_orig``: Standard deviation for the group differences prior to correction
   * ``sigma_new``: Standard deviation for the group differences after correction
   * ``diff``: Group difference data input to the fit
