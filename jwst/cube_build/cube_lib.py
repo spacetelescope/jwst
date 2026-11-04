@@ -97,7 +97,7 @@ class CubeWCS:
     """Rotation angle of the WCS frame relative to the pixel grid (degrees)."""
 
     linear_wave: bool
-    """If True, the spectral axis is linearly sampled; 
+    """If True, the spectral axis is linearly sampled;
     if False, wavelength_table is used instead."""
 
     wavelength_table: np.ndarray | None = None
