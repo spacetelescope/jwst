@@ -252,8 +252,6 @@ class STFITSDiff(FITSDiff):
 
         # Make sure to compare the same extensions
         for idxa, extname in enumerate(ext_namesa):
-            if isinstance(extname, tuple):
-                extname = extname[0]
             extver = self.a[idxa].ver
             same_version = False
             if extname not in ext_intersection:
@@ -283,6 +281,8 @@ class STFITSDiff(FITSDiff):
                         and idxa not in self.ignore_number_hdus
                         and extname not in additional_hdus_to_ignore
                     ):
+                        if isinstance(extname, tuple):
+                            extname = extname[0]
                         hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
                         if not hdu_diff.identical:
                             self.diff_hdus.append((idxa, hdu_diff, extname, extver))
