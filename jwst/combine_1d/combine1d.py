@@ -493,22 +493,6 @@ class OutputSpectrumModel:
             self.weight,
             self.count,
         ]
-        if self.contam_flux is not None:
-            # add contam columns in the same positions used for WFSSCombinedSpecModel
-            descr = cmb_dtype.descr
-            names = [name for name, _ in descr]
-            contam_idx = names.index("FLUX") + 1
-            sb_idx = names.index("SURF_BRIGHT") + 3
-            data_list.insert(contam_idx, self.contam_flux)
-            data_list.insert(contam_idx + 1, self.corr_flux)
-            data_list.insert(sb_idx, self.contam_surf_bright)
-            data_list.insert(sb_idx + 1, self.corr_surf_bright)
-
-            descr.insert(contam_idx, ("CONTAM_FLUX", float))
-            descr.insert(contam_idx + 1, ("CORR_FLUX", float))
-            descr.insert(sb_idx, ("CONTAM_SURF_BRIGHT", float))
-            descr.insert(sb_idx + 1, ("CORR_SURF_BRIGHT", float))
-            cmb_dtype = np.dtype(descr)
 
         data = np.array(list(zip(*data_list, strict=False)), dtype=cmb_dtype)
         output_model = dm.CombinedSpecModel(spec_table=data)
@@ -518,11 +502,6 @@ class OutputSpectrumModel:
         output_model.spec_table.columns["error"].unit = self.flux_unit
         output_model.spec_table.columns["surf_bright"].unit = self.sb_unit
         output_model.spec_table.columns["sb_error"].unit = self.sb_unit
-        if self.contam_flux is not None:
-            output_model.spec_table.columns["contam_flux"].unit = self.flux_unit
-            output_model.spec_table.columns["contam_surf_bright"].unit = self.sb_unit
-            output_model.spec_table.columns["corr_flux"].unit = self.flux_unit
-            output_model.spec_table.columns["corr_surf_bright"].unit = self.sb_unit
 
         return output_model
 
