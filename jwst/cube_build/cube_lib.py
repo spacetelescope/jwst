@@ -36,6 +36,15 @@ class CubeWCS:
     crval3: float
     """Reference point wavelength coordinate."""
 
+    cdelt1: float
+    """Pixel scale along the x-axis (arcseconds per pixel)."""
+
+    cdelt2: float
+    """Pixel scale along the y-axis (arcseconds per pixel)."""
+
+    cdelt3: float
+    """Pixel scale along the z-axis (microns per pixel)."""
+
     crpix1: float
     """Reference point pixel index along x-axis (1-indexed)."""
 
@@ -84,31 +93,17 @@ class CubeWCS:
     cdelt3_normal: np.ndarray
     """Array of wavelength bin step sizes used for flux normalization."""
 
-    naxis1: int
-    naxis2: int
-    naxis3: int
-    cdelt1: float
-    cdelt2: float
-    cdelt3: float
-    crpix1: float
-    crpix2: float
-    crpix3: float
-    crval1: float
-    crval2: float
-    crval3: float
-    cdelt3_normal: np.ndarray
     rot_angle: float
-    xcoord: np.ndarray
-    ycoord: np.ndarray
-    zcoord: np.ndarray
-    a_min: float
-    a_max: float
-    b_min: float
-    b_max: float
-    lambda_min: float
-    lambda_max: float
+    """Rotation angle of the WCS frame relative to the pixel grid (degrees)."""
+
     linear_wave: bool
+    """If True, the spectral axis is linearly sampled; 
+    if False, wavelength_table is used instead."""
+
     wavelength_table: np.ndarray | None = None
+    """Explicit array of wavelength values (typically microns) defining the
+    spectral axis when linear_wave is False. Each entry is the centre
+    wavelength of one spectral bin. Ignored when linear_wave is True."""
 
 
 def radec2std(crval1, crval2, ra, dec, rot_angle=None):
