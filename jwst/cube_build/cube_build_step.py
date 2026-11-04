@@ -382,9 +382,6 @@ class CubeBuildStep(Step):
             for key in rm_keys:
                 if key in cube.meta.wcsinfo.instance:
                     del cube.meta.wcsinfo.instance[key]
-        # if status_cube == 1:
-        #    record_step_status(cube_container, "cube_build", success=False)
-        # else:
         record_step_status(cube_container, "cube_build", success=True)
 
         t1 = time.time()

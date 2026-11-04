@@ -102,7 +102,7 @@ class CubeWCS:
 
     wavelength_table: np.ndarray | None = None
     """Explicit array of wavelength values (typically microns) defining the
-    spectral axis when linear_wave is False. Each entry is the centre
+    spectral axis when linear_wave is False. Each entry is the center
     wavelength of one spectral bin. Ignored when linear_wave is True."""
 
 
@@ -321,7 +321,7 @@ def set_wcs(
         array directly as the non-uniform spectral coordinates.
     wavelength_table : array-like of float or None
         Explicit array of wavelength values (typically microns) defining the
-        spectral axis when linear_wave is False. Each entry is the centre
+        spectral axis when linear_wave is False. Each entry is the center
         wavelength of one spectral bin. Ignored when linear_wave is True.
 
     Returns
@@ -720,7 +720,7 @@ def setup_final_model(
 
     Returns
     -------
-    cube_model: `~stdatamodels.jwst.datamodels.IFUCubeModel`:
+    cube_model: `~stdatamodels.jwst.datamodels.IFUCubeModel`
         IFU cube datamodel with data arrays and WCS metadata filled in.
     """
     # loop over the wavelength planes to confirm each plane has some data
@@ -879,8 +879,5 @@ def setup_final_model(
     )
 
     cube_model.meta.cal_step.cube_build = "COMPLETE"
-    # problem with cube_build - contains only 0 data
-    # if status == 1:
-    #    cube_model.meta.cal_step.cube_build = "SKIPPED"
 
     return cube_model
