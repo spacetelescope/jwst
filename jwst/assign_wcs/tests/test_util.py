@@ -11,6 +11,7 @@ from astropy.modeling import CompoundModel
 from astropy.modeling.models import Identity, Shift
 from astropy.table import QTable
 from astropy.utils.data import get_pkg_data_filename
+from stcal.alignment import wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import (
@@ -20,7 +21,6 @@ from jwst.assign_wcs.util import (
     subarray_transform,
     substripe_subarray_transforms,
     transform_bbox_from_shape,
-    wcs_bbox_from_shape,
 )
 from jwst.lib.catalog_utils import SkyObject
 from jwst.tests.nircam_rate_helpers import nircam_dhs_nrca1_sub260_rate_model
