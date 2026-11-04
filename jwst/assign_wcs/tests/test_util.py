@@ -21,6 +21,7 @@ from jwst.assign_wcs.util import (
     subarray_transform,
     substripe_subarray_transforms,
     transform_bbox_from_shape,
+    wrap_ra,
 )
 from jwst.lib.catalog_utils import SkyObject
 from jwst.tests.nircam_rate_helpers import nircam_dhs_nrca1_sub260_rate_model
@@ -146,3 +147,59 @@ def test_substripe_subarray_transforms(full_frame):
         assert transforms[stripe][0].offset.value == 0
         # y offset is as expected
         assert transforms[stripe][1].offset.value == expected[i]
+
+
+def test_wrap_ra():
+    """Test function wrap_ra but all ra on same side of 0/360 border."""
+
+    # test 1  wrap ra should do nothing
+    ra = np.zeros(5, dtype=float)
+    ra[0] = 0.26
+    ra[1] = 0.12
+    ra[2] = 0.35
+    ra[3] = 0.23
+    ra[4] = 0.45
+
+    ra_test = wrap_ra(ra)
+    assert np.all(ra == ra_test)
+
+    # test 2 the 4th value should be changed to a negative
+    ra[4] = 359.8
+    ra_compare = ra.copy()
+    ra_compare[4] = ra[4] - 360.0
+    ra_test = wrap_ra(ra)
+    assert np.all(ra_compare == ra_test)
+
+    # test 3 the 4th value will be changed to 362.0
+    ra[0] = 356.8
+    ra[1] = 350.0
+    ra[2] = 358.9
+    ra[3] = 359.6
+    ra[4] = 2.0
+
+    ra_compare = ra.copy()
+    ra_compare[4] = 360.0 + ra[4]
+    ra_test = wrap_ra(ra)
+    assert np.all(ra_compare == ra_test)
+
+    # test 4, this would do the wrong thing with the old version of wrap_ra
+    ra4 = np.zeros(4, dtype=float)
+    ra4[0] = 359.4
+    ra4[1] = 359.99
+    ra4[2] = 0.2
+    ra4[3] = 0.3
+
+    ra_compare = ra4.copy()
+    ra_compare[0] = ra4[0] - 360.0
+    ra_compare[1] = ra4[1] - 360.0
+    ra_test = wrap_ra(ra4)
+    assert np.all(ra_compare == ra_test)
+    # The old version of wrap_ra would return [359.4, -0.01, 0.2, 0.3]
+    # instead of [-0.6, -0.01, 0.2, 0.3]
+
+    # test that it works with a list
+    ra_list = ra.tolist()
+    ra_test = wrap_ra(ra_list)
+    ra_compare = ra_list.copy()
+    ra_compare[4] = ra_list[4] + 360.0
+    assert ra_compare == ra_test
