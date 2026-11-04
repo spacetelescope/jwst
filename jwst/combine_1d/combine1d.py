@@ -817,20 +817,6 @@ def _inputspectra_from_multispec(ms, exptime_key, input_spectra):
         declination = np.zeros_like(wavelength)
         right_ascension[:], declination[:] = spec.meta.wcs(0.0)[:2]
 
-        # Flag to indicate the contamination columns are present,
-        # i.e., this is a WFSS mode.
-        has_contam = "contam_flux" in spec.spec_table.columns
-        if has_contam:
-            contam_flux = spec.spec_table.field("contam_flux")
-            corr_flux = spec.spec_table.field("corr_flux")
-            contam_surf_bright = spec.spec_table.field("contam_surf_bright")
-            corr_surf_bright = spec.spec_table.field("corr_surf_bright")
-        else:
-            contam_flux = None
-            corr_flux = None
-            contam_surf_bright = None
-            corr_surf_bright = None
-
         weight = np.ones_like(wavelength)
         if not unit_weight:
             weight *= weight_factor
@@ -855,10 +841,6 @@ def _inputspectra_from_multispec(ms, exptime_key, input_spectra):
                 source_ra,
                 source_dec,
                 dispersion_direction,
-                contam_flux=contam_flux,
-                corr_flux=corr_flux,
-                contam_surf_bright=contam_surf_bright,
-                corr_surf_bright=corr_surf_bright,
             )
         )
 
