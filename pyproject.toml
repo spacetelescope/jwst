@@ -205,15 +205,11 @@ show-response = 1
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+testpaths = ["docs", "jwst"]
 norecursedirs = [
     "docs/_build",
     "docs/exts",
     "jwst/associations/tests/data",
-    "scripts",
-    ".tox",
-    ".eggs",
-    "build",
-    "venv",
 ]
 junit_family = "xunit2"
 inputs_root = "jwst-pipeline"
