@@ -1,2 +1,2 @@
 Refactor general spectral cube build tools into a library module. Added a test in the cube build library to
-raise a ValueError when cube with an unreasonble number of elements is trying to be created (i.e. > 1.0e8 voxels). 
+raise a ValueError when cube with an unreasonable number of elements is trying to be created (i.e. > 1.0e8 voxels). 

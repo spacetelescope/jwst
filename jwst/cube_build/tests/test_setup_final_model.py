@@ -1,18 +1,19 @@
 """
 Unit tests for cube_lib.setup_final_model and ifu_cube.IFUCubeData.set_wcs_slicer.
 
-Coverage targets
-----------------
-setup_final_model
-  - pixelarea keywords (PIXAR_A2, PIXAR_SR) are computed from cdelt1 * cdelt2
-  - skyalign / linear_wave=True  : cdelt1/2 stored in degrees, ctype3="WAVE"
-  - skyalign / linear_wave=False : ctype3="WAVE-TAB", crval3=1, cdelt3=None
-  - internal_cal / NIRSPEC       : cdelt1/2 stored in native units (meters),
-                                   cunit1="meter", ctype1="NRSSLICERX", pc1_1 sign flip
-  - internal_cal / MIRI          : cunit1="arcsec", ctype1="MRSALPHA"
-  - drizzle interpolation        : weight_power/roi_wave/roi_spatial zeroed
 
 """
+
+# This test is covers these test:
+# ----------------
+# setup_final_model
+#  - pixelarea keywords (PIXAR_A2, PIXAR_SR) are computed from cdelt1 * cdelt2
+#  - skyalign / linear_wave=True  : cdelt1/2 stored in degrees, ctype3="WAVE"
+#  - skyalign / linear_wave=False : ctype3="WAVE-TAB", crval3=1, cdelt3=None
+#  - internal_cal / NIRSPEC       : cdelt1/2 stored in native units (meters),
+#                                   cunit1="meter", ctype1="NRSSLICERX", pc1_1 sign flip
+#  - internal_cal / MIRI          : cunit1="arcsec", ctype1="MRSALPHA"
+#  - drizzle interpolation        : weight_power/roi_wave/roi_spatial zeroed
 
 import math
 

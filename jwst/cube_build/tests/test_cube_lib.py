@@ -317,9 +317,9 @@ class TestSetWcsArrayLengths:
 # ---------------------------------------------------------------------------
 # test for find_spaxel_flux:
 #  spaxels with iflux == 0 are not modified (division-by-zero guard)
-#  spaxels with iflux > 0 are normalised by weight
-#  variance is normalised by weight**2
-#  mixed array: zero-iflux spaxel unchanged, non-zero normalised
+#  spaxels with iflux > 0 are normalized by weight
+#  variance is normalized by weight**2
+#  mixed array: zero-iflux spaxel unchanged, non-zero normalized
 
 
 class TestFindSpaxelFlux:
@@ -337,7 +337,7 @@ class TestFindSpaxelFlux:
         assert flux_out[0] == pytest.approx(999.0)
         assert var_out[0] == pytest.approx(888.0)
 
-    def test_flux_normalised_by_weight(self):
+    def test_flux_normalized_by_weight(self):
         """flux[good] = flux[good] / weight[good]."""
         iflux = np.array([1.0])
         flux = np.array([500.0])
@@ -348,7 +348,7 @@ class TestFindSpaxelFlux:
 
         assert flux_out[0] == pytest.approx(250.0)
 
-    def test_variance_normalised_by_weight_squared(self):
+    def test_variance_normalized_by_weight_squared(self):
         """var[good] = var[good] / weight[good]**2."""
         iflux = np.array([1.0])
         flux = np.array([0.0])
@@ -360,7 +360,7 @@ class TestFindSpaxelFlux:
         assert var_out[0] == pytest.approx(48.0 / 16.0)
 
     def test_mixed_array_only_good_spaxels_modified(self):
-        """Zero-iflux spaxels stay unchanged; non-zero-iflux spaxels are normalised."""
+        """Zero-iflux spaxels stay unchanged; non-zero-iflux spaxels are normalized."""
         iflux = np.array([0.0, 1.0, 1.0])
         flux = np.array([777.0, 100.0, 200.0])
         weight = np.array([0.0, 5.0, 10.0])
@@ -400,7 +400,7 @@ class TestFindSpaxelFlux:
 
 
 class TestSetFinalDqFlags:
-    """DQ flag, NaN, and preservation behaviour."""
+    """DQ flag, NaN, and preservation behavior."""
 
     def test_positive_weight_spaxel_flux_unchanged(self):
         """Spaxels with weight > 0 must keep their flux value."""
