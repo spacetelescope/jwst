@@ -1,40 +1,4 @@
-"""
-Unit tests for cube_lib functions.
-
-Coverage targets
-----------------
-check_cube_size
-  - passes silently when total is within limit
-  - raises ValueError when total exceeds limit
-  - exact limit boundary (total == limit) passes
-
-radec2std / std2radec
-  - rot_angle != None rotates xi/eta by the expected angle
-  - rot_angle=0 is equivalent to rot_angle=None
-  - round-trip ra,dec -> xi,eta -> ra,dec is exact (no rot_angle)
-
-set_wcs
-  - ra_center / dec_center override replaces the computed circmean
-  - nspax_x / nspax_y override controls naxis1/naxis2 (and crpix)
-  - non-linear wavelength path sets naxis3 = len(wavelength_table)
-    and crval3 = wavelength_table[0]
-  - cdelt3_normal last element equals the second-to-last element
-  - xcoord / ycoord arrays have exactly naxis1 / naxis2 elements
-  - zcoord has exactly naxis3 elements for the linear path
-
-find_spaxel_flux
-  - spaxels with iflux == 0 are not modified (division-by-zero guard)
-  - spaxels with iflux > 0 are normalised by weight
-  - variance is normalised by weight**2
-  - mixed array: zero-iflux spaxel unchanged, non-zero normalised
-
-set_final_dq_flags
-  - spaxels with weight > 0 keep their flux and are not flagged DO_NOT_USE
-  - spaxels with weight == 0 get DO_NOT_USE | NON_SCIENCE added to dq
-  - spaxels with weight == 0 have flux and var set to NaN
-  - pre-existing DQ bits on zero-weight spaxels are preserved (OR semantics)
-  - mixed array: only zero-weight spaxels are flagged
-"""
+"""Unit tests for cube_lib functions."""
 
 import math
 
@@ -94,7 +58,15 @@ def _make_cube_wcs_kwargs(
 
 
 class TestCheckCubeSize:
-    """check_cube_size raises only when total > limit."""
+    """
+    check_cube_size raises only when total > limit.
+
+    Notes:
+    tests for check_cube_size
+        passes silently when total is within limit
+        raises ValueError when total exceeds limit
+        exact limit boundary (total == limit) passes
+    """
 
     def test_within_limit_no_exception(self):
         """Total < limit must not raise."""
@@ -118,6 +90,10 @@ class TestCheckCubeSize:
 # ---------------------------------------------------------------------------
 # radec2std — rot_angle branch
 # ---------------------------------------------------------------------------
+# Test for radec2std and std2radec:
+#  rot_angle != None rotates xi/eta by the expected angle
+#  rot_angle=0 is equivalent to rot_angle=None
+#  round-trip ra,dec -> xi,eta -> ra,dec is exact (no rot_angle)
 
 
 class TestRadec2StdRotAngle:
@@ -137,10 +113,6 @@ class TestRadec2StdRotAngle:
     def test_rot_angle_90_swaps_xi_eta(self):
         """
         A 90-degree rotation should swap xi and eta (up to sign).
-
-        For rot_angle=90: the rotation matrix is
-          [ cos(-90)  -sin(-90) ]   [  0   1 ]
-          [ sin(-90)   cos(-90) ]   [ -1   0 ]
         So xi_rot = eta_unrot, eta_rot = -xi_unrot.
         """
         crval1, crval2 = 0.0, 0.0
@@ -184,8 +156,16 @@ class TestRadec2StdRotAngle:
 
 
 # ---------------------------------------------------------------------------
-# set_wcs — ra_center / dec_center override
+# set_wcs: ra_center and dec_center override
 # ---------------------------------------------------------------------------
+# Test for set_wcs:
+#  - ra_center and dec_center override replaces the computed circmean
+#  - nspax_x and  nspax_y override controls naxis1/naxis2 (and crpix)
+#  - non-linear wavelength path sets naxis3 = len(wavelength_table)
+#    and crval3 = wavelength_table[0]
+#  - cdelt3_normal last element equals the second-to-last element
+#  - xcoord and  ycoord arrays have exactly naxis1 / naxis2 elements
+#  - zcoord has exactly naxis3 elements for the linear path
 
 
 class TestSetWcsCenterOverride:
@@ -223,7 +203,7 @@ class TestSetWcsCenterOverride:
 
 
 # ---------------------------------------------------------------------------
-# set_wcs — nspax_x / nspax_y override
+# set_wcs: nspax_x and nspax_y override
 # ---------------------------------------------------------------------------
 
 
@@ -335,6 +315,11 @@ class TestSetWcsArrayLengths:
 # ---------------------------------------------------------------------------
 # find_spaxel_flux
 # ---------------------------------------------------------------------------
+# test for find_spaxel_flux:
+#  spaxels with iflux == 0 are not modified (division-by-zero guard)
+#  spaxels with iflux > 0 are normalised by weight
+#  variance is normalised by weight**2
+#  mixed array: zero-iflux spaxel unchanged, non-zero normalised
 
 
 class TestFindSpaxelFlux:
@@ -406,6 +391,12 @@ class TestFindSpaxelFlux:
 # ---------------------------------------------------------------------------
 # set_final_dq_flags
 # ---------------------------------------------------------------------------
+# Test for set_final_dq_flags:
+#  spaxels with weight > 0 keep their flux and are not flagged DO_NOT_USE
+#  spaxels with weight == 0 get DO_NOT_USE | NON_SCIENCE added to dq
+#  spaxels with weight == 0 have flux and var set to NaN
+#  pre-existing DQ bits on zero-weight spaxels are preserved (OR semantics)
+#  mixed array: only zero-weight spaxels are flagged
 
 
 class TestSetFinalDqFlags:
