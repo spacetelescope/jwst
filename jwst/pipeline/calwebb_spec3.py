@@ -9,6 +9,7 @@ from stcal.alignment import combine_sregions
 # step imports
 from jwst.adaptive_trace_model import adaptive_trace_model_step
 from jwst.assign_mtwcs import assign_mtwcs_step
+from jwst.associations.exceptions import AssociationError
 from jwst.associations.lib.rules_level3_base import format_product
 from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
@@ -80,7 +81,7 @@ class Spec3Pipeline(Pipeline):
         """
         log.info("Starting calwebb_spec3 ...")
         t_start = time.time()
-        asn_exptypes = ["science", "background"]
+        asn_exptypes = ["science", "background", "direct_image"]
 
         # Setup sub-step defaults
         self.master_background.suffix = "mbsub"
@@ -147,6 +148,19 @@ class Spec3Pipeline(Pipeline):
             log.info("Assigning WCS to a Moving Target exposure.")
             # assign_mtwcs modifies input_models in-place
             self.assign_mtwcs.run(input_models)
+
+        direct_wcs = None
+        # WFSS associations contain the direct image
+        if members_by_type["direct_image"]:
+            # ind_asn_type returns list - there should only be one
+            direct_index = input_models.ind_asn_type("direct_image")
+            if len(direct_index) > 1:
+                raise AssociationError(
+                    "More than one direct_image association member - only one is expected."
+                )
+            # We'll use the direct_wcs to generate the combined S_REGION - discard the model
+            direct_wcs = input_models[direct_index[0]].meta.wcs
+            input_models.pop(direct_index[0])
 
         # If background data are present, call the master background step
         if members_by_type["background"]:
@@ -316,7 +330,7 @@ class Spec3Pipeline(Pipeline):
         if exptype in WFSS_TYPES:
             log.info("Reordering the %s spectra to be per-source", exptype)
             x1d_output = make_wfss_multiexposure(source_models)
-            self._populate_wfss_sregion(x1d_output, source_models)
+            self._populate_wfss_sregion(x1d_output, source_models, direct_wcs)
 
             if self.save_results:
                 x1d_filename = self.make_output_path(basepath=output_file, ext="fits", suffix="x1d")
@@ -399,7 +413,7 @@ class Spec3Pipeline(Pipeline):
 
         return srcid
 
-    def _populate_wfss_sregion(self, wfss_model, cal_model_list):
+    def _populate_wfss_sregion(self, wfss_model, cal_model_list, direct_wcs):
         """
         Generate cumulative S_REGION footprint from input grism images.
 
@@ -418,6 +432,10 @@ class Spec3Pipeline(Pipeline):
         cal_model_list : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The list of input_models provided to Spec3Pipeline by the
             input association.
+
+        direct_wcs : `~gwcs.wcs.WCS` or None
+            The WCS of the direct image mosaic associated with the dispersed
+            cal models.
         """
         try:
             input_sregions = [w.spec[0].s_region for w in cal_model_list if w.spec[0].s_region]
@@ -438,20 +456,20 @@ class Spec3Pipeline(Pipeline):
             wfss_model.spec[0].s_region = input_sregions[0]
             return
 
-        # WCS of any slit should be ok - internally this does a round-trip, so any offsets
-        # introduced for a specific slit won't matter
-        try:
-            with dm.open(cal_model_list[0].meta.direct_image) as mosaic_model:
-                wcs = mosaic_model.meta.wcs
-        except FileNotFoundError:
-            log.info("Direct image mosaic not available.")
-            wcs = cal_model_list[0].meta.wcs
+        # New associations should provide a direct_wcs - these are fallback methods
+        if direct_wcs is None:
+            try:
+                with dm.open(cal_model_list[0].meta.direct_image) as mosaic_model:
+                    direct_wcs = mosaic_model.meta.wcs
+            except FileNotFoundError:
+                log.info("Direct image mosaic not available.")
+                direct_wcs = cal_model_list[0].meta.wcs
 
-        if "moving_target" in wcs.available_frames:
+        if "moving_target" in direct_wcs.available_frames:
             # This should never be hit for WFSS data but is here just in case
-            det2world = wcs.get_transform("detector", "moving_target")
+            det2world = direct_wcs.get_transform("detector", "moving_target")
         else:
-            det2world = wcs.get_transform("detector", "world")
+            det2world = direct_wcs.get_transform("detector", "world")
 
         try:
             sregion = combine_sregions(input_sregions, det2world)
