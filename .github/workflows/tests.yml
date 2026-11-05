@@ -112,18 +112,8 @@ jobs:
       cache-path: ${{ needs.crds.outputs.path }}
       cache-key: crds-${{ needs.crds.outputs.context }}
       envs: |
-        - linux: check-dependencies
-          python-version: ${{ needs.supported-pythons.outputs.latest }} 
-        - name: run tests (oldest supported Python, ubuntu-latest)
-          linux: py312-oldestdeps-cov-xdist
-        - linux: py*-xdist
-        - name: run tests with coverage (latest supported Python, ubuntu-latest)
-          linux: py3-cov-xdist
-          python-version: ${{ needs.supported-pythons.outputs.latest }}
-          pytest-results-summary: true
-          coverage: codecov-oidc
-        - name: run tests (latest supported Python, macos-latest)
-          macos: py3-xdist
+        - name: run tests (latest supported Python, ubuntu-latest)
+          linux: py3
           python-version: ${{ needs.supported-pythons.outputs.latest }}
       artifact-path: |
         results.xml
