@@ -1,0 +1,1 @@
+Use double for slope to improve numerical accuracy.
