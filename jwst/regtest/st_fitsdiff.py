@@ -276,13 +276,13 @@ class STFITSDiff(FITSDiff):
                             self.atol = self.expected_extension_tolerances["DEFAULT"]["atol"]
 
                     # Only do a comparison if the HDU is not in any list to be ignored
+                    if isinstance(extname, tuple):
+                        extname = extname[0]
                     if (
                         extname not in self.ignore_hdus
                         and idxa not in self.ignore_number_hdus
                         and extname not in additional_hdus_to_ignore
                     ):
-                        if isinstance(extname, tuple):
-                            extname = extname[0]
                         hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
                         if not hdu_diff.identical:
                             self.diff_hdus.append((idxa, hdu_diff, extname, extver))
