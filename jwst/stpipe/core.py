@@ -306,6 +306,11 @@ class JwstStep(_Step):
                                 message=r"(?s:.*)Array datatype .* not compatible",
                                 category=ValidationWarning,
                             )
+                            warnings.filterwarnings(
+                                "error",
+                                message=r"(?s:.*)Wrong number of dimensions",
+                                category=ValidationWarning,
+                            )
                             input_models = ramp_type(init, **kwargs)
                     except ValidationWarning as err:
                         log.error(err)
