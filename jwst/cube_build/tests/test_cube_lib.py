@@ -69,15 +69,15 @@ class TestCheckCubeSize:
     """
 
     def test_within_limit_no_exception(self):
-        """Total < limit must not raise."""
+        """Total less than  limit must not raise."""
         cube_lib.check_cube_size(10, 10, 10, limit=2000)
 
     def test_at_exact_limit_no_exception(self):
-        """Total == limit must not raise (boundary passes)."""
+        """Total equal limit must not raise (boundary passes)."""
         cube_lib.check_cube_size(10, 10, 10, limit=1000)
 
     def test_exceeds_limit_raises(self):
-        """Total > limit must raise ValueError with informative message."""
+        """Total greater than  limit must raise ValueError with informative message."""
         with pytest.raises(ValueError, match="exceeds limit"):
             cube_lib.check_cube_size(10, 10, 10, limit=999)
 
@@ -100,7 +100,7 @@ class TestRadec2StdRotAngle:
     """Verify the rotation branch of radec2std."""
 
     def test_rot_angle_zero_equals_no_rot_angle(self):
-        """rot_angle=0 should produce the same output as rot_angle=None."""
+        """rot_angle equal to 0 should produce the same output as rot_angle=None."""
         crval1, crval2 = 45.0, 30.0
         ra, dec = 45.1, 30.1
 
@@ -121,7 +121,7 @@ class TestRadec2StdRotAngle:
         xi0, eta0 = cube_lib.radec2std(crval1, crval2, ra, dec, rot_angle=None)
         xi90, eta90 = cube_lib.radec2std(crval1, crval2, ra, dec, rot_angle=90.0)
 
-        # After 90° rotation: xi_rot ≈ eta0, eta_rot ≈ -xi0
+        # After 90 degrees rotation: xi_rot ≈ eta0, eta_rot ≈ -xi0
         np.testing.assert_allclose(xi90, eta0, atol=1e-6)
         np.testing.assert_allclose(eta90, -xi0, atol=1e-6)
 
@@ -169,7 +169,7 @@ class TestRadec2StdRotAngle:
 
 
 class TestSetWcsCenterOverride:
-    """User-supplied ra_center / dec_center must replace the computed mean."""
+    """User-supplied ra_center and dec_center must replace the computed mean."""
 
     def test_ra_center_stored_in_crval1(self):
         kw = _make_cube_wcs_kwargs()
@@ -194,7 +194,7 @@ class TestSetWcsCenterOverride:
         assert math.isclose(wcs.crval2, -56.78, rel_tol=1e-10)
 
     def test_no_center_uses_computed_mean(self):
-        """Without overrides crval1/crval2 must be near the input corner mean."""
+        """Without overrides crval1 and crval2 must be near the input corner mean."""
         kw = _make_cube_wcs_kwargs(crval1=50.0, crval2=-20.0)
         wcs = cube_lib.set_wcs(**kw)
         # circmean of the two RA corners (50.0 ± 0.01) is 50.0 to high precision
@@ -208,7 +208,7 @@ class TestSetWcsCenterOverride:
 
 
 class TestSetWcsNspax:
-    """User-supplied nspax_x / nspax_y must control naxis1/naxis2 and crpix."""
+    """User-supplied nspax_x and nspax_y must control naxis1, naxis2 and crpix."""
 
     def test_nspax_x_sets_naxis1(self):
         kw = _make_cube_wcs_kwargs()
@@ -280,7 +280,7 @@ class TestSetWcsNonLinearWave:
 
 
 class TestSetWcsArrayLengths:
-    """xcoord, ycoord, zcoord must have exactly naxis1/2/3 elements."""
+    """xcoord, ycoord, zcoord must have exactly naxis1, naxis2, naxis3 elements."""
 
     def test_xcoord_length_equals_naxis1(self):
         kw = _make_cube_wcs_kwargs()
@@ -427,7 +427,7 @@ class TestSetFinalDqFlags:
         assert not (dq_out[0] & NON_SCIENCE)
 
     def test_zero_weight_flux_set_to_nan(self):
-        """Spaxels with weight == 0 must have flux set to NaN."""
+        """Spaxels with weight equal 0 must have flux set to NaN."""
         dq = np.array([0], dtype=np.uint32)
         flux = np.array([0.0])
         var = np.array([0.0])
@@ -439,7 +439,7 @@ class TestSetFinalDqFlags:
         assert np.isnan(var_out[0])
 
     def test_zero_weight_gets_do_not_use(self):
-        """Spaxels with weight == 0 must receive DO_NOT_USE flag."""
+        """Spaxels with weight equal 0 must receive DO_NOT_USE flag."""
         dq = np.array([0], dtype=np.uint32)
         flux = np.array([0.0])
         var = np.array([0.0])
@@ -450,7 +450,7 @@ class TestSetFinalDqFlags:
         assert dq_out[0] & DO_NOT_USE
 
     def test_zero_weight_gets_non_science(self):
-        """Spaxels with weight == 0 must receive NON_SCIENCE flag."""
+        """Spaxels with weight equal 0 must receive NON_SCIENCE flag."""
         dq = np.array([0], dtype=np.uint32)
         flux = np.array([0.0])
         var = np.array([0.0])
@@ -478,7 +478,7 @@ class TestSetFinalDqFlags:
 
     def test_mixed_array_only_zero_weight_flagged(self):
         """
-        In a mixed array, only the zero-weight spaxel gets DO_NOT_USE/NON_SCIENCE
+        In a mixed array, only the zero-weight spaxel gets DO_NOT_USE and NON_SCIENCE
         and NaN flux; the good-weight spaxel is untouched.
         """
         dq = np.array([0, 0], dtype=np.uint32)
