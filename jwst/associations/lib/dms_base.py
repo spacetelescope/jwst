@@ -995,7 +995,6 @@ class DMSAttrConstraint(AttrConstraint):
         super(DMSAttrConstraint, self).__init__(**kwargs)
 
 
-# XXX JP-4459
 class Constraint_NIRCamImageNoDisperser(SimpleConstraint):
     """Constrataint for engineering imaging templated data."""
 
@@ -1014,7 +1013,7 @@ class Constraint_NIRCamImageNoDisperser(SimpleConstraint):
         # Contains *grism* and *dhs*
         disperser_filter = ["GDHS0", "GDHS60", "GRISMC", "GRISMR", "GRISMV2", "GRISMV3"]
 
-        if exp_type.lower() == "nrc_image" and disperser not in disperser_filter:
+        if exp_type.lower() == "nrc_image" and disperser in disperser_filter:
             return False, []
 
         return True, []
