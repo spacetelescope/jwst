@@ -140,8 +140,9 @@ def example_input(example_wcs):
     return c
 
 
+@pytest.mark.parametrize("group_by_visit", [True, False])
 @pytest.mark.parametrize("with_shift", [True, False])
-def test_tweakreg_step(example_input, with_shift):
+def test_tweakreg_step(example_input, with_shift, group_by_visit):
     """
     A simplified unit test for basic operation of the TweakRegStep
     when run with or without a small shift in the input image sources
@@ -153,11 +154,16 @@ def test_tweakreg_step(example_input, with_shift):
         example_input[1].data[-9:] = BKG_LEVEL
 
     # assign images to different groups (so they are aligned to each other)
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "b"
+    if group_by_visit:
+        example_input[0].meta.observation.visit_id = "a"
+        example_input[1].meta.observation.visit_id = "b"
+    else:
+        example_input[0].meta.group_id = "a"
+        example_input[1].meta.group_id = "b"
 
     # make the step with default arguments
     step = tweakreg_step.TweakRegStep()
+    step.group_by_visit = group_by_visit
 
     # run the step on the example input modified above
     result = step.run(example_input)
@@ -186,17 +192,23 @@ def test_tweakreg_step(example_input, with_shift):
         assert abs_delta < 1e-12
 
 
+@pytest.mark.parametrize("group_by_visit", [True, False])
 @pytest.mark.parametrize("alignment_type", ["", "abs_"])
-def test_src_confusion_pars(example_input, alignment_type):
+def test_src_confusion_pars(example_input, alignment_type, group_by_visit):
     # assign images to different groups (so they are aligned to each other)
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "b"
+    if group_by_visit:
+        example_input[0].meta.observation.visit_id = "a"
+        example_input[1].meta.observation.visit_id = "b"
+    else:
+        example_input[0].meta.group_id = "a"
+        example_input[1].meta.group_id = "b"
 
     # make the step with arguments that may cause source confusion in match
     pars = {
         f"{alignment_type}separation": 1.0,
         f"{alignment_type}tolerance": 1.0,
         "abs_refcat": REFCAT,
+        "group_by_visit": group_by_visit,
     }
     step = tweakreg_step.TweakRegStep(**pars)
     result = step.run(example_input)
@@ -213,13 +225,18 @@ def test_src_confusion_pars(example_input, alignment_type):
             result.shelve(model)
 
 
-def test_ngroup_1(caplog, example_input):
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "a"
+@pytest.mark.parametrize("group_by_visit", [True, False])
+def test_ngroup_1(caplog, example_input, group_by_visit):
+    if group_by_visit:
+        example_input[0].meta.observation.visit_id = "a"
+        example_input[1].meta.observation.visit_id = "a"
+    else:
+        example_input[0].meta.group_id = "a"
+        example_input[1].meta.group_id = "a"
 
     # Input has the same group, so processing should be skipped
-    result = tweakreg_step.TweakRegStep.call(example_input)
-    assert "At least two exposures are required" in caplog.text
+    result = tweakreg_step.TweakRegStep.call(example_input, group_by_visit=group_by_visit)
+    assert "At least two groups are required" in caplog.text
 
     # check that step was failed
     with result:
@@ -278,8 +295,8 @@ def test_custom_catalog(
         - a "valid" file passed as `catfile`
     """
 
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "b"
+    example_input[0].meta.observation.visit_id = "a"
+    example_input[1].meta.observation.visit_id = "b"
     name2group = {
         example_input[0].meta.filename.split(".")[0]: "a",
         example_input[1].meta.filename.split(".")[0]: "b",
@@ -392,8 +409,8 @@ def test_sip_approx(example_input, with_shift):
         example_input[1].data[-9:] = BKG_LEVEL
 
     # assign images to different groups (so they are aligned to each other)
-    example_input[0].meta.group_id = "a"
-    example_input[1].meta.group_id = "b"
+    example_input[0].meta.observation.visit_id = "a"
+    example_input[1].meta.observation.visit_id = "b"
 
     # call th step with override SIP approximation parameters
     step = tweakreg_step.TweakRegStep()

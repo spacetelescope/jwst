@@ -402,6 +402,7 @@ def mock_miri_ifu_func():
     model.meta.observation.date = "2023-07-22"
     model.meta.observation.time = "06:24:45.569"
     model.meta.exposure.type = "MIR_MRS"
+    model.meta.subarray.name = "FULL"
 
     model.meta.wcsinfo.dispersion_direction = 2
     model.meta.photometry.pixelarea_steradians = 1.0

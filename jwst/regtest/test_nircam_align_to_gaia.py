@@ -36,6 +36,12 @@ def test_tweakreg_with_gaia(run_image3pipeline, rtdata_module, root):
     rtdata.get_truth("truth/test_nircam_align_to_gaia/" + output_crf)
 
     with datamodels.open(rtdata.output) as model, datamodels.open(rtdata.truth) as model_truth:
+        # Makes sure the catalog is not attached
+        assert not hasattr(model, "catalog")
+
+        # Check that all exposures have a WCS correction applied
+        assert "v2v3corr" in model.meta.wcs.available_frames
+
         grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
 
         ra, dec = model.meta.wcs(*grid)
