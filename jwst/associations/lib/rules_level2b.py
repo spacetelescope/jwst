@@ -158,7 +158,7 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
         # Science or background exposures.
         exposures = Constraint(
             [
-                Constraint_NIRCamImageNoDisperser(),  # XXX JP-4459
+                Constraint_NIRCamImageNoDisperser(),
                 Constraint_Background(),
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
             ],
