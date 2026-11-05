@@ -88,7 +88,7 @@ class TestCheckCubeSize:
 
 
 # ---------------------------------------------------------------------------
-# radec2std — rot_angle branch
+# radec2std and rot_angle branch
 # ---------------------------------------------------------------------------
 # Test for radec2std and std2radec:
 #  rot_angle != None rotates xi/eta by the expected angle
@@ -237,7 +237,7 @@ class TestSetWcsNspax:
 
 
 # ---------------------------------------------------------------------------
-# set_wcs — non-linear wavelength path
+# set_wcs and non-linear wavelength path
 # ---------------------------------------------------------------------------
 
 
@@ -275,7 +275,7 @@ class TestSetWcsNonLinearWave:
 
 
 # ---------------------------------------------------------------------------
-# set_wcs — coordinate array lengths and cdelt3_normal
+# set_wcs and coordinate array lengths and cdelt3_normal
 # ---------------------------------------------------------------------------
 
 
@@ -415,7 +415,7 @@ class TestSetFinalDqFlags:
         assert not np.isnan(var_out[0])
 
     def test_positive_weight_spaxel_not_flagged(self):
-        """Spaxels with weight > 0 must NOT receive DO_NOT_USE or NON_SCIENCE."""
+        """Spaxels with weight greater than 0 must NOT receive DO_NOT_USE or NON_SCIENCE."""
         dq = np.array([0], dtype=np.uint32)
         flux = np.array([1.0])
         var = np.array([1.0])
@@ -463,7 +463,7 @@ class TestSetFinalDqFlags:
     def test_pre_existing_dq_preserved_on_zero_weight(self):
         """
         Pre-existing DQ bits (e.g. SATURATED) on a zero-weight spaxel
-        must still be present in the output (OR semantics, not replacement).
+        must still be present in the output.
         """
         dq = np.array([SATURATED], dtype=np.uint32)
         flux = np.array([0.0])
