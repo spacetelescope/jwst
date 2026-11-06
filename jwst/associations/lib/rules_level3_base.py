@@ -1049,10 +1049,9 @@ class AsnMixin_Lv3WFSS(AsnMixin_Spectrum):
             raise AssociationNotValidError(
                 f"{self.__class__.__name__} has no required science exposure"
             )
-        science = sciences[0]
 
         # Find direct image basename
-        self.direct_image = self.find_closest_direct(science, directs)
+        self.direct_image = self.find_closest_direct(directs)
         lv3_direct_image_root = self._dms_dir_product_name(self)  # noqa: SLF001
 
         # Remove all direct images from the association.
