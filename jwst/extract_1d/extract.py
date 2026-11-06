@@ -1890,7 +1890,7 @@ def create_extraction(
             descr = otab_dtype.descr
             descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
             descr.insert(flux_idx + 2, ("CONTAMCORR_FLUX", float))
-            descr.insert(sb_idx + 3, ("CONTAM_SURF_BRIGHT", float))
+            descr.insert(sb_idx + 3, ("CONTAMSB", float))
             descr.insert(sb_idx + 4, ("CONTAMCORR_SURF_BRIGHT", float))
             otab_dtype = np.dtype(descr)
 
