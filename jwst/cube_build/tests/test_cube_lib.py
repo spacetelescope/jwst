@@ -59,7 +59,7 @@ def _make_cube_wcs_kwargs(
 
 class TestCheckCubeSize:
     """
-    check_cube_size raises only when total > limit.
+    check_cube_size raises only when total greater than limit.
 
     Notes:
     tests for check_cube_size
@@ -97,7 +97,7 @@ class TestCheckCubeSize:
 
 
 class TestRadec2StdRotAngle:
-    """Verify the rotation branch of radec2std."""
+    """Verify the rotation in radec2std works correctly."""
 
     def test_rot_angle_zero_equals_no_rot_angle(self):
         """rot_angle equal to 0 should produce the same output as rot_angle=None."""
@@ -323,7 +323,7 @@ class TestSetWcsArrayLengths:
 
 
 class TestFindSpaxelFlux:
-    """Normalisation logic and zero-iflux guard."""
+    """Normailization logic in find_spaxel_flux."""
 
     def test_zero_iflux_spaxel_is_unchanged(self):
         """A spaxel with iflux==0 must not be modified (avoids division by zero)."""
