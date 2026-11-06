@@ -30,11 +30,11 @@ def attrs_to_group_id(obs_meta):
         if key not in obs_meta:
             raise KeyError(f"Missing required keyword in meta.observation for group_id: {key}")
     return (
-        f"jw{obs_meta['program_number']}"
-        f"{obs_meta['observation_number']}"
+        # f"jw{obs_meta['program_number']}"
+        # f"{obs_meta['observation_number']}"
         f"{obs_meta['visit_number']}"
-        f"_{obs_meta['visit_group']}"
-        f"{obs_meta['sequence_id']}"
-        f"{obs_meta['activity_id']}"
-        f"_{obs_meta['exposure_number']}"
+        # f"_{obs_meta['visit_group']}"
+        # f"{obs_meta['sequence_id']}"
+        # f"{obs_meta['activity_id']}"
+        # f"_{obs_meta['exposure_number']}"
     )

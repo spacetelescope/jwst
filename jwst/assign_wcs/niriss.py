@@ -20,6 +20,7 @@ from stdatamodels.jwst.transforms.models import (
 from jwst.assign_wcs import pointing
 from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
+    get_mosaic_member_tweak,
     not_implemented_mode,
     subarray_transform,
     transform_bbox_from_shape,
@@ -469,6 +470,10 @@ def wfss(input_model, reference_files):
         log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
         det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
 
+    # forward input is (x,y,lam,order) -> x, y
+    # backward input needs to be the same ra, dec, lam, order -> x, y
+    grism_pipeline = [(gdetector, det2det)]
+
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
     # it also needs to be part of the grism image wcs pipeline to
@@ -480,10 +485,6 @@ def wfss(input_model, reference_files):
     # use the imaging_distortion reference file here
     image_pipeline = imaging(input_model, reference_files)
 
-    # forward input is (x,y,lam,order) -> x, y
-    # backward input needs to be the same ra, dec, lam, order -> x, y
-    grism_pipeline = [(gdetector, det2det)]
-
     # pass through the wave, beam  and theta in the pipeline
     # Theta is a constant for each grism exposure and is in the
     # meta information for the input_model, pass it to the model
@@ -492,6 +493,16 @@ def wfss(input_model, reference_files):
     imagepipe = []
     world = image_pipeline.pop()[0]
     world.name = "sky"
+
+    # Pull the wcs tweak generated for direct_image partner exposure if available
+    mosaic_tweak = get_mosaic_member_tweak(input_model)
+    if mosaic_tweak is not None:
+        # Extract the tweak frame and transform
+        tweakframe = mosaic_tweak.v2v3corr
+        tweak_xfrm = mosaic_tweak.get_transform("v2v3vacorr", "v2v3corr")
+        tweakframe.name = "v2v3corrdirect"
+        image_pipeline.append([tweakframe, tweak_xfrm])
+
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
         name = cframe.name
