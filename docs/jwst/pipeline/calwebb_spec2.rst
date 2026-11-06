@@ -47,29 +47,29 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 +====================================================================+=====+=====+=====+=====+=====+=====+================+================+=================+===================+=====+
 | :ref:`assign_wcs <assign_wcs_step>`                                | |c| | |c| | |c| | |c| | |c| | |c| | |c|            | |c|            | |c|             |  |c|              | |c| |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`badpix_selfcal <badpix_selfcal_step>`\ :sup:`2`              |     |     | |c| |     |     | |c| |                |                |                 |                   |     |
+| :ref:`badpix_selfcal <badpix_selfcal_step>` [2]_                   |     |     | |c| |     |     | |c| |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 | :ref:`msaflagopen <msaflagopen_step>`                              |     | |c| | |c| |     |     |     |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`clean_flicker_noise <clean_flicker_noise_step>`              | |c| | |c| | |c| |     |     |     |                |                |                 |                   |     |
+| :ref:`clean_flicker_noise <clean_flicker_noise_step>` [4]_         | |c| | |c| | |c| |     |     |     |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 | :ref:`imprint <imprint_step>`                                      |     | |c| | |c| |     |     |     |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 | :ref:`background <background_subtraction>`                         | |c| | |c| | |c| | |c| |     | |c| | |c|            | |c|            | |c|             |  |c|              |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`extract_2d <extract_2d_step>`\ :sup:`1`                      | |c| | |c| |     |     |     |     | |c|            |                | |c|             |  |c|              | |c| |
+| :ref:`extract_2d <extract_2d_step>` [1]_                           | |c| | |c| |     |     |     |     | |c|            |                | |c|             |  |c|              | |c| |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`srctype <srctype_step>`\ :sup:`1`                            | |c| | |c| | |c| | |c| | |c| | |c| | |c|            | |c|            | |c|             |  |c|              | |c| |
+| :ref:`srctype <srctype_step>` [1]_                                 | |c| | |c| | |c| | |c| | |c| | |c| | |c|            | |c|            | |c|             |  |c|              | |c| |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`targ_centroid <targ_centroid_step>` :sup:`2`                 |     |     |     | |c| | |c| |     |                |                |                 |                   |     |
+| :ref:`targ_centroid <targ_centroid_step>` [2]_                     |     |     |     | |c| | |c| |     |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 | :ref:`master_background <master_background_step>`                  |     | |c| |     |     |     |     |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`wavecorr <wavecorr_step>`                                    | |c| | |c| |     |     |     |     |                |                |                 |                   |     |
+| :ref:`wavecorr <wavecorr_step>` [4]_                               | |c| | |c| |     |     |     |     |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 | :ref:`straylight <straylight_step>`                                |     |     |     |     |     | |c| |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`flat_field <flatfield_step>`\ :sup:`1`                       | |c| | |c| | |c| | |c| | |c| | |c| | |c|            | |c|            | |c|             |  |c|              | |c| |
+| :ref:`flat_field <flatfield_step>` [1]_                            | |c| | |c| | |c| | |c| | |c| | |c| | |c|            | |c|            | |c|             |  |c|              | |c| |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 | :ref:`fringe <fringe_step>`                                        |     |     |     |     |     | |c| |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
@@ -79,36 +79,35 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 | :ref:`wfss_contam <wfss_contam_step>`                              |     |     |     |     |     |     | |c|            |                | |c|             |  |c|              |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`photom <photom_step>`                                        | |c| | |c| | |c| | |c| | |c| | |c| | |c| \ :sup:`3` | |c| \ :sup:`3` | |c| \ :sup:`3`  |  |c| \ :sup:`3`   | |c| |
+| :ref:`photom <photom_step>`                                        | |c| | |c| | |c| | |c| | |c| | |c| | |c| [3]_       | |c| [3]_       | |c| [3]_        |  |c| [3]_         | |c| |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`residual_fringe <residual_fringe_step>` \ :sup:`2`           |     |     |     |     |     | |c| |                |                |                 |                   |     |
+| :ref:`residual_fringe <residual_fringe_step>` [2]_                 |     |     |     |     |     | |c| |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`adaptive_trace_model <adaptive_trace_model_step>` \ :sup:`2` | |c| | |c| | |c| | |c| | |c| | |c| |                |                |                 |                   |     |
+| :ref:`adaptive_trace_model <adaptive_trace_model_step>` [2]_       | |c| | |c| | |c| | |c| | |c| | |c| |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`pixel_replace <pixel_replace_step>` \ :sup:`2`               | |c| | |c| | |c| | |c| | |c| |     |                |                | |c|             |  |c|              |     |
+| :ref:`pixel_replace <pixel_replace_step>` [2]_                     | |c| | |c| | |c| | |c| | |c| |     |                |                | |c|             |  |c|              |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 | :ref:`resample_spec <resample_spec_step>`                          | |c| | |c| |     | |c| |     |     |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 | :ref:`cube_build <cube_build_step>`                                |     |     | |c| |     |     | |c| |                |                |                 |                   |     |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
-| :ref:`extract_1d <extract_1d_step>`                                | |c| | |c| | |c| | |c| | |c| | |c| | |c| \ :sup:`3` | |c| \ :sup:`3` | |c| \ :sup:`3`  |  |c| \ :sup:`3`   | |c| |
+| :ref:`extract_1d <extract_1d_step>`                                | |c| | |c| | |c| | |c| | |c| | |c| | |c| [3]_       | |c| [3]_       | |c| [3]_        | |c| [3]_          | |c| |
 +--------------------------------------------------------------------+-----+-----+-----+-----+-----+-----+----------------+----------------+-----------------+-------------------+-----+
 
-:sup:`1`\ The exact order of the :ref:`extract_2d <extract_2d_step>`, :ref:`srctype <srctype_step>`,
-and :ref:`flat_field <flatfield_step>` steps depends on the observing mode.
-For NIRISS, MIRI, NIRCam WFSS, as well as NIRCam TSO grism exposures, the order is
-flat_field, extract_2d, and srctype (no wavecorr).
-For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
-
-:sup:`2`\ By default this step is skipped in the ``calwebb_spec2`` pipeline, but
-may be enabled for some modes via overrides provided in parameter reference files.
-
-:sup:`3`\ WFSS data and NIRISS SOSS data can have multiple spectral orders contribute flux to one pixel; because
-photometric correction values depend on the spectral order assigned to a pixel, the order of
-:ref:`photom <photom_step>` and :ref:`extract_1d <extract_1d_step>`  is swapped for WFSS and SOSS 
-exposures. This allows the spectral orders to be disentangled by either the ATOCA
-algorithm (for SOSS) or the ``wfss_contam`` step (for WFSS), such that
-photometric corrections can be applied to each spectrum separately.
+.. [1] The exact order of the :ref:`extract_2d <extract_2d_step>`, :ref:`srctype <srctype_step>`,
+   and :ref:`flat_field <flatfield_step>` steps depends on the observing mode.
+   For NIRISS, MIRI, NIRCam WFSS, as well as NIRCam TSO grism exposures, the order is
+   flat_field, extract_2d, and srctype (no wavecorr).
+   For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
+.. [2] By default this step is skipped in the ``calwebb_spec2`` pipeline, but
+   may be enabled for some modes via overrides provided in parameter reference files.
+.. [3] WFSS data and NIRISS SOSS data can have multiple spectral orders contribute flux to one pixel; because
+   photometric correction values depend on the spectral order assigned to a pixel, the order of
+   :ref:`photom <photom_step>` and :ref:`extract_1d <extract_1d_step>`  is swapped for WFSS and SOSS
+   exposures. This allows the spectral orders to be disentangled by either the ATOCA
+   algorithm (for SOSS) or the ``wfss_contam`` step (for WFSS), such that
+   photometric corrections can be applied to each spectrum separately.
+.. [4] This step is actually performed by default for TSO BOTS, which is a special case of TSO.
 
 Notice that NIRSpec MOS is the only mode to receive master background subtraction
 in the ``calwebb_spec2`` pipeline. All other spectral modes have master background
