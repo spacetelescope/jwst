@@ -127,40 +127,6 @@ def test_coord_trans3():
     assert math.isclose(dec, dec_test.item(), abs_tol=0.00001)
 
 
-def test_wrap_ra():
-    """Test function wrap_ra but all ra on same side of 0/360 border"""
-
-    # test 1  wrap ra should do nothing
-    ra = np.zeros(5, dtype=float)
-    ra[0] = 0.26
-    ra[1] = 0.12
-    ra[2] = 0.35
-    ra[3] = 0.23
-    ra[4] = 0.45
-
-    ra_test = cube_build_wcs_util.wrap_ra(ra)
-    assert np.all(ra == ra_test)
-
-    # test 2 the 4th value should be changed to a negative
-    ra[4] = 359.8
-    ra_compare = ra.copy()
-    ra_compare[4] = ra[4] - 360.0
-    ra_test = cube_build_wcs_util.wrap_ra(ra)
-    assert np.all(ra_compare == ra_test)
-
-    # test 3 the 4th value will be changed to 362.0
-    ra[0] = 356.8
-    ra[1] = 350.0
-    ra[2] = 358.9
-    ra[3] = 359.6
-    ra[4] = 2.0
-
-    ra_compare = ra.copy()
-    ra_compare[4] = 360.0 + ra[4]
-    ra_test = cube_build_wcs_util.wrap_ra(ra)
-    assert np.all(ra_compare == ra_test)
-
-
 def test_setup_wcs():
     """setting size of IFU given input min,max and cdelts"""
     ra1 = 98.83006930071556

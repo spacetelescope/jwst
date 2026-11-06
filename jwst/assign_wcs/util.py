@@ -3,6 +3,7 @@
 import logging
 import warnings
 
+import astropy
 import gwcs.coordinate_frames
 import numpy as np
 from astropy import units as u
@@ -1096,41 +1097,48 @@ def velocity_correction(velosys):
 
 def wrap_ra(ravalues):
     """
-    Test for 0/360 wrapping in RA values.
+    Test for 0/360 wrapping in RA values and filter out non-finite values.
 
-    If exists it makes it difficult to determine
-    RA range of a region on the sky. This problem is solved by putting them all
-    on "one side" of 0/360 border.
+    If RA wrapping exists it makes it difficult to determine the
+    RA range of a region on the sky. This problem is solved by putting all
+    the points either around 0 degrees or 360 degrees.
+
+    This is just a thin wrapper around the astropy.coordinates.wrap_at function,
+    where we test for a large difference between the min and max RA values to
+    determine if wrapping correction is needed, and then apply it if necessary.
 
     Parameters
     ----------
-    ravalues : ndarray
+    ravalues : ndarray or list
         The input RA values
 
     Returns
     -------
-    ndarray
-        A numpy array of RA values all on "same side" of 0/360 border
+    ndarray or list
+        A numpy array or list of RA values all around either 0 or 360 degrees
     """
     ravalues_array = np.array(ravalues)
     index_good = np.where(np.isfinite(ravalues_array))
     ravalues_wrap = ravalues_array[index_good].copy()
-    median_ra = np.nanmedian(ravalues_wrap)
+    max_ra = np.nanmax(ravalues_wrap)
+    min_ra = np.nanmin(ravalues_wrap)
+    if max_ra - min_ra > 180.0:
+        # Decide which value to wrap at using the median
+        median_ra = np.nanmedian(ravalues_wrap)
+        # If there are an equal number of values near 0 and 360 degrees, the median will be near
+        # 180 degrees.  In that case we default to wrapping at 0 degrees.
+        if median_ra > 270.0:
+            # Most values are near 360 degrees rather than 0 degrees
+            wrap_angle = 540.0 * u.deg
+        else:
+            # Most values are near 0 degrees rather than 360 degrees
+            wrap_angle = 180.0 * u.deg
+        ravalues_wrap = astropy.coordinates.Angle(ravalues_wrap * u.deg).wrap_at(wrap_angle).value
 
-    # using median to test if there is any wrapping going on
-    wrap_index = np.where(np.fabs(ravalues_wrap - median_ra) > 180.0)
-    nwrap = wrap_index[0].size
-
-    # get all the ra on the same "side" of 0/360
-    if nwrap != 0 and median_ra < 180:
-        ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] - 360.0
-
-    if nwrap != 0 and median_ra > 180:
-        ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] + 360.0
-
-    # if the input ravaules are a list - return a list
+    # if the input ravalues are a list, return a list
     if isinstance(ravalues, list):
         ravalues = ravalues_wrap.tolist()
+        return ravalues
 
     return ravalues_wrap
 
