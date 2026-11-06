@@ -75,8 +75,8 @@ def test_wfss_contam_step(tmp_cwd, multicutoutmodel):
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
     for i, slit in enumerate(multicutoutmodel.slits):
         result_slit = result.slits[i]
-        assert result_slit.corr_data is not None
-        assert slit.corr_data is None
+        assert result_slit.contamcorr_data is not None
+        assert slit.contamcorr_data is None
         np.testing.assert_allclose(result_slit.data, slit.data)
     assert Path("multicutout_model_simul.fits").exists()
     result.close()
@@ -98,8 +98,8 @@ def test_wfss_contam_step_defaults(tmp_cwd, multicutoutmodel):
 
     # Original data is preserved, and corrected data is attached separately.
     assert multicutoutmodel.meta.cal_step.wfss_contam is None
-    assert all(slit.corr_data is not None for slit in result.slits)
-    assert all(slit.corr_data is None for slit in multicutoutmodel.slits)
+    assert all(slit.contamcorr_data is not None for slit in result.slits)
+    assert all(slit.contamcorr_data is None for slit in multicutoutmodel.slits)
     i_modified = [
         i
         for i in range(len(multicutoutmodel.slits))

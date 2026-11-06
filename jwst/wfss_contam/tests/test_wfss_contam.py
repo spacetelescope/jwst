@@ -413,8 +413,8 @@ def test_iteration_improves_contamination_correction(
         ):
             np.testing.assert_array_equal(input_slit.data, original)
             np.testing.assert_array_equal(output_slit.data, original)
-            assert hasattr(output_slit, "corr_data")
-        return [np.array(s.corr_data) for s in result.slits]
+            assert hasattr(output_slit, "contamcorr_data")
+        return [np.array(s.contamcorr_data) for s in result.slits]
 
     corrected_flat = _run(1, polyfit_degree=None)
     corrected_1iter = _run(1, polyfit_degree=1)

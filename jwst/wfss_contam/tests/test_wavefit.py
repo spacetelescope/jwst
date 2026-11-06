@@ -49,7 +49,7 @@ def make_slits():
     obs_data = np.where(sim_data != 0, sim_data + sinusoid + noise, 0.0)
 
     observed_slit = SlitModel()
-    observed_slit.corr_data = obs_data
+    observed_slit.contamcorr_data = obs_data
     observed_slit.dq = np.zeros(shape, dtype=np.uint32)
 
     simul_slit = SlitModel()
@@ -68,7 +68,7 @@ def test_more_basis_images_reduces_residuals(make_slits):
     more basis images are used.
     """
     observed_slit, simul_slit, wavelength = make_slits
-    obs_data = observed_slit.corr_data
+    obs_data = observed_slit.contamcorr_data
     sim_data = simul_slit.data
     inside = sim_data != 0
 
@@ -115,7 +115,7 @@ def test_fit_recovers_exact_coefficients(make_slits):
     # Build observed as an exact linear combination of the two basis images
     obs_data = c0_true * simul.data + c1_true * simul.fluxmodel_1
     observed_slit = SlitModel()
-    observed_slit.corr_data = obs_data
+    observed_slit.contamcorr_data = obs_data
     observed_slit.dq = np.zeros(obs_data.shape, dtype=np.uint32)
 
     coeffs = fit_cutout_by_basis_images(observed_slit, simul)
@@ -131,7 +131,7 @@ def test_fit_flat_only_no_fluxmodel(make_slits):
     scale = 1.05
     obs_data = scale * sim_data
     observed_slit = SlitModel()
-    observed_slit.corr_data = obs_data
+    observed_slit.contamcorr_data = obs_data
     observed_slit.dq = np.zeros(obs_data.shape, dtype=np.uint32)
 
     simul = SlitModel()
@@ -159,7 +159,7 @@ def test_fit_dq_mask_excludes_bad_pixels(make_slits):
     dq[5:8, 10:40] = 1
 
     observed_masked = SlitModel()
-    observed_masked.corr_data = corrupted
+    observed_masked.contamcorr_data = corrupted
     observed_masked.dq = dq
 
     coeffs = fit_cutout_by_basis_images(observed_masked, simul)
@@ -183,7 +183,7 @@ def test_large_errors_downweight_bad_pixels(make_slits):
     err[5:8, 10:40] = 1e10
 
     observed = SlitModel()
-    observed.corr_data = corrupted
+    observed.contamcorr_data = corrupted
     observed.dq = np.zeros(corrupted.shape, dtype=np.uint32)
     observed.err = err
 
@@ -201,7 +201,7 @@ def test_fit_raises_when_all_errors_nonfinite(make_slits):
     obs_data = 1.0 * simul.data + 0.5 * simul.fluxmodel_1
 
     observed = SlitModel()
-    observed.corr_data = obs_data
+    observed.contamcorr_data = obs_data
     observed.dq = np.zeros(obs_data.shape, dtype=np.uint32)
     observed.err = np.full(obs_data.shape, np.nan)
 
@@ -220,7 +220,7 @@ def test_fit_raises_too_few_valid_pixels():
     simul.fluxmodel_1 = sim_data * 0.5
 
     observed = SlitModel()
-    observed.corr_data = sim_data.copy()
+    observed.contamcorr_data = sim_data.copy()
     observed.dq = np.zeros(shape, dtype=np.uint32)
 
     with pytest.raises(SpectralFitError, match="valid pixel"):
@@ -239,7 +239,7 @@ def test_fit_returns_none_when_c0_far_from_unity(make_slits):
     simul = _make_basis_slit(sim_data, wavelength, max_order=1)
     obs_data = 5.0 * simul.data
     observed_slit = SlitModel()
-    observed_slit.corr_data = obs_data
+    observed_slit.contamcorr_data = obs_data
     observed_slit.dq = np.zeros(obs_data.shape, dtype=np.uint32)
 
     result = fit_cutout_by_basis_images(observed_slit, simul)

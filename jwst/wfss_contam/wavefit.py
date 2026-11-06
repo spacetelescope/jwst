@@ -67,7 +67,7 @@ def fit_cutout_by_basis_images(
     Parameters
     ----------
     observed_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
-        Observed 2-D spectral cutout with contamination-corrected data in ``corr_data``.
+        Observed 2-D spectral cutout with contamination-corrected data in ``contamcorr_data``.
     simul_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
         Simulated cutout with ``data`` and optional ``fluxmodel_N`` attributes.
     l2_alpha : float, optional
@@ -93,7 +93,7 @@ def fit_cutout_by_basis_images(
         If there are fewer valid pixels than basis terms.
     """
     basis = _get_basis_images(simul_cutout)
-    obs_data = np.asarray(observed_cutout.corr_data)
+    obs_data = np.asarray(observed_cutout.contamcorr_data)
 
     mask = np.isfinite(obs_data) & np.isfinite(basis[0]) & (basis[0] != 0)
     if getattr(observed_cutout, "dq", None) is not None:

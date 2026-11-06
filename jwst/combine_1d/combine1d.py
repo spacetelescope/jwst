@@ -84,13 +84,13 @@ class InputSpectrumModel:
     contam_flux: np.ndarray | None = None
     """Input contaminating flux, if present. WFSS mode only."""
 
-    contam_surf_bright: np.ndarray | None = None
+    contamsb: np.ndarray | None = None
     """Input contaminating surface brightness, if present. WFSS mode only."""
 
-    corr_flux: np.ndarray | None = None
+    contamcorr_flux: np.ndarray | None = None
     """Contamination-corrected flux, if present. WFSS mode only."""
 
-    corr_surf_bright: np.ndarray | None = None
+    contamcorr_surf_bright: np.ndarray | None = None
     """Contamination-corrected surface brightness, if present. WFSS mode only."""
 
 
@@ -122,11 +122,11 @@ class OutputSpectrumModel:
         Flag to indicate data has been combined (sums are normalized).
     contam_flux : ndarray or None
         Output contaminating flux, if present. WFSS mode only.
-    corr_flux : ndarray or None
+    contamcorr_flux : ndarray or None
         Output contamination-corrected flux, if present. WFSS mode only.
-    contam_surf_bright : ndarray or None
+    contamsb : ndarray or None
         Output contaminating surface brightness, if present. WFSS mode only.
-    corr_surf_bright : ndarray or None
+    contamcorr_surf_bright : ndarray or None
         Output contamination-corrected surface brightness, if present. WFSS mode only.
     """
 
@@ -145,9 +145,9 @@ class OutputSpectrumModel:
         self.flux_unit = None
         self.sb_unit = None
         self.contam_flux = None
-        self.contam_surf_bright = None
-        self.corr_flux = None
-        self.corr_surf_bright = None
+        self.contamsb = None
+        self.contamcorr_flux = None
+        self.contamcorr_surf_bright = None
 
     def assign_wavelengths(self, input_spectra):
         """
@@ -214,18 +214,18 @@ class OutputSpectrumModel:
         weight = np.zeros((nspec, nelem), dtype=np.float64)
         count = np.zeros((nspec, nelem), dtype=np.float64)
 
-        # contam_flux and contam_surf_bright are present for WFSS modes
+        # contam_flux and contamsb are present for WFSS modes
         has_contam = any(in_spec.contam_flux is not None for in_spec in input_spectra)
         if has_contam:
             contam_flux = np.full((nspec, nelem), np.nan, dtype=np.float64)
-            corr_flux = np.full((nspec, nelem), np.nan, dtype=np.float64)
-            contam_surf_bright = np.full((nspec, nelem), np.nan, dtype=np.float64)
-            corr_surf_bright = np.full((nspec, nelem), np.nan, dtype=np.float64)
+            contamcorr_flux = np.full((nspec, nelem), np.nan, dtype=np.float64)
+            contamsb = np.full((nspec, nelem), np.nan, dtype=np.float64)
+            contamcorr_surf_bright = np.full((nspec, nelem), np.nan, dtype=np.float64)
         else:
             contam_flux = None
-            corr_flux = None
-            contam_surf_bright = None
-            corr_surf_bright = None
+            contamcorr_flux = None
+            contamsb = None
+            contamcorr_surf_bright = None
 
         self.flux_unit = input_spectra[0].flux_unit
         self.sb_unit = input_spectra[0].sb_unit
@@ -267,9 +267,9 @@ class OutputSpectrumModel:
                 count[s, k] = 1.0
                 if has_contam and (in_spec.contam_flux is not None):
                     contam_flux[s, k] = in_spec.contam_flux[i]
-                    corr_flux[s, k] = in_spec.corr_flux[i]
-                    contam_surf_bright[s, k] = in_spec.contam_surf_bright[i]
-                    corr_surf_bright[s, k] = in_spec.corr_surf_bright[i]
+                    contamcorr_flux[s, k] = in_spec.contamcorr_flux[i]
+                    contamsb[s, k] = in_spec.contamsb[i]
+                    contamcorr_surf_bright[s, k] = in_spec.contamcorr_surf_bright[i]
 
         (
             flux,
@@ -279,9 +279,9 @@ class OutputSpectrumModel:
             weight,
             count,
             contam_flux,
-            corr_flux,
-            contam_surf_bright,
-            corr_surf_bright,
+            contamcorr_flux,
+            contamsb,
+            contamcorr_surf_bright,
         ) = self.combine_spectra(
             flux,
             flux_error,
@@ -290,9 +290,9 @@ class OutputSpectrumModel:
             weight,
             count,
             contam_flux=contam_flux,
-            corr_flux=corr_flux,
-            contam_surf_bright=contam_surf_bright,
-            corr_surf_bright=corr_surf_bright,
+            contamcorr_flux=contamcorr_flux,
+            contamsb=contamsb,
+            contamcorr_surf_bright=contamcorr_surf_bright,
             sigma_clip=sigma_clip,
         )
 
@@ -307,9 +307,9 @@ class OutputSpectrumModel:
         self.weight = weight
         self.count = count
         self.contam_flux = contam_flux
-        self.corr_flux = corr_flux
-        self.contam_surf_bright = contam_surf_bright
-        self.corr_surf_bright = corr_surf_bright
+        self.contamcorr_flux = contamcorr_flux
+        self.contamsb = contamsb
+        self.contamcorr_surf_bright = contamcorr_surf_bright
 
         # Since the output wavelengths will not usually be exactly the same
         # as the input wavelengths, it's possible that there will be output
@@ -333,9 +333,9 @@ class OutputSpectrumModel:
             self.count = self.count[index]
             if self.contam_flux is not None:
                 self.contam_flux = self.contam_flux[index]
-                self.corr_flux = self.corr_flux[index]
-                self.contam_surf_bright = self.contam_surf_bright[index]
-                self.corr_surf_bright = self.corr_surf_bright[index]
+                self.contamcorr_flux = self.contamcorr_flux[index]
+                self.contamsb = self.contamsb[index]
+                self.contamcorr_surf_bright = self.contamcorr_surf_bright[index]
         del index
 
     def combine_spectra(
@@ -347,9 +347,9 @@ class OutputSpectrumModel:
         weight,
         count,
         contam_flux=None,
-        corr_flux=None,
-        contam_surf_bright=None,
-        corr_surf_bright=None,
+        contamcorr_flux=None,
+        contamsb=None,
+        contamcorr_surf_bright=None,
         sigma_clip=None,
     ):
         """
@@ -372,11 +372,11 @@ class OutputSpectrumModel:
             Count of how many values at each index in the input arrays.
         contam_flux : ndarray, 2-D, optional
             Contaminating fluxes of input spectra, if present.
-        corr_flux : ndarray, 2-D, optional
+        contamcorr_flux : ndarray, 2-D, optional
             Contamination-corrected fluxes of input spectra, if present.
-        contam_surf_bright : ndarray, 2-D, optional
+        contamsb : ndarray, 2-D, optional
             Contaminating surface brightnesses of input spectra, if present.
-        corr_surf_bright : ndarray, 2-D, optional
+        contamcorr_surf_bright : ndarray, 2-D, optional
             Contamination-corrected surface brightnesses of input spectra, if present.
         sigma_clip : float, optional
             Factor for clipping outliers.  Compares input spectra to the
@@ -398,11 +398,11 @@ class OutputSpectrumModel:
             Total count of spectra contributing to each wavelength.
         contam_flux : ndarray, 1-D, or None
             Combined 1-D contaminating fluxes, if present.
-        corr_flux : ndarray, 1-D, or None
+        contamcorr_flux : ndarray, 1-D, or None
             Combined 1-D contamination-corrected fluxes, if present.
-        contam_surf_bright : ndarray, 1-D, or None
+        contamsb : ndarray, 1-D, or None
             Combined 1-D contaminating surface brightnesses, if present.
-        corr_surf_bright : ndarray, 1-D, or None
+        contamcorr_surf_bright : ndarray, 1-D, or None
             Combined 1-D contamination-corrected surface brightnesses, if present.
         """
         # Catch warnings for all NaN slices in an array.
@@ -430,10 +430,10 @@ class OutputSpectrumModel:
                 weight[clipped] = 0
                 if contam_flux is not None:
                     contam_flux[clipped] = np.nan
-                    corr_flux[clipped] = np.nan
-                if contam_surf_bright is not None:
-                    contam_surf_bright[clipped] = np.nan
-                    corr_surf_bright[clipped] = np.nan
+                    contamcorr_flux[clipped] = np.nan
+                if contamsb is not None:
+                    contamsb[clipped] = np.nan
+                    contamcorr_surf_bright[clipped] = np.nan
 
             # Perform a weighted sum of the input spectra
             sum_weight = np.nansum(weight, axis=0)
@@ -446,12 +446,12 @@ class OutputSpectrumModel:
             count = np.nansum(count, axis=0)
             if contam_flux is not None:
                 contam_flux = np.nansum(contam_flux * weight, axis=0) / sum_weight_nonzero
-                corr_flux = np.nansum(corr_flux * weight, axis=0) / sum_weight_nonzero
-            if contam_surf_bright is not None:
-                contam_surf_bright = (
-                    np.nansum(contam_surf_bright * weight, axis=0) / sum_weight_nonzero
+                contamcorr_flux = np.nansum(contamcorr_flux * weight, axis=0) / sum_weight_nonzero
+            if contamsb is not None:
+                contamsb = np.nansum(contamsb * weight, axis=0) / sum_weight_nonzero
+                contamcorr_surf_bright = (
+                    np.nansum(contamcorr_surf_bright * weight, axis=0) / sum_weight_nonzero
                 )
-                corr_surf_bright = np.nansum(corr_surf_bright * weight, axis=0) / sum_weight_nonzero
 
         self.normalized = True
 
@@ -463,9 +463,9 @@ class OutputSpectrumModel:
             sum_weight,
             count,
             contam_flux,
-            corr_flux,
-            contam_surf_bright,
-            corr_surf_bright,
+            contamcorr_flux,
+            contamsb,
+            contamcorr_surf_bright,
         )
 
     def create_output_data(self):
@@ -1015,9 +1015,9 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
             sb_error = row["sb_error"][:n]
             dq = row["dq"][:n]
             contam_flux = row["contam_flux"][:n]
-            corr_flux = row["corr_flux"][:n]
-            contam_surf_bright = row["contam_surf_bright"][:n]
-            corr_surf_bright = row["corr_surf_bright"][:n]
+            contamcorr_flux = row["contamcorr_flux"][:n]
+            contamsb = row["contamsb"][:n]
+            contamcorr_surf_bright = row["contamcorr_surf_bright"][:n]
 
             right_ascension = np.zeros_like(wavelength)
             right_ascension[:] = spec_ra
@@ -1050,9 +1050,9 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
                     source_dec,
                     dispersion_direction,
                     contam_flux=contam_flux,
-                    corr_flux=corr_flux,
-                    contam_surf_bright=contam_surf_bright,
-                    corr_surf_bright=corr_surf_bright,
+                    contamcorr_flux=contamcorr_flux,
+                    contamsb=contamsb,
+                    contamcorr_surf_bright=contamcorr_surf_bright,
                 )
             )
 
@@ -1194,11 +1194,11 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
                     output_spec.wavelength,
                     output_spec.flux,
                     output_spec.contam_flux,
-                    output_spec.corr_flux,
+                    output_spec.contamcorr_flux,
                     output_spec.flux_error,
                     output_spec.surf_bright,
-                    output_spec.contam_surf_bright,
-                    output_spec.corr_surf_bright,
+                    output_spec.contamsb,
+                    output_spec.contamcorr_surf_bright,
                     output_spec.sb_error,
                     output_spec.dq,
                     output_spec.weight,
@@ -1224,11 +1224,11 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
             ("WAVELENGTH", "<f8", max_wlen),
             ("FLUX", "<f8", max_wlen),
             ("CONTAM_FLUX", "<f8", max_wlen),
-            ("CORR_FLUX", "<f8", max_wlen),
+            ("CONTAMCORR_FLUX", "<f8", max_wlen),
             ("ERROR", "<f8", max_wlen),
             ("SURF_BRIGHT", "<f8", max_wlen),
-            ("CONTAM_SURF_BRIGHT", "<f8", max_wlen),
-            ("CORR_SURF_BRIGHT", "<f8", max_wlen),
+            ("CONTAMSB", "<f8", max_wlen),
+            ("CONTAMCORR_SURF_BRIGHT", "<f8", max_wlen),
             ("SB_ERROR", "<f8", max_wlen),
             ("DQ", "<u4", max_wlen),
             ("WEIGHT", "<f8", max_wlen),
@@ -1246,11 +1246,11 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
             "WAVELENGTH",
             "FLUX",
             "CONTAM_FLUX",
-            "CORR_FLUX",
+            "CONTAMCORR_FLUX",
             "ERROR",
             "SURF_BRIGHT",
-            "CONTAM_SURF_BRIGHT",
-            "CORR_SURF_BRIGHT",
+            "CONTAMSB",
+            "CONTAMCORR_SURF_BRIGHT",
             "SB_ERROR",
             "WEIGHT",
             "N_INPUT",
@@ -1266,11 +1266,11 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
             data[k]["WAVELENGTH"][:nalongdisp] = dd[1]
             data[k]["FLUX"][:nalongdisp] = dd[2]
             data[k]["CONTAM_FLUX"][:nalongdisp] = dd[3]
-            data[k]["CORR_FLUX"][:nalongdisp] = dd[4]
+            data[k]["CONTAMCORR_FLUX"][:nalongdisp] = dd[4]
             data[k]["ERROR"][:nalongdisp] = dd[5]
             data[k]["SURF_BRIGHT"][:nalongdisp] = dd[6]
-            data[k]["CONTAM_SURF_BRIGHT"][:nalongdisp] = dd[7]
-            data[k]["CORR_SURF_BRIGHT"][:nalongdisp] = dd[8]
+            data[k]["CONTAMSB"][:nalongdisp] = dd[7]
+            data[k]["CONTAMCORR_SURF_BRIGHT"][:nalongdisp] = dd[8]
             data[k]["SB_ERROR"][:nalongdisp] = dd[9]
             data[k]["DQ"][:nalongdisp] = dd[10]
             data[k]["WEIGHT"][:nalongdisp] = dd[11]
@@ -1284,11 +1284,11 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
         output_order.spec_table.columns["wavelength"].unit = "um"
         output_order.spec_table.columns["flux"].unit = flux_unit
         output_order.spec_table.columns["contam_flux"].unit = flux_unit
-        output_order.spec_table.columns["corr_flux"].unit = flux_unit
+        output_order.spec_table.columns["contamcorr_flux"].unit = flux_unit
         output_order.spec_table.columns["error"].unit = flux_unit
         output_order.spec_table.columns["surf_bright"].unit = sb_unit
-        output_order.spec_table.columns["contam_surf_bright"].unit = sb_unit
-        output_order.spec_table.columns["corr_surf_bright"].unit = sb_unit
+        output_order.spec_table.columns["contamsb"].unit = sb_unit
+        output_order.spec_table.columns["contamcorr_surf_bright"].unit = sb_unit
         output_order.spec_table.columns["sb_error"].unit = sb_unit
         output_order.spec_table.columns["source_ra"].unit = "deg"
         output_order.spec_table.columns["source_dec"].unit = "deg"

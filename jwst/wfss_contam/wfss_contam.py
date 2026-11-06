@@ -358,7 +358,7 @@ def _fit_spectral_shape(
     Parameters
     ----------
     observed_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
-        Observed cutout whose ``.corr_data`` is used as the target for the fit.
+        Observed cutout whose ``.contamcorr_data`` is used as the target for the fit.
         If ``n_iterations > 1``, this holds the contamination-corrected data
         from the previous iteration. The original ``.data`` is left unchanged.
     simul_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
@@ -431,7 +431,7 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
         The full-frame simulated data.
     original_data : list
         List of original observed data arrays, retained as the baseline for
-        computing ``cutout.corr_data``.
+        computing ``cutout.contamcorr_data``.
 
     Returns
     -------
@@ -447,7 +447,7 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
         else:
             simul_all_cut = _cut_frame_to_match_cutout(simul_data, cutout)
             contam_cut = simul_all_cut - this_simul.data
-        cutout.corr_data = original_data[i] - contam_cut
+        cutout.contamcorr_data = original_data[i] - contam_cut
         contam_cuts.append(contam_cut)
     return contam_cuts
 
@@ -595,7 +595,7 @@ def contam_corr(
     -------
     output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         A copy of the input_model with contamination-corrected data stored in
-        each slit's ``corr_data`` attribute. The original ``data`` arrays are unchanged.
+        each slit's ``contamcorr_data`` attribute. The original ``data`` arrays are unchanged.
     simul_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Full-frame simulated image of the grism exposure
     """
@@ -771,7 +771,7 @@ def contam_corr(
             del output_model.slits[i]
 
     # Hold onto the unchanged input data so iterative corrections always start
-    # from the same baseline. Corrected data is stored separately in corr_data.
+    # from the same baseline. Corrected data is stored separately in contamcorr_data.
     original_data = [cutout.data for cutout in output_model.slits]
 
     if n_iterations > 1 and polyfit_degree is None:
@@ -847,7 +847,7 @@ def contam_corr(
                 # For fainter sources, it will be whatever was in the previous iteration,
                 # i.e., flat-spectrum for the first iteration.
                 simul_all_cut = _cut_frame_to_match_cutout(simul_data, cutout)
-                cutout.corr_data = original_data[i] - (simul_all_cut - matched_flat.data)
+                cutout.contamcorr_data = original_data[i] - (simul_all_cut - matched_flat.data)
 
                 if _fit_spectral_shape(
                     cutout,

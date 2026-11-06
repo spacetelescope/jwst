@@ -444,25 +444,25 @@ def _add_contam_columns(model):
 
     # build contam and contam-corrected columns
     contam_flux = np.arange(nelem, dtype=np.float32) / 10.0
-    corr_flux = model.spec_table["FLUX"] - contam_flux
+    contamcorr_flux = model.spec_table["FLUX"] - contam_flux
     flux_idx = _idx_from_dtype(tab.dtype, "FLUX")
     otab_list.insert(flux_idx + 1, contam_flux)
-    otab_list.insert(flux_idx + 2, corr_flux)
+    otab_list.insert(flux_idx + 2, contamcorr_flux)
 
-    contam_surf_bright = np.arange(nelem, dtype=np.float32) / 100.0
-    corr_surf_bright = model.spec_table["SURF_BRIGHT"] - contam_surf_bright
+    contamsb = np.arange(nelem, dtype=np.float32) / 100.0
+    contamcorr_surf_bright = model.spec_table["SURF_BRIGHT"] - contamsb
     sb_idx = _idx_from_dtype(tab.dtype, "SURF_BRIGHT")
-    otab_list.insert(sb_idx + 3, contam_surf_bright)
-    otab_list.insert(sb_idx + 4, corr_surf_bright)
+    otab_list.insert(sb_idx + 3, contamsb)
+    otab_list.insert(sb_idx + 4, contamcorr_surf_bright)
 
     # Need to modify the dtype, but it's immutable.
     # Use descr to get it as a list
     otab_dtype = tab.dtype
     descr = otab_dtype.descr
     descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
-    descr.insert(flux_idx + 2, ("CORR_FLUX", float))
-    descr.insert(sb_idx + 3, ("CONTAM_SURF_BRIGHT", float))
-    descr.insert(sb_idx + 4, ("CORR_SURF_BRIGHT", float))
+    descr.insert(flux_idx + 2, ("CONTAMCORR_FLUX", float))
+    descr.insert(sb_idx + 3, ("CONTAMSB", float))
+    descr.insert(sb_idx + 4, ("CONTAMCORR_SURF_BRIGHT", float))
     otab_dtype = np.dtype(descr)
     new_tab = np.array(list(zip(*otab_list)), dtype=otab_dtype)
     model.spec_table = new_tab
@@ -1590,8 +1590,8 @@ def test_niriss_wfss():
         result.append(np.allclose(contam_ratio, compare[1:], rtol=1.0e-7, equal_nan=True))
 
         # also check corr_flux was flux-calibrated
-        corr_flux = output["CORR_FLUX"] / input_data["CORR_FLUX"]
-        result.append(np.allclose(corr_flux, compare, rtol=1.0e-7, equal_nan=True))
+        contamcorr_flux = output["CONTAMCORR_FLUX"] / input_data["CONTAMCORR_FLUX"]
+        result.append(np.allclose(contamcorr_flux, compare, rtol=1.0e-7, equal_nan=True))
 
     assert np.all(result)
 
