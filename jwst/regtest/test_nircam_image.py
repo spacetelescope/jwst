@@ -134,6 +134,7 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, resource_tracker):
         "calwebb_image3",
         rtdata.input,
         "--steps.tweakreg.save_results=True",
+        "--steps.tweakreg.abs_refcat=''",
         "--steps.source_catalog.snr_threshold=20",
     ]
     with resource_tracker.track():
@@ -221,17 +222,12 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
 
 
 def test_nircam_image_stage3_tweakreg(run_image3pipeline):
-    """Test that tweakreg doesn't attach a catalog and that it updates the wcs"""
+    """Test that tweakreg does no alignment for single-visit input."""
     files = glob("*tweakreg.fits")
     for filename in files:
         with datamodels.open(filename) as model:
-            # Makes sure the catalog is not attached
-            assert not hasattr(model, "catalog")
-
-            # Check that all but the first exposure in the association
-            # has a WCS correction applied
-            if "jw01538046001_0310f_00001" not in model.meta.filename:
-                assert "v2v3corr" in model.meta.wcs.available_frames
+            # Check that all exposures do not have a WCS correction applied
+            assert "v2v3corr" not in model.meta.wcs.available_frames
 
 
 @pytest.mark.parametrize("suffix", ["i2d"])

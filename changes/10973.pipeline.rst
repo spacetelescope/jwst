@@ -1,0 +1,1 @@
+Fix prefetch behavior for tso3, allowing it to prefetch the reference files needed by its steps at the start of the pipeline.

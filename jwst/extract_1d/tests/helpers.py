@@ -2,8 +2,8 @@ import gwcs
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling.models import Identity, Mapping, Scale, Shift
+from stcal.alignment import wcs_bbox_from_shape
 
-from jwst.assign_wcs.util import wcs_bbox_from_shape
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.exp_to_source import multislit_to_container
 
@@ -402,6 +402,7 @@ def mock_miri_ifu_func():
     model.meta.observation.date = "2023-07-22"
     model.meta.observation.time = "06:24:45.569"
     model.meta.exposure.type = "MIR_MRS"
+    model.meta.subarray.name = "FULL"
 
     model.meta.wcsinfo.dispersion_direction = 2
     model.meta.photometry.pixelarea_steradians = 1.0

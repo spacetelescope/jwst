@@ -1,26 +1,22 @@
 from copy import deepcopy
-from pathlib import Path
 
 import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
-import jwst
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.tests.test_nirspec import (
-    create_nirspec_fs_file,
-    create_nirspec_ifu_file,
-    create_nirspec_mos_file,
-)
 from jwst.extract_1d.tests.helpers import mock_miri_lrs_fs_func, mock_niriss_soss_96_func
 from jwst.extract_2d import Extract2dStep
 from jwst.pathloss import PathLossStep
+from jwst.tests.nirspec_rate_helpers import (
+    nirspec_fs_rate_model,
+    nirspec_ifu_rate_model,
+    nirspec_mos_rate_model,
+)
 
 
 def create_nirspec_fs_model(source_type="POINT"):
-    hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
-    im = datamodels.ImageModel(hdul)
-    hdul.close()
+    im = nirspec_fs_rate_model(with_wcs=False)
 
     im.data = np.full((2048, 2048), 1.0)
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
@@ -45,12 +41,7 @@ def create_nirspec_fs_model(source_type="POINT"):
 
 
 def create_nirspec_mos_model(source_type="POINT"):
-    hdul = create_nirspec_mos_file()
-    msa_meta = Path(jwst.__path__[0]) / "assign_wcs" / "tests" / "data" / "msa_configuration.fits"
-    hdul[0].header["MSAMETFL"] = str(msa_meta)
-    hdul[0].header["MSAMETID"] = 12
-    im = datamodels.ImageModel(hdul)
-    hdul.close()
+    im = nirspec_mos_rate_model(with_wcs=False)
 
     im.data = np.full((2048, 2048), 1.0)
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
@@ -82,11 +73,7 @@ def create_nirspec_mos_model(source_type="POINT"):
 
 
 def create_nirspec_ifu_model(source_type="POINT"):
-    hdul = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    im = datamodels.IFUImageModel(hdul)
-    hdul.close()
+    im = nirspec_ifu_rate_model(with_wcs=False)
 
     im.meta.target.source_type = source_type
     im.data = np.full((2048, 2048), 1.0)

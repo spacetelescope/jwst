@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcstools
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
@@ -8,16 +7,15 @@ from stdatamodels.jwst.transforms import models
 from stpipe.crds_client import reference_uri_to_cache_path
 
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_nirspec_mos_file
 from jwst.extract_2d import Extract2dStep
 from jwst.srctype import SourceTypeStep
+from jwst.tests.nirspec_rate_helpers import nirspec_fs_rate_model, nirspec_mos_rate_model
 from jwst.wavecorr import WavecorrStep, wavecorr
 
 
 @pytest.fixture(scope="module")
 def nrs_fs_model():
-    hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
-    im = datamodels.ImageModel(hdul)
+    im = nirspec_fs_rate_model(grating="G140H", filter_name="F100LP", with_wcs=False)
     im.data = np.zeros((2048, 2048))
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
@@ -29,7 +27,6 @@ def nrs_fs_model():
     im_ex2d.close()
     im_wcs.close()
     im.close()
-    hdul.close()
 
 
 @pytest.fixture(scope="module")
@@ -51,16 +48,16 @@ def nrs_slit_model(nrs_fs_model):
 
 
 def test_wavecorr():
-    hdul = create_nirspec_mos_file()
-    msa_meta = get_pkg_data_filename("data/msa_configuration.fits", package="jwst.assign_wcs.tests")
-    hdul[0].header["MSAMETFL"] = msa_meta
-    hdul[0].header["MSAMETID"] = 12
-    im = datamodels.ImageModel(hdul)
+    # make a rate model without wcs
+    im = nirspec_mos_rate_model(with_wcs=False)
+
     im.data = np.zeros((2048, 2048))
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     im.var_rnoise = np.zeros((2048, 2048))
     im.var_poisson = np.zeros((2048, 2048))
+
+    # call assign_wcs directly: step processing is needed
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
     bbox = ((-0.5, 1432.5), (-0.5, 37.5))
@@ -140,8 +137,7 @@ def test_ideal_to_v23_fs():
 
 
 def test_skip_invalid_exptype():
-    hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
-    im = datamodels.ImageModel(hdul)
+    im = nirspec_fs_rate_model(with_wcs=False)
 
     # test a non-valid exp_type2transform
     im.meta.exposure.type = "NRS_IMAGE"
@@ -154,8 +150,7 @@ def test_skip_invalid_exptype():
 
 
 def test_skip_missing_prerequisites():
-    hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
-    im = datamodels.ImageModel(hdul)
+    im = nirspec_fs_rate_model(with_wcs=False)
 
     # Test an error is raised if assign_wcs or extract_2d were not run.
     im.meta.exposure.type = "NRS_FIXEDSLIT"
@@ -164,8 +159,7 @@ def test_skip_missing_prerequisites():
 
 
 def test_reference_file_requirements():
-    hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
-    im = datamodels.ImageModel(hdul)
+    im = nirspec_fs_rate_model(grating="G140H", filter_name="F100LP", with_wcs=False)
     im.data = np.zeros((2048, 2048))
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
@@ -236,16 +230,14 @@ def test_reference_file_requirements():
 
 def test_mos_slit_status():
     """Test conditions that are skipped for mos slitlets."""
-    hdul = create_nirspec_mos_file()
-    msa_meta = get_pkg_data_filename("data/msa_configuration.fits", package="jwst.assign_wcs.tests")
-    hdul[0].header["MSAMETFL"] = msa_meta
-    hdul[0].header["MSAMETID"] = 12
-    im = datamodels.ImageModel(hdul)
+    im = nirspec_mos_rate_model(with_wcs=False)
+
     im.data = np.zeros((2048, 2048))
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     im.var_rnoise = np.zeros((2048, 2048))
     im.var_poisson = np.zeros((2048, 2048))
+
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
     bbox = ((-0.5, 1432.5), (-0.5, 37.5))
@@ -286,8 +278,8 @@ def test_mos_slit_status():
 
 
 def test_wavecorr_fs():
-    hdul = create_nirspec_fs_file(grating="PRISM", filter="CLEAR")
-    im = datamodels.ImageModel(hdul)
+    im = nirspec_fs_rate_model(grating="PRISM", filter_name="CLEAR", with_wcs=False)
+    im.data = np.zeros((2048, 2048))
     im.err = np.zeros((2048, 2048))
     im.dq = np.zeros((2048, 2048), dtype=np.uint32)
     im.var_rnoise = np.zeros((2048, 2048))
@@ -317,7 +309,7 @@ def test_wavecorr_fs():
         "waverange_end": 5.3e-06,
         "waverange_start": 6e-07,
     }
-    im.data = np.zeros((2048, 2048))
+
     result = AssignWcsStep.call(im)
     result = Extract2dStep.call(result)
     bbox = ((-0.5, 428.5), (-0.5, 38.5))
@@ -374,8 +366,7 @@ def test_wavecorr_fs():
 
 
 def test_assign_wcs_skipped():
-    hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
-    im = datamodels.ImageModel(hdul)
+    im = nirspec_fs_rate_model(with_wcs=False)
 
     # if assign_wcs was skipped, wavecorr is also skipped
     im.meta.cal_step.assign_wcs = "SKIPPED"
@@ -386,19 +377,14 @@ def test_assign_wcs_skipped():
     assert result is not im
     assert im.meta.cal_step.wavecorr is None
 
-    hdul.close()
     im.close()
     result.close()
 
 
 def test_missing_wcs():
-    hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
-    im = datamodels.SlitModel(hdul)
-
+    im = datamodels.SlitModel(nirspec_fs_rate_model(with_wcs=False))
     with pytest.raises(AttributeError, match="does not have a WCS"):
         WavecorrStep.call(im)
-
-    hdul.close()
     im.close()
 
 

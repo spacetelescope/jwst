@@ -9,7 +9,7 @@ from astropy.table import Table
 from photutils.datasets import make_100gaussians_image
 from photutils.segmentation import SourceFinder, make_2dgaussian_kernel
 
-from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs, create_wfss_wcs
+from jwst.tests.niriss_rate_helpers import niriss_image_rate_model, niriss_wfss_rate_model
 
 
 @pytest.fixture(scope="module")
@@ -29,7 +29,20 @@ def direct_image():
 
 
 @pytest.fixture(scope="module")
-def direct_image_with_gradient(direct_image):
+def imaging_wcs():
+    """
+    Create an imaging WCS object.
+
+    Returns
+    -------
+    `~gwcs.wcs.WCS`
+        The WCS object.
+    """
+    return niriss_image_rate_model().meta.wcs
+
+
+@pytest.fixture(scope="module")
+def direct_image_with_gradient(direct_image, imaging_wcs):
     """
     Add a gradient to the direct image and save it as a JWST datamodel.
 
@@ -45,13 +58,13 @@ def direct_image_with_gradient(direct_image):
 
     # obs expects input list of direct image filenames
     model = dm.ImageModel(data=data)
-    model.meta.wcs = create_imaging_wcs("F200W")
+    model.meta.wcs = imaging_wcs
 
     return model
 
 
 @pytest.fixture(scope="module")
-def direct_image_cube_with_gradient(direct_image):
+def direct_image_cube_with_gradient(direct_image, imaging_wcs):
     """
     Build a multi-band direct image cube and save it as a WFSSCubeModel.
 
@@ -76,13 +89,13 @@ def direct_image_cube_with_gradient(direct_image):
         cube[i] = direct_image + gradient
 
     model = dm.WFSSCubeModel(data=cube, wavelength=band_wls)
-    model.meta.wcs = create_imaging_wcs("F200W")
+    model.meta.wcs = imaging_wcs
 
     return model
 
 
 @pytest.fixture(scope="module")
-def segmentation_map(direct_image):
+def segmentation_map(direct_image, imaging_wcs):
     """
     Make a segmentation map from the mock direct image.
 
@@ -98,7 +111,7 @@ def segmentation_map(direct_image):
 
     # turn this into a jwst datamodel
     model = dm.SegmentationMapModel(data=segm.data)
-    model.meta.wcs = create_imaging_wcs("F200W")
+    model.meta.wcs = imaging_wcs
     return model
 
 
@@ -152,10 +165,10 @@ def grism_wcs():
 
     Returns
     -------
-    gwcs.wcs.WCS
+    `~gwcs.wcs.WCS`
         The grism wcs object.
     """
-    return create_wfss_wcs("GR150C", pupil="F200W")
+    return niriss_wfss_rate_model(filter_name="GR150C").meta.wcs
 
 
 @pytest.fixture(scope="module")

@@ -546,7 +546,14 @@ class ApCorr(ApCorrBase):
         spec_table : `~astropy.io.fits.FITS_rec`
             Table of aperture corrections values from apcorr reference file.
         """
-        flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
+        flux_cols_to_correct = (
+            "flux",
+            "flux_error",
+            "contam_flux",
+            "surf_bright",
+            "sb_error",
+            "contam_surf_bright",
+        )
         var_cols_to_correct = (
             "flux_var_poisson",
             "flux_var_rnoise",
@@ -561,7 +568,8 @@ class ApCorr(ApCorrBase):
         correction = self.apcorr_func(spec_table["npixels"], spec_table["wavelength"], grid=False)
 
         for col in flux_cols_to_correct:
-            spec_table[col] *= correction
+            if col in spec_table.columns:
+                spec_table[col] *= correction
         for col in var_cols_to_correct:
             spec_table[col] *= correction * correction
 

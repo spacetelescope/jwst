@@ -22,6 +22,8 @@ from stdatamodels.jwst.transforms import models as trmodels
 
 from jwst.assign_wcs import assign_wcs_step, nirspec
 from jwst.assign_wcs.util import MSAFileError, in_ifu_slice
+from jwst.tests import nirspec_rate_helpers as helpers
+from jwst.tests.wcs_helpers import get_reference_files
 
 wcs_kw = {
     "wcsaxes": 2,
@@ -42,7 +44,7 @@ wcs_kw = {
     "pc2_2": 1,
 }
 
-slit_fields_num = [
+SLIT_FIELDS_NUM = [
     "shutter_id",
     "dither_position",
     "xcen",
@@ -58,111 +60,16 @@ slit_fields_num = [
     "slit_yscale",
 ]
 
-slit_fields_str = ["name", "shutter_state", "source_name", "source_alias"]
+SLIT_FIELDS_STR = ["name", "shutter_state", "source_name", "source_alias"]
+
+IFU_GWA_VALUES = {"gwa_xtil": 0.3318742513656616, "gwa_ytil": 0.1258982867002487, "gwa_tilt": None}
 
 
 def _compare_slits(s1, s2):
-    for f in slit_fields_num:
+    for f in SLIT_FIELDS_NUM:
         assert_allclose(getattr(s1, f), getattr(s2, f))
-    for f in slit_fields_str:
+    for f in SLIT_FIELDS_STR:
         assert getattr(s1, f) == getattr(s2, f)
-
-
-def create_hdul(detector="NRS1"):
-    """
-    Create a fits HDUList instance.
-    """
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header["instrume"] = "NIRSPEC"
-    phdu.header["detector"] = detector
-    phdu.header["time-obs"] = "8:59:37"
-    phdu.header["date-obs"] = "2016-09-05"
-    phdu.header["program"] = "1234"
-
-    scihdu = fits.ImageHDU()
-    scihdu.header["EXTNAME"] = "SCI"
-    for item in wcs_kw.items():
-        scihdu.header[item[0]] = item[1]
-    hdul.append(phdu)
-    hdul.append(scihdu)
-    return hdul
-
-
-def create_reference_files(datamodel):
-    """
-    Create a dict {reftype: reference_file}.
-    """
-    refs = {}
-    step = assign_wcs_step.AssignWcsStep()
-    for reftype in assign_wcs_step.AssignWcsStep.reference_file_types:
-        refs[reftype] = step.get_reference_file(datamodel, reftype)
-    return refs
-
-
-def create_nirspec_imaging_file(filter_name="F290LP", exptype="NRS_IMAGE"):
-    image = create_hdul()
-    image[0].header["exp_type"] = exptype
-    image[0].header["filter"] = filter_name
-    image[0].header["grating"] = "MIRROR"
-    image[0].header["lamp"] = "NONE"
-
-    return image
-
-
-def create_nirspec_mos_file(grating="G235M", filt="F170LP"):
-    image = create_hdul()
-    image[0].header["exp_type"] = "NRS_MSASPEC"
-    image[0].header["filter"] = filt
-    image[0].header["grating"] = grating
-    image[0].header["PATT_NUM"] = 1
-
-    msa_status_file = get_pkg_data_filename(
-        "data/SPCB-GD-A.msa.fits.gz", package="jwst.assign_wcs.tests"
-    )
-    image[0].header["MSAMETFL"] = msa_status_file
-    return image
-
-
-def create_nirspec_ifu_file(
-    filter,
-    grating,
-    lamp="N/A",
-    detector="NRS1",
-    gwa_xtil=0.3318742513656616,
-    gwa_ytil=0.1258982867002487,
-    gwa_tilt=None,
-):
-    image = create_hdul(detector)
-    image[0].header["date-obs"] = "2026-01-01"  # chromcorr CRDS selector requires date > launch
-    image[0].header["exp_type"] = "NRS_IFU"
-    image[0].header["filter"] = filter
-    image[0].header["grating"] = grating
-    image[1].header["crval3"] = 0
-    image[1].header["wcsaxes"] = 3
-    image[1].header["ctype3"] = "WAVE"
-    image[0].header["lamp"] = lamp
-    image[0].header["GWA_XTIL"] = gwa_xtil
-    image[0].header["GWA_YTIL"] = gwa_ytil
-    if gwa_tilt is not None:
-        image[0].header["GWA_TILT"] = gwa_tilt
-    return image
-
-
-def create_nirspec_fs_file(grating, filter, lamp="N/A"):
-    image = create_hdul()
-    image[0].header["exp_type"] = "NRS_FIXEDSLIT"
-    image[0].header["filter"] = filter
-    image[0].header["grating"] = grating
-    image[0].header["lamp"] = lamp
-    image[1].header["crval3"] = 0
-    image[1].header["wcsaxes"] = 3
-    image[1].header["ctype3"] = "WAVE"
-    image[0].header["GWA_XTIL"] = 0.3316612243652344
-    image[0].header["GWA_YTIL"] = 0.1260581910610199
-    image[0].header["SUBARRAY"] = "FULL"
-    image[0].header["FXD_SLIT"] = "S200A1"
-    return image
 
 
 @pytest.mark.parametrize("exptype", ["NRS_IMAGE", "NRS_LAMP"])
@@ -171,14 +78,8 @@ def test_nirspec_imaging(exptype):
     Test Nirspec Imaging mode using build 6 reference files.
     """
     # Test creating the WCS
-    f = create_nirspec_imaging_file(exptype=exptype)
-    im = datamodels.ImageModel(f)
+    im = helpers.nirspec_image_rate_model(exptype=exptype, with_wcs=True)
 
-    refs = create_reference_files(im)
-
-    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-0.5, 0.5])
-    w = wcs.WCS(pipe)
-    im.meta.wcs = w
     # Test evaluating the WCS
     im.meta.wcs(1, 2)
 
@@ -195,9 +96,7 @@ def test_nirspec_imaging(exptype):
 @pytest.mark.parametrize("exptype", ["NRS_IMAGE", "NRS_LAMP"])
 def test_nirspec_imaging_via_step_call(exptype):
     """Test Nirspec Imaging modes in the step call."""
-    f = create_nirspec_imaging_file(exptype=exptype)
-    im = datamodels.ImageModel(f)
-    im.data = np.zeros((10, 10))
+    im = helpers.nirspec_image_rate_model(exptype=exptype, with_wcs=False)
     result = assign_wcs_step.AssignWcsStep.call(im)
     assert list(result.meta.wcs.available_frames) == [
         "detector",
@@ -219,14 +118,8 @@ def test_nirspec_imaging_via_step_call(exptype):
 
 def test_nirspec_imaging_opaque():
     """Test NIRSpec Imaging mode with OPAQUE filter."""
-    f = create_nirspec_imaging_file(filter_name="OPAQUE")
-    im = datamodels.ImageModel(f)
-
     # Test creating the WCS
-    refs = create_reference_files(im)
-    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-0.5, 0.5])
-    w = wcs.WCS(pipe)
-    im.meta.wcs = w
+    im = helpers.nirspec_image_rate_model(filter_name="OPAQUE", with_wcs=True)
 
     # Test evaluating the WCS
     im.meta.wcs(1, 2)
@@ -241,7 +134,7 @@ def test_nirspec_imaging_opaque():
     assert len(result) == 2
 
 
-def test_nirspec_ifu_against_esa(wcs_ifu_grating):
+def test_nirspec_ifu_against_esa():
     """
     Test Nirspec IFU mode using CV3 reference files.
     """
@@ -254,7 +147,7 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
         # Test NRS1
         pyw = astwcs.WCS(ref["SLITY1"].header)
         # Test evaluating the WCS (slice 0)
-        im, refs = wcs_ifu_grating("G140M", "OPAQUE")
+        im = helpers.nirspec_ifu_rate_model(grating="G140M", filter_name="OPAQUE", **IFU_GWA_VALUES)
         w0 = nirspec.nrs_wcs_set_input(im, 0)
 
         # get positions within the slit and the corresponding lambda
@@ -281,14 +174,9 @@ def test_nirspec_fs_esa():
     Test Nirspec FS mode using build 6 reference files.
     """
     # Test creating the WCS
-    filename = create_nirspec_fs_file(grating="G140M", filter="F100LP")
-    im = datamodels.ImageModel(filename)
+    im = helpers.nirspec_fs_rate_model()
     im.meta.filename = "test_fs.fits"
-    refs = create_reference_files(im)
 
-    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-0.5, 0.5])
-    w = wcs.WCS(pipe)
-    im.meta.wcs = w
     # Test evaluating the WCS
     w1 = nirspec.nrs_wcs_set_input(im, "S200A1")
 
@@ -817,23 +705,17 @@ def test_shutter_state(open_shutters, main_shutter, result):
 
 
 def test_slit_projection_on_detector():
-    step = assign_wcs_step.AssignWcsStep()
+    im = helpers.nirspec_fs_rate_model(
+        grating="G395M", filter_name="OPAQUE", lamp="LINE1", with_wcs=False
+    )
+    refs = get_reference_files(im)
 
-    hdul = create_nirspec_fs_file(grating="G395M", filter="OPAQUE", lamp="LINE1")
-    hdul[0].header["DETECTOR"] = "NRS2"
-    im = datamodels.ImageModel(hdul)
-
-    refs = {}
-    for reftype in step.reference_file_types:
-        refs[reftype] = step.get_reference_file(im, reftype)
-
+    im.meta.instrument.detector = "NRS2"
     open_slits = nirspec.get_open_slits(im, refs)
     assert len(open_slits) == 1
     assert open_slits[0].name == "S200B1"
 
-    hdul[0].header["DETECTOR"] = "NRS1"
-    im = datamodels.ImageModel(hdul)
-
+    im.meta.instrument.detector = "NRS1"
     open_slits = nirspec.get_open_slits(im, refs)
     assert len(open_slits) == 4
     names = [s.name for s in open_slits]
@@ -844,8 +726,7 @@ def test_slit_projection_on_detector():
 
 
 def test_missing_msa_file():
-    image = create_nirspec_mos_file()
-    model = datamodels.ImageModel(image)
+    model = helpers.nirspec_mos_rate_model(with_wcs=False)
 
     model.meta.instrument.msa_metadata_file = ""
     with pytest.raises(MSAFileError):
@@ -861,13 +742,7 @@ def test_open_slits():
 
     Issue #2321
     """
-    image = create_nirspec_mos_file()
-    model = datamodels.ImageModel(image)
-    msaconfl = get_pkg_data_filename("data/msa_configuration.fits", package="jwst.assign_wcs.tests")
-
-    model.meta.instrument.msa_metadata_file = msaconfl
-    model.meta.instrument.msa_metadata_id = 12
-
+    model = helpers.nirspec_mos_rate_model(with_wcs=False)
     slits = nirspec.get_open_slits(model)
     assert len(slits) == 1
 
@@ -876,19 +751,9 @@ def test_shutter_size_on_sky():
     """
     Test the size of a MOS shutter on sky is ~ .2 x .4 arcsec.
     """
-    image = create_nirspec_mos_file()
-    model = datamodels.ImageModel(image)
-    msaconfl = get_pkg_data_filename("data/msa_configuration.fits", package="jwst.assign_wcs.tests")
+    model = helpers.nirspec_mos_rate_model()
 
-    model.meta.instrument.msa_metadata_file = msaconfl
-    model.meta.instrument.msa_metadata_id = 12
-
-    refs = create_reference_files(model)
-
-    pipe = nirspec.create_pipeline(model, refs, slit_y_range=(-0.5, 0.5))
-    w = wcs.WCS(pipe)
-    model.meta.wcs = w
-    slit = w.get_transform("gwa", "slit_frame").slits[0]
+    slit = model.meta.wcs.get_transform("gwa", "slit_frame").slits[0]
     wslit = nirspec.nrs_wcs_set_input(model, slit.name)
     virtual_corners_x = [-0.5, -0.5, 0.5, 0.5, -0.5]
     virtual_corners_y = [-0.5, 0.5, 0.5, -0.5, -0.5]
@@ -908,14 +773,12 @@ def test_shutter_size_on_sky():
 
 @pytest.mark.parametrize(("mode"), ["fs", "msa"])
 def test_functional_fs_msa(mode):
-    #     """
-    #     Compare Nirspec instrument model with IDT model for FS and MSA.
-    #     """
+    """Compare Nirspec instrument model with IDT model for FS and MSA."""
     if mode == "fs":
         model_file = "fixed_slits_functional_ESA_v4_20180618.txt"
-        hdul = create_nirspec_fs_file(grating="G395H", filter="F290LP")
-        im = datamodels.ImageModel(hdul)
-        refs = create_reference_files(im)
+
+        im = helpers.nirspec_fs_rate_model(grating="G395H", filter_name="F290LP", with_wcs=False)
+        refs = get_reference_files(im)
         pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.55, 0.55])
         w = wcs.WCS(pipeline)
         im.meta.wcs = w
@@ -924,9 +787,8 @@ def test_functional_fs_msa(mode):
 
     if mode == "msa":
         model_file = "msa_functional_ESA_v2_20180620.txt"
-        hdul = create_nirspec_mos_file(grating="G395H", filt="F290LP")
-        im = datamodels.ImageModel(hdul)
-        refs = create_reference_files(im)
+        im = helpers.nirspec_mos_rate_model(grating="G395H", filter_name="F290LP", with_wcs=False)
+
         slit = trmodels.Slit(
             name=1,
             shutter_id=4699,
@@ -944,6 +806,8 @@ def test_functional_fs_msa(mode):
             source_ypos=0.5,
         )
         open_slits = [slit]
+
+        refs = get_reference_files(im)
         pipeline = nirspec.slitlets_wcs(im, refs, open_slits)
         w = wcs.WCS(pipeline)
         im.meta.wcs = w
@@ -1041,29 +905,13 @@ def test_functional_fs_msa(mode):
     assert_allclose(v3, ins_tab["yV2V3"])
 
 
-@pytest.fixture
-def wcs_ifu_grating():
-    def _create_image_model(grating="G395H", filter="F290LP", **kwargs):
-        hdul = create_nirspec_ifu_file(grating=grating, filter=filter, **kwargs)
-        im = datamodels.ImageModel(hdul)
-        refs = create_reference_files(im)
-        pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.5, 0.5])
-        w = wcs.WCS(pipeline)
-        im.meta.wcs = w
-
-        slits = list(range(30))
-        im.meta.wcs.bounding_box = nirspec.generate_compound_bbox(im, slits)
-        return im, refs
-
-    return _create_image_model
-
-
-def test_functional_ifu_grating(wcs_ifu_grating):
+def test_functional_ifu_grating():
     """Compare Nirspec instrument model with IDT model for IFU grating."""
 
     # setup test
     model_file = "ifu_grating_functional_ESA_v1_20180619.txt"
-    im, refs = wcs_ifu_grating("G395H", "F290LP", gwa_xtil=0.35986012, gwa_ytil=0.13448857)
+
+    im = helpers.nirspec_ifu_rate_model(grating="G395H", filter_name="F290LP", gwa_tilt=None)
 
     slit_wcs = nirspec.nrs_wcs_set_input(im, 0)  # use slice 0
     ins_file = get_pkg_data_filename(f"data/{model_file}", package="jwst.assign_wcs.tests")
@@ -1071,6 +919,8 @@ def test_functional_ifu_grating(wcs_ifu_grating):
     slitx = [0] * 5
     slity = [-0.5, -0.25, 0, 0.25, 0.5]
     lam = np.array([2.9, 3.39, 3.88, 4.37, 5]) * 10**-6
+
+    refs = get_reference_files(im)
     order, wrange = nirspec.get_spectral_order_wrange(im, refs["wavelengthrange"])
     im.meta.wcsinfo.sporder = order
     im.meta.wcsinfo.waverange_start = wrange[0]
@@ -1251,20 +1101,16 @@ def test_functional_ifu_prism():
     """Compare Nirspec instrument model with IDT model for IFU prism."""
     # setup test
     model_file = "ifu_prism_functional_ESA_v1_20180619.txt"
-    hdu1 = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    im = datamodels.ImageModel(hdu1)
-    refs = create_reference_files(im)
-    pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.55, 0.55])
-    w = wcs.WCS(pipeline)
-    im.meta.wcs = w
+
+    im = helpers.nirspec_ifu_rate_model()
     slit_wcs = nirspec.nrs_wcs_set_input(im, 0)  # use slice 0
     ins_file = get_pkg_data_filename(f"data/{model_file}", package="jwst.assign_wcs.tests")
     ins_tab = table.Table.read(ins_file, format="ascii")
     slitx = [0] * 5
     slity = [-0.5, -0.25, 0, 0.25, 0.5]
     lam = np.array([0.7e-7, 1e-6, 2e-6, 3e-6, 5e-6])
+
+    refs = get_reference_files(im)
     order, wrange = nirspec.get_spectral_order_wrange(im, refs["wavelengthrange"])
     im.meta.wcsinfo.sporder = order
     im.meta.wcsinfo.waverange_start = wrange[0]
@@ -1402,14 +1248,8 @@ def test_ifu_bbox():
         29: ((172.3681094850081, 1643.685604697228), (1874.8184744639657, 1929.9072657798927)),
     }
 
-    hdul = create_nirspec_ifu_file("F290LP", "G140M")
-    im = datamodels.IFUImageModel(hdul)
+    im = helpers.nirspec_ifu_rate_model(filter_name="F290LP", grating="G140M", **IFU_GWA_VALUES)
     im.meta.filename = "test_ifu.fits"
-    refs = create_reference_files(im)
-
-    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-0.5, 0.5])
-    im.meta.wcs = wcs.WCS(pipe)
-
     im.meta.wcs.bounding_box = nirspec.generate_compound_bbox(im, refine=False)
 
     for sl in range(30):
@@ -1418,16 +1258,14 @@ def test_ifu_bbox():
         assert_allclose(bbox[sl], bbox_tuple, atol=1.0)
 
 
-@pytest.fixture
-def ifu_world_coord(wcs_ifu_grating):
+def _ifu_world_coord(model):
     """Return RA, DEC, LAM for all slices in the NRS IFU."""
     ra_all = []
     dec_all = []
     lam_all = []
-    im, refs = wcs_ifu_grating(grating="G140H", filter="F100LP")
     for sl in range(30):
-        x, y = wcstools.grid_from_bounding_box(im.meta.wcs.bounding_box[sl])
-        r, d, lam, _ = im.meta.wcs(x, y, sl)
+        x, y = wcstools.grid_from_bounding_box(model.meta.wcs.bounding_box[sl])
+        r, d, lam, _ = model.meta.wcs(x, y, sl)
         ra_all.append(r)
         dec_all.append(d)
         lam_all.append(lam)
@@ -1438,12 +1276,15 @@ def ifu_world_coord(wcs_ifu_grating):
 
 
 @pytest.mark.parametrize("slice", [1, 17])
-def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
+def test_in_slice(slice):
     """Test that the number of valid outputs from a slice forward transform
     equals the valid pixels within the slice from the slice backward transform.
     """
-    ra_all, dec_all, lam_all = ifu_world_coord
-    im, refs = wcs_ifu_grating("G140H", "F100LP")
+
+    im = helpers.nirspec_ifu_rate_model(grating="G140H", filter_name="F100LP", **IFU_GWA_VALUES)
+
+    ra_all, dec_all, lam_all = _ifu_world_coord(im)
+
     slice_wcs = nirspec.nrs_wcs_set_input(im, slice)
     slicer2world = slice_wcs.get_transform("slicer", "world")
     detector2slicer = slice_wcs.get_transform("detector", "slicer")
@@ -1461,23 +1302,17 @@ def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
 def test_nrs_wcs_by_slit(mode, velocity_corr):
     pixel_tol = 0.02
     if mode == "IFU":
-        hdul = create_nirspec_ifu_file("F290LP", "G140M")
-        im = datamodels.IFUImageModel(hdul)
+        im = helpers.nirspec_ifu_rate_model(
+            filter_name="F290LP", grating="G140M", with_wcs=False, **IFU_GWA_VALUES
+        )
 
         # Round trip is currently a little worse for IFU
         pixel_tol = 0.12
 
     elif mode == "MOS":
-        hdul = create_nirspec_mos_file()
-        im = datamodels.ImageModel(hdul)
-        msaconfl = get_pkg_data_filename(
-            "data/msa_configuration.fits", package="jwst.assign_wcs.tests"
-        )
-        im.meta.instrument.msa_metadata_file = msaconfl
-        im.meta.instrument.msa_metadata_id = 12
+        im = helpers.nirspec_mos_rate_model(with_wcs=False)
     else:
-        hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
-        im = datamodels.ImageModel(hdul)
+        im = helpers.nirspec_fs_rate_model(grating="G140M", filter_name="F100LP", with_wcs=False)
 
     # Add a significant velosys to trigger velocity correction
     if velocity_corr:
@@ -1533,9 +1368,9 @@ def test_nrs_fs_slit_id_unexpected(bad_value):
     assert nirspec.nrs_fs_slit_name(bad_value) == "NONE"
 
 
-def test_slit_bounding_box(wcs_ifu_grating):
+def test_slit_bounding_box():
     # Check that a bounding box can be generated for a slit-specific wcs
-    im, _ = wcs_ifu_grating("G140H", "F100LP")
+    im = helpers.nirspec_ifu_rate_model()
     _, wavelength_range = nirspec.spectral_order_wrange_from_model(im)
     for i in range(30):
         # Slit bounding box from compound bounding box

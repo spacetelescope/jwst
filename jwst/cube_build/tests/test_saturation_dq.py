@@ -37,6 +37,7 @@ def mock_miri_image_model(mock_wcs):
     input_model.data = np.zeros(SHAPE, dtype=np.float32)
     input_model.err = np.zeros(SHAPE, dtype=np.float32)
     input_model.dq = np.zeros(SHAPE, dtype=np.uint32)
+    input_model.var_rnoise = np.zeros(SHAPE, dtype=np.float32)
     input_model.meta.wcs = mock_wcs
     return input_model
 

@@ -5,7 +5,6 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.table import QTable
 
-from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs
 from jwst.wfss_contam.observations import SimulatedCutout
 from jwst.wfss_contam.wfss_contam import (
     CutoutOverlapError,
@@ -263,7 +262,7 @@ def _iter_geometry():
 
 
 @pytest.fixture
-def two_source_input(tmp_cwd, grism_wcs):
+def two_source_input(tmp_cwd, grism_wcs, imaging_wcs):
     """
     MultiSlitModel with two cutouts whose grism traces partially overlap.
 
@@ -306,7 +305,7 @@ def two_source_input(tmp_cwd, grism_wcs):
         model.slits.append(slit)
 
     direct = dm.ImageModel(data=np.ones(_ITER_FRAME_SHAPE))
-    direct.meta.wcs = create_imaging_wcs("F200W")
+    direct.meta.wcs = imaging_wcs
     direct.save("direct_image.fits")
     seg = dm.SegmentationMapModel(data=np.zeros(_ITER_FRAME_SHAPE, dtype=np.uint32))
     seg.save("seg_map.fits")

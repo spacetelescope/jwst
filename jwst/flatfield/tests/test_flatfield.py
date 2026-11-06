@@ -5,10 +5,9 @@ from astropy.table import Table
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.flatfield import FlatFieldStep
 from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES
+from jwst.tests.nirspec_rate_helpers import nirspec_ifu_rate_model
 
 
 @pytest.mark.parametrize(
@@ -391,17 +390,12 @@ def test_nirspec_ifu_flat():
     w_shape = (10, 2048, 2048)
 
     # IFU mode requires WCS information, so make a more realistic model
-    hdul = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    hdul["SCI"].data = np.ones(shape, dtype=float)
-
-    data = datamodels.IFUImageModel(hdul)
+    data = nirspec_ifu_rate_model()
+    data.data = np.ones(shape, dtype=float)
+    data.dq = data.get_default("dq")
     data.var_rnoise = data.get_default("var_rnoise")
     data.var_poisson = data.get_default("var_poisson")
     data.var_flat = data.get_default("var_flat")
-
-    data = AssignWcsStep.call(data)
 
     flats = create_nirspec_flats(w_shape)
     result = FlatFieldStep.call(
