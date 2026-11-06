@@ -2,13 +2,13 @@ Step Arguments
 ==============
 The ramp fitting step has the following optional arguments that can be set by the user.
 
-``--algorithm``
+``--algorithm`` (string, default='OLS_C')
   A string to select the desired algorithm.  The available
   values are "OLS_C" to select the C implementation of the Ordinary Least
   Squares algorithm and "LIKELY" to select a maximum-likelihood based
   approach.  The algorithm defaults to "OLS_C".
 
-``--save_opt``
+``--save_opt`` (boolean, default=False)
   A boolean value that specifies whether to write
   the optional output product. When using the "OLS_C" algorithm, the
   optional results product is a set of intermediate calculations captured
@@ -21,29 +21,32 @@ The ramp fitting step has the following optional arguments that can be set by th
   The output file will have the suffix "likely_chisq".
   Default is `False`.
 
-``--opt_name``
+``--opt_name`` (string, default='')
   A string that can be used to override the default name
   for the optional output product. If no optional name is provided, but
   saving the optional product is `True`, then this step will use the input
   file name as the base name.
 
-``--int_name``
+``--int_name`` (string, default='')
   A string that can be used to override the default name
   for the per-integration product.
 
-``--firstgroup``, ``--lastgroup``
+``--firstgroup``, ``--lastgroup`` (integer, default=None)
   A pair of integers that can be used to set the first and last groups
   to be used in the ramp fitting procedure.  These values are zero-indexed.  If the first group is set to ``<0``,
   or None, or the last group is set to ``> (num_groups - 1)`` or None, or the first group is set to ``> last_group``,
   the settings are ignored and the full ramp is fit.  Default values for both parameters are None.
 
-``--suppress_one_group``
+``--suppress_one_group`` (boolean, default=True)
   A boolean to suppress computations for saturated ramps
   with only one good (unsaturated) sample.  The default is set to `True` to suppress these computations,
   which will compute all values for the ramp the same as if the entire ramp were
   saturated.
 
-``--maximum_cores``
+``--skip_jump_detect`` (boolean, default='1')
+  If True, skip additional likelihood-based jump detection, when ``algorithm="LIKELY"``.
+
+``--maximum_cores`` (string, default=False)
   The number of available cores that will be
   used for multi-processing in this step. The default value is ``'1'``, which results in no
   multi-processing. Other options are either an integer, ``'quarter'``, ``'half'``, and ``'all'``.
