@@ -294,7 +294,7 @@ ignore-words-list = "indx, delt, Shepard, tread, usig"
 warn_return_any = true
 warn_unused_configs = true
 disable_error_code = "import-untyped" # do not check imports
-exclude = ["build"]
+exclude = ["build", "/setup\\.py$"]
 python_version = "3.13"
 
 [[tool.mypy.overrides]]

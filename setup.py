@@ -1,6 +1,5 @@
 import sys
 import sysconfig
-from typing import TypedDict
 
 import numpy as np
 from setuptools import Extension, setup
@@ -8,21 +7,9 @@ from setuptools import Extension, setup
 GIL_ENABLED_PYTHON = sysconfig.get_config_var("Py_GIL_DISABLED") != 1
 
 
-class CompilerOptions(TypedDict):
-    """Compiler options for the C extension modules."""
-
-    include_dirs: list[str]
-    define_macros: list[tuple[str, str | None]]
-    libraries: list[str]
-    extra_compile_args: list[str]
-    py_limited_api: bool
-
-
-cfg: CompilerOptions = {
+cfg = {
     "include_dirs": [np.get_include(), "jwst/lib/src"],
-    "define_macros": [
-        ("NUMPY", "1"),
-    ],
+    "define_macros": [("NUMPY", "1")],
     "libraries": [],
     "extra_compile_args": [],
     "py_limited_api": GIL_ENABLED_PYTHON,
