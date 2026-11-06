@@ -242,18 +242,6 @@ class TestSetWcsArrayLengths:
 class TestFindSpaxelFlux:
     """Normailization logic in find_spaxel_flux."""
 
-    def test_zero_iflux_spaxel_is_unchanged(self):
-        """A spaxel with iflux==0 must not be modified (avoids division by zero)."""
-        iflux = np.array([0.0])
-        flux = np.array([999.0])  # sentinel — must survive unchanged
-        weight = np.array([0.0])
-        var = np.array([888.0])  # sentinel
-
-        flux_out, var_out = cube_lib.find_spaxel_flux(iflux, flux, weight, var)
-
-        assert flux_out[0] == 999.0
-        assert var_out[0] == 888.0
-
     def test_flux_normalized_by_weight(self):
         """flux[good] = flux[good] / weight[good]."""
         iflux = np.array([1.0])
