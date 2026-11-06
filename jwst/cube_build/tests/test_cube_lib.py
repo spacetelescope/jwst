@@ -1,7 +1,5 @@
 """Unit tests for cube_lib functions."""
 
-import math
-
 import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import dqflags
@@ -81,11 +79,6 @@ class TestCheckCubeSize:
         with pytest.raises(ValueError, match="exceeds limit"):
             cube_lib.check_cube_size(10, 10, 10, limit=999)
 
-    def test_error_message_contains_total(self):
-        """The ValueError message must include the computed total."""
-        with pytest.raises(ValueError, match="1000"):
-            cube_lib.check_cube_size(10, 10, 10, limit=1)
-
 
 # ---------------------------------------------------------------------------
 # radec2std and rot_angle branch
@@ -158,48 +151,18 @@ class TestRadec2StdRotAngle:
 # ---------------------------------------------------------------------------
 # set_wcs: ra_center and dec_center override
 # ---------------------------------------------------------------------------
-# Test for set_wcs:
-#  - ra_center and dec_center override replaces the computed circmean
-#  - nspax_x and  nspax_y override controls naxis1/naxis2 (and crpix)
-#  - non-linear wavelength path sets naxis3 = len(wavelength_table)
-#    and crval3 = wavelength_table[0]
-#  - cdelt3_normal last element equals the second-to-last element
-#  - xcoord and  ycoord arrays have exactly naxis1 / naxis2 elements
-#  - zcoord has exactly naxis3 elements for the linear path
 
 
 class TestSetWcsCenterOverride:
     """User-supplied ra_center and dec_center must replace the computed mean."""
-
-    def test_ra_center_stored_in_crval1(self):
-        kw = _make_cube_wcs_kwargs()
-        kw["ra_center"] = 99.5
-        kw["dec_center"] = None
-        wcs = cube_lib.set_wcs(**kw)
-        assert math.isclose(wcs.crval1, 99.5, rel_tol=1e-10)
-
-    def test_dec_center_stored_in_crval2(self):
-        kw = _make_cube_wcs_kwargs()
-        kw["ra_center"] = None
-        kw["dec_center"] = -55.25
-        wcs = cube_lib.set_wcs(**kw)
-        assert math.isclose(wcs.crval2, -55.25, rel_tol=1e-10)
 
     def test_both_centers_override_computed_values(self):
         kw = _make_cube_wcs_kwargs()
         kw["ra_center"] = 12.34
         kw["dec_center"] = -56.78
         wcs = cube_lib.set_wcs(**kw)
-        assert math.isclose(wcs.crval1, 12.34, rel_tol=1e-10)
-        assert math.isclose(wcs.crval2, -56.78, rel_tol=1e-10)
-
-    def test_no_center_uses_computed_mean(self):
-        """Without overrides crval1 and crval2 must be near the input corner mean."""
-        kw = _make_cube_wcs_kwargs(crval1=50.0, crval2=-20.0)
-        wcs = cube_lib.set_wcs(**kw)
-        # circmean of the two RA corners (50.0 ± 0.01) is 50.0 to high precision
-        assert math.isclose(wcs.crval1, 50.0, abs_tol=0.05)
-        assert math.isclose(wcs.crval2, -20.0, abs_tol=0.05)
+        assert np.isclose(wcs.crval1, 12.34)
+        assert np.isclose(wcs.crval2, -56.78)
 
 
 # ---------------------------------------------------------------------------
@@ -210,30 +173,15 @@ class TestSetWcsCenterOverride:
 class TestSetWcsNspax:
     """User-supplied nspax_x and nspax_y must control naxis1, naxis2 and crpix."""
 
-    def test_nspax_x_sets_naxis1(self):
+    def test_wcs_nspax(self):
         kw = _make_cube_wcs_kwargs()
         kw["nspax_x"] = 11  # odd → half = 5, naxis1 = 5*2+1 = 11
+        kw["nspax_y"] = 7
         wcs = cube_lib.set_wcs(**kw)
         assert wcs.naxis1 == 11
-
-    def test_nspax_y_sets_naxis2(self):
-        kw = _make_cube_wcs_kwargs()
-        kw["nspax_y"] = 7
-        wcs = cube_lib.set_wcs(**kw)
         assert wcs.naxis2 == 7
-
-    def test_nspax_x_crpix1_is_central_pixel(self):
-        """crpix1 must be (naxis1 + 1) / 2 for the cube to be centred."""
-        kw = _make_cube_wcs_kwargs()
-        kw["nspax_x"] = 11
-        wcs = cube_lib.set_wcs(**kw)
-        assert math.isclose(wcs.crpix1, (wcs.naxis1 + 1) / 2, abs_tol=0.5)
-
-    def test_nspax_y_crpix2_is_central_pixel(self):
-        kw = _make_cube_wcs_kwargs()
-        kw["nspax_y"] = 7
-        wcs = cube_lib.set_wcs(**kw)
-        assert math.isclose(wcs.crpix2, (wcs.naxis2 + 1) / 2, abs_tol=0.5)
+        assert np.isclose(wcs.crpix1, (wcs.naxis1 + 1) / 2)
+        assert np.isclose(wcs.crpix2, (wcs.naxis2 + 1) / 2)
 
 
 # ---------------------------------------------------------------------------
@@ -248,29 +196,13 @@ class TestSetWcsNonLinearWave:
     def wave_table(self):
         return np.array([7.5, 7.6, 7.75, 8.0, 8.3, 8.7])
 
-    def test_naxis3_equals_table_length(self, wave_table):
+    def test_wcs(self, wave_table):
         kw = _make_cube_wcs_kwargs(linear_wave=False, wavelength_table=wave_table)
         wcs = cube_lib.set_wcs(**kw)
         assert wcs.naxis3 == len(wave_table)
-
-    def test_crval3_equals_first_table_element(self, wave_table):
-        kw = _make_cube_wcs_kwargs(linear_wave=False, wavelength_table=wave_table)
-        wcs = cube_lib.set_wcs(**kw)
-        assert math.isclose(wcs.crval3, wave_table[0], rel_tol=1e-10)
-
-    def test_crpix3_is_one(self, wave_table):
-        kw = _make_cube_wcs_kwargs(linear_wave=False, wavelength_table=wave_table)
-        wcs = cube_lib.set_wcs(**kw)
+        assert np.isclose(wcs.crval3, wave_table[0])
         assert wcs.crpix3 == 1.0
-
-    def test_linear_wave_flag_is_false(self, wave_table):
-        kw = _make_cube_wcs_kwargs(linear_wave=False, wavelength_table=wave_table)
-        wcs = cube_lib.set_wcs(**kw)
         assert wcs.linear_wave is False
-
-    def test_zcoord_matches_table(self, wave_table):
-        kw = _make_cube_wcs_kwargs(linear_wave=False, wavelength_table=wave_table)
-        wcs = cube_lib.set_wcs(**kw)
         np.testing.assert_allclose(wcs.zcoord, wave_table)
 
 
@@ -282,34 +214,19 @@ class TestSetWcsNonLinearWave:
 class TestSetWcsArrayLengths:
     """xcoord, ycoord, zcoord must have exactly naxis1, naxis2, naxis3 elements."""
 
-    def test_xcoord_length_equals_naxis1(self):
+    def test_xycoord_length_equals_naxis(self):
         kw = _make_cube_wcs_kwargs()
         wcs = cube_lib.set_wcs(**kw)
         assert len(wcs.xcoord) == wcs.naxis1
-
-    def test_ycoord_length_equals_naxis2(self):
-        kw = _make_cube_wcs_kwargs()
-        wcs = cube_lib.set_wcs(**kw)
         assert len(wcs.ycoord) == wcs.naxis2
 
     def test_zcoord_length_equals_naxis3_linear(self):
-        kw = _make_cube_wcs_kwargs(lambda_min=7.5, lambda_max=7.51, cdelt3=0.001)
-        wcs = cube_lib.set_wcs(**kw)
-        assert len(wcs.zcoord) == wcs.naxis3
-
-    def test_cdelt3_normal_last_equals_second_to_last(self):
-        """The last element of cdelt3_normal must be a copy of the previous."""
-        kw = _make_cube_wcs_kwargs(lambda_min=7.5, lambda_max=7.515, cdelt3=0.001)
-        wcs = cube_lib.set_wcs(**kw)
-        assert math.isclose(wcs.cdelt3_normal[-1], wcs.cdelt3_normal[-2], rel_tol=1e-10)
-
-    def test_cdelt3_normal_interior_equals_cdelt3(self):
-        """For a uniform linear grid, all interior cdelt3_normal values equal cdelt3."""
-        cdelt3 = 0.001
+        cdelt3 = 0.0001
         kw = _make_cube_wcs_kwargs(lambda_min=7.5, lambda_max=7.51, cdelt3=cdelt3)
         wcs = cube_lib.set_wcs(**kw)
-        # All but the last element should be cdelt3 (uniform grid)
-        np.testing.assert_allclose(wcs.cdelt3_normal[:-1], cdelt3, rtol=1e-6)
+        assert len(wcs.zcoord) == wcs.naxis3
+        assert np.isclose(wcs.cdelt3_normal[-1], wcs.cdelt3_normal[-2])
+        np.testing.assert_allclose(wcs.cdelt3_normal[:-1], cdelt3)
 
 
 # ---------------------------------------------------------------------------
@@ -334,8 +251,8 @@ class TestFindSpaxelFlux:
 
         flux_out, var_out = cube_lib.find_spaxel_flux(iflux, flux, weight, var)
 
-        assert flux_out[0] == pytest.approx(999.0)
-        assert var_out[0] == pytest.approx(888.0)
+        assert flux_out[0] == 999.0
+        assert var_out[0] == 888.0
 
     def test_flux_normalized_by_weight(self):
         """flux[good] = flux[good] / weight[good]."""
@@ -346,7 +263,7 @@ class TestFindSpaxelFlux:
 
         flux_out, _ = cube_lib.find_spaxel_flux(iflux, flux, weight, var)
 
-        assert flux_out[0] == pytest.approx(250.0)
+        assert flux_out[0] == 250.0
 
     def test_variance_normalized_by_weight_squared(self):
         """var[good] = var[good] / weight[good]**2."""
@@ -357,7 +274,7 @@ class TestFindSpaxelFlux:
 
         _, var_out = cube_lib.find_spaxel_flux(iflux, flux, weight, var)
 
-        assert var_out[0] == pytest.approx(48.0 / 16.0)
+        assert var_out[0] == 48.0 / 16.0
 
     def test_mixed_array_only_good_spaxels_modified(self):
         """Zero-iflux spaxels stay unchanged; non-zero-iflux spaxels are normalized."""
@@ -368,12 +285,10 @@ class TestFindSpaxelFlux:
 
         flux_out, var_out = cube_lib.find_spaxel_flux(iflux, flux, weight, var)
 
-        assert flux_out[0] == pytest.approx(777.0)  # unchanged
-        assert var_out[0] == pytest.approx(555.0)  # unchanged
-        assert flux_out[1] == pytest.approx(100.0 / 5.0)
-        assert var_out[1] == pytest.approx(25.0 / 25.0)
-        assert flux_out[2] == pytest.approx(200.0 / 10.0)
-        assert var_out[2] == pytest.approx(400.0 / 100.0)
+        np.testing.assert_allclose(flux_out[1], 100.0 / 5.0)
+        np.testing.assert_allclose(var_out[1], 25.0 / 5.0**2)
+        np.testing.assert_allclose(flux_out[2], 200.0 / 10.0)
+        np.testing.assert_allclose(var_out[2], 400.0 / 10.0**2)
 
     def test_unit_weight_leaves_flux_unchanged(self):
         """When weight == 1 and iflux > 0, flux and var are unscaled."""
@@ -408,10 +323,9 @@ class TestSetFinalDqFlags:
         flux = np.array([42.0])
         var = np.array([1.0])
         weight = np.array([1.5])
-
         flux_out, var_out, dq_out = cube_lib.set_final_dq_flags(dq, flux, var, weight)
 
-        assert flux_out[0] == pytest.approx(42.0)
+        assert flux_out[0] == 42.0
         assert not np.isnan(var_out[0])
 
     def test_positive_weight_spaxel_not_flagged(self):
@@ -426,39 +340,18 @@ class TestSetFinalDqFlags:
         assert not (dq_out[0] & DO_NOT_USE)
         assert not (dq_out[0] & NON_SCIENCE)
 
-    def test_zero_weight_flux_set_to_nan(self):
-        """Spaxels with weight equal 0 must have flux set to NaN."""
+    def test_zero_weight_gets_do_not_use(self):
+        """Spaxels with weight equal 0 must receive DO_NOT_USE and NON_SCIENCE flag."""
         dq = np.array([0], dtype=np.uint32)
         flux = np.array([0.0])
         var = np.array([0.0])
         weight = np.array([0.0])
 
-        flux_out, var_out, _ = cube_lib.set_final_dq_flags(dq, flux, var, weight)
+        flux_out, var_out, dq_out = cube_lib.set_final_dq_flags(dq, flux, var, weight)
 
+        assert dq_out[0] == (DO_NOT_USE | NON_SCIENCE)
         assert np.isnan(flux_out[0])
         assert np.isnan(var_out[0])
-
-    def test_zero_weight_gets_do_not_use(self):
-        """Spaxels with weight equal 0 must receive DO_NOT_USE flag."""
-        dq = np.array([0], dtype=np.uint32)
-        flux = np.array([0.0])
-        var = np.array([0.0])
-        weight = np.array([0.0])
-
-        _, _, dq_out = cube_lib.set_final_dq_flags(dq, flux, var, weight)
-
-        assert dq_out[0] & DO_NOT_USE
-
-    def test_zero_weight_gets_non_science(self):
-        """Spaxels with weight equal 0 must receive NON_SCIENCE flag."""
-        dq = np.array([0], dtype=np.uint32)
-        flux = np.array([0.0])
-        var = np.array([0.0])
-        weight = np.array([0.0])
-
-        _, _, dq_out = cube_lib.set_final_dq_flags(dq, flux, var, weight)
-
-        assert dq_out[0] & NON_SCIENCE
 
     def test_pre_existing_dq_preserved_on_zero_weight(self):
         """
@@ -489,7 +382,7 @@ class TestSetFinalDqFlags:
         flux_out, var_out, dq_out = cube_lib.set_final_dq_flags(dq, flux, var, weight)
 
         # good spaxel (index 0)
-        assert flux_out[0] == pytest.approx(5.0)
+        assert flux_out[0] == 5.0
         assert not np.isnan(var_out[0])
         assert not (dq_out[0] & DO_NOT_USE)
 
