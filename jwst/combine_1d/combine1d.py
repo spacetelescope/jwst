@@ -426,43 +426,6 @@ class OutputSpectrumModel:
             contam_surf_bright,
         )
 
-    def create_output_data(self):
-        """
-        Create the non-WFSS output data.
-
-        Returns
-        -------
-        output_model : `~stdatamodels.jwst.datamodels.CombinedSpecModel`
-            A table of combined spectral data.
-        """
-        if not self.normalized:
-            log.warning("Data have not been divided by the sum of the weights.")
-
-        cmb_dtype = dm.CombinedSpecModel().get_dtype("spec_table")
-
-        # Note that these arrays have to be in the right order.
-        data_list = [
-            self.wavelength,
-            self.flux,
-            self.flux_error,
-            self.surf_bright,
-            self.sb_error,
-            self.dq,
-            self.weight,
-            self.count,
-        ]
-
-        data = np.array(list(zip(*data_list, strict=False)), dtype=cmb_dtype)
-        output_model = dm.CombinedSpecModel(spec_table=data)
-
-        output_model.spec_table.columns["wavelength"].unit = "um"
-        output_model.spec_table.columns["flux"].unit = self.flux_unit
-        output_model.spec_table.columns["error"].unit = self.flux_unit
-        output_model.spec_table.columns["surf_bright"].unit = self.sb_unit
-        output_model.spec_table.columns["sb_error"].unit = self.sb_unit
-
-        return output_model
-
 
 def count_input(input_spectra):
     """
@@ -1248,12 +1211,38 @@ def _combine_one(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT0
     """Produce a single MultiCombinedSpecModel for given model and spectra."""
     output_model = dm.MultiCombinedSpecModel()
     output_wcs = None
+    cmb_dtype = dm.CombinedSpecModel().get_dtype("spec_table")
+
     for order, input_spec in input_spectra.items():
         output_spec = OutputSpectrumModel()
         output_spec.assign_wavelengths(input_spec)
         output_spec.accumulate_sums(input_spec, sigma_clip=sigma_clip)
 
-        output_order = output_spec.create_output_data()
+        if not output_spec.normalized:
+            log.warning("Data have not been divided by the sum of the weights.")
+
+        # Note that these arrays have to be in the right order.
+        output_order = dm.CombinedSpecModel(
+            spec_table=np.rec.fromarrays(
+                [
+                    output_spec.wavelength,
+                    output_spec.flux,
+                    output_spec.flux_error,
+                    output_spec.surf_bright,
+                    output_spec.sb_error,
+                    output_spec.dq,
+                    output_spec.weight,
+                    output_spec.count,
+                ],
+                dtype=cmb_dtype,
+            )
+        )
+
+        output_order.spec_table.columns["wavelength"].unit = "um"
+        output_order.spec_table.columns["flux"].unit = output_spec.flux_unit
+        output_order.spec_table.columns["error"].unit = output_spec.flux_unit
+        output_order.spec_table.columns["surf_bright"].unit = output_spec.sb_unit
+        output_order.spec_table.columns["sb_error"].unit = output_spec.sb_unit
         output_order.spectral_order = order
 
         # attributes that we want to copy unmodified from input to output spectra
