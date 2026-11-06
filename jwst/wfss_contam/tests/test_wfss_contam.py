@@ -397,8 +397,10 @@ def test_iteration_improves_contamination_correction(
     )
 
     def _run(n_iter, polyfit_degree):
+        input_model = two_source_input.copy()
+        original_data = [np.array(s.data) for s in input_model.slits]
         result, *_ = contam_corr(
-            two_source_input.copy(),
+            input_model,
             wavelengthrange_ref_model,
             photom_ref_model_niriss,
             "none",
@@ -406,7 +408,13 @@ def test_iteration_improves_contamination_correction(
             polyfit_degree=polyfit_degree,
             n_iterations=n_iter,
         )
-        return [np.array(s.data) for s in result.slits]
+        for original, input_slit, output_slit in zip(
+            original_data, input_model.slits, result.slits, strict=True
+        ):
+            np.testing.assert_array_equal(input_slit.data, original)
+            np.testing.assert_array_equal(output_slit.data, original)
+            assert hasattr(output_slit, "contamcorr_data")
+        return [np.array(s.contamcorr_data) for s in result.slits]
 
     corrected_flat = _run(1, polyfit_degree=None)
     corrected_1iter = _run(1, polyfit_degree=1)

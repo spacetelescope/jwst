@@ -358,9 +358,9 @@ def _fit_spectral_shape(
     Parameters
     ----------
     observed_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
-        Observed cutout whose ``.data`` is used as the target for the fit.
+        Observed cutout whose ``.contamcorr_data`` is used as the target for the fit.
         If ``n_iterations > 1``, this holds the contamination-corrected data
-        from the previous iteration.
+        from the previous iteration. The original ``.data`` is left unchanged.
     simul_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
         Simulated cutout, already backplane-matched to ``observed_cutout``.
         Its ``.data`` attribute is updated in-place with the spectrally fitted result.
@@ -430,7 +430,8 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
     simul_data : np.ndarray
         The full-frame simulated data.
     original_data : list
-        List of original observed data arrays.
+        List of original observed data arrays, retained as the baseline for
+        computing ``cutout.contamcorr_data``.
 
     Returns
     -------
@@ -446,7 +447,7 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
         else:
             simul_all_cut = _cut_frame_to_match_cutout(simul_data, cutout)
             contam_cut = simul_all_cut - this_simul.data
-        cutout.data = original_data[i] - contam_cut
+        cutout.contamcorr_data = original_data[i] - contam_cut
         contam_cuts.append(contam_cut)
     return contam_cuts
 
@@ -593,7 +594,8 @@ def contam_corr(
     Returns
     -------
     output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
-        A copy of the input_model that has been corrected
+        A copy of the input_model with contamination-corrected data stored in
+        each slit's ``contamcorr_data`` attribute. The original ``data`` arrays are unchanged.
     simul_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Full-frame simulated image of the grism exposure
     """
@@ -761,18 +763,16 @@ def contam_corr(
         )
         return input_model, None
 
-    # Initialize output model
-    output_model = datamodels.MultiSlitModel()
+    # Copy the input model so that adding result attributes does not modify it,
+    # then retain only cutouts with simulated counterparts.
+    output_model = input_model.copy()
+    for i in reversed(range(len(output_model.slits))):
+        if output_model.slits[i].source_id not in obs.source_ids:
+            del output_model.slits[i]
 
-    # Copy over matching cutouts.
-    # Note that this makes a reference to input cutouts, not a deep copy,
-    # so the input data may be modified by this function.  The input data is
-    # copied in the calling step, as needed.
-    good_cutouts = [cutout for cutout in input_model.slits if cutout.source_id in obs.source_ids]
-    output_model.slits.extend(good_cutouts)
-
-    # Hold onto original input data so iterative corrections always start from the same baseline.
-    original_data = [np.array(cutout.data) for cutout in output_model.slits]
+    # Hold onto the unchanged input data so iterative corrections always start
+    # from the same baseline. Corrected data is stored separately in contamcorr_data.
+    original_data = [cutout.data for cutout in output_model.slits]
 
     if n_iterations > 1 and polyfit_degree is None:
         log.warning(
@@ -801,8 +801,9 @@ def contam_corr(
             )
 
     # Save the brightness of the simulation for each spectrum for sorting later.
-    # _fit_spectral_shape only reassigns .data (never modifies fluxmodel_N), so
-    # the flat data captures the intrinsic source flux independently of any fitted shape.
+    # _fit_spectral_shape only reassigns the simulated cutout's .data (never
+    # modifies fluxmodel_N), so the flat data captures the intrinsic source flux
+    # independently of any fitted shape.
     flat_matched_sum = [
         np.nansum(np.array(s.data)) if s is not None else None for s in matched_flat_simuls
     ]
@@ -846,7 +847,7 @@ def contam_corr(
                 # For fainter sources, it will be whatever was in the previous iteration,
                 # i.e., flat-spectrum for the first iteration.
                 simul_all_cut = _cut_frame_to_match_cutout(simul_data, cutout)
-                cutout.data = original_data[i] - (simul_all_cut - matched_flat.data)
+                cutout.contamcorr_data = original_data[i] - (simul_all_cut - matched_flat.data)
 
                 if _fit_spectral_shape(
                     cutout,
