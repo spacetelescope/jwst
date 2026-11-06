@@ -369,7 +369,7 @@ def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
     )
     # test that optional contam columns got handled
     flux = result.spec[0].spec_table["flux"]
-    contam = result.spec[0].spec_table["contam_flux"]
+    contam = result.spec[0].spec_table["contam"]
     contamcorr = result.spec[0].spec_table["contamcorr_flux"]
     np.testing.assert_allclose(contam, 150.0)
     # ensure that the sum of contam and corr equals the un-contamintated flux.
@@ -386,7 +386,7 @@ def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
     names = result.spec[0].spec_table.dtype.names
     flux_idx = names.index("FLUX")
     sb_idx = names.index("SURF_BRIGHT")
-    assert names[flux_idx + 1] == "CONTAM_FLUX"
+    assert names[flux_idx + 1] == "CONTAM"
     assert names[flux_idx + 2] == "CONTAMCORR_FLUX"
     assert names[sb_idx + 1] == "CONTAMSB"
     assert names[sb_idx + 2] == "CONTAMCORR_SURF_BRIGHT"

@@ -288,16 +288,16 @@ def expand_table(spec):
     data_type = datamodels.SpecModel().schema["properties"]["spec_table"]["datatype"]
     columns_to_copy = [col["name"] for col in data_type]
     out_dtype = datamodels.SpecModel().get_dtype("spec_table")
-    has_contam = "CONTAM_FLUX" in all_columns
+    has_contam = "CONTAM" in all_columns
     if has_contam:
-        # Add the CONTAM_FLUX and CONTAM_SURF_BRIGHT columns to the output dtype
+        # Add the CONTAM and CONTAM_SURF_BRIGHT columns to the output dtype
         # directly after the FLUX and SURF_BRIGHT columns, respectively
         descr = out_dtype.descr
         flux_idx = _idx_from_dtype(out_dtype, "FLUX")
         sb_idx = _idx_from_dtype(out_dtype, "SURF_BRIGHT")
-        columns_to_copy.insert(flux_idx + 1, "CONTAM_FLUX")
+        columns_to_copy.insert(flux_idx + 1, "CONTAM")
         columns_to_copy.insert(flux_idx + 2, "CONTAMCORR_FLUX")
-        descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
+        descr.insert(flux_idx + 1, ("CONTAM", float))
         descr.insert(flux_idx + 2, ("CONTAMCORR_FLUX", float))
         # surface brightness needs a +3 because two columns were inserted before it
         columns_to_copy.insert(sb_idx + 3, "CONTAMSB")

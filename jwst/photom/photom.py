@@ -1005,7 +1005,7 @@ class DataSet:
             # Fluxes are in units of Jy
             flux_unit = "Jy"
             flux_squared_unit = "Jy^2"
-            for att in ["FLUX", "FLUX_ERROR", "CONTAM_FLUX", "CONTAMCORR_FLUX"]:
+            for att in ["FLUX", "FLUX_ERROR", "CONTAM", "CONTAMCORR_FLUX"]:
                 if att in spec.spec_table.columns:
                     spec.spec_table[att][self.integ_row] *= conversion
                     spec.spec_table.columns[att].unit = flux_unit
