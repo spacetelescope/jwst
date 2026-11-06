@@ -177,9 +177,6 @@ def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
     return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
 
 
-# *****************************************************************************
-
-
 def find_corners_nirspec(input_data, coord_system):
     """
     Find the sky footprint of a slice of a NIRSpec exposure.
