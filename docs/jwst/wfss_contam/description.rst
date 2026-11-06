@@ -88,7 +88,8 @@ Outputs
 
 The primary output is the contamination-corrected grism data, which is saved as additional
 extensions in the input `~stdatamodels.jwst.datamodels.MultiSlitModel` data model.
-The contamination-corrected observed data is stored in the CORR_SCI extension (``.corr_data`` attribute),
+The contamination-corrected observed data is stored in the
+CONTAMCORR_SCI extension (``.contamcorr_data`` attribute),
 The simulation for a given source cutout is stored in the SIMUL extension (``.simul`` attribute),
 and the contamination estimate is stored in the CONTAM extension (``.contam`` attribute).
 The step does not modify the SCI extension (``.data`` attribute) of the input data.

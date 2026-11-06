@@ -1,1 +1,1 @@
-Handle new CORR_FLUX and CORR_SURF_BRIGHT columns for WFSS modes
+Handle new CONTAMCORR_FLUX and CONTAMCORR_SURF_BRIGHT columns for WFSS modes.

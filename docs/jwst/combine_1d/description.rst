@@ -88,7 +88,7 @@ The other spectra are NaN-padded to match the longest spectrum,
 and the number of valid data points for each spectrum is recorded in the N_ALONGDISP column.
 
 .. note::
-    The CONTAM_FLUX, CORR_FLUX, CONTAM_SURF_BRIGHT, and CORR_SURF_BRIGHT columns are computed
+    The CONTAM_FLUX, CONTAMCORR_FLUX, CONTAMSB, and CONTAMCORR_SURF_BRIGHT columns are computed
     from the input x1d files in an identical way to the FLUX and SURF_BRIGHT columns.
     As it currently stands, the pipeline only combines fluxes from a single orient, and in that case
     all input spectra should be contaminated in the same way. The columns are NaN-filled

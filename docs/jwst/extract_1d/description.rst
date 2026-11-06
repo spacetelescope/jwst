@@ -132,9 +132,10 @@ The spectral tables for this model contain the same columns as the
 `~stdatamodels.jwst.datamodels.MultiSpecModel`, but
 each row in the table contains the full spectrum for a single source and order. There are four
 additional columns for WFSS modes. If the ``wfss_contam`` step was run,
-CONTAM_FLUX and CONTAM_SURF_BRIGHT hold the simulated contamination estimate as computed from the
-CONTAM extension of the input data, and CORR_FLUX and CORR_SURF_BRIGHT hold the contamination-corrected
-flux and surface brightness for each source as computed from the CORR_SCI extension of the input data.
+CONTAM_FLUX and CONTAMSB hold the simulated contamination estimate as computed from the
+CONTAM extension of the input data in flux and surface brightness units, respectively, and
+CONTAMCORR_FLUX and CONTAMCORR_SURF_BRIGHT hold the contamination-corrected
+flux and surface brightness for each source as computed from the CONTAMCORR_SCI extension of the input data.
 If the ``wfss_contam`` step was not run, those columns will be NaN-filled. The spectral columns
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
