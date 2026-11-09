@@ -136,7 +136,7 @@ CONTAM_FLUX and CONTAMSB hold the simulated contamination estimate as computed f
 CONTAM extension of the input data in flux and surface brightness units, respectively, and
 CONTAMCORR_FLUX and CONTAMCORR_SURF_BRIGHT hold the contamination-corrected
 flux and surface brightness for each source, computed by simply subtracting the
-CONTAM values from the measured flux and surface brightness, respectively.
+CONTAM_FLUX and CONTAMSB values from the extracted flux and surface brightness, respectively.
 If the ``wfss_contam`` step was not run, those columns will be NaN-filled. The spectral columns
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
