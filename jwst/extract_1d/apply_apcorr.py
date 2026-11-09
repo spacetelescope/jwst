@@ -549,10 +549,12 @@ class ApCorr(ApCorrBase):
         flux_cols_to_correct = (
             "flux",
             "flux_error",
-            "contam_flux",
+            "contam",
+            "contamcorr_flux",
             "surf_bright",
             "sb_error",
-            "contam_surf_bright",
+            "contamsb",
+            "contamcorr_surf_bright",
         )
         var_cols_to_correct = (
             "flux_var_poisson",
