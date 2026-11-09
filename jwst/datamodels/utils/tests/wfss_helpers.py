@@ -47,15 +47,18 @@ def example_spec():
     names = [d[0] for d in recarray_dtype]
     flux_idx = names.index("FLUX")
     sb_idx = names.index("SURF_BRIGHT")
-    recarray_dtype.insert(flux_idx + 1, ("CONTAM_FLUX", "f4"))
-    recarray_dtype.insert(sb_idx + 2, ("CONTAM_SURF_BRIGHT", "f4"))
+    recarray_dtype.insert(flux_idx + 1, ("CONTAM", "f4"))
+    recarray_dtype.insert(flux_idx + 2, ("CONTAMCORR_FLUX", "f4"))
+    recarray_dtype.insert(sb_idx + 3, ("CONTAMSB", "f4"))
+    recarray_dtype.insert(sb_idx + 4, ("CONTAMCORR_SURF_BRIGHT", "f4"))
     spec.meta.wcs = mock_wcs()
     # initializing directly with np.recarray() gives garbage values in unset columns
     # which sometimes makes DQ nonzero and drops rows from the table in combine_1d
     spec_table = np.zeros((N_ROWS,), dtype=recarray_dtype).view(np.recarray)
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)
-    spec_table["CONTAM_FLUX"] = np.ones(N_ROWS, dtype=np.float32) / 10.0
+    spec_table["CONTAM"] = np.ones(N_ROWS, dtype=np.float32) / 10.0
+    spec_table["CONTAMCORR_FLUX"] = spec_table["FLUX"] - spec_table["CONTAM"]
     spec.spec_table = spec_table
     spec.spec_table.columns["wavelength"].unit = "um"
     return spec

@@ -1,0 +1,1 @@
+Handle new CONTAMCORR_FLUX and CONTAMCORR_SURF_BRIGHT columns for WFSS modes

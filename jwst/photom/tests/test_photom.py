@@ -441,18 +441,28 @@ def _add_contam_columns(model):
     tab = model.spec_table
     nelem = len(tab)
     otab_list = list(zip(*tab.tolist()))
-    contam_flux = np.arange(nelem, dtype=np.float32) / 10.0
+
+    # build contam and contam-corrected columns
+    contam = np.arange(nelem, dtype=np.float32) / 10.0
+    contamcorr_flux = model.spec_table["FLUX"] - contam
     flux_idx = _idx_from_dtype(tab.dtype, "FLUX")
+    otab_list.insert(flux_idx + 1, contam)
+    otab_list.insert(flux_idx + 2, contamcorr_flux)
+
+    contamsb = np.arange(nelem, dtype=np.float32) / 100.0
+    contamcorr_surf_bright = model.spec_table["SURF_BRIGHT"] - contamsb
     sb_idx = _idx_from_dtype(tab.dtype, "SURF_BRIGHT")
-    otab_list.insert(flux_idx + 1, contam_flux)
-    contam_surf_bright = np.arange(nelem, dtype=np.float32) / 100.0
-    otab_list.insert(sb_idx + 2, contam_surf_bright)
+    otab_list.insert(sb_idx + 3, contamsb)
+    otab_list.insert(sb_idx + 4, contamcorr_surf_bright)
+
     # Need to modify the dtype, but it's immutable.
     # Use descr to get it as a list
     otab_dtype = tab.dtype
     descr = otab_dtype.descr
-    descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
-    descr.insert(sb_idx + 2, ("CONTAM_SURF_BRIGHT", float))
+    descr.insert(flux_idx + 1, ("CONTAM", float))
+    descr.insert(flux_idx + 2, ("CONTAMCORR_FLUX", float))
+    descr.insert(sb_idx + 3, ("CONTAMSB", float))
+    descr.insert(sb_idx + 4, ("CONTAMCORR_SURF_BRIGHT", float))
     otab_dtype = np.dtype(descr)
     new_tab = np.array(list(zip(*otab_list)), dtype=otab_dtype)
     model.spec_table = new_tab
@@ -1561,7 +1571,6 @@ def test_niriss_wfss():
         nelem = ftab.phot_table["nelem"][rownum]
         wavelength = ftab.phot_table["wavelength"][rownum][0:nelem]
         relresponse = ftab.phot_table["relresponse"][rownum][0:nelem]
-        shape = input_data.shape
         wl = input_data["WAVELENGTH"][0]
 
         # compute dispersion
@@ -1574,11 +1583,15 @@ def test_niriss_wfss():
         # Compare the values at the center pixel.
         ratio = output["FLUX"] / input_data["FLUX"]
         result.append(np.allclose(ratio, compare, rtol=1.0e-7))
-        # 0th index of CONTAM_FLUX is 0, so handle this to avoid divide by zero
-        assert np.allclose(output["CONTAM_FLUX"][0][0], 0.0, rtol=1.0e-7)
-        assert np.allclose(input_data["CONTAM_FLUX"][0][0], 0.0, rtol=1.0e-7)
-        contam_ratio = output["CONTAM_FLUX"][0][1:] / input_data["CONTAM_FLUX"][0][1:]
+        # 0th index of CONTAM is 0, so handle this to avoid divide by zero
+        assert np.allclose(output["CONTAM"][0][0], 0.0, rtol=1.0e-7)
+        assert np.allclose(input_data["CONTAM"][0][0], 0.0, rtol=1.0e-7)
+        contam_ratio = output["CONTAM"][0][1:] / input_data["CONTAM"][0][1:]
         result.append(np.allclose(contam_ratio, compare[1:], rtol=1.0e-7, equal_nan=True))
+
+        # also check corr_flux was flux-calibrated
+        contamcorr_flux = output["CONTAMCORR_FLUX"] / input_data["CONTAMCORR_FLUX"]
+        result.append(np.allclose(contamcorr_flux, compare, rtol=1.0e-7, equal_nan=True))
 
     assert np.all(result)
 
