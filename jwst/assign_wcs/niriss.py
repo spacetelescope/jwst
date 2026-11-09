@@ -494,10 +494,9 @@ def wfss(input_model, reference_files):
     # so the user doesn't have to
 
     imagepipe = []
-    world = image_pipeline.pop().frame
+    world = image_pipeline.pop()[0]
     world.name = "sky"
-    for step in image_pipeline:
-        cframe, trans = step.frame, step.transform
+    for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
         name = cframe.name
         cframe.name = name + "spatial"

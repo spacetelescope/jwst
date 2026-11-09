@@ -1263,7 +1263,7 @@ def apply_mosaic_member_tweak(input_model, image_pipeline):
 
     Returns
     -------
-    corrected_pipeline : list
+    corrected_pipeline : list of tuple
         The image pipeline with the tweak applied, if found.
     """
     matrix, shift = get_mosaic_member_tweak(input_model)
@@ -1271,7 +1271,11 @@ def apply_mosaic_member_tweak(input_model, image_pipeline):
         # Found tweak: apply it to the image pipeline
         corrector = JWSTWCSCorrector(WCS(image_pipeline), input_model.meta.wcsinfo.instance)
         corrector.set_correction(matrix=matrix, shift=shift)
-        return corrector.wcs.pipeline
+
+        # make a list of tuples to return as the pipeline, for compatibility with
+        # return values from existing imaging pipelines
+        corrected_pipeline = [(step.frame, step.transform) for step in corrector.wcs.pipeline]
+        return corrected_pipeline
     else:
         return image_pipeline
 
