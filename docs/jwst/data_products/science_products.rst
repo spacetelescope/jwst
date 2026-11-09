@@ -776,10 +776,10 @@ The table also reports several pieces of source-specific metadata; these fields 
 SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_RA, SOURCE_DEC.
 See the :ref:`combine_1d <combine_1d_step>` step documentation for more details.
 
+.. _pfpc:
+
 PFPC 1-D spectroscopic data: ``pfpc``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. _pfpc:
 
 Extracted spectral data, with point fixed pattern corrections (PFPC) applied,
 produced by the :ref:`pfpc <pfpc_step>` step are stored in binary table extensions
