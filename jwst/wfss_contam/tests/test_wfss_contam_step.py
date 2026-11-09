@@ -78,6 +78,9 @@ def test_wfss_contam_step(tmp_cwd, multicutoutmodel):
         assert result_slit.contamcorr_data is not None
         assert slit.contamcorr_data is None
         np.testing.assert_allclose(result_slit.data, slit.data)
+        np.testing.assert_allclose(
+            result_slit.contam + result_slit.contamcorr_data, slit.data, rtol=1e-6
+        )
     assert Path("multicutout_model_simul.fits").exists()
     result.close()
 
