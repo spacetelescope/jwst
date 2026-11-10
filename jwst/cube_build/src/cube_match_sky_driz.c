@@ -126,17 +126,9 @@ match_driz(
     double *eta3, double *xi4, double *eta4, double *dwave, double *cdelt3, double *x_det,
     double *y_det, double cdelt1, double cdelt2, int nx, int ny, int nwave, long ncube, long npt,
     int linear, long debug_cube_index, double **spaxel_flux, double **spaxel_weight,
-<<<<<<< HEAD
-    double **spaxel_var, double **spaxel_iflux, int **spaxel_dq)
-{
-
-    // rn_weight: 1 = weight by readnoise, 0 = do not weight by variances
-=======
     double **spaxel_var, double **spaxel_iflux, int **spaxel_dq, int **spaxel_exposure_counter)
 {
-
     // rn_weight: 1 = weight by readnoise, 0 = do not weight by readnoise
->>>>>>> 00ae41194 (using c routine for readnoise weighting)
     // xc : IFU grid point values along x-axis
     // yc : IFU grid point values along y-axis
     // zc : IFU grid point values along the z-axis
@@ -208,10 +200,8 @@ match_driz(
 
     // loop over each detector pixel and find which spaxels it overlaps with
     nxy = nx * ny;
-<<<<<<< HEAD
-=======
+
     int *exposure_already_counted = (int *) calloc(ncube, sizeof(int));
->>>>>>> 00ae41194 (using c routine for readnoise weighting)
 
     for (k = 0; k < npt; k++) {
         xpixel[0] = xi1[k];
@@ -314,7 +304,7 @@ match_driz(
                         ybot = yc[iy] - cdelt2 * 0.5;
                         ytop = yc[iy] + cdelt2 * 0.5;
 
-                        index_xy = iy * nx + ix;
+                        // index_xy = iy * nx + ix;
                         if (xleft < xmax && xright > xmin && ybot < ymax && ytop > ymin) {
 
                             index_xy = iy * nx + ix;
@@ -327,8 +317,6 @@ match_driz(
                             // total_weight contols the flux accumulation
 
                             area_weight = area * zoverlap;
-
-<<<<<<< HEAD
                             total_weight = area_weight;
                             if (rn_weight == 1) {
                                 // Readnoise variance is valid value
@@ -343,13 +331,6 @@ match_driz(
                             }
 
                             if (total_weight > 0) {
-=======
-                            if (rn_weight == 1 && !npy_isnan(readvar[k]) &&
-                                readvar[k] > rn_tolerance) {
-                                area_weight = area_weight / readvar[k];
-                            }
-                            if (area_weight > 0) {
->>>>>>> 00ae41194 (using c routine for readnoise weighting)
                                 if (!npy_isnan(flux[k]) && !npy_isnan(err[k])) {
                                     weighted_flux = flux[k] * total_weight;
                                     weighted_var =
@@ -372,27 +353,12 @@ match_driz(
 
                             // Keep print statement in code - used for debugging
                             if (index_cube == debug_cube_index && area_weight > 0) {
-                                printf("*************** \n");
                                 printf(
-<<<<<<< HEAD
                                     "spaxel index, flux, x, y [count starting at 0], area_weight, "
                                     "readnoise var  "
                                     "%i %f %f %f %.10f %f \n ",
                                     index_cube, flux[k], x_det[k], y_det[k], area_weight,
                                     readvar[k]);
-=======
-                                    "spaxel index, flux, x, y, area_weight [count starting at 0]  "
-                                    "%i %f %f %f \n ",
-                                    index_cube, flux[k], x_det[k], y_det[k]);
-                                printf("dq %i \n ", dq[k]);
-                                printf("readnoiose %f \n ", readvar[k]);
-                                printf(" area * zoverlap %.12f \n", area * zoverlap);
-                                printf(" area_weight %.12f \n", area_weight);
-
-                                printf(
-                                    "weighted flux %.12f %.12f %.12f \n ", weighted_flux,
-                                    fluxv[index_cube], weightv[index_cube]);
->>>>>>> 00ae41194 (using c routine for readnoise weighting)
                             }
 
                             // end of print statements
@@ -570,12 +536,8 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         (double *) PyArray_DATA(xi4), (double *) PyArray_DATA(eta4), (double *) PyArray_DATA(dwave),
         (double *) PyArray_DATA(cdelt3), (double *) PyArray_DATA(x_det),
         (double *) PyArray_DATA(y_det), cdelt1, cdelt2, nxx, nyy, nwave, ncube, npt, linear,
-<<<<<<< HEAD
-        debug_cube_index, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux, &spaxel_dq);
-=======
         debug_cube_index, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux, &spaxel_dq,
         &spaxel_exposure_counter);
->>>>>>> 00ae41194 (using c routine for readnoise weighting)
 
     if (status) {
         goto fail;
@@ -622,7 +584,7 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         spaxel_exposure_counter_arr = (PyArrayObject *) PyArray_SimpleNewFromData(
             1, &npy_ncube, NPY_INT, spaxel_exposure_counter);
         if (!spaxel_exposure_counter_arr) {
-            goto fail;
+            goto fail_counter;
         }
         spaxel_exposure_counter = NULL;
 
@@ -639,6 +601,14 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         goto cleanup;
     }
 
+fail_counter:
+    Py_XDECREF(spaxel_exposure_counter_arr);
+    free(spaxel_exposure_counter);
+    // if (!PyErr_Occurred()) {
+    //     PyErr_SetString(PyExc_MemoryError, "Unable to allocate memory for counter array.");
+    //  }
+    // goto cleanup;
+
 fail:
     Py_XDECREF(spaxel_flux_arr);
     Py_XDECREF(spaxel_weight_arr);
@@ -654,14 +624,6 @@ fail:
 
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_MemoryError, "Unable to allocate memory for output arrays.");
-    }
-    goto cleanup;
-
-fail_counter:
-    Py_XDECREF(spaxel_exposure_counter_arr);
-    free(spaxel_exposure_counter);
-    if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_MemoryError, "Unable to allocate memory for counter array.");
     }
     goto cleanup;
 
@@ -759,13 +721,14 @@ PyMODINIT_FUNC
 
 PyInit_cube_match_sky_driz(void)
 {
+    import_array();
     PyObject *m = PyModule_Create(&moduledef);
     if (m == NULL) {
         return NULL;
     }
 
     // Initialize NumPy API array (crucial before any array utility is called)
-    import_array();
+    // import_array();
 
     return m;
 }
