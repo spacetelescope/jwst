@@ -1,0 +1,1 @@
+Run the pixel_replace algorithm internally to the straylight code to minimize impact of missing pixels on estimated straylight signal.
