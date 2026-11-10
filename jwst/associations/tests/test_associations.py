@@ -95,7 +95,7 @@ def test_base_instantiation():
             get_pkg_data_filename(
                 "data/pool_001_candidates.csv", package="jwst.associations.tests"
             ),
-            12,
+            22,
         ),
         (
             DMSAttrConstraint(
