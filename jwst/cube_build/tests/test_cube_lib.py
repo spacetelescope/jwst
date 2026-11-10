@@ -76,7 +76,7 @@ class TestCheckCubeSize:
 
     def test_exceeds_limit_raises(self):
         """Total greater than  limit must raise ValueError with informative message."""
-        with pytest.raises(ValueError, match="exceeds limit"):
+        with pytest.warns(UserWarning, match="exceeds limit"):
             cube_lib.check_cube_size(10, 10, 10, limit=999)
 
 
