@@ -2,7 +2,6 @@
 
 import copy
 import logging
-import math
 
 import numpy as np
 from gwcs import wcstools
@@ -10,8 +9,8 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.assign_wcs import pointing
-from jwst.assign_wcs.util import compute_footprint_nrs_slit, wrap_ra
-from jwst.cube_build import coord
+from jwst.assign_wcs.util import compute_footprint_nrs_slit
+from jwst.cube_build import cube_lib
 from jwst.cube_build.cube_match_sky_driz import cube_wrapper_driz  # c extension
 
 log = logging.getLogger(__name__)
@@ -53,36 +52,38 @@ class MSACubeData:
         self.coord_system = pars.get("coord_system")
         self.wavemin = pars.get("wavemin")
         self.wavemax = pars.get("wavemax")
-        self.weighting = pars.get("weighting")
+        self.wavemin_ref = pars.get("wavemin_ref")
+        self.wavemax_ref = pars.get("wavemax_ref")
+        self.readnoise_weight = pars.get("readnoise_weight")
         self.wavelength_table = pars.get("wavelength_table")
         self.suffix = pars.get("suffix")
 
         self.cdelt1 = None
         self.cdelt2 = None
         self.cdelt3 = None
-        self.crpix1 = None
-        self.crpix2 = None
-        self.crpix3 = None
-        self.crval1 = None
-        self.crval2 = None
-        self.crval3 = None
-        self.naxis1 = None
-        self.naxis2 = None
-        self.naxis3 = None
-        self.cdelt3_normal = None
+        # self.crpix1 = None
+        # self.crpix2 = None
+        # self.crpix3 = None
+        # self.crval1 = None
+        # self.crval2 = None
+        # self.crval3 = None
+        # self.naxis1 = None
+        # self.naxis2 = None
+        # self.naxis3 = None
+        # self.cdelt3_normal = None
         self.rot_angle = None  # rotation angle between Ra-Dec and MSA local instrument plane
 
-        self.a_min = 0
-        self.a_max = 0
-        self.b_min = 0
-        self.b_max = 0
-        self.lambda_min = 0
-        self.lambda_max = 0
-        self.xcoord = None
-        self.ycoord = None
-        self.zcoord = None
+        # self.a_min = 0
+        # self.a_max = 0
+        # self.b_min = 0
+        # self.b_max = 0
+        # self.lambda_min = 0
+        # self.lambda_max = 0
+        # self.xcoord = None
+        # self.ycoord = None
+        # self.zcoord = None
 
-    def find_footprint(self):
+    def setup_msacube_wcs(self):  # setup_msacube_wcs
         """
         Set up the WCS of the MSA cube.
 
@@ -116,17 +117,17 @@ class MSACubeData:
         if self.linear_wave:
             self.cdelt3 = self.scalew
 
+        # lists used to determine min and max ranges
+        corner_a = []
+        corner_b = []
+        lambda_min = []
+        lambda_max = []
+
         # Define the rotation angle
         # If coord_system = msaalign then the angle is between the ra-dec and alpha beta
         # coord system using the first input model. Use first file in first band to set up
         # rotation angle.
         # Compute the rotation angle between local MSA system  and RA-DEC
-
-        corner_a = []
-        corner_b = []
-
-        lambda_min = []
-        lambda_max = []
 
         num = len(self.source["slit_models"])
         log.info(f"Number of slits:  {num}")
@@ -199,227 +200,48 @@ class MSACubeData:
         final_lam_min = min(lambda_min)
         final_lam_max = max(lambda_max)
 
-        return (corner_a, corner_b, final_lam_min, final_lam_max, rot_angle)
-
-    def set_slit_wcs(self, corner_ra, corner_dec, lambda_min, lambda_max, rot_angle):
-        """
-        Set up the 3D spatial/spectral World Coordinate System (WCS).
-
-        This method calculates the spatial field of view (RA/Dec mapped to tangent plane
-        coordinates xi and eta) and sets the corresponding FITS WCS standard attributes
-        (CRVAL, CRPIX, NAXIS) along with the spaxel center arrays for spatial (x, y)
-        and spectral (z) axes.
-
-        Parameters
-        ----------
-        corner_ra : array-like of float
-            Right Ascension values at the footprint corners, in degrees.
-        corner_dec : array-like of float
-            Declination values at the footprint corners, in degrees.
-        lambda_min : float
-            Minimum wavelength threshold for the spectral axis.
-        lambda_max : float
-            Maximum wavelength threshold for the spectral axis.
-        rot_angle : float
-            Position or rotation angle for the sky-to-tangent plane transformation, in degrees.
-
-        Notes
-        -----
-        Updates the following instance attributes:
-        - `crval1`, `crval2`, `crval3` : Reference point coordinates.
-        - `crpix1`, `crpix2`, `crpix3` : Reference point pixel indices (1-indexed).
-        - `naxis1`, `naxis2`, `naxis3` : Cube pixel dimensions along x, y, and wavelength.
-        - `a_min`, `a_max`, `b_min`, `b_max` : Min/Max spatial bounds in standard coordinates.
-        - `xcoord`, `ycoord`, `zcoord` : 1D arrays of spaxel center positions.
-        - `lambda_min`, `lambda_max` : Adjusted bounds for linear wavelength axis.
-        - `cdelt3_normal` : Array of wavelength bin step sizes for flux normalization.
-
-        - Uses `coord.radec2std` to transform RA/Dec into projected standard coordinates xi, eta.
-        - Ensures the spatial projection grid is centered at (xi=0, eta=0) by padding `naxis1`
-        and `naxis2` to odd dimensions.
-        - If `self.ra_center` or `self.dec_center` are pre-defined, they override the mean
-        calculated tangent reference points.
-        - Supports both linear (`self.linear_wave = True`) and tabular non-linear spectral grids.
-        """
-        ra_min = min(corner_ra)
-        ra_max = max(corner_ra)
-        dec_min = min(corner_dec)
-        dec_max = max(corner_dec)
-        dec_ave = (dec_min + dec_max) / 2.0
-
-        # we can not average ra values because of the convergence
-        # of hour angles.
-        ravalues = np.zeros(2)
-        ravalues[0] = ra_min
-        ravalues[1] = ra_max
-        ra_ave = np.nanmean(wrap_ra(ravalues))
-
-        self.crval1 = ra_ave
-        self.crval2 = dec_ave
-
-        if self.ra_center is not None:
-            self.crval1 = self.ra_center
-        if self.dec_center is not None:
-            self.crval2 = self.dec_center
-
-        # find the 4 corners - tangent plane through crval1, crval2
-        xi_corner = []
-        eta_corner = []
-        num = len(corner_ra)
-
-        for i in range(num):
-            xi, eta = coord.radec2std(
-                self.crval1, self.crval2, corner_ra[i], corner_dec[i], rot_angle
-            )
-            xi_corner.append(xi)
-            eta_corner.append(eta)
-
-        xi_min = min(xi_corner)
-        xi_max = max(xi_corner)
-        eta_min = min(eta_corner)
-        eta_max = max(eta_corner)
-
-        xilimit = max(np.abs(xi_min), np.abs(xi_max))
-        etalimit = max(np.abs(eta_min), np.abs(eta_max))
-
-        # Adjust the cube to be slightly bigger I want the cube to be centered
-        # on xi and eta = 0  If no data is mapped to spaxel the value will be NAN.
-        # xi, eta is set by  by crval1, crval2.
-        # number min
-
-        na = math.ceil(xilimit / self.cdelt1) + 1
-        nb = math.ceil(etalimit / self.cdelt2) + 1
-
-        if self.nspax_x is not None:
-            na = self.nspax_x
-        if self.nspax_y is not None:
-            nb = self.nspax_y
-
-        # full range of xi and eta values
-        xi_min = 0.0 - (na * self.cdelt1) - (self.cdelt1 / 2.0)
-        xi_max = (na * self.cdelt1) + (self.cdelt1 / 2.0)
-
-        eta_min = 0.0 - (nb * self.cdelt2) - (self.cdelt2 / 2.0)
-        eta_max = (nb * self.cdelt2) + (self.cdelt2 / 2.0)
-
-        self.a_min = xi_min
-        self.a_max = xi_max
-        self.b_min = eta_min
-        self.b_max = eta_max
-        # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
-        self.crpix1 = float(na) + 1.0
-        self.crpix2 = float(nb) + 1.0
-
-        self.naxis1 = na * 2 + 1  # + 1 to set the center  = 0
-        self.naxis2 = nb * 2 + 1
-
-        # center of spaxels
-        self.xcoord = np.zeros(self.naxis1)
-        xstart = xi_min + self.cdelt1 / 2.0
-        self.xcoord = np.arange(
-            start=xstart, stop=xstart + self.naxis1 * self.cdelt1, step=self.cdelt1
-        )
-
-        self.ycoord = np.zeros(self.naxis2)
-        ystart = eta_min + self.cdelt2 / 2.0
-        self.ycoord = np.arange(
-            start=ystart, stop=ystart + self.naxis2 * self.cdelt2, step=self.cdelt2
-        )
-
-        # depending on the naxis and cdelt values the x,ycoord can have 1 more element than naxis.
-        # Clean up arrays dropping extra values at the end.
-
-        # TODO - this could be removed just left for testing.
-        # A check that at crpix values the xi,eta values are close to zero
-        test1 = self.xcoord[int(self.crpix1 - 1)]
-        test2 = self.ycoord[int(self.crpix2 - 1)]
-
-        # print('xi coordinate must be (close to ) zero', test1)  #TODO remove after testing
-        # print('eta coordinate must be (close to)  zero', test2)
-        if np.abs(test1) > 5e-6 or np.abs(test2) > 5e-6:
-            log.warning(" Warning xi, eta grid center is not at zero")
-
-        self.xcoord = self.xcoord[0 : self.naxis1]
-        self.ycoord = self.ycoord[0 : self.naxis2]
-
-        # now wavelength axis
-        if self.linear_wave:
-            range_lambda = lambda_max - lambda_min
-            self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
-            # adjust max based on integer value of naxis3
-            lambda_max = lambda_min + (self.naxis3) * self.cdelt3
-            self.lambda_min = lambda_min
-            self.lambda_max = lambda_max
-            self.zcoord = np.zeros(self.naxis3)
-            # CRPIX3 for FITS is 1 (center of first pixel)
-            # CRVAL3 then is lambda_min + self.cdelt3/ 2.0, which is also zcoord[0]
-            # Note that these are all values at the center of a spaxel
-            self.crval3 = lambda_min + self.cdelt3 / 2.0
-            self.crpix3 = 1.0
-            zstart = lambda_min + self.cdelt3 / 2.0
-            self.zcoord = zstart + np.arange(self.naxis3) * self.cdelt3
+        # final_lam_min and final_lam_max are determined from the data
+        # Check if the user set wavemin. If so use that value. It takes precedence.
+        if self.wavemin is not None:
+            final_lam_min = self.wavemin
+        # If the user has not set a wavemin value, then check that the one determined from the data
+        # is not larger than the value given in the reference file.
         else:
-            self.zcoord = np.asarray(self.wavelength_table, dtype=np.float64)
-            self.naxis3 = len(self.zcoord)
-            self.crval3 = self.zcoord[0]
-            self.crpix3 = 1.0
-            # Set default cdelt3 step estimate for non-linear tables
-            self.cdelt3 = np.mean(np.diff(self.zcoord)) if self.naxis3 > 1 else 0.0
+            if self.wavemin_ref < final_lam_min:
+                final_lam_min = (
+                    self.wavemin_ref
+                )  # TODO Check with NIRSPEC if we should have this check
 
-        # Vectorized setup for cdelt3_normal normalization array
-        self.cdelt3_normal = np.empty(self.naxis3)
-        self.cdelt3_normal[:-1] = np.diff(self.zcoord)
-        self.cdelt3_normal[-1] = self.cdelt3_normal[-2]
+        # user set wavemax use this values.
+        if self.wavemax is not None:
+            final_lam_max = self.wavemax
+        # If the user has not set a wavemin value,
+        # then check that the one determined from the data
+        # is not larger than the value given in the reference file.
+        else:
+            if final_lam_max > self.wavemax_ref:
+                final_lam_max = (
+                    self.wavemax_ref
+                )  # TODO Check with NIRSPEC if we should have this check
 
-    def print_geometry(self):
-        """Print to log the general properties of the size of the MSA cube."""
-        log.info("MSA Cube Geometry:")
-
-        log.info("axis#  Naxis  CRPIX    CRVAL       CDELT(arcsec)  Min & Max (xi, eta arcsec)")
-        log.info(
-            "Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f",
-            self.naxis1,
-            self.crpix1,
-            self.crval1,
+        self.cube_wcs = cube_lib.set_wcs(
+            corner_a,
+            corner_b,
+            final_lam_min,
+            final_lam_max,
+            self.ra_center,
+            self.dec_center,
+            self.rot_angle,
+            self.nspax_x,
+            self.nspax_y,
             self.cdelt1,
-            self.a_min,
-            self.a_max,
-        )
-        log.info(
-            "Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f",
-            self.naxis2,
-            self.crpix2,
-            self.crval2,
             self.cdelt2,
-            self.b_min,
-            self.b_max,
+            self.cdelt3,
+            self.linear_wave,
+            self.wavelength_table,
         )
-        if self.linear_wave:
-            log.info("axis#  Naxis  CRPIX    CRVAL      CDELT(microns)  Min & Max (microns)")
-            log.info(
-                "Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f",
-                self.naxis3,
-                self.crpix3,
-                self.crval3,
-                self.cdelt3,
-                self.lambda_min,
-                self.lambda_max,
-            )
 
-        if not self.linear_wave:
-            log.info("Non-linear wavelength dimension; CDELT3 variable")
-            log.info("axis#  Naxis  CRPIX    CRVAL     Min & Max (microns)")
-            log.info(
-                "Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f",
-                self.naxis3,
-                self.crpix3,
-                self.crval3,
-                self.wavelength_table[0],
-                self.wavelength_table[self.naxis3 - 1],
-            )
-
-        if self.rot_angle is not None:
-            log.info("Rotation angle between RA-Dec and Slicer-Plane %12.8f", self.rot_angle)
+        cube_lib.print_cube_geometry(self.coord_system, self.cube_wcs)
 
     def build_msacube(self):
         """
@@ -449,8 +271,8 @@ class MSACubeData:
         - Spaxel debugging log outputs can be triggered by setting `self.spaxel_x`,
         `self.spaxel_y`, and `self.spaxel_z` prior to calling this method.
         """
-        total_num = self.naxis1 * self.naxis2 * self.naxis3
-
+        # self.cube_wcs = cube_wcs
+        total_num = self.cube_wcs.naxis1 * self.cube_wcs.naxis2 * self.cube_wcs.naxis3
         self.spaxel_flux = np.zeros(total_num, dtype=np.float64)
         self.spaxel_weight = np.zeros(total_num, dtype=np.float64)
         self.spaxel_var = np.zeros(total_num, dtype=np.float64)
@@ -461,7 +283,7 @@ class MSACubeData:
         # we need bunit in the out header - is there another way to do this ? #TODO
         bunit_data = self.source["bunit"]
         bunit_err = self.source["bunit_err"]
-        nxyplane = self.naxis1 * self.naxis2
+        nxyplane = self.cube_wcs.naxis1 * self.cube_wcs.naxis2
 
         if self.spaxel_z == -1 and self.spaxel_x == -1 and self.spaxel_y == -1:
             debug_spaxel_index = -1
@@ -484,6 +306,7 @@ class MSACubeData:
 
         # start looping over the slits for the source
         for i in range(num):
+            print("Working on slit", i)
             slit = self.source["slit_models"][i]
             results = self.map_source_pixels_to_output_frame(slit)
 
@@ -506,22 +329,16 @@ class MSACubeData:
             npt = flux.size
             # Check that the slit has valid pixels
             if npt > 0:
-                cdelt3_mean = np.nanmean(self.cdelt3_normal)
+                cdelt3_mean = np.nanmean(self.cube_wcs.cdelt3_normal)
                 xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner
-
-            if self.weighting == "readnoise":
-                weight_type = 1
-            else:
-                weight_type = 0
 
             linear = 1
             dummy = x_array.copy()  # place holder needed for cube_build - valid for IFU data
-
             result = cube_wrapper_driz(
-                weight_type,
-                self.xcoord,
-                self.ycoord,
-                self.zcoord,
+                self.readnoise_weight,
+                self.cube_wcs.xcoord,
+                self.cube_wcs.ycoord,
+                self.cube_wcs.zcoord,
                 xi_array,
                 eta_array,
                 wave,
@@ -539,9 +356,9 @@ class MSACubeData:
                 xi4,
                 eta4,
                 dwave,
-                self.cdelt3_normal,
-                self.cdelt1,
-                self.cdelt2,
+                self.cube_wcs.cdelt3_normal,
+                self.cube_wcs.cdelt1,
+                self.cube_wcs.cdelt2,
                 cdelt3_mean,
                 linear,
                 x_array,
@@ -578,37 +395,37 @@ class MSACubeData:
             )
             # end looping over the slits for the source
 
-        self.find_spaxel_flux(
+        self.spaxel_flux, self.spaxel_var = cube_lib.find_spaxel_flux(
             self.spaxel_iflux, self.spaxel_flux, self.spaxel_weight, self.spaxel_var
         )
-        cube_wcs = (
-            self.naxis1,
-            self.naxis2,
-            self.naxis3,
-            self.cdelt1,
-            self.cdelt2,
-            self.cdelt3,
-            self.crpix1,
-            self.crpix2,
-            self.crpix3,
-            self.crval1,
-            self.crval2,
-            self.crval3,
+        self.spaxel_flux, self.spaxel_var, self.spaxel_dq = cube_lib.set_final_dq_flags(
+            self.spaxel_dq, self.spaxel_flux, self.spaxel_var, self.spaxel_weight
         )
 
         model_ref = self.source["slit_models"][0]
-        final_cube = self.setup_final_model(
+        final_cube = cube_lib.setup_final_model(
             model_ref,
-            cube_wcs,
-            self.rot_angle,
+            self.cube_wcs,
             self.spaxel_flux,
             self.spaxel_iflux,
             self.spaxel_var,
             self.spaxel_dq,
-            self.spaxel_exposure_counter,
-            bunit_data,
-            bunit_err,
+            None,
+            self.cube_wcs.rot_angle,
+            self.coord_system,
+            "drizzle",
+            "drizzle",
+            0,
+            0,
+            0,
+            0,
+            None,
         )
+
+        # self.spaxel_exposure_counter,
+        # bunit_data,
+        # bunit_err,
+        # )
 
         return final_cube
 
@@ -725,7 +542,9 @@ class MSACubeData:
         across_slit, along_slit, lam_pixel = d2s(x, y)
         w_pixel = lam_pixel
         ra_pixel, dec_pixel, lam = s2w(across_slit, along_slit, lam_pixel)
-        xi, eta = coord.radec2std(self.crval1, self.crval2, ra_pixel, dec_pixel, self.rot_angle)
+        xi, eta = cube_lib.radec2std(
+            self.cube_wcs.crval1, self.cube_wcs.crval2, ra_pixel, dec_pixel, self.cube_wcs.rot_angle
+        )
 
         # slit width is in fractions of slit - see jwst.assign_wcs.util.compute_footprint_nrs_slit
         # a full slit width = 0.5 in these equations
@@ -827,10 +646,18 @@ class MSACubeData:
         lam_array.append(lam)
         lam_delta_array.append(delta_lam)
 
-        xi1, eta1 = coord.radec2std(self.crval1, self.crval2, ra1, dec1, self.rot_angle)
-        xi2, eta2 = coord.radec2std(self.crval1, self.crval2, ra2, dec2, self.rot_angle)
-        xi3, eta3 = coord.radec2std(self.crval1, self.crval2, ra3, dec3, self.rot_angle)
-        xi4, eta4 = coord.radec2std(self.crval1, self.crval2, ra4, dec4, self.rot_angle)
+        xi1, eta1 = cube_lib.radec2std(
+            self.cube_wcs.crval1, self.cube_wcs.crval2, ra1, dec1, self.cube_wcs.rot_angle
+        )
+        xi2, eta2 = cube_lib.radec2std(
+            self.cube_wcs.crval1, self.cube_wcs.crval2, ra2, dec2, self.cube_wcs.rot_angle
+        )
+        xi3, eta3 = cube_lib.radec2std(
+            self.cube_wcs.crval1, self.cube_wcs.crval2, ra3, dec3, self.cube_wcs.rot_angle
+        )
+        xi4, eta4 = cube_lib.radec2std(
+            self.cube_wcs.crval1, self.cube_wcs.crval2, ra4, dec4, self.cube_wcs.rot_angle
+        )
         corner = [xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4]
 
         x_array = np.array(x_array).flatten()

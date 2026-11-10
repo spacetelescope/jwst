@@ -12,8 +12,7 @@ import time
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import update_s_region_keyword
-from jwst.cube_build import msa_cube
-from jwst.cube_build.cube_lib import check_cube_size
+from jwst.cube_build import cube_lib, msa_cube
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe import Step, record_step_status
 
@@ -31,8 +30,8 @@ class SlitCubeBuildStep(Step):
          linear_wave = boolean(default=True) # Toggle between linear (True) and nonlinear (False) wavelength dimensions
          scalexy = float(default=0.0) # cube sample size to use for axis 1 and axis2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('volume','readnoise',default = 'volume') # Type of weighting function
-         coord_system = option('skyalign','world','msaalign',default='skyalign') # Output Coordinate system.
+         variance_weighting = option('readnoise', default=None)  # In the drizzle routine also weight by readnoise
+         coord_system = option('skyalign','world','msaalign',default='skyalign') # Output Coordinate system
          slit_frac = float(default=1.0) # Slit fraction
          ra_center = float(default=None) # RA center of the MSA cube
          dec_center = float(default=None) # Declination center of the MSA cube
@@ -82,7 +81,7 @@ class SlitCubeBuildStep(Step):
         t0 = time.time()
 
         # limit on the maximum size of cube
-        limit_size = 1e8
+        cube_limit = 1.0e8
 
         # For all parameters convert to a standard format
         # Report read in values to screen
@@ -90,8 +89,11 @@ class SlitCubeBuildStep(Step):
         if not self.coord_system.islower():
             self.coord_system = self.coord_system.lower()
 
-        if not self.weighting.islower():
-            self.weighting = self.weighting.lower()
+        if self.variance_weighting == "readnoise":
+            readnoise_weight = 1
+            log.info("Also weighting by readnoise in drizzle method")
+        else:
+            readnoise_weight = 0
 
         if self.scalexy != 0.0:
             log.info(f"Input Scale of axis 1 and 2 {self.scalexy}")
@@ -188,7 +190,7 @@ class SlitCubeBuildStep(Step):
             "source": self.source,
             "scalexy": self.scalexy,
             "scalew": self.scalew,
-            "weighting": self.weighting,
+            "readnoise_weight": readnoise_weight,
             "coord_system": self.coord_system,
             "linear_wave": self.linear_wave,
             "ra_center": self.ra_center,
@@ -199,6 +201,8 @@ class SlitCubeBuildStep(Step):
             "slit_frac": self.slit_frac,
             "wavemin": self.wavemin,
             "wavemax": self.wavemax,
+            "wavemin_ref": self.wavemin_ref,
+            "wavemax_ref": self.wavemax_ref,
             "wavelength_table": self.wavelength_table,
             "suffix": self.suffix,
             "debug_spaxel": self.debug_spaxel,
@@ -209,39 +213,16 @@ class SlitCubeBuildStep(Step):
 
         msacube = msa_cube.MSACubeData(**pars)
 
-        result = msacube.find_footprint()
-        corner_ra, corner_dec, final_lam_min, final_lam_max, rot_angle = result
-
-        # final_lam_min and final_lam_max are determined from the data
-        # Check if the user set wavemin. If so use that value. It takes precedence.
-        if self.wavemin is not None:
-            final_lam_min = self.wavemin
-        # If the user has not set a wavemin value, then check that the one determined from the data
-        # is not larger than the value given in the reference file.
-        else:
-            if self.wavemin_ref < final_lam_min:
-                final_lam_min = (
-                    self.wavemin_ref
-                )  # TODO Check with NIRSPEC if we should have this check
-
-        # user set wavemax use this values.
-        if self.wavemax is not None:
-            final_lam_max = self.wavemax
-        # If the user has not set a wavemin value,
-        # then check that the one determined from the data
-        # is not larger than the value given in the reference file.
-        else:
-            if final_lam_max > self.wavemax_ref:
-                final_lam_max = (
-                    self.wavemax_ref
-                )  # TODO Check with NIRSPEC if we should have this check
-
-        msacube.set_slit_wcs(corner_ra, corner_dec, final_lam_min, final_lam_max, rot_angle)
-
-        msacube.print_geometry()
-
-        # check the size of the cube if too large raise an exception
-        check_cube_size(msacube.naxis1, msacube.naxis2, msacube.naxis3, limit_size)
+        msacube.setup_msacube_wcs()
+        # Check that the MSA cube is not over the size limit. Cubes above the size
+        # limit will lead to a memory failure and usually result trying to combine too
+        # much data together.
+        cube_lib.check_cube_size(
+            msacube.cube_wcs.naxis1,
+            msacube.cube_wcs.naxis2,
+            msacube.cube_wcs.naxis3,
+            cube_limit,
+        )
 
         slit_cube = msacube.build_msacube()
 

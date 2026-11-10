@@ -416,10 +416,6 @@ def set_wcs(
     xcoord = xcoord[0:naxis1]
     ycoord = ycoord[0:naxis2]
 
-    # xv, yv = np.meshgrid(xcoord, ycoord)
-    # xcenters = xv.flatten()
-    # ycenters = yv.flatten()
-
     # set up the lambda (z) coordinate of the cube
     cdelt3_normal = None
     if linear_wave:
