@@ -70,7 +70,7 @@ class ChargeMigrationStep(Step):
             log.info("Using READNOISE reference file: %s", readnoise_filename)
 
             with datamodels.ReadnoiseModel(readnoise_filename) as rnoise:
-                output = correct_charge_migration(
+                result, fit_info = correct_charge_migration(
                     result,
                     rnoise,
                     correction_threshold=self.correction_threshold,
@@ -80,7 +80,6 @@ class ChargeMigrationStep(Step):
                     fit_info=self.save_fit_info,
                 )
                 if self.save_fit_info:
-                    result, fit_info = output
                     if fit_info is None:
                         log.info("No fit info to save; not creating output table.")
                     else:
@@ -88,8 +87,6 @@ class ChargeMigrationStep(Step):
                         tree = {"data": fit_info}
                         asdf.dump(tree, table_filepath)
                         log.info(f"Saved fit info table in {table_filepath}")
-                else:
-                    result = output
 
         result.meta.cal_step.charge_migration = "COMPLETE"
 

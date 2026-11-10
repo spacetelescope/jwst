@@ -37,7 +37,7 @@ def test_correct_one_pix(caplog, small_ramp, readnoise_model):
     input_values = small_ramp.data.copy()
 
     # correct the ramp
-    result = correct_charge_migration(
+    result, _ = correct_charge_migration(
         small_ramp, readnoise_model, correction_threshold=THRESHOLD, mask_pad=0
     )
 
@@ -90,7 +90,9 @@ def test_correct_neighbors(caplog, small_ramp, readnoise_model):
 def test_clip_outliers(caplog, sigclip_ramp, readnoise_model):
     caplog.set_level("INFO", "jwst")
     input_values = sigclip_ramp.data.copy()
-    result = correct_charge_migration(sigclip_ramp, readnoise_model, correction_threshold=THRESHOLD)
+    result, _ = correct_charge_migration(
+        sigclip_ramp, readnoise_model, correction_threshold=THRESHOLD
+    )
 
     # input data has one diff non-zero: it is sigma clipped out, so no correction is applied
     np.testing.assert_allclose(result.data, input_values)
@@ -101,7 +103,9 @@ def test_no_valid(caplog, small_ramp, readnoise_model):
     caplog.set_level("INFO", "jwst")
     small_ramp.data *= np.inf
     input_values = small_ramp.data.copy()
-    result = correct_charge_migration(small_ramp, readnoise_model, correction_threshold=THRESHOLD)
+    result, _ = correct_charge_migration(
+        small_ramp, readnoise_model, correction_threshold=THRESHOLD
+    )
 
     # input data has all invalid values: no correction is applied
     np.testing.assert_allclose(result.data, input_values)
@@ -112,7 +116,7 @@ def test_no_pix_above_threshold(caplog, small_ramp, readnoise_model):
     caplog.set_level("INFO", "jwst")
 
     input_values = small_ramp.data.copy()
-    result = correct_charge_migration(small_ramp, readnoise_model, correction_threshold=1e6)
+    result, _ = correct_charge_migration(small_ramp, readnoise_model, correction_threshold=1e6)
 
     # input data is all below threshold: no correction is applied
     np.testing.assert_allclose(result.data, input_values)
@@ -127,7 +131,9 @@ def test_too_few_diffs(caplog, small_ramp, readnoise_model):
     small_ramp.groupdq = small_ramp.groupdq[:, :2]
 
     input_values = small_ramp.data.copy()
-    result = correct_charge_migration(small_ramp, readnoise_model, correction_threshold=THRESHOLD)
+    result, _ = correct_charge_migration(
+        small_ramp, readnoise_model, correction_threshold=THRESHOLD
+    )
 
     # input data has too few diffs: no correction is applied
     np.testing.assert_allclose(result.data, input_values)

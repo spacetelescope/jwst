@@ -117,9 +117,11 @@ def correct_charge_migration(
     fit_info_table : `~astropy.table.Table` or None, optional
         Table containing information about all fits attempted. Columns are:
         ``x, y, fit_success, value_change, sigma_orig, sigma_new, diff, model``.
-        Returned only if ``fit_info`` is True. If there were no pixels to correct,
+        If there were no pixels to correct, or ``fit_info`` is False,
         the return value is None.
     """
+    fit_info_table = None
+
     # Input science and DQ data
     sci = output_model.data
     gdq = output_model.groupdq
@@ -137,13 +139,9 @@ def correct_charge_migration(
     mask = maxvals > correction_threshold
 
     # Check if there is anything to do
-    if fit_info:
-        return_val = output_model, None
-    else:
-        return_val = output_model
     if not np.any(mask):
         log.info("No pixels over threshold to correct.")
-        return return_val
+        return output_model, fit_info_table
 
     # Grow the mask with the specified padding
     box_size = 2 * mask_pad + 1
@@ -186,7 +184,7 @@ def correct_charge_migration(
     # Check again if there is anything to do
     if nfit == 0:
         log.info("No valid pixels to correct.")
-        return return_val
+        return output_model, fit_info_table
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
@@ -203,7 +201,7 @@ def correct_charge_migration(
     # Check again if there is anything to do, after clipping
     if not np.any(valid_for_fit):
         log.info("No pixels to correct after sigma clipping.")
-        return return_val
+        return output_model, fit_info_table
 
     # Clip again for a good measure of sigma
     with warnings.catch_warnings():
@@ -292,7 +290,4 @@ def correct_charge_migration(
             ],
         )
 
-        return output_model, fit_info_table
-    else:
-        # Just return the model
-        return output_model
+    return output_model, fit_info_table
