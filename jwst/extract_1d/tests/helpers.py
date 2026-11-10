@@ -402,6 +402,7 @@ def mock_miri_ifu_func():
     model.meta.observation.date = "2023-07-22"
     model.meta.observation.time = "06:24:45.569"
     model.meta.exposure.type = "MIR_MRS"
+    model.meta.subarray.name = "FULL"
 
     model.meta.wcsinfo.dispersion_direction = 2
     model.meta.photometry.pixelarea_steradians = 1.0
@@ -485,6 +486,8 @@ def mock_nis_wfss_l2():
     slit0 = mock_nirspec_fs_one_slit_func()
     # give contam a unique value so we know it has ended up in the right column later
     slit0.contam = np.zeros_like(slit0.data) + 3
+    # same with contamcorr_data
+    slit0.contamcorr_data = np.zeros_like(slit0.data) + 4
 
     nslit = 3
     for i in range(nslit):

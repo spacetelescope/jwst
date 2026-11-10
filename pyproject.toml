@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.15",
 ]
 dependencies = [
-    "asdf>=5.3.1,<6",
+    "asdf>=5.3.1,<7",
     "astropy>=7.2",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.4,!=13.1.15",
@@ -539,6 +539,11 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "persistence"
 name = 'persistence (detector1 NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "pfpc"
+name = "pfpc (spec3)"
 showcontent = true
 
 [[tool.towncrier.type]]
