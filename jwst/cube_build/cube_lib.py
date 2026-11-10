@@ -251,9 +251,9 @@ def check_cube_size(naxis1, naxis2, naxis3, limit):
     """
     total = naxis1 * naxis2 * naxis3
     if total > limit:
-        msg = f"Large Cube: naxis1 * naxis2 * naxis3 = {total} exceeds limit of {limit}"
+        msg = f"Large cube: naxis1 * naxis2 * naxis3 = {total} exceeds limit of {limit}"
         log.warning(msg)
-        warnings.warn(msg, stacklevel=2)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
 
 def set_wcs(
