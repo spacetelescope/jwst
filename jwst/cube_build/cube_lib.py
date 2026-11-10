@@ -24,6 +24,7 @@ __all__ = [
 
 ARCSEC2_PER_SR = 2.3504e-11
 
+
 @dataclass
 class CubeWCS:
     """A class for the WCS information of 3D spectral cubes."""
@@ -753,7 +754,6 @@ def setup_final_model(
     cube_model.update(model_ref)
     if output_name is not None:
         cube_model.meta.filename = output_name
-
 
     cube_model.meta.wcsinfo.crval1 = cube_wcs.crval1
     cube_model.meta.wcsinfo.crval2 = cube_wcs.crval2
