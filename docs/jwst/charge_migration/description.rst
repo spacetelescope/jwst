@@ -60,9 +60,9 @@ Correcting for Charge Migration
 
 To correct for the brighter-fatter effect, this step fits a linear trend to the group
 differences for any pixel with maximum signal greater than ``correction_threshold``, along
-with its neighbors.  For pixels affected by charge loss, the linear trend will be negative,
-because the rate of charge accumulation decreases at larger absolute signal levels.
-For the neighbors receiving excess charge, the linear trend will be positive.
+with its neighbors.  For pixels affected by charge loss, the linear trend (second derivative
+of the charge counts) will be negative, because the rate of charge accumulation decreases at
+larger absolute signal levels. For the neighbors receiving excess charge, the linear trend will be positive.
 In either case, correcting the ramp values for the observed trend in group differences
 will mitigate the effects of the charge migration, while tending to conserve flux over the PSF.
 
