@@ -159,7 +159,7 @@ def subarray_transform(input_model):
         return subarray2full
 
 
-def substripe_subarray_transforms(input_model, stripe_ids, full_frame=False):
+def substripe_subarray_transforms(input_model, stripe_ids, full_frame=False, reference_pixel=None):
     """
     Return a dictionary of offset models for NIRCam substripe data.
 
@@ -177,9 +177,13 @@ def substripe_subarray_transforms(input_model, stripe_ids, full_frame=False):
         The science model with defined multistripe parameters.
     stripe_ids : list
         List of stripe labels, from bottom of array to top in detector orientation.
-    full_frame : bool
+    full_frame : bool, optional
         If True, transform into the FULL frame. Otherwise, just remove stripe
         offsets within the subarray to return relative coordinates within the stripe.
+    reference_pixel : dict or None, optional
+        If ``full_frame`` is False, apply an additional offset from the provided
+        reference pixel to the start of the stripe in the full frame. Keys are
+        stripe IDs; values are full frame y index values.
 
     Returns
     -------
@@ -198,6 +202,10 @@ def substripe_subarray_transforms(input_model, stripe_ids, full_frame=False):
             stripe_offset = stripe_ranges["full"][i][0] - stripe_ranges["subarray"][i][0]
         else:
             stripe_offset = -stripe_ranges["subarray"][i][0]
+
+            # Additional offset from a reference pixel, given as a full frame index value
+            if reference_pixel is not None and stripe in reference_pixel:
+                stripe_offset += stripe_ranges["full"][i][0] - reference_pixel[stripe]
 
         xrefstart = xstart
         yrefstart = stripe_offset
