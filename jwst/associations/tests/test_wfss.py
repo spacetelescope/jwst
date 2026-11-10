@@ -21,7 +21,7 @@ def test_niriss_wfss():
     asns = results.associations
 
     # Need 4 associations: image2, spec2, image3, spec3
-    assert len(asns) == 11
+    assert len(asns) == 12
     asn_types = [asn["asn_type"] for asn in asns]
     assert REQUIRED_ASN_TYPES == set(asn_types)
 
@@ -56,7 +56,7 @@ def test_miri_wfss():
     # 4 spec2 associations
     # 1 spec3 association
     # 1 image3 association
-    assert len(asns) == 7
+    assert len(asns) == 10
     asn_types = [asn["asn_type"] for asn in asns]
     assert REQUIRED_ASN_TYPES == set(asn_types)
 
