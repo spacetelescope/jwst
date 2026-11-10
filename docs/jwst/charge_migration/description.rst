@@ -60,11 +60,11 @@ Correcting for Charge Migration
 
 To correct for the brighter-fatter effect, this step fits a linear trend to the group
 differences for any pixel with maximum signal greater than ``correction_threshold``, along
-with its neighbors.  For pixels affected by charge loss, the linear trend will have a negative slope,
-as the rate decreases over time.  For the neighbors receiving excess charge, the linear
-trend will have a positive slope. In either case, correcting the ramp values for the
-fit slope will mitigate the effects of the charge migration, while tending to conserve
-flux over the PSF.
+with its neighbors.  For pixels affected by charge loss, the linear trend will be negative,
+because the rate of charge accumulation decreases at larger absolute signal levels.
+For the neighbors receiving excess charge, the linear trend will be positive.
+In either case, correcting the ramp values for the observed trend in group differences
+will mitigate the effects of the charge migration, while tending to conserve flux over the PSF.
 
 The process is:
 
@@ -76,15 +76,15 @@ The process is:
 4. For each identified pixel, fit a line to the clipped median diffs.
 5. Reject the fit if it does not meet these criteria:
 
-   a. The value change due to the slope over the range of the fit values is
+   a. The total change in group differences over the ramp is
       less than a specified factor times the read noise.  The factor is set by the
       ``snr_limit`` parameter.
    b. The fit value for the first group difference is positive.
-   c. If there are more than 5 diffs, the RMS of the corrected data is reduced
+   c. If there are more than 5 diffs, the RMS of the corrected group differences is reduced
       by at least a specified factor of the original RMS. The factor is set
       by the ``rms_limit`` parameter.
 
-6. For pixels with valid corrections, subtract the fit slope from the group
+6. For pixels with valid corrections, subtract the fitted trend from the group
    differences.
 7. Reconstruct the ramps from the modified differences, adding each new diff
    into the previous corrected group.

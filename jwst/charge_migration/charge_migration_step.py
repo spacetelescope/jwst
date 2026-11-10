@@ -19,8 +19,8 @@ class ChargeMigrationStep(Step):
     class_alias = "charge_migration"
 
     spec = """
-        signal_threshold = float(default=-1)  # Threshold value above which to flag excessive charge loss.
-        correction_threshold = float(default=-1)  # Threshold value above which to correct for charge migration.
+        signal_threshold = float(default=-1)  # Threshold value in ADU above which to flag excessive charge loss.
+        correction_threshold = float(default=-1)  # Threshold value in ADU above which to correct for charge migration.
         mask_pad = integer(default=2)  # Number of pixels to fit on either side of a pixel with charge loss.
         snr_limit = float(default=3.0)  # Correction fit significance limit, as a multiple of the read noise
         rms_limit = float(default=2.2)  # Correction fit quality limit, as a reduction factor of the initial RMS

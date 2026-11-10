@@ -71,21 +71,22 @@ def correct_charge_migration(
 
     The process is:
 
-    1. Identify pixels with maximum counts over the signal threshold, along with
-       neighbors within the specified padding window.
-    2. Compute diffs of all groups in the ramp, masking any bad pixels, and
+    1. Identify pixels with maximum counts over ``correction_threshold``, along with
+       neighbors within the specified padding window (``mask_pad``).
+    2. Compute differences of all groups in the ramp, masking any bad or saturated pixels, and
        median-combine across all integrations.
     3. If more than 5 diffs are available, reject outliers with sigma clipping.
     4. For each identified pixel, fit a line to the clipped median diffs.
     5. Reject the fit if it does not meet these criteria:
 
-       a. The value change due to the slope over the range of the fit values is
-          less than ``snr_limit`` times the read noise.
+       a. The total change in group differences over the ramp is less than
+          ``snr_limit`` times the read noise.
        b. The fit value for the first group difference is positive.
-       c. If there are more than 5 diffs, the RMS of the corrected data is
-          reduced by at least ``rms_limit``, compared to the original RMS.
+       c. If there are more than 5 diffs, the RMS of the corrected group
+          differences is reduced by at least ``rms_limit``, compared to the
+          original RMS.
 
-    6. For pixels with valid corrections, subtract the fit slope from the group
+    6. For pixels with valid corrections, subtract the fitted trend from the group
        differences.
     7. Reconstruct the ramps from the modified differences, adding each new diff
        into the previous corrected group.
