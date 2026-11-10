@@ -22,6 +22,7 @@ __all__ = [
     "setup_final_model",
 ]
 
+ARCSEC2_PER_SR = 2.3504e-11
 
 @dataclass
 class CubeWCS:
@@ -206,9 +207,6 @@ def std2radec(crval1, crval2, xi, eta):
     xi = -xi  # xi is made negative so it increases in the opposite direction
     # of ra to match the images the Parity of the ifu_cube is
     # for ra is PC1_1 = -1
-
-    ra0 = crval1 * deg2rad
-    dec0 = crval2 * deg2rad
 
     beta = math.cos(dec0) - eta * math.sin(dec0)
     angle = xi / beta
@@ -744,22 +742,18 @@ def setup_final_model(
         wave = np.asarray(wavelength_table, dtype=np.float32)
         num = len(wave)
         alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
-        # always write the wavetable
-        cube_model = datamodels.IFUCubeModel(
-            data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
-        )
     else:
         wave = np.asarray(cube_wcs.wavelength_table, dtype=np.float32)
         num = len(wave)
         alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
-
-        cube_model = datamodels.IFUCubeModel(
-            data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
-        )
-
+    # always write the wavetable
+    cube_model = datamodels.IFUCubeModel(
+        data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
+    )
     cube_model.update(model_ref)
     if output_name is not None:
         cube_model.meta.filename = output_name
+
 
     cube_model.meta.wcsinfo.crval1 = cube_wcs.crval1
     cube_model.meta.wcsinfo.crval2 = cube_wcs.crval2
@@ -771,7 +765,7 @@ def setup_final_model(
     # Now that we've got a pixel scale, set photometric area keywords
     cube_model.meta.photometry.pixelarea_arcsecsq = cube_wcs.cdelt1 * cube_wcs.cdelt2
     cube_model.meta.photometry.pixelarea_steradians = (
-        cube_model.meta.photometry.pixelarea_arcsecsq * 2.3504e-11
+        cube_model.meta.photometry.pixelarea_arcsecsq * ARCSEC2_PER_SR
     )
     if cube_wcs.linear_wave:
         cube_model.meta.wcsinfo.crval3 = cube_wcs.crval3
@@ -800,27 +794,21 @@ def setup_final_model(
     cube_model.meta.wcsinfo.ctype2 = "DEC--TAN"
     cube_model.meta.wcsinfo.cunit1 = "deg"
     cube_model.meta.wcsinfo.cunit2 = "deg"
-
     cube_model.meta.wcsinfo.cunit3 = "um"
     cube_model.meta.wcsinfo.wcsaxes = 3
-    cube_model.meta.wcsinfo.pc1_1 = -1
-    cube_model.meta.wcsinfo.pc1_2 = 0
-    cube_model.meta.wcsinfo.pc1_3 = 0
-
-    cube_model.meta.wcsinfo.pc2_1 = 0
-    cube_model.meta.wcsinfo.pc2_2 = 1
-    cube_model.meta.wcsinfo.pc2_3 = 0
-
-    cube_model.meta.wcsinfo.pc3_1 = 0
-    cube_model.meta.wcsinfo.pc3_2 = 0
-    cube_model.meta.wcsinfo.pc3_3 = 1
 
     if rot_angle is None:
         rot_angle = 0.0
+
     cube_model.meta.wcsinfo.pc1_1 = -np.cos(rot_angle * np.pi / 180.0)
     cube_model.meta.wcsinfo.pc1_2 = np.sin(rot_angle * np.pi / 180.0)
+    cube_model.meta.wcsinfo.pc1_3 = 0
     cube_model.meta.wcsinfo.pc2_1 = np.sin(rot_angle * np.pi / 180.0)
     cube_model.meta.wcsinfo.pc2_2 = np.cos(rot_angle * np.pi / 180.0)
+    cube_model.meta.wcsinfo.pc2_3 = 0
+    cube_model.meta.wcsinfo.pc3_1 = 0
+    cube_model.meta.wcsinfo.pc3_2 = 0
+    cube_model.meta.wcsinfo.pc3_3 = 1
 
     cube_model.meta.ifu.flux_extension = "SCI"
     cube_model.meta.ifu.error_extension = "ERR"

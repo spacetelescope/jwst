@@ -61,56 +61,58 @@ class MSACubeData:
         self.cdelt1 = None
         self.cdelt2 = None
         self.cdelt3 = None
-        # self.crpix1 = None
-        # self.crpix2 = None
-        # self.crpix3 = None
-        # self.crval1 = None
-        # self.crval2 = None
-        # self.crval3 = None
-        # self.naxis1 = None
-        # self.naxis2 = None
-        # self.naxis3 = None
-        # self.cdelt3_normal = None
         self.rot_angle = None  # rotation angle between Ra-Dec and MSA local instrument plane
 
-        # self.a_min = 0
-        # self.a_max = 0
-        # self.b_min = 0
-        # self.b_max = 0
-        # self.lambda_min = 0
-        # self.lambda_max = 0
-        # self.xcoord = None
-        # self.ycoord = None
-        # self.zcoord = None
-
-    def setup_msacube_wcs(self):  # setup_msacube_wcs
+    def setup_msacube_wcs(self):
         """
         Set up the WCS of the MSA cube.
 
-        Loop over every slitlet contained in the MultiExposureModel and find the WCS
-        of the output cube that contains all the data.
+        Loops over every slitlet in the source dictionary, filters out bad pixels,
+        and collects the spatial footprint corners and wavelength range of each slit.
+        The first slit with more than ``_MIN_VALID_LAM_SIZE`` valid wavelength points
+        is used to determine the rotation angle between the MSA plane and the sky.
 
-        Returns
-        -------
-        corner_a : list
-            List of corner ra values of slit
-        corner_b : list
-            List of corner dec values of slit
-        final_lam_min : float
-            Minimum wavelength
-        final_lam_max : float
-            Maximum wavelength
-        rot_angle : float
-            Rotation angle
+        For ``msaalign`` cubes, the rotation angle is computed from the slit-frame-to-world
+        transform of that slit. For ``skyalign`` cubes, the rotation angle is taken from
+        ``cube_pa`` if provided, otherwise it defaults to ``None``.
+
+        The final wavelength range is clamped to the reference file bounds unless the
+        user has explicitly set ``wavemin`` or ``wavemax``, which take precedence.
+
+        Sets
+        ----
+        self.cdelt1 : float
+            Spatial pixel scale along axis 1 (arcseconds).
+        self.cdelt2 : float
+            Spatial pixel scale along axis 2 (arcseconds).
+        self.cdelt3 : float
+            Spectral pixel scale along the wavelength axis (microns), set only
+            when ``linear_wave`` is True.
+        self.rot_angle : float or None
+            Rotation angle in degrees between the MSA plane and the sky.
+            ``None`` if no slit had enough valid data or ``cube_pa`` was not set.
+        self.cube_wcs : `~jwst.cube_build.cube_lib.CubeWCS`
+            Data class containing the full WCS geometry of the output cube.
+
+        Raises
+        ------
+        ValueError
+            If ``lam_med`` is NaN for the slit selected for rotation, meaning the
+            slit has no valid wavelength data after DQ filtering.
+        ValueError
+            If the slit-frame-to-world transform returns NaN sky coordinates,
+            indicating an invalid WCS at the median wavelength.
+        ValueError
+            If ``dra`` and ``ddec`` are both zero, meaning the two slit reference
+            points map to the same sky position.
 
         Notes
         -----
-        For NIRSPEC the units along/across slice dimension are meters.
+        For NIRSpec the units along/across the slice dimension are meters.
 
-        Module sets the wcs class parameters.
-        If the coordinate system is ``skyalign``/``msaalign``, then the min and max of
-        RA (degrees), dec (degrees), and lambda (microns) are returned
-        for internal calculations.
+        If no slit exceeds ``_MIN_VALID_LAM_SIZE`` valid wavelength points,
+        ``self.rot_angle`` will remain ``None`` and the cube will be built
+        without a rotation correction.
         """
         self.cdelt1 = self.scalexy
         self.cdelt2 = self.scalexy
@@ -134,7 +136,7 @@ class MSACubeData:
 
         for i in range(num):
             slit = self.source["slit_models"][i]
-            wcs = copy.deepcopy(slit.meta.wcs)  # TODO do we need a deep copy
+            wcs = copy.deepcopy(slit.meta.wcs)  # TODO do we need a deep copy ?
             bbox = wcs.bounding_box
 
             grid = wcstools.grid_from_bounding_box(bbox)
@@ -146,28 +148,51 @@ class MSACubeData:
             good_data = np.where(~bad1 & ~bad2)
             lam = lam[good_data]
 
-            if (
-                i == 0
-            ):  # only use first slit to figure out the rotation between msa along slit and sky.
-                # we want the same rotation applied to all the data.
+            min_valid_lam_size = 1000  # is this the right value ?
+            rotation_found = False
+            # Use the first slit with enough valid data to determine the rotation angle.
+            # The first slit is not always usable — it may have no valid wavelength data.
+            use_for_rotation = (lam.size > min_valid_lam_size) and not rotation_found
+            if use_for_rotation:
+                rotation_found = True
                 if self.coord_system == "msaalign":
-                    # set up transforms
                     s2w = wcs.get_transform("slit_frame", "world")
                     lam_med = np.nanmedian(lam)
-                    temp_ra1, temp_dec1, lam_temp = s2w(0, 0, lam_med)
-                    temp_ra2, temp_dec2, lam_temp = s2w(0, 0.005, lam_med)
 
-                    dra, ddec = (
-                        (temp_ra2 - temp_ra1) * np.cos(temp_dec1 * np.pi / 180.0),
-                        (temp_dec2 - temp_dec1),
-                    )
+                    if np.isnan(lam_med):
+                        non_nan = np.sum(~np.isnan(lam))
+                        raise ValueError(
+                            f"lam_med is NaN for slit {i} — lam has {lam.size} elements, "
+                            f"{non_nan} non-NaN. Slit may have no valid data."
+                        )
+
+                    temp_ra1, temp_dec1, _ = s2w(0, 0, lam_med)
+                    temp_ra2, temp_dec2, _ = s2w(0, 0.005, lam_med)
+
+                    if np.isnan([temp_ra1, temp_dec1, temp_ra2, temp_dec2]).any():
+                        raise ValueError(
+                            f"s2w transform returned NaN for slit {i} at lam_med={lam_med:.4f}. "
+                            f"Got ra1={temp_ra1}, dec1={temp_dec1}, "
+                            f"ra2={temp_ra2}, dec2={temp_dec2}. Check WCS validity."
+                        )
+
+                    dra = (temp_ra2 - temp_ra1) * np.cos(temp_dec1 * np.pi / 180.0)
+                    ddec = temp_dec2 - temp_dec1
+
+                    if dra == 0 and ddec == 0:
+                        raise ValueError(
+                            f"dra and ddec are both zero for slit {i} — "
+                            "the two slit points map to the same sky position."
+                        )
+
                     rot_angle = 90 + np.arctan2(dra, ddec) * 180.0 / np.pi
-                    log.info(f"Rotation angle between the msa plane and th sky  {rot_angle}")
+                    log.info(f"Rotation angle between MSA plane and sky: {rot_angle:.4f}")
                 else:
                     if self.cube_pa is not None:
-                        rot_angle = self.cube_pa
+                        rot_angle = self.cube_pa  # None if not set, which is the correct default
                     else:
                         rot_angle = None
+                self.rot_angle = rot_angle
 
             if len(good_data[0]) > 0:
                 lmin = np.nanmin(lam)
@@ -188,11 +213,11 @@ class MSACubeData:
                 corner_a.append(ca2)
                 corner_b.append(cb2)
 
-                corner_b.append(cb3)
                 corner_a.append(ca3)
+                corner_b.append(cb3)
 
-                corner_b.append(cb4)
                 corner_a.append(ca4)
+                corner_b.append(cb4)
 
                 lambda_min.append(lmin)
                 lambda_max.append(lmax)
@@ -281,8 +306,8 @@ class MSACubeData:
         self.spaxel_exposure_counter = np.zeros(total_num, dtype=np.uint32)
 
         # we need bunit in the out header - is there another way to do this ? #TODO
-        bunit_data = self.source["bunit"]
-        bunit_err = self.source["bunit_err"]
+        # bunit_data = self.source["bunit"]
+        # bunit_err = self.source["bunit_err"]
         nxyplane = self.cube_wcs.naxis1 * self.cube_wcs.naxis2
 
         if self.spaxel_z == -1 and self.spaxel_x == -1 and self.spaxel_y == -1:
@@ -491,25 +516,11 @@ class MSACubeData:
         #   d. delta lambda (estimation of wavelength bin)  at x,y
         #
 
-        x_array = []
-        y_array = []
-        flux_array = []
-        error_array = []
-        dq_array = []
-        xi_array = []
-        eta_array = []
-        lam_array = []
-        corner = []
-        lam_delta_array = []
-        var_rnoise_array = []
-
         # map pixels to sky, forming the ra,dec, corners
         flux = slit.data
         err = slit.err
         dq = slit.dq
         var_rnoise = slit.var_rnoise
-        wcs = copy.deepcopy(slit.meta.wcs)
-
         wcs = slit.meta.wcs
         bbox = wcs.bounding_box
 
@@ -540,7 +551,6 @@ class MSACubeData:
 
         # Map pixel to sky (this is the center of the pixel used in drizzle).
         across_slit, along_slit, lam_pixel = d2s(x, y)
-        w_pixel = lam_pixel
         ra_pixel, dec_pixel, lam = s2w(across_slit, along_slit, lam_pixel)
         xi, eta = cube_lib.radec2std(
             self.cube_wcs.crval1, self.cube_wcs.crval2, ra_pixel, dec_pixel, self.cube_wcs.rot_angle
@@ -566,25 +576,24 @@ class MSACubeData:
 
         # selecting good data. This is probably overkill. But it accounts for pixel edges that fall
         # off the valid region.
-        valid1 = np.isfinite(flux)
-        good = np.where(~np.isnan(lam))
-        valid2 = np.isfinite(lam)
-        valid3 = np.isfinite(ra1)
-        valid4 = np.isfinite(ra2)
-        valid31 = np.isfinite(ra3)
-        valid41 = np.isfinite(ra4)
 
-        valid5 = np.isfinite(lam1)
-        valid6 = np.isfinite(lam2)
         bad1 = np.bitwise_and(dq, datamodels.dqflags.pixel["DO_NOT_USE"]).astype(bool)
         bad2 = np.bitwise_and(dq, datamodels.dqflags.pixel["NON_SCIENCE"]).astype(bool)
         good = np.where(
-            ~bad1 & ~bad2 & valid1 & valid2 & valid3 & valid4 & valid5 & valid6 & valid31 & valid41
+            ~bad1
+            & ~bad2
+            & np.isfinite(flux)
+            & np.isfinite(lam)
+            & np.isfinite(lam1)
+            & np.isfinite(lam2)
+            & np.isfinite(ra1)
+            & np.isfinite(ra2)
+            & np.isfinite(ra3)
+            & np.isfinite(ra4)
         )
         ngood = len(good[0])
-
-        wave_pixel = np.full_like(w_pixel, np.nan, dtype=np.float64)
-        wave_pixel[good] = w_pixel[good]
+        wave_pixel = np.full_like(lam_pixel, np.nan, dtype=np.float64)
+        wave_pixel[good] = lam_pixel[good]
 
         dwave_pixel = np.full_like(d_pixel, np.nan, dtype=np.float64)
         dwave_pixel[good] = d_pixel[good]
@@ -592,33 +601,33 @@ class MSACubeData:
         if ngood == 0:
             log.warning("WARNING: slit contains no valid data")
             return (
-                x_array,
-                y_array,
-                np.array(flux_array),
-                error_array,
-                dq_array,
-                var_rnoise_array,
-                xi_array,
-                eta_array,
-                lam_array,
-                lam_delta_array,
-                corner,
+                np.array([]),
+                np.array([]),
+                np.array([]),
+                np.array([]),
+                np.array([], dtype=np.uint32),
+                np.array([]),
+                np.array([]),
+                np.array([]),
+                np.array([]),
+                np.array([]),
+                [],
                 wave_pixel,
                 dwave_pixel,
             )
 
-        flux = flux[good]
-        dq = dq[good]
-        x = x[good]
-        y = y[good]
-        err = err[good]
-        var_rnoise = var_rnoise[good]  # used in readnoise weighting
+        # Extract good pixels.
+        x_array = x[good].flatten()
+        y_array = y[good].flatten()
+        flux_array = flux[good].flatten()
+        error_array = err[good].flatten()
+        dq_array = dq[good].flatten()
+        var_rnoise_array = var_rnoise[good].flatten()  # used in readnoise weighting
+        xi_array = xi[good].flatten()
+        eta_array = eta[good].flatten()
+        lam_array = lam[good].flatten()
+        lam_delta_array = d_pixel[good].flatten()
 
-        along_slit = along_slit[good]
-        across_slit = across_slit[good]
-        xi = xi[good]
-        eta = eta[good]
-        lam = lam[good]
         ra1 = ra1[good]
         ra2 = ra2[good]
         ra3 = ra3[good]
@@ -628,23 +637,6 @@ class MSACubeData:
         dec2 = dec2[good]
         dec3 = dec3[good]
         dec4 = dec4[good]
-
-        lam1 = lam1[good]
-        lam2 = lam2[good]
-        delta_lam = np.abs(lam2 - lam1)
-
-        # store information
-        x_array.append(x)
-        y_array.append(y)
-        flux_array.append(flux)
-        error_array.append(err)
-        dq_array.append(dq)
-        var_rnoise_array.append(var_rnoise)
-
-        xi_array.append(xi)
-        eta_array.append(eta)
-        lam_array.append(lam)
-        lam_delta_array.append(delta_lam)
 
         xi1, eta1 = cube_lib.radec2std(
             self.cube_wcs.crval1, self.cube_wcs.crval2, ra1, dec1, self.cube_wcs.rot_angle
@@ -659,17 +651,6 @@ class MSACubeData:
             self.cube_wcs.crval1, self.cube_wcs.crval2, ra4, dec4, self.cube_wcs.rot_angle
         )
         corner = [xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4]
-
-        x_array = np.array(x_array).flatten()
-        y_array = np.array(y_array).flatten()
-        flux_array = np.array(flux_array).flatten()
-        error_array = np.array(error_array).flatten()
-        dq_array = np.array(dq_array).flatten()
-        var_rnoise_array = np.array(var_rnoise_array).flatten()
-        xi_array = np.array(xi_array).flatten()
-        lam_array = np.array(lam_array).flatten()
-        eta_array = np.array(eta_array).flatten()
-        lam_delta_array = np.array(lam_delta_array).flatten()
 
         return (
             x_array,
@@ -686,42 +667,6 @@ class MSACubeData:
             wave_pixel,
             dwave_pixel,
         )
-
-    def find_spaxel_flux(self, spaxel_iflux, spaxel_flux, spaxel_weight, spaxel_var):
-        """
-        Calculate the final normalized flux and variance for each spaxel.
-
-        Normalizes the weighted flux and variance arrays after mapping overlap
-        between the detector array and the sky. Spaxels with no contributing points
-        (where spaxel_iflux == 0) are ignored to prevent division-by-zero errors.
-
-        Parameters
-        ----------
-        spaxel_iflux : numpy.ndarray
-            Array containing the counts/number of detector elements contributing to each spaxel.
-        spaxel_flux : numpy.ndarray
-             Array of weighted cumulative flux values. Modified in-place.
-        spaxel_weight : numpy.ndarray
-             Array of total weights accumulated for each spaxel.Modified in-place.
-        spaxel_var : numpy.ndarray
-             Array of cumulative variance values. Modified in-place.
-
-        Notes
-        -----
-            Modifies `spaxel_flux` and `spaxel_var` in-place.
-        """
-        # after overlapping is performed between the detector mapped array and sky find the
-        # final spaxel values for flux and variance.
-
-        # Don't apply any normalization if no points contributed to a spaxel
-        # (i.e., don't divide by zero)
-
-        good = spaxel_iflux > 0
-
-        # Normalize the weighted sum of pixel fluxes by the sum of the weights
-        spaxel_flux[good] = spaxel_flux[good] / spaxel_weight[good]
-        # Normalize the variance by  the weights
-        spaxel_var[good] = spaxel_var[good] / (spaxel_weight[good] * spaxel_weight[good])
 
     def setup_final_model(
         self,
