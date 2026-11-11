@@ -6,6 +6,7 @@ from stdatamodels.jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.helpers import make_mock_dhs_nrca1_regions
 from jwst.tests.nircam_rate_helpers import (
+    nircam_dhs_nrca1_sub164_rate_model,
     nircam_dhs_nrca1_sub260_rate_model,
     nircam_dhs_nrcalong_sub260_rate_model,
 )
@@ -13,7 +14,7 @@ from jwst.tests.nircam_rate_helpers import (
 
 @pytest.fixture
 def mock_dhs_nrca1_rate():
-    """Create a mock DHS NRCA1 rate file."""
+    """Create a mock DHS NRCA1 rate file with 64 pixel stripes."""
     return nircam_dhs_nrca1_sub260_rate_model(with_wcs=False)
 
 
@@ -30,6 +31,12 @@ def create_dhs_nrca1_wcs():
 
 
 @pytest.fixture
+def create_dhs_nrca1_40pix_wcs():
+    """Create a WCS for the mock NRCA1 DHS mode with 40 pixel stripes."""
+    return nircam_dhs_nrca1_sub164_rate_model().meta.wcs
+
+
+@pytest.fixture
 def mock_dhs_nrcalong_rate():
     """Create a mock DHS NRCALONG rate file."""
     return nircam_dhs_nrcalong_sub260_rate_model(with_wcs=False)
@@ -43,7 +50,7 @@ def create_dhs_nrcalong_wcs():
 
 def test_dhs_nrca1_roundtrip(create_dhs_nrca1_wcs):
     """
-    Test that the DHS mode WCS round-trips.
+    Test that the DHS mode WCS round-trips for 64 pixel stripes.
 
     Also verifies that:
     - Sky coordinates from the full forward pipeline are physically near the
@@ -71,6 +78,56 @@ def test_dhs_nrca1_roundtrip(create_dhs_nrca1_wcs):
     # Current calibration is preliminary, so allow a couple pixels tolerance on the
     # expected value.
     expected = [34, 105, 171, 223]
+    assert_allclose(y_rec, expected, atol=2)
+    assert_allclose(y_rec, y_in, atol=10)
+
+    # Full forward pipeline: (x, y, order) -> (ra, dec, lam, order, stripe)
+    ra, dec, lam_world, order_out, stripe_out = wcsobj(x_in, y_in, order_in)
+
+    # Test we are in the ballpark of the reference RA/Dec.
+    # Values for all stripes are the same.
+    assert_allclose(ra, 265.76, atol=0.02)
+    assert_allclose(dec, 66.93, atol=0.02)
+
+    # Similarly test wavelength makes sense for F150W2
+    assert np.all(lam_world > 1.0)
+    assert np.all(lam_world < 2.25)
+
+    # Check expected order and stripe values
+    assert_allclose(order_rec, order_in)
+    assert_allclose(stripe_out, [10, 9, 8, 7])
+
+
+def test_dhs_nrca1_40pix_roundtrip(create_dhs_nrca1_40pix_wcs):
+    """
+    Test that the DHS mode WCS round-trips for 40 pixel stripes.
+
+    Also verifies that:
+    - Sky coordinates from the full forward pipeline are physically near the
+      reference pointing and in a plausible spectral range.
+    - Spectral dispersion varies along the x axis.
+    - The stripe ID is one of the expected DHS stripe IDs.
+    """
+    wcsobj = create_dhs_nrca1_40pix_wcs
+    grism_to_direct = wcsobj.get_transform("grism_detector", "direct_image")
+
+    # Roundtrip: grism_detector -> direct_image -> grism_detector
+    # Only the x (dispersion) coordinate is expected to round-trip, because the
+    # forward transform collapses all y positions to the source reference point.
+    x_in = [1000] * 4  # same x for all stripes
+    y_in = 20.5 + np.arange(0, 164, 41)  # center y for each 40 pix stripe
+    order_in = [1] * 4  # same order for all stripes
+    x0, y0, lam, order_mid, stripe = grism_to_direct(x_in, y_in, order_in)
+    x_rec, y_rec, order_rec = grism_to_direct.inverse(x0, y0, lam, order_mid, stripe)
+
+    assert_allclose(x_rec, x_in, atol=1e-2, rtol=0)
+    assert_allclose(order_rec, order_in)
+
+    # The y coordinate returned should be at the expected trace position for each stripe:
+    # these are near the center of the stripe, but may be a few pixels up or down.
+    # Current calibration is preliminary, so allow a couple pixels tolerance on the
+    # expected value.
+    expected = [22, 69, 109, 139]
     assert_allclose(y_rec, expected, atol=2)
     assert_allclose(y_rec, y_in, atol=10)
 
