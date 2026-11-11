@@ -32,28 +32,7 @@ def miri_mrs_short():
     """Set up MIRI MRS SHORT data"""
 
     image = miri_mrs_rate_model(shape = (1024,1032), with_wcs = True)
-    #pdb.set_trace()
-
-    #image = IFUImageModel((1024, 1032))
-    #image.data = np.random.random((1024, 1032))
-    image.meta.instrument.name = "MIRI"
-    image.meta.instrument.detector = "MIRIFUSHORT"
-    image.meta.exposure.type = "MIR_MRS"
-    image.meta.instrument.channel = "12"
-    image.meta.instrument.band = "SHORT"
     image.meta.filename = "test_miri_short.fits"
-    image.meta.observation.date = "2019-01-01"
-    image.meta.observation.time = "10:10:10"
-    image.meta.wcsinfo.v2_ref = -503.3406
-    image.meta.wcsinfo.v3_ref = -318.864
-    image.meta.wcsinfo.roll_ref = 234.28804423615944
-    image.meta.wcsinfo.ra_ref = 206.88338859678234
-    image.meta.wcsinfo.dec_ref = 49.3133194779185
-    image.meta.wcsinfo.dispersion_direction = 2
-
-    #ref = get_reference_files(image)
-    #pipeline = miri.create_pipeline(image, ref)
-    #image.meta.wcs = wcs.WCS(pipeline)
 
     return image
 
