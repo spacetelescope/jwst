@@ -174,6 +174,7 @@ class RampFitStep(Step):
         firstgroup = integer(default=None)   # Ignore groups before this one (zero indexed)
         lastgroup = integer(default=None)   # Ignore groups after this one (zero indexed)
         maximum_cores = string(default='1') # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
+        skip_jump_detect = boolean(default=False)  # Skip likelihood-based jump detection
     """  # noqa: E501
 
     weighting = "optimal"  # Only weighting allowed for Build 7.1
@@ -270,6 +271,7 @@ class RampFitStep(Step):
             max_cores,
             dqflags.pixel,
             suppress_one_group=self.suppress_one_group,
+            skip_jump_detect=self.skip_jump_detect,
         )
 
         # Save the OLS_C optional fit product, if it exists.

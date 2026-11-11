@@ -360,9 +360,14 @@ def tsgrism(input_model, reference_files):
     if input_model.meta.instrument.module != "A":
         raise ValueError("NRC_TSGRISM mode only supports module A")
 
+    dhs_long = False
     if "DHS" in input_model.meta.subarray.name:
-        log.info("Building WCS for DHS data.")
-        return dhs(input_model, reference_files)
+        if "LONG" in input_model.meta.instrument.detector:
+            dhs_long = True
+        else:
+            # DHS SW needs special handling to add a label mapper for the stripes
+            log.info("Building WCS for DHS data.")
+            return dhs(input_model, reference_files)
     elif "GRISMR" not in input_model.meta.instrument.pupil:
         raise ValueError("NRC_TSGRISM mode only supports GRISMR and DHS pupil values.")
 
@@ -408,25 +413,50 @@ def tsgrism(input_model, reference_files):
     input_model.meta.wcsinfo.siaf_xref_sci += x_off
     input_model.meta.wcsinfo.siaf_yref_sci += y_off
 
-    xcenter = Const1D(xc)
-    xcenter.inverse = Const1D(xc)
-    ycenter = Const1D(yc)
-    ycenter.inverse = Const1D(yc)
-
     # x, y, order in goes to transform to full array location and order
-    # get the shift to full frame coordinates
-    sub_trans = subarray_transform(input_model)
-    if sub_trans is not None:
+    if dhs_long:
+        # For long wavelength DHS, existing tsgrism calibration is used,
+        # so relative y-coordinates within the stripe should be used.
+        # Set the y reference to yc, the center of the first stripe in
+        # subarray coordinates, corrected for the dither offset.
+        xform_refx = Const1D(xc)
+        xform_refx.inverse = Const1D(xc)
+        xform_refy = Const1D(yc)
+        xform_refy.inverse = Const1D(yc)
+
+        # After the specwcs models, return the reference position in full frame coordinates
+        # for this exposure to pass to the sky models. Set the inverse for y to the
+        # relative value to pass through the transform in the other direction.
+        xcenter = Const1D(xc)
+        xcenter.inverse = Const1D(xc)
+        ycenter = Const1D(yc + input_model.meta.subarray.ystart - 1)
+        ycenter.inverse = Const1D(yc)
+
         sub2direct = (
-            sub_trans & Identity(1)
-            | Mapping((0, 1, 0, 1, 2))
-            | (Identity(2) & xcenter & ycenter & Identity(1))
+            Mapping((0, 1, 0, 1, 2))
+            | (Identity(2) & xform_refx & xform_refy & Identity(1))
             | det2det
+            | (xcenter & ycenter & Identity(2))
         )
     else:
-        sub2direct = (
-            Mapping((0, 1, 0, 1, 2)) | (Identity(2) & xcenter & ycenter & Identity(1)) | det2det
-        )
+        xcenter = Const1D(xc)
+        xcenter.inverse = Const1D(xc)
+        ycenter = Const1D(yc)
+        ycenter.inverse = Const1D(yc)
+
+        # get the shift to full frame coordinates
+        sub_trans = subarray_transform(input_model)
+        if sub_trans is not None:
+            sub2direct = (
+                sub_trans & Identity(1)
+                | Mapping((0, 1, 0, 1, 2))
+                | (Identity(2) & xcenter & ycenter & Identity(1))
+                | det2det
+            )
+        else:
+            sub2direct = (
+                Mapping((0, 1, 0, 1, 2)) | (Identity(2) & xcenter & ycenter & Identity(1)) | det2det
+            )
 
     pipeline = [
         (frames["grism_detector"], sub2direct),
@@ -441,7 +471,7 @@ def tsgrism(input_model, reference_files):
 
 def dhs(input_model, reference_files):
     """
-    Create WCS pipeline for a NIRCAM Time Series DHS Grism observation.
+    Create WCS pipeline for a NIRCAM Time Series SW DHS Grism observation.
 
     Parameters
     ----------
@@ -485,48 +515,30 @@ def dhs(input_model, reference_files):
     # The first stripe starts at this value in the full frame
     stripe_offset = min([stripe_range[0] for stripe_range in stripe_ranges["full"].values()])
 
-    if "LONG" in input_model.meta.instrument.detector.upper():
-        longflag = True
-        # Because nrcalong DHS uses existing transforms, we need to mock
-        # the new structure to allow both to pass through this method.
-        subarray_stripenum = len(stripe_ranges["subarray"])
-        stripes = np.arange(1, subarray_stripenum + 1)
-        displ = [base_displ] * subarray_stripenum
-        dispx = [base_dispx] * subarray_stripenum
-        dispy = [base_dispy] * subarray_stripenum
+    # Short-wavelength regions and specwcs files must both have a stripe present
+    # for calibration to proceed. Currently, specwcs files will have transforms
+    # for all possible stripes on the detector, and we rely on the regions file
+    # to down-select to the appropriate stripes given the subarray.
+    region_stripes = np.unique(regions[regions > 0])
 
-        # Update the region map to reflect the assigned stripe IDs: input map
-        # has the same value for all stripe regions
-        for stripe, stripe_range in stripe_ranges["subarray"].items():
-            regions[stripe_range[0] : stripe_range[1]] = stripe + 1
-        detector_order_stripes = stripes
-    else:
-        longflag = False
+    # Short-wavelength GrismModels contain stripe transforms for both fieldpoints.
+    # Down-select the transform lists to the relevant entries.
+    displ, dispx, dispy, stripes = [], [], [], []
+    for i, fieldpoint in enumerate(fieldpoints):
+        if fieldpoint not in input_model.meta.aperture.pps_name:
+            continue
+        if base_stripes[i] not in region_stripes:
+            continue
+        displ.append(base_displ[i])
+        dispx.append(base_dispx[i])
+        dispy.append(base_dispy[i])
+        stripes.append(base_stripes[i])
 
-        # Short-wavelength regions and specwcs files must both have a stripe present
-        # for calibration to proceed. Currently, specwcs files will have transforms
-        # for all possible stripes on the detector, and we rely on the regions file
-        # to down-select to the appropriate stripes given the subarray.
-        region_stripes = np.unique(regions[regions > 0])
+    if len(stripes) == 0:
+        raise ValueError("No stripes present in both regions and specwcs reference files.")
 
-        # Short-wavelength GrismModels contain stripe transforms for both fieldpoints.
-        # Down-select the transform lists to the relevant entries.
-        displ, dispx, dispy, stripes = [], [], [], []
-        for i, fieldpoint in enumerate(fieldpoints):
-            if fieldpoint not in input_model.meta.aperture.pps_name:
-                continue
-            if base_stripes[i] not in region_stripes:
-                continue
-            displ.append(base_displ[i])
-            dispx.append(base_dispx[i])
-            dispy.append(base_dispy[i])
-            stripes.append(base_stripes[i])
-
-        if len(stripes) == 0:
-            raise ValueError("No stripes present in both regions and specwcs reference files.")
-
-        # Sort the stripe IDs in reverse to match read order in detector orientation
-        detector_order_stripes = sorted(stripes, reverse=True)
+    # Sort the stripe IDs in reverse to match read order in detector orientation
+    detector_order_stripes = sorted(stripes, reverse=True)
 
     # Get the shift to go from x/y in the input image to relative stripe coordinates.
     # Used in final transform from initial input x, y, order to pass through the detector
@@ -577,47 +589,29 @@ def dhs(input_model, reference_files):
         det2det = _build_grism_det2det(orders, displ[i], dispx[i], dispy[i])
         det2det = _apply_velocity_correction(det2det, velosys)
 
-        if longflag:
-            # For long wavelength DHS, existing tsgrism calibration is used,
-            # so relative y-coordinates within each stripe should be used.
-            # Set the y reference to yc, the center of the first stripe in
-            # subarray coordinates, corrected for the dither offset.
-            xform_refx = Const1D(xc)
-            xform_refx.inverse = Const1D(xc)
-            xform_refy = Const1D(yc)
-            xform_refy.inverse = Const1D(yc)
+        # TODO: specwcs is currently intended to be implemented as a relative position
+        #  within each stripe. With current reference files, this works only with
+        #  the F322W2 field position with 64 pixel stripes (e.g. PID 4453, obs 25).
+        #  Assumptions may need updating when specwcs development resumes.
 
-            # After the specwcs models, return the reference position in full frame coordinates
-            # for this exposure to pass to the sky models. Set the inverse for y to the
-            # relative value to pass through the transform in the other direction.
-            xcenter = Const1D(xc)
-            xcenter.inverse = Const1D(xc)
-            ycenter = Const1D(yc + stripe_offset)
-            ycenter.inverse = Const1D(yc)
-        else:
-            # TODO: specwcs is currently intended to be implemented as a relative position
-            #  within each stripe. With current reference files, this works only with
-            #  the F322W2 field position with 64 pixel stripes (e.g. PID 4453, obs 25).
-            #  Assumptions may need updating when specwcs development resumes.
+        # For short wavelength DHS, the trace model in specwcs encodes an absolute
+        # position within the substripe, so the reference x0, y0 values should always
+        # be 0.0 and input x and y values are offset to the start of the stripe in y.
+        # Set the inverse value to 0.0 as well: the reference value is discarded
+        # in the backward transform anyway.
+        xform_refx = Const1D(0.0)
+        xform_refx.inverse = Const1D(0.0)
+        xform_refy = Const1D(0.0)
+        xform_refy.inverse = Const1D(0.0)
 
-            # For short wavelength DHS, the trace model in specwcs encodes an absolute
-            # position within the substripe, so the reference x0, y0 values should always
-            # be 0.0 and input x and y values are offset to the start of the stripe in y.
-            # Set the inverse value to 0.0 as well: the reference value is discarded
-            # in the backward transform anyway.
-            xform_refx = Const1D(0.0)
-            xform_refx.inverse = Const1D(0.0)
-            xform_refy = Const1D(0.0)
-            xform_refy.inverse = Const1D(0.0)
-
-            # After calling the specwcs models, we'll return the reference position as
-            # x and y in full frame coordinates, to pass to the sky transforms.
-            # Set the inverse value to 0 to pass through the specwcs models appropriately
-            # in the backward transform.
-            xcenter = Const1D(xc)
-            xcenter.inverse = Const1D(0.0)
-            ycenter = Const1D(yc + stripe_offset)
-            ycenter.inverse = Const1D(0.0)
+        # After calling the specwcs models, we'll return the reference position as
+        # x and y in full frame coordinates, to pass to the sky transforms.
+        # Set the inverse value to 0 to pass through the specwcs models appropriately
+        # in the backward transform.
+        xcenter = Const1D(xc)
+        xcenter.inverse = Const1D(0.0)
+        ycenter = Const1D(yc + stripe_offset)
+        ycenter.inverse = Const1D(0.0)
 
         stripe_model = Const1D(stripe)
         stripe_model.inverse = Const1D(stripe)
