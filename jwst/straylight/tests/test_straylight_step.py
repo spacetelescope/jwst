@@ -4,7 +4,7 @@ Unit tests for straylight step configuration
 
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import CubeModel, IFUImageModel
+from stdatamodels.jwst.datamodels import CubeModel
 
 from jwst.straylight import StraylightStep
 from jwst.tests.miri_rate_helpers import miri_mrs_rate_model
