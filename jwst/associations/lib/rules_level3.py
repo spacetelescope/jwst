@@ -904,6 +904,9 @@ class Asn_Lv3TSO(AsnMixin_Science):
         )
 
         # Exclude NIRISS SOSS with a single integration or an uncalibrated filter.
+        # For stripe subarrays, the integer in the subaray name describes the stripe width
+        # Exclude exposures with nints = 2040 (n_science_rows) / stripe width
+        # E.g. for sub17stripe_soss, 2040 / 17 = 120
         not_nis_soss_invalid = Constraint(
             [
                 Constraint(
@@ -915,7 +918,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
                 Constraint(
                     [
                         DMSAttrConstraint(
-                            name="subarray", sources=["subarray"], value="SUB17STRIPE_SOSS"
+                            name="subarray", sources=["subarray"], value="sub17stripe_soss"
                         ),
                         DMSAttrConstraint(name="nints", sources=["nints"], value="120"),
                     ]
@@ -923,7 +926,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
                 Constraint(
                     [
                         DMSAttrConstraint(
-                            name="subarray", sources=["subarray"], value="SUB60STRIPE_SOSS"
+                            name="subarray", sources=["subarray"], value="sub60stripe_soss"
                         ),
                         DMSAttrConstraint(name="nints", sources=["nints"], value="34"),
                     ]
@@ -931,7 +934,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
                 Constraint(
                     [
                         DMSAttrConstraint(
-                            name="subarray", sources=["subarray"], value="SUB204STRIPE_SOSS"
+                            name="subarray", sources=["subarray"], value="sub204stripe_soss"
                         ),
                         DMSAttrConstraint(name="nints", sources=["nints"], value="10"),
                     ]
@@ -939,7 +942,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
                 Constraint(
                     [
                         DMSAttrConstraint(
-                            name="subarray", sources=["subarray"], value="SUB680STRIPE_SOSS"
+                            name="subarray", sources=["subarray"], value="sub680stripe_soss"
                         ),
                         DMSAttrConstraint(name="nints", sources=["nints"], value="3"),
                     ]
