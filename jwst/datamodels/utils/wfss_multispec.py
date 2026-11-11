@@ -19,8 +19,8 @@ def make_wfss_multiexposure(input_list):
     """
     Compile a list of extracted sources into a single binary table.
 
-    The output model will contain one binary table per exposure,
-    with each table containing all sources extracted from that exposure
+    The output model will contain one binary table per exposure, detector, and spectral order,
+    with each table containing all sources extracted from that combination
     (one row per source). The number of elements in each table row
     will be the same across all exposures, with NaNs used to pad
     shorter rows to match the longest row in the exposure.
@@ -68,7 +68,7 @@ def make_wfss_multiexposure(input_list):
                 dt = spec.spec_table.dtype.descr
                 input_datatype = [{"name": name, "datatype": str(dtype)} for name, dtype in dt]
             fname = getattr(spec.meta, "filename", None)
-            exp_number = getattr(spec.meta, "group_id", None)
+            exp_number = (getattr(spec.meta, "group_id", None), spec.detector)
 
             # if this is the first time this exposure has been encountered,
             # create a new dictionary entry for it
@@ -77,6 +77,7 @@ def make_wfss_multiexposure(input_list):
                 exposure_counter[exp_number] = {
                     "n_rows": n_rows,
                     "filename": fname,
+                    "detector": spec.detector,
                     "exposure_time": model.meta.exposure.exposure_time,  # need for combine_1d
                     "integration_time": model.meta.exposure.integration_time,  # need for combine_1d
                     "spectral_order": spec.spectral_order,
@@ -122,8 +123,8 @@ def make_wfss_multiexposure(input_list):
     # Now loop through the models and populate the tables
     for model in results_list:
         for spec in model.spec:
-            # ensure data goes to correct exposure table based on group_id attribute
-            exp_num = spec.meta.group_id
+            # Ensure data goes to the correct exposure and detector table.
+            exp_num = (spec.meta.group_id, spec.detector)
             exposure_idx = exposure_numbers.index(exp_num)
             fltdata = fltdata_by_exposure[exposure_idx]
             n_rows = n_rows_by_exposure[exposure_idx]
@@ -158,7 +159,8 @@ def make_wfss_multiexposure(input_list):
 
         # copy metadata
         ext.filename = exposure_counter[exposure_number]["filename"]
-        ext.group_id = exposure_number
+        ext.group_id = exposure_number[0]
+        ext.detector = exposure_counter[exposure_number]["detector"]
         ext.dispersion_direction = example_spec.dispersion_direction
         ext.spectral_order = exposure_counter[exposure_number]["spectral_order"]
         ext.exposure_time = exposure_counter[exposure_number]["exposure_time"]
