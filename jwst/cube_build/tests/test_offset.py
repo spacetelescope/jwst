@@ -168,7 +168,7 @@ def test_offset_file_units(tmp_cwd, miri_ifushort_short_2files, offset_file_arcm
     input_models = miri_ifushort_short_2files
 
     step.offset_file = offset_file_arcmin
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=r"Offset file is not correct."):
         step.check_offset_file(input_models)
 
 

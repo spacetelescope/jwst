@@ -1,21 +1,20 @@
 """Mock spectral data in cal format."""
 
 import numpy as np
-from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
-from jwst.assign_wcs.tests.test_miri import (
-    create_datamodel_cube,
-    create_hdul,
-    create_hdul_lrs_slitless,
-)
-from jwst.assign_wcs.tests.test_nirspec import (
-    create_nirspec_fs_file,
-    create_nirspec_ifu_file,
-    create_nirspec_mos_file,
-)
 from jwst.extract_2d.extract_2d_step import Extract2dStep
+from jwst.tests.miri_rate_helpers import (
+    miri_lrs_slit_rate_model,
+    miri_lrs_slitless_rate_model,
+    miri_mrs_rate_model,
+)
+from jwst.tests.nirspec_rate_helpers import (
+    nirspec_fs_rate_model,
+    nirspec_ifu_rate_model,
+    nirspec_mos_rate_model,
+)
 
 __all__ = [
     "miri_lrs_slit_cal_model",
@@ -38,26 +37,15 @@ def miri_lrs_slit_cal_model():
     model : `~stdatamodels.jwst.datamodels.SlitModel`
         The LRS slit datamodel.
     """
-    hdul = create_hdul("MIRIMAGE", "ANY", "ANY")
-    model = datamodels.ImageModel(hdul)
-    hdul.close()
+    model = miri_lrs_slit_rate_model()
 
-    shape = (1024, 1032)
-    model.data = np.zeros(shape)
+    shape = model.data.shape
     model.err = np.zeros(shape)
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.var_poisson = np.zeros(shape)
     model.var_rnoise = np.zeros(shape)
 
-    # Add metadata needed for LRS FS
-    model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
-    model.meta.wcsinfo.v3yangle = 0.0
-    model.meta.wcsinfo.vparity = -1
-    model.meta.dither.x_offset = 0.0
-    model.meta.dither.y_offset = 0.0
-
-    # Assign WCS
-    model = AssignWcsStep.call(model)
+    # Reassign model type
     model = datamodels.SlitModel(model)
 
     return model
@@ -74,15 +62,12 @@ def miri_lrs_slitless_cal_model():
     model : `~stdatamodels.jwst.datamodels.SlitModel`
         The LRS slitless datamodel.
     """
-    shape = (5, 416, 72)
-    hdul = create_hdul_lrs_slitless()
-    cube_model = create_datamodel_cube(hdul, shape)
-    hdul.close()
+    model = miri_lrs_slitless_rate_model()
 
-    model = datamodels.SlitModel(cube_model)
-    cube_model.close()
+    # Reassign model type
+    model = datamodels.SlitModel(model)
 
-    model.data = np.zeros(shape)
+    shape = model.data.shape
     model.err = np.zeros(shape)
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.var_poisson = np.zeros(shape)
@@ -114,19 +99,21 @@ def miri_mrs_cal_model(detector="MIRIFUSHORT", channel="12", band="SHORT", shape
     model : `~stdatamodels.jwst.datamodels.IFUImageModel`
         The MRS datamodel.
     """
-    hdul = create_hdul(detector=detector, channel=channel, band=band)
-    model = datamodels.IFUImageModel(hdul)
-    hdul.close()
+    # Make a rate model, but don't assign a WCS object
+    model = miri_mrs_rate_model(
+        detector=detector, channel=channel, band=band, shape=shape, with_wcs=False
+    )
 
-    # Add data before calling AssignWCS: the s_region depends on it existing
-    model.data = np.ones(shape)
+    # Run assign_wcs directly: some tests need the full step processing
     model = AssignWcsStep.call(model)
 
+    model.data[:] = 1.0
     model.err = 0.01 * model.data
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.var_poisson = np.zeros(shape)
     model.var_rnoise = np.zeros(shape)
     model.var_flat = np.zeros(shape)
+
     return model
 
 
@@ -150,11 +137,7 @@ def nirspec_ifu_cal_model(wcs_style="coordinates"):
         The IFU datamodel.
     """
     shape = (2048, 2048)
-    hdul = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    model = datamodels.IFUImageModel(hdul)
-    hdul.close()
+    model = nirspec_ifu_rate_model(with_wcs=False)
 
     # assign a WCS
     if wcs_style == "coordinates":
@@ -186,13 +169,7 @@ def nirspec_mos_cal_model():
     model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The MOS datamodel.
     """
-    hdul = create_nirspec_mos_file()
-    model = datamodels.ImageModel(hdul)
-    hdul.close()
-
-    msaconfl = get_pkg_data_filename("data/msa_configuration.fits", package="jwst.assign_wcs.tests")
-    model.meta.instrument.msa_metadata_file = msaconfl
-    model.meta.instrument.msa_metadata_id = 12
+    model = nirspec_mos_rate_model(with_wcs=False)
 
     shape = (2048, 2048)
     model.data = np.zeros(shape)
@@ -224,9 +201,7 @@ def nirspec_slit_cal_model():
     model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
         The FS datamodel.
     """
-    hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
-    model = datamodels.ImageModel(hdul)
-    hdul.close()
+    model = nirspec_fs_rate_model(with_wcs=False)
 
     shape = (2048, 2048)
     model.data = np.ones(shape)

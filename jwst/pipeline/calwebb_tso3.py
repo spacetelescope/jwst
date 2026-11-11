@@ -46,7 +46,6 @@ class Tso3Pipeline(Pipeline):
         "photom": photom_step.PhotomStep,
         "white_light": white_light_step.WhiteLightStep,
     }
-    reference_file_types = ["gain", "readnoise"]
 
     def process(self, input_data):
         """

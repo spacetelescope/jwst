@@ -364,7 +364,11 @@ spectral overlap between detector pixels and cube voxels as a function of wavele
 The spatial extent of each detector pixel
 volume is determined from the combination of the along-slice pixel size and the IFU slice width, both of which will be rotated at some angle with respect
 to the output voxel grid of the final data cube. The spectral extent of each detector pixel volume is determined by the wavelength range across
-the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect to the detector pixel grid).
+the pixel in the dimension most closely matched to the dispersion axis (i.e., neglecting small tilts of the dispersion direction with respect
+to the detector pixel grid). When the variance weighting option is enabled with the drizzle method, an additional inverse weighting based on
+the readnoise variance of each detector pixel is applied to this product, downweighting pixels with higher readnoise relative to those with
+lower readnoise. This is an experimental option, not yet recommended for general use.
+
 For more details on this method, see `A 3D Drizzle Algorithm for JWST and Practical Application to the MIRI Medium Resolution Spectrometer,
 Law, D. R., et al. 2023, AJ, 166, 45 <https://iopscience.iop.org/article/10.3847/1538-3881/acdddc>`_.
 

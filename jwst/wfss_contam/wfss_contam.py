@@ -358,9 +358,9 @@ def _fit_spectral_shape(
     Parameters
     ----------
     observed_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
-        Observed cutout whose ``.data`` is used as the target for the fit.
+        Observed cutout whose ``.contamcorr_data`` is used as the target for the fit.
         If ``n_iterations > 1``, this holds the contamination-corrected data
-        from the previous iteration.
+        from the previous iteration. The original ``.data`` is left unchanged.
     simul_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
         Simulated cutout, already backplane-matched to ``observed_cutout``.
         Its ``.data`` attribute is updated in-place with the spectrally fitted result.
@@ -430,7 +430,8 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
     simul_data : np.ndarray
         The full-frame simulated data.
     original_data : list
-        List of original observed data arrays.
+        List of original observed data arrays, retained as the baseline for
+        computing ``cutout.contamcorr_data``.
 
     Returns
     -------
@@ -446,7 +447,7 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
         else:
             simul_all_cut = _cut_frame_to_match_cutout(simul_data, cutout)
             contam_cut = simul_all_cut - this_simul.data
-        cutout.data = original_data[i] - contam_cut
+        cutout.contamcorr_data = original_data[i] - contam_cut
         contam_cuts.append(contam_cut)
     return contam_cuts
 
@@ -501,13 +502,15 @@ def _reject_off_detector_bounds(
     xmin, xmax, ymin, ymax = get_bounding_box_extents(
         ra_corners, dec_corners, sky_to_grism, wlmin, wlmax, order
     )
+    infinite = ~np.isfinite(np.asarray([xmin, xmax, ymin, ymax]))
+    any_non_finite = np.sum(infinite, axis=0) > 0
 
     # check against bounds
     xmin_too_big = xmin > subarray_xsize - 1
     xmax_too_small = xmax < 0
     ymin_too_big = ymin > subarray_ysize - 1
     ymax_too_small = ymax < 0
-    bad = xmin_too_big | xmax_too_small | ymin_too_big | ymax_too_small
+    bad = xmin_too_big | xmax_too_small | ymin_too_big | ymax_too_small | any_non_finite
     return ~bad
 
 
@@ -524,6 +527,8 @@ def contam_corr(
     n_iterations=1,
     l2_alpha=0.1,
     rejection_threshold=0.1,
+    pdt_spacing=None,
+    pdt_wl_oversample=1,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -535,8 +540,9 @@ def contam_corr(
         make a copy before calling this function, if needed.
     waverange : `~stdatamodels.jwst.datamodels.WavelengthrangeModel`
         Wavelength range reference file model
-    photom : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel` or \
-             `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
+    photom : `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`, \
+             `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`, \
+             or `~stdatamodels.jwst.datamodels.MirWfssPhotomModel`
         Photom (flux cal) reference file model
     max_cores : str or int
         Number of cores to use for multiprocessing. If set to 'none'
@@ -574,11 +580,22 @@ def contam_corr(
     rejection_threshold : float, optional
         Threshold for rejecting fits based on the fitted constant term coefficient, passed to
         `~jwst.wfss_contam.wavefit.fit_cutout_by_basis_images`.
+    pdt_spacing : int, optional
+        Pixel spacing along each of the x, y, and wavelength axes when
+        building the PDT. If None, the exact grism-to-detector transform
+        will be evaluated at every pixel.
+    pdt_wl_oversample : float, optional
+        Oversampling factor for the pixel dispersion table wavelength grid, relative to the
+        native dispersion scale. If None, the lookup table's wavelength grid
+        exactly matches the dispersal wavelength grid, allowing wavelength-axis
+        interpolation to be skipped entirely when evaluating the PDT. Only
+        used if ``pdt_spacing`` is not None.
 
     Returns
     -------
     output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
-        A copy of the input_model that has been corrected
+        A copy of the input_model with contamination-corrected data stored in
+        each slit's ``contamcorr_data`` attribute. The original ``data`` arrays are unchanged.
     simul_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Full-frame simulated image of the grism exposure
     """
@@ -624,6 +641,10 @@ def contam_corr(
     # Get the FILTER and PUPIL wheel positions, for use later
     filter_kwd = input_model.meta.instrument.filter
     pupil_kwd = input_model.meta.instrument.pupil
+    # subarray is used for MIRI photom ref file selection and model size
+    subarray_kwd = input_model.meta.subarray.name
+    subarray_xsize = input_model.meta.subarray.xsize
+    subarray_ysize = input_model.meta.subarray.ysize
 
     # NOTE: The NIRCam WFSS mode uses filters that are in the FILTER wheel
     # with gratings in the PUPIL wheel. NIRISS WFSS mode, however, is just
@@ -640,7 +661,7 @@ def contam_corr(
     source_catalog = read_source_catalog(input_model.meta.source_catalog)
     if magnitude_limit is not None:
         order1_wave_response, order1_sens_response = get_photom_data(
-            photom, filter_kwd, pupil_kwd, order=1
+            photom, filter_kwd, pupil_kwd, subarray_kwd, order=1
         )
         min_relresp_order1 = _find_min_relresp(order1_wave_response, order1_sens_response)
 
@@ -651,7 +672,7 @@ def contam_corr(
             seg_model.data,
             grism_wcs,
             direct_image_wcs,
-            boundaries=[0, 2047, 0, 2047],
+            boundaries=[0, subarray_xsize - 1, 0, subarray_ysize - 1],
             max_cpu=ncpus,
             max_pixels_per_chunk=max_pixels_per_chunk,
             oversample_factor=oversample_factor,
@@ -665,7 +686,9 @@ def contam_corr(
         wmin = wavelength_range[order][0]
         wmax = wavelength_range[order][1]
         log.debug(f"wmin={wmin}, wmax={wmax} for order {order}")
-        sens_waves, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
+        sens_waves, sens_response = get_photom_data(
+            photom, filter_kwd, pupil_kwd, subarray_kwd, order
+        )
 
         # Build Legendre basis flux models for disperse() if polynomial fitting is requested.
         # wmin/wmax are order-specific, so construction must happen inside the order loop.
@@ -730,6 +753,8 @@ def contam_corr(
             sens_response,
             selected_ids,
             basis_models=basis_models,
+            pdt_spacing=pdt_spacing,
+            pdt_wl_oversample=pdt_wl_oversample,
         )
 
     if no_sources:
@@ -738,18 +763,16 @@ def contam_corr(
         )
         return input_model, None
 
-    # Initialize output model
-    output_model = datamodels.MultiSlitModel()
+    # Copy the input model so that adding result attributes does not modify it,
+    # then retain only cutouts with simulated counterparts.
+    output_model = input_model.copy()
+    for i in reversed(range(len(output_model.slits))):
+        if output_model.slits[i].source_id not in obs.source_ids:
+            del output_model.slits[i]
 
-    # Copy over matching cutouts.
-    # Note that this makes a reference to input cutouts, not a deep copy,
-    # so the input data may be modified by this function.  The input data is
-    # copied in the calling step, as needed.
-    good_cutouts = [cutout for cutout in input_model.slits if cutout.source_id in obs.source_ids]
-    output_model.slits.extend(good_cutouts)
-
-    # Hold onto original input data so iterative corrections always start from the same baseline.
-    original_data = [np.array(cutout.data) for cutout in output_model.slits]
+    # Hold onto the unchanged input data so iterative corrections always start
+    # from the same baseline. Corrected data is stored separately in contamcorr_data.
+    original_data = [cutout.data for cutout in output_model.slits]
 
     if n_iterations > 1 and polyfit_degree is None:
         log.warning(
@@ -778,8 +801,9 @@ def contam_corr(
             )
 
     # Save the brightness of the simulation for each spectrum for sorting later.
-    # _fit_spectral_shape only reassigns .data (never modifies fluxmodel_N), so
-    # the flat data captures the intrinsic source flux independently of any fitted shape.
+    # _fit_spectral_shape only reassigns the simulated cutout's .data (never
+    # modifies fluxmodel_N), so the flat data captures the intrinsic source flux
+    # independently of any fitted shape.
     flat_matched_sum = [
         np.nansum(np.array(s.data)) if s is not None else None for s in matched_flat_simuls
     ]
@@ -823,7 +847,7 @@ def contam_corr(
                 # For fainter sources, it will be whatever was in the previous iteration,
                 # i.e., flat-spectrum for the first iteration.
                 simul_all_cut = _cut_frame_to_match_cutout(simul_data, cutout)
-                cutout.data = original_data[i] - (simul_all_cut - matched_flat.data)
+                cutout.contamcorr_data = original_data[i] - (simul_all_cut - matched_flat.data)
 
                 if _fit_spectral_shape(
                     cutout,

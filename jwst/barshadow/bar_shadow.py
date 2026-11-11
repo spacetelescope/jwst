@@ -193,8 +193,10 @@ def _calc_correction(slitlet, barshadow_model, source_type):
 
     # Interpolate the bar shadow correction for non-Nan pixels
     correction = datamodels.SlitModel()
-    correction.data = ndimage.map_coordinates(
-        shadow, [yrow, wcol], cval=np.nan, order=1, mode="nearest"
+    correction.data = np.full(yrow.shape, np.nan)
+    is_finite = np.isfinite(yrow) & np.isfinite(wcol)
+    correction.data[is_finite] = ndimage.map_coordinates(
+        shadow, [yrow[is_finite], wcol[is_finite]], cval=np.nan, order=1, mode="nearest"
     )
 
     return correction

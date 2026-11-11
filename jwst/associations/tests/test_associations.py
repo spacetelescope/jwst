@@ -34,7 +34,7 @@ def test_read_assoc_defs_fromdefault():
 
 def test_registry_backref():
     rules = AssociationRegistry()
-    for name, rule in rules.items():
+    for rule in rules.values():
         assert rule.registry == rules
 
 

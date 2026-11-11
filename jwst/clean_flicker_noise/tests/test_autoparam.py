@@ -39,6 +39,7 @@ def test_image_high_mask_high_slope(tmp_path, caplog, instrument):
     flat = helpers.make_flat_model(image)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
+    flat.close()
 
     with LoggingContext(autoparam.log, level=logging.DEBUG):
         if instrument == "NIS":
@@ -66,6 +67,7 @@ def test_image_high_mask_low_slope(tmp_path, caplog, instrument):
     flat = helpers.make_flat_model(image, value=1.0)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
+    flat.close()
 
     with LoggingContext(autoparam.log, level=logging.DEBUG):
         if instrument == "NIS":
@@ -94,6 +96,7 @@ def test_image_low_mask(tmp_path, caplog, instrument):
     flat = helpers.make_flat_model(image, value=1.0)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
+    flat.close()
 
     with LoggingContext(autoparam.log, level=logging.DEBUG):
         if instrument == "NIS":
@@ -148,6 +151,7 @@ def test_niriss_image_high_offset(tmp_path, caplog):
     flat = helpers.make_flat_model(image, shape=(2048, 2048), value=1.0)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
+    flat.close()
 
     expected = {"apply_flat_field": True, "background_method": "median", "fit_by_channel": True}
 
@@ -194,6 +198,7 @@ def test_niriss_image_high_mask_high_offset_high_slope(tmp_path, caplog):
     flat.data /= np.nanmedian(flat.data)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
+    flat.close()
 
     expected = {"apply_flat_field": True, "background_method": "model", "fit_by_channel": False}
 
@@ -221,6 +226,7 @@ def test_niriss_image_high_mask_high_offset_low_slope(tmp_path, caplog):
     flat = helpers.make_flat_model(image, shape=(2048, 2048), value=1.0)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
+    flat.close()
 
     expected = {"apply_flat_field": True, "background_method": "median", "fit_by_channel": False}
 
@@ -251,6 +257,7 @@ def test_niriss_image_low_mask_high_slope(tmp_path, caplog):
     flat = helpers.make_flat_model(image, shape=(2048, 2048), value=1.0)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
+    flat.close()
 
     expected = {"apply_flat_field": True, "background_method": "model", "fit_by_channel": True}
 
@@ -276,6 +283,7 @@ def test_niriss_image_low_mask_medium_slope_high_ratio(tmp_path, caplog):
     flat = helpers.make_flat_model(image, shape=(100, 100), value=1.0)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
+    flat.close()
 
     expected = {"apply_flat_field": True, "background_method": "median", "fit_by_channel": False}
 
@@ -302,6 +310,7 @@ def test_niriss_image_low_mask_medium_slope_low_ratio(tmp_path, caplog):
     flat = helpers.make_flat_model(image, shape=(100, 100), value=1.0)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
+    flat.close()
 
     expected = {"apply_flat_field": True, "background_method": "model", "fit_by_channel": False}
 

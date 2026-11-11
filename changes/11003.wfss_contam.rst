@@ -1,0 +1,1 @@
+Output contamination-corrected observed data now resides in a new attribute contamcorr_data (FITS extension CONTAMCORR_SCI) instead of directly modifying the input data.

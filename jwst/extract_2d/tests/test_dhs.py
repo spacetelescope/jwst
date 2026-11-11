@@ -4,14 +4,9 @@ import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.tests.helpers import (
-    NRCA1_DHS_STRIPE_IDS,
-    make_mock_dhs_nrca1_rate,
-    make_mock_dhs_nrcalong_rate,
-)
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.grisms import extract_tso_object
+from jwst.tests import nircam_rate_helpers as helpers
 
 
 def get_reference_files(datamodel):
@@ -24,27 +19,15 @@ def get_reference_files(datamodel):
 
 
 @pytest.fixture
-def mock_dhs_nrca1_rate():
-    """Mock DHS NRCA1 rate CubeModel."""
-    return make_mock_dhs_nrca1_rate()
-
-
-@pytest.fixture
-def mock_dhs_nrcalong_rate():
-    """Mock DHS NRCALONG rate CubeModel."""
-    return make_mock_dhs_nrcalong_rate()
-
-
-@pytest.fixture
-def dhs_nrca1_wcs_model(mock_dhs_nrca1_rate):
+def dhs_nrca1_wcs_model():
     """NRCA1 DHS CubeModel with WCS assigned."""
-    return AssignWcsStep.call(mock_dhs_nrca1_rate)
+    return helpers.nircam_dhs_nrca1_sub260_rate_model()
 
 
 @pytest.fixture
-def dhs_nrcalong_wcs_model(mock_dhs_nrcalong_rate):
+def dhs_nrcalong_wcs_model():
     """NRCALONG DHS CubeModel with WCS assigned."""
-    return AssignWcsStep.call(mock_dhs_nrcalong_rate)
+    return helpers.nircam_dhs_nrcalong_sub260_rate_model()
 
 
 def test_extract_tso_dhs_nrca1(dhs_nrca1_wcs_model):
@@ -53,8 +36,10 @@ def test_extract_tso_dhs_nrca1(dhs_nrca1_wcs_model):
     result = extract_tso_object(dhs_nrca1_wcs_model, reference_files=refs)
 
     assert isinstance(result, datamodels.MultiSlitModel)
-    assert len(result.slits) == len(NRCA1_DHS_STRIPE_IDS)
-    assert {slit.name for slit in result.slits} == {str(sid) for sid in NRCA1_DHS_STRIPE_IDS}
+    assert len(result.slits) == len(helpers.NRCA1_DHS_STRIPE_IDS)
+    assert {slit.name for slit in result.slits} == {
+        str(sid) for sid in helpers.NRCA1_DHS_STRIPE_IDS
+    }
     full_width = dhs_nrca1_wcs_model.meta.subarray.xsize
     for slit in result.slits:
         assert slit.xsize == full_width
@@ -92,7 +77,7 @@ def test_extract_2d_step_dhs_nrca1(dhs_nrca1_wcs_model):
 
     assert result.meta.cal_step.extract_2d == "COMPLETE"
     assert isinstance(result, datamodels.MultiSlitModel)
-    assert len(result.slits) == len(NRCA1_DHS_STRIPE_IDS)
+    assert len(result.slits) == len(helpers.NRCA1_DHS_STRIPE_IDS)
     assert result is not dhs_nrca1_wcs_model
     assert dhs_nrca1_wcs_model.meta.cal_step.extract_2d is None
 
@@ -103,6 +88,6 @@ def test_extract_2d_step_dhs_nrcalong(dhs_nrcalong_wcs_model):
 
     assert result.meta.cal_step.extract_2d == "COMPLETE"
     assert isinstance(result, datamodels.MultiSlitModel)
-    assert len(result.slits) == len(NRCA1_DHS_STRIPE_IDS)
+    assert len(result.slits) == len(helpers.NRCA1_DHS_STRIPE_IDS)
     assert result is not dhs_nrcalong_wcs_model
     assert dhs_nrcalong_wcs_model.meta.cal_step.extract_2d is None

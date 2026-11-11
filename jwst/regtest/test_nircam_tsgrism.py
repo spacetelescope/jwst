@@ -90,7 +90,7 @@ def test_nircam_tsgrism_stage2_offsetSR(run_pipeline_offsetSR, fitsdiff_default_
     "suffix", ["calints", "extract_2d", "flat_field", "o002_crfints", "srctype", "x1dints"]
 )
 def test_nircam_tsgrism_stage2(run_spec2_pipeline, fitsdiff_default_kwargs, suffix):
-    """Regression test of tso-spec2 pipeline performed on NIRCam TSO grism data."""
+    """Regression test of spec2 pipeline performed on NIRCam TSO grism data."""
     rtdata = run_spec2_pipeline
     rtdata.input = "jw01366002001_04103_00001-seg001_nrcalong_rateints.fits"
     output = "jw01366002001_04103_00001-seg001_nrcalong_" + suffix + ".fits"

@@ -140,7 +140,7 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
     assert isinstance(result, dm.WFSSMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
-    for i, exp in enumerate(result.spec):
+    for exp in result.spec:
         tab = exp.spec_table[0]
 
         # output wavelength is the same as input
@@ -367,15 +367,29 @@ def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
         output_dir=str(tmp_path),
         suffix="x1d",
     )
-    # test that optional contam column got handled
-    np.testing.assert_allclose(result.spec[0].spec_table["contam_flux"], 150.0)
-    np.testing.assert_allclose(result.spec[0].spec_table["contam_surf_bright"], 3.0)
+    # test that optional contam columns got handled
+    flux = result.spec[0].spec_table["flux"]
+    contam = result.spec[0].spec_table["contam"]
+    contamcorr = result.spec[0].spec_table["contamcorr_flux"]
+    np.testing.assert_allclose(contam, 150.0)
+    # ensure that the sum of contam and corr equals the un-contamintated flux.
+    np.testing.assert_allclose(contam + contamcorr, flux, rtol=1e-6)
+
+    sb = result.spec[0].spec_table["surf_bright"]
+    corr_sb = result.spec[0].spec_table["contamcorr_surf_bright"]
+    contamsb = result.spec[0].spec_table["contamsb"]
+    np.testing.assert_allclose(contamsb, 3.0)
+    # ensure that the sum of contam and corr equals the un-contamintated flux.
+    np.testing.assert_allclose(contamsb + corr_sb, sb, rtol=1e-6)
+
     # test that the index of these columns is as expected
     names = result.spec[0].spec_table.dtype.names
     flux_idx = names.index("FLUX")
     sb_idx = names.index("SURF_BRIGHT")
-    assert names[flux_idx + 1] == "CONTAM_FLUX"
-    assert names[sb_idx + 1] == "CONTAM_SURF_BRIGHT"
+    assert names[flux_idx + 1] == "CONTAM"
+    assert names[flux_idx + 2] == "CONTAMCORR_FLUX"
+    assert names[sb_idx + 1] == "CONTAMSB"
+    assert names[sb_idx + 2] == "CONTAMCORR_SURF_BRIGHT"
     result.close()
 
     fname = "test_x1d.fits"
@@ -431,7 +445,7 @@ def test_extract_nircam_dhs(mock_nircam_dhs, simple_wcs):
     assert isinstance(result, dm.TSOMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
-    for i, exp in enumerate(result.spec):
+    for exp in result.spec:
         tab = exp.spec_table[0]
 
         # output wavelength is the same as input

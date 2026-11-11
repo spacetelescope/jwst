@@ -77,6 +77,7 @@ class TweakRegStep(Step):
         deblend = boolean(default=True) # deblend sources?
 
         # align wcs options
+        group_by_visit = boolean(default=True)  # Group relative alignment by visit instead of exposure
         enforce_user_order = boolean(default=False) # Align images in user specified order?
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
@@ -152,8 +153,18 @@ class TweakRegStep(Step):
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")
 
-        # determine number of groups (used below)
-        n_groups = len(images.group_names)
+        # determine the groups from the visit ID if needed (used below)
+        if self.group_by_visit:
+            groups = []
+            with images:
+                for i in range(len(images)):
+                    meta = images.read_metadata(i)
+                    visit_id = meta.get("meta.observation.visit_id", "NONE")
+                    groups.append(f"visit_{visit_id}")
+            n_groups = len(set(groups))
+        else:
+            groups = None
+            n_groups = len(images.group_names)
 
         use_custom_catalogs = self.use_custom_catalogs
 
@@ -195,8 +206,8 @@ class TweakRegStep(Step):
             # since we're not aligning to a reference catalog, check if we
             # are saving catalogs, if not, and we have 1 group, skip
             if not self.save_catalogs and n_groups == 1:
-                # we need at least two exposures to perform image alignment
-                log.warning("At least two exposures are required for image alignment.")
+                # we need at least two groups to perform image alignment
+                log.warning("At least two groups are required for image alignment.")
                 log.warning("Nothing to do. Skipping 'TweakRegStep'...")
                 record_step_status(images, "tweakreg", success=False)
                 return images
@@ -261,7 +272,11 @@ class TweakRegStep(Step):
                     # FIXME this modifies the input_model
                     image_model.meta.tweakreg_catalog = self._write_catalog(catalog, filename)
 
-                # construct the corrector since the model is open (and already has a group_id)
+                # construct the corrector since the model is open
+                if groups is None:
+                    group_id = image_model.meta.group_id
+                else:
+                    group_id = groups[model_index]
                 catalog = twk.filter_catalog_by_bounding_box(
                     catalog, image_model.meta.wcs.bounding_box
                 )
@@ -276,7 +291,7 @@ class TweakRegStep(Step):
                     meta={
                         "catalog": catalog,
                         "name": catalog.meta.get("name"),
-                        "group_id": image_model.meta.group_id,
+                        "group_id": group_id,
                     },
                 )
                 correctors[model_index] = corrector

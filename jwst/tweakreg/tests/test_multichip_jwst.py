@@ -288,6 +288,7 @@ def test_multichip_alignment_step_rel(monkeypatch):
     m1.meta.observation.program_number = "1"
     m1.meta.observation.visit_number = "1"
     m1.meta.observation.visit_group = "1"
+    m1.meta.observation.visit_id = "1"
     m1.meta.observation.sequence_id = "1"
     m1.meta.observation.activity_id = "1"
     m1.meta.observation.exposure_number = "1"
@@ -317,6 +318,7 @@ def test_multichip_alignment_step_rel(monkeypatch):
     m2.meta.observation.program_number = "1"
     m2.meta.observation.visit_number = "1"
     m2.meta.observation.visit_group = "1"
+    m2.meta.observation.visit_id = "1"
     m2.meta.observation.sequence_id = "1"
     m2.meta.observation.activity_id = "1"
     m2.meta.observation.exposure_number = "1"
@@ -345,6 +347,7 @@ def test_multichip_alignment_step_rel(monkeypatch):
     mr.meta.observation.program_number = "0"
     mr.meta.observation.visit_number = "0"
     mr.meta.observation.visit_group = "0"
+    mr.meta.observation.visit_id = "0"
     mr.meta.observation.sequence_id = "0"
     mr.meta.observation.activity_id = "0"
     mr.meta.observation.exposure_number = "0"
@@ -369,7 +372,6 @@ def test_multichip_alignment_step_rel(monkeypatch):
     mr.meta.wcs.bounding_box = ((x.min() - 0.5, x.max() + 0.5), (y.min() - 0.5, y.max() + 0.5))
 
     mc = ModelContainer([mr, m1, m2])
-    mc.models_grouped
 
     step = tweakreg_step.TweakRegStep()
     step.fitgeometry = "general"
@@ -427,6 +429,7 @@ def test_multichip_alignment_step_abs(monkeypatch):
     mr.meta.observation.program_number = "0"
     mr.meta.observation.visit_number = "0"
     mr.meta.observation.visit_group = "0"
+    mr.meta.observation.visit_id = "0"
     mr.meta.observation.sequence_id = "0"
     mr.meta.observation.activity_id = "0"
     mr.meta.observation.exposure_number = "0"
@@ -447,7 +450,6 @@ def test_multichip_alignment_step_abs(monkeypatch):
     mr.meta.wcs.bounding_box = ((x.min() - 0.5, x.max() + 0.5), (y.min() - 0.5, y.max() + 0.5))
 
     mc = ModelContainer([mr])
-    mc.models_grouped
 
     step = tweakreg_step.TweakRegStep()
     step.fitgeometry = "general"

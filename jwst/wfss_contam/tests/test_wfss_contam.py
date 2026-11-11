@@ -5,7 +5,6 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.table import QTable
 
-from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs
 from jwst.wfss_contam.observations import SimulatedCutout
 from jwst.wfss_contam.wfss_contam import (
     CutoutOverlapError,
@@ -263,7 +262,7 @@ def _iter_geometry():
 
 
 @pytest.fixture
-def two_source_input(tmp_cwd, grism_wcs):
+def two_source_input(tmp_cwd, grism_wcs, imaging_wcs):
     """
     MultiSlitModel with two cutouts whose grism traces partially overlap.
 
@@ -286,6 +285,8 @@ def two_source_input(tmp_cwd, grism_wcs):
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.filter = "GR150C"
     model.meta.instrument.pupil = "F200W"
+    model.meta.subarray.xsize = _ITER_FRAME_SHAPE[1]
+    model.meta.subarray.ysize = _ITER_FRAME_SHAPE[0]
 
     for sid, xstart, ystart, data in [
         (1, _ITER_XA, _ITER_YA, obs_A_data),
@@ -304,7 +305,7 @@ def two_source_input(tmp_cwd, grism_wcs):
         model.slits.append(slit)
 
     direct = dm.ImageModel(data=np.ones(_ITER_FRAME_SHAPE))
-    direct.meta.wcs = create_imaging_wcs("F200W")
+    direct.meta.wcs = imaging_wcs
     direct.save("direct_image.fits")
     seg = dm.SegmentationMapModel(data=np.zeros(_ITER_FRAME_SHAPE, dtype=np.uint32))
     seg.save("seg_map.fits")
@@ -396,8 +397,10 @@ def test_iteration_improves_contamination_correction(
     )
 
     def _run(n_iter, polyfit_degree):
+        input_model = two_source_input.copy()
+        original_data = [np.array(s.data) for s in input_model.slits]
         result, *_ = contam_corr(
-            two_source_input.copy(),
+            input_model,
             wavelengthrange_ref_model,
             photom_ref_model_niriss,
             "none",
@@ -405,7 +408,17 @@ def test_iteration_improves_contamination_correction(
             polyfit_degree=polyfit_degree,
             n_iterations=n_iter,
         )
-        return [np.array(s.data) for s in result.slits]
+        for original, input_slit, output_slit in zip(
+            original_data, input_model.slits, result.slits, strict=True
+        ):
+            np.testing.assert_array_equal(input_slit.data, original)
+            np.testing.assert_array_equal(output_slit.data, original)
+            assert hasattr(output_slit, "contamcorr_data")
+            assert np.any(output_slit.contam != 0)
+            np.testing.assert_allclose(
+                output_slit.contam + output_slit.contamcorr_data, original, rtol=1e-6
+            )
+        return [np.array(s.contamcorr_data) for s in result.slits]
 
     corrected_flat = _run(1, polyfit_degree=None)
     corrected_1iter = _run(1, polyfit_degree=1)

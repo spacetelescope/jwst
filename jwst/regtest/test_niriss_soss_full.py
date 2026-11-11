@@ -12,7 +12,7 @@ def run_tso_spec2(rtdata_module):
     """Run stage 2 pipeline on NIRISS SOSS TSO data with FULL subarray."""
     rtdata = rtdata_module
 
-    # Run tso-spec2 pipeline on a _rateints file
+    # Run spec2 pipeline on a _rateints file
     rtdata.get_data("niriss/soss/jw02113004001_02101_00001-seg001_nis_rateints.fits")
     args = [
         "calwebb_spec2",

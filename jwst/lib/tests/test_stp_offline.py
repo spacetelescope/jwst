@@ -17,7 +17,7 @@ def test_method_string(method):
 
 def test_change_engdb_url_fail():
     """Test changing the engineering database by call"""
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="Cannot open engineering DB"):
         stp.get_pointing(
             Time("2019-06-03T17:25:40", format="isot").mjd,
             Time("2019-06-03T17:25:56", format="isot").mjd,

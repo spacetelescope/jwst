@@ -1768,10 +1768,13 @@ def create_extraction(
                 extract_params,
                 data_attr="contam",
             )
-            contam_flux = contam_results[0]
+            contam = contam_results[0]
+            contamcorr_flux = sum_flux - contam
         else:
-            contam_flux = np.full_like(sum_flux, np.nan)
-        contam_surf_bright = np.full_like(sum_flux, np.nan)
+            contam = np.full_like(sum_flux, np.nan)
+            contamcorr_flux = np.full_like(sum_flux, np.nan)
+        contamsb = np.full_like(sum_flux, np.nan)
+        contamcorr_surf_bright = np.full_like(sum_flux, np.nan)
 
         # Save the scene model and residual
         if save_scene_model:
@@ -1799,7 +1802,8 @@ def create_extraction(
             sb_var_poisson = f_var_poisson / npixels_squared
             sb_var_rnoise = f_var_rnoise / npixels_squared
             sb_var_flat = f_var_flat / npixels_squared
-            contam_surf_bright = contam_flux / npixels_temp
+            contamsb = contam / npixels_temp
+            contamcorr_surf_bright = contamcorr_flux / npixels_temp
         background /= npixels_temp
         b_var_poisson = b_var_poisson / npixels_squared
         b_var_rnoise = b_var_rnoise / npixels_squared
@@ -1818,7 +1822,8 @@ def create_extraction(
             # for NIRSpec point sources
             if input_units_are_megajanskys:
                 flux = sum_flux * 1.0e6  # MJy --> Jy
-                contam_flux *= 1.0e6  # MJy --> Jy
+                contam *= 1.0e6  # MJy --> Jy
+                contamcorr_flux *= 1.0e6  # MJy --> Jy
                 f_var_poisson *= 1.0e12  # MJy**2 --> Jy**2
                 f_var_rnoise *= 1.0e12  # MJy**2 --> Jy**2
                 f_var_flat *= 1.0e12  # MJy**2 --> Jy**2
@@ -1835,7 +1840,8 @@ def create_extraction(
                 f_var_poisson *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
                 f_var_rnoise *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
                 f_var_flat *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
-                contam_flux *= pixel_solid_angle * 1.0e6  # MJy / steradian --> Jy
+                contam *= pixel_solid_angle * 1.0e6  # MJy / steradian --> Jy
+                contamcorr_flux *= pixel_solid_angle * 1.0e6  # MJy / steradian --> Jy
         else:
             flux = sum_flux  # count rate
 
@@ -1875,18 +1881,22 @@ def create_extraction(
             # add contam columns
             flux_idx = _idx_from_dtype(otab_dtype, "FLUX")
             sb_idx = _idx_from_dtype(otab_dtype, "SURF_BRIGHT")
-            otab_list.insert(flux_idx + 1, contam_flux[valid])
-            otab_list.insert(sb_idx + 2, contam_surf_bright[valid])
+            otab_list.insert(flux_idx + 1, contam[valid])
+            otab_list.insert(flux_idx + 2, contamcorr_flux[valid])
+            otab_list.insert(sb_idx + 3, contamsb[valid])
+            otab_list.insert(sb_idx + 4, contamcorr_surf_bright[valid])
             # Need to modify the dtype, but it's immutable.
             # Use descr to get it as a list
             descr = otab_dtype.descr
-            descr.insert(flux_idx + 1, ("CONTAM_FLUX", float))
-            descr.insert(sb_idx + 2, ("CONTAM_SURF_BRIGHT", float))
+            descr.insert(flux_idx + 1, ("CONTAM", float))
+            descr.insert(flux_idx + 2, ("CONTAMCORR_FLUX", float))
+            descr.insert(sb_idx + 3, ("CONTAMSB", float))
+            descr.insert(sb_idx + 4, ("CONTAMCORR_SURF_BRIGHT", float))
             otab_dtype = np.dtype(descr)
 
         otab = np.array(list(zip(*otab_list, strict=True)), dtype=otab_dtype)
 
-        spec = datamodels.SpecModel(spec_table=otab)
+        spec = datamodels.SpecModel(spec_table=otab, validate_on_assignment=False)
         spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
         spec.spec_table.columns["wavelength"].unit = "um"
         spec.spec_table.columns["flux"].unit = flux_units
@@ -1899,10 +1909,12 @@ def create_extraction(
         spec.spec_table.columns["sb_var_poisson"].unit = sb_var_units
         spec.spec_table.columns["sb_var_rnoise"].unit = sb_var_units
         spec.spec_table.columns["sb_var_flat"].unit = sb_var_units
-        if "contam_flux" in spec.spec_table.columns:
-            spec.spec_table.columns["contam_flux"].unit = flux_units
-        if "contam_surf_bright" in spec.spec_table.columns:
-            spec.spec_table.columns["contam_surf_bright"].unit = sb_units
+        if "contam" in spec.spec_table.columns:
+            spec.spec_table.columns["contam"].unit = flux_units
+            spec.spec_table.columns["contamcorr_flux"].unit = flux_units
+        if "contamsb" in spec.spec_table.columns:
+            spec.spec_table.columns["contamsb"].unit = sb_units
+            spec.spec_table.columns["contamcorr_surf_bright"].unit = sb_units
         spec.spec_table.columns["background"].unit = sb_units
         spec.spec_table.columns["bkgd_error"].unit = sb_units
         spec.spec_table.columns["bkgd_var_poisson"].unit = sb_var_units

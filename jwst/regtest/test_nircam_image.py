@@ -26,7 +26,7 @@ def run_detector1pipeline(rtdata_module):
         "--steps.saturation.save_results=True",
         "--steps.superbias.save_results=True",
         "--steps.refpix.save_results=True",
-        "--steps.refpix.refpix_algorithm=median",
+        "--steps.refpix.refpix_algorithm=median",  # sirs is default; exercise the median algo
         "--steps.linearity.save_results=True",
         "--steps.dark_current.save_results=True",
         "--steps.jump.save_results=True",
@@ -36,21 +36,17 @@ def run_detector1pipeline(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1pipeline_with_sirs(rtdata_module, resource_tracker):
-    """Run calwebb_detector1 on NIRCam imaging data using SIRS.
-
-    SIRS is the convolution kernel algorithm - Simple Improved Reference Subtraction.
-    """
+def run_detector1pipeline_with_zeroframe(rtdata_module, resource_tracker):
+    """Run calwebb_detector1 on NIRCam imaging data with a zeroframe."""
     rtdata = rtdata_module
     rtdata.get_data("nircam/image/jw01345001001_10201_00001_nrca3_uncal.fits")
 
-    # Run detector1 pipeline only on one of the _uncal files
+    # Run detector1 pipeline
     args = [
         "calwebb_detector1",
         rtdata.input,
-        "--output_file=jw01345001001_10201_00001_nrca3_sirs",
-        "--steps.refpix.refpix_algorithm=sirs",
         "--steps.refpix.save_results=True",
+        "--steps.jump.save_results=True",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)
@@ -138,13 +134,16 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, resource_tracker):
         "calwebb_image3",
         rtdata.input,
         "--steps.tweakreg.save_results=True",
+        "--steps.tweakreg.abs_refcat=''",
         "--steps.source_catalog.snr_threshold=20",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
 
-def test_log_tracked_resources_detector1(log_tracked_resources, run_detector1pipeline_with_sirs):
+def test_log_tracked_resources_detector1(
+    log_tracked_resources, run_detector1pipeline_with_zeroframe
+):
     log_tracked_resources()
 
 
@@ -156,18 +155,16 @@ def test_log_tracked_resources_image3(log_tracked_resources, run_image3pipeline)
     log_tracked_resources()
 
 
-def test_nircam_image_sirs(run_detector1pipeline_with_sirs, rtdata_module, fitsdiff_default_kwargs):
+@pytest.mark.parametrize("suffix", ["refpix", "jump", "rate"])
+def test_nircam_image_zeroframe(
+    run_detector1pipeline_with_zeroframe, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
     rtdata = rtdata_module
     rtdata.input = "jw01345001001_10201_00001_nrca3_uncal.fits"
-    output = "jw01345001001_10201_00001_nrca3_sirs_refpix.fits"
+    output = f"jw01345001001_10201_00001_nrca3_{suffix}.fits"
     rtdata.output = output
-    rtdata.get_truth(
-        "truth/test_nircam_image_stages/jw01345001001_10201_00001_nrca3_sirs_refpix.fits"
-    )
-
-    fitsdiff_default_kwargs["rtol"] = 5e-5
-    fitsdiff_default_kwargs["atol"] = 1e-4
+    rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -225,18 +222,12 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
 
 
 def test_nircam_image_stage3_tweakreg(run_image3pipeline):
-    """Test that tweakreg doesn't attach a catalog and that it updates the wcs"""
+    """Test that tweakreg does no alignment for single-visit input."""
     files = glob("*tweakreg.fits")
     for filename in files:
         with datamodels.open(filename) as model:
-            # Makes sure the catalog is not attached
-            with pytest.raises(AttributeError):
-                model.catalog
-
-            # Check that all but the first exposure in the association
-            # has a WCS correction applied
-            if "jw01538046001_0310f_00001" not in model.meta.filename:
-                assert "v2v3corr" in model.meta.wcs.available_frames
+            # Check that all exposures do not have a WCS correction applied
+            assert "v2v3corr" not in model.meta.wcs.available_frames
 
 
 @pytest.mark.parametrize("suffix", ["i2d"])
@@ -368,12 +359,12 @@ def test_nircam_image_detector1_with_likelihood(
 
 
 def test_nircam_image_inv_linearity(
-    run_detector1pipeline_with_sirs, rtdata_module, fitsdiff_default_kwargs
+    run_detector1pipeline_with_zeroframe, rtdata_module, fitsdiff_default_kwargs
 ):
-    """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
+    """Regression test of inverse linearity processing for NIRCam data."""
     rtdata = rtdata_module
     rtdata.get_data("nircam/image/jwst_nircam_linearity_0053_invcoef.fits")
-    rtdata.input = "jw01345001001_10201_00001_nrca3_sirs_refpix.fits"
+    rtdata.input = "jw01345001001_10201_00001_nrca3_refpix.fits"
 
     args = [
         "linearity",
@@ -383,10 +374,10 @@ def test_nircam_image_inv_linearity(
     ]
     Step.from_cmdline(args)
 
-    output = "jw01345001001_10201_00001_nrca3_sirs_linearitystep.fits"
+    output = "jw01345001001_10201_00001_nrca3_linearitystep.fits"
     rtdata.output = output
     rtdata.get_truth(
-        "truth/test_nircam_image_stages/jw01345001001_10201_00001_nrca3_sirs_linearitystep.fits"
+        "truth/test_nircam_image_stages/jw01345001001_10201_00001_nrca3_linearitystep.fits"
     )
 
     fitsdiff_default_kwargs["rtol"] = 5e-5

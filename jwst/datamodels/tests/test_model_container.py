@@ -61,16 +61,12 @@ def test_modelcontainer_indexing(container):
 def test_modelcontainer_group1(container):
     for group in container.models_grouped:
         assert len(group) == 2
-        for model in group:
-            pass
 
 
 def test_modelcontainer_group2(container):
     container[0].meta.observation.exposure_number = "2"
     for group in container.models_grouped:
         assert len(group) == 1
-        for model in group:
-            pass
     container[0].meta.observation.exposure_number = "1"
 
 

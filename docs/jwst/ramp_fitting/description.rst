@@ -89,11 +89,18 @@ datasets, which would cause errors during ramp fitting.
 See :ref:`multiprocessing` for more details and examples of how to run a pipeline step
 with multiprocessing enabled.
 
-:ref:`Output Products <stcal:ramp_output_products>`
----------------------------------------------------
+Output Products
+---------------
 
-:ref:`Special Cases <stcal:ramp_special_cases>`
------------------------------------------------
+Detailed documentation for output products from the ``ramp_fit`` step can be found in
+the stcal documentation at :ref:`Output Products <stcal:ramp_output_products>`.
+
+
+Special Cases
+-------------
+
+Detailed documentation for special cases in the ``ramp_fit`` step can be found in
+the stcal documentation at :ref:`Special Cases <stcal:ramp_special_cases>`.
 
 NIRCam Frame Zero
 -----------------

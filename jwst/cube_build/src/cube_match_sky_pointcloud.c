@@ -11,8 +11,8 @@ This module uses the modified Shepard weighting method (emsm if weight_type =0 o
 
 Main function for Python: cube_wrapper
 
-Python signature: result = cube_wrapper(weight_type, start_region,
-end_region, xcoord, ycoord, zcoord, coord1, coord2, wave, flux, err, dq,
+Python signature: result = cube_wrapper(weight_type,
+xcoord, ycoord, zcoord, coord1, coord2, wave, flux, err, dq,
 slice_no, rois_pixel, roiw_pixel, scalerad_pixel weight_pixel, softrad_pixel,cdelt3_normal,
                                         roiw_ave, cdelt1, cdelt2)
 provide more details
@@ -25,10 +25,6 @@ Parameters
 weight_type : int
    0: use emsm weighting
    1: use msm weighting
-start_region : int
-    Starting slice number for detector region used in dq flagging
-end_region: int
-    Ending slice number for detector region used in dq flagging
 xcoord : double array
   This array holds the center x axis values of the ifu cube. It has a size of naxis1.
 ycoord : double array
@@ -428,7 +424,7 @@ cube_wrapper(PyObject *module, PyObject *args)
     double cdelt1, cdelt2, roiw_ave;
     int nwave, npt, nxx, nyy, ncube;
 
-    int start_region, end_region, weight_type;
+    int weight_type;
     double *spaxel_flux = NULL, *spaxel_weight = NULL, *spaxel_var = NULL;
     double *spaxel_iflux = NULL;
     int *spaxel_dq = NULL;
@@ -449,8 +445,8 @@ cube_wrapper(PyObject *module, PyObject *args)
     int ny, nz;
 
     if (!PyArg_ParseTuple(
-            args, "iiiOOOOOOOOOOOOOOOOddd:cube_wrapper", &weight_type, &start_region, &end_region,
-            &xco, &yco, &zco, &coord1o, &coord2o, &waveo, &fluxo, &erro, &dqo,
+            args, "iOOOOOOOOOOOOOOOOddd:cube_wrapper", &weight_type, &xco, &yco, &zco, &coord1o,
+            &coord2o, &waveo, &fluxo, &erro, &dqo,
             &slicenoo, // codespell:ignore erro
             &rois_pixelo, &roiw_pixelo, &scalerad_pixelo, &weight_pixelo, &softrad_pixelo,
             &zcdelt3o, &roiw_ave, &cdelt1, &cdelt2)) {

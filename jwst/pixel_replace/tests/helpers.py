@@ -5,8 +5,7 @@ from astropy.modeling.models import Const1D, Mapping
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel as flags
 
-from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
+from jwst.tests.spec_cal_helpers import nirspec_ifu_cal_model
 
 __all__ = [
     "cal_data",
@@ -155,13 +154,7 @@ def nirspec_ifu():
     bad_idx = (1424, 690)
 
     # IFU mode requires WCS information, so make a more realistic model
-    hdul = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    hdul["SCI"].data = np.ones(shape, dtype=float)
-
-    model = datamodels.IFUImageModel(hdul)
-    model = AssignWcsStep.call(model)
+    model = nirspec_ifu_cal_model()
 
     test_data = cal_data(shape=shape, bad_idx=bad_idx, dispaxis=1, model="ifu")
     model.data = test_data.data

@@ -25,10 +25,13 @@ def run_wfss_contam(rtdata_module, resource_tracker):
     step_params = {
         "step": "jwst.pipeline.Spec2Pipeline",
         "args": [
+            "--steps.extract_2d.wfss_nbright=40",
             "--steps.wfss_contam.save_simulated_image=True",
             "--steps.wfss_contam.save_results=true",
             "--steps.wfss_contam.skip=False",
             "--steps.wfss_contam.maximum_cores=none",
+            "--steps.wfss_contam.pdt_spacing=20",
+            "--steps.wfss_contam.magnitude_limit=22",
         ],
     }
     with resource_tracker.track():
@@ -40,7 +43,7 @@ def test_log_tracked_resources_nis_wfss_contam(log_tracked_resources, run_wfss_c
     log_tracked_resources()
 
 
-@pytest.mark.parametrize("suffix", ["simul", "wfss_contam"])
+@pytest.mark.parametrize("suffix", ["simul", "wfss_contam", "x1d"])
 def test_niriss_wfss_contam(run_wfss_contam, fitsdiff_default_kwargs, suffix):
     """Regression test for wfss_contam applied to NIRISS WFSS data"""
 

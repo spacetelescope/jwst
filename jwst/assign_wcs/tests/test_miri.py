@@ -1,266 +1,23 @@
 """
-Test MIRI MRS WCS transformation against IDT team data.
+Test MIRI WCS transformation against IDT team data.
 
-Notes:
-
-1. Test data use CDP-8b placeholder values computed by D. Law for the time being.
-
+Note: MRS test data use CDP-8b placeholder values computed by D. Law.
 """
 
 import numpy as np
 import pytest
-from astropy.io import fits
-from gwcs import wcs
 from numpy.testing import assert_allclose
-from stdatamodels.jwst.datamodels import CubeModel, ImageModel
 
-from jwst.assign_wcs import AssignWcsStep, miri
+from jwst.tests.miri_rate_helpers import (
+    miri_lrs_slitless_rate_model,
+    miri_mrs_rate_model,
+    miri_wfss_rate_model,
+)
 
-wcs_kw = {
-    "wcsaxes": 3,
-    "ra_ref": 165,
-    "dec_ref": 54,
-    "v2_ref": -8.3942412,
-    "v3_ref": -5.3123744,
-    "roll_ref": 37,
-    "crpix1": 1024,
-    "crpix2": 1024,
-    "crpix3": 0,
-    "cdelt1": 0.08,
-    "cdelt2": 0.08,
-    "cdelt3": 1,
-    "ctype1": "RA---TAN",
-    "ctype2": "DEC--TAN",
-    "ctype3": "WAVE",
-    "pc1_1": 1,
-    "pc1_2": 0,
-    "pc1_3": 0,
-    "pc2_1": 0,
-    "pc2_2": 1,
-    "pc2_3": 0,
-    "pc3_1": 0,
-    "pc3_2": 0,
-    "pc3_3": 1,
-    "cunit1": "deg",
-    "cunit2": "deg",
-    "cunit3": "um",
-}
+BAND_MAPPING = {"SHORT": "A", "MEDIUM": "B", "LONG": "C"}
 
-band_mapping = {"SHORT": "A", "MEDIUM": "B", "LONG": "C"}
-
-
-def create_hdul(detector, channel, band):
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header["telescop"] = "JWST"
-    phdu.header["filename"] = "test" + channel + band
-    phdu.header["instrume"] = "MIRI"
-    phdu.header["detector"] = detector
-    phdu.header["CHANNEL"] = channel
-    phdu.header["BAND"] = band
-    phdu.header["time-obs"] = "8:59:37"
-    phdu.header["date-obs"] = "2017-09-05"
-    phdu.header["exp_type"] = "MIR_MRS"
-    scihdu = fits.ImageHDU()
-    scihdu.header["EXTNAME"] = "SCI"
-    scihdu.header.update(wcs_kw)
-    scihdu.data = np.zeros((10, 10))
-    hdul.append(phdu)
-    hdul.append(scihdu)
-    return hdul
-
-
-def create_hdu_wfss():
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header["telescop"] = "JWST"
-    phdu.header["filename"] = "test_miri_wfss"
-    phdu.header["instrume"] = "MIRI"
-    phdu.header["detector"] = "MIRIMAGE"
-    phdu.header["filter"] = "P750L"
-    phdu.header["time-obs"] = "8:59:37"
-    phdu.header["date-obs"] = "2017-09-05"
-    phdu.header["exp_type"] = "MIR_WFSS"
-    scihdu = fits.ImageHDU()
-    scihdu.header["EXTNAME"] = "SCI"
-    scihdu.header.update(wcs_kw)
-    hdul.append(phdu)
-    hdul.append(scihdu)
-    return hdul
-
-
-def create_hdul_lrs_slitless():
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header["telescop"] = "JWST"
-    phdu.header["filename"] = "test_miri_lrs_slitless"
-    phdu.header["instrume"] = "MIRI"
-    phdu.header["detector"] = "MIRIMAGE"
-    phdu.header["time-obs"] = "8:59:37"
-    phdu.header["date-obs"] = "2017-09-05"
-    phdu.header["exp_type"] = "MIR_LRS-SLITLESS"
-    phdu.header["subarray"] = "SLITLESSPRISM"
-    phdu.header["substrt1"] = 1
-    phdu.header["substrt2"] = 529
-    phdu.header["subsize1"] = 72
-    phdu.header["subsize2"] = 416
-    scihdu = fits.ImageHDU()
-    scihdu.header["EXTNAME"] = "SCI"
-    scihdu.header.update(wcs_kw)
-    hdul.append(phdu)
-    hdul.append(scihdu)
-    return hdul
-
-
-def create_datamodel(hdul):
-    im = ImageModel(hdul)
-    ref = create_reference_files(im)
-    pipeline = miri.create_pipeline(im, ref)
-    wcsobj = wcs.WCS(pipeline)
-    im.meta.wcs = wcsobj
-    return im
-
-
-def create_datamodel_cube(hdul, data_shape):
-    data = np.zeros(data_shape)
-    hdul[1].data = data
-    cube = CubeModel(hdul)
-    ref = create_reference_files(cube)
-    pipeline = miri.create_pipeline(cube, ref)
-    wcsobj = wcs.WCS(pipeline)
-    cube.meta.wcs = wcsobj
-    return cube
-
-
-def create_reference_files(datamodel):
-    refs = {}
-    step = AssignWcsStep()
-    for reftype in AssignWcsStep.reference_file_types:
-        refs[reftype] = step.get_reference_file(datamodel, reftype)
-
-    return refs
-
-
-def create_wfss_wcs():
-    hdul = create_hdu_wfss()
-    im = ImageModel(hdul)
-    ref = create_reference_files(im)
-    pipeline = miri.create_pipeline(im, ref)
-    wcsobj = wcs.WCS(pipeline)
-    return wcsobj
-
-
-def traverse_wfss_trace():
-    wcsobj = create_wfss_wcs()
-    detector_to_dispersed = wcsobj.get_transform("detector", "grism_detector")
-    dispersed_to_detector = wcsobj.get_transform("grism_detector", "detector")
-
-    # check the round trip, grism pixel 100,100, source at 110,110,order 1
-    xdis, ydis, xsource, ysource, order_in = (100, 100, 110, 110, 1)
-    x0, y0, lam, order = dispersed_to_detector(xdis, ydis, xsource, ysource, order_in)
-    x, y, xdet, ydet, orderdet = detector_to_dispersed(x0, y0, lam, order)
-
-    assert x0 == xsource
-    assert y0 == ysource
-    assert order == order_in
-    assert xdet == xsource
-    assert ydet == ysource
-    assert orderdet == order_in
-
-
-# Invoke this test when the reference files for MIRI WFSS are in CRDS
-@pytest.mark.xfail(reason="Reference files for MIRI WFSS mode are not in CRDS yet.")
-def test_traverse_wfss():
-    """Make sure the trace polynomials roundtrip."""
-    traverse_wfss_trace()
-
-
-def run_test(model):
-    wcsobj = model.meta.wcs
-    for ch in model.meta.instrument.channel:
-        ref_data = mrs_ref_data[ch + band_mapping[model.meta.instrument.band]]
-        detector_to_alpha_beta = wcsobj.get_transform("detector", "alpha_beta")
-        ab_to_v2v3 = wcsobj.get_transform("alpha_beta", "v2v3").set_input(int(ch))
-        v2v3_to_ab = wcsobj.get_transform("v2v3", "alpha_beta").set_input(int(ch))
-        ab_to_detector = wcsobj.get_transform("alpha_beta", "detector")
-
-        ref_alpha = ref_data["alpha"]
-        ref_beta = ref_data["beta"]
-        ref_lam = ref_data["lam"]
-        ref_v2 = ref_data["v2"]
-        ref_v3 = ref_data["v3"]
-
-        x, y = ref_data["x"], ref_data["y"]
-        for i, s in enumerate(ref_data["s"]):
-            sl = int(ch) * 100 + s
-            alpha, beta, lam = detector_to_alpha_beta.set_input(sl)(x[i], y[i])
-            assert_allclose(alpha, ref_alpha[i], atol=0.05)
-            assert_allclose(beta, ref_beta[i], atol=0.05)
-            assert_allclose(lam, ref_lam[i], atol=0.05)
-
-        v2, v3, lam = ab_to_v2v3(ref_alpha, ref_beta, ref_lam)
-        assert_allclose(v2, ref_v2, atol=0.05)
-        assert_allclose(v3, ref_v3, atol=0.05)
-        assert_allclose(lam, ref_lam, atol=0.05)
-
-        # Test the reverse transform
-        alpha_back, beta_back, lam_back = v2v3_to_ab(v2, v3, lam)
-        assert_allclose(alpha_back, ref_alpha, atol=0.05)
-        assert_allclose(beta_back, ref_beta, atol=0.05)
-        assert_allclose(lam_back, ref_lam, atol=0.05)
-
-        for i, s in enumerate(ref_data["s"]):
-            sl = int(ch) * 100 + s
-            x_back, y_back = ab_to_detector.set_input(sl)(alpha_back[i], beta_back[i], lam_back[i])
-            assert_allclose(x_back, x[i], atol=0.08)
-            assert_allclose(y_back, y[i], atol=0.08)
-
-
-def test_miri_mrs_12A():
-    hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="SHORT")
-    im = create_datamodel(hdul)
-    run_test(im)
-
-
-def test_miri_mrs_12B():
-    hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="MEDIUM")
-    im = create_datamodel(hdul)
-    run_test(im)
-
-
-def test_miri_mrs_12C():
-    hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="LONG")
-    im = create_datamodel(hdul)
-    run_test(im)
-
-
-def test_miri_mrs_34A():
-    hdul = create_hdul(detector="MIRIFULONG", channel="34", band="SHORT")
-    im = create_datamodel(hdul)
-    run_test(im)
-
-
-def test_miri_mrs_34B():
-    hdul = create_hdul(detector="MIRIFULONG", channel="34", band="MEDIUM")
-    im = create_datamodel(hdul)
-    run_test(im)
-
-
-def test_miri_mrs_34C():
-    hdul = create_hdul(detector="MIRIFULONG", channel="34", band="LONG")
-    im = create_datamodel(hdul)
-    run_test(im)
-
-
-def test_mrs_tso_bounding_box():
-    # JP-3127
-    hdul = create_hdul(detector="MIRIFULONG", channel="34", band="MEDIUM")
-    cube = create_datamodel_cube(hdul, data_shape=(3, 40, 50))
-    assert_allclose(cube.meta.wcs.bounding_box, ((-0.5, 49.5), (-0.5, 39.5)))
-
-
-# MRS test reference data
-mrs_ref_data = {
+# MRS test reference data by band
+MRS_REF_DATA = {
     "1A": {
         "x": np.array([76.0, 354.0]),
         "y": np.array([512.0, 700.0]),
@@ -382,3 +139,98 @@ mrs_ref_data = {
         "v3": np.array([-321.57006077329663, -317.7252303132135]),
     },
 }
+
+
+def run_test(model):
+    wcsobj = model.meta.wcs
+    for ch in model.meta.instrument.channel:
+        ref_data = MRS_REF_DATA[ch + BAND_MAPPING[model.meta.instrument.band]]
+        detector_to_alpha_beta = wcsobj.get_transform("detector", "alpha_beta")
+        ab_to_v2v3 = wcsobj.get_transform("alpha_beta", "v2v3").set_input(int(ch))
+        v2v3_to_ab = wcsobj.get_transform("v2v3", "alpha_beta").set_input(int(ch))
+        ab_to_detector = wcsobj.get_transform("alpha_beta", "detector")
+
+        ref_alpha = ref_data["alpha"]
+        ref_beta = ref_data["beta"]
+        ref_lam = ref_data["lam"]
+        ref_v2 = ref_data["v2"]
+        ref_v3 = ref_data["v3"]
+
+        x, y = ref_data["x"], ref_data["y"]
+        for i, s in enumerate(ref_data["s"]):
+            sl = int(ch) * 100 + s
+            alpha, beta, lam = detector_to_alpha_beta.set_input(sl)(x[i], y[i])
+            assert_allclose(alpha, ref_alpha[i], atol=0.05)
+            assert_allclose(beta, ref_beta[i], atol=0.05)
+            assert_allclose(lam, ref_lam[i], atol=0.05)
+
+        v2, v3, lam = ab_to_v2v3(ref_alpha, ref_beta, ref_lam)
+        assert_allclose(v2, ref_v2, atol=0.05)
+        assert_allclose(v3, ref_v3, atol=0.05)
+        assert_allclose(lam, ref_lam, atol=0.05)
+
+        # Test the reverse transform
+        alpha_back, beta_back, lam_back = v2v3_to_ab(v2, v3, lam)
+        assert_allclose(alpha_back, ref_alpha, atol=0.05)
+        assert_allclose(beta_back, ref_beta, atol=0.05)
+        assert_allclose(lam_back, ref_lam, atol=0.05)
+
+        for i, s in enumerate(ref_data["s"]):
+            sl = int(ch) * 100 + s
+            x_back, y_back = ab_to_detector.set_input(sl)(alpha_back[i], beta_back[i], lam_back[i])
+            assert_allclose(x_back, x[i], atol=0.08)
+            assert_allclose(y_back, y[i], atol=0.08)
+
+
+@pytest.mark.parametrize("detector, channel", [("MIRIFUSHORT", "12"), ("MIRIFULONG", "34")])
+@pytest.mark.parametrize("band", ["SHORT", "MEDIUM", "LONG"])
+def test_miri_mrs(detector, channel, band):
+    im = miri_mrs_rate_model(detector=detector, channel=channel, band=band)
+    run_test(im)
+
+
+def test_mrs_tso_bounding_box():
+    # JP-3127
+    cube = miri_mrs_rate_model(
+        detector="MIRIFULONG", channel="34", band="MEDIUM", shape=(3, 40, 50)
+    )
+    assert_allclose(cube.meta.wcs.bounding_box, ((-0.5, 49.5), (-0.5, 39.5)))
+
+
+def test_traverse_wfss():
+    """Make sure the trace polynomials roundtrip for MIRI WFSS."""
+    wcsobj = miri_wfss_rate_model().meta.wcs
+    detector_to_dispersed = wcsobj.get_transform("detector", "grism_detector")
+    dispersed_to_detector = wcsobj.get_transform("grism_detector", "detector")
+
+    # check the round trip, grism pixel 100,100, source at 110,110,order 1
+    xdis, ydis, xsource, ysource, order_in = (100, 100, 110, 110, 1)
+    x0, y0, lam, order = dispersed_to_detector(xdis, ydis, xsource, ysource, order_in)
+    x, y, xdet, ydet, orderdet = detector_to_dispersed(x0, y0, lam, order)
+
+    assert x0 == xsource
+    assert y0 == ysource
+    assert order == order_in
+    assert xdet == xsource
+    assert ydet == ysource
+    assert orderdet == order_in
+
+
+@pytest.mark.parametrize("subarray", ["SLITLESSPRISM", "SLITLESSPRISM_IPS"])
+def test_lrs_slitless_bbox(subarray):
+    cube_model = miri_lrs_slitless_rate_model(subarray=subarray)
+    shape = cube_model.data.shape
+
+    bbox = cube_model.meta.wcs.bounding_box
+    bbox_tuple = [tuple(bbox[name]) for name in bbox.named_intervals]
+
+    if subarray == "SLITLESSPRISM":
+        # For the slitlessprism array, left edge is always 3.5:
+        # just past the initial 4 reference pixels.
+        assert bbox_tuple[0][0] == 3.5
+    else:
+        # For the slitlessprism_ips array, left edge is set by the shape
+        assert bbox_tuple[0][0] == -0.5
+
+    # For both, right edge is set by the shape
+    assert bbox_tuple[0][1] == shape[2] - 0.5

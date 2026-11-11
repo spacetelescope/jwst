@@ -1,0 +1,1 @@
+Enable MIRI WFSS exposures to pass through wfss_contam step

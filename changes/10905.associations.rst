@@ -1,0 +1,1 @@
+Move association types from outdated names to the pipelines used to process these data (e.g. ``tso-spec2`` and ``tso-image2`` to ``spec2`` and ``image2``). 
