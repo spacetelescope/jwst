@@ -5,10 +5,10 @@ Unit tests for straylight step configuration
 import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import CubeModel, IFUImageModel
-from gwcs import wcs
+
 from jwst.straylight import StraylightStep
-from jwst.tests.wcs_helpers import get_reference_files
-from jwst.assign_wcs import miri
+from jwst.tests.miri_rate_helpers import miri_mrs_rate_model
+
 
 @pytest.fixture(scope="module")
 def miri_mrs_short_tso():
@@ -31,8 +31,11 @@ def miri_mrs_short_tso():
 def miri_mrs_short():
     """Set up MIRI MRS SHORT data"""
 
-    image = IFUImageModel((1024, 1032))
-    image.data = np.random.random((1024, 1032))
+    image = miri_mrs_rate_model(shape = (1024,1032), with_wcs = True)
+    #pdb.set_trace()
+
+    #image = IFUImageModel((1024, 1032))
+    #image.data = np.random.random((1024, 1032))
     image.meta.instrument.name = "MIRI"
     image.meta.instrument.detector = "MIRIFUSHORT"
     image.meta.exposure.type = "MIR_MRS"
@@ -48,9 +51,9 @@ def miri_mrs_short():
     image.meta.wcsinfo.dec_ref = 49.3133194779185
     image.meta.wcsinfo.dispersion_direction = 2
 
-    ref = get_reference_files(image)
-    pipeline = miri.create_pipeline(image, ref)
-    image.meta.wcs = wcs.WCS(pipeline)
+    #ref = get_reference_files(image)
+    #pipeline = miri.create_pipeline(image, ref)
+    #image.meta.wcs = wcs.WCS(pipeline)
 
     return image
 

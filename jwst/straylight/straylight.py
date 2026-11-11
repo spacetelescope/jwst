@@ -8,8 +8,8 @@ from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst import datamodels
-from jwst.straylight.calc_xart import xart_wrapper  # c extension
 from jwst.pixel_replace import PixelReplaceStep
+from jwst.straylight.calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
 
