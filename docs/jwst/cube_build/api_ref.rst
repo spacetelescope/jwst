@@ -14,7 +14,7 @@ Complete Developer API
 .. automodapi:: jwst.cube_build.blot_cube_build
    :no-inheritance-diagram:
 
-.. automodapi:: jwst.cube_build.coord
+.. automodapi:: jwst.cube_build.cube_lib
    :no-inheritance-diagram:
 
 .. automodapi:: jwst.cube_build.cube_build_io_util

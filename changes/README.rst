@@ -105,6 +105,7 @@ Stage 3 Steps
 - ``<PR#>.source_catalog.rst``
 - ``<PR#>.combine_1d.rst``
 - ``<PR#>.ami.rst``
+- ``<PR#>.pfpc.rst``
 
 Other Changes
 =============
