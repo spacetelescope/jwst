@@ -56,35 +56,63 @@ blot_weight : numpy.ndarray
   IFU spaxel weight
 */
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wundef"
+#endif
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <Python.h>
 #include <stdbool.h>
-#include <numpy/arrayobject.h>
-#include <numpy/npy_math.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_blot_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#endif
+
+#include <numpy/arrayobject.h>
+#include <numpy/npy_math.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
+#include "numpy_utils.h"
+
+PyMODINIT_FUNC
+PyInit_blot_median(void);
 
 //_______________________________________________________________________
 // Allocate the memory to for the blotted arrays
 //_______________________________________________________________________
 
-int
+static int
 alloc_blot_arrays(int nelem, double **fluxv, double **weightv)
 {
 
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
-    if (!(*fluxv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*fluxv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc;
     }
 
     // weight
-    if (!(*weightv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*weightv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc;
     }
@@ -93,6 +121,7 @@ alloc_blot_arrays(int nelem, double **fluxv, double **weightv)
 failed_mem_alloc:
     free(*fluxv);
     free(*weightv);
+    return 1;
 }
 
 // Match the median cube mapped to detector space with detector pixels
@@ -102,7 +131,7 @@ failed_mem_alloc:
 
 // return values: blot_flux, blot_weight
 
-int
+static int
 blot_overlap(
     double roi, int xsize_det, int ysize_det, int xstart, int xsize2, int ncube, double *xcenter,
     double *ycenter, double *x_cube, double *y_cube, double *flux_cube, double **blot_flux,
@@ -147,23 +176,6 @@ blot_overlap(
     return 0;
 }
 
-//  set up the C extension
-
-PyArrayObject *
-ensure_array(PyObject *obj, int *is_copy)
-{
-    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
-        PyArray_TYPE((PyArrayObject *) obj) == NPY_DOUBLE) {
-        *is_copy = 0;
-        return (PyArrayObject *) obj;
-    } else {
-        *is_copy = 1;
-        return (PyArrayObject *) PyArray_FromAny(
-            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
-            NULL);
-    }
-}
-
 static PyObject *
 blot_wrapper(PyObject *module, PyObject *args)
 {
@@ -176,7 +188,7 @@ blot_wrapper(PyObject *module, PyObject *args)
     int free_xcenter = 0, free_ycenter = 0, free_xcube = 0, free_ycube = 0, free_flux = 0,
         status = 0;
 
-    PyArrayObject *xcenter, *ycenter, *x_cube, *y_cube, *flux_cube;
+    PyArrayObject *xcenter, *ycenter = NULL, *x_cube = NULL, *y_cube = NULL, *flux_cube = NULL;
     PyArrayObject *blot_flux_arr = NULL, *blot_weight_arr = NULL;
 
     npy_intp npt = 0;
@@ -197,9 +209,9 @@ blot_wrapper(PyObject *module, PyObject *args)
         goto cleanup;
     }
 
-    nx = (int) PyArray_Size((PyObject *) x_cube);
-    ny = (int) PyArray_Size((PyObject *) y_cube);
-    nz = (int) PyArray_Size((PyObject *) flux_cube);
+    nx = get_array_size(x_cube);
+    ny = get_array_size(y_cube);
+    nz = get_array_size(flux_cube);
     if (ny != nz || nz != nx) {
         PyErr_SetString(PyExc_ValueError, "Input coordinate arrays of unequal size.");
         goto cleanup;
@@ -208,12 +220,12 @@ blot_wrapper(PyObject *module, PyObject *args)
     npt = (npy_intp) (xsize_det * ysize_det);
     if (npt == 0) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
-        blot_flux_arr = (PyArrayObject *) PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
+        blot_flux_arr = create_empty_array(1, &npt, NPY_DOUBLE);
         if (!blot_flux_arr) {
             goto fail;
         }
 
-        blot_weight_arr = (PyArrayObject *) PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
+        blot_weight_arr = create_empty_array(1, &npt, NPY_DOUBLE);
         if (!blot_weight_arr) {
             goto fail;
         }
@@ -236,29 +248,25 @@ blot_wrapper(PyObject *module, PyObject *args)
     } else {
         // create return tuple:
 
-        blot_flux_arr = (PyArrayObject *) PyArray_SimpleNewFromData(1, &npt, NPY_DOUBLE, blot_flux);
+        blot_flux_arr = array_from_vector1d(npt, NPY_DOUBLE, blot_flux);
         if (!blot_flux_arr) {
             goto fail;
         }
         blot_flux = NULL;
 
-        blot_weight_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npt, NPY_DOUBLE, blot_weight);
+        blot_weight_arr = array_from_vector1d(npt, NPY_DOUBLE, blot_weight);
         if (!blot_weight_arr) {
             goto fail;
         }
         blot_weight = NULL;
-
-        PyArray_ENABLEFLAGS(blot_flux_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(blot_weight_arr, NPY_ARRAY_OWNDATA);
 
         result = Py_BuildValue("(NN)", blot_flux_arr, blot_weight_arr);
         goto cleanup;
     }
 
 fail:
-    Py_XDECREF(blot_flux_arr);
-    Py_XDECREF(blot_weight_arr);
+    Py_XDECREF((PyObject *) blot_flux_arr);
+    Py_XDECREF((PyObject *) blot_weight_arr);
 
     free(blot_flux);
     free(blot_weight);
@@ -269,19 +277,19 @@ fail:
 
 cleanup:
     if (free_xcenter) {
-        Py_XDECREF(xcenter);
+        Py_XDECREF((PyObject *) xcenter);
     }
     if (free_ycenter) {
-        Py_XDECREF(ycenter);
+        Py_XDECREF((PyObject *) ycenter);
     }
     if (free_xcube) {
-        Py_XDECREF(x_cube);
+        Py_XDECREF((PyObject *) x_cube);
     }
     if (free_ycube) {
-        Py_XDECREF(y_cube);
+        Py_XDECREF((PyObject *) y_cube);
     }
     if (free_flux) {
-        Py_XDECREF(flux_cube);
+        Py_XDECREF((PyObject *) flux_cube);
     }
 
     return result;
