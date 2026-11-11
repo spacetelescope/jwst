@@ -5,9 +5,10 @@ Unit tests for straylight step configuration
 import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import CubeModel, IFUImageModel
-
+from gwcs import wcs
 from jwst.straylight import StraylightStep
-
+from jwst.tests.wcs_helpers import get_reference_files
+from jwst.assign_wcs import miri
 
 @pytest.fixture(scope="module")
 def miri_mrs_short_tso():
@@ -40,6 +41,17 @@ def miri_mrs_short():
     image.meta.filename = "test_miri_short.fits"
     image.meta.observation.date = "2019-01-01"
     image.meta.observation.time = "10:10:10"
+    image.meta.wcsinfo.v2_ref = -503.3406
+    image.meta.wcsinfo.v3_ref = -318.864
+    image.meta.wcsinfo.roll_ref = 234.28804423615944
+    image.meta.wcsinfo.ra_ref = 206.88338859678234
+    image.meta.wcsinfo.dec_ref = 49.3133194779185
+    image.meta.wcsinfo.dispersion_direction = 2
+
+    ref = get_reference_files(image)
+    pipeline = miri.create_pipeline(image, ref)
+    image.meta.wcs = wcs.WCS(pipeline)
+
     return image
 
 
