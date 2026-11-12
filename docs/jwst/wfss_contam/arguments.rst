@@ -4,7 +4,7 @@ Step Arguments
 ==============
 The ``wfss_contam`` step uses the following optional arguments.
 
-``--save_simulated_image`` (bool, default=False)
+``--save_simulated_image`` (bool, default=True)
   Whether the full-frame simulated grism image containing all
   simulated spectra within the field-of-view should be saved to a file. The file
   name uses a product type suffix of "simul".
