@@ -20,6 +20,7 @@ from jwst.associations.lib.rules_level3_base import (
     ASN_SCHEMA,  # noqa: F401
     AsnMixin_AuxData,
     AsnMixin_Coronagraphy,
+    AsnMixin_Lv3WFSS,
     AsnMixin_Science,
     AsnMixin_Spectrum,
     Constraint_IFU,
@@ -1120,7 +1121,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
 
 
 @RegistryMarker.rule
-class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
+class Asn_Lv3WFSSNRC(AsnMixin_Lv3WFSS):
     """
     Level 3 NIRCam WFSS/Grism Association.
 
@@ -1133,7 +1134,7 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
 
     def __init__(self, *args, **kwargs):
         # Setup for checking.
-        self.constraints = Constraint(
+        grism_exposure = Constraint(
             [
                 Constraint_Target(association=self),
                 DMSAttrConstraint(
@@ -1151,7 +1152,34 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
                     name="opt_elem2",
                     sources=["filter"],
                 ),
-            ]
+            ],
+        )
+        direct_exposure = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="nrc_image",
+                ),
+                DMSAttrConstraint(
+                    name="dir_opt_elem",
+                    sources=["pupil"],
+                ),
+                DMSAttrConstraint(
+                    name="dir_opt_elem2",
+                    sources=["filter"],
+                    force_unique=False,
+                ),
+                DMSAttrConstraint(name="detector", sources=["detector"], value="NRCALONG|NRCBLONG"),
+            ],
+        )
+
+        self.constraints = Constraint(
+            [
+                grism_exposure,
+                direct_exposure,
+            ],
+            reduce=Constraint.any,
         )
 
         # Check and continue initialization.
@@ -1169,9 +1197,41 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
         """
         return dms_product_name_wfss(self)
 
+    def get_dir_opt_element(self):
+        """
+        Get optical elements for the direct image member.
+
+        This always includes `clear` for the pupil, while
+        the filter is selected first from any direct filter
+        that matches the grism filters, and second the shortest
+        filter available.
+
+        Returns
+        -------
+        opt_elem : str
+            The Level3 Product name representation
+            of the optical elements.
+        """
+        # Retrieve all the optical elements
+        filt_elems = list(self.constraints["dir_opt_elem2"].found_values)
+        filt_elems.sort(key=str.lower)
+
+        grism_opt_elem = list(self.constraints["opt_elem2"].found_values)
+        matched_filters = [filt for filt in filt_elems if filt in grism_opt_elem]
+        if len(matched_filters) == 0:
+            filt = filt_elems[0]
+        elif len(matched_filters) == 1:
+            filt = matched_filters[0]
+        else:  # More than one match - choose shortest wavelength
+            matched_filters.sort(key=str.lower)
+            filt = matched_filters[0]
+
+        opt_elem = "clear-" + filt
+        return opt_elem
+
 
 @RegistryMarker.rule
-class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
+class Asn_Lv3WFSSNIS(AsnMixin_Lv3WFSS):
     """
     Level 3 NIRISS WFSS/Grism Association.
 
@@ -1184,7 +1244,7 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
 
     def __init__(self, *args, **kwargs):
         # Setup for checking.
-        self.constraints = Constraint(
+        grism_exposure = Constraint(
             [
                 Constraint_Target(association=self),
                 DMSAttrConstraint(
@@ -1204,6 +1264,31 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
                 ),
             ]
         )
+        direct_exposure = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="nis_image",
+                ),
+                DMSAttrConstraint(
+                    name="dir_opt_elem",
+                    sources=["filter"],
+                    value="clear",
+                ),
+                DMSAttrConstraint(
+                    name="dir_opt_elem2",
+                    sources=["pupil"],
+                ),
+            ]
+        )
+        self.constraints = Constraint(
+            [
+                grism_exposure,
+                direct_exposure,
+            ],
+            reduce=Constraint.any,
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3WFSSNIS, self).__init__(*args, **kwargs)
@@ -1220,9 +1305,41 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
         """
         return dms_product_name_wfss(self)
 
+    def get_dir_opt_element(self):
+        """
+        Get optical elements for the direct image member.
+
+        This always includes `clear` for the filter, while
+        the pupil is selected first from any direct pupil
+        that matches the grism pupil, and second the shortest
+        pupil available.
+
+        Returns
+        -------
+        opt_elem : str
+            The Level3 Product name representation
+            of the optical elements.
+        """
+        # Retrieve all the optical elements
+        pupil_elems = list(self.constraints["dir_opt_elem2"].found_values)
+        pupil_elems.sort(key=str.lower)
+
+        grism_opt_elem = list(self.constraints["opt_elem2"].found_values)
+        matched_filters = [pupil for pupil in pupil_elems if pupil in grism_opt_elem]
+        if len(matched_filters) == 0:
+            pupil = pupil_elems[0]
+        elif len(matched_filters) == 1:
+            pupil = matched_filters[0]
+        else:  # More than one match - select shortest wavelength
+            matched_filters.sort(key=str.lower)
+            pupil = matched_filters[0]
+
+        opt_elem = "clear-" + pupil
+        return opt_elem
+
 
 @RegistryMarker.rule
-class Asn_Lv3WFSSMIR(AsnMixin_Spectrum):
+class Asn_Lv3WFSSMIR(AsnMixin_Lv3WFSS):
     """
     Level 3 MIRI WFSS/PRISM Association.
 
@@ -1235,7 +1352,7 @@ class Asn_Lv3WFSSMIR(AsnMixin_Spectrum):
 
     def __init__(self, *args, **kwargs):
         # Setup for checking.
-        self.constraints = Constraint(
+        grism_exposure = Constraint(
             [
                 Constraint_Target(association=self),
                 DMSAttrConstraint(
@@ -1249,6 +1366,26 @@ class Asn_Lv3WFSSMIR(AsnMixin_Spectrum):
                     value="P750L",
                 ),
             ]
+        )
+        direct_exposure = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_image",
+                ),
+                DMSAttrConstraint(
+                    name="dir_opt_elem",
+                    sources=["filter"],
+                ),
+            ]
+        )
+        self.constraints = Constraint(
+            [
+                grism_exposure,
+                direct_exposure,
+            ],
+            reduce=Constraint.any,
         )
 
         # Check and continue initialization.
@@ -1265,6 +1402,24 @@ class Asn_Lv3WFSSMIR(AsnMixin_Spectrum):
             The product name.
         """
         return dms_product_name_wfss(self)
+
+    def get_dir_opt_element(self):
+        """
+        Get optical element for the direct image member.
+
+        The filter is selected from shortest wavelength available.
+
+        Returns
+        -------
+        opt_elem : str
+            The Level3 Product name representation
+            of the optical elements.
+        """
+        # Retrieve all the optical elements
+        filt_elems = list(self.constraints["dir_opt_elem"].found_values)
+        filt_elems.sort(key=str.lower)
+
+        return filt_elems[0]
 
 
 @RegistryMarker.rule
