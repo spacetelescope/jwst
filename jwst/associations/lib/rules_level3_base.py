@@ -78,10 +78,8 @@ MULTI_OBS_AC_TYPES = ["group", "background", "mosaic"]
 
 
 def _fix_subarray(subarray):
-    # Remove dashes or underscores to avoid a downstream CAOM ingest
-    subarray = strip_subarray(subarray)
     # Add the dash that separates the slit name from the subarray
-    subarray = "-" + subarray
+    subarray = "-" + strip_subarray(subarray)
     return subarray
 
 

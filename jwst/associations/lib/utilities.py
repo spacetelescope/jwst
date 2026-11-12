@@ -37,8 +37,8 @@ def strip_subarray(subarray):
     subarray : str
         The subarray stripped of dashes or underscores.
     """
-    subarray.strip("-")
-    subarray.strip("_")
+    subarray = subarray.replace("-", "")
+    subarray = subarray.replace("_", "")
     return subarray
 
 
