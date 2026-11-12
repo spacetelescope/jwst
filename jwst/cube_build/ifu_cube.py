@@ -151,7 +151,6 @@ class IFUCubeData:
         self.cdelt1 = None
         self.cdelt2 = None
         self.cdelt3 = None
-
         self.rot_angle = None  # rotation angle between Ra-Dec and IFU local instrument plane
 
     def check_ifucube(self):
@@ -338,8 +337,6 @@ class IFUCubeData:
 
         b_min = np.min(corner_b)
         b_max = np.max(corner_b)
-        lambda_min = lambda_min
-        lambda_max = lambda_max
 
         # along slice: a
         # across slice: b

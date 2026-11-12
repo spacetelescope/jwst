@@ -31,8 +31,8 @@ Python signature:  result = cube_wrapper_driz(
                             debug_cube_index
                         )
 
-The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight, spaxel_var,
-spaxel_iflux, spaxel_dq)
+The output of this function is a tuple of 6 arrays:(spaxel_flux, spaxel_weight, spaxel_var,
+spaxel_iflux, spaxel_dq, spaxel_exposure_counter)
 
 Parameters
 ----------
@@ -101,6 +101,8 @@ spaxel_var : numpy.ndarray
   IFU spaxel error
 spaxel_dq : numpy.ndarray
   IFU spaxel dq
+spaxel_exposure_counter : numpy:ndarray
+  IFU spaxel exposure counter
 */
 
 #include <stdlib.h>
@@ -124,10 +126,9 @@ match_driz(
     double *eta3, double *xi4, double *eta4, double *dwave, double *cdelt3, double *x_det,
     double *y_det, double cdelt1, double cdelt2, int nx, int ny, int nwave, long ncube, long npt,
     int linear, long debug_cube_index, double **spaxel_flux, double **spaxel_weight,
-    double **spaxel_var, double **spaxel_iflux, int **spaxel_dq)
+    double **spaxel_var, double **spaxel_iflux, int **spaxel_dq, int **spaxel_exposure_counter)
 {
-
-    // rn_weight: 1 = weight by readnoise, 0 = do not weight by variances
+    // rn_weight: 1 = weight by readnoise, 0 = do not weight by readnoise
     // xc : IFU grid point values along x-axis
     // yc : IFU grid point values along y-axis
     // zc : IFU grid point values along the z-axis
@@ -155,7 +156,9 @@ match_driz(
     // spaxel_weight : return value of combined weights
     // spaxel_var : return value of weighted combined variance
     // spaxel_iflux :return value of weighted combined iweighting map
-    // spaxel_dq :return value of combined dq (saturated and do_not_use)
+    // spaxel_dq :return value of combined dq (saturated and do_not_use)'
+    // spaxel_exposure_counter :return value of counter for number of unique exposures falling on
+    // spaxel
 
     int k, j, ix1, ix2, iy1, iy2, iw1, iw2;
     int nxy, ix, iy, iw, index_xy, index_cube;
@@ -168,6 +171,7 @@ match_driz(
     double ptmin, ptmax, spxmin, spxmax, zoverlap, z1, z2, z3;
     double cdelt1_half, cdelt2_half;
     double xleft, xright, ybot, ytop;
+
     double rn_tolerance = 1.0e-13; // Estimation from Mike Regan looking at GARDEN data.
     double total_weight = 0;
 
@@ -177,6 +181,7 @@ match_driz(
     double *varv = *spaxel_var;
     double *ifluxv = *spaxel_iflux;
     int *dqv = *spaxel_dq;
+    int *exp_counterv = *spaxel_exposure_counter;
 
     // find max of cdelt3, dwave to be used to estimate which wavelength plane the
     // pixel falls on
@@ -195,6 +200,8 @@ match_driz(
 
     // loop over each detector pixel and find which spaxels it overlaps with
     nxy = nx * ny;
+
+    int *exposure_already_counted = (int *) calloc(ncube, sizeof(int));
 
     for (k = 0; k < npt; k++) {
         xpixel[0] = xi1[k];
@@ -297,7 +304,7 @@ match_driz(
                         ybot = yc[iy] - cdelt2 * 0.5;
                         ytop = yc[iy] + cdelt2 * 0.5;
 
-                        index_xy = iy * nx + ix;
+                        // index_xy = iy * nx + ix;
                         if (xleft < xmax && xright > xmin && ybot < ymax && ytop > ymin) {
 
                             index_xy = iy * nx + ix;
@@ -310,7 +317,6 @@ match_driz(
                             // total_weight contols the flux accumulation
 
                             area_weight = area * zoverlap;
-
                             total_weight = area_weight;
                             if (rn_weight == 1) {
                                 // Readnoise variance is valid value
@@ -333,6 +339,12 @@ match_driz(
                                     weightv[index_cube] = weightv[index_cube] + total_weight;
                                     varv[index_cube] = varv[index_cube] + weighted_var;
                                     ifluxv[index_cube] = ifluxv[index_cube] + 1.0;
+
+                                    if (exposure_already_counted[index_cube] == 0) {
+                                        exp_counterv[index_cube] = exp_counterv[index_cube] + 1;
+                                        exposure_already_counted[index_cube] =
+                                            1; // mark it so we don't count again
+                                    }
                                 }
                             }
                             if (area_weight > 0) {
@@ -364,7 +376,9 @@ match_driz(
     *spaxel_var = varv;
     *spaxel_iflux = ifluxv;
     *spaxel_dq = dqv;
+    *spaxel_exposure_counter = exp_counterv;
 
+    free(exposure_already_counted);
     return 0;
 }
 
@@ -388,6 +402,7 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
     double *spaxel_flux = NULL, *spaxel_weight = NULL, *spaxel_var = NULL;
     double *spaxel_iflux = NULL;
     int *spaxel_dq = NULL;
+    int *spaxel_exposure_counter = NULL;
 
     int free_xc = 0, free_yc = 0, free_zc = 0, free_coord1 = 0, free_coord2 = 0, free_wave = 0,
         status = 0;
@@ -401,7 +416,8 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
     PyArrayObject *xi1, *eta1, *xi2, *eta2, *xi3, *eta3, *xi4, *eta4, *dwave;
     PyArrayObject *cdelt3, *sliceno, *x_det, *y_det;
     PyArrayObject *spaxel_flux_arr = NULL, *spaxel_weight_arr = NULL, *spaxel_var_arr = NULL;
-    PyArrayObject *spaxel_iflux_arr = NULL, *spaxel_dq_arr = NULL;
+    PyArrayObject *spaxel_iflux_arr = NULL, *spaxel_dq_arr = NULL,
+                  *spaxel_exposure_counter_arr = NULL;
     npy_intp npy_ncube = 0;
 
     int ny, nz;
@@ -487,9 +503,14 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
             goto fail;
         }
 
+        spaxel_exposure_counter_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_INT, 0);
+        if (!spaxel_exposure_counter_arr) {
+            goto fail_counter;
+        }
+
         result = Py_BuildValue(
-            "(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
-            spaxel_dq_arr);
+            "(NNNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
+            spaxel_dq_arr, spaxel_exposure_counter_arr);
 
         goto cleanup;
     }
@@ -497,6 +518,10 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
     if (alloc_flux_dq_arrays(
             ncube, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux, &spaxel_dq)) {
         goto fail;
+    }
+
+    if (alloc_counter_array(ncube, &spaxel_exposure_counter)) {
+        goto fail_counter;
     }
 
     //______________________________________________________________________
@@ -511,7 +536,8 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         (double *) PyArray_DATA(xi4), (double *) PyArray_DATA(eta4), (double *) PyArray_DATA(dwave),
         (double *) PyArray_DATA(cdelt3), (double *) PyArray_DATA(x_det),
         (double *) PyArray_DATA(y_det), cdelt1, cdelt2, nxx, nyy, nwave, ncube, npt, linear,
-        debug_cube_index, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux, &spaxel_dq);
+        debug_cube_index, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux, &spaxel_dq,
+        &spaxel_exposure_counter);
 
     if (status) {
         goto fail;
@@ -555,17 +581,33 @@ cube_wrapper_driz(PyObject *module, PyObject *args)
         }
         spaxel_dq = NULL;
 
+        spaxel_exposure_counter_arr = (PyArrayObject *) PyArray_SimpleNewFromData(
+            1, &npy_ncube, NPY_INT, spaxel_exposure_counter);
+        if (!spaxel_exposure_counter_arr) {
+            goto fail_counter;
+        }
+        spaxel_exposure_counter = NULL;
+
         PyArray_ENABLEFLAGS(spaxel_flux_arr, NPY_ARRAY_OWNDATA);
         PyArray_ENABLEFLAGS(spaxel_weight_arr, NPY_ARRAY_OWNDATA);
         PyArray_ENABLEFLAGS(spaxel_var_arr, NPY_ARRAY_OWNDATA);
         PyArray_ENABLEFLAGS(spaxel_iflux_arr, NPY_ARRAY_OWNDATA);
         PyArray_ENABLEFLAGS(spaxel_dq_arr, NPY_ARRAY_OWNDATA);
+        PyArray_ENABLEFLAGS(spaxel_exposure_counter_arr, NPY_ARRAY_OWNDATA);
         result = Py_BuildValue(
-            "(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
-            spaxel_dq_arr);
+            "(NNNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
+            spaxel_dq_arr, spaxel_exposure_counter_arr);
 
         goto cleanup;
     }
+
+fail_counter:
+    Py_XDECREF(spaxel_exposure_counter_arr);
+    free(spaxel_exposure_counter);
+    // if (!PyErr_Occurred()) {
+    //     PyErr_SetString(PyExc_MemoryError, "Unable to allocate memory for counter array.");
+    //  }
+    // goto cleanup;
 
 fail:
     Py_XDECREF(spaxel_flux_arr);
@@ -583,6 +625,7 @@ fail:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_MemoryError, "Unable to allocate memory for output arrays.");
     }
+    goto cleanup;
 
 cleanup:
     if (free_xc) {
@@ -678,13 +721,14 @@ PyMODINIT_FUNC
 
 PyInit_cube_match_sky_driz(void)
 {
+    import_array();
     PyObject *m = PyModule_Create(&moduledef);
     if (m == NULL) {
         return NULL;
     }
 
     // Initialize NumPy API array (crucial before any array utility is called)
-    import_array();
+    // import_array();
 
     return m;
 }

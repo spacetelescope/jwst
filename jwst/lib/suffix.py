@@ -195,6 +195,7 @@ _calculated_suffixes = {
     "saturationstep",
     "skymatch",
     "skymatchstep",
+    "slitcubebuildstep",
     "source_catalog",
     "sourcecatalogstep",
     "sourcetypestep",
