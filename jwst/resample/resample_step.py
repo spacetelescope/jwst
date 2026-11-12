@@ -2,6 +2,7 @@
 
 import logging
 
+import numpy as np
 from stdatamodels import filetype
 
 from jwst.datamodels import ImageModel, ModelContainer, ModelLibrary  # type: ignore[attr-defined]
@@ -165,19 +166,9 @@ class ResampleStep(Step):
             )
             result = resamp.resample_many_to_one()
 
-        with input_models:
-            for model in input_models:
-                if model.meta.cal_step.tweakreg == "COMPLETE":
-                    result.member_wcs.append(
-                        {
-                            "filename": model.meta.filename,
-                            "visit_number": int(model.meta.observation.visit_number),
-                            "ra": model.meta.wcsinfo.ra_ref,
-                            "dec": model.meta.wcsinfo.dec_ref,
-                            "tweak": model.meta.wcs,  # .get_transform("v2v3vacorr", "v2v3corr")
-                        }
-                    )
-                input_models.shelve(model)
+            # Store as-applied tweaks from the input model WCSs
+            self._add_tweak_table(input_models, result)
+
         # The output is a new datamodel.
         # Clean up the input model(s) if they were opened here.
         if input_model is not input_data:
@@ -268,3 +259,34 @@ class ResampleStep(Step):
             log.debug(f"   {k}={v}")
 
         return kwargs
+
+    def _add_tweak_table(self, input_models, result):
+        """
+        Add a table of input WCS tweaks to an output image model.
+
+        Parameters
+        ----------
+        input_models : `~jwst.datamodels.library.ModelLibrary`
+            Input member images.
+        result : `~stdatamodels.jwst.datamodels.ImageModel`
+            Output mosaic image. Updated in place.
+        """
+        tweak_rows = []
+        rad2arcsec = 3600.0 * np.rad2deg(1.0)
+        with input_models:
+            for model in input_models:
+                if "v2v3corr" in model.meta.wcs.available_frames:
+                    filename = model.meta.filename
+                    visit = model.meta.observation.visit_id
+                    ra_ref = model.meta.wcsinfo.ra_ref
+                    dec_ref = model.meta.wcsinfo.dec_ref
+
+                    tweak_tfm = model.meta.wcs.get_transform("v2v3", "v2v3corr")
+                    matrix = tweak_tfm["tp_affine"].matrix.value
+                    shift = tweak_tfm["tp_affine"].translation.value * rad2arcsec
+
+                    tweak_rows.append((filename, visit, ra_ref, dec_ref, *shift, *matrix.flat))
+
+                input_models.shelve(model)
+        if len(tweak_rows) > 0:
+            result.tweak_table = np.array(tweak_rows, dtype=result.get_dtype("tweak_table"))

@@ -19,6 +19,7 @@ from stcal.alignment.util import (
     wcs_bbox_from_shape,
 )
 from stdatamodels.jwst.datamodels import (
+    ImageModel,
     MiriLRSSpecwcsModel,
     WavelengthrangeModel,
 )
@@ -29,6 +30,7 @@ from stdatamodels.jwst.transforms.models import (
     NIRISSBackwardGrismDispersion,
 )
 from stpipe.exceptions import StpipeExitException
+from tweakwcs.correctors import JWSTWCSCorrector
 
 from jwst.lib.catalog_utils import SkyObject, read_source_catalog
 from jwst.lib.stripe_utils import generate_substripe_ranges
@@ -47,6 +49,8 @@ __all__ = [
     "create_grism_bbox",
     "get_bounding_box_extents",
     "wrap_ra",
+    "get_mosaic_member_tweak",
+    "apply_mosaic_member_tweak",
     "update_fits_wcsinfo",
     "is_sky_like",
     "validate_orders_against_transform",
@@ -1172,63 +1176,108 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
 
 def get_mosaic_member_tweak(input_model):
     """
-    Given input model with associated direct image, find matching image WCS.
+    Given input model with associated direct image, find matching image WCS tweak.
 
-    Attempt to open the listed direct image mosaic, find the mosaic member WCS
-    closest in pointing to the input model, and return the WCS object.
+    Attempt to open the listed direct image mosaic, find the mosaic member tweak
+    with matching visit that is closest in pointing to the input model,
+    and return the affine transformation applied (matrix and shift).
 
     Parameters
     ----------
     input_model : `~stdatamodels.jwst.datamodels.ImageModel`
-        The input data for which we'll find the closest pointing match in the
-        list of exposures used to generate the associated direct image mosaic.
+        The input data to match.
 
     Returns
     -------
-    `~gwcs.wcs.WCS`
-        The WCS object stored for the mosaic member closest in pointing to the
-        input model.
+    matrix : ndarray or None
+        The 2D affine transformation matrix. Returns None if no match found.
+    shift : ndarray or None
+        The x and y translation in the tangent plane, in arcsec. Returns None
+        if no match found.
     """
-    mosaic_wcs = None
+    matrix, shift = None, None
     direct_file = input_model.meta.direct_image
 
+    # Check for a direct image
+    if direct_file is None:
+        log.warning("No direct image file identified.")
+        return matrix, shift
+
+    # Try to open the direct image
     try:
-        direct = ImageModel(direct_file)
-        bestsep = 1.0  # deg
-        bestfit = -1
-        visit_number = int(input_model.meta.observation.visit_number)
+        with ImageModel(direct_file) as direct:
+            tweak_table = getattr(direct, "tweak_table", None)
+    except FileNotFoundError:
+        log.warning(f"Direct image file {direct_file} not found.")
+        return matrix, shift
+
+    # Check if there was a tweak table
+    if tweak_table is None:
+        log.info("Direct image does not contain WCS tweaks; none applied.")
+        return matrix, shift
+
+    # Check for a matching visit id
+    visit_id = input_model.meta.observation.visit_id
+    match_visit = tweak_table["VISIT_ID"] == visit_id
+    if not np.any(match_visit):
+        log.info(f"No matching tweak for visit ID {visit_id} in direct image.")
+        return matrix, shift
+
+    matches = tweak_table[match_visit]
+    if len(matches) == 1:
+        # Just one match for the visit id
+        match = matches[0]
+    else:
+        # Multiple matches - take the closest
         spec_coord = coord.SkyCoord(
             input_model.meta.wcsinfo.ra_ref,
             input_model.meta.wcsinfo.dec_ref,
             unit=(u.deg, u.deg),
         )
+        img_coord = coord.SkyCoord(matches["RA_REF"], matches["DEC_REF"], unit=(u.deg, u.deg))
+        sep = img_coord.separation(spec_coord)
+        match = matches[np.argmin(sep.value)]
 
-        for i, entry in enumerate(direct.member_wcs.instance):
-            if entry["visit_number"] == visit_number:
-                member_coord = coord.SkyCoord(
-                    entry["ra"],
-                    entry["dec"],
-                    unit=(u.deg, u.deg),
-                )
-                sep = member_coord.separation(spec_coord)
-                if sep.value < bestsep:
-                    bestfit = i
-                    bestsep = sep.value
+    log.info(f"Applying WCS tweak from mosaic member {match['FILENAME']}")
 
-        if bestfit >= 0:
-            log.info(
-                f"Retrieving WCS from {direct.member_wcs.instance[bestfit]['filename']} "
-                f"with pointing separation of {bestsep * 3600} arcsec."
-            )
-            mosaic_wcs = direct.member_wcs.instance[bestfit]["tweak"]
+    matrix = np.array(
+        [[match["MATRIX_00"], match["MATRIX_01"]], [match["MATRIX_10"], match["MATRIX_11"]]]
+    )
+    shift = np.array([match["SHIFT_X"], match["SHIFT_Y"]])
+    log.debug(f"Affine matrix: [{matrix[0]}, {matrix[1]}]")
+    log.debug(f"Shift: {shift}")
 
-    except FileNotFoundError:
-        log.warning(f"Direct image file {direct_file} not found.")
+    return matrix, shift
 
-    except (KeyError, AttributeError):
-        log.warning("Direct image does not contain WCS information.")
 
-    return mosaic_wcs
+def apply_mosaic_member_tweak(input_model, image_pipeline):
+    """
+    Apply a WCS tweak from a direct image member to a WFSS image pipeline.
+
+    Parameters
+    ----------
+    input_model : `~stdatamodels.jwst.datamodels.ImageModel`
+        Input WFSS model.
+    image_pipeline : list
+        Image transforms for the WFSS model.
+
+    Returns
+    -------
+    corrected_pipeline : list of tuple
+        The image pipeline with the tweak applied, if found.
+    """
+    matrix, shift = get_mosaic_member_tweak(input_model)
+    if matrix is not None and shift is not None:
+        # Found tweak: apply it to the image pipeline
+        corrector = JWSTWCSCorrector(WCS(image_pipeline), input_model.meta.wcsinfo.instance)
+        corrector.set_correction(matrix=matrix, shift=shift)
+
+        # make a list of tuples to return as the pipeline, for compatibility with
+        # return values from existing imaging pipelines
+        corrected_pipeline = [(step.frame, step.transform) for step in corrector.wcs.pipeline]
+        return corrected_pipeline
+    else:
+        return image_pipeline
 
 
 def update_fits_wcsinfo(
@@ -1449,13 +1498,13 @@ def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
     """
     xstart = wfss_model.meta.subarray.xstart
     ystart = wfss_model.meta.subarray.ystart
+    reference_files = get_wcs_reference_files(wfss_model)
+    image_pipeline = imaging(wfss_model, reference_files)
 
-    imwcs = get_mosaic_member_tweak(wfss_model)
-    if imwcs is None:
-        reference_files = get_wcs_reference_files(wfss_model)
-        image_pipeline = imaging(wfss_model, reference_files)
-        imwcs = WCS(image_pipeline)
+    # Apply WCS tweak from the direct image if needed
+    image_pipeline = apply_mosaic_member_tweak(wfss_model, image_pipeline)
 
+    imwcs = WCS(image_pipeline)
     if bbox is not None:
         imwcs.bounding_box = bbox
     elif xstart is not None and ystart is not None and (xstart != 1 or ystart != 1):

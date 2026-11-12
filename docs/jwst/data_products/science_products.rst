@@ -402,6 +402,8 @@ The FITS file structure for ``i2d`` and ``s2d`` products is as follows:
 +-----+-------------+----------+-----------+-------------------------+
 |     | WCS-TABLE*  | BINTABLE | N/A       | variable cols x 1 row   |
 +-----+-------------+----------+-----------+-------------------------+
+|     | TWEAK*      | BINTABLE | N/A       | 10 cols x variable rows |
++-----+-------------+----------+-----------+-------------------------+
 |     | HDRTAB*     | BINTABLE | N/A       | variable                |
 +-----+-------------+----------+-----------+-------------------------+
 |     | ASDF        | BINTABLE | N/A       | variable                |
@@ -418,6 +420,8 @@ The FITS file structure for ``i2d`` and ``s2d`` products is as follows:
  - WCS-TABLE: A table listing the wavelength values to be associated with each dispersion
    element in the SCI array, in a format that conforms to the FITS spectroscopic WCS standards.
    Only appears for spectroscopic products (``s2d``).
+ - TWEAK: A table of WCS tweak values applied to individual input images, if any. Only appears
+   for imaging products (``i2d``).
  - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
    that were combined to produce the output image. Only appears when multiple inputs are used.
  - ADSF: The data model meta data.
