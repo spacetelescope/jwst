@@ -15,6 +15,7 @@ from numpy.testing import assert_allclose
 from stcal.alignment.util import compute_scale, sregion_to_footprint
 from stcal.resample.utils import build_driz_weight, compute_mean_pixel_area
 from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, dqflags
+from tweakwcs.correctors import JWSTWCSCorrector
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ModelContainer, ModelLibrary
@@ -2094,3 +2095,56 @@ def test_spec_fits_wcs(tmp_path, nirspec_cal, use_source_location):
     np.testing.assert_allclose(gwcs_diff, slit.meta.wcsinfo.cdelt2)
 
     im.close()
+
+
+def test_store_wcs_tweak_table(nircam_rate):
+    # Make 3 images with a wcs applied
+    im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im1.meta.filename = "test1.fits"
+    _set_photom_kwd(im1)
+    im2 = im1.copy()
+    im3 = im1.copy()
+    im2.meta.filename = "test2.fits"
+    im2.meta.observation.visit_number = "2"
+    im2.meta.observation.visit_id = "id2"
+    im3.meta.filename = "test3.fits"
+    im3.meta.observation.visit_number = "3"
+    im3.meta.observation.visit_id = "id3"
+
+    c = ModelLibrary([im1, im2, im3])
+    assert len(c.group_names) == 3
+
+    # apply a tweak to two of them
+    shift2 = [-1.5, 0.1]
+    shift3 = [0.02, -0.2]
+    matrix = [[1, 0], [0, 1]]
+    corrector = JWSTWCSCorrector(im2.meta.wcs, im2.meta.wcsinfo.instance)
+    corrector.set_correction(matrix=matrix, shift=shift2)
+    im2.meta.wcs = corrector.wcs
+    corrector = JWSTWCSCorrector(im3.meta.wcs, im3.meta.wcsinfo.instance)
+    corrector.set_correction(matrix=matrix, shift=shift3)
+    im3.meta.wcs = corrector.wcs
+
+    c = ModelLibrary([im1, im2, im3])
+
+    result = ResampleStep.call(c, weight_type="exptime", blendheaders=False, save_results=False)
+
+    # a table with the two tweaks present is saved
+    ra_ref = im1.meta.wcsinfo.ra_ref
+    dec_ref = im1.meta.wcsinfo.dec_ref
+
+    assert np.all(result.tweak_table["FILENAME"] == ("test2.fits", "test3.fits"))
+    assert np.all(result.tweak_table["VISIT_ID"] == ("id2", "id3"))
+    np.testing.assert_allclose(result.tweak_table["RA_REF"], ra_ref)
+    np.testing.assert_allclose(result.tweak_table["DEC_REF"], dec_ref)
+    np.testing.assert_allclose(result.tweak_table["SHIFT_X"], (shift2[0], shift3[0]))
+    np.testing.assert_allclose(result.tweak_table["SHIFT_Y"], (shift2[1], shift3[1]))
+    np.testing.assert_allclose(result.tweak_table["MATRIX_00"], 1)
+    np.testing.assert_allclose(result.tweak_table["MATRIX_01"], 0)
+    np.testing.assert_allclose(result.tweak_table["MATRIX_10"], 0)
+    np.testing.assert_allclose(result.tweak_table["MATRIX_11"], 1)
+
+    im1.close()
+    im2.close()
+    im3.close()
+    result.close()
