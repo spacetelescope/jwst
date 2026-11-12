@@ -301,7 +301,8 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
     if not pwcpos_is_valid:
         raise ValueError(f"PWC position {pwcpos} is outside bounds ({pwcpos_bounds}).")
 
-    return _get_soss_traces(refmodel, pwcpos, order, subarray)
+    order, x, y, wl, _psf_tilt = _get_soss_traces(refmodel, pwcpos, order, subarray)
+    return order, x, y, wl
 
 
 def retrieve_default_pastasoss_model():
@@ -355,6 +356,8 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
         The y coordinates of the rotated points.
     wavelengths : ndarray
         The wavelengths associated with the rotated points.
+    psf_tilt : ndarray
+        The wavelength-dependent PSF tilt.
     """
     spectral_order_index = _find_spectral_order_index(refmodel, int(order))
 
@@ -364,7 +367,6 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
         refmodel.traces[spectral_order_index].pivot_x,
         refmodel.traces[spectral_order_index].pivot_y,
     )
-
     # Offset for SUBSTRIP96
     if subarray == "SUBSTRIP96":
         y -= 10
@@ -374,7 +376,11 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
     # wavelength associated to trace at given pwcpos value
     wavelengths = _get_wavelengths(refmodel, x_new, pwcpos, int(order))
 
-    return order, x_new, y_new, wavelengths
+    # interpolate wavelength-dependent PSF tilt onto the wavelength grid of the rotated trace
+    wl_tilt, tilt = refmodel.traces[spectral_order_index].psf_tilt
+    psf_tilt = np.interp(wavelengths, wl_tilt, tilt)
+
+    return order, x_new, y_new, wavelengths, psf_tilt
 
 
 def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
@@ -570,9 +576,10 @@ def get_soss_wavemaps(
     wavemaps = []
     traces = []
     for order in orders_requested:
-        _, x, y, wl = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
+        _, x, y, wl, tilt = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
         xtrace = _extrapolate_to_wavegrid(wave_grid, wl, x)
         ytrace = _extrapolate_to_wavegrid(wave_grid, wl, y)
+        psf_tilt = np.interp(wave_grid, wl, tilt)
         spectrace = np.array([xtrace, ytrace, wave_grid])
 
         # Make wavemap from wavelength solution
@@ -580,7 +587,7 @@ def get_soss_wavemaps(
             wave_grid,
             xtrace,
             ytrace,
-            np.zeros_like(xtrace),
+            psf_tilt,
             oversample=1,
             dimx=soss_xdim,
             dimy=soss_ydim,
