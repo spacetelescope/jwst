@@ -379,8 +379,12 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
     wavelengths = _get_wavelengths(refmodel, x_new, pwcpos, int(order))
 
     # interpolate PSF tilt onto the wavelength grid of the rotated trace
-    wl_tilt, tilt = refmodel.traces[spectral_order_index].psf_tilt
-    psf_tilt = np.interp(wavelengths, wl_tilt, tilt)
+    tiltarr = getattr(refmodel.traces[spectral_order_index], "psf_tilt", None)
+    if tiltarr is not None:
+        wl_tilt, tilt = refmodel.traces[spectral_order_index].psf_tilt
+        psf_tilt = np.interp(wavelengths, wl_tilt, tilt)
+    else:
+        psf_tilt = np.zeros_like(wavelengths)
 
     return order, x_new, y_new, wavelengths, psf_tilt
 
