@@ -94,7 +94,7 @@ The simulation for a given source cutout is stored in the SIMUL extension (``.si
 and the contamination estimate is stored in the CONTAM extension (``.contam`` attribute).
 The step does not modify the SCI extension (``.data`` attribute) of the input data.
 
-If the step argument ``--save_simulated_image`` is set to `True`, the full-frame image
+If the step argument ``--save_simulated_image`` is set to `True` (the default), the full-frame image
 containing a simulation of the entire field (the result of step 1 above) is saved to
 a file with the extension ``_simul.fits``. See :ref:`wfss_contam_step_args`.
 
