@@ -388,12 +388,14 @@ def refmodel(trace1d):
     model.meta.wavemap_wlmin = 0.5
     model.meta.wavemap_wlmax = 5.5
 
+    tilt = np.array([np.linspace(0.5, 5.5, 501), np.linspace(0, 3.0, 501)])
     trace0 = {
         "cutoff": 2048,
         "pivot_x": 189.0,
         "pivot_y": 5.0,
         "spectral_order": 1,
         "trace": np.array([trace1d[0][0], trace1d[0][1]], dtype=np.float64).T,
+        "psf_tilt": tilt,
     }
     trace1 = {
         "cutoff": 1783,
@@ -401,6 +403,7 @@ def refmodel(trace1d):
         "pivot_y": 20.0,
         "spectral_order": 2,
         "trace": np.array([trace1d[1][0], trace1d[1][1]], dtype=np.float64).T,
+        "psf_tilt": tilt,
     }
     trace2 = {
         "cutoff": 1134,
@@ -408,6 +411,7 @@ def refmodel(trace1d):
         "pivot_y": 36.1,
         "spectral_order": 3,
         "trace": np.array([trace1d[2][0], trace1d[2][1]], dtype=np.float64).T,
+        "psf_tilt": tilt,
     }
     model.traces = [trace0, trace1, trace2]
 

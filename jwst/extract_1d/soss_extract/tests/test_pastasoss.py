@@ -130,7 +130,7 @@ def test_get_soss_traces(refmodel):
     for order in ["1", "2", "3"]:
         idx = int(order) - 1
         for subarray in ["SUBSTRIP96", "SUBSTRIP256"]:
-            order_out, x_new, y_new, wavelengths = _get_soss_traces(
+            order_out, x_new, y_new, wavelengths, _tilt = _get_soss_traces(
                 refmodel, PWCPOS, order, subarray
             )
 
@@ -179,11 +179,12 @@ def test_extrapolate_to_wavegrid(refmodel):
 @pytest.mark.parametrize("subarray", [None, "SUBSTRIP96", "FULL"])
 def test_get_soss_traces_public(subarray, order, pwcpos):
     """Test of public interface to get_soss_traces, which should not require datamodel or refmodel"""
-    order_out, x_new, y_new, wavelengths = get_soss_traces(pwcpos, order, subarray=subarray)
+    order_out, x_new, y_new, wavelengths, tilt = get_soss_traces(pwcpos, order, subarray=subarray)
 
     assert str(order_out) == order
     assert x_new.shape == y_new.shape
     assert x_new.shape == wavelengths.shape
+    assert x_new.shape == tilt.shape
 
 
 @pytest.mark.parametrize("pwcpos", [245.79 - 0.24, 245.79, 245.79 + 0.24])  # edges of bounds
@@ -201,7 +202,7 @@ def test_get_soss_wavemaps_public(subarray, pwcpos, orders_requested):
     n_orders = len(orders_requested)
     expected_shape = (n_orders, subarray_shapes[subarray], 2048)
     assert wavemaps.shape == expected_shape
-    assert traces.shape == (n_orders, 3, 5001)
+    assert traces.shape == (n_orders, 4, 5001)
 
 
 def test_get_soss_traces_bad_pwcpos():
