@@ -31,7 +31,7 @@ def miri_mrs_short_tso():
 def miri_mrs_short():
     """Set up MIRI MRS SHORT data"""
 
-    image = miri_mrs_rate_model(shape = (1024,1032), with_wcs = True)
+    image = miri_mrs_rate_model(shape=(1024, 1032), with_wcs=True)
     image.meta.filename = "test_miri_short.fits"
 
     return image
