@@ -216,7 +216,7 @@ def correct_xartifact(input_model, modelpars):
     step = PixelReplaceStep()
     # Use the fit_profile method because we want to be maximally aggressive in replacing pixels
     # in order to derive the cross-artifact correction
-    step.algorithm = 'fit_profile'
+    step.algorithm = "fit_profile"
     usemodel = step.run(input_model)
     usedata = usemodel.data
     usedq = usemodel.dq
