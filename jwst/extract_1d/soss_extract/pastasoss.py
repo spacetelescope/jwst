@@ -382,6 +382,9 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
     tiltarr = getattr(refmodel.traces[spectral_order_index], "psf_tilt", None)
     if tiltarr is not None:
         wl_tilt, tilt = refmodel.traces[spectral_order_index].psf_tilt
+        sort_indices = np.argsort(wl_tilt)
+        wl_tilt = wl_tilt[sort_indices]
+        tilt = tilt[sort_indices]
         psf_tilt = np.interp(wavelengths, wl_tilt, tilt)
     else:
         psf_tilt = np.zeros_like(wavelengths)
