@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.io import fits
 from numpy.testing import assert_allclose
 
 from jwst.datamodels.utils.tests.wfss_helpers import (
@@ -73,6 +74,98 @@ def test_make_wfss_multiexposure(input_model_maker, request):
         for col in to_check:
             assert col in exposure.spec_table.columns.names
             assert exposure.spec_table.columns[col].unit == expected_units[to_check.index(col)]
+
+
+@pytest.mark.parametrize("input_model_maker", ["wfss_spec2_multispec", "wfss_spec3_multispec"])
+def test_detector_meta_preserved(input_model_maker, request, tmp_path):
+    """Preserve per-exposure detectors through WFSS conversion and FITS serialization."""
+    input_model = request.getfixturevalue(input_model_maker)
+    input_model.meta.instrument.detector = "NRCALONG"
+    detectors = {}
+    for spec in input_model.spec:
+        # All sources in an exposure have the same detector, but exposures may differ.
+        group_id = spec.meta.group_id
+        detector = "NRCALONG" if int(group_id) % 2 else "NRCBLONG"
+        spec.detector = detector
+        detectors[group_id] = detector
+
+    output_path = tmp_path / "wfss_x1d.fits"
+    with make_wfss_multiexposure(input_model) as output_model:
+        for exposure in output_model.spec:
+            assert exposure.detector == detectors[exposure.group_id]
+        output_model.save(output_path)
+
+    with fits.open(output_path) as hdul:
+        for hdu in hdul:
+            if hdu.name == "EXTRACT1D":
+                assert hdu.header["DETECTOR"] == detectors[hdu.header["EXPGRPID"]]
+
+    with dm.open(output_path) as saved_model:
+        for exposure in saved_model.spec:
+            assert exposure.detector == detectors[exposure.group_id]
+        expanded_models = wfss_multiexposure_to_multispec(saved_model)
+        try:
+            for model in expanded_models:
+                for spec in model.spec:
+                    assert spec.detector == detectors[spec.meta.group_id]
+        finally:
+            for model in expanded_models:
+                model.close()
+
+
+@pytest.mark.parametrize("flat_input", [False, True])
+@pytest.mark.parametrize("reverse_inputs", [False, True])
+@pytest.mark.parametrize("invalid_blong", [False, True])
+def test_detectors_are_separated(wfss_spec3_multispec, flat_input, reverse_inputs, invalid_blong):
+    """Keep both detectors for a source, even if one has no valid flux values."""
+    inputs = []
+    expected = {}
+    for detector in ["NRCALONG", "NRCBLONG"]:
+        model = wfss_spec3_multispec.copy()
+        # The parent detector must not override the individual spectrum's detector.
+        model.meta.instrument.detector = "NRCALONG"
+        for spec in model.spec:
+            spec.detector = detector
+            spec.meta.filename = f"exposure_{spec.meta.group_id}_{detector}.fits"
+            spec.spectral_order = 1
+            if detector == "NRCBLONG":
+                spec.spec_table["FLUX"] = np.nan if invalid_blong else 2.0
+            key = (spec.meta.group_id, detector)
+            expected[key] = (spec.meta.filename, spec.spec_table.copy())
+        inputs.append(model)
+
+    if flat_input:
+        flat_models = [make_wfss_multiexposure(model) for model in inputs]
+        for model in inputs:
+            model.close()
+        inputs = flat_models
+    if reverse_inputs:
+        inputs.reverse()
+
+    def check_output(output):
+        assert len(output.spec) == N_EXPOSURES * 2
+        assert {(spec.group_id, spec.detector) for spec in output.spec} == set(expected)
+        for spec in output.spec:
+            filename, table = expected[(spec.group_id, spec.detector)]
+            assert spec.filename == filename
+            assert spec.spectral_order == 1
+            assert len(spec.spec_table) == 1
+            row = spec.spec_table[0]
+            assert row["SOURCE_ID"] == wfss_spec3_multispec.spec[0].source_id
+            assert row["N_ALONGDISP"] == len(table)
+            assert len(row["FLUX"]) == len(table)
+            for column in ["WAVELENGTH", "FLUX", "FLUX_ERROR", "DQ", "CONTAM", "CONTAMCORR_FLUX"]:
+                assert_allclose(row[column], table[column])
+
+    try:
+        with make_wfss_multiexposure(inputs) as output:
+            check_output(output)
+            # Regrouping a mixed-detector product must also preserve both detectors.
+            with make_wfss_multiexposure(output) as regrouped:
+                check_output(regrouped)
+    finally:
+        for model in inputs:
+            model.close()
 
 
 def test_orders_are_separated(wfss_spec3_multispec):
