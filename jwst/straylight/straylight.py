@@ -8,6 +8,7 @@ from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst import datamodels
+from jwst.pixel_replace import PixelReplaceStep
 from jwst.straylight.calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
@@ -210,14 +211,20 @@ def correct_xartifact(input_model, modelpars):
     # Save some data parameters for easy use later
     nrows, ncols = input_model.data.shape
 
-    # Create a copy of the input data array that will be modified
-    # for use in the cross artifact calculations
-    usedata = input_model.data.copy()
+    # Apply pixel-replacement to the data to fix as many missing values as possible
+    # prior to convolution with the cross-artifact kernel
+    step = PixelReplaceStep()
+    # Use the fit_profile method because we want to be maximally aggressive in replacing pixels
+    # in order to derive the cross-artifact correction
+    step.algorithm = "fit_profile"
+    usemodel = step.run(input_model)
+    usedata = usemodel.data
+    usedq = usemodel.dq
 
     # mask is same size as image - set = 1 everywhere to start
     mask = np.ones_like(usedata)
 
-    # if there are nans remove them because they mess up the correction
+    # if there are nans left remove them because they mess up the correction
     # Set them to zero in the copy of input data used for calculation
     index_inf = np.isinf(usedata).nonzero()
     usedata[index_inf] = 0.0
@@ -228,7 +235,6 @@ def correct_xartifact(input_model, modelpars):
     mask[index_inf] = 0
 
     # flag pixels that should not be used for computation
-    mask_dq = input_model.dq.copy()  # * mask # find DQ flags of the gap values
     all_flags = (
         dqflags.pixel["DO_NOT_USE"]
         + dqflags.pixel["NON_SCIENCE"]
@@ -236,7 +242,7 @@ def correct_xartifact(input_model, modelpars):
         + dqflags.pixel["HOT"]
     )
     # where are pixels set to any one of the all_flags cases
-    testflags = np.bitwise_and(mask_dq, all_flags)
+    testflags = np.bitwise_and(usedq, all_flags)
     # where are testflags ne 0 and mask == 1
     bad_flags = np.where(testflags != 0)
     mask[bad_flags] = 0
