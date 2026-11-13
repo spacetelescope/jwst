@@ -1,0 +1,1 @@
+Removed support for unused NRC_FLAT exposure type.
