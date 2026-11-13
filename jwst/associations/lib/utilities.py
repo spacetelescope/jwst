@@ -37,9 +37,7 @@ def strip_subarray(subarray):
     subarray : str
         The subarray stripped of dashes or underscores.
     """
-    subarray = subarray.replace("-", "")
-    subarray = subarray.replace("_", "")
-    return subarray
+    return subarray.replace("-", "").replace("_", "")
 
 
 def constrain_on_candidates(candidates):
