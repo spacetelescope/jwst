@@ -323,9 +323,9 @@ solveIntersection(
          Value defining the bottom edge of the clipped polygon
 
      */
-    float m = 0;
+    double m = 0;
     if (x2 != x1) {
-        m = ((double) (y2 - y1) / (double) (x2 - x1));
+        m = (double) ((y2 - y1) / (x2 - x1));
     }
     switch (edge) {
         case CP_LEFT:
@@ -339,7 +339,7 @@ solveIntersection(
         case CP_BOTTOM:
             *y = bottom;
             if (x1 != x2) {
-                *x = x1 + (double) (1 / m) * (*y - y1);
+                *x = x1 + (1.0 / m) * (*y - y1);
             } else {
                 *x = x1;
             }
@@ -347,7 +347,7 @@ solveIntersection(
         case CP_TOP:
             *y = top;
             if (x1 != x2) {
-                *x = x1 + (double) (1 / m) * (*y - y1);
+                *x = x1 + (1.0 / m) * (*y - y1);
             } else {
                 *x = x1;
             }
