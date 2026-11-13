@@ -25,7 +25,7 @@ __all__ = [
 
 def strip_subarray(subarray):
     """
-    Remove dashes or underscores to avoid a downstream CAOM ingest.
+    Remove dashes or underscores to avoid a downstream CAOM failure.
 
     Parameters
     ----------
