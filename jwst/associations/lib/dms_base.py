@@ -994,6 +994,30 @@ class DMSAttrConstraint(AttrConstraint):
         super(DMSAttrConstraint, self).__init__(**kwargs)
 
 
+class Constraint_NIRCamImageNoDisperser(SimpleConstraint):
+    """Constrataint for engineering imaging templated data."""
+
+    def check_and_set(self, item):
+        exp_type = item.get("exp_type")
+        disperser = item.get("pupil")
+
+        #     Complete list
+        # CLEAR, FLAT, F162M, F164N,
+        # GDHS0, GDHS60,
+        # MASKBAR, MASKIPR, MASKRND, PINHOLES, WLM8,
+        # WLP8, F323N, F405N, F466N, F470N,
+        # GRISMC, GRISMR, GRISMV2, GRISMV3,
+        # N/A, ANY
+        #     Filter:
+        # Contains *grism* and *dhs*
+        disperser_filter = ["GDHS0", "GDHS60", "GRISMC", "GRISMR", "GRISMV2", "GRISMV3"]
+
+        if exp_type.lower() == "nrc_image" and disperser in disperser_filter:
+            return False, []
+
+        return True, []
+
+
 class Constraint_TargetAcq(SimpleConstraint):
     """
     Select on target acquisition exposures.
