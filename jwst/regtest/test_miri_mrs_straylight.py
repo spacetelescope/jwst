@@ -2,8 +2,9 @@
 
 import pytest
 
+from jwst.assign_wcs import AssignWcsStep
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
-from jwst.stpipe import Step
+from jwst.straylight import StraylightStep
 
 # Define artifactory source and truth file paths
 INPUT_PATH = "miri/mrs"
@@ -19,14 +20,14 @@ def run_straylight(rtdata_module):
     filename = "jw01024001001_04101_00001_mirifulong_rate.fits"
     rtdata.get_data(INPUT_PATH + "/" + filename)
 
-    args = [
-        "jwst.straylight.StraylightStep",
-        rtdata.input,
-        "--clean_showers=True",
-        "--save_shower_model=True",
-    ]
-
-    Step.from_cmdline(args)
+    with AssignWcsStep.call(rtdata.input) as wcs_model:
+        result = StraylightStep.call(
+            wcs_model,
+            clean_showers=True,
+            save_shower_model=True,
+            save_results=True,
+        )
+        result.close()
 
     return rtdata
 
