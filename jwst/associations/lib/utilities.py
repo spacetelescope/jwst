@@ -19,7 +19,25 @@ __all__ = [
     "return_on_exception",
     "getattr_from_list_nofail",
     "is_iterable",
+    "strip_subarray",
 ]
+
+
+def strip_subarray(subarray):
+    """
+    Remove dashes or underscores to avoid a downstream CAOM failure.
+
+    Parameters
+    ----------
+    subarray : str
+        The subarray to strip.
+
+    Returns
+    -------
+    subarray : str
+        The subarray stripped of dashes or underscores.
+    """
+    return subarray.replace("-", "").replace("_", "")
 
 
 def constrain_on_candidates(candidates):
