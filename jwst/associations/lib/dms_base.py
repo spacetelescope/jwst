@@ -1001,6 +1001,8 @@ class Constraint_NIRCamImageNoDisperser(Constraint):
     def __init__(self, *args, **kwargs):  # noqa: ARG002
         super(Constraint_NIRCamImageNoDisperser, self).__init__(
             [
+                # Exclude any candidate with EXP_TYPE=NRC_IMAGE and any
+                # PUPIL value containing "DHS" or "GRISM".
                 Constraint(
                     [
                         DMSAttrConstraint(
