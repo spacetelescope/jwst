@@ -10,6 +10,7 @@ from jwst.associations.lib.diff import MultiDiffError, compare_asns
 from jwst.associations.lib.utilities import getattr_from_list, strip_subarray
 
 __all__ = [
+    "Constraint_NIRCamImageNoDisperser",
     "Constraint_NotBkgd",
     "Constraint_NotBkgdOrTSO",
     "Constraint_NotTSO",
@@ -996,28 +997,30 @@ class DMSAttrConstraint(AttrConstraint):
         super(DMSAttrConstraint, self).__init__(**kwargs)
 
 
-class Constraint_NIRCamImageNoDisperser(SimpleConstraint):
+class Constraint_NIRCamImageNoDisperser(Constraint):
     """Constrataint for engineering imaging templated data."""
 
-    def check_and_set(self, item):
-        exp_type = item.get("exp_type")
-        disperser = item.get("pupil")
-
-        #     Complete list
-        # CLEAR, FLAT, F162M, F164N,
-        # GDHS0, GDHS60,
-        # MASKBAR, MASKIPR, MASKRND, PINHOLES, WLM8,
-        # WLP8, F323N, F405N, F466N, F470N,
-        # GRISMC, GRISMR, GRISMV2, GRISMV3,
-        # N/A, ANY
-        #     Filter:
-        # Contains *grism* and *dhs*
-        disperser_filter = ["GDHS0", "GDHS60", "GRISMC", "GRISMR", "GRISMV2", "GRISMV3"]
-
-        if exp_type.lower() == "nrc_image" and disperser in disperser_filter:
-            return False, []
-
-        return True, []
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
+        super(Constraint_NIRCamImageNoDisperser, self).__init__(
+            [
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="exp_type",
+                            sources=["exp_type"],
+                            value="nrc_image",
+                        ),
+                        DMSAttrConstraint(
+                            name="pupil",
+                            sources=["pupil"],
+                            value="gdhs0|gdhs60|grismc|grismr|grismv2|grismv3",
+                        ),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ],
+            name="is_image_no_disperser",
+        )
 
 
 class Constraint_TargetAcq(SimpleConstraint):
