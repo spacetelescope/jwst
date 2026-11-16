@@ -168,8 +168,8 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
             [
                 Constraint_Base(),
                 Constraint_Mode(),
-                Constraint_Image_Science(),
                 Constraint_NIRCamImageNoDisperser(),
+                Constraint_Image_Science(),
                 Constraint_NotTSO(),
                 exposures,
             ]

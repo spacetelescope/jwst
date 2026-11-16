@@ -175,8 +175,8 @@ class Asn_Lv3Image(AsnMixin_Science):
     def __init__(self, *args, **kwargs):
         self.constraints = Constraint(
             [
-                Constraint_Optical_Path(),
                 Constraint_NIRCamImageNoDisperser(),
+                Constraint_Optical_Path(),
                 Constraint_Target(association=self),
                 Constraint_Image(),
                 DMSAttrConstraint(
