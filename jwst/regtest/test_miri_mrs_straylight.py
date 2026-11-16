@@ -37,7 +37,9 @@ def run_straylight_clean_showers(rtdata_module):
     "suffix",
     ["straylightstep", "shower_model"],
 )
-def test_miri_mrs_straylight_clean_showers(run_straylight_clean_showers, fitsdiff_default_kwargs, suffix):
+def test_miri_mrs_straylight_clean_showers(
+    run_straylight_clean_showers, fitsdiff_default_kwargs, suffix
+):
     """Test running straylight with clean shower= True on an rate file with significant showers."""
 
     rtdata = run_straylight_clean_showers
