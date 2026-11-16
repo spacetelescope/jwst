@@ -1,0 +1,1 @@
+For SOSS data, if measured pwcpos is outside bounds, set it to nearest valid position with warning instead of raising an error.
