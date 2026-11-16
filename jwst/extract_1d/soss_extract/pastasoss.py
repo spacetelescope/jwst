@@ -612,7 +612,7 @@ def _check_pwcpos_bounds(pwcpos, bounds):
     Returns
     -------
     float
-        The PWC position if it is within bounds
+        The PWC position if it is within bounds, or the nearest valid value otherwise.
     """
     if bounds is None or len(bounds) != 2:
         raise ValueError("Invalid PWC position bounds. Must be a tuple of length 2.")
