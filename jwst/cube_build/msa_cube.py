@@ -8,7 +8,6 @@ from gwcs import wcstools
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.assign_wcs import pointing
 from jwst.assign_wcs.util import compute_footprint_nrs_slit
 from jwst.cube_build import cube_lib
 from jwst.cube_build.cube_match_sky_driz import cube_wrapper_driz  # c extension
@@ -79,21 +78,6 @@ class MSACubeData:
         The final wavelength range is clamped to the reference file bounds unless the
         user has explicitly set ``wavemin`` or ``wavemax``, which take precedence.
 
-        Sets
-        ----
-        self.cdelt1 : float
-            Spatial pixel scale along axis 1 (arcseconds).
-        self.cdelt2 : float
-            Spatial pixel scale along axis 2 (arcseconds).
-        self.cdelt3 : float
-            Spectral pixel scale along the wavelength axis (microns), set only
-            when ``linear_wave`` is True.
-        self.rot_angle : float or None
-            Rotation angle in degrees between the MSA plane and the sky.
-            ``None`` if no slit had enough valid data or ``cube_pa`` was not set.
-        self.cube_wcs : `~jwst.cube_build.cube_lib.CubeWCS`
-            Data class containing the full WCS geometry of the output cube.
-
         Raises
         ------
         ValueError
@@ -118,6 +102,12 @@ class MSACubeData:
         self.cdelt2 = self.scalexy
         if self.linear_wave:
             self.cdelt3 = self.scalew
+
+        # Depending on which detector we have NRS1 or NRS2 there many be no valid data
+        # in the slit. This causes a problem when we are trying to find the rotation
+        # between the slit frame and sky.
+        # IS there a better way to do this ?
+        min_valid_lam_size = 1000
 
         # lists used to determine min and max ranges
         corner_a = []
@@ -148,7 +138,6 @@ class MSACubeData:
             good_data = np.where(~bad1 & ~bad2)
             lam = lam[good_data]
 
-            min_valid_lam_size = 1000  # is this the right value ?
             rotation_found = False
             # Use the first slit with enough valid data to determine the rotation angle.
             # The first slit is not always usable — it may have no valid wavelength data.
@@ -331,7 +320,8 @@ class MSACubeData:
 
         # start looping over the slits for the source
         for i in range(num):
-            print("Working on slit", i)
+            if i % 10 == 0:
+                log.info("Working on slit %d", i + 1)
             slit = self.source["slit_models"][i]
             results = self.map_source_pixels_to_output_frame(slit)
 
@@ -435,15 +425,17 @@ class MSACubeData:
             self.spaxel_iflux,
             self.spaxel_var,
             self.spaxel_dq,
+            self.spaxel_exposure_counter,
             None,
             self.cube_wcs.rot_angle,
             self.coord_system,
             "drizzle",
             "drizzle",
-            0,
-            0,
-            0,
-            0,
+            None,
+            None,
+            None,
+            None,
+            self.slit_frac,
             None,
         )
 
@@ -667,185 +659,3 @@ class MSACubeData:
             wave_pixel,
             dwave_pixel,
         )
-
-    def setup_final_model(
-        self,
-        model_ref,
-        cube_wcs,
-        rot_angle,
-        spaxel_flux,
-        spaxel_iflux,
-        spaxel_var,
-        spaxel_dq,
-        spaxel_exposure_counter,
-        bunit,
-        bunit_err,
-    ):
-        """
-        Reshape 1D spaxel arrays into a 3D spectral cube and populate the IFUCubeModel.
-
-        Takes 1D flattened arrays resulting from the spatial and spectral mapping stage,
-        reshapes them into 3D (wave, dec, ra) data arrays, applies quality masking,
-        populates meta WCS header keywords, attaches a transformation WCS object,
-        and assigns photometric unit attributes.
-
-        Parameters
-        ----------
-        cube_wcs : tuple
-            A tuple of 12 WCS parameters containing:
-            (naxis1, naxis2, naxis3, cdelt1, cdelt2, cdelt3,
-             crpix1, crpix2, crpix3, crval1, crval2, crval3).
-        rot_angle : float or None
-            Rotation angle of the output cube in degrees. If `None`, defaults to `0.0`.
-        spaxel_flux : numpy.ndarray
-            1D array containing cumulative flux per spaxel.
-        spaxel_iflux : numpy.ndarray
-            1D array containing weight or count mapping information per spaxel.
-        spaxel_var : numpy.ndarray
-            1D array containing cumulative variance per spaxel.
-        spaxel_dq : numpy.ndarray
-            1D array containing data quality flags per spaxel.
-        spaxel_exposure_counter : numpy.ndarray
-            1D array containing exposure counts per spaxel, mapped to the final DQ array.
-        bunit : str
-            Physical unit of the main science data extension (e.g., `'MJy/sr'`).
-        bunit_err : str
-            Physical unit of the error extension.
-
-        Returns
-        -------
-        cube_model : jwst.datamodels.IFUCubeModel
-            Fully initialized 3D IFU Data Model with populated WCS metadata,
-            photometry info, wavetable, and AST-based WCS object.
-
-        Notes
-        -----
-        Output data is an IFUCube model - we may want to define MSACubeModel - but this model will
-        work for now.
-        """
-        index = np.where(spaxel_iflux == 0)
-        spaxel_flux[index] = np.nan
-        spaxel_var[index] = np.nan
-
-        # Rearrange values from 1d vectors into 3d cubes
-
-        (
-            naxis1,
-            naxis2,
-            naxis3,
-            cdelt1,
-            cdelt2,
-            cdelt3,
-            crpix1,
-            crpix2,
-            crpix3,
-            crval1,
-            crval2,
-            crval3,
-        ) = cube_wcs
-
-        flux = spaxel_flux.reshape((naxis3, naxis2, naxis1))
-        wmap = spaxel_iflux.reshape((naxis3, naxis2, naxis1))
-        var = spaxel_var.reshape((naxis3, naxis2, naxis1))
-        dq = spaxel_dq.reshape((naxis3, naxis2, naxis1))
-        exp_count = spaxel_exposure_counter.reshape((naxis3, naxis2, naxis1))
-        dnu = np.where((dq & dqflags.pixel["DO_NOT_USE"]) != 0)
-        flux[dnu] = np.nan
-        var[dnu] = np.nan
-        err = np.sqrt(var)
-
-        if self.linear_wave:
-            pixels = np.arange(naxis3)
-
-            # Calculate wavelengths
-            # We add 1 to 'pixels' to convert 0-based Python indexing to 1-based FITS indexing
-            wavelength_table = crval3 + (pixels + 1 - crpix3) * cdelt3
-            wave = np.asarray(wavelength_table, dtype=np.float32)
-            num = len(wave)
-            alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
-            # always write the wavetable
-            cube_model = datamodels.IFUCubeModel(
-                data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata, expcount=exp_count
-            )
-
-        else:
-            wave = np.asarray(self.wavelength_table, dtype=np.float32)
-            num = len(wave)
-            alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
-
-            cube_model = datamodels.IFUCubeModel(
-                data=flux, dq=dq, err=err, weightmap=wmap, wavetable=alldata, expcount=exp_count
-            )
-
-        # Write the information in header we want to keep track of.
-        # TODO - this is not working as expected.
-        cube_model.update(model_ref)  # to get the history in the header
-
-        cube_model.meta.wcsinfo.crval1 = crval1
-        cube_model.meta.wcsinfo.crval2 = crval2
-        cube_model.meta.wcsinfo.crpix1 = crpix1
-        cube_model.meta.wcsinfo.crpix2 = crpix2
-
-        cube_model.meta.wcsinfo.cdelt1 = cdelt1 / 3600.0
-        cube_model.meta.wcsinfo.cdelt2 = cdelt2 / 3600.0
-        # Now that we've got a pixel scale, set photometric area keywords
-        cube_model.meta.photometry.pixelarea_arcsecsq = cdelt1 * cdelt2
-        cube_model.meta.photometry.pixelarea_steradians = (
-            cube_model.meta.photometry.pixelarea_arcsecsq * 2.3504e-11
-        )
-
-        cube_model.meta.wcsinfo.crval3 = crval3
-        cube_model.meta.wcsinfo.cdelt3 = cdelt3
-        cube_model.meta.wcsinfo.ctype3 = "WAVE"
-        cube_model.meta.wcsinfo.crpix3 = crpix3
-
-        cube_model.meta.wcsinfo.ctype1 = "RA---TAN"
-        cube_model.meta.wcsinfo.ctype2 = "DEC--TAN"
-        cube_model.meta.wcsinfo.cunit1 = "deg"
-        cube_model.meta.wcsinfo.cunit2 = "deg"
-
-        cube_model.meta.wcsinfo.cunit3 = "um"
-        cube_model.meta.wcsinfo.wcsaxes = 3
-        cube_model.meta.wcsinfo.pc1_1 = -1
-        cube_model.meta.wcsinfo.pc1_2 = 0
-        cube_model.meta.wcsinfo.pc1_3 = 0
-
-        cube_model.meta.wcsinfo.pc2_1 = 0
-        cube_model.meta.wcsinfo.pc2_2 = 1
-        cube_model.meta.wcsinfo.pc2_3 = 0
-
-        cube_model.meta.wcsinfo.pc3_1 = 0
-        cube_model.meta.wcsinfo.pc3_2 = 0
-        cube_model.meta.wcsinfo.pc3_3 = 1
-
-        if rot_angle is None:
-            rot_angle = 0.0
-
-        cube_model.meta.wcsinfo.pc1_1 = -np.cos(rot_angle * np.pi / 180.0)
-        cube_model.meta.wcsinfo.pc1_2 = np.sin(rot_angle * np.pi / 180.0)
-        cube_model.meta.wcsinfo.pc2_1 = np.sin(rot_angle * np.pi / 180.0)
-        cube_model.meta.wcsinfo.pc2_2 = np.cos(rot_angle * np.pi / 180.0)
-
-        cube_model.meta.ifu.flux_extension = "SCI"
-        cube_model.meta.ifu.error_extension = "ERR"
-        cube_model.meta.ifu.error_type = "ERR"
-        cube_model.meta.ifu.dq_extension = "DQ"
-        cube_model.meta.ifu.exp_count_extension = "EXPCOUNT"
-        cube_model.meta.ifu.weighting = self.weighting
-
-        cube_model.meta.bunit_data = bunit
-        cube_model.meta.bunit_err = bunit_err
-
-        cube_model.meta.ifu.slit_frac = self.slit_frac
-        # stick in values of 0, otherwise it is NaN and
-        # fits file can not be written because these
-        # values are defined in ifucube.schema.yaml
-        cube_model.meta.ifu.weight_power = 0
-        cube_model.meta.ifu.roi_wave = 0
-        cube_model.meta.ifu.roi_spatial = 0
-
-        # set WCS information
-        wcsobj = pointing.create_fitswcs(cube_model)
-        cube_model.meta.wcs = wcsobj
-        cube_model.meta.wcs.bounding_box = ((0, naxis1 - 1), (0, naxis2 - 1), (0, naxis3 - 1))
-        return cube_model

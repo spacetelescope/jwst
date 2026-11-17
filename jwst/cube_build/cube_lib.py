@@ -650,6 +650,7 @@ def setup_final_model(
     spaxel_iflux,
     spaxel_var,
     spaxel_dq,
+    spaxel_exposure_counter,
     instrument,
     rot_angle,
     coord_system,
@@ -659,6 +660,7 @@ def setup_final_model(
     rois,
     roiw,
     roiw_table,
+    slit_frac,
     output_name,
 ):
     """
@@ -682,6 +684,8 @@ def setup_final_model(
         before storing in the error extension.
     spaxel_dq : ndarray
         1-D array of data quality flags for each spaxel.
+    spaxel_exposure_counter : ndarray
+        1-D array of data for the number of unique exposures for each spaxel.
     instrument : str
         Instrument name. Either ``'MIRI'`` or ``'NIRSPEC'``. Controls the
         coordinate type and units set for the internal calibration system.
@@ -748,8 +752,17 @@ def setup_final_model(
         num = len(wave)
         alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
     # always write the wavetable
+
+    if spaxel_exposure_counter is not None:
+        exp_count = spaxel_exposure_counter.reshape(
+            (cube_wcs.naxis3, cube_wcs.naxis2, cube_wcs.naxis1)
+        )
+
+    else:
+        exp_count = None
+
     cube_model = datamodels.IFUCubeModel(
-        data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
+        data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata, expcount=exp_count
     )
     cube_model.update(model_ref)
     if output_name is not None:
@@ -772,8 +785,10 @@ def setup_final_model(
         cube_model.meta.wcsinfo.cdelt3 = cube_wcs.cdelt3
         cube_model.meta.wcsinfo.ctype3 = "WAVE"
         cube_model.meta.wcsinfo.crpix3 = cube_wcs.crpix3
-        cube_model.meta.ifu.roi_spatial = float(rois)
-        cube_model.meta.ifu.roi_wave = float(roiw)
+        if rois is not None:
+            cube_model.meta.ifu.roi_spatial = float(rois)
+        if roiw is not None:
+            cube_model.meta.ifu.roi_wave = float(roiw)
         # even though we are writing a WAVE-TAB we
         # do not want to set these parameters:
         #   ctype3="WAVE-TAB",
@@ -814,8 +829,11 @@ def setup_final_model(
     cube_model.meta.ifu.error_extension = "ERR"
     cube_model.meta.ifu.error_type = "ERR"
     cube_model.meta.ifu.dq_extension = "DQ"
+    if spaxel_exposure_counter is not None:
+        cube_model.meta.ifu.expcount_extension = "EXPCOUNT"
     cube_model.meta.ifu.weighting = str(weighting)
     cube_model.meta.ifu.weight_power = weight_power
+    cube_model.meta.ifu.slit_frac = slit_frac
 
     if interpolation == "drizzle":
         # stick in values of 0, otherwise it is NaN and

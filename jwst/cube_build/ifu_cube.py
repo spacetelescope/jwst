@@ -655,7 +655,9 @@ class IFUCubeData:
                             debug_cube_index,
                         )
 
-                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result_c
+                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq, _ = (
+                            result_c
+                        )
 
                         self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
                         self.spaxel_weight = self.spaxel_weight + np.asarray(
@@ -815,6 +817,7 @@ class IFUCubeData:
             self.spaxel_iflux,
             self.spaxel_var,
             self.spaxel_dq,
+            None,
             self.instrument,
             self.cube_wcs.rot_angle,
             self.coord_system,
@@ -824,6 +827,7 @@ class IFUCubeData:
             self.rois,
             self.roiw,
             self.roiw_table,
+            None,
             self.output_name,
         )
 

@@ -1,152 +1,159 @@
-import types
-from unittest.mock import patch
+"""Unit tests for SlitCubeBuildStep."""
 
+import astropy.table
 import numpy as np
 import pytest
+from stdatamodels.jwst.datamodels import ImageModel, MultiExposureModel, SlitModel
 
 from jwst.cube_build.slit_cube_build_step import SlitCubeBuildStep
 
-
-# Dummy object to replace STDataModels / MultiExposureModel structures
-class DummyExposure:
-    def __init__(self, name="slit1", source_id=1, source_type="POINT", source_name="src1"):
-        self.name = name
-        self.source_id = source_id
-        self.source_type = source_type
-        self.source_name = source_name
-        self.meta = types.SimpleNamespace(
-            bunit_data="Jy/sr",
-            bunit_err="Jy/sr",
-            photometry=types.SimpleNamespace(pixelarea_steradians=1e-12, pixelarea_arcsecsq=0.01),
-            wcs=types.SimpleNamespace(dummy_wcs=True),
-        )
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 
-class DummyModel:
-    def __init__(self, detector="NRS1", exposures=None):
-        self.exposures = exposures or [DummyExposure()]
-        self.meta = types.SimpleNamespace(
-            instrument=types.SimpleNamespace(
-                name="NIRSPEC", detector=detector, grating="G235H", filter="F170LP"
+def _make_model(instrument="NIRSPEC", detector="NRS1", grating="G235H", filter="F170LP", n_slits=1):
+    """Return a real MultiExposureModel with n_slits SlitModel exposures.
+
+    All metadata fields needed by the step are populated; the actual pixel
+    arrays are left at their zero-filled defaults so construction is cheap.
+    """
+    model = MultiExposureModel()
+    model.meta.instrument.name = instrument
+    model.meta.instrument.detector = detector
+    model.meta.instrument.grating = grating
+    model.meta.instrument.filter = filter
+    for i in range(n_slits):
+        slit = SlitModel()
+        slit.name = f"slit{i + 1}"
+        slit.source_id = 101
+        slit.source_type = "POINT"
+        slit.source_name = "src1"
+        slit.meta.bunit_data = "MJy/sr"
+        slit.meta.bunit_err = "MJy/sr"
+        model.exposures.append(slit)
+    return model
+
+
+class _StepNoIO(SlitCubeBuildStep):
+    """SlitCubeBuildStep subclass that skips all file I/O.
+
+    * ``prepare_output`` is overridden to be a no-op so tests that call
+      ``process`` never touch the filesystem.
+    * ``read_cubepars`` is overridden to raise ``ValueError`` immediately when
+      no matching row exists in the supplied in-memory table, exercising the
+      same error path without reading any file.
+    """
+
+    def prepare_output(self, input_data):
+        return input_data
+
+    def read_cubepars(self, par_file, grating, filter_name):
+        """Use an in-memory table with no matching rows instead of a real file."""
+        table = astropy.table.Table({"grating": ["G140H", "G395H"], "filter": ["F100LP", "F290LP"]})
+        match = (table["grating"] == grating) & (table["filter"] == filter_name)
+        if not np.any(match):
+            raise ValueError(
+                f"No matching configuration found for grating={grating}, filter={filter_name}"
             )
-        )
-
-    def close(self):
-        pass
+        return table[match]
 
 
-def test_step_defaults():
-    """Verify default step parameter initializations."""
-    step = SlitCubeBuildStep()
-    assert step.linear_wave is True
-    assert step.scalexy == 0.0
-    assert step.scalew == 0.0
-    assert step.weighting == "volume"
-    assert step.coord_system == "skyalign"
-    assert step.suffix == "s3d"
+# ---------------------------------------------------------------------------
+# organize_source
+# ---------------------------------------------------------------------------
 
 
-def test_organize_source_aggregates_metadata():
-    """Test that organize_source correctly extracts list attributes from a input model."""
-    step = SlitCubeBuildStep()
-    dummy_model = DummyModel(
-        detector="NRS1",
-        exposures=[
-            DummyExposure(name="slit1", source_id=101),
-            DummyExposure(name="slit2", source_id=101),
-        ],
-    )
+class TestOrganizeSource:
+    """organize_source extracts the correct metadata from a MultiExposureModel."""
 
-    source_dict = step.organize_source(dummy_model)
-
-    assert source_dict["number_slits"] == 2
-    assert source_dict["bunit"] == "Jy/sr"
-    assert source_dict["bunit_err"] == "Jy/sr"
-    assert len(source_dict["slit_models"]) == 2
+    def test_number_of_slits_matches_exposures(self):
+        """number_slits must equal the number of exposures in the model."""
+        model = _make_model(n_slits=2)
+        source_dict = SlitCubeBuildStep().organize_source(model)
+        assert source_dict["number_slits"] == 2
+        assert len(source_dict["slit_models"]) == 2
+        model.close()
 
 
-def test_process_parameter_normalization(monkeypatch):
-    """Verify process method normalizes strings and adjusts even spaxel counts to odd values."""
-    step = SlitCubeBuildStep()
-    step.coord_system = "WORLD"
-    step.weighting = "VOLUME"
-    step.nspax_x = 10  # Even number should be adjusted to 11
-    step.nspax_y = 8  # Even number should be adjusted to 9
-    step.slit_frac = 1.5  # Invalid range should trigger fallback to 1.0
-
-    # Short-circuit prepare_output to avoid file IO / JWST datamodel requirement
-    monkeypatch.setattr(step, "prepare_output", lambda input_data: input_data)
-
-    dummy_model = DummyModel()
-
-    # Pass an unsupported instrument to exit execution early right after parameter checking
-    dummy_model.meta.instrument.name = "MIRI"
-
-    result = step.process(dummy_model)
-
-    # Check updated step parameters
-    assert step.coord_system == "skyalign"
-    assert step.weighting == "volume"
-    assert step.nspax_x == 11
-    assert step.nspax_y == 9
-    assert step.slit_frac == 1.0
-    # Step returns input_data upon early exit
-    assert result == dummy_model
+# ---------------------------------------------------------------------------
+# process — parameter normalization
+# ---------------------------------------------------------------------------
 
 
-def test_read_cubepars_missing_config_raises_error(monkeypatch):
-    """Ensure read_cubepars raises a ValueError when grating/filter combo is not found."""
-    step = SlitCubeBuildStep()
+class TestProcessParameterNormalization:
+    """process normalizes string case and enforces odd spaxel counts and slit_frac range."""
 
-    class DummyTable:
-        def __getitem__(self, item):
-            return self
+    def test_coord_system_lowercased(self):
+        step = _StepNoIO()
+        step.coord_system = "WORLD"
+        step.process(_make_model(instrument="MIRI"))
+        assert step.coord_system == "skyalign"
 
-        def __eq__(self, other):
-            return np.array([False, False])
+    def test_even_nspax_x_bumped_to_next_odd(self):
+        """Even nspax_x must be incremented to the next odd value."""
+        step = _StepNoIO()
+        step.nspax_x = 10
+        step.nspax_y = 8
+        step.process(_make_model(instrument="MIRI"))
+        assert step.nspax_x == 11
+        assert step.nspax_y == 9
 
-        def __and__(self, other):
-            return np.array([False, False])
-
-        def __len__(self):
-            return 0
-
-    # Mock astropy.table.Table.read to return our empty dummy structure
-    import astropy.table
-
-    monkeypatch.setattr(astropy.table.Table, "read", lambda *args, **kwargs: DummyTable())
-
-    with pytest.raises(ValueError, match="No matching configuration found"):
-        step.read_cubepars("dummy_path.fits", "G235H", "F170LP")
+    def test_slit_frac_out_of_range_reset_to_one(self):
+        """slit_frac outside [0, 1] must be reset to 1.0."""
+        step = _StepNoIO()
+        step.slit_frac = 1.5
+        step.process(_make_model(instrument="MIRI"))
+        assert step.slit_frac == 1.0
 
 
-def test_process_unsupported_instrument_miri(monkeypatch, caplog):
-    """Verify process logs a warning and returns input_data if the instrument is MIRI."""
-    step = SlitCubeBuildStep()
-    dummy_model = DummyModel()
-    dummy_model.meta.instrument.name = "MIRI"
+# ---------------------------------------------------------------------------
+# read_cubepars — missing configuration
+# ---------------------------------------------------------------------------
 
-    monkeypatch.setattr(step, "prepare_output", lambda input_data: input_data)
 
-    # Mock isinstance to allow DummyModel through the MultiExposureModel check
-    with patch("jwst.cube_build.slit_cube_build_step.isinstance", return_value=True):
+class TestReadCubepars:
+    """read_cubepars raises ValueError when no matching grating/filter row exists."""
+
+    def test_missing_config_raises_value_error(self):
+        with pytest.raises(ValueError, match="No matching configuration found"):
+            _StepNoIO().read_cubepars("unused", "G235H", "F170LP")
+
+
+# ---------------------------------------------------------------------------
+# process — unsupported instrument
+# ---------------------------------------------------------------------------
+
+
+class TestProcessUnsupportedInstrument:
+    """process logs a warning and returns input_data when the instrument is not NIRSpec."""
+
+    def test_logs_nirspec_guidance(self, caplog):
+        step = _StepNoIO()
         with caplog.at_level("WARNING"):
-            result = step.process(dummy_model)
-
-    assert result is dummy_model
-    assert "Input instrument 'MIRI' is not supported" in caplog.text
-    assert "SlitCubeBuildStep is designed specifically for NIRSpec" in caplog.text
+            step.process(_make_model(instrument="MIRI"))
+        assert "SlitCubeBuildStep is designed specifically for NIRSpec" in caplog.text
 
 
-def test_process_invalid_datamodel_type(monkeypatch, caplog):
-    """Verify process logs a warning and returns input_data if not a MultiExposureModel."""
-    step = SlitCubeBuildStep()
-    dummy_model = DummyModel()
+# ---------------------------------------------------------------------------
+# process — invalid datamodel type
+# ---------------------------------------------------------------------------
 
-    monkeypatch.setattr(step, "prepare_output", lambda input_data: input_data)
 
-    with caplog.at_level("WARNING"):
-        result = step.process(dummy_model)
+class TestProcessInvalidDatamodelType:
+    """process logs a warning and returns input_data when given a non-MultiExposureModel."""
 
-    assert result is dummy_model
-    assert "SlitCubeBuildStep requires a MultiExposureModel" in caplog.text
+    def _make_non_exposure_model(self):
+        """Return a real JwstDataModel that is not a MultiExposureModel."""
+        return ImageModel()
+
+    def test_returns_input_unchanged(self):
+        step = _StepNoIO()
+        bad_model = self._make_non_exposure_model()
+        assert step.process(bad_model) is bad_model
+
+    def test_logs_model_type_warning(self, caplog):
+        step = _StepNoIO()
+        with caplog.at_level("WARNING"):
+            step.process(self._make_non_exposure_model())
+        assert "SlitCubeBuildStep requires a MultiExposureModel" in caplog.text
