@@ -204,9 +204,12 @@ def test_get_soss_wavemaps_public(subarray, pwcpos, orders_requested):
     assert traces.shape == (n_orders, 3, 5001)
 
 
-def test_get_soss_traces_bad_pwcpos():
-    """Test that get_soss_traces raises ValueError for bad PWC positions"""
-    with pytest.raises(ValueError, match="PWC position 245.0 is outside bounds"):
-        get_soss_traces(245.0, "1")
-    with pytest.raises(ValueError, match="PWC position 247.0 is outside bounds"):
-        get_soss_traces(247.0, "2")
+def test_get_soss_traces_bad_pwcpos(caplog):
+    """Test that get_soss_traces logs a warning for bad PWC positions and sets to nearest bound"""
+    caplog.set_level("WARNING")
+    get_soss_traces(245.0, "1")
+    assert "PWC position 245.0 is outside bounds" in caplog.text
+    assert "Setting to nearest bound (245.54)" in caplog.text
+    get_soss_traces(247.0, "2")
+    assert "PWC position 247.0 is outside bounds" in caplog.text
+    assert "Setting to nearest bound (246.04)" in caplog.text
