@@ -53,7 +53,7 @@ jobs:
         id: latest-context
         run: >
           echo latest-context=$(
-            curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["${{ env.CRDS_OBSERVATORY }}", "latest"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ --retry 8 --connect-timeout 10 |
+            curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["${{ env.CRDS_OBSERVATORY }}", "edit"], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ --retry 8 --connect-timeout 10 |
             python -c "import sys, json; print(json.load(sys.stdin)['result'])"
           ) >> $GITHUB_OUTPUT
     outputs:
