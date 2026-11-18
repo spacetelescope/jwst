@@ -94,7 +94,6 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY", pupi
         # NIRCam
         "NRC_CORON": None,
         "NRC_DARK": None,
-        "NRC_FLAT": None,
         "NRC_FOCUS": None,
         "NRC_GRISM": (exposure_type, "ANY", "ANY", pupil),
         "NRC_IMAGE": None,

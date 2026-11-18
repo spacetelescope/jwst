@@ -14,7 +14,8 @@ log = logging.getLogger(__name__)
 
 __all__ = [
     "InputSpectrumModel",
-    "OutputSpectrumModel",
+    "accumulate_sums",
+    "combine_spectra",
     "count_input",
     "compute_output_wl",
     "check_exptime",
@@ -57,10 +58,10 @@ class InputSpectrumModel:
     unit_weight: bool
     """Flag to indicate uniform weights are used."""
 
-    right_ascension: np.ndarray
+    right_ascension: float
     """RA value for each spectral element."""
 
-    declination: np.ndarray
+    declination: float
     """Dec value for each spectral element."""
 
     name: str
@@ -84,426 +85,382 @@ class InputSpectrumModel:
     contam: np.ndarray | None = None
     """Input contaminating flux, if present. WFSS mode only."""
 
-    contamsb: np.ndarray | None = None
-    """Input contaminating surface brightness, if present. WFSS mode only."""
-
     contamcorr_flux: np.ndarray | None = None
     """Contamination-corrected flux, if present. WFSS mode only."""
+
+    contamsb: np.ndarray | None = None
+    """Input contaminating surface brightness, if present. WFSS mode only."""
 
     contamcorr_surf_bright: np.ndarray | None = None
     """Contamination-corrected surface brightness, if present. WFSS mode only."""
 
 
-class OutputSpectrumModel:
+def accumulate_sums(input_spectra, sigma_clip=None, wfss=False):
     """
-    Model an output spectrum.
+    Compute a weighted sum of all the input spectra.
 
-    Attributes
+    Each pixel of each input spectrum will be added to one pixel of
+    the output spectrum.  The wavelength spacing of the input and
+    output should be comparable, so each input pixel will usually
+    correspond to one output pixel (i.e., have the same wavelength,
+    to within half a pixel).  However, for any given input spectrum,
+    there can be output pixels that are incremented by more than one
+    input pixel, and there can be output pixels that are not incremented.
+    If there are several input spectra, such gaps will hopefully be
+    filled in.
+
+    Pixels in an input spectrum that are flagged (via the DQ array)
+    as DO_NOT_USE will not be used, i.e., they will simply be ignored
+    when incrementing output arrays from an input spectrum.  If an
+    input pixel is flagged with a non-zero value other than DO_NOT_USE,
+    the value will be propagated to the output DQ array via bitwise OR.
+
+    For the output wavelength, we take the union of all input wavelengths,
+    then call :func:`compute_output_wl` to bin wavelengths in groups
+    of the number of overlapping spectra.
+
+    Parameters
     ----------
+    input_spectra : list of `~jwst.combine_1d.combine1d.InputSpectrumModel`
+        List of input spectra.
+
+    sigma_clip : float, optional
+        Factor for clipping outliers in spectral combination.
+
+    wfss : bool
+        Set to `True` for WFSS mode; `False` otherwise.
+
+    Returns
+    -------
     wavelength : ndarray
         Output wavelength.
+
     flux : ndarray
         Output flux.
+
     flux_error : ndarray
         Output error on the flux.
+
     surf_bright : ndarray
         Output surface brightness.
+
     sb_error : ndarray
         Output error on the surface brightness.
+
     dq : ndarray
         Output DQ array.
+
     weight : ndarray
         Weight value for each spectral element.
+
     count : ndarray
         Input value count for each output spectral element.
-    wcs : gwcs.wcs.WCS
+
+    wcs : `~gwcs.wcs.WCS`
         Output spectral WCS.
-    normalized : bool
-        Flag to indicate data has been combined (sums are normalized).
+
     contam : ndarray or None
-        Output contaminating flux, if present. WFSS mode only.
+        Output contaminating flux.
+        This is only returned for WFSS mode.
+
     contamcorr_flux : ndarray or None
-        Output contamination-corrected flux, if present. WFSS mode only.
+        Output contamination-corrected flux.
+        This is only returned for WFSS mode.
+
     contamsb : ndarray or None
-        Output contaminating surface brightness, if present. WFSS mode only.
+        Output contaminating surface brightness.
+        This is only returned for WFSS mode.
+
     contamcorr_surf_bright : ndarray or None
-        Output contamination-corrected surface brightness, if present. WFSS mode only.
+        Output contamination-corrected surface brightness.
+        This is only returned for WFSS mode.
     """
+    wavelength = np.sort(compute_output_wl(*count_input(input_spectra)))
+    wcs = create_spectral_wcs(
+        input_spectra[0].right_ascension, input_spectra[0].declination, wavelength
+    )
+    nelem = wavelength.size
+    nspec = len(input_spectra)
+    shape2d = (nspec, nelem)
 
-    def __init__(self):
-        self.wavelength = None
-        self.flux = None
-        self.flux_error = None
-        self.surf_bright = None
-        self.sb_error = None
-        self.dq = None
-        self.weight = None
-        self.count = None
-        self.wcs = None
-        self.normalized = False
-        self.source_id = None
-        self.flux_unit = None
-        self.sb_unit = None
-        self.contam = None
-        self.contamsb = None
-        self.contamcorr_flux = None
-        self.contamcorr_surf_bright = None
+    # Use double precision for accumulating sums for most columns,
+    # but for the DQ array, use 32-bit unsigned int.
+    dq = np.zeros(nelem, dtype=np.uint32)
+    flux = np.zeros(shape2d, dtype=np.float64)
+    flux_error = np.zeros(shape2d, dtype=np.float64)
+    surf_bright = np.zeros(shape2d, dtype=np.float64)
+    sb_error = np.zeros(shape2d, dtype=np.float64)
+    weight = np.zeros(shape2d, dtype=np.float64)
+    count = np.zeros(shape2d, dtype=np.float64)
 
-    def assign_wavelengths(self, input_spectra):
-        """
-        Create an array of wavelengths to use for the output spectrum.
+    # contam and contamsb are present for WFSS modes
+    if wfss:
+        contam = np.full(shape2d, np.nan, dtype=np.float64)
+        contamcorr_flux = np.full(shape2d, np.nan, dtype=np.float64)
+        contamsb = np.full(shape2d, np.nan, dtype=np.float64)
+        contamcorr_surf_bright = np.full(shape2d, np.nan, dtype=np.float64)
+    else:
+        contam = None
+        contamcorr_flux = None
+        contamsb = None
+        contamcorr_surf_bright = None
 
-        Take the union of all input wavelengths, then call :func:`compute_output_wl`
-        to bin wavelengths in groups of the number of overlapping spectra.
-
-        Parameters
-        ----------
-        input_spectra : list of `~jwst.combine_1d.combine1d.InputSpectrumModel`
-            List of input spectra.
-        """
-        (wl, n_input_spectra) = count_input(input_spectra)
-
-        self.wavelength = np.sort(compute_output_wl(wl, n_input_spectra))
-
-        self.wcs = create_spectral_wcs(
-            input_spectra[0].right_ascension[0], input_spectra[0].declination[0], self.wavelength
-        )
-
-    def accumulate_sums(self, input_spectra, sigma_clip=None):
-        """
-        Compute a weighted sum of all the input spectra.
-
-        Each pixel of each input spectrum will be added to one pixel of
-        the output spectrum.  The wavelength spacing of the input and
-        output should be comparable, so each input pixel will usually
-        correspond to one output pixel (i.e., have the same wavelength,
-        to within half a pixel).  However, for any given input spectrum,
-        there can be output pixels that are incremented by more than one
-        input pixel, and there can be output pixels that are not incremented.
-        If there are several input spectra, such gaps will hopefully be
-        filled in.
-
-        Pixels in an input spectrum that are flagged (via the DQ array)
-        as DO_NOT_USE will not be used, i.e., they will simply be ignored
-        when incrementing output arrays from an input spectrum.  If an
-        input pixel is flagged with a non-zero value other than DO_NOT_USE,
-        the value will be propagated to the output DQ array via bitwise OR.
-
-        Parameters
-        ----------
-        input_spectra : list of `~jwst.combine_1d.combine1d.InputSpectrumModel`
-            List of input spectra.
-        sigma_clip : float, optional
-            Factor for clipping outliers in spectral combination.
-        """
-        # This is the data type for the output spectrum.  We'll use double
-        # precision for accumulating sums for most columns, but for the DQ
-        # array, use the correct output data type.
-        cmb_dtype = dm.CombinedSpecModel().get_dtype("spec_table")
-        dq_dtype = cmb_dtype.fields["DQ"][0]
-
-        nelem = self.wavelength.shape[0]
-        nspec = len(input_spectra)
-
-        dq = np.zeros(nelem, dtype=dq_dtype)
-
-        flux = np.zeros((nspec, nelem), dtype=np.float64)
-        flux_error = np.zeros((nspec, nelem), dtype=np.float64)
-        surf_bright = np.zeros((nspec, nelem), dtype=np.float64)
-        sb_error = np.zeros((nspec, nelem), dtype=np.float64)
-        weight = np.zeros((nspec, nelem), dtype=np.float64)
-        count = np.zeros((nspec, nelem), dtype=np.float64)
-
-        # contam and contamsb are present for WFSS modes
-        has_contam = any(in_spec.contam is not None for in_spec in input_spectra)
-        if has_contam:
-            contam = np.full((nspec, nelem), np.nan, dtype=np.float64)
-            contamcorr_flux = np.full((nspec, nelem), np.nan, dtype=np.float64)
-            contamsb = np.full((nspec, nelem), np.nan, dtype=np.float64)
-            contamcorr_surf_bright = np.full((nspec, nelem), np.nan, dtype=np.float64)
+    n_nan = 0
+    ninputs = 0
+    for s, in_spec in enumerate(input_spectra):
+        ninputs += 1
+        if in_spec.name is not None:
+            slit_name = f"{ninputs}, slit {in_spec.name}"
         else:
-            contam = None
-            contamcorr_flux = None
-            contamsb = None
-            contamcorr_surf_bright = None
+            slit_name = ninputs
+        log.info("Accumulating data from input spectrum %s", slit_name)
+        # Get the pixel numbers in the output corresponding to the
+        # wavelengths of the current input spectrum.
+        out_pixel = wcs.invert(in_spec.right_ascension, in_spec.declination, in_spec.wavelength)
+        # i is a pixel number in the current input spectrum, and
+        # k is the corresponding pixel number in the output spectrum.
+        nan_flag = np.isnan(out_pixel)
+        n_nan += nan_flag.sum()
+        for i in range(len(out_pixel)):
+            # Need to check on dq and nan flux because dq is not set for some x1d
+            if (in_spec.dq[i] & dm.dqflags.pixel["DO_NOT_USE"] > 0) | np.isnan(in_spec.flux[i]):
+                continue
+            # Skip if the pixel number is NaN
+            if nan_flag[i]:
+                continue
+            # Round to the nearest pixel.
+            k = round(float(out_pixel[i]))
+            if k < 0 or k >= nelem:
+                continue
+            dq[k] |= in_spec.dq[i]
+            flux[s, k] = in_spec.flux[i]
+            flux_error[s, k] = in_spec.flux_error[i]
+            surf_bright[s, k] = in_spec.surf_bright[i]
+            sb_error[s, k] = in_spec.sb_error[i]
+            weight[s, k] = in_spec.weight[i]
+            count[s, k] = 1.0
+            if wfss:
+                contam[s, k] = in_spec.contam[i]
+                contamcorr_flux[s, k] = in_spec.contamcorr_flux[i]
+                contamsb[s, k] = in_spec.contamsb[i]
+                contamcorr_surf_bright[s, k] = in_spec.contamcorr_surf_bright[i]
+        # End of i loop
+    # End of s loop
 
-        self.flux_unit = input_spectra[0].flux_unit
-        self.sb_unit = input_spectra[0].sb_unit
-
-        n_nan = 0  # initial value
-        ninputs = 0
-        for s, in_spec in enumerate(input_spectra):
-            ninputs += 1
-            if in_spec.name is not None:
-                slit_name = f"{ninputs}, slit {in_spec.name}"
-            else:
-                slit_name = ninputs
-            log.info("Accumulating data from input spectrum %s", slit_name)
-            # Get the pixel numbers in the output corresponding to the
-            # wavelengths of the current input spectrum.
-            out_pixel = self.wcs.invert(
-                in_spec.right_ascension, in_spec.declination, in_spec.wavelength
-            )
-            # i is a pixel number in the current input spectrum, and
-            # k is the corresponding pixel number in the output spectrum.
-            nan_flag = np.isnan(out_pixel)
-            n_nan += nan_flag.sum()
-            for i in range(len(out_pixel)):
-                # Need to check on dq and nan flux because dq is not set for some x1d
-                if (in_spec.dq[i] & dm.dqflags.pixel["DO_NOT_USE"] > 0) | np.isnan(in_spec.flux[i]):
-                    continue
-                # Round to the nearest pixel.
-                if nan_flag[i]:  # skip if the pixel number is NaN
-                    continue
-                k = round(float(out_pixel[i]))
-                if k < 0 or k >= nelem:
-                    continue
-                dq[k] |= in_spec.dq[i]
-                flux[s, k] = in_spec.flux[i]
-                flux_error[s, k] = in_spec.flux_error[i]
-                surf_bright[s, k] = in_spec.surf_bright[i]
-                sb_error[s, k] = in_spec.sb_error[i]
-                weight[s, k] = in_spec.weight[i]
-                count[s, k] = 1.0
-                if has_contam and (in_spec.contam is not None):
-                    contam[s, k] = in_spec.contam[i]
-                    contamcorr_flux[s, k] = in_spec.contamcorr_flux[i]
-                    contamsb[s, k] = in_spec.contamsb[i]
-                    contamcorr_surf_bright[s, k] = in_spec.contamcorr_surf_bright[i]
-
-        (
-            flux,
-            flux_error,
-            surf_bright,
-            sb_error,
-            weight,
-            count,
-            contam,
-            contamcorr_flux,
-            contamsb,
-            contamcorr_surf_bright,
-        ) = self.combine_spectra(
-            flux,
-            flux_error,
-            surf_bright,
-            sb_error,
-            weight,
-            count,
-            contam=contam,
-            contamcorr_flux=contamcorr_flux,
-            contamsb=contamsb,
-            contamcorr_surf_bright=contamcorr_surf_bright,
-            sigma_clip=sigma_clip,
-        )
-
-        if n_nan > 0:
-            log.warning("%d output pixel numbers were NaN", n_nan)
-
-        self.flux = flux
-        self.flux_error = flux_error
-        self.surf_bright = surf_bright
-        self.sb_error = sb_error
-        self.dq = dq
-        self.weight = weight
-        self.count = count
-        self.contam = contam
-        self.contamcorr_flux = contamcorr_flux
-        self.contamsb = contamsb
-        self.contamcorr_surf_bright = contamcorr_surf_bright
-
-        # Since the output wavelengths will not usually be exactly the same
-        # as the input wavelengths, it's possible that there will be output
-        # pixels for which there is no corresponding pixel in any of the
-        # input spectra.  Check for this case.
-        index = np.where(self.count > 0.0)
-        n_good = len(index[0])
-        if nelem > n_good:
-            log.warning(
-                "%d elements of output had no corresponding input data;\n"
-                "    these elements will be omitted.",
-                nelem - n_good,
-            )
-            self.wavelength = self.wavelength[index]
-            self.flux = self.flux[index]
-            self.flux_error = self.flux_error[index]
-            self.surf_bright = self.surf_bright[index]
-            self.sb_error = self.sb_error[index]
-            self.dq = self.dq[index]
-            self.weight = self.weight[index]
-            self.count = self.count[index]
-            if self.contam is not None:
-                self.contam = self.contam[index]
-                self.contamcorr_flux = self.contamcorr_flux[index]
-                self.contamsb = self.contamsb[index]
-                self.contamcorr_surf_bright = self.contamcorr_surf_bright[index]
-        del index
-
-    def combine_spectra(
-        self,
+    (
         flux,
         flux_error,
         surf_bright,
         sb_error,
         weight,
         count,
-        contam=None,
-        contamcorr_flux=None,
-        contamsb=None,
-        contamcorr_surf_bright=None,
-        sigma_clip=None,
-    ):
-        """
-        Combine accumulated spectra.
+        contam,
+        contamcorr_flux,
+        contamsb,
+        contamcorr_surf_bright,
+    ) = combine_spectra(
+        flux,
+        flux_error,
+        surf_bright,
+        sb_error,
+        weight,
+        count,
+        contam=contam,
+        contamcorr_flux=contamcorr_flux,
+        contamsb=contamsb,
+        contamcorr_surf_bright=contamcorr_surf_bright,
+        sigma_clip=sigma_clip,
+    )
 
-        Parameters
-        ----------
-        flux : ndarray, 2-D
-            Tabulated fluxes for the input spectra in the format
-            ``[N spectra, M wavelengths]``.
-        flux_error : ndarray, 2-D
-            Flux errors of input spectra.
-        surf_bright : ndarray, 2-D
-            Surface brightnesses of input spectra.
-        sb_error : ndarray, 2-D
-            Surface brightness errors for input spectra.
-        weight : ndarray, 2-D
-            Pixel weights for input spectra
-        count : ndarray, 2-D
-            Count of how many values at each index in the input arrays.
-        contam : ndarray, 2-D, optional
-            Contaminating fluxes of input spectra, if present.
-        contamcorr_flux : ndarray, 2-D, optional
-            Contamination-corrected fluxes of input spectra, if present.
-        contamsb : ndarray, 2-D, optional
-            Contaminating surface brightnesses of input spectra, if present.
-        contamcorr_surf_bright : ndarray, 2-D, optional
-            Contamination-corrected surface brightnesses of input spectra, if present.
-        sigma_clip : float, optional
-            Factor for clipping outliers.  Compares input spectra to the
-            median and median absolute deviation, by default None.
+    if n_nan > 0:
+        log.warning("%d output pixel numbers were NaN", n_nan)
 
-        Returns
-        -------
-        flux : ndarray, 1-D
-            Combined 1-D fluxes.
-        flux_error : ndarray, 1-D
-            Combined 1-D flux errors.
-        surf_bright : ndarray, 1-D
-            Combined 1-D surface brightnesses.
-        sb_error : ndarray, 1-D
-            Combined 1-D surface brightness errors.
-        weight : ndarray, 1-D
-            Total, per wavelength weights.
-        count : ndarray, 1-D
-            Total count of spectra contributing to each wavelength.
-        contam : ndarray, 1-D, or None
-            Combined 1-D contaminating fluxes, if present.
-        contamcorr_flux : ndarray, 1-D, or None
-            Combined 1-D contamination-corrected fluxes, if present.
-        contamsb : ndarray, 1-D, or None
-            Combined 1-D contaminating surface brightnesses, if present.
-        contamcorr_surf_bright : ndarray, 1-D, or None
-            Combined 1-D contamination-corrected surface brightnesses, if present.
-        """
-        # Catch warnings for all NaN slices in an array.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+    # Since the output wavelengths will not usually be exactly the same
+    # as the input wavelengths, it's possible that there will be output
+    # pixels for which there is no corresponding pixel in any of the
+    # input spectra.  Check for this case.
+    index = np.where(count > 0.0)
+    n_good = len(index[0])
+    if nelem > n_good:
+        log.warning(
+            "%d elements of output had no corresponding input data;\n"
+            "    these elements will be omitted.",
+            nelem - n_good,
+        )
+        wavelength = wavelength[index]
+        flux = flux[index]
+        flux_error = flux_error[index]
+        surf_bright = surf_bright[index]
+        sb_error = sb_error[index]
+        dq = dq[index]
+        weight = weight[index]
+        count = count[index]
+        if wfss:
+            contam = contam[index]
+            contamcorr_flux = contamcorr_flux[index]
+            contamsb = contamsb[index]
+            contamcorr_surf_bright = contamcorr_surf_bright[index]
 
-            if sigma_clip is not None:
-                # Copy the fluxes for modifying
-                flux_2d = np.array(flux * weight)
-
-                # Mask any missing pixels in the input spectra
-                missing = (count < 1) | (flux_2d == 0.0)
-                flux_2d[missing] = np.nan
-                # Calculate median and median absolute deviation
-                med_flux = np.nanmedian(flux_2d, axis=0)
-                mad = np.nanmedian(np.abs(flux_2d - med_flux))
-
-                # Clip any outlier pixels in the input spectra
-                clipped = np.abs(flux * weight - med_flux) > sigma_clip * mad
-                flux[clipped] = np.nan
-                flux_error[clipped] = np.nan
-                surf_bright[clipped] = np.nan
-                sb_error[clipped] = np.nan
-                count[clipped] = 0
-                weight[clipped] = 0
-                if contam is not None:
-                    contam[clipped] = np.nan
-                    contamcorr_flux[clipped] = np.nan
-                if contamsb is not None:
-                    contamsb[clipped] = np.nan
-                    contamcorr_surf_bright[clipped] = np.nan
-
-            # Perform a weighted sum of the input spectra
-            sum_weight = np.nansum(weight, axis=0)
-            sum_weight_nonzero = np.where(sum_weight > 0.0, sum_weight, 1.0)
-
-            flux = np.nansum(flux * weight, axis=0) / sum_weight_nonzero
-            flux_error = np.sqrt(np.nansum((flux_error * weight) ** 2, axis=0)) / sum_weight_nonzero
-            surf_bright = np.nansum(surf_bright * weight, axis=0) / sum_weight_nonzero
-            sb_error = np.sqrt(np.nansum((sb_error * weight) ** 2, axis=0)) / sum_weight_nonzero
-            count = np.nansum(count, axis=0)
-            if contam is not None:
-                contam = np.nansum(contam * weight, axis=0) / sum_weight_nonzero
-                contamcorr_flux = np.nansum(contamcorr_flux * weight, axis=0) / sum_weight_nonzero
-            if contamsb is not None:
-                contamsb = np.nansum(contamsb * weight, axis=0) / sum_weight_nonzero
-                contamcorr_surf_bright = (
-                    np.nansum(contamcorr_surf_bright * weight, axis=0) / sum_weight_nonzero
-                )
-
-        self.normalized = True
-
+    if wfss:
         return (
+            wavelength,
             flux,
             flux_error,
             surf_bright,
             sb_error,
-            sum_weight,
+            dq,
+            weight,
             count,
+            wcs,
             contam,
             contamcorr_flux,
             contamsb,
             contamcorr_surf_bright,
         )
 
-    def create_output_data(self):
-        """
-        Create the non-WFSS output data.
+    return (
+        wavelength,
+        flux,
+        flux_error,
+        surf_bright,
+        sb_error,
+        dq,
+        weight,
+        count,
+        wcs,
+    )
 
-        Returns
-        -------
-        output_model : `~stdatamodels.jwst.datamodels.CombinedSpecModel`
-            A table of combined spectral data.
-        """
-        if not self.normalized:
-            log.warning("Data have not been divided by the sum of the weights.")
 
-        cmb_dtype = dm.CombinedSpecModel().get_dtype("spec_table")
+def combine_spectra(
+    flux,
+    flux_error,
+    surf_bright,
+    sb_error,
+    weight,
+    count,
+    contam=None,
+    contamcorr_flux=None,
+    contamsb=None,
+    contamcorr_surf_bright=None,
+    sigma_clip=None,
+):
+    """
+    Combine accumulated spectra.
 
-        # Note that these arrays have to be in the right order.
-        data_list = [
-            self.wavelength,
-            self.flux,
-            self.flux_error,
-            self.surf_bright,
-            self.sb_error,
-            self.dq,
-            self.weight,
-            self.count,
-        ]
+    Parameters
+    ----------
+    flux : ndarray, 2-D
+        Tabulated fluxes for the input spectra in the format
+        ``[N spectra, M wavelengths]``.
+    flux_error : ndarray, 2-D
+        Flux errors of input spectra.
+    surf_bright : ndarray, 2-D
+        Surface brightnesses of input spectra.
+    sb_error : ndarray, 2-D
+        Surface brightness errors for input spectra.
+    weight : ndarray, 2-D
+        Pixel weights for input spectra
+    count : ndarray, 2-D
+        Count of how many values at each index in the input arrays.
+    contam : ndarray, 2-D, optional
+        Contaminating fluxes of input spectra, if present.
+    contamcorr_flux : ndarray, 2-D, optional
+        Contamination-corrected fluxes of input spectra, if present.
+    contamsb : ndarray, 2-D, optional
+        Contaminating surface brightnesses of input spectra, if present.
+    contamcorr_surf_bright : ndarray, 2-D, optional
+        Contamination-corrected surface brightnesses of input spectra, if present.
+    sigma_clip : float, optional
+        Factor for clipping outliers.  Compares input spectra to the
+        median and median absolute deviation, by default None.
 
-        data = np.array(list(zip(*data_list, strict=False)), dtype=cmb_dtype)
-        output_model = dm.CombinedSpecModel(spec_table=data)
+    Returns
+    -------
+    flux : ndarray, 1-D
+        Combined 1-D fluxes.
+    flux_error : ndarray, 1-D
+        Combined 1-D flux errors.
+    surf_bright : ndarray, 1-D
+        Combined 1-D surface brightnesses.
+    sb_error : ndarray, 1-D
+        Combined 1-D surface brightness errors.
+    weight : ndarray, 1-D
+        Total, per wavelength weights.
+    count : ndarray, 1-D
+        Total count of spectra contributing to each wavelength.
+    contam : ndarray, 1-D, or None
+        Combined 1-D contaminating fluxes, if present.
+    contamcorr_flux : ndarray, 1-D, or None
+        Combined 1-D contamination-corrected fluxes, if present.
+    contamsb : ndarray, 1-D, or None
+        Combined 1-D contaminating surface brightnesses, if present.
+    contamcorr_surf_bright : ndarray, 1-D, or None
+        Combined 1-D contamination-corrected surface brightnesses, if present.
+    """
+    # Catch warnings for all NaN slices in an array.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
 
-        output_model.spec_table.columns["wavelength"].unit = "um"
-        output_model.spec_table.columns["flux"].unit = self.flux_unit
-        output_model.spec_table.columns["error"].unit = self.flux_unit
-        output_model.spec_table.columns["surf_bright"].unit = self.sb_unit
-        output_model.spec_table.columns["sb_error"].unit = self.sb_unit
+        if sigma_clip is not None:
+            # Copy the fluxes for modifying
+            flux_2d = np.array(flux * weight)
 
-        return output_model
+            # Mask any missing pixels in the input spectra
+            missing = (count < 1) | (flux_2d == 0.0)
+            flux_2d[missing] = np.nan
+            # Calculate median and median absolute deviation
+            med_flux = np.nanmedian(flux_2d, axis=0)
+            mad = np.nanmedian(np.abs(flux_2d - med_flux))
+
+            # Clip any outlier pixels in the input spectra
+            clipped = np.abs(flux * weight - med_flux) > sigma_clip * mad
+            flux[clipped] = np.nan
+            flux_error[clipped] = np.nan
+            surf_bright[clipped] = np.nan
+            sb_error[clipped] = np.nan
+            count[clipped] = 0
+            weight[clipped] = 0
+            if contam is not None:
+                contam[clipped] = np.nan
+            if contamcorr_flux is not None:
+                contamcorr_flux[clipped] = np.nan
+            if contamsb is not None:
+                contamsb[clipped] = np.nan
+            if contamcorr_surf_bright is not None:
+                contamcorr_surf_bright[clipped] = np.nan
+
+        # Perform a weighted sum of the input spectra
+        sum_weight = np.nansum(weight, axis=0)
+        sum_weight_nonzero = np.where(sum_weight > 0.0, sum_weight, 1.0)
+
+        flux = np.nansum(flux * weight, axis=0) / sum_weight_nonzero
+        flux_error = np.sqrt(np.nansum((flux_error * weight) ** 2, axis=0)) / sum_weight_nonzero
+        surf_bright = np.nansum(surf_bright * weight, axis=0) / sum_weight_nonzero
+        sb_error = np.sqrt(np.nansum((sb_error * weight) ** 2, axis=0)) / sum_weight_nonzero
+        count = np.nansum(count, axis=0)
+        if contam is not None:
+            contam = np.nansum(contam * weight, axis=0) / sum_weight_nonzero
+        if contamcorr_flux is not None:
+            contamcorr_flux = np.nansum(contamcorr_flux * weight, axis=0) / sum_weight_nonzero
+        if contamsb is not None:
+            contamsb = np.nansum(contamsb * weight, axis=0) / sum_weight_nonzero
+        if contamcorr_surf_bright is not None:
+            contamcorr_surf_bright = (
+                np.nansum(contamcorr_surf_bright * weight, axis=0) / sum_weight_nonzero
+            )
+
+    return (
+        flux,
+        flux_error,
+        surf_bright,
+        sb_error,
+        sum_weight,
+        count,
+        contam,
+        contamcorr_flux,
+        contamsb,
+        contamcorr_surf_bright,
+    )
 
 
 def count_input(input_spectra):
@@ -813,9 +770,7 @@ def _inputspectra_from_multispec(ms, exptime_key, input_spectra):
         sb_error = spec.spec_table.field("sb_error")
         dq = spec.spec_table.field("dq")
 
-        right_ascension = np.zeros_like(wavelength)
-        declination = np.zeros_like(wavelength)
-        right_ascension[:], declination[:] = spec.meta.wcs(0.0)[:2]
+        right_ascension, declination = spec.meta.wcs(0.0)[:2]
 
         weight = np.ones_like(wavelength)
         if not unit_weight:
@@ -911,12 +866,6 @@ def _inputspectra_from_tso(ms, exptime_key, input_spectra):
             sb_error = spec_row["sb_error"][:n]
             dq = spec_row["dq"][:n]
 
-            right_ascension = np.zeros_like(wavelength)
-            right_ascension[:] = spec_ra
-
-            declination = np.zeros_like(wavelength)
-            declination[:] = spec_dec
-
             weight = np.ones_like(wavelength)
             if not unit_weight:
                 weight *= weight_factor
@@ -933,8 +882,8 @@ def _inputspectra_from_tso(ms, exptime_key, input_spectra):
                     dq,
                     weight,
                     unit_weight,
-                    right_ascension,
-                    declination,
+                    spec_ra,
+                    spec_dec,
                     name,
                     source_id,
                     source_type,
@@ -968,8 +917,8 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
     unit_weight, weight_factor = _weight_from_ms(ms, exptime_key)
 
     # WFSS schema stores WCS at model level, not spec level.
-    spec_ra = ms.meta.target.ra
-    spec_dec = ms.meta.target.dec
+    spec_ra = ms.meta.target.ra or np.nan
+    spec_dec = ms.meta.target.dec or np.nan
 
     for spec in ms.spec:
         name = spec.group_id
@@ -1019,12 +968,6 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
             contamsb = row["contamsb"][:n]
             contamcorr_surf_bright = row["contamcorr_surf_bright"][:n]
 
-            right_ascension = np.zeros_like(wavelength)
-            right_ascension[:] = spec_ra
-
-            declination = np.zeros_like(wavelength)
-            declination[:] = spec_dec
-
             weight = np.ones_like(wavelength)
             if not unit_weight:
                 weight *= weight_factor
@@ -1041,8 +984,8 @@ def _inputspectra_from_wfss(ms, exptime_key, input_spectra_by_sid):
                     dq,
                     weight,
                     unit_weight,
-                    right_ascension,
-                    declination,
+                    spec_ra,
+                    spec_dec,
                     name,
                     source_id,
                     source_type,
@@ -1176,14 +1119,23 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
             if dispersion_direction is None:
                 dispersion_direction = inspec0.dispersion_direction
 
-            output_spec = OutputSpectrumModel()
-            output_spec.assign_wavelengths(input_spec)
-            output_spec.accumulate_sums(input_spec, sigma_clip=sigma_clip)
+            (
+                out_wavelength,
+                out_flux,
+                out_flux_error,
+                out_surf_bright,
+                out_sb_error,
+                out_dq,
+                out_weight,
+                out_count,
+                out_wcs,
+                out_contam,
+                out_contamcorr_flux,
+                out_contamsb,
+                out_contamcorr_surf_bright,
+            ) = accumulate_sums(input_spec, sigma_clip=sigma_clip, wfss=True)
 
-            if not output_spec.normalized:
-                log.warning("Data have not been divided by the sum of the weights.")
-
-            nalongdisp = output_spec.wavelength.shape[0]
+            nalongdisp = out_wavelength.shape[0]
             if nalongdisp > max_wlen:
                 max_wlen = nalongdisp
 
@@ -1191,18 +1143,18 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
             data_list.append(
                 (
                     source_id,
-                    output_spec.wavelength,
-                    output_spec.flux,
-                    output_spec.contam,
-                    output_spec.contamcorr_flux,
-                    output_spec.flux_error,
-                    output_spec.surf_bright,
-                    output_spec.contamsb,
-                    output_spec.contamcorr_surf_bright,
-                    output_spec.sb_error,
-                    output_spec.dq,
-                    output_spec.weight,
-                    output_spec.count,
+                    out_wavelength,
+                    out_flux,
+                    out_contam,
+                    out_contamcorr_flux,
+                    out_flux_error,
+                    out_surf_bright,
+                    out_contamsb,
+                    out_contamcorr_surf_bright,
+                    out_sb_error,
+                    out_dq,
+                    out_weight,
+                    out_count,
                     nalongdisp,
                     inspec0.source_type,
                     inspec0.source_ra,
@@ -1211,13 +1163,13 @@ def _combine_wfss(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT
             )
 
             if flux_unit is None:
-                flux_unit = output_spec.flux_unit
+                flux_unit = inspec0.flux_unit
             if sb_unit is None:
-                sb_unit = output_spec.sb_unit
+                sb_unit = inspec0.sb_unit
 
-            # Looks clunky, but need an output_spec instance to copy WCS
+            # Looks clunky, but need an output instance to copy WCS
             if output_wcs is None:
-                output_wcs = output_spec.wcs
+                output_wcs = out_wcs
 
         fltdtype = [
             ("SOURCE_ID", "<i4"),
@@ -1318,16 +1270,47 @@ def _combine_one(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT0
     """Produce a single MultiCombinedSpecModel for given model and spectra."""
     output_model = dm.MultiCombinedSpecModel()
     output_wcs = None
-    for order, input_spec in input_spectra.items():
-        output_spec = OutputSpectrumModel()
-        output_spec.assign_wavelengths(input_spec)
-        output_spec.accumulate_sums(input_spec, sigma_clip=sigma_clip)
+    cmb_dtype = dm.CombinedSpecModel().get_dtype("spec_table")
 
-        output_order = output_spec.create_output_data()
+    for order, input_spec in input_spectra.items():
+        inspec0 = input_spec[0]
+        (
+            out_wavelength,
+            out_flux,
+            out_flux_error,
+            out_surf_bright,
+            out_sb_error,
+            out_dq,
+            out_weight,
+            out_count,
+            out_wcs,
+        ) = accumulate_sums(input_spec, sigma_clip=sigma_clip)
+
+        # Note that these arrays have to be in the right order.
+        output_order = dm.CombinedSpecModel(
+            spec_table=np.rec.fromarrays(
+                [
+                    out_wavelength,
+                    out_flux,
+                    out_flux_error,
+                    out_surf_bright,
+                    out_sb_error,
+                    out_dq,
+                    out_weight,
+                    out_count,
+                ],
+                dtype=cmb_dtype,
+            )
+        )
+
+        output_order.spec_table.columns["wavelength"].unit = "um"
+        output_order.spec_table.columns["flux"].unit = inspec0.flux_unit
+        output_order.spec_table.columns["error"].unit = inspec0.flux_unit
+        output_order.spec_table.columns["surf_bright"].unit = inspec0.sb_unit
+        output_order.spec_table.columns["sb_error"].unit = inspec0.sb_unit
         output_order.spectral_order = order
 
         # attributes that we want to copy unmodified from input to output spectra
-        inspec0 = input_spec[0]
         output_order.source_id = inspec0.source_id
         output_order.source_type = inspec0.source_type
         output_order.source_ra = inspec0.source_ra
@@ -1336,9 +1319,9 @@ def _combine_one(input_model, input_spectra, sigma_clip):  # numpydoc ignore=RT0
 
         output_model.spec.append(output_order)
 
-        # Looks clunky, but need an output_spec instance to copy WCS
+        # Looks clunky, but need an output to copy WCS
         if output_wcs is None:
-            output_wcs = output_spec.wcs
+            output_wcs = out_wcs
 
     # Copy one of the input headers to output.
     if isinstance(input_model, ModelContainer):
