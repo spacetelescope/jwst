@@ -1018,7 +1018,7 @@ class Constraint_NIRCamImageNoDisperser(Constraint):
                             value="gdhs0|gdhs60|grismc|grismr|grismv2|grismv3",
                         ),
                     ],
-                    reduce=Constraint.notany,
+                    reduce=Constraint.notall,
                 ),
             ],
             name="is_image_no_disperser",
