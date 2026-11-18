@@ -60,6 +60,12 @@ ramp exposure. For more information on the superstripe readout mode for NIRISS S
 see the
 `NIRISS JDox documentation <https://jwst-docs.stsci.edu/jwst-near-infrared-imager-and-slitless-spectrograph/niriss-observing-modes/niriss-single-object-slitless-spectroscopy>`__.
 
+.. note::
+
+    All steps can be controlled by parameter reference files, and may be disabled or
+    modified for certain instrument configurations. For the most up-to-date information,
+    please see `CRDS <https://jwst-crds.stsci.edu/>`_.
+
 
 .. |check| unicode:: U+2713 .. checkmark
 

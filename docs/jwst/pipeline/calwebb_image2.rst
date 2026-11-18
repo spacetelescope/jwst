@@ -19,6 +19,12 @@ list of steps in the table below).
 The list of steps applied by the ``Image2Pipeline`` pipeline is shown in the
 table below.
 
+.. note::
+
+    All steps can be controlled by parameter reference files, and may be disabled or
+    modified for certain instrument configurations. For the most up-to-date information,
+    please see `CRDS <https://jwst-crds.stsci.edu/>`_.
+
 .. |check| unicode:: U+2713 .. checkmark
 
 +--------------------------------------------+---------+---------+---------+

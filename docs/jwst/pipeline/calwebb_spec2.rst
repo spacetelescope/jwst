@@ -38,6 +38,12 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 - NIRISS SOSS = Single Object Slitless Spectroscopy
 - NIRISS, MIRI, and NIRCam WFSS = Wide-Field Slitless Spectroscopy
 
+.. note::
+
+    All steps can be controlled by parameter reference files, and may be disabled or
+    modified for certain instrument configurations. For the most up-to-date information,
+    please see `CRDS <https://jwst-crds.stsci.edu/>`_.
+
 .. |c| unicode:: U+2713 .. checkmark
 
 +--------------------------------------------------------------------+-----------------------+----------------------------------+----------------------------------+-------------------+-------------+
