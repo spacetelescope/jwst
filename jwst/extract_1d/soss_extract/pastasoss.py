@@ -299,12 +299,8 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
         refmodel = retrieve_default_pastasoss_model()
 
     pwcpos_bounds = refmodel.meta.pwcpos_bounds
-    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos, pwcpos_bounds)
-    if not pwcpos_is_valid:
-        raise ValueError(f"PWC position {pwcpos} is outside bounds ({pwcpos_bounds}).")
-
-    order, x, y, wl, psf_tilt = _get_soss_traces(refmodel, pwcpos, order, subarray)
-    return order, x, y, wl, psf_tilt
+    pwcpos = _check_pwcpos_bounds(pwcpos, pwcpos_bounds)
+    return _get_soss_traces(refmodel, pwcpos, order, subarray)
 
 
 def retrieve_default_pastasoss_model():
@@ -570,9 +566,7 @@ def get_soss_wavemaps(
         orders_requested = _verify_requested_orders(orders_requested, refmodel_orders)
 
     pwcpos_bounds = refmodel.meta.pwcpos_bounds
-    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos, pwcpos_bounds)
-    if not pwcpos_is_valid:
-        raise ValueError(f"PWC position {pwcpos} is outside bounds ({pwcpos_bounds}).")
+    pwcpos = _check_pwcpos_bounds(pwcpos, pwcpos_bounds)
 
     # Make wavemap from trace center wavelengths
     wave_grid = np.linspace(
@@ -633,11 +627,17 @@ def _check_pwcpos_bounds(pwcpos, bounds):
 
     Returns
     -------
-    bool
-        `True` if the PWC position is within bounds, `False` otherwise.
+    float
+        The PWC position if it is within bounds, or the nearest valid value otherwise.
     """
-    if bounds is not None and len(bounds) == 2:
-        return bounds[0] <= pwcpos <= bounds[1]
-
-    # No bounds found: return False
-    return False
+    if bounds is None or len(bounds) != 2:
+        raise ValueError("Invalid PWC position bounds. Must be a tuple of length 2.")
+    good = bounds[0] <= pwcpos <= bounds[1]
+    if good:
+        return pwcpos
+    nearest_bound = bounds[0] if pwcpos < bounds[0] else bounds[1]
+    log.warning(
+        f"PWC position {pwcpos} is outside bounds ({bounds}). "
+        f"Setting to nearest bound ({nearest_bound})."
+    )
+    return nearest_bound

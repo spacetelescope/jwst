@@ -28,7 +28,7 @@ from jwst.associations.lib.dms_base import (
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.prune import prune
-from jwst.associations.lib.utilities import evaluate, is_iterable
+from jwst.associations.lib.utilities import evaluate, is_iterable, strip_subarray
 from jwst.associations.registry import RegistryMarker
 from jwst.lib.suffix import remove_suffix
 
@@ -73,8 +73,14 @@ LEVEL2B_EXPTYPES.extend(IMAGE2_SCIENCE_EXP_TYPES)
 LEVEL2B_EXPTYPES.extend(IMAGE2_NONSCIENCE_EXP_TYPES)
 LEVEL2B_EXPTYPES.extend(SPEC2_SCIENCE_EXP_TYPES)
 
-# Association Candidates that should have more than one observations
+# Association Candidates that should have more than one observation
 MULTI_OBS_AC_TYPES = ["group", "background", "mosaic"]
+
+
+def _fix_subarray(subarray):
+    # Add the dash that separates the slit name from the subarray
+    subarray = "-" + strip_subarray(subarray)
+    return subarray
 
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
@@ -170,7 +176,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         subarray = association.get_subarray()
         if subarray:
-            subarray = "-" + subarray
+            subarray = _fix_subarray(subarray)
 
         product_name = "jw{program}-{acid}_{target}_{instrument}_{opt_elem}{slit_name}{subarray}"
         product_name = product_name.format(
@@ -310,7 +316,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 return [self]
 
             # Create new members for each science exposure in the association,
-            # using the the base name + _x1d as background.
+            # using the base name + _x1d as background.
             results = []
             # Loop over all science exposures in the association
             for science_exp in science_exps:
@@ -597,7 +603,7 @@ def dms_product_name_sources(asn):
 
     subarray = asn.get_subarray()
     if subarray:
-        subarray = "-" + subarray
+        subarray = _fix_subarray(subarray)
 
     product_name_format = (
         "jw{program}-{acid}_{source_id}_{instrument}_{opt_elem}{slit_name}{subarray}"
@@ -646,7 +652,7 @@ def dms_product_name_wfss(asn):
 
     subarray = asn.get_subarray()
     if subarray:
-        subarray = "-" + subarray
+        subarray = _fix_subarray(subarray)
 
     product_name_format = "jw{program}-{acid}_{target}_{instrument}_{opt_elem}{slit_name}{subarray}"
     product_name = format_product(
@@ -689,7 +695,7 @@ def dms_product_name_nrsfs_sources(asn):
 
     subarray = asn.get_subarray()
     if subarray:
-        subarray = "-" + subarray
+        subarray = _fix_subarray(subarray)
 
     product_name_format = (
         "jw{program}-{acid}_{target}-{source_id}_{instrument}_{opt_elem}-{slit_name}{subarray}"
@@ -734,7 +740,7 @@ def dms_product_name_coronimage(asn):
 
     subarray = asn.get_subarray()
     if subarray:
-        subarray = "-" + subarray
+        subarray = _fix_subarray(subarray)
 
     suffix = "-image3"
 
