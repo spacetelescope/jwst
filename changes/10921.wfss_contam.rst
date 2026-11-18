@@ -1,0 +1,1 @@
+Change the default of save_simulated_image from False to True

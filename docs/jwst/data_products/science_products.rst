@@ -596,7 +596,31 @@ for more information).
 For NIRCam, MIRI, and NIRISS WFSS ``x1d`` products, each row in the table holds the full
 spectrum for a single source, such that all extracted sources are present in the
 same binary table. The spectral data columns listed above are each 2-D: each row is a 1-D
-vector containing all data points for the spectrum in that integration.
+vector containing all data points for the spectrum in that exposure.
+Additional columns related to contamination will be present in the table. These are:
+
++------------------------+-----------+--------------------+-------------+
+| Column Name            | Data Type | Contents           | Units       |
++========================+===========+====================+=============+
+| CONTAM                 | float32   | Contamination      | same as     |
+|                        |           | estimate           | FLUX        |
++------------------------+-----------+--------------------+-------------+
+| CONTAMCORR_FLUX        | float32   | Contamination-     | same as     |
+|                        |           | corrected flux     | FLUX        |
++------------------------+-----------+--------------------+-------------+
+| CONTAMSB               | float32   | Contamination      | same as     |
+|                        |           | in surface         | SURF_BRIGHT |
+|                        |           | brightness units   |             |
++------------------------+-----------+--------------------+-------------+
+| CONTAMCORR_SURF_BRIGHT | float32   | Contamination-     | same as     |
+|                        |           | corrected surface  | SURF_BRIGHT |
+|                        |           | brightness         |             |
++------------------------+-----------+--------------------+-------------+
+
+CONTAM and CONTAMCORR_FLUX will appear just after the FLUX column, and
+CONTAMSB and CONTAMCORR_SURF_BRIGHT will appear just after the SURF_BRIGHT column
+in the table. If the :ref:`wfss_contam <wfss_contam_step>` step has not been run,
+these columns will be NaN-filled.
 The table also reports several pieces of source-specific metadata; these fields are:
 SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC,
 EXTRACT2D_XSTART, EXTRACT2D_YSTART, SPECTRAL_ORDER.
@@ -720,6 +744,47 @@ The structure of the "COMBINE1D" table extension is as follows:
 
 The table is constructed using a simple 2-D layout, using one row per extracted spectral
 element in the dispersion direction of the data (i.e. one row per wavelength bin).
+
+For NIRCam, MIRI, and NIRISS WFSS ``c1d`` products, each row in the table holds the full
+spectrum for a single source, such that all extracted sources are present in the
+same binary table.
+Additional columns related to contamination will be present in the table. These are:
+
++------------------------+-----------+--------------------+-------------+
+| Column Name            | Data Type | Contents           | Units       |
++========================+===========+====================+=============+
+| CONTAM                 | float32   | Contamination      | same as     |
+|                        |           | estimate           | FLUX        |
++------------------------+-----------+--------------------+-------------+
+| CONTAMCORR_FLUX        | float32   | Contamination-     | same as     |
+|                        |           | corrected flux     | FLUX        |
++------------------------+-----------+--------------------+-------------+
+| CONTAMSB               | float32   | Contamination      | same as     |
+|                        |           | in surface         | SURF_BRIGHT |
+|                        |           | brightness units   |             |
++------------------------+-----------+--------------------+-------------+
+| CONTAMCORR_SURF_BRIGHT | float32   | Contamination-     | same as     |
+|                        |           | corrected surface  | SURF_BRIGHT |
+|                        |           | brightness         |             |
++------------------------+-----------+--------------------+-------------+
+
+CONTAM and CONTAMCORR_FLUX will appear just after the FLUX column, and
+CONTAMSB and CONTAMCORR_SURF_BRIGHT will appear just after the SURF_BRIGHT column
+in the table. If the :ref:`wfss_contam <wfss_contam_step>` step has not been run,
+these columns will be NaN-filled.
+The table also reports several pieces of source-specific metadata; these fields are:
+SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_RA, SOURCE_DEC.
+See the :ref:`combine_1d <combine_1d_step>` step documentation for more details.
+
+.. _pfpc:
+
+PFPC 1-D spectroscopic data: ``pfpc``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Extracted spectral data, with point fixed pattern corrections (PFPC) applied,
+produced by the :ref:`pfpc <pfpc_step>` step are stored in binary table extensions
+of FITS files.  The format is identical to the :ref:`x1d <x1d>` products.
+
 
 .. _cat:
 

@@ -1,0 +1,1 @@
+Fix a bug where values were cast from double-precision to single and then back, improving numerical accuracy.

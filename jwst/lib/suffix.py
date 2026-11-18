@@ -169,6 +169,8 @@ _calculated_suffixes = {
     "pathlossstep",
     "persistence",
     "persistencestep",
+    "pfpc",
+    "pfpcstep",
     "photom",
     "photomstep",
     "picture_frame",

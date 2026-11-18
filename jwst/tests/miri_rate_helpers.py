@@ -126,6 +126,7 @@ def miri_mrs_rate_model(
         model = datamodels.IFUImageModel(base_model)
     model.data = np.zeros(shape, dtype=np.float32)
     model.meta.filename = f"test{channel}{band}"
+    model.meta.subarray.name = "FULL"
 
     if with_wcs:
         ref = get_reference_files(model)

@@ -3,6 +3,7 @@ import pytest
 from stdatamodels.jwst.datamodels import ImageModel, RampModel, ReadnoiseModel, WfssBkgModel
 
 from jwst.lib.reffile_utils import (
+    MatchRowError,
     detector_science_frame_transform,
     find_row,
     get_subarray_model,
@@ -32,6 +33,28 @@ def test_find_row():
 
     result = find_row(filters, missing_key)
     assert result is None
+
+
+@pytest.mark.parametrize("require_one", [True, False])
+def test_find_row_require_one(caplog, require_one):
+    filters = [
+        {"column_offset": 1.0, "filter": "F277W", "pupil": "FLAT", "row_offset": 2.0},
+        {"column_offset": 0.0, "filter": "F356W", "pupil": "FLAT", "row_offset": 0.0},
+    ]
+
+    # match both rows
+    match_keys = {"pupil": "FLAT"}
+
+    if require_one:
+        with pytest.raises(
+            MatchRowError, match="Expected to find one matching row in table, found 2"
+        ):
+            find_row(filters, match_keys, require_one=require_one)
+    else:
+        result = find_row(filters, match_keys, require_one=require_one)
+
+        # first match is returned
+        assert result == filters[0]
 
 
 def test_multistripe_subarray_model_substripe():
