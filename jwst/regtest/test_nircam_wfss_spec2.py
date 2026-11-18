@@ -32,6 +32,7 @@ def run_pipeline(rtdata_module, resource_tracker):
         "--steps.extract_2d.wfss_nbright=20",
         "--steps.srctype.save_results=true",
         "--steps.flat_field.save_results=true",
+        "--steps.wfss_contam.skip=true",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)
