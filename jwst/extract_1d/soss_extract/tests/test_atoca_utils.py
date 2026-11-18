@@ -99,8 +99,8 @@ def test_get_wave_p_or_m(wave_map, dispersion_axis):
 
 def test_get_wave_p_or_m_not_ascending(wave_map):
     wave_map = wave_map[0].copy()
+    wave_map[0, :100] = np.linspace(1, 2, 100)  # make it not strictly ascending
     with pytest.raises(ValueError):
-        wave_map[0, 5] = 2  # make it not strictly ascending
         au.get_wave_p_or_m(wave_map, dispersion_axis=1)
 
 
