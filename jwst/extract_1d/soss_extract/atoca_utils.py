@@ -136,9 +136,13 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
 
     # The outputs depend on the direction of the spectral axis.
     invalid = wave_map == 0
-    if ((wave_right >= wave_left) | invalid).all():
+    right_over_left = (wave_right >= wave_left) | invalid
+    left_over_right = (wave_left >= wave_right) | invalid
+    # A PSF tilt can introduce small numbers of pixels that do not follow the expected order
+    # but the vast majority should still follow it.
+    if np.sum(right_over_left) / right_over_left.size > 0.99:
         wave_plus, wave_minus = wave_right, wave_left
-    elif ((wave_right <= wave_left) | invalid).all():
+    elif np.sum(left_over_right) / left_over_right.size > 0.99:
         wave_plus, wave_minus = wave_left, wave_right
     else:
         msg = "Some pixels do not follow the expected dispersion axis!"
