@@ -125,6 +125,8 @@ def miri_mrs_rate_model(
     else:
         model = datamodels.IFUImageModel(base_model)
     model.data = np.zeros(shape, dtype=np.float32)
+    model.err = np.zeros(shape, dtype=np.float32)
+    model.dq = np.zeros(shape, dtype=np.uint32)
     model.meta.filename = f"test{channel}{band}"
     model.meta.subarray.name = "FULL"
 
@@ -132,6 +134,7 @@ def miri_mrs_rate_model(
         ref = get_reference_files(model)
         pipeline = miri.create_pipeline(model, ref)
         model.meta.wcs = wcs.WCS(pipeline)
+        model.meta.wcsinfo.dispersion_direction = 2
 
     return model
 
