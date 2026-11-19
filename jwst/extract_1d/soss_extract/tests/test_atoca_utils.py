@@ -97,6 +97,18 @@ def test_get_wave_p_or_m(wave_map, dispersion_axis):
     assert np.allclose(wave_m_0, np.fliplr(wave_m_1))
 
 
+def test_get_wave_p_or_m_masks_reversed_pixels():
+    wave_map = np.tile(np.linspace(1, 2, 200), (10, 1))
+    # Pixel 51 has reversed midpoint boundaries because wave[52] < wave[50]
+    wave_map[0, 52] = wave_map[0, 48]
+
+    wave_p, wave_m = au.get_wave_p_or_m(wave_map, dispersion_axis=1)
+
+    masked = (wave_p == 0) & (wave_m == 0)
+    assert np.argwhere(masked).tolist() == [[0, 51]]
+    assert np.all(wave_p[~masked] >= wave_m[~masked])
+
+
 def test_get_wave_p_or_m_not_ascending(wave_map):
     wave_map = wave_map[0].copy()
     wave_map[0, :100] = np.linspace(1, 2, 100)  # make it not strictly ascending

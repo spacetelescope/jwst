@@ -145,9 +145,17 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
     elif np.sum(left_over_right) / left_over_right.size > 0.99:
         wave_plus, wave_minus = wave_left, wave_right
     else:
-        msg = "Some pixels do not follow the expected dispersion axis!"
+        msg = "More than 1 percent of pixels do not follow the expected dispersion axis!"
         log.critical(msg)
         raise ValueError(msg)
+
+    # Pixels that don't follow the monotonic behavior can lead to negative weights so they need
+    # to be masked here.
+    reversed_bounds = ~invalid & (wave_plus < wave_minus)
+    if reversed_bounds.any():
+        log.debug(f"Masking {reversed_bounds.sum()} pixels with reversed wavelength boundaries.")
+        wave_plus = np.where(reversed_bounds, 0, wave_plus)
+        wave_minus = np.where(reversed_bounds, 0, wave_minus)
 
     return wave_plus, wave_minus
 
