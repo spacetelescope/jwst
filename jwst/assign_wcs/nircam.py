@@ -23,6 +23,7 @@ from stdatamodels.jwst.transforms.models import (
 
 from jwst.assign_wcs import pointing
 from jwst.assign_wcs.util import (
+    apply_mosaic_member_tweak,
     bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,
@@ -748,6 +749,9 @@ def wfss(input_model, reference_files):
     # manner that gives you the originating 'imaging' pixels ra and dec,
     # not the ra/dec on the sky from the pointing wcs of the grism image.
     image_pipeline = imaging(input_model, reference_files)
+
+    # Apply the WCS tweak generated for direct image partner exposure if available
+    image_pipeline = apply_mosaic_member_tweak(input_model, image_pipeline)
 
     # input is (x,y,x0,y0,order) -> x0, y0, wave, order
     # x0, y0 is in the image-detector reference frame already
