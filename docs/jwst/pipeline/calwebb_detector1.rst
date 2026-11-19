@@ -60,6 +60,12 @@ ramp exposure. For more information on the superstripe readout mode for NIRISS S
 see the
 `NIRISS JDox documentation <https://jwst-docs.stsci.edu/jwst-near-infrared-imager-and-slitless-spectrograph/niriss-observing-modes/niriss-single-object-slitless-spectroscopy>`__.
 
+.. note::
+
+    All steps can be controlled by parameter reference files, and may be disabled or
+    modified for certain instrument configurations. For the most up-to-date information,
+    please see `CRDS <https://jwst-crds.stsci.edu/>`_.
+
 
 .. |check| unicode:: U+2713 .. checkmark
 
@@ -78,7 +84,7 @@ see the
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`ipc <ipc_step>` [1]_                                           |         |         | :ref:`ipc <ipc_step>`                                |         |         |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
-| :ref:`superbias <superbias_step>`                                    | |check| | |check| | :ref:`firstframe <firstframe_step>`                  | |check| |         |
+| :ref:`superbias <superbias_step>`                                    | |check| | |check| | :ref:`rscd <rscd_step>`                              | |check| |         |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`refpix <refpix_step>`                                          | |check| | |check| | :ref:`lastframe <lastframe_step>`                    | |check| |         |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
@@ -86,31 +92,32 @@ see the
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`linearity <linearity_step>`                                    | |check| | |check| | :ref:`linearity <linearity_step>`                    | |check| | |check| |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
-| :ref:`persistence <persistence_step>` [2]_                           | |check| |         | :ref:`rscd <rscd_step>`                              | |check| |         |
+| :ref:`persistence <persistence_step>` [1]_                           | |check| |         | :ref:`persistence <persistence_step>` [1]_           | |check| |         |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`dark_current <dark_current_step>`                              | |check| | |check| | :ref:`dark_current <dark_current_step>`              | |check| | |check| |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 |                                                                      |         |         | :ref:`refpix <refpix_step>`                          |         |         |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
-| :ref:`charge_migration <charge_migration_step>` [1]_                 | |check| |         |                                                      |         |         |
+| :ref:`charge_migration <charge_migration_step>` [2]_                 | |check| |         |                                                      |         |         |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`jump <jump_step>`                                              | |check| | |check| | :ref:`jump <jump_step>`                              | |check| | |check| |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`picture_frame <picture_frame_step>` [1]_                       | |check| | |check| |                                                      |         |         |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
-| :ref:`clean_flicker_noise <clean_flicker_noise_step>` [1]_           | |check| | |check| | :ref:`clean_flicker_noise <clean_flicker_noise_step>`| |check| | |check| |
+| :ref:`clean_flicker_noise <clean_flicker_noise_step>` [3]_           | |check| | |check| | :ref:`clean_flicker_noise <clean_flicker_noise_step>`| |check| | |check| |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`ramp_fitting <ramp_fitting_step>`                              | |check| | |check| | :ref:`ramp_fitting <ramp_fitting_step>`              | |check| | |check| |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`gain_scale <gain_scale_step>`                                  | |check| | |check| | :ref:`gain_scale <gain_scale_step>`                  | |check| | |check| |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 
-
 .. [1] By default, this step is skipped in the ``calwebb_detector1`` pipeline
    for all instruments and modes.
-.. [2] The :ref:`persistence <persistence_step>` step is currently hardwired to be skipped in
-   the `~jwst.pipeline.Detector1Pipeline` module for all NIRSpec exposures.
-
+.. [2] By default, this step is skipped in the ``calwebb_detector1`` pipeline
+   for all instruments and modes, except NIRISS.
+.. [3] This step controlled by the parameter reference file in the
+   ``calwebb_detector1`` pipeline. By default, it is enabled for
+   NIRSpec TSO, NIRISS SOSS, and NIRISS imaging.
 
 Arguments
 ---------
