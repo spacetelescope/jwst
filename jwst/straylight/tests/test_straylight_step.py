@@ -4,9 +4,10 @@ Unit tests for straylight step configuration
 
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import CubeModel, IFUImageModel
+from stdatamodels.jwst.datamodels import CubeModel
 
 from jwst.straylight import StraylightStep
+from jwst.tests.miri_rate_helpers import miri_mrs_rate_model
 
 
 @pytest.fixture(scope="module")
@@ -30,16 +31,9 @@ def miri_mrs_short_tso():
 def miri_mrs_short():
     """Set up MIRI MRS SHORT data"""
 
-    image = IFUImageModel((1024, 1032))
-    image.data = np.random.random((1024, 1032))
-    image.meta.instrument.name = "MIRI"
-    image.meta.instrument.detector = "MIRIFUSHORT"
-    image.meta.exposure.type = "MIR_MRS"
-    image.meta.instrument.channel = "12"
-    image.meta.instrument.band = "SHORT"
+    image = miri_mrs_rate_model(shape=(1024, 1032), with_wcs=True)
     image.meta.filename = "test_miri_short.fits"
-    image.meta.observation.date = "2019-01-01"
-    image.meta.observation.time = "10:10:10"
+
     return image
 
 
