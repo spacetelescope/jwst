@@ -5,21 +5,37 @@ import pytest
 from jwst.regtest import regtestdata as rt
 from jwst.stpipe import Step
 
-EXP_TYPES = ["fgs_acq1", "fgs_fineguide", "fgs_id-image", "fgs_id-stack"]
-FILE_ROOTS = [
-    "jw01029001001_gs-acq1_2022142180746",
-    "jw01029001001_gs-fg_2022142181502",
-    "jw01029001001_gs-id_1_image",
-    "jw01029001001_gs-id_1_stacked",
-]
+INPUT_DATA_PATH = "rtdata/fgs/level1b"
+INPUT_DATA = {
+    "fgs_acq1": rt.RTFile(
+        file_name="jw01029001001_gs-acq1_2022142180746_uncal.fits",
+        path=INPUT_DATA_PATH,
+    ),
+    "fgs_fineguide": rt.RTFile(
+        file_name="jw01029001001_gs-fg_2022142181502_uncal.fits",
+        path=INPUT_DATA_PATH,
+    ),
+    "fgs_id-image": rt.RTFile(
+        file_name="jw01029001001_gs-id_1_image_uncal.fits",
+        path=INPUT_DATA_PATH,
+    ),
+    "fgs_id-stack": rt.RTFile(
+        file_name="jw01029001001_gs-id_1_stacked_uncal.fits",
+        path=INPUT_DATA_PATH,
+    ),
+}
 GUIDER_SUFFIXES = ["cal", "dq_init", "guider_cds"]
 
 
-@pytest.fixture(scope="module", params=FILE_ROOTS, ids=FILE_ROOTS)
+@pytest.fixture(
+    scope="module",
+    params=[rtobj.full_path for rtobj in INPUT_DATA.values()],
+    ids=[k for k in INPUT_DATA.keys()],
+)
 def run_guider_pipelines(rtdata_module, request):
     """Run pipeline for guider data"""
     rtdata = rtdata_module
-    rtdata.get_data("fgs/level1b/" + request.param + "_uncal.fits")
+    rtdata.get_data(request.param)
 
     args = [
         "calwebb_guider",
@@ -40,6 +56,6 @@ def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
         run_guider_pipelines,
         fitsdiff_default_kwargs,
         suffix,
-        "truth/test_fgs_guider",
+        "rtdata/truth/test_fgs_guider",
         is_suffix=True,
     )
