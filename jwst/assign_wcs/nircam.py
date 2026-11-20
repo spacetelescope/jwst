@@ -479,6 +479,7 @@ def dhs(input_model, reference_files):
         base_dispx = f.dispx.instance
         base_dispy = f.dispy.instance
         base_stripes = f.stripes.instance
+        base_refpix = f.reference_pixel.instance
 
     # Get the substripe ranges in full and subarray coordinates
     stripe_ranges = generate_substripe_ranges(input_model, science_frame=True)
@@ -494,6 +495,7 @@ def dhs(input_model, reference_files):
         displ = [base_displ] * subarray_stripenum
         dispx = [base_dispx] * subarray_stripenum
         dispy = [base_dispy] * subarray_stripenum
+        refpix = None  # not needed for long wave transforms
 
         # Update the region map to reflect the assigned stripe IDs: input map
         # has the same value for all stripe regions
@@ -511,7 +513,7 @@ def dhs(input_model, reference_files):
 
         # Short-wavelength GrismModels contain stripe transforms for both fieldpoints.
         # Down-select the transform lists to the relevant entries.
-        displ, dispx, dispy, stripes = [], [], [], []
+        displ, dispx, dispy, stripes, refpix = [], [], [], [], {}
         for i, fieldpoint in enumerate(fieldpoints):
             if fieldpoint not in input_model.meta.aperture.pps_name:
                 continue
@@ -522,6 +524,12 @@ def dhs(input_model, reference_files):
             dispy.append(base_dispy[i])
             stripes.append(base_stripes[i])
 
+            # Older specwcs files may not have refpix defined.
+            # Without it, the trace transform is expected to work only for
+            # the F322W2 field position with 64 pixel stripes (e.g. PID 4453, obs 25).
+            if len(base_refpix) == len(base_displ):
+                refpix[base_stripes[i]] = base_refpix[i]
+
         if len(stripes) == 0:
             raise ValueError("No stripes present in both regions and specwcs reference files.")
 
@@ -531,7 +539,9 @@ def dhs(input_model, reference_files):
     # Get the shift to go from x/y in the input image to relative stripe coordinates.
     # Used in final transform from initial input x, y, order to pass through the detector
     # transforms per stripe.
-    sub_trans_dict = substripe_subarray_transforms(input_model, detector_order_stripes)
+    sub_trans_dict = substripe_subarray_transforms(
+        input_model, detector_order_stripes, reference_pixel=refpix
+    )
 
     # Get sky transforms - same for all stripes
     distortion, va_corr, tel2sky = _build_sky_pipeline_steps(
@@ -595,11 +605,6 @@ def dhs(input_model, reference_files):
             ycenter = Const1D(yc + stripe_offset)
             ycenter.inverse = Const1D(yc)
         else:
-            # TODO: specwcs is currently intended to be implemented as a relative position
-            #  within each stripe. With current reference files, this works only with
-            #  the F322W2 field position with 64 pixel stripes (e.g. PID 4453, obs 25).
-            #  Assumptions may need updating when specwcs development resumes.
-
             # For short wavelength DHS, the trace model in specwcs encodes an absolute
             # position within the substripe, so the reference x0, y0 values should always
             # be 0.0 and input x and y values are offset to the start of the stripe in y.
