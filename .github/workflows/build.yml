@@ -18,34 +18,41 @@ jobs:
       matrix:
         runs-on:
           - ubuntu-latest
+          - ubuntu-26.04-arm
           - macos-latest
     runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-tags: true
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
+        with:
+          package-dir: ./
+          output-dir: dist/
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-${{ runner.os }}-${{ runner.arch }}
+          path: ./dist/
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3"
-      - if: ${{ runner.os == 'Linux' }}
-        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
-        with:
-          platforms: all
-      - uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
-        with:
-          package-dir: ./
-          output-dir: dist/
       - run: pip install build
       - run: python -m build --sdist
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: dist-${{ runner.os }}-${{ runner.arch }}
+          name: dist-src
           path: ./dist/
   publish:
     if: (github.event_name == 'release') && (github.event.action == 'released')
-    needs: [build]
+    needs: [build,sdist]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
