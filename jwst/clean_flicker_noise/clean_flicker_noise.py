@@ -323,12 +323,12 @@ def mask_soss_traces(input_model, mask, soss_refmodel=None, halfwidth=16):
     """
     pwcpos = input_model.meta.instrument.pupil_position
     subarray = input_model.meta.subarray.name
-    wavemaps, traces = pastasoss.get_soss_wavemaps(
+    _wavemaps, traces = pastasoss.get_soss_wavemaps(
         pwcpos, subarray=subarray, refmodel=soss_refmodel, spectraces=True
     )
     ny, nx = input_model.data.shape[-2:]
     yidx, xidx = np.mgrid[:ny, :nx]
-    for xpts, ypts, _ in traces:
+    for xpts, ypts, _, _ in traces:
         # Sort by x
         order = np.argsort(xpts)
         xpts = xpts[order]
