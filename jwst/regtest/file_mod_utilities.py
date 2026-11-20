@@ -1,4 +1,12 @@
-"""Mod code functions."""
+"""
+Callback functions, which will be run by the Regression Test DaTa Updating tool (rtdtu).
+
+These functions can have any inputs and outputs, and they must be wrapped in a function that has
+no inputs or outputs.
+
+Information about the tool and how it interacts with the jwst package can be found in the wiki at
+https://github.com/spacetelescope/jwst/wiki/RTFile%3A-Setting-up-a-mapping-between-regression-test-data-and-MAST
+"""
 
 from pathlib import Path
 
@@ -31,25 +39,14 @@ def trim_tso_data(file, ints_to_keep, intstart, ints_offset):
         dm.meta.exposure.integration_start = intstart
         dm.meta.exposure.integration_end = intstart + ints_to_keep - 1
         dm.data = dm.data[ints_offset : ints_offset + ints_to_keep, ...]
-        accepted_exceptions = (AttributeError, TypeError)
-        try:
+        if dm.hasattr("refout"):
             dm.refout = dm.refout[ints_offset : ints_offset + ints_to_keep, ...]
-        except accepted_exceptions:
-            pass
-        try:
+        if dm.hasattr("error"):
             dm.error = dm.error[ints_offset : ints_offset + ints_to_keep, ...]
-        except accepted_exceptions:
-            pass
-        try:
+        if dm.hasattr("var_poisson"):
             dm.var_poisson = dm.var_poisson[ints_offset : ints_offset + ints_to_keep, ...]
-        except accepted_exceptions:
-            pass
-        try:
+        if dm.hasattr("var_noise"):
             dm.var_rnoise = dm.var_rnoise[ints_offset : ints_offset + ints_to_keep, ...]
-        except accepted_exceptions:
-            pass
-        try:
+        if dm.hasattr("int_times"):
             dm.int_times = dm.int_times[ints_offset : ints_offset + ints_to_keep]
-        except accepted_exceptions:
-            pass
         dm.save(modfname)

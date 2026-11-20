@@ -38,16 +38,25 @@ def test_bad_fits_input_rtfile():
         from_mast=True,
         callback_function="fake_function",
     )
-    pytest.raises(ValueError, lambda: rtobj.validate_file_name())
+    with pytest.raises(ValueError, match="Suffix 'mod' should be right before pipeline suffix."):
+        rtobj.validate_file_name()
 
 
 def test_bad_asn_input_rtfile():
     # Test no 'mod' in file name
     rtobj = RTFile(
-        file_name="jw_mock_asn.json",
+        file_name="jw_mock_mod_asn.json",
         path="rtdata/fgs/image3",
         from_mast=True,
         callback_function="fake_function",
     )
-    pytest.raises(ValueError, lambda: rtobj.validate_file_name())
-    pytest.raises(ValueError, lambda: rtobj.root_name)
+    with pytest.raises(
+        ValueError,
+        match="Association files expected to be listed in the RTData.asn_files attribute.",
+    ):
+        rtobj.validate_file_name()
+
+    rtobj.file_name = "jw_mock_asn.json"
+    rtobj.asn_files = ["file1.fits", "file2.fits"]
+    with pytest.raises(ValueError, match="Modified file does not have the 'mod' suffix."):
+        rtobj.validate_file_name()

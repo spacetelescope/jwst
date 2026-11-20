@@ -592,7 +592,7 @@ class RTFile:
     asn_files_from_mast: bool = True
 
     def validate_file_name(self):
-        """Validate that the file name."""
+        """Validate that the file name has the correct format and asn files are listed."""
         if ".json" in self.file_name:
             if len(self.asn_files) == 0:
                 raise ValueError(
@@ -606,7 +606,7 @@ class RTFile:
                 root, suffix = find_suffix(original_fname.name)
                 modfname = replace_suffix(root, "mod_" + suffix) + ".fits"
                 if self.file_name != modfname:
-                    raise ValueError("Suffix 'mod' should be right before pipeline suffix. ")
+                    raise ValueError("Suffix 'mod' should be right before pipeline suffix.")
 
     @property
     def root_name(self):  # numpydoc ignore=RT01
