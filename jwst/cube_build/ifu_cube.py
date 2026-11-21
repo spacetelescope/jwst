@@ -151,7 +151,6 @@ class IFUCubeData:
         self.cdelt1 = None
         self.cdelt2 = None
         self.cdelt3 = None
-
         self.rot_angle = None  # rotation angle between Ra-Dec and IFU local instrument plane
 
     def check_ifucube(self):
@@ -338,8 +337,6 @@ class IFUCubeData:
 
         b_min = np.min(corner_b)
         b_max = np.max(corner_b)
-        lambda_min = lambda_min
-        lambda_max = lambda_max
 
         # along slice: a
         # across slice: b
@@ -658,7 +655,9 @@ class IFUCubeData:
                             debug_cube_index,
                         )
 
-                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result_c
+                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq, _ = (
+                            result_c
+                        )
 
                         self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
                         self.spaxel_weight = self.spaxel_weight + np.asarray(
@@ -818,6 +817,7 @@ class IFUCubeData:
             self.spaxel_iflux,
             self.spaxel_var,
             self.spaxel_dq,
+            None,
             self.instrument,
             self.cube_wcs.rot_angle,
             self.coord_system,
@@ -827,6 +827,7 @@ class IFUCubeData:
             self.rois,
             self.roiw,
             self.roiw_table,
+            None,
             self.output_name,
         )
 

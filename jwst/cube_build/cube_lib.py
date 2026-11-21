@@ -23,6 +23,8 @@ __all__ = [
     "setup_final_model",
 ]
 
+ARCSEC2_PER_SR = 2.3504e-11
+
 
 @dataclass
 class CubeWCS:
@@ -207,9 +209,6 @@ def std2radec(crval1, crval2, xi, eta):
     xi = -xi  # xi is made negative so it increases in the opposite direction
     # of ra to match the images the Parity of the ifu_cube is
     # for ra is PC1_1 = -1
-
-    ra0 = crval1 * deg2rad
-    dec0 = crval2 * deg2rad
 
     beta = math.cos(dec0) - eta * math.sin(dec0)
     angle = xi / beta
@@ -416,10 +415,6 @@ def set_wcs(
     # Clean up arrays dropping extra values at the end.
     xcoord = xcoord[0:naxis1]
     ycoord = ycoord[0:naxis2]
-
-    # xv, yv = np.meshgrid(xcoord, ycoord)
-    # xcenters = xv.flatten()
-    # ycenters = yv.flatten()
 
     # set up the lambda (z) coordinate of the cube
     cdelt3_normal = None
@@ -656,6 +651,7 @@ def setup_final_model(
     spaxel_iflux,
     spaxel_var,
     spaxel_dq,
+    spaxel_exposure_counter,
     instrument,
     rot_angle,
     coord_system,
@@ -665,6 +661,7 @@ def setup_final_model(
     rois,
     roiw,
     roiw_table,
+    slit_frac,
     output_name,
 ):
     """
@@ -688,6 +685,8 @@ def setup_final_model(
         before storing in the error extension.
     spaxel_dq : ndarray
         1-D array of data quality flags for each spaxel.
+    spaxel_exposure_counter : ndarray
+        1-D array of data for the number of unique exposures for each spaxel.
     instrument : str
         Instrument name. Either ``'MIRI'`` or ``'NIRSPEC'``. Controls the
         coordinate type and units set for the internal calibration system.
@@ -749,19 +748,23 @@ def setup_final_model(
         wave = np.asarray(wavelength_table, dtype=np.float32)
         num = len(wave)
         alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
-        # always write the wavetable
-        cube_model = datamodels.IFUCubeModel(
-            data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
-        )
     else:
         wave = np.asarray(cube_wcs.wavelength_table, dtype=np.float32)
         num = len(wave)
         alldata = np.array([(wave[None].T,)], dtype=[("wavelength", "<f4", (num, 1))])
+    # always write the wavetable
 
-        cube_model = datamodels.IFUCubeModel(
-            data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata
+    if spaxel_exposure_counter is not None:
+        exp_count = spaxel_exposure_counter.reshape(
+            (cube_wcs.naxis3, cube_wcs.naxis2, cube_wcs.naxis1)
         )
 
+    else:
+        exp_count = None
+
+    cube_model = datamodels.IFUCubeModel(
+        data=flux, dq=dq, err=var, weightmap=wmap, wavetable=alldata, expcount=exp_count
+    )
     cube_model.update(model_ref)
     if output_name is not None:
         cube_model.meta.filename = output_name
@@ -776,15 +779,17 @@ def setup_final_model(
     # Now that we've got a pixel scale, set photometric area keywords
     cube_model.meta.photometry.pixelarea_arcsecsq = cube_wcs.cdelt1 * cube_wcs.cdelt2
     cube_model.meta.photometry.pixelarea_steradians = (
-        cube_model.meta.photometry.pixelarea_arcsecsq * 2.3504e-11
+        cube_model.meta.photometry.pixelarea_arcsecsq * ARCSEC2_PER_SR
     )
     if cube_wcs.linear_wave:
         cube_model.meta.wcsinfo.crval3 = cube_wcs.crval3
         cube_model.meta.wcsinfo.cdelt3 = cube_wcs.cdelt3
         cube_model.meta.wcsinfo.ctype3 = "WAVE"
         cube_model.meta.wcsinfo.crpix3 = cube_wcs.crpix3
-        cube_model.meta.ifu.roi_spatial = float(rois)
-        cube_model.meta.ifu.roi_wave = float(roiw)
+        if rois is not None:
+            cube_model.meta.ifu.roi_spatial = float(rois)
+        if roiw is not None:
+            cube_model.meta.ifu.roi_wave = float(roiw)
         # even though we are writing a WAVE-TAB we
         # do not want to set these parameters:
         #   ctype3="WAVE-TAB",
@@ -805,34 +810,31 @@ def setup_final_model(
     cube_model.meta.wcsinfo.ctype2 = "DEC--TAN"
     cube_model.meta.wcsinfo.cunit1 = "deg"
     cube_model.meta.wcsinfo.cunit2 = "deg"
-
     cube_model.meta.wcsinfo.cunit3 = "um"
     cube_model.meta.wcsinfo.wcsaxes = 3
-    cube_model.meta.wcsinfo.pc1_1 = -1
-    cube_model.meta.wcsinfo.pc1_2 = 0
-    cube_model.meta.wcsinfo.pc1_3 = 0
-
-    cube_model.meta.wcsinfo.pc2_1 = 0
-    cube_model.meta.wcsinfo.pc2_2 = 1
-    cube_model.meta.wcsinfo.pc2_3 = 0
-
-    cube_model.meta.wcsinfo.pc3_1 = 0
-    cube_model.meta.wcsinfo.pc3_2 = 0
-    cube_model.meta.wcsinfo.pc3_3 = 1
 
     if rot_angle is None:
         rot_angle = 0.0
+
     cube_model.meta.wcsinfo.pc1_1 = -np.cos(rot_angle * np.pi / 180.0)
     cube_model.meta.wcsinfo.pc1_2 = np.sin(rot_angle * np.pi / 180.0)
+    cube_model.meta.wcsinfo.pc1_3 = 0
     cube_model.meta.wcsinfo.pc2_1 = np.sin(rot_angle * np.pi / 180.0)
     cube_model.meta.wcsinfo.pc2_2 = np.cos(rot_angle * np.pi / 180.0)
+    cube_model.meta.wcsinfo.pc2_3 = 0
+    cube_model.meta.wcsinfo.pc3_1 = 0
+    cube_model.meta.wcsinfo.pc3_2 = 0
+    cube_model.meta.wcsinfo.pc3_3 = 1
 
     cube_model.meta.ifu.flux_extension = "SCI"
     cube_model.meta.ifu.error_extension = "ERR"
     cube_model.meta.ifu.error_type = "ERR"
     cube_model.meta.ifu.dq_extension = "DQ"
+    if spaxel_exposure_counter is not None:
+        cube_model.meta.ifu.expcount_extension = "EXPCOUNT"
     cube_model.meta.ifu.weighting = str(weighting)
     cube_model.meta.ifu.weight_power = weight_power
+    cube_model.meta.ifu.slit_frac = slit_frac
 
     if interpolation == "drizzle":
         # stick in values of 0, otherwise it is NaN and

@@ -18,12 +18,16 @@ PyArrayObject *
 ensure_array_int(PyObject *obj, int *is_copy);
 
 // Memory allocation function declarations
+
 int
-alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv);
+alloc_flux_arrays(long nelem, double **fluxv, double **weightv, double **varv, double **ifluxv);
 
 int
 alloc_flux_dq_arrays(
-    int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv, int **dqv);
+    long nelem, double **fluxv, double **weightv, double **varv, double **ifluxv, int **dqv);
+
+int
+alloc_counter_array(long nelem, int **exp_counterv);
 
 // Geometry and overlap function declarations
 double
