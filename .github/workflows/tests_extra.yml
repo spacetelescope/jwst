@@ -83,5 +83,7 @@ jobs:
         - linux: py3-devdeps-xdist
         - macos: py3-stdevdeps-xdist
         - macos: py3-devdeps-xdist
+        - linux: py3-xdist
+          runs-on: ubuntu-26.04-arm
       artifact-path: |
         results.xml
