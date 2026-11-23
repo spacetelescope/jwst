@@ -1,0 +1,1 @@
+Fix a bug where order 0 flux was not masked when determining background for NIRISS WFSS data.

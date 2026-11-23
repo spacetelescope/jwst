@@ -13,9 +13,9 @@ from jwst.wfss_contam.wfss_contam import (
     _build_simulated_image_from_cutouts,
     _cut_frame_to_match_cutout,
     _find_matching_simul_cutout,
+    _validate_orders_against_reference,
     contam_corr,
     match_backplane_prefer_first,
-    validate_orders_against_reference,
 )
 
 VALID_ORDERS = [-1, 0, 1, 2, 3]
@@ -151,11 +151,11 @@ def test_apply_magnitude_limit_no_sources(photom_ref_model, source_catalog):
 def test_constrain_orders(log_watcher):
     # normal case
     orders = [1, 2]
-    constrained_orders = validate_orders_against_reference(orders, VALID_ORDERS)
+    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array(orders))
 
     # orders is None
-    constrained_orders = validate_orders_against_reference(None, VALID_ORDERS)
+    constrained_orders = _validate_orders_against_reference(None, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array(VALID_ORDERS))
 
 
@@ -167,7 +167,7 @@ def test_constrain_orders_error_empty(log_watcher):
         message="None of the requested spectral orders ",
         level="error",
     )
-    constrained_orders = validate_orders_against_reference(orders, VALID_ORDERS)
+    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
     assert not constrained_orders
 
     # none of the orders match spec_orders
@@ -177,7 +177,7 @@ def test_constrain_orders_error_empty(log_watcher):
         message="None of the requested spectral orders ",
         level="error",
     )
-    constrained_orders = validate_orders_against_reference(orders, VALID_ORDERS)
+    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
     assert not constrained_orders
 
 
@@ -185,9 +185,9 @@ def test_constrain_orders_warn_subset(log_watcher):
     # only a subset of orders match
     orders = [1, 4]
     watcher = log_watcher(
-        "jwst.assign_wcs.util", message="Skipping undefined orders", level="warning"
+        "jwst.wfss_contam.wfss_contam", message="Skipping undefined orders", level="warning"
     )
-    constrained_orders = validate_orders_against_reference(orders, VALID_ORDERS)
+    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array([1]))
     watcher.assert_seen()
 
@@ -387,7 +387,7 @@ def test_iteration_improves_contamination_correction(
     )
     # Bypass the grism-WCS order-validity check
     monkeypatch.setattr(
-        "jwst.wfss_contam.wfss_contam.validate_orders_against_transform",
+        "jwst.wfss_contam.wfss_contam._validate_orders_against_transform",
         lambda _wcs, orders: orders,
     )
     # Mock the off-detector bounds check to always return True
@@ -397,8 +397,10 @@ def test_iteration_improves_contamination_correction(
     )
 
     def _run(n_iter, polyfit_degree):
+        input_model = two_source_input.copy()
+        original_data = [np.array(s.data) for s in input_model.slits]
         result, *_ = contam_corr(
-            two_source_input.copy(),
+            input_model,
             wavelengthrange_ref_model,
             photom_ref_model_niriss,
             "none",
@@ -406,7 +408,17 @@ def test_iteration_improves_contamination_correction(
             polyfit_degree=polyfit_degree,
             n_iterations=n_iter,
         )
-        return [np.array(s.data) for s in result.slits]
+        for original, input_slit, output_slit in zip(
+            original_data, input_model.slits, result.slits, strict=True
+        ):
+            np.testing.assert_array_equal(input_slit.data, original)
+            np.testing.assert_array_equal(output_slit.data, original)
+            assert hasattr(output_slit, "contamcorr_data")
+            assert np.any(output_slit.contam != 0)
+            np.testing.assert_allclose(
+                output_slit.contam + output_slit.contamcorr_data, original, rtol=1e-6
+            )
+        return [np.array(s.contamcorr_data) for s in result.slits]
 
     corrected_flat = _run(1, polyfit_degree=None)
     corrected_1iter = _run(1, polyfit_degree=1)

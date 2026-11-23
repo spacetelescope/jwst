@@ -21,12 +21,12 @@ dependencies = [
     "asdf>=5.3.1,<7",
     "astropy>=7.2",
     "BayesicFitting>=3.2.2",
-    "crds>=12.0.4,!=13.1.15",
+    "crds>=12.0.4,!=13.1.15,<15",
     "gwcs>=1.0.3,<2",
     "numpy>=2.4.1",
     "photutils>=3.0,<4",
     "pyyaml>=6.0.1",
-    "requests>=2.32",
+    "requests>=2.32.3",
     "scikit-image>=0.23.1",
     "scipy>=1.18.0",
     # "stdatamodels>=6.0.0,<6.1",
@@ -539,6 +539,11 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "persistence"
 name = 'persistence (detector1 NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "pfpc"
+name = "pfpc (spec3)"
 showcontent = true
 
 [[tool.towncrier.type]]

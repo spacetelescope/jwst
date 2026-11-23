@@ -7,12 +7,12 @@ import types
 import numpy as np
 from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
-
-from jwst.assign_wcs.util import (
-    get_bounding_box_extents,
-    validate_orders_against_reference,
-    validate_orders_against_transform,
+from stdatamodels.jwst.transforms.models import (
+    NIRCAMBackwardGrismDispersion,
+    NIRISSBackwardGrismDispersion,
 )
+
+from jwst.assign_wcs.util import get_bounding_box_extents
 from jwst.lib.catalog_utils import read_source_catalog
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
@@ -178,6 +178,86 @@ def match_backplane_prefer_first(slit0, slit1):
     slit1.ysize = slit0.ysize
 
     return slit1
+
+
+def _validate_orders_against_reference(orders, spec_orders):
+    """
+    Compare user-requested spectral orders with the orders defined in the reference file.
+
+    Parameters
+    ----------
+    orders : list[int]
+        List of user-requested spectral orders.
+    spec_orders : list[int]
+        List of spectral orders defined in the reference file.
+
+    Returns
+    -------
+    np.ndarray[int]
+        List of spectral orders constrained to the user-specified ones
+        that are also defined in the reference file.
+    """
+    spec_orders = np.array(spec_orders, dtype=int)
+    if orders is None:
+        return spec_orders
+    orders = np.array(orders, dtype=int)
+    good_orders = np.isin(orders, spec_orders, assume_unique=True)
+    if (len(good_orders) == 0) or (not np.any(good_orders)):
+        log.error(
+            f"None of the requested spectral orders {orders} are defined "
+            "in the wavelength range reference file. "
+            f"Expected orders are: {spec_orders}. "
+        )
+        return []
+    if not np.all(good_orders):
+        log.warning(
+            f"Not all requested spectral orders {orders} are defined in the "
+            f"wavelength range reference file. Defined orders are: {spec_orders}. "
+            "Skipping undefined orders."
+        )
+    return orders[good_orders]
+
+
+def _validate_orders_against_transform(wcs, spec_orders):
+    """
+    Ensure the requested spectral orders are defined in the WCS transforms.
+
+    Parameters
+    ----------
+    wcs : gwcs.wcs.WCS
+        The input MultiSlitModel's WCS object.
+    spec_orders : list[int]
+        The list of requested spectral orders.
+
+    Returns
+    -------
+    list
+        List of spectral orders that are defined in the WCS transform.
+    """
+    sky_to_grism = wcs.backward_transform
+    good_orders = spec_orders.copy()
+    for model in sky_to_grism:
+        if isinstance(model, (NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion)):
+            # Get the orders defined in the transform
+            orders = np.sort(model.orders)
+            is_good_order = [order in orders for order in spec_orders]
+            if not any(is_good_order):
+                log.error(
+                    f"None of the requested spectral orders {spec_orders} are defined "
+                    "in the WCS transform. "
+                    f"Defined orders are: {orders}. "
+                )
+                return []
+            if not all(is_good_order):
+                log.warning(
+                    f"Not all requested spectral orders {spec_orders} are "
+                    f"defined in the WCS transform. Defined orders are: {orders}. "
+                    "Skipping undefined orders."
+                )
+            good_orders = [order for order in spec_orders if order in orders]
+            # There will be only one transform of this type in the wcs
+            break
+    return np.sort(good_orders)
 
 
 def _find_min_relresp(sens_waves, sens_response):
@@ -358,9 +438,9 @@ def _fit_spectral_shape(
     Parameters
     ----------
     observed_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
-        Observed cutout whose ``.data`` is used as the target for the fit.
+        Observed cutout whose ``.contamcorr_data`` is used as the target for the fit.
         If ``n_iterations > 1``, this holds the contamination-corrected data
-        from the previous iteration.
+        from the previous iteration. The original ``.data`` is left unchanged.
     simul_cutout : `~stdatamodels.jwst.datamodels.SlitModel`
         Simulated cutout, already backplane-matched to ``observed_cutout``.
         Its ``.data`` attribute is updated in-place with the spectrally fitted result.
@@ -430,7 +510,8 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
     simul_data : np.ndarray
         The full-frame simulated data.
     original_data : list
-        List of original observed data arrays.
+        List of original observed data arrays, retained as the baseline for
+        computing ``cutout.contamcorr_data``.
 
     Returns
     -------
@@ -446,7 +527,7 @@ def _build_contam(output_model, per_source_simuls, simul_data, original_data):
         else:
             simul_all_cut = _cut_frame_to_match_cutout(simul_data, cutout)
             contam_cut = simul_all_cut - this_simul.data
-        cutout.data = original_data[i] - contam_cut
+        cutout.contamcorr_data = original_data[i] - contam_cut
         contam_cuts.append(contam_cut)
     return contam_cuts
 
@@ -593,7 +674,8 @@ def contam_corr(
     Returns
     -------
     output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
-        A copy of the input_model that has been corrected
+        A copy of the input_model with contamination-corrected data stored in
+        each slit's ``contamcorr_data`` attribute. The original ``data`` arrays are unchanged.
     simul_model : `~stdatamodels.jwst.datamodels.ImageModel`
         Full-frame simulated image of the grism exposure
     """
@@ -629,8 +711,8 @@ def contam_corr(
     # array of order values in the Wavelengthrange ref file,
     # then constrain the orders to the user-specified ones
     spec_orders = np.asarray(waverange.order)
-    spec_orders = validate_orders_against_reference(orders, spec_orders)
-    spec_orders = validate_orders_against_transform(grism_wcs, spec_orders)
+    spec_orders = _validate_orders_against_reference(orders, spec_orders)
+    spec_orders = _validate_orders_against_transform(grism_wcs, spec_orders)
     if len(spec_orders) == 0:
         log.error("No valid spectral orders found. Step will be SKIPPED.")
         return input_model, None
@@ -761,18 +843,16 @@ def contam_corr(
         )
         return input_model, None
 
-    # Initialize output model
-    output_model = datamodels.MultiSlitModel()
+    # Copy the input model so that adding result attributes does not modify it,
+    # then retain only cutouts with simulated counterparts.
+    output_model = input_model.copy()
+    for i in reversed(range(len(output_model.slits))):
+        if output_model.slits[i].source_id not in obs.source_ids:
+            del output_model.slits[i]
 
-    # Copy over matching cutouts.
-    # Note that this makes a reference to input cutouts, not a deep copy,
-    # so the input data may be modified by this function.  The input data is
-    # copied in the calling step, as needed.
-    good_cutouts = [cutout for cutout in input_model.slits if cutout.source_id in obs.source_ids]
-    output_model.slits.extend(good_cutouts)
-
-    # Hold onto original input data so iterative corrections always start from the same baseline.
-    original_data = [np.array(cutout.data) for cutout in output_model.slits]
+    # Hold onto the unchanged input data so iterative corrections always start
+    # from the same baseline. Corrected data is stored separately in contamcorr_data.
+    original_data = [cutout.data for cutout in output_model.slits]
 
     if n_iterations > 1 and polyfit_degree is None:
         log.warning(
@@ -801,8 +881,9 @@ def contam_corr(
             )
 
     # Save the brightness of the simulation for each spectrum for sorting later.
-    # _fit_spectral_shape only reassigns .data (never modifies fluxmodel_N), so
-    # the flat data captures the intrinsic source flux independently of any fitted shape.
+    # _fit_spectral_shape only reassigns the simulated cutout's .data (never
+    # modifies fluxmodel_N), so the flat data captures the intrinsic source flux
+    # independently of any fitted shape.
     flat_matched_sum = [
         np.nansum(np.array(s.data)) if s is not None else None for s in matched_flat_simuls
     ]
@@ -846,7 +927,7 @@ def contam_corr(
                 # For fainter sources, it will be whatever was in the previous iteration,
                 # i.e., flat-spectrum for the first iteration.
                 simul_all_cut = _cut_frame_to_match_cutout(simul_data, cutout)
-                cutout.data = original_data[i] - (simul_all_cut - matched_flat.data)
+                cutout.contamcorr_data = original_data[i] - (simul_all_cut - matched_flat.data)
 
                 if _fit_spectral_shape(
                     cutout,

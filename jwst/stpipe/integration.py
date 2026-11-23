@@ -69,6 +69,7 @@ def get_steps():
         ("jwst.step.OutlierDetectionStep", "outlier_detection", False),
         ("jwst.step.PathLossStep", "pathloss", False),
         ("jwst.step.PersistenceStep", "persistence", False),
+        ("jwst.step.PFPCStep", "pfpc", False),
         ("jwst.step.PhotomStep", "photom", False),
         ("jwst.step.PictureFrameStep", "picture_frame", False),
         ("jwst.step.PixelReplaceStep", "pixel_replace", False),
