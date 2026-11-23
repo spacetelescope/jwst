@@ -40,7 +40,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 
 .. note::
 
-    All steps can be controlled by parameter reference files, and may be disabled or
+    All steps can be controlled by parameter reference files and may be disabled or
     modified for certain instrument configurations. For the most up-to-date information,
     please see `CRDS <https://jwst-crds.stsci.edu/>`_.
 

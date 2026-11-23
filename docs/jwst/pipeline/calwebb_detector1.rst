@@ -62,7 +62,7 @@ see the
 
 .. note::
 
-    All steps can be controlled by parameter reference files, and may be disabled or
+    All steps can be controlled by parameter reference files and may be disabled or
     modified for certain instrument configurations. For the most up-to-date information,
     please see `CRDS <https://jwst-crds.stsci.edu/>`_.
 
@@ -115,7 +115,7 @@ see the
    for all instruments and modes.
 .. [2] By default, this step is skipped in the ``calwebb_detector1`` pipeline
    for all instruments and modes, except NIRISS.
-.. [3] This step controlled by the parameter reference file in the
+.. [3] This step is controlled by the parameter reference file in the
    ``calwebb_detector1`` pipeline. By default, it is enabled for
    NIRSpec TSO, NIRISS SOSS, and NIRISS imaging.
 
