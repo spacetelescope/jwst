@@ -229,7 +229,7 @@ def test_extract_niriss_soss_96(tmp_path, mock_niriss_soss_96):
 
 
 def test_extract_niriss_soss_superstripe(mock_niriss_soss_superstripe):
-    result = Extract1dStep.call(mock_niriss_soss_superstripe)
+    result = Extract1dStep.call(mock_niriss_soss_superstripe, soss_tikfac=1e-13)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
     # output flux and errors are non-zero, exact values will depend

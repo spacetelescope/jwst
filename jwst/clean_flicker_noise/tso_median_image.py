@@ -58,7 +58,7 @@ def _soss_box_extract(rateints, soss_refmodel=None):
     order = 1
 
     # Get trace x,y positions
-    _, xtrace, ytrace, _ = pastasoss.get_soss_traces(pwcpos, order=order, refmodel=soss_refmodel)
+    _, xtrace, ytrace, _, _ = pastasoss.get_soss_traces(pwcpos, order=order, refmodel=soss_refmodel)
     box_weights = soss_extract.get_box_weights(ytrace, width, img_shape, cols=xtrace.astype(int))
 
     # Get wavelengths
