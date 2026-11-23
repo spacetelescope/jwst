@@ -28,7 +28,7 @@ from jwst.associations.lib.dms_base import (
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.prune import prune
-from jwst.associations.lib.utilities import evaluate, is_iterable, strip_subarray
+from jwst.associations.lib.utilities import evaluate, is_iterable
 from jwst.associations.registry import RegistryMarker
 from jwst.lib.suffix import remove_suffix
 
@@ -78,9 +78,20 @@ MULTI_OBS_AC_TYPES = ["group", "background", "mosaic"]
 
 
 def _fix_subarray(subarray):
-    # Add the dash that separates the slit name from the subarray
-    subarray = "-" + strip_subarray(subarray)
-    return subarray
+    """
+    Remove dashes or underscores to avoid a downstream CAOM failure.
+
+    Parameters
+    ----------
+    subarray : str
+        The subarray to strip.
+
+    Returns
+    -------
+    str
+        The subarray stripped of dashes or underscores.
+    """
+    return "-" + subarray.replace("-", "").replace("_", "")
 
 
 class DMS_Level3_Base(DMSBaseMixin, Association):

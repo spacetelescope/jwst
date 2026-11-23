@@ -7,7 +7,7 @@ from jwst.associations.lib.acid import ACIDMixin
 from jwst.associations.lib.constraint import AttrConstraint, Constraint, SimpleConstraint
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.diff import MultiDiffError, compare_asns
-from jwst.associations.lib.utilities import getattr_from_list, strip_subarray
+from jwst.associations.lib.utilities import getattr_from_list
 
 __all__ = [
     "Constraint_NotBkgd",
@@ -893,9 +893,7 @@ class DMSBaseMixin(ACIDMixin):
         if subarray == "full":
             subarray = None
         if subarray is not None:
-            # Remove dashes or underscores to avoid a downstream
-            # Common Archive Observation Model (CAOM) ingest
-            result = strip_subarray(subarray)
+            result = subarray
 
         return result
 
