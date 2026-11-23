@@ -292,6 +292,8 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
         The y coordinates of the rotated points.
     wavelengths : ndarray
         The wavelengths associated with the rotated points.
+    psf_tilt : ndarray
+        The monochromatic PSF tilt.
     """
     if refmodel is None:
         refmodel = retrieve_default_pastasoss_model()
@@ -352,6 +354,8 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
         The y coordinates of the rotated points.
     wavelengths : ndarray
         The wavelengths associated with the rotated points.
+    psf_tilt : ndarray
+        The monochromatic PSF tilt.
     """
     spectral_order_index = _find_spectral_order_index(refmodel, int(order))
 
@@ -361,7 +365,6 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
         refmodel.traces[spectral_order_index].pivot_x,
         refmodel.traces[spectral_order_index].pivot_y,
     )
-
     # Offset for SUBSTRIP96
     if subarray == "SUBSTRIP96":
         y -= 10
@@ -371,7 +374,18 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
     # wavelength associated to trace at given pwcpos value
     wavelengths = _get_wavelengths(refmodel, x_new, pwcpos, int(order))
 
-    return order, x_new, y_new, wavelengths
+    # interpolate PSF tilt onto the wavelength grid of the rotated trace
+    tiltarr = getattr(refmodel.traces[spectral_order_index], "psf_tilt", None)
+    if tiltarr is not None:
+        wl_tilt, tilt = refmodel.traces[spectral_order_index].psf_tilt
+        sort_indices = np.argsort(wl_tilt)
+        wl_tilt = wl_tilt[sort_indices]
+        tilt = tilt[sort_indices]
+        psf_tilt = np.interp(wavelengths, wl_tilt, tilt)
+    else:
+        psf_tilt = np.zeros_like(wavelengths)
+
+    return order, x_new, y_new, wavelengths, psf_tilt
 
 
 def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
@@ -536,10 +550,11 @@ def get_soss_wavemaps(
     wavemaps : ndarray
         The 2D wavemaps. Will have shape ``(n_orders, array_x, array_y)``
         with orders 1, 2, etc. being the elements of the first dimension.
-        Wavemaps for all orders defined in the reference file
-        will be returned.
+        Wavemaps for all orders defined in the reference file will be returned.
     traces : ndarray, optional
         The corresponding 1D traces (if ``spectraces`` is `True`).
+        These will take the form of a 3-D array with shape ``(n_orders, 4, n_wavelengths)``,
+        where the second dimension corresponds to ``(xtrace, ytrace, wave_grid, psf_tilt)``.
     """
     if refmodel is None:
         refmodel = retrieve_default_pastasoss_model()
@@ -565,17 +580,18 @@ def get_soss_wavemaps(
     wavemaps = []
     traces = []
     for order in orders_requested:
-        _, x, y, wl = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
+        _, x, y, wl, tilt = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
         xtrace = _extrapolate_to_wavegrid(wave_grid, wl, x)
         ytrace = _extrapolate_to_wavegrid(wave_grid, wl, y)
-        spectrace = np.array([xtrace, ytrace, wave_grid])
+        psf_tilt = np.interp(wave_grid, wl, tilt)
+        spectrace = np.array([xtrace, ytrace, wave_grid, psf_tilt])
 
         # Make wavemap from wavelength solution
         wavemap = _calc_2d_wave_map(
             wave_grid,
             xtrace,
             ytrace,
-            np.zeros_like(xtrace),
+            psf_tilt,
             oversample=1,
             dimx=soss_xdim,
             dimy=soss_ydim,
