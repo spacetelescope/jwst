@@ -386,8 +386,12 @@ def _mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
     reference_files = {"wavelengthrange": wl_range_name}
     inst = input_model.meta.instrument.name
     if inst == "NIRISS":
+        if input_model.meta.instrument.pupil == "F090W":
+            mask_orders = [0, 1, 2]
+        else:
+            mask_orders = [0, 1]
         grism_obj_list = create_grism_bbox(
-            input_model, reference_files, mmag_extract, extract_orders=[0, 1]
+            input_model, reference_files, mmag_extract, extract_orders=mask_orders
         )
     else:
         grism_obj_list = create_grism_bbox(input_model, reference_files, mmag_extract)
