@@ -62,6 +62,7 @@ class GuiderCdsStep(Step):
         readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
 
         result = guider_cds.guider_cds(output_model, gain_model, readnoise_model)
+        result.int_times = output_model.int_times
         result.meta.cal_step.guider_cds = "COMPLETE"
 
         # Output is a new model, so close the input if it was opened here
