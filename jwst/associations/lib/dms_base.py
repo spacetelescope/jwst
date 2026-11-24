@@ -996,7 +996,7 @@ class DMSAttrConstraint(AttrConstraint):
 
 
 class Constraint_NIRCamImageNoDisperser(Constraint):
-    """Constrataint for engineering imaging templated data."""
+    """Constraint for engineering imaging templated data."""
 
     def __init__(self, *args, **kwargs):  # noqa: ARG002
         super(Constraint_NIRCamImageNoDisperser, self).__init__(
