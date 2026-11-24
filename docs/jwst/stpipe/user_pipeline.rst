@@ -181,15 +181,14 @@ they are run in the order they are given. There can also be ``pre_hooks`` and
 ``post_hooks`` on the Pipeline as a whole (since a Pipeline is also a Step).
 Each of these parameters is a list of strings, where each entry is one of:
 
-* An external commandline application.  The arguments can be
-  accessed using {0}, {1} etc.  (See
-  ``stpipe.subproc.SystemCall``).
+* (Deprecated) An external commandline application.  The arguments can be
+  accessed using {0}, {1} etc.  (See ``stpipe.subproc.SystemCall``).
 * A dot-separated path to a Python Step class.
 * A dot-separated path to a Python function.
 
 
-For example, here's a ``post_hook`` that will display a FITS file in
-the ``ds9`` FITS viewer after the resample step has completed processing:
+For example, here's a ``post_hook`` that runs a user-defined ``UserMaskStep``
+step after the resample step (see :ref:`writing-a-step` for how to define a ``Step``).
 
 .. code-block:: yaml
 
@@ -197,4 +196,4 @@ the ``ds9`` FITS viewer after the resample step has completed processing:
    - class: jwst.resample.resample_step.ResampleStep
      name: resample
      parameters:
-        post_hooks = "ds9 {0}",
+        post_hooks = "UserMaskStep",
