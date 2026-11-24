@@ -487,6 +487,8 @@ class Extract1dStep(Step):
                     result.meta.wcs = output_model.slits[0].meta.wcs
                     result.spec[0].s_region = output_model.slits[0].meta.wcsinfo.s_region
             result.meta.cal_step.extract_1d = "COMPLETE"
+        if isinstance(result, datamodels.TSOMultiSpecModel):
+            result.spec[0].s_region = output_model.slits[0].meta.wcsinfo.s_region
 
         # The result is a new model, so close the input model if it was opened here.
         if output_model is not input_data:
