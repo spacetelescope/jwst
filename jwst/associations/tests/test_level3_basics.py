@@ -48,3 +48,20 @@ def test_targacq(pool_file):
             for product in asn["products"]:
                 exptypes = [member["exptype"].lower() for member in product["members"]]
                 assert "target_acquisition" in exptypes
+
+
+def test_image_no_disperser():
+    """Tests Constraint_NIRCamImageNoDisperser excludes proper candidate from associations."""
+    rules = registry_level3_only()
+    pool = combine_pools(
+        get_pkg_data_filename("data/pool_image_no_disperser.csv", package="jwst.associations.tests")
+    )
+    asns = generate(pool, rules)
+
+    assert len(asns) > 0  # Associations get created
+
+    # The first candidate satisfies constraint and shouldn't be in any association.
+    exclude = pool[0]["filename"]
+    for asn in asns:
+        expname = asn.data["products"][0]["members"][0]["expname"]
+        assert exclude != expname
