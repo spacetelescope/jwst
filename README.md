@@ -1,5 +1,5 @@
 <a href="https://stsci.edu">
-  <img src="docs/_static/stsci_pri_combo_mark_horizonal_white_bkgd.png" alt="Space Telescope Science Institute" width="83%" style="margin-left: auto;"/>
+  <img src="https://github.com/spacetelescope/branding/blob/81b7021231e885bda9c022e6c082b3cf26009b3b/stsci_pri_combo_mark_horizonal_white_bkgd.svg" alt="Space Telescope Science Institute" width="83%" style="margin-left: auto;"/>
 </a>
 <a href="https://science.nasa.gov/mission/webb/">
   <img src="docs/_static/jwst_logo.png" alt="JWST Logo" width="15%" style="margin-right: auto;"/>
