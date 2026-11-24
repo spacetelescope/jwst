@@ -13,6 +13,12 @@ and is used to produce calibrated time-series photometry or spectra of the sourc
 The steps applied by the ``calwebb_tso3`` pipeline for Imaging and Spectroscopic TSO
 exposures are shown below:
 
+.. note::
+
+    All steps can be controlled by parameter reference files, and may be disabled or
+    modified for certain instrument configurations. For the most up-to-date information,
+    please see `CRDS <https://jwst-crds.stsci.edu/>`_.
+
 .. |check| unicode:: U+2713
 
 .. checkmark
