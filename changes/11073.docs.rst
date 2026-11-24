@@ -1,0 +1,1 @@
+Document deprecation of unknown string hooks as systemcalls to match change in stpipe.
