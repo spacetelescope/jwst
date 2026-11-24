@@ -1,0 +1,1 @@
+Add an experimental correction for the brighter-fatter effect (BFE) alongside the existing charge migration flagging algorithm.
