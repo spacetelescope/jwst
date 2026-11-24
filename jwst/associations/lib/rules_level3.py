@@ -4,6 +4,7 @@ import logging
 
 from jwst.associations.lib.constraint import Constraint, SimpleConstraint
 from jwst.associations.lib.dms_base import (
+    Constraint_NIRCamImageNoDisperser,
     Constraint_NotBkgd,
     Constraint_NotBkgdOrTSO,
     Constraint_NotTSO,
@@ -174,6 +175,7 @@ class Asn_Lv3Image(AsnMixin_Science):
     def __init__(self, *args, **kwargs):
         self.constraints = Constraint(
             [
+                Constraint_NIRCamImageNoDisperser(),
                 Constraint_Optical_Path(),
                 Constraint_Target(association=self),
                 Constraint_Image(),
@@ -897,19 +899,54 @@ class Asn_Lv3TSO(AsnMixin_Science):
                 DMSAttrConstraint(
                     name="subarray",
                     sources=["subarray"],
-                    value="sub260stripe4dhs|sub41stripe1dhs|sub82stripe2dhs|sub164stripe4dhs",
+                    value="sub260stripe4_dhs|sub41stripe1_dhs|sub82stripe2_dhs|sub164stripe4_dhs",
                 ),
             ],
             reduce=Constraint.notany,
         )
 
         # Exclude NIRISS SOSS with a single integration or an uncalibrated filter.
+        # For stripe subarrays, the integer in the subaray name describes the stripe width
+        # Exclude exposures with nints = 2040 (n_science_rows) / stripe width
+        # E.g. for sub17stripe_soss, 2040 / 17 = 120
         not_nis_soss_invalid = Constraint(
             [
                 Constraint(
                     [
                         DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="nis_soss"),
                         DMSAttrConstraint(name="nints", sources=["nints"], value="1"),
+                    ]
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="subarray", sources=["subarray"], value="sub17stripe_soss"
+                        ),
+                        DMSAttrConstraint(name="nints", sources=["nints"], value="120"),
+                    ]
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="subarray", sources=["subarray"], value="sub60stripe_soss"
+                        ),
+                        DMSAttrConstraint(name="nints", sources=["nints"], value="34"),
+                    ]
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="subarray", sources=["subarray"], value="sub204stripe_soss"
+                        ),
+                        DMSAttrConstraint(name="nints", sources=["nints"], value="10"),
+                    ]
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="subarray", sources=["subarray"], value="sub680stripe_soss"
+                        ),
+                        DMSAttrConstraint(name="nints", sources=["nints"], value="3"),
                     ]
                 ),
                 Constraint(

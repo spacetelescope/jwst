@@ -15,6 +15,12 @@ The steps applied by the ``calwebb_spec3`` pipeline are shown below.
 This pipeline is intended for non-TSO spectra only. TSO spectral data should be
 processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 
+.. note::
+
+    All steps can be controlled by parameter reference files, and may be disabled or
+    modified for certain instrument configurations. For the most up-to-date information,
+    please see `CRDS <https://jwst-crds.stsci.edu/>`_.
+
 .. |c| unicode:: U+2713 .. checkmark
 
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+------+--------+
