@@ -79,7 +79,7 @@ section will be a general overview on how to configure the pipeline when running
 and the following sections will elaborate on each of these possible customizations
 and demonstrate usage.
 
-**When running command line with ``strun``, there are two ways two configure a Pipeline/Step.**
+**When running command line with strun, there are two ways two configure a Pipeline/Step.**
 
 1. By passing in arguments to a pipeline/step on the command line
 2. By using a :ref:`parameter file<parameter_files>` and passing this in as an argument on the command line
