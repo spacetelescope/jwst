@@ -2056,8 +2056,6 @@ def test_output_is_not_input_when_skipped(generate_miri_reffiles, setup_inputs):
 
 
 def test_uneven_sampling(caplog):
-    caplog.set_level("DEBUG", "jwst")
-
     # Superstripe ramp model with in-frame reads: readout times are not evenly sampled
     model = make_sub64p_multistripe_model()
     model.pixeldq = model.get_default("pixeldq")
@@ -2065,16 +2063,21 @@ def test_uneven_sampling(caplog):
     assert len(collated.meta.exposure.read_times) > 0
 
     # Set the data equal to the read time
-    for group in range(collated.data.shape[1]):
+    ngroup = collated.data.shape[1]
+    for group in range(ngroup):
         collated.data[:, group, :, :] = collated.meta.exposure.read_times[group][0]
 
-    # Don't configure the log, so that caplog picks up the messages correctly.
-    jump = JumpStep.call(collated, configure_log=False)
+    # Add a jump
+    collated.data[0, ngroup // 2 :, 4, 4] *= 1000
+
+    jump = JumpStep.call(collated, rejection_threshold=1.0)
     assert "Using explicit read times" in caplog.text
 
-    # No jumps expected, since data matches readtimes
+    # One jump expected
+    assert jump.meta.exposure.primary_cosmic_rays > 0
     assert jump.meta.exposure.extended_emission_events == 0
-    assert not np.any(jump.groupdq & JUMP_DET > 0)
+    assert np.sum(jump.groupdq & JUMP_DET > 0) == 1
+    assert jump.groupdq[0, ngroup // 2, 4, 4] == JUMP_DET
 
 
 def test_nircam_group0_zeroframe(generate_nircam_reffiles, setup_inputs):
