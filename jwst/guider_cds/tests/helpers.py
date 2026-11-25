@@ -1,6 +1,7 @@
 import numpy as np
+from stdatamodels.jwst import datamodels
 
-from jwst import datamodels
+from jwst.lib.tests.helpers import int_times_table
 
 __all__ = ["make_guider_image"]
 
@@ -33,5 +34,7 @@ def make_guider_image():
     image.meta.subarray.ystart = 209
     image.meta.subarray.xsize = 10
     image.meta.subarray.ysize = 10
+
+    image.int_times = int_times_table(image.meta.exposure.ngroups)
 
     return image
