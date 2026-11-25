@@ -261,7 +261,7 @@ def test_generate_stripe_reference_substripe():
     # equal to row number in detector frame.
     test_array = (np.ones((2048, 2048), dtype=int) * np.arange(2048)).T
 
-    # SUB41STRIPE1_DHS nrca1 case
+    # SUB41S1_2-SPECTRA nrca1 case
     stripe_params = (2048, 41, 1, 40, 1901, 0, 1, 1, 0, 0, -1, 2)
     _assign_metadata(sci_meta, subarray_keys, stripe_params)
 
@@ -291,7 +291,7 @@ def test_generate_stripe_reference_substripe():
     assert stripe1swap_array.shape == (2048, 41)
     assert stripe1swap_array[1024, 1] == 1902  # nreads1 + nskips1
 
-    # SUB82STRIPE2_DHS nrca2 case
+    # SUB82S2_4-SPECTRA nrca2 case
     stripe_params = (2048, 82, 1, 40, 1662, 82, 1, 1, 0, 0, 1, -2)
     _assign_metadata(sci_meta, subarray_keys, stripe_params)
 
@@ -308,7 +308,7 @@ def test_generate_stripe_reference_substripe():
     assert stripe2_array[-42, 1024] == 0
     assert stripe2_array[-43, 1024] == 1785  # nreads1 + nskips1 + nreads2 + nskips2
 
-    # SUB164STRIPE4_DHS nrcalong case
+    # SUB164S4_8-SPECTRA nrcalong case
     stripe_params = (2048, 164, 1, 40, 971, 0, 1, 0, 0, 0, -1, 2)
     _assign_metadata(sci_meta, subarray_keys, stripe_params)
 
@@ -890,23 +890,23 @@ def test_collate_repeat_stripe(substripe_model):
             (1, 0, 1, 64, 8, None, None),
             [[0.00760], [0.0152]],
         ),
-        (  # SUB260STRIPE4_DHS nframes=1, groupgap=0
+        (  # SUB260S4_8-SPECTRA nframes=1, groupgap=0
             (1, 0, 4, 2048, 260, 1, 64),
             [[0.34585], [0.68645], [1.02705], [1.36765], [1.7135], [2.0541], [2.3947], [2.7353]],
         ),
-        (  # SUB164STRIPE4_DHS nframes=1, groupgap=0
+        (  # SUB264S4_8-SPECTRA nframes=1, groupgap=0
             (1, 0, 4, 2048, 164, 1, 40),
             [[0.22009], [0.43493], [0.64977], [0.86461], [1.0847], [1.29954], [1.51438], [1.72922]],
         ),
-        (  # SUB82STRIPE4_DHS nframes=1, groupgap=0
+        (  # SUB82S2_4-SPECTRA nframes=1, groupgap=0
             (1, 0, 4, 2048, 82, 1, 40),
             [[0.22009], [0.43493], [0.65502], [0.86986]],
         ),
-        (  # SUB82STRIPE4_DHS nframes=2, groupgap=2
+        (  # SUB82S2_4-SPECTRA nframes=2, groupgap=2
             (2, 2, 4, 2048, 82, 1, 40),
             [[0.22009, 0.65502], [0.43493, 0.86986], [1.95981, 2.39474], [2.17465, 2.60958]],
         ),
-        (  # SUB41STRIPE4_DHS nframes=1, groupgap=0
+        (  # SUB41S1_2-SPECTRA nframes=1, groupgap=0
             (1, 0, 4, 2048, 41, 1, 40),
             [[0.22009], [0.44018]],
         ),

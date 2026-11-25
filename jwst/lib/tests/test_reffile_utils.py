@@ -64,7 +64,7 @@ def test_multistripe_subarray_model_substripe():
     mock_sci = RampModel(data=np.ones((5, 5, 164, 2048)))
     mock_sci.meta.subarray = {
         "fastaxis": 1,
-        "name": "SUB164STRIPE4_DHS",
+        "name": "SUB164S4_8-SPECTRA",
         "slowaxis": -2,
         "xsize": 2048,
         "xstart": 1,

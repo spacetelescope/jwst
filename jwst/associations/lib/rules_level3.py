@@ -897,7 +897,11 @@ class Asn_Lv3TSO(AsnMixin_Science):
                 DMSAttrConstraint(
                     name="subarray",
                     sources=["subarray"],
-                    value="sub260stripe4_dhs|sub41stripe1_dhs|sub82stripe2_dhs|sub164stripe4_dhs",
+                    value=(
+                        "sub260stripe4_dhs|sub41stripe1_dhs|sub82stripe2_dhs|sub164stripe4_dhs|"
+                        "sub41s1_2-spectra|sub82s2_4-spectra|sub164s4_8-spectra|"
+                        "sub260s4_8-spectra"
+                    ),
                 ),
             ],
             reduce=Constraint.notany,

@@ -18,7 +18,7 @@ def _populate_dhs_regions_metadata(model):
     model.meta.pedigree = "GROUND"
     model.meta.useafter = "2000-01-01T00:00:00"
     model.meta.instrument.name = "NIRCAM"
-    model.meta.subarray.name = "SUB164STRIPE4_DHS"
+    model.meta.subarray.name = "SUB164S4_8-SPECTRA"
 
 
 def make_mock_dhs_nrca1_regions(sci_model, tmp_path):
