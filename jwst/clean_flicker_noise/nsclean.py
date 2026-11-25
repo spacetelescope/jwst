@@ -96,9 +96,9 @@ class NSClean:
         # will optimize this later.
         _weight = np.zeros((self.ny, self.nx), dtype=np.float32)  # Build the kernel here
         _x = np.arange(self.nx)
-        _mu = self.nx // 2 + 1
+        _mu = self.nx // 2
         _sigma = self.weights_kernel_sigma
-        _weight[self.ny // 2 + 1] = (
+        _weight[self.ny // 2] = (
             np.exp(-((_x - _mu) ** 2) / _sigma**2 / 2) / _sigma / np.sqrt(2 * np.pi)
         )
         _weight_fft = np.fft.rfft2(np.fft.ifftshift(_weight))
@@ -119,7 +119,7 @@ class NSClean:
         # array to represent it. I tried broadcasting a vector, but that made a kernel
         # 2048 columns wide (in detector space).
         _y = np.arange(self.ny)
-        _mu = self.nx // 2 + 1
+        _mu = self.nx // 2
         _sigma = self.buffer_sigma  # Standard deviation of kernel
         _gkern = (
             np.exp(-(((_y - _mu) / _sigma) ** 2) / 2) / _sigma / np.sqrt(2 * np.pi)
@@ -524,7 +524,7 @@ class NSCleanSubarray:
             # sample density in time. Roughly approximate the local density, P, using
             # the reciprocal of convolution by a Gaussian kernel.
             _x = np.arange(self.n, dtype=np.float32)  # x-values for building a 1-D Gaussian
-            _mu = np.float32(self.n // 2 + 1)  # Center point of Gaussian
+            _mu = np.float32(self.n // 2)  # Center point of Gaussian
             _sigma = np.float32(self.weights_kernel_sigma)  # Standard deviation of Gaussian
             _weight = (
                 np.exp(-((_x - _mu) ** 2) / _sigma**2 / 2) / _sigma / np.sqrt(2 * np.pi)

@@ -4,6 +4,7 @@ import logging
 
 from jwst.associations.lib.constraint import Constraint, SimpleConstraint
 from jwst.associations.lib.dms_base import (
+    Constraint_NIRCamImageNoDisperser,
     Constraint_NotTSO,
     Constraint_TSO,
     Constraint_WFSC,
@@ -167,6 +168,7 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
             [
                 Constraint_Base(),
                 Constraint_Mode(),
+                Constraint_NIRCamImageNoDisperser(),
                 Constraint_Image_Science(),
                 Constraint_NotTSO(),
                 exposures,
