@@ -3,9 +3,9 @@
 import logging
 
 import numpy as np
-from stcal.dark_current import dark_sub
 from stdatamodels.jwst import datamodels
 
+from jwst.dark_current import dark_sub
 from jwst.stpipe import Step
 
 __all__ = ["DarkCurrentStep", "save_dark_data_as_dark_model", "dark_output_data_2_ramp_model"]
