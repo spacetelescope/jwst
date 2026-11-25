@@ -1,0 +1,1 @@
+Transition to new user-facing subarray names for NIRCam DHS data products.

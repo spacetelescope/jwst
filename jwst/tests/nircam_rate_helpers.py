@@ -196,14 +196,14 @@ def nircam_wfss_rate_model(pupil="GRISMR", with_wcs=True):
     return model
 
 
-def _populate_dhs_shared_metadata(model, subarray="SUB260STRIPE4_DHS"):
+def _populate_dhs_shared_metadata(model, subarray="SUB260S4_8-SPECTRA"):
     """
     Populate metadata that is identical between NRCA1 and NRCALONG DHS modes.
 
     Updates *model* in place.
     """
     # Aperture
-    if subarray == "SUB164STRIPE4_DHS":
+    if subarray == "SUB164S4_8-SPECTRA":
         model.meta.aperture.pps_name = "NRCA5_164STRIPE4_DHS_F322W2"
     else:
         model.meta.aperture.pps_name = "NRCA5_260STRIPE4_DHS_F322W2"
@@ -225,7 +225,7 @@ def _populate_dhs_shared_metadata(model, subarray="SUB260STRIPE4_DHS"):
     model.meta.subarray.xstart = 1
     model.meta.subarray.xsize = 2048
     model.meta.subarray.ystart = 1
-    if subarray == "SUB164STRIPE4_DHS":
+    if subarray == "SUB164S4_8-SPECTRA":
         model.meta.subarray.ysize = 164
     else:
         model.meta.subarray.ysize = 260
@@ -251,7 +251,7 @@ def _populate_dhs_shared_metadata(model, subarray="SUB260STRIPE4_DHS"):
 
 def nircam_dhs_nrca1_sub260_rate_model(with_wcs=True):
     """
-    Create a mock DHS NRCA1 rate CubeModel with subarray SUB260STRIPE4_DHS.
+    Create a mock DHS NRCA1 rate CubeModel with subarray SUB260S4_8-SPECTRA.
 
     Data array has shape (5, 260, 2048) and is filled with the stripe ID values.
 
@@ -301,7 +301,7 @@ def nircam_dhs_nrca1_sub260_rate_model(with_wcs=True):
 
 def nircam_dhs_nrca1_sub164_rate_model(with_wcs=True):
     """
-    Create a mock DHS NRCA1 rate CubeModel with subarray SUB164STRIPE4_DHS.
+    Create a mock DHS NRCA1 rate CubeModel with subarray SUB164S4_8-SPECTRA.
 
     Parameters
     ----------
@@ -314,7 +314,7 @@ def nircam_dhs_nrca1_sub164_rate_model(with_wcs=True):
         Mock NRCA1 DHS rate model.
     """
     model = datamodels.CubeModel((5, 164, 2048))
-    _populate_dhs_shared_metadata(model, subarray="SUB164STRIPE4_DHS")
+    _populate_dhs_shared_metadata(model, subarray="SUB164S4_8-SPECTRA")
 
     model.meta.instrument.name = "NIRCAM"
     model.meta.instrument.channel = "SHORT"
@@ -349,7 +349,7 @@ def nircam_dhs_nrca1_sub164_rate_model(with_wcs=True):
 
 def nircam_dhs_nrcalong_sub260_rate_model(with_wcs=True):
     """
-    Create a mock DHS NRCALONG rate CubeModel with subarray SUB260STRIPE4_DHS.
+    Create a mock DHS NRCALONG rate CubeModel with subarray SUB260S4_8-SPECTRA.
 
     Parameters
     ----------
