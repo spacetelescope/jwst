@@ -131,7 +131,7 @@ class EngdbDirect(EngdbABC):
 
         # Make our request
         response = self._session.get(query, timeout=self.timeout)
-        logger.debug('Response="%s"', response)
+        logger.info('Response="%s"', response)
         response.raise_for_status()
 
         # That's all folks
@@ -281,7 +281,7 @@ class EngdbDirect(EngdbABC):
                 endtime.iso,
             ]
         )
-        logger.debug('Query URL="%s"', query)
+        logger.info('Query URL="%s"', query)
 
         # Make our request
         response = self._session.get(query, timeout=self.timeout)
