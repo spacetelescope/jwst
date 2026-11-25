@@ -25,7 +25,7 @@ def test_outlier_step_weak_cr_tso(mirimage_50_sci, rolling_window_width):
     real_time_variability = helpers.SIGNAL * np.cos(np.linspace(0, np.pi, 50))
     for i, model in enumerate(im):
         model.data[j, k] += real_time_variability[i]
-        model.err[j, k] = np.sqrt(helpers.SIGMA**2 + model.data[j, k])
+        model.err[j, k] = np.sqrt(helpers.SIGMA**2 + 0.1 * model.data[j, k])
 
     cube = helpers.container_to_cube(im)
 
@@ -46,6 +46,7 @@ def test_outlier_step_weak_cr_tso(mirimage_50_sci, rolling_window_width):
     # Verify source is not flagged for rolling median
     if rolling_window_width == 7:
         assert_array_equal(result.dq[:, j, k], datamodels.dqflags.pixel["GOOD"])
+
     # But this fails for simple median
     elif rolling_window_width == 0:
         with pytest.raises(AssertionError):

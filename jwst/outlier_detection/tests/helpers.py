@@ -23,16 +23,21 @@ OUTLIER_DO_NOT_USE = np.bitwise_or(
 )
 
 
-def mock_data():
+def mock_data(seed=99):
     """
     Make some mock data with a "real" source at 7,7.
+
+    Parameters
+    ----------
+    seed : int, optional
+        Seed for the random number generator used to produce data and error arrays.
 
     Returns
     -------
     data, err : ndarray
         Data and error arrays.
     """
-    rng = np.random.default_rng(99)
+    rng = np.random.default_rng(seed)
     j, k = SIGNAL_LOC
     data = rng.normal(loc=BACKGROUND, size=SHAPE, scale=SIGMA)
     err = np.zeros(SHAPE) + SIGMA

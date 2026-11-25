@@ -234,11 +234,13 @@ processing performed by this step. This routine performs the following operation
 #. Apply a bad pixel mask to the input data based on the input DQ arrays and the ``good_bits``
    parameter.
 
-#. Compute a median cube by combining all planes in the
+#. Compute a median cube (:math:`image\_median`, below) by combining all planes in the
    `~stdatamodels.jwst.datamodels.CubeModel` pixel-by-pixel using a
    rolling-median algorithm, in order to flag outliers integration-by-integration but
    preserve real time variability. The ``rolling_window_width`` parameter specifies the
    number of integrations over which to compute the median.
+   Also compute a rolling-median error estimate (:math:`median\_err`, below) by
+   combining the corresponding error cube with the same window width as the science data.
 
 #. If the ``save_intermediate_results`` parameter is set to `True`, write the rolling-median
    `~stdatamodels.jwst.datamodels.CubeModel` to disk with the suffix ``_median.fits``.
@@ -248,7 +250,7 @@ processing performed by this step. This routine performs the following operation
    except that the input error is used in place of the median error:
 
    .. math::
-      | image\_input - image\_median | > SNR \times input\_err
+      | image\_input - image\_median | > SNR \times median\_err
 
 #. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.
@@ -326,12 +328,15 @@ for all processing performed by this step. This routine performs the following o
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad".
 
+   * A median error estimate is also computed, by combining the corresponding error arrays
+     in the same way.
+
 #. Perform statistical comparison between median image and original image to identify outliers.
 
    The core detection algorithm uses the following to generate an outlier mask:
 
    .. math::
-      | image\_input - image\_median | > SNR \times input\_err
+      | image\_input - image\_median | > SNR \times median\_err
 
 #. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.

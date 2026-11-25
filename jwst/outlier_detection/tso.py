@@ -56,18 +56,23 @@ def detect_outliers(
     weight_threshold = compute_weight_threshold(weighted_cube.wht, maskpt)
 
     if (rolling_window_width > 1) and (rolling_window_width < weighted_cube.shape[0]):
-        medians = compute_rolling_median(weighted_cube, weight_threshold, w=rolling_window_width)
+        medians, median_err = compute_rolling_median(
+            weighted_cube, weight_threshold, w=rolling_window_width, return_error=True
+        )
 
     else:
         medians = nanmedian3D(weighted_cube.data, overwrite_input=False)
+        median_err = nanmedian3D(weighted_cube.err, overwrite_input=False)
+
         # this is a 2-D array, need to repeat it into the time axis
         # for consistent shape with rolling median case
         medians = np.broadcast_to(medians, weighted_cube.shape)
+        median_err = np.broadcast_to(median_err, weighted_cube.shape)
 
     # Save median model if pars['save_intermediate_results'] is True
     # this will be a CubeModel with rolling median values.
     if save_intermediate_results:
-        median_model = dm.CubeModel(data=medians)  # type: ignore[name-defined]
+        median_model = dm.CubeModel(data=medians, err=median_err)  # type: ignore[name-defined]
         with dm.open(weighted_cube) as dm0:
             median_model.update(dm0)
         save_median(median_model, make_output_path)
@@ -76,11 +81,7 @@ def detect_outliers(
     # no need for blotting, resample is turned off for TSO
     # go straight to outlier detection
     log.info("Flagging outliers")
-    flag_model_crs(
-        input_model,
-        medians,
-        snr,
-    )
+    flag_model_crs(input_model, medians, snr, median_err=median_err)
     return input_model
 
 
@@ -123,6 +124,7 @@ def compute_rolling_median(
     model: dm.CubeModel,  # type: ignore[name-defined]
     weight_threshold: np.ndarray,
     w: int = 25,
+    return_error=False,
 ) -> np.ndarray:
     """
     Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
@@ -138,25 +140,42 @@ def compute_rolling_median(
     w : int
         The window size for the rolling median.
 
+    return_error : bool, optional
+        If `True`, an approximate median error is computed alongside the
+        median science cube.
+
     Returns
     -------
-    ndarray
+    meds: ndarray
         The rolling median of the input data. Same dimensions as input.
+    meds_err: ndarray, optional
+        The rolling median of the input error. Same dimensions as input. Only
+        returned if ``return_error`` is True.
     """
     sci = model.data
     weight = model.wht
     badmask = np.less(weight, weight_threshold)
     log.debug(f"Percentage of pixels with low weight: {np.sum(badmask) / weight.size * 100}")
 
-    # Fill resampled_sci array with nan's where mask values are True
+    # Fill array with NaNs where mask values are True
     sci[badmask] = np.nan
+    if return_error:
+        err = model.err
+        err[badmask] = np.nan
+
     del badmask
 
     if w > sci.shape[0]:
         raise ValueError("Window size must be less than the number of integrations.")
     meds = moving_median_over_zeroth_axis(sci, w)
-
     del sci
+
+    if return_error:
+        meds_err = moving_median_over_zeroth_axis(err, w)
+        del err
+
+        return meds, meds_err
+
     return meds
 
 
