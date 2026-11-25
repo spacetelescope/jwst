@@ -160,17 +160,17 @@ class RefPixStep(Step):
             elif status == reference_pixels.SUBARRAY_SKIPPED:
                 result.meta.cal_step.refpix = "SKIPPED"
 
-            # TODO: determine if substripe exposures with repeats should also be collated here.
-            #   If so, it will impact reference file formats for DHS LW.
+            # Superstripe modes, like NIRISS SOSS
             has_superstripes = (
                 result.meta.subarray.num_superstripe is not None
                 and result.meta.subarray.num_superstripe > 0
             )
-            # has_repeats = (
-            #     result.meta.subarray.repeat_stripe == 1
-            #     and result.meta.subarray.interleave_reads1 == 0
-            # )
-            if has_superstripes:  # or has_repeats:
+            # Substripe modes with in-frame repeats, like NIRCam DHS LW
+            has_repeats = (
+                result.meta.subarray.repeat_stripe == 1
+                and result.meta.subarray.interleave_reads1 == 0
+            )
+            if has_superstripes or has_repeats:
                 log.info("Reassembling striped data to standard ramp format")
                 result = stripe_utils.collate_superstripes(result)
 

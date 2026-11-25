@@ -1,0 +1,2 @@
+For NIRCam LW DHS mode, collate all in-frame samples to a single unevenly sampled ramp instead of processing each stripe separately.
+This will cause the ``ramp_fit`` step to use the likelihood algorithm instead of OLS, to handle the uneven sampling.
