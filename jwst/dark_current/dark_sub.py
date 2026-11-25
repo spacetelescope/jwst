@@ -42,10 +42,10 @@ def do_correction(input_model, dark_model, dark_output=None):
 
     Returns
     -------
-    output_data : ScienceData
-        dark-subtracted science data
+    output_data : `~jwst.dark_current.dark_class.ScienceData`
+        Dark-subtracted science data
 
-    averaged_dark : DarkData
+    averaged_dark : `~jwst.dark_current.dark_class.DarkData`
         New dark object with averaged frames
     """
     science_data = dark_class.ScienceData(input_model)
@@ -60,22 +60,22 @@ def do_correction_data(science_data, dark_data, dark_output=None):
 
     Parameters
     ----------
-    science_data : ScienceData
-        science data to be corrected
+    science_data : `~jwst.dark_current.dark_class.ScienceData`
+        Science data to be corrected.
 
-    dark_data : dark model object
-        dark data
+    dark_data : `~jwst.dark_current.dark_class.DarkData`
+        Dark data.
 
-    dark_output : string
-        file name in which to optionally save averaged dark data
+    dark_output : str
+        File name in which to optionally save averaged dark data.
 
     Returns
     -------
-    output_data : ScienceData
-        dark-subtracted science data
+    output_data : `~jwst.dark_current.dark_class.ScienceData`
+        Dark-subtracted science data.
 
-    averaged_dark : DarkData
-        New dark object with averaged frames
+    averaged_dark : `~jwst.dark_current.dark_class.DarkData`
+        New dark object with averaged frames.
     """
     # Save some data params for easy use later
     sci_nints = science_data.data.shape[0]
@@ -192,22 +192,22 @@ def average_dark_frames_3d(dark_data, ngroups, nframes, groupgap):
 
     Parameters
     ----------
-    dark_data : DarkData
-        the input dark data
+    dark_data : `~jwst.dark_current.dark_class.DarkData`
+        The input dark data.
 
     ngroups : int
-        number of groups in the science data set
+        Number of groups in the science data set.
 
     nframes : int
-        number of frames per group in the science data set
+        Number of frames per group in the science data set.
 
     groupgap : int
-        number of frames skipped between groups in the science data set
+        Number of frames skipped between groups in the science data set.
 
     Returns
     -------
-    avg_dark : DarkData
-        New dark object with averaged frames
+    avg_dark : `~jwst.dark_current.dark_class.DarkData`
+        New dark object with averaged frames.
     """
     # Create a model for the averaged dark data
     dny = dark_data.data.shape[1]
@@ -261,25 +261,25 @@ def average_dark_frames_4d(dark_data, nints, ngroups, nframes, groupgap):
 
     Parameters
     ----------
-    dark_data : DarkData
-        the input dark data
+    dark_data : `~jwst.dark_current.dark_class.DarkData`
+        The input dark data.
 
     nints : int
-        number of integrations in the science data
+        Number of integrations in the science data.
 
     ngroups : int
-        number of groups in the science data set
+        Number of groups in the science data set.
 
     nframes : int
-        number of frames per group in the science data set
+        Number of frames per group in the science data set.
 
     groupgap : int
-        number of frames skipped between groups in the science data set
+        Number of frames skipped between groups in the science data set.
 
     Returns
     -------
-    avg_dark : dark data model
-        New dark object with averaged frames
+    avg_dark : `~jwst.dark_current.dark_class.DarkData`
+        New dark object with averaged frames.
     """
     # Create a model for the averaged dark data
     dint = dark_data.data.shape[0]
@@ -333,22 +333,22 @@ def average_dark_frames_4d(dark_data, nints, ngroups, nframes, groupgap):
 
 def subtract_dark(science_data, dark_data):
     """
-    Subtracts dark current data from science arrays.
+    Subtract dark current data from science arrays.
 
     Also updates data quality array based on DQ flags in the dark arrays.
 
     Parameters
     ----------
-    science_data : ScienceData
-        the input science data
+    science_data : `~jwst.dark_current.dark_class.ScienceData`
+        The input science data.
 
-    dark_data : DarkData
-        the dark current data
+    dark_data : `~jwst.dark_current.dark_class.DarkData`
+        The dark current data.
 
     Returns
     -------
-    output : data model object
-        dark-subtracted science data
+    output : `~jwst.dark_current.dark_class.ScienceData`
+        Dark-subtracted science data.
     """
     # The integration start number is only needed for JWST/MIRI data.
     # It defaults to 1 if the keyword is not in the science data.
@@ -417,14 +417,30 @@ def extrapolate_dark(dark_data, ngroups):
 
     Parameters
     ----------
-    dark_data : ~stdatamodels.jwst.datamodels.DarkModel or DarkMIRIModel
+    dark_data : `~stdatamodels.jwst.datamodels.DarkModel` or \
+                `~stdatamodels.jwst.datamodels.DarkMIRIModel`
         The dark datamodel to be extrapolated.
     ngroups : int
         The number of groups to add to the dark array's ngroups.
     """
 
     def _extrapolate_int(arr, ngroups):
-        """Extrapolate using rate derived from difference of last two groups."""
+        """
+        Extrapolate using rate derived from difference of last two groups.
+
+        Parameters
+        ----------
+        arr : ndarray
+            Dark array to extrapolate.
+
+        ngroups : int
+            The number of groups to add to the dark array's ngroups.
+
+        Returns
+        -------
+        arr : ndarray
+            Extrapolated array.
+        """
         rate_arr = arr[-1, :, :] - arr[-2, :, :]
         new_groups = (
             np.broadcast_to(np.arange(1, ngroups + 1).reshape(-1, 1, 1), (ngroups, *rate_arr.shape))

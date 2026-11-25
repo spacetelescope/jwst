@@ -31,7 +31,6 @@ class DarkData:
             data array are known, then 'dims' is used (the arrays data
             and groupdq are assumed to have the same dimension).
 
-
         dark_model : data model, optional
             Input data model, assumed to be a JWST DarkModel like model.  If
             this argument is not None, the DarkData class will have arrasy and
