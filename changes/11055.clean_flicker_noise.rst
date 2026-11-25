@@ -1,0 +1,1 @@
+Fix a bug in the nsclean algorithm for clean_flicker_noise in which centroids were not being properly computed.
