@@ -110,7 +110,8 @@ def _make_spaxel_arrays(naxis1, naxis2, naxis3, flux_value=1.0):
     iflux = np.ones(total, dtype=np.float64)
     var = np.ones(total, dtype=np.float64)
     dq = np.zeros(total, dtype=np.uint32)
-    return flux, iflux, var, dq
+    exposure_counter = None
+    return flux, iflux, var, dq, exposure_counter
 
 
 def _call_setup_final_model(
@@ -123,10 +124,13 @@ def _call_setup_final_model(
     rois=0.2,
     roiw=0.001,
     roiw_table=None,
+    slit_frac=None,
     instrument="NIRSPEC",
 ):
     """Helper that builds spaxel arrays and calls setup_final_model."""
-    flux, iflux, var, dq = _make_spaxel_arrays(cube_wcs.naxis1, cube_wcs.naxis2, cube_wcs.naxis3)
+    flux, iflux, var, dq, exposure_counter = _make_spaxel_arrays(
+        cube_wcs.naxis1, cube_wcs.naxis2, cube_wcs.naxis3
+    )
     if roiw_table is None:
         roiw_table = np.array([roiw])
 
@@ -137,6 +141,7 @@ def _call_setup_final_model(
         spaxel_iflux=iflux,
         spaxel_var=var,
         spaxel_dq=dq,
+        spaxel_exposure_counter=None,
         instrument=instrument,
         rot_angle=cube_wcs.rot_angle,
         coord_system=coord_system,
@@ -146,6 +151,7 @@ def _call_setup_final_model(
         rois=rois,
         roiw=roiw,
         roiw_table=roiw_table,
+        slit_frac=None,
         output_name=None,
     )
     return cube_model
