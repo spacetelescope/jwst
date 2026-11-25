@@ -360,8 +360,8 @@ def tsgrism(input_model, reference_files):
     if input_model.meta.instrument.module != "A":
         raise ValueError("NRC_TSGRISM mode only supports module A")
 
-    # Attempt to catch DHS exposures on metadata
-    if "SPECTRA" in input_model.meta.subarray.name and "DHS" in input_model.meta.aperture.name:
+    # Attempt to catch only DHS exposures on subarray name containing SPECTRA
+    if "SPECTRA" in input_model.meta.subarray.name:
         log.info("Building WCS for DHS data.")
         return dhs(input_model, reference_files)
     elif "GRISMR" not in input_model.meta.instrument.pupil:
