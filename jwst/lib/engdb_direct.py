@@ -1,7 +1,6 @@
 """Access the JWST Engineering Mnemonic Database through direct connection."""
 
 import logging
-import re
 from os import getenv
 
 import requests
@@ -17,11 +16,31 @@ logger = logging.getLogger(__name__)
 # Where is the engineering service? Its HERE!!!
 # #############################################
 
-# URI paths necessary to access the db
-ENGDB_DATA = "Data/"
-ENGDB_DATA_XML = "xml/Data/"
-ENGDB_METADATA = "MetaData/TlmMnemonics/"
-ENGDB_METADATA_XML = "xml/MetaData/TlmMnemonics/"
+
+# The big difference between old and new query service is:
+#  old: ObsTime in the JSON-formatted response string was milliseconds from
+#      UNIX epoch, e.g., Date(1453041183719+0000)
+#  new: ObsTime in the JSON-formatted response string is an ISO-formatted string:
+#      YYYY-MM-DDThh:mm:ss.nn
+# The response is always a string in JSON format.
+#  I believe that was always the default format, with nothing specified in the call.
+#  The only other option was 'xml', which instead returned the results in XML format.
+#  I do not believe that XML response is still supported, but it looks like it was not used anyway.
+
+# Engineering DB Query Service Call (currently using the Data Archive API (DAAPI))
+# base URL ENV VAR
+#  ENGDB_DAAPI_QUERY = "https://{server}/api/query/jwst/edp/mnemonics/"
+# EngDb access type: fqa=frequent access OR spa=sporadic access (CAL and SDP query fqa)
+# Use an env var for this? --> ENGDB_ACCESS
+# A full EngB Query Service Call endpoint for a mnemonic retrieval is:
+#  ENGDB_DAAPI_QUERY + ENGDB_ACCESS/ + call,
+#  where call is:
+#   data?mnemonic={mnemonic}&s_time={startTimeIso}&e_time={endTimeIso}
+#   metadata?mnemonic={mnemonic}
+#   metadata    # (retrieve metadata for all eng mnemonics)
+ENGDB_DATA = "/data"
+ENGDB_METADATA = "/metadata"
+
 
 __all__ = ["EngdbDirect"]
 
@@ -30,14 +49,12 @@ class EngdbDirect(EngdbABC):
     """
     Access the JWST Engineering Database through direct connection.
 
+    Retrieve mnemonic metadata from the JWST Engineering Database using the DAAPI Query Service.
+
     Parameters
     ----------
     base_url : str
-        The base url for the engineering RESTful service.
-
-    default_format : str
-        The format the results of the data should be returned from the service.
-        If ``'dict'``, the result will be in Python dictionary format.
+        The base url for the engineering database query service.
 
     **service_kwargs : dict
         Service-specific keyword arguments that are not relevant to this implementation
@@ -46,9 +63,6 @@ class EngdbDirect(EngdbABC):
 
     #: The base URL for the engineering service.
     base_url = None
-
-    #: The format the results of the data should be returned from the service.
-    default_format = None
 
     #: The end time of the last query.
     endtime = None
@@ -59,32 +73,15 @@ class EngdbDirect(EngdbABC):
     #: The start time of the last query.
     starttime = None
 
-    def __init__(self, base_url=None, default_format="dict", **service_kwargs):
+    def __init__(self, base_url=None, **service_kwargs):
         logger.debug("kwargs not used by this service: %s", service_kwargs)
 
         self.configure(base_url=base_url)
 
-        self.default_format = default_format
-
         self.set_session()
 
-        # Check for aliveness
-        response = self._session.get(
-            "".join([self.base_url, self.default_format, ENGDB_METADATA]), timeout=self.timeout
-        )
+        response = self._session.get("".join([self.base_url, ENGDB_METADATA]), timeout=self.timeout)
         response.raise_for_status()
-
-    @property  # type: ignore[no-redef]
-    def default_format(self):  # noqa: F811
-        """Default return format."""  # numpydoc ignore=RT01
-        return self._default_format
-
-    @default_format.setter
-    def default_format(self, result_format):
-        result_format += "/"
-        if result_format == "dict/":
-            result_format = ""
-        self._default_format = result_format
 
     def configure(self, base_url=None):
         """
@@ -93,22 +90,29 @@ class EngdbDirect(EngdbABC):
         Parameters
         ----------
         base_url : str
-            The base url for the engineering RESTful service.
+            The base url for the engineering database query service.
         """
-        # Determine the database to use.
+        # Setup for a retrieval using the engineering database query service
         if base_url is None:
-            base_url = getenv("ENG_BASE_URL")
+            base_url = getenv("ENGDB_DAAPI_QUERY")
         if not base_url:
             raise RuntimeError("No engineering database URL given.")
         if base_url[-1] != "/":
             base_url += "/"
-        self.base_url = base_url
+        # Accommodate differing access methods
+        # Default to fqa for operations
+        access = getenv("ENGDB_ACCESS")
+        if access is None:
+            base_url = base_url + "fqa"
+        else:
+            base_url = base_url + access
+        self.base_url = base_url + "/" if base_url[-1] != "/" else base_url
 
         # Get various timeout parameters
         self.retries = getenv("ENG_RETRIES", RETRIES)
         self.timeout = getenv("ENG_TIMEOUT", TIMEOUT)
 
-    def get_meta(self, mnemonic="", result_format=None):
+    def get_meta(self, mnemonic=""):
         """
         Get the mnemonics meta info.
 
@@ -117,24 +121,17 @@ class EngdbDirect(EngdbABC):
         mnemonic : str
             The engineering mnemonic to retrieve.
 
-        result_format : str
-            The format to request from the service.
-            If None, the `default_format` is used.
-
         Returns
         -------
         response_json : dict
             Meta info as JSON.
         """
-        if result_format is None:
-            result_format = self.default_format
-
-        query = "".join([self.base_url, result_format, ENGDB_METADATA, mnemonic])
+        query = "".join([self.base_url, ENGDB_METADATA, "?mnemonic=", mnemonic])
         logger.debug('Query URL="%s"', query)
 
         # Make our request
         response = self._session.get(query, timeout=self.timeout)
-        logger.debug('Response="%s"', response)
+        logger.info('Response="%s"', response)
         response.raise_for_status()
 
         # That's all folks
@@ -198,14 +195,19 @@ class EngdbDirect(EngdbABC):
             mnemonic=mnemonic, starttime=starttime, endtime=endtime, time_format=time_format
         )
 
+        # The retrieved rows include:
+        #   all rows where the observed time is within starttime to endtime, inclusive
+        #   AND the latest row prior to the starttime
+        #   AND the earliest row beyond the endtime
+        # All times are retrieved as ISOT-formatted strings, converted to astropy.time.
         # Records returned are apparent not strictly correlated with
         # observation time. So, need to filter further.
-        db_starttime = extract_db_time(records["ReqSTime"])
-        db_endtime = extract_db_time(records["ReqETime"])
+        db_starttime = Time(records["ReqSTime"], format="isot")
+        db_endtime = Time(records["ReqETime"], format="isot")
         results = _ValueCollection(include_obstime=include_obstime, zip_results=zip_results)
         if records["Data"] is not None:
             for record in records["Data"]:
-                obstime = extract_db_time(record["ObsTime"])
+                obstime = Time(record["ObsTime"], format="isot")
                 if not include_bracket_values:
                     if obstime < db_starttime or obstime > db_endtime:
                         continue
@@ -224,7 +226,7 @@ class EngdbDirect(EngdbABC):
 
         self._session = s
 
-    def _get_records(self, mnemonic, starttime, endtime, result_format=None, time_format=None):
+    def _get_records(self, mnemonic, starttime, endtime, time_format=None):
         """
         Retrieve all results for a mnemonic in the requested time range.
 
@@ -238,10 +240,6 @@ class EngdbDirect(EngdbABC):
 
         endtime : str or astropy.time.Time
             The, inclusive, end time to retrieve from.
-
-        result_format : str
-            The format to request from the service.
-            If None, the `default_format` is used.
 
         time_format : str
             The format of the input time used if the input times
@@ -264,9 +262,6 @@ class EngdbDirect(EngdbABC):
         The engineering service always returns the bracketing entries
         before and after the requested time range.
         """
-        if result_format is None:
-            result_format = self.default_format
-
         if not isinstance(starttime, Time):
             starttime = Time(starttime, format=time_format)
         if not isinstance(endtime, Time):
@@ -274,20 +269,19 @@ class EngdbDirect(EngdbABC):
         self.starttime = starttime
         self.endtime = endtime
 
-        # Build the URL
         query = "".join(
             [
                 self.base_url,
-                result_format,
-                "Data/",
+                ENGDB_DATA,
+                "?mnemonic=",
                 mnemonic,
-                "?sTime=",
+                "&s_time=",
                 starttime.iso,
-                "&eTime=",
+                "&e_time=",
                 endtime.iso,
             ]
         )
-        logger.debug('Query URL="%s"', query)
+        logger.info('Query URL="%s"', query)
 
         # Make our request
         response = self._session.get(query, timeout=self.timeout)
@@ -307,13 +301,12 @@ class _ValueCollection:
     Parameters
     ----------
     include_obstime : bool
-        If `True`, the return values will include observation
-        time as `astropy.time.Time`. See `zip_results` for further details.
+        If `True`, the return values include observed time
+        as `astropy.time.Time`. See `zip_results` for further details.
 
     zip_results : bool
-        If `True` and `include_obstime` is `True`, the return values
-        will be a list of 2-tuples. If false, the return will
-        be a single 2-tuple, where each element is a list.
+        If `True` and `include_obstime` is `True`, a single list of 2-tuples is returned.
+        If false, a single 2-tuple is returned, where each element is a list.
 
     Attributes
     ----------
@@ -331,68 +324,36 @@ class _ValueCollection:
 
     @property
     def collection(self):
+        """
+        Define a collection to hold Data from the query response.
+
+        Returns
+        -------
+        list
+            Collection of values from EngDB.
+        """
         if self._include_obstime:
-            obstimes = Time(self.obstimes, format="unix")
-            obstimes.format = "isot"
             if self._zip_results:
                 collection = [
-                    EngDB_Value(t, v) for t, v in zip(obstimes, self.values, strict=False)
+                    EngDB_Value(t, v) for t, v in zip(self.obstimes, self.values, strict=False)
                 ]
             else:
-                collection = EngDB_Value(obstimes, self.values)
+                collection = EngDB_Value(self.obstimes, self.values)
         else:
             collection = self.values
         return collection
 
     def append(self, obstime, value):
         """
-        Append value to collection.
+        Append an astropy.time observed time and EU value to collection.
 
         Parameters
         ----------
-        obstime : int(milliseconds)
-            Observation time as returned from the engineering
-            db, in milliseconds
+        obstime : astropy.time
+            Observed time of the EU value
 
         value : numeric
-            Value from db.
-
-        Notes
-        -----
-        The ``obstime`` is converted to an `astropy.time.Time`.
+            Mnemonic EU value at the observed time (may be string or numeric)
         """
-        # Convert from milliseconds to seconds before appending.
-        self.obstimes.append(obstime / 1000.0)
+        self.obstimes.append(obstime)
         self.values.append(value)
-
-
-# #########
-# Utilities
-# #########
-def extract_db_time(db_date):
-    """
-    Extract date from date string in the Database.
-
-    Parameters
-    ----------
-    db_date : str
-        The string from a date field in the database.
-
-    Returns
-    -------
-    time : int
-        The UNIX time in milliseconds.
-
-    Notes
-    -----
-    The format of time in the database is::
-
-        /Date(1234567890123+1234)/
-
-    where the plus could be a minus. What is returned is
-    the actual 13 digit number before the plus/minus.
-    """
-    match = re.match(r"\/Date\((\d{13})(.*)\)\/", db_date)
-    milliseconds = int(match.group(1))
-
-    return milliseconds
