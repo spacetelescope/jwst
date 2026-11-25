@@ -4,6 +4,7 @@ import logging
 
 from jwst.associations.lib.constraint import Constraint, SimpleConstraint
 from jwst.associations.lib.dms_base import (
+    Constraint_NIRCamImageNoDisperser,
     Constraint_NotBkgd,
     Constraint_NotBkgdOrTSO,
     Constraint_NotTSO,
@@ -174,6 +175,7 @@ class Asn_Lv3Image(AsnMixin_Science):
     def __init__(self, *args, **kwargs):
         self.constraints = Constraint(
             [
+                Constraint_NIRCamImageNoDisperser(),
                 Constraint_Optical_Path(),
                 Constraint_Target(association=self),
                 Constraint_Image(),
