@@ -75,16 +75,45 @@ spaxel_dq : ndarray
   IFU spaxel dq
 */
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wundef"
+#endif
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <Python.h>
 #include <stdbool.h>
-#include <numpy/npy_math.h>
+
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_build_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#endif
+
 #include <numpy/arrayobject.h>
+#include <numpy/npy_math.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
+#include "numpy_utils.h"
 #include "cube_utils.h"
+
+PyMODINIT_FUNC
+PyInit_cube_match_sky_pointcloud(void);
 
 // Match point cloud to sky and determine the weighting to assign to each point cloud  member
 // to matched spaxel based on ROI - weighting type is emsm.
@@ -93,7 +122,7 @@ spaxel_dq : ndarray
 
 // returns : 0 success, 1 failure
 
-int
+static int
 match_point_emsm(
     double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *flux,
     double *err, int *dq, double *rois_pixel, double *roiw_pixel, double *scalerad_pixel,
@@ -253,7 +282,7 @@ match_point_emsm(
 // set values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux.
 // returns: 0 = success, 1 = failure.
 
-int
+static int
 match_point_msm(
     double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *flux,
     double *err, int *dq, double *rois_pixel, double *roiw_pixel, double *weight_pixel,
@@ -435,9 +464,10 @@ cube_wrapper(PyObject *module, PyObject *args)
         free_err = 0, free_dq = 0, free_zcdelt3 = 0;
     int free_sliceno = 0, free_softrad_pixel = 0, free_weight_pixel = 0;
 
-    PyArrayObject *xc, *yc, *zc, *flux, *err, *dq, *coord1, *coord2, *wave, *rois_pixel,
-        *roiw_pixel, *scalerad_pixel;
-    PyArrayObject *zcdelt3, *sliceno, *softrad_pixel, *weight_pixel;
+    PyArrayObject *xc = NULL, *yc = NULL, *zc = NULL, *flux = NULL, *err = NULL, *dq = NULL,
+                  *coord1 = NULL, *coord2 = NULL, *wave = NULL, *rois_pixel = NULL,
+                  *roiw_pixel = NULL, *scalerad_pixel = NULL;
+    PyArrayObject *zcdelt3 = NULL, *sliceno = NULL, *softrad_pixel = NULL, *weight_pixel = NULL;
     PyArrayObject *spaxel_flux_arr = NULL, *spaxel_weight_arr = NULL, *spaxel_var_arr = NULL;
     PyArrayObject *spaxel_iflux_arr = NULL, *spaxel_dq_arr = NULL;
     npy_intp npy_ncube = 0;
@@ -481,43 +511,43 @@ cube_wrapper(PyObject *module, PyObject *args)
         goto cleanup;
     }
 
-    npt = (int) PyArray_Size((PyObject *) coord1);
-    ny = (int) PyArray_Size((PyObject *) coord2);
-    nz = (int) PyArray_Size((PyObject *) wave);
+    npt = (int) get_array_size(coord1);
+    ny = (int) get_array_size(coord2);
+    nz = (int) get_array_size(wave);
     if (ny != npt || nz != npt) {
         PyErr_SetString(PyExc_ValueError, "Input coordinate arrays of unequal size.");
         goto cleanup;
     }
 
-    nxx = (int) PyArray_Size((PyObject *) xc);
-    nyy = (int) PyArray_Size((PyObject *) yc);
-    nwave = (int) PyArray_Size((PyObject *) zc);
+    nxx = get_array_size(xc);
+    nyy = (int) get_array_size(yc);
+    nwave = (int) get_array_size(zc);
 
     ncube = nxx * nyy * nwave;
 
     if (ncube == 0) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
-        spaxel_flux_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
+        spaxel_flux_arr = create_empty_array(1, &npy_ncube, NPY_DOUBLE);
         if (!spaxel_flux_arr) {
             goto fail;
         }
 
-        spaxel_weight_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
+        spaxel_weight_arr = create_empty_array(1, &npy_ncube, NPY_DOUBLE);
         if (!spaxel_weight_arr) {
             goto fail;
         }
 
-        spaxel_var_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
+        spaxel_var_arr = create_empty_array(1, &npy_ncube, NPY_DOUBLE);
         if (!spaxel_var_arr) {
             goto fail;
         }
 
-        spaxel_iflux_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
+        spaxel_iflux_arr = create_empty_array(1, &npy_ncube, NPY_DOUBLE);
         if (!spaxel_iflux_arr) {
             goto fail;
         }
 
-        spaxel_dq_arr = (PyArrayObject *) PyArray_EMPTY(1, &npy_ncube, NPY_INT, 0);
+        spaxel_dq_arr = create_empty_array(1, &npy_ncube, NPY_INT);
         if (!spaxel_dq_arr) {
             goto fail;
         }
@@ -559,53 +589,38 @@ cube_wrapper(PyObject *module, PyObject *args)
             &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux, &spaxel_dq);
     }
 
-    if (status) {
-        goto fail;
-
-    } else {
+    if (!status) {
         // create return tuple:
-        npy_ncube = (npy_intp) ncube;
-
-        spaxel_flux_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_flux);
+        spaxel_flux_arr = array_from_vector1d((npy_intp) ncube, NPY_DOUBLE, spaxel_flux);
         if (!spaxel_flux_arr) {
             goto fail;
         }
         spaxel_flux = NULL;
 
-        spaxel_weight_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_weight);
+        spaxel_weight_arr = array_from_vector1d((npy_intp) ncube, NPY_DOUBLE, spaxel_weight);
         if (!spaxel_weight_arr) {
             goto fail;
         }
         spaxel_weight = NULL;
 
-        spaxel_var_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_var);
+        spaxel_var_arr = array_from_vector1d((npy_intp) ncube, NPY_DOUBLE, spaxel_var);
         if (!spaxel_var_arr) {
             goto fail;
         }
         spaxel_var = NULL;
 
-        spaxel_iflux_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_iflux);
+        spaxel_iflux_arr = array_from_vector1d((npy_intp) ncube, NPY_DOUBLE, spaxel_iflux);
         if (!spaxel_iflux_arr) {
             goto fail;
         }
         spaxel_iflux = NULL;
 
-        spaxel_dq_arr =
-            (PyArrayObject *) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_INT, spaxel_dq);
+        spaxel_dq_arr = array_from_vector1d((npy_intp) ncube, NPY_INT, spaxel_dq);
         if (!spaxel_dq_arr) {
             goto fail;
         }
         spaxel_dq = NULL;
 
-        PyArray_ENABLEFLAGS(spaxel_flux_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(spaxel_weight_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(spaxel_var_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(spaxel_iflux_arr, NPY_ARRAY_OWNDATA);
-        PyArray_ENABLEFLAGS(spaxel_dq_arr, NPY_ARRAY_OWNDATA);
         result = Py_BuildValue(
             "(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
             spaxel_dq_arr);
@@ -614,11 +629,11 @@ cube_wrapper(PyObject *module, PyObject *args)
     }
 
 fail:
-    Py_XDECREF(spaxel_flux_arr);
-    Py_XDECREF(spaxel_weight_arr);
-    Py_XDECREF(spaxel_var_arr);
-    Py_XDECREF(spaxel_iflux_arr);
-    Py_XDECREF(spaxel_dq_arr);
+    Py_XDECREF((PyObject *) spaxel_flux_arr);
+    Py_XDECREF((PyObject *) spaxel_weight_arr);
+    Py_XDECREF((PyObject *) spaxel_var_arr);
+    Py_XDECREF((PyObject *) spaxel_iflux_arr);
+    Py_XDECREF((PyObject *) spaxel_dq_arr);
 
     free(spaxel_flux);
     free(spaxel_weight);
@@ -632,52 +647,52 @@ fail:
 
 cleanup:
     if (free_xc) {
-        Py_XDECREF(xc);
+        Py_XDECREF((PyObject *) xc);
     }
     if (free_yc) {
-        Py_XDECREF(yc);
+        Py_XDECREF((PyObject *) yc);
     }
     if (free_zc) {
-        Py_XDECREF(zc);
+        Py_XDECREF((PyObject *) zc);
     }
     if (free_coord1) {
-        Py_XDECREF(coord1);
+        Py_XDECREF((PyObject *) coord1);
     }
     if (free_coord2) {
-        Py_XDECREF(coord2);
+        Py_XDECREF((PyObject *) coord2);
     }
     if (free_wave) {
-        Py_XDECREF(wave);
+        Py_XDECREF((PyObject *) wave);
     }
     if (free_flux) {
-        Py_XDECREF(flux);
+        Py_XDECREF((PyObject *) flux);
     }
     if (free_err) {
-        Py_XDECREF(err);
+        Py_XDECREF((PyObject *) err);
     }
     if (free_dq) {
-        Py_XDECREF(dq);
+        Py_XDECREF((PyObject *) dq);
     }
     if (free_rois_pixel) {
-        Py_XDECREF(rois_pixel);
+        Py_XDECREF((PyObject *) rois_pixel);
     }
     if (free_roiw_pixel) {
-        Py_XDECREF(roiw_pixel);
+        Py_XDECREF((PyObject *) roiw_pixel);
     }
     if (free_scalerad_pixel) {
-        Py_XDECREF(scalerad_pixel);
+        Py_XDECREF((PyObject *) scalerad_pixel);
     }
     if (free_softrad_pixel) {
-        Py_XDECREF(softrad_pixel);
+        Py_XDECREF((PyObject *) softrad_pixel);
     }
     if (free_weight_pixel) {
-        Py_XDECREF(weight_pixel);
+        Py_XDECREF((PyObject *) weight_pixel);
     }
     if (free_zcdelt3) {
-        Py_XDECREF(zcdelt3);
+        Py_XDECREF((PyObject *) zcdelt3);
     }
     if (free_sliceno) {
-        Py_XDECREF(sliceno);
+        Py_XDECREF((PyObject *) sliceno);
     }
 
     return result;

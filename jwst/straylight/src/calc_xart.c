@@ -55,29 +55,57 @@ xart_flux : numpy.ndarray
   1d cross-artifact detector model
 */
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wundef"
+#endif
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <Python.h>
 #include <stdbool.h>
-#include <numpy/arrayobject.h>
-#include <numpy/npy_math.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_xart_numpy_api
 #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wundef"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#endif
+
+#include <numpy/arrayobject.h>
+#include <numpy/npy_math.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
+#include "numpy_utils.h"
+
+PyMODINIT_FUNC
+PyInit_calc_xart(void);
 
 //_______________________________________________________________________
 // Allocate the memory for the output array, nelem elements long
 //_______________________________________________________________________
 
-int
+static int
 alloc_xart_arrays(int nelem, double **fluxv)
 {
 
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
-    if (!(*fluxv = (double *) calloc(nelem, sizeof(double)))) {
+    if (!(*fluxv = (double *) calloc((size_t) nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         return 1;
     }
@@ -87,7 +115,7 @@ alloc_xart_arrays(int nelem, double **fluxv)
 
 // Do the computation of the cross-artifact values.
 // return values: xart_flux
-int
+static int
 xart_model(
     int imin, int imax, int xsize_det, int ysize_det, double *xvec, double *fimg, double *gamma,
     double *lor_amp, double *g_std, double *g_dx, double *g1_amp, double *g2_amp,
@@ -99,7 +127,6 @@ xart_model(
 
     // This is how big the output vector needs to be
     int npt = xsize_det * ysize_det;
-
     // allocate memory to hold output
     if (alloc_xart_arrays(npt, &fluxv)) {
         return 1;
@@ -137,28 +164,13 @@ xart_model(
     return 0;
 }
 
-//  set up the C extension
-PyArrayObject *
-ensure_array(PyObject *obj, int *is_copy)
-{
-    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
-        PyArray_TYPE((PyArrayObject *) obj) == NPY_DOUBLE) {
-        *is_copy = 0;
-        return (PyArrayObject *) obj;
-    } else {
-        *is_copy = 1;
-        return (PyArrayObject *) PyArray_FromAny(
-            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
-            NULL);
-    }
-}
-
 //  Main wrapper function interface to Python code
 static PyObject *
 xart_wrapper(PyObject *module, PyObject *args)
 {
-    PyObject *result = NULL, *xveco, *fimgo, *gammao, *lor_ampo, *g_stdo, *g_dxo, *g1_ampo,
-             *g2_ampo;
+    PyObject *result = NULL, *xveco = NULL, *fimgo = NULL, *gammao = NULL;
+    PyObject *lor_ampo = NULL, *g_stdo = NULL, *g_dxo = NULL, *g1_ampo = NULL;
+    PyObject *g2_ampo = NULL;
 
     int imin, imax;
     int xsize_det, ysize_det;
@@ -167,7 +179,8 @@ xart_wrapper(PyObject *module, PyObject *args)
     int free_fimg = 0, free_gamma = 0, free_loramp = 0, free_gstd = 0, free_gdx = 0, free_g1amp = 0,
         free_g2amp = 0;
 
-    PyArrayObject *xvec, *fimg, *gamma, *lor_amp, *g_std, *g_dx, *g1_amp, *g2_amp;
+    PyArrayObject *xvec = NULL, *fimg = NULL, *gamma = NULL, *lor_amp = NULL;
+    PyArrayObject *g_std = NULL, *g_dx = NULL, *g1_amp = NULL, *g2_amp = NULL;
     PyArrayObject *xart_flux_arr = NULL;
 
     npy_intp npt = 0;
@@ -195,7 +208,7 @@ xart_wrapper(PyObject *module, PyObject *args)
     npt = (npy_intp) (xsize_det * ysize_det);
     if (npt == 0) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
-        xart_flux_arr = (PyArrayObject *) PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
+        xart_flux_arr = create_empty_array(1, &npt, NPY_DOUBLE);
         if (!xart_flux_arr) {
             goto fail;
         }
@@ -217,20 +230,18 @@ xart_wrapper(PyObject *module, PyObject *args)
 
     } else {
         // create return tuple:
-        xart_flux_arr = (PyArrayObject *) PyArray_SimpleNewFromData(1, &npt, NPY_DOUBLE, xart_flux);
+        xart_flux_arr = array_from_vector1d(npt, NPY_DOUBLE, xart_flux);
         if (!xart_flux_arr) {
             goto fail;
         }
         xart_flux = NULL;
-
-        PyArray_ENABLEFLAGS(xart_flux_arr, NPY_ARRAY_OWNDATA);
 
         result = Py_BuildValue("(N)", xart_flux_arr);
         goto cleanup;
     }
 
 fail:
-    Py_XDECREF(xart_flux_arr);
+    Py_XDECREF((PyObject *) xart_flux_arr);
 
     free(xart_flux);
 
@@ -240,28 +251,28 @@ fail:
 
 cleanup:
     if (free_xvec) {
-        Py_XDECREF(xvec);
+        Py_XDECREF((PyObject *) xvec);
     }
     if (free_fimg) {
-        Py_XDECREF(fimg);
+        Py_XDECREF((PyObject *) fimg);
     }
     if (free_gamma) {
-        Py_XDECREF(gamma);
+        Py_XDECREF((PyObject *) gamma);
     }
     if (free_loramp) {
-        Py_XDECREF(lor_amp);
+        Py_XDECREF((PyObject *) lor_amp);
     }
     if (free_gstd) {
-        Py_XDECREF(g_std);
+        Py_XDECREF((PyObject *) g_std);
     }
     if (free_gdx) {
-        Py_XDECREF(g_dx);
+        Py_XDECREF((PyObject *) g_dx);
     }
     if (free_g1amp) {
-        Py_XDECREF(g1_amp);
+        Py_XDECREF((PyObject *) g1_amp);
     }
     if (free_g2amp) {
-        Py_XDECREF(g2_amp);
+        Py_XDECREF((PyObject *) g2_amp);
     }
 
     return result;

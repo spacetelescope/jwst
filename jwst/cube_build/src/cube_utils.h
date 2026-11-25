@@ -1,22 +1,6 @@
 #ifndef CUBE_UTILS_H
 #define CUBE_UTILS_H
 
-#include <Python.h>
-
-// Ensure PY_ARRAY_UNIQUE_SYMBOL is set BEFORE numpy header includes
-#ifndef PY_ARRAY_UNIQUE_SYMBOL
-#define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_build_numpy_api
-#endif
-
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-
-// Array utility declarations
-PyArrayObject *
-ensure_array(PyObject *obj, int *is_copy);
-PyArrayObject *
-ensure_array_int(PyObject *obj, int *is_copy);
-
 // Memory allocation function declarations
 int
 alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv);

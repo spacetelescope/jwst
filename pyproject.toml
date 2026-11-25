@@ -112,7 +112,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-build = "cp3*"
+build = "cp312-*"  # build for CPython 3.12 Stable API
 skip = ["cp3*t-*"]  # explicitly skip free-threaded builds
 test-command = 'python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"'
 
@@ -287,14 +287,14 @@ checks = [
 ]
 
 [tool.codespell]
-skip = "*.c, *.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
+skip = "*.c, *.h, *.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
 ignore-words-list = "indx, delt, Shepard, tread, usig"
 
 [tool.mypy]
 warn_return_any = true
 warn_unused_configs = true
 disable_error_code = "import-untyped" # do not check imports
-exclude = ["build"]
+exclude = ["build", "/setup\\.py$"]
 python_version = "3.13"
 
 [[tool.mypy.overrides]]
