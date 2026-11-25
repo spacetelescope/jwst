@@ -1,7 +1,7 @@
 import numpy as np
 from astropy import units as u
 
-__all__ = ["DarkData"]
+__all__ = ["DarkData", "ScienceData"]
 
 
 class DarkData:
