@@ -10,6 +10,7 @@ from jwst.associations.lib.diff import MultiDiffError, compare_asns
 from jwst.associations.lib.utilities import getattr_from_list
 
 __all__ = [
+    "Constraint_NIRCamImageNoDisperser",
     "Constraint_NotBkgd",
     "Constraint_NotBkgdOrTSO",
     "Constraint_NotTSO",
@@ -992,6 +993,34 @@ class DMSAttrConstraint(AttrConstraint):
             kwargs["invalid_values"] = _EMPTY
 
         super(DMSAttrConstraint, self).__init__(**kwargs)
+
+
+class Constraint_NIRCamImageNoDisperser(Constraint):
+    """Constraint for engineering imaging templated data."""
+
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
+        super(Constraint_NIRCamImageNoDisperser, self).__init__(
+            [
+                # Exclude any candidate with EXP_TYPE=NRC_IMAGE and any
+                # PUPIL value containing "DHS" or "GRISM".
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="exp_type",
+                            sources=["exp_type"],
+                            value="nrc_image",
+                        ),
+                        DMSAttrConstraint(
+                            name="pupil",
+                            sources=["pupil"],
+                            value="gdhs0|gdhs60|grismc|grismr|grismv2|grismv3",
+                        ),
+                    ],
+                    reduce=Constraint.notall,
+                ),
+            ],
+            name="is_image_no_disperser",
+        )
 
 
 class Constraint_TargetAcq(SimpleConstraint):

@@ -437,6 +437,9 @@ def _extract_tso_dhs_object(
             output_model.slits.append(sub_model)
     if getattr(input_model, "int_times", None) is not None:
         output_model.int_times = input_model.int_times.copy()
+    # update s_region of 0th slit to match input model
+    if output_model.slits:
+        output_model.slits[0].meta.wcsinfo.s_region = input_model.meta.wcsinfo.s_region
     return output_model
 
 
