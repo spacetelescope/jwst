@@ -27,6 +27,7 @@ from stdatamodels.jwst.transforms.models import (
 
 from jwst.assign_wcs import pointing
 from jwst.assign_wcs.util import (
+    apply_mosaic_member_tweak,
     bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,
@@ -925,6 +926,9 @@ def wfss(input_model, reference_files):
 
     # use the imaging_distortion reference file here
     image_pipeline = imaging(input_model, reference_files)
+
+    # Apply the WCS tweak generated for direct image partner exposure if available
+    image_pipeline = apply_mosaic_member_tweak(input_model, image_pipeline)
 
     # forward input is (x,y,lam,order) -> x0, y0
     # backward input needs to be the same ra, dec, lam, order -> x, y

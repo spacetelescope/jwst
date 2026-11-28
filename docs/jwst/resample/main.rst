@@ -139,6 +139,26 @@ context array ``con``, one can do something like this::
 For convenience, this functionality was implemented in the
 :func:`~drizzle.utils.decode_context` function.
 
+WCS Tweak Table
+---------------
+
+If the input images to the resample step had corrections applied to the WCS by
+the :ref:`tweakreg <tweakreg_step>` step, the shift and affine transformation
+matrix applied to each input image is stored in a table in the output product.
+The table has extension name TWEAK, and columns as follows:
+
+* FILENAME: Name of the input image
+* VISIT_ID: Visit ID
+* RA_REF: Reference RA value (deg)
+* DEC_REF: Reference Dec value (deg)
+* SHIFT_X: Tangent plane shift along x (arcsec)
+* SHIFT_Y: Tangent plane shift along y (arcsec)
+* MATRIX_00: Affine matrix element (0,0)
+* MATRIX_01: Affine matrix element (0,1)
+* MATRIX_10: Affine matrix element (1,0)
+* MATRIX_11: Affine matrix element (1,1)
+
+
 References
 ----------
 

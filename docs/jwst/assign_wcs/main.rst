@@ -216,7 +216,10 @@ the reference and actual angles.
 
 For WFSS modes (``NIS_WFSS``, ``NRC_WFSS``, and ``MIR_WFSS``), an approximation of the GWCS object
 associated with a direct image with the same instrument configuration as the grism/prism image
-is saved as FITS WCS in the headers of grism/prism images.
+is saved as FITS WCS in the headers of grism/prism images.  This WCS includes any
+tweaks applied to the direct image WCS by the :ref:`tweakreg <tweakreg_step>` step in the
+:ref:`calwebb_image3 <calwebb_image3>` pipeline, as recorded in the TWEAK table in the
+associated :ref:`i2d <i2d>` product.
 
 For TSGRISM, since only one source position is expected, the ``x0, y0`` coordinate is derived
 from the SIAF reference position (FITS keywords ``XREF_SCI`` and ``YREF_SCI``), corrected by
